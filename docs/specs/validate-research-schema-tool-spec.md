@@ -99,11 +99,12 @@ prefix.
 One case escapes the structured result. `validateResearchSchema`
 destructures `input` before it enters its `try`, so a `tools/call` that
 omits `arguments` altogether — the MCP protocol marks `arguments`
-optional, and `server.ts` does not validate it against `inputSchema` —
+optional, and `server.ts` checks argument names only when it is present —
 throws `Cannot destructure property 'projectPath' of 'input' as it is
 undefined`. `server.ts` catches that and returns `{ error: "<message>" }`
-with `isError: true`. Whenever `arguments` is present, every outcome is a
-structured result and `isError` is never set.
+with `isError: true`. Whenever `arguments` is present and names only this
+tool's parameters, every outcome is a structured result and `isError` is never
+set; a key that is not a parameter is refused by the guard with `isError: true`.
 
 ## 4. Validation rules
 
@@ -126,8 +127,9 @@ Skills that call this tool after writing project files:
 
 Agents: `person-evidence.md`, `gps-mentor.md`, `hypothesis-tracking.md`,
 `tree-edit.md`, `citation.md` (its Step 6 makes the call, mandatory on every
-write), `validate-schema.md` (its only tool: an
-on-demand, read-only audit).
+write), `validate-schema.md` (an on-demand audit that never edits a file to
+fix an error; inside a project it logs its report as one `validate_schema`
+entry through `research_log_append`).
 
 Referenced in: the "Validate" step of `agents/citation.md`, which absorbed the
 former `citation/references/validation-protocol.md`.

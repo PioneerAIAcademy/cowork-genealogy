@@ -446,10 +446,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   "gps-mentor.md": {
     tools: [
       "collections_search",
+      "evaluation_append",
       "place_distance",
       "place_search",
       "project_context",
-      "research_append",
       "research_query",
       "sidecar_read",
       "validate_research_schema",
@@ -771,6 +771,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "person_read",
       "person_record_matches",
       "record_read",
+      "research_append",
       "research_log_append",
       "research_query",
       "sidecar_read",

@@ -15,6 +15,8 @@
 
 import * as net from "node:net";
 
+import { consumeFsBudgetSlot, isFsBudgetExhausted } from "./fs-budget.js";
+
 export const DEFAULT_FETCH_TIMEOUT_MS = 30_000;
 
 /**
@@ -139,6 +141,12 @@ export async function fetchWithTimeout(
   init: RequestInit = {},
   timeoutMs: number = DEFAULT_FETCH_TIMEOUT_MS
 ): Promise<Response> {
+  // Before any network I/O, so a refused call never reaches the wire. Here and
+  // not in `fsFetch`, because many FamilySearch calls never pass through it
+  // (place-api, memories, fs-image-fetch, auth/refresh). Off unless the hosted
+  // entrypoint configured it. Throws a marked error both retry loops rethrow.
+  consumeFsBudgetSlot(String(url));
+
   let response: Response;
   try {
     // `signal` is spread last deliberately: no caller passes its own signal
@@ -273,6 +281,19 @@ export async function fetchWithRetry(
           : Math.min(timeoutMs, Math.max(0, deadline - Date.now()));
       response = await fetchWithTimeout(url, init, attemptTimeout);
     } catch (err) {
+      // A spent budget is a LOCAL refusal, not a transport failure: nothing
+      // reached the upstream, and retrying spends the next three attempts on
+      // the same refusal plus two backoff sleeps. Rethrown even when a
+      // retryable Response is already in hand (the `lastResponse` return
+      // below) — handing back a stale 429 would name the wrong cause.
+      if (isFsBudgetExhausted(err)) {
+        // `lastResponse` holds a retryable Response (a 429/5xx from an earlier
+        // attempt) that nothing will read now. An unconsumed undici body holds
+        // its socket until GC (catalog-search.ts:793), and under a spent
+        // process-wide budget this path runs for every caller.
+        await lastResponse?.text().catch(() => "");
+        throw err;
+      }
       // Network error or per-attempt timeout — retryable.
       lastErr = err;
       if (!isFetchTimeout(err)) lastSocketErr = err;

@@ -16,6 +16,7 @@ description: >-
   like migration or why an event happened (use historical-context), or a
   general Wikipedia summary of the place (use search-wikipedia).
 model: claude-sonnet-4-6
+effort: high
 tools:
   - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__project_context

@@ -61,7 +61,7 @@ def sent(monkeypatch, pg_dsn) -> list[dict]:
             bodies.append(json.loads(params["MessageBody"]))
             return f"<R><MessageId>m-{len(bodies)}</MessageId></R>"
 
-    monkeypatch.setattr(worker, "PG_DSN", pg_dsn)
+    monkeypatch.setattr(worker, "PG", worker.pg_credentials.PgCredentials.fixed(pg_dsn))
     monkeypatch.setattr(worker, "QUEUE_URL", "http://q/000000000000/turns")
     monkeypatch.setattr(worker, "log", lambda **f: None)
     monkeypatch.setattr(enqueue, "credentials_ready", lambda timeout=None: True)
@@ -502,7 +502,7 @@ def close_with_reply(dsn: str, row, turn_id: str, *, reply=KEEP_GOING, marker=No
     turn_row = {"turn_id": turn_id, "session_id": row.session_id, "project_id": row.project_id}
     with psycopg.connect(dsn) as raw:
         conn = PausingConn(raw, marker, pause) if marker else raw
-        return worker.complete(conn, turn_row, 1, claim_epoch=None, auto_reply=reply, max_nudges=0)
+        return worker.complete(conn, turn_row, 1, claim_epoch=None, auto_reply=reply)
 
 
 def auto_rows(dsn: str, sid: str) -> list[str]:

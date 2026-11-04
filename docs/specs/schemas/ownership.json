@@ -5,11 +5,14 @@
     "unit": "eval/harness/validators/test_universal.py — two checks. test_ownership_table diffs before/after project state against the calling skill's SKILL.md frontmatter name and cannot see an agent caller. test_no_out_of_lane_section_writes (issue #2022) records the shipped hook's own owner_denied verdict from skill_runner's PreToolUse hook, so since 2026-09-02 this plane DOES see the agent caller, and denies rather than merely detecting. Both run only inside a paid per-skill eval run.",
     "e2e": "eval/harness/e2e — whole-run detectors. Eval-only; never reaches production.",
     "tool": "a writer-tool precondition in packages/engine/mcp-server/src/tools. The only plane that binds in every environment, and the only one that is caller-agnostic — it constrains the WRITE, never who made it. Claimed by the questions row since 2026-08-23 (two exhaustiveness preconditions in research_append). Nothing reads this manifest at runtime: a row claiming this plane is a pointer to a hand-written check, kept in step by review.",
-    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19), person_evidence (section-scoped, 2026-09-01), questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23) project (FIELD-scoped on status, keyed on presence rather than on a claim value, 2026-09-25), conflicts (CLAIM-scoped over several fields on the analytical product, 2026-09-29), rejected_links (section-scoped, 2026-09-30), namesakes (section-scoped, 2026-10-25) and evaluations (section-scoped, 2026-10-26, issue #3191). Nothing reads this manifest at runtime — the hook runs in the VM with no repo access — so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
+    "hook": "the plugin PreToolUse hook. The only plane that can discriminate by caller. Claimed by proof_summaries (section-scoped, 2026-08-19), person_evidence (section-scoped, 2026-09-01), questions (FIELD-scoped on the exhaustiveness claim, 2026-08-23) project (FIELD-scoped on status, keyed on presence rather than on a claim value, 2026-09-25; and `objective` denied to every subagent, main thread only, 2026-11-03, issue #3975), conflicts (CLAIM-scoped over several fields on the analytical product, 2026-09-29), rejected_links (section-scoped, 2026-09-30), namesakes (section-scoped, 2026-10-25) and evaluations (section-scoped, 2026-10-26, issue #3191). Nothing reads this manifest at runtime — the hook runs in the VM with no repo access — so the guard hardcodes its maps and hookCallers plus a comment keeps the two in step."
   },
   "hookRouting": {
-    "$comment": "What the plugin PreToolUse hook routes by section, read by ownership-manifest.test.ts, plugin-hooks.test.ts and eval/harness/e2e/writer_attribution_report.py so the actual-writer reach rule has one source. `tool` is the one writer tool guard_project_files.py's owner_denied gates (plugin-hooks.test.ts pins it against the script); `treeRowsVia` maps each tree.gedcomx.json row that tool writes to the research.json section whose op writes it.",
-    "tool": "research_append",
+    "$comment": "What the plugin PreToolUse hook routes by section, read by ownership-manifest.test.ts, plugin-hooks.test.ts and eval/harness/e2e/writer_attribution_report.py so the actual-writer reach rule has one source. `tool` is the writer tools guard_project_files.py's owner_denied gates (plugin-hooks.test.ts pins them against the script): `research_append`, and `evaluation_append`, which is `research_append` scoped to `evaluations` by tool identity and routed the same way (issue #1491). A row's `hookCallers` counts for whichever of these tools its `writerTools` also lists. `treeRowsVia` maps each tree.gedcomx.json row `research_append` writes to the research.json section whose op writes it (evaluation_append writes no tree row).",
+    "tool": [
+      "research_append",
+      "evaluation_append"
+    ],
     "treeRowsVia": {
       "persons": "assertions",
       "sources": "sources"
@@ -46,13 +49,13 @@
         "hook"
       ],
       "requires": "init-project creates the object; proof-conclusion sets `status` and `updated` when a project completes. `updated` alone is a per-session activity ping any successful writer may refresh — a diff confined to that field is not a violation.",
-      "failure": "A skill rewrites the objective, subject persons, or status mid-project, and every later skill plans against a changed goal it never agreed to.",
-      "remedy": "Route a status change through proof-conclusion; route an objective change through init-project.",
+      "failure": "A subagent rewrites the objective, or anyone rewrites the title or subject persons, or a non-owner sets status mid-project, and every later skill plans against a changed goal it never agreed to.",
+      "remedy": "Route a status change through proof-conclusion. The main conversation rewrites the objective when the user asks; a subagent cannot. The title and subject persons are fixed for the life of the project.",
       "override": "none",
       "hookCallers": [
         "agent:proof-conclusion"
       ],
-      "notes": "The hook rule is FIELD-scoped, not section-scoped: only `status` is routed, because `project` is co-written — init-project authors the section and every skill refreshes `updated`, so reserving the whole section would deny both. It is keyed on presence rather than on a value (unlike `questions`' `exhaustive_declaration`) because `status` has no honest non-claiming value: any write of it asserts the project's state."
+      "notes": "The hook rule is FIELD-scoped, not section-scoped: only `status` is routed, because `project` is co-written — init-project authors the section and every skill refreshes `updated`, so reserving the whole section would deny both. It is keyed on presence rather than on a value (unlike `questions`' `exhaustive_declaration`) because `status` has no honest non-claiming value: any write of it asserts the project's state. A second field rule runs the other way: `objective` is main-thread-only (`MAIN_THREAD_FIELDS`), so the hook denies it to every subagent and names no agent to delegate to, which is why it adds nothing to `hookCallers` (lead ruling 2026-10-29, issue #3975). research_append no longer treats `objective` as set-once; `title` and `subject_person_ids` still are."
     },
     {
       "artifact": "research.json",
@@ -128,7 +131,8 @@
         "agent:search-records",
         "agent:search-external-sites",
         "agent:search-full-text",
-        "agent:search-images"
+        "agent:search-images",
+        "agent:search-hints"
       ],
       "writerTools": [
         "research_append",
@@ -137,7 +141,7 @@
       "enforceableAt": [
         "unit"
       ],
-      "requires": "The research-plan agent owns plan and item structure. The search skills, the search-images, search-external-sites and search-full-text agents may update only `items[].status` after executing an item. `extraction_append`, whoever calls it, moves an `in_progress` item on an active plan to `completed` once a record one of its positive or partial `record_search` searches found is extracted, and changes nothing else.",
+      "requires": "The research-plan agent owns plan and item structure. The search skills, the search-images, search-external-sites, search-full-text and search-hints agents may update only `items[].status` after executing an item (search-hints sets the status of its 'review pending hints' item, issue #3153). `extraction_append`, whoever calls it, moves an `in_progress` item on an active plan to `completed` once a record or full-text hit one of its positive or partial `record_search` or `fulltext_search` searches found is extracted, and changes nothing else.",
       "failure": "A search skill rewrites the plan it was handed, and the plan stops being a record of what was intended versus what was done.",
       "remedy": "Update the item's status; route a change to the plan itself through the research-plan agent.",
       "override": "none",
@@ -154,7 +158,8 @@
         "agent:search-records",
         "agent:search-external-sites",
         "agent:search-full-text",
-        "agent:search-images"
+        "agent:search-images",
+        "agent:search-hints"
       ],
       "agentCallers": [
         {
@@ -177,6 +182,12 @@
         },
         {
           "agent": "agent:search-records",
+          "tools": [
+            "research_append"
+          ]
+        },
+        {
+          "agent": "agent:search-hints",
           "tools": [
             "research_append"
           ]
@@ -383,8 +394,8 @@
         "unit",
         "tool"
       ],
-      "notes": "convert-dates held this section in the table this manifest replaced, and the grant was dead: its only tool is `convert_calendar`, it holds no writer tool, and its own body says it writes nothing. Dropped rather than recorded — a declared writer that cannot write reads as coverage in exactly the way an invented owner does. Free: none of the skill's 14 unit tests names `research_append` or `assertions`. Tool plane since 2026-10-05 (genealogist ruling, option B): research_append, as an MCP caller reaches it (researchAppendFromCaller), refuses every assertions write except an update that sets only informant_bias_notes; extraction_append calls researchAppend directly and is unaffected.",
-      "requires": "`extraction_append` writes the atomic assertions and their three-layer classifications, first and final, from the extraction table. No later pass refines them. The one later change it makes is to `extracted_for_question_ids`: when a question re-finds a record already extracted, that question's id is appended to the record's assertions, and ids are never removed.",
+      "notes": "convert-dates held this section in the table this manifest replaced, and the grant was dead: its only tool is `convert_calendar`, it holds no writer tool, and its own body says it writes nothing. Dropped rather than recorded — a declared writer that cannot write reads as coverage in exactly the way an invented owner does. Free: none of the skill's 14 unit tests names `research_append` or `assertions`. Tool plane since 2026-10-05 (genealogist ruling, option B): research_append, as an MCP caller reaches it (researchAppendFromCaller), refuses every assertions write except an update that sets only informant_bias_notes; extraction_append calls researchAppend directly and is unaffected. A re-extraction (`reextract: true`) is the one path that changes an existing assertion: it sets `superseded_by`/`superseded_reason` on the old reading, through the internal `retireAssertions` option, never from a caller, and only while nothing cites the assertion.",
+      "requires": "`extraction_append` writes the atomic assertions and their three-layer classifications from the extraction table. No later pass edits one in place. The one later change it makes is to `extracted_for_question_ids`: when a question re-finds a record already extracted, that question's id is appended to the record's assertions, and ids are never removed. A record extracted wrongly is corrected by extracting it again with `reextract: true`, which writes a fresh reading and retires the old assertions (`superseded_by` naming the replacement, or `\"retracted\"` with a reason); an assertion is never edited in place.",
       "failure": "An assertion written outside extraction carries no source, no classification, and no persona link — and the GPS analysis layer treats it as evidence anyway.",
       "remedy": "Extract through `extraction_append`, or the record-structurer agent for a non-FamilySearch source. A disagreement with a classification, from evidence outside the record, is weighed in conflict-resolution.",
       "override": "none",
@@ -434,7 +445,7 @@
         "unit",
         "hook"
       ],
-      "requires": "Only conflict-resolution opens, analyses, or settles a conflict. `weighed_log_entry_ids` is claim-routed with the analysis fields: it is what moves a question from conflict-resolution to ending on an unsettled conflict, so a main-thread write of it could end the research with no weighing.",
+      "requires": "Only conflict-resolution opens, analyses, or settles a conflict. `weighed_log_entry_ids` is declared by conflict-resolution on an unresolved conflict's analysis write when nothing is left to search, filled by `research_append` with every log entry of every question the conflict blocks, and claim-routed with the analysis fields: it is what moves a question from conflict-resolution to ending on an unsettled conflict, so a main-thread write of it could end the research with no weighing.",
       "failure": "An unresolved blocking conflict is what stops a project completing. A skill that marks one resolved without adjudicating it removes the block and the project completes over contradictory evidence.",
       "remedy": "Adjudicate through conflict-resolution, which writes the analysis alongside the status.",
       "override": "none",
@@ -523,6 +534,7 @@
         "agent:gps-mentor"
       ],
       "writerTools": [
+        "evaluation_append",
         "research_append"
       ],
       "enforceableAt": [
@@ -531,8 +543,8 @@
       "hookCallers": [
         "agent:gps-mentor"
       ],
-      "notes": "Enforced at the hook plane since 2026-10-26 (issue #3191, lead ruling 2026-10-12), section-scoped: the guard's OWNED_SECTIONS routes the section to the gps-mentor agent, so a MAIN-THREAD write — which carries no agent_id and was the one committed non-owner shape: a main thread recording its own mentor verdict before gps-mentor was spawned (katalin-horak-son/run-2026-08-03_21-26-35.json, tool_calls[93] and [94], spawn at [97]) — is denied; every other agent was already held off by its AGENT_WRITABLE_SECTIONS lane. Not `unit`: the section is outside the diff set that plane iterates, and test_ownership_table keys on the calling skill's SKILL.md frontmatter name, so it could not express an agent owner either. Measured over the committed e2e corpus: 230 write ops across 114 of 154 runs, with 32 of 34 attributable writes made by gps-mentor.",
-      "requires": "Only the gps-mentor agent appends an evaluation. A superseded evaluation is retired by pointing `superseded_by` at its replacement, never by deletion.",
+      "notes": "Enforced at the hook plane since 2026-10-26 (issue #3191, lead ruling 2026-10-12), section-scoped: the guard's OWNED_SECTIONS routes the section to the gps-mentor agent, so a MAIN-THREAD write — which carries no agent_id and was the one committed non-owner shape: a main thread recording its own mentor verdict before gps-mentor was spawned (katalin-horak-son/run-2026-08-03_21-26-35.json, tool_calls[93] and [94], spawn at [97]) — is denied; every other agent was already held off by its AGENT_WRITABLE_SECTIONS lane. Since 2026-10-27 (issue #1491) gps-mentor writes it through the narrow `evaluation_append`, which the guard routes the same way as `research_append`. Not `unit`: the section is outside the diff set that plane iterates, and test_ownership_table keys on the calling skill's SKILL.md frontmatter name, so it could not express an agent owner either. Measured over the committed e2e corpus: 230 write ops across 114 of 154 runs, with 32 of 34 attributable writes made by gps-mentor.",
+      "requires": "Only the gps-mentor agent appends an evaluation, through evaluation_append. A superseded evaluation is retired by pointing `superseded_by` at its replacement, never by deletion.",
       "failure": "A main thread recording its own verdict makes the second opinion self-issued — a caller appending its own evaluation grades its own work.",
       "remedy": "Invoke gps-mentor and let it write the entry.",
       "override": "none"

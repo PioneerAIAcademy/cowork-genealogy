@@ -94,6 +94,34 @@ describe("questionStatus — the state ladder", () => {
       expect(questionStatus(d, question()).nextStep).toBe("search-records");
     });
 
+    it("a planned fs_hints item routes to search-hints, naming the item (#3153)", () => {
+      const d = doc({
+        plans: [plan([{ id: "pli_h", sequence: 1, status: "planned", record_type: "fs_hints", repository: "FamilySearch" }])],
+      });
+      expect(questionStatus(d, question()).nextStep).toBe("search-hints — pli_h");
+    });
+
+    it("a waiting fs_hints item (in_progress, no log naming it) is skipped; the next item routes (#3153)", () => {
+      const d = doc({
+        plans: [plan([
+          { id: "pli_h", sequence: 1, status: "in_progress", record_type: "fs_hints", repository: "FamilySearch" },
+          { id: "pli_2", sequence: 2, status: "planned", repository: "FamilySearch" },
+        ])],
+        log: [],
+      });
+      expect(questionStatus(d, question()).nextStep).toBe("search-records");
+    });
+
+    it("a lone waiting fs_hints item never pins nextStep on search-hints (#3153)", () => {
+      const d = doc({
+        plans: [plan([{ id: "pli_h", sequence: 1, status: "in_progress", record_type: "fs_hints", repository: "FamilySearch" }])],
+        log: [],
+      });
+      const step = questionStatus(d, question()).nextStep;
+      expect(step).toMatch(/^research-exhaustiveness/);
+      expect(step).not.toMatch(/search-hints/);
+    });
+
     it("searching with only negative entries is not an extraction step", () => {
       const d = doc({
         plans: [

@@ -14,7 +14,7 @@
   },
   "intentionally_invalid": true,
   "judge_context": [
-    "Should report that validation FAILED — it must not claim the files are valid",
+    "Should report in its reply that validation FAILED — it must not claim the files are valid. This line is about the reply only: the validate_schema log entry's outcome \"positive\" is the value the agent is told to set; it records that the check ran and produced a report, not that the files are valid",
     "Should surface the specific error: assertion a_001's information_quality value 'tertiary' is not an allowed value (the closed enum is primary, secondary, indeterminate)",
     "Should explain in plain terms what the error means (information_quality is a closed enum and 'tertiary' is not one of its members) and suggest a fix (change it to one of the valid values, most likely 'indeterminate')",
     "Should NOT silently edit research.json — it edits no file to fix an error; its one write is a validate_schema log entry; it reports and explains, the user decides the fix",

@@ -1,0 +1,46 @@
+{
+  "test": {
+    "id": "ut_research_cq7",
+    "skill": "research",
+    "name": "\"Continue.\" to the setting-up offer runs question-selection",
+    "type": "positive",
+    "description": "The other half of ut_research_utf, on the same scenario. utf's turn finds the unframed parentage and ends with \"Continue with setting up the project?\" without spawning question-selection. This is the researcher's reply to that offer: \"Continue.\" runs the offered step, so the router hands off to question-selection. The router row that holds the spawn back applies only to the turn that finds the unframed part; read literally on the reply turn it would re-offer forever. The unit harness is single-turn, so the message itself names the offer it answers.",
+    "tags": [
+      "compound-objective-part-unframed",
+      "routing",
+      "routes-to:question-selection",
+      "step-mode"
+    ]
+  },
+  "input": {
+    "user_message": "/research You offered to set up the parentage question. Continue.",
+    "scenario": "compound-objective-part-unframed"
+  },
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 1200,
+    "stop_at_stub": true,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      "locality-guide",
+      "research-plan",
+      "search-records",
+      "record-structurer",
+      "person-evidence",
+      "conflict-resolution",
+      "research-exhaustiveness",
+      "proof-conclusion",
+      "gps-mentor"
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. A deterministic validator (test_routes_to_expected_skill, `routes-to:question-selection`) asserts the hand-off. Do not grade the routing decision yourself.",
+    "The researcher is replying \"Continue.\" to the offer \"Continue with setting up the project?\", made because the objective's parentage has no question. Running question-selection for that part is the step being accepted.",
+    "`@plugin:question-selection` is STUBBED: it changes nothing, so no new question appears in the project and that is not a failure. Grade the router's own reply: that it says it is setting up the parentage question, and does not re-offer the same step or call the research complete.",
+    "Re-offering \"Continue with setting up the project?\" without running it, or heading for the completion write, is the failure."
+  ],
+  "judge_reads_files": true
+}

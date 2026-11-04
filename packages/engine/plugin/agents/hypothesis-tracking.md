@@ -15,7 +15,8 @@ description: >-
   claim. Do NOT use when the user wants to resolve a specific fact conflict
   (use conflict-resolution), wants to build a timeline (use timeline), or
   wants to write a final conclusion (use proof-conclusion).
-model: claude-sonnet-4-6
+model: claude-haiku-5-5
+effort: low
 tools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append

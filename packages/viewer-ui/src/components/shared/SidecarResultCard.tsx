@@ -74,9 +74,7 @@ interface RecordReadView {
  * else the first principal, else none ('' — document order, no labels).
  */
 function recordReadView(result: RecordReadResult, focusPersonaId?: string): RecordReadView {
-  const persons = (result.gedcomx?.persons ?? []).filter(
-    (p) => p && typeof p.id === 'string' && Array.isArray(p.names)
-  )
+  const persons = (result.gedcomx?.persons ?? []).filter((p) => p && typeof p.id === 'string')
   const relationships = (result.gedcomx?.relationships ?? []).filter(
     (r) => r && typeof r === 'object'
   )

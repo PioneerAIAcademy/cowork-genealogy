@@ -232,7 +232,19 @@ here and left for validation to refuse at its own index. A resolved value is
 reported in `placesFilled`. A caller-supplied value that the resolver replaced or
 could not confirm, or that sat on a fact with no `place`, is named in
 `validation.warnings`; one that did not resolve — no match, a failed lookup, or
-the budget running out — is left unset, never kept.
+the budget running out — is left unset, never kept. The writers' rule for a
+supplied value (tree-edit-tool-spec §4.1.1) does not apply here: no production
+caller supplies one (`init-project` never passes `tree`).
+
+**A place left unstandardized is reported, never silent.** Once the fill has
+run, every fact in the tree that still has a `place` and no `standard_place` —
+a read place the retry could not fill, or a hand-entered one that did not
+resolve — is listed in `unresolvedPlaces: string[]`, once each in the spelling
+first met and keyed as `placesFilled` is, and named in one
+`validation.warnings` line, `Places kept as written, with no standard place
+found: …`. A non-place phrase such as "Same House" (`isNonPlacePhrase`) has no
+standard form to miss and is left out. Both are absent when every place was
+standardized.
 
 **The result, with `personId`,** is a summary, never the tree, held under
 `SUMMARY_MAX_CHARS` (2,000 serialized characters): `subject` (`id`,
@@ -260,6 +272,16 @@ and `statementSource` when one was created. It also carries `placesFilled`,
 none). One resolution is listed once, in the spelling first met, however else
 the same place was written (trimmed, case-folded, spaces collapsed), so the
 caller can tell the researcher which places it standardized without being asked.
+
+**`projectUrl`, on either success.** The project's page in the self-hosted
+beta's web app, `<webPublicUrl>/#/p/<projectId>`, present only when the per-user
+config has `webPublicUrl` and the bound store has a `projectId`
+(`projectLinks(principal)`, `src/utils/project-links.ts`; the same helper and
+rules as `project_context`'s, its spec §2.7). That id is the store's, so it is
+**not** the `projectId: "rp_001"` this result also carries, which is the
+research project's id inside `research.json`. On the `personId` summary it is
+built inside the 2,000-character cap. The desktop's file store has no id, so the
+desktop never gets one.
 
 **Naming the subject.** A caller that has only the FamilySearch ID writes the
 objective and title before the read, so it can name the subject only by that ID.
@@ -322,7 +344,7 @@ come from what the researcher actually said, and are written afterwards through
 | `objective` absent, empty, or whitespace | A project is the pursuit of a stated question, and every later step plans against it |
 | The pair fails validation | Including a `subjectPersonIds` entry the tree does not contain |
 | `projectPath` absent | — |
-| `personReadRef` passed, in any form | Removed; refused by name, telling the caller to pass `personId`. A caller built against the old contract would otherwise fall into the hand-built path with a FamilySearch PID as its subject |
+| `personReadRef` passed, in any form | Removed; refused by name, telling the caller to pass `personId`. Over MCP `server.ts`'s unknown-argument guard sends this message before the handler runs (`PERSON_READ_REF_REMOVED`, `src/utils/tool-hint-messages.ts`); a direct call gets it from the handler. A caller built against the old contract would otherwise fall into the hand-built path with a FamilySearch PID as its subject |
 | `personId` present but not a non-empty string | — |
 | `tree` with any entry beside `personId` | "People the researcher names beside a read" above |
 | The read fails (no login, a person FamilySearch does not hold, the read holds no person with the requested id) | The read's own message, which names the remedy (log in; check the ID) |

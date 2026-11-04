@@ -22,4 +22,4 @@ The skill must NOT formulate a question that assumes Thomas Flynn is the father 
 
 ## Used by
 
-- `question-selection` tests for the **unsound-premise guard** — the skill must recognize that the parentage premise is unverified and propose a verification question rather than building on the online tree claim.
+- tests for the **unsound-premise guard** — the skill must recognize that the parentage premise is unverified rather than building on the online tree claim. With a question already open, testing the premise is plan items on it; a verification question is correct only when no question is open.

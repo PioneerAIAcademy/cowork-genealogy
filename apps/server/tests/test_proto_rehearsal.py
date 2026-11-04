@@ -41,6 +41,9 @@ REPO = Path(__file__).resolve().parents[3]
 REHEARSAL_DIR = REPO / "apps" / "server" / "proto" / "eb-rehearsal"
 TESTS = Path(__file__).resolve().parent
 ACCOUNT = "000000000000"
+# Windows has no Unix permission bits (chmod only toggles read-only), so a mode
+# assertion can only hold on POSIX; the rest of each such test still runs (issue #4043).
+POSIX_MODES = sys.platform != "win32"
 MASTER_ARN = f"arn:aws:secretsmanager:us-east-1:{ACCOUNT}:secret:rds!db-fake-AbCdEf"
 FAKE_MODEL_KEY = "sk-ant-u13-fake-model-key-value"
 
@@ -875,12 +878,14 @@ def test_work_dir_never_adopts_a_directory_it_did_not_make(tmp_path):
     rc = rh.main(["plan", "--expect-account", ACCOUNT, "--work-dir", str(mine)], runner=FakeAws(),
                  out=lambda line: None)
     assert rc == 2
-    assert stat.S_IMODE(mine.stat().st_mode) == 0o755, "an existing directory is never chmodded"
+    if POSIX_MODES:
+        assert stat.S_IMODE(mine.stat().st_mode) == 0o755, "an existing directory is never chmodded"
     empty = tmp_path / "empty"
     empty.mkdir()
     assert rh.main(["plan", "--expect-account", ACCOUNT, "--work-dir", str(empty)], runner=FakeAws(),
                    out=lambda line: None) == 0
-    assert stat.S_IMODE(empty.stat().st_mode) == 0o700
+    if POSIX_MODES:
+        assert stat.S_IMODE(empty.stat().st_mode) == 0o700
     assert rh.main(["plan", "--expect-account", ACCOUNT, "--work-dir", str(empty)], runner=FakeAws(),
                    out=lambda line: None) == 0, "a work dir this tool made is reused"
 
@@ -958,7 +963,8 @@ def test_option_settings_and_secret_strings_are_private_files(stack):
                 ref = argv[argv.index(flag) + 1]
                 assert ref.startswith(f"file://{env['work']}"), (flag, ref)
                 mode = stat.S_IMODE(Path(ref[len("file://"):]).stat().st_mode)
-                assert mode == 0o600, (ref, oct(mode))
+                if POSIX_MODES:
+                    assert mode == 0o600, (ref, oct(mode))
                 seen += 1
     assert seen >= 9
 
@@ -1020,7 +1026,9 @@ def test_signin_https_imports_a_self_signed_certificate_and_moves_the_listener_t
     [req] = fake.openssl_calls
     assert req[:3] == ["openssl", "req", "-x509"] and f"subjectAltName=DNS:{host}" in req and f"/CN={host}" in req
     key = env["work"] / "tls" / "web-key.pem"
-    assert key.is_file() and stat.S_IMODE(key.stat().st_mode) == 0o600
+    assert key.is_file()
+    if POSIX_MODES:
+        assert stat.S_IMODE(key.stat().st_mode) == 0o600
     [imp] = fake.calls_to("acm", "import-certificate")
     assert f"fileb://{key}" in imp and "Key=genealogy:rehearsal,Value=u13" in imp
     web = options_file(env, rh.ENV_NAMES["web"])
@@ -1395,7 +1403,7 @@ def test_cases_cover_the_plan_list():
         "web_half_sqs", "sqs_region_contradicts", "fast_errors", "maxretries_2", "maxretries_1", "tmpdir_bad",
         "worker_no_provider", "worker_no_tool_url", "worker_blocked_tools", "worker_no_queue_url",
         "worker_default_enc_key", "web_no_queue_url", "default_session_secret", "kill_window", "debug_hold",
-        "refresh_age_0", "cap_1usd", "nudges_3", "nudges_0", "no_telemetry", "idle_session_60s",
+        "refresh_age_0", "cap_1usd", "no_telemetry", "idle_session_60s",
         "slots_4", "slots_8", "worker_xlarge"}
 
 
@@ -1408,20 +1416,14 @@ def test_every_case_has_a_row_in_the_readme_probe_table():
 
 
 @pytest.mark.parametrize("case, tier, name, value", [
-    ("nudges_3", "web", "AUTONOMOUS_MAX_NUDGES", "3"),
-    ("nudges_0", "web", "AUTONOMOUS_MAX_NUDGES", "0"),
     ("no_telemetry", "worker", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC", "1"),
 ])
-def test_nudge_and_telemetry_cases_set_one_name_and_remove_it_on_restore(stack, case, tier, name, value):
-    """Neither name is in up's API layer, so the restore removes it: on web the template's
-    AUTONOMOUS_MAX_NUDGES=0 (01-web.config) applies again; the worker template sets neither."""
+def test_the_telemetry_case_sets_one_name_and_removes_it_on_restore(stack, case, tier, name, value):
+    """The name is not in up's API layer, so the restore removes it; the worker template
+    does not set it."""
     assert rh.CASES[case]["ops"] == {tier: [(rh.ENV_NS, name, value)]} and "allow" not in rh.CASES[case]
-    # The template is 0 under step mode (decision 25), so `nudges_0` now sets the
-    # value the template already carries. The case still earns its keep: it proves
-    # the rehearsal APPLIES and REMOVES the option, which is what the restore tests,
-    # and it is the case that would catch the template drifting back above 0.
-    assert rh.template_env("web")["AUTONOMOUS_MAX_NUDGES"] == "0"
     assert "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC" not in rh.template_env("worker")
+    assert "AUTONOMOUS_MAX_NUDGES" not in rh.template_env("web"), "the Stop veto's cap is deleted"
     env, fake, _ = stack
     env_name = rh.ENV_NAMES[tier]
     assert (rh.ENV_NS, name) not in rh.options_map(json.loads(
@@ -2484,7 +2486,10 @@ def _no_aws(argv):
 
 @pytest.mark.parametrize("cmd", [["plan"], ["up", "--phase", "all", "--phase", "signin", "--phase", "resolver",
                                             "--dry-run"],
-                                 ["down", "--dry-run"], ["probe", "--case", "kill_window", "--case",
+                                 pytest.param(["down", "--dry-run"], marks=pytest.mark.skipif(
+                                     sys.platform == "win32", reason="names a file after the <run> placeholder; "
+                                     "< and > are illegal in a Windows filename")),
+                                 ["probe", "--case", "kill_window", "--case",
                                                          "idle_session_60s", "--case", "graviton_boot", "--dry-run"],
                                  ["probe", "--case", "slots_4", "--case", "worker_xlarge", "--dry-run"],
                                  ["cpu", "--start", "2026-10-10T12:00:00Z", "--end", "2026-10-10T12:30:00Z", "--dry-run"],
@@ -2509,7 +2514,11 @@ def test_dry_run_secret_strings_are_paths(env):
     _, lines = run(env, _no_aws, "plan")
     secret_lines = [line for line in lines if line.startswith("+ ") and "--secret-string" in line]
     assert len(secret_lines) == len(rh.SECRET_KEYS)
-    assert all("--secret-string file://" in line for line in secret_lines)
+    # Parsed, not substring-matched: the command is shell-quoted, so a Windows path
+    # prints as '--secret-string 'file://C:\...'' (issue #4043).
+    for line in secret_lines:
+        argv = shlex.split(line[2:])
+        assert argv[argv.index("--secret-string") + 1].startswith("file://"), line
 
 
 def test_plan_with_another_instance_class_still_passes(env, monkeypatch):
@@ -2635,7 +2644,8 @@ def test_leak_check_refuses_without_local(leak_repo, capsys):
 
 def test_leak_check_patterns_file_stays_outside_the_repo(leak_repo):
     _leak(leak_repo)
-    assert stat.S_IMODE((leak_repo["work"] / "leak-patterns").stat().st_mode) == 0o600
+    if POSIX_MODES:
+        assert stat.S_IMODE((leak_repo["work"] / "leak-patterns").stat().st_mode) == 0o600
     assert "leak-patterns" not in _git(leak_repo["repo"], "status", "--porcelain", "--untracked-files=all")
 
 

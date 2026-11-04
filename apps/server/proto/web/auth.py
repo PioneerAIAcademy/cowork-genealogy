@@ -19,7 +19,9 @@ Settings are read from the environment at call time, so a test can set them per 
   PUBLIC_URL                 the tier's public origin; /callback hangs off it. Its scheme
                              is the production discriminant: https turns on secure
                              cookies, turns off dev-login and arms ``preflight``
-                             (as FAMILYSEARCH_WEB_ENABLED does, at any scheme).
+                             (as FAMILYSEARCH_WEB_ENABLED does, at any scheme). Its path
+                             is the prefix an edge strips before the origin (U28): it
+                             scopes the cookies and the SPA's ``<base href>``.
   WEB_ORIGIN                 where the callback sends the browser (defaults to PUBLIC_URL)
   SESSION_SECRET             signs the session cookie and the OAuth state cookie
   FS_TOKEN_ENC_KEY           any string; a Fernet key is derived from it
@@ -29,6 +31,12 @@ Settings are read from the environment at call time, so a test can set them per 
   FAMILYSEARCH_CONFIG        path to the engine's familysearch.json
   DEV_LOGIN                  true to offer dev-login (compose sets it; U11's packaging
                              guard keeps every DEV_ variable out of the templates)
+  GENEALOGY_CHAT             unset or true: the chat (turns queue, grant refresher and every
+                             /api/sessions route); false: none of the three. Anything else
+                             refuses to start
+  GENEALOGY_MAX_USERS        a positive integer: sign-in admits by user cap and ignores
+                             ALLOWED_EMAILS; unset: the allowlist. Anything else refuses to
+                             start
 """
 
 from __future__ import annotations
@@ -44,6 +52,7 @@ import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 
 from cryptography.fernet import Fernet
 from itsdangerous import BadSignature, URLSafeTimedSerializer
@@ -107,6 +116,9 @@ FS_ACCESS_TOKEN_LIFETIME_S = 8 * 60 * 60
 # Where the callback may send the browser afterwards: only a hash route of our own SPA.
 # The value rides a cookie the browser controls, so anything else is an open redirect.
 SAFE_NEXT_RE = re.compile(r"^#/[A-Za-z0-9/_-]{0,120}$")
+# PUBLIC_URL's path: unreserved segments only, since it is written into a cookie Path and
+# the SPA's HTML.
+BASE_PATH_RE = re.compile(r"^(/[A-Za-z0-9._~-]+)*$")
 
 
 # ── settings ─────────────────────────────────────────────────────────────────────
@@ -118,6 +130,23 @@ def _env(name: str, default: str = "") -> str:
 
 def public_url() -> str:
     return _env("PUBLIC_URL", DEFAULT_PUBLIC_URL).rstrip("/")
+
+
+def base_path() -> str:
+    """PUBLIC_URL's path without its trailing slash, ``''`` at the root. Raises on a path
+    outside ``BASE_PATH_RE`` or any query or fragment, at any scheme."""
+    parts = urlsplit(public_url())
+    path = parts.path.rstrip("/")
+    if parts.query or parts.fragment or "?" in public_url() or "#" in public_url() or not BASE_PATH_RE.match(path):
+        raise RuntimeError(
+            f"Refusing to start: PUBLIC_URL {public_url()!r} must be an origin plus an optional path of "
+            "unreserved segments (A-Z a-z 0-9 . _ ~ -), with no query or fragment"
+        )
+    return path
+
+
+def cookie_path() -> str:
+    return base_path() or "/"
 
 
 def web_origin() -> str:
@@ -138,6 +167,30 @@ def fs_token_enc_key() -> str:
 
 def allowed_emails() -> set[str]:
     return {e.lower() for e in re.split(r"[,\s]+", _env("ALLOWED_EMAILS")) if e}
+
+
+def chat_enabled() -> bool:
+    """``GENEALOGY_CHAT``: on when unset, empty or ``true``, off when ``false`` (any case).
+    Any other value raises, so a typo never silently turns the chat off or on."""
+    raw = _env("GENEALOGY_CHAT").lower()
+    if raw in ("", "true"):
+        return True
+    if raw == "false":
+        return False
+    raise RuntimeError(f"GENEALOGY_CHAT is {_env('GENEALOGY_CHAT')!r}: set it to true or false, or leave it unset")
+
+
+def max_users() -> int | None:
+    """``GENEALOGY_MAX_USERS``: the user cap, or None (unset or empty) for the allowlist.
+    Raises unless it is a positive integer, so a typo never falls back to the allowlist."""
+    raw = _env("GENEALOGY_MAX_USERS")
+    if not raw:
+        return None
+    # ASCII digits only: int() would also take "1_000", "+5" and non-ASCII digits.
+    value = int(raw) if re.fullmatch(r"[0-9]+", raw) else 0
+    if value < 1:
+        raise RuntimeError(f"GENEALOGY_MAX_USERS is {raw!r}: set it to a positive integer, or leave it unset")
+    return value
 
 
 def familysearch_enabled() -> bool:
@@ -198,7 +251,12 @@ def preflight() -> None:
       empty SESSION_SECRET forges every session and the OAuth state; a default or empty
       FS_TOKEN_ENC_KEY encrypts every grant under a public string. Only http with
       FamilySearch off (compose's dev-login tier) may start on the defaults.
+    - ``GENEALOGY_CHAT`` other than true/false, or ``GENEALOGY_MAX_USERS`` other than a
+      positive integer, at any scheme.
     """
+    base_path()
+    chat_enabled()
+    max_users()
     fs_on = familysearch_enabled()
     if fs_on:
         client_id()
@@ -241,7 +299,7 @@ def read_session_cookie(token: str | None) -> dict[str, Any] | None:
 
 
 def cookie_kwargs() -> dict[str, Any]:
-    return {"httponly": True, "samesite": "lax", "secure": is_https(), "path": "/"}
+    return {"httponly": True, "samesite": "lax", "secure": is_https(), "path": cookie_path()}
 
 
 def oauth_state_cookie(verifier: str, state: str, next_route: str | None) -> str:
@@ -263,10 +321,11 @@ def read_oauth_state_cookie(token: str | None) -> dict[str, Any] | None:
 
 def redirect_target(next_route: Any) -> str:
     """Where the callback lands the browser. ``next`` is re-validated on the way out: it
-    came back on a cookie the browser holds."""
-    target = web_origin()
+    came back on a cookie the browser holds. Always ``<origin>/``: under a prefix the SPA's
+    relative URLs need the trailing slash."""
+    target = f"{web_origin()}/"
     if isinstance(next_route, str) and SAFE_NEXT_RE.match(next_route):
-        return f"{target}/{next_route}"
+        return f"{target}{next_route}"
     return target
 
 
@@ -309,7 +368,8 @@ def pkce() -> tuple[str, str]:
 def redirect_uri() -> str:
     """The registered redirect is a TOP-LEVEL /callback on the public URL. The dev key's
     only registration is http://127.0.0.1:1837/callback, which is why the compose
-    override publishes this tier on 1837."""
+    override publishes this tier on 1837. Under a prefix PUBLIC_URL carries it, so the
+    registration is ``<prefix>/callback``."""
     return f"{public_url()}/callback"
 
 

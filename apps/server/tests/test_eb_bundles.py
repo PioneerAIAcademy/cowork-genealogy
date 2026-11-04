@@ -252,11 +252,13 @@ def good(tier: str) -> dict[str, tuple[bytes, int]]:
                 "web/app.py": (b"", f), "web/auth.py": (b"", f), "web/spa.py": (b"", f),
                 "web/feedback.py": (b"", f), "web/blobstore.py": (b"", f),
                 "enqueue.py": (b"", f), "grants.py": (b"", f), "turn_message.py": (b"", f),
-                "migrate.py": (b"", f),
+                "migrate.py": (b"", f), "pg_credentials.py": (b"", f),
                 "sql/001_schema.sql": (b"", f),
                 "config/familysearch.json": (b"{}", f),
                 "web-dist/index.html": (b"<html>", f),
-                "web-dist/assets/index-abc.js": (b"const s=new EventSource(u);", f)}
+                "web-dist/assets/index-abc.js": (b"const s=new EventSource(u);", f),
+                ".platform/nginx/conf.d/01-web-headers.conf": (b"large_client_header_buffers 4 32k;\n", f),
+                ".platform/nginx/conf.d/01-web-uploads.conf": (b"client_max_body_size 26m;\n", f)}
     if tier == "worker":
         return {**common,
                 "Procfile": (b"web: python proto/worker/worker.py\n", f),
@@ -268,6 +270,7 @@ def good(tier: str) -> dict[str, tuple[bytes, int]]:
                 "app/__init__.py": (b"", f), "app/agent/__init__.py": (b"", f), "app/agent/real_agent.py": (b"", f),
                 "proto/enqueue.py": (b"", f), "proto/grants.py": (b"", f),
                 "proto/turn_message.py": (b"", f), "proto/migrate.py": (b"", f),
+                "proto/pg_credentials.py": (b"", f),
                 "proto/sql/001_schema.sql": (b"", f),
                 "proto/worker/worker.py": (b"", f), "proto/worker/options.py": (b"", f),
                 "plugin/.claude-plugin/plugin.json": (b"{}", f), "plugin/hooks/hooks.json": (b"{}", f),
@@ -320,10 +323,15 @@ LEGITIMATE = {
         "node_modules/somepkg/README.md": b""}),
     "a dirty build stamp": ("tools", {"build/build-info.json": json.dumps(
         {"version": "0.1.0+2026-10-02.abc12345.dirty"}).encode()}),
-    "the web tier's nudge cap": ("web", {".ebextensions/01-web.config": _config(
-        {"PORT": "8000", "PGSSLROOTCERT": CA, "AUTONOMOUS_MAX_NUDGES": "60"})}),
     "the worker's slot users": ("worker", {".ebextensions/02-worker.config": _config(
         {"PORT": "8000", "PGSSLROOTCERT": CA, "WORKER_TURN_USERS": "genealogy-turn-0 genealogy-turn-1"})}),
+    "web built with the FS Python extras": ("web", {
+        "BUILD-INFO.json": json.dumps({"fs_extras": {"python": ["sas-client==1.2.3", "fs-dep==0.1"]}}).encode(),
+        "wheels/sas_client-1.2.3-py3-none-any.whl": b"x"}),
+    "tools built with the FS node client": ("tools", {
+        "BUILD-INFO.json": json.dumps({"fs_extras": {"node": {"name": "@fs/sas-client", "version": "4.3.0",
+                                                              "integrity": "sha512-x"}}}).encode(),
+        "node_modules/@fs/sas-client/package.json": b"{}"}),
 }
 
 
@@ -413,7 +421,26 @@ REJECTED = {
     "no predeploy hook": ("worker", lambda: _drop("worker", ".platform/hooks/predeploy/100_worker-layout.sh"),
                           "missing .platform/hooks/predeploy/"),
     "no migrate.py in web": ("web", lambda: _drop("web", "migrate.py"), "missing migrate.py"),
+    "no header-buffer file in web": ("web", lambda: _drop("web", ".platform/nginx/conf.d/01-web-headers.conf"),
+                                     "missing .platform/nginx/conf.d/01-web-headers.conf"),
+    "no upload-size file in web": ("web", lambda: _drop("web", ".platform/nginx/conf.d/01-web-uploads.conf"),
+                                   "missing .platform/nginx/conf.d/01-web-uploads.conf"),
     "no migrate.py in worker": ("worker", lambda: _drop("worker", "proto/migrate.py"), "missing proto/migrate.py"),
+    "no pg_credentials.py in web": ("web", lambda: _drop("web", "pg_credentials.py"), "missing pg_credentials.py"),
+    "no pg_credentials.py in worker": ("worker", lambda: _drop("worker", "proto/pg_credentials.py"),
+                                       "missing proto/pg_credentials.py"),
+    "FS extras recorded but no sas_client wheel": ("worker", lambda: _add("worker", **{
+        "BUILD-INFO.json": json.dumps({"fs_extras": {"python": ["sas-client==1.2.3"]}}).encode()}),
+        "holds no sas_client wheel"),
+    "FS extras that pin no sas-client": ("web", lambda: _add("web", **{
+        "BUILD-INFO.json": json.dumps({"fs_extras": {"python": []}}).encode(),
+        "wheels/sas_client-1.2.3-py3-none-any.whl": b"x"}), "pins no sas-client"),
+    "FS extras recorded but no node client": ("tools", lambda: _add("tools", **{
+        "BUILD-INFO.json": json.dumps({"fs_extras": {"node": {"version": "4.3.0"}}}).encode()}),
+        "node_modules/@fs/sas-client/package.json is missing"),
+    "FS extras naming no node package": ("tools", lambda: _add("tools", **{
+        "BUILD-INFO.json": json.dumps({"fs_extras": {}}).encode(),
+        "node_modules/@fs/sas-client/package.json": b"{}"}), "names no node package"),
     "the WebSocket SPA": ("web", lambda: _add("web", **{"web-dist/assets/index-abc.js": b"x=new WebSocket(u)"}),
                           "opens a WebSocket"),
     "a SPA with no SSE": ("web", lambda: _add("web", **{"web-dist/assets/index-abc.js": b"x=1"}),
@@ -443,6 +470,10 @@ REJECTED = {
     "the nudge cap in the worker template": ("worker", lambda: _add("worker", **{
         ".ebextensions/02-worker.config": _config({"PORT": "8000", "PGSSLROOTCERT": CA,
                                                    "AUTONOMOUS_MAX_NUDGES": "60"})}),
+        "sets AUTONOMOUS_MAX_NUDGES"),
+    "the nudge cap in the web template": ("web", lambda: _add("web", **{
+        ".ebextensions/01-web.config": _config({"PORT": "8000", "PGSSLROOTCERT": CA,
+                                                "AUTONOMOUS_MAX_NUDGES": "60"})}),
         "sets AUTONOMOUS_MAX_NUDGES"),
     "no slot users in the worker template": ("worker", lambda: _add("worker", **{
         ".ebextensions/02-worker.config": _config({"PORT": "8000", "PGSSLROOTCERT": CA,
@@ -487,6 +518,30 @@ def test_verifier_dry_runs_pip_once_per_arch_and_reports_a_failure(tmp_path, mon
         assert {"--dry-run", "--no-index", "--only-binary=:all:"} <= set(cmd)
         assert cmd[cmd.index("--find-links") + 1] == "wheels"
     assert got == ["offline pip dry-run fails for aarch64: ERROR: No matching distribution for foo"]
+
+
+@pytest.mark.parametrize("info, want", [
+    ({"arches": ["x86_64"]}, ["manylinux_2_34_x86_64"]),
+    ({"arches": ["aarch64"]}, ["manylinux_2_34_aarch64"]),
+    ({"arches": []}, ["manylinux_2_34_x86_64", "manylinux_2_34_aarch64"]),
+    ({"arches": ["riscv"]}, ["manylinux_2_34_x86_64", "manylinux_2_34_aarch64"]),
+    ({}, ["manylinux_2_34_x86_64", "manylinux_2_34_aarch64"]),
+])
+def test_verifier_dry_runs_the_arches_the_bundle_was_built_for(tmp_path, monkeypatch, info, want):
+    """An --arch x86_64 build has no aarch64 wheels, so a default verify must not ask for them."""
+    calls = []
+
+    def fake_run(cmd, **kw):
+        calls.append(cmd[cmd.index("--platform") + 1])
+        return subprocess.CompletedProcess(cmd, 0, "", "")
+
+    monkeypatch.setattr(verify.subprocess, "run", fake_run)
+    entries = {**good("worker"), "BUILD-INFO.json": (json.dumps(info).encode(), 0o644)}
+    assert verify.verify(zip_of(tmp_path, "worker", entries)) == []
+    assert calls == want
+    calls.clear()
+    assert verify.verify(zip_of(tmp_path, "worker", entries), arches=("aarch64",)) == []
+    assert calls == ["manylinux_2_34_aarch64"], "an explicit --arch still wins"
 
 
 def test_verifier_cli_exit_codes(tmp_path, capsys):
@@ -554,3 +609,125 @@ def test_make_eb_bundles_hands_the_builder_the_callers_path():
         before_uv = line.split("uv run", 1)[0]
         assert f'{build.CALLER_PATH_VAR}="$$PATH"' in before_uv, (
             f"eb-bundles must pass {build.CALLER_PATH_VAR}=\"$$PATH\" ahead of `uv run`: {line.strip()}")
+
+
+# ── the FS-only SAS clients (U29) ────────────────────────────────────────────────
+
+
+def _wheel(directory: Path, name: str, data: bytes) -> Path:
+    path = directory / name
+    path.write_bytes(data)
+    return path
+
+
+def test_append_hashed_pins_each_new_wheel_with_its_sha256(tmp_path):
+    req = tmp_path / "requirements.txt"
+    req.write_text("--no-index\n--find-links wheels\nfoo==1.0 \\\n    --hash=sha256:00\n", encoding="utf-8")
+    pure = _wheel(tmp_path, "sas_client-1.2.3-py3-none-any.whl", b"pure")
+    x86 = _wheel(tmp_path, "Fs.Dep-0.1-cp312-cp312-manylinux_2_17_x86_64.whl", b"x86")
+    arm = _wheel(tmp_path, "Fs.Dep-0.1-cp312-cp312-manylinux_2_17_aarch64.whl", b"arm")
+    assert build.append_hashed(req, [pure, x86, arm]) == ["fs-dep==0.1", "sas-client==1.2.3"]
+    text = req.read_text(encoding="utf-8")
+    assert text.startswith("--no-index\n--find-links wheels\nfoo==1.0")
+    hashes = {build.sha256(w) for w in (pure, x86, arm)}
+    assert set(re.findall(r"--hash=sha256:([0-9a-f]{64})", text)) == hashes
+    tail = text.split("--hash=sha256:00\n", 1)[1]
+    assert re.fullmatch(r"fs-dep==0\.1 \\\n    --hash=sha256:\w{64} \\\n    --hash=sha256:\w{64}\n"
+                        r"sas-client==1\.2\.3 \\\n    --hash=sha256:\w{64}\n", tail), tail
+
+
+def test_append_hashed_refuses_a_name_that_is_not_a_wheel(tmp_path):
+    req = tmp_path / "requirements.txt"
+    req.write_text("", encoding="utf-8")
+    with pytest.raises(build.BuildError, match="not a wheel"):
+        build.append_hashed(req, [_wheel(tmp_path, "sas_client-1.2.3.tar.gz", b"x")])
+
+
+def test_fs_requirement_lines_accepts_pins_and_refuses_the_rest():
+    base = "annotated-types==0.7.0 \\\n    --hash=sha256:00\npsycopg-binary==3.3.4 \\\n"
+    assert build.fs_requirement_lines("# FS only\nsas-client==1.2.3\nFs_Dep==0.1  # via sas-client\n", base) \
+        == ["sas-client==1.2.3", "Fs_Dep==0.1"]
+    for bad in ("", "# nothing\n", "sas-client>=1\n", "sas-client==1 --hash=sha256:00\n",
+                "--index-url https://example.invalid/simple\nsas-client==1\n", "sas-client\n"):
+        with pytest.raises(build.BuildError, match="one `name==version` per line"):
+            build.fs_requirement_lines(bad, base)
+    with pytest.raises(build.BuildError, match=r"disagrees with the base export: \['Psycopg_Binary==3.3.5 \(base 3.3.4\)'\]"):
+        build.fs_requirement_lines("sas-client==1\nPsycopg_Binary==3.3.5\n", base)
+
+
+def test_fs_requirement_lines_drops_what_the_tier_already_pins():
+    base = "boto3==1.43.106 \\\n    --hash=sha256:00\ncertifi==2026.5.20 \\\n"
+    fs = "sas-client==0.2.1.16\nboto3==1.43.106\nCertifi==2026.5.20\n"
+    assert build.fs_requirement_lines(fs, base) == ["sas-client==0.2.1.16"]
+    assert build.fs_requirement_lines(fs, "certifi==2026.5.20 \\\n") == ["sas-client==0.2.1.16", "boto3==1.43.106"]
+
+
+def test_the_committed_fs_requirements_fit_both_python_tiers():
+    fs = (REPO / "apps/server/proto/requirements-fs.txt").read_text(encoding="utf-8")
+    for tier in ("web", "worker"):
+        keep = build.fs_requirement_lines(fs, (REPO / layout.REQUIREMENTS[tier]).read_text(encoding="utf-8"))
+        assert keep[:2] == ["sas-client==0.2.1.16", "binding-register-client==0.1.1.14"], tier
+
+
+def test_python_tier_adds_the_fs_wheels_hashed_and_records_the_pins(tmp_path, monkeypatch):
+    calls = []
+
+    def fake_download(requirements, wheels, arches, extra=()):
+        calls.append((Path(requirements).name, extra))
+        if extra:
+            _wheel(wheels, "sas_client-1.2.3-py3-none-any.whl", b"sas")
+        else:
+            _wheel(wheels, "anyio-4.14.2-py3-none-any.whl", b"base")
+
+    monkeypatch.setattr(build, "download_wheels", fake_download)
+    fs_req = tmp_path / "requirements-fs.txt"
+    fs_req.write_text("sas-client==1.2.3\n", encoding="utf-8")
+    stage = tmp_path / "stage"
+    stage.mkdir()
+    out, pins = build.python_tier("worker", stage, ["x86_64", "aarch64"], fs_req)
+    assert calls == [("requirements.txt", ()), ("fs-requirements.txt", ("--no-deps",))]
+    assert pins == ["sas-client==1.2.3"]
+    dests = [d for d, _ in out]
+    assert "wheels/sas_client-1.2.3-py3-none-any.whl" in dests and "wheels/anyio-4.14.2-py3-none-any.whl" in dests
+    req = (stage / "requirements.txt").read_text(encoding="utf-8")
+    assert req.startswith(layout.REQUIREMENTS_HEADER)
+    assert req.endswith(f"sas-client==1.2.3 \\\n    --hash=sha256:{build.sha256(stage / 'wheels' / 'sas_client-1.2.3-py3-none-any.whl')}\n")
+
+    stage2 = tmp_path / "stage2"
+    stage2.mkdir()
+    calls.clear()
+    out, pins = build.python_tier("worker", stage2, ["x86_64"])
+    assert pins is None and calls == [("requirements.txt", ())]
+    assert "sas-client" not in (stage2 / "requirements.txt").read_text(encoding="utf-8")
+
+
+def test_node_package_record_leaves_out_the_registry(tmp_path):
+    nm = tmp_path / "node_modules"
+    nm.mkdir()
+    (nm / ".package-lock.json").write_text(json.dumps({"packages": {"node_modules/@fs/sas-client": {
+        "version": "4.3.0", "resolved": "https://registry.example.invalid/x.tgz", "integrity": "sha512-abc"}}}),
+        encoding="utf-8")
+    assert build.node_package_record(tmp_path, "@fs/sas-client") == \
+        {"name": "@fs/sas-client", "version": "4.3.0", "integrity": "sha512-abc"}
+    with pytest.raises(build.BuildError, match="no entry for @fs/other"):
+        build.node_package_record(tmp_path, "@fs/other")
+
+
+def test_build_main_passes_the_fs_flags_through(monkeypatch):
+    got = {}
+    monkeypatch.setattr(build, "build", lambda *a, **kw: got.update(args=a, kw=kw) or 0)
+    assert build.main(["--tiers", "worker", "--fs-python-requirements", "apps/server/proto/requirements-fs.txt",
+                       "--fs-node-sas-client", "@fs/sas-client@4.3.0"]) == 0
+    assert got["kw"] == {"fs_python_requirements": REPO / "apps/server/proto/requirements-fs.txt",
+                         "fs_node_sas_client": "@fs/sas-client@4.3.0"}
+    assert build.main(["--tiers", "worker"]) == 0
+    assert got["kw"] == {"fs_python_requirements": None, "fs_node_sas_client": None}
+
+
+def test_verify_mcpb_forbids_the_sas_client():
+    assert "forbid node_modules/@fs/sas-client" in (REPO / "scripts" / "verify-mcpb.sh").read_text(encoding="utf-8")
+
+
+def test_both_python_tiers_ship_pg_credentials_where_their_imports_look(files):
+    assert ("apps/server/proto/pg_credentials.py", "pg_credentials.py") in build.tier_sources("web", files)
+    assert ("apps/server/proto/pg_credentials.py", "proto/pg_credentials.py") in build.tier_sources("worker", files)

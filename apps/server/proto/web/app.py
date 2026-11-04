@@ -6,28 +6,32 @@ sees the model stream: the worker (D9-10) writes ``map_message`` output into
 turn's evidence reaches Postgres without a hop that dies with the worker.
 
 Routes are on the same paths ``apps/web`` already calls (``api.ts``), so the SPA is
-reused verbatim with ``VITE_SESSION_TRANSPORT=sse``:
+reused verbatim with ``VITE_SESSION_TRANSPORT=sse``. Every ``/api/sessions`` route exists only
+with the chat on (#3985, ``GENEALOGY_CHAT``):
 
   POST /api/sessions/{id}/messages {text}      mint turn_id, record it, enqueue it   -> 202
   GET  /api/sessions/{id}/events?after=N       one-shot poll read (JSON)
   GET  /api/sessions/{id}/events/stream        text/event-stream; Last-Event-ID resume
   GET/POST /api/sessions, GET/PATCH/DELETE /api/sessions/{id}, POST .../resume, GET .../state
+  GET  /api/projects                         the patron's projects
+  GET  /api/projects/{id}/state               viewer state; ETag revalidation
+  GET  /api/projects/{id}/sidecar/{log_id}     search-result body
+  GET  /api/projects/{id}/image?filename=      persisted source page scan
   GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout, GET /auth/familysearch/login,
-  GET  /callback   (patron sign-in, web/auth.py; every /api/sessions route needs the cookie)
-  GET  .../sidecar/{log_id} -> 404;  .../image, .../logs, .../files -> 501
+  GET  /callback   (patron sign-in, web/auth.py; every /api/sessions and /api/projects route needs the cookie)
+  GET  /api/sessions/{id}/sidecar/{log_id}     search-result body, or 404 when absent
+  GET  /api/sessions/{id}/image?filename=      persisted source page scan, or 404 when absent
+  GET  /api/sessions/{id}/logs -> 501; POST .../files stores a researcher upload
   POST /api/sessions/{id}/interrupt                Stop: raise the flag        -> 202
+  GET  /livez                                   200 {ok: true}, touching no store (#3985)
   GET  /api/feedback/context?sessionId=         the files and transcript size a report would carry
   POST /api/feedback {sessionId, ...}           bundle the project + transcript to S3 (U20,
                                                 web/feedback.py); stored, sent nowhere
 
-The turn message body is ``{turn_id, session_id, project_id, text, enqueued_at,
-max_nudges}``. The ``turn_id`` is a UUID minted here and travels IN THE BODY -- never the
-SQS MessageId, which the shim holds and the worker never sees. ``max_nudges`` (1a) is
-this tier's ``AUTONOMOUS_MAX_NUDGES``, stamped on every message and preferred by the
-worker over its own: the worker serves the browser and ``make proto-demo`` alike and
-cannot tell them apart. It is read from the ENVIRONMENT and never from the request --
-the cap is the operator's, so a ``MessageBody`` field would let a signed-in patron set
-their own nudge budget.
+The turn message body is ``{turn_id, session_id, project_id, text, enqueued_at}``. The
+``turn_id`` is a UUID minted here and travels IN THE BODY -- never the SQS MessageId,
+which the shim holds and the worker never sees. A body enqueued before the Stop veto was
+deleted may still carry ``max_nudges``; the worker ignores it.
 
 Row -> wire contract (the worker writes the rows; the SPA's chatEvents.ts reads the wire):
 
@@ -44,9 +48,12 @@ Only ``session_events`` frames carry ``id: <seq>``, so ``Last-Event-ID`` is alwa
 and the transient frames are never replayed -- the same split as TRANSIENT_KINDS in the
 hosted runner.
 
-Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
-queue URL, the shim's shape; required -- unset or empty refuses to start),
-POLL_S (1), SSE_PING_S (15), AUTONOMOUS_MAX_NUDGES (0 -- see ``max_nudges``),
+Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto) or PG_SAS_OBJECT (the SAS
+fchDatabase object to read instead, U29; both set refuses to start), QUEUE_URL (a full SQS
+queue URL, the shim's shape; required with the chat on -- unset or empty refuses to start),
+GENEALOGY_CHAT (unset or true; false serves no /api/sessions route and needs no queue),
+GENEALOGY_MAX_USERS (unset: the allowlist admits; a positive integer: the user cap does),
+POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
 AWS; one alone refuses to start) and GENEALOGY_SQS_REGION (else the QUEUE_URL host's
@@ -55,8 +62,8 @@ it with the proto/sql/*.sql this tier ships, running no DDL (U9) -- and syncs th
 allowlist, one inline attempt each under one ``STARTUP_BUDGET_S``; a failure is retried
 in the background and never stops the tier listening (U10). It logs
 ``queue: <url>; sqs credentials: <mode>; region <r>``. Until the allowlist has synced, a
-FamilySearch-configured tier answers 503 at both allowlist checks rather than read a
-table an earlier boot left. ``GET /api/health`` is readiness: 200 or 503, the same keys
+FamilySearch-configured tier admitting by allowlist (no ``GENEALOGY_MAX_USERS``) answers
+503 at both allowlist checks rather than read a table an earlier boot left. ``GET /api/health`` is readiness: 200 or 503, the same keys
 either way, plus ``checks`` (``postgres``, ``schema``, ``allowlist``) whose ``error`` is a
 label, never a message.
 
@@ -91,23 +98,26 @@ import secrets
 import sys
 import time
 import uuid
-from collections.abc import AsyncIterator, Awaitable, Callable, Mapping
+from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlparse
 
-from fastapi import Depends, FastAPI, HTTPException, Request, File, UploadFile
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, File, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field, ValidationError, field_validator
+from starlette.datastructures import MutableHeaders
+from starlette.routing import get_route_path
+from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 HERE = Path(__file__).resolve().parent
 PROTO_DIR = HERE.parent
 SQL_DIR = PROTO_DIR / "sql"
-# enqueue.py, grants.py and migrate.py are siblings of this package in the repo (proto/)
+# enqueue.py, grants.py, migrate.py and pg_credentials.py are siblings of this package in the repo (proto/)
 # and in the container (/app); make them importable from wherever uvicorn, the driver or
 # pytest started.
 if str(PROTO_DIR) not in sys.path:
@@ -117,6 +127,8 @@ import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
 import grants  # noqa: E402  (U3: grant custody, shared with the worker)
 import turn_message  # noqa: E402  (the queue body, shared with the worker)
 import migrate  # noqa: E402  (U9: the ledger and the verdict; this tier runs no DDL)
+import pg_credentials  # noqa: E402  (U29: the DSN from the environment or from SAS)
+from pg_credentials import PgCredentials  # noqa: E402
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 from web import blobstore  # noqa: E402  (U20: the S3 client, the engine's GENEALOGY_S3_* semantics)
 from web import feedback  # noqa: E402  (U20: the feedback bundle)
@@ -170,6 +182,9 @@ READY_SQL = (
 STARTUP_BUDGET_S = 5.0
 STARTUP_BACKOFF_FIRST_S = 1.0
 STARTUP_BACKOFF_MAX_S = 30.0
+# The edge's alias path cuts a stream silent for ~45 s (handoff F11), so the ping stays
+# well under it whatever SSE_PING_S says.
+SSE_PING_MAX_S = 15.0
 DEFAULT_TITLE = "New research session"
 DEFAULT_MODEL = "claude-sonnet-4-6"
 EVENTS_PAGE = 500
@@ -274,6 +289,8 @@ class User:
     email: str
     familysearch_id: str | None = None
     sessions_revoked_at: datetime | None = None
+    # 016: set by an operator to refuse the patron at sign-in and on every request.
+    blocked_at: datetime | None = None
 
 
 class ProjectNotOwned(Exception):
@@ -305,6 +322,29 @@ class IdentityMismatch(Exception):
     signed in as the existing user."""
 
 
+class AdmissionRefused(Exception):
+    """A new user's sign-in found ``GENEALOGY_MAX_USERS`` users already (blocked users
+    count). No row is written; the callback answers 403 before any grant."""
+
+
+# #3985: status, API detail and sign-in page text ({who}: the escaped account, {fail}: the
+# try-again line) for each reason ``_admission_refusal`` returns. upsert_user's own outcomes
+# (AdmissionRefused, AdmissionBusy) are answered at the callback's ``except``s.
+ADMISSION_REFUSALS: dict[str, tuple[int, str, str]] = {
+    "blocked": (403, "Account blocked", "{who} is blocked. Ask the administrator."),
+    "not_ready": (503, "Not ready", "Not ready: the allowlist has not loaded yet. {fail}"),
+    "not_allowed": (403, "Account removed from allowlist",
+                    "{who} is not on the allowlist. Ask the administrator to add this exact address, "
+                    "then sign in again."),
+}
+
+
+class AdmissionBusy(Exception):
+    """A capped sign-in could not take the user's row (a returning user) or the admission
+    lock (a new one) within ``grants.QUEUE_LOCK_TIMEOUT_S``; the callback answers 503 and
+    nothing is written."""
+
+
 @dataclass(frozen=True)
 class EventRow:
     seq: int
@@ -327,15 +367,22 @@ class Turn:
 
 
 class Store(Protocol):
+    async def list_projects(self, owner_id: str) -> list[dict[str, Any]]: ...
+    async def project_owner(self, project_id: str) -> str | None: ...
+    async def project_versions(self, project_id: str) -> tuple[str | None, dict[str, int]]: ...
     async def create_session(
         self, title: str, model: str, project_id: str | None, owner: str, may_create_or_claim: bool
     ) -> SessionRow: ...
     async def list_sessions(self, owner: str) -> list[SessionRow]: ...
     async def get_session(self, session_id: str) -> SessionRow | None: ...
-    async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None: ...
+    async def patch_session(
+        self, session_id: str, title: str | None, model: str | None, title_if_default: str | None = None
+    ) -> SessionRow | None: ...
     async def delete_session(self, session_id: str) -> bool: ...
     async def document_versions(self, project_id: str) -> dict[str, int]: ...
-    async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]: ...
+    async def documents(
+        self, project_id: str, names: tuple[str, ...] | None = None
+    ) -> dict[str, tuple[int, Any]]: ...
     async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict[str, Any] | None]: ...
     async def fail_turn(self, turn_id: str, reason: str) -> None: ...
     async def put_back_held(self, turn_id: str) -> bool: ...
@@ -346,7 +393,7 @@ class Store(Protocol):
     async def request_stop(self, session_id: str) -> bool: ...
     # 008: sign-in. store_grant takes CIPHERTEXT; web/auth.py encrypts before the call.
     async def get_user(self, user_id: str) -> User | None: ...
-    async def upsert_user(self, email: str, familysearch_id: str | None) -> User: ...
+    async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None) -> User: ...
     async def is_allowed(self, email: str) -> bool: ...
     async def sync_allowlist(self, emails: set[str]) -> None: ...
     async def revoke_sessions(self, user_id: str) -> None: ...
@@ -372,17 +419,29 @@ class Queue(Protocol):
 
 
 
-def _pg_dsn() -> str:
-    """The web tier's Postgres DSN, resolved as the lifespan resolves it (``PgStore``).
+def _pg_connect_sync(request: Request, **kw: Any):
+    """A synchronous connection from the lifespan's credentials (``app.state.pg_creds``),
+    the holder ``PgStore`` reads, so a rotation one path recovers from reaches the other.
 
-    The three blob routes below open their own SYNCHRONOUS connection -- `fetch_sidecar`,
-    `fetch_blob` and `put_blob` are sync, and `app.state.store` is an async pool -- so
-    they cannot borrow the store's. They referenced a bare `PG_DSN` that this module has
-    never defined, which made all three raise `NameError` and answer 500 on every call
-    that got past validation. Nothing caught it: the route tests stub the client, and
-    `make harness-lint`'s F821 pass covered `eval/harness` but not `apps/server`.
+    `_sidecar`, `_image` and the upload route below open their own SYNCHRONOUS connection --
+    `fetch_sidecar`, `fetch_blob` and `put_blob` are sync, and `app.state.store` is async --
+    so they cannot borrow the store's. They once referenced a bare `PG_DSN` this module
+    never defined, which made all three answer 500; the route tests stub the client.
     """
-    return os.environ.get("PG_DSN") or DEFAULT_PG_DSN
+    import psycopg
+
+    creds = request.app.state.pg_creds
+    if creds is None:  # no lifespan ran: a test's ASGITransport
+        creds = request.app.state.pg_creds = _pg_creds_from_env()
+    return pg_credentials.connect(creds, lambda d, **k: psycopg.connect(d, **k), **kw)
+
+
+def _pg_creds_from_env() -> PgCredentials:
+    """``PG_DSN`` or ``PG_SAS_OBJECT`` (U29); a configuration error raises ``RuntimeError``."""
+    creds = PgCredentials.from_env(dsn_var="PG_DSN", sas_var="PG_SAS_OBJECT", default=DEFAULT_PG_DSN)
+    if creds.problem:
+        raise RuntimeError(creds.problem)
+    return creds
 
 
 # ── rows ─────────────────────────────────────────────────────────────────────────
@@ -426,13 +485,31 @@ def resolve_cursor(last_event_id: str | None, after: str | None) -> int:
     return value
 
 
-def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str, nudges: int) -> dict[str, Any]:
+def queue_body(turn_id: str, session: SessionRow, text: str, enqueued_at: str) -> dict[str, Any]:
     """This tier's call into the shared builder (``proto/turn_message.py``), which the
     worker also enqueues through. Kept as a wrapper because every call site here holds
     a ``SessionRow`` and the worker holds none."""
     return turn_message.queue_body(
-        turn_id, session.session_id, session.project_id, text, enqueued_at, nudges
+        turn_id, session.session_id, session.project_id, text, enqueued_at
     )
+
+
+def project_label(research: Any) -> str | None:
+    """The research title, then objective; only non-empty strings count."""
+    if not isinstance(research, dict):
+        return None
+    project = research.get("project")
+    if not isinstance(project, dict):
+        return None
+    title = project.get("title")
+    if isinstance(title, str) and title:
+        return title
+    objective = project.get("objective")
+    return objective if isinstance(objective, str) and objective else None
+
+
+def _version_tag(research_version: int, tree_version: int) -> str:
+    return f"r{research_version}-t{tree_version}"
 
 
 def session_out(row: SessionRow) -> dict[str, Any]:
@@ -572,8 +649,9 @@ def ready_label(exc: BaseException) -> str:
 
 
 def redact(text: str) -> str:
-    """A message for the log, with any ``scheme://user:password@`` taken out."""
-    return _DSN_CREDENTIALS.sub("", text)
+    """A message for the log, with any ``scheme://user:password@`` and any password read
+    from SAS taken out."""
+    return pg_credentials.scrub(_DSN_CREDENTIALS.sub("", text))
 
 
 def check_out(state: str) -> dict[str, Any]:
@@ -591,12 +669,23 @@ class PgStore:
     Connections are ``autocommit=True``: a read is one round trip, and the writers that
     need several statements to land together say so with ``conn.transaction()``."""
 
-    def __init__(self, dsn: str) -> None:
-        self.dsn = dsn
+    def __init__(self, creds: PgCredentials | str) -> None:
+        self.creds = PgCredentials.fixed(creds) if isinstance(creds, str) else creds
         # U10: the one readiness probe in flight, shared by concurrent /api/health calls,
         # and the postgres check's last outcome for the transition log.
         self._ready_task: asyncio.Task | None = None
         self._ready_last: bool | None = None
+
+    @property
+    def dsn(self) -> str:
+        return self.creds.cached() or ""
+
+    async def _aconn(self, **kw: Any):
+        """Every connection this store opens: re-resolves once on an invalid password (U29)."""
+        import psycopg
+
+        return await pg_credentials.aconnect(
+            self.creds, lambda d, **k: psycopg.AsyncConnection.connect(d, **k), **kw)
 
     async def check_ready(self, timeout_s: float | None = None) -> dict[str, Any]:
         """``{ok, checks: {postgres}}`` from a connection of its own that must see every
@@ -631,10 +720,8 @@ class PgStore:
         return {"ok": check["ok"], "checks": {"postgres": check}}
 
     async def _probe_postgres(self) -> None:
-        import psycopg
-
-        conn = await psycopg.AsyncConnection.connect(
-            self.dsn, autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
+        conn = await self._aconn(
+            autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
             options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
         )
         try:
@@ -647,12 +734,10 @@ class PgStore:
             raise ReadyCheckError(f"schema: missing {names}", f"web tables or functions missing: {names}")
 
     async def _connect(self):
-        import psycopg
         from psycopg.rows import dict_row
 
         # U23: a connect to a vanished host fails in 10 s rather than the OS's TCP timeout.
-        return await psycopg.AsyncConnection.connect(self.dsn, row_factory=dict_row, autocommit=True,
-                                                     connect_timeout=10)
+        return await self._aconn(row_factory=dict_row, autocommit=True, connect_timeout=10)
 
     async def verify_schema(self, sql_dir: Path = SQL_DIR) -> list[str]:
         """The ledger ``migrate.py`` keeps against the files under ``sql_dir``: the shipped
@@ -662,11 +747,9 @@ class PgStore:
         migrated. A connection of its own with positional rows and a server-side
         statement_timeout, like ``_probe_postgres``, and awaited rather than run on a
         thread, so the shared startup budget can cancel it."""
-        import psycopg
-
         shipped = migrate.load(sql_dir)
-        conn = await psycopg.AsyncConnection.connect(
-            self.dsn, autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
+        conn = await self._aconn(
+            autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
             options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
         )
         try:
@@ -676,7 +759,7 @@ class PgStore:
             await conn.close()
         found = migrate.verdict(shipped, migrate.ledger_from_rows(exists, rows))
         if found.label is not None:
-            raise ReadyCheckError(found.label, f"{found.label}; run migrate.py with MIGRATE_PG_DSN")
+            raise ReadyCheckError(found.label, f"{found.label}; run migrate.py with MIGRATE_PG_DSN or MIGRATE_PG_SAS_OBJECT")
         return [m.name for m in shipped]
 
     @staticmethod
@@ -791,12 +874,16 @@ class PgStore:
             row = await cur.fetchone()
         return self._row(row) if row else None
 
-    async def patch_session(self, session_id: str, title: str | None, model: str | None) -> SessionRow | None:
+    async def patch_session(
+        self, session_id: str, title: str | None, model: str | None, title_if_default: str | None = None
+    ) -> SessionRow | None:
+        # title_if_default names the session only while it still has the default title, in this one
+        # UPDATE, so an agent's title never overwrites a name the user chose.
         async with await self._connect() as conn:
             cur = await conn.execute(
-                "UPDATE sessions SET title = COALESCE(%s, title), model = COALESCE(%s, model), "
-                "updated_at = now() WHERE session_id = %s RETURNING session_id",
-                (title, model, session_id),
+                "UPDATE sessions SET title = COALESCE(%s, CASE WHEN title = %s THEN %s END, title), "
+                "model = COALESCE(%s, model), updated_at = now() WHERE session_id = %s RETURNING session_id",
+                (title, DEFAULT_TITLE, title_if_default, model, session_id),
             )
             hit = await cur.fetchone()
         return await self.get_session(session_id) if hit else None
@@ -845,14 +932,52 @@ class PgStore:
                     )
         return True
 
+    async def list_projects(self, owner_id: str) -> list[dict[str, Any]]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "SELECT p.project_id AS id, r.doc->'project' AS project, "
+                "(SELECT max(d.updated_at) FROM documents d WHERE d.project_id = p.project_id) AS updated_at "
+                "FROM projects p LEFT JOIN documents r ON r.project_id = p.project_id AND r.name = 'research.json' "
+                "WHERE p.owner_id = %s ORDER BY updated_at DESC NULLS LAST, p.project_id",
+                (owner_id,),
+            )
+            return [{"id": r["id"], "label": project_label({"project": r["project"]}), "updated_at": r["updated_at"]}
+                    for r in await cur.fetchall()]
+
+    async def project_owner(self, project_id: str) -> str | None:
+        async with await self._connect() as conn:
+            cur = await conn.execute(grants.OWNER_SQL, (project_id,))
+            row = await cur.fetchone()
+            return row["owner_id"] if row else None
+
+    async def project_versions(self, project_id: str) -> tuple[str | None, dict[str, int]]:
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "SELECT p.owner_id, d.name, d.version FROM projects p "
+                "LEFT JOIN documents d ON d.project_id = p.project_id "
+                "AND d.name IN ('research.json', 'tree.gedcomx.json') WHERE p.project_id = %s",
+                (project_id,),
+            )
+            rows = await cur.fetchall()
+            if not rows:
+                return None, {}
+            return rows[0]["owner_id"], {r["name"]: r["version"] for r in rows if r["name"] is not None}
+
     async def document_versions(self, project_id: str) -> dict[str, int]:
         async with await self._connect() as conn:
             cur = await conn.execute("SELECT name, version FROM documents WHERE project_id = %s", (project_id,))
             return {r["name"]: r["version"] for r in await cur.fetchall()}
 
-    async def documents(self, project_id: str) -> dict[str, tuple[int, Any]]:
+    async def documents(
+        self, project_id: str, names: tuple[str, ...] | None = None
+    ) -> dict[str, tuple[int, Any]]:
+        query = "SELECT name, version, doc FROM documents WHERE project_id = %s"
+        params: tuple[Any, ...] = (project_id,)
+        if names is not None:
+            query += " AND name = ANY(%s)"
+            params += (list(names),)
         async with await self._connect() as conn:
-            cur = await conn.execute("SELECT name, version, doc FROM documents WHERE project_id = %s", (project_id,))
+            cur = await conn.execute(query, params)
             return {r["name"]: (r["version"], r["doc"]) for r in await cur.fetchall()}
 
     # -- U20 feedback reads ------------------------------------------------------------
@@ -936,7 +1061,7 @@ class PgStore:
 
         turn_id = str(uuid.uuid4())
         enqueued_at = datetime.now(tz=timezone.utc).isoformat()
-        body = queue_body(turn_id, session, text, enqueued_at, max_nudges())
+        body = queue_body(turn_id, session, text, enqueued_at)
         await conn.execute(
             "INSERT INTO turns (turn_id, session_id, project_id, message, enqueued_at, outcome) "
             "VALUES (%s, %s, %s, %s, %s::timestamptz, %s)",
@@ -1055,10 +1180,10 @@ class PgStore:
     def _user(r: dict[str, Any]) -> User:
         return User(
             id=r["id"], email=r["email"], familysearch_id=r["familysearch_id"],
-            sessions_revoked_at=r["sessions_revoked_at"],
+            sessions_revoked_at=r["sessions_revoked_at"], blocked_at=r["blocked_at"],
         )
 
-    _USER = "SELECT id, email, familysearch_id, sessions_revoked_at FROM users"
+    _USER = "SELECT id, email, familysearch_id, sessions_revoked_at, blocked_at FROM users"
 
     async def get_user(self, user_id: str) -> User | None:
         async with await self._connect() as conn:
@@ -1066,26 +1191,57 @@ class PgStore:
             row = await cur.fetchone()
         return self._user(row) if row else None
 
-    async def upsert_user(self, email: str, familysearch_id: str | None) -> User:
+    async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None) -> User:
         """The user for this email, created on first sign-in. The FamilySearch id is
         pinned on first sight; a later sign-in presenting a DIFFERENT one raises
-        IdentityMismatch (trust on first use)."""
+        IdentityMismatch (trust on first use). A blocked user is returned unpinned, so the
+        caller's refusal writes nothing.
+
+        With ``max_users`` (#3985, ``GENEALOGY_MAX_USERS``), an existing user is returned
+        whatever the count, without the admission lock; a new one is inserted only while
+        ``users`` holds fewer rows, else AdmissionRefused. Only a new email takes the
+        tier-wide admission lock, and counts and inserts under it, so two sign-ins at cap-1
+        cannot both pass; a wait past ``grants.QUEUE_LOCK_TIMEOUT_S`` on that lock or on the
+        user's row raises AdmissionBusy."""
+        from psycopg import errors
+
         email = email.strip().lower()
-        async with await self._connect() as conn:
-            async with conn.transaction():
-                await conn.execute(
-                    "INSERT INTO users (id, email) VALUES (%s, %s) ON CONFLICT (email) DO NOTHING",
-                    ("usr_" + uuid.uuid4().hex[:16], email),
-                )
-                cur = await conn.execute(self._USER + " WHERE email = %s FOR UPDATE", (email,))
-                user = self._user(await cur.fetchone())
-                if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
-                    raise IdentityMismatch(email)
-                if familysearch_id and not user.familysearch_id:
-                    await conn.execute(
-                        "UPDATE users SET familysearch_id = %s WHERE id = %s", (familysearch_id, user.id)
-                    )
-                    user = User(user.id, user.email, familysearch_id, user.sessions_revoked_at)
+        new_id = "usr_" + uuid.uuid4().hex[:16]
+        insert = "INSERT INTO users (id, email) VALUES (%s, %s) ON CONFLICT (email) DO NOTHING"
+        select = self._USER + " WHERE email = %s FOR UPDATE"
+        try:
+            async with await self._connect() as conn:
+                async with conn.transaction():
+                    row = None
+                    if max_users is None:
+                        await conn.execute(insert, (new_id, email))
+                    else:
+                        # One bounded wait for both locks below. An existing user, row-locked
+                        # so a concurrent delete waits; else the admission lock, the same read
+                        # again (a sign-in for this email may have inserted while this one
+                        # waited), the count, the insert.
+                        await conn.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(),))
+                        row = await (await conn.execute(select, (email,))).fetchone()
+                        if row is None:
+                            await conn.execute(grants.ADMISSION_LOCK_SQL, (grants.ADMISSION_LOCK_NS,))
+                            row = await (await conn.execute(select, (email,))).fetchone()
+                        if row is None:
+                            cur = await conn.execute("SELECT count(*) AS n FROM users")
+                            if (await cur.fetchone())["n"] >= max_users:
+                                raise AdmissionRefused(email)
+                            await conn.execute(insert, (new_id, email))
+                    if row is None:
+                        row = await (await conn.execute(select, (email,))).fetchone()
+                    user = self._user(row)
+                    if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
+                        raise IdentityMismatch(email)
+                    if familysearch_id and not user.familysearch_id and user.blocked_at is None:
+                        await conn.execute(
+                            "UPDATE users SET familysearch_id = %s WHERE id = %s", (familysearch_id, user.id)
+                        )
+                        user = replace(user, familysearch_id=familysearch_id)
+        except errors.LockNotAvailable as exc:
+            raise AdmissionBusy(email) from exc
         return user
 
     async def is_allowed(self, email: str) -> bool:
@@ -1152,12 +1308,9 @@ class PgStore:
     async def _grant_connect(self):
         """A connection of its own for one refresh: its session advisory locks die with it,
         and the server's keepalives end its backend if this host vanishes mid-refresh."""
-        import psycopg
         from psycopg.rows import dict_row
 
-        return await psycopg.AsyncConnection.connect(
-            self.dsn, row_factory=dict_row, autocommit=True, options=grants.GRANT_KEEPALIVE_OPTIONS,
-        )
+        return await self._aconn(row_factory=dict_row, autocommit=True, options=grants.GRANT_KEEPALIVE_OPTIONS)
 
     async def refresh_grant(
         self, user_id: str, *, refresh: Callable[[str], Awaitable[grants.RefreshResult]], refresh_age_s: float,
@@ -1270,6 +1423,7 @@ class CreateSessionBody(BaseModel):
 
 class PatchSessionBody(BaseModel):
     title: str | None = None
+    title_if_default: str | None = None
     model: str | None = None
 
 
@@ -1288,6 +1442,24 @@ class MessageBody(BaseModel):
 
 class DevLoginBody(BaseModel):
     email: str | None = None
+
+
+def _relative_self_location(location: str, host: str | None, base_path: str = "") -> str:
+    """U28: a redirect to this tier's own host, made root-relative and put under the prefix.
+    Behind the edge this tier sees http from its load balancer and a path with the prefix
+    stripped, so an absolute URL Starlette builds from the request (its trailing-slash 307)
+    leaves the prefix and drops https. A path already under the prefix (the callback's
+    PUBLIC_URL target) keeps it once. Any other host, or a host:port that differs from the
+    request's, is left alone."""
+    if not host:
+        return location
+    parts = urlparse(location)
+    if parts.scheme not in ("http", "https") or parts.netloc.lower() != host.lower():
+        return location
+    path = parts.path or "/"
+    if base_path and path != base_path and not path.startswith(f"{base_path}/"):
+        path = f"{base_path}{path}"
+    return path + (f"?{parts.query}" if parts.query else "")
 
 
 def _env_float(name: str, default: float) -> float:
@@ -1311,48 +1483,6 @@ def _env_float(name: str, default: float) -> float:
         log.warning("%s=%r is not a number; using %s", name, raw, default)
         return default
     return value if value > 0 else default
-
-
-# 0 under step mode (decision 25): a turn is one step and ends at its boundary on
-# purpose, so there is nothing for a Stop veto to re-open. The earlier 60 was sized
-# on step count per run to clear a p99 under a harness that FORBADE yielding; that
-# regime is gone, and the test that re-derived the p99 from the corpus went with it.
-DEFAULT_MAX_NUDGES = 0
-
-
-def max_nudges(env: Mapping[str, str] | None = None) -> int:
-    """``AUTONOMOUS_MAX_NUDGES`` for the turns this tier enqueues (1a).
-
-    Read from the tier's OWN environment and stamped on the queue body -- never taken
-    from the request. The cap is the operator's, so a field on ``MessageBody`` would let a
-    signed-in patron set their own nudge budget, and the worker cannot tell the browser from
-    ``make proto-demo``: there is no browser path it can see. Each recipe recreates this
-    container with its own export instead.
-
-    **The default is now 0, and the reason inverted** (step mode, decision 25,
-    2026-10-21). This paragraph used to say "not 0", because a tier that enqueued 0 would
-    ship "the stop-every-step behaviour the plan exists to remove". Under step mode
-    stopping at each step IS the behaviour: every turn runs one step, reports it and ends
-    with "Continue with X?". A nudge past that re-opens a turn that ended on purpose.
-
-    A malformed or unset value still takes the default, and that default is still the
-    operator's to change -- but a positive cap no longer restores the old continuous
-    behaviour, because the step boundary is enforced independently of it. A turn under a
-    positive cap is vetoed for ending at its boundary, reaches for the next step, is
-    denied by the gate, and halts. Export a positive cap only to exercise that path."""
-    raw = (os.environ if env is None else env).get("AUTONOMOUS_MAX_NUDGES")
-    text = (raw or "").strip()
-    if not text:
-        return DEFAULT_MAX_NUDGES
-    try:
-        n = int(text)
-    except ValueError:
-        log.warning("AUTONOMOUS_MAX_NUDGES=%r is not an integer; using %d", raw, DEFAULT_MAX_NUDGES)
-        return DEFAULT_MAX_NUDGES
-    if n < 0:
-        log.warning("AUTONOMOUS_MAX_NUDGES=%d is negative; using 0 (the Stop hook off)", n)
-        return 0
-    return n
 
 
 # ── startup (U10) ────────────────────────────────────────────────────────────────
@@ -1447,8 +1577,9 @@ def create_app(
     stream_max_polls: int | None = None,
     blobs: Any = None,
 ) -> FastAPI:
-    """Factory. With no arguments the lifespan builds PgStore(PG_DSN) + SqsQueue(QUEUE_URL)
-    from env, refusing to start without a QUEUE_URL; tests pass fakes and shrink the timings.
+    """Factory. With no arguments the lifespan builds PgStore(PG_DSN or PG_SAS_OBJECT) + SqsQueue(QUEUE_URL)
+    from env, refusing to start without a QUEUE_URL while the chat is on (#3985,
+    ``GENEALOGY_CHAT``, read once here); tests pass fakes and shrink the timings.
     ``blobs`` (U20) is the feedback bucket (``blobstore.S3Blobs``); None with no store
     passed means the lifespan builds it from GENEALOGY_S3_*."""
 
@@ -1456,8 +1587,9 @@ def create_app(
     async def lifespan(app: FastAPI):
         auth.preflight()  # before anything binds: a misconfigured tier must not come up
         # U7: a half SQS pair refuses here, before a startup step or its background retry
-        # exists, so the refusal leaves nothing running.
-        if app.state.queue is None:
+        # exists, so the refusal leaves nothing running. #3985: with the chat off there is no
+        # queue to need, and app.state.queue stays None.
+        if app.state.chat and app.state.queue is None:
             # U11: no queue means a turn is recorded and nothing ever runs it.
             queue_url = (os.environ.get("QUEUE_URL") or "").strip()
             if not queue_url:
@@ -1481,9 +1613,18 @@ def create_app(
             log.info("%s", blobstore.describe(os.environ))
         # U10 D8: the store goes on app.state before either step, so every route and
         # /api/health see it while Postgres is down; neither step can stop the tier listening.
+        # U29: SAS unreachable, or slower than STARTUP_BUDGET_S, is an outage (the tier
+        # listens, readiness reports it); a configuration error refuses here.
+        creds = _pg_creds_from_env()
+        try:
+            await asyncio.to_thread(creds.check_at_start, STARTUP_BUDGET_S)
+        except pg_credentials.PgCredentialsError as exc:
+            raise RuntimeError(str(exc)) from None
+        app.state.pg_creds = getattr(app.state.store, "creds", None) or creds
+        log.info("postgres: pg_credentials=%s", app.state.pg_creds.description)
         steps: dict[str, Callable[[], Awaitable[Any]]] = {}
         if app.state.store is None:
-            app.state.store = PgStore(os.environ.get("PG_DSN") or DEFAULT_PG_DSN)
+            app.state.store = PgStore(creds)
             steps["schema"] = app.state.store.verify_schema
         store = app.state.store
         if hasattr(store, "sync_allowlist"):
@@ -1505,8 +1646,9 @@ def create_app(
         failing = {name: step for name, step in steps.items() if startup[name] != "ok"}
         retry = asyncio.create_task(retry_startup(startup, failing)) if failing else None
         # U3: only a store that can refresh (PgStore) gets the loop; a test's FakeStore never.
+        # #3985: nor a chat-off tier, which runs no turn a grant could serve.
         refresher = None
-        if hasattr(store, "refresh_grant"):
+        if app.state.chat and hasattr(store, "refresh_grant"):
             interval = grants.env_seconds(os.environ, "FS_GRANT_REFRESH_INTERVAL_S", grants.DEFAULT_REFRESH_INTERVAL_S)
             refresher = asyncio.create_task(grant_refresh_loop(
                 store, refresh=auth.refresh_tokens,
@@ -1526,15 +1668,106 @@ def create_app(
     # public host, and nothing in the repo reads them.
     app = FastAPI(title="Genealogy search-agent prototype - web tier", lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
+    # #3985: read once, so the routes and the lifespan cannot disagree; a bad value refuses here.
+    app.state.chat = auth.chat_enabled()
     app.state.store = store
-    app.state.queue = queue
+    # #3985: a chat-off tier has no queue, even when a caller passes one.
+    app.state.queue = queue if app.state.chat else None
     app.state.blobs = blobs
+    app.state.pg_creds = getattr(store, "creds", None)
     # U10: what the lifespan's startup steps reached (`ok`, `pending` or a label). None
     # when no lifespan ran (a test's ASGITransport), which leaves the allowlist ungated.
     app.state.startup = None
     app.state.poll_s = poll_s if poll_s is not None else _env_float("POLL_S", 1.0)
-    app.state.ping_s = ping_s if ping_s is not None else _env_float("SSE_PING_S", 15.0)
+    if ping_s is None:
+        ping_s = _env_float("SSE_PING_S", SSE_PING_MAX_S)
+        if ping_s > SSE_PING_MAX_S:
+            log.warning("SSE_PING_S=%s is above the %ss cap; using %s", ping_s, SSE_PING_MAX_S, SSE_PING_MAX_S)
+    app.state.ping_s = min(ping_s, SSE_PING_MAX_S)
+    # U28: PUBLIC_URL's path, the prefix the edge strips. Raises on a bad PUBLIC_URL, so a
+    # tier that would scope its cookies wrongly never constructs.
+    app.state.base_path = auth.base_path()
+    prefix_mismatch_logged = False
     app.state.stream_max_polls = stream_max_polls
+
+    class ProjectCacheHeaders:
+        def __init__(self, app: ASGIApp) -> None:
+            self.app = app
+
+        async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+            if scope["type"] != "http":
+                await self.app(scope, receive, send)
+                return
+            path = get_route_path(scope)
+            if not (path == "/api/projects" or path.startswith("/api/projects/")):
+                await self.app(scope, receive, send)
+                return
+
+            async def send_headers(message: Message) -> None:
+                if message["type"] == "http.response.start":
+                    headers = MutableHeaders(scope=message)
+                    headers["Cache-Control"] = "private, no-store"
+                    vary = []
+                    for line in headers.getlist("Vary"):
+                        for value in line.split(","):
+                            value = value.strip()
+                            if value and (value.lower() != "cookie" or not any(v.lower() == "cookie" for v in vary)):
+                                vary.append(value)
+                    if not any(value.lower() == "cookie" for value in vary):
+                        vary.append("Cookie")
+                    headers["Vary"] = ", ".join(vary)
+                await send(message)
+
+            await self.app(scope, receive, send_headers)
+
+    app.add_middleware(ProjectCacheHeaders)
+
+    class PrefixMismatchWarning:
+        """One warning per process, the first time the edge's ``X-Orig-Base`` disagrees with
+        PUBLIC_URL's path: a PUBLIC_URL missing its prefix scopes the session cookie to the
+        whole shared host. The header only warns; it is forgeable off the edge."""
+
+        def __init__(self, app: ASGIApp) -> None:
+            self.app = app
+
+        async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+            nonlocal prefix_mismatch_logged
+            if scope["type"] in ("http", "websocket") and not prefix_mismatch_logged:
+                for name, value in scope.get("headers") or ():
+                    if name == b"x-orig-base":
+                        seen = value.decode("latin-1").strip().rstrip("/")
+                        if seen != app.state.base_path:
+                            prefix_mismatch_logged = True
+                            log.warning("ev=prefix_mismatch x_orig_base=%r base_path=%r",
+                                        seen[:200], app.state.base_path)
+                        break
+            await self.app(scope, receive, send)
+
+    app.add_middleware(PrefixMismatchWarning)
+
+    class RelativeSelfRedirects:
+        """U28: see ``_relative_self_location``."""
+
+        def __init__(self, app: ASGIApp) -> None:
+            self.app = app
+
+        async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+            if scope["type"] != "http":
+                await self.app(scope, receive, send)
+                return
+            host = next((v.decode("latin-1") for k, v in scope.get("headers") or () if k == b"host"), None)
+
+            async def send_relative(message: Message) -> None:
+                if message["type"] == "http.response.start" and 300 <= message["status"] < 400:
+                    headers = MutableHeaders(scope=message)
+                    location = headers.get("location")
+                    if location is not None:
+                        headers["location"] = _relative_self_location(location, host, app.state.base_path)
+                await send(message)
+
+            await self.app(scope, receive, send_relative)
+
+    app.add_middleware(RelativeSelfRedirects)
 
     def _store(request: Request) -> Store:
         return request.app.state.store
@@ -1545,8 +1778,25 @@ def create_app(
         startup = request.app.state.startup
         return startup is None or startup.get("allowlist", "ok") == "ok"
 
+    async def _admission_refusal(request: Request, email: str, user: User | None) -> str | None:
+        """The one admission check (#3985), for ``current_user`` and ``/callback``: the
+        ``ADMISSION_REFUSALS`` reason to refuse with, or None. A blocked user is refused always, FamilySearch
+        configured or not. Otherwise, with FamilySearch configured and no
+        ``GENEALOGY_MAX_USERS``, the allowlist decides (fail-closed until it has loaded); with
+        a cap, nothing here: an existing user is admitted, and a new one only through
+        ``upsert_user(max_users=...)``. ``user`` is None before the callback's upsert, so the
+        allowlist refuses a stranger before any row is written."""
+        if user is not None and user.blocked_at is not None:
+            return "blocked"
+        if auth.familysearch_configured() and auth.max_users() is None:
+            if not _allowlist_ready(request):
+                return "not_ready"
+            if not await _store(request).is_allowed(email):
+                return "not_allowed"
+        return None
+
     async def current_user(request: Request) -> User:
-        """The signed-in patron, or 401/403. On every /api/sessions route."""
+        """The signed-in patron, or 401/403. On every /api/sessions and /api/projects route."""
         data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
         if data is None:
             raise HTTPException(status_code=401, detail="Not signed in")
@@ -1556,11 +1806,9 @@ def create_app(
             raise HTTPException(status_code=401, detail="Unknown user")
         if auth.revoked(data.get("iat"), user.sessions_revoked_at):
             raise HTTPException(status_code=401, detail="Session revoked")
-        if auth.familysearch_configured():
-            if not _allowlist_ready(request):
-                raise HTTPException(status_code=503, detail="Not ready")
-            if not await store.is_allowed(user.email):
-                raise HTTPException(status_code=403, detail="Account removed from allowlist")
+        if (reason := await _admission_refusal(request, user.email, user)) is not None:
+            status, detail, _page = ADMISSION_REFUSALS[reason]
+            raise HTTPException(status_code=status, detail=detail)
         return user
 
     async def _session(request: Request, session_id: str, user: User) -> SessionRow:
@@ -1572,7 +1820,21 @@ def create_app(
             raise HTTPException(status_code=404, detail="Session not found")
         return row
 
+    def _check_project_owner(owner: str | None, user: User) -> None:
+        """Missing, foreign and NULL-owner projects all answer the same 404."""
+        if owner is None or owner != user.id:
+            raise HTTPException(status_code=404, detail="Project not found")
+
+    async def _project(request: Request, project_id: str, user: User) -> None:
+        _check_project_owner(await _store(request).project_owner(project_id), user)
+
     # -- health ---------------------------------------------------------------------
+
+    @app.get("/livez")
+    async def livez() -> dict:
+        """Liveness (#3985): the process answers. Touches no store and no startup step, so a
+        Postgres outage never cycles an instance; in both chat modes."""
+        return {"ok": True}
 
     @app.get("/api/health")
     async def health(request: Request) -> JSONResponse:
@@ -1584,9 +1846,11 @@ def create_app(
         body: dict[str, Any] = {
             "ok": True,
             "tier": "proto-web",
-            "queue": type(state.queue).__name__,
+            # #3985: null with the chat off, never "NoneType".
+            "queue": None if state.queue is None else type(state.queue).__name__,
             "poll_s": state.poll_s,
             "ping_s": state.ping_s,
+            "base_path": state.base_path,
         }
         checks: dict[str, Any] = {}
         try:
@@ -1632,7 +1896,7 @@ def create_app(
         data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
         if data is not None:
             await _store(request).revoke_sessions(data["uid"])
-        response.delete_cookie(auth.COOKIE_NAME, path="/", samesite="lax", secure=auth.is_https())
+        response.delete_cookie(auth.COOKIE_NAME, path=auth.cookie_path(), samesite="lax", secure=auth.is_https())
         return {"ok": True}
 
     @app.get("/auth/familysearch/login")
@@ -1656,8 +1920,9 @@ def create_app(
         """The registered FamilySearch redirect: a TOP-LEVEL /callback (auth.redirect_uri).
 
         Order matters, and each refusal writes nothing: state, code exchange, identity,
-        allowlist, then the user (refused if the email is pinned to another FamilySearch
-        account), and only then the grant -- encrypted here, so the store sees ciphertext.
+        allowlist (none under ``GENEALOGY_MAX_USERS``), then the user (refused if the email is
+        pinned to another FamilySearch account, if it is new and the cap is reached, or if it
+        is blocked), and only then the grant -- encrypted here, so the store sees ciphertext.
         The write takes the patron's grant write lock (``PgStore.store_grant``), so it never
         interleaves with a refresh; while a refresher holds the lock past
         ``grants.WRITE_LOCK_TIMEOUT_S`` it answers 503 and the patron signs in again. Every
@@ -1682,23 +1947,32 @@ def create_app(
                 status_code=403,
             )
         store = _store(request)
-        if not _allowlist_ready(request):
-            return HTMLResponse(f"Not ready: the allowlist has not loaded yet. {fail}", status_code=503)
-        if not await store.is_allowed(email):
-            return HTMLResponse(
-                f"The FamilySearch account <strong>{html.escape(email)}</strong> is not on the allowlist. "
-                "Ask the administrator to add this exact address, then sign in again.",
-                status_code=403,
-            )
+
+        def refused(reason: str) -> HTMLResponse:
+            status, _detail, page = ADMISSION_REFUSALS[reason]
+            who = f"The FamilySearch account <strong>{html.escape(email)}</strong>"
+            return HTMLResponse(page.format(who=who, fail=fail), status_code=status)
+
+        if (reason := await _admission_refusal(request, email, None)) is not None:
+            return refused(reason)
         fs_id = identity.get("id")
         try:
-            user = await store.upsert_user(email, str(fs_id) if fs_id else None)
+            user = await store.upsert_user(email, str(fs_id) if fs_id else None, max_users=auth.max_users())
         except IdentityMismatch:
             return HTMLResponse(
                 f"<strong>{html.escape(email)}</strong> is already linked to a different FamilySearch "
                 "account. Sign in with that account, or ask the administrator.",
                 status_code=403,
             )
+        except AdmissionRefused:
+            return HTMLResponse(
+                "This app has reached its user limit, so a new account cannot sign in. Ask the administrator.",
+                status_code=403,
+            )
+        except AdmissionBusy:
+            return HTMLResponse(f"Sign-in is busy; try again. {fail}", status_code=503)
+        if (reason := await _admission_refusal(request, email, user)) is not None:
+            return refused(reason)
         refresh = token_json.get("refresh_token")
         try:
             await store.store_grant(
@@ -1713,16 +1987,69 @@ def create_app(
         resp.set_cookie(
             auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.COOKIE_MAX_AGE, **auth.cookie_kwargs()
         )
-        resp.delete_cookie(auth.FS_OAUTH_COOKIE, path="/")
+        resp.delete_cookie(auth.FS_OAUTH_COOKIE, path=auth.cookie_path())
         return resp
 
-    # -- sessions -----------------------------------------------------------------
+    # -- projects -----------------------------------------------------------------
 
-    @app.get("/api/sessions")
+    @app.get("/api/projects")
+    async def list_projects(request: Request, user: User = Depends(current_user)) -> list[dict[str, Any]]:
+        """[{id: str, label: str | None, updated_at: ISO-8601 str | None}]."""
+        return await _store(request).list_projects(user.id)
+
+    @app.get("/api/projects/{project_id}/state")
+    async def project_state(project_id: str, request: Request, user: User = Depends(current_user)) -> Response:
+        """{label, research, gedcomx, sidecars: [], version: rN-tN}, or an empty 304; both with ETag."""
+        store = _store(request)
+        owner, versions = await store.project_versions(project_id)
+        _check_project_owner(owner, user)
+        tag = _version_tag(versions.get("research.json", 0), versions.get("tree.gedcomx.json", 0))
+        etag = f'"{tag}"'
+        condition = ",".join(request.headers.getlist("if-none-match"))
+        matches = [value.strip().removeprefix("W/") for value in condition.split(",")]
+        if etag in matches or "*" in matches:
+            return Response(status_code=304, headers={"ETag": etag})
+        docs = await store.documents(project_id, ("research.json", "tree.gedcomx.json"))
+        rv, research = docs.get("research.json", (0, None))
+        tv, gedcomx = docs.get("tree.gedcomx.json", (0, None))
+        tag = _version_tag(rv, tv)
+        etag = f'"{tag}"'
+        return JSONResponse({
+            "label": project_label(research),
+            "research": research,
+            "gedcomx": gedcomx,
+            "sidecars": [],
+            "version": tag,
+        }, headers={"ETag": etag})
+
+    @app.get("/api/projects/{project_id}/sidecar/{log_id}")
+    async def project_sidecar(
+        project_id: str, log_id: str, request: Request, user: User = Depends(current_user)
+    ) -> dict:
+        """{raw: str, mtime: float} for a search-result sidecar."""
+        await _project(request, project_id, user)
+        return await _sidecar(request, project_id, log_id)
+
+    @app.get("/api/projects/{project_id}/image")
+    async def project_image(
+        project_id: str, request: Request, filename: str | None = None,
+        user: User = Depends(current_user),
+    ) -> Response:
+        """The source page scan's bytes, with Content-Type: image/jpeg."""
+        await _project(request, project_id, user)
+        return await _image(request, project_id, filename)
+
+    # -- sessions -----------------------------------------------------------------
+    # #3985: with the chat on these register on the app, as before; with it off, on a router
+    # nothing includes, so a chat-off tier serves no /api/sessions route. (An included router
+    # stays one lazy entry in app.routes on this FastAPI, which the route sweeps cannot see.)
+    sessions = app if app.state.chat else APIRouter()
+
+    @sessions.get("/api/sessions")
     async def list_sessions(request: Request, user: User = Depends(current_user)) -> list[dict]:
         return [session_out(r) for r in await _store(request).list_sessions(user.id)]
 
-    @app.post("/api/sessions")
+    @sessions.post("/api/sessions")
     async def create_session(body: CreateSessionBody, request: Request, user: User = Depends(current_user)) -> dict:
         try:
             row = await _store(request).create_session(
@@ -1733,7 +2060,7 @@ def create_app(
             raise HTTPException(status_code=404, detail="Project not found") from exc
         return session_out(row)
 
-    @app.post("/api/sessions/{session_id}/continue")
+    @sessions.post("/api/sessions/{session_id}/continue")
     async def continue_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         """U19: a new session on a retired session's project, so its research goes on."""
         row = await _session(request, session_id, user)
@@ -1745,27 +2072,27 @@ def create_app(
             raise HTTPException(status_code=404, detail="Project not found") from exc
         return session_out(new)
 
-    @app.get("/api/sessions/{session_id}")
+    @sessions.get("/api/sessions/{session_id}")
     async def get_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         return session_out(await _session(request, session_id, user))
 
-    @app.patch("/api/sessions/{session_id}")
+    @sessions.patch("/api/sessions/{session_id}")
     async def patch_session(
         session_id: str, body: PatchSessionBody, request: Request, user: User = Depends(current_user)
     ) -> dict:
         # Check, then act: an existing project's owner only ever moves from NULL to a
         # user, and a NULL owner has already failed the check.
         await _session(request, session_id, user)
-        row = await _store(request).patch_session(session_id, body.title, body.model)
+        row = await _store(request).patch_session(session_id, body.title, body.model, body.title_if_default)
         if row is None:
             raise HTTPException(status_code=404, detail="Session not found")
         return session_out(row)
 
-    @app.post("/api/sessions/{session_id}/resume")
+    @sessions.post("/api/sessions/{session_id}/resume")
     async def resume_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         return session_out(await _session(request, session_id, user))  # nothing to resume: no sandbox
 
-    @app.delete("/api/sessions/{session_id}")
+    @sessions.delete("/api/sessions/{session_id}")
     async def delete_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         await _session(request, session_id, user)
         try:
@@ -1779,7 +2106,7 @@ def create_app(
             raise HTTPException(status_code=404, detail="Session not found")
         return {"ok": True}
 
-    @app.get("/api/sessions/{session_id}/state")
+    @sessions.get("/api/sessions/{session_id}/state")
     async def session_state(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         row = await _session(request, session_id, user)
         docs = await _store(request).documents(row.project_id)
@@ -1790,11 +2117,14 @@ def create_app(
             "sidecars": [],
         }
 
-    @app.get("/api/sessions/{session_id}/sidecar/{log_id}")
+    @sessions.get("/api/sessions/{session_id}/sidecar/{log_id}")
     async def session_sidecar(
         session_id: str, log_id: str, request: Request, user: User = Depends(current_user)
     ) -> dict:
         row = await _session(request, session_id, user)
+        return await _sidecar(request, row.project_id, log_id)
+
+    async def _sidecar(request: Request, project_id: str, log_id: str) -> dict:
         try:
             sidecar_key(log_id)
         except ValueError:
@@ -1810,15 +2140,13 @@ def create_app(
         if blobs is None:
             # 404, not 503: a scan reads as ABSENT rather than unimplemented.
             raise HTTPException(status_code=404, detail="no blob store configured")
-        import psycopg
-
         # Off the event loop: psycopg.connect and the S3 GET inside fetch_sidecar
         # are both blocking, and this tier runs ONE uvicorn worker (eb-web/Procfile),
         # so a slow round trip freezes every live SSE stream. The feedback route
         # below already does this; these three did not.
         def _read() -> object:
-            with psycopg.connect(_pg_dsn()) as conn:
-                return fetch_sidecar(conn, blobs, row.project_id, log_id)
+            with _pg_connect_sync(request, connect_timeout=10) as conn:
+                return fetch_sidecar(conn, blobs, project_id, log_id)
 
         blob = await asyncio.to_thread(_read)
         payload = sidecar_payload(blob)
@@ -1833,12 +2161,12 @@ def create_app(
         "logs": "There are no sandbox logs on this backend; read the worker's stdout",
     }
 
-    @app.get("/api/sessions/{session_id}/logs")
+    @sessions.get("/api/sessions/{session_id}/logs")
     async def not_in_prototype_get(session_id: str, request: Request, user: User = Depends(current_user)) -> None:
         await _session(request, session_id, user)
         raise HTTPException(status_code=501, detail=_NOT_IN_PROTOTYPE[request.url.path.rsplit("/", 1)[-1]])
 
-    @app.get("/api/sessions/{session_id}/image")
+    @sessions.get("/api/sessions/{session_id}/image")
     async def session_image(
         session_id: str, request: Request, filename: str | None = None,
         user: User = Depends(current_user),
@@ -1854,18 +2182,19 @@ def create_app(
         # runs, so a foreign session learned the route exists and what it takes. The
         # ownership suite caught it.
         row = await _session(request, session_id, user)
+        return await _image(request, row.project_id, filename)
+
+    async def _image(request: Request, project_id: str, filename: str | None) -> Response:
         if not filename or ".." in filename or not IMAGE_REF_RE.match(filename):
             raise HTTPException(status_code=400, detail="not an image reference")
         blobs = request.app.state.blobs
         if blobs is None:
             # 404, not 503: most projects hold no scans, so absent is the honest answer.
             raise HTTPException(status_code=404, detail="no blob store configured")
-        import psycopg
-
         # Off the event loop, for the reason given on the sidecar route above.
         def _read() -> object:
-            with psycopg.connect(_pg_dsn()) as conn:
-                return fetch_blob(conn, blobs, row.project_id, filename)
+            with _pg_connect_sync(request, connect_timeout=10) as conn:
+                return fetch_blob(conn, blobs, project_id, filename)
 
         blob = await asyncio.to_thread(_read)
         if blob is None:
@@ -1876,7 +2205,7 @@ def create_app(
         # PNG bytes; browsers sniff, and matching the alpha beats a third behaviour.
         return Response(content=blob.body, media_type="image/jpeg")
 
-    @app.post("/api/sessions/{session_id}/files")
+    @sessions.post("/api/sessions/{session_id}/files")
     async def upload_session_file(
         session_id: str,
         request: Request,
@@ -1938,12 +2267,10 @@ def create_app(
             # missing store is "unavailable", not "absent". Matches the feedback route.
             raise HTTPException(status_code=503, detail="no blob store configured")
         key = upload_key(name)
-        import psycopg
-
         # Off the event loop, for the reason given on the sidecar route above: this one
         # also does an S3 PUT, so it is the longest of the three.
         def _write() -> int:
-            with psycopg.connect(_pg_dsn()) as conn:
+            with _pg_connect_sync(request, connect_timeout=10) as conn:
                 n = put_blob(conn, blobs, row.project_id, key, body, content_type=content_type)
                 conn.commit()
                 return n
@@ -1951,7 +2278,7 @@ def create_app(
         written = await asyncio.to_thread(_write)
         return {"path": key, "sizeBytes": written}
 
-    @app.post("/api/sessions/{session_id}/interrupt", status_code=202)
+    @sessions.post("/api/sessions/{session_id}/interrupt", status_code=202)
     async def interrupt(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         """1c: Stop. This used to answer 501 -- "the worker owns the turn" -- and the whole
         design rests on it, so it is phase-1 work rather than a later nicety.
@@ -1968,7 +2295,7 @@ def create_app(
 
     # -- turns and events ---------------------------------------------------------
 
-    @app.post("/api/sessions/{session_id}/messages", status_code=202)
+    @sessions.post("/api/sessions/{session_id}/messages", status_code=202)
     async def post_message(
         session_id: str, body: MessageBody, request: Request, user: User = Depends(current_user)
     ) -> dict:
@@ -2021,7 +2348,7 @@ def create_app(
             ) from exc
         return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": message_id, "queued": held}
 
-    @app.get("/api/sessions/{session_id}/events")
+    @sessions.get("/api/sessions/{session_id}/events")
     async def get_events(
         session_id: str, request: Request, after: str | None = None, user: User = Depends(current_user)
     ) -> dict:
@@ -2041,7 +2368,7 @@ def create_app(
             "next_after": rows[-1].seq if rows else cursor,
         }
 
-    @app.get("/api/sessions/{session_id}/events/stream")
+    @sessions.get("/api/sessions/{session_id}/events/stream")
     async def stream_events(
         session_id: str, request: Request, after: str | None = None, user: User = Depends(current_user)
     ) -> StreamingResponse:
@@ -2158,7 +2485,7 @@ def create_app(
         return {"ok": True, "filename": key.rsplit("/", 1)[-1]}
 
     # Last, so it sees every API route it must not shadow (web/spa.py).
-    spa.mount_spa(app, tier_root=PROTO_DIR)
+    spa.mount_spa(app, tier_root=PROTO_DIR, base_path=app.state.base_path)
     return app
 
 

@@ -1,0 +1,198 @@
+{
+  "run_log": "v7_2026-10-30_04-56-05.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_question_selection_q4v",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_q4v`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified two missing children from census gap analysis: one deceased before the 1900 enumeration (born on or before 1900-06-01) and one living child born between 1900-06-01 and 1910-04-15. The question targets the missing children, the rationale accurately describes both gaps, and the tool responses confirm the analysis. The skill correctly distinguished that William (b. 1906) is already in the tree and is not the post-1900 living child. All factual claims are supported by the census_children_gap tool output.\n\nJunior: (Pass - All factual claims are supported by the census_children_gap tool output.)"
+    },
+    {
+      "test_id": "ut_question_selection_q4v",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_q4v`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: it called census_children_gap with correct parameters (motherId I1, both census entries), analyzed the two missing children identified by the tool, wrote a research question targeting them, and provided a rationale explaining both the deceased pre-1900 child and the living post-1900 child. The reply explicitly names both missing children as research targets ('one who died before June 1, 1900, and one born between June 1, 1900 and April 15, 1910 who survived to 1910'), fulfilling the requirement to mention both even though the question targets the group.\n\nJunior: (Pass - The skill addressed all required elements.)"
+    },
+    {
+      "test_id": "ut_question_selection_q4v",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_q4v`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All four tool calls passed correct arguments. census_children_gap received motherId I1, projectPath, and both census entries (1900: 6 born/5 living; 1910: 8 born/7 living) as expected. project_context and person_warnings calls used correct projectPath and personId. research_append correctly appended the question with appropriate fields including selection_basis 'objective_decomposition', question_kind 'enumerative', priority 'high', and empty depends_on/unblocks arrays. No fixture_not_found errors occurred.\n\nJunior: (Pass -All four tool calls passed correct arguments.)"
+    },
+    {
+      "test_id": "ut_question_selection_q4v",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_question_selection_q4v`** — `rubric` / `Question specificity`\nLLM: 2 → Junior: 2\n\n> The question 'Who are the children of Margaret Mercer (b. ~1868, Ohio) and Thomas Mercer not yet recorded in the family tree?' is mostly specific in naming the parents and the fact sought (missing children), but it has a fuzzy edge: it does not distinguish between the two distinct missing children identified by census_children_gap (one deceased before 1900, one living born 1900–1910). The per-test context requires the reply to name both as research targets; a more specific question would explicitly target both gaps or be written as two separate questions. The question is concrete enough to drive a search but lacks the precision to distinguish between the two distinct research scenarios the census gap analysis revealed.\n\nJunior: (Partial - The question is concrete enough to drive a search but lacks the precision to distinguish between the two distinct research scenarios the census gap analysis revealed.)"
+    },
+    {
+      "test_id": "ut_question_selection_d01",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_d01`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that pli_006 (Thomas Flynn probate search) remains in_progress with zero log entries, blocking new question creation. The delegation's claim that work is 'effectively done' was properly rejected as a caller's summary unsupported by project evidence. Claude accurately cited the proof summary tier (probable) and the open plan item status. The reasoning about scope—that sibling identification falls outside the parentage objective—is sound. No fabricated material or unsupported claims.\n\nJunior: (Pass - No fabricated material or unsupported claims.)"
+    },
+    {
+      "test_id": "ut_question_selection_d01",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_d01`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed all required elements: identified the blocking condition (pli_006 in_progress), named the specific plan item by ID, explained why the delegation's assertion does not override project state, clarified the scope boundary (siblings vs. parents), and provided a concrete next step (conduct/record probate search results, then close pli_006). No silent omissions of what the input state required.\n\nJunior: (Pass - No silent omissions of what the input state required.)"
+    },
+    {
+      "test_id": "ut_question_selection_d01",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_d01`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All seven MCP tool calls passed arguments matching expected_args semantically. Calls to project_context, research_query (plans, conflicts, proof_summaries, questions, log by planItemId), person_warnings, and hypotheses all used correct identifiers and section names. No fixture_not_found errors. Arguments were well-formed and appropriate to the investigation.\n\nJunior: (Pass - No fixture_not_found errors. Arguments were well-formed and appropriate to the investigation.)"
+    },
+    {
+      "test_id": "ut_question_selection_d01",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_question_selection_d01`** — `rubric` / `Question specificity`\nLLM: N/A → Junior: N/A\n\n> This dimension is N/A because Claude correctly deferred adding a new question. The skill did not write a new question to grade for specificity. Per the per-test context, hypothetical future questions mentioned in passing (e.g., sibling identification as a possible follow-up) are illustrations, not actual selections, and should not be penalized on this dimension.\n\nJunior: (This dimension is N/A because Claude correctly deferred adding a new question.)"
+    },
+    {
+      "test_id": "ut_question_selection_c7f",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_c7f`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly analyzed the project state: q_001 is finished (proof summary ps_001 exists, all plan items completed), q_002 is resolved, conflict c_001 is resolved, and hypothesis h_001 is supported. Claude correctly identified that the person_warnings contradiction (Residence dated 1925 on Patrick who died 1908) is a data error, not a new research question. The decision to not write a new question is correct—the objective is fully covered by q_001. All factual claims are supported by tool responses.\n\nJunior: (Pass - All factual claims are supported by tool responses.)"
+    },
+    {
+      "test_id": "ut_question_selection_c7f",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_c7f`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed all required elements: called person_warnings on I1 as instructed, examined all questions and their statuses, reviewed the active plan (pl_002) and confirmed all items completed, checked conflicts and hypotheses, and correctly determined no new question should be written. Claude identified the next step (proof-conclusion to re-conclude ps_001) and explained why no new question is appropriate given the objective is fully covered.\n\nJunior: (Pass - Claude addressed all required elements.)"
+    },
+    {
+      "test_id": "ut_question_selection_c7f",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_c7f`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All five MCP tool calls used correct arguments: project_context with correct projectPath, research_query calls with correct section and questionId parameters, and person_warnings with correct projectPath and personId (I1). All calls matched expected_args semantically and returned live responses with no fixture_not_found errors. Arguments were well-formed and appropriate to the task.\n\nJunior: (Pass - All five MCP tool calls used correct arguments.)"
+    },
+    {
+      "test_id": "ut_question_selection_c7f",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_question_selection_c7f`** — `rubric` / `Question specificity`\nLLM: N/A → Junior: N/A\n\n> No new question was proposed in this response. The skill correctly determined that the existing q_001 ('Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?') fully covers the objective and requires no additional research questions. This dimension applies only when a new question is written; since none was written, it is N/A.\n\nJunior: (This dimension applies only when a new question is written; since none was written, it is N/A.)"
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_013`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified that q_001 is already open and in progress, and that pli_001 (the baptism search) remains at 'planned' status. The recommendation to execute pli_001 before creating any new question is factually accurate and aligns with the project state. No fabricated claims or unsupported assertions were made. The skill accurately cited the existing question and plan item by ID.\n\nJunior: (Pass -  No fabricated claims or unsupported assertions were made. The skill accurately cited the existing question and plan item by ID.)"
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_013`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the core requirement: determining whether a new question should be written. It correctly determined that no new question is needed because q_001 already covers the objective and its plan item pli_001 has not yet been executed. The skill provided the next step (carry out pli_001) as required. All necessary context from the project state was examined and incorporated into the decision.\n\nJunior: (Pass - All necessary context from the project state was examined and incorporated into the decision.)"
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_013`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All three MCP tool calls used correct arguments. The project_context call retrieved the full project state with the correct projectPath. The research_query call correctly queried the 'plans' section for q_001. The person_warnings call correctly checked I1 (Job Purnell). All calls matched their expected_args semantically and returned live fixtures with no fixture_not_found errors.\n\nJunior: (Pass - All three MCP tool calls used correct arguments.)"
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_question_selection_013`** — `rubric` / `Question specificity`\nLLM: N/A → Junior: N/A\n\n> This dimension is N/A because the skill correctly determined that no new question should be written. The skill did not propose a new question, so there is no new question specificity to evaluate. The existing q_001 ('Who were the parents of Job Purnell (b. ~1826, Trowbridge, Wiltshire)?') is already specific and concrete, but that question predates this skill execution and is not being graded here.\n\nJunior: ( This dimension is N/A because the skill correctly determined that no new question should be written.)"
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_007`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified that the father (Thomas Flynn) is resolved and the mother remains unknown. The new question q_003 is factually sound: it asks specifically for Patrick Flynn's mother's identity, grounded in the objective decomposition. The rationale accurately reflects the project state—q_001 is resolved, q_002 located the household, and the mother is the remaining gap. The depends_on array correctly includes both q_001 and q_002, reflecting that the Thomas Flynn household identified in those questions is the starting point for mother identification. No fabricated claims or unsupported assertions.\n\nJunior: (Pass - No fabricated claims or unsupported assertions.)"
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_007`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: recognized the father is confirmed, identified the mother as the remaining objective gap, created a new question with appropriate specificity, provided a clear rationale grounded in objective decomposition, correctly populated depends_on with both q_001 and q_002, included the unblocks field (empty array, appropriate since this question doesn't unblock others), and acknowledged that the Thomas Flynn household records are the natural starting point. All input state requirements were met.\n\nJunior: (Pass - All input state requirements were met.)"
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_007`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All eight MCP tool calls passed correct arguments. project_context and research_query calls used the correct projectPath and section parameters. The final research_append call correctly specified section='questions', op='append', and provided a well-formed entry object with all required fields (question, rationale, selection_basis, question_kind, priority, status, depends_on, unblocks, resolved, resolution_assertion_ids, search_stop). No fixture_not_found errors occurred. All calls matched expected patterns.\n\nJunior: (Pass -All calls matched expected patterns.)"
+    },
+    {
+      "test_id": "ut_question_selection_007",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_007`** — `rubric` / `Question specificity`\nLLM: 3 → Junior: 3\n\n> The question 'Who was the mother of Patrick Flynn, born ca. 1845 in Ireland, died 1908 in Schuylkill County, Pennsylvania?' is concrete and answerable. It names the specific person (Patrick Flynn), the time period (birth ca. 1845, death 1908), the jurisdiction (Schuylkill County, Pennsylvania), and the specific fact sought (mother's identity). A follow-up search could be designed to answer it by examining household records, church registers, immigration documents, and vital records. The question is not vague or overly broad—it targets a precise genealogical fact.\n\nJunior: (Pass - The question is not vague or overly broad—it targets a precise genealogical fact.)"
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_008`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified that the Thomas Flynn parentage claim rests on a single unsourced Ancestry Member Tree (src_001) with no original records cited. The question formulated—'Do independent records confirm or refute that Thomas Flynn (born ca. 1815 in Ireland) was the father of Patrick Flynn...'—is a verification question that tests the premise rather than assuming it. The rationale explicitly cites the compiled/unsourced nature of the evidence and the need to verify against original records before proceeding. All factual claims are supported by the tool responses and project state. No fabricated material or unsupported assertions.\n\nJunior: (Pass -  No fabricated material or unsupported assertions.)"
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_008`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed all required elements: (1) recognized the unsourced premise from the compiled Ancestry tree, (2) formulated a verification question rather than one assuming the claim, (3) provided a rationale citing the compiled/unsourced nature as the reason for verification, (4) set appropriate metadata (selection_basis: 'hypothesis_test', priority: 'high', status: 'open'), and (5) persisted the question to research.json. The response included both the question text and supporting narrative explaining why this verification approach is necessary before further research.\n\nJunior: (Pass - The skill addressed all required elements.)"
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_008`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All five MCP tool calls passed correct arguments: (1) project_context with correct projectPath, (2) research_query for hypotheses section, (3) research_query for assertions section, (4) person_warnings for I1, and (5) research_append with properly structured question entry including all required fields (question text, rationale, selection_basis, question_kind, priority, status, depends_on, unblocks, search_stop). All calls matched expected patterns and returned ok: true. No fixture_not_found errors or validation failures.\n\nJunior: (Pass - No fixture_not_found errors or validation failures.)"
+    },
+    {
+      "test_id": "ut_question_selection_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_008`** — `rubric` / `Question specificity`\nLLM: 3 → Junior: 3\n\n> The question is concrete and answerable: it names specific persons (Thomas Flynn born ca. 1815 in Ireland, Patrick Flynn born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA), specifies the fact being sought (confirmation or refutation of the father-child relationship), and identifies the record types that could answer it (death certificates, church records, naturalization papers, census records). A follow-up search could be designed directly from this question. The question avoids vagueness and is neither too broad ('Learn about the Flynn family') nor record-set scoped.\n\nJunior: (Pass - The question avoids vagueness and is neither too broad ('Learn about the Flynn family') nor record-set scoped.)"
+    }
+  ]
+}

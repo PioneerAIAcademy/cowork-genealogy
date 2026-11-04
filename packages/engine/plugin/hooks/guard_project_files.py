@@ -14,10 +14,14 @@ add-to-an-existing-project tools is what produced the bypass this guard exists t
 prevent: in an empty folder every one of them refuses with "not found in
 projectPath", so an agent told to use them had nowhere to go and reached for the
 shell instead. A deny has to leave a working alternative, and in an empty folder
-`project_create` is the only one.
+`project_create` is the only one. The main session cannot call it, or the tree
+writers, so the message also names the agent that holds each.
 `research/SKILL.md` has forbidden it in prose since the beginning and no
 skill's `allowed-tools` lists bare Write/Edit; this is the same rule as a
 denial. See `docs/specs/guardrail-enforcement-spec.md` §6, issue #940.
+
+It also denies the main thread the tools only agents hold (AGENT_ONLY_TOOLS,
+issue #3528), naming the agents to delegate to, and denies a fork.
 
 **Why this ships in the plugin rather than only in the host.** A `PreToolUse`
 hook is the only instrument that can restrain the MAIN THREAD — a per-agent
@@ -81,6 +85,146 @@ DEVICE_WRITE_TOOLS = ("device_commit_files",)
 DELEGATION_TOOLS = ("Agent", "Task")
 FORK_SUBAGENT_TYPE = "fork"
 
+# MCP tools held only by agents, denied on the MAIN THREAD (no `agent_id` key),
+# mapped to the BARE names of the agents whose `tools:` grant them -- the deny
+# names every one, so the model has a route out instead of a wall. Issue #3528:
+# when the main thread holds a tool it calls it rather than delegating, and both
+# production paths give it every tool. Measured in hosted feedback (#3694,
+# #3720): dozens of main-thread `record_search` / `image_transcribe` calls and
+# no delegation at all.
+#
+# HAND-KEPT, not derived from "agents' tools minus skills' allowed-tools" (lead,
+# 2026-10-20). Derivation would make a skill's `allowed-tools` a main-thread
+# restriction, which it is not (CLAUDE.md: a grant, not a restriction), and the
+# list would grow silently on every skill-to-agent conversion. So a tool held
+# only by agents is placed on this map or on MAIN_THREAD_OK by a person, with a
+# reason, and `tests/packaging/plugin-hooks.test.ts` fails when one is on
+# neither, when one is on a list it no longer qualifies for, or when an owner
+# list here drifts from the agents' frontmatter. hooks.json's matcher must name
+# every key here, or the script is never run for it.
+#
+# Held in the hook because the hook runs in the VM with no access to the repo.
+AGENT_ONLY_TOOLS = {
+    "build_external_search_url": ("search-external-sites", "where-else-to-search"),
+    "catalog_search": ("locality-guide", "search-records"),
+    "census_children_gap": ("check-warnings", "question-selection"),
+    "collections_search": (
+        "gps-mentor",
+        "locality-guide",
+        "research-plan",
+        "search-external-sites",
+    ),
+    "convert_calendar": ("conflict-resolution", "convert-dates"),
+    "evaluation_append": ("gps-mentor",),
+    "external_links_search": (
+        "locality-guide",
+        "research-plan",
+        "search-external-sites",
+        "where-else-to-search",
+    ),
+    "fulltext_search": ("search-full-text",),
+    "get_name_variants": ("search-full-text",),
+    "image_search": ("search-images",),
+    "materialize_facts": ("person-evidence",),
+    "merge_tree_persons": ("proof-conclusion", "tree-edit"),
+    "merge_warnings": ("person-evidence", "proof-conclusion"),
+    "person_person_matches": ("tree-edit",),
+    "person_quality": ("person-evidence", "source-evaluation"),
+    "person_record_matches": ("search-hints", "tree-edit"),
+    "person_warnings": (
+        "check-warnings",
+        "person-evidence",
+        "question-selection",
+        "source-evaluation",
+    ),
+    "place_distance": (
+        "conflict-resolution",
+        "gps-mentor",
+        "person-evidence",
+        "timeline",
+    ),
+    "place_population": ("historical-context", "locality-guide"),
+    "place_search": (
+        "conflict-resolution",
+        "gps-mentor",
+        "historical-context",
+        "locality-guide",
+        "person-evidence",
+        "research-plan",
+        "search-external-sites",
+        "survey-surname",
+        "timeline",
+        "tree-edit",
+        "where-else-to-search",
+    ),
+    "place_search_all": (
+        "conflict-resolution",
+        "historical-context",
+        "locality-guide",
+        "research-plan",
+        "timeline",
+        "tree-edit",
+    ),
+    "project_create": ("init-project",),
+    "rank_search_matches": ("search-records",),
+    "record_search": ("search-records", "survey-surname"),
+    "same_person": ("person-evidence", "search-records"),
+    "tree_correct": ("proof-conclusion", "tree-edit"),
+    "tree_edit": ("init-project", "person-evidence", "proof-conclusion", "tree-edit"),
+    "tree_gaps": ("tree-survey",),
+    "volume_bisect": ("search-images",),
+    "volume_search": ("locality-guide", "research-plan", "search-images"),
+    "wiki_place_page": ("gps-mentor", "locality-guide"),
+    "wiki_read": (
+        "citation",
+        "conflict-resolution",
+        "historical-context",
+        "locality-guide",
+        "person-evidence",
+        "research-exhaustiveness",
+        "research-plan",
+        "search-full-text",
+        "search-records",
+        "timeline",
+    ),
+    "wiki_search": (
+        "gps-mentor",
+        "historical-context",
+        "locality-guide",
+        "search-familysearch-wiki",
+        "search-full-text",
+        "search-records",
+    ),
+    "wikipedia_search": ("historical-context", "locality-guide", "search-wikipedia"),
+}
+
+# Tools held only by agents that the main thread may still call, each with the
+# legitimate main-thread call that keeps it off AGENT_ONLY_TOOLS. Seeded from the
+# false-deny replay over the committed e2e runs made after the skills became
+# agents (issue #3528's PR body has the counts). A tool leaves this map when a
+# skill declares it -- it is then not held only by agents -- and the drift test
+# says so.
+MAIN_THREAD_OK = {
+    "image_transcribe": (
+        "research/SKILL.md delivers a bounded transcription itself (lead, "
+        "2026-10-18; issue #2490 retires the wrapper agent)"
+    ),
+    "sidecar_read": (
+        "research/SKILL.md shows the page of that transcription from its staged ref"
+    ),
+    "record_read": (
+        "the only tool that returns the imageArk that transcription needs from a "
+        "record ARK"
+    ),
+    "research_log_append": (
+        "logs that transcription; every replayed main-thread call logged one"
+    ),
+    "research_append": (
+        "routed per section by owner_denied below, whose reason names the one "
+        "agent that owns the section; a tool-level deny would name sixteen"
+    ),
+}
+
 # A path never contains a newline, and is never longer than the platform allows.
 # Both bounds exist to keep the scan below off file CONTENT travelling in the
 # same payload — but only the newline bound does real work there, since content
@@ -130,6 +274,8 @@ OWNED_SECTIONS = {
     # the MAIN-THREAD write -- the committed non-owner op is a main thread
     # recording its own mentor verdict, which makes the second opinion
     # self-issued. The per-agent lanes already kept every other agent off it.
+    # The agent writes it through the narrow `evaluation_append` (issue #1491);
+    # `owner_denied` routes that tool here as well as `research_append`.
     "evaluations": "gps-mentor",
 }
 
@@ -171,6 +317,18 @@ OWNED_DECLARATIONS = {("questions", "search_stop"): "research-exhaustiveness"}
 # any write of it asserts the project's state, so the write IS the claim and
 # presence is the right key.
 OWNED_FIELDS = {("project", "status"): "proof-conclusion"}
+
+# Fields only the MAIN THREAD may write: (section, field), keyed on presence.
+# The reverse of OWNED_FIELDS, which names the one agent that may write a field,
+# so it is not an entry there: an `init-project` owner would deny the main
+# thread, and an empty owner would let through a subagent whose `agent_type` is
+# null. `objective` stopped being set-once so a researcher can correct it, and
+# a website user has no file access to do that any other way. The correction
+# arrives in the main conversation; a subagent rewriting it is the drift the
+# ownership row names, every later step planning against a goal the user never
+# agreed to. Lead ruling 2026-10-29, issue #3975. Accepted risk: the main
+# thread drifting on its own, which nothing here can tell from a user's ask.
+MAIN_THREAD_FIELDS = frozenset({("project", "objective")})
 
 # Op-scoped routing: section -> the BARE agent name that may APPEND to it. Fifth
 # granularity. `questions` is updated by three agents (research-exhaustiveness
@@ -267,6 +425,10 @@ AGENT_WRITABLE_SECTIONS = {
     # above. Its search log goes through research_log_append, which carries no
     # `section`.
     "search-records": frozenset({"plan_items", "namesakes"}),
+    # search-hints sets the status of the "review pending hints" plan item it
+    # executes (issue #3153). Its no-hints log goes through research_log_append,
+    # which carries no `section`. A repo CI requirement, not a hook route.
+    "search-hints": frozenset({"plan_items"}),
     # search-full-text updates the status of the plan item a search executed.
     # Its search log goes through research_log_append, which carries no `section`.
     # This is a repo CI requirement, not a runtime gate (the guard does not fire
@@ -301,7 +463,8 @@ AGENT_WRITABLE_SECTIONS = {
     # project_create, which itself writes the
     # project, the fixed researcher profile and one `sources` entry per
     # transcribed memory (issue #3384). It owns `project` (ownership.json);
-    # `project.status` stays routed to proof-conclusion above. A lane, not a
+    # `project.status` stays routed to proof-conclusion above, and
+    # `project.objective` is main-thread-only (MAIN_THREAD_FIELDS). A lane, not a
     # route: nothing is routed to this agent. It leaves out `questions`, which
     # question-selection owns (issue #2122), and `sources`, which only
     # project_create writes for it.
@@ -363,6 +526,14 @@ OWNED_FIELD_REASON = (
     "`updated` activity ping, is unaffected."
 )
 
+MAIN_THREAD_FIELD_REASON = (
+    "Setting research.json's `{section}.{field}` from a subagent is disabled — "
+    "only the main conversation may change it, and only when the user asks. "
+    "Return the user's wording to the main conversation in your result and let "
+    "it make the research_append call. Every other write to `{section}` is "
+    "unaffected."
+)
+
 CLAIM_REASON = (
     "Recording a conflict's analysis or resolution from here is disabled — "
     "settling `{section}` (a `status: \"resolved\"`, or any of {fields}) is owned "
@@ -383,10 +554,13 @@ OUT_OF_LANE_REASON = (
 REASON = (
     "{tool} on {name} is disabled — all writes to research.json/tree.gedcomx.json "
     "must go through the writer tools. To CREATE a new project use project_create, "
-    "which writes both files together; to add to an existing one use "
-    "research_append, research_log_append, tree_edit or tree_correct. These "
+    "which writes both files together (from the main session, invoke "
+    "`@plugin:init-project`, which calls it); to add to an existing one use "
+    "research_append or research_log_append, and for the tree tree_edit or "
+    "tree_correct (from the main session, invoke `@plugin:tree-edit`). These "
     "validate before persisting. Direct file writes never validate. "
-    "external-collections.json is written only by external_links_search given a projectPath."
+    "external-collections.json is written only by external_links_search given a projectPath "
+    "(from the main session, invoke `@plugin:locality-guide`)."
 )
 
 FORK_REASON = (
@@ -394,6 +568,13 @@ FORK_REASON = (
     "without the plugin agent's instructions and tool limits. Delegate to the named "
     "plugin agent the step calls for (its name is the subagent_type), or do the step "
     "yourself."
+)
+
+AGENT_ONLY_REASON = (
+    "Calling {tool} from the main session is disabled — only agents hold it, and "
+    "each applies rules its result depends on. Delegate the step: invoke "
+    "{invocations} — whichever owns the work in hand — with the task and "
+    "projectPath, and let that agent make the {tool} call."
 )
 
 
@@ -523,7 +704,11 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     analytical product (a resolve, or any analysis field), reached by anyone
     but its owning agent. A sixth, `owned_append`, returns the bare section of
     an `OWNED_APPENDS` route: an `op: "append"` there, made by anyone but its
-    owning agent.
+    owning agent. A seventh, `main_thread_field`, returns a dotted
+    `section.field` from `MAIN_THREAD_FIELDS`: a field keyed on presence,
+    written by ANY subagent. It is the one rule that keys on `agent_id`
+    membership rather than on `caller`, because a subagent with a null
+    `agent_type` has `caller == ""`, the same as the main thread.
 
     `proof_summaries` is owned by `proof-conclusion`
     (`docs/specs/schemas/ownership.json`). Measured over the committed corpus,
@@ -545,15 +730,18 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     `ps_NNN` in place on every re-conclusion, and a rule that saw only appends
     would leave that path denied in production with its fixture still green.
 
-    **Gating on `research_append` alone is complete, and here is the check that
-    says so** — it looks like an oversight and is the first thing a reader asks.
-    Of the six declared writers of any research.json section
-    (`research_append`, `project_create`, `research_log_append`,
-    `extraction_append`, `merge_tree_persons`, `build_external_search_url`),
-    two also write a section this function routes without ever passing through
-    here. `merge_tree_persons` reaches `person_evidence` and `proof_summaries`.
-    `extraction_append`, in `personId` mode only, appends `person_evidence`
-    links.
+    **Gating on `research_append` and `evaluation_append` is complete, and here
+    is the check that says so** — it looks like an oversight and is the first
+    thing a reader asks. `evaluation_append` is `research_append` scoped to
+    `evaluations` by tool identity (issue #1491), so it is gated here for the
+    same reason and its ops carry `section: "evaluations"` for the routed check
+    to read. Of the seven declared writers of any research.json section
+    (`research_append`, `evaluation_append`, `project_create`,
+    `research_log_append`, `extraction_append`, `merge_tree_persons`,
+    `build_external_search_url`), the two this function does NOT gate also write a
+    section it routes without ever passing through here. `merge_tree_persons`
+    reaches `person_evidence` and `proof_summaries`. `extraction_append`, in
+    `personId` mode only, appends `person_evidence` links.
 
     That is safe for a structural reason, not a lucky one: it writes those
     sections through `iteratePersonIdRefs`, whose setters assign one field on an
@@ -573,10 +761,11 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     section through anything but a ref setter, this docstring is what stops
     being true, and nothing checks it.
     """
-    if _basename(tool_name.replace("__", "/")) != "research_append":
+    if _basename(tool_name.replace("__", "/")) not in ("research_append", "evaluation_append"):
         return None
     caller = ""
-    if "agent_id" in payload:
+    is_subagent = "agent_id" in payload
+    if is_subagent:
         caller = str(payload.get("agent_type") or "").rsplit(":", 1)[-1]
     writable = AGENT_WRITABLE_SECTIONS.get(caller)
     for op in _ops(tool_input):
@@ -636,6 +825,20 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
                 payload_obj = op.get(key)
                 if isinstance(payload_obj, dict) and field in payload_obj:
                     return (f"{section}.{field}", "owned_field", caller)
+        # A main-thread-only FIELD, reached by any subagent. Keyed on
+        # `is_subagent`, never on `caller`, which is "" for a subagent with a
+        # null `agent_type`. Before the lane check, so an agent whose lane lacks
+        # the section is told to hand the wording back rather than that the
+        # section is someone else's. Both payload keys, for the fail-open
+        # reason the loops above give.
+        if is_subagent:
+            for owned_section, field in MAIN_THREAD_FIELDS:
+                if section != owned_section:
+                    continue
+                for key in ("fields", "entry"):
+                    payload_obj = op.get(key)
+                    if isinstance(payload_obj, dict) and field in payload_obj:
+                        return (f"{section}.{field}", "main_thread_field", caller)
         # A known agent reaching outside its own set.
         if writable is not None and section not in writable:
             return (section, "out_of_lane", caller)
@@ -657,6 +860,30 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
                 ):
                     return (section, "claim", caller)
     return None
+
+
+def agent_only_denied(tool_name: str, payload: dict) -> str | None:
+    """The bare tool name when a main-thread call reaches AGENT_ONLY_TOOLS, else None.
+
+    The main thread is told apart by the ABSENCE of the `agent_id` key, as in
+    `owner_denied`: `agent_type` alone is also present on the main thread of a
+    session started with `--agent`. Matched on the bare tail, so every server
+    spelling is caught.
+    """
+    if "agent_id" in payload:
+        return None
+    bare = _basename(tool_name.replace("__", "/"))
+    return bare if bare in AGENT_ONLY_TOOLS else None
+
+
+def agent_only_reason(tool: str) -> str:
+    """The deny text for a main-thread call to an AGENT_ONLY_TOOLS member.
+
+    One copy, imported by the harness (`context_policy.subagent_only_denial`).
+    """
+    calls = [f"`@plugin:{a}`" for a in AGENT_ONLY_TOOLS[tool]]
+    invocations = calls[0] if len(calls) == 1 else ", ".join(calls[:-1]) + " or " + calls[-1]
+    return AGENT_ONLY_REASON.format(tool=tool, invocations=invocations)
 
 
 def deny_reason(denied: tuple) -> str:
@@ -697,6 +924,9 @@ def deny_reason(denied: tuple) -> str:
             field=field,
             agent=OWNED_FIELDS[(owned_section, field)],
         )
+    elif rule == "main_thread_field":
+        owned_section, _, field = section.partition(".")
+        reason = MAIN_THREAD_FIELD_REASON.format(section=owned_section, field=field)
     else:
         allowed = ", ".join(f"`{s}`" for s in sorted(AGENT_WRITABLE_SECTIONS[caller]))
         reason = OUT_OF_LANE_REASON.format(section=section, allowed=allowed)
@@ -715,6 +945,16 @@ def decision(payload: dict) -> dict:
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
                 "permissionDecisionReason": FORK_REASON.format(tool=tool_name),
+            },
+        }
+
+    tool = agent_only_denied(tool_name, payload)
+    if tool is not None:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": agent_only_reason(tool),
             },
         }
 

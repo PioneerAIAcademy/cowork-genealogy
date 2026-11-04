@@ -64,6 +64,13 @@ entry's canned text. On a test that sets `execution.stop_at_stub`, such as
 `ut_research_015` below, a spawn of any stubbed name is denied too and ends the
 run.
 
+A test tagged `relays-agent-tail` also asserts that the router's reply carries,
+verbatim, everything after the final `---` of its `routes-to:` callee's canned
+response (`test_relays_the_agents_tail_verbatim`, issue #3862). The expected text
+is read from the test's own `stub_skills` entry, not from the agent return the
+harness recorded, which wraps it in scaffolding the router must not print.
+`ut_research_zfp` carries it.
+
 Every agent spawn in this suite is denied, listed or not, unless the test names
 the agent in `execution.run_agents`. That is how the negative tests whose
 "nothing was written" invariant needs a writer that can really write keep their
@@ -83,8 +90,11 @@ extension gives. `ut_research_hnp` and `ut_research_hsp` instead serve it from
 with one project. They are the hosted pairs of `ut_research_tsi` and
 `ut_research_011`. `uses-new-project-path` and `uses-listed-project` gate the
 validators that read which `projectPath` the router took from that answer. The
-mock serves every project tool from the test's one workspace, whatever path is
-passed, so each test's scenario is the project its route should open.
+mock serves every project tool from the test's one workspace, so each test's
+scenario is the project its route should open. In these two tests it behaves as
+a hosted store does (`mock_mcp._hosted_store`): a `projectPath` the listing does
+not name is refused, and `project_context` at a listed project carries its
+`projectUrl`.
 
 ## Agent dispatch tests (issue #1851)
 
@@ -204,13 +214,13 @@ is the failure. Deterministic, via the `attached-first` tag and
 hand-off list so a turn that only narrates having checked cannot pass.
 
 `ut_research_c1k` (`compound-bounded-ask.json`) pins the COMPOUND direction: a
-message asking for two deliverables that are each on the list is still bounded.
-It grades with `delivers:<skill>` tags rather than `routes-to:`, and the reason is
-worth knowing before copying either. `routes-to:` asserts only the FIRST hand-off,
-so on a compound ask it passes a turn that delivers one and silently drops the
-other — which is precisely the pre-change behaviour. A blind review proved that by
-executing the validator against four synthetic run shapes. `delivers:` requires a
-hand-off for every tag, in any order, because the skill body imposes no ordering.
+message asking for two deliverables that are each on the list is still bounded,
+and under step mode it delivers the first this turn and offers the next. Its
+first deliverable is a transcription, so it carries only `transcribes-in-place`,
+which also asserts that nothing is handed off: a research-plan spawn (both
+deliverables in one turn) and the job path (locality-guide first) both fail it.
+The `delivers:<skill>` tag and its validator are gone: under step mode a compound
+ask hands off at most one deliverable, so there is nothing for them to count.
 
 **This one needed a fixture to exist at all, and that is the general rule.** Neither
 `person_read` nor `source_attachments` is in `mock_mcp.LIVE_TOOLS`, and the mock

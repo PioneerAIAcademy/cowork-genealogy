@@ -1,0 +1,43 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "given": "Josiah",
+          "surname": "Rowe"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "date": "about 1828",
+          "standard_date": "1828",
+          "place": "Ohio, United States",
+          "standard_place": "Ohio, United States"
+        },
+        {
+          "id": "F2",
+          "type": "MilitaryService",
+          "date": "1862-1865",
+          "standard_date": "1862",
+          "place": "Indiana, United States",
+          "standard_place": "Indiana, United States"
+        },
+        {
+          "id": "F3",
+          "type": "Death",
+          "date": "1879",
+          "standard_date": "1879",
+          "place": "Vigo County, Indiana, United States",
+          "standard_place": "Vigo, Indiana, United States"
+        }
+      ]
+    }
+  ],
+  "relationships": [],
+  "sources": []
+}

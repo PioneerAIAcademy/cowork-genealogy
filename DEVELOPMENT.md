@@ -25,7 +25,7 @@ cd packages/engine/mcp-server && npx vitest run -t "test name"       # Run tests
 ./scripts/verify-mcpb.sh                             # Verify the packed .mcpb (contents + boots)
 ./scripts/package-plugin.sh                          # Package plugin .zip (→ releases/)
 make eb-bundles                                      # Build the prototype's Beanstalk bundles (→ releases/eb-*.zip)
-make eb-bundles-verify                               # Verify them (layout, Procfile/PORT, offline pip per arch)
+make eb-bundles-verify                               # Verify them (layout, Procfile/PORT, offline pip per built arch)
 make eb-bundles-smoke                                # Boot each offline in Docker [EB_PLATFORM=linux/arm64]
 ```
 
@@ -139,6 +139,11 @@ Example: adding a "list providers" feature.
    - Create `packages/engine/plugin/skills/list-providers/SKILL.md`
    - In the SKILL.md, instruct Claude to call the new tool when the
      user asks what providers are available
+   - If only agents grant the tool (no skill's `allowed-tools` does), decide
+     whether the main thread may call it: add it to `AGENT_ONLY_TOOLS` in
+     `packages/engine/plugin/hooks/guard_project_files.py` with its agents and to
+     `hooks.json`'s matcher, or to `MAIN_THREAD_OK` with the call that needs it.
+     `tests/packaging/plugin-hooks.test.ts` fails until you do.
 
 3. **Rebuild both artifacts.**
    ```bash
@@ -346,6 +351,20 @@ since mid-2026 was verified without one. Verification is automated:
    and deletes through `--pg-dsn`, which both arms pass: the tool server 403s any other
    bearer (U4). `BASE=http://127.0.0.1:8787` runs it against the compose `tools`
    service instead. All read `dev/smoke-calls.ts`.
+
+   The `offline` subset of `engine-smoke-http` runs in CI as the
+   `engine-smoke-http` job (`.github/workflows/engine-tests.yml`), on the stack
+   `vitest-pg` starts. A caller bringing its own Postgres + minio sets
+   `SMOKE_STACK_DEP=` (empty) to drop the `proto-up-store` prerequisite,
+   `SMOKE_PG_CONTAINER=<name>` to name its postgres container, and
+   `SMOKE_OFFLINE_ONLY=1` to run only the rows that need no network and no
+   credentials. `SMOKE_PG_CONTAINER` takes a NAME, not an empty value — unlike
+   its two neighbours there is no empty form, and the target says so rather
+   than letting `docker exec` read the next word as the container. The network
+   and credentialed rows run only locally.
+
+   `engine-smoke-stdio`'s offline rows run in CI too, inside the `vitest` job:
+   it needs no Docker, no network and no credentials.
 
 Three guides survive in `docs/testing-guides/`, covering setup paths the
 harness cannot reach: `oauth-tool-testing-guide.md` (how to get a
@@ -561,6 +580,10 @@ hosted sessions at the wiki-query and Pop Stats services; leave them unset and
 the engine uses its compiled-in defaults, which name one developer's tailnet
 host. Changing one reaches existing sessions on their next connect — no need to
 recreate a project.
+
+`MATCHER_URL` belongs in `[env]` and `MATCHER_API_KEY` in `fly secrets set`. With
+both set, hosted sessions score with the matcher service; otherwise with
+FamilySearch's matcher. A change reaches existing sessions on their next connect.
 
 The agent runs on **E2B**, not in this container. The `genealogy-agent` image is
 a separate artifact built from its own Dockerfile, but `make deploy` builds and

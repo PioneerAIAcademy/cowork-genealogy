@@ -113,6 +113,7 @@ import {
 import { projectList } from "./tools/project-list.js";
 import { treeQuery, type TreeQueryInput } from "./tools/tree-query.js";
 import { extractionAppend } from "./tools/extraction-append.js";
+import { evaluationAppend } from "./tools/evaluation-append.js";
 import { timelineBuild } from "./tools/timeline-build.js";
 import type { TimelineBuildInput } from "./types/timeline-build.js";
 import { materializeFacts } from "./tools/materialize-facts.js";
@@ -132,6 +133,7 @@ import { allToolSchemas } from "./tool-schemas.js";
 // need `isError` set explicitly — the catch arms below cannot see them.
 import { writerToolResult, type OkFalseResult } from "./tool-result.js";
 import { readBuildInfo } from "./utils/build-info.js";
+import { rejectUnknownArgs } from "./utils/unknown-args.js";
 
 export function createServer(principal: Principal): Server {
   const server = new Server(
@@ -156,13 +158,23 @@ export function createServer(principal: Principal): Server {
   // Nothing downstream parses the formatting; a human debugging a transcript can
   // pipe it through `jq`. See docs/plan/research-performance-2026-07-27.md §C6.
   server.setRequestHandler(CallToolRequestSchema, async (request) => {
+    // Argument NAMES only (`unknown-args.ts`): a key that is not a parameter is
+    // refused here, before any arm, instead of being dropped by the handler.
+    const unknownArgs = rejectUnknownArgs(request.params.name, request.params.arguments);
+    if (unknownArgs !== null) {
+      return {
+        content: [{ type: "text", text: JSON.stringify({ error: unknownArgs }) }],
+        isError: true
+      };
+    }
+
     if (request.params.name === "research_delivered") {
       // A pure signal: no network, no auth, no project write. On BOTH hosted planes a
       // PreToolUse hook ends the turn on this tool's NAME before it executes, so this
       // arm runs only where no such hook binds (Cowork, the e2e harness).
       //
-      // The try/catch is not decoration: the server does NOT validate `inputSchema`, so
-      // a non-string `summary` reaches the body and `.trim()` throws. Every other arm
+      // The try/catch is not decoration: the server checks argument names, not their
+      // types, so a non-string `summary` reaches the body and `.trim()` throws. Every other arm
       // here returns `isError` with a readable message; without this one, that throw
       // escapes as a protocol-level MCP error instead.
       try {
@@ -803,6 +815,16 @@ export function createServer(principal: Principal): Server {
         return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
       }
     }
+    if (request.params.name === "evaluation_append") {
+      try {
+        const args = request.params.arguments as unknown as ResearchAppendInput;
+        const result = await evaluationAppend(args);
+        return writerToolResult(result);
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Unknown error";
+        return { content: [{ type: "text", text: JSON.stringify({ error: message }) }], isError: true };
+      }
+    }
     if (request.params.name === "rank_search_matches") {
       try {
         const args = request.params.arguments as unknown as RankSearchMatchesInput;
@@ -816,7 +838,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "project_context") {
       try {
         const args = request.params.arguments as unknown as ProjectContextInput;
-        const result = await projectContext(args);
+        const result = await projectContext(args, principal);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
@@ -835,7 +857,7 @@ export function createServer(principal: Principal): Server {
     }
     if (request.params.name === "project_list") {
       try {
-        const result = await projectList();
+        const result = await projectList(principal);
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

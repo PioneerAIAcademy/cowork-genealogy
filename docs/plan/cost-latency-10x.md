@@ -210,10 +210,10 @@ Lever 1's other half: what comes back. Tool-result carry is **24%** of the bill.
   generates a median **9,036 chars of arguments** per call — those are output tokens
   at $15/MTok. Results are the cheaper half (result/arg 0.17–0.33).
 
-**Production runs with tool search off. A short probe measured that at 2.2× cost; a full run puts it at about +12–14%.**
+**Production ran with tool search off until PR #4094 (2026-10-31). A short probe measured that at 2.2× cost; a full run puts it at about +12–14%.**
 Every figure in this plan comes from runs with tool search **on**: both harnesses and the
-alpha set `ENABLE_TOOL_SEARCH=true`. The FamilySearch gateway path turns it off:
-`GATEWAY_TOOL_SEARCH` defaults to `false` in `apps/server/proto/worker/options.py`,
+alpha set `ENABLE_TOOL_SEARCH=true`. The FamilySearch gateway path turned it off --
+`GATEWAY_TOOL_SEARCH` defaulted to `false` in `apps/server/proto/worker/options.py` --
 because agentgateway 1.5.0 cannot parse the `tool_reference` blocks tool search returns
 (`search-agent-prototype.md`, P3e/P3f). Off means all 48 tool schemas load eagerly on
 every call. Probe P3b (`make probe-gateway-path`, 2026-09-11) measured the difference:
@@ -238,11 +238,12 @@ the switch. n = 1 pair; the figure is the projection, not the totals. The hosted
 
 Two pieces of work, in order:
 
-1. **Get the gateway onto agentgateway ≥ 1.6.0, then set `GATEWAY_TOOL_SEARCH=true`.**
-   The first half is done: our PR fs-eng/tap-gateway#46 put TAP's EKS gateway on v1.6.0,
-   merged 2026-10-12, so the drafted request was never sent. The second half waits on the
-   handoff's U14 two-turn check on that gateway; until it passes, production pays for the
-   whole schema block on every call and Wave 2's schema trim is the only relief.
+1. **Done 2026-10-31. Get the gateway onto agentgateway ≥ 1.6.0, then set `GATEWAY_TOOL_SEARCH=true`.**
+   Our PR fs-eng/tap-gateway#46 put TAP's EKS gateway on v1.6.0, merged 2026-10-12, so the
+   drafted request was never sent. The handoff's U14 runs on a local copy of that gateway's
+   route held with tool search on (2026-10-31), and PR #4094 made `true` the default
+   (Richard, 2026-10-31). Unverified on the deployed gateway until F1; TAP's Fargate stack
+   (1.5.0) needs `GATEWAY_TOOL_SEARCH=false`.
 2. **Done 2026-10-09 (above). Measure one e2e panel fixture with tool search off against the same fixture with
    it on**, on the harness, so the production gap is priced on this plan's basis. Do
    this before step 1 lands, because it decides how much of the gap is this lever's.
@@ -341,18 +342,10 @@ the first time it is pulled.
 
 **Gating Wave 4 only:**
 
-- **~~Production cannot set effort.~~ Done in code (T4.1, 2026-10-20), off by default.**
-  `ORCHESTRATOR_EFFORT`, `SUBAGENT_EFFORT` and `SUBAGENT_EFFORT_BY_AGENT` on the control
-  plane (`config.Settings`) reach a sandbox at create through `sandbox.base.optional_agent_env`
-  (both `E2BProvider._agent_env` and `LocalProvider.ensure_server`, which also strips a host
-  value; `SandboxSpec` was not needed). `build_options` passes the orchestrator level as
-  `effort=`, and `_pretool_hook` writes the helper level onto each Agent call (CLI 2.1.294's
-  per-spawn `effort`). Measured locally on 2.1.294 (`dev/probe_effort_capture.py`): main
-  `medium` with the helper held at `high`; a per-agent `low` reaching `person-evidence`
-  under both its bare and namespaced names. The lead set the alpha's main thread to `low` on
-  2026-10-21 (`ORCHESTRATOR_EFFORT` in `deploy/fly.toml`), and fresh sandboxes picked it up:
-  the proxy logged 574 main-thread calls at `low` in the 14 days to 2026-10-25
-  (`make alpha-costs`). The helpers' level is still the lead's call.
+- **~~Production cannot set effort.~~ Done.** The main thread's model and effort are set in
+  `packages/engine/plugin/main-thread.json`, which the hosted alpha and beta and both
+  harnesses read and pass as `--model` / `--effort`; each agent's are in its own file. The
+  control-plane settings and per-spawn hook that came first (T4.1) are removed.
 - **`EFFORT_LEVEL` is not wired into `eval/RunE2E.bat`** — it threads `DENY_SHELL`
   and `DENY_PROJECT_READS` only, so the Windows genealogists cannot run an arm.
   **Wire it with a paired CI guard** (`check_added_runlogs_effort_high`, modelled on
@@ -410,7 +403,7 @@ runlog summary plus a warn-only check makes every future PR's cost visible.
     fetch (33–36 s cold, unless its 1-hour cache is warm). On a subject with attached records
     it also adds record reads (4.5–7.2 s for 14–16 records) and the extraction summary in
     context.
-  - Issue #3153's hints item adds a search-hints spawn on identity and parentage questions.
+  - Issue #3153's hints item adds a search-hints spawn on identity, parentage, birth, death and marriage questions (#3906 widened it).
     In e2e that spawn cannot read hints, because `person_record_matches` is blocked.
 
   Compare runs from either side of them like with like.

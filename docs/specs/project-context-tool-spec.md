@@ -119,6 +119,13 @@ repo's identifier-casing rule):
   },
   sectionCounts: { [section: string]: number | null },  // entries per research_query section — §2.6
   unregisteredDisagreementCount: number,         // what research_query's conflicts adds — §2.6
+  uploads?: [{                           // the user's uploads, newest first; absent when none — §2.7
+    name: string,
+    uploaded: string,                    // ISO, from the store's mtime
+    hasText: boolean,                    // uploads/<name>.txt exists
+  }],
+  projectUrl?: string,                   // viewer page; only with webPublicUrl and a store id — §2.7
+  uploadUrl?: string,                    // upload page; only when uploadsEnabled too — §2.7
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
@@ -212,14 +219,17 @@ outranks a missing resolve, which outranks a missing summary. A missing critique
 is never a next step.
 
 **An unsettled conflict that has weighed everything ends the research** (step
-mode, section E; decision 12). When every open conflict carries an
-`independence_analysis` and a `weighed_log_entry_ids` covering every log entry
-the question owns (the same coverage set as the researcher's choice below), and
+mode, section E; decision 12). When the question is unresolved and every open
+conflict carries an `independence_analysis` and a `weighed_log_entry_ids` (present
+only once conflict-resolution has declared nothing left to search) covering every
+log entry the question owns (the same coverage set as the researcher's choice below), and
 no `planned` or `in_progress` item is left (one waiting only on an upload aside),
 `nextStep` is `proof-conclusion — unsettled conflict …`: re-running
 conflict-resolution there would weigh the same evidence again. Once the question
-has a `not_proved` summary with `shortfall: "conflict"`, `nextStep` is null — the
-research ended on the conflict. One log entry the weighed list does not cover is
+has a summary with `shortfall: "conflict"`, at whatever tier the evidence reached,
+whose `updated` is not older than the question's latest log entry, `nextStep` is null — the research ended
+on the conflict. An older one predates the evidence just weighed, so
+proof-conclusion refreshes it. One log entry the weighed list does not cover is
 new evidence and routes back to conflict-resolution.
 
 **A conflict that wants evidence already planned routes to the search** (step
@@ -534,6 +544,39 @@ the October 2026 e2e corpus 98 of 98 of those reads came back empty; in two
 hosted sessions of 2026-10-05/06, 12 of 21 did. The reads were issued in
 parallel, so the counts save tokens and calls more than wall-clock time.
 
+### 2.7 `uploads`, `projectUrl`, `uploadUrl` — the self-hosted beta's web tier
+
+```typescript
+uploads?: [{ name: string, uploaded: string /* ISO, from the store's mtime */, hasText: boolean }]
+projectUrl?: string   // `${webPublicUrl}/#/p/${projectId}`
+uploadUrl?: string    // `${projectUrl}/upload`
+```
+
+`uploads` lists the store's `uploads/` entries, newest first, ties by name. An
+entry `X.txt` whose `X` is also an entry is X's **text layer**, not an upload: it
+sets X's `hasText` and is not listed. A `notes.txt` with no `notes` beside it is
+an upload. A dotfile is not an upload. `<name>` is the full basename with its extension (`census.pdf` →
+`census.pdf.txt`), the name `upload_key()` gives an upload
+(`apps/server/proto/web/project_blobs.py`); the web tier's text-layer writer
+must use that name. `uploads` is **omitted** when there are none, so
+every desktop and harness response is unchanged, and when the listing fails.
+
+The links come from `projectLinks(principal)` (`src/utils/project-links.ts`):
+`projectUrl` only when the per-user config has `webPublicUrl` (trailing slashes
+stripped) **and** the bound store has a `projectId`; `uploadUrl` only when
+`uploadsEnabled` is also `true`. The id is the store's, never derived from
+`projectPath`: on the hosted path every project arrives under the same anchor
+path, `/project`. The file store has no id, so the desktop gets no link. On the
+hosted tool server the settings arrive as `WEB_PUBLIC_URL` and
+`UPLOADS_ENABLED` (`src/hosted-config-env.ts`); a switch other than
+`true`/`false`, or a `WEB_PUBLIC_URL` that is not a plain http(s) URL with no
+`#`, `?`, credentials, backslash, space or control character, refuses start-up
+with exit 2. The tool takes the principal as its last parameter because the
+links read the per-user config.
+
+What nothing checks: that the web tier writes the text layer under the name
+this side reads. Each side is tested against its own fixture.
+
 ## 3. Decisions recorded
 
 - **A projection, not a query language.** One fixed shape, no field
@@ -560,10 +603,12 @@ was still deferred and arrived through ToolSearch, description included):
 > progress", "what have we found?") or reopens a project, call this and answer
 > from it in exactly ONE plain-language paragraph and nothing else: the
 > objective, what is established, what is open or waiting on the researcher,
-> and the next step, stated rather than asked. No lead-in line ("Here's where
-> things stand:"), no line breaks, headings, tables, lists or bold, no closing
-> question, and no identifiers, file names, tool names or field names:
-> say "the proof summary" or "the parentage question", never q_001 or ps_001.
+> and the next step, stated rather than asked, as the paragraph's last
+> sentence. This shape overrides narrationGuidance for this answer. No lead-in
+> line ("Here's where things stand:"), no line breaks, headings, tables, lists
+> or bold, no closing question, and no identifiers, file names, tool names or
+> field names: say "the conclusion" or "the parentage question", never q_001
+> or ps_001.
 > nextStep values name ids and agents; restate them in plain words. Do not
 > read the project files and do not delegate.
 
@@ -574,6 +619,15 @@ the third quoting `ps_001`. With the worked examples, 3 of 3 scratch runs and
 0 of 1 in the full suite; with the `nextStep` sentence added, 4 of 5. Every
 miss quoted `ps_001`, which `questionStatuses[].nextStep` hands over verbatim
 ("gps-mentor (proof-critique) — ps_001").
+
+Once `narrationGuidance` came back in the same result, the house
+guidance's "what was found, in one paragraph, and what happens next in one
+sentence" competed with the one-paragraph rule: on 2026-10-30 (Windows, scratch
+runs) 10 of 17 replies put "The immediate next step is …" on a line of its own,
+and the clause's own example "the proof summary" put a word the house guidance
+bans into the reply. Naming the next step as the paragraph's last sentence,
+saying this shape overrides `narrationGuidance`, and giving "the conclusion" as
+the example: 10 of 10 single-paragraph replies, 9 of 10 passing the judge.
 
 The shape half is checked too: the validator fails a reply with more than one
 paragraph, a heading, list or table line, bold, or a closing question. Before
@@ -639,6 +693,14 @@ untouched.
   a capture on a different URL closes nothing; an earlier capture does not
   close a later hand-off; a `positive` entry with `capture_received: false`
   never lists; a non-`external_site` entry never lists.
+- **uploads and links** — `X` and `X.txt` list once with `hasText: true`, a lone
+  `notes.txt` lists as an upload; newest first, ties by name (seeded with `fs`,
+  so `make engine-test-pg` runs it on Postgres/S3); no uploads → key absent.
+  With a project-id store: both links with both settings, no `uploadUrl` while
+  uploads are off or unset, neither link without `webPublicUrl` or without a
+  store id; a failing listing omits `uploads` and still answers.
+  `tests/http/http-server.test.ts` 2d drives both links, with both settings on,
+  through `startHttpServer`'s `baseConfig`.
 - **`exhaustedImageGroups`** — a film at 20 distinct images lists with the plan
   items of its `image_search` entries, across sub-volumes of the film, and not those
   of a `fulltext_search` entry on it; 19 images plus a re-read does not list; a torn

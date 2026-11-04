@@ -15,7 +15,8 @@ description: >-
   (search-records); when they are still choosing what or where to search
   (research-plan); or to analyze a single record already in context
   (the record-structurer agent).
-model: claude-sonnet-4-6
+model: claude-sonnet-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and

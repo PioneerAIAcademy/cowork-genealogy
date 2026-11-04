@@ -129,7 +129,7 @@ services:
   # process for every turn and every patron -- bearer as Authorization, the turn's
   # project id as X-Genealogy-Project-Id, the store bound per request. Only the recipes
   # that wait for `tools` can run a real turn -- proto-up, proto-turn, proto-kill,
-  # proto-demo, proto-demo-auto. proto-up-core deliberately leaves `tools` down for the
+  # proto-demo. proto-up-core deliberately leaves `tools` down for the
   # D3 smoke, whose stub arms never build worker options, so they never reach it.
   worker:
     build:
@@ -159,7 +159,7 @@ services:
       # /bedrock), its consumer key, and whether tool search is on (off below v1.6).
       GATEWAY_BASE_URL: ${GATEWAY_BASE_URL:-}
       GATEWAY_API_KEY: ${GATEWAY_API_KEY:-}
-      GATEWAY_TOOL_SEARCH: ${GATEWAY_TOOL_SEARCH:-false}
+      GATEWAY_TOOL_SEARCH: ${GATEWAY_TOOL_SEARCH:-true}
       # U3: the FamilySearch bearer is the turn's project owner's grant, read from Postgres
       # (familysearch_tokens) at the start of EVERY attempt and held under that patron's
       # attempt lock; the web tier is its only refresher. No token reaches this service any
@@ -183,11 +183,6 @@ services:
       # The e2e harness's tree-read block for fixture runs (bare MCP tool names, comma-
       # separated; proto-demo exports the harness's five). Empty: no block.
       BLOCKED_TOOLS: ${BLOCKED_TOOLS:-}
-      # D18's autonomous arm: the worker's Stop hook vetoes the model's voluntary yield up
-      # to this many times per turn. Only for a message WITHOUT max_nudges: the web tier
-      # stamps its own cap (below) on every message, and the worker prefers it, so this 0
-      # does not switch the hook off for a web-tier turn.
-      AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-0}
       # 1e: the per-session spend cap (0 is off) and the price vector that meters it, each
       # defaulting to app/agent/spend.py's own value. Read once at start, so a new value
       # needs the container recreated (`up -d` does), not restarted.
@@ -286,22 +281,6 @@ services:
       FS_GRANT_REFRESH_INTERVAL_S: ${FS_GRANT_REFRESH_INTERVAL_S:-30}
       # The worker's note on OPENSSL_armcap: the same cryptography wheel, the same SIGILL.
       OPENSSL_armcap: ${OPENSSL_armcap:-0}
-      # PR #2870 item 1a: the Stop hook's veto cap, stamped on every queue message
-      # this tier enqueues (admit_message -> body.max_nudges) and preferred by run_turn over
-      # the worker's own AUTONOMOUS_MAX_NUDGES. It lives HERE, not on MessageBody: the
-      # cap is the operator's, so a request field would let a signed-in patron set their
-      # own nudge budget. The worker cannot tell the browser from `make proto-demo` -- there is no
-      # browser path it can see -- so each recipe recreates this container with its own
-      # export instead, and proto-demo exports 0 to stay a one-turn run.
-      #
-      # 0 under step mode: a turn is one step and ends at its boundary on purpose,
-      # so there is nothing for a Stop veto to re-open (`turn_max_nudges`). The host's
-      # own reply continues the run, bounded by `MAX_AUTO_REPLIES` in step_boundary.py.
-      # The earlier 60 was sized on step count per run to clear a p99 under a harness
-      # that FORBADE yielding; that regime is gone, and the test that re-derived the
-      # p99 from the corpus went with it. The cap was never the spend control; 1e's
-      # per-session bound is.
-      AUTONOMOUS_MAX_NUDGES: ${AUTONOMOUS_MAX_NUDGES:-0}
     depends_on:
       postgres:
         condition: service_healthy
@@ -334,7 +313,11 @@ services:
       GENEALOGY_S3_ACCESS_KEY: proto
       GENEALOGY_S3_SECRET_KEY: protoproto
       GENEALOGY_ANCHOR_PATH: /project
-      # The per-user config, the four keys src/hosted-config-env.ts reads from the env:
+      # Process-wide limits (self-hosted beta E4). Empty means off, which is the
+      # default everywhere; set them in the shell to exercise the on state.
+      GENEALOGY_FS_CALLS_PER_MINUTE: ${GENEALOGY_FS_CALLS_PER_MINUTE:-}
+      GENEALOGY_MAX_TRANSCRIPTIONS: ${GENEALOGY_MAX_TRANSCRIPTIONS:-}
+      # The per-user config, the keys src/hosted-config-env.ts reads from the env:
       # one shared process, so these are per-STACK here rather than per patron, which is
       # what a one-patron prototype wants. Without the OpenRouter key `image_transcribe`
       # answers with its no-key error. env.sh exports it from eval/.env.
@@ -342,6 +325,14 @@ services:
       OPENROUTER_MODEL: ${OPENROUTER_MODEL:-}
       WIKI_API_URL: ${WIKI_API_URL:-}
       POP_STATS_URL: ${POP_STATS_URL:-}
+      # Unset: no viewer or upload link, transcription as today. A switch other than
+      # true/false, or a WEB_PUBLIC_URL that is not a plain http(s) URL with no '#', '?',
+      # credentials, backslash, space or control character, refuses start-up.
+      WEB_PUBLIC_URL: ${WEB_PUBLIC_URL:-}
+      UPLOADS_ENABLED: ${UPLOADS_ENABLED:-}
+      TRANSCRIPTION_ENABLED: ${TRANSCRIPTION_ENABLED:-}
+      MATCHER_URL: ${MATCHER_URL:-}
+      MATCHER_API_KEY: ${MATCHER_API_KEY:-}
     # Project state lives in Postgres/S3, so nothing writes to the rootfs; /tmp is the
     # one rw path.
     read_only: true
@@ -381,9 +372,7 @@ services:
       WORKER_CONTAINER: proto-worker
       HTTP_CONNECTIONS: "2"
       # The step ceiling: 1800 s unless the `up` environment sets READ_TIMEOUT_S
-      # (proto-demo-auto exports it too, but at the same pinned 1800 since 0b brought
-      # the ceiling back down -- it buys MORE attempts now, not a longer one; proto-demo, proto-turn and
-      # proto-kill run at the default). docker-compose.ceiling.yml lowers it for the
+      # (proto-demo, proto-turn and proto-kill run at the default). docker-compose.ceiling.yml lowers it for the
       # smoke's ceiling case and changes nothing else.
       READ_TIMEOUT_S: "${READ_TIMEOUT_S:-1800}"
       BACKOFF_BASE_S: "5"

@@ -33,6 +33,7 @@ vi.mock("../../src/utils/place-resolver.js", async (importOriginal) => {
 import { LOCAL } from "../../src/auth/principal.js";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { extractionAppend } from "../../src/tools/extraction-append.js";
+import { evaluationAppend } from "../../src/tools/evaluation-append.js";
 import { timelineBuild } from "../../src/tools/timeline-build.js";
 import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { treeEdit } from "../../src/tools/tree-edit.js";
@@ -102,6 +103,11 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
       researchAppend({ projectPath, section: "sources", op: "append", entry: { id: "src_001" } } as any),
   },
   {
+    tool: "evaluation_append",
+    call: (projectPath) =>
+      evaluationAppend({ projectPath, section: "evaluations", op: "append", entry: { id: "ev_001" } } as any),
+  },
+  {
     tool: "extraction_append",
     call: (projectPath) =>
       extractionAppend({
@@ -151,7 +157,7 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
     tool: "tree_forget",
     call: (projectPath) => treeForget({ projectPath, forget: [{ personId: "I1" }] } as any),
   },
-  { tool: "project_context", call: (projectPath) => projectContext({ projectPath } as any) },
+  { tool: "project_context", call: (projectPath) => projectContext({ projectPath } as any, LOCAL) },
   { tool: "tree_query", call: (projectPath) => treeQuery({ projectPath } as any) },
   {
     tool: "research_query",

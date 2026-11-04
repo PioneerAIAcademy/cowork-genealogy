@@ -32,6 +32,8 @@ import { readExternalCollections } from "../utils/external-collections-store.js"
 import { placeSegments } from "../utils/place-resolver.js";
 import { unregisteredDisagreements, type UnregisteredDisagreement } from "../utils/question-state.js";
 import { rankForReview, type ReviewLink } from "../utils/review-ranking.js";
+import { SECTIONS_NEAR_MISS } from "../utils/tool-hint-messages.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
 
 const MAX_ITEMS = 50;
 
@@ -114,6 +116,8 @@ export interface ResearchQueryInput {
   questionId?: string;
   personId?: string | string[];
   assertionId?: string | string[];
+  /** conflicts only: the conflict's own id. */
+  conflictId?: string | string[];
   planItemId?: string;
   status?: string;
   targetId?: string;
@@ -125,6 +129,8 @@ export interface ResearchQueryInput {
   /** Pagination, not a filter: skip the first `offset` matches, then return up
    *  to MAX_ITEMS. Applies to every section; absent ⇒ 0 (the whole first page). */
   offset?: number;
+  /** assertions only: also return the ones a re-extraction retired (#3678). */
+  includeSuperseded?: boolean;
 }
 
 export type ResearchQueryResult =
@@ -181,6 +187,7 @@ type FilterKey =
   | "questionId"
   | "personId"
   | "assertionId"
+  | "conflictId"
   | "planItemId"
   | "status"
   | "targetId"
@@ -260,6 +267,7 @@ export const SECTION_FILTERS: Record<ResearchQuerySection, Partial<Record<Filter
     assertionId: { field: "assertion_id", mode: "exact" },
   },
   conflicts: {
+    conflictId: { field: "id", mode: "exact" },
     assertionId: { field: "competing_assertion_ids", mode: "contains" },
     // Any status. A resolved conflict has emptied `blocks_question_ids`, and a
     // caller asking what was settled for a question needs it still:
@@ -318,6 +326,7 @@ const FILTER_KEYS: FilterKey[] = [
   "questionId",
   "personId",
   "assertionId",
+  "conflictId",
   "planItemId",
   "status",
   "targetId",
@@ -328,7 +337,49 @@ const FILTER_KEYS: FilterKey[] = [
 
 /** The id keys that take a list as well as one id. Each keeps its per-section
  *  rule; a list matches an item when ANY of its ids would. */
-export const PLURAL_KEYS: readonly FilterKey[] = ["personId", "assertionId", "sourceId", "recordId"];
+export const PLURAL_KEYS: readonly FilterKey[] = ["personId", "assertionId", "sourceId", "recordId", "conflictId"];
+
+/** The id prefix each id filter takes. A known id of another kind matched
+ *  nothing and read as "none exists": on `conflicts`, `assertionId: "c_001"`
+ *  returned 0, and ut_conflict_resolution_008 (v4, run 2) appended a duplicate
+ *  of c_001. */
+const ID_PREFIX: Partial<Record<FilterKey, string>> = {
+  assertionId: "a",
+  conflictId: "c",
+  questionId: "q",
+  sourceId: "src",
+  planItemId: "pli",
+};
+
+/** The research.json id prefixes, each with its kind, as research_append mints them. */
+const ID_KIND: Record<string, string> = {
+  a: "an assertion",
+  c: "a conflict",
+  q: "a question",
+  src: "a source",
+  pli: "a plan item",
+  pl: "a plan",
+  pe: "a person_evidence",
+  rj: "a rejected_links",
+  h: "a hypothesis",
+  t: "a timeline",
+  ps: "a proof summary",
+  ev: "an evaluation",
+  loc: "a locality",
+  ns: "a namesake",
+  log: "a log entry",
+};
+
+/** The first value that is a research.json id of another kind than `key` takes. */
+function wrongKindOfId(key: FilterKey, values: string[]): { value: string; prefix: string } | undefined {
+  const expected = ID_PREFIX[key];
+  if (!expected) return undefined;
+  for (const value of values) {
+    const prefix = /^([a-z]+)_\d+$/.exec(value)?.[1];
+    if (prefix && prefix !== expected && Object.hasOwn(ID_KIND, prefix)) return { value, prefix };
+  }
+  return undefined;
+}
 
 /** One filter's value as the ids to match, and whether the caller sent a list.
  *  Never coerces: a non-string, an empty or mixed list, or a malformed
@@ -469,7 +520,7 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
           ? " Plan items live under section 'plans'."
           : section === undefined &&
               (input as unknown as Record<string, unknown>).sections !== undefined
-            ? " The parameter is 'section' (singular) and takes one value at a time — you sent 'sections'."
+            ? ` ${SECTIONS_NEAR_MISS}`
             : "";
       throw new ResearchQueryError(
         `section ${JSON.stringify(section)} is not one of: ${RESEARCH_QUERY_SECTIONS.join(", ")}.` +
@@ -494,6 +545,10 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
         `offset must be a non-negative whole number (got ${got}). ` +
           `Send it as a number, not a string.`,
       );
+    }
+
+    if (input.includeSuperseded !== undefined && typeof input.includeSuperseded !== "boolean") {
+      throw new ResearchQueryError("includeSuperseded must be true or false.");
     }
 
     const allowed = SECTION_FILTERS[section];
@@ -521,6 +576,16 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
         listFilter = filter;
       }
       activeFilters.push(filter);
+    }
+
+    for (const { key, values } of activeFilters) {
+      const wrong = wrongKindOfId(key, values);
+      if (!wrong) continue;
+      const better = (Object.keys(ID_PREFIX) as FilterKey[]).find((k) => ID_PREFIX[k] === wrong.prefix && allowed[k]);
+      throw new ResearchQueryError(
+        `'${wrong.value}' is ${ID_KIND[wrong.prefix]} id, but ${key} takes ${ID_PREFIX[key]}_ ids` +
+          (better ? `. To filter by it on '${section}', pass ${better} '${wrong.value}'.` : "."),
+      );
     }
 
     if (section === EXTERNAL_COLLECTIONS_SECTION) {
@@ -618,7 +683,9 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       assertionsFor.set(value, ids);
     }
 
-    const filtered = arr.filter((item) =>
+    // A retired assertion is history, not evidence: shown only on request.
+    const showRetired = section !== "assertions" || input.includeSuperseded === true;
+    const filtered = arr.filter((item) => (showRetired || isLiveAssertion(item)) &&
       activeFilters.every(({ rule, values }) =>
         matches(item, rule, values, rule.mode === "question-conflict" ? assertionsFor.get(values[0]) : planItemsFor.get(values[0])),
       ),
@@ -669,7 +736,12 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     if (section !== "conflicts" || (input.status !== undefined && input.status !== "unresolved")) {
       return page;
     }
-    const assertionIds = activeFilters.find((f) => f.key === "assertionId")?.values;
+    // A conflictId read is scoped to that conflict's own competing assertions.
+    const assertionIds =
+      activeFilters.find((f) => f.key === "assertionId")?.values ??
+      (activeFilters.some((f) => f.key === "conflictId")
+        ? ordered.flatMap((c: any) => (Array.isArray(c?.competing_assertion_ids) ? c.competing_assertion_ids : []))
+        : undefined);
     return { ...page, unregisteredDisagreements: disagreementsInScope(research, input, assertionIds) };
   } catch (e) {
     if (e instanceof NoProjectError) return noProjectResult("read");
@@ -702,7 +774,7 @@ export const researchQuerySchema = {
     "`person_evidence` (personId, assertionId — pass `orderBy: \"review\"` to order by " +
     "consequence and get `reviewReasons`), `rejected_links` (no filters; the pairs a " +
     "researcher ruled out, so a later step does not re-propose them), " +
-    "`conflicts` (assertionId — matches " +
+    "`conflicts` (conflictId — the conflict's own id, assertionId — matches " +
     "competing_assertion_ids, questionId — matches blocks_question_ids or a competing " +
     "assertion of that question, at any status; status), " +
     "`hypotheses` (questionId — matches " +
@@ -715,7 +787,7 @@ export const researchQuerySchema = {
     "`superseded_by` — narrow with targetId/focus, then pick the entry whose " +
     "`superseded_by` is null yourself.\n" +
     "\n" +
-    "`personId`, `assertionId`, `sourceId` and `recordId` also take a list (≤50 ids): one call " +
+    "`personId`, `assertionId`, `sourceId`, `recordId` and `conflictId` also take a list (≤50 ids): one call " +
     "returns items matching any, plus `countById` per id.\n" +
     "\n" +
     "Returns `{ section, count, items, truncated }` — `count` is the total match " +
@@ -729,7 +801,8 @@ export const researchQuerySchema = {
     "assertionIds}]`, linked assertions that disagree on a birth or death place or " +
     "year with no conflicts entry naming them. These are evidence conflicts present " +
     "but not yet registered: `count: 0` does not mean the evidence agrees. Scoped to " +
-    "the question's own assertions under `questionId`, narrowed by `assertionId`, " +
+    "the question's own assertions under `questionId`, narrowed by `assertionId` or to a " +
+    "`conflictId` conflict's competing assertions, " +
     "omitted under a `status` other than 'unresolved'.",
   inputSchema: {
     type: "object" as const,
@@ -778,6 +851,11 @@ export const researchQuerySchema = {
           "(contains). hypotheses: matches supporting_assertion_ids OR " +
           "contradicting_assertion_ids (contains either).",
       },
+      conflictId: {
+        type: ["string", "array"],
+        items: { type: "string" },
+        description: "conflicts: matches the conflict's own id (c_NNN).",
+      },
       planItemId: { type: "string", description: "log: matches plan_item_id." },
       status: {
         type: "string",
@@ -813,6 +891,12 @@ export const researchQuerySchema = {
           "skips that many, then returns up to 50. Default 0. When `truncated` is " +
           "true, fetch items 51+ by setting offset to 50, then 100, and so on. " +
           "Must be a non-negative whole number.",
+      },
+      includeSuperseded: {
+        type: "boolean",
+        description:
+          "assertions only (not a filter): true also returns assertions a re-extraction retired " +
+          "(non-null `superseded_by`). Omitted, they are left out: they are not evidence.",
       },
     },
     required: ["projectPath", "section"],

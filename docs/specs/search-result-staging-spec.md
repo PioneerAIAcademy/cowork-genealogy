@@ -90,7 +90,9 @@ requires `projectPath` and refuses a call without one.
 **Inline-payload strip (overflow protection).** Once a producer has staged its
 full payload, it drops the heavy per-result field from the *inline* copy so a
 broad search can't overflow the model's token cap — the bulk lives in the
-sidecar, which `record_read` and `rank_search_matches` read host-side. Each
+sidecar, which `record_read` and `rank_search_matches` read host-side, and
+`sidecar_read` serves one full-text hit's `textDocument` from it
+(`results/<file>#<hit id>`). Each
 producer strips its own heavy field: `record_search` drops `gedcomx`,
 and `fulltext_search` drops `textDocument` (the AI-transcribed page). Both strips
 are unconditional once staged (so the protection can't be forgotten) and never
@@ -229,6 +231,10 @@ names, then runs its own checks on that canonical ref.
 - **Exactly one candidate** is used. Zero or several, a ref naming any other
   directory, or a ref containing `..`, is left unchanged and refused by the
   consumer's own check as before — the resolver never guesses.
+- A ref containing `#` is never corrected: it carries a full-text hit selector
+  (`results/<file>#<hit id>`), which only `sidecar_read` and `extraction_append`'s
+  `transcriptionRef` read. `readStagedResults` and
+  `checkStagedResults` refuse it, naming the ref without the selector.
 - A writing consumer reports each correction in `validation.warnings`
   (`<field> '<given>' matched no staged file; used '<canonical>', ...`); the
   read-only `readStagedResults` reads through without persisting anything.
@@ -425,5 +431,7 @@ output change.
 - `image-transcribe-tool-spec.md` §5.4/§5.5, `record_read` and `person-read-tool-spec.md` — the three acquisition producers. **Ownership boundary:** this spec and those tools own the writer, the envelope
   and finalize. *Reading a staged transcription's full text back* is the consumer's design —
   the `document-capture` agent returns `{ recordId, logId, resultsRef, digest }` and decides
-  whether extraction reads the text host-side or through a paged reader; `sidecar_read`
-  deliberately does not serve `results/` (its spec §7), so no reader was added here.
+  whether extraction reads the text host-side or through a paged reader. `sidecar_read` is
+  that paged reader: it serves a transcription's `transcription`, and one full-text hit's
+  `textDocument` through `results/<file>#<hit id>` (`#hits` lists the hits), and refuses
+  every other `results/` sidecar (its spec §7), so no reader was added here.

@@ -18,11 +18,12 @@ import {
 import { expandLookingFor } from "../utils/name-variants.js";
 import {
   runOcr,
+  runFoundCheck,
   buildOcrPrompt,
-  parseFound,
   OCR_TIMEOUT_MS,
   OCR_MAX_TOKENS,
   MAX_OCR_INPUT_BYTES,
+  withTranscriptionSlot,
 } from "../utils/ocr.js";
 import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.js";
 import { getProjectStore } from "../store/project-store.js";
@@ -105,28 +106,13 @@ function captureIdFor(ref: string): string {
   return `capture:${base.replace(/\.[A-Za-z0-9]+$/, "")}`;
 }
 
-/**
- * OCR a FamilySearch page scan via a hosted VLM (OpenRouter, default
- * Gemini Flash) and return the transcription as text. The image bytes go
- * host-side → OpenRouter and never cross the MCP transport, so there is no
- * size cap (unlike image_read). See docs/specs/image-transcribe-tool-spec.md.
- */
-export async function imageTranscribeTool(
-  input: ImageTranscribeInput,
-  principal: Principal,
-  /**
-   * Internal only — not on the MCP schema, so no caller across the tool
-   * boundary can set it. person_read's memories phase runs every OCR under one
-   * ~40s wall-clock budget; without a cap here a single call would keep its own
-   * 180s hang-catcher and go on running after the phase had already given up on
-   * it, burning an OpenRouter call nothing will read. Capping the underlying
-   * fetch aborts it for real rather than abandoning the promise.
-   */
-  opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
-): Promise<ImageTranscribeResult | NoProjectResult> {
-  input = foldImageArkInput(input, "image_transcribe");
-  // Exactly one input form, checked HERE: `resolveFsImageInput` is shared with
-  // image_read and knows only the three FamilySearch shapes.
+/** Exactly one input form, checked HERE: `resolveFsImageInput` is shared with
+ *  image_read and knows only the three FamilySearch shapes.
+ *
+ *  Pure and idempotent, so it runs in the exported wrapper (before a slot is
+ *  taken, so a malformed call is told what conflicts rather than that the
+ *  server is busy) and again in the body, which stays safe to call directly. */
+function assertOneImageForm(input: ImageTranscribeInput): void {
   const forms = (["imageId", "ark", "memoryArtifactUrl", "file"] as const).filter(
     (k) => typeof input[k] === "string" && input[k] !== "",
   );
@@ -141,6 +127,55 @@ export async function imageTranscribeTool(
       `Provide exactly one of imageId, ark, memoryArtifactUrl, or file — not ${forms.join(" and ")}.`,
     );
   }
+}
+
+/**
+ * OCR a FamilySearch page scan via a hosted VLM (OpenRouter, default
+ * Gemini Flash) and return the transcription as text. The image bytes go
+ * host-side → OpenRouter and never cross the MCP transport, so there is no
+ * size cap (unlike image_read). See docs/specs/image-transcribe-tool-spec.md.
+ *
+ * Holds one transcription slot for the whole call (`GENEALOGY_MAX_TRANSCRIPTIONS`,
+ * self-hosted beta E4). A thin wrapper rather than a `try`/`finally` around the
+ * body: the slot then covers EVERY caller of this function — `person_read`'s
+ * memories phase included, which calls it directly rather than through the MCP
+ * wrapper — with no re-indent of the 320-line body and no edit at the line
+ * issue #3996 also works on. Off unless configured, in which case
+ * `withTranscriptionSlot` calls straight through.
+ *
+ * INPUT SHAPE IS VALIDATED FIRST, before the slot: a caller who passes two
+ * conflicting identifiers should be told which ones conflict, not that the
+ * server is busy — otherwise it retries the same malformed call forever.
+ */
+export async function imageTranscribeTool(
+  input: ImageTranscribeInput,
+  principal: Principal,
+  opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
+): Promise<ImageTranscribeResult | NoProjectResult> {
+  // Fold BEFORE validating: `imageArk` becomes `ark` here, and checking the
+  // unfolded input would read a valid imageArk call as "no image input".
+  // Folding is idempotent, so the body's own fold is still correct for a
+  // direct call to the inner function.
+  const folded = foldImageArkInput(input, "image_transcribe");
+  assertOneImageForm(folded);
+  return withTranscriptionSlot(() => imageTranscribeToolInner(folded, principal, opts));
+}
+
+async function imageTranscribeToolInner(
+  input: ImageTranscribeInput,
+  principal: Principal,
+  /**
+   * Internal only — not on the MCP schema, so no caller across the tool
+   * boundary can set it. person_read's memories phase runs every OCR under one
+   * ~40s wall-clock budget; without a cap here a single call would keep its own
+   * 180s hang-catcher and go on running after the phase had already given up on
+   * it, burning an OpenRouter call nothing will read. Capping the underlying
+   * fetch aborts it for real rather than abandoning the promise.
+   */
+  opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
+): Promise<ImageTranscribeResult | NoProjectResult> {
+  input = foldImageArkInput(input, "image_transcribe");
+  assertOneImageForm(input);
 
   let bytes: Uint8Array;
   let contentType: string;
@@ -204,8 +239,8 @@ export async function imageTranscribeTool(
     // the host check, unchanged.
     //
     // This resolution lives HERE, not in resolveFsImageInput, on purpose.
-    // `ImageReadInput extends FsImageInput`, so image_read already accepts
-    // memoryArtifactUrl without advertising it — lifting the resolve into the
+    // `ImageReadInput extends FsImageInput`, so a direct image_read call can
+    // carry memoryArtifactUrl (server.ts refuses it over MCP) — lifting the resolve into the
     // shared resolver would quietly give image_read page-URL support, against
     // the image_transcribe-only ruling (lead, 2026-09-29; placement confirmed
     // 2026-09-30). image_read would also mostly pay the lookup and then refuse
@@ -254,12 +289,19 @@ export async function imageTranscribeTool(
   }
 
   // Expand recognized given names in lookingFor with historical diminutives
-  // (issue #607). The VLM reads this as natural language, so all forms
-  // (including scribal abbreviations with periods) are included.
+  // (issue #607). The model reads this as natural language, so all forms
+  // (including scribal abbreviations with periods) are included. It feeds ONLY
+  // the text-only found check below — never the OCR prompt, where a hinted name
+  // primes the read to return it in rows the page does not have (issue #3718).
   const lookingForExpansion = input.lookingFor
     ? expandLookingFor(input.lookingFor)
     : null;
   const expandedLookingFor = lookingForExpansion?.expanded ?? input.lookingFor;
+
+  // One budget spans the OCR read AND the found check: the second call runs on
+  // what the first leaves, so lookingFor never widens this leg's worst case.
+  const ocrBudgetMs = Math.max(1, Math.min(opts.ocrTimeoutMs ?? OCR_TIMEOUT_MS, OCR_TIMEOUT_MS));
+  const ocrStartedAt = Date.now();
 
   // The transport, the size refusal, the single transport retry, the status
   // triage and the truncation detection all live in utils/ocr.ts (issue #2183)
@@ -268,10 +310,10 @@ export async function imageTranscribeTool(
     bytes,
     contentType,
     sizeBytes,
-    prompt: buildOcrPrompt(expandedLookingFor),
+    prompt: buildOcrPrompt(),
     apiKey,
     model,
-    timeoutMs: opts.ocrTimeoutMs,
+    timeoutMs: ocrBudgetMs,
     maxTokens: OCR_MAX_TOKENS,
   });
   const transcription = ocr.text;
@@ -319,11 +361,27 @@ export async function imageTranscribeTool(
     if (imageRef) recordImageReadCap(input.projectPath, imageRef, truncated);
   }
 
-  // Suppress found on a truncated read: the FOUND/NOT FOUND marker rides a final
-  // line the model never reached, and a target may sit below the cut — a
-  // half-read page must never yield a clean NOT FOUND negative (#1974).
+  // `found` comes from a SECOND, text-only call over the transcription — the
+  // OCR prompt carries no lookingFor (issue #3718). Skipped on a truncated
+  // read: a target may sit below the cut, so a half-read page must never yield
+  // a clean NOT FOUND negative (#1974). Best-effort — any failure omits `found`
+  // (the transcription is the primary payload) — and it runs BEFORE staging so
+  // the staged element and the digest carry it.
   const key = input.lookingFor?.trim();
-  const found = key && !truncated ? parseFound(transcription) : undefined;
+  let found: "FOUND" | "NOT FOUND" | undefined;
+  if (key && !truncated) {
+    try {
+      found = await runFoundCheck({
+        transcription,
+        lookingFor: expandedLookingFor ?? key,
+        apiKey,
+        model,
+        timeoutMs: Math.max(1, ocrBudgetMs - (Date.now() - ocrStartedAt)),
+      });
+    } catch {
+      found = undefined;
+    }
+  }
 
   // Stage the transcription (issue #2489, merged into #2048): the same channel
   // the search tools use, as a ONE-element results[] so finalize's invariants

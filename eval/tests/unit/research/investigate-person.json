@@ -16,7 +16,8 @@
   },
   "judge_context": [
     "'Investigate [person]' is a listed trigger for the research orchestrator",
-    "Should drive the full GPS workflow, not just one search or one plan"
+    "Should enter the GPS routing table rather than answering inline or doing one ad-hoc search. It runs the FIRST step that table names and ends there with its offer line; driving several steps in one turn is the behaviour step mode removed.",
+    "**One step per turn.** Ending the turn after one step, with a report and a \"Continue with <label>?\" line, is CORRECT and must not be charged as stopping early. What is still a failure is ending with no step run at all, or ending without the offer line when a next step exists."
   ],
   "execution": {
     "max_turns": 40,

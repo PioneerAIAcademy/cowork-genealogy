@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_research_plan_tgt",
+    "skill": "research-plan",
+    "type": "positive",
+    "name": "A targeted question's plan carries no enumerative bookkeeping",
+    "description": "Issue #1830 item 1, the lead's 2026-08-31 ruling on #1917: a targeted question has no five-event obligation, and a narrow plan stays legitimate. q_001 asks Thomas Hale's birth county and carries question_kind: targeted. Gated by the amended test_new_plan_items_planned_status, under which a skipped item at creation is allowed only on an enumerative question. A regression guard: it passes before the edit too, since no rule exists then to over-fire. Synthetic scenario — no PII.",
+    "tags": [
+      "planning",
+      "new-plan-items-planned-status",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Create the first research plan for q_001 — in which Pennsylvania county was Thomas Hale born?\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "hale-birthplace-targeted"
+  },
+  "judge_reads_files": true,
+  "execution": {
+    "sdk_message_silence_seconds": 360,
+    "max_wall_clock_seconds": 600,
+    "max_turns": 40
+  },
+  "mcp_fixtures": [
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "person-read-empty-any",
+    "wiki-read-not-found-any"
+  ],
+  "judge_context": [
+    "Whether any new item was written with a status other than planned is checked by the deterministic validator test_new_plan_items_planned_status. If it fails, it is listed among the failed validators; if it is not listed, the plan met it.",
+    "Background: the question asks one fact about one person. A narrow plan aimed at that fact is legitimate here; do not reduce Correctness for record types the question does not need.",
+    "The repository is irrelevant, and an item may reach a record without naming a collection id."
+  ]
+}

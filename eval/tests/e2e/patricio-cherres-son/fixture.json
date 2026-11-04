@@ -15,5 +15,10 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "medium",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 11, hint-samples.csv row 303, flags adds_son, confidence 3). Draft transcribed from a 1908 Catholic burial entry at San Pedro, Guanujo, Bolívar, Ecuador; unverified."
+  "image_basis": true,
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:8HQL-MNW2",
+    "identity": "same"
+  },
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 11, hint-samples.csv row 303, flags adds_son, confidence 3). Resolved true match (issue #3633): a 1908 Catholic burial entry at San Pedro de Guanujo, Bolívar, Ecuador, confirmed against the original register image, correcting the index's mis-standardized Colombia place."
 }

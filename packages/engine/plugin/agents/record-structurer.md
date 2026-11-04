@@ -12,6 +12,7 @@ description: >-
   staged.resultsRef), to search for
   records, or to format citations.
 model: claude-sonnet-5
+effort: high
 tools:
   - mcp__genealogy__sidecar_read
   - mcp__genealogy__extraction_append

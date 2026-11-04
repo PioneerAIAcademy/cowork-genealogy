@@ -15,5 +15,9 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "easy",
-  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 16, hint-samples.csv row 471, flags adds_daughter, confidence 3). Draft transcribed from an 1871 Kiskunfélegyháza Catholic baptism of Veronika Tarjanyi, daughter of Janos Tarjanyi and Rozalia Bona; unverified. The mother's surname differs and the subject was about eleven in 1871, so a false match is the likely outcome."
+  "notes": "Record-hint fixture (filtered-list-samples-4.csv row 16, hint-samples.csv row 471, flags adds_daughter, confidence 3). Resolved 2026-10-29: false match. The hint record (ark:/61903/1:1:XZ1Y-W4K) names the mother as Rozalia Bona — not Görög — and Rozália Görög born about 1860 would have been approximately eleven in 1871, making it impossible for her to be this child's mother. Settled from the index alone; no image read was needed.",
+  "hint": {
+    "persona_ark": "ark:/61903/1:1:XZ1Y-W4K",
+    "identity": "different"
+  }
 }

@@ -25,7 +25,7 @@ export type SmokeMode = "no-bearer" | "bearer";
 
 /** The three auth tools the transport smoke never calls, each with its reason. */
 export const EXCLUDED_TOOLS: Readonly<Record<string, string>> = {
-  login: "every HTTP request is a bearer principal, so isHostedMode is true: answers HOSTED_REAUTH_INSTRUCTION without touching tokens.json",
+  login: "every HTTP request is a bearer principal, so isHostedMode is true: answers HOSTED_LOGIN_UNAVAILABLE without touching tokens.json",
   logout: "a bearer principal has no token file: answers HOSTED_SESSION_MANAGED_MESSAGE without touching tokens.json",
   auth_status: "answers {loggedIn: token.length > 0} from the bearer alone, but is excluded with the other auth tools",
 };
@@ -77,6 +77,10 @@ export interface SmokeStep {
 const REAL_IMAGE_ID = "004884748_02613";
 const FS_PID = "KNDX-MKG";
 const STAGED_REF = "results/.staging/smoke.json";
+// Staged, not finalized: a results/<log>.json no log entry names fails the
+// later validate_research_schema row as an orphan sidecar.
+const FULLTEXT_REF = "results/.staging/smoke-fulltext.json";
+const FULLTEXT_HIT = { id: "ark:/61903/3:1:TEST-0001", textDocument: "Smoke full-text transcript." };
 
 const SEED_TREE = {
   persons: [
@@ -126,6 +130,19 @@ function carries(res: CallResult, msg: string): boolean {
 
 const noError = (res: CallResult): Expectation => ({ ok: !res.isError, detail: brief(res) });
 
+/** No link when the server has no WEB_PUBLIC_URL (the default); when a developer's
+ *  exported one reaches compose, a viewer link, and an upload link only beside it. It does
+ *  not read `process.env.WEB_PUBLIC_URL`: compose can take it from a `.env` file this
+ *  process never sees. */
+const linksWellFormed = (body: any): boolean => {
+  const { projectUrl, uploadUrl } = body;
+  if (projectUrl === undefined) return uploadUrl === undefined;
+  return (
+    /^https?:\/\/[^/#?\s@]+[^#?\s]*\/#\/p\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(projectUrl) &&
+    (uploadUrl === undefined || uploadUrl === `${projectUrl}/upload`)
+  );
+};
+
 const okTrue = (res: CallResult): Expectation => ({
   ok: !res.isError && res.body?.ok === true,
   detail: brief(res),
@@ -140,6 +157,14 @@ function reauth(res: CallResult, ctx: SmokeCtx): Expectation {
   if (ctx.mode === "bearer") return noError(res);
   const ok = res.isError && carries(res, HOSTED_REAUTH_INSTRUCTION);
   return { ok, detail: ok ? "isError with HOSTED_REAUTH_INSTRUCTION" : brief(res) };
+}
+
+/** Write a JSON fixture into the project on this host; a no-op for a server-side anchor. */
+async function writeHostFixture(ctx: SmokeCtx, ref: string, body: unknown): Promise<void> {
+  if (!ctx.hostProjectDir) return;
+  const file = join(ctx.hostProjectDir, ...ref.split("/"));
+  await mkdir(join(file, ".."), { recursive: true });
+  await writeFile(file, JSON.stringify(body), "utf-8");
 }
 
 function keyMissing(res: CallResult): Expectation {
@@ -172,7 +197,8 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       personReadRef: STAGED_REF,
     }),
     expect: (res) => ({
-      ok: res.body?.ok === false && /personReadRef is no longer accepted/.test(JSON.stringify(res.body?.errors ?? "")),
+      // Refused by server.ts's unknown-argument guard, with project_create's own text.
+      ok: res.isError && /personReadRef is no longer accepted/.test(String(res.body?.error ?? "")),
       detail: brief(res, 300),
     }),
   },
@@ -206,7 +232,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
       tree: SEED_TREE,
     }),
     expect: (res) => ({
-      ok: !res.isError && res.body?.ok === true,
+      ok: !res.isError && res.body?.ok === true && linksWellFormed(res.body),
       detail: res.body?.ok === true ? `wrote ${res.body.filesWritten.join(", ")}` : brief(res, 300),
     }),
   },
@@ -220,7 +246,10 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     tool: "project_context",
     offline: true,
     args: (ctx) => ({ projectPath: ctx.projectPath }),
-    expect: noError,
+    expect: (res) => ({
+      ok: !res.isError && linksWellFormed(res.body ?? {}),
+      detail: brief(res, 300),
+    }),
   },
   {
     tool: "tree_query",
@@ -341,6 +370,31 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: okTrue,
   },
   {
+    tool: "evaluation_append",
+    label: "evaluation_append (evaluations + verdict)",
+    offline: true,
+    // research_append scoped to `evaluations` by tool identity (ADR-0006). The
+    // narrow tool takes the same single-op shape and forces the lane.
+    args: (ctx) => ({
+      projectPath: ctx.projectPath,
+      section: "evaluations",
+      op: "append",
+      // Its own timestamp: the sidecar is named focus-target-<second>, so without
+      // it this step, run in the same second as the research_append one above,
+      // would overwrite that step's sidecar and prove nothing about its own.
+      entry: {
+        focus: "on-demand",
+        target_id: "project",
+        target_type: "project",
+        verdict: "looks_solid",
+        timestamp: "2026-01-01T00:00:01Z",
+        superseded_by: null,
+      },
+      verdict: { summary: "narrow-tool transport smoke" },
+    }),
+    expect: okTrue,
+  },
+  {
     tool: "research_query",
     label: "research_query (evaluations)",
     offline: true,
@@ -358,6 +412,32 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     offline: true,
     args: (ctx) => ({ projectPath: ctx.projectPath, ref: String(ctx.values.evaluationFilePath ?? "") }),
     expect: okTrue,
+  },
+  {
+    // One full-text hit by its bare id (#3522). fulltext_search needs a token,
+    // so the sidecar is staged by hand; against a server-side anchor it cannot
+    // be, and the missing file is the achievable assertion.
+    tool: "sidecar_read",
+    label: "sidecar_read (full-text hit)",
+    offline: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, ref: `${FULLTEXT_REF}#TEST-0001` }),
+    before: (ctx) =>
+      writeHostFixture(ctx, FULLTEXT_REF, { tool: "fulltext_search", payload: { results: [FULLTEXT_HIT] } }),
+    expect: (res, ctx) => {
+      if (!ctx.hostProjectDir) {
+        const ok = res.isError && res.body?.reason === "not_found";
+        return { ok, detail: ok ? "no host fixtures: missing full-text sidecar refused" : brief(res) };
+      }
+      return {
+        ok:
+          !res.isError &&
+          res.body?.ok === true &&
+          res.body?.content === FULLTEXT_HIT.textDocument &&
+          res.body?.hitId === FULLTEXT_HIT.id &&
+          res.body?.hitIndex === 1,
+        detail: brief(res),
+      };
+    },
   },
   {
     tool: "tree_edit",
@@ -412,12 +492,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     // anchor it cannot, so the missing-ref error is the achievable assertion.
     tool: "rank_search_matches",
     args: (ctx) => ({ projectPath: ctx.projectPath, stagedResultsRef: STAGED_REF, subjectId: "P1" }),
-    before: async (ctx) => {
-      if (!ctx.hostProjectDir) return;
-      const file = join(ctx.hostProjectDir, ...STAGED_REF.split("/"));
-      await mkdir(join(file, ".."), { recursive: true });
-      await writeFile(file, JSON.stringify({ payload: { results: [{}] } }), "utf-8");
-    },
+    before: (ctx) => writeHostFixture(ctx, STAGED_REF, { payload: { results: [{}] } }),
     expect: (res, ctx) => {
       if (!ctx.hostProjectDir) {
         const ok = res.isError && carries(res, "does not exist or is invalid JSON");
@@ -553,6 +628,10 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     // network leg, so the smoke never spends a billed OCR probe. The happy path
     // needs a real Natural Group name and is dev/try-volume-bisect.ts's job.
     tool: "volume_bisect",
+    // Offline: the bare image-group prefix is refused by assertSplitGroup in
+    // the exported wrapper, before the transcription slot and before any
+    // network leg, so this row reaches no upstream.
+    offline: true,
     args: () => ({ imageGroupNumber: "004516861", targetYear: 1695 }),
     expect: (res) => ({
       ok: res.isError === true && carries(res, "volume_search"),
@@ -574,7 +653,9 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   // Pure signal: no network, no token, no project state. The hosted PreToolUse hook
   // ends the turn on its NAME before it executes, so this exercises the arm that
   // runs only where no hook binds (Cowork, the e2e harness, the unit harness).
-  { tool: "research_delivered", args: () => ({ summary: "the plan you asked for" }), expect: noError },
+  // Offline: makes no call of any kind, so it costs CI nothing and its dispatch
+  // arm in server.ts is exactly what the transport smoke exists to cover.
+  { tool: "research_delivered", offline: true, args: () => ({ summary: "the plan you asked for" }), expect: noError },
 
   // Public-network tools: no token, must succeed.
   { tool: "wikipedia_search", args: () => ({ query: "Genealogy" }), expect: noError },

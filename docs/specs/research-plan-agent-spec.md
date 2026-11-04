@@ -101,6 +101,8 @@ that would replace it (probed 2026-10-02, §5):
   marriage, is ours: neither `Denmark_Military_Records` nor its levying-roll
   subpage says it. The page does not even state on its main page that the army
   rolls list the father's name.
+- **The `fs_hints` review item on identity, parentage, birth, death and marriage questions.** It answers a reported gap: a subject had pending record hints and the plan did not suggest looking at them. A pending FamilySearch hint is a record FamilySearch already surfaced for the subject; on any of those questions one may already answer it, so research-plan emits a `record_type: "fs_hints"` item at `sequence` 1 — the cheapest first read — when the person has an `ark` in the project tree, and none when they do not: a hints item for a local id with no FamilySearch id has nothing to read, and search-hints closes one that slips through as `skipped`/`inaccessible` so it cannot hold the router. It is a **plan item, not a routing row**: research-plan's "you thought of the search → it goes in a plan" rule holds, and no self-initiated review runs unasked. The PID lives in the item's `rationale` rather than a new `plan_items` field, because nothing else needs a per-item person id and `project.subject_person_ids` would be wrong for a parentage question about someone other than the subject. The item never blocks the other searches: once it is `in_progress` awaiting verdicts with no log entry naming it, `nextUnexecutedItem` (`question-state.ts`) skips it. Finding no hints never stops or skips another search. search-hints sets the item's own status through the `plan_items` lane the hook grants it — the same shape search-records and search-images hold.
+  - **Why birth, death and marriage too (lead, 2026-10-29).** The item first shipped for identity and parentage questions only. A death-date tester run (jakub-wojtczak-death, 2026-10-27) searched Poland, handed out external-site URLs and never opened the pending hint that settled the question. Two more record-hint e2e runs, a death date (jakub-wojtczak-death) and a marriage (victoriana-vasquez-marriage), spent their whole tool budget on nil searches and stopped at `tool_cap` with no source saved. In each, the record that answered the question was a hint already attached to the person. A one-fact question is exactly where an attached hint is most likely to be the answer, so the item now leads those plans too. Birth means a birth, baptism or christening date or place; death means a death or burial date or place; marriage means when or where the person married (review-ready, 2026-10-30: the goal table already treats baptism as birth evidence and burial as death evidence). A who-was-the-spouse question and an enumerative question (children, siblings) still get no item: the hints on one person do not enumerate a family.
 - **The death-record route to a pre-register birth.** When
   the birth predates the register of the parish where the subject was born or
   first appears, or the birth parish is the unknown, plan the subject's own
@@ -200,3 +202,10 @@ change; keep no local copy.
   item targets the subject's own death or burial entry, dated after the birth
   window, and the items span at least two `record_type`s.
 - Both are proven to fail in `eval/harness/tests/unit/test_research_plan_validator.py`.
+- `test_research_plan_hints_review_first`: on `fs-hints-first` tests (ut_016,
+  `ut_research_plan_subj`, `ut_research_plan_prof`) the new plan has an
+  `fs_hints` item at `sequence` 1, none lower, whose rationale names the question
+  person's PID. On `no-fs-hints` tests (`ut_research_plan_enm`) it has no
+  `fs_hints` item. Either tag fails when no person the question names has an
+  `ark`. Proven to fail in
+  `eval/harness/tests/unit/test_research_plan_hints_review_validator.py`.

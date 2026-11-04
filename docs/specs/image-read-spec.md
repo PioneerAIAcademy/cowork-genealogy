@@ -33,17 +33,22 @@ carrying them is used, whichever key it came in on: on a multi-image waypoint
 ARK `i=` picks the page, so the bare side could read another image. Two that
 both carry those params and differ, and any other pair, are refused before any
 fetch, and so is an `ark` that is not a string. An empty `imageArk` is not
-folded, so the no-input error names it. Like
-`memoryArtifactUrl`, it is accepted without being advertised on the schema.
+folded, so the no-input error names it. It is accepted without being advertised
+on the schema: `server.ts`'s unknown-argument guard lists it as an accepted
+alias for this tool (`ACCEPTED_ALIASES`, `src/utils/unknown-args.ts`), unlike
+`memoryArtifactUrl`, which the guard refuses here.
 
-**`memoryArtifactUrl` is accepted but deliberately not advertised.**
-`ImageReadInput extends FsImageInput`, the input schema carries no
-`additionalProperties: false`, and the tool forwards `memoryShape` on purpose —
-so a direct artifact URL passed here works, and a dedicated test pins it. What
-was declined (lead, 2026-09-29) is **advertising the parameter on the input
-schema**, for two reasons: it adds an MCP parameter to every conversation, and
-this tool refuses anything over `MAX_INLINE_IMAGE_BYTES` (700 KB raw), which
-turns away most register photos regardless.
+**`memoryArtifactUrl` is not advertised, and over MCP it is refused.**
+`server.ts` refuses every argument key a tool's schema does not list
+(`rejectUnknownArgs`), so an MCP call to `image_read` carrying
+`memoryArtifactUrl` is refused before the handler runs, and the tool's own
+errors name only `imageId` and `ark`. Memories pages go to `image_transcribe`,
+as the description says (decided at review, 2026-10-26). `ImageReadInput
+extends FsImageInput`, so a direct call can still carry it, and the tool forwards
+`memoryShape` on purpose for that path. Advertising the parameter was declined
+(lead, 2026-09-29): it adds an MCP parameter to every conversation, and this tool
+refuses anything over `MAX_INLINE_IMAGE_BYTES` (700 KB raw), which turns away most
+register photos regardless.
 
 A Memories **page** URL (`photos/artifacts/<id>` or `/memories/<id>`) is a
 different matter: it is not a bytes URL at all, and only `image_transcribe`
@@ -227,13 +232,15 @@ The tool returns two content blocks:
 | Condition | Message |
 |-----------|---------|
 | Not logged in | "Not authenticated. Call the login tool first." |
-| More than one of imageId, ark and memoryArtifactUrl provided | "Provide exactly one of imageId, ark, or memoryArtifactUrl." (`imageArk` counts as `ark`) |
-| None of them provided | "image_read requires one of imageId, ark, or memoryArtifactUrl. Received keys: {each key passed, marked `(empty)` or `(not a string)` where so}." — or "Received no keys." |
+| More than one of imageId, ark and memoryArtifactUrl provided (a direct call; over MCP `server.ts` refuses `memoryArtifactUrl` first) | "Provide exactly one of imageId or ark." (`imageArk` counts as `ark`) |
+| None of them provided | "image_read requires one of imageId or ark. Received keys: {each key passed, marked `(empty)` or `(not a string)` where so}." — or "Received no keys." |
 | `ark` and `imageArk` both given, and they do not name the same image (see Input) | "image_read was given both ark ('{ark}') and imageArk ('{imageArk}'), which do not name the same image. imageArk is another name for ark: pass only one." — thrown before any fetch |
 | `ark` is not a string | "image_read was given an ark that is not a string ({null, a number, an array, …}). Pass ark as a string: the ARK (ark:/61903/3:1:...) or page URL exactly as it was given." — thrown before any fetch, with or without `imageArk` |
 | Invalid imageId format | "Unrecognized imageId. Expected an Image Group Number of the form NUMBER_NUMBER (e.g. 004884748_02613)." |
 | Invalid ark format | "Unrecognized ark. Expected a FamilySearch document-image ARK (ark:/61903/3:1:... or 3:2:..., a bare 3:1:.../3:2:... id, an unprefixed XXXX-XXXX-XXXX-X id (treated as 3:1:), or a resolver URL for one), a DeepZoomCloud ARK URL (ending in /$dist), or a DGS distribution URL (dgs:.../dist.jpg). Pass the FamilySearch page URL or ARK exactly as the user gave it, including its 3:1:/3:2: prefix; do not build an imageId from a groupId or an i= index." |
-| FamilySearch returns non-2xx | "FamilySearch image fetch failed: {status} {statusText}" (the `{statusText}` and its separating space are omitted when the response carries none). On a **400 or 404** for a `3:1:`/`3:2:` ark that is not a memory artifact, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field, and to passing the full page URL when the ark carries `i=`/`cc=`/`groupId=` context. It states that `image_search` returns image ids rather than arks. Every other status — including 401/403 (rights-restricted image) and 429 — keeps the bare message, because the ark is real and re-fetching it returns the same one. |
+| FamilySearch returns **401** on a fetch that sent a bearer | `rejectedTokenMessage(principal)`: the hosted reconnect instruction (`HOSTED_REAUTH_INSTRUCTION`), or `REJECTED_TOKEN_MESSAGE` (call `login`) on the desktop. A 401 here is a rejected token, not a restricted image: restricted images answer 403, and no committed image fetch has answered 401 — `grep -rhoE "image fetch failed: 40[0-9]" eval/runlogs | sort | uniq -c` gave 403 ×46, 400 ×10, 404 ×2, 401 ×0 (2026-10-27). A memory artifact's fetch sends no bearer, so its 401 takes the non-2xx row below. If the request fell back to the bare resolver URL and that also failed, this primary 401 is reported, not the fallback's status. |
+| FamilySearch returns **403** | `FamilySearch image fetch failed: 403 {statusText}. ` followed by one of two texts (`{statusText}` and its space are omitted when the response carries none). A page scan gets `RESTRICTED_IMAGE_GUIDANCE`: the image is **most likely** restricted for this account or location, many films are viewable only at a FamilySearch Center or affiliate library, this is not a sign-in problem that reconnecting or logging in again would change, and if other images in the same film open the refusal may be temporary, so try again later. It is hedged because FamilySearch's edge also answers 403 to a blocked or rate-limited request. A memory artifact (by flag or by URL shape) gets `RESTRICTED_MEMORY_GUIDANCE`: its file is not publicly readable and this tool cannot read it. That text names no account, because the artifact is fetched without one; memory 403s are unmeasured. Neither text may carry an anchor the prototype counts as an auth failure (`REAUTH_HITS` in `apps/server/proto/turn.py`). The bare status was read as a sign-in failure in two hosted runs: lucia-skora-parents called `login` on Center-only films and wrote that reason into its proof, and maria-stockburger-son told the researcher to log in. If the request fell back to the bare resolver URL and that also failed, this primary 403 is reported, not the fallback's status. |
+| FamilySearch returns non-2xx | "FamilySearch image fetch failed: {status} {statusText}" (the `{statusText}` and its separating space are omitted when the response carries none). On a **400 or 404** for a `3:1:`/`3:2:` ark that is not a memory artifact, appends: the ark may not be a valid document-image identifier; directs to `record_read`'s `imageArk` field, and to passing the full page URL when the ark carries `i=`/`cc=`/`groupId=` context. It states that `image_search` returns image ids rather than arks. Every other status — including a memory artifact's 401 and 429 — keeps the bare message, because the ark is real and re-fetching it returns the same one. |
 | Response is not an image | "Expected an image response but got content-type: {type}" |
 | 21st distinct image in one image group in one project | "Image cap reached: 20 distinct images from image group {group} have already been read in this project, …" — thrown before the fetch. See §"Image cap" below. |
 | Image exceeds the inline size cap | "FamilySearch image {imageId or ark} is {N} MB — too large to return inline. The MCP transport caps a single response near 1 MB and base64 encoding inflates the image by ~33%, so returning it would crash the session. OCR it with image_transcribe instead (it reads the scan host-side and returns text, with no size limit), or read the indexed record with record_read / record_search." |

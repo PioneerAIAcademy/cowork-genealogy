@@ -16,6 +16,7 @@
  */
 
 import type { SimplifiedGedcomX, SimplifiedPerson, SimplifiedRelationship } from "../types/gedcomx.js";
+import { isLiveAssertion } from "../utils/assertion-liveness.js";
 import type { ConflictSurfaced } from "../types/materialize-facts.js";
 import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
 import type { PersonWarning } from "../types/person-warnings.js";
@@ -115,6 +116,12 @@ export const GATE_EXEMPT_TYPES: ReadonlySet<string> = new Set([
   "earliestChildBirthToBirthMale14",
   "relativesLatestChildBirthToMarriage35",
   "latestChildBirthToMarriage35",
+
+  // Standardisation artefact, not a claim the writer makes: the place text and
+  // its standard_place name different countries, and the pair is usually
+  // FamilySearch-supplied. Gating it would refuse a write that merely carries
+  // the bad pair forward (issue #3976).
+  "hasPlaceStandardOtherCountry",
 ]);
 
 /** Compute warnings for a single person on a tree, returning [] if the
@@ -413,7 +420,7 @@ function parentEvidence(
   );
   const cited = (Array.isArray(research?.assertions) ? research.assertions : []).filter(
     (a: any) =>
-      a && sdidOf.has(a.source_id) && linkedToParent.has(a.id) &&
+      isLiveAssertion(a) && sdidOf.has(a.source_id) && linkedToParent.has(a.id) &&
       isRelationshipEstablishing(a.fact_type) && String(a.fact_type).trim().toLowerCase() !== "marriage",
   );
   const covered = new Set(cited.map((a: any) => sdidOf.get(a.source_id)));

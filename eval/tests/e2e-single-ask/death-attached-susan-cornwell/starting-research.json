@@ -1,0 +1,28 @@
+{
+  "project": {
+    "id": "rp_death_attached_susan_cornwell",
+    "objective": "Find the death record of Susan Reynolds Cornwell (K8TG-N4H) in New York.",
+    "subject_person_ids": [
+      "K8TG-N4H"
+    ],
+    "status": "active",
+    "created": "2026-11-02",
+    "updated": "2026-11-02"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

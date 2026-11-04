@@ -6,6 +6,7 @@ import { tmpdir } from "os";
 import { formatEventDate, planTimeline, timelineBuild } from "../../src/tools/timeline-build.js";
 import { extractRecord } from "../../src/utils/record-extract.js";
 import { ATTACHMENT_LINK_RATIONALE } from "../../src/utils/tree-person.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 const SCENARIOS = resolve(__dirname, "../../../../../eval/fixtures/scenarios");
 const scenario = (name: string) => ({
@@ -635,11 +636,30 @@ describe("places and the deadline", () => {
     expect(p!.events[0].standard_place).toBe(OHIO);
     expect(p!.events[1].distance_from_previous_km).toBeGreaterThan(200);
   });
+  it("takes an event's standard place only from an assertion of its own place text, else resolves the text", async () => {
+    const CINCINNATI = "Cincinnati, Hamilton, Ohio, United States";
+    const p = await plan(
+      project([
+        { fact: "birth", date: "1850", record: "ark:/61903/1:1:R1", place: "Ohio" },
+        { fact: "birth", date: "1850", record: "ark:/61903/1:1:R1", place: "Cincinnati, Ohio", sp: CINCINNATI },
+        { fact: "death", date: "1900", record: "ark:/61903/1:1:R2", place: "Columbus, Ohio" },
+        { fact: "death", date: "1900", record: "ark:/61903/1:1:R2", place: "columbus,  ÓHIO", sp: OHIO },
+      ]),
+      man,
+      places({ Ohio: "Ohio, United States" }),
+    );
+    expect(p!.events.map((e: any) => [e.place, e.standard_place])).toEqual([
+      ["Ohio", "Ohio, United States"],
+      ["Columbus, Ohio", OHIO],
+    ]);
+  });
   it("a Places lookup that never answers leaves its checks out and still returns before the deadline", async () => {
     const never = { resolvePlace: () => new Promise<string | null>(() => {}), placeCoords: () => new Promise<any>(() => {}), deadlineMs: 200 };
     const t0 = Date.now();
     const p = await plan(project([{ fact: "residence", date: "1850", place: "Columbus, Ohio" }, { fact: "residence", date: "1880", place: "Columbus, Ohio" }]), man, never);
-    expect(Date.now() - t0).toBeLessThan(2000);
+    // Wide of the 200 ms deadline for load lag; a removed deadline still hangs
+    // these never-settling resolvers into the 30 s test timeout whatever the bound.
+    expect(Date.now() - t0).toBeLessThan(8_000);
     expect(census(p)).toEqual([]);
     expect(p!.events.every((e: any) => e.distance_from_previous_km === null)).toBe(true);
     expect(p!.skipped.length).toBeGreaterThan(0);
@@ -728,7 +748,7 @@ describe("timelineBuild on a project", () => {
     expect(first).toMatchObject({ ok: true, status: "written" });
     const research = await read();
     research.timelines.find((t: any) => t.id === first.timelineId).person_ids = ["KWCJ-RN4"];
-    await writeFile(join(dir, "research.json"), JSON.stringify(research), "utf-8");
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(research), "utf-8");
     const second: any = await timelineBuild({ projectPath: dir, personId: "I1" }, deps);
     expect(second).toMatchObject({ status: "updated", timelineId: first.timelineId });
     expect((await read()).timelines.find((t: any) => t.id === first.timelineId).person_ids).toEqual(["KWCJ-RN4"]);

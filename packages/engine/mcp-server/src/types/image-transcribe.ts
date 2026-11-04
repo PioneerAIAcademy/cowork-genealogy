@@ -15,10 +15,12 @@ export interface ImageTranscribeInput {
   file?: string;
   /**
    * Optional search key — who/what to locate on the page. On a complete read it
-   * sets a FOUND / NOT FOUND pointer (`found`); the pointer is withheld on a
-   * truncated read (a half-read page cannot support a clean NOT FOUND). It never
-   * shortens or slants the full transcription, and any assertion in it is
-   * ignored.
+   * sets a FOUND / NOT FOUND pointer (`found`), decided by a second, text-only
+   * call over the transcription — the OCR prompt never carries it (a hinted
+   * name primed the read to return it in rows the page does not have, issue
+   * #3718). The pointer is withheld on a truncated read (a half-read page
+   * cannot support a clean NOT FOUND). It never shortens or slants the full
+   * transcription, and any assertion in it is ignored.
    */
   lookingFor?: string;
   /** Absolute project-folder path. Required on the MCP schema (the page is
@@ -49,14 +51,18 @@ export interface ImageTranscribeToolResponse {
   /** Tool-voiced, human-readable companion to `truncated` — a plain sentence
    *  the caller can surface without improvising. Present iff `truncated`. */
   truncationNotice?: string;
-  /** Present only when `lookingFor` was provided. Suppressed on a truncated
-   *  read — a half-read page must never surface a clean NOT FOUND. */
+  /** Present only when `lookingFor` was provided — decided by a second,
+   *  text-only call over the transcription (`runFoundCheck`), never by the OCR
+   *  read itself. Suppressed on a truncated read — a half-read page must never
+   *  surface a clean NOT FOUND — and omitted when the second call fails or its
+   *  reply carries no parseable marker. */
   found?: "FOUND" | "NOT FOUND";
   /** Project-relative path of the saved scan (images/<key>.jpg), present only
    *  when projectPath was supplied and the save succeeded (§8.5). */
   imageRef?: string;
-  /** Present when `lookingFor` contained a recognized given name and
-   *  expansion fired. Tells the caller what the VLM was primed with. */
+  /** Present when `lookingFor` contained a recognized given name and expansion
+   *  fired. `expanded` is the rewritten `lookingFor` the found check saw — the
+   *  OCR prompt carries no names (issue #3718). */
   nameExpansion?: {
     original: string;
     expanded: string;

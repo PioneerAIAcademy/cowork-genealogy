@@ -48,9 +48,13 @@ SCHEMAS_DIR = REPO_ROOT / "docs/specs/schemas"
 # interpreter (issue #2684). One definition, two import paths.
 from .outcomes import (  # noqa: E402,F401
     RunlogAssemblyError,
+    _DIMENSION_RANK,
     _modal_with_tiebreak_down,
     _OUTCOME_RANK,
+    aggregate_dimensions,
     aggregate_per_run_outcome,
+    consequential,
+    refresh_test_entry_outcome,
     suppressed_failure,
     unexpected_pass,
 )
@@ -192,87 +196,6 @@ def _wall_clock_ms_from_runs(run_dicts: list[dict[str, Any]]) -> float:
     if not starts or not ends:
         return 0.0
     return max(0.0, (max(ends) - min(starts)) * 1000.0)
-
-
-# ---- Aggregation helpers -------------------------------------------------
-
-
-# None (N/A) ranks above pass so it never wins a tie against a real score.
-# All-null buckets are handled separately in aggregate_dimensions and don't
-# rely on this rank.
-_DIMENSION_RANK = {1: 1, 2: 2, 3: 3, None: 4}
-
-
-def aggregate_dimensions(
-    runs: list[SingleRun], *, include_validator_failed: bool = False
-) -> list[dict[str, Any]]:
-    """Modal per-dimension score across runs (ties resolve down).
-
-    A dimension may have score=None (N/A): the Tool Arguments base
-    dimension on a run with zero MCP tool calls, any rubric dimension the
-    fixture never exercised, and since #2196 Correctness/Completeness on a
-    correctly-routed negative test, where the harness usually truncates the
-    transcript at the hand-off (measured: not on 4 of the 47 runs it fires
-    on, where the 1 is real - see flag_routing_negative_judge_fail). All-None buckets aggregate to None; mixed
-    buckets fall back to standard modal logic with None ranking above pass
-    so a real score wins any tie.
-
-    Runs that FAILED a validator are excluded (#2057): they are graded now,
-    but their scores stay out of the modal so committed baselines do not
-    shift. Their per-run scores remain in `runs[].judge.dimensions`.
-
-    `include_validator_failed=True` lifts that exclusion. It exists for ONE
-    caller — `assemble_test_entry` building `review_dimensions`, the rows a
-    human annotates — and must never feed `aggregated_dimensions`, which is
-    what the baseline readers (`skill_gate`, the dashboards) consume.
-    """
-    if not runs:
-        return []
-    bucket: dict[tuple[str, str], list[dict[str, Any]]] = {}
-    for r in runs:
-        # A validator-failing run is now GRADED (#2057) but stays out of the
-        # modal: letting defective runs into the aggregate would move every
-        # committed baseline at once, so the next gate-skill comparison would
-        # be against a shifted goalpost. The per-run scores remain in
-        # runs[].judge.dimensions. On committed data this disjunct is a no-op
-        # (every validator-failing run there was already judge-skipped), so
-        # test_aggregate_excludes_a_validator_failing_run is what pins it.
-        #
-        # `is False`, not `not r.validators.passed` as issue #2057 words it:
-        # ValidatorResult.passed is `bool | None`, and None means validators
-        # never reached a verdict (the _aborted_entry path) rather than that
-        # one failed. Truthiness would drop an unknown-but-graded run from the
-        # aggregate too, which is wider than the ruling. Unreachable today —
-        # compute_validators_passed returns a bool, and every None-valued run
-        # is aborted and so already excluded by judge.skipped — so this is
-        # about intent surviving the next reader, and
-        # test_aggregate_still_counts_a_run_whose_validators_are_unknown fails
-        # if it is ever simplified back.
-        if r.judge.skipped:
-            continue
-        if r.validators.passed is False and not include_validator_failed:
-            continue
-        for d in r.judge.dimensions:
-            key = (d.get("source", ""), d.get("name", ""))
-            bucket.setdefault(key, []).append(d)
-
-    aggregated: list[dict[str, Any]] = []
-    for key, dims in bucket.items():
-        scores = [d.get("score") for d in dims]
-        if all(s is None for s in scores):
-            modal = None
-        else:
-            modal = _modal_with_tiebreak_down(scores, _DIMENSION_RANK)
-        modal_dim = next(d for d in dims if d.get("score") == modal)
-        aggregated.append(
-            {
-                "source": key[0],
-                "name": key[1],
-                "score": modal,
-                "rationale": modal_dim.get("rationale", ""),
-            }
-        )
-    return aggregated
 
 
 # ---- Activated derivation (spec §6) --------------------------------------
@@ -621,6 +544,7 @@ def build_run_log(
     model: str,
     judge_prompt_hash: str,
     judge_model: str | None = None,
+    judge_render_hash: str | None = None,
     instrument: dict[str, Any] | None = None,
     snapshot: dict[str, str],
     tests: list[dict[str, Any]],
@@ -684,6 +608,11 @@ def build_run_log(
     # byte-identical rather than gaining a stray `"judge_model": null`.
     if judge_model:
         envelope["judge_model"] = judge_model
+    # judge_render_hash is optional (issue #3576): the fingerprint of the CODE
+    # that renders the judge's input, beside the prompt's own hash. Absent on
+    # logs written before the field, which rule 2b treats as a warning.
+    if judge_render_hash:
+        envelope["judge_render_hash"] = judge_render_hash
     if review_sample is not None:
         envelope["review_sample"] = review_sample
     if tool_search is not None:

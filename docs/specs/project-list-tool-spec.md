@@ -27,7 +27,10 @@ project_list({})
 ```
 
 No parameters. Read-only: writes nothing, on any backend. The mode comes from the
-active `ProjectStore`'s `listProjects()`.
+active `ProjectStore`'s `listProjects()`. The function takes the call's principal as its last
+parameter, for the entries' `projectUrl`; no entry carries one yet, because filling
+it needs a map from each listed `projectPath` to its store's project id, which
+no store keeps yet.
 
 ### 2.1 Return value
 
@@ -59,8 +62,10 @@ project in a folder the caller names. It answers `mode: "folder"` and a message,
 with no `projects` and no `newProjectPath`: an empty list there reads as "no
 project" to a model that has not yet looked at the folder, and the research
 suite's routing tests went red on exactly that reading. The message tells the
-caller to pass the working folder's absolute path as `projectPath` and read what
-it holds with `project_context`.
+caller to pass the working folder's absolute path as `projectPath`, says that it
+does not tell whether the folder holds a project, and has the caller call
+`project_context` with that path before routing. At medium effort the router
+otherwise skipped that read and sent an existing project to `init-project`.
 
 ### 2.3 Hosted mode
 

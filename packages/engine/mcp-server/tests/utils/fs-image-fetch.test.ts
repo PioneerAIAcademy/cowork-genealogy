@@ -1,4 +1,12 @@
-import { LOCAL } from "../../src/auth/principal.js";
+import { LOCAL, bearerPrincipal } from "../../src/auth/principal.js";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+import {
+  HOSTED_LOGIN_UNAVAILABLE,
+  HOSTED_REAUTH_INSTRUCTION,
+  REJECTED_TOKEN_MESSAGE,
+} from "../../src/auth/config.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
 vi.mock("../../src/auth/refresh.js", () => ({
@@ -10,8 +18,11 @@ import {
   fetchFsImageBytes,
   foldImageArkInput,
   receivedKeys,
+  RESTRICTED_IMAGE_GUIDANCE,
+  RESTRICTED_MEMORY_GUIDANCE,
 } from "../../src/utils/fs-image-fetch.js";
 import { getValidToken } from "../../src/auth/refresh.js";
+import { MEMORY_LOOKUP_FAILED_GUIDANCE } from "../../src/utils/memories.js";
 
 const mockedGetValidToken = vi.mocked(getValidToken);
 const mockFetch = vi.fn();
@@ -311,6 +322,50 @@ describe("fetchFsImageBytes — fallback retry", () => {
     expect(mockFetch).toHaveBeenCalledTimes(2);
   });
 
+  // A primary 401/403 names the real cause; a failing fallback must not swap it
+  // for a 404 whose guidance sends the agent back to record_read.
+  it("keeps a primary 403 when the fallback also fails", async () => {
+    mockErrorResponse(403, "Forbidden");
+    mockErrorResponse(404, "Not Found");
+
+    await expect(
+      fetchFsImageBytes(
+        "https://www.familysearch.org/ark:/61903/3:1:X?i=3",
+        "https://www.familysearch.org/ark:/61903/3:1:X",
+        LOCAL
+      )
+    ).rejects.toHaveProperty(
+      "message",
+      `FamilySearch image fetch failed: 403 Forbidden. ${RESTRICTED_IMAGE_GUIDANCE}`
+    );
+    expect(mockFetch).toHaveBeenCalledTimes(2);
+  });
+
+  it("keeps a primary bearer 401 when the fallback returns HTML", async () => {
+    mockErrorResponse(401, "Unauthorized");
+    mockHtmlResponse();
+
+    await expect(
+      fetchFsImageBytes(
+        "https://www.familysearch.org/ark:/61903/3:1:X?i=3",
+        "https://www.familysearch.org/ark:/61903/3:1:X",
+        bearerPrincipal("tok")
+      )
+    ).rejects.toThrow(HOSTED_REAUTH_INSTRUCTION);
+  });
+
+  it("still uses the fallback's image after a primary 403", async () => {
+    mockErrorResponse(403, "Forbidden");
+    mockImageResponse();
+
+    const result = await fetchFsImageBytes(
+      "https://www.familysearch.org/ark:/61903/3:1:X?i=3",
+      "https://www.familysearch.org/ark:/61903/3:1:X",
+      LOCAL
+    );
+    expect(result.resolvedUrl).toBe("https://www.familysearch.org/ark:/61903/3:1:X");
+  });
+
   it("does not retry when no fallback URL is given", async () => {
     mockHtmlResponse();
 
@@ -425,6 +480,41 @@ describe("fs-image-fetch — memory artifacts", () => {
     ).rejects.toThrow(/Expected an image response/);
   });
 
+  // No bearer was sent, so a 401 here is not a token the user can fix.
+  it("keeps the bare message on a memory artifact 401", async () => {
+    mockErrorResponse(401, "Unauthorized");
+    await expect(
+      fetchFsImageBytes(ARTIFACT, undefined, LOCAL, true),
+    ).rejects.toThrow(/^FamilySearch image fetch failed: 401 Unauthorized$/);
+  });
+
+  // The artifact is fetched with no account, so the text cannot blame one,
+  // and a memory is never a FamilySearch Center film.
+  it("gives a memory artifact 403 its own text", async () => {
+    mockErrorResponse(403, "Forbidden");
+    const err = await fetchFsImageBytes(ARTIFACT, undefined, LOCAL, true).then(
+      () => null,
+      (e: Error) => e,
+    );
+    expect(err?.message).toBe(
+      `FamilySearch image fetch failed: 403 Forbidden. ${RESTRICTED_MEMORY_GUIDANCE}`
+    );
+    expect(err?.message).not.toContain("FamilySearch Center");
+  });
+
+  // Detection is by URL shape as well as the flag. Real callers do not reach
+  // this with memoryShape false: a memory URL passed as `ark` resolves to a
+  // plain www.familysearch.org ark first. This pins the shape check only.
+  it("detects a memory URL by its shape when memoryShape is false", async () => {
+    mockErrorResponse(403, "Forbidden");
+    await expect(
+      fetchFsImageBytes(ARTIFACT, undefined, LOCAL),
+    ).rejects.toHaveProperty(
+      "message",
+      `FamilySearch image fetch failed: 403 Forbidden. ${RESTRICTED_MEMORY_GUIDANCE}`
+    );
+  });
+
   it("rejects an audio artifact even in the memory shape", async () => {
     mockTypedResponse("audio/mpeg");
     await expect(
@@ -446,9 +536,11 @@ describe("fs-image-fetch — memory artifacts", () => {
 
 // The guidance ("that ark may not be a valid document-image identifier — get
 // one from record_read's imageArk or image_search") is only true when the ark
-// itself is wrong. It fires on 400 and 404 and nothing else: 401/403 is a
-// rights-restricted image and 429 a rate limit, where the ark is real and
-// re-fetching it from record_read hands back the same one. Memory artifacts
+// itself is wrong. It fires on 400 and 404 and nothing else: 403 is a
+// rights-restricted image, with its own text, and 429 a rate limit, where
+// the ark is real and re-fetching it from record_read hands back the same
+// one. A 401 on a fetch that sent a bearer is a rejected token, answered by
+// rejectedTokenMessage. Memory artifacts
 // carry a 3:1: ark too (person_read's artifact_url) that neither named tool
 // can ever return, so they are excluded whatever the status.
 //
@@ -515,21 +607,67 @@ describe("fetchFsImageBytes — bad-identifier ark guidance", () => {
   // Every ark failure in creszentia-haas-birth's committed runlog is a 403 on
   // a real, rights-restricted image — issue #2392 carved that cause out in the
   // same words. Telling the agent the ark may be invalid and to re-fetch it
-  // from record_read sends it round the same loop.
-  it("uses the generic message on a 403 for an ark URL (restricted, not invalid)", async () => {
+  // from record_read sends it round the same loop. The bare status was read as
+  // a sign-in failure instead (lucia-skora-parents, maria-stockburger-son), so
+  // a 403 says it is restricted. Exact, so the ark guidance cannot leak in.
+  it("says a 403 is a restricted image, not an invalid ark", async () => {
     mockErrorResponse(403, "Forbidden");
 
     await expect(
       fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
-    ).rejects.toThrow(/^FamilySearch image fetch failed: 403 Forbidden$/);
+    ).rejects.toHaveProperty(
+      "message",
+      `FamilySearch image fetch failed: 403 Forbidden. ${RESTRICTED_IMAGE_GUIDANCE}`
+    );
   });
 
-  it("uses the generic message on a 401 for an ark URL", async () => {
+  // FamilySearch's edge also answers 403 to a blocked or rate-limited request
+  // (catalog-search.ts), so the text may not state the restriction as certain.
+  it("hedges the restricted-image text and says when to retry", () => {
+    expect(RESTRICTED_IMAGE_GUIDANCE).toMatch(/most likely restricted/);
+    expect(RESTRICTED_IMAGE_GUIDANCE).toMatch(/other images in the same film open/);
+    expect(RESTRICTED_IMAGE_GUIDANCE).toMatch(/try this one again later/);
+    expect(RESTRICTED_IMAGE_GUIDANCE).not.toMatch(/Treat the image as access-restricted/);
+  });
+
+  it("gives a bearer 403 the restricted text, not the reconnect instruction", async () => {
+    mockErrorResponse(403, "Forbidden");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, bearerPrincipal("tok"))
+    ).rejects.toHaveProperty(
+      "message",
+      `FamilySearch image fetch failed: 403 Forbidden. ${RESTRICTED_IMAGE_GUIDANCE}`
+    );
+  });
+
+  it("leaves no stray space on a 403 with an empty statusText", async () => {
+    mockErrorResponse(403, "");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
+    ).rejects.toHaveProperty(
+      "message",
+      `FamilySearch image fetch failed: 403. ${RESTRICTED_IMAGE_GUIDANCE}`
+    );
+  });
+
+  // A 401 on a fetch that sent a bearer is a rejected token, not a restricted
+  // image: the committed corpus has 403 x46 and 401 x0 (#3905).
+  it("tells the desktop user to log in on a 401", async () => {
     mockErrorResponse(401, "Unauthorized");
 
     await expect(
       fetchFsImageBytes(ARK_URL_31, undefined, LOCAL)
-    ).rejects.toThrow(/^FamilySearch image fetch failed: 401 Unauthorized$/);
+    ).rejects.toThrow(REJECTED_TOKEN_MESSAGE);
+  });
+
+  it("gives the hosted reconnect instruction on a bearer 401", async () => {
+    mockErrorResponse(401, "Unauthorized");
+
+    await expect(
+      fetchFsImageBytes(ARK_URL_31, undefined, bearerPrincipal("tok"))
+    ).rejects.toThrow(HOSTED_REAUTH_INSTRUCTION);
   });
 
   it("uses the generic message on a 429 for an ark URL", async () => {
@@ -625,5 +763,32 @@ describe("fetchFsImageBytes — bad-identifier ark guidance", () => {
         fetchFsImageBytes(artifact, undefined, LOCAL, true)
       ).rejects.toThrow(expected);
     }
+  });
+});
+
+// ─── No reauth anchor in a not-a-sign-in-problem message ──────────────────
+
+// The prototype counts any tool result matching REAUTH_HITS as an auth failure
+// and voids the run (apps/server/proto/turn.py, demo.py). A restricted image or
+// a hosted login answer that matched would repeat the misdiagnosis these texts
+// exist to stop. The pattern is copied because the engine cannot import Python;
+// the first test fails if the copy drifts from the source.
+describe("restricted and login texts carry no reauth anchor", () => {
+  const REAUTH_HITS_SOURCE = String.raw`Call the login tool|Reconnect FamilySearch|unauthori[sz]ed|\b401\b`;
+  const REAUTH_HITS = new RegExp(REAUTH_HITS_SOURCE, "i");
+
+  it("copies turn.py's REAUTH_HITS verbatim", () => {
+    const repoRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "..");
+    const turn = readFileSync(join(repoRoot, "apps", "server", "proto", "turn.py"), "utf-8");
+    expect(turn).toContain(`REAUTH_HITS = re.compile(r"${REAUTH_HITS_SOURCE}", re.I)`);
+  });
+
+  it.each([
+    ["restricted image", RESTRICTED_IMAGE_GUIDANCE],
+    ["restricted memory", RESTRICTED_MEMORY_GUIDANCE],
+    ["hosted login", HOSTED_LOGIN_UNAVAILABLE],
+    ["memory lookup", MEMORY_LOOKUP_FAILED_GUIDANCE],
+  ])("the %s text matches no reauth anchor", (_name, text) => {
+    expect(text).not.toMatch(REAUTH_HITS);
   });
 });

@@ -8510,49 +8510,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified that the request conflates terminology: 'primary source' describes information quality (informant proximity), not source type. src_004 is correctly classified as 'original' per Evidence Explained. The skill appropriately declined to rewrite the citation or change source_classification, which is outside its writable scope. The response accurately explains the distinction and routes the user to the appropriate skill (record-extraction) for evidence-quality questions, while clarifying that the citation skill handles wording, not classification."
+            "rationale": "Claude correctly identified that the request conflates terminology: 'primary source' describes information quality (informant proximity), not source classification. src_004 is correctly classified as 'original' per Evidence Explained. The response accurately explains the distinction and appropriately declines to rewrite the citation with incorrect terminology. No factual errors or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill fully addressed the user's request by clarifying the terminology confusion and explaining why the request cannot be fulfilled as stated. It identified the correct scope boundary: the citation skill handles citation wording; record-extraction owns evidence classification. The response covers both the immediate question (why 'primary source' is a category error) and the appropriate next step (record-extraction for evidence work). No required element was omitted."
+            "rationale": "Claude addressed the full scope of the request: clarified the terminology distinction, explained that source classification is owned by record-extraction, and correctly noted that src_004 is already properly classified as original. The response covers what the user needed to understand about the request's scope and the correct terminology."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tools because the request was out of scope for citation refinement (it asked for a terminology/classification change that belongs to record-extraction). N/A applies."
+            "rationale": "No MCP tool calls were made. The skill correctly handled the request through explanation and routing guidance without invoking tools, which is appropriate for a terminology clarification that does not require file changes."
           },
           {
             "source": "rubric",
             "name": "Evidence Explained compliance",
-            "score": null,
-            "rationale": "No citation was created or modified in this run. The skill declined to change src_004's citation, so there is no refined citation to evaluate against the Who/What/When/Where/Where-within framework. N/A applies."
+            "score": 3,
+            "rationale": "The skill did not modify src_004's citation, so no new compliance issues were introduced. The per-test context confirms src_004 is correctly classified as original and that the request should not result in citation rewrites. No changes were made, so compliance remains as it was."
           },
           {
             "source": "rubric",
             "name": "Replication test",
-            "score": null,
-            "rationale": "No citation was created or modified. The skill correctly left src_004's citation unchanged, so there is no locator set to evaluate for replication fidelity. N/A applies."
+            "score": 3,
+            "rationale": "No citation changes were made, so replication integrity is preserved. The skill correctly refused to add invented locators or unsupported detail (such as writing 'primary source' into the citation string). The response appropriately declined to modify the citation in ways that would affect replication."
           },
           {
             "source": "rubric",
             "name": "Source vs information distinction",
             "score": 3,
-            "rationale": "The skill correctly distinguished between source classification (Original/Derivative/Authored) and information quality (primary/secondary based on informant proximity). It explained that src_004 is an original source containing both primary information (death facts) and secondary information (birth facts from son-in-law). No source was modified, so no conflation occurred. The skill's explanation demonstrates proper understanding of the distinction."
+            "rationale": "Claude correctly distinguished between source classification (original/derivative/authored) and information quality (primary/secondary based on informant proximity). The response explicitly teaches this distinction and notes that src_004 contains both primary information (death facts from attending context) and secondary information (birth facts from son-in-law). No conflation occurred."
           },
           {
             "source": "rubric",
             "name": "Source fidelity \u2014 no fabricated detail",
             "score": 3,
-            "rationale": "The skill made no changes to src_004's citation, citation_detail, or notes. No invented values, locators, or details were introduced. The response contains no fabricated material\u2014it only explains terminology and declines the request. The skill correctly avoided inventing any 'primary source' language or other unsupported additions."
+            "rationale": "No changes were persisted to src_004's citation. Claude correctly refused to invent or add unsupported detail such as 'primary source' language. The response stayed honest about what the request asked for and what the skill's scope permits, without fabricating any locators, dates, or other concrete values."
           },
           {
             "source": "rubric",
             "name": "Tool usage \u2014 the write path",
             "score": 3,
-            "rationale": "No write operations were performed. The skill correctly declined to modify research.json, so no research_append or validate_research_schema calls were needed or made. The absence of writes is the correct behavior for this request, which was out of scope. No tool-path violations occurred."
+            "rationale": "No writes to research.json were attempted or made. The skill correctly identified that the request concerns terminology and scope boundaries rather than citation refinement requiring persistence. No validation call was needed because no file changes occurred, which is the correct behavior."
           }
         ],
         "review_dimensions": [
@@ -8560,49 +8560,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified that the request conflates terminology: 'primary source' describes information quality (informant proximity), not source type. src_004 is correctly classified as 'original' per Evidence Explained. The skill appropriately declined to rewrite the citation or change source_classification, which is outside its writable scope. The response accurately explains the distinction and routes the user to the appropriate skill (record-extraction) for evidence-quality questions, while clarifying that the citation skill handles wording, not classification."
+            "rationale": "Claude correctly identified that the request conflates terminology: 'primary source' describes information quality (informant proximity), not source classification. src_004 is correctly classified as 'original' per Evidence Explained. The response accurately explains the distinction and appropriately declines to rewrite the citation with incorrect terminology. No factual errors or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill fully addressed the user's request by clarifying the terminology confusion and explaining why the request cannot be fulfilled as stated. It identified the correct scope boundary: the citation skill handles citation wording; record-extraction owns evidence classification. The response covers both the immediate question (why 'primary source' is a category error) and the appropriate next step (record-extraction for evidence work). No required element was omitted."
+            "rationale": "Claude addressed the full scope of the request: clarified the terminology distinction, explained that source classification is owned by record-extraction, and correctly noted that src_004 is already properly classified as original. The response covers what the user needed to understand about the request's scope and the correct terminology."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tools because the request was out of scope for citation refinement (it asked for a terminology/classification change that belongs to record-extraction). N/A applies."
+            "rationale": "No MCP tool calls were made. The skill correctly handled the request through explanation and routing guidance without invoking tools, which is appropriate for a terminology clarification that does not require file changes."
           },
           {
             "source": "rubric",
             "name": "Evidence Explained compliance",
-            "score": null,
-            "rationale": "No citation was created or modified in this run. The skill declined to change src_004's citation, so there is no refined citation to evaluate against the Who/What/When/Where/Where-within framework. N/A applies."
+            "score": 3,
+            "rationale": "The skill did not modify src_004's citation, so no new compliance issues were introduced. The per-test context confirms src_004 is correctly classified as original and that the request should not result in citation rewrites. No changes were made, so compliance remains as it was."
           },
           {
             "source": "rubric",
             "name": "Replication test",
-            "score": null,
-            "rationale": "No citation was created or modified. The skill correctly left src_004's citation unchanged, so there is no locator set to evaluate for replication fidelity. N/A applies."
+            "score": 3,
+            "rationale": "No citation changes were made, so replication integrity is preserved. The skill correctly refused to add invented locators or unsupported detail (such as writing 'primary source' into the citation string). The response appropriately declined to modify the citation in ways that would affect replication."
           },
           {
             "source": "rubric",
             "name": "Source vs information distinction",
             "score": 3,
-            "rationale": "The skill correctly distinguished between source classification (Original/Derivative/Authored) and information quality (primary/secondary based on informant proximity). It explained that src_004 is an original source containing both primary information (death facts) and secondary information (birth facts from son-in-law). No source was modified, so no conflation occurred. The skill's explanation demonstrates proper understanding of the distinction."
+            "rationale": "Claude correctly distinguished between source classification (original/derivative/authored) and information quality (primary/secondary based on informant proximity). The response explicitly teaches this distinction and notes that src_004 contains both primary information (death facts from attending context) and secondary information (birth facts from son-in-law). No conflation occurred."
           },
           {
             "source": "rubric",
             "name": "Source fidelity \u2014 no fabricated detail",
             "score": 3,
-            "rationale": "The skill made no changes to src_004's citation, citation_detail, or notes. No invented values, locators, or details were introduced. The response contains no fabricated material\u2014it only explains terminology and declines the request. The skill correctly avoided inventing any 'primary source' language or other unsupported additions."
+            "rationale": "No changes were persisted to src_004's citation. Claude correctly refused to invent or add unsupported detail such as 'primary source' language. The response stayed honest about what the request asked for and what the skill's scope permits, without fabricating any locators, dates, or other concrete values."
           },
           {
             "source": "rubric",
             "name": "Tool usage \u2014 the write path",
             "score": 3,
-            "rationale": "No write operations were performed. The skill correctly declined to modify research.json, so no research_append or validate_research_schema calls were needed or made. The absence of writes is the correct behavior for this request, which was out of scope. No tool-path violations occurred."
+            "rationale": "No writes to research.json were attempted or made. The skill correctly identified that the request concerns terminology and scope boundaries rather than citation refinement requiring persistence. No validation call was needed because no file changes occurred, which is the correct behavior."
           }
         ]
       },
@@ -8944,49 +8944,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified that the URL points to a record not yet in the project and appropriately declined to create a citation without first extracting the source. The response accurately describes the workflow: record-extraction must run first, then citation refinement. No fabricated claims or unsupported assertions were made. The skill's assessment that the ARK identifier alone cannot supply record details (type, year, jurisdiction, person, locators) is factually correct."
+            "rationale": "The skill correctly identified that the URL points to a record not yet in the project and appropriately declined to create a citation without extraction. The response accurately describes the workflow: record-extraction must run first, then citation refinement. No factual errors or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed the user's request completely by explaining why it cannot proceed (the record is not yet extracted) and providing clear next steps. It identified the correct prerequisite (record-extraction) and offered to run it. The response covers the full scope of what was asked: how to turn the URL into a proper citation, which requires extraction first."
+            "rationale": "The skill addressed the user's request completely by explaining why it cannot proceed (source not yet extracted), directing them to the correct next step (record-extraction), and offering to run it. The response covers all necessary context for the user to understand the workflow."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tools because the record does not exist in the project yet. This is the appropriate behavior for this scenario \u2014 N/A."
+            "rationale": "No MCP tool calls were made. The skill correctly declined to act and routed the request to record-extraction, which is the appropriate behavior for this scenario. N/A applies."
           },
           {
             "source": "rubric",
             "name": "Evidence Explained compliance",
-            "score": 3,
-            "rationale": "The skill did not create a citation, so this dimension does not apply to a persisted artifact. However, the skill correctly identified that all five Evidence Explained elements (Who/What/When/Where/Where-within) cannot be populated from an opaque ARK URL alone and would require the user to open the record and supply those details. The skill's refusal to guess these elements demonstrates proper understanding of the framework."
+            "score": null,
+            "rationale": "No citation was created or persisted. The skill correctly declined to generate a citation structure without first extracting the record. This dimension does not apply when no citation output was produced."
           },
           {
             "source": "rubric",
             "name": "Replication test",
-            "score": 3,
-            "rationale": "Per the per-test context, the opaque ARK URL supplies no page/entry/dwelling locator, so where_within is genuinely unavailable. The skill correctly did not invent locators and did not persist a citation with fabricated details. The skill's direction to the user to open the record and extract it first is the correct handling of an unavoidable gap. No citation was created, so no false locators were introduced."
-          },
-          {
-            "source": "rubric",
-            "name": "Source fidelity \u2014 no fabricated detail",
-            "score": 3,
-            "rationale": "The skill made no persisted changes to research.json and produced no citation with invented details. The response correctly refused to guess record type, year, jurisdiction, person, or locators from the opaque ARK. No concrete values (page numbers, certificate numbers, dates, names) were fabricated in either the persisted state or the chat response. The skill stayed honest about what the URL cannot supply."
+            "score": null,
+            "rationale": "No citation was persisted or presented to the user. The skill declined to create a citation, so there is no citation structure to evaluate for replication capability. This dimension does not apply."
           },
           {
             "source": "rubric",
             "name": "Source vs information distinction",
             "score": 3,
-            "rationale": "No source was created or modified, so no source_classification was due. Per the rubric, when no source is created/modified, this dimension scores pass. The skill correctly did not attempt to classify a source that does not yet exist in the project."
+            "rationale": "No source was created or modified. The skill correctly avoided creating a new src_ entry, as per the per-test requirement that source creation is record-extraction's job. When no source is created/modified, this dimension passes."
+          },
+          {
+            "source": "rubric",
+            "name": "Source fidelity \u2014 no fabricated detail",
+            "score": 3,
+            "rationale": "The skill made no concrete claims about the record's contents, page numbers, dates, or other locators. It correctly refused to guess from the opaque ARK identifier and did not invent any details. The response stays honest about what the URL cannot supply."
           },
           {
             "source": "rubric",
             "name": "Tool usage \u2014 the write path",
             "score": 3,
-            "rationale": "No changes were made to research.json, so no research_append or validate_research_schema calls were required. The skill correctly skipped validation because no write occurred. The response accurately states that the source does not yet exist and that record-extraction must run first \u2014 no false claims about validation or persistence were made."
+            "rationale": "No changes were made to research.json, so no research_append or validate_research_schema calls were required or expected. The skill correctly skipped validation because no write occurred. The response accurately reflects this: no false claims about validation or persistence."
           }
         ],
         "review_dimensions": [
@@ -8994,49 +8994,49 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified that the URL points to a record not yet in the project and appropriately declined to create a citation without first extracting the source. The response accurately describes the workflow: record-extraction must run first, then citation refinement. No fabricated claims or unsupported assertions were made. The skill's assessment that the ARK identifier alone cannot supply record details (type, year, jurisdiction, person, locators) is factually correct."
+            "rationale": "The skill correctly identified that the URL points to a record not yet in the project and appropriately declined to create a citation without extraction. The response accurately describes the workflow: record-extraction must run first, then citation refinement. No factual errors or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed the user's request completely by explaining why it cannot proceed (the record is not yet extracted) and providing clear next steps. It identified the correct prerequisite (record-extraction) and offered to run it. The response covers the full scope of what was asked: how to turn the URL into a proper citation, which requires extraction first."
+            "rationale": "The skill addressed the user's request completely by explaining why it cannot proceed (source not yet extracted), directing them to the correct next step (record-extraction), and offering to run it. The response covers all necessary context for the user to understand the workflow."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. The skill correctly declined to invoke tools because the record does not exist in the project yet. This is the appropriate behavior for this scenario \u2014 N/A."
+            "rationale": "No MCP tool calls were made. The skill correctly declined to act and routed the request to record-extraction, which is the appropriate behavior for this scenario. N/A applies."
           },
           {
             "source": "rubric",
             "name": "Evidence Explained compliance",
-            "score": 3,
-            "rationale": "The skill did not create a citation, so this dimension does not apply to a persisted artifact. However, the skill correctly identified that all five Evidence Explained elements (Who/What/When/Where/Where-within) cannot be populated from an opaque ARK URL alone and would require the user to open the record and supply those details. The skill's refusal to guess these elements demonstrates proper understanding of the framework."
+            "score": null,
+            "rationale": "No citation was created or persisted. The skill correctly declined to generate a citation structure without first extracting the record. This dimension does not apply when no citation output was produced."
           },
           {
             "source": "rubric",
             "name": "Replication test",
-            "score": 3,
-            "rationale": "Per the per-test context, the opaque ARK URL supplies no page/entry/dwelling locator, so where_within is genuinely unavailable. The skill correctly did not invent locators and did not persist a citation with fabricated details. The skill's direction to the user to open the record and extract it first is the correct handling of an unavoidable gap. No citation was created, so no false locators were introduced."
-          },
-          {
-            "source": "rubric",
-            "name": "Source fidelity \u2014 no fabricated detail",
-            "score": 3,
-            "rationale": "The skill made no persisted changes to research.json and produced no citation with invented details. The response correctly refused to guess record type, year, jurisdiction, person, or locators from the opaque ARK. No concrete values (page numbers, certificate numbers, dates, names) were fabricated in either the persisted state or the chat response. The skill stayed honest about what the URL cannot supply."
+            "score": null,
+            "rationale": "No citation was persisted or presented to the user. The skill declined to create a citation, so there is no citation structure to evaluate for replication capability. This dimension does not apply."
           },
           {
             "source": "rubric",
             "name": "Source vs information distinction",
             "score": 3,
-            "rationale": "No source was created or modified, so no source_classification was due. Per the rubric, when no source is created/modified, this dimension scores pass. The skill correctly did not attempt to classify a source that does not yet exist in the project."
+            "rationale": "No source was created or modified. The skill correctly avoided creating a new src_ entry, as per the per-test requirement that source creation is record-extraction's job. When no source is created/modified, this dimension passes."
+          },
+          {
+            "source": "rubric",
+            "name": "Source fidelity \u2014 no fabricated detail",
+            "score": 3,
+            "rationale": "The skill made no concrete claims about the record's contents, page numbers, dates, or other locators. It correctly refused to guess from the opaque ARK identifier and did not invent any details. The response stays honest about what the URL cannot supply."
           },
           {
             "source": "rubric",
             "name": "Tool usage \u2014 the write path",
             "score": 3,
-            "rationale": "No changes were made to research.json, so no research_append or validate_research_schema calls were required. The skill correctly skipped validation because no write occurred. The response accurately states that the source does not yet exist and that record-extraction must run first \u2014 no false claims about validation or persistence were made."
+            "rationale": "No changes were made to research.json, so no research_append or validate_research_schema calls were required or expected. The skill correctly skipped validation because no write occurred. The response accurately reflects this: no false claims about validation or persistence."
           }
         ]
       },

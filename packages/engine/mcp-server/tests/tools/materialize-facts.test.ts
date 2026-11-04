@@ -3,7 +3,9 @@ import { single } from "../helpers/narrow.js";
 import { mkdtemp, writeFile, readFile, rm, access } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
+import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { materializeFacts } from "../../src/tools/materialize-facts.js";
+import { writeProjectFile } from "../helpers/project-files.js";
 
 // ─── fixture builders (valid research.json + tree.gedcomx.json) ───────────────
 
@@ -124,7 +126,7 @@ describe("materialize_facts", () => {
       );
     }
     await writeFile(join(dir, "research.json"), JSON.stringify(researchDoc, null, 2), "utf-8");
-    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(treeDoc, null, 2), "utf-8");
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(treeDoc, null, 2), "utf-8");
   }
   const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
   const exists = async (name: string) => access(join(dir, name)).then(() => true, () => false);
@@ -395,6 +397,46 @@ describe("materialize_facts", () => {
       expect(out.ok).toBe(true);
     });
 
+
+    /** A same_person score recorded for (assertion, person), comparing `role`. */
+    const scoredAs = (assertionId: string, personId: string, role: string) =>
+      recordMatchScore(dir, {
+        record_id: "REC-MARR", record_persona_id: null, record_role: role, tree_person_id: personId, score: 0.9,
+        scorer: "familysearch", model: null, assertion_id: assertionId, record_source: "record_read", computed: "2026-10-28T00:00:00Z",
+      });
+
+    // The let-through (tree-materialization-spec §4.3): the wife's name is linked
+    // to her husband too, and the groom's own name is not yet linked to him, so
+    // nothing in the links says he is not her. A same_person score that compared
+    // him as the groom does.
+    const ferberUnheld = () => ferberLinks().filter((e) => e.id !== "pe_001");
+
+    it("refuses the wife persona onto her husband when her name's link to him was scored as the groom", async () => {
+      const r = research({ sources: [S1], assertions: ferber() });
+      r.person_evidence = ferberUnheld();
+      await writeProject(tree({ persons: [WILLIAM, EMMA] }), r, { link: false });
+      await scoredAs("a_031", "I3", "groom");
+      const out = await copyWife("I3");
+      expect(out.ok).toBe(false);
+      if (!out.ok) {
+        expect(out.errors[0]).toMatch(/same_person score/);
+        expect(out.errors[0]).toContain("the link of 'a_031' to 'I3' does not count");
+        expect(out.errors[0]).not.toMatch(/same_person\(/);
+      }
+      expect(findPerson(await readTree(), "I3").names).toHaveLength(1);
+      expect((await copyWife("I5")).ok).toBe(true);
+    });
+
+    it("still copies it when that score compared him as the wife, or when no score was recorded", async () => {
+      const r = research({ sources: [S1], assertions: ferber() });
+      r.person_evidence = ferberUnheld();
+      await writeProject(tree({ persons: [WILLIAM, EMMA] }), r, { link: false });
+      expect((await copyWife("I3")).ok).toBe(true);
+      await writeProject(tree({ persons: [WILLIAM, EMMA] }), r, { link: false });
+      await scoredAs("a_031", "I3", "Wife");
+      expect((await copyWife("I3")).ok).toBe(true);
+    });
+
     // An assertion about a second person filed on this persona is linked to
     // that person too, so its link says nothing about who this persona is.
     it.each(["Father", "Mother", "parents", "father_name", "mother_name", "parent_name", "father_birthplace", "mother_birthplace", "filiation", "spouse", "Couple", "informant"])(
@@ -578,6 +620,48 @@ describe("materialize_facts", () => {
       const him = findPerson(await readTree(), "I3");
       expect(him.names).toHaveLength(1);
       expect(him.facts ?? []).toHaveLength(0);
+    });
+
+
+    // The named-party let-through (§4.3): the marriage assertion is linked to
+    // both, nothing of the groom's own is linked to him, and no gender is passed,
+    // so the links cannot say which party its link to him is about. A score that
+    // compared him as the groom can.
+    const unheldGroom = () => {
+      const r = research({ sources: [S1], assertions: [...namedBride(), assertion("a_023", { record_id: "REC-MARR", record_role: "groom", fact_type: "name", value: "Thomas Flynn" })] });
+      r.person_evidence = [
+        pe("probable", { id: "pe_002", assertion_id: "a_021", person_id: "I3" }),
+        pe("probable", { id: "pe_003", assertion_id: "a_021", person_id: "I2" }),
+      ];
+      return r;
+    };
+    const UNSEXED_GROOM = { id: "I3", gender: "Unknown", names: [{ id: "N3", given: "Thomas", surname: "Flynn" }] };
+    const brideOnto = async (personId: string) =>
+      single(
+        await materializeFacts({
+          projectPath: dir, personId, assertionId: "a_021", relatedRole: "bride", name: { given: "Mary", surname: "Doyle" },
+        }),
+      );
+
+    it("refuses the bride onto the groom when the marriage link to him was scored as the groom", async () => {
+      await writeProject(tree({ persons: [MARY, UNSEXED_GROOM] }), unheldGroom(), { link: false });
+      await scoredAs("a_021", "I3", "groom");
+      const out = await brideOnto("I3");
+      expect(out.ok).toBe(false);
+      if (!out.ok) {
+        expect(out.errors[0]).toMatch(/same_person score/);
+        expect(out.errors[0]).toContain("the link of 'a_021' to 'I3' does not count");
+        expect(out.errors[0]).not.toMatch(/same_person\(/);
+      }
+      expect(findPerson(await readTree(), "I3").names).toHaveLength(1);
+    });
+
+    it("still writes her there with no score, and onto herself when her link was scored as the bride", async () => {
+      await writeProject(tree({ persons: [MARY, UNSEXED_GROOM] }), unheldGroom(), { link: false });
+      expect((await brideOnto("I3")).ok).toBe(true);
+      await writeProject(tree({ persons: [MARY, UNSEXED_GROOM] }), unheldGroom(), { link: false });
+      await scoredAs("a_021", "I2", "bride");
+      expect((await brideOnto("I2")).ok).toBe(true);
     });
 
     // The own-party check in the allowing direction: it must refuse the groom
@@ -896,6 +980,56 @@ describe("materialize_facts", () => {
     const births = p.facts.filter((f: any) => f.type === "Birth");
     expect(births).toHaveLength(1); // agreeing → ONE fact
     expect(births[0].sources.map((s: any) => s.ref).sort()).toEqual(["S1", "S2"]);
+  });
+
+  it("(4b) a corroborating record gives the fact its standard place only for the same place text", async () => {
+    const stub = { id: "I2", gender: "Male", names: [{ id: "N2", given: "Jane", surname: "Doe" }] };
+    const NAUVOO = "Nauvoo, Hancock, Illinois, United States";
+    await writeProject(
+      tree({ persons: [stub], sources: [{ id: "S1", title: "Census A" }, { id: "S2", title: "Census B" }] }),
+      research({
+        sources: [source("src_001", "S1"), source("src_002", "S2")],
+        assertions: [
+          assertion("a_001", { source_id: "src_001", record_id: "REC-A", fact_type: "birth", date: "1850", place: "Illinois, United States" }),
+          assertion("a_002", { source_id: "src_001", record_id: "REC-A", fact_type: "death", date: "1900" }),
+          assertion("a_003", { source_id: "src_001", record_id: "REC-A", fact_type: "burial", date: "1900", place: "Nauvoo, Hancock, Illinois, United States" }),
+          assertion("a_004", { source_id: "src_002", record_id: "REC-B", fact_type: "birth", date: "1850", place: "Nauvoo, Hancock, Illinois", standard_place: NAUVOO }),
+          assertion("a_005", { source_id: "src_002", record_id: "REC-B", fact_type: "death", date: "1900", place: "Nauvoo, Hancock, Illinois", standard_place: NAUVOO }),
+          assertion("a_006", { source_id: "src_002", record_id: "REC-B", fact_type: "burial", date: "1900", place: "nauvoo,  hancock, ILLINOIS, united states", standard_place: NAUVOO }),
+        ],
+      }),
+    );
+    for (const recordId of ["REC-A", "REC-B"]) {
+      expect(single(await materializeFacts({ projectPath: dir, personId: "I2", recordId, recordRole: "principal" })).ok).toBe(true);
+    }
+    const facts = findPerson(await readTree(), "I2").facts;
+    const of = (type: string) => facts.filter((f: any) => f.type === type);
+    expect(of("Birth")).toEqual([expect.objectContaining({ place: "Illinois, United States" })]);
+    expect(of("Birth")[0]).not.toHaveProperty("standard_place");
+    expect(of("Death")).toEqual([expect.objectContaining({ place: "Nauvoo, Hancock, Illinois", standard_place: NAUVOO })]);
+    expect(of("Burial")).toEqual([expect.objectContaining({ place: "Nauvoo, Hancock, Illinois, United States", standard_place: NAUVOO })]);
+  });
+
+  it("(4c) a record that gives one place text two standard places copies neither, and another record's does not count", async () => {
+    const stub = { id: "I2", gender: "Male", names: [{ id: "N2", given: "Sam", surname: "Vital" }] };
+    await writeProject(
+      tree({ persons: [stub] }),
+      research({
+        sources: [S1],
+        assertions: [
+          assertion("a_001", { record_id: "REC5", fact_type: "birth", date: "1850", place: "Nauvoo, Illinois", standard_place: "Nauvoo, Hancock, Illinois, United States" }),
+          assertion("a_002", { record_id: "REC5", record_role: "father", fact_type: "residence", date: "1850", place: "nauvoo, illinois", standard_place: "Nauvoo Township, Hancock, Illinois, United States" }),
+          assertion("a_003", { record_id: "REC5", fact_type: "death", date: "1900", place: "Carthage, Illinois", standard_place: "Carthage, Hancock, Illinois, United States" }),
+          assertion("a_004", { record_id: "REC6", fact_type: "burial", date: "1900", place: "Carthage, Illinois", standard_place: "Carthage, Hancock, Illinois" }),
+        ],
+      }),
+    );
+    expect(single(await materializeFacts({ projectPath: dir, personId: "I2", recordId: "REC5", recordRole: "principal" })).ok).toBe(true);
+    const facts = findPerson(await readTree(), "I2").facts;
+    const birth = facts.find((f: any) => f.type === "Birth");
+    expect(birth.place).toBe("Nauvoo, Illinois");
+    expect(birth).not.toHaveProperty("standard_place");
+    expect(facts.find((f: any) => f.type === "Death").standard_place).toBe("Carthage, Hancock, Illinois, United States");
   });
 
   it("(5) two CONFLICTING births COEXIST as two facts AND appear in conflicts_surfaced", async () => {

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import QuestionsSection from '../QuestionsSection'
 import type { Question, ResearchData } from '../../../lib/schema'
 import { patrickFlynnResearch } from '../../../lib/__fixtures__/patrick-flynn'
@@ -75,6 +76,28 @@ describe('QuestionsSection', () => {
     mockResearch({ questions: [malformed] })
     expect(() => render(<QuestionsSection />)).not.toThrow()
     expect(screen.getByText('A question with no stop decision or arrays')).toBeInTheDocument()
+  })
+
+  // question_kind is optional (issue #1830 item 1): shown when set, and a question
+  // written before the field existed renders with no empty "Question Kind" row.
+  // The card renders its fields only once expanded, so each test opens it first.
+  it('shows the question kind when it is set', async () => {
+    const q = patrickFlynnResearch.questions.find((x) => x.id === 'q_002') as Question
+    mockResearch({ questions: [{ ...q, question_kind: 'enumerative' }] })
+    render(<QuestionsSection />)
+    await userEvent.click(screen.getByText(q.question).parentElement as HTMLElement)
+    expect(screen.getByText('Question Kind')).toBeInTheDocument()
+    expect(screen.getByText('enumerative')).toBeInTheDocument()
+  })
+
+  it('omits the question kind row when the field is absent', async () => {
+    const q = patrickFlynnResearch.questions.find((x) => x.id === 'q_002') as Question
+    mockResearch({ questions: [q] })
+    render(<QuestionsSection />)
+    await userEvent.click(screen.getByText(q.question).parentElement as HTMLElement)
+    // Expanded, or this assertion would pass on a collapsed card.
+    expect(screen.getByText('Selection Basis')).toBeInTheDocument()
+    expect(screen.queryByText('Question Kind')).toBeNull()
   })
 
   // A legacy document with exhaustive_declaration.declared=true must still show the badge.
