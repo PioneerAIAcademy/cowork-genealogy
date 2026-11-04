@@ -2,10 +2,10 @@
   "test": {
     "id": "ut_search_records_no_fs_collection",
     "skill": "search-records",
-    "name": "A record set FamilySearch holds no collection for hands back to search-external-sites at once, with no sole-repository claim",
+    "name": "A record set FamilySearch holds no collection for hands back to search-external-sites after one logged search, with no sole-repository claim",
     "type": "positive",
     "holdout": true,
-    "description": "From feedback #4130 via issue #4139. The user asks, ad hoc, for every Tallman/Tollman household in Clinton and Essex Counties in the 1825, 1835 and 1845 New York state censuses. The live New York Census wiki page (wiki-read-new-york-census, a faithful capture) starts its state-census table at 1855 and mentions the earlier years only under a New York State Library county list; every record_search returns two city-directory rows and no census. The #4130 run reported 'Not on FamilySearch (held at NY State Library only)' and named no outside site. Step 8 item 7 now says a record set FamilySearch holds no collection for is reported as 'not on FamilySearch' and handed back to search-external-sites at once, planned or ad-hoc, with no 3-variant threshold; Step 2 forbids a 'held only at' or 'not available elsewhere' claim. The claim validator also fails a true-sounding sentence such as '1892 is only available at Ancestry' -- intended, since the agent has no tool that checks outside holdings.",
+    "description": "From feedback #4130 via issue #4139. The user asks, ad hoc, for every Tallman/Tollman household in Clinton and Essex Counties in the 1825, 1835 and 1845 New York state censuses. The live New York Census wiki page (wiki-read-new-york-census, a faithful capture) starts its state-census table at 1855 and mentions the earlier years only under a New York State Library county list; every record_search returns two city-directory rows and no census. The #4130 run reported 'Not on FamilySearch (held at NY State Library only)' and named no outside site. Step 8 item 7 now says a record set FamilySearch holds no collection for is reported as 'not on FamilySearch' and handed back to search-external-sites after one logged record_search, planned or ad-hoc, with no 3-variant threshold; Step 2 forbids a 'held only at' or 'not available elsewhere' claim. The claim validator also fails a true-sounding sentence such as '1892 is only available at Ancestry' -- intended, since the agent has no tool that checks outside holdings.",
     "tags": [
       "search",
       "census",

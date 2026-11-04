@@ -150,7 +150,7 @@ search*, not whether a plan exists.
 | What you have | Do |
 |---|---|
 | A plan item | Execute. Full GPS, including the Step 8 escalation |
-| No plan item, but the **user named this search** | Execute as ad-hoc: log `plan_item_id: null`, note it was user-requested, and stop when done — no escalation except Step 8 item 7's no-collection hand-back, no plan edits |
+| No plan item, but the **user named this search** | Execute as ad-hoc: log `plan_item_id: null`, note it was user-requested, and stop when done — no plan edits, no escalation except Step 8 item 7 |
 | No plan item, and **you** thought of the search | Return `Hand-back: research-plan — <the search you thought of>` and stop. It comes back as a plan item — not as ad-hoc |
 
 Refusing a researcher's own request is obstruction, not rigour; inventing a search
@@ -165,8 +165,8 @@ search back to it rather than running it yourself.
 - **The search is a census search** (the plan item's `record_type` is `census`, or the user asked for a census): `wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Census" })` for the jurisdiction's country — `United_States_Census`, `England_Census`, `Norway_Census`, `Luxembourg_Census`. Take the country from the jurisdiction string when it names one; when it names only a county and state, resolve the country from those and say which you did. Never state what a census schedule collected from memory.
 - **If that page does not settle which fields the schedule collected for the year you are searching**, follow its own per-year link (`United_States_Census_{year}`) before asserting or denying a field.
 - A constructed URL that 404s, or a page that comes back generic, is a gap to record and report — not a prompt to fill from memory.
-- **A state census** (in the US, a year not ending in 0) takes the state's page instead: `wiki_read({ url: "https://www.familysearch.org/en/wiki/{State}_Census" })`.
-- Never state that a record set is held only at a named repository, or is not available elsewhere. Which outside sites hold it is `search-external-sites`' answer.
+- **A state census** (in the US, a year not ending in 0) uses the state's page: `wiki_read({ url: "https://www.familysearch.org/en/wiki/{State}_Census" })`.
+- Never state that a record set is held only at one repository or is not available elsewhere; which sites hold it is `search-external-sites`' answer.
 
 **Choose a search strategy:**
 
@@ -739,7 +739,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 
    **No plan item → no escalation**, however many variants came back nil; an ad-hoc search ends when you log it (Step 1).
 
-   **No FamilySearch collection for the record set → hand back at once, planned or ad-hoc.** When the census wiki page shows FamilySearch holds no collection for the requested place and year, run one `record_search` for that place and year, log it (Step 5), report the year as "not on FamilySearch" if it returns no census record, and return `Hand-back: search-external-sites — <record set, place, years>; FamilySearch holds no collection for these years`, with `userPresent` as above. No 3-variant threshold. A nil on a collection FamilySearch does hold is not this case.
+   **No FamilySearch collection for the record set → hand back after one logged search, planned or ad-hoc.** When the census wiki page shows no FamilySearch collection for the place and year, run and log (Step 5) one `record_search` for them; if it returns no census record, report the year as "not on FamilySearch" and return `Hand-back: search-external-sites — <record set, place, years>; FamilySearch holds no collection for these years`, with `userPresent` as above. A nil on a collection FamilySearch holds is not this case.
 
    ❌ WRONG: Ending your return with "FamilySearch is exhausted — would you like me to check Ancestry?" Offering the escalation as a question is not escalating.
    ✅ CORRECT: Log the nils, then return "Hand-back: search-external-sites — FamilySearch variants exhausted; <person attributes, plan item, userPresent>".
@@ -765,7 +765,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 
 ## Searching multiple repositories
 
-If the user says "search all repositories," execute the FamilySearch items then suggest: "The FamilySearch searches are complete. The plan also includes searches on [Ancestry/etc.] — would you like me to generate search URLs for those?" (naming search-external-sites in the caller-facing lines).
+Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com go to `search-external-sites`: hand them back, never execute them. If the user says "search all repositories," execute the FamilySearch items then suggest: "The FamilySearch searches are complete. The plan also includes searches on [Ancestry/etc.] — would you like me to generate search URLs for those?" (naming search-external-sites in the caller-facing lines).
 
 ## Important rules
 
@@ -787,7 +787,7 @@ Return **≤12 lines** to the caller, in this order:
 - records passed to extraction (`src_` ids) or why none, and that no `sources` or `assertions` exist when none ran
 - the plan item's new `status`, and any instruction in the delegation you did not follow (e.g. a request to mark it `completed`) with a clause saying why
 - each `ns_` row written, and when its call warned, `Hand-back: person-evidence — namesake <ns_ id> recorded for <person_id>; links <pe_ ids> are untied`
-- next-step hint, naming the owning agent for any hand-back as a `Hand-back: <owner> — <the request in one clause>` line — after FamilySearch exhaustion on a plan item, or a record set FamilySearch holds no collection for, it is always `Hand-back: search-external-sites — …`, never prose offering another site: `search-external-sites` (with the person attributes, the plan item and `userPresent`), `research-plan`, `search-full-text`, `record-structurer`, or `research-exhaustiveness`
+- next-step hint, naming the owning agent for any hand-back as a `Hand-back: <owner> — <the request in one clause>` line — after Step 8 item 7 it is always `Hand-back: search-external-sites — …`, never prose offering another site: `search-external-sites` (with the person attributes, the plan item and `userPresent`), `research-plan`, `search-full-text`, `record-structurer`, or `research-exhaustiveness`
 
 Do not reproduce result lists or sidecar payloads.
 
