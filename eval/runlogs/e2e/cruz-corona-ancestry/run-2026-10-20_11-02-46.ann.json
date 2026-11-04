@@ -8,7 +8,7 @@
   },
   "proof_quality_score": 1,
   "notes": {
-    "f1": "Proof quality corrected on re-audit (2026-11-04) from 3 to 1: the narrative states twice that a source was \"read as an image\" (\"original government record... read as an image\"; \"original enumeration (read as an image)\") and reaches a \"proved\" tier on that basis, but research.json's own source_classification marks both underlying sources derivative, and there are zero image_read/image_transcribe calls anywhere in the run. A top-tier conclusion built on a fabricated evidentiary claim is unsound (1), not sound (3) — the most serious instance of this pattern found across this fixture's annotations."
+    "f1": "Proof quality corrected on re-audit (Milescia, 2026-11-04) from 3 to 1: the narrative states twice that a source was \"read as an image\" (\"original government record... read as an image\"; \"original enumeration (read as an image)\") and reaches a \"proved\" tier on that basis, but research.json's own source_classification marks both underlying sources derivative, and there are zero image_read/image_transcribe calls anywhere in the run. A top-tier conclusion built on a fabricated evidentiary claim is unsound (1), not sound (3) — the most serious instance of this pattern found across this fixture's annotations."
   },
   "annotator": "mercyokum",
   "findings_hash": "61c97416379af03d0808efd6ffd1148332b4bcff57c7ef1014557045bc1b261a",

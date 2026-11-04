@@ -9,8 +9,8 @@ time.)
 
 ## Research question
 
-> What is the birth date of John Perry Witbeck, and what evidence
-> confirms it?
+> What is the birth date of John Perry Witbeck of Schenectady County, New
+> York, and what evidence confirms it?
 
 ## Bundled captures (`provided-documents/`)
 
@@ -60,9 +60,11 @@ tracked, and several sources reference other Witbeck family members).
 three independent facts (birth, death, and burial): "What are the birth date,
 death date, and burial date of John Perry Witbeck, and what evidence confirms
 each event in Schenectady County, New York?" Reworded `researcher_question` to
-the birth date only; demoted `f2` (death) and `f3` (burial) to
+the birth date only, keeping "of Schenectady County, New York" as identifying
+detail (review, 2026-11-04); demoted `f2` (death) and `f3` (burial) to
 `required: false`, so a run that recovers them anyway still gets credit. No
-finding wording changed, and this fixture has no committed runs to re-grade.
+finding wording changed. Its three annotations carry neither `findings_hash`
+nor `blind_bundle_digest`, so they stay valid with no re-grading needed.
 
 Originates from GitHub issue #760 ("Create e2e test for John Perry
 Witbeck MGRB-VP2 (NewYork)"). If a run fails to recover the death or

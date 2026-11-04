@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.)
 
 ## Research question
 
-> Who was Daniel Cook's wife?
+> Who was the wife of Daniel Cook, father of David and Isaac Cook?
 
 ## What was removed from the starting tree
 
@@ -30,7 +30,9 @@ Medium — the marriage is independently corroborable via a named marriage-recor
 two independent facts (the wife, and what the sons' 1850 census entries show):
 "Who was Daniel Cook's wife, and what do the family's 1850 census entries show
 about his sons David and Isaac?" Reworded `researcher_question` to the wife
-only; demoted `f2` and `f3` (the two sons' census entries) to
+only, keeping the sons' names as identifying detail ("Who was the wife of
+Daniel Cook, father of David and Isaac Cook?" — review, 2026-11-04); demoted
+`f2` and `f3` (the two sons' census entries) to
 `required: false`, so a run that recovers them anyway still gets credit. This
 matches the fixture's own stated purpose below — "a pass demonstrates that
 research recovers what a prior removal took, not only the one fact a

@@ -118,8 +118,9 @@ Domingo Olivera with spouse Francisca González, and for Domingo Olivera born
 **The findings.**
 
 - **f1 (required):** the subject's parents.
-- **f2 (bonus, `required: false`):** the second half of the research question,
-  that the 1925 father is the son. It is a bonus because recall is graded from
+- **f2 (bonus, `required: false`):** that the 1925 father is the son, not the
+  subject — now carried in the question only as identifying context about the
+  hint, not asked for directly. It is a bonus because recall is graded from
   the tree only. The tree can show it only if the agent adds the granddaughter
   Carmen under GN52-SH9, which is outside a parents question. A run that
   correctly concludes "it's the son" in `research.json` alone would otherwise
