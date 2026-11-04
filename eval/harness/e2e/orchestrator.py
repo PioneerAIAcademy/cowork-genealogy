@@ -2080,6 +2080,8 @@ async def _run_agent(
                 if _verdict[0] == "halt":
                     _out["continue_"] = False
                     _out["stopReason"] = _verdict[1]
+                    if _step_turns and _step_turns[-1].halt_offer is None:
+                        _step_turns[-1].halt_offer = _gate.halt_offer
                 return _out
             # Allowed, so if it was a step this turn OPENED with, record which.
             # `next_auto_reply` keys on the step a turn ran, and the gate is the
@@ -2268,6 +2270,14 @@ async def _run_agent(
                     f"routed to the {agent} agent. Every other write to "
                     f"`{owned_section}` is unaffected; delegate this field rather "
                     "than setting it here."
+                )
+            elif rule == "main_thread_field":
+                owned_section, _, field = owned.partition(".")
+                text = (
+                    f"`{bare}` denied on `{owned_section}` — setting `{field}` is "
+                    "reserved to the main conversation. Every other write to "
+                    f"`{owned_section}` is unaffected; hand the user's wording back "
+                    "rather than setting it here."
                 )
             elif rule == "claim":
                 agent = OWNED_CLAIM_ROUTES[owned][0]
@@ -2697,7 +2707,7 @@ async def _run_agent(
                 mode,
                 previous,
                 turn.step,
-                _boundary.offered_step(_last_text(turn)),
+                _boundary.offered_step(_last_text(turn)) or turn.halt_offer,
                 outcome,
             )
             _reply_state.clear()

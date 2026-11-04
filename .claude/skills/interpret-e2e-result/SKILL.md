@@ -161,11 +161,12 @@ entry carries `blocked_by: "context"`, but **two different guards land here and
   not own. This is the arm that actually fires; every entry in the committed
   corpus is one. **Not** evidence of a spawn failure, and the shipped plugin hook
   holds the same rule, so a user would hit it too. Do not assume the main thread:
-  `owner_denied` has six rules — `routed`, `out_of_lane`, `declaration`,
+  `owner_denied` has seven rules — `routed`, `out_of_lane`, `declaration`,
   `owned_field` (a field routed on presence, `project.status`), `claim` (a
   conflict's analysis) and `owned_append` (a new question from anyone but
-  question-selection) — and `out_of_lane` fires for a **named subagent**
-  reaching outside its own lanes. `tool` is `research_append` for all six, so it cannot tell them apart — read
+  question-selection) and `main_thread_field` (`project.objective` from any
+  subagent) — and `out_of_lane` fires for a **named subagent**
+  reaching outside its own lanes. `tool` is `research_append` for all seven, so it cannot tell them apart — read
   `narration[]` for the rule and `tool_calls[]` for the caller.
 - **`image_read`** — the one subagent-only tool, called on the main thread. No
   agent owns it, so this is the router reaching for a scan inline instead of

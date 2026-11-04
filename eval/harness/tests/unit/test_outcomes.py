@@ -21,9 +21,13 @@ import pytest
 from harness import runlog
 from harness.outcomes import (
     RunlogAssemblyError,
+    _DIMENSION_RANK,
     _modal_with_tiebreak_down,
     _OUTCOME_RANK,
+    aggregate_dimensions,
     aggregate_per_run_outcome,
+    consequential,
+    refresh_test_entry_outcome,
 )
 from tests.unit.bare_python import bare
 
@@ -35,6 +39,10 @@ def test_runlog_reexports_the_same_objects_not_copies():
     assert runlog.RunlogAssemblyError is RunlogAssemblyError
     assert runlog._modal_with_tiebreak_down is _modal_with_tiebreak_down
     assert runlog._OUTCOME_RANK is _OUTCOME_RANK
+    assert runlog._DIMENSION_RANK is _DIMENSION_RANK
+    assert runlog.aggregate_dimensions is aggregate_dimensions
+    assert runlog.refresh_test_entry_outcome is refresh_test_entry_outcome
+    assert runlog.consequential is consequential
 
 
 def test_outcomes_imports_on_a_bare_interpreter():
@@ -45,6 +53,22 @@ def test_outcomes_imports_on_a_bare_interpreter():
     )
     assert proc.returncode == 0, f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
     assert proc.stdout.strip() == "pass"
+
+
+def test_refresh_test_entry_outcome_runs_on_a_bare_interpreter():
+    """Rule 12 rebuilds committed entries in CI, so the rebuild itself, not just
+    the import, must run with no third-party packages (#3936)."""
+    proc = bare(
+        "import sys; sys.path.insert(0, %r);"
+        "from harness.outcomes import refresh_test_entry_outcome as r;"
+        "e = {'runs': [{'outcome': 'partial', 'validators': {'passed': True},"
+        " 'judge': {'skipped': False, 'dimensions':"
+        " [{'source': 'base', 'name': 'Correctness', 'score': 2}]}}]};"
+        "r(e); print(e['outcome_summary']['aggregated_dimensions'][0]['score'])"
+        % str(HARNESS_DIR)
+    )
+    assert proc.returncode == 0, f"stdout:\n{proc.stdout}\nstderr:\n{proc.stderr}"
+    assert proc.stdout.strip() == "2"
 
 
 def test_check_runlogs_itself_imports_on_a_bare_interpreter():

@@ -1,0 +1,246 @@
+{
+  "run_log": "v4_2026-11-02_21-04-54.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_search_images_d2",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the skill faithfully reported the volume_search result of zero records without fabricating a volume, image group, or page browsing. It also correctly notes that the response matched the tool output and appropriately avoided unnecessary retries."
+    },
+    {
+      "test_id": "ut_search_images_d2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment confirms all required actions: the specified volume_search, honest reporting of the nil result, proper negative-browse logging with scope details, and appropriate alternative research paths. It also correctly verifies that the search scope was captured in the log notes."
+    },
+    {
+      "test_id": "ut_search_images_d2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately verifies the search arguments, date range, negative-result logging structure, and absence of an inappropriate image_search call. It also correctly confirms that the arguments align with the fixture’s expected usage."
+    },
+    {
+      "test_id": "ut_search_images_d2",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the skill used the delegated place/date range, correctly handled the zero-result search as a nil browse, and avoided fabricating an imageGroupNumber or unsupported image search. It also correctly identifies the absence of a digitized volume as the appropriate result from the tool output."
+    },
+    {
+      "test_id": "ut_search_images_d2",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that the empty volume_search result meant there was nothing available to browse, so skipping image_search and image_transcribe was appropriate. It also accurately verifies that the agent did not fabricate image IDs, pages, or browsing activity."
+    },
+    {
+      "test_id": "ut_search_images_d2",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that log_006 documents the negative search with the necessary scope—place, date range, record type, result, and absence of a volume/image group. It also correctly notes that no fabricated identifiers were used and that the log provides an appropriate audit trail for the nil browse."
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately verifies the will transcription, the absence of Patrick from the named beneficiaries, the repeated identical Henry Schoener images as a data-quality issue, and the 1889-versus-1881 citation conflict. It also correctly confirms that the response did not introduce fabricated or unsupported claims."
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the skill completed the delegated image-group research, including the supplied imageGroupNumber, all returned images, the target-page and sidecar reads, and the research log. It also correctly recognizes the per-test override that made volume_search unnecessary and confirms that no inappropriate retry was performed."
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment thoroughly verifies the tool arguments, including the supplied image group, exploratory volume searches, image IDs, sidecar reference, and research-log fields. It also correctly confirms that no critical identifiers were wrong, no fixture_not_found errors occurred, and no inappropriate parameters were introduced."
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly recognizes that using the supplied imageGroupNumber was required under the per-test override and that the subsequent volume searches were reasonable due diligence rather than a required prerequisite. It also accurately confirms that the skill identified the mixed probate film and scoped the browse appropriately without targeting an incorrect volume."
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the skill faithfully reported the image-search and transcription results, including the 1889 will and the absence of Patrick Flynn. It also correctly identifies the duplicated Henry Schoener transcriptions as a data-quality issue and verifies that the skill did not fabricate or claim to inspect images it had not actually processed."
+    },
+    {
+      "test_id": "ut_search_images_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment thoroughly verifies that log_006 captured the necessary scope, findings, negative result, and caveats. It correctly explains that these details provide a strong audit trail showing what was examined, what was found, and what remains unresolved."
+    },
+    {
+      "test_id": "ut_search_images_d8",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the correct target image was examined, the transcription matches the expected Orphans' Court Docket entry, and the skill correctly recognized that the record neither names Patrick Flynn nor establishes parentage. It also appropriately confirms that no fabricated or unsupported material was introduced."
+    },
+    {
+      "test_id": "ut_search_images_d8",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms all required actions: locating the correct volume and target page, transcribing and reading it, logging the browse with comprehensive scope details, and providing the requested summary. It correctly concludes that all three delegated tasks were completed."
+    },
+    {
+      "test_id": "ut_search_images_d8",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately verifies the expected arguments for all tool calls, including the required image group, item, image ID, project path, and research-log structures. It also correctly notes that the extra itemImage parameter was reasonable and that no critical identifiers were wrong or fixture_not_found errors occurred."
+    },
+    {
+      "test_id": "ut_search_images_d8",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that the supplied imageGroupNumber and item were used directly, as required for an ad hoc browse under the rubric. It also correctly notes that no volume_search was necessary and that the skill appropriately avoided searching for a volume."
+    },
+    {
+      "test_id": "ut_search_images_d8",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms the correct image search, transcription, and sidecar read, and verifies that the reported docket contents match the page. It also correctly notes that the skill neither fabricated content nor overstated what the record establishes about Patrick Flynn or parentage"
+    },
+    {
+      "test_id": "ut_search_images_d8",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately verifies that log_006 contains comprehensive scope, identification, outcome, and limitation details sufficient for an audit trail. It correctly highlights the image group, item, image ID, record type, page location, estate details, and the explicit limitation that the docket does not name Patrick or heirs."
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms the target volume, its mixed probate structure, the complete image search, and the repeated Henry Schoener transcriptions as a tool/OCR issue rather than evidence of the target will. It also correctly verifies that the skill did not fabricate or misrepresent findings and that the conclusion was supported by the tool results."
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms all required actions: selecting the correct volume, recognizing its mixed structure, listing and sampling the images, documenting the duplicate-page issue, logging the browse, and updating the plan status. It also correctly concludes that no required action was omitted."
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment thoroughly verifies the correctness of all tool arguments, including the volume search, image search/transcription, logging, and research update calls. It also confirms that there were no incorrect identifiers, fixture_not_found errors, or unnecessary parameters."
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the skill selected the correct probate volume, recognized and documented its mixed record structure, and avoided incorrectly browsing the unrelated tax assessment volume. It also correctly notes that the skill did not invent unsupported filtering parameters."
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately verifies the complete image-browsing workflow, including representative transcription, confirmation of the duplicated OCR pattern, and the supporting sidecar_read. It correctly recognizes that stopping after establishing the tool/OCR issue and documenting the incomplete browse was appropriate, rather than fabricating a negative finding or repeatedly re-reading the same images."
+    },
+    {
+      "test_id": "ut_search_images_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately verifies that the research log captured the full search scope, the partial outcome, the OCR/data-quality limitation, and the reason the browse could not be completed. It also correctly notes that the existing source was acknowledged without falsely claiming it was confirmed on the searched film, providing a sufficient audit trail."
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately verifies the image-group selection, the Thomas Flynn will and its specific details, the sidecar confirmation, and the OCR duplication artifact. It is fully grounded in the reported tool responses and correctly confirms that no unsupported factual claims were introduced."
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that all required research actions were completed, including selecting the correct volume, examining all 15 images, reading the target page, and logging the full browse scope and caveats. It correctly concludes that no required action was omitted."
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment thoroughly verifies the correctness of all tool arguments, including the volume/image searches, all 15 transcriptions, the sidecar reference, and the research-log metadata. It also correctly confirms that no critical identifiers were wrong, no fixture_not_found errors occurred, and no unnecessary arguments were introduced."
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly verifies the volume-selection logic, including rejection of all three scoping traps and selection of the correct Schuylkill County probate group. It also appropriately notes that the unindexed, non-searchable nature of the volume makes image browsing the correct research method."
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms the complete browse workflow: all 15 images were listed and transcribed, the target will was fully read, and the OCR duplication artifact was reported honestly. It also correctly notes that no invalid retry parameters were used and that the browse was complete without requiring individual re-reading of every image."
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately verifies that log_006 captured the full browse scope, including the image group, place, record type, all 15 images, positive outcome, and target findings. It also correctly notes that the detailed notes and OCR caveat provide sufficient documentation for an exhaustiveness audit."
+    }
+  ]
+}
