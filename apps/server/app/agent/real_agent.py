@@ -48,6 +48,7 @@ from .continue_policy import (
     DELEGATION_TOOLS,
     foreground_rewrite,
     NO_PROJECT_NOTE,
+    SOURCES_GUIDANCE,
     HOSTED_PLANE_ENV,
     completion_halt_summary,
     status_before_call,
@@ -803,7 +804,7 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         system_prompt={
             "type": "preset",
             "preset": "claude_code",
-            "append": f"{project_note}\n\n{NO_PROJECT_NOTE}",
+            "append": f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{NO_PROJECT_NOTE}",
         },
         # "project" only — the same source both eval harnesses load
         # (workspace.py, e2e/orchestrator.py) and what registers the agents

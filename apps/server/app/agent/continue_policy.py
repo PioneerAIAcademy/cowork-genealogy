@@ -62,6 +62,23 @@ NO_PROJECT_NOTE = (
 )
 
 
+# Issue #4011. Before any project existed, the Kenya alpha session listed "Kenya, Civil
+# Registration, deaths 1904–1967" as searchable from memory; FamilySearch has no Kenya
+# collections. Issue #4125 (via the lead on #4011, 2026-11-02) did the same with a book: the
+# 1895 Ayling register, for the wrong war, and footnotes no tool read. So the rule covers any
+# named source. The main thread cannot call `collections_search` itself (the plugin hook
+# denies it), so the sentence names the agents that hold it. Both hosted planes append it,
+# and the plugin's `no_project_route.py` carries the same text to Cowork as
+# `SOURCES_NOTE`; `test_the_sources_sentence_is_the_one_the_plugin_hook_adds`
+# fails if the two differ.
+SOURCES_GUIDANCE = (
+    "Name a source, collection, book or citation only if a tool result in this session "
+    "returned it; otherwise say it is unconfirmed. FamilySearch collections come from "
+    "collections_search, which locality-guide and research-plan run. This rule is about "
+    "what you name, not about which agent a question goes to."
+)
+
+
 # Set in the SDK env by both hosted planes (`real_agent._sdk_env`, the prototype worker's
 # options). The plugin's `no_project_route.py` hook defines the same name and stays silent
 # when it is set, so its routing text reaches Cowork only and the hosted planes keep the

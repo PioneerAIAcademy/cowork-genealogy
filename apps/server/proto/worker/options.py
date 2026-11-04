@@ -64,6 +64,7 @@ from app.agent.continue_policy import (
     DELEGATION_TOOLS,
     foreground_rewrite,
     NO_PROJECT_NOTE,
+    SOURCES_GUIDANCE,
     HOSTED_PLANE_ENV,
     env_float,
     env_int,
@@ -880,7 +881,7 @@ def build_worker_options(
         "narration style."
     )
     # Unconditional, on the opening turn too: the opening turn is the one #3768 is about.
-    project_note = f"{project_note}\n\n{NO_PROJECT_NOTE}"
+    project_note = f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{NO_PROJECT_NOTE}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
         # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the

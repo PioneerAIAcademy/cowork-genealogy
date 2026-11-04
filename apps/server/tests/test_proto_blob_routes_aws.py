@@ -53,10 +53,11 @@ def test_a_missing_store_is_404_on_a_read_and_503_on_a_write():
         r"(?:\s*#[^\n]*\n)*\s*raise HTTPException\(status_code=(\d+)",
         body,
     )
-    # sidecar GET, image GET, upload POST, feedback POST — in file order. The two reads
-    # answer "absent", the two writes answer "unavailable".
-    assert guards == ["404", "404", "503", "503"], \
-        f"guard statuses are {guards}, expected 404/404/503/503"
+    # sidecar GET, image GET, session upload POST, project upload POST, project download
+    # GET, feedback POST — in file order. The reads answer "absent", the writes
+    # "unavailable".
+    assert guards == ["404", "404", "503", "503", "404", "503"], \
+        f"guard statuses are {guards}, expected 404/404/503/503/404/503"
 
 
 def test_the_helpers_take_the_facade_not_a_bucket_name():
