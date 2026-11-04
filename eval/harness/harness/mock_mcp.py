@@ -1553,6 +1553,20 @@ def create_mock_server(
             ):
                 response = _stage_person_read(_workspace, args, response)
 
+            # Production's fulltext_search adds `facets` only when the call sent
+            # `includeFacets` (`if (input.includeFacets && data.facets)`,
+            # fulltext-search.ts), and stages after, so neither the reply nor the
+            # sidecar carries them otherwise. A fixture's canned `facets` served to
+            # a call that never asked handed the agent partition ids it could not
+            # have seen, and it scoped to one (#3973).
+            if (
+                _name == "fulltext_search"
+                and isinstance(response, dict)
+                and "facets" in response
+                and not args.get("includeFacets")
+            ):
+                response = {k: v for k, v in response.items() if k != "facets"}
+
             # Production's record_search and fulltext_search return (and stage)
             # `query: echoQuery(input)` — every argument the call sent — while a
             # fixture carries whatever query it was recorded with, and a
