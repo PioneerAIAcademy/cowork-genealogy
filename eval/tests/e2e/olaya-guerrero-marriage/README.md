@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.) Born about 1732 in Hig
 
 ## Research question
 
-> When and where did Olaya Guerrero, born about 1732 in Higüey, marry Baltazar Guerrero, the father of her daughter Rosa born in Higüey in September 1769, and who were her parents?
+> When and where did Olaya Guerrero, born about 1732 in Higüey, marry Baltazar Guerrero, the father of her daughter Rosa born in Higüey in September 1769?
 
 ## What was removed from the starting tree
 
@@ -27,6 +27,15 @@ medium — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4144).** The old question asked
+two independent facts (the marriage, and her parents): "When and where did
+Olaya Guerrero, born about 1732 in Higüey, marry Baltazar Guerrero, the father
+of her daughter Rosa born in Higüey in September 1769, and who were her
+parents?" Reworded `researcher_question` to the marriage only; demoted `f2`
+(her parents) to `required: false`, so a run that recovers it anyway still
+gets credit. No finding wording changed, and this fixture has no committed
+runs to re-grade.
 
 **Resolved 2026-10-15 (issue #3330): the hint is a true match.** Adjudicated by Ikennaya1. The hint (`ark:/61903/1:1:XLLN-5JM`, "Dominican Republic, Marriages, 1743-1929", an index with no image) is the bride's persona of the 13 October 1768 Higüey marriage of Baltasar Guerrero, son of Gregorio Guerrero and Maria Ygnacia Garrido, and Olaya Vrtarte (Urtarte), daughter of Gregorio Vrtarte and Baltasara de Reyna. The tree's Baltazar already cites the groom's persona of the same entry (`ark:/61903/1:1:XLLN-5J3`).
 

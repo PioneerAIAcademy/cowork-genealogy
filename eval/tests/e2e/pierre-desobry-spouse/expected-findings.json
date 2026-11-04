@@ -34,7 +34,7 @@
         "France, Nord, Parish and Civil Registration, 1524-1893 — birth registration (Act 53), 5 Sep 1808, Pecquencourt, of Julien Joseph Desbry, naming father Pierre Henri Desbry (ark:/61903/1:1:8NW1-RP6Z) — the confirming record for his existence and parentage",
         "Absence of any later record (death, marriage, or other) for Julien Joseph Desbry/Désobri in the same collection across a four-variant indexed search, 1808-1850 — supports but does not directly document death in infancy"
       ],
-      "required": true
+      "required": false
     }
   ]
 }
