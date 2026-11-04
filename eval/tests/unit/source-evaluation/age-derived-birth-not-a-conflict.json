@@ -50,9 +50,9 @@
     "person-quality-tallman-detail"
   ],
   "judge_context": [
-    "A source's age gives a birth window: record year minus age, minus one, to record year minus age. The 1850 census (age 11), the 1865 census (age 26) and the 1910 census (age 71) each give 1838-1839, which contains the profile's 30 November 1838. They are NOT disagreements and must not be reported as findings, [CONFLICT] cells or counted against the profile. Reporting them as consistent, or saying nothing, is correct.",
+    "A source's age gives a birth window: record year minus age, minus one, to record year minus age. The 1850 census (age 11), the 1865 census (age 26) and the 1910 census (age 71) each give 1838-1839, which contains the profile's 30 November 1838. Showing that window in the table is correct. Marking it [CONFLICT], listing it as a finding or counting it against the profile is the defect this test exists for.",
     "The two Vermont death indexes (2V7M-JMY, F8R4-RYM) index a bare birth year of 1839 beside an age at death of 74 on a 16 August 1913 death: the window is 1838-1839, containing the profile date. The same rule applies: not a birth-date finding. Their OTHER disagreements (the father's name misread, the death place) are separate and stay reportable.",
-    "The 1870 census (1841) and 1880 census (1840) fall outside 1838-1839 by two and one year. Setting them aside as ordinary census drift is correct; reporting them as findings is a defect, as the profile doctrine allows a couple of years.",
+    "Do not grade how the 1870 (1841) and 1880 (1840) censuses are handled: setting them aside or noting them as ordinary drift are both acceptable, and no score is deducted either way.",
     "The tombstone's age '74 yrs 6 mos 16 dys' before 16 August 1913 gives 31 January 1839, and Find a Grave states '31 Jan 1839'. That is an exact date against the profile's 30 November 1838 and IS a real conflict: the reply must report it, and must not fold it into the age window. Reporting it as the birth-date finding is correct and must not be deducted.",
     "No project exists: person_warnings returning no_project is correct; the reply should say impossible-date checks need a project and must not invent warnings."
   ]
