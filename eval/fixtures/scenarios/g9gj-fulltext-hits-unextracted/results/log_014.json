@@ -1,0 +1,2972 @@
+{
+  "log_id": "log_014",
+  "tool": "record_search",
+  "retrieved": "2026-10-09T15:24:58.007Z",
+  "returned_count": 30,
+  "payload": {
+    "query": {
+      "birthPlace": "New Hampshire, United States",
+      "birthYearFrom": 1755,
+      "birthYearTo": 1800,
+      "count": 30,
+      "projectPath": "<workspace>",
+      "residencePlace": "New York, United States",
+      "residenceYearFrom": 1850,
+      "residenceYearTo": 1850,
+      "surname": "Hyde"
+    },
+    "totalMatches": 25541,
+    "paginationCappedAt": 4999,
+    "returned": 30,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:MZM9-GG4",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "Jackson, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Iram Hyde",
+        "score": 5.1317997,
+        "confidence": 3,
+        "sex": "Male",
+        "birthDate": "1798",
+        "birthPlace": "New Hampshire, United States",
+        "collectionId": "1401638",
+        "collectionTitle": "United States, Census, 1850",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
+        "recordTitle": "Household of Iram Hyde, \"United States, Census, 1850\"",
+        "recordArk": "ark:/61903/1:2:M4DV-GM6",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_243047467",
+              "ark": "ark:/61903/1:1:MZM9-GG4",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Iram",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1798",
+                  "standard_date": "1798",
+                  "place": "New Hampshire",
+                  "standard_place": "New Hampshire, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Jackson, Washington, New York, United States",
+                  "standard_place": "Jackson, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_243047468",
+              "ark": "ark:/61903/1:1:MZM9-GGH",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1796",
+                  "standard_date": "1796",
+                  "place": "New York",
+                  "standard_place": "New York, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Jackson, Washington, New York, United States",
+                  "standard_place": "Jackson, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_243047469",
+              "ark": "ark:/61903/1:1:MZM9-GGC",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Margaret",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1833",
+                  "standard_date": "1833",
+                  "place": "New York",
+                  "standard_place": "New York, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Jackson, Washington, New York, United States",
+                  "standard_place": "Jackson, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_180325813",
+              "title": "Household of Iram Hyde, \"United States, Census, 1850\"",
+              "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZM9-GG4 : Fri Jan 10 17:52:53 UTC 2025), Entry for Iram Hyde and Mary Hyde, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M4DV-GM6"
+            },
+            {
+              "id": "sd_c_1401638",
+              "title": "United States, Census, 1850",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6X36-5P"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_243047467",
+              "url": "#p_243047467"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "359",
+              "name": "New Hampshire, United States",
+              "latitude": 43.67,
+              "longitude": -71.5
+            },
+            {
+              "id": "4608450",
+              "name": "Jackson, Washington, New York, United States",
+              "latitude": 43.0883,
+              "longitude": -73.3767
+            }
+          ]
+        },
+        "primaryId": "p_243047467"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M3Y2-4SZ",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "Westchester county, Westchester, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Jack Hight",
+        "score": 3.60108,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1786",
+        "birthPlace": "United States",
+        "deathDate": "October 1849",
+        "collectionId": "1420441",
+        "collectionTitle": "United States Census (Mortality Schedule), 1850-1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1420441",
+        "recordTitle": "Household of Jack Hight, \"United States Census (Mortality Schedule), 1850-1880\"",
+        "recordArk": "ark:/61903/1:2:M9Y6-BSZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_95316370",
+              "ark": "ark:/61903/1:1:M3Y2-4SZ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Jack",
+                  "surname": "Hight"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1786",
+                  "standard_date": "1786",
+                  "place": "America",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Westchester county, Westchester, New York, United States",
+                  "standard_place": "Westchester, New York, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "Oct 1849",
+                  "standard_date": "Oct 1849"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_46546270",
+              "title": "Household of Jack Hight, \"United States Census (Mortality Schedule), 1850-1880\"",
+              "citation": "\"United States Census (Mortality Schedule), 1850-1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M3Y2-4SZ : Tue Apr 22 17:06:13 UTC 2025), Entry for Jack Hight, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M9Y6-BSZ"
+            },
+            {
+              "id": "sd_c_1420441",
+              "title": "United States Census (Mortality Schedule), 1850-1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1420441"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6LCS-FRT"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_95316370",
+              "url": "#p_95316370"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "393121",
+              "name": "Westchester, New York, United States",
+              "latitude": 41.11667,
+              "longitude": -73.8
+            }
+          ]
+        },
+        "primaryId": "p_95316370"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MCTM-Y3X",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "White Plains, Westchester, New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Charlotte Hyatt",
+        "score": 3.60108,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "1776",
+        "birthPlace": "United States",
+        "collectionId": "1401638",
+        "collectionTitle": "United States, Census, 1850",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
+        "recordTitle": "Household of Elainor, \"United States, Census, 1850\"",
+        "recordArk": "ark:/61903/1:2:M48R-LM3",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_239784404",
+              "ark": "ark:/61903/1:1:MCTM-Y3X",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyatt",
+                  "given": "Charlotte"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "White Plains, Westchester, New York, United States",
+                  "standard_place": "White Plains, Westchester, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1776",
+                  "standard_date": "1776",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_239784403",
+              "ark": "ark:/61903/1:1:MCTM-Y36",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elainor"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1784",
+                  "standard_date": "1784",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "White Plains, Westchester, New York, United States",
+                  "standard_place": "White Plains, Westchester, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_239784405",
+              "ark": "ark:/61903/1:1:MCTM-Y3F",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyatt",
+                  "given": "Matilda"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "White Plains, Westchester, New York, United States",
+                  "standard_place": "White Plains, Westchester, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1798",
+                  "standard_date": "1798",
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_239784406",
+              "ark": "ark:/61903/1:1:MCTM-Y3N",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Caroline"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "White Plains, Westchester, New York, United States",
+                  "standard_place": "White Plains, Westchester, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1844",
+                  "standard_date": "1844",
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_179703903",
+              "title": "Household of Elainor, \"United States, Census, 1850\"",
+              "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCTM-Y36 : Thu Oct 16 11:27:56 UTC 2025), Entry for Elainor and Charlotte Hyatt, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M48R-LM3"
+            },
+            {
+              "id": "sd_c_1401638",
+              "title": "United States, Census, 1850",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-63N9-PQY"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_239784404",
+              "url": "#p_239784404"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "4613379",
+              "name": "White Plains, Westchester, New York, United States",
+              "latitude": 41.034,
+              "longitude": -73.7621
+            }
+          ]
+        },
+        "primaryId": "p_239784404"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MCTM-Y3F",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "White Plains, Westchester, New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Matilda Hyatt",
+        "score": 3.60108,
+        "confidence": 2,
+        "sex": "Female",
+        "birthDate": "1798",
+        "birthPlace": "United States",
+        "collectionId": "1401638",
+        "collectionTitle": "United States, Census, 1850",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
+        "recordTitle": "Household of Elainor, \"United States, Census, 1850\"",
+        "recordArk": "ark:/61903/1:2:M48R-LM3",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_239784405",
+              "ark": "ark:/61903/1:1:MCTM-Y3F",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyatt",
+                  "given": "Matilda"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "White Plains, Westchester, New York, United States",
+                  "standard_place": "White Plains, Westchester, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1798",
+                  "standard_date": "1798",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_239784403",
+              "ark": "ark:/61903/1:1:MCTM-Y36",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elainor"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1784",
+                  "standard_date": "1784",
+                  "place": "United States",
+                  "standard_place": "United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "White Plains, Westchester, New York, United States",
+                  "standard_place": "White Plains, Westchester, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_239784404",
+              "ark": "ark:/61903/1:1:MCTM-Y3X",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyatt",
+                  "given": "Charlotte"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "White Plains, Westchester, New York, United States",
+                  "standard_place": "White Plains, Westchester, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1776",
+                  "standard_date": "1776",
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_239784406",
+              "ark": "ark:/61903/1:1:MCTM-Y3N",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Caroline"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "White Plains, Westchester, New York, United States",
+                  "standard_place": "White Plains, Westchester, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1844",
+                  "standard_date": "1844",
+                  "place": "United States",
+                  "standard_place": "United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_179703903",
+              "title": "Household of Elainor, \"United States, Census, 1850\"",
+              "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCTM-Y36 : Thu Oct 16 11:27:56 UTC 2025), Entry for Elainor and Charlotte Hyatt, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M48R-LM3"
+            },
+            {
+              "id": "sd_c_1401638",
+              "title": "United States, Census, 1850",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-63N9-PQY"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_239784405",
+              "url": "#p_239784405"
+            }
+          ],
+          "places": [
+            {
+              "id": "1",
+              "name": "United States",
+              "latitude": 40,
+              "longitude": -95
+            },
+            {
+              "id": "4613379",
+              "name": "White Plains, Westchester, New York, United States",
+              "latitude": 41.034,
+              "longitude": -73.7621
+            }
+          ]
+        },
+        "primaryId": "p_239784405"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1L-5NWG",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hyde",
+        "score": 3.2918,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDP-SDXW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292322372602",
+              "ark": "ark:/61903/1:1:6Z1L-5NWG",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173812295226",
+              "title": "Entry for Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1L-5NWG : Fri Mar 08 07:31:35 UTC 2024), Entry for Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDP-SDXW"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQD5-9"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292322372602",
+              "url": "#p_292322372602"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            }
+          ]
+        },
+        "primaryId": "p_292322372602"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M3YK-RJ8",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "Rensselaer county, Rensselaer, New York, United States"
+          },
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "Rensselaer county, Rensselaer, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Delia Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "sex": "Female",
+        "deathDate": "August 1849",
+        "collectionId": "1420441",
+        "collectionTitle": "United States Census (Mortality Schedule), 1850-1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1420441",
+        "recordTitle": "Household of Delia Hyde, \"United States Census (Mortality Schedule), 1850-1880\"",
+        "recordArk": "ark:/61903/1:2:M9Y6-NX9",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_95306021",
+              "ark": "ark:/61903/1:1:M3YK-RJ8",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Delia",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Rensselaer county, Rensselaer, New York, United States",
+                  "standard_place": "Rensselaer, Rensselaer, New York, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "Rensselaer county, Rensselaer, New York, United States",
+                  "standard_place": "Rensselaer, Rensselaer, New York, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "Aug 1849",
+                  "standard_date": "Aug 1849"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_46535821",
+              "title": "Household of Delia Hyde, \"United States Census (Mortality Schedule), 1850-1880\"",
+              "citation": "\"United States Census (Mortality Schedule), 1850-1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M3YK-RJ8 : Tue Apr 22 17:24:08 UTC 2025), Entry for Delia Hyde, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M9Y6-NX9"
+            },
+            {
+              "id": "sd_c_1420441",
+              "title": "United States Census (Mortality Schedule), 1850-1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1420441"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6LCS-PPT"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_95306021",
+              "url": "#p_95306021"
+            }
+          ],
+          "places": [
+            {
+              "id": "4632980",
+              "name": "Rensselaer, Rensselaer, New York, United States",
+              "latitude": 42.6383,
+              "longitude": -73.74663
+            }
+          ]
+        },
+        "primaryId": "p_95306021"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1X-8VQX",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Henry Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Henry Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDL-CQSZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292316353334",
+              "ark": "ark:/61903/1:1:6Z1X-8VQX",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Henry"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810856670",
+              "title": "Entry for Henry Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1X-8VQX : Sun Mar 10 14:28:11 UTC 2024), Entry for Henry Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDL-CQSZ"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQLT-4"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292316353334",
+              "url": "#p_292316353334"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292316353334"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1D-YDXC",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Amelia L W Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Amelia L W Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BD2-PH6K",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292315160229",
+              "ark": "ark:/61903/1:1:6Z1D-YDXC",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Amelia L W"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_292315160230",
+              "ark": "ark:/61903/1:1:6Z1D-YDXZ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Robert"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_292315160229",
+              "person2": "p_292315160230"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810428609",
+              "title": "Entry for Amelia L W Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1D-YDXC : Sat Mar 09 00:01:19 UTC 2024), Entry for Amelia L W Hyde and Robert, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BD2-PH6K"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQNG-Q"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292315160229",
+              "url": "#p_292315160229"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292315160229"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Y-YT5K",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Edward G Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Edward G Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDR-SZ3K",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292327323139",
+              "ark": "ark:/61903/1:1:6Z1Y-YT5K",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Edward G"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173813913109",
+              "title": "Entry for Edward G Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Y-YT5K : Thu Mar 07 03:47:46 UTC 2024), Entry for Edward G Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDR-SZ3K"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQJ4-3"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292327323139",
+              "url": "#p_292327323139"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292327323139"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1D-YDFQ",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for John Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BD2-PHX8",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292315160254",
+              "ark": "ark:/61903/1:1:6Z1D-YDFQ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "John"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810428631",
+              "title": "Entry for John Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1D-YDFQ : Sat Mar 09 00:01:21 UTC 2024), Entry for John Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BD2-PHX8"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQNG-Q"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292315160254",
+              "url": "#p_292315160254"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292315160254"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1G-Q11X",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDP-HTN2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292322654984",
+              "ark": "ark:/61903/1:1:6Z1G-Q11X",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173812469900",
+              "title": "Entry for Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1G-Q11X : Sat Apr 13 12:33:01 UTC 2024), Entry for Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDP-HTN2"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQ8B-D"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292322654984",
+              "url": "#p_292322654984"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292322654984"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68MX-SSKK",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Barnabas B Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Barnabas B Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4B6M-GH7N",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292340396389",
+              "ark": "ark:/61903/1:1:68MX-SSKK",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Barnabas B",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173818501366",
+              "title": "Entry for Barnabas B Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68MX-SSKK : Sat Mar 09 07:14:35 UTC 2024), Entry for Barnabas B Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4B6M-GH7N"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQ8X-L"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292340396389",
+              "url": "#p_292340396389"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292340396389"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68MX-SSKR",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Daniel S Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Daniel S Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4B6M-GH7L",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292340396395",
+              "ark": "ark:/61903/1:1:68MX-SSKR",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Daniel S",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173818501371",
+              "title": "Entry for Daniel S Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68MX-SSKR : Sat Mar 09 07:14:36 UTC 2024), Entry for Daniel S Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4B6M-GH7L"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQ8X-L"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292340396395",
+              "url": "#p_292340396395"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292340396395"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1X-8V74",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Samuel L Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Samuel L Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDL-CQ3S",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292316353357",
+              "ark": "ark:/61903/1:1:6Z1X-8V74",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Samuel L"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810856692",
+              "title": "Entry for Samuel L Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1X-8V74 : Sun Mar 10 14:28:15 UTC 2024), Entry for Samuel L Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDL-CQ3S"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQLT-4"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292316353357",
+              "url": "#p_292316353357"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292316353357"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1D-YDFF",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Samuel T Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Samuel T Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BD2-PHXG",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292315160265",
+              "ark": "ark:/61903/1:1:6Z1D-YDFF",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Samuel T"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810428642",
+              "title": "Entry for Samuel T Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1D-YDFF : Sat Mar 09 00:01:11 UTC 2024), Entry for Samuel T Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BD2-PHXG"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQNG-Q"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292315160265",
+              "url": "#p_292315160265"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292315160265"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1W-JC8J",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "James Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for James Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDV-GLRF",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292310027447",
+              "ark": "ark:/61903/1:1:6Z1W-JC8J",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "James"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173808793665",
+              "title": "Entry for James Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1W-JC8J : Fri Mar 08 06:00:06 UTC 2024), Entry for James Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDV-GLRF"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQPW-X"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292310027447",
+              "url": "#p_292310027447"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292310027447"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1X-8VQD",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "George A Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for George A Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDL-CQSH",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292316353332",
+              "ark": "ark:/61903/1:1:6Z1X-8VQD",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "George A"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810856668",
+              "title": "Entry for George A Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1X-8VQD : Sun Mar 10 14:28:09 UTC 2024), Entry for George A Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDL-CQSH"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQLT-4"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292316353332",
+              "url": "#p_292316353332"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292316353332"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1W-JC8V",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "James E Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for James E Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDV-GLRN",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292310027448",
+              "ark": "ark:/61903/1:1:6Z1W-JC8V",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "James E"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173808793666",
+              "title": "Entry for James E Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1W-JC8V : Fri Mar 08 06:00:05 UTC 2024), Entry for James E Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDV-GLRN"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQPW-X"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292310027448",
+              "url": "#p_292310027448"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292310027448"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1X-8VQY",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John M Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for John M Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDL-CQSP",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292316353347",
+              "ark": "ark:/61903/1:1:6Z1X-8VQY",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "John M"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810856683",
+              "title": "Entry for John M Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1X-8VQY : Sun Mar 10 14:28:11 UTC 2024), Entry for John M Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDL-CQSP"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQLT-4"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292316353347",
+              "url": "#p_292316353347"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292316353347"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z16-VZXT",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BD2-BJNW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292315725446",
+              "ark": "ark:/61903/1:1:6Z16-VZXT",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810571786",
+              "title": "Entry for Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z16-VZXT : Sun Mar 10 23:48:31 UTC 2024), Entry for Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BD2-BJNW"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQKC-R"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292315725446",
+              "url": "#p_292315725446"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292315725446"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68MX-SSKG",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Catharine Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Catharine Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4B6M-GH7K",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292340396392",
+              "ark": "ark:/61903/1:1:68MX-SSKG",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Catharine",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_292340396393",
+              "ark": "ark:/61903/1:1:68MX-SSKP",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Stephen"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_292340396392",
+              "person2": "p_292340396393"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173818501369",
+              "title": "Entry for Catharine Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68MX-SSKG : Sat Mar 09 07:14:36 UTC 2024), Entry for Catharine Hyde and Stephen, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4B6M-GH7K"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQ8X-L"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292340396392",
+              "url": "#p_292340396392"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292340396392"
+      },
+      {
+        "recordId": "ark:/61903/1:1:689H-XDCG",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "James Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for James Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4B6Z-WTYG",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292360169092",
+              "ark": "ark:/61903/1:1:689H-XDCG",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "James"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173826186232",
+              "title": "Entry for James Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:689H-XDCG : Fri Mar 08 19:20:03 UTC 2024), Entry for James Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4B6Z-WTYG"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQ64-1"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292360169092",
+              "url": "#p_292360169092"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292360169092"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1D-YDFC",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John W Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for John W Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BD2-PHXN",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292315160259",
+              "ark": "ark:/61903/1:1:6Z1D-YDFC",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "John W"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810428636",
+              "title": "Entry for John W Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1D-YDFC : Sat Mar 09 00:01:12 UTC 2024), Entry for John W Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BD2-PHXN"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQNG-Q"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292315160259",
+              "url": "#p_292315160259"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292315160259"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1X-8V7D",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "William W Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for William W Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDL-CQ34",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292316353362",
+              "ark": "ark:/61903/1:1:6Z1X-8V7D",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "William W"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810856697",
+              "title": "Entry for William W Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1X-8V7D : Sun Mar 10 14:28:12 UTC 2024), Entry for William W Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDL-CQ34"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQLT-4"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292316353362",
+              "url": "#p_292316353362"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292316353362"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1D-ZXFP",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "George A Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for George A Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BD2-KVRL",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292314703073",
+              "ark": "ark:/61903/1:1:6Z1D-ZXFP",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "George A"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810329971",
+              "title": "Entry for George A Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1D-ZXFP : Sat Mar 09 06:45:48 UTC 2024), Entry for George A Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BD2-KVRL"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQVJ-6"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292314703073",
+              "url": "#p_292314703073"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292314703073"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68MX-SS2N",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Joseph Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Joseph Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4B6M-GHW8",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292340396416",
+              "ark": "ark:/61903/1:1:68MX-SS2N",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Joseph",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173818501391",
+              "title": "Entry for Joseph Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68MX-SS2N : Sat Mar 09 07:14:32 UTC 2024), Entry for Joseph Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4B6M-GHW8"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQ8X-L"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292340396416",
+              "url": "#p_292340396416"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292340396416"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1Y-YTR6",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mary J Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Mary J Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDR-SZQ8",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292327323163",
+              "ark": "ark:/61903/1:1:6Z1Y-YTR6",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Mary J"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173813913131",
+              "title": "Entry for Mary J Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1Y-YTR6 : Thu Mar 07 03:47:37 UTC 2024), Entry for Mary J Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDR-SZQ8"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQJ4-3"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292327323163",
+              "url": "#p_292327323163"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292327323163"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68MX-SS26",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "John Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for John Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4B6M-GHWH",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292340396413",
+              "ark": "ark:/61903/1:1:68MX-SS26",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173818501388",
+              "title": "Entry for John Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68MX-SS26 : Sat Mar 09 07:14:40 UTC 2024), Entry for John Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4B6M-GHWH"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQ8X-L"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292340396413",
+              "url": "#p_292340396413"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292340396413"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6Z1X-8VQ9",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Catharine Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Catharine Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDL-CQ9B",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292316353321",
+              "ark": "ark:/61903/1:1:6Z1X-8VQ9",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Catharine"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_292316353322",
+              "ark": "ark:/61903/1:1:6Z1X-8VQS",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Stephen"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_292316353321",
+              "person2": "p_292316353322"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173810856658",
+              "title": "Entry for Catharine Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6Z1X-8VQ9 : Sun Mar 10 14:28:27 UTC 2024), Entry for Catharine Hyde and Stephen, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDL-CQ9B"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQLT-4"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292316353321",
+              "url": "#p_292316353321"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292316353321"
+      },
+      {
+        "recordId": "ark:/61903/1:1:689H-XDCN",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1846 to 1852",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "George A Hyde",
+        "score": 3.2818,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for George A Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4B6Z-WTYJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292360169086",
+              "ark": "ark:/61903/1:1:689H-XDCN",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "George A"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1846 to 1852",
+                  "standard_date": "Bet 1846 and 1852",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173826186227",
+              "title": "Entry for George A Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:689H-XDCN : Fri Mar 08 19:20:03 UTC 2024), Entry for George A Hyde, from 1846 to 1852.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4B6Z-WTYJ"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CS4C-TQ64-1"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292360169086",
+              "url": "#p_292360169086"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292360169086"
+      }
+    ]
+  }
+}

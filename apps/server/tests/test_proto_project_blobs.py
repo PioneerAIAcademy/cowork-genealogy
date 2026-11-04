@@ -4,8 +4,8 @@ Two of phase 2's acceptance clauses rest on these: "a census page opens from the
 and "a PDF attached mid-run reaches the project". Both answered 501 until now.
 
 The write is the part worth testing hard. It mirrors the engine's own `indexObject`
-(fresh object key, upsert the row, delete the superseded object AFTER the row is
-durable), and the failure modes are quiet: an orphaned object, or a row pointing at an
+(fresh object key, upsert the row, leave the superseded object to U19's orphan sweep),
+and the failure modes are quiet: an orphaned object, or a row pointing at an
 object that is not there. Neither raises on the next read — they just return nothing,
 which is what the viewer renders as "no scan".
 """
@@ -13,6 +13,7 @@ which is what the viewer renders as "no scan".
 from __future__ import annotations
 
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -23,9 +24,13 @@ sys.path.insert(0, str(SERVER / "proto"))
 
 from web.project_blobs import (  # noqa: E402
     IMAGE_REF_RE,
+    delete_blob,
     fetch_blob,
+    pdf_page_count,
     put_blob,
     safe_upload_name,
+    sniff,
+    text_key,
     upload_key,
 )
 
@@ -65,6 +70,9 @@ class FakeConn:
             project_id, key, s3_key, nbytes, sha = params
             self.rows[(project_id, key)] = (s3_key, nbytes, sha)
             return type("C", (), {"fetchone": staticmethod(lambda: None)})()
+        if sql.startswith("DELETE FROM blobs"):
+            gone = self.rows.pop((params[0], params[1]), None)
+            return type("C", (), {"rowcount": int(gone is not None)})()
         raise AssertionError(f"unexpected SQL: {sql[:60]}")
 
 
@@ -167,3 +175,70 @@ def test_the_image_reference_shape_is_pinned():
     assert not IMAGE_REF_RE.match("images/abc.png")
     assert not IMAGE_REF_RE.match("uploads/abc.jpg")
     assert not IMAGE_REF_RE.match("images/../secret.jpg")
+
+
+# -- #3987: project uploads ---------------------------------------------------------
+
+
+def test_the_text_layer_sits_beside_the_upload_under_the_name_project_context_reads():
+    assert text_key("deed.pdf") == "uploads/deed.pdf.txt"
+
+
+@pytest.mark.parametrize(
+    ("head", "content_type", "refused"),
+    [
+        (b"%PDF-1.7\n", "application/pdf", None),
+        (b"\xff\xd8\xff\xe0\x00\x10JFIF", "image/jpeg", None),
+        (b"\x89PNG\r\n\x1a\n\x00\x00", "image/png", None),
+        (b"GIF89a\x01\x00", "image/gif", None),
+        (b"RIFF\x00\x00\x00\x00WEBPVP8 ", "image/webp", None),
+        (b"II*\x00\x08\x00\x00\x00", "image/tiff", "TIFF"),
+        (b"MM\x00*\x00\x00\x00\x08", "image/tiff", "TIFF"),
+        *[(b"\x00\x00\x00\x18ftyp" + brand + b"\x00\x00", "image/heic", "HEIC")
+          for brand in (b"heic", b"heix", b"hevc", b"heim", b"heis", b"mif1", b"msf1")],
+        # An MP4 shares the box layout; only the HEIF brands are refused.
+        (b"\x00\x00\x00\x18ftypisom\x00\x00", "application/octet-stream", None),
+        (b"\x00\x00\x00\x18ftypmp42\x00\x00", "application/octet-stream", None),
+        (b"Ada Schuster, b. 1841", "application/octet-stream", None),
+        (b"II", "application/octet-stream", None),
+        (b"", "application/octet-stream", None),
+    ],
+)
+def test_the_first_bytes_decide_the_type_and_tiff_and_heic_are_refused(head, content_type, refused):
+    got = sniff(head)
+    assert (got.content_type, got.refused) == (content_type, refused)
+
+
+@pytest.mark.parametrize(
+    ("body", "pages"),
+    [
+        (b"1 0 obj<</Type /Pages /Kids[2 0 R]>>endobj 2 0 obj<</Type /Page>>endobj", 1),
+        (b"1 0 obj<</Type/Pages>>endobj 2 0 obj<</Type/Page>>endobj 3 0 obj\n<</Type\n/Page>>endobj"
+         b" 4 0 obj<</Type /Page /Parent 1 0 R>>endobj", 3),
+        # An incremental save repeats the page object under the same number: still one page.
+        (b"1 0 obj<</Type /Pages>>endobj 5 0 obj<</Type /Page>>endobj %%EOF\n"
+         b"5 0 obj<</Type /Page /Annots [6 0 R]>>endobj %%EOF", 1),
+        # Pages inside a compressed object stream are invisible: the documented undercount.
+        (b"1 0 obj<</Type /ObjStm /N 3>>stream\nx\x9c\x00\x01endstream endobj", 0),
+    ],
+)
+def test_pages_are_counted_by_distinct_object_number(body, pages):
+    assert pdf_page_count(b"%PDF-1.4\n" + body) == pages
+
+
+def test_pdf_page_count_is_linear_on_a_digit_run():
+    """A long digit run made the unbounded object-header regex backtrack quadratically,
+    and `re` holds the GIL, so the scan froze the event loop for every patron."""
+    body = b"%PDF-1.4\n" + b"1" * 50_000
+    t = time.perf_counter()
+    pdf_page_count(body)
+    assert time.perf_counter() - t < 1.0
+
+
+def test_deleting_an_upload_drops_its_row_and_leaves_the_object_to_the_sweep():
+    conn, s3 = FakeConn(), FakeS3()
+    put_blob(conn, s3, "proj_1", "uploads/deed.pdf.txt", b"text")
+    assert delete_blob(conn, "proj_1", "uploads/deed.pdf.txt") is True
+    assert ("proj_1", "uploads/deed.pdf.txt") not in conn.rows
+    assert len(s3.objects) == 1  # FakeS3 has no delete: the facade has none either
+    assert delete_blob(conn, "proj_1", "uploads/deed.pdf.txt") is False

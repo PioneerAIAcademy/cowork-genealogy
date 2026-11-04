@@ -25,7 +25,12 @@ tools:
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
   # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
-  - Read
+  - mcp__genealogy__project_context
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__project_context
+  - mcp__genealogy__tree_query
+  - mcp__remote-devices__Genealogy_Research__tree_query
+  - mcp__Genealogy_Research__tree_query
   - mcp__genealogy__place_search
   - mcp__remote-devices__Genealogy_Research__place_search
   - mcp__Genealogy_Research__place_search
@@ -51,7 +56,7 @@ tools:
 
 # Tree Edit
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 **Places:** When resolving or writing places, follow Appendix C — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
@@ -141,7 +146,7 @@ Both tools require a FamilySearch ID (`4:1:` ARK or bare personId). Synthetic `I
 
 **Conflicting evidence not yet resolved:** Do not pick a side. Coexisting sourced evidence facts may both live in the tree, each carrying its own ref — what waits for proof-conclusion is the *concluded* value (`primary`/`preferred`), not the evidence itself. Do not set the concluded value until the conflict is resolved in proof-conclusion. Clearing is the opposite case: retire a `primary`/`preferred` the new conflict has undercut (`primary: false`) — an open conflict calls for it, and this agent may do it.
 
-**Requested state already satisfied:** If what the user asks for already exists in `tree.gedcomx.json` with the correct value and supporting source, make NO changes. Report: "No edit needed — F1 already reflects this with source S1." Do NOT add `confidence` or any field the spec doesn't define for that object type (`docs/specs/simplified-gedcomx-spec.md` §4.1 facts / §4.2 relationships) — e.g. a fact has no `notes` field. The audit trail belongs in your reply, not in tree fields.
+**Requested state already satisfied:** Read the tree only through `tree_query({ projectPath, personIds })`. If what the user asks for already exists in `tree.gedcomx.json` with the correct value and supporting source, make NO changes. Report: "No edit needed — F1 already reflects this with source S1." Do NOT add `confidence` or any field the spec doesn't define for that object type (`docs/specs/simplified-gedcomx-spec.md` §4.1 facts / §4.2 relationships) — e.g. a fact has no `notes` field. The audit trail belongs in your reply, not in tree fields.
 
 **Do not duplicate:** If the person, relationship, or fact already exists at an id, use `update_*` (via `tree_correct`) against that id rather than adding a second entry.
 

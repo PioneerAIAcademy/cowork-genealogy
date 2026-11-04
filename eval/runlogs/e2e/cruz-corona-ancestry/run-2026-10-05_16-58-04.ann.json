@@ -1,12 +1,16 @@
 {
   "per_finding": {
     "f1": "true",
-    "f2": "partial",
-    "f3": "partial",
+    "f2": "false",
+    "f3": "false",
     "f4": "false",
     "f5": "false"
   },
   "proof_quality_score": null,
-  "findings_hash": "66443b65ecb879e448dd210bead49a6f4f53d7bce7443baf73f3b3dfe1711140",
-  "blind_bundle_digest": "56389a1cf13df10cbeb5d78384080d119db7fdd11e5553695bd94b0dea8f3272"
+  "notes": {
+    "f2": "Corrected on re-audit (2026-11-04): originally graded partial. Sóstenes (I5) and Apolinar (I2) are linked as parents of a sibling (I7, via the 1935 marriage record), not of the subject (PID-TODO) — PID-TODO has no relationship to either parent at all. Same unmerged-duplicate/mislinking defect already seen on this fixture (run-2026-09-21_23-54-48, run-2026-09-25_11-30-49); should be false, not partial, by that precedent. f1's exact birth fact does land correctly on PID-TODO, so it stays true.",
+    "f3": "Corrected on re-audit (2026-11-04): same defect as f2 — Apolinar is linked to the sibling I7, not to the subject. False."
+  },
+  "findings_hash": "61c97416379af03d0808efd6ffd1148332b4bcff57c7ef1014557045bc1b261a",
+  "blind_bundle_digest": "f947e2976ddafdaededf697afc00a295c942854e680c6e29195faad30cccd035"
 }

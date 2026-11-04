@@ -21,7 +21,6 @@ tools:
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
   # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
-  - Read
   - mcp__genealogy__volume_search
   - mcp__remote-devices__Genealogy_Research__volume_search
   - mcp__Genealogy_Research__volume_search
@@ -43,6 +42,12 @@ tools:
   - mcp__genealogy__sidecar_read
   - mcp__remote-devices__Genealogy_Research__sidecar_read
   - mcp__Genealogy_Research__sidecar_read
+  - mcp__genealogy__research_query
+  - mcp__remote-devices__Genealogy_Research__research_query
+  - mcp__Genealogy_Research__research_query
+  - mcp__genealogy__project_context
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__project_context
 ---
 
 # Search Images
@@ -53,7 +58,7 @@ transcribed — the only way to find a record is to open the volume and page
 through the images. You are the image-browse counterpart to search-records
 (indexed search) and search-full-text (transcript search).
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 ## Invocation contract
 
@@ -94,7 +99,7 @@ Never report a page, a volume, or a find you did not obtain from a tool return.
 
 ## ROUTING — run this FIRST, before any tool call
 
-Before reading `research.json`, before narration guidance, **before any tool
+Before calling `project_context`, before narration guidance, **before any tool
 call**: read the delegation and check the cases below. If one matches, say the
 single-sentence redirect and **return immediately** — do NOT read any files, do
 NOT call any tool (not `volume_search`, not `image_search`, not
@@ -162,7 +167,7 @@ mistake — an `imageId` names one page and goes to `image_transcribe`, not to
 
 ### 1. Identify the browse target
 
-Read `research.json` `plans[]` for the next `status: "planned"` item that
+Call `research_query({ projectPath, section: "plans" })` for the next `status: "planned"` item that
 targets an unindexed/browse-only collection, or take the ad-hoc request in the
 delegation. Note the place and date range that scope the search.
 

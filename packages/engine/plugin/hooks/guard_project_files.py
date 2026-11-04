@@ -277,6 +277,12 @@ OWNED_SECTIONS = {
     # The agent writes it through the narrow `evaluation_append` (issue #1491);
     # `owner_denied` routes that tool here as well as `research_append`.
     "evaluations": "gps-mentor",
+    # hit_verdicts, 2026-10-29 (issue #3522, lead ruling 2026-10-18). One agent
+    # per full-text hit judges it against the target's tree facts, so the main
+    # thread that ran the search cannot label its own hits from the list.
+    # merge_tree_persons re-keys `person_id` by tool identity and never
+    # reaches this hook.
+    "hit_verdicts": "evaluate-search-results",
 }
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
@@ -434,6 +440,10 @@ AGENT_WRITABLE_SECTIONS = {
     # This is a repo CI requirement, not a runtime gate (the guard does not fire
     # for agents outside the listed sections).
     "search-full-text": frozenset({"plan_items"}),
+    # evaluate-search-results appends one verdict per hit to `hit_verdicts`, the
+    # section routed to it above, and writes nothing else in research.json. A
+    # Match is extracted by record-structurer on the next turn, never here.
+    "evaluate-search-results": frozenset({"hit_verdicts"}),
     # citation refines `citation` / `citation_detail` on source entries that
     # already exist, and writes nothing else in research.json.
     "citation": frozenset({"sources"}),

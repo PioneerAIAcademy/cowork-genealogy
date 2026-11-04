@@ -19,6 +19,9 @@ model: claude-haiku-5-5
 effort: low
 tools:
   - Read
+  - mcp__genealogy__project_context
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__project_context
   - mcp__genealogy__research_log_append
   - mcp__remote-devices__Genealogy_Research__research_log_append
   - mcp__Genealogy_Research__research_log_append
@@ -26,7 +29,7 @@ tools:
 
 # Translation
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** When the delegation gave a `projectPath`, call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, no `projectPath` was given, or the result is `reason: "no_project"`, default to a one-line preamble per action.
 
 Provides genealogy-specific translation and paleography assistance
 for historical records in Western European languages. Genealogical
@@ -144,9 +147,9 @@ not the translation.
 
 ### 6. Log the translation
 
-If the Narration read found no `research.json`, skip this step.
+If the delegation gave no `projectPath`, skip this step.
 
-Before you write your reply: one `research_log_append` call with `projectPath` (the absolute path of the current working directory when none was given) and one op: `tool: "translation"`, `query: {language, recordType}`, `planItemId: null`, `outcome: "positive"`, `resultsExamined` (records or terms translated), `notes` set to the **full** translation exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
+Before you write your reply: one `research_log_append` call with the delegation's `projectPath` and one op: `tool: "translation"`, `query: {language, recordType}`, `planItemId: null`, `outcome: "positive"`, `resultsExamined` (records or terms translated), `notes` set to the **full** translation exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
 
 - `reason: "no_project"` → stop; write nothing.
 - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite `notes` as instructed, use the same text in your return, and re-send. Never drop the entry.

@@ -1,4 +1,4 @@
-# Francisco Naveda Somarriba — Spanish origin and parents
+# Francisco Naveda Somarriba — parents
 
 **Source PID:** `PID-TODO`
 **Francisco Naveda Somarriba is deceased.** (FamilySearch ToS requires
@@ -6,7 +6,8 @@ all committed e2e fixtures to be about deceased persons.)
 
 ## Research question
 
-> Where in Spain was Francisco Naveda Somarriba born or baptized, and who were his parents?
+> Who were the parents of Francisco Naveda Somarriba, a native of Spain
+> living in Papantla, Veracruz, Mexico circa 1862?
 
 ## What was removed from the starting tree
 
@@ -48,12 +49,29 @@ Santillana del Mar) is image-only with incomplete indexing.
 
 ## Notes for reviewers
 
-Three required findings: the baptism place/date in Limpias (f1), the
-father Juan de Naveda (f2), and the mother Maria Somarriba Gonzalez (f3).
-Two bonus findings: the sister Balentina/Valentina (f4, required:false) and
-the paternal grandparents Luis de Naveda and Maria Cruz Somarriba (f5,
-required:false). Grade on recovered facts; the agent may cite the sister's
-baptism or marriage record as the evidence path rather than Francisco's
-own baptism — both are acceptable routes to the same conclusion.
+**2026-11-04 — re-scoped for step mode (issue #4144).** The old question asked
+two independent facts (his birthplace/baptism, and his parents): "Where in
+Spain was Francisco Naveda Somarriba born or baptized, and who were his
+parents?" First reworded to the baptism/birthplace only; corrected on review
+(EdmondOware, 2026-11-04) to the parents instead, matching
+`tags.question_type` ("parents") and the 2-of-3 majority of required findings
+on main (f2, f3 for the parents against f1 for the baptism) — the same two
+signals already used to pick the primary fact on `cruz-corona-ancestry` and
+`elena-asmundsdotter-origin` in #4235/#4143 point here to parents, not
+baptism. Reworded `researcher_question` to "Who were the parents of Francisco
+Naveda Somarriba, a native of Spain living in Papantla, Veracruz, Mexico circa
+1862?", keeping the Papantla/1862 detail that identifies which Francisco is
+meant. Demoted `f1` (baptism) to `required: false` instead; `f2`/`f3` (his
+parents) are required again. No finding wording changed. This fixture's one
+annotation carries no `findings_hash`, so it is grandfathered and needs no
+re-grading.
+
+Required findings now: the father Juan de Naveda (f2) and the mother Maria
+Somarriba Gonzalez (f3). Three bonus findings: the baptism place/date in
+Limpias (f1, required:false), the sister Balentina/Valentina (f4,
+required:false), and the paternal grandparents Luis de Naveda and Maria Cruz
+Somarriba (f5, required:false). Grade on recovered facts; the agent may cite
+the sister's baptism or marriage record as the evidence path rather than
+Francisco's own baptism — both are acceptable routes to the same conclusion.
 
 **Authoring note (PID-less / Path 3):** Built from the bundled research document(s) (DebbieGurtler/Naveda Report + Naveda FGRs) with no FamilySearch access, so the starting tree was *constructed* from the document rather than captured from a live `person_read` snapshot — sanity-check its fidelity before relying on it. `source_pid` is an unused placeholder (`PID-TODO`): §6.1 blocks every person-keyed tool, so neither the benchmark run nor the judge ever reads the PID — it is provenance only, and may optionally be filled in later if a re-snapshot or provenance link is wanted. The landing gate is the same as for every fixture (Path 1 included): a committed §14 validity run that passes (`uv run python -m e2e.validate_fixture naveda-spain-origin`). Recoverability from FamilySearch records is flagged in the reviewer notes above.
