@@ -2555,7 +2555,7 @@ async def _run_agent(
             so the turn cap is checked here on the run's sum. `cost_cap` is the
             exception: it stays a reporting threshold (spec, "`cost_cap` was a
             post-hoc label"), so the host keeps replying past it, and the turn cap
-            still fires and outranks it, as the tool cap does.
+            still fires and outranks it, as the tool cap and an SDK error do.
             """
             nonlocal aborted_reason, error
             run_turns = accumulate_usage(_step_turns[: turn.index + 1]).get("num_turns") or 0
@@ -3004,7 +3004,7 @@ async def _run_agent(
                     # written when the SDK supplied it — absent, never null or {}.
                     if isinstance(getattr(message, "model_usage", None), dict):
                         usage["model_usage"] = message.model_usage
-                    if message.is_error and aborted_reason is None:
+                    if message.is_error and aborted_reason in (None, "cost_cap"):
                         detail = message.result or message.stop_reason or ""
                         # The SDK surfaces a turn-cap hit as an *error result*
                         # rather than a clean stop_reason="max_turns". Reclassify.

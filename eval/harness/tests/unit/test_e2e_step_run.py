@@ -182,6 +182,35 @@ def test_the_turn_cap_still_stops_a_run_already_over_its_cost_cap(tmp_path, monk
     assert client.result[3] == "max_turns", client.result[3:5]
 
 
+def test_an_error_after_the_cost_cap_is_recorded_as_an_error(tmp_path, monkeypatch):
+    """A step run has one `ResultMessage` per turn, so a later step can end in an SDK
+    error after an earlier one set `cost_cap`. That error must not read as "spent too
+    much": it replaces the label, as the turn cap does."""
+    import sys
+
+    from claude_agent_sdk import ResultMessage
+
+    calls = []
+
+    def _r(session="S1"):
+        calls.append(1)
+        failed = len(calls) == 2
+        return ResultMessage(subtype="result", duration_ms=1, duration_api_ms=1,
+                             is_error=failed, num_turns=1, session_id=session,
+                             total_cost_usd=999.0,
+                             result="API Error: 500 overloaded" if failed else None)
+
+    monkeypatch.setattr(sys.modules[__name__], "_result", _r)
+    client = _drive(
+        tmp_path, monkeypatch,
+        [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
+        step_mode="job",
+    )
+    assert client.result[3] == "error", client.result[3:5]
+    assert "API Error: 500 overloaded" in (client.result[4] or ""), client.result[3:5]
+    assert len(client.sent) == 2, client.sent
+
+
 def test_the_turn_cap_bounds_the_whole_run_not_one_step(tmp_path, monkeypatch):
     """`num_turns` arrives per turn on a persistent session, so the SDK's own
     `max_turns` stops one step only. The host checks the run's sum."""
