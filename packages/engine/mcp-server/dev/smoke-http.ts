@@ -17,7 +17,8 @@
  *
  * Two clients, because the server admits a project request only for the bearer
  * stamped on an open attempt of that project (U4):
- *   - client one sends no project header and the real bearer when there is one
+ *   - client one presents the connector token under `--connector`, otherwise the
+ *     stamped turn's headers
  *     (`--bearer`, else this host's unexpired token). It lists the tools and runs
  *     every row that passes no `projectPath`: the FamilySearch and store-less rows.
  *   - client two sends a synthetic random bearer, the project header and the claim
