@@ -2405,15 +2405,7 @@ export function mintedFromThisRecord(
   // in the write-once starting-tree baseline. Without them the exemption
   // refused 232 committed links, 206 of which were pre-existing people (184
   // caught by both discriminators, 22 by the starting-tree baseline alone).
-  if (pidOrStartingPerson(personId, startingPersonIds)) return false;
-  // A person with an attachment link came from FamilySearch: only an imported
-  // person has records attached there. Without this, reusing the import's S for
-  // an attached record makes that person's only ref reach this record, and a
-  // project with no starting-tree baseline would read them as minted from it,
-  // exempting any caller's link to them from the score gate.
-  if (((research?.person_evidence ?? []) as any[]).some((pe) => pe?.person_id === personId && isAttachmentLink(pe))) {
-    return false;
-  }
+  if (importedPerson(personId, research, startingPersonIds)) return false;
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
   if (!person) return false;
   const refs = personSourceRefs(person);
@@ -2430,16 +2422,52 @@ export function pidOrStartingPerson(personId: string, startingPersonIds?: Readon
   return FS_PERSON_PID.test(personId) || startingPersonIds?.has(personId) === true;
 }
 
-/** A live link to a person this research added who carries no source ref on any
- *  name or fact: `tree_edit add_person` made it, so nothing records which record it
- *  came from, and the link would vouch for it anyway. `materialize_facts` writes the
- *  persona's sourced name and facts onto it, after which it links. Silent without a
- *  starting-tree baseline, which cannot tell an imported person from an added one,
- *  for an attachment link, and for negative evidence, which no record's persona
- *  can materialize. Measured 2026-11-04 over the e2e final documents: of 4,950
- *  links since August, 8 point at such a person (3 persons, 2 of them
- *  record-derived stubs and 1 negative evidence, now exempt); 1,098 of July's 6,014
- *  did. */
+/** Whether this person came from FamilySearch: a FamilySearch id, a starting-tree
+ *  person, or one holding an attachment link (only an imported person has records
+ *  attached there). Without the attachment test, reusing the import's S for an
+ *  attached record makes that person's only ref reach this record, and a project
+ *  with no starting-tree baseline would read them as minted from it. */
+export function importedPerson(personId: string, research: any, startingPersonIds?: ReadonlySet<string>): boolean {
+  return (
+    pidOrStartingPerson(personId, startingPersonIds) ||
+    ((research?.person_evidence ?? []) as any[]).some((pe) => pe?.person_id === personId && isAttachmentLink(pe))
+  );
+}
+
+/** A person this research added that carries no provenance at all: not imported,
+ *  and no source ref on its own node, its names, its facts, or any relationship it
+ *  is in. `tree_edit add_person` makes one; a stub the researcher stated carries
+ *  its source on the relationship, and is not blank. False with no starting-tree
+ *  baseline, which cannot tell an imported person from an added one. Both
+ *  `research_append`'s link gate and `materialize_facts`' read this, so the step
+ *  one refuses for is the step the other allows. */
+export function blankAddedPerson(
+  personId: string,
+  research: any,
+  tree: any,
+  startingPersonIds?: ReadonlySet<string>,
+): boolean {
+  if (!startingPersonIds || startingPersonIds.size === 0) return false;
+  if (importedPerson(personId, research, startingPersonIds)) return false;
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
+  if (!person || personSourceRefs(person).size > 0) return false;
+  return !((tree?.relationships ?? []) as any[]).some(
+    (r: any) =>
+      r &&
+      [r.person1, r.person2, r.parent, r.child].includes(personId) &&
+      [r, ...(Array.isArray(r.facts) ? r.facts : [])].flatMap(sourceRefsOf).length > 0,
+  );
+}
+
+/** A live probable or confident link to a `blankAddedPerson`: nothing records
+ *  which record that person came from, and the link would vouch for it anyway.
+ *  `materialize_facts` writes the persona onto the person first, which it allows
+ *  for a blank person without a link, after which the link writes. A speculative
+ *  link asserts no identity and is not refused. Silent for an attachment link and
+ *  for negative evidence, which no record's persona can materialize. Measured
+ *  2026-11-04 over the e2e final documents: of 4,950 links since August, 8 point
+ *  at a person with no ref on any name or fact (3 persons, 1 of them negative
+ *  evidence, now exempt); 1,098 of July's 6,014 did. */
 function refLessAddedPersonInvariants(
   entry: any,
   research: any,
@@ -2449,26 +2477,31 @@ function refLessAddedPersonInvariants(
   attachmentLink = false,
 ): string[] {
   const personId = entry?.person_id;
-  if (typeof personId !== "string" || !startingPersonIds || startingPersonIds.size === 0) return [];
-  if (attachmentLink || isAttachmentLink(entry) || pidOrStartingPerson(personId, startingPersonIds)) return [];
-  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
-  if (!person || personSourceRefs(person).size > 0) return [];
-  if (((research?.person_evidence ?? []) as any[]).some((pe) => pe?.person_id === personId && isAttachmentLink(pe))) {
-    return [];
-  }
+  if (typeof personId !== "string" || attachmentLink || isAttachmentLink(entry)) return [];
+  if (entry.confidence !== "probable" && entry.confidence !== "confident") return [];
+  if (!blankAddedPerson(personId, research, tree, startingPersonIds)) return [];
   const assertion =
     batchAssertions?.get(entry.assertion_id) ??
     ((research?.assertions ?? []) as any[]).find((a: any) => a?.id === entry.assertion_id);
   if (assertion?.record_role === "absent" || assertion?.record_basis === "absent") return [];
   const persona =
     typeof assertion?.record_id === "string" && typeof assertion?.record_role === "string"
-      ? `recordId '${assertion.record_id}', recordRole '${assertion.record_role}'`
-      : "the persona's recordId and recordRole";
+      ? `materialize_facts({ projectPath, personId: '${personId}', recordId: '${assertion.record_id}', ` +
+        `recordRole: '${assertion.record_role}' })`
+      : `materialize_facts({ projectPath, personId: '${personId}', recordId, recordRole })`;
+  const related = assertion?.structured_value?.related_person_role;
+  const named =
+    isTwoParty(assertion?.fact_type) && typeof related === "string" && related !== ""
+      ? ` If '${personId}' is the ${related} this assertion names rather than its ` +
+        `${assertion.record_role}, write the named party instead: materialize_facts({ projectPath, ` +
+        `personId: '${personId}', assertionId: '${entry.assertion_id}', relatedRole: '${related}', ` +
+        `name: { given, surname } }), with the name the record gives them.`
+      : "";
   return [
-    `person_evidence links '${personId}', a person added during this research with no source ref ` +
-      `on any name or fact, so nothing records which record it came from. Write the persona onto it ` +
-      `first with materialize_facts({ projectPath, personId: '${personId}', ${persona} }), which adds ` +
-      `its sourced name and facts, then link it.`,
+    `person_evidence links '${personId}' at ${entry.confidence}, a person added during this research ` +
+      `with no source ref on any name, fact or relationship, so nothing records which record it came ` +
+      `from. Write the persona onto it first with ${persona}, which adds its sourced name and facts, ` +
+      `then link it.${named}`,
   ];
 }
 

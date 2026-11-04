@@ -421,7 +421,12 @@ when `same_person` is called without `recordRole`:
   the father's party, and nothing else on it tells them apart.
 
 Minting needs no link (the link to a new person is written after it exists),
-and neither does re-running a record onto the stub it minted
+and neither does writing onto a person the run added that carries no provenance
+at all (`blankAddedPerson`: not imported, and no source ref on its node, names,
+facts or any relationship it is in), which is a mint by another route: it holds
+nothing a record's facts could contradict, and `research_append` refuses a
+`probable` or `confident` link to it until it has been written onto. Nor does
+re-running a record onto the stub it minted
 (`mintedFromThisRecord`: a person the run added, not shaped like a FamilySearch
 id, whose refs reach only this record), judged against the write-once starting
 tree so that a person the project began with is never taken for a stub, even

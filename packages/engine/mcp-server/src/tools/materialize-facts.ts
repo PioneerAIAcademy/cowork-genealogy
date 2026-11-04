@@ -56,6 +56,7 @@ import type {
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { checkWarningGate } from "./tree-edit.js";
 import {
+  blankAddedPerson,
   mintedFromThisRecord,
   namesakeMergeRoute,
   namesakePairsText,
@@ -960,6 +961,11 @@ function linkGate(
   namesakeOpts: NamesakeGateOptions = {},
 ): LinkGate {
   if (!(tree.persons ?? []).some((p) => p?.id === personId)) return { refusal: null };
+  // A person this research added with no provenance at all carries nothing a
+  // record's facts could contradict, so writing onto it is a mint, as for a
+  // person that does not exist yet. research_append refuses a probable link to
+  // one until it has been written onto (`blankAddedPerson`).
+  if (blankAddedPerson(personId, research, tree, startingPersonIds)) return { refusal: null };
   const trace = mintedFromThisRecord(personId, recordId, research, tree, startingPersonIds)
     ? partyTrace(tree, research, personId, recordId, party)
     : null;
