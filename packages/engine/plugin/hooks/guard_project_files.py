@@ -59,6 +59,29 @@ PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.
 # there is no reading of `Write(file_path=...)` where that file is an input.
 FILE_WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
 
+# The raw read tools, and the project files a read of is denied. In Cowork the
+# agent runs in a VM whose working directory holds none of the connected folder
+# (measured 2026-11-04: `Read` of research.json returned "File does not exist"
+# before and after an MCP write); a project served by a remote store has no
+# folder at all. So a read is a miss here, and a tool serves the same data.
+# Only the two files a tool serves are listed: a read of any other project file
+# (results/, images/) has no replacement and stays allowed. Matched on the
+# basename, since the hook cannot see a project root in Cowork. `Bash` and
+# `device_bash` are not covered, for the reason DEVICE_WRITE_TOOLS gives.
+FILE_READ_TOOLS = ("Read", "Grep", "Glob")
+READ_ROUTES = {
+    "research.json": (
+        "project_context (the overview, narrationGuidance and subscriptions) or "
+        "research_query (one section at a time)"
+    ),
+    "tree.gedcomx.json": (
+        "tree_query (persons, facts, relationships and cited sources) or "
+        "project_context (ids, names and one-hop family)"
+    ),
+}
+# The argument(s) each read tool names its target in.
+READ_TARGET_KEYS = {"Read": ("file_path", "path"), "Grep": ("path", "glob"), "Glob": ("pattern", "path")}
+
 # The device-bridge writer, matched on the BARE TAIL because Cowork namespaces
 # it (`mcp__remote-devices__device_commit_files`) and the plugin cannot control
 # the prefix — the same reason agent frontmatter carries every spelling.
@@ -108,7 +131,7 @@ FORK_SUBAGENT_TYPE = "fork"
 # Held in the hook because the hook runs in the VM with no access to the repo.
 AGENT_ONLY_TOOLS = {
     "build_external_search_url": ("search-external-sites", "where-else-to-search"),
-    "catalog_search": ("locality-guide", "search-records"),
+    "catalog_search": ("locality-guide", "search-images", "search-records"),
     "census_children_gap": ("check-warnings", "question-selection"),
     "collections_search": (
         "gps-mentor",
@@ -587,6 +610,12 @@ REASON = (
     "(from the main session, invoke `@plugin:locality-guide`)."
 )
 
+READ_REASON = (
+    "{tool} on {name} is disabled — the project folder is not readable from here, and "
+    "{name} may come back empty or out of date. Read it with {route}, passing the "
+    "projectPath you were given."
+)
+
 FORK_REASON = (
     '{tool} with subagent_type "fork" is disabled in this plugin: a fork runs the step '
     "without the plugin agent's instructions and tool limits. Delegate to the named "
@@ -653,6 +682,23 @@ def _path_like_strings(value, depth: int = 0):
     elif isinstance(value, (list, tuple)):
         for v in value:
             yield from _path_like_strings(v, depth + 1)
+
+
+def read_target(tool_name: str, tool_input: dict) -> str | None:
+    """The served project file a Read/Grep/Glob call names, or None.
+
+    Matched on the basename of each target argument, under either separator, so
+    an absolute path, a relative one and a `**/research.json` glob are caught
+    alike. A directory or a wildcard (`*.json`) names no file and is allowed: the
+    hook cannot tell what it would reach, and a false deny of a legitimate read
+    is the worse failure."""
+    for key in READ_TARGET_KEYS.get(tool_name, ()):
+        value = tool_input.get(key)
+        if isinstance(value, str) and value and len(value) <= _MAX_PATH_LEN:
+            name = _basename(value)
+            if name in READ_ROUTES:
+                return name
+    return None
 
 
 def protected_target(tool_name: str, tool_input: dict) -> str | None:
@@ -1014,6 +1060,18 @@ def decision(payload: dict) -> dict:
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
                 "permissionDecisionReason": reason,
+            },
+        }
+
+    read_name = read_target(tool_name, tool_input)
+    if read_name is not None:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": READ_REASON.format(
+                    tool=tool_name, name=read_name, route=READ_ROUTES[read_name]
+                ),
             },
         }
 

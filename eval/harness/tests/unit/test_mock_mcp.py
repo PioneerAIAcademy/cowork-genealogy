@@ -2652,29 +2652,49 @@ def test_image_transcribe_staged_ref_reads_back_through_live_sidecar_read(tmp_pa
     assert "In the name of God, Amen" in json.dumps(read)
 
 
-def test_image_transcribe_without_project_path_is_refused_not_served(tmp_path):
-    """Production refuses a call with no projectPath before any OCR, so the
-    fixture's page must not reach the agent either."""
+def test_image_transcribe_without_project_path_returns_the_page_inline(tmp_path):
+    """Production reads with no projectPath and returns the page inline, staging
+    nothing (#4136), so the fixture's page reaches the agent with no `staged`."""
     _copy_scenario(tmp_path)
     _s, _c, tools_by_name = create_mock_server(
         ["image-transcribe-schuylkill-probate-flynn-will"], FIXTURES_DIR, workspace=tmp_path
     )
     result = _invoke(tools_by_name, "image_transcribe", dict(_WILL_ARGS))
     body = _extract_response_dict(result)
-    assert result.get("is_error") is True, body
-    assert body == {"error": mock_mcp.IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE}
-    assert "In the name of God" not in json.dumps(body)
+    assert not result.get("is_error"), body
+    assert body["transcription"].startswith("Will Book G, page 112.")
+    for key in ("staged", "digest", "imageRef", "stagingError"):
+        assert key not in body
 
 
-def test_image_transcribe_needs_project_message_has_not_drifted_from_the_typescript_source():
-    src = (
-        REPO_ROOT / "packages/engine/mcp-server/src/tools/image-transcribe.ts"
-    ).read_text(encoding="utf-8")
-    decl = re.search(r"const IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE =(.*?);\n", src, re.DOTALL)
-    assert decl, "IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE is gone from image-transcribe.ts"
-    ts_msg = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', decl.group(1)))
-    assert ts_msg, "parsed an empty message — the declaration's shape changed"
-    assert ts_msg == mock_mcp.IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE
+def test_image_transcribe_on_a_folder_that_is_not_a_project_stages_nothing(tmp_path):
+    """A projectPath naming an empty folder is no project: the page comes back
+    inline and no results/ is created there, as production writes nothing."""
+    _s, _c, tools_by_name = create_mock_server(
+        ["image-transcribe-schuylkill-probate-flynn-will"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(tools_by_name, "image_transcribe", {**_WILL_ARGS, "projectPath": str(tmp_path)})
+    body = _extract_response_dict(result)
+    assert not result.get("is_error"), body
+    assert body["transcription"].startswith("Will Book G, page 112.")
+    assert "staged" not in body
+    assert not (tmp_path / "results").exists()
+
+
+def test_image_transcribe_file_with_no_project_answers_no_project(tmp_path):
+    _s, _c, tools_by_name = create_mock_server(["image-transcribe-any"], FIXTURES_DIR, workspace=tmp_path)
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "image_transcribe", {"file": "uploads/scan.jpg", "projectPath": str(tmp_path)})
+    )
+    assert body == {"ok": False, "reason": "no_project", "errors": [mock_mcp.NO_PROJECT_MESSAGE_READ]}
+
+
+def test_no_project_read_message_has_not_drifted_from_the_typescript_source():
+    src = (REPO_ROOT / "packages/engine/mcp-server/src/utils/project-io.ts").read_text(encoding="utf-8")
+    base = src.split('const NO_PROJECT_BASE = "', 1)[1].split('";', 1)[0]
+    read = src.split("export const NO_PROJECT_MESSAGE_READ =", 1)[1].split("`;", 1)[0]
+    read = read.split("${NO_PROJECT_BASE} ", 1)[1]
+    assert f"{base} {read}" == mock_mcp.NO_PROJECT_MESSAGE_READ
 
 
 def test_image_transcribe_capture_id_for_a_file(tmp_path, monkeypatch):

@@ -1,0 +1,15 @@
+{
+  "tool": "image_transcribe",
+  "description": "SYNTHETIC (issue #4136): written by hand, not captured live — the FamilySearch session had expired. The NARA M246 title is real; the film note, image group 008246133, image ids and roll contents are invented for the no-project test. Page 2 of 2 of Capt. Moses Dustin's company roll, image 008246133_00413. Anchored to the full id. Pair with image-transcribe-any, ordered last.",
+  "args": {
+    "imageId": "~008246133_00413"
+  },
+  "response": {
+    "transcription": "Capt. Moses Dustin's Company, Col. Reid's Regt., continued.\n\nNames | Rank | Time of Enlistment | Time of Discharge\nEbenezer Hall | Private | July 21, 1777 | Sept. 25, 1777\nAsa Page | Private | July 22, 1777 | Sept. 25, 1777\nTimothy [illegible]ton | Private | July 22, 1777 | Aug. 30, 1777 (sick)\nJohn Webster | Fifer | July 23, 1777 | Sept. 25, 1777\n\nI do swear that the above roll is true. Moses Dustin, Capt.",
+    "metadata": {
+      "imageId": "008246133_00413",
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1702113
+    }
+  }
+}
