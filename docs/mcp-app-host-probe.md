@@ -18,7 +18,9 @@ record blocks it fills.
 ### Set up
 
 1. **Build the page,** and fill the **Run** block in the record. Open Claude Desktop
-   first and let it update, because it sets which Claude Code a Cowork task runs.
+   first and let it update. That does not pin what a task runs: a default Cowork task
+   runs in the cloud, and the page that draws its card loads from claude.ai, so both
+   can change without a Desktop update.
 
    ```
    make mcp-viewer-build
@@ -78,14 +80,13 @@ record blocks it fills.
 
    ```
    export VIEWER_ORIGIN="https://$(tailscale status --json | jq -r '.Self.DNSName | rtrimstr(".")')"
-   curl -s -o /dev/null -w '%{http_code}\n' "$VIEWER_ORIGIN/"
-   curl -s "$VIEWER_ORIGIN/$(cat ~/.mcp-viewer-secret)/mcp" -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+   curl -s "http://127.0.0.1:8090/$(cat ~/.mcp-viewer-secret)/mcp" -H 'Content-Type: application/json' -H 'Accept: application/json, text/event-stream' -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | jq -r '.result.tools[].name'
    ```
 
-   Expect `404`, then a list naming `show_project` and `read_project_view`. This Mac
-   reaches its own hostname over the tailnet, so this proves the mapping and the
-   server, not public reach. Adding the connector proves that. A new hostname can take
-   a few minutes to answer.
+   Expect `show_project` and `read_project_view`. Then open the bare hostname on a
+   device that is off the tailnet, such as a phone on cellular: expect a 404, not a 502.
+   Do not test the hostname from this Mac, where a request to it can time out. A new
+   hostname can take a few minutes to answer.
 
 8. **Add the connector.** Put the URL on the clipboard, so it is never typed into a
    file:
@@ -96,21 +97,36 @@ record blocks it fills.
 
    On the organization's connectors admin page, add a custom connector named exactly
    `Genealogy Viewer`, paste the URL, and set no sign-in. Then connect it on your own
-   account under Settings → Connectors.
+   account under Settings → Connectors. A connector can also go straight on a personal
+   account; record which one was used in **Run**.
 
-   - The name sets the tool prefix, `mcp__Genealogy_Viewer__…`, and the artifact's
-     capability names it.
+   Then fully quit and reopen Claude Desktop. Until then it does not list a connector
+   added on the website: the tool still runs, but no card draws and nothing says why.
+   Check that the connector's page lists `Show project` under **Interactive tools** and
+   `Read project view` under **App-only tools**.
+
+   - The name is the tool's label, and the artifact's capability names it. The model
+     may report `mcp__Genealogy_Viewer__…`; record what it says.
    - The admin page has no rename, and an organization cannot add two connectors with
      the same URL. To fix the name, delete the connector, then re-add it.
+   - `tools/list` is cached per connector, so after changing a tool's metadata, remove
+     and re-add the connector.
 
 ### Leg 1: connector
 
-Open every task on `~/mcp-probe/mcandrew`, with the connector on. Follow the log in a
-spare terminal; a hidden call shows only there.
+Follow the log in a spare terminal; a hidden call shows only there.
 
 ```
 tail -f ~/mcp-probe/server.log
 ```
+
+**Run the controls first.** Before any Cowork task, type the **Card** line below in a
+new chat at claude.ai, then in a new Desktop Chat. A card in both proves the server, so
+a missing card in Cowork is about Cowork. An open bug report says a Cowork session can
+replace the connector's shared tool list and stop cards in Chat, so reconnect the
+connector if Chat stops drawing them.
+
+Open every task on `~/mcp-probe/mcandrew`, with the connector on.
 
 9. **Card.** New task:
 
@@ -118,11 +134,15 @@ tail -f ~/mcp-probe/server.log
    Call show_project with show "latest". Tell me the tool's full name.
    ```
 
-   Read which Claude Code the task runs, and put it in **Run**. A task on a build with
-   no card code says nothing about Cowork: 2.1.237 has none, 2.1.286 has it.
+   Read where the task ran, and put it in **Run**. `grantRemoteSessionFolders: cse_` or
+   `[remote-bash]` means the cloud; a new `local_*.json` under
+   `local-agent-mode-sessions` means a local task. A cloud task with no folder and no
+   bash can leave no line. `Installing SDK` in `cowork_vm_node.log` does not answer this:
+   it prints Desktop's pinned build on every VM start, and a cloud task starts the VM
+   only for bash.
 
    ```
-   grep 'Installing SDK' ~/Library/Logs/Claude/cowork_vm_node.log | tail -1
+   grep -E 'grantRemoteSessionFolders|\[remote-bash\]|\[HostLoop\] sdkOptions' ~/Library/Logs/Claude/main.log | tail -3
    ```
 
    Does a card appear in the conversation? The card prints a report as selectable
@@ -130,7 +150,16 @@ tail -f ~/mcp-probe/server.log
    into the record, never the whole report: its **Card** section names the project.
    `result _meta arrived` says whether the result's `_meta` reached the card, and
    `first result keys:` names what the result did hold. The size ladder and image
-   buttons are on the card too. The client's declared extensions are in the log:
+   buttons are on the card too. The log shows whether the page asked for the card: each
+   card makes one `resources/read`, just before its `tools/call`.
+
+   ```
+   grep -c 'resources/read' ~/mcp-probe/server.log
+   ```
+
+   The client's declared extensions are stamped when the connector connects, not when
+   the task runs. A tool call arrives with no `initialize`, after a harmless
+   `server/discover` 400.
 
    ```
    grep '"initialize"' ~/mcp-probe/server.log
@@ -476,7 +505,8 @@ the step needed a card and none rendered, which is an answer.
 |---|---|
 | Date | |
 | Claude Desktop version | |
-| Claude Code version in the Cowork VM | |
+| Where the task ran (cloud or local), and whether it had a folder | |
+| Account the connector is on (organization or personal) | |
 | macOS version | |
 | Commit of `mcp-app-viewer-m0` | |
 
@@ -502,23 +532,37 @@ hypothesis and conclusion get a card, and the router lines shrink to match.
 ### Card renders
 
 **Decides:** the go/no-go in Decision 8. If neither a card nor an artifact can show a
-project's data in a Cowork task, the build stops. Check the Claude Code version in
-**Run** before calling a missing card final. If only the artifact can, the case
+project's data in a Cowork task, the build stops. Before calling a missing card final,
+check that Claude Desktop was restarted after the connector was added, and read the
+table below. If only the artifact can, the case
 file runs as an artifact. If the local route does not render, testers see cards in the
 browser tab.
 
 | Route | Renders? | Tool's full name |
 |---|---|---|
-| Connector, main thread | | |
+| Control: claude.ai chat | | |
+| Control: Desktop Chat | | |
+| Connector, task with a folder on this Mac | | |
+| Connector, task with no folder | | |
 | Connector, after a ToolSearch load | | |
 | Connector, with the variant plugin | | |
 | Local | | |
 | Artifact (shows the page, not a card) | | — |
 
+| You see | `resources/read` lines | It means |
+|---|---|---|
+| Card | One per mount | The route works. |
+| Plain tool row | None | The page found no connector for the row. Restart Claude Desktop and retry. |
+| Plain tool row after a restart | None | The page refused the row. Run the same line in a task with no folder, then with another MCP App connector. |
+| Empty frame or error | None | The read failed before our server. |
+| Empty frame or error | One or more | The read arrived. Check the sandbox and the page's own errors. |
+
 ### Declared extensions
 
-**Decides:** nothing alone. It explains a card that does not render: a client that
-declares no MCP Apps extension never asked for one.
+**Decides:** nothing alone. `clientInfo` is Anthropic's client, not the task's Claude
+Code. `Anthropic/ClaudeAI` declaring the extension shows the page asked for apps. A
+`claude-code` line that declares none explains nothing, because the page reads the
+resource itself.
 
 | Route | `clientInfo` | Declared extensions |
 |---|---|---|
