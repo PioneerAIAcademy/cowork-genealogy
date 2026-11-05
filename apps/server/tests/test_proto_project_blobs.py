@@ -35,6 +35,37 @@ from web.project_blobs import (  # noqa: E402
 )
 
 
+UPLOAD_NAME_CASES = [
+    ("deed.pdf", "deed.pdf"),
+    ("C:\\Users\\me\\deed.pdf", "deed.pdf"),      # a browser directory upload
+    ("/etc/passwd", "passwd"),
+    ("sub/dir/scan 2.jpg", "scan 2.jpg"),         # spaces are allowed
+    # Reduced to its basename, and `passwd` is a perfectly safe name to write at
+    # `uploads/passwd`. The BASENAME REDUCTION is the defence here, not the `..`
+    # check — which is why the reduction happens first. Matches the alpha exactly.
+    ("../../etc/passwd", "passwd"),
+    ("..", None),                                 # nothing left but the traversal
+    ("a/../../b.pdf", "b.pdf"),
+    ("", None),
+    (None, None),
+    (".hidden", None),                            # a dotfile is refused, not renamed
+    ("x" * 200, "x" * 120),                       # truncated to the length bound
+    ("Ancestry Download - Massachusetts, U.S., Wills and Probate Records.pdf",
+     "Ancestry Download - Massachusetts_ U.S._ Wills and Probate Records.pdf"),
+    ("Müller.pdf", "M_ller.pdf"),
+    (",,,", None),
+    ("--", None),
+    ("a..pdf", None),
+    (",report.pdf", "_report.pdf"),
+    ("y" * 150 + ".pdf", "y" * 116 + ".pdf"),
+    ("s" * 150 + "." + "e" * 19, "s" * 100 + "." + "e" * 19),
+    ("s" * 150 + "." + "e" * 20, "s" * 120),
+    ("a" * 115 + ".b" + "c" * 10 + ".pdf", "a" * 115 + ".pdf"),
+    ("a" * 119 + "." + "b" * 30, "a" * 119),
+    ("_" * 130 + "." + "b" * 25, None),
+]
+
+
 class FakeS3:
     """The `S3Blobs` facade's surface, not a raw client. Both helpers take the shared
     facade now so one object knows how to reach the bucket -- the raw client they used
@@ -145,29 +176,18 @@ def test_the_object_is_written_before_the_row_points_at_it():
     assert order == ["object", "row"]
 
 
-@pytest.mark.parametrize(
-    "raw, expected",
-    [
-        ("deed.pdf", "deed.pdf"),
-        ("C:\\Users\\me\\deed.pdf", "deed.pdf"),      # a browser directory upload
-        ("/etc/passwd", "passwd"),
-        ("sub/dir/scan 2.jpg", "scan 2.jpg"),         # spaces are allowed
-        # Reduced to its basename, and `passwd` is a perfectly safe name to write at
-        # `uploads/passwd`. The BASENAME REDUCTION is the defence here, not the `..`
-        # check — which is why the reduction happens first. Matches the alpha exactly.
-        ("../../etc/passwd", "passwd"),
-        ("..", None),                                 # nothing left but the traversal
-        ("a/../../b.pdf", "b.pdf"),
-        ("", None),
-        (None, None),
-        (".hidden", None),                            # must start alphanumeric
-        ("x" * 200, None),                            # over the length bound
-    ],
-)
+@pytest.mark.parametrize("raw, expected", UPLOAD_NAME_CASES)
 def test_a_client_filename_cannot_steer_the_write(raw, expected):
     """Basename only. Some browsers send a path for directory uploads, and a
     client-supplied name must never decide where bytes land."""
     assert safe_upload_name(raw) == expected
+
+
+@pytest.mark.parametrize("raw, expected", UPLOAD_NAME_CASES)
+def test_alpha_cleans_upload_names_the_same_way(raw, expected):
+    from app.sessions import _clean_upload_name
+
+    assert _clean_upload_name(raw) == expected
 
 
 def test_the_image_reference_shape_is_pinned():

@@ -87,10 +87,10 @@ describe("sidecar_read", () => {
     expect(r.content).toBe("born in Kraków\n");
   });
 
-  it("reads an upload with a 121-character name (the hosted upload-name ceiling)", async () => {
-    // _UPLOAD_NAME_RE in apps/server/app/sessions.py: one leading alnum + up to 120 more.
-    const name = "a" + "b".repeat(116) + ".txt";
-    expect(name).toHaveLength(121);
+  it("reads an upload with a 120-character name (the hosted upload-name ceiling)", async () => {
+    // _clean_upload_name in apps/server/app/sessions.py caps an upload name at 120 characters.
+    const name = "a" + "b".repeat(115) + ".txt";
+    expect(name).toHaveLength(120);
     await put(`uploads/${name}`, "ok");
     const r = await sidecarRead({ projectPath: dir, ref: `uploads/${name}` });
     expect(r.ok).toBe(true);
