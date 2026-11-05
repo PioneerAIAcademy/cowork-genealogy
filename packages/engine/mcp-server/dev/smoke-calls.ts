@@ -64,6 +64,8 @@ export interface SmokeStep {
   label?: string;
   /** Runnable with no network and no credentials (the stdio smoke's subset). */
   offline?: boolean;
+  /** Reaches FamilySearch with the caller's token (every `tokenStep`). */
+  familySearch?: boolean;
   args: (ctx: SmokeCtx) => Record<string, unknown>;
   /** Host-side fixture write before the call; skipped when `hostProjectDir` is null. */
   before?: (ctx: SmokeCtx) => Promise<void>;
@@ -155,8 +157,30 @@ const validTrue = (res: CallResult): Expectation => ({
 
 function reauth(res: CallResult, ctx: SmokeCtx): Expectation {
   if (ctx.mode === "bearer") return noError(res);
-  const ok = res.isError && carries(res, HOSTED_REAUTH_INSTRUCTION);
-  return { ok, detail: ok ? "isError with HOSTED_REAUTH_INSTRUCTION" : brief(res) };
+  // Two shapes are both correct for a run with no host FamilySearch token.
+  //
+  // An EMPTY bearer raises the hosted reauth instruction before any request
+  // leaves. But since E1 every row presents the turn's stamped bearer, which is
+  // a random value when the host has no token — non-empty, so `getValidToken`
+  // hands it to FamilySearch and the refusal comes back as a 401 the tools word
+  // their own way. Demanding only the first shape fails every FamilySearch row
+  // on any host without a token.
+  // The LOCAL-principal wording must NEVER pass. CLAUDE.md calls binding LOCAL
+  // in a hosted entrypoint the cross-patron impersonation the Principal
+  // parameter exists to prevent, and this smoke is the only check that drives
+  // the real entrypoint, so nothing else would catch that regression. It has
+  // to be excluded explicitly: HOSTED_REAUTH_INSTRUCTION itself ends "(Do not
+  // call the login tool: ...)", so `/login tool/i` matches BOTH wordings and
+  // cannot tell them apart.
+  const localWording = /not logged in to FamilySearch/i.test(res.text);
+  const ok =
+    res.isError &&
+    !localWording &&
+    (carries(res, HOSTED_REAUTH_INSTRUCTION) || /\b401\b/.test(res.text) || /login tool/i.test(res.text));
+  return {
+    ok,
+    detail: ok ? "isError: hosted reauth, 401, or 'login tool'" : brief(res),
+  };
 }
 
 /** Write a JSON fixture into the project on this host; a no-op for a server-side anchor. */
@@ -178,6 +202,11 @@ const tokenStep = (tool: string, args: Record<string, unknown>): SmokeStep => ({
   tool,
   args: () => args,
   expect: reauth,
+  // Every tokenStep reaches FamilySearch with the caller's token. E1's
+  // connector client runs none of them, and marking them here keeps that
+  // exclusion derived rather than a hand-kept list of tool names that drifts
+  // the moment a row is added.
+  familySearch: true,
 });
 
 export const CALL_PLAN: readonly SmokeStep[] = [
@@ -210,6 +239,9 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     // with a real token the read reaches an id FamilySearch does not hold.
     tool: "project_create",
     label: "project_create (personId reaches the token)",
+    // Reaches FamilySearch with the caller's token, like every tokenStep, but
+    // carries its own expectation rather than `reauth`.
+    familySearch: true,
     args: (ctx) => ({
       projectPath: ctx.projectPath,
       objective: "Does a personId create reach the principal?",
@@ -599,6 +631,9 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   {
     // Beta host: with a bearer, accept success or an explicit upstream error.
     tool: "person_quality",
+    // Reaches FamilySearch with the caller's token, like every tokenStep, but
+    // carries its own expectation rather than `reauth`.
+    familySearch: true,
     args: () => ({ personId: FS_PID }),
     expect: (res, ctx) => {
       if (ctx.mode === "no-bearer") return reauth(res, ctx);
@@ -612,6 +647,9 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     // required (#2490): without it the call stops at the project check and
     // never reaches the key or the token this row exists to smoke.
     tool: "image_transcribe",
+    // Reaches FamilySearch with the caller's token, like every tokenStep, but
+    // carries its own expectation rather than `reauth`.
+    familySearch: true,
     args: (ctx) => ({ imageId: REAL_IMAGE_ID, projectPath: ctx.projectPath }),
     expect: (res, ctx) => {
       if (ctx.openRouterKeyConfigured === false) return keyMissing(res);
@@ -728,6 +766,9 @@ export function assertCoverage(advertisedNames: readonly string[]): string[] {
 export interface RunPlanOptions {
   /** Run only the steps flagged `offline` (the stdio smoke). */
   offlineOnly?: boolean;
+  /** A reason to skip this tool's rows, or null/undefined to run them. The
+   *  reason is printed and the rows are counted out of `calls`. */
+  skip?: (tool: string, step: SmokeStep) => string | null | undefined;
 }
 
 export interface RunPlanResult {
@@ -739,8 +780,18 @@ export interface RunPlanResult {
 export async function runPlan(call: CallFn, ctx: SmokeCtx, opts: RunPlanOptions = {}): Promise<RunPlanResult> {
   const steps = opts.offlineOnly ? CALL_PLAN.filter((s) => s.offline) : CALL_PLAN;
   const failures: string[] = [];
+  let skipped = 0;
   for (const step of steps) {
     const label = step.label ?? step.tool;
+    // A row this caller cannot run yet, with the reason PRINTED. Skipping is
+    // not passing: it is counted out of `calls`, so a run that quietly stopped
+    // covering something does not keep reporting the same total.
+    const skipReason = opts.skip?.(step.tool, step);
+    if (skipReason) {
+      console.log(`skip ${label}: ${skipReason}`);
+      skipped += 1;
+      continue;
+    }
     let verdict: Expectation;
     try {
       if (step.before) await step.before(ctx);
@@ -753,7 +804,7 @@ export async function runPlan(call: CallFn, ctx: SmokeCtx, opts: RunPlanOptions 
     report(label, verdict.ok, verdict.detail);
     if (!verdict.ok) failures.push(label);
   }
-  return { calls: steps.length, failures };
+  return { calls: steps.length - skipped, failures };
 }
 
 export function report(name: string, ok: boolean, detail: string): void {
