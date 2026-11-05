@@ -1,0 +1,14 @@
+{
+  "per_finding": {
+    "f1": "partial",
+    "f2": "partial"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "For a relationship-type finding the father link and maiden name alone are tempting to call true, but the description states Adam's birth, death and burial and the tree leaves him an undated stub, so this is right-person/incomplete-facts rather than full recovery.",
+    "f2": "The mother relationship and given name are recovered, but the surname Weber, the only identifying element beyond a given name, is absent and the narrative says so; her birth and death are absent too."
+  },
+  "annotator": "praise",
+  "findings_hash": "9c4149411a0f44d86d9d3c6f9854e12da5eea45ca139458393559c813dc53ed4",
+  "blind_bundle_digest": "725a40a3c1cfea418e18d748a7e3236ec1c3bfe913f72358f90d70b33a801f6c"
+}

@@ -73,6 +73,24 @@ const FIXTURES: FixtureSpec[] = [
   // Pinning by hand meant reading a whole search response to copy one string.
   { name: "death", recordId: "", why: "principal -> deceased; parents from edges", search: { recordType: "death", collectionId: "2128172" } },
   { name: "baptism", recordId: "", why: "principal -> child; presenting parents", search: { recordType: "birth", collectionId: "1680845" } },
+  // thomas-hanrahan-marriage's attached records (alpha feedback #3931): the
+  // household census whose personas each carry their own ark, and the two Irish
+  // baptisms the tree also attaches to the children.
+  {
+    name: "hanrahan-census-1880",
+    recordId: "MZF2-Y55",
+    why: "US 1880, Saratoga: six household personas, each with its own 1:1 ark; Mary b. 1865 and John b. 1872 in New York",
+  },
+  {
+    name: "hanrahan-baptism-mary",
+    recordId: "F5GR-QBN",
+    why: "Ireland baptism read through the father's ark: Mary, Birth 17 Feb 1871, Ireland; parents Thomas Hanrahan and Johanna Ryan",
+  },
+  {
+    name: "hanrahan-baptism-john",
+    recordId: "F5YK-84C",
+    why: "Ireland baptism read through the father's ark: John, Birth 28 Nov 1872, Ardfinnan; parents Thomas Hanrahan and Johanna Ryan",
+  },
 ];
 
 const EMPTY_RESEARCH = {
@@ -155,7 +173,15 @@ async function capture(spec: FixtureSpec): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  for (const f of FIXTURES) {
+  // Optional fixture names: capture only those, so adding one does not
+  // re-capture (and shift) the rest. An unknown name is an error.
+  const names = process.argv.slice(2);
+  const unknown = names.filter((n) => !FIXTURES.some((f) => f.name === n));
+  if (unknown.length > 0) {
+    console.error(`unknown fixture name(s): ${unknown.join(", ")}`);
+    process.exit(1);
+  }
+  for (const f of names.length > 0 ? FIXTURES.filter((x) => names.includes(x.name)) : FIXTURES) {
     try {
       await capture(f);
     } catch (e) {

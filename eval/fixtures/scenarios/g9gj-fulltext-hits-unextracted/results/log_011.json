@@ -1,0 +1,827 @@
+{
+  "log_id": "log_011",
+  "tool": "record_search",
+  "retrieved": "2026-10-09T15:21:06.175Z",
+  "returned_count": 10,
+  "payload": {
+    "query": {
+      "count": 10,
+      "deathYearFrom": 1909,
+      "deathYearTo": 1911,
+      "givenName": "Elizabeth",
+      "projectPath": "<workspace>",
+      "surname": "Skellie"
+    },
+    "totalMatches": 324463,
+    "paginationCappedAt": 4999,
+    "returned": 10,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:QL25-4KXW",
+        "events": [
+          {
+            "type": "Burial",
+            "place": "North East, Erie, Pennsylvania, United States of America"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Elizabeth R Hyde Skellie",
+        "score": 4.2536,
+        "confidence": 3,
+        "birthDate": "22 September 1823",
+        "deathDate": "26 July 1910",
+        "collectionId": "2221801",
+        "collectionTitle": "Find a Grave Index",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2221801",
+        "recordTitle": "Entry for Elizabeth R Hyde Skellie, \"Find a Grave Index\"",
+        "recordArk": "ark:/61903/1:2:QPBK-4N1X",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_103294646526",
+              "ark": "ark:/61903/1:1:QL25-4KXW",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde Skellie",
+                  "given": "Elizabeth R"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "22 Sep 1823",
+                  "standard_date": "22 Sep 1823"
+                },
+                {
+                  "type": "Death",
+                  "date": "26 Jul 1910",
+                  "standard_date": "26 Jul 1910"
+                },
+                {
+                  "type": "Burial",
+                  "primary": true,
+                  "place": "North East, Erie, Pennsylvania, United States of America",
+                  "standard_place": "North East, Erie, Pennsylvania, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_104942994284",
+              "title": "Entry for Elizabeth R Hyde Skellie, \"Find a Grave Index\"",
+              "citation": "\"Find a Grave Index\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QL25-4KXW : Mon Oct 05 10:26:00 UTC 2026), Entry for Elizabeth R Hyde Skellie.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QPBK-4N1X"
+            },
+            {
+              "id": "sd_c_2221801",
+              "title": "Find a Grave Index",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2221801"
+            },
+            {
+              "id": "sd_da1",
+              "url": "http://www.findagrave.com/cgi-bin/fg.cgi?page=gr&GRid=182667793"
+            },
+            {
+              "id": "src_p_p_103294646526",
+              "url": "#p_103294646526"
+            }
+          ],
+          "places": [
+            {
+              "id": "4839028",
+              "name": "North East, Erie, Pennsylvania, United States",
+              "latitude": 42.2089,
+              "longitude": -79.8347
+            }
+          ]
+        },
+        "primaryId": "p_103294646526"
+      },
+      {
+        "recordId": "ark:/61903/1:1:ZHD8-93ZM",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Elizabeth Skellie",
+        "score": 3.6036,
+        "confidence": 2,
+        "collectionId": "3398461",
+        "collectionTitle": "Minnesota, Deaths, 1887-2001",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3398461",
+        "recordTitle": "Entry for William Skellie, \"Minnesota, Deaths, 1887-2001\"",
+        "recordArk": "ark:/61903/1:2:W1W8-H4MM",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_224832540000",
+              "ark": "ark:/61903/1:1:ZHD8-93ZM",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elizabeth",
+                  "surname": "Skellie"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_224832539700",
+              "ark": "ark:/61903/1:1:ZHD8-93MM",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "William",
+                  "surname": "Skellie"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "16 Sep 1920",
+                  "standard_date": "16 Sep 1920",
+                  "place": "Windom, Cottonwood, Minnesota, United States",
+                  "standard_place": "Windom, Cottonwood, Minnesota, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1845",
+                  "standard_date": "1845",
+                  "place": "Michigan",
+                  "standard_place": "Michigan, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_224832539800",
+              "ark": "ark:/61903/1:1:ZHD8-933Z",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Skellie"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_224832539900",
+              "ark": "ark:/61903/1:1:ZHD8-93W2",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Catherine",
+                  "surname": "McKerchen"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_224832539700",
+              "person2": "p_224832540000"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_224832539800",
+              "child": "p_224832539700"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_224832539900",
+              "child": "p_224832539700"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_152515932300",
+              "title": "Entry for William Skellie, \"Minnesota, Deaths, 1887-2001\"",
+              "citation": "\"Minnesota, Deaths, 1887-2001\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZHD8-93MM : Fri Mar 27 23:58:12 UTC 2026), Entry for William Skellie and John Skellie, 16 Sep 1920.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:W1W8-H4MM"
+            },
+            {
+              "id": "sd_c_3398461",
+              "title": "Minnesota, Deaths, 1887-2001",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3398461"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9T2-H9S9-C"
+            },
+            {
+              "id": "sd_auto_M92P-JNY",
+              "title": "United States, Minnesota, Deaths, from 1500 to 2026"
+            },
+            {
+              "id": "src_p_p_224832540000",
+              "url": "#p_224832540000"
+            }
+          ],
+          "places": [
+            {
+              "id": "332",
+              "name": "Michigan, United States",
+              "latitude": 44.2503,
+              "longitude": -85.5003
+            },
+            {
+              "id": "4345918",
+              "name": "Windom, Cottonwood, Minnesota, United States",
+              "latitude": 43.8694,
+              "longitude": -95.1183
+            }
+          ]
+        },
+        "primaryId": "p_224832540000"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2J7N-6XS",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Elizabeth Kelly",
+        "score": 3.5328803,
+        "confidence": 2,
+        "birthDate": "1860",
+        "deathDate": "1910",
+        "deathPlace": "Morpeth, Northumberland, England, United Kingdom",
+        "collectionId": "2285341",
+        "collectionTitle": "England and Wales, Death Registration Index 1837-2007",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2285341",
+        "recordTitle": "Entry for Elizabeth Kelly, \"England and Wales, Death Registration Index 1837-2007\"",
+        "recordArk": "ark:/61903/1:2:99XJ-S62G",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14997594122",
+              "ark": "ark:/61903/1:1:2J7N-6XS",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Kelly",
+                  "given": "Elizabeth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1860",
+                  "standard_date": "1860"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Morpeth, Northumberland, England",
+                  "standard_place": "Morpeth, Northumberland, England, United Kingdom"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22953036322",
+              "title": "Entry for Elizabeth Kelly, \"England and Wales, Death Registration Index 1837-2007\"",
+              "citation": "\"England and Wales, Death Registration Index 1837-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2J7N-6XS : Fri Feb 28 09:21:32 UTC 2025), Entry for Elizabeth Kelly, 1910.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:99XJ-S62G"
+            },
+            {
+              "id": "sd_c_2285341",
+              "title": "England and Wales, Death Registration Index 1837-2007",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2285341"
+            },
+            {
+              "id": "src_p_p_14997594122",
+              "url": "#p_14997594122"
+            }
+          ],
+          "places": [
+            {
+              "id": "3041454",
+              "name": "Morpeth, Northumberland, England, United Kingdom",
+              "latitude": 55.14455,
+              "longitude": -1.700717
+            }
+          ]
+        },
+        "primaryId": "p_14997594122"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2J7N-6X7",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Elizabeth Kelly",
+        "score": 3.5328803,
+        "confidence": 2,
+        "birthDate": "1869",
+        "deathDate": "1910",
+        "deathPlace": "Crediton, Devon, England, United Kingdom",
+        "collectionId": "2285341",
+        "collectionTitle": "England and Wales, Death Registration Index 1837-2007",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2285341",
+        "recordTitle": "Entry for Elizabeth Kelly, \"England and Wales, Death Registration Index 1837-2007\"",
+        "recordArk": "ark:/61903/1:2:99XJ-S62R",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14997594125",
+              "ark": "ark:/61903/1:1:2J7N-6X7",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elizabeth",
+                  "surname": "Kelly"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Crediton, Devon, England",
+                  "standard_place": "Crediton, Devon, England, United Kingdom"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1869",
+                  "standard_date": "1869"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22953036325",
+              "title": "Entry for Elizabeth Kelly, \"England and Wales, Death Registration Index 1837-2007\"",
+              "citation": "\"England and Wales, Death Registration Index 1837-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2J7N-6X7 : Fri Feb 28 09:21:33 UTC 2025), Entry for Elizabeth Kelly, 1910.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:99XJ-S62R"
+            },
+            {
+              "id": "sd_c_2285341",
+              "title": "England and Wales, Death Registration Index 1837-2007",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2285341"
+            },
+            {
+              "id": "src_p_p_14997594125",
+              "url": "#p_14997594125"
+            }
+          ],
+          "places": [
+            {
+              "id": "3039359",
+              "name": "Crediton, Devon, England, United Kingdom",
+              "latitude": 50.80184,
+              "longitude": -3.69732
+            }
+          ]
+        },
+        "primaryId": "p_14997594125"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2J75-B74",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Elizabeth Kelly",
+        "score": 3.5328803,
+        "confidence": 2,
+        "deathDate": "1910",
+        "deathPlace": "Leeds, Yorkshire, England, United Kingdom",
+        "collectionId": "2285341",
+        "collectionTitle": "England and Wales, Death Registration Index 1837-2007",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2285341",
+        "recordTitle": "Entry for Elizabeth Kelly, \"England and Wales, Death Registration Index 1837-2007\"",
+        "recordArk": "ark:/61903/1:2:99XJ-ZB8Y",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14997823357",
+              "ark": "ark:/61903/1:1:2J75-B74",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Kelly",
+                  "given": "Elizabeth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Leeds, Yorkshire, England",
+                  "standard_place": "Leeds, Yorkshire, England, United Kingdom"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22953265557",
+              "title": "Entry for Elizabeth Kelly, \"England and Wales, Death Registration Index 1837-2007\"",
+              "citation": "\"England and Wales, Death Registration Index 1837-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2J75-B74 : Fri Feb 28 09:29:13 UTC 2025), Entry for Elizabeth Kelly, 1910.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:99XJ-ZB8Y"
+            },
+            {
+              "id": "sd_c_2285341",
+              "title": "England and Wales, Death Registration Index 1837-2007",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2285341"
+            },
+            {
+              "id": "src_p_p_14997823357",
+              "url": "#p_14997823357"
+            }
+          ],
+          "places": [
+            {
+              "id": "3056894",
+              "name": "Leeds, Yorkshire, England, United Kingdom",
+              "latitude": 53.7999,
+              "longitude": -1.5472
+            }
+          ]
+        },
+        "primaryId": "p_14997823357"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2J7D-FJD",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Elizabeth A O'Kelly",
+        "score": 3.5328803,
+        "confidence": 2,
+        "birthDate": "1883",
+        "deathDate": "1910",
+        "deathPlace": "Birkenhead, Cheshire, England, United Kingdom",
+        "collectionId": "2285341",
+        "collectionTitle": "England and Wales, Death Registration Index 1837-2007",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2285341",
+        "recordTitle": "Entry for Elizabeth A O'Kelly, \"England and Wales, Death Registration Index 1837-2007\"",
+        "recordArk": "ark:/61903/1:2:99XN-BF5S",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14997488022",
+              "ark": "ark:/61903/1:1:2J7D-FJD",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "O'Kelly",
+                  "given": "Elizabeth A"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1883",
+                  "standard_date": "1883"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Birkenhead, Cheshire, England",
+                  "standard_place": "Birkenhead, Cheshire, England, United Kingdom"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22952930222",
+              "title": "Entry for Elizabeth A O'Kelly, \"England and Wales, Death Registration Index 1837-2007\"",
+              "citation": "\"England and Wales, Death Registration Index 1837-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2J7D-FJD : Fri Feb 28 09:17:51 UTC 2025), Entry for Elizabeth A O'Kelly, 1910.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:99XN-BF5S"
+            },
+            {
+              "id": "sd_c_2285341",
+              "title": "England and Wales, Death Registration Index 1837-2007",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2285341"
+            },
+            {
+              "id": "src_p_p_14997488022",
+              "url": "#p_14997488022"
+            }
+          ],
+          "places": [
+            {
+              "id": "1650287",
+              "name": "Birkenhead, Cheshire, England, United Kingdom",
+              "latitude": 53.3902,
+              "longitude": -3.0229
+            }
+          ]
+        },
+        "primaryId": "p_14997488022"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2J7N-6DF",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Elizabeth Kelley",
+        "score": 3.5328803,
+        "confidence": 2,
+        "deathDate": "1910",
+        "deathPlace": "Rotherham, Yorkshire, England, United Kingdom",
+        "collectionId": "2285341",
+        "collectionTitle": "England and Wales, Death Registration Index 1837-2007",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2285341",
+        "recordTitle": "Entry for Elizabeth Kelley, \"England and Wales, Death Registration Index 1837-2007\"",
+        "recordArk": "ark:/61903/1:2:99XJ-S6K7",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14997594075",
+              "ark": "ark:/61903/1:1:2J7N-6DF",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elizabeth",
+                  "surname": "Kelley"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Rotherham, Yorkshire, England",
+                  "standard_place": "Rotherham, Yorkshire, England, United Kingdom"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22953036275",
+              "title": "Entry for Elizabeth Kelley, \"England and Wales, Death Registration Index 1837-2007\"",
+              "citation": "\"England and Wales, Death Registration Index 1837-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2J7N-6DF : Fri Feb 28 09:21:38 UTC 2025), Entry for Elizabeth Kelley, 1910.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:99XJ-S6K7"
+            },
+            {
+              "id": "sd_c_2285341",
+              "title": "England and Wales, Death Registration Index 1837-2007",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2285341"
+            },
+            {
+              "id": "src_p_p_14997594075",
+              "url": "#p_14997594075"
+            }
+          ],
+          "places": [
+            {
+              "id": "3041644",
+              "name": "Rotherham, Yorkshire, England, United Kingdom",
+              "latitude": 53.43,
+              "longitude": -1.357
+            }
+          ]
+        },
+        "primaryId": "p_14997594075"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2J75-B7Z",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Elizabeth K Kelly",
+        "score": 3.5328803,
+        "confidence": 2,
+        "deathDate": "1910",
+        "deathPlace": "Wolstanton, Staffordshire, England, United Kingdom",
+        "collectionId": "2285341",
+        "collectionTitle": "England and Wales, Death Registration Index 1837-2007",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2285341",
+        "recordTitle": "Entry for Elizabeth K Kelly, \"England and Wales, Death Registration Index 1837-2007\"",
+        "recordArk": "ark:/61903/1:2:99XJ-ZBDM",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14997823360",
+              "ark": "ark:/61903/1:1:2J75-B7Z",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elizabeth K",
+                  "surname": "Kelly"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Wolstanton, Staffordshire, England",
+                  "standard_place": "Wolstanton, Staffordshire, England, United Kingdom"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22953265560",
+              "title": "Entry for Elizabeth K Kelly, \"England and Wales, Death Registration Index 1837-2007\"",
+              "citation": "\"England and Wales, Death Registration Index 1837-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2J75-B7Z : Fri Feb 28 09:29:13 UTC 2025), Entry for Elizabeth K Kelly, 1910.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:99XJ-ZBDM"
+            },
+            {
+              "id": "sd_c_2285341",
+              "title": "England and Wales, Death Registration Index 1837-2007",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2285341"
+            },
+            {
+              "id": "src_p_p_14997823360",
+              "url": "#p_14997823360"
+            }
+          ],
+          "places": [
+            {
+              "id": "1628264",
+              "name": "Wolstanton, Staffordshire, England, United Kingdom",
+              "latitude": 53.0315,
+              "longitude": -2.2167
+            }
+          ]
+        },
+        "primaryId": "p_14997823360"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2J75-B7S",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Elizabeth Kelly",
+        "score": 3.5328803,
+        "confidence": 2,
+        "birthDate": "1852",
+        "deathDate": "1910",
+        "deathPlace": "Liverpool, Lancashire, England, United Kingdom",
+        "collectionId": "2285341",
+        "collectionTitle": "England and Wales, Death Registration Index 1837-2007",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2285341",
+        "recordTitle": "Entry for Elizabeth Kelly, \"England and Wales, Death Registration Index 1837-2007\"",
+        "recordArk": "ark:/61903/1:2:99XJ-ZB8G",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14997823352",
+              "ark": "ark:/61903/1:1:2J75-B7S",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elizabeth",
+                  "surname": "Kelly"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Liverpool, Lancashire, England",
+                  "standard_place": "Liverpool, Lancashire, England, United Kingdom"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1852",
+                  "standard_date": "1852"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22953265552",
+              "title": "Entry for Elizabeth Kelly, \"England and Wales, Death Registration Index 1837-2007\"",
+              "citation": "\"England and Wales, Death Registration Index 1837-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2J75-B7S : Fri Feb 28 09:29:13 UTC 2025), Entry for Elizabeth Kelly, 1910.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:99XJ-ZB8G"
+            },
+            {
+              "id": "sd_c_2285341",
+              "title": "England and Wales, Death Registration Index 1837-2007",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2285341"
+            },
+            {
+              "id": "src_p_p_14997823352",
+              "url": "#p_14997823352"
+            }
+          ],
+          "places": [
+            {
+              "id": "3039900",
+              "name": "Liverpool, Lancashire, England, United Kingdom",
+              "latitude": 53.409,
+              "longitude": -2.9908
+            }
+          ]
+        },
+        "primaryId": "p_14997823352"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2J78-GL2",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Elizabeth Kelly",
+        "score": 3.5328803,
+        "confidence": 2,
+        "birthDate": "1838",
+        "deathDate": "1910",
+        "deathPlace": "St Albans, Hertfordshire, England, United Kingdom",
+        "collectionId": "2285341",
+        "collectionTitle": "England and Wales, Death Registration Index 1837-2007",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2285341",
+        "recordTitle": "Entry for Elizabeth Kelly, \"England and Wales, Death Registration Index 1837-2007\"",
+        "recordArk": "ark:/61903/1:2:99XN-YGBZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14997467450",
+              "ark": "ark:/61903/1:1:2J78-GL2",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Kelly",
+                  "given": "Elizabeth"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "St. Albans, Hertfordshire, England",
+                  "standard_place": "St Albans, Hertfordshire, England, United Kingdom"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1838",
+                  "standard_date": "1838"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22952909650",
+              "title": "Entry for Elizabeth Kelly, \"England and Wales, Death Registration Index 1837-2007\"",
+              "citation": "\"England and Wales, Death Registration Index 1837-2007\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2J78-GL2 : Fri Feb 28 09:17:11 UTC 2025), Entry for Elizabeth Kelly, 1910.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:99XN-YGBZ"
+            },
+            {
+              "id": "sd_c_2285341",
+              "title": "England and Wales, Death Registration Index 1837-2007",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2285341"
+            },
+            {
+              "id": "src_p_p_14997467450",
+              "url": "#p_14997467450"
+            }
+          ],
+          "places": [
+            {
+              "id": "3041288",
+              "name": "St Albans, Hertfordshire, England, United Kingdom",
+              "latitude": 51.75023,
+              "longitude": -0.342155
+            }
+          ]
+        },
+        "primaryId": "p_14997467450"
+      }
+    ]
+  }
+}

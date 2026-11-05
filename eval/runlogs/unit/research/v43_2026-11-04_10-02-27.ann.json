@@ -1,0 +1,222 @@
+{
+  "run_log": "v43_2026-11-04_10-02-27.json",
+  "annotator": "taiwoadedotunxx1@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_j1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_j1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Override. judge_context says locating or extracting the record — \"asking the researcher for its identifier or collection\" — \"is a legitimate first step and counts as following the lead\", and the only failure it names is a forward plan that goes from the record \"straight to wrap-up\". The reply asks for the ARK, record ID or collection and entry so it can be searched or extracted, flags James and Elizabeth Eastham as a significant new finding, and does not head to exhaustiveness or a conclusion. A fuller Pulaski County plan is not required this turn."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Override. The reply does what judge_context asks and avoids the failure it names. It weighs the reported death against h_002 and calls the identity impossible: \"If Robert Eastham … died in Pulaski County in 1861, he cannot be the same Robert Eastham who married Margaret Rucker in Boyd County in January 1870\". It routes to hypothesis-tracking to register that. It reports only what the researcher stated (place, year, birth year, parents), and says the record needs identifying and extracting before it is cited. judge_context calls taking the report as a working premise before extraction \"correct, not a fault\", so the \"unsupported inference\" charge does not hold. Earlier runs of gm4 used the 1870 marriage as corroboration; this one catches the conflict."
+    },
+    {
+      "test_id": "ut_research_zfp",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_zfp",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_zfp",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_j1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree with 2. I checked the calls. research_query was sent filter: {\"fact_type\": \"Christening\"}, a parameter the tool does not take; it refused (\"research_query has no parameter filter … Nothing was run\"), and the router recovered on the next call with no filter, reading all 13 assertions. One refused call followed by an immediate correction scores 2 under the recovery policy. project_list and project_context were correct."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree with 1, diagnostically. judge_context says the ideal is to spawn research-plan \"without producing the browsing strategy, tier list, or prioritized plan inline\", and the reply produced exactly that inline. Two problems the judge did not name: it lists specific parishes (\"St. Patrick's, Pottsville (est. 1827, oldest in the county)\", Assumption BVM Minersville, St. Joseph's Girardville) that no tool returned (its only calls were project_context and research_query), and it says the 1840s registers may be \"held only on Archion/Matricula-type portals\", which are German and Austrian church-book sites unrelated to Pennsylvania. The outcome is decided by the no-browse-no-write validator, which passed."
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Agree with 1, diagnostically: on this test completeness is graded on the routing, and the planning question was answered inline instead of being handed to research-plan. The project snapshot it gives is accurate (pli_006 probate in progress, the 1860 census and 1908 death certificate done"
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Override. The judge marks the reply wrong for not stating that FamilySearch has no Kenya collections, but the router had no tool result to say that from: locality-guide was stubbed, so collections_search never ran, and the reply made no MCP call. Asserting \"none exist\" would be the same from-memory claim this test exists to stop, just in the other direction. judge_context says the outcome is graded by the deterministic validator — no collection title no collections_search returned — and that saying one is unconfirmed is correct. Both tag-gated validators passed. The reply says \"I can't name specific FamilySearch collection titles as verified\", names none, and gives record types, the Catalog by place, and the Kenya National Archives (a repository, not a collection"
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "Override, same reason. The question was what Kenyan records to search for him on FamilySearch. Without a tool result the honest complete answer is the record types to look for, how to check FamilySearch's own holdings (the Records search and the Catalog by place), and a next step that would confirm them (a wiki or records search), which is what the reply gives. \"None exist\" was not available to it from any tool this session."
+    }
+  ]
+}
