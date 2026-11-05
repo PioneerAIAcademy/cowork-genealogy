@@ -281,10 +281,29 @@ contains only the collections that pass it.
 
 ## Caching
 
-The full collection list (~3400 entries) changes infrequently. Cache the
-API response for 1 hour to avoid re-fetching on every call. The cache is
-keyed on the access token (different users may see different collections
-due to access restrictions).
+The full collection list (~3400 entries) changes infrequently. The API
+response is cached for 1 hour in one module-level slot, so a call does not
+re-fetch it. Only a successful fetch is stored.
+
+- **Setting unset (the default): keyed on the access token.** A call under
+  another token re-fetches and replaces the slot. This is the behavior of the
+  `.mcpb`, both harnesses, and any server that does not set the variable below.
+- **`GENEALOGY_SHARED_COLLECTIONS_CACHE=true` (the hosted tool server,
+  self-hosted beta E4): one catalog for the whole process.** `src/http.ts`
+  reads it through `readLimitsEnv`, which takes `true` or `false` (unset or
+  `false` is per token, anything else is exit 2), and names the mode on
+  start-up. Any caller's
+  cached success is served to every caller within the hour. Decided by the lead
+  on 2026-11-01. The reason this spec used to give for keying on the token, that
+  different users may see different collections due to access restrictions, was
+  never measured. The catalog is collection titles and counts with no patron
+  data, so the worst case under sharing is a listed collection that a patron's
+  own search cannot reach. Without sharing, each new patron pays a 33–60 s cold
+  fetch per hour.
+- **A failure is never shared.** A failed fetch throws and stores nothing, so
+  the next call, under any token, fetches for itself. No in-flight fetch is
+  shared either: two cold calls each make their own request, so one patron's
+  failed fetch never reaches another patron's call.
 
 ---
 
@@ -316,8 +335,12 @@ and output types (`Collection`, `CollectionsSearchResult`).
 - `collectionsSearchTool(input)` — main function
 - `standardPlaceToCollectionsQuery(value)` — derive the title-match term from a `standardPlace` (US → state, Canada/Mexico → `"Country, State"`, else → country; free text passes through)
 - `fetchAllCollections(token)` — cached API call
+- `configureCollectionsCache({ shared })` — the cache's mode, set once by the
+  hosted entrypoint (`src/http.ts`); per token when never called
+- `collectionsCacheMode()` — the mode in force, read back for `src/http.ts`'s
+  start-up line
 - `filterByQuery(entries, query)` — case-insensitive title matching
-- `clearCollectionsCache()` — for testing
+- `clearCollectionsCache()` — empties the cache, for testing
 
 ### `packages/engine/mcp-server/src/index.ts`
 
@@ -351,6 +374,12 @@ Smoke-test script for list mode.
 | 12 | Collection with no year span always survives the date filter | Date filter edge case |
 | 13 | Throws when `endYear` < `startYear` | Input validation |
 | 14 | Each of the five record-type spellings throws, pointing to `volume_search`'s `recordTypeGroups`, with no token read and no request | Record-type refusal |
+
+**Cache tests (`fetchAllCollections`):** with the setting unset, the same
+token is served from cache and another token re-fetches into the one slot;
+shared, a second token is served the first's catalog, a failed fetch is not
+handed to the next call, two cold calls each fetch (no in-flight sharing), the
+hour still expires, and turning sharing off keys on the token again.
 
 **`standardPlaceToCollectionsQuery` unit tests:** US → state (any nesting
 depth); Canada/Mexico → `"Country, State"`; other countries → country;

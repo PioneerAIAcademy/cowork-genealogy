@@ -51,6 +51,8 @@ import sys
 # starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
 # diffs against (issue #1490); a raw overwrite of it would defeat the gate the
 # same way a raw tree.gedcomx.json write defeats the write-boundary invariants.
+# Lowercase, and matched through `_protected_name`, which folds a name the way
+# Windows and macOS hosts resolve it (`Research.JSON` is `research.json` there).
 PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
 # The raw file-write tools. Their `file_path` is unambiguously a destination —
@@ -264,10 +266,12 @@ OWNED_SECTIONS = {
     # rejected_links, 2026-09-30. Same lane as the links themselves: a rejection
     # cannot be written by something that could not have made the link.
     "rejected_links": "person-evidence",
-    # namesakes, 2026-10-25 (issue #3363). The leads ruled search-records the sole
-    # writer: a row caps the person's links for good, so only the agent that saw
-    # the namesake in its own search results records one. merge_tree_persons
-    # re-keys rows by tool identity and never reaches this hook.
+    # namesakes, 2026-10-25 (issue #3363). A row caps the person's links for
+    # good, so only an agent that met the namesake in its own results records
+    # one. search-records owns the section and is the agent a deny names; the
+    # two search agents listed in SECTION_CO_WRITERS below may write it too
+    # (2026-11-02). merge_tree_persons re-keys rows by tool identity and never
+    # reaches this hook.
     "namesakes": "search-records",
     # evaluations, 2026-10-26, lead ruling 2026-10-12 on issue 3191. One owner
     # for mentor verdicts, so a whole-section route fits. What this closes is
@@ -277,7 +281,20 @@ OWNED_SECTIONS = {
     # The agent writes it through the narrow `evaluation_append` (issue #1491);
     # `owner_denied` routes that tool here as well as `research_append`.
     "evaluations": "gps-mentor",
+    # hit_verdicts, 2026-10-29 (issue #3522, lead ruling 2026-10-18). One agent
+    # per full-text hit judges it against the target's tree facts, so the main
+    # thread that ran the search cannot label its own hits from the list.
+    # merge_tree_persons re-keys `person_id` by tool identity and never
+    # reaches this hook.
+    "hit_verdicts": "evaluate-search-results",
 }
+
+# Agents that may also write a section OWNED_SECTIONS routes. The owner stays the
+# one agent a deny names (OWNER_REASON), so a refused caller is still sent to one
+# place. namesakes: a page read with image_transcribe, or a full-text transcript
+# hit, can turn up a same-named person the search rules out (issue #3363,
+# 2026-11-02). Each co-writer also needs the section in its lane below.
+SECTION_CO_WRITERS = {"namesakes": ("search-images", "search-full-text")}
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
 # to a gate-claiming value. Same plane and same manifest as OWNED_SECTIONS,
@@ -317,6 +334,18 @@ OWNED_DECLARATIONS = {("questions", "search_stop"): "research-exhaustiveness"}
 # any write of it asserts the project's state, so the write IS the claim and
 # presence is the right key.
 OWNED_FIELDS = {("project", "status"): "proof-conclusion"}
+
+# Fields only the MAIN THREAD may write: (section, field), keyed on presence.
+# The reverse of OWNED_FIELDS, which names the one agent that may write a field,
+# so it is not an entry there: an `init-project` owner would deny the main
+# thread, and an empty owner would let through a subagent whose `agent_type` is
+# null. `objective` stopped being set-once so a researcher can correct it, and
+# a website user has no file access to do that any other way. The correction
+# arrives in the main conversation; a subagent rewriting it is the drift the
+# ownership row names, every later step planning against a goal the user never
+# agreed to. Lead ruling 2026-10-29, issue #3975. Accepted risk: the main
+# thread drifting on its own, which nothing here can tell from a user's ask.
+MAIN_THREAD_FIELDS = frozenset({("project", "objective")})
 
 # Op-scoped routing: section -> the BARE agent name that may APPEND to it. Fifth
 # granularity. `questions` is updated by three agents (research-exhaustiveness
@@ -401,9 +430,10 @@ AGENT_WRITABLE_SECTIONS = {
     # gps-mentor appends its verdict to `evaluations` and writes nothing else in
     # research.json; its description says so and every corpus write is there.
     "gps-mentor": frozenset({"evaluations"}),
-    # search-images updates the status of the plan item a browse executed. Its
-    # browse log goes through research_log_append, which carries no `section`.
-    "search-images": frozenset({"plan_items"}),
+    # search-images updates the status of the plan item a browse executed, and
+    # records the namesakes its pages turn up (a co-writer, SECTION_CO_WRITERS).
+    # Its browse log goes through research_log_append, which carries no `section`.
+    "search-images": frozenset({"plan_items", "namesakes"}),
     # search-external-sites updates the status of the plan item a search executed.
     # Its log entries go through research_log_append and build_external_search_url,
     # which carry no `section`.
@@ -417,11 +447,17 @@ AGENT_WRITABLE_SECTIONS = {
     # executes (issue #3153). Its no-hints log goes through research_log_append,
     # which carries no `section`. A repo CI requirement, not a hook route.
     "search-hints": frozenset({"plan_items"}),
-    # search-full-text updates the status of the plan item a search executed.
-    # Its search log goes through research_log_append, which carries no `section`.
+    # search-full-text updates the status of the plan item a search executed, and
+    # records the namesakes its transcript hits turn up (a co-writer,
+    # SECTION_CO_WRITERS). Its search log goes through research_log_append, which
+    # carries no `section`.
     # This is a repo CI requirement, not a runtime gate (the guard does not fire
     # for agents outside the listed sections).
-    "search-full-text": frozenset({"plan_items"}),
+    "search-full-text": frozenset({"plan_items", "namesakes"}),
+    # evaluate-search-results appends one verdict per hit to `hit_verdicts`, the
+    # section routed to it above, and writes nothing else in research.json. A
+    # Match is extracted by record-structurer on the next turn, never here.
+    "evaluate-search-results": frozenset({"hit_verdicts"}),
     # citation refines `citation` / `citation_detail` on source entries that
     # already exist, and writes nothing else in research.json.
     "citation": frozenset({"sources"}),
@@ -451,7 +487,8 @@ AGENT_WRITABLE_SECTIONS = {
     # project_create, which itself writes the
     # project, the fixed researcher profile and one `sources` entry per
     # transcribed memory (issue #3384). It owns `project` (ownership.json);
-    # `project.status` stays routed to proof-conclusion above. A lane, not a
+    # `project.status` stays routed to proof-conclusion above, and
+    # `project.objective` is main-thread-only (MAIN_THREAD_FIELDS). A lane, not a
     # route: nothing is routed to this agent. It leaves out `questions`, which
     # question-selection owns (issue #2122), and `sources`, which only
     # project_create writes for it.
@@ -513,6 +550,14 @@ OWNED_FIELD_REASON = (
     "`updated` activity ping, is unaffected."
 )
 
+MAIN_THREAD_FIELD_REASON = (
+    "Setting research.json's `{section}.{field}` from a subagent is disabled — "
+    "only the main conversation may change it, and only when the user asks. "
+    "Return the user's wording to the main conversation in your result and let "
+    "it make the research_append call. Every other write to `{section}` is "
+    "unaffected."
+)
+
 CLAIM_REASON = (
     "Recording a conflict's analysis or resolution from here is disabled — "
     "settling `{section}` (a `status: \"resolved\"`, or any of {fields}) is owned "
@@ -564,6 +609,26 @@ def _basename(value: str) -> str:
     return value.replace("\\", "/").rsplit("/", 1)[-1]
 
 
+def _protected_name(path: str) -> str | None:
+    """The protected file `path` names, as its canonical lowercase name, or None.
+
+    Folded the way a Windows or macOS host resolves a name: case is folded
+    (`casefold`, so a long-s spelling (U+017F) matches as APFS matches it), and a stream
+    suffix (`research.json::$DATA`) and trailing dots and spaces
+    (`research.json.`) are dropped, since Windows ignores both. An 8.3 short
+    name (`RESEAR~1.JSO`) is not matched: it cannot be told from a real file
+    by name alone. A suffix after `:` is a stream only when it holds no
+    whitespace, so one-line file content such as `research.json: notes` on the
+    device bridge is not read as a path.
+    """
+    name = _basename(path)
+    head, colon, stream = name.partition(":")
+    if colon and not any(c.isspace() for c in stream):
+        name = head
+    name = name.rstrip(". ").casefold()
+    return name if name in PROTECTED_PROJECT_FILES else None
+
+
 def _path_like_strings(value, depth: int = 0):
     """Every string in `value` that could be a path, walked structurally.
 
@@ -612,13 +677,12 @@ def protected_target(tool_name: str, tool_input: dict) -> str | None:
     """
     if tool_name in FILE_WRITE_TOOLS:
         file_path = str((tool_input or {}).get("file_path") or "")
-        name = _basename(file_path)
-        return name if name in PROTECTED_PROJECT_FILES else None
+        return _protected_name(file_path)
 
     if _basename(tool_name.replace("__", "/")) in DEVICE_WRITE_TOOLS:
         for candidate in _path_like_strings(tool_input or {}):
-            name = _basename(candidate)
-            if name in PROTECTED_PROJECT_FILES:
+            name = _protected_name(candidate)
+            if name:
                 return name
         return None
 
@@ -671,8 +735,8 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     """`(section, rule, caller)` for a denied write, or None to allow.
 
     Four rules, all keyed on the caller and all returning the offending
-    section: `routed` — a section reserved to an owning agent, reached by
-    someone else; `declaration` — a routed CLAIM (a field set to a particular
+    section: `routed` — a section reserved to an owning agent (and any
+    `SECTION_CO_WRITERS`), reached by someone else; `declaration` — a routed CLAIM (a field set to a particular
     value), reached by someone else; `owned_field` — a routed field, keyed on
     presence rather than value; `out_of_lane` — a known agent reaching outside
     the sections its own skill is a declared caller for. `declaration` and
@@ -683,7 +747,11 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     analytical product (a resolve, or any analysis field), reached by anyone
     but its owning agent. A sixth, `owned_append`, returns the bare section of
     an `OWNED_APPENDS` route: an `op: "append"` there, made by anyone but its
-    owning agent.
+    owning agent. A seventh, `main_thread_field`, returns a dotted
+    `section.field` from `MAIN_THREAD_FIELDS`: a field keyed on presence,
+    written by ANY subagent. It is the one rule that keys on `agent_id`
+    membership rather than on `caller`, because a subagent with a null
+    `agent_type` has `caller == ""`, the same as the main thread.
 
     `proof_summaries` is owned by `proof-conclusion`
     (`docs/specs/schemas/ownership.json`). Measured over the committed corpus,
@@ -739,15 +807,21 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     if _basename(tool_name.replace("__", "/")) not in ("research_append", "evaluation_append"):
         return None
     caller = ""
-    if "agent_id" in payload:
+    is_subagent = "agent_id" in payload
+    if is_subagent:
         caller = str(payload.get("agent_type") or "").rsplit(":", 1)[-1]
     writable = AGENT_WRITABLE_SECTIONS.get(caller)
     for op in _ops(tool_input):
         section = op.get("section")
         if not isinstance(section, str):
             continue
-        # A routed section, reached by anyone but its owning agent.
-        if section in OWNED_SECTIONS and caller != OWNED_SECTIONS[section]:
+        # A routed section, reached by anyone but its owning agent and its
+        # co-writers.
+        if (
+            section in OWNED_SECTIONS
+            and caller != OWNED_SECTIONS[section]
+            and caller not in SECTION_CO_WRITERS.get(section, ())
+        ):
             return (section, "routed", caller)
         # A routed APPEND, made by anyone but its owning agent. Before the
         # declaration loop: a main-thread question append that also carries a
@@ -799,6 +873,20 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
                 payload_obj = op.get(key)
                 if isinstance(payload_obj, dict) and field in payload_obj:
                     return (f"{section}.{field}", "owned_field", caller)
+        # A main-thread-only FIELD, reached by any subagent. Keyed on
+        # `is_subagent`, never on `caller`, which is "" for a subagent with a
+        # null `agent_type`. Before the lane check, so an agent whose lane lacks
+        # the section is told to hand the wording back rather than that the
+        # section is someone else's. Both payload keys, for the fail-open
+        # reason the loops above give.
+        if is_subagent:
+            for owned_section, field in MAIN_THREAD_FIELDS:
+                if section != owned_section:
+                    continue
+                for key in ("fields", "entry"):
+                    payload_obj = op.get(key)
+                    if isinstance(payload_obj, dict) and field in payload_obj:
+                        return (f"{section}.{field}", "main_thread_field", caller)
         # A known agent reaching outside its own set.
         if writable is not None and section not in writable:
             return (section, "out_of_lane", caller)
@@ -884,6 +972,9 @@ def deny_reason(denied: tuple) -> str:
             field=field,
             agent=OWNED_FIELDS[(owned_section, field)],
         )
+    elif rule == "main_thread_field":
+        owned_section, _, field = section.partition(".")
+        reason = MAIN_THREAD_FIELD_REASON.format(section=owned_section, field=field)
     else:
         allowed = ", ".join(f"`{s}`" for s in sorted(AGENT_WRITABLE_SECTIONS[caller]))
         reason = OUT_OF_LANE_REASON.format(section=section, allowed=allowed)

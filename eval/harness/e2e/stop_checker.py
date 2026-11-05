@@ -106,63 +106,17 @@ def project_completed(research: dict[str, Any] | None) -> bool:
     return (research.get("project") or {}).get("status") == "completed"
 
 
-def should_continue_run(
-    *,
-    research: dict[str, Any] | None,
-    nudges_used: int,
-    max_nudges: int,
-    tool_count: int,
-    tool_count_at_last_nudge: int,
-    mcp_unavailable: bool = False,
-) -> bool:
-    """Whether to veto an agent's *voluntary* stop and nudge it onward.
-
-    True  → block the Stop: the run is unfinished and a nudge may help.
-    False → allow the Stop: the project is complete, the nudge budget is
-            spent, the previous nudge produced no tool call (the agent
-            isn't making progress, so another nudge won't either), there is
-            no research.json (issue #3274 — see below), or the genealogy MCP
-            surface is gone (issue #941 — see below).
-
-    Kept pure so the orchestrator's Stop hook stays a thin wrapper and this
-    is unit-testable without a live agent.
-    """
-    # #941, ask (3): with no genealogy tools in the session there is nothing to
-    # resume into, and in the 35-minute lost run this hook vetoed the agent's
-    # attempt to give up NINE times. Not the mechanism that ends such a run —
-    # the orchestrator's abort returns from its message loop, and no Stop hook
-    # is dispatched after that — but a hook already in flight when the abort
-    # lands must not nudge the agent back into an empty tool set.
-    if mcp_unavailable:
-        return False
-    # #3274: with no research.json there is no project to resume, and the nudge says to
-    # re-read it. `is None`, not a falsy test, so an empty `{}` still reads as an unfinished
-    # project. The hosted copy of this predicate was deleted with the Stop veto in step
-    # mode phase 2, so nothing pins this one.
-    if research is None:
-        return False
-    if project_completed(research):
-        return False
-    if nudges_used >= max_nudges:
-        return False
-    if nudges_used > 0 and tool_count == tool_count_at_last_nudge:
-        return False
-    return True
-
-
 # The retired hand-back literal (lead ruling 2026-09-07, retired by issue #2292 and
 # PR #2870, 2026-09-27: "the Stop hook is the mechanism"). No shipped prompt emits it,
-# so in an autonomous run a `step` is the agent asking the patron — the yield the veto
-# exists to refuse. Kept as telemetry only: `usage.hand_back_classes` and
-# `nudge_report` count it, the reply never depends on it (U17, handoff plan), and the
-# committed pre-retirement run logs still carry it. Matched literally; do not loosen.
+# so in an autonomous run a `step` is the agent asking the patron. Kept as telemetry
+# only: `nudge_report` counts it over the committed runs, which still carry it.
+# Matched literally; do not loosen.
 _HAND_BACK_STEP_TAIL = ". Continue?"
 _HAND_BACK_STEP_LEAD = "Next: "
 _HAND_BACK_COMPLETE = "Research complete."
 
 # Step mode's offer (decision 25). Unlike the literal above this one is LIVE: every
-# step turn ends on it, and the host reads it to decide the next reply. Matched on
-# FORM only, which is all this function is about -- `step_boundary.offered_step`
+# step turn ends on it. Matched on FORM only, which is all this function is about -- `step_boundary.offered_step`
 # resolves WHICH step the label names, and that needs the label table, which this
 # module deliberately does not import (stdlib-only, pure, shared with
 # `nudge_report.py`). Same strictness as the retired pair above: a lead and a tail,
@@ -175,11 +129,11 @@ def classify_hand_back(text: str | None) -> str:
     """Classify an agent's closing words: "step_offer" | "step" | "silent" | "completion_claim".
 
     Pure, stdlib-only, text in / class out, and takes NO `research` argument: whether
-    a completion claim is true is `hand_back_key`'s question, not this one's.
+    a completion claim is true is the caller's question, not this one's.
 
-    Normalises its own input (`" ".join(text.split())`) so the two callers agree: the
-    orchestrator passes a whole TextBlock, `nudge_report` passes narration text, and a
-    predicate anchored to the end would otherwise behave differently on each.
+    Normalises its own input (`" ".join(text.split())`), since `nudge_report` passes
+    narration text and a predicate anchored to the end would otherwise trip on
+    trailing whitespace.
 
     `completion_claim` is tested first. The order of the two step arms is now
     DELIBERATE, where it used to be arbitrary: `_STEP_OFFER_TAIL` is bare `"?"`,
@@ -200,55 +154,6 @@ def classify_hand_back(text: str | None) -> str:
     if t.endswith(_HAND_BACK_STEP_TAIL) and _HAND_BACK_STEP_LEAD in t:
         return "step"
     return "silent"
-
-
-def terminal_reason(
-    *,
-    research: dict | None,
-    nudges_used: int,
-    max_nudges: int,
-    mcp_unavailable: bool,
-) -> str:
-    """Why `should_continue_run` is about to return False.
-
-    That function returns a bare bool for FIVE different reasons and only two of them
-    are defects. 134 of the 181 committed e2e run logs stop on `completed` — counting
-    those as hand-back defects would make the rate dominated by successes, and the live
-    acceptance run (which must end `completed`) would log one against itself. `ok` is the
-    fifth: no research.json, so no project for a hand-back to be a defect against.
-
-    Mirrors should_continue_run's own order, which is what keeps the two in agreement.
-    """
-    if mcp_unavailable:
-        return "mcp_unavailable"
-    if research is None:
-        return "ok"
-    if project_completed(research):
-        return "completed"
-    if nudges_used >= max_nudges:
-        return "budget"
-    return "no_progress"
-
-
-#: Terminal reasons whose hand-back is worth counting. `completed` is the successful
-#: path, `mcp_unavailable` is infrastructure (#941) and `ok` has no project (#3274) —
-#: none of them says anything about how the agent handed back.
-COUNTED_TERMINAL_REASONS = frozenset({"budget", "no_progress"})
-
-
-def hand_back_key(hand_back_class: str, *, project_is_completed: bool) -> str:
-    """The `usage.hand_back_classes` key for one hand-back class — telemetry only.
-
-    Every vetoed stop gets the same reply (U17), once the worker's `CONTINUE_REASON`
-    verbatim. The hosted planes deleted their veto in step mode phase 2, so this copy
-    stands alone until the e2e half deletes it, and nothing pins the text any more.
-
-    A `completion_claim` on a project that IS completed is a TRUTHFUL completion, not a
-    false one — `terminal_completed`, never `false_completion`.
-    """
-    if hand_back_class == "completion_claim":
-        return "terminal_completed" if project_is_completed else "false_completion"
-    return hand_back_class
 
 
 def derive_stop_reason(

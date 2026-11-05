@@ -217,7 +217,9 @@ def fake_sas_package(monkeypatch, calls: list) -> None:
 
     class SasClient:
         async def get_secure_object(self, sas_object_name):
-            calls.append((id(self), sas_object_name, threading.get_ident()))
+            # The client itself, not its id(): holding it stops a freed client's address
+            # being reused by the next one, which read as "the same client" 2 runs in 40.
+            calls.append((self, sas_object_name, threading.get_ident()))
             return obj()
 
     module.SasClient = SasClient
@@ -232,7 +234,7 @@ def test_fetch_awaits_the_real_client_shape(monkeypatch):
     assert pc._fetch_sas_object("fch-db") == obj()
     assert pc._fetch_sas_object("fch-db") == obj()
     assert [c[1] for c in calls] == ["fch-db", "fch-db"]
-    assert calls[0][0] != calls[1][0], "a new client per fetch, so its cache cannot serve a rotated password"
+    assert calls[0][0] is not calls[1][0], "a new client per fetch, so its cache cannot serve a rotated password"
 
 
 def test_fetch_works_from_inside_a_running_loop(monkeypatch):
@@ -421,6 +423,52 @@ def test_check_at_start_lets_an_unreachable_sas_through_and_caches_a_good_one():
     assert sas.calls == 1, "a cached DSN is not re-read"
     pc.PgCredentials.fixed(DSN1).check_at_start()  # env mode: nothing to fetch
 
+
+
+# The message sas-client 0.2.1.16 raised for a missing object on FS112 (2026-11-03): a plain
+# Exception, chained from another, with SAS's XML body (Status 404, "Object Not Found").
+SAS_404 = ("SAS response error: 404 - <?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n"
+           "<sas xmlns=\"http://www.familysearch.org/sas\"><attributes><attribute name=\"Status\">"
+           "<values><value>NDA0</value></values></attribute></attributes></sas>")
+
+
+def sas_404() -> Exception:
+    try:
+        try:
+            raise Exception(SAS_404)
+        except Exception as inner:
+            raise Exception(f"SAS Error: Failed to get 'fch-db' object from SAS: {inner}") from inner
+    except Exception as outer:
+        return outer
+
+
+def test_check_at_start_refuses_an_object_sas_does_not_have():
+    creds = sas_creds(Sas(sas_404()))
+    with pytest.raises(pc.PgCredentialsError, match="SAS has no object fch-db"):
+        creds.check_at_start()
+
+
+def test_an_object_sas_does_not_have_after_start_is_unusable():
+    with pytest.raises(pc.PgCredentialsUnavailable, match="unusable .*SAS has no object fch-db"):
+        sas_creds(Sas(sas_404())).dsn()
+
+
+@pytest.mark.parametrize("exc", [
+    Exception("SAS response error: 503 - <sas/>"),
+    Exception("SAS response error: 4040 - <sas/>"),
+    TimeoutError("timed out"),
+    Exception("Failed to get 'fch-db': connection reset"),
+])
+def test_a_sas_error_other_than_404_stays_an_outage(exc):
+    assert not pc.sas_not_found(exc)
+    assert sas_creds(Sas(exc)).check_at_start() is None
+
+
+def test_sas_not_found_reads_the_whole_chain():
+    inner = Exception(SAS_404)
+    outer = RuntimeError("wrapped")
+    outer.__cause__ = inner
+    assert pc.sas_not_found(outer) and pc.sas_not_found(sas_404())
 
 
 def test_check_at_start_does_not_wait_out_a_hung_sas(caplog):

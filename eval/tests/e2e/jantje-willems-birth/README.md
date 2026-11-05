@@ -1,4 +1,4 @@
-# Jantje Willems — baptism and parents (1748 Groningen hint rejected)
+# Jantje Willems — parents (1748 Groningen hint rejected)
 
 **Source PID:** `K8C9-ZZC`
 **Jantje Willems is deceased.** (FamilySearch ToS requires
@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.) The tree carries only 
 
 ## Research question
 
-> When and where was Jantje Willems, wife of Jacob Jeltes and mother of Trijntje (baptized 1774) and Willemke (baptized 1777) in the city of Groningen, baptized, and who were her parents?
+> Who were the parents of Jantje Willems, wife of Jacob Jeltes and mother of Trijntje (baptized 1774) and Willemke (baptized 1777) in the city of Groningen?
 
 ## What was removed from the starting tree
 
@@ -27,6 +27,18 @@ medium — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4143).** The old question asked
+two independent facts (her baptism, and her parents): "When and where was
+Jantje Willems, wife of Jacob Jeltes and mother of Trijntje (baptized 1774)
+and Willemke (baptized 1777) in the city of Groningen, baptized, and who were
+her parents?" Reworded `researcher_question` to the parents only — `f1`
+(parents avoid-guard) and `f3` (the negative-conclusion documentation) are the
+two required findings and both center on parentage, while the baptism-only
+guard `f2` was already `required: false`, so nothing in `expected-findings.json`
+changed. The one stamped annotation's `findings_hash` therefore stays valid;
+only its `blind_bundle_digest` needs re-stamping, since it fingerprints
+`fixture.json` too.
 
 **Resolved 2026-10-14 (#3338): false match, no substitute found.** The hint
 — "Netherlands, Births and Baptisms, 1564-1910", baptism of Jantjen

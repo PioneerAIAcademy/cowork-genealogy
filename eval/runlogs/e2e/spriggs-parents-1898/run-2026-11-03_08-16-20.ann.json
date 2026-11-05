@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "notes": {
+    "f1": "Run crashed (ENOTFOUND, local network drop) during extraction before any person or relationship for John William Spriggs was added. The final tree has no new persons and no ParentChild relationship linking either parent to Reuben — only Reuben's own pre-existing relationships to his children. research.json's proof_summaries is empty. Graded false on the tree as it stands, independent of why the run stopped.",
+    "f2": "Same crash, same tree state — Charlotte (Westby) Spriggs was never added or linked before the crash. Graded false."
+  },
+  "annotator": "Milescia",
+  "findings_hash": "8282b99585e85550c9a239b680abd2df42e7db75ad8ad2b1401ef4324ac71eda",
+  "blind_bundle_digest": "89ab6b1392c3b93e6ab9379573091f58491f408503702f2f9a775a00649a847a"
+}

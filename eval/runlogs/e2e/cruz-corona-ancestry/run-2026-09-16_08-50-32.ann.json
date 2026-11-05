@@ -6,13 +6,14 @@
     "f4": "false",
     "f5": "false"
   },
-  "proof_quality_score": 2,
+  "proof_quality_score": 1,
   "notes": {
+    "f1": "Proof quality corrected on re-audit (Milescia, 2026-11-04) from 2 to 1: research.json's own source_classification marks src_001 and src_002 as \"original,\" and the proof narrative calls both original/primary/direct — but there is exactly one image_transcribe call in the whole run, for src_001's image, and it failed (ECONNRESET); src_002 has zero image calls. The agent's own note on src_001 says the image \"should be reviewed\" (never done). An original/primary classification asserted into structured data with no image ever successfully read is an over-claim of evidence, not a thin-but-honest proof — 1 (unsound), not 2 (thin).",
     "f2": "Father-child link (R2) present; name variants Sóstenes/Sostenes/Sostanas across 4 sources. Father's birth date (27 Nov 1882) and place (Coahuayutla) absent from I1 node. Full formal name José Sóstenes Cruz Basurto not in tree. Graded true on relationship + correct primary name being present.",
     "f3": "Mother-child link (R3) present; Apolinar/Ma Apolinar Corona across 5 sources. Mother's birth detail absent from I2 node. Graded true on relationship + correct name.",
     "f4": "No grandparent persons or parent relationships on I1. Genuinely absent.",
     "f5": "No grandparent persons or parent relationships on I2. Genuinely absent."
   },
   "annotator": "mercyokum",
-  "findings_hash": "66443b65ecb879e448dd210bead49a6f4f53d7bce7443baf73f3b3dfe1711140"
+  "findings_hash": "61c97416379af03d0808efd6ffd1148332b4bcff57c7ef1014557045bc1b261a"
 }
