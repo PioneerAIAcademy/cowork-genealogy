@@ -1227,6 +1227,73 @@ describe("namesake cap", () => {
       expect((await update({ notes: "Checked again." })).ok).toBe(true);
       expect((await row()).record_persona_ids).toEqual({ [REC.voter]: "p_555" });
     });
+
+    // The hannah-earnest-children e2e run of 2026-10-30: both rows cited a
+    // record_read, whose sidecar carries no primaryId, and one listed the read
+    // persona's wife on the same household record.
+    describe("from a record's own persons", () => {
+      const ARK = (bare: string) => `ark:/61903/1:1:${bare}`;
+      const HANNAH_1901 = { id: "p_10259312010", ark: ARK("XS75-FJM") };
+      const EDWIN = { id: "p_10257197490", ark: ARK("XS3W-W3M") };
+      const HANNAH_QB = { id: "p_10257197491", ark: ARK("XS3W-W39") };
+      async function setupSidecar(tool: string, results: Array<Record<string, unknown>>) {
+        await setup(research({ namesakes: [], log: [log("log_001", tool, "results/log_001.json")] }));
+        await mkdir(join(dir, "results"), { recursive: true });
+        const sidecar = { log_id: "log_001", tool, retrieved: "2026-10-30T00:00:00Z", returned_count: results.length,
+          payload: { query: {}, results } };
+        await writeFile(join(dir, "results", "log_001.json"), JSON.stringify(sidecar));
+      }
+
+      it("stamps a record_read's persona, which its sidecar names only in the record's persons", async () => {
+        await setupSidecar("record_read", [{ recordId: HANNAH_1901.ark, gedcomx: { persons: [HANNAH_1901] } }]);
+        const r = await appendRow({ record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] });
+        expect(r.ok, errs(r)).toBe(true);
+        expect((await row()).record_ids).toEqual([HANNAH_1901.ark]);
+        expect((await row()).record_persona_ids).toEqual({ [HANNAH_1901.ark]: HANNAH_1901.id });
+      });
+
+      it("stamps a member of the read persona's household listed by her own ark", async () => {
+        await setupSidecar("record_read", [{ recordId: EDWIN.ark, gedcomx: { persons: [EDWIN, HANNAH_QB] } }]);
+        const r = await appendRow({ record_ids: [HANNAH_QB.ark], log_entry_ids: ["log_001"] });
+        expect(r.ok, errs(r)).toBe(true);
+        expect((await row()).record_persona_ids).toEqual({ [HANNAH_QB.ark]: HANNAH_QB.id });
+      });
+
+      it("stamps a member of a search hit's household listed by her own ark", async () => {
+        await setupSidecar("record_search", [
+          { recordId: EDWIN.ark, primaryId: EDWIN.id, gedcomx: { persons: [EDWIN, HANNAH_QB] } },
+        ]);
+        const r = await appendRow({ record_ids: ["XS3W-W39"], log_entry_ids: ["log_001"] });
+        expect(r.ok, errs(r)).toBe(true);
+        expect((await row()).record_ids).toEqual([HANNAH_QB.ark]);
+        expect((await row()).record_persona_ids).toEqual({ [HANNAH_QB.ark]: HANNAH_QB.id });
+      });
+
+      it("stamps a search hit's primaryId over a person of the record with the same ark", async () => {
+        await setupSidecar("record_search", [
+          { recordId: REC.voter, primaryId: "p_555", gedcomx: { persons: [{ id: "p_777", ark: REC.voter }] } },
+        ]);
+        const r = await appendRow({ record_ids: [REC.voter], log_entry_ids: ["log_001"] });
+        expect(r.ok, errs(r)).toBe(true);
+        expect((await row()).record_persona_ids).toEqual({ [REC.voter]: "p_555" });
+      });
+
+      it("leaves an id on no person of the record unstamped and unchanged", async () => {
+        await setupSidecar("record_read", [{ recordId: EDWIN.ark, gedcomx: { persons: [EDWIN, HANNAH_QB] } }]);
+        const r = await appendRow({ record_ids: ["DTH3-003"], log_entry_ids: ["log_001"] });
+        expect(r.ok, errs(r)).toBe(true);
+        expect((await row()).record_ids).toEqual(["DTH3-003"]);
+        expect((await row()).record_persona_ids).toBeUndefined();
+      });
+
+      it("stores the ark form of a person with no id, and stamps nothing", async () => {
+        await setupSidecar("record_read", [{ recordId: EDWIN.ark, gedcomx: { persons: [EDWIN, { ark: HANNAH_QB.ark }] } }]);
+        const r = await appendRow({ record_ids: ["XS3W-W39"], log_entry_ids: ["log_001"] });
+        expect(r.ok, errs(r)).toBe(true);
+        expect((await row()).record_ids).toEqual([HANNAH_QB.ark]);
+        expect((await row()).record_persona_ids).toBeUndefined();
+      });
+    });
   });
 });
 

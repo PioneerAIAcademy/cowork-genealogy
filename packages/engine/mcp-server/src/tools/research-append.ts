@@ -4157,6 +4157,18 @@ export function factEvidenceParties(
   return [...refsReach(sourceRefsOf(fact), research).sourceIds].map((source) => ({ source, party: null }));
 }
 
+const isPersonaId = (v: unknown): v is string => typeof v === "string" && v !== "";
+
+/** The person of any sidecar result's record whose ark is `bare`. */
+function personByArk(results: ReadonlyArray<any>, bare: string): { id?: unknown; ark: string } | undefined {
+  for (const r of results) {
+    const persons = Array.isArray(r?.gedcomx?.persons) ? r.gedcomx.persons : [];
+    const found = persons.find((p: any) => p && typeof p.ark === "string" && arkToBareId(p.ark) === bare);
+    if (found) return found;
+  }
+  return undefined;
+}
+
 /** Item 10 of #3363 (chesworthrm, 2026-10-24): stamps `record_persona_ids` on
  *  each row the call appended, or updated through `record_ids` or
  *  `log_entry_ids`, from the row's own search sidecars, so the first runs can
@@ -4184,15 +4196,24 @@ export async function stampNamesakePersonas(
     const stamp: Record<string, string> = {};
     const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
       if (typeof id !== "string") return id;
+      const bare = arkToBareId(id);
       for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
         const entry = logById.get(logId);
         if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
-        const hit = (await readResults(entry.results_ref))?.find(
-          (r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === arkToBareId(id),
-        );
-        if (!hit) continue;
-        if (typeof hit.primaryId === "string" && hit.primaryId !== "") stamp[hit.recordId] = hit.primaryId;
-        return hit.recordId;
+        const results = (await readResults(entry.results_ref)) ?? [];
+        const hit = results.find((r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === bare);
+        if (hit && isPersonaId(hit.primaryId)) {
+          stamp[hit.recordId] = hit.primaryId;
+          return hit.recordId;
+        }
+        // A record_read names its persona only among the record's persons, and a
+        // row may list another member of a hit's or a read's household.
+        const person = personByArk(results, bare);
+        if (person) {
+          if (isPersonaId(person.id)) stamp[person.ark] = person.id;
+          return person.ark;
+        }
+        if (hit) return hit.recordId;
       }
       // Accepted unstamped, unlike #699's assertions: the cap reads only that a row exists, so this loses a count, not identity.
       return id;

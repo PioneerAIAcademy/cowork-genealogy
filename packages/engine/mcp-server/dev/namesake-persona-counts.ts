@@ -19,7 +19,8 @@ export interface PersonaStampCounts {
    *  that staged a sidecar: absent from it, or its result named no persona. */
   absent: number;
   /** (a) Live probable or confident links to a row holder whose assertion's
-   *  record and persona equal a stamped pair. */
+   *  persona is one the row stamped, from any record id: an assertion read from
+   *  another member of the household carries that member's record id. */
   wouldRefuse: number;
   /** (b) Live probable or confident links to a row holder on a listed record
    *  whose persona differs from the stamped one: a record-id rule refuses them. */
@@ -66,10 +67,18 @@ export function personaStampCounts(research: any): PersonaStampCounts {
         counts.absent += 1;
       } else counts.unstampable += 1;
     }
+    const stampedPersonas = new Set(Object.values(stamp));
     for (const link of strongLinks) {
       if (link.person_id !== row.person_id) continue;
       const a = assertionById.get(link.assertion_id);
-      if (!a || typeof a.record_id !== "string") continue;
+      if (!a) continue;
+      // An assertion read from another member's record id carries the stamped
+      // persona under that id, so (a) matches the persona alone.
+      if (typeof a.record_persona_id === "string" && stampedPersonas.has(a.record_persona_id)) {
+        refused.add(link);
+        continue;
+      }
+      if (typeof a.record_id !== "string") continue;
       const bare = arkToBareId(a.record_id);
       if (!listed.has(bare)) continue;
       const persona = stampByBare.get(bare);

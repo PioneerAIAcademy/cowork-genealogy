@@ -72,6 +72,15 @@ describe("personaStampCounts (item 10 of #3363)", () => {
     expect([c.stamped, c.wouldRefuse, c.spared]).toEqual([0, 0, 0]);
   });
 
+  it("counts a link to the stamped persona read from another member's record id", () => {
+    // ns_001 of the hannah-earnest-children run: the row lists Hannah's ark, the
+    // assertion came from the read of her husband's, with her persona.
+    const r = research({});
+    r.assertions.push(assertion("a_005", "ark:/61903/1:1:HSE1-00H", "p_9"));
+    r.person_evidence.push(link("pe_007", "a_005"));
+    expect(personaStampCounts(r).wouldRefuse).toBe(3);
+  });
+
   it("counts a link once when the person has two rows", () => {
     const c = personaStampCounts(research({}, 2));
     expect([c.listed, c.wouldRefuse, c.spared]).toEqual([4, 2, 1]);

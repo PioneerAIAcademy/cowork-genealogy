@@ -1697,8 +1697,11 @@ is listed, and the name sentence only when a name is. It rides
 - **The same call stamps `record_persona_ids`.** On an append, and on an update
   setting `record_ids` or `log_entry_ids`, `stampNamesakePersonas` looks each
   listed record up in the sidecars of the row's `log_entry_ids` (persona-bearing
-  searches only, matched by bare id), stores a found id in the sidecar's form and
-  maps it to that result's `primaryId`, overwriting any value the caller sent; an
+  searches and reads only, matched by bare id), stores a found id in the sidecar's
+  form and maps it to that result's `primaryId`, or, where the result has none (a
+  read), to the person of its record whose ark is the listed id. A listed household
+  member of a hit or a read is found the same way, by that person's ark. Any value
+  the caller sent is overwritten; an
   update cannot set the field (`updatableFields`). A record found in no sidecar is
   left unstamped and the row is still written. Nothing reads the field yet: it
   measures item 10 (`research-schema-spec.md` §5.15).
