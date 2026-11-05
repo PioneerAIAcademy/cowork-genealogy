@@ -16,7 +16,13 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 import { RESEARCH_APPEND_SECTIONS } from "../../src/tools/research-append.js";
 import { NOT_A_DOCUMENT_WRITER, OK_FALSE_IS_FAILURE } from "../../src/tool-result.js";
 import { frontmatterBlock, listFromBlock, parseFrontmatter, scalarValue } from "./frontmatter.js";
-import { HOOK_ROUTED_TOOLS, agentWritableSections, researchAppendReaches, wholeSectionOwners } from "./hook-lanes.js";
+import {
+  HOOK_ROUTED_TOOLS,
+  agentWritableSections,
+  researchAppendReaches,
+  sectionCoWriters,
+  wholeSectionOwners,
+} from "./hook-lanes.js";
 import { grantedTools } from "./tool-names.js";
 
 /**
@@ -495,6 +501,27 @@ function expectedKeys(): string[] {
     ...[...tree].map((s) => `tree.gedcomx.json#${s}`),
   ].sort();
 }
+
+describe("ownership manifest — co-writers of a routed section", () => {
+  // SECTION_CO_WRITERS lets an agent write a section OWNED_SECTIONS routes to
+  // another agent. Read from the shipped hook, so the first case reds when the
+  // reach helper drops its co-writer arm or the hook drops the table.
+  const coWriters = sectionCoWriters();
+  const namesakes = rows.find((r) => r.artifact === "research.json" && r.section === "namesakes");
+
+  it("lets the owner and each namesakes co-writer reach the row", () => {
+    expect(namesakes, "no research.json#namesakes row").toBeDefined();
+    expect(coWriters.namesakes).toEqual(["search-images", "search-full-text"]);
+    for (const agent of ["search-records", ...coWriters.namesakes]) {
+      expect(researchAppendReaches(agent, namesakes!, hookLanes, hookOwners, coWriters), agent).toBe(true);
+    }
+  });
+
+  it("keeps every other agent off it, and admits a co-writer only through the table", () => {
+    expect(researchAppendReaches("search-external-sites", namesakes!, hookLanes, hookOwners, coWriters)).toBe(false);
+    expect(researchAppendReaches("search-images", namesakes!, hookLanes, hookOwners, {})).toBe(false);
+  });
+});
 
 describe("ownership manifest — exhaustiveness", () => {
   it("has exactly one row per writable section of both project documents", () => {

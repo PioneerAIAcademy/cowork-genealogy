@@ -1,4 +1,4 @@
-# Marina López — parents Manuel López G. and Carmen Nelia Casado (1937 marriage)
+# Marina López — parents Manuel López G. and Carmen Nelia Casado
 
 **Source PID:** `P874-7BV`
 **Marina López is deceased.** (FamilySearch ToS requires
@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.) No vital dates recorde
 
 ## Research question
 
-> Who were the parents of Marina López, wife of Juan de Dios Pichardo Chalas of San José de Ocoa, and when was she born and married?
+> Who were the parents of Marina López, wife of Juan de Dios Pichardo Chalas of San José de Ocoa?
 
 ## What was removed from the starting tree
 
@@ -27,6 +27,18 @@ medium — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4144).** The old question asked
+three things (her parents, her birth, and her marriage) with only two findings
+behind it: "Who were the parents of Marina López, wife of Juan de Dios
+Pichardo Chalas of San José de Ocoa, and when was she born and married?"
+Reworded `researcher_question` to the parents only, dropping both the birth
+clause (no finding ever answered it — see "Her birth year is deliberately
+unanswered" below) and the marriage clause; demoted `f2` (the marriage) to
+`required: false`, so a run that recovers it anyway still gets credit. No
+finding wording changed. Its one stamped annotation
+(`run-2026-09-16_11-11-58`) is re-graded below, per the spec's rule that an
+`expected-findings.json` edit is always a re-grade, never a re-stamp.
 
 **Resolved 2026-09-15 — outcome 2 (the hint's relationships are right, its
 dates are wrong).** The hint under adjudication was
@@ -88,9 +100,8 @@ Dios's death act **twice**, both entries resolving to image
 author's question is a duplicate index of the death act with a mangled spouse
 name — it was never the hinted father.
 
-**Her birth year is deliberately unanswered.** The `researcher_question` asks
-"when was she born and married?"; the marriage clause is answered and the birth
-clause is not. She is recorded as 24 at the marriage, which would place her
+**Her birth year is deliberately unanswered.** No finding in this fixture
+asks for it. She is recorded as 24 at the marriage, which would place her
 birth around 1912–13, but no record states it and the draft's `f3` (b. about
 1903) was an artifact of the misread year. It was dropped rather than replaced
 with a derived figure. Searched and came up empty for her own birth or baptism:
