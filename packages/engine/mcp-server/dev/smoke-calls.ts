@@ -134,16 +134,15 @@ function carries(res: CallResult, msg: string): boolean {
 
 const noError = (res: CallResult): Expectation => ({ ok: !res.isError, detail: brief(res) });
 
-/** No link when the server has no WEB_PUBLIC_URL (the default); when a developer's
- *  exported one reaches compose, a viewer link, and an upload link only beside it. It does
- *  not read `process.env.WEB_PUBLIC_URL`: compose can take it from a `.env` file this
- *  process never sees. */
+/** Never a viewer link, and no upload link unless the server has both WEB_PUBLIC_URL and
+ *  UPLOADS_ENABLED (not the default). It does not read `process.env.WEB_PUBLIC_URL`:
+ *  compose can take it from a `.env` file this process never sees. */
 const linksWellFormed = (body: any): boolean => {
   const { projectUrl, uploadUrl } = body;
-  if (projectUrl === undefined) return uploadUrl === undefined;
+  if (projectUrl !== undefined) return false;
   return (
-    /^https?:\/\/[^/#?\s@]+[^#?\s]*\/#\/p\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(projectUrl) &&
-    (uploadUrl === undefined || uploadUrl === `${projectUrl}/upload`)
+    uploadUrl === undefined ||
+    /^https?:\/\/[^/#?\s@]+[^#?\s]*\/#\/p\/[A-Za-z0-9][A-Za-z0-9._-]*\/upload$/.test(uploadUrl)
   );
 };
 
@@ -282,7 +281,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     args: (ctx) => ({ projectPath: ctx.projectPath }),
     expect: (res) => ({
       ok: !res.isError && linksWellFormed(res.body ?? {}),
-      detail: brief(res, 300),
+      detail: [res.body?.projectUrl, res.body?.uploadUrl].filter(Boolean).join(" ") || brief(res, 300),
     }),
   },
   {

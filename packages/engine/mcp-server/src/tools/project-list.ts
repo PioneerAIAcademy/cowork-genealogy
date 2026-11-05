@@ -7,7 +7,6 @@
 
 import { getProjectStore } from "../store/project-store.js";
 import { preferredDisplayName } from "./project-context.js";
-import type { Principal } from "../auth/principal.js";
 
 export interface ProjectListSubject {
   id: string;
@@ -20,8 +19,6 @@ export interface ProjectListEntry {
   subjects: ProjectListSubject[];
   status: string | null;
   updated: string | null;
-  /** The project's viewer page, when the server knows its public URL. */
-  projectUrl?: string;
 }
 
 export interface ProjectListResult {
@@ -79,9 +76,7 @@ function hostedMessage(listed: number, hasNew: boolean): string {
   return parts.join(" ");
 }
 
-/** `principal` is for the entries' `projectUrl`, which waits on the connector store's
- *  path-to-id map (issue #3991). */
-export async function projectList(_principal: Principal): Promise<ProjectListResult> {
+export async function projectList(): Promise<ProjectListResult> {
   const store = getProjectStore();
   const listing = await store.listProjects();
   if (listing.mode === "folder") return { mode: "folder", message: FOLDER_MESSAGE };

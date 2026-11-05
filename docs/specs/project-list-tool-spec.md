@@ -26,10 +26,7 @@ project_list({})
 ```
 
 No parameters. Read-only: writes nothing, on any backend. The mode comes from the
-active `ProjectStore`'s `listProjects()`. The function takes the call's principal as its last
-parameter, for the entries' `projectUrl`; no entry carries one yet, because filling
-it needs a map from each listed `projectPath` to its store's project id, which
-no store keeps yet.
+active `ProjectStore`'s `listProjects()`.
 
 ### 2.1 Return value
 
@@ -47,7 +44,6 @@ Wire-side **camelCase**:
     }],
     status: string | null,            // research.project.status
     updated: string | null,           // research.project.updated
-    projectUrl?: string,              // the project's viewer page, when the server knows its public URL
   }],
   newProjectPath?: string,            // where a new project goes; absent when none can be started
   message: string,                    // what to pass as projectPath, in one or two sentences
@@ -97,8 +93,6 @@ names, starts a new project at `newProjectPath` for a person no listed project i
 about, and otherwise lists the projects and asks which one to continue. With no
 `project_list` tool at all (an expired connector sign-in, or a desktop extension
 older than this tool), it says the genealogy tools are not connected and stops.
-A reply that ends the router's turn ends with the project's `projectUrl` when a
-tool returned one.
 
 ## 3. Tests
 

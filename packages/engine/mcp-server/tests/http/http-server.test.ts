@@ -313,7 +313,7 @@ describe("tool server over Streamable HTTP", () => {
     expect(dirs.every((d) => d.startsWith("alpha-") || d.startsWith("beta-"))).toBe(true);
   });
 
-  it("2d. baseConfig's public URL reaches project_create and project_context as links built from the header's project id", async () => {
+  it("2d. baseConfig's public URL reaches project_context as an upload link built from the header's project id, and no viewer link anywhere", async () => {
     const linked = await startHttpServer({
       host: "127.0.0.1",
       port: 0,
@@ -331,11 +331,11 @@ describe("tool server over Streamable HTTP", () => {
       const client = await connect({ [PROJECT_HEADER]: id }, `http://127.0.0.1:${address.port}`);
       const created = JSON.parse(textOf(await client.callTool({ name: "project_create", arguments: createArgs("Linked") })));
       expect(created.ok, JSON.stringify(created)).toBe(true);
-      expect(created.projectUrl).toBe(`https://beta.example/#/p/${id}`);
+      expect("projectUrl" in created).toBe(false);
       const ctx = JSON.parse(
         textOf(await client.callTool({ name: "project_context", arguments: { projectPath: SCOPED_ANCHOR } })),
       );
-      expect(ctx.projectUrl).toBe(`https://beta.example/#/p/${id}`);
+      expect("projectUrl" in ctx).toBe(false);
       expect(ctx.uploadUrl).toBe(`https://beta.example/#/p/${id}/upload`);
     } finally {
       linked.closeAllConnections();
