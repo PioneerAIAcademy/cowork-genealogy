@@ -1237,7 +1237,9 @@ lost for good when its search staged no sidecar, a missing stamp costs a count,
 not an identity, because the cap reads only that a row exists. The first runs that write rows count, with
 `dev/measure-namesake-cap.ts` §7, how many listed records were stamped, how many
 were not though their row cites such a search, and what a persona-keyed refusal
-would refuse and spare; item 10 is decided on those counts. "Would refuse" counts
+would refuse and spare; item 10 is decided on those counts. A run whose engine
+cannot stamp a read, or whose engine commit is not in the clone, is left out and
+named rather than counted as zeros (chesworthrm, 2026-11-05). "Would refuse" counts
 a strong link whose assertion's persona is any persona the row stamped, from any
 record id, a household member's included; "spare" counts links to another persona
 of a record the row stamped, the record found as the cap finds a link's (its
