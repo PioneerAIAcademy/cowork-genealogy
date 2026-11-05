@@ -16,7 +16,7 @@ Fernet derivation both tiers decrypt with lives in ``grants.py``, which both ima
 
 Settings are read from the environment at call time, so a test can set them per case:
 
-  PUBLIC_URL                 the tier's public origin; /callback hangs off it. Its scheme
+  PUBLIC_URL                 the tier's public origin; the default callback hangs off it. Its scheme
                              is the production discriminant: https turns on secure
                              cookies, turns off dev-login and arms ``preflight``
                              (as FAMILYSEARCH_WEB_ENABLED does, at any scheme). Its path
@@ -40,6 +40,18 @@ Settings are read from the environment at call time, so a test can set them per 
   OPENROUTER_LINKING_ENABLED true: serve the /openrouter routes (#3988) and say so in
                              /auth/config; unset or false: every /openrouter route is a 404.
                              Anything else refuses to start
+  FS_REDIRECT_URI            the FamilySearch redirect URI (#3992); the callback is served at
+                             its path, less PUBLIC_URL's prefix. Unset: PUBLIC_URL + /callback.
+                             Not an absolute http(s) URL with a path, or with a query or
+                             fragment, refuses to start
+  GENEALOGY_SIGNIN_CALLS_PER_MINUTE  the sign-in budget (#3992): the code exchange and the
+                             identity read share this many calls per sliding minute, two per
+                             sign-in. Unset: no budget. Anything but a whole number of at least
+                             2 refuses to start
+
+With the chat off (#3992) the session cookie lasts 24 hours rather than 30 days, sign-in asks
+for no ``offline_access``, and each sign-in consumes a single-use state record
+(``signin_states``) before it calls FamilySearch.
 
 OpenRouter linking (#3988) is the second PKCE round-trip here: the patron's own OpenRouter
 key, stored under the same Fernet key as the FamilySearch grant (``encrypt``), which the
@@ -100,7 +112,9 @@ DEV_FS_TOKEN_ENC_KEY = grants.DEV_FS_TOKEN_ENC_KEY
 DEFAULT_PUBLIC_URL = "http://127.0.0.1:8085"
 
 COOKIE_NAME = "wb_session"
-COOKIE_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
+# #3992: the session's life, in the cookie and in the signature check that actually ends it.
+SESSION_MAX_AGE_CHAT_S = 60 * 60 * 24 * 30  # 30 days, the handoff's
+SESSION_MAX_AGE_NO_CHAT_S = 60 * 60 * 24  # a beta user signs in every sitting
 FS_OAUTH_COOKIE = "fs_oauth"
 FS_OAUTH_MAX_AGE = 600
 DEV_LOGIN_EMAIL = "dev@localhost"
@@ -248,6 +262,23 @@ def max_users() -> int | None:
     return positive_int_env("GENEALOGY_MAX_USERS")
 
 
+def signin_calls_per_minute() -> int | None:
+    """``GENEALOGY_SIGNIN_CALLS_PER_MINUTE`` (#3992): the sign-in budget, or None (unset) for
+    none. At least 2: a sign-in takes two calls at once, so 1 would refuse every sign-in."""
+    value = positive_int_env("GENEALOGY_SIGNIN_CALLS_PER_MINUTE")
+    if value == 1:
+        raise RuntimeError(
+            "GENEALOGY_SIGNIN_CALLS_PER_MINUTE is '1': a sign-in takes two calls, so set it to 2 or more, "
+            "or leave it unset"
+        )
+    return value
+
+
+def session_max_age() -> int:
+    """The session's life in seconds (#3992): 24 hours with the chat off, 30 days with it on."""
+    return SESSION_MAX_AGE_CHAT_S if chat_enabled() else SESSION_MAX_AGE_NO_CHAT_S
+
+
 def familysearch_enabled() -> bool:
     return _env("FAMILYSEARCH_WEB_ENABLED").lower() in {"1", "true", "yes", "on"}
 
@@ -307,13 +338,17 @@ def preflight() -> None:
       OAuth state; a default or empty FS_TOKEN_ENC_KEY encrypts every grant and key under a
       public string. Only http with both off (compose's dev-login tier) may start on the
       defaults.
-    - ``GENEALOGY_CHAT`` or ``OPENROUTER_LINKING_ENABLED`` other than true/false, or
-      ``GENEALOGY_MAX_USERS`` other than a positive integer, at any scheme.
+    - ``GENEALOGY_CHAT`` or ``OPENROUTER_LINKING_ENABLED`` other than true/false,
+      ``GENEALOGY_MAX_USERS`` other than a positive integer,
+      ``GENEALOGY_SIGNIN_CALLS_PER_MINUTE`` other than a whole number of at least 2, or an
+      ``FS_REDIRECT_URI`` that is not an absolute http(s) URL with a path, at any scheme.
     """
     base_path()
     chat_enabled()
     or_on = openrouter_linking_enabled()
     max_users()
+    signin_calls_per_minute()
+    callback_path()
     fs_on = familysearch_enabled()
     if fs_on:
         client_id()
@@ -374,7 +409,7 @@ def read_session_cookie(token: str | None) -> dict[str, Any] | None:
     if not token:
         return None
     try:
-        data = _session_serializer().loads(token, max_age=COOKIE_MAX_AGE)
+        data = _session_serializer().loads(token, max_age=session_max_age())
     except BadSignature:
         return None
     return data if isinstance(data, dict) and isinstance(data.get("uid"), str) else None
@@ -449,17 +484,50 @@ def pkce() -> tuple[str, str]:
 
 
 def redirect_uri() -> str:
-    """The registered redirect is a TOP-LEVEL /callback on the public URL. The dev key's
-    only registration is http://127.0.0.1:1837/callback, which is why the compose
+    """``FS_REDIRECT_URI`` (#3992), else a TOP-LEVEL /callback on the public URL. The dev
+    key's only registration is http://127.0.0.1:1837/callback, which is why the compose
     override publishes this tier on 1837. Under a prefix PUBLIC_URL carries it, so the
-    registration is ``<prefix>/callback``."""
-    return f"{public_url()}/callback"
+    default registration is ``<prefix>/callback``. ``authorize_url`` and ``exchange_code``
+    both send this value, as FamilySearch requires."""
+    return _env("FS_REDIRECT_URI", f"{public_url()}/callback")
+
+
+def callback_path() -> str:
+    """The path the callback route is served at: ``redirect_uri()``'s, less PUBLIC_URL's
+    prefix when it sits under it on a segment boundary (the edge strips the prefix before
+    the request reaches the tier). The path is taken exactly as FamilySearch will send the
+    browser back to it, so it must be unreserved segments (``BASE_PATH_RE``: no trailing
+    slash, no percent-encoding, which the route would match differently). Raises on a
+    redirect that is not an absolute http(s) URL, carries a query or fragment, or whose path
+    is empty, ``/`` or the prefix itself (each of those is the SPA's root)."""
+    prefix = base_path()  # first, so a bad PUBLIC_URL is reported as itself
+    uri = redirect_uri()
+    parts = urlsplit(uri)
+    path = parts.path
+    if (parts.scheme not in ("http", "https") or not parts.netloc or parts.query or parts.fragment
+            or "?" in uri or "#" in uri or not path or not BASE_PATH_RE.match(path) or path == prefix):
+        raise RuntimeError(
+            f"Refusing to start: FS_REDIRECT_URI {uri!r} must be an absolute http(s) URL whose path is "
+            "one or more unreserved segments (A-Z a-z 0-9 . _ ~ -) other than PUBLIC_URL's own path, "
+            "with no trailing slash, query or fragment"
+        )
+    if prefix and path.startswith(prefix + "/"):
+        path = path[len(prefix):]
+    return path
+
+
+def state_sha256(state: str) -> str:
+    """The single-use state record's key (017_connector_auth.sql): lowercase hex sha256 of
+    the UTF-8 state."""
+    return hashlib.sha256(state.encode("utf-8")).hexdigest()
 
 
 def authorize_url(challenge: str, state: str) -> str:
+    """With the chat off (#3992) no ``scope`` at all: the beta refreshes nothing, so it asks
+    for no ``offline_access``. With it on, exactly the handoff's request."""
     from urllib.parse import urlencode
 
-    return FS_AUTHORIZE_URL + "?" + urlencode({
+    params = {
         "response_type": "code",
         "client_id": client_id(),
         "redirect_uri": redirect_uri(),
@@ -467,7 +535,35 @@ def authorize_url(challenge: str, state: str) -> str:
         "state": state,
         "code_challenge": challenge,
         "code_challenge_method": "S256",
-    })
+    }
+    if not chat_enabled():
+        del params["scope"]
+    return FS_AUTHORIZE_URL + "?" + urlencode(params)
+
+
+class SigninBudget:
+    """The web tier's own FamilySearch sign-in budget (#3992, ``GENEALOGY_SIGNIN_CALLS_PER_MINUTE``):
+    at most ``limit`` calls in any sliding 60 s, held in process memory. ``try_take`` checks
+    and takes in one synchronous step, so no other coroutine runs between the two, and takes
+    all ``n`` units or none. ``clock`` is for tests."""
+
+    WINDOW_S = 60.0
+
+    def __init__(self, limit: int, clock: Any = time.monotonic) -> None:
+        from collections import deque
+
+        self.limit = limit
+        self._clock = clock
+        self._taken: deque[float] = deque()
+
+    def try_take(self, n: int) -> bool:
+        now = self._clock()
+        while self._taken and now - self._taken[0] >= self.WINDOW_S:
+            self._taken.popleft()
+        if len(self._taken) + n > self.limit:
+            return False
+        self._taken.extend([now] * n)
+        return True
 
 
 async def exchange_code(code: str, verifier: str) -> dict[str, Any] | None:

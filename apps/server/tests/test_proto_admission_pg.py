@@ -27,7 +27,7 @@ from tests._proto_pg import PROTO, AsyncPausingConn, database, sql
 sys.path.insert(0, str(PROTO))
 
 import web.app as web_app  # noqa: E402
-from web.app import AdmissionBusy, AdmissionRefused, IdentityMismatch, PgStore  # noqa: E402
+from web.app import AdmissionBusy, AdmissionRefused, EmailTaken, IdentityMismatch, PgStore  # noqa: E402
 
 WAIT_S = 10.0
 FS_ID = "MMMM-AAA"
@@ -205,3 +205,136 @@ async def test_a_held_admission_lock_answers_busy_not_a_hang(pg_dsn, monkeypatch
         with pytest.raises(AdmissionBusy):
             await PgStore(pg_dsn).upsert_user("a@example.org", None, max_users=5)
     assert users(pg_dsn) == []
+
+
+# ── #3992: users keyed by FamilySearch id, and the single-use sign-in state ─────
+
+
+def rows(dsn: str) -> list[tuple]:
+    return sql(dsn, "SELECT id, email, familysearch_id FROM users ORDER BY id")
+
+
+@pytest.mark.parametrize("max_users", [None, 5])
+async def test_a_known_id_with_a_new_email_is_the_same_user_with_the_email_updated(pg_dsn, max_users):
+    store = PgStore(pg_dsn)
+    first = await store.upsert_user("old@example.org", FS_ID, max_users=max_users)
+    again = await store.upsert_user("New@example.org", FS_ID, max_users=max_users)
+    assert again.id == first.id and again.email == "new@example.org"
+    assert rows(pg_dsn) == [(first.id, "new@example.org", FS_ID)]
+
+
+@pytest.mark.parametrize("max_users", [None, 5])
+async def test_a_new_email_another_user_holds_is_refused_with_no_write(pg_dsn, max_users):
+    store = PgStore(pg_dsn)
+    await store.upsert_user("old@example.org", FS_ID)
+    add_user(pg_dsn, "b@example.org")
+    before = rows(pg_dsn)
+    with pytest.raises(EmailTaken):
+        await store.upsert_user("b@example.org", FS_ID, max_users=max_users)
+    assert rows(pg_dsn) == before
+
+
+async def test_a_new_user_is_inserted_with_its_familysearch_id(pg_dsn):
+    user = await PgStore(pg_dsn).upsert_user("c@example.org", FS_ID, max_users=5)
+    assert rows(pg_dsn) == [(user.id, "c@example.org", FS_ID)]
+
+
+async def test_two_first_sign_ins_of_one_id_write_one_row(pg_dsn):
+    """One FamilySearch account signs in twice at once and FamilySearch reports its email
+    differently each time: A has read nothing and is about to insert when B inserts. A's
+    insert must not 500 on the id's unique index; it finds B's row and updates its email."""
+    reached, go = asyncio.Event(), asyncio.Event()
+
+    async def pause():
+        reached.set()
+        await asyncio.wait_for(go.wait(), WAIT_S)
+
+    a_side = asyncio.ensure_future(
+        pausing_store(pg_dsn, "INSERT INTO users", pause).upsert_user("a@example.org", FS_ID))
+    try:
+        await asyncio.wait_for(reached.wait(), WAIT_S)
+        b = await PgStore(pg_dsn).upsert_user("b@example.org", FS_ID)
+    finally:
+        go.set()
+    a = await a_side
+    assert a.id == b.id
+    assert rows(pg_dsn) == [(a.id, "a@example.org", FS_ID)]
+
+
+async def test_a_pin_that_loses_a_race_for_the_id_answers_busy_not_a_500(pg_dsn):
+    """A holds a@'s row and is about to pin FS_ID; B, a new email with the same id, inserts
+    it first. A's pin hits the unique index: AdmissionBusy, nothing written. A retry finds
+    FS_ID is b@'s and that a@ belongs to another row: IdentityMismatch."""
+    add_user(pg_dsn, "a@example.org")
+    reached, go = asyncio.Event(), asyncio.Event()
+
+    async def pause():
+        reached.set()
+        await asyncio.wait_for(go.wait(), WAIT_S)
+
+    a_side = asyncio.ensure_future(
+        pausing_store(pg_dsn, "UPDATE users SET familysearch_id", pause).upsert_user("a@example.org", FS_ID))
+    try:
+        await asyncio.wait_for(reached.wait(), WAIT_S)
+        await PgStore(pg_dsn).upsert_user("b@example.org", FS_ID)
+    finally:
+        go.set()
+    with pytest.raises(AdmissionBusy):
+        await a_side
+    assert sql(pg_dsn, "SELECT familysearch_id FROM users WHERE email = 'a@example.org'") == [(None,)]
+    with pytest.raises(IdentityMismatch):
+        await PgStore(pg_dsn).upsert_user("a@example.org", FS_ID)
+
+
+async def test_dev_login_stays_keyed_by_email(pg_dsn):
+    store = PgStore(pg_dsn)
+    first = await store.upsert_user("dev@localhost", None)
+    assert (await store.upsert_user("DEV@localhost", None)).id == first.id
+    assert rows(pg_dsn) == [(first.id, "dev@localhost", None)]
+
+
+async def test_a_state_is_unused_until_consumed_and_consumed_once(pg_dsn):
+    store = PgStore(pg_dsn)
+    digest = web_app.auth.state_sha256("st-1")
+    assert not await store.signin_state_unused(digest)
+    assert not await store.consume_signin_state(digest), "no record, nothing to consume"
+    await store.create_signin_state(digest)
+    assert await store.signin_state_unused(digest)
+    assert await store.consume_signin_state(digest)
+    assert not await store.signin_state_unused(digest)
+    assert not await store.consume_signin_state(digest)
+
+
+async def test_creating_a_state_deletes_the_expired_ones(pg_dsn):
+    sql(pg_dsn, "INSERT INTO signin_states (state_sha256, created_at) VALUES "
+                "('old', now() - make_interval(secs => %s)), ('fresh', now())",
+        (web_app.auth.FS_OAUTH_MAX_AGE + 1,))
+    await PgStore(pg_dsn).create_signin_state("new")
+    assert sorted(r[0] for r in sql(pg_dsn, "SELECT state_sha256 FROM signin_states")) == ["fresh", "new"]
+
+
+async def lock_waiters(dsn: str) -> int:
+    got = await asyncio.to_thread(
+        sql, dsn,
+        "SELECT count(*) FROM pg_stat_activity WHERE wait_event_type = 'Lock' AND datname = current_database()",
+    )
+    return int(got[0][0])
+
+
+async def test_two_concurrent_consumes_of_one_state_admit_exactly_one(pg_dsn):
+    """A holder locks the record, both callbacks' UPDATEs queue behind it, then it lets go:
+    the first re-reads used_at and wins, the second finds it set and gets no row. A SELECT
+    then UPDATE would let both through."""
+    store = PgStore(pg_dsn)
+    digest = web_app.auth.state_sha256("st-race")
+    await store.create_signin_state(digest)
+    loop = asyncio.get_running_loop()
+    with psycopg.connect(pg_dsn) as holder:
+        holder.execute("SELECT 1 FROM signin_states WHERE state_sha256 = %s FOR UPDATE", (digest,))
+        sides = [asyncio.ensure_future(store.consume_signin_state(digest)) for _ in range(2)]
+        deadline = loop.time() + WAIT_S
+        while await lock_waiters(pg_dsn) < 2:
+            assert loop.time() < deadline, "the two consumes never queued on the row lock"
+            await asyncio.sleep(0.05)
+        holder.commit()
+    assert sorted(await asyncio.gather(*sides)) == [False, True]
