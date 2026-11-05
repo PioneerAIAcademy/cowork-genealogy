@@ -1129,7 +1129,7 @@ malachi-wipe: ## Delete Postgres and MinIO data: CONFIRM=yes. Keeps backups and 
 	$(MALACHI) wipe
 
 .PHONY: malachi-rehearsal
-malachi-rehearsal: ## Bring the whole stack up, through every target, on this Mac under its own name; cleans up after itself
+malachi-rehearsal: ## Bring the whole stack up, through every target but malachi-prune, on this Mac under its own name; cleans up after itself
 	apps/server/proto/malachi/rehearsal.sh
 
 # ── Source screen (issue #3408) ──

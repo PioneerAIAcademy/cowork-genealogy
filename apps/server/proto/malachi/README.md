@@ -123,6 +123,6 @@ make malachi-check
 ## Rehearsing
 
 `make malachi-rehearsal` runs on a developer's Mac from a clean tree. It clones the branch, runs
-every target against a real stack on port 18006, and removes everything. No CI job brings the stack
+every target but `malachi-prune` against a real stack on port 18006, and removes everything. No CI job brings the stack
 up, so this is the only end-to-end proof. It reaches nothing outside the Mac, so `PUBLIC=1` and a
 successful `REACH=1` are proved only on `malachi`.

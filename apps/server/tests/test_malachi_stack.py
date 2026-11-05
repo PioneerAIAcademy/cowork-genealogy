@@ -213,6 +213,9 @@ def shape_violations(doc: dict) -> list[str]:
     for name in ("web", "tools"):
         if (wait.get(name) or {}).get("condition") != "service_healthy":
             out.append(f"edge: must wait for {name} to be healthy")
+        bucket = (services[name].get("depends_on") or {}).get("minio-init") or {}
+        if bucket.get("condition") != "service_completed_successfully":
+            out.append(f"{name}: must wait for minio-init to make the bucket")
     if "genealogy.edge-conf" not in (services["edge"].get("labels") or {}):
         out.append("edge: no label ties it to nginx.conf")
     return out
@@ -345,6 +348,11 @@ DEFECTS: list[tuple[str, str, Callable[[dict], None]]] = [
     ("shape", "owner on tools", _set_env("tools", "GENEALOGY_PG_DSN",
                                          "postgresql://postgres:${POSTGRES_PASSWORD:?x}@postgres:5432/genealogy")),
     ("shape", "edge does not wait", _unset("edge", "depends_on")),
+    ("shape", "tools does not wait for the bucket", _set("tools", "depends_on", {
+        "postgres": {"condition": "service_healthy"},
+        "migrate": {"condition": "service_completed_successfully"},
+        "minio": {"condition": "service_healthy"},
+    })),
     ("shape", "health check on the socket", _set("postgres", "healthcheck", {"test": ["CMD-SHELL", "pg_isready -U postgres"]})),
     ("shape", "no memory cap", _unset("tools", "mem_limit")),
     ("shape", "no rotation", _unset("minio", "logging")),

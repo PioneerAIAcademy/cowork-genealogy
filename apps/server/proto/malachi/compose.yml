@@ -77,6 +77,8 @@ services:
       dockerfile: apps/server/proto/web/Dockerfile
     restart: "no"
     logging: *logging
+    labels:
+      genealogy.git-sha: ${GIT_SHA:-unknown}
     command: ["sh", "-c", "python migrate.py && python /opt/malachi/dml_role.py"]
     environment:
       MIGRATE_PG_DSN: postgresql://postgres:${POSTGRES_PASSWORD:?set in the env file}@postgres:5432/genealogy
@@ -168,6 +170,8 @@ services:
         condition: service_completed_successfully
       minio:
         condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
 
   # genealogy.edge-conf: a bind's new content never changes compose's config hash, so this
   # label, set from the file's git hash, is what recreates the edge when nginx.conf changes.

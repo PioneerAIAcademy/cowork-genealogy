@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# `make malachi-rehearsal`: every malachi-* target against a real stack, on a developer's Mac,
+# `make malachi-rehearsal`: every malachi-* target but malachi-prune against a real stack, on a developer's Mac,
 # from a temporary plain clone of this branch. Its own compose project, its own loopback port
 # and a temporary DATA_DIR, so it touches nothing else: no request leaves this machine, and
 # the FamilySearch token it seeds is a fake. It tears everything down, and exits 0 only if
