@@ -93,6 +93,7 @@ export function buildIndex(
     ['sources', asArray(research.sources)],
     ['assertions', asArray(research.assertions)],
     ['person_evidence', asArray(research.person_evidence)],
+    ['rejected_links', asArray(research.rejected_links)],
     ['conflicts', asArray(research.conflicts)],
     ['hypotheses', asArray(research.hypotheses)],
     ['timelines', asArray(research.timelines)],

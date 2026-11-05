@@ -73,7 +73,6 @@ class SingleAskGrade:
     checks: dict[str, tuple[bool, str]]
     first_unit: str | None
     units: list[dict[str, Any]]
-    delivered: bool
     extraction_appends: int
     stop: str
     background_spawns: int = 0
@@ -225,10 +224,6 @@ def grade(
         else "none declared",
     )
 
-    delivered = any(
-        _bare(str(e.get("tool") or "")) == "research_delivered" and _is_main(e)
-        for e in tool_calls
-    )
     extraction_appends = sum(
         1 for e in tool_calls if _bare(str(e.get("tool") or "")) == "extraction_append"
     )
@@ -255,7 +250,6 @@ def grade(
         checks=checks,
         first_unit=first,
         units=units,
-        delivered=delivered,
         extraction_appends=extraction_appends,
         stop=aborted_reason or "clean",
         background_spawns=background_spawns,
@@ -273,7 +267,7 @@ def format_line(spec: SingleAskSpec, g: SingleAskGrade) -> str:
         f"{'PASS' if g.passed else 'FAIL'} {spec.id}  "
         f"expected={_owner_text(owners(spec))}  first={g.first_unit or 'none'}  "
         f"save={'ok' if save_ok else save_detail}  "
-        f"delivered={'yes' if g.delivered else 'no'}  stop={g.stop}"
+        f"stop={g.stop}"
     )
     if g.failed:
         line += f"  failed=[{','.join(g.failed)}]"

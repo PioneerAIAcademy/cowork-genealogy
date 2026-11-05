@@ -11,6 +11,7 @@ import HypothesesSection from './components/sections/HypothesesSection'
 import TimelinesSection from './components/sections/TimelinesSection'
 import ProofSummariesSection from './components/sections/ProofSummariesSection'
 import EvaluationsSection from './components/sections/EvaluationsSection'
+import RejectedLinksSection from './components/sections/RejectedLinksSection'
 import NamesakesSection from './components/sections/NamesakesSection'
 import CollectionsSection from './components/sections/CollectionsSection'
 
@@ -26,6 +27,7 @@ export const sectionComponents: Record<string, React.ComponentType> = {
   sources: SourcesSection,
   assertions: AssertionsSection,
   person_evidence: PersonEvidenceSection,
+  rejected_links: RejectedLinksSection,
   namesakes: NamesakesSection,
   conflicts: ConflictsSection,
   hypotheses: HypothesesSection,

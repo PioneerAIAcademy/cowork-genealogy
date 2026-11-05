@@ -23,6 +23,8 @@ FAIL evaluate-sources-moses-watrous  expected=source-evaluation  first=source-ev
     research job: question-selection, research-plan, new questions entry, new plans entry
 ```
 
+The `delivered=` column was retired with `research_delivered` (PR #4148); the line above is the output as measured.
+
 The main thread never loaded the `research` router: it spawned `source-evaluation` from that agent's own
 description, then ran `question-selection` and `research-plan` in the same turn. The "deliver the first,
 offer the next" rule lives in `research/SKILL.md`, so it never applied. Tracked on issue #2813.
