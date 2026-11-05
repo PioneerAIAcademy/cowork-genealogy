@@ -22,6 +22,8 @@ with the chat on (#3985, ``GENEALOGY_CHAT``):
   GET  /api/projects/{id}/download             the project as a zip, streamed from /var/tmp (#3987)
   GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout, GET /auth/familysearch/login,
   GET  /callback   (patron sign-in, web/auth.py; every /api/sessions and /api/projects route needs the cookie)
+  GET  /privacy, /terms (no sign-in), GET /api/account (the id and deletion code)
+                                                only with the chat off (#3993); 404 with it on
   GET  /openrouter, /openrouter/link, /openrouter/callback, POST /openrouter/unlink
                                                 the patron's own OpenRouter key (#3988; served only
                                                 with OPENROUTER_LINKING_ENABLED=true; cookie needed)
@@ -143,6 +145,7 @@ from pg_credentials import PgCredentials  # noqa: E402
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 from web import blobstore  # noqa: E402  (U20: the S3 client, the engine's GENEALOGY_S3_* semantics)
 from web import feedback  # noqa: E402  (U20: the feedback bundle)
+from web import policies  # noqa: E402  (#3993: the privacy and terms text)
 from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
 from web.job_state import job_state  # noqa: E402  (the four states the list shows)
 from web.project_blobs import (  # noqa: E402  (source scans in, researcher uploads out)
@@ -1962,6 +1965,10 @@ def create_app(
     prefix_mismatch_logged = False
     app.state.stream_max_polls = stream_max_polls
 
+    # Every route that returns one user's data goes here: it gets `private, no-store` and
+    # `Vary: Cookie`, refusals included. A new per-user route outside these prefixes gets neither.
+    PER_USER_CACHE_PATHS = ("/api/account", "/api/projects")
+
     class ProjectCacheHeaders:
         def __init__(self, app: ASGIApp) -> None:
             self.app = app
@@ -1971,7 +1978,7 @@ def create_app(
                 await self.app(scope, receive, send)
                 return
             path = get_route_path(scope)
-            if not (path == "/api/projects" or path.startswith("/api/projects/")):
+            if not any(path == p or path.startswith(p + "/") for p in PER_USER_CACHE_PATHS):
                 await self.app(scope, receive, send)
                 return
 
@@ -2995,6 +3002,28 @@ def create_app(
         log.info("ev=feedback result=stored session=%s project=%s key=%s bytes=%d files=%d transcripts=%d dropped=%d",
                  row.session_id, row.project_id, key, meta["bytes"], n_files, n_transcripts, meta["dropped"])
         return {"ok": True, "filename": key.rsplit("/", 1)[-1]}
+
+    # -- chat-off pages and account (#3993) -----------------------------------------
+    # The inverse of `sessions` above: registered on the app only with the chat off, so a
+    # chat-on tier answers 404 for all three, as before. With the chat on the router is
+    # deliberately never included: it is a sink so the decorators below have somewhere to
+    # register. Do not "fix" it by including it.
+    beta = APIRouter() if app.state.chat else app
+
+    @beta.get("/privacy")
+    async def privacy_page() -> HTMLResponse:
+        return HTMLResponse(policies.PRIVACY_HTML)
+
+    @beta.get("/terms")
+    async def terms_page() -> HTMLResponse:
+        return HTMLResponse(policies.TERMS_HTML)
+
+    @beta.get("/api/account")
+    async def account(user: User = Depends(current_user)) -> dict:
+        """The account menu's data. Its own route, not /auth/me, so the code does not ride on
+        every page load. ProjectCacheHeaders adds ``private, no-store`` and ``Vary: Cookie``
+        to every response here, refusals included."""
+        return {"accountId": user.id, "deletionCode": auth.deletion_code(user.id)}
 
     # Last, so it sees every API route it must not shadow (web/spa.py).
     spa.mount_spa(app, tier_root=PROTO_DIR, base_path=app.state.base_path)
