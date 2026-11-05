@@ -98,7 +98,7 @@ web and tools are up.
 
 **Memory and disk.** `malachi-up` refuses under 4 GB of free memory, because a build shares this
 host with `wiki-query-api` and `pop-stats-api`. `MIN_FREE_MEM_GB=` overrides it. `malachi-up` and
-`malachi-check` want 10 GB free on Docker's root (`MIN_DOCKER_FREE_GB=`), and `malachi-up` asks
+`malachi-check` want 10 GB free on Docker's root (`MIN_DOCKER_FREE_GB=`), and `malachi-up` checks
 before it builds. `malachi-check` and `malachi-backup` want 20 GB free on `DATA_DIR`
 (`MIN_FREE_GB=`).
 
