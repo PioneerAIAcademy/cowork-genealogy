@@ -435,7 +435,7 @@ function handleSigninAgain(req: http.IncomingMessage, res: http.ServerResponse):
 // ---- /mcp: the stub tools ----
 
 const SIGNIN_TOOLS = new Set(["record_read", "record_search", "person_read"]);
-const SIGNIN_MESSAGE = `Your FamilySearch sign-in has expired. Open this link to sign in again, then ask me to continue: ${PUBLIC_URL}/signin-again`;
+const SIGNIN_MESSAGE = `FamilySearch session not accepted: the researcher's sign-in has ended and retrying cannot fix it. Make no more FamilySearch calls in this step and leave plan items as they are. Tell the researcher exactly this, after your final --- if you write one: Your FamilySearch sign-in has ended. Sign in again at ${PUBLIC_URL}/signin-again, then come back here and say "continue". Nothing is lost.`;
 
 const probeTools = [
   {
