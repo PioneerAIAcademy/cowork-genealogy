@@ -123,13 +123,13 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 | 9. PDF text | Not measured: three real browser-saved Ancestry captures through pdf.js. |
 | 10. Reconnect | Not measured: with a live connector token and an expired FamilySearch session, whether the tools stay, whether the link reaches the user from the main thread and from an agent, and whether "continue" works in the same task. |
 | 11. Long token | Not measured: whether a long `expires_in` with no refresh token still works, in a new task and in the open one, and, when that token dies, what reconnecting takes. |
-| 12. Surfaces | Claude's plugin docs say chat ignores agents and hooks, and a Cowork task in the desktop app loads them. Not measured: whether a Cowork session on claude.ai loads them, what a chat session does with this plugin, and whether the card and the sign-in link behave alike on each. |
+| 12. Surfaces | Claude's plugin docs say chat ignores agents and hooks, and a Cowork task in the desktop app loads them. On an account with the unified home there is no selector: a conversation starts as chat and moves to a cloud session when it needs code or files. Others report plugin agents and hooks running in web sessions, unreliably. Not measured here: whether a Cowork session on claude.ai runs this plugin's agents and hook on the first message, whether research moves a unified conversation at all, what a chat session does with this plugin, and whether the card and the sign-in link behave alike on each. |
 | 13. Door refusals | Not measured: what the researcher, the model and the card see when the door answers 400, 403 or 503, and whether the connector then works with no new sign-in. A bad result could move these to `isError`, on the connector path only. 401 stays HTTP. |
-| 14. One install | Not measured: a plugin whose `.mcp.json` names the server. Claude's docs say the entry appears on the plugin's Connectors tab, where the user connects and signs in, so skills, agents, hook and connector arrive together on the account. Still to learn: whether its tools keep the `mcp__Genealogy_Research__` prefix the agents list. |
+| 14. One install | Not measured: a plugin whose `.mcp.json` names the server. Claude's docs say the entry appears on the plugin's Connectors tab, where the user connects and signs in, so skills, agents, hook and connector arrive together on the account. Still to learn: whether its tools keep the `mcp__Genealogy_Research__` prefix the agents list, because Claude Code's docs name a bundled server's tools `mcp__plugin_<plugin>_<server>__…`. |
 
 **When each runs:**
-- **Sitting 1:** item 10 on the main thread and in an agent, approvals in agents, item 4, a stub card on a signed-in connector, the MCP App's open cells, and items 12 and 13. The card and the refusals run on each surface, and the refusals run last.
-- **Sitting 2, at least 25 hours later, 45 minutes:** item 11, then item 14, which removes the connector.
+- **Sitting 1:** item 10 on the main thread and in an agent, approvals in agents, `sidecar_read` in `search-images` and `search-hints`, item 4, a stub card on a signed-in connector, the MCP App's open cells, and items 12 and 13. The card and the refusals run on each surface, and the refusals run last.
+- **Sitting 2, at least 25 hours later, 45 minutes:** item 11, item 10's `--refresh` run, then item 14, which removes the connector.
 - **Before the first invited user:** items 6, 8 and 9.
 
 **Done when:** each item has a recorded result in a comment on issue #3529.
@@ -165,7 +165,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 - **`project_context`** carries `signInUrl` when the session has ended, from a `GET /platform/users/current` memoised briefly, so the next turn shows the link even if an agent's summary lost it. `docs/specs/project-context-tool-spec.md` changes with it.
 - **`auth_status`,** for connector callers, reports the account id and checks the session with the same `GET`.
 - **Sites that miss the message today:** `collections_search`'s bare 401, `match-by-id`'s 403 wording, and `rank_search_matches`, which should rethrow a rejected token.
-- **Agents.** `search-records` and `init-project` replace the tool's message with "type `login`"; they relay it instead. `search-hints` leaves an item as it is on a sign-in message, so a lapsed session is not recorded as an inaccessible source. Wording follows sitting 1. Each edit owes `make eval-skill` or a senior's `eval-cosmetic-skip` label.
+- **Agents.** `search-records` replaces the tool's message with "type `login`", and `init-project` with "log in, and stop"; they relay it instead. `search-hints` leaves an item as it is on a sign-in message, so a lapsed session is not recorded as an inaccessible source. Wording follows sitting 1. Each edit owes `make eval-skill` or a senior's `eval-cosmetic-skip` label.
 - **Comments.** Five still cite the dropped session-end rule: `src/auth/principal.ts`, `src/http-server.ts`, `src/store/pg-s3-project-store.ts`, `tests/utils/fs-fetch.test.ts` and `tests/http/http-server.test.ts`.
 - **Done when:** tests pin each wording, and a dead token gives the link at every site above.
 
@@ -180,7 +180,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 - **`image_read`** is refused for connector callers, and `docs/specs/image-read-spec.md` says so.
 - **The image cap** is keyed per user, so a connector call that names no project cannot spend a film's cap for everyone.
 - **`TRANSCRIPTION_ENABLED` goes,** with its plumbing and its line in the handoff's step 9.
-- **Direct reads.** `search-full-text` uses `Read` on a staged result and `translation` on an image path, and neither file exists for a connector. Both move to tools, and each agent's edit owes its eval.
+- **Direct reads (issue #4311).** `search-full-text` uses `Read` on a staged result and `translation` on an image path, and neither file exists for a connector. Both move to tools, and each agent's edit owes its eval.
 - **Done when:** tests pin the time budget, the refusal and the per-user cap, and `git grep -E 'TRANSCRIPTION_ENABLED|transcriptionEnabled' -- ':!docs/plan/self-hosted-mcp-beta.md'` returns nothing.
 
 ### The web tier (`apps/server/proto/web`)
@@ -244,7 +244,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 
 **G6 The router PR (issue #4297).** Merges with the MCP App work before launch, in one paid `research` run: the card lines, removing `projectUrl`, showing `signInUrl`, logging an upload the main thread reads, an answer to "where is my report?", the agent lines that lean on the viewer, what `project_list`'s cut-short and error answers mean, and the no-`Agent` line the Surface decision sets. Until then the card lines exist only in a variant plugin, which the demo may run at a pinned commit. Invited users get the zip `make plugin-connector` builds.
 
-**Issue #3836**, agents reading project files directly, is closed: the tools, the agents' reads and the hook's deny have shipped. E5 takes the last two reads.
+**Issue #3836**, agents reading project files directly, is closed: the tools, the agents' reads and the hook's deny have shipped. Issue #4311 takes the last two reads.
 
 ## Phase 3: release and operations
 
@@ -267,7 +267,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 **D4 Onboarding page.**
 1. Add the custom connector through the prefilled link (`https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Genealogy%20Research&connectorUrl=…`), keeping its name. Any other name leaves every agent without its tools.
 2. Sign in.
-3. Install the plugin once, under Customize → Plugins. It follows the Claude account.
+3. Install the plugin once from the Plugins page. It follows the Claude account.
 
 The page also says:
 - **Where research runs,** from the Surface decision.
@@ -327,7 +327,7 @@ When FamilySearch hosts the open beta:
 Each of these is additive and keeps the handoff's behavior as the default. Before each one, check for open PRs on the same files, keep the PR small, and ask Richard to review it. Each change also lists its new settings in the handoff plan's step 9 or 15, unset there.
 - **Done:** PR #3852's `project_list` and router step; W1; W3's routes; E1; E4's process-wide limits; S1's schema files.
 - **Web tier,** `apps/server/proto/web/`: W2 and W4. With chat off, sign-in asks for no `offline_access` and the callback stores no refresh token. Chat on stays the default.
-- **Dependencies,** `apps/server/pyproject.toml`, `apps/server/uv.lock` and `apps/server/proto/web/requirements.txt`: `mcp` joins `proto-web`. It brings nine packages `proto-web` lacks: `httpx-sse`, `jsonschema` with `attrs`, `jsonschema-specifications`, `referencing` and `rpds-py`, `pydantic-settings`, `pyjwt` and `sse-starlette`. Before W2 merges, Richard checks each against his build runner's package curation.
+- **Dependencies,** `apps/server/pyproject.toml`, `apps/server/uv.lock` and `apps/server/proto/web/requirements.txt`: `mcp` joins `proto-web`. It brings nine packages `proto-web` lacks: `httpx-sse`, `jsonschema` with `attrs`, `jsonschema-specifications`, `referencing` and `rpds-py`, `pydantic-settings`, `pyjwt` and `sse-starlette`. Before W2 merges, Richard reviews the dependency change.
 - **The tool server,** `packages/engine/mcp-server/`: E2, E3, E4 and E5, and the MCP App's fold into `createServer`.
 - **The plugin,** which `eb-worker.zip` carries: G5's wording, E3's and E5's agent lines, and G6.
 
@@ -347,6 +347,7 @@ The lead's two agents hold the first group. The team builds the rest; an issue l
 | W2 Users, sessions, state, redirect, budget | issue #3992 | clack391 | 19 Nov |
 | W4 Plain pages (D4) | issue #4001 | team | 30 Nov |
 | E5 Fit for a connector | issue #3996 | team | The pin |
+| E5 Direct reads | issue #4311 | team, senior | The pin |
 | E4 Limits: per user | issue #3999 | team, senior | Before invited users |
 | S2 Deleting and blocking one user | issue #4000 | team, senior | Before invited users |
 | G5 Capture wording | issue #3990 | team | Before invited users |
