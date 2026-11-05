@@ -24,6 +24,7 @@ bundle both set it.
 | `POST /api/projects/{id}/files` | Owner-checked upload (#3987), 404 unless `UPLOADS_ENABLED=true`. Multipart `file` plus an optional plain `text` field, together at most 25 MB; the text is stored as `uploads/<name>.txt`, and a re-upload with no `text` drops the old one. 200 `{path, sizeBytes, textPath, contentType}`, the type sniffed from the bytes. 413 oversize; 415 TIFF or HEIC; 422 a multi-page PDF with no text; 429 `Retry-After: 5` with three in flight. |
 | `GET /api/projects/{id}/download` | Owner-checked zip of the project (#3987): every document and blob `feedback.project_files` walks, unredacted, built in a temp file under `/var/tmp` and streamed with `Content-Length`; an unreadable blob is named in `MISSING.txt`. 404 with no blob store; 429 `Retry-After: 5` while another download streams. |
 | `GET /auth/config`, `GET /auth/me`, `POST /auth/dev-login`, `POST /auth/logout`, `GET /auth/familysearch/login`, `GET /callback` | Patron sign-in (U2, below). Every `/api/sessions` and `/api/projects` route needs the session cookie. Session routes answer 404 for a session on a project the caller does not own. |
+| `GET /openrouter`, `GET /openrouter/link`, `GET /openrouter/callback`, `POST /openrouter/unlink` | The patron's own OpenRouter key (#3988), served only with `OPENROUTER_LINKING_ENABLED=true` (otherwise 404), each needing the session cookie (a blocked user gets 403). `GET /openrouter` is `{linked}`, never the key; linked means a stored key that decrypts under the current `FS_TOKEN_ENC_KEY`. `link` sets the `or_oauth` state cookie (uid, PKCE verifier, state; its own salt) and redirects to openrouter.ai with the state inside `callback_url`. The callback answers every outcome with a page and drops the state cookie: a refused session with its 401/403; a missing cookie, another user's cookie, a mismatched state or no code (cancelled) with 400; a failed exchange with 502 (outcome and status or exception class logged, never the body), under one 20 s deadline; a failed write with 503. When the code was spent but no key was stored, the page tells the patron to delete the possibly-created key at OpenRouter. Otherwise the key is stored encrypted under `FS_TOKEN_ENC_KEY` in `users.openrouter_key_enc`. `unlink` is POST only, sets the column to NULL and calls nothing at OpenRouter. |
 | `GET /api/sessions/{id}/sidecar/{log_id}`, `GET …/image`, `GET …/logs`, `POST …/files` | Sidecars return `{raw, mtime}` and images return the persisted scan (404 when absent); logs answer 501; file uploads are stored and return `{path, sizeBytes}`. |
 | `GET /`, each top-level file of the dist, `GET /assets/…` | The SPA, when `WEB_DIST_DIR` is set (below). `/docs`, `/redoc` and `/openapi.json` are off. |
 | `GET /api/feedback/context?sessionId=`, `POST /api/feedback` | The SPA's feedback dialog (U20, below): the files and transcript size a report would carry; then the zip, stored in S3 under `feedback/` and sent nowhere. 200 `{ok, filename}`. |
@@ -213,7 +214,9 @@ Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape; required with th
 `GENEALOGY_MAX_USERS` (a positive integer: sign-in admits by user cap, blocked users counted,
 and ignores `ALLOWED_EMAILS`; unset: the allowlist; anything else refuses to start),
 `UPLOADS_ENABLED` (unset or `false`: `POST /api/projects/{id}/files` answers 404 and
-`/auth/config` has no `uploads` key; `true`: uploads on; anything else refuses to start), `POLL_S` (1),
+`/auth/config` has no `uploads` key; `true`: uploads on; anything else refuses to start),
+`OPENROUTER_LINKING_ENABLED` (unset or `false`: every `/openrouter` route answers 404 and
+`/auth/config` says `"openrouter": false`; `true`: linking on; anything else refuses to start), `POLL_S` (1),
 `SSE_PING_S` (15, capped at 15), `WEB_DIST_DIR` (unset: no SPA), `GENEALOGY_SQS_ACCESS_KEY` +
 `GENEALOGY_SQS_SECRET_KEY` (both or neither; neither signs with the default AWS chain, the
 instance profile on AWS; one alone refuses to start) and `GENEALOGY_SQS_REGION` (else the
@@ -227,6 +230,19 @@ refuses to start; SAS unreachable, or slower than 5 s, leaves the tier listening
 `PgCredentialsUnavailable`. An invalid password (28P01) re-reads the object, at most once
 every 30 s, and retries the connect once with the new password. The start line names
 `pg_credentials=SAS object <name>` or `environment DSN`, never a credential.
+
+`PG_POOL_MAX_SIZE` (#3980; unset: one connection per query, as before) turns on a
+`psycopg-pool` pool of at most that many query connections, checked as each is handed out,
+so one the server closed while idle is replaced rather than used; anything but a positive
+integer refuses to start. Pooled connects go through the same credentials (a rotation
+re-reads SAS as above). The pool opens after the inline startup steps, which connect on
+their own as without it, and never waits, so the tier listens at once with Postgres down.
+After that a borrow waits up to 10 s before failing: requests during an outage fail after
+10 s rather than at once, and the allowlist step's background retries, cut at 5 s, report
+`TimeoutError`. Readiness (`postgres`), the schema step and each grant refresh keep
+connections of their own and name the real cause. A connection Neon closed is skipped
+without the pool's own check backoff: every pooled connection dies together when Neon
+suspends an idle compute.
 
 ## The driver (`../drive.py`)
 

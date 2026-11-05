@@ -86,9 +86,8 @@ entirely. Distinct issues (do **not** conflate):
 ### The insight
 
 Extraction never wanted *pixels* — it wanted a **transcription**.
-The `image-reader` subagent already exists solely to absorb the base64 in a
-throwaway context and return **text only** (spec:
-`docs/specs/image-reader-agent-spec.md`).
+The `image-reader` subagent, since retired, existed solely to absorb the base64
+in a throwaway context and return **text only**.
 
 If OCR runs **on the host** (where the MCP server has full network access)
 and the tool returns **text**, the image never traverses the MCP transport
@@ -96,7 +95,7 @@ at all. That dissolves the entire T13 problem class at once:
 
 - No 1 MiB frame limit (the response is a short transcription string).
 - No base64 accumulation across reads (the crash the `image-reader`
-  subagent was built to prevent — see its spec §1).
+  subagent was built to prevent).
 - No 700 KB single-image floor.
 
 For the **large** scans `image_read` refuses today, this is a clean win — and
@@ -113,7 +112,7 @@ faithful text transcription.
 
 ## 2. The bet (why Phase 0 exists)
 
-Moving OCR off the caller's model (Claude Sonnet vision, via the current
+Moving OCR off the caller's model (Claude Sonnet vision, via the then-current
 `image-reader` subagent) onto a cheap hosted VLM is a **quality bet on a brutal
 domain**: 18th–19th-century German church-register hands (Kurrent /
 Fraktur), faint ink, uneven exposure. The pre-spike `image-reader` spec
@@ -139,8 +138,8 @@ the constraint the pre-spike spec named is still the live one.
 - Not replacing `image_read`'s raw-image return for consumers that genuinely
   need the *pixels* (e.g. Issue #28's OCR-model comparison). `image_read`
   stays (§8).
-- Not a native-vision reader. The `image-reader` subagent OCRs every scan via
-  `image_transcribe` and does **not** use Claude's own vision. A
+- Not a native-vision reader. Every scan is OCR'd through `image_transcribe`,
+  **not** Claude's own vision. A
   VLM-first path with an opt-in Sonnet-5 reconciling second opinion was tried
   and dropped (§1); `image_read` the tool is kept only for the Issue #28 eval
   (§8), not as a workflow reader.
@@ -708,8 +707,7 @@ refused (403) and 4 answered 400.
 | Empty result **with** an output cap (`finish_reason`/`native_finish_reason` marks it) | throw too — a zero-content read has nothing to return — but the message names the cap (budget likely spent on reasoning) so the caller learns a budget bound, not an unreadable scan. Keeps the invariant that `truncated: true` never ships beside an empty `transcription` (§6.2) |
 
 The tool **never fabricates** a transcription on failure. It throws; the
-caller pivots to indexed records, exactly as the
-`image-reader` NOT-READ path prescribes today.
+caller pivots to indexed records.
 
 ### 5.7 Timeout budget
 
@@ -734,7 +732,7 @@ differences that bite"), so a Cowork transcription slower than a minute is
 aborted long before either budget above fires. Measured 2026-09-08 over 59 live
 reads, none ran past 60s (p50 18.7s, p95 42.8s, max 50.1s), so a Cowork
 transcription now usually finishes inside the window — though several
-`image-reader` subagents transcribing at once still stretch the tail past it.
+transcriptions running at once still stretch the tail past it.
 The 90/90/180 budgets hold only on the paths that honour them — verified over
 stdio for the harnesses and the hosted
 control plane; whether the desktop `.mcpb` is bridged too is unverified, so the
@@ -765,7 +763,7 @@ An agent can enter an unbounded page-by-page hunt through a browse-only image
 volume — binary-searching a film for one register page, one OCR round-trip at a
 time — and never leave it. One run did exactly this: 58 `image_transcribe` calls
 bisecting a single image group, no give-up condition, until it burned the harness
-wall-clock cap with no proof written. The per-invocation `image-reader` bound does
+wall-clock cap with no proof written. A per-invocation bound in an agent does
 not reach it (nothing counts *across* invocations), and skill prose does not either
 (over half the long hunts run in sessions that never load `search-images`). So the
 bound lives on the tools.
@@ -1200,10 +1198,9 @@ built now.)
   that needs pixels (Issue #28 OCR comparison). Its 700 KB floor and the
   accumulation caveats remain valid for *that* return type. Drop only the
   fetch duplication.
-- Update `docs/specs/image-read-spec.md` to cross-reference this tool as the
-  `image-reader` subagent's **sole** OCR path, and note that `image_read`'s
-  inline-base64 return is no longer used by that subagent (it stays only for
-  the Issue #28 pixel consumer).
+- `docs/specs/image-read-spec.md` cross-references this tool as the **sole** OCR
+  path; `image_read`'s inline-base64 return stays only for the Issue #28 pixel
+  consumer.
 
 ## 8.5 Image persistence + viewing (retained sources only)
 
@@ -1417,7 +1414,7 @@ one, because the key is `image_filename`, not imageId:
 
 *Phase 0 passed, so this fallback is not used; kept as a record of the
 alternatives that were considered.* If Qwen (any variant) cannot match the
-Claude path on the hard corpus, do **not** ship `image_transcribe`. Fall back to keeping the current
+Claude path on the hard corpus, do **not** ship `image_transcribe`. Fall back to keeping the then-current
 `image-reader` subagent (Claude vision) and solving T13's *size* problem by
 response-shaping `image_read` itself, per the earlier brainstorm:
 
@@ -1440,7 +1437,7 @@ implementation; it passed (PR 723).
 ### 13.2 Unit tests (`tests/tools/image-transcribe.test.ts`)
 
 Unlike `image_read` (which the mock MCP server **cannot** exercise because it
-can't emit image content blocks — see `image-reader-agent-spec.md` §7), this
+can't emit image content blocks), this
 tool **returns text**, so it is fully unit-testable by mocking `fetch`.
 Mirror `tests/tools/wiki-search.test.ts` (stub global `fetch`, mock the
 `config.js` getters):
@@ -1496,7 +1493,7 @@ scenarios from the closing report. The landing gate is a scored run in which:
   transcription and the facts land as assertions;
 - the transcription is a **genuine read** (the historical `clark-parents`
   run *fabricated* its image read — a run that merely finishes is **not**
-  sufficient; see `image-reader-agent-spec.md` §7);
+  sufficient);
 - **≥2 scans across separate calls** succeed, confirming the transport-cap /
   accumulation failure mode is gone (it should be structurally impossible now
   — the bytes never enter the transcript — but prove it end-to-end).
@@ -1504,6 +1501,9 @@ scenarios from the closing report. The landing gate is a scored run in which:
 Record the passing scored run + `.ann.json` per the usual e2e gate.
 
 ## 14. Files to create / modify
+
+> Shipped, then superseded. `image-reader` and its spec were retired on 2026-10-16,
+> so the list below is the change list as it stood when this tool shipped.
 
 **Create**
 - `docs/specs/image-transcribe-tool-spec.md` (this doc)
@@ -1593,7 +1593,7 @@ passed unedited across the move:*
    accuracy and doubled hallucinations. No `jimp`.
 3. **Prompt/language hinting.** Does the reader benefit from a language hint
    ("German church register, Kurrent script") in the OCR prompt, or does the
-   reuse-`image-reader.md` prompt suffice?
+   default prompt suffice?
 4. **OpenRouter rate limits / latency / provider routing** for the chosen
    model, and whether `provider.data_collection: "deny"` narrows availability
    or raises cost.
