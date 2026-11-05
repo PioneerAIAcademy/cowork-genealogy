@@ -75,7 +75,7 @@ The `personId` is the simplified GedcomX id from `tree.gedcomx.json` (e.g. `I1` 
 
 Once you've confirmed this is a warnings task (not a handoff — see the Handoff rules; a source-vs-source disagreement goes to `conflict-resolution`, not here), then for each person to check:
 
-1. Call `person_warnings({ projectPath, personId })` — the impossibility check that runs for every person you check. `projectPath` is the delegation's; when none was given, treat it as `no_project` (step 2). The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`.
+1. Call `person_warnings({ projectPath, personId })` — the impossibility check that runs for every person you check. `projectPath` is the delegation's; when none was given, treat it as `no_project` (step 2). The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`, plus `relatedPersonId` when a warning has one.
 2. **No project here.** If `person_warnings` returns `reason: "no_project"`, make no further call and return `Hand-back: init-project — create a project for <the person id>, then check it`, then the return contract. Never create the project yourself.
 3. **Census counts.** If the request gives a mother's 1900 or 1910 US census counts of children born and children living, call `census_children_gap({ censuses: [{ year, childrenBorn, childrenLiving }], projectPath, motherId })` once for that mother, with `motherId` her person id. Never pass `knownChildren`, and never work out the missing children yourself, even when the tool errors.
 
@@ -447,8 +447,10 @@ Naming patterns:
 - `maleRelatives<CheckName>` -- only male relatives are considered.
 - `femaleRelatives<CheckName>` -- only female relatives are considered.
 
-The relative being flagged is named in the warning's `personName`
-/ `personId`, not the focal person.
+A `relatives*`, `maleRelatives*` or `femaleRelatives*` warning is about a
+relative, never about the person you checked, so leave it out of that
+person's cluster count. Name the relative from `personId` when it differs
+from the id you passed, otherwise from `relatedPersonId`.
 
 The current set of relative-mob tags: `relativesDeathRangeGreaterThan2`,
 `relativesEarliestChildBirthToBirth12`,
