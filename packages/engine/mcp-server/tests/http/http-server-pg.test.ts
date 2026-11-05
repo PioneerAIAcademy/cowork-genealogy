@@ -15,7 +15,9 @@ import {
   lookupConnectorToken,
   projectOwnerOf,
 } from "../../src/store/pg-s3-project-store.js";
-import type { ClaimFence, ProjectStore } from "../../src/store/project-store.js";
+import { runWithProjectStore, type ClaimFence, type ProjectStore } from "../../src/store/project-store.js";
+import { stagePersonRead } from "../../src/tools/person-read.js";
+import { saveSourceImage } from "../../src/utils/image-store.js";
 import { protoBackendOptions } from "../store/pg-s3-test-env.js";
 
 // The HTTP server with the real per-request store and the real project check —
@@ -374,6 +376,15 @@ if (!DSN || !ENDPOINT) {
         return p;
       };
 
+      /** `projects.owner_id` for a path's id: empty when the project has no row. */
+      async function ownerOf(projectPath: string): Promise<Array<string | null>> {
+        const rows = await backend.pool.query<{ owner_id: string | null }>(
+          "SELECT owner_id FROM projects WHERE project_id = $1",
+          [projectPath.slice(1)],
+        );
+        return rows.rows.map((r) => r.owner_id);
+      }
+
       /** One connector tools/call over raw fetch. */
       async function connCall(token: string | null, name: string, args: Record<string, unknown>) {
         const res = await fetch(`${base}/mcp`, {
@@ -486,6 +497,36 @@ if (!DSN || !ENDPOINT) {
         await backend.pool.query("INSERT INTO projects (project_id) VALUES ($1)", [projectId]);
         const r = await connCall(a.token, "project_context", { projectPath });
         expect(r.status, r.text).toBe(403);
+      });
+
+      it("project_context on a fresh path answers no_project and claims nothing", async () => {
+        const a = await seedConnector();
+        const projectPath = freshPath();
+        const r = await connCall(a.token, "project_context", { projectPath });
+        expect(r.status, r.text).toBe(200);
+        const { result } = JSON.parse(r.text);
+        expect(result.isError, r.text).not.toBe(true);
+        expect(JSON.parse(result.content[0].text)).toMatchObject({ ok: false, reason: "no_project" });
+        expect(await ownerOf(projectPath)).toEqual([]);
+      });
+
+      it("staging and a scan on a fresh path land and claim it for the caller", async () => {
+        const a = await seedConnector();
+        const projectPath = freshPath();
+        const store = new PgS3ProjectStore(backend, {
+          projectId: projectPath.slice(1),
+          anchorPath: projectPath,
+          ownerId: a.userId,
+        });
+        const read = { persons: [], relationships: [], sources: [] };
+        const { staged, imageRef } = await runWithProjectStore(store, async () => ({
+          staged: await stagePersonRead({ projectPath, input: { personId: "KNDX-MKG" }, result: read }),
+          imageRef: await saveSourceImage({ projectPath, imageKey: "scan_1", bytes: new Uint8Array([1, 2, 3]) }),
+        }));
+        expect(staged.stagingError).toBeUndefined();
+        expect(staged.staged).not.toBeNull();
+        expect(imageRef).toBe("images/scan_1.jpg");
+        expect(await ownerOf(projectPath)).toEqual([a.userId]);
       });
 
       it("a two-call batch is refused", async () => {

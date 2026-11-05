@@ -638,8 +638,10 @@ export interface PgS3ProjectStoreOptions {
   /**
    * The connector caller who owns this project (self-hosted beta E1). Set,
    * `touchProject` records it on a FRESH id and refuses a project owned by
-   * anyone else. Absent on the worker path, which keeps today's ownerless
-   * upsert.
+   * anyone else, and an absent row reads as an empty project: a connector's id
+   * exists from the moment `project_list` offers it, while a staged read or a
+   * scan may land before its `research.json`. Absent on the worker path, which
+   * keeps today's ownerless upsert and reads an absent row as no project.
    */
   ownerId?: string;
   /** Aborted when the caller that bound this store is gone (the HTTP server's
@@ -802,7 +804,7 @@ export class PgS3ProjectStore implements ProjectStore {
     if (!this.isAnchor(projectPath)) return "missing_dir";
     const db = this.db();
     const row = await db.query("SELECT 1 FROM projects WHERE project_id = $1", [this.projectId]);
-    if (row.rowCount === 0) return "missing_dir";
+    if (row.rowCount === 0 && this.ownerId === undefined) return "missing_dir";
     const docs = await db.query(
       "SELECT 1 FROM documents WHERE project_id = $1 AND name IN ('research.json', 'tree.gedcomx.json') LIMIT 1",
       [this.projectId],
@@ -813,7 +815,7 @@ export class PgS3ProjectStore implements ProjectStore {
   async projectDirState(projectPath: string): Promise<ProjectDirState> {
     if (!this.isAnchor(projectPath)) return "missing";
     const row = await this.db().query("SELECT 1 FROM projects WHERE project_id = $1", [this.projectId]);
-    return row.rowCount === 0 ? "missing" : "directory";
+    return row.rowCount === 0 && this.ownerId === undefined ? "missing" : "directory";
   }
 
   /** Rows do not nest. */

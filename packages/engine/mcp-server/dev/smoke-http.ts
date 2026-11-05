@@ -347,9 +347,10 @@ try {
       // `${connectorProjectPath}/nope`: that is malformed, so the door refuses
       // it at 400 before a store exists and the row fails for the wrong
       // reason. An unwritten /proj_ path has no projects row, so the door
-      // admits it (the first write would claim it) and the tools see exactly
-      // the "no project there" state this row is about.
+      // admits it (the first write would claim it) and the store reads it as
+      // an empty project, which is what `connector` makes this row require.
       missingProjectPath: `/proj_${randomBytes(8).toString("hex")}`,
+      connector: true,
       values: {},
     };
     const connectorRun = await runPlan(

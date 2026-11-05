@@ -1040,6 +1040,16 @@ if (!DSN || !ENDPOINT) {
         }
       });
 
+      it("a store with an owner reads an absent row as an empty project and claims nothing", async () => {
+        const projectId = randomUUID();
+        const store = new PgS3ProjectStore(backend, { projectId, anchorPath: ANCHOR, ownerId: "u_no_row_needed" });
+        expect(await store.classifyProject(ANCHOR)).toBe("no_project");
+        expect(await store.projectDirState(ANCHOR)).toBe("directory");
+        expect(await store.classifyProject(MISSING)).toBe("missing_dir");
+        expect(await store.projectDirState(MISSING)).toBe("missing");
+        expect(await projectRows(projectId)).toBe(0);
+      });
+
       it("lists a staged write under results/.staging and not under results/", () =>
         withProject(async ({ projectId, store }) => {
           await store.writeJson(ANCHOR, "results/.staging/abc.json", { tool: "record_search" });

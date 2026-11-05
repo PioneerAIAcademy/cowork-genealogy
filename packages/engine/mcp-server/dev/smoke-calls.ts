@@ -47,6 +47,8 @@ export interface SmokeCtx {
   hostProjectDir: string | null;
   /** A path under projectPath that holds no project. */
   missingProjectPath: string;
+  /** Running through the connector door, whose unwritten `/proj_` path is an empty project. */
+  connector?: boolean;
   /** Whether the server holds an OpenRouter key; null when this host cannot tell (a remote server). */
   openRouterKeyConfigured: boolean | null;
   /** Values read back from earlier steps (e.g. the evaluations sidecar `file_path`). */
@@ -565,7 +567,12 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     label: "project_context on a missing dir",
     offline: true,
     args: (ctx) => ({ projectPath: ctx.missingProjectPath }),
-    expect: (res) => ({ ok: res.isError || res.body?.ok === false, detail: brief(res) }),
+    expect: (res, ctx) => ({
+      ok: ctx.connector
+        ? !res.isError && res.body?.reason === "no_project"
+        : res.isError || res.body?.ok === false,
+      detail: brief(res),
+    }),
   },
 
   // Offline tools.
