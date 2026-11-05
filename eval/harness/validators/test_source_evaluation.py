@@ -1348,13 +1348,30 @@ def _age_flag_text(text: str) -> bool:
     return bool(_AGE_CONFLICT_WORD_RE.search(text)) and not _AGE_DENIED_RE.search(text)
 
 
+_AGE_ARK_ID_RE = re.compile(r"\b(?=[A-Z0-9]*[A-Z])[A-Z0-9]{4}-(?=[A-Z0-9]*[A-Z])[A-Z0-9]{3,4}\b")
+
+
 def _age_source_hits(text: str, sources: list[dict]) -> list[str]:
+    """Sources the text names, by id or by title.
+
+    A title token (a collection name) is shared by every record in that collection, so
+    when the text names another record by its own id and none of this source's ids, the
+    collection name is about that other record. Bare-year tokens are exempt.
+    """
     low = text.lower()
-    return [
-        s["name"]
-        for s in sources
-        if any(tok.lower() in low for tok in s.get("match", []))
-    ]
+    named_ids = set(_AGE_ARK_ID_RE.findall(text))
+    hits: list[str] = []
+    for s in sources:
+        tokens = s.get("match", [])
+        ids = [t for t in tokens if _AGE_ARK_ID_RE.fullmatch(t)]
+        titles = [t for t in tokens if t not in ids]
+        if any(i.lower() in low for i in ids):
+            hits.append(s["name"])
+            continue
+        foreign = bool(named_ids) and not named_ids & set(ids)
+        if any(t.lower() in low and not (foreign and not re.fullmatch(r"\d{4}", t)) for t in titles):
+            hits.append(s["name"])
+    return hits
 
 
 def _age_table_cells(line: str) -> list[str]:
@@ -1441,7 +1458,7 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
                     continue
                 if _AGE_RANGE_RE.search(clause) and not re.search(r'\[\s*conf', clause, re.IGNORECASE):
                     continue
-                about_birth = re.search(r"\bbirth\b", sentence, re.IGNORECASE)
+                about_birth = re.search(r"\bbirth\b(?!\s+(?:mother|father|parents?|place|family))", sentence, re.IGNORECASE)
                 if (about_birth and _AGE_CONFLICT_WORD_RE.search(sentence)) or (
                     in_birth_block and re.search(r"\b18\d\d\b", clause)
                 ):

@@ -2054,3 +2054,44 @@ def test_the_same_paragraph_without_a_heading_still_flags_the_census():
             "The 1850 census gives 1839.\n"
             "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
         )
+
+
+def test_a_sentence_about_another_record_in_the_same_collection_is_not_a_flag():
+    """Replay of a live run: an unread record from the same Vermont collection is named by its
+    own id, and the collection title must not pull the Vermont death index into the sentence."""
+    _age_check(
+        'The one source that could not be retrieved, XF2X-BYV, "Edward M Tollman, Vermont Vital Records, '
+        '1760-1954", is the only remaining candidate that could be a birth registration carrying '
+        '"30 November 1838", so the profile birth date has a conflict with no support.\n\n'
+        "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+    )
+
+
+def test_the_same_collection_title_with_the_death_indexs_own_id_is_still_a_flag():
+    """The other direction: naming the death index by its id keeps the flag."""
+    with pytest.raises(AssertionError, match="Vermont, Vital Records"):
+        _age_check(
+            "The Vermont Vital Records, 1760-1954 death index (2V7M-JMY) birth year of 1839 conflicts with "
+            "the profile's birth date.\n\n"
+            "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+        )
+
+
+def test_a_conflict_about_the_birth_mother_is_not_a_birth_date_flag():
+    """Replay of a live run: "birth mother" in a mother's-name conflict with the 1850 census."""
+    _age_check(
+        'The 1850 census (F) records "Joseph Tollman" with his wife listed as "Hannah Tollman." This creates '
+        "a genuine conflict with Jane Patterson, the 1913 informant's answer, unless Hannah was a stepmother "
+        "after the death of Edward's birth mother.\n\n"
+        "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+    )
+
+
+def test_a_census_named_by_a_foreign_id_with_a_year_token_is_still_a_flag():
+    """The other direction: a bare-year token is exempt from the foreign-id rule, so a census cited
+    by some other id still counts when the sentence is about the birth date."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(
+            "The 1850 census (ST8Y-Z2C) birth year of 1839 conflicts with the profile's birth date.\n\n"
+            "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+        )
