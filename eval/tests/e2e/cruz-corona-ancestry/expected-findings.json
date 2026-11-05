@@ -15,7 +15,7 @@
       "supporting_sources": [
         "Birth record of Mauro Cruz, \"México, Guerrero, Registro Civil, 1860-1996\", database with images, FamilySearch (https://www.familysearch.org/ark:/61903/1:1:QGWQ-MCFP : 11 April 2022), Sóstenes Cruz in entry for Mauro Cruz Corona, 1910."
       ],
-      "required": true
+      "required": false
     },
     {
       "id": "f2",

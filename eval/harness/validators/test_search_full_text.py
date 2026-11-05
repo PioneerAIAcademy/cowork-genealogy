@@ -19,6 +19,10 @@ import re
 
 import pytest
 
+from validators_lib import as_mapping as _as_mapping
+from validators_lib import assert_namesake_rows_cite as _assert_namesake_rows_cite
+from validators_lib import assert_namesake_warning_handed_back as _assert_namesake_warning_handed_back
+from validators_lib import assert_no_namesake_row_without_subject as _assert_no_namesake_row_without_subject
 from validators_lib import new_log_entries as _new_log_entries
 
 
@@ -262,39 +266,6 @@ def _fts_tool_calls(tool_calls):
     return [tc for tc in (tool_calls or []) if (tc.get("tool") or "").endswith("fulltext_search")]
 
 
-def _logged_fulltext_filters(tool_calls):
-    """(handle, frozenset of present post-search filter keys) for every
-    fulltext_search op the run LOGGED via research_log_append.
-
-    The write-boundary guard `filteredNilRetryInvariants` (research-log-append.ts,
-    issue #3432) enforces the unfiltered retry on exactly these — a filtered nil
-    the agent records as a finding. The filtered-nil check below is that guard's
-    shadow plane, so it judges the same population: an UNLOGGED exploratory probe
-    the agent abandoned (e.g. a bare surname that hit a catch-all nil, then
-    recovered via the name field) is not part of the research record and is not
-    held to the retry."""
-    out = set()
-    for tc in (tool_calls or []):
-        if not (tc.get("tool") or "").endswith("research_log_append"):
-            continue
-        args = tc.get("args") or {}
-        ops = args.get("ops")
-        if isinstance(ops, str):
-            try:
-                ops = json.loads(ops)
-            except ValueError:
-                ops = None
-        for op in (ops if isinstance(ops, list) else [args]):
-            if not isinstance(op, dict) or op.get("tool") != "fulltext_search":
-                continue
-            q = op.get("query")
-            if not isinstance(q, dict):
-                continue
-            handle = q.get("keywords") or q.get("nlQuery") or ""
-            out.add((handle, frozenset(k for k in POST_SEARCH_FILTER_KEYS if k in q)))
-    return out
-
-
 def test_log_query_traces_to_fulltext_search_call(before_state, after_state, tool_calls):
     """A new fulltext_search log entry's query must not record a
     recordPlace/yearFrom/yearTo/recordType/collectionId filter that was
@@ -387,17 +358,25 @@ def test_record_place_filters_use_facet_form(tool_calls):
     )
 
 
+def _fts_filters(args):
+    """The post-search filter keys a call sent with a value, as the write-boundary
+    guard reads them (`fulltextFilterKeys` in research-log-append.ts): absent,
+    null and "" are unset."""
+    return [k for k in POST_SEARCH_FILTER_KEYS if args.get(k) not in (None, "")]
+
+
 def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
     """SKILL.md step 4 / query-syntax.md: when a fulltext_search call carries
     post-search filters and returns zero results, the next call for the same
     topic (same keywords/nlQuery handle) must omit those filters — a nil under
     a filter may be a metadata mismatch, not a true negative. Spelling and
-    abbreviation variants are not exempt (SKILL.md step 4)."""
+    abbreviation variants are not exempt (SKILL.md step 4). Judges every call,
+    logged or not (lead, 2026-11-01, issue #3974): an unlogged filtered nil is
+    the escape the write-boundary guard cannot see."""
     calls = _fts_tool_calls(tool_calls)
     if not calls:
         pytest.skip("no fulltext_search calls this turn")
 
-    logged = _logged_fulltext_filters(tool_calls)
     by_handle: dict = {}
     for c in calls:
         args = c["args"]
@@ -412,13 +391,8 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
             # keywords), not filter removal; their retry has a different handle.
             if "name" in args:
                 continue
-            present_filters = [k for k in POST_SEARCH_FILTER_KEYS if k in args]
+            present_filters = _fts_filters(args)
             if not present_filters:
-                continue
-            # Shadow of the write-boundary guard (issue #3432): judge only a
-            # filtered nil the agent LOGGED as a finding, not an unlogged probe it
-            # ran and abandoned. See _logged_fulltext_filters.
-            if (handle, frozenset(present_filters)) not in logged:
                 continue
             resp = c.get("response") or {}
             results = resp.get("results")
@@ -431,7 +405,7 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
                 continue
             later_calls = handle_calls[i + 1:]
             retry_found = any(
-                {k for k in POST_SEARCH_FILTER_KEYS if k in lc["args"]} < set(present_filters)
+                set(_fts_filters(lc["args"])) < set(present_filters)
                 for lc in later_calls
             )
             if not retry_found:
@@ -442,6 +416,56 @@ def test_filtered_nil_is_followed_by_unfiltered_retry(tool_calls):
                 )
     assert not errors, (
         "Filtered nil not followed by unfiltered retry:\n  - " + "\n  - ".join(errors)
+    )
+
+
+_FTS_SCOPE_KEYS = ("collectionId", "imageGroupNumber")
+
+
+def _fts_search_key(args):
+    """(handle, frozenset of filter and scope keys sent with a value).
+    `includeFacets`, `count` and `offset` change what comes back, not what was
+    searched."""
+    handle = args.get("keywords") or args.get("nlQuery") or args.get("name") or ""
+    scopes = [k for k in _FTS_SCOPE_KEYS if args.get(k) not in (None, "")]
+    return handle, frozenset(_fts_filters(args) + scopes)
+
+
+def test_every_nil_fulltext_search_is_logged(before_state, after_state, tool_calls):
+    """Every search is logged, empty ones included (lead, 2026-11-01, issue
+    #3974). A nil stages nothing, so `research_log_append`'s guards never see one
+    left unlogged; this checks what research.json holds, so a refused batch does
+    not count. A `name`-field nil is exempt from the retry rule, not from this.
+    A call with no `projectPath` is out of scope, as the ruling words it: it is
+    the throwaway probe the tool's schema lets the agent leave unlogged. The key
+    ignores filter values: one entry covers two nils that differ only in them.
+    Reopen trigger: docs/specs/guardrail-enforcement-spec.md §9."""
+    calls = _fts_tool_calls(tool_calls)
+    if not calls:
+        pytest.skip("no fulltext_search calls this turn")
+
+    logged = {
+        _fts_search_key(e["query"])
+        for e in _new_log_entries(before_state, after_state)
+        if e.get("tool") == "fulltext_search" and isinstance(e.get("query"), dict)
+    }
+    missing = []
+    for c in calls:
+        args = c.get("args") or {}
+        resp = c.get("response")
+        project_path = args.get("projectPath")
+        if not (isinstance(project_path, str) and project_path.strip()):
+            continue
+        if not isinstance(resp, dict) or "error" in resp:
+            continue
+        total = resp.get("totalResults")
+        if resp.get("results") or (isinstance(total, (int, float)) and total > 0):
+            continue
+        key = _fts_search_key(args)
+        if key not in logged and key not in missing:
+            missing.append(key)
+    assert not missing, "Nil fulltext_search with no research_log_append entry:\n  - " + "\n  - ".join(
+        f"{handle!r} with filters {sorted(filters)}" for handle, filters in missing
     )
 
 
@@ -597,3 +621,47 @@ def test_plan_item_completion_matches_its_own_record_type(before_state, after_st
     assert not errors, "Plan-item completion mismatches:\n  - " + "\n  - ".join(errors)
     if not checked_content:
         pytest.skip("completed item(s) all have a record_type outside the starter vocabulary; structural check only")
+
+
+# --- Namesake rows (issue #3363, PR 3) ---------------------------------------
+
+
+def _hit_ids(tool_calls) -> set[str]:
+    """The `id` of every result this run's fulltext_search calls returned."""
+    out: set[str] = set()
+    for c in _fts_tool_calls(tool_calls):
+        for result in _as_mapping(c.get("response")).get("results") or []:
+            if isinstance(result, dict) and isinstance(result.get("id"), str):
+                out.add(result["id"])
+    return out
+
+
+def test_namesake_row_recorded(before_state, after_state, tool_calls, test):
+    """Tag-gated (namesake-row): a hit naming a same-named person the search rules
+    out is recorded as a namesakes row on the subject (step 8b), listing the
+    hit's `id` and citing the search's `fulltext_search` log. Ids compare bare:
+    a hit's `id` may come back as an ARK URL and be listed as an ARK."""
+    if "namesake-row" not in test.get("tags", []):
+        pytest.skip("not a namesake-row scenario")
+    _assert_namesake_rows_cite(
+        before_state,
+        after_state,
+        log_tool="fulltext_search",
+        ids_read=_hit_ids(tool_calls),
+        compare_bare=True,
+        what="the id of a hit this run's fulltext_search returned",
+    )
+
+
+def test_no_namesake_row_without_subject(before_state, after_state, test):
+    """No `subject:` block in the delegation, no namesakes row (step 8b)."""
+    _assert_no_namesake_row_without_subject(before_state, after_state, test)
+
+
+def test_namesake_warning_handed_to_person_evidence(tool_calls, agent_returns, text_response, test):
+    """Tag-gated (namesake-warning): when the namesakes write warns that links to
+    the subject are untied, the return hands every listed `pe_` id to
+    person-evidence (the same line search-records owes)."""
+    if "namesake-warning" not in test.get("tags", []):
+        pytest.skip("not a namesake-warning scenario")
+    _assert_namesake_warning_handed_back(tool_calls, agent_returns, text_response, "search-full-text")

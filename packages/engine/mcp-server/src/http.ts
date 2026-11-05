@@ -44,7 +44,9 @@
 // transcriptions (set it at 5 or above -- person_read transcribes five memories
 // at a time). Either set to anything but a whole number in range joins the same
 // invalid-value line and exit 2 above; otherwise one stderr line names each, or
-// says "off".
+// says "off". GENEALOGY_SHARED_COLLECTIONS_CACHE=true makes collections_search's
+// catalog cache one for the process rather than one slot per token; unset or
+// false keeps it per token, and anything but true/false is exit 2 the same way.
 //
 // The process also runs the S3 orphan sweep (store/s3-orphan-sweep.ts, U19):
 // GENEALOGY_ORPHAN_SWEEP_INTERVAL_S (3600; 0 = off; at most 2147483, setTimeout's
@@ -59,6 +61,7 @@ import { authorizeAttempt, createPgS3Backend, PgS3ProjectStore, readyLabel } fro
 import { readLimitsEnv } from "./store/limits-env.js";
 import { configureFsBudget } from "./utils/fs-budget.js";
 import { configureTranscriptionCap } from "./utils/ocr.js";
+import { collectionsCacheMode, configureCollectionsCache } from "./tools/collections-search.js";
 import { readPgS3Env } from "./store/pg-s3-env.js";
 import { loadSasClient, SasClientMissing, SasObjectInvalid, SasPgCredentials } from "./store/pg-credentials.js";
 import { startOrphanSweep, type OrphanSweepTimer } from "./store/s3-orphan-sweep.js";
@@ -95,7 +98,8 @@ if (invalidEnv.length > 0) {
       "(GENEALOGY_S3_FORCE_PATH_STYLE takes true or false; the GENEALOGY_ORPHAN_* variables whole seconds, " +
       "the grace at least 3600, the interval at most 2147483; " +
       "GENEALOGY_PG_SAS_OBJECT and GENEALOGY_PG_DSN are exclusive; " +
-      "GENEALOGY_FS_CALLS_PER_MINUTE and GENEALOGY_MAX_TRANSCRIPTIONS whole numbers above 0)\n",
+      "GENEALOGY_FS_CALLS_PER_MINUTE and GENEALOGY_MAX_TRANSCRIPTIONS whole numbers above 0; " +
+      "GENEALOGY_SHARED_COLLECTIONS_CACHE true or false)\n",
   );
   process.exit(2);
 }
@@ -162,6 +166,8 @@ process.stderr.write(
     ? `transcription cap: ${maxTranscriptions} at a time\n`
     : "transcription cap: off\n",
 );
+configureCollectionsCache({ shared: limitsEnv.sharedCollectionsCache === true });
+process.stderr.write(`collections cache: ${collectionsCacheMode()}\n`);
 const holdLine = debugHoldStartupLine(process.env);
 if (holdLine) process.stderr.write(holdLine);
 
