@@ -4,7 +4,9 @@ import type {
   FulltextSearchResult,
   GedcomxPerson,
   GedcomxRelationship,
-  SidecarTool
+  SidecarTool,
+  HitVerdictEntry,
+  HitVerdict
 } from '../../lib/schema'
 import { getPreferredName, getPrimaryFact } from '../../lib/schema'
 import { orderPersons, relationshipFromPerspective } from '../../lib/relationship-label'
@@ -50,6 +52,10 @@ interface SidecarResultCardProps {
   tool: SidecarTool
   focusPersonaId?: string
   defaultExpanded: boolean
+  /** Verdicts for this hit (fulltext_search only). Absent means not yet evaluated. */
+  hitVerdicts?: HitVerdictEntry[]
+  /** True when an assertion with a matching bare record_id already exists in the tree. */
+  hitExtracted?: boolean
 }
 
 /** FamilySearch citations carry markup (`<i>FamilySearch</i>`); show it as plain text. */
@@ -331,11 +337,20 @@ function FulltextSearchBody({ result }: { result: FulltextSearchResult }): React
   )
 }
 
+function bestVerdict(verdicts: HitVerdictEntry[]): HitVerdict | null {
+  if (verdicts.some((v) => v.verdict === 'match')) return 'match'
+  if (verdicts.some((v) => v.verdict === 'possible_match')) return 'possible_match'
+  if (verdicts.length > 0) return 'not_a_match'
+  return null
+}
+
 export default function SidecarResultCard({
   result,
   tool,
   focusPersonaId,
-  defaultExpanded
+  defaultExpanded,
+  hitVerdicts,
+  hitExtracted
 }: SidecarResultCardProps): React.JSX.Element {
   const [expanded, setExpanded] = useState(defaultExpanded)
 
@@ -385,6 +400,19 @@ export default function SidecarResultCard({
         <h3 className={styles.title}>{title}</h3>
         <div className={styles.headerMeta}>
           {score !== undefined && <span className={styles.score}>score {score.toFixed(2)}</span>}
+          {tool === 'fulltext_search' && hitVerdicts && hitVerdicts.length > 0 && (() => {
+            const v = bestVerdict(hitVerdicts)
+            if (v === 'match') return <span className={`${styles.verdictBadge} ${styles.verdictMatch}`}>Match</span>
+            if (v === 'possible_match') return <span className={`${styles.verdictBadge} ${styles.verdictPossible}`}>Possible</span>
+            if (v === 'not_a_match') return <span className={`${styles.verdictBadge} ${styles.verdictNo}`}>Not a match</span>
+            return null
+          })()}
+          {tool === 'fulltext_search' && hitExtracted && (
+            <span className={`${styles.verdictBadge} ${styles.verdictExtracted}`}>Extracted</span>
+          )}
+          {tool === 'fulltext_search' && !hitExtracted && hitVerdicts && hitVerdicts.some((v) => v.new_vital_info) && (
+            <span className={`${styles.verdictBadge} ${styles.verdictNew}`}>New vital info</span>
+          )}
           {body && <span className={styles.chevron}>{expanded ? '▾' : '▸'}</span>}
         </div>
       </header>

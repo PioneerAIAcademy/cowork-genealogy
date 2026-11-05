@@ -4,8 +4,8 @@
 # pins at the same version is skipped for that tier; a different version refuses the build.
 sas-client==0.2.1.16
 binding-register-client==0.1.1.14
-boto3==1.43.106
-s3transfer==0.19.2
+boto3==1.43.124
+s3transfer==0.19.3
 requests==2.34.2
 charset-normalizer==3.5.2
 toml==0.10.2

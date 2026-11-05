@@ -34,6 +34,12 @@ def test_research_json_is_denied_and_routed_to_research_query():
     assert "record_read" not in reason
 
 
+def test_a_case_variant_research_json_is_routed_to_research_query():
+    reason = denied("Read", {"file_path": f"{ROOT}/Research.JSON"})
+    assert reason is not None
+    assert "research_query" in reason
+
+
 def test_tree_is_denied_and_routed_to_project_context():
     reason = denied("Read", {"file_path": f"{ROOT}/tree.gedcomx.json"})
     assert reason is not None

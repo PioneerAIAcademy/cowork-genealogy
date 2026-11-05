@@ -5,7 +5,7 @@ import SidecarResultCard from '../SidecarResultCard'
 import { setOpenExternal, setOpenFamilySearch } from '../../../lib/external'
 import { patrickFlynnSidecar } from '../../../lib/__fixtures__/patrick-flynn-sidecar'
 import { flynnRecordReadSidecar } from '../../../lib/__fixtures__/flynn-record-read-sidecar'
-import type { RecordSearchResult, FulltextSearchResult } from '../../../lib/schema'
+import type { RecordSearchResult, FulltextSearchResult, HitVerdictEntry } from '../../../lib/schema'
 import type { RecordReadResult } from '../SidecarResultCard'
 
 /** One builder for every "the base result, but with X" case in this file.
@@ -661,5 +661,77 @@ describe('SidecarResultCard — unrouted tool', () => {
   it('does not present a header with nothing to expand as a button', () => {
     render(<SidecarResultCard result={{ id: 'x' }} tool="person_read" defaultExpanded={false} />)
     expect(screen.queryByRole('button')).toBeNull()
+  })
+})
+
+describe('SidecarResultCard — verdict badges', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  const hit: FulltextSearchResult = {
+    id: 'ark:/61903/3:1:S3HT-XYZ',
+    collectionTitle: 'Pennsylvania Probate Records',
+    textDocument: 'Some text about Thomas Flynn.',
+    names: [],
+    places: []
+  }
+
+  const matchVerdict: HitVerdictEntry = {
+    id: 'v1',
+    log_id: 'log_001',
+    hit_id: 'ark:/61903/3:1:S3HT-XYZ',
+    person_id: 'P1',
+    verdict: 'match',
+    new_vital_info: false,
+    rationale: 'Direct name match.',
+    created: '2026-10-01T12:00:00Z'
+  }
+
+  it('shows no badge when hitVerdicts is absent', () => {
+    render(<SidecarResultCard result={hit} tool="fulltext_search" defaultExpanded={false} />)
+    expect(screen.queryByText('Match')).toBeNull()
+    expect(screen.queryByText('Extracted')).toBeNull()
+    expect(screen.queryByText('New vital info')).toBeNull()
+  })
+
+  it('shows Match badge for a match verdict', () => {
+    render(
+      <SidecarResultCard
+        result={hit}
+        tool="fulltext_search"
+        defaultExpanded={false}
+        hitVerdicts={[matchVerdict]}
+      />
+    )
+    expect(screen.getByText('Match')).toBeInTheDocument()
+  })
+
+  it('shows Extracted badge and suppresses New vital info when hitExtracted is true', () => {
+    const newInfoVerdict: HitVerdictEntry = { ...matchVerdict, new_vital_info: true }
+    render(
+      <SidecarResultCard
+        result={hit}
+        tool="fulltext_search"
+        defaultExpanded={false}
+        hitVerdicts={[newInfoVerdict]}
+        hitExtracted={true}
+      />
+    )
+    expect(screen.getByText('Extracted')).toBeInTheDocument()
+    expect(screen.queryByText('New vital info')).toBeNull()
+  })
+
+  it('shows New vital info when new_vital_info is true and not extracted', () => {
+    const newInfoVerdict: HitVerdictEntry = { ...matchVerdict, new_vital_info: true }
+    render(
+      <SidecarResultCard
+        result={hit}
+        tool="fulltext_search"
+        defaultExpanded={false}
+        hitVerdicts={[newInfoVerdict]}
+        hitExtracted={false}
+      />
+    )
+    expect(screen.getByText('New vital info')).toBeInTheDocument()
+    expect(screen.queryByText('Extracted')).toBeNull()
   })
 })

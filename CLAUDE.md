@@ -221,11 +221,16 @@ listed in `packages/engine/mcp-server/src/tool-schemas.ts` (`allToolSchemas`, th
 source of truth for the advertised tool list); `src/server.ts`
 (`createServer(principal)`) imports that list and dispatches calls, and the
 entrypoints only connect a transport: `src/index.ts` (stdio, the `.mcpb`) and
-`src/http.ts` (the prototype's Streamable HTTP server, compose service `tools`, binding each
-request's `Authorization: Bearer` and a `PgS3ProjectStore` from its
-`X-Genealogy-Project-Id` header, fenced by `X-Genealogy-Turn-Id` and
-`X-Genealogy-Claim-Epoch` so a superseded worker attempt's writes roll back, and
-owner-checked against the bearer the worker stamped on that open turn — U6/U4). Per-tool
+`src/http.ts` (the prototype's Streamable HTTP server, compose service `tools`).
+It is ONE front door with two paths (self-hosted beta E1). A request carrying
+`X-Genealogy-Project-Id` is the **worker** path: a `PgS3ProjectStore` bound from
+that header, fenced by `X-Genealogy-Turn-Id` and `X-Genealogy-Claim-Epoch` so a
+superseded attempt's writes roll back, owner-checked against the bearer the
+worker stamped on that open turn, and 403 on refusal (U6/U4). Every other
+request is the **connector** path: the bearer is looked up by its sha256 in
+`connector_tokens`, the principal carries the user's id, `surface` and their
+decrypted FamilySearch token, the project comes from the call's own
+`/proj_<16 hex>` `projectPath`, and a refusal is 401 with `WWW-Authenticate`. Per-tool
 behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
@@ -345,8 +350,9 @@ A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds two sen
 to each Cowork researcher message: a conditional one (no project → a research request goes
 to the research skill) and one naming a source, collection, book or citation only from a
 tool result. It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
-the SDK env, so the hosted planes keep their own text-only fix (`project_note`,
-`DELIVERY_GUIDANCE`). The name is defined twice, `continue_policy.HOSTED_PLANE_ENV` and
+the SDK env, so the hosted planes keep their own text-only fix (`project_note`, with
+`continue_policy.SOURCES_GUIDANCE` and `continue_policy.NO_PROJECT_NOTE` appended beside it).
+The name is defined twice, `continue_policy.HOSTED_PLANE_ENV` and
 `no_project_route.HOSTED_PLANE_ENV`; change both together, and
 `test_the_hosted_flag_is_the_one_the_plugin_hook_reads` fails if they differ. The sources
 sentence is too (`continue_policy.SOURCES_GUIDANCE`, which both hosted planes append, and
@@ -681,8 +687,10 @@ packaging drift test checks), add the call dispatch to `src/server.ts`,
 and add the tool name to `manifest.json`'s `tools` array. Dispatch lives in
 `src/server.ts` (`createServer(principal)`); `src/index.ts` is the shipped stdio
 entrypoint binding `LOCAL`, `src/http.ts` the prototype's Streamable HTTP one binding each
-request's `Authorization: Bearer` (never `LOCAL`) and a `PgS3ProjectStore` from its
-`X-Genealogy-Project-Id` header (claim-fenced and owner-checked, U6/U4), and a new tool's arm goes in
+request's `Authorization: Bearer` (never `LOCAL`) — the worker path from the
+`X-Genealogy-Project-Id` header (claim-fenced and owner-checked, U6/U4), every
+other request from a `connector_tokens` lookup against the caller's own
+`/proj_<16 hex>` path (E1), and a new tool's arm goes in
 `server.ts`, never in an entrypoint. A new tool also needs a row in
 `dev/smoke-calls.ts`: `make engine-smoke-http` fails on an advertised tool it
 neither calls nor lists as an exclusion.

@@ -130,7 +130,7 @@ RETIRED_ARMS: tuple[tuple[str, str], ...] = (
 # by `test_the_census_watches_the_files_the_lockdown_protects`.
 WATCHED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
-_PROTECTED_RE = "|".join(re.escape(f) for f in WATCHED_PROJECT_FILES)
+_PROTECTED_RE = "(?i:" + "|".join(re.escape(f) for f in WATCHED_PROJECT_FILES) + ")"
 
 # Ordered `(label, pattern)`; the first match names the shape. Each pattern
 # either targets a protected path directly (redirect, tee, mv/cp) or is a
@@ -229,7 +229,7 @@ def bash_protected_hits(data: dict, path: Path) -> list[BashHit]:
         command = args.get("command") if isinstance(args, dict) else None
         if not isinstance(command, str):
             continue
-        if not any(f in command for f in WATCHED_PROJECT_FILES):
+        if not any(f in command.casefold() for f in WATCHED_PROJECT_FILES):
             continue
         hits.append(
             BashHit(path.parent.name, path.name, write_shape(command), command)
