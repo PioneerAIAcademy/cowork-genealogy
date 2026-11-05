@@ -16,9 +16,9 @@
  *   npx tsx dev/probe-image-index.ts [ark] [--fallback]
  *
  * Default target is the Peru, Clinton County NY 1830 census page from the
- * feedback. `--fallback` additionally measures the two-leg fallback, which is
- * MEASURED AND NEVER SHIPPED: it runs past Cowork's ~60 s call ceiling and
- * spends the hosted FamilySearch budget.
+ * feedback. `--fallback` prints the two-leg fallback's plan; it does NOT
+ * measure it. The fallback is NEVER SHIPPED: it runs past Cowork's ~60 s call
+ * ceiling and spends the hosted FamilySearch budget.
  *
  * RESULTS (2026-11-04, ark:/61903/3:1:33SQ-GYY1-B2G). THE ENDPOINT EXISTS, and
  * the browser capture is what found it -- no amount of guessing at paths would
@@ -104,43 +104,55 @@
  *     - Step 2 answers 200 with NO bearer at all, given a valid imageData body
  *       (measured by replaying the captured 134 KB body: 200, records=12 with
  *       and without Authorization).
- *     - Step 1 refuses our OAuth bearer: 403 {"error":{"message":"User not
- *       authorized to see this image."}}. That is an APPLICATION refusal, not
- *       the Imperva UA gate, and the two are distinguishable by body (8,290 B
- *       with error.message, versus 347 B with an incidentId). The same human
- *       sees this image in a signed-in browser, so what differs is the
- *       credential type: this route appears to want the web session's cookies.
+ *     - Step 1 refuses our OAuth bearer from OUTSIDE: 403 {"error":{"message":
+ *       "User not authorized to see this image."}}. That is an APPLICATION
+ *       refusal, not the Imperva UA gate, and the two are distinguishable by
+ *       body (8,290 B with error.message, versus 347 B with an incidentId).
+ *       What separates a refusal from a 200 is the
+ *       request's origin: from inside the church network the same call returns
+ *       200 with all 27 entries under every arm, with no credential at all. From
+ *       outside it returns 403 with or without the bearer. Whether a signed-in
+ *       web session clears it from outside is unmeasured.
  *     - imageData.records and imageData.recordList are both REQUIRED by step 2
  *       (dropping either gives 500), so the chain cannot be entered at step 2.
- *     - FOLLOW-UP (2026-11-04): step 1 answers the SAME 403 with and without
- *       the bearer, on four different image arks. Identical, not merely both
- *       refused -- so the bearer is IGNORED, not rejected, and the refusal is
- *       not about this one image. The route authenticates by web-session
- *       cookie only. (A fourth ark, an old numeric one, 404s instead with
+ *     - FOLLOW-UP (2026-11-04): from outside, step 1 answers the SAME 403 with
+ *       and without the bearer, on four different image arks. Identical, not
+ *       merely both refused -- so the bearer is IGNORED, not rejected, and the
+ *       refusal is not about this one image. Read with the in-network 200s
+ *       above, what the route keys on is the origin, not the credential.
+ *       (A fourth ark, an old numeric one, 404s instead with
  *       "Unable to get GedcomX image information", a different failure and not
  *       evidence either way.)
  *     - The capture's two other leads are dead: hermes/project/<apid> returns
  *       terms-of-use flags (226 B), fulltext/search/groupNumber?ids=<film>
  *       returns {"ids": []}, and waypoint-data is catalog notes. None yields a
  *       recordList, so step 2's bearer-less call cannot be fed from anything
- *       reachable with the credential the engine holds.
- *     - BROWSER_USER_AGENT is required throughout.
+ *       else reachable from outside.
+ *     - BROWSER_USER_AGENT is required throughout, measured from outside.
  *
  *   So the capability exists and returns exactly what the researcher asked for,
- *   but the chain's entry point is not callable with the credential the engine
- *   holds. Step 2 of the CARD has to decide what to do about that; this probe
- *   does not.
+ *   but from outside the church network the chain's entry point refuses, with
+ *   or without our bearer, while from inside it answers with no credential at
+ *   all. Which origin the shipped .mcpb and the hosted tool server each speak
+ *   from is what decides whether a tool can be built on this, and neither was
+ *   measured here. Step 2 of the CARD has to settle that; this probe does not.
  *
- * VANTAGE POINT
- *   2026-11-04, from the developer's own machine on a consumer home connection
- *   (a mobile 5G router), NOT a church-network host, on an ordinary
- *   FamilySearch account. The outside run
- *   is the binding one: inside the church network Imperva clears requests
- *   ahead of the checks it applies to public traffic, so a 200 there would not
- *   prove the shipped .mcpb can make the same call, and an in-network run
- *   cannot observe the User-Agent or bearer requirements at all. Nothing here
- *   was measured from the hosted tool server; that is a separate run this host
- *   cannot perform, and no result above is presented as covering it.
+ * VANTAGE POINT -- two of them, and they disagree.
+ *   OUTSIDE (2026-11-04): the developer's own machine on a consumer home
+ *   connection (a mobile 5G router), NOT a church-network host, on an ordinary
+ *   FamilySearch account. Every RESULT above is from this run unless a line
+ *   says otherwise.
+ *   INSIDE (2026-11-05, reviewer's run of this script unmodified): from within
+ *   the church network, step 1 returned 200 with all 27 entries under all four
+ *   arms, and a replay with no Authorization header at all returned the same
+ *   200, carrying both XHPP-F3V and XHPP-FQX.
+ *   The outside run is the one that binds a shipped tool: inside the church
+ *   network Imperva clears requests ahead of the checks it applies to public
+ *   traffic, so a 200 there does not prove the shipped .mcpb can make the same
+ *   call, and an in-network run cannot observe the User-Agent or bearer
+ *   requirements at all. Nothing here was measured from the hosted tool server;
+ *   that is a separate run neither host can perform, and no result above is
+ *   presented as covering it.
  *
  * GROUND TRUTH. 27 entries, with "Michael Barry" first and "Mila Fuller"
  *   second. Taken from the viewer's OWN response in the browser capture, which
@@ -492,44 +504,44 @@ async function main() {
     console.log(
       "    BASELINE UNSOUND — not sweeping. Every result would be the baseline being\n" +
         "    refused, not the added parameter. Fix the query shape before reading anything\n" +
-        "    into this section.",
+        "    into this section. Candidate 4 below still runs: it is the answer, and it does\n" +
+        "    not depend on this baseline.",
     );
-    console.log("\n# done");
-    return;
-  }
-  const paramNames = ["q.imageArk", "f.imageArk", "q.imageId", "f.imageId", "q.apid", "q.imageApid"];
-  for (const name of paramNames) {
-    for (const [kind, key] of [...keys, ["bareArk", ark.replace(/^ark:\/61903\//, "")] as const]) {
-      if (!key) continue;
-      const url = `${baseQuery}&${name}=${encodeURIComponent(key)}`;
-      const res = await hit(url, "a:bearer+browserUA", token);
-      let hits: unknown = "-";
-      try {
-        hits = (JSON.parse(res.text) as { results?: unknown }).results ?? "-";
-      } catch {
-        /* keep "-" */
+  } else {
+    const paramNames = ["q.imageArk", "f.imageArk", "q.imageId", "f.imageId", "q.apid", "q.imageApid"];
+    for (const name of paramNames) {
+      for (const [kind, key] of [...keys, ["bareArk", ark.replace(/^ark:\/61903\//, "")] as const]) {
+        if (!key) continue;
+        const url = `${baseQuery}&${name}=${encodeURIComponent(key)}`;
+        const res = await hit(url, "a:bearer+browserUA", token);
+        let hits: unknown = "-";
+        try {
+          hits = (JSON.parse(res.text) as { results?: unknown }).results ?? "-";
+        } catch {
+          /* keep "-" */
+        }
+        // A request that never completed is an ERROR, not a result. Without this
+        // first branch a THREW row falls past the >=400 test, compares "-"
+        // against the baseline count, and prints "HONOURED?? (count differs)" --
+        // a transient network failure reported as the endpoint we were looking
+        // for. 16 rows were mislabelled that way on the first full run.
+        const verdict =
+          typeof res.status !== "number"
+            ? "ERROR (no result — re-run)"
+            : res.status >= 400
+              ? "REJECTED (informative)"
+              : String(hits) === String(baseHits)
+                ? "IGNORED (same count)"
+                : "HONOURED?? (count differs)";
+        console.log(`    ${name}=${kind.padEnd(10)} ${String(res.status).padEnd(10)} results=${String(hits).padEnd(8)} ${verdict}`);
       }
-      // A request that never completed is an ERROR, not a result. Without this
-      // first branch a THREW row falls past the >=400 test, compares "-"
-      // against the baseline count, and prints "HONOURED?? (count differs)" --
-      // a transient network failure reported as the endpoint we were looking
-      // for. 16 rows were mislabelled that way on the first full run.
-      const verdict =
-        typeof res.status !== "number"
-          ? "ERROR (no result — re-run)"
-          : res.status >= 400
-            ? "REJECTED (informative)"
-            : String(hits) === String(baseHits)
-              ? "IGNORED (same count)"
-              : "HONOURED?? (count differs)";
-      console.log(`    ${name}=${kind.padEnd(10)} ${String(res.status).padEnd(10)} results=${String(hits).padEnd(8)} ${verdict}`);
     }
+    console.log(
+      "    NOTE: probe-catalog section D's 200/400 method was measured on catalog/v3/search,\n" +
+        "    a different service. Whether hr/v2/personas hard-400s on an unknown parameter is\n" +
+        "    itself unmeasured, so IGNORED is the expected shape of a negative here.",
+    );
   }
-  console.log(
-    "    NOTE: probe-catalog section D's 200/400 method was measured on catalog/v3/search,\n" +
-      "    a different service. Whether hr/v2/personas hard-400s on an unknown parameter is\n" +
-      "    itself unmeasured, so IGNORED is the expected shape of a negative here.",
-  );
 
   // ── Candidate 4: the endpoint the viewer actually uses ────────────────────
   // FOUND, by capturing the viewer's Network tab -- the step the issue names
@@ -577,17 +589,28 @@ async function main() {
   }
 
   console.log("\n### step 1 — image-data (the chain's entry point)");
+  const step1Statuses: (number | string)[] = [];
   for (const arm of ARMS) {
     const r = await filmdata("image-data", { imageURL: viewerUrl, locale: "en", state }, arm);
+    step1Statuses.push(r.status);
     console.log(`    ${arm.padEnd(20)} ${String(r.status).padEnd(8)} ${r.bytes}B  ${r.sample.slice(0, 90)}`);
   }
-  console.log(
-    "    The 403 body here is an APPLICATION refusal (\"User not authorized to see\n" +
-      "    this image.\"), not the Imperva UA gate -- the UA gate returns HTML. The same\n" +
-      "    human sees this image in a signed-in browser, so what differs is the\n" +
-      "    credential type: this route wants the web session's cookies, not our OAuth\n" +
-      "    bearer. That is the finding that shapes step 2.",
-  );
+  // The 403 reading is about ONE origin. From inside the church network every
+  // arm has been seen to answer 200 with no credential at all, so printing the
+  // refusal paragraph on a 200 run would report a finding that did not happen.
+  if (step1Statuses.length > 0 && step1Statuses.every((s) => s === 403)) {
+    console.log(
+      "    The 403 body here is an APPLICATION refusal (\"User not authorized to see\n" +
+        "    this image.\"), not the Imperva UA gate -- the UA gate returns HTML. This is\n" +
+        "    the OUTSIDE answer: from inside the church network the same call returns 200\n" +
+        "    with no credential at all. Record where this ran.",
+    );
+  } else {
+    console.log(
+      `    step 1 answered ${step1Statuses.map(String).join(", ")} from this origin — the 403\n` +
+        "    reading does not apply; record where this ran.",
+    );
+  }
 
   // ── The fallback: measured, never shipped ─────────────────────────────────
   if (withFallback) {
