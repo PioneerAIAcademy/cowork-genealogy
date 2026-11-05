@@ -17,7 +17,8 @@ record blocks it fills.
 
 ### Set up
 
-1. **Build the page,** and fill the **Run** block in the record.
+1. **Build the page,** and fill the **Run** block in the record. Open Claude Desktop
+   first and let it update, because it sets which Claude Code a Cowork task runs.
 
    ```
    make mcp-viewer-build
@@ -115,6 +116,13 @@ tail -f ~/mcp-probe/server.log
 
    ```text
    Call show_project with show "latest". Tell me the tool's full name.
+   ```
+
+   Read which Claude Code the task runs, and put it in **Run**. A task on a build with
+   no card code says nothing about Cowork: 2.1.237 has none, 2.1.286 has it.
+
+   ```
+   grep 'Installing SDK' ~/Library/Logs/Claude/cowork_vm_node.log | tail -1
    ```
 
    Does a card appear in the conversation? The card prints a report as selectable
@@ -468,6 +476,7 @@ the step needed a card and none rendered, which is an answer.
 |---|---|
 | Date | |
 | Claude Desktop version | |
+| Claude Code version in the Cowork VM | |
 | macOS version | |
 | Commit of `mcp-app-viewer-m0` | |
 
@@ -493,7 +502,8 @@ hypothesis and conclusion get a card, and the router lines shrink to match.
 ### Card renders
 
 **Decides:** the go/no-go in Decision 8. If neither a card nor an artifact can show a
-project's data in a Cowork task, the build stops. If only the artifact can, the case
+project's data in a Cowork task, the build stops. Check the Claude Code version in
+**Run** before calling a missing card final. If only the artifact can, the case
 file runs as an artifact. If the local route does not render, testers see cards in the
 browser tab.
 
