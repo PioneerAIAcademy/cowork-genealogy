@@ -30,6 +30,8 @@ with the chat on (#3985, ``GENEALOGY_CHAT``):
   GET  /api/feedback/context?sessionId=         the files and transcript size a report would carry
   POST /api/feedback {sessionId, ...}           bundle the project + transcript to S3 (U20,
                                                 web/feedback.py); stored, sent nowhere
+  POST /api/projects/{id}/feedback {...}        bundle the project, no transcript (#3986): posted
+                                                to FEEDBACK_URL when set, else stored in S3; 5 a day
 
 The turn message body is ``{turn_id, session_id, project_id, text, enqueued_at}``. The
 ``turn_id`` is a UUID minted here and travels IN THE BODY -- never the SQS MessageId,
@@ -74,7 +76,9 @@ label, never a message.
 
 GENEALOGY_S3_BUCKET / _ENDPOINT / _ACCESS_KEY / _SECRET_KEY / _REGION (web/blobstore.py,
 the engine's semantics): the feedback bucket. Unset bucket: POST /api/feedback answers 503;
-a half key pair refuses to start, as a half SQS pair does.
+a half key pair refuses to start, as a half SQS pair does. FEEDBACK_URL (unset: the project
+feedback route stores to the bucket; set: it posts there instead, and the bucket is still
+required for the project's blobs). Never logged.
 
 WEB_DIST_DIR (unset: no SPA) names the ``apps/web`` SSE build to serve at ``/``; a
 relative value resolves against the tier root, and a missing dist refuses to start
@@ -208,6 +212,9 @@ DOWNLOAD_CHUNK = 1024 * 1024
 # Stored rather than deflated: scans and PDFs do not compress, and this tier's CPU also
 # serves every patron's SSE.
 DOWNLOAD_DEFLATE_EXTS = frozenset({".json", ".md", ".txt", ".csv", ".tsv", ".yaml", ".yml", ".jsonl"})
+# #3986: project-route feedback submissions per patron per UTC day, counted in memory per
+# process, so N web instances allow N times this.
+FEEDBACK_DAILY_LIMIT = 5
 DEFAULT_TITLE = "New research session"
 DEFAULT_MODEL = "claude-sonnet-4-6"
 EVENTS_PAGE = 500
@@ -1917,6 +1924,8 @@ def create_app(
     # #3985: a chat-off tier has no queue, even when a caller passes one.
     app.state.queue = queue if app.state.chat else None
     app.state.blobs = blobs
+    # #3986: read once; empty means unset. Never logged: the URL is the endpoint's credential.
+    app.state.feedback_url = (os.environ.get("FEEDBACK_URL") or "").strip() or None
     app.state.pg_creds = getattr(store, "creds", None)
     # U10: what the lifespan's startup steps reached (`ok`, `pending` or a label). None
     # when no lifespan ran (a test's ASGITransport), which leaves the allowlist ungated.
@@ -2123,6 +2132,8 @@ def create_app(
         # #3987: only when UPLOADS_ENABLED is set, so an unset tier answers as it always did.
         if app.state.uploads is not None:
             config["uploads"] = app.state.uploads
+        # #3986: whether the project feedback route can build a bundle at all.
+        config["feedback"] = app.state.blobs is not None
         return config
 
     @app.get("/auth/me")
@@ -2786,11 +2797,42 @@ def create_app(
     # The alpha's two routes over the prototype's stores: the project from documents +
     # blobs (bytes in S3), the transcript from session_entries, the zip to our own bucket
     # under feedback/ and sent nowhere (feedback.forward_stored_feedback). The owner check
-    # runs before the body is validated: a foreign session is 404, never 422.
+    # runs before the body is validated: a foreign session is 404, never 422. #3986 adds a
+    # third, keyed by project, with no transcript, which posts to FEEDBACK_URL when it is set.
 
     # One build at a time per process: a build holds up to 35 MiB of project files, the
     # transcript budget and the zip, on the tier that also serves every patron's SSE.
     feedback_gate = asyncio.Semaphore(1)
+    # #3986: (user id, UTC date) -> project-route submissions that answered 200. Read and
+    # written only under feedback_gate, so two concurrent sixths cannot both pass.
+    feedback_counts: dict[tuple[str, str], int] = {}
+
+    async def _build_feedback(
+        store: Store, blobs: Any, project_id: str, body: feedback.FeedbackFields, fields: dict[str, str],
+        tokens: list[str], *, folder: str, submitted_at: str, label: str | None,
+        session_log: list[tuple[str, bytes]], dropped_transcripts: list[str],
+    ) -> tuple[bytes, int, int]:
+        """``(zip, files bundled, entries left out)``: the project from ``documents`` and
+        ``blobs``, through ``feedback.build_bundle``. Call it under ``feedback_gate``. ``label``
+        None is the research title or objective from the documents already loaded, else
+        ``project_id``."""
+        docs = await store.documents(project_id)
+        files, stale = feedback.project_files(docs, await store.blob_index(project_id))
+        if label is None:
+            label = project_label(docs.get("research.json", (0, None))[1]) or project_id
+        kept, dropped = feedback.select_project_files(files, body.includeMedia)
+        fetched, unreadable = await asyncio.to_thread(feedback.fetch_project_files, kept, blobs.get)
+        fetched = await asyncio.to_thread(feedback.redact_project_files, fetched, tokens)
+        dropped = dropped + unreadable + [f"{rel} (stale copy)" for rel in stale]
+        built_at, git_sha = feedback.build_info(PROTO_DIR)
+        build = functools.partial(
+            feedback.build_bundle,
+            fields=fields, body=body, folder=folder, submitted_at=submitted_at, project_label=label,
+            built_at=built_at, git_sha=git_sha, files=fetched, dropped_files=dropped,
+            session_log=session_log, dropped_transcripts=dropped_transcripts,
+        )
+        data, _redacted = await asyncio.to_thread(build)
+        return data, len(fetched), len(dropped) + len(dropped_transcripts)
 
     async def _owned_for_feedback(request: Request, session_id: Any, user: User) -> SessionRow:
         if not isinstance(session_id, str) or not session_id:
@@ -2839,12 +2881,6 @@ def create_app(
             raise HTTPException(status_code=503, detail="feedback storage is not configured")
         submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
         async with feedback_gate:
-            files, stale = feedback.project_files(await store.documents(row.project_id),
-                                                  await store.blob_index(row.project_id))
-            kept, dropped = feedback.select_project_files(files, body.includeMedia)
-            fetched, unreadable = await asyncio.to_thread(feedback.fetch_project_files, kept, blobs.get)
-            fetched = await asyncio.to_thread(feedback.redact_project_files, fetched, tokens)
-            dropped = dropped + unreadable + [f"{rel} (stale copy)" for rel in stale]
             session_log: list[tuple[str, bytes]] = []
             dropped_transcripts: list[str] = []
             if body.includeSessionLog:
@@ -2853,17 +2889,14 @@ def create_app(
                     await store.transcript_groups(row.project_id), store.transcript_rows,
                     row.project_id, active, tokens,
                 )
-            built_at, git_sha = feedback.build_info(PROTO_DIR)
-            build = functools.partial(
-                feedback.build_bundle,
-                fields=fields, body=body, submitted_at=submitted_at, project_label=row.title,
-                built_at=built_at, git_sha=git_sha, files=fetched, dropped_files=dropped,
-                session_log=session_log, dropped_transcripts=dropped_transcripts,
+            n_transcripts = len(session_log)
+            data, n_files, n_dropped = await _build_feedback(
+                store, blobs, row.project_id, body, fields, tokens, folder=body.sessionId,
+                submitted_at=submitted_at, label=row.title, session_log=session_log,
+                dropped_transcripts=dropped_transcripts,
             )
-            data, _redacted = await asyncio.to_thread(build)
-            n_files, n_transcripts = len(fetched), len(session_log)
-            # The zip holds what is needed now; free the inputs before the upload.
-            del build, fetched, session_log
+            # The zip holds what is needed now; free the transcript before the upload.
+            del session_log
             # row.owner_id == user.id past _session: the internal usr_ id, never NULL here.
             key = feedback.bundle_key(user.id, row.project_id, submitted_at)
             try:
@@ -2872,12 +2905,96 @@ def create_app(
                 log.error("ev=feedback result=error reason=put_failed session=%s project=%s key=%s error=%s",
                           row.session_id, row.project_id, key, type(exc).__name__)
                 raise HTTPException(status_code=502, detail="Feedback upload failed") from None
-        meta = {"session": row.session_id, "project": row.project_id, "bytes": len(data), "files": n_files,
-                "transcripts": n_transcripts, "dropped": len(dropped) + len(dropped_transcripts)}
-        feedback.forward_stored_feedback(key, meta)
+        filename = key.rsplit("/", 1)[-1]
+        # No URL: a session bundle carries the transcript, so it stays in our bucket.
+        await feedback.forward_stored_feedback(None, filename=filename, data=data, email=fields["email"],
+                                               submitted_at=submitted_at)
         log.info("ev=feedback result=stored session=%s project=%s key=%s bytes=%d files=%d transcripts=%d dropped=%d",
-                 row.session_id, row.project_id, key, meta["bytes"], n_files, n_transcripts, meta["dropped"])
-        return {"ok": True, "filename": key.rsplit("/", 1)[-1]}
+                 row.session_id, row.project_id, key, len(data), n_files, n_transcripts, n_dropped)
+        return {"ok": True, "filename": filename}
+
+    @app.post("/api/projects/{project_id}/feedback")
+    async def submit_project_feedback(
+        project_id: str, request: Request, user: User = Depends(current_user)
+    ) -> dict:
+        """The beta's feedback route (#3986), keyed by project: the project's files, never a
+        transcript. The W4a transport calls exactly this.
+
+        Request: ``POST /api/projects/{project_id}/feedback``, the session cookie, a JSON
+        object (``feedback.FeedbackFields``; every key optional, unknown keys ignored):
+        ``email: str = ""``, ``userPrompt: str = ""``, ``agentDid: str = ""``,
+        ``workedAsExpected: bool = false``, ``agentShouldHave: str = ""``,
+        ``correctAnswer: str = ""``, ``notes: str | null = null``, ``includeMedia: bool =
+        false``, ``includeSessionLog: bool = true`` (ignored: no transcript ships).
+
+        Responses, checked in this order:
+          404 ``"Project not found"`` -- missing or foreign project, before the body is read,
+              so a malformed POST to someone else's project is 404, never 422;
+          422 -- the body is not such an object; 400 -- a field over 10,000 characters;
+          503 -- no feedback bucket (the project's blobs are read from it, URL or not);
+          429 ``"Feedback limit reached (5 a day, UTC); try again tomorrow"`` -- the patron's
+              sixth 200 of the UTC day on this process, refused before any build;
+          502 ``"Feedback upload failed"`` -- the post or the store failed (not counted);
+          200 ``{"ok": true, "filename": <str>}``.
+
+        ``FEEDBACK_URL`` set: posted through ``feedback.forward_stored_feedback`` as
+        ``feedback-<user id>-<stamp>.zip``, nothing stored. Unset: stored at
+        ``feedback.bundle_key``, the session route's key shape, and ``filename`` is its last
+        segment."""
+        await _project(request, project_id, user)
+        try:
+            payload = await request.json()
+        except ValueError:
+            payload = None
+        try:
+            body = feedback.FeedbackFields.model_validate(payload)
+        except ValidationError as exc:
+            raise RequestValidationError(exc.errors(include_url=False, include_context=False)) from None
+        store = _store(request)
+        tokens = await _owner_tokens(store, user.id)
+        fields = feedback.feedback_fields(body, tokens)
+        blobs = request.app.state.blobs
+        if blobs is None:
+            raise HTTPException(status_code=503, detail="feedback storage is not configured")
+        url = request.app.state.feedback_url
+        async with feedback_gate:
+            submitted_at = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+            slot = (user.id, submitted_at[:10])
+            if feedback_counts.get(slot, 0) >= FEEDBACK_DAILY_LIMIT:
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Feedback limit reached ({FEEDBACK_DAILY_LIMIT} a day, UTC); try again tomorrow",
+                )
+            data, n_files, n_dropped = await _build_feedback(
+                store, blobs, project_id, body, fields, tokens, folder=project_id,
+                submitted_at=submitted_at, label=None, session_log=[], dropped_transcripts=[],
+            )
+            if url:
+                filename = feedback.posted_filename(user.id, submitted_at)
+                try:
+                    await feedback.forward_stored_feedback(url, filename=filename, data=data, email=fields["email"],
+                                                           submitted_at=submitted_at)
+                except Exception as exc:  # noqa: BLE001 - its text, like httpx's, can carry the URL
+                    log.error("ev=feedback result=error reason=post_failed project=%s error=%s",
+                              project_id, type(exc).__name__)
+                    raise HTTPException(status_code=502, detail="Feedback upload failed") from None
+                result = "posted"
+            else:
+                key = feedback.bundle_key(user.id, project_id, submitted_at)
+                try:
+                    await asyncio.to_thread(blobs.put, key, data, "application/zip")
+                except Exception as exc:  # noqa: BLE001 - any S3 refusal; its text names the account
+                    log.error("ev=feedback result=error reason=put_failed project=%s key=%s error=%s",
+                              project_id, key, type(exc).__name__)
+                    raise HTTPException(status_code=502, detail="Feedback upload failed") from None
+                filename = key.rsplit("/", 1)[-1]
+                result = "stored"
+            for stale_slot in [s for s in feedback_counts if s[1] != slot[1]]:
+                del feedback_counts[stale_slot]
+            feedback_counts[slot] = feedback_counts.get(slot, 0) + 1
+        log.info("ev=feedback result=%s project=%s filename=%s bytes=%d files=%d dropped=%d",
+                 result, project_id, filename, len(data), n_files, n_dropped)
+        return {"ok": True, "filename": filename}
 
     # Last, so it sees every API route it must not shadow (web/spa.py).
     spa.mount_spa(app, tier_root=PROTO_DIR, base_path=app.state.base_path)

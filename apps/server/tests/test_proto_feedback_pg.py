@@ -16,6 +16,7 @@ import json
 import sys
 import uuid
 
+import httpx
 import pytest
 
 from proto.worker.session_store import PgSessionStore
@@ -122,3 +123,38 @@ async def test_the_other_feedback_reads(pg_dsn, role_dsn):
     assert await store.sdk_session_id(sid) == "sdk-1" and await store.sdk_session_id("sess_none") is None
     assert await store.grant_ciphertexts(uid) == ("enc-a", "enc-r")
     assert await store.grant_ciphertexts("usr_none") == (None, None)
+
+
+async def test_the_project_route_owner_check_is_the_projects_row(pg_dsn, role_dsn, monkeypatch):
+    """#3986: ``projects.owner_id`` decides, before the body is read. B's cookie on A's
+    project is 404 -- a malformed body included -- and nothing is posted or stored; A's own
+    cookie is 200, so the 404 is the owner check and not a broken route."""
+    from tests.test_proto_feedback import FEEDBACK_URL, FakeBlobs, FakeEndpoint, PROJECT_FIELDS
+    from tests.test_proto_web import FakeQueue
+    from web import auth
+    from web.app import create_app
+
+    pid = "proj_" + uuid.uuid4().hex[:10]
+    a, b = "usr_" + uuid.uuid4().hex[:8], "usr_" + uuid.uuid4().hex[:8]
+    for uid in (a, b):
+        sql(pg_dsn, "INSERT INTO users (id, email) VALUES (%s, %s)", (uid, uid + "@example.org"))
+    sql(pg_dsn, "INSERT INTO projects (project_id, owner_id) VALUES (%s, %s)", (pid, a))
+    sql(pg_dsn, "INSERT INTO documents (project_id, name, doc) VALUES (%s, 'research.json', %s)",
+        (pid, json.dumps({"project": {"title": "A's"}})))
+    monkeypatch.setenv("FEEDBACK_URL", FEEDBACK_URL)
+    endpoint, blobs = FakeEndpoint(monkeypatch), FakeBlobs()
+    app = create_app(PgStore(role_dsn), FakeQueue(), poll_s=0.0, ping_s=0.0, blobs=blobs)
+
+    async def submit(uid: str, payload: dict):
+        cookies = {auth.COOKIE_NAME: auth.session_cookie_value(uid)}
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=app), base_url="http://t",
+                                     cookies=cookies) as c:
+            return await c.post(f"/api/projects/{pid}/feedback", json=payload)
+
+    for payload in (PROJECT_FIELDS, {"includeMedia": {"not": "a bool"}}):
+        r = await submit(b, payload)
+        assert r.status_code == 404 and r.json() == {"detail": "Project not found"}, r.text
+    assert endpoint.envelopes == [] and blobs.puts == [] and blobs.gets == []
+    r = await submit(a, PROJECT_FIELDS)
+    assert r.status_code == 200, r.text
+    assert len(endpoint.envelopes) == 1 and blobs.puts == []

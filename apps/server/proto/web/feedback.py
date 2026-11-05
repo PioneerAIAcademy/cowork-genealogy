@@ -12,7 +12,8 @@ S3) and the transcript is ``session_entries`` rows. So this module is two halves
 - **Proto-only** -- reading the project from the store and S3, streaming the transcript
   in keyset batches, the bearer/literal token redaction (the alpha never had a token in a
   transcript; the worker's ``mcp.json`` carries the owner's FamilySearch token), the S3
-  key and the ``forward_stored_feedback`` seam.
+  key, and the ``forward_stored_feedback`` seam that posts a project bundle to
+  ``FEEDBACK_URL`` in the alpha's envelope.
 
 The zip's layout and ``feedback.json`` keys are the alpha's, so ``make feedback-case``
 reads a prototype bundle unchanged (docs/specs/feedback-case-spec.md).
@@ -20,8 +21,10 @@ reads a prototype bundle unchanged (docs/specs/feedback-case-spec.md).
 from __future__ import annotations
 
 import asyncio
+import base64
 import io
 import json
+import logging
 import re
 import secrets
 import zipfile
@@ -31,8 +34,13 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+import httpx
 from fastapi import HTTPException
 from pydantic import BaseModel
+
+# httpx logs every request's URL at INFO, and FEEDBACK_URL is the endpoint's only credential:
+# whatever handler a later change gives the root logger, that line never prints.
+logging.getLogger("httpx").setLevel(logging.WARNING)
 
 # The worker's cwd (proto/worker/Dockerfile, WORKER_CWD): every parent transcript entry
 # is stamped with it, as the alpha's sandbox stamped /project.
@@ -497,8 +505,10 @@ def _group_prefix(sid: str, *, active: bool) -> str:
     return "_feedback/" if active else f"_feedback/sessions/{sid}/"
 
 
-class FeedbackBody(BaseModel):
-    sessionId: str
+class FeedbackFields(BaseModel):
+    """Every field of the alpha's body but ``sessionId``: the project route's body. Proto-only
+    split; ``FeedbackBody`` below keeps the alpha's schema (pydantic flattens a subclass)."""
+
     email: str = ""
     userPrompt: str = ""
     agentDid: str = ""
@@ -516,6 +526,10 @@ class FeedbackBody(BaseModel):
     notes: str | None = None
     includeMedia: bool = False
     includeSessionLog: bool = True
+
+
+class FeedbackBody(FeedbackFields):
+    sessionId: str
 
 
 def _norm(v: str) -> str:
@@ -1025,7 +1039,7 @@ def build_info(tier_root: Path) -> tuple[str, str]:
         return "dev", "dev"
 
 
-def feedback_fields(body: FeedbackBody, literals: Sequence[str] = ()) -> dict[str, str]:
+def feedback_fields(body: FeedbackFields, literals: Sequence[str] = ()) -> dict[str, str]:
     """The alpha's normalised fields (400 over ``_MAX_FIELD_CHARS``), API keys and tokens
     redacted."""
     return {
@@ -1039,12 +1053,14 @@ def feedback_fields(body: FeedbackBody, literals: Sequence[str] = ()) -> dict[st
 
 
 def build_bundle(
-    *, fields: dict[str, str], body: FeedbackBody, submitted_at: str, project_label: str,
+    *, fields: dict[str, str], body: FeedbackFields, folder: str, submitted_at: str, project_label: str,
     built_at: str, git_sha: str, files: list[tuple[str, bytes]], dropped_files: list[str],
     session_log: list[tuple[str, bytes]], dropped_transcripts: list[str], now: date | None = None,
 ) -> tuple[bytes, int]:
     """``(zip bytes, living persons redacted)``: the alpha's ``submit_feedback`` from the
-    redaction on. Synchronous (the deflate): run it in a thread."""
+    redaction on. ``folder`` is ``feedback.json``'s ``project_folder_path``: the session
+    route's ``sessionId``, the project route's project id. Synchronous (the deflate): run it
+    in a thread."""
     viewer_version = f"web {built_at} ({git_sha})"
     feedback_json = {
         "schema_version": FEEDBACK_SCHEMA_VERSION,
@@ -1054,7 +1070,7 @@ def build_bundle(
         "git_sha": git_sha,
         "platform": "web",
         "email": fields["email"],
-        "project_folder_path": body.sessionId,
+        "project_folder_path": folder,
         "user_prompt": fields["userPrompt"],
         "agent_did": fields["agentDid"],
         "worked_as_expected": body.workedAsExpected,
@@ -1097,20 +1113,53 @@ def build_bundle(
 FEEDBACK_PREFIX = "feedback/"
 
 
+def _stamp(submitted_at: str) -> str:
+    """The alpha's filename stamp: ``submitted_at`` with ``:`` and ``.`` as ``-``."""
+    return submitted_at.replace(":", "-").replace(".", "-")
+
+
 def bundle_key(owner_id: str, project_id: str, submitted_at: str) -> str:
     """``feedback/<owner_id>/<project_id>/feedback-<ts>-<8 hex>.zip``. ``owner_id`` (the
     internal ``usr_...`` id, not PII) keeps a bundle traceable to its patron after
     ``delete_session`` drops the ``projects`` row."""
-    stamp = submitted_at.replace(":", "-").replace(".", "-")
-    return f"{FEEDBACK_PREFIX}{owner_id}/{project_id}/feedback-{stamp}-{secrets.token_hex(4)}.zip"
+    return f"{FEEDBACK_PREFIX}{owner_id}/{project_id}/feedback-{_stamp(submitted_at)}-{secrets.token_hex(4)}.zip"
 
 
-def forward_stored_feedback(key: str, meta: dict[str, Any]) -> None:
-    """Where a stored bundle goes next. Deliberately nothing.
+def posted_filename(owner_id: str, submitted_at: str) -> str:
+    """``feedback-<owner_id>-<ts>.zip``: the name a bundle posted to ``FEEDBACK_URL`` carries.
+    ``owner_id`` is the internal ``usr_...`` id ``/auth/me`` returns as ``id``."""
+    return f"feedback-{owner_id}-{_stamp(submitted_at)}.zip"
 
-    No destination is decided. The alpha posted the zip to Drive through an Apps Script,
-    which also opened the triage issue (docs/alpha-feedback-guide.md); sending patron data
-    anywhere beyond our own bucket is the lead's call (handoff F7/F17). Until then a
-    prototype bundle reaches S3 and no one is notified. The route calls this after the
-    PUT, so the decision lands here and nowhere else."""
+
+class FeedbackRejected(Exception):
+    """The endpoint answered 2xx without ``{"ok": true}``. Carries no text: the route logs
+    only the type."""
+
+
+async def forward_stored_feedback(
+    url: str | None, *, filename: str, data: bytes, email: str, submitted_at: str
+) -> None:
+    """Where a bundle goes past our own bucket: POSTed to ``url`` (``FEEDBACK_URL``, the
+    lead's Apps Script copy, which files it on Drive) in the alpha's envelope, exactly
+    ``{timestamp, email, filename, zipBase64}``. A no-op when ``url`` is unset, which the
+    session route always passes, so its bundles stay in S3 only.
+
+    ``follow_redirects`` is required: an Apps Script web app answers a POST with a redirect.
+    A transport error, a non-2xx, a non-JSON body, or a JSON ``ok`` that is not ``true``
+    raises; the caller answers 502 and must log the exception's type only, never its text
+    or ``url`` -- the URL is the endpoint's only credential, and httpx's messages carry it."""
+    if not url:
+        return None
+    envelope = {
+        "timestamp": submitted_at,
+        "email": email,
+        "filename": filename,
+        "zipBase64": base64.b64encode(data).decode("ascii"),
+    }
+    async with httpx.AsyncClient(timeout=30, follow_redirects=True) as client:
+        res = await client.post(url, json=envelope)
+        res.raise_for_status()
+        reply = res.json()
+    if not isinstance(reply, dict) or reply.get("ok") is not True:
+        raise FeedbackRejected()
     return None

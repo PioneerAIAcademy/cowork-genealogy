@@ -486,7 +486,8 @@ async def test_state_reads_documents_and_the_unserved_routes_say_so():
         # design rests on, so a 501 here is the feature missing, not a gap in the tier.
         assert (await c.post(f"/api/sessions/{row.session_id}/interrupt")).status_code == 202
         config = (await c.get("/auth/config")).json()
-        assert config == {"familysearch": False, "devLogin": True}
+        # #3986: no blob store here, so the project feedback route cannot build.
+        assert config == {"familysearch": False, "devLogin": True, "feedback": False}
         assert (await c.get("/auth/me")).json() == {"id": USER_A.id, "email": USER_A.email}
 
 
