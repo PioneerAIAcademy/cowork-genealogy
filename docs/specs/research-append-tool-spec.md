@@ -1699,8 +1699,11 @@ is listed, and the name sentence only when a name is. It rides
   listed record up in the sidecars of the row's `log_entry_ids` (persona-bearing
   searches and reads only, matched by bare id), stores a found id in the sidecar's
   form and maps it to that result's `primaryId`, or, where the result has none (a
-  read), to the person of its record whose ark is the listed id. A listed household
-  member of a hit or a read is found the same way, by that person's ark. Any value
+  read), to the person of its record whose ark is the listed id (`personaFor`). A
+  listed household member of a hit or a read is found the same way, by that
+  person's ark, and stored in it. A log that finds the record but names no persona
+  for it does not end the lookup: a later cited log may still stamp it, and
+  otherwise the first found form is kept. Any value
   the caller sent is overwritten; an
   update cannot set the field (`updatableFields`). A record found in no sidecar is
   left unstamped and the row is still written. Nothing reads the field yet: it

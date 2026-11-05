@@ -82,6 +82,7 @@ import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId, toArk } from "../utils/ark.js";
+import { personaFor } from "../utils/record-persona-select.js";
 import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint, sidecarReader } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
@@ -2905,7 +2906,7 @@ function capSource(a: any): unknown {
  *  `record_document_id` when every assertion of that source carries one (a
  *  source can hold two documents, #2537). A source with any assertion that
  *  names no document keys as `capSource`, as before the field existed. */
-function capDocumentKeyer(assertions: Iterable<any>): (a: any) => unknown {
+export function capDocumentKeyer(assertions: Iterable<any>): (a: any) => unknown {
   const unsplit = new Set<unknown>();
   for (const a of assertions) {
     const doc = a?.record_document_id;
@@ -4159,16 +4160,6 @@ export function factEvidenceParties(
 
 const isPersonaId = (v: unknown): v is string => typeof v === "string" && v !== "";
 
-/** The person of any sidecar result's record whose ark is `bare`. */
-function personByArk(results: ReadonlyArray<any>, bare: string): { id?: unknown; ark: string } | undefined {
-  for (const r of results) {
-    const persons = Array.isArray(r?.gedcomx?.persons) ? r.gedcomx.persons : [];
-    const found = persons.find((p: any) => p && typeof p.ark === "string" && arkToBareId(p.ark) === bare);
-    if (found) return found;
-  }
-  return undefined;
-}
-
 /** Item 10 of #3363 (chesworthrm, 2026-10-24): stamps `record_persona_ids` on
  *  each row the call appended, or updated through `record_ids` or
  *  `log_entry_ids`, from the row's own search and read sidecars, so the first
@@ -4197,26 +4188,35 @@ export async function stampNamesakePersonas(
     const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
       if (typeof id !== "string") return id;
       const bare = arkToBareId(id);
+      // A bare id is a record persona's.
+      const ark = toArk(id).startsWith("ark:/") ? toArk(id) : `ark:/61903/1:1:${bare}`;
+      // The form of a log that finds the record but names no persona for it; a
+      // later cited log may still name one.
+      let found: string | undefined;
       for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
         const entry = logById.get(logId);
         if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
         const results = (await readResults(entry.results_ref)) ?? [];
         const hit = results.find((r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === bare);
-        if (hit && isPersonaId(hit.primaryId)) {
-          stamp[hit.recordId] = hit.primaryId;
-          return hit.recordId;
+        let persona: unknown = hit?.primaryId;
+        let form: unknown = hit?.recordId;
+        if (!isPersonaId(persona)) {
+          // A record_read names its persona only among the record's persons, and a
+          // row may list another member of a hit's or a read's household.
+          const persons = results.flatMap((r) => (Array.isArray(r?.gedcomx?.persons) ? r.gedcomx.persons : []));
+          const person = personaFor({ persons }, ark);
+          persona = person?.id;
+          form ??= person?.ark;
         }
-        // A record_read names its persona only among the record's persons, and a
-        // row may list another member of a hit's or a read's household.
-        const person = personByArk(results, bare);
-        if (person) {
-          if (isPersonaId(person.id)) stamp[person.ark] = person.id;
-          return person.ark;
+        if (typeof form !== "string") continue;
+        if (isPersonaId(persona)) {
+          stamp[form] = persona;
+          return form;
         }
-        if (hit) return hit.recordId;
+        found ??= form;
       }
       // Accepted unstamped, unlike #699's assertions: the cap reads only that a row exists, so this loses a count, not identity.
-      return id;
+      return found ?? id;
     });
     row.record_ids = await Promise.all(recordIds);
     if (Object.keys(stamp).length > 0) row.record_persona_ids = stamp;

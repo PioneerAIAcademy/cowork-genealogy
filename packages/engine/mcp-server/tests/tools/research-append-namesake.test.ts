@@ -1237,13 +1237,19 @@ describe("namesake cap", () => {
       const HANNAH_1901 = { id: "p_10259312010", ark: ARK("XS75-FJM") };
       const EDWIN = { id: "p_10257197490", ark: ARK("XS3W-W3M") };
       const HANNAH_QB = { id: "p_10257197491", ark: ARK("XS3W-W39") };
-      async function setupSidecar(tool: string, results: Array<Record<string, unknown>>) {
-        await setup(research({ namesakes: [], log: [log("log_001", tool, "results/log_001.json")] }));
+      type Sidecar = { tool: string; results: Array<Record<string, unknown>> };
+      /** One log entry and sidecar per element, log_001 first. */
+      async function setupSidecars(sidecars: Sidecar[]) {
+        const ids = sidecars.map((_, i) => `log_00${i + 1}`);
+        await setup(research({ namesakes: [], log: sidecars.map((s, i) => log(ids[i], s.tool, `results/${ids[i]}.json`)) }));
         await mkdir(join(dir, "results"), { recursive: true });
-        const sidecar = { log_id: "log_001", tool, retrieved: "2026-10-30T00:00:00Z", returned_count: results.length,
-          payload: { query: {}, results } };
-        await writeFile(join(dir, "results", "log_001.json"), JSON.stringify(sidecar));
+        for (const [i, { tool, results }] of sidecars.entries()) {
+          const sidecar = { log_id: ids[i], tool, retrieved: "2026-10-30T00:00:00Z", returned_count: results.length,
+            payload: { query: {}, results } };
+          await writeFile(join(dir, "results", `${ids[i]}.json`), JSON.stringify(sidecar));
+        }
       }
+      const setupSidecar = (tool: string, results: Sidecar["results"]) => setupSidecars([{ tool, results }]);
 
       it("stamps a record_read's persona, which its sidecar names only in the record's persons", async () => {
         await setupSidecar("record_read", [{ recordId: HANNAH_1901.ark, gedcomx: { persons: [HANNAH_1901] } }]);
@@ -1293,6 +1299,31 @@ describe("namesake cap", () => {
         expect(r.ok, errs(r)).toBe(true);
         expect((await row()).record_ids).toEqual([HANNAH_QB.ark]);
         expect((await row()).record_persona_ids).toBeUndefined();
+      });
+
+      it("stores the read's own record id form, the one an assertion from it carries", async () => {
+        // A fixture read can stage a bare recordId (gaetjen-namesake-confident-link log_015).
+        await setupSidecar("record_read", [{ recordId: "XS75-FJM", gedcomx: { persons: [HANNAH_1901] } }]);
+        const r = await appendRow({ record_ids: [HANNAH_1901.ark], log_entry_ids: ["log_001"] });
+        expect(r.ok, errs(r)).toBe(true);
+        expect((await row()).record_ids).toEqual(["XS75-FJM"]);
+        expect((await row()).record_persona_ids).toEqual({ "XS75-FJM": HANNAH_1901.id });
+      });
+
+      it("stamps from a later cited log when an earlier one finds the record but names no persona, in either order", async () => {
+        // The read's record names no person of the read's ark.
+        const read = { tool: "record_read", results: [{ recordId: HANNAH_1901.ark, gedcomx: { persons: [] } }] };
+        const search = {
+          tool: "record_search",
+          results: [{ recordId: HANNAH_1901.ark, primaryId: HANNAH_1901.id, gedcomx: { persons: [HANNAH_1901] } }],
+        };
+        for (const cited of [["log_001", "log_002"], ["log_002", "log_001"]]) {
+          await setupSidecars([read, search]);
+          const r = await appendRow({ record_ids: ["XS75-FJM"], log_entry_ids: cited });
+          expect(r.ok, errs(r)).toBe(true);
+          expect((await row()).record_ids).toEqual([HANNAH_1901.ark]);
+          expect((await row()).record_persona_ids, cited.join(", ")).toEqual({ [HANNAH_1901.ark]: HANNAH_1901.id });
+        }
       });
     });
   });

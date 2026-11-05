@@ -1460,7 +1460,7 @@ function section7(states: FinalState[]): void {
     `    (a) probable or confident links a persona rule would refuse: ${sum.wouldRefuse} ` +
       `(hint is a namesake's: ${refusedByLabel.false}; the subject's own: ${refusedByLabel.true}; unlabelled: ${refusedByLabel.unlabelled})`,
   );
-  console.log(`    (b) links on a listed record with another persona, which a record-id rule would refuse: ${sum.spared}`);
+  console.log(`    (b) links to another persona of a record the row stamped, which a rule keyed on the record would refuse: ${sum.spared}`);
 }
 
 // ─── main ───────────────────────────────────────────────────────────────────

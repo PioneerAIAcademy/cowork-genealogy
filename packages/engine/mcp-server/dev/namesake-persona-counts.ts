@@ -2,6 +2,7 @@
 // namesake persona `research_append` stamps (`record_persona_ids`) would do,
 // read from one research.json. Called by measure-namesake-cap.ts §7.
 
+import { capDocumentKeyer } from "../src/tools/research-append.js";
 import { arkToBareId } from "../src/utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../src/utils/results-staging.js";
 
@@ -22,8 +23,10 @@ export interface PersonaStampCounts {
    *  persona is one the row stamped, from any record id: an assertion read from
    *  another member of the household carries that member's record id. */
   wouldRefuse: number;
-  /** (b) Live probable or confident links to a row holder on a listed record
-   *  whose persona differs from the stamped one: a record-id rule refuses them. */
+  /** (b) Live probable or confident links to a row holder on a record the row
+   *  stamped, with another persona: a rule keyed on the record refuses them. The
+   *  record is the cap's document, so it is reached from another member's record
+   *  id as (a) is. */
   spared: number;
 }
 
@@ -39,6 +42,7 @@ export function personaStampCounts(research: any): PersonaStampCounts {
       .filter((a: any) => a && typeof a.id === "string")
       .map((a: any) => [a.id, a]),
   );
+  const documentOf = capDocumentKeyer(assertionById.values());
   const strongLinks = (Array.isArray(research?.person_evidence) ? research.person_evidence : []).filter(
     (e: any) => e && !e.superseded_by && STRONG.has(e.confidence) && typeof e.assertion_id === "string",
   );
@@ -68,22 +72,23 @@ export function personaStampCounts(research: any): PersonaStampCounts {
       } else counts.unstampable += 1;
     }
     const stampedPersonas = new Set(Object.values(stamp));
+    const isStamped = (a: any) => typeof a.record_persona_id === "string" && stampedPersonas.has(a.record_persona_id);
+    // The records the row stamped: a stamped record's own assertions, and an
+    // assertion of a stamped persona read from another member's record id.
+    const stampedDocuments = new Set<unknown>();
+    for (const a of assertionById.values()) {
+      const bare = typeof a.record_id === "string" ? arkToBareId(a.record_id) : undefined;
+      const onStampedRecord = bare !== undefined && listed.has(bare) && stampByBare.has(bare);
+      if ((onStampedRecord || isStamped(a)) && documentOf(a) !== null) stampedDocuments.add(documentOf(a));
+    }
     for (const link of strongLinks) {
       if (link.person_id !== row.person_id) continue;
       const a = assertionById.get(link.assertion_id);
       if (!a) continue;
       // An assertion read from another member's record id carries the stamped
       // persona under that id, so (a) matches the persona alone.
-      if (typeof a.record_persona_id === "string" && stampedPersonas.has(a.record_persona_id)) {
-        refused.add(link);
-        continue;
-      }
-      if (typeof a.record_id !== "string") continue;
-      const bare = arkToBareId(a.record_id);
-      if (!listed.has(bare)) continue;
-      const persona = stampByBare.get(bare);
-      if (persona !== undefined && a.record_persona_id === persona) refused.add(link);
-      else if (persona !== undefined) spared.add(link);
+      if (isStamped(a)) refused.add(link);
+      else if (stampedDocuments.has(documentOf(a))) spared.add(link);
     }
   }
   counts.wouldRefuse = refused.size;

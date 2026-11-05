@@ -1239,9 +1239,12 @@ not an identity, because the cap reads only that a row exists. The first runs th
 were not though their row cites such a search, and what a persona-keyed refusal
 would refuse and spare; item 10 is decided on those counts. "Would refuse" counts
 a strong link whose assertion's persona is any persona the row stamped, from any
-record id, a household member's included; "spare" counts links on a listed record
-with another persona. They are not one population and do not add up to what a
-record-id rule would refuse. Ids no persona
+record id, a household member's included; "spare" counts links to another persona
+of a record the row stamped, the record found as the cap finds a link's (its
+source, split by `record_document_id`), so a household member's record id reaches
+it as it reaches "would refuse". Together they are what a rule keyed on those
+records would refuse; a persona-keyed rule refuses the first and spares the
+second. Ids no persona
 search can stamp, a page's image id (which every entry on that page shares) and
 a full-text hit's id, are counted on a line of their own, outside the stamped
 share, so a refusal never keys on an image id alone.
