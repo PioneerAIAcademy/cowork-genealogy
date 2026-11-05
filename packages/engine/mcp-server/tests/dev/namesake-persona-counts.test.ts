@@ -15,6 +15,8 @@ function research(row: Record<string, unknown>, rows = 1) {
     log: [
       { id: "log_001", tool: "record_search", results_ref: "results/log_001.json" },
       { id: "log_002", tool: "record_search", results_ref: null },
+      { id: "log_003", tool: "image_search", results_ref: null },
+      { id: "log_004", tool: "fulltext_search", results_ref: "results/log_004.json" },
     ],
     assertions: [
       assertion("a_001", HOUSE, "p_9"), // the namesake's persona in the shared household record
@@ -39,7 +41,25 @@ function research(row: Record<string, unknown>, rows = 1) {
 
 describe("personaStampCounts (item 10 of #3363)", () => {
   it("counts the stamped, the absent, the links a persona rule refuses and the ones it spares", () => {
-    expect(personaStampCounts(research({}))).toEqual({ listed: 2, stamped: 1, absent: 1, wouldRefuse: 2, spared: 1 });
+    expect(personaStampCounts(research({}))).toEqual({
+      listed: 2, unstampable: 0, stamped: 1, absent: 1, wouldRefuse: 2, spared: 1,
+    });
+  });
+
+  it("keeps a page's image id and a full-text hit's id out of listed", () => {
+    const page = personaStampCounts(
+      research({ record_ids: ["004567123_00058"], log_entry_ids: ["log_003"], record_persona_ids: undefined }),
+    );
+    expect([page.listed, page.unstampable, page.stamped, page.absent]).toEqual([0, 1, 0, 0]);
+    const hit = personaStampCounts(
+      research({ record_ids: ["ark:/61903/3:1:3Q9M-CS1Z-9Q7S"], log_entry_ids: ["log_004"], record_persona_ids: undefined }),
+    );
+    expect([hit.listed, hit.unstampable, hit.stamped, hit.absent]).toEqual([0, 1, 0, 0]);
+  });
+
+  it("counts nothing for a pool row, which lists no record", () => {
+    const c = personaStampCounts(research({ record_ids: [], record_persona_ids: undefined, notes: "pool: ..." }));
+    expect([c.listed, c.unstampable, c.stamped, c.absent]).toEqual([0, 0, 0, 0]);
   });
 
   it("counts an unstamped record as absent only when its row cites a persona search with a sidecar", () => {

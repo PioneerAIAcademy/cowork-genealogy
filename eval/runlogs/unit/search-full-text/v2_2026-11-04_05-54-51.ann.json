@@ -1,17 +1,9 @@
 {
-  "run_log": "v1_2026-10-06_09-29-31.json",
-  "annotator": "mercybocumy2000@gmail.com",
+  "run_log": "v2_2026-11-04_05-54-51.json",
+  "annotator": "raphaeldaveal@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_search_full_text_011",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_011",
+      "test_id": "ut_search_full_text_009",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,47 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_011",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Query construction",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_011",
-      "dimension_source": "rubric",
-      "dimension_name": "FAN awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Negative result handling",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_011",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_012",
+      "test_id": "ut_search_full_text_009",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -67,15 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_012",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_012",
+      "test_id": "ut_search_full_text_009",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -83,7 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_012",
+      "test_id": "ut_search_full_text_009",
       "dimension_source": "rubric",
       "dimension_name": "Query construction",
       "llm_score": 3,
@@ -91,7 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_012",
+      "test_id": "ut_search_full_text_009",
       "dimension_source": "rubric",
       "dimension_name": "FAN awareness",
       "llm_score": 3,
@@ -99,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_012",
+      "test_id": "ut_search_full_text_009",
       "dimension_source": "rubric",
       "dimension_name": "Negative result handling",
       "llm_score": 3,
@@ -107,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_012",
+      "test_id": "ut_search_full_text_009",
       "dimension_source": "rubric",
       "dimension_name": "Result triage",
       "llm_score": 3,
@@ -115,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_019",
+      "test_id": "ut_search_full_text_007",
       "dimension_source": "rubric",
       "dimension_name": "Result triage",
       "llm_score": 3,
@@ -123,7 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_019",
+      "test_id": "ut_search_full_text_007",
       "dimension_source": "rubric",
       "dimension_name": "Negative result handling",
       "llm_score": 3,
@@ -131,7 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_019",
+      "test_id": "ut_search_full_text_007",
       "dimension_source": "rubric",
       "dimension_name": "FAN awareness",
       "llm_score": 3,
@@ -139,7 +83,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_019",
+      "test_id": "ut_search_full_text_007",
       "dimension_source": "rubric",
       "dimension_name": "Query construction",
       "llm_score": 3,
@@ -147,7 +91,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_019",
+      "test_id": "ut_search_full_text_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -155,7 +99,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_019",
+      "test_id": "ut_search_full_text_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -163,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_019",
+      "test_id": "ut_search_full_text_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -171,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_013",
+      "test_id": "ut_search_full_text_014",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -179,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_013",
+      "test_id": "ut_search_full_text_014",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -187,7 +131,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_013",
+      "test_id": "ut_search_full_text_014",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -195,7 +139,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_013",
+      "test_id": "ut_search_full_text_014",
       "dimension_source": "rubric",
       "dimension_name": "Query construction",
       "llm_score": 3,
@@ -203,7 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_013",
+      "test_id": "ut_search_full_text_014",
       "dimension_source": "rubric",
       "dimension_name": "FAN awareness",
       "llm_score": 3,
@@ -211,17 +155,9 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_013",
+      "test_id": "ut_search_full_text_014",
       "dimension_source": "rubric",
       "dimension_name": "Negative result handling",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -235,7 +171,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_014",
+      "test_id": "ut_search_full_text_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Result triage",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_008",
       "dimension_source": "rubric",
       "dimension_name": "Negative result handling",
       "llm_score": 3,
@@ -243,7 +187,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_014",
+      "test_id": "ut_search_full_text_008",
       "dimension_source": "rubric",
       "dimension_name": "FAN awareness",
       "llm_score": 3,
@@ -251,7 +195,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_014",
+      "test_id": "ut_search_full_text_008",
       "dimension_source": "rubric",
       "dimension_name": "Query construction",
       "llm_score": 3,
@@ -259,7 +203,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_014",
+      "test_id": "ut_search_full_text_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -267,7 +211,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_014",
+      "test_id": "ut_search_full_text_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -275,7 +219,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_014",
+      "test_id": "ut_search_full_text_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -283,7 +227,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_016",
+      "test_id": "ut_search_full_text_010",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -291,15 +235,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_016",
+      "test_id": "ut_search_full_text_010",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The skill left 7 of 12 scoped results unreviewed after pagination stalled and tried no alternative to recover them."
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_search_full_text_016",
+      "test_id": "ut_search_full_text_010",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -307,7 +251,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_016",
+      "test_id": "ut_search_full_text_010",
       "dimension_source": "rubric",
       "dimension_name": "Query construction",
       "llm_score": 3,
@@ -315,15 +259,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_016",
-      "dimension_source": "rubric",
-      "dimension_name": "FAN awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_full_text_016",
+      "test_id": "ut_search_full_text_010",
       "dimension_source": "rubric",
       "dimension_name": "Negative result handling",
       "llm_score": 3,
@@ -331,7 +267,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_016",
+      "test_id": "ut_search_full_text_010",
+      "dimension_source": "rubric",
+      "dimension_name": "FAN awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_full_text_010",
       "dimension_source": "rubric",
       "dimension_name": "Result triage",
       "llm_score": 3,

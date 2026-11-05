@@ -1,0 +1,44 @@
+{
+  "test": {
+    "id": "ut_search_records_032",
+    "skill": "search-records",
+    "name": "Of two same-named grooms, the one whose father differs from the subject's is recorded as a namesake; the other is not, and no pool is written",
+    "type": "positive",
+    "description": "Executing pli_008 (Schuylkill County Catholic marriages, 1865-1880, for Patrick Flynn's wife), record_search returns two marriages of a Patrick Flynn of the subject's age: one son of Thomas Flynn (1870, Pottsville), one son of Michael Flynn (1871, Mahanoy City). The subject block names his father, Thomas (I2), and this search is for his wife, so the son of Michael is ruled out on the other-parents ground and recorded as a namesakes row on I1, while the son of Thomas may still be the subject and gets no row. One is ruled out, so there is no pool. The Polereczky shape: issue #3363, PR 3.",
+    "tags": [
+      "search",
+      "marriage",
+      "identity",
+      "needs-review",
+      "namesake",
+      "namesake-row",
+      "namesake-other-parents",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Execute plan item pli_008 — search FamilySearch's Pennsylvania Catholic marriage records, Schuylkill County, 1865-1880, for Patrick Flynn's marriage, which may name his wife.\n\nplanItemId: pli_008\nplanId: pl_003\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_008\",\n  \"sequence\": 1,\n  \"record_type\": \"church\",\n  \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n  \"date_range\": \"1865-1880\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"A Catholic marriage register entry for Patrick may name his wife.\",\n  \"fallback_for\": null,\n  \"status\": \"planned\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Patrick\",\n      \"surname\": \"Flynn\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"about 1845\",\n    \"place\": \"Ireland\"\n  },\n  \"death\": {\n    \"date\": \"12 March 1908\",\n    \"place\": \"Schuylkill County, Pennsylvania\"\n  },\n  \"parents\": [\n    {\n      \"personId\": \"I2\",\n      \"name\": \"Thomas Flynn\"\n    }\n  ]\n}",
+    "scenario": "mid-research-flynn-namesakes"
+  },
+  "execution": {
+    "max_turns": 35,
+    "max_wall_clock_seconds": 600
+  },
+  "mcp_fixtures": [
+    "record-search-flynn-1870-marriages-other-parents",
+    "rank-search-matches-flynn-1870-marriages",
+    "record-read-flynn-1870-marriage-q7fm-t70",
+    "record-read-flynn-1871-marriage-q7fm-m70",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords",
+    "record-search-flynn-any-variant-no-results"
+  ],
+  "judge_context": [
+    "Tool Arguments: score 3 if record_search was called with projectPath and parameters appropriate to a marriage of Patrick Flynn in Schuylkill County, 1865-1880, with subjectId I1. Score 2 only if record_search was skipped or had clearly wrong arguments. Do NOT expect a separate rank_search_matches call.",
+    "CORE (Correctness): both results are marriages of a Patrick Flynn of the subject's age in Schuylkill County. The groom of the 1871 Mahanoy City marriage is a son of Michael Flynn; the subject's father in the tree is Thomas (I2), and this search is for his wife, not his parents, so that groom is a different man. The 1870 Pottsville groom, a son of Thomas, may be the subject: the skill may present him as a candidate that still needs an anchor, but must not call him confirmed on the father's name alone.",
+    "Namesake row: the skill records the son of Michael as a namesakes row on I1 (section namesakes), listing his recordId (Q7FM-M70) verbatim, the search's log id, and the ground (other parents) as notes. It records NO row for the son of Thomas, who may still be the subject, and no pool row, since one candidate is ruled out on a stated ground.",
+    "The write may warn that links pe_004 and pe_005 to I1 stand untied; a 'Hand-back: person-evidence' line naming them is right. Do not score it down, and do not require it.",
+    "The plan item stays in_progress. record_read is stocked but OPTIONAL. Score neither path down."
+  ],
+  "judge_reads_files": true
+}
