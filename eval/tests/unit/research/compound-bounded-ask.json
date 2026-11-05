@@ -6,8 +6,7 @@
     "type": "positive",
     "tags": [
       "bounded-request",
-      "transcribes-in-place",
-      "ends-with-delivery"
+      "transcribes-in-place"
     ],
     "description": "Issue #2813 item 1, as step mode reworded it (plan section H). The message asks for a transcription AND a research plan, both on the bounded list, so it is bounded. A compound bounded ask now delivers the FIRST deliverable this turn and offers the next. The transcription is the router's own deliverable (image_transcribe, then sidecar_read on the staged ref), so `transcribes-in-place` asserts those calls AND that nothing is handed off: a research-plan spawn (delivering both in one turn) and the job path (locality-guide first, on this scenario) both fail it. SCENARIO: wilkins-first-plan, one registered question, no plan and no localities, so the job path's first row is locality-guide (pinned by ut_research_012). JUDGE CONTEXT: the prohibition is stated before the explanation, and the stubs' empty project state is named as expected, after v18's judge read both the wrong way."
   },

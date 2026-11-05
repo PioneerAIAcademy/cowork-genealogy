@@ -222,7 +222,6 @@ from proto.worker.options import (  # noqa: E402
     STORE_UNAVAILABLE_REASON,
     TERMINAL_BUDGET,
     TERMINAL_COMPLETED,
-    TERMINAL_DELIVERED,
     TERMINAL_QUEUED,
     TERMINAL_STOPPED,
     build_worker_options,
@@ -1231,7 +1230,7 @@ def completed_already_labelled(conn: psycopg.Connection, project_id: str, turn_i
     store must not be asked twice.
 
     Two consequences, both recorded in docs/plan/research-step-mode.md. When the
-    completing turn closed `stopped`, `budget` or `delivered`, the NEXT ordinary
+    completing turn closed `stopped` or `budget`, the NEXT ordinary
     turn carries the label -- which is right, since the project is complete and
     the researcher should be told. And a project completed a SECOND time is labelled
     only when the completing proof-conclusion call ends the turn (the completion halt,
@@ -2844,14 +2843,6 @@ async def _run_turn(
         def on_halt_failed() -> None:
             store_unavailable()
 
-        def on_delivered() -> None:
-            """The agent delivered what a bounded request asked for. The turn ends
-            `delivered`, not `completed`: the ask was met while the PROJECT is still
-            open, and calling it complete would read as a finished project."""
-            terminal["reason"] = TERMINAL_DELIVERED
-            terminal["halted"] = True
-            log(ev="delivered_exit", turn_id=turn_id, session_id=session_id)
-
         # The step boundary (decision 25). This worker is the only plane that enforces
         # it. A gate that cannot be built leaves `step_gate` None and the turn runs
         # unbounded -- logged loudly, because a worker enforcing nothing looks exactly
@@ -2893,7 +2884,7 @@ async def _run_turn(
         hook = make_pretool_hook(
             turn_id=turn_id, session_id=session_id, cwd=WORKER_CWD,
             config_root=lambda: config_root["path"], record=record, log=log, blocked=_BLOCKED,
-            halt=halt, on_delivered=on_delivered, on_halt_failed=on_halt_failed,
+            halt=halt, on_halt_failed=on_halt_failed,
             step_gate=step_gate,
         )
 

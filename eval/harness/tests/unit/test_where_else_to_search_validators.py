@@ -138,7 +138,7 @@ def test_curated_fires_on_a_site_wide_or_invented_base_and_accepts_a_curated_one
     with pytest.raises(AssertionError):
         check_curated(CALLS + [site_wide], t)
     with pytest.raises(AssertionError):
-        check_curated(CALLS + [build_call() | {"args": {"site": "ancestry", "baseUrl": CURATED + "?edited=1"}}], t)
+        check_curated(CALLS + [build_call() | {"args": {"site": "ancestry", "baseUrl": CURATED.replace("9040", "9041")}}], t)
     with pytest.raises(AssertionError):  # no curated list fetched at all
         check_curated([build_call()], t)
     # A failed build on a curated row is still a curated base.
@@ -329,3 +329,79 @@ def test_shape_zero_results_is_the_one_sentence_for_the_searched_place():
             check_shape(calls, reply(f"x\n---\n{prose}"), None, t)
     with pytest.raises(pytest.skip.Exception):  # the place was never resolved
         check_shape([call("place_search", {"results": []})], reply(f"x\n---\n{plain}"), None, t)
+
+
+def _row_call(url):
+    return call(
+        "external_links_search",
+        {"results": [{"url": url, "linkText": "x", "startYear": 1860, "endYear": 1869}]},
+    )
+
+
+def _build_with_base(base, url):
+    return call("build_external_search_url", {"ok": True, "url": url}, site="ancestry", baseUrl=base)
+
+
+def test_curated_and_span_accept_a_trailing_slash_change_on_an_ancestry_collection():
+    t = where_test()
+    slash = CURATED + "/"
+    built_url = BUILT
+    # base gains a slash the row lacks
+    calls = [_row_call(CURATED), _build_with_base(slash, built_url)]
+    check_curated(calls, t)
+    check_span(calls, _span_reply(_entry("**Muster Rolls**", "Covers 1860–1869.", built_url)), None, t)
+    # base drops a slash the row has
+    calls = [_row_call(slash), _build_with_base(CURATED, built_url)]
+    check_curated(calls, t)
+    check_span(calls, _span_reply(_entry("**Muster Rolls**", "Covers 1860–1869.", built_url)), None, t)
+
+
+def test_curated_still_fires_on_a_different_ancestry_id_or_a_slash_on_another_host():
+    t = where_test()
+    with pytest.raises(AssertionError):
+        check_curated([_row_call(CURATED), _build_with_base("https://www.ancestry.com/search/collections/9041/", BUILT)], t)
+    host = "https://www.pa-archives.example/civil-war"
+    with pytest.raises(AssertionError):
+        check_curated([_row_call(host), _build_with_base(host + "/", OTHER)], t)
+    check_curated([_row_call(host), _build_with_base(host, OTHER)], t)
+
+
+ROW_7486 = "https://www.ancestry.com/search/collections/7486/?arrival=_alabama-usa_3&count=50"
+BASE_7486 = "https://www.ancestry.com/search/collections/7486?arrival=_alabama-usa_3&count=50"
+
+
+def test_curated_and_span_fold_the_slash_before_a_query():
+    t = where_test()
+    calls = [_row_call(ROW_7486), _build_with_base(BASE_7486, BUILT)]
+    check_curated(calls, t)
+    check_span(calls, _span_reply(_entry("**Passenger Lists**", "Covers 1860–1869.", BUILT)), None, t)
+    # a dbid= url on another host is not an Ancestry collection
+    other = "https://www.example.org/x?dbid=7486"
+    assert v._collection_key(other) == other
+
+
+def test_shape_fails_on_a_sentence_inside_an_entry_and_accepts_a_domain_site_name():
+    t = where_test()
+    calls = _shape_calls(3)
+    good_reply = _shape_reply(3, v._CLOSING)
+    good = good_reply[0]["text"]
+    check_shape(calls, good_reply, None, t)
+    first = "**Muster Rolls** — Ancestry, needs a subscription"
+    bad_first = good.replace(first, first + ". Your soldier is likely here.", 1)
+    bad_site = good.replace(first, "**Muster Rolls** — Ancestry. Your soldier is likely here, needs a subscription", 1)
+    link = f"{BUILT}&n=0"
+    bad_link = good.replace(link, link + " Check the 1890 census too.", 1)
+    for bad in (bad_first, bad_site, bad_link):
+        assert bad != good
+        with pytest.raises(AssertionError):
+            check_shape(calls, reply(bad), None, t)
+    domain = good.replace("— Ancestry,", "— Newspapers.com,", 1)
+    check_shape(calls, reply(domain), None, t)
+
+
+def test_shape_accepts_an_also_listed_ancestry_url_with_the_slash_changed():
+    t = where_test()
+    also = "https://www.ancestry.ca/search/collections/62200"
+    calls = [links_call(CURATED, also + "/")] + [build_call(url=f"{BUILT}&n={i}") for i in range(3)]
+    block = f"{v._ALSO_HEADER}\nAlabama Records: {also}"
+    check_shape(calls, _shape_reply(3, block, v._CLOSING), None, t)
