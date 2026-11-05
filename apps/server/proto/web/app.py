@@ -2604,7 +2604,7 @@ def create_app(
             if name is None:
                 raise HTTPException(
                     status_code=400,
-                    detail="filename must be a plain basename of letters, digits, dot, dash, space or underscore",
+                    detail="filename is empty, starts with a dot, contains '..', or has no letters or digits",
                 )
             # The spooled size before the read: a chunked body has no Content-Length to
             # refuse above, and `max_part_size` does not bound a file part.
@@ -2699,7 +2699,7 @@ def create_app(
             if name is None:
                 raise HTTPException(
                     status_code=400,
-                    detail="filename must be a plain basename of letters, digits, dot, dash, space or underscore",
+                    detail="filename is empty, starts with a dot, contains '..', or has no letters or digits",
                 )
             if file.size is not None and file.size + len(text) > UPLOAD_MAX_BYTES:
                 raise HTTPException(status_code=413, detail=too_big)
