@@ -1434,7 +1434,7 @@ async function section3b(): Promise<void> {
 // ─── §7 item 10: the stamped namesake personas ──────────────────────────────
 
 function section7(states: FinalState[]): void {
-  const sum = { listed: 0, stamped: 0, absent: 0, wouldRefuse: 0, spared: 0 };
+  const sum = { listed: 0, unstampable: 0, stamped: 0, absent: 0, wouldRefuse: 0, spared: 0 };
   const refusedByLabel: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
   let carrying = 0;
   for (const s of states) {
@@ -1452,6 +1452,9 @@ function section7(states: FinalState[]): void {
   console.log(
     `    (c) listed records stamped: ${sum.stamped} of ${sum.listed}; ` +
       `(d) unstamped though their row cites a persona search with a sidecar: ${sum.absent}`,
+  );
+  console.log(
+    `    (e) ids on rows no persona search reaches (page image ids, full-text hit ids), outside (c): ${sum.unstampable}`,
   );
   console.log(
     `    (a) probable or confident links a persona rule would refuse: ${sum.wouldRefuse} ` +

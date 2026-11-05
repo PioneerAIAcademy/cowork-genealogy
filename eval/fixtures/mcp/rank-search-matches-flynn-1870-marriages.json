@@ -1,0 +1,46 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches ranks the two Schuylkill marriages of a Patrick Flynn against subject I1 nearly level: same name, county and age, neither attached, no birth-year conflict. Feeds ut_search_records_032. Matched on subjectId.",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 2,
+    "returnedCount": 2,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:Q7FM-T70",
+        "primaryId": "P1",
+        "personName": "Patrick Flynn",
+        "sex": "Male",
+        "birthDate": "1845",
+        "collectionTitle": "Pennsylvania, Catholic Church Records, 1765-1940",
+        "matchScore": 0.71,
+        "attachedToSubject": false,
+        "attachedToOther": false,
+        "birthYearConflict": false,
+        "birthYearGap": 0
+      },
+      {
+        "matchRank": 2,
+        "searchRank": 2,
+        "recordId": "ark:/61903/1:1:Q7FM-M70",
+        "primaryId": "P1",
+        "personName": "Patrick Flynn",
+        "sex": "Male",
+        "birthDate": "1845",
+        "collectionTitle": "Pennsylvania, Catholic Church Records, 1765-1940",
+        "matchScore": 0.7,
+        "attachedToSubject": false,
+        "attachedToOther": false,
+        "birthYearConflict": false,
+        "birthYearGap": 0
+      }
+    ]
+  }
+}
