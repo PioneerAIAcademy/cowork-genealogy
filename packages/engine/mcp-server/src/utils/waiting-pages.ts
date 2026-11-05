@@ -1,14 +1,15 @@
 // waiting-pages — which held records have had their page read but not kept.
 //
-// A page read with `image_transcribe` is staged, and nothing puts it on the
-// source of the indexed record it shows. This joins the two, read-only:
-// `project_context` lists the matches and `extraction_append` attaches them.
+// A page read with `image_transcribe` is staged, or logged, which moves it to a
+// sidecar, and nothing puts it on the source of the indexed record it shows. This
+// joins the two, read-only: `project_context` lists the matches and
+// `extraction_append` attaches them.
 // Spec: docs/specs/research-append-tool-spec.md, "Attaching waiting pages".
 
 import { arkToBareId } from "./ark.js";
-import { listStagedEnvelopes } from "./results-staging.js";
+import { listStagedEnvelopes, readStagedResults } from "./results-staging.js";
 
-/** A held record's source and the staged page that shows it. */
+/** A held record's source and the staged or logged page that shows it. */
 export interface WaitingPage {
   sourceId: string;
   ref: string;
@@ -28,10 +29,23 @@ export function pageKey(ark: string): string | null {
   return IMAGE_SELECTORS.some((k) => params.has(k)) ? null : arkToBareId(ark);
 }
 
+/** Whether a logged page holds text. Only those that do are listed: a logged page
+ *  never expires, so one that could not be attached would be listed forever. */
+async function loggedPageHasText(projectPath: string, ref: string): Promise<boolean> {
+  try {
+    const rows = await readStagedResults(projectPath, ref);
+    return rows.some((r: any) => typeof r?.transcription === "string" && r.transcription !== "");
+  } catch {
+    return false;
+  }
+}
+
 /**
- * Sources with a known image and no page, each joined to the oldest staged read
- * of that image, so a repeat read cannot displace the first. An expired page drops
- * out by itself and an attached source stops qualifying, so nothing here can loop.
+ * Sources with a known image and no page, each joined to the oldest logged read of
+ * that image, else the oldest staged one, so a repeat read cannot displace the
+ * first. An expired page drops out by itself and an attached source stops
+ * qualifying, so nothing here can loop. Only a logged read a source waits for has
+ * its sidecar read.
  */
 export async function waitingPages(projectPath: string, research: any): Promise<WaitingPage[]> {
   const sources = (Array.isArray(research?.sources) ? research.sources : []).filter(
@@ -39,8 +53,18 @@ export async function waitingPages(projectPath: string, research: any): Promise<
   );
   if (sources.length === 0) return [];
 
-  const staged = await listStagedEnvelopes(projectPath, "image_transcribe");
+  const wanted = new Set(sources.map((s: any) => pageKey(s.image_ark)));
   const oldestRead = new Map<string, string>();
+  for (const e of Array.isArray(research?.log) ? research.log : []) {
+    if (e?.tool !== "image_transcribe" || typeof e?.results_ref !== "string") continue;
+    const ark = e.query?.ark ?? e.query?.imageArk;
+    if (typeof ark !== "string" || ark === "") continue;
+    const key = pageKey(ark);
+    if (key === null || !wanted.has(key) || oldestRead.has(key)) continue;
+    if (await loggedPageHasText(projectPath, e.results_ref)) oldestRead.set(key, e.results_ref);
+  }
+
+  const staged = await listStagedEnvelopes(projectPath, "image_transcribe");
   for (const entry of [...staged].reverse()) {
     const ark = (entry.envelope.payload as { query?: { ark?: unknown } } | undefined)?.query?.ark;
     if (typeof ark !== "string" || ark === "") continue;

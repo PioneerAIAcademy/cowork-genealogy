@@ -14,6 +14,7 @@ import { projectContext } from "../../src/tools/project-context.js";
 import { getProjectStore } from "../../src/store/project-store.js";
 import { stageSearchResults } from "../../src/utils/results-staging.js";
 import { pageKey, waitingPages } from "../../src/utils/waiting-pages.js";
+import { researchLogAppend } from "../../src/tools/research-log-append.js";
 import { validateProject } from "../../src/validation/validator.js";
 import { LOCAL } from "../../src/auth/principal.js";
 
@@ -78,6 +79,15 @@ describe("waiting pages", () => {
         }],
       },
     }))!.resultsRef;
+
+  const logPage = async (ref: string, query?: Record<string, unknown>) => {
+    const r: any = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", outcome: "positive", resultsExamined: 1, stagedResultsRef: ref,
+      ...(query ? { query } : {}),
+    } as any);
+    expect(r.ok).toBe(true);
+    return r.resultsRef as string;
+  };
 
   beforeEach(async () => {
     refused.clear();
@@ -158,6 +168,101 @@ describe("waiting pages", () => {
     expect(after.sources[0]).toMatchObject({ transcription: "Paul Raymond 1 1 0 3 1", image_filename: "images/page.jpg" });
     expect(after.assertions).toEqual([]);
     expect(after.log).toHaveLength(1);
+  });
+
+  describe("a logged page", () => {
+    it("loses its staged copy, and still attaches", async () => {
+      await seed([source("src_001", { image_ark: ARK })]);
+      const staged = await stagePage({ ark: ARK });
+      const ref = await logPage(staged);
+      expect(await getProjectStore().exists(dir, staged)).toBe(false);
+      expect(await listed()).toEqual([{ sourceId: "src_001", ref }]);
+      const r = await attach();
+      expect(r).toMatchObject({ ok: true, attached: 1 });
+      const after = await read();
+      expect(after.sources[0]).toMatchObject({ transcription: "Paul Raymond 1 1 0 3 1", image_filename: "images/page.jpg" });
+      expect(after.sources).toHaveLength(1);
+      expect(after.assertions).toEqual([]);
+    });
+
+    it("is found when the log names the page as imageArk", async () => {
+      await seed([source("src_001", { image_ark: ARK })]);
+      await logPage(await stagePage({ ark: ARK }), { imageArk: ARK });
+      expect(await listed()).toHaveLength(1);
+    });
+
+    it("attaches to a record extracted after it was logged", async () => {
+      const ref = await logPage(await stagePage({ ark: ARK }));
+      const doc = await read();
+      doc.sources.push(source("src_001", { image_ark: ARK }));
+      await getProjectStore().writeJson(dir, "research.json", doc);
+      expect(await listed()).toEqual([{ sourceId: "src_001", ref }]);
+    });
+
+    it("is listed, attached, then not listed", async () => {
+      await seed([source("src_001", { image_ark: ARK })]);
+      await logPage(await stagePage({ ark: ARK }));
+      await attach();
+      expect(await listed()).toEqual([]);
+      expect((await attach()).attached).toBe(0);
+    });
+
+    it("that holds no text is not listed, so it cannot be listed forever", async () => {
+      await seed([source("src_001", { image_ark: ARK })]);
+      await logPage(await stagePage({ ark: ARK }, { transcription: "" }));
+      expect(await listed()).toEqual([]);
+    });
+
+    it("whose sidecar is gone is not listed", async () => {
+      await seed([source("src_001", { image_ark: ARK })]);
+      const ref = await logPage(await stagePage({ ark: ARK }));
+      await getProjectStore().remove(dir, ref);
+      expect(await listed()).toEqual([]);
+    });
+
+    it("wins over a staged read of the same page", async () => {
+      await seed([source("src_001", { image_ark: ARK })]);
+      const ref = await logPage(await stagePage({ ark: ARK }, { transcription: "logged reading" }));
+      await stagePage({ ark: ARK }, { transcription: "staged reading" });
+      expect((await listed())[0].ref).toBe(ref);
+    });
+
+    it("that came first wins over a later logged read", async () => {
+      await seed([source("src_001", { image_ark: ARK })]);
+      const first = await logPage(await stagePage({ ark: ARK }, { transcription: "first reading" }));
+      await logPage(await stagePage({ ark: ARK }, { transcription: "second reading" }));
+      expect((await listed())[0].ref).toBe(first);
+    });
+
+    it("with no text gives way to a later one that has it", async () => {
+      await seed([source("src_001", { image_ark: ARK })]);
+      await logPage(await stagePage({ ark: ARK }, { transcription: "" }));
+      const good = await logPage(await stagePage({ ark: ARK }));
+      expect((await listed())[0].ref).toBe(good);
+    });
+
+    it("with i= does not attach", async () => {
+      await seed([source("src_001", { image_ark: ARK })]);
+      await logPage(await stagePage({ ark: `${ARK}?i=15` }));
+      expect(await listed()).toEqual([]);
+    });
+
+    it("of another image does not attach, and its sidecar is not read", async () => {
+      await seed([source("src_001", { image_ark: ARK })]);
+      const ref = await logPage(await stagePage({ ark: OTHER }));
+      const spy = vi.spyOn(getProjectStore(), "readText");
+      expect(await listed()).toEqual([]);
+      expect(spy.mock.calls.map((c) => c[1])).not.toContain(ref);
+      spy.mockRestore();
+    });
+
+    it("is matched only on an image_transcribe entry", async () => {
+      const doc = research([source("src_001", { image_ark: ARK })]);
+      doc.log.push({ id: "log_002", performed: "2026-01-01T00:00:00Z", tool: "image_read", query: { ark: ARK }, results_ref: "results/log_002.json", outcome: "positive", results_examined: 1 } as any);
+      await getProjectStore().writeJson(dir, "results/log_002.json", { payload: { results: [{ transcription: "text" }] } });
+      await writeFile(join(dir, "research.json"), JSON.stringify(doc), "utf8");
+      expect(await listed()).toEqual([]);
+    });
   });
 
   it("a read carrying lookingFor still matches", async () => {

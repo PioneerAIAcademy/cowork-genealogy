@@ -1203,7 +1203,7 @@ async function tieOutcome(
 /**
  * Copy each waiting page's text and scan onto its record's source. It takes no
  * refs, so a caller cannot name the wrong page, and it writes no assertion and no
- * log entry. The staged file is left alone: a second held record extracted later
+ * log entry. The page's file is left alone: a second held record extracted later
  * can still find it, and a refused write loses nothing. One write per page, so a
  * refusal leaves the others done.
  */
@@ -1232,7 +1232,7 @@ async function attachWaitingPagesMode(input: ExtractionBatchInput): Promise<Extr
       row = undefined;
     }
     if (!row) {
-      errors.push(`the page staged at ${ref} could not be read; read it again with image_transcribe.`);
+      errors.push(`the page at ${ref} could not be read; read it again with image_transcribe.`);
       continue;
     }
     const imageRef = typeof row.image_ref === "string" && row.image_ref !== "" ? row.image_ref : undefined;

@@ -3502,12 +3502,13 @@ there is no `same_person` gate. Checking the attachments is a separate request.
 
 `extraction_append({ projectPath, attachWaitingPages: true })`, sent alone, for what
 `project_context` lists in `waitingPages`. It takes no refs, so a caller cannot name
-the wrong page: code joins each source's `image_ark` to a staged `image_transcribe`
-read and sets `transcription` and `image_filename` on the existing source. A page
+the wrong page: code joins each source's `image_ark` to a logged or staged
+`image_transcribe` read and sets `transcription` and `image_filename` on the existing
+source. A page
 showing two held records fills both.
 
-It writes no assertion and no log entry, and does not consume the staged file, so a
-record extracted later the same day still finds the page. Facts on the page stay as
+It writes no assertion and no log entry, and does not consume the page's file, so a
+record extracted later still finds the page, the same day for a staged one. Facts on the page stay as
 text. One write per page, so a refusal leaves the others kept. `ok` is false only
 when something waited and nothing was kept. The result carries `attached`, a
 `summary` naming each record, and `records: []`.
