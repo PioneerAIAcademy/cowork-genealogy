@@ -521,8 +521,6 @@ the `rationale` as a departure; it does not move the tier by itself.
 | **Strong** — name, age, place, and relationship fit all agree, with the place inside the residence cluster or a move outside it that something bridges | `confident` | May create the link without explicit user confirmation, but still present the rationale. |
 | **Obvious** — same record already linked for another role, or the person was found by searching for this specific individual | `confident` or `probable`, based on reasoning | No separate analysis needed. State the rationale clearly. |
 
-**A `same_person` score ≥0.75 with all primary identifiers agreeing reaches `confident` on a single record — a second independent source is not required.** When identity rests on qualitative reasoning alone — a naming in a will, an explicit relationship role, a death certificate — without that quantitative corroboration, a single source supports `probable` at most. A pre-existing tree relationship entered from the same evidence chain is not independent corroboration.
-
 **Stub match on relationship-fit alone (household enrichment).** A
 fact-less stub is still matchable — by its name, gender, and parent-child
 edge — and a **strong relationship-fit is the strongest household
@@ -871,13 +869,7 @@ hands a merge set to proof-conclusion to fold. For a household record:
    question, and also named as its own question in `summary_for_user`. Name
    the possibilities: they died before the record, were enumerated
    elsewhere, separated, or this household is a different family. "Not
-   extracted" is never the explanation offered alone. **Name each absent
-   member by their tree name, not just by role.** Example: "Catherine
-   Ackerman (I2), George's wife (R1), has no death fact — her absence from
-   this 1860 household is unexplained. She may have died before 1860, been
-   enumerated elsewhere, separated, or this 'George Ackerman' may be a
-   different man." This check is required even when the user message
-   mentions only the head and children and says nothing about a spouse. The
+   extracted" is never the explanation offered alone. The
    `matchRelatives` triples from step 2.3 give the persona→tree-person
    pairings; a new member (no tree match) pairs to a fresh id you mint in
    step 3.
