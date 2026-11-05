@@ -627,6 +627,7 @@ def test_a_read_under_the_anchor_is_denied_and_routed(tmp_path):
     kw = dict(cwd=str(root), project_root=str(root), config_root=str(cfg))
     reason = deny.project_read_denied("Read", {"file_path": str(root / "research.json")}, **kw)
     assert reason and "research_query" in reason and "Read on research.json" in reason
+    assert "research_query" in deny.project_read_denied("Read", {"file_path": str(root / "Research.JSON")}, **kw)
     assert "record_read" in deny.project_read_denied("Read", {"file_path": str(root / "results" / "abc.json")}, **kw)
     assert "sidecar_read" in deny.project_read_denied("Read", {"file_path": str(root / "evaluations" / "v.json")}, **kw)
     assert "sidecar_read" in deny.project_read_denied("Grep", {"pattern": "x", "path": str(root / "uploads")}, **kw)
