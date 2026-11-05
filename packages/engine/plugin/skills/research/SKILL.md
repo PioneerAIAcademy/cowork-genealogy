@@ -22,7 +22,6 @@ allowed-tools:
   - validate_research_schema
   - research_query
   - extraction_append
-  - research_delivered
   - person_read
   - source_attachments
 ---
@@ -164,8 +163,8 @@ Two or more of them in one message is still bounded: deliver the first this
 turn, name the others, and offer the next, ending on its "Continue with …?" line
 when it is a step in the label table. **The others are not started this turn:**
 when the first is a transcription, a records-request letter or a status answer,
-the turn spawns no agent at all: deliver it, name the next, end on its offer
-line, then call `research_delivered`. A message that also asks for open-ended
+the turn spawns no agent at all: deliver it, name the next, and end your turn
+on its offer line. A message that also asks for open-ended
 research is a job.
 
 **A job** — everything else. Route it exactly as the rest of this file says.
@@ -208,17 +207,13 @@ is already attached. Never search for a record that is already attached,
 and never offer to add a person who is already in the tree.
 
 When this turn's deliverable is produced — the only one asked for, or the first
-of several — **end your turn by calling `research_delivered`**.
-Say what you produced first: the turn ends where you stop, so anything you were
-going to add afterwards never reaches the researcher. Name what this turn saved
+of several — **no further step runs this turn: no spawn and no `Skill` call,
+whatever else the message asked for.** Name what this turn saved
 and where — "Saved to Susan Cornwell: death index, 4 Apr 1892" — and name
 anything this turn found but did not save: the record and the person it was for,
-not "an extraction did not finish". Then offer to take it further. The offer is
-not something you wait for — their answer arrives as the next message.
-
-Call it last, with a one-sentence summary of what you delivered, after everything
-you want the researcher to read. If you do not already hold its schema, search for
-it by name.
+not "an extraction did not finish". Then offer to take it further and **end your
+turn**. The offer is not something you wait for — their answer arrives as the next
+message.
 
 ## What to do
 
@@ -280,6 +275,17 @@ it by name.
    is skipping it while leaving state that looks like it ran. See the
    **Exhaustiveness/proof-conclusion contract** below.
 
+   **Unregistered inferred relationships — check before anything else.**
+   Before consulting the routing table or acting on `project_context.nextStep`,
+   scan every log entry's `notes` field for hedged language about family
+   relationships: "look like", "appear to be", "likely are", or "seem to be"
+   used to infer that people are relatives from shared surname, place or era
+   with no record linking them. If any such phrasing exists and `hypotheses`
+   has no entry for that relationship, the one step this turn is
+   `@plugin:hypothesis-tracking`, naming the people and the inferred
+   relationship. Do not read the table or follow `nextStep` until this check
+   is clean.
+
    **Researcher-reported evidence.** When the message describes a record not
    yet in the project, with no record id or ARK, take only what the
    researcher stated: add no place, date, origin or relationship they did not
@@ -291,11 +297,18 @@ it by name.
    search for each, or ask the researcher for the record's identifier, before
    `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`. If the
    record contradicts a hypothesis, say so — do not present its facts as
-   support for that hypothesis or any theory built on it. The same holds for a
-   relationship you or an earlier log note inferred from shared surname, place
-   or era with no record linking the people: it is a hypothesis, not a fact.
-   Spawn `@plugin:hypothesis-tracking` to register it before any search,
-   filter or rejection relies on it.
+   support for that hypothesis or any theory built on it. The same holds for
+   a relationship you or an earlier log note inferred from shared surname,
+   place or era with no record linking the people: it is a hypothesis, not a
+   fact. Log notes that say people "look like", "appear to be", "likely are",
+   or "seem to be" relatives qualify. Spawn `@plugin:hypothesis-tracking` to
+   hand it off — the agent writes the entry; say only that it was handed off,
+   not that it is registered. When reporting, describe the inferred
+   relationship as the log's speculation ("the log treats them as siblings"),
+   never as a fact the router established. Do this before any plan item
+   dispatch, person-evidence pass, research-exhaustiveness call, search,
+   filter or rejection relies on it — regardless of what
+   `project_context.nextStep` suggests.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
@@ -304,7 +317,7 @@ it by name.
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `@plugin:research-plan` |
-   | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until it is registered |
+   | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item, routing to person-evidence, **or** invoking research-exhaustiveness | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until hypothesis-tracking has written the entry |
    | The question's **`active`** plan has a not-yet-executed `record_type: "fs_hints"` item (`project_context.nextStep` reads `search-hints — <pli_>`) — on an identity or parentage question research-plan emits one at `sequence` 1 | `@plugin:search-hints`, handing it the item's `planItemId`, its plan's `planId`, the `personId` you read out of the item's `rationale` ("Review pending FamilySearch hints on <PID> before…"), and `userPresent: no` ONLY on an `--autonomous` run (otherwise omit it; absent means yes). It reviews the subject's pending FamilySearch hints and sets the item's own status — a hint that already answers the question can save a search. A hints item awaiting verdicts is not "next" (`project_context` skips it), so this never holds up the other searches |
    | The active plan has `planned` items and the analyzed evidence already answers the question, and none of those items is the subject's own record of the event asked about (that one is searched) | `@plugin:research-plan` with the `planItemIds` `project_context`'s `nextStep` names, to dispose of them; then `@plugin:research-exhaustiveness` |
    | The question's **`active`** plan has items not yet executed — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `completed` plan, which a revision leaves behind still `planned` | `@plugin:search-records`, handing it the item you just queried as a `plan_item:` JSON block and the subject you hold as a `subject:` block, learned from `project_context` and `tree_query` with the subject person id and `factTypes` `["Birth","Death","Marriage"]` (or `@plugin:search-external-sites` for non-FS sources) |
@@ -600,7 +613,7 @@ turn made):
 7. N is the Matches not already extracted; a Possible Match is not offered.
    N ≥ 1: end "Continue with `extracting the N Matches`?" ("the Match" for
    one). N = 0: no "Continue with …?" line.
-8. `research_delivered`.
+8. End your turn.
 
 When the researcher answers "Continue." to that offer, in a later turn, spawn
 `@plugin:record-structurer` once with `projectPath`, `questionIds` and `sources`
