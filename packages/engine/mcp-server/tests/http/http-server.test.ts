@@ -53,7 +53,7 @@ import {
 } from "../../src/http-server.js";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
-import type { ClaimFence, ProjectStore } from "../../src/store/project-store.js";
+import type { ClaimFence, OwnedProjectIds, ProjectStore } from "../../src/store/project-store.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
 
 // The wire spelling; node:http lower-cases it to PROJECT_ID_HEADER on arrival.
@@ -147,7 +147,7 @@ const projectOwner = vi.fn(
 );
 
 /** The caller owns nothing unless a case says otherwise. */
-const ownedProjects = vi.fn(async (_userId: string): Promise<string[]> => []);
+const ownedProjects = vi.fn(async (_userId: string): Promise<OwnedProjectIds> => ({ ids: [], truncated: false }));
 
 /** The headers a connector request carries. */
 function connectorHeaders(extra: Record<string, string> = {}): Record<string, string> {
@@ -1077,7 +1077,7 @@ describe("tool server over Streamable HTTP", () => {
         await Promise.all(ids.map(seedOwned));
         bindStore.mockClear();
         ownedProjects.mockClear();
-        ownedProjects.mockResolvedValueOnce(ids);
+        ownedProjects.mockResolvedValueOnce({ ids, truncated: false });
 
         const listed = await listProjects();
         expect(listed.isError, listed.text).not.toBe(true);
@@ -1109,11 +1109,23 @@ describe("tool server over Streamable HTTP", () => {
         const claimedByDevLogin = "a-web-tier-project";
         await Promise.all([good, claimedByDevLogin].map(seedOwned));
         bindStore.mockClear();
-        ownedProjects.mockResolvedValueOnce([claimedByDevLogin, good]);
+        ownedProjects.mockResolvedValueOnce({ ids: [claimedByDevLogin, good], truncated: false });
 
         const body = JSON.parse((await listProjects()).text);
         expect(body.projects.map((p: { projectPath: string }) => p.projectPath)).toEqual([`/${good}`]);
         expect(bindStore.mock.calls.map(([id]) => id)).not.toContain(claimedByDevLogin);
+        expect(body).not.toHaveProperty("truncated");
+      });
+
+      it("a cut listing says so, even when the door's filter left fewer ids than the query's limit", async () => {
+        const good = "proj_eeeeeeeeeeeeeeee";
+        await seedOwned(good);
+        ownedProjects.mockResolvedValueOnce({ ids: ["a-web-tier-project", good], truncated: true });
+
+        const body = JSON.parse((await listProjects()).text);
+        expect(body.projects.map((p: { projectPath: string }) => p.projectPath)).toEqual([`/${good}`]);
+        expect(body.truncated).toBe(true);
+        expect(body.message).toContain("More projects exist than are listed");
       });
 
       it("a failing ownedProjects is isError, never No project yet", async () => {
@@ -1127,7 +1139,7 @@ describe("tool server over Streamable HTTP", () => {
       it("a document read that fails mid-listing is isError, never a project with no subject", async () => {
         const id = "proj_dddddddddddddddd";
         await seedOwned(id);
-        ownedProjects.mockResolvedValueOnce([id]);
+        ownedProjects.mockResolvedValueOnce({ ids: [id], truncated: false });
         const store = new ScopedFsStore(root, id, `/${id}`);
         vi.spyOn(store, "readText").mockRejectedValue(new Error("pool is down"));
         bindStore.mockReturnValueOnce(store);
@@ -1136,6 +1148,54 @@ describe("tool server over Streamable HTTP", () => {
         expect(listed.isError, listed.text).toBe(true);
         expect(listed.text).toContain("pool is down");
         expect(listed.text).not.toContain("newProjectPath");
+      });
+
+      it("a client that disconnects mid-listing stops the listing at its next read", async () => {
+        const ids = ["proj_1111111111111111", "proj_2222222222222222", "proj_3333333333333333"];
+        await Promise.all(ids.map(seedOwned));
+        ownedProjects.mockResolvedValueOnce({ ids, truncated: false });
+
+        // The first project's research.json holds the tool mid-listing until the
+        // client has gone, which is when the store's signal aborts.
+        let release!: () => void;
+        const gate = new Promise<void>((resolve) => (release = resolve));
+        const reads: string[] = [];
+        const signals: AbortSignal[] = [];
+        // One per listed path and one for the fresh path.
+        for (let i = 0; i <= ids.length; i++) {
+          bindStore.mockImplementationOnce((projectId, signal, _fence, opts) => {
+            signals.push(signal);
+            const store = new ScopedFsStore(root, projectId, opts?.anchorPath);
+            const readText = store.readText.bind(store);
+            vi.spyOn(store, "readText").mockImplementation(async (projectPath, ref) => {
+              reads.push(`${projectPath}:${ref}`);
+              await gate;
+              return readText(projectPath, ref);
+            });
+            return store;
+          });
+        }
+
+        const client = new AbortController();
+        const dropped = fetch(`${base}/mcp`, {
+          method: "POST",
+          signal: client.signal,
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json, text/event-stream",
+            ...connectorHeaders(),
+          },
+          body: JSON.stringify(call("project_list", {})),
+        }).catch(() => undefined);
+
+        await vi.waitFor(() => expect(reads).toEqual([`/${ids[0]}:research.json`]));
+        client.abort();
+        await vi.waitFor(() => expect(signals[0]!.aborted).toBe(true));
+        release();
+        await dropped;
+        // The dropped client has no response to wait on, so give the tool its next turns.
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        expect(reads).toEqual([`/${ids[0]}:research.json`]);
       });
 
       it("a connector call naming no project still refuses project tools and queries nothing", async () => {

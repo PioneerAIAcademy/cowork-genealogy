@@ -3,7 +3,8 @@
 // The file backend keeps each project in a folder the caller names, so it lists
 // none and says so. A hosted store names the paths it answers for: each holding a
 // research.json is a project, and the first holding none is where a new project
-// goes. Spec: docs/specs/project-list-tool-spec.md.
+// goes. A signed-in user's listing bounds each entry, because nothing bounds the
+// documents it reads. Spec: docs/specs/project-list-tool-spec.md.
 
 import { getProjectStore } from "../store/project-store.js";
 import { preferredDisplayName } from "./project-context.js";
@@ -17,6 +18,8 @@ export interface ProjectListEntry {
   projectPath: string;
   objective: string | null;
   subjects: ProjectListSubject[];
+  /** How many subjects were left out of a bounded entry; absent when none were. */
+  moreSubjects?: number;
   status: string | null;
   updated: string | null;
 }
@@ -25,9 +28,30 @@ export interface ProjectListResult {
   mode: "folder" | "hosted";
   /** Hosted only: an empty list on the file store would read as "no project". */
   projects?: ProjectListEntry[];
+  /** More projects exist than `projects` names; absent when it names them all. */
+  truncated?: true;
   newProjectPath?: string;
   message: string;
 }
+
+/** Above the longest objective in the eval corpus (341): only an abuse is cut. */
+export const MAX_OBJECTIVE_CHARS = 400;
+/** A subject's id and name, a status, a date. */
+export const MAX_FIELD_CHARS = 100;
+export const MAX_LISTED_SUBJECTS = 5;
+
+interface EntryBounds {
+  objective: number;
+  field: number;
+  subjects: number;
+}
+
+const VERBATIM: EntryBounds = { objective: Infinity, field: Infinity, subjects: Infinity };
+const USER_LISTING: EntryBounds = {
+  objective: MAX_OBJECTIVE_CHARS,
+  field: MAX_FIELD_CHARS,
+  subjects: MAX_LISTED_SUBJECTS,
+};
 
 const FOLDER_MESSAGE =
   "The task's working folder is the project: pass its absolute path as projectPath. " +
@@ -45,35 +69,53 @@ async function readJson(projectPath: string, ref: string): Promise<any> {
   }
 }
 
-const text = (v: unknown): string | null => (typeof v === "string" ? v : null);
+/** `s`, or its first `max` characters and an ellipsis. The trip through a Buffer
+ *  copies them: a V8 slice keeps its whole parent alive, so every entry would hold
+ *  the text this cut lets go. It also turns a pair the cut split into U+FFFD, since
+ *  half a pair is invalid in the JSON a client sends on to its model. */
+function cut(s: string, max: number): string {
+  return s.length <= max ? s : `${Buffer.from(s.slice(0, max)).toString()}…`;
+}
 
-async function entry(projectPath: string): Promise<ProjectListEntry> {
+const text = (v: unknown, max: number): string | null => (typeof v === "string" ? cut(v, max) : null);
+
+async function entry(projectPath: string, bounds: EntryBounds): Promise<ProjectListEntry> {
   const project = (await readJson(projectPath, "research.json"))?.project;
   const tree = await readJson(projectPath, "tree.gedcomx.json");
   const persons: any[] = Array.isArray(tree?.persons) ? tree.persons : [];
   const ids: unknown[] = Array.isArray(project?.subject_person_ids) ? project.subject_person_ids : [];
+  const subjectIds = ids.filter((id): id is string => typeof id === "string");
+  const left = subjectIds.length - bounds.subjects;
   return {
     projectPath,
-    objective: text(project?.objective),
-    subjects: ids
-      .filter((id): id is string => typeof id === "string")
-      .map((id) => ({ id, name: preferredDisplayName(persons.find((p) => p?.id === id)) })),
-    status: text(project?.status),
-    updated: text(project?.updated),
+    objective: text(project?.objective, bounds.objective),
+    subjects: subjectIds.slice(0, bounds.subjects).map((id) => ({
+      id: cut(id, bounds.field),
+      name: text(preferredDisplayName(persons.find((p) => p?.id === id)), bounds.field),
+    })),
+    ...(left > 0 ? { moreSubjects: left } : {}),
+    status: text(project?.status, bounds.field),
+    updated: text(project?.updated, bounds.field),
   };
 }
 
-function hostedMessage(listed: number, hasNew: boolean): string {
+function hostedMessage(listed: number, hasNew: boolean, truncated: boolean): string {
   const parts: string[] = [];
   if (listed > 0) parts.push("Pass a listed project's projectPath to continue it.");
   if (hasNew) {
     parts.push(
-      listed > 0
+      listed > 0 || truncated
         ? "To start a project for a person none of them is about, pass newProjectPath as projectPath."
         : "No project yet: pass newProjectPath as projectPath to start one.",
     );
   } else {
     parts.push("No other project can be started here.");
+  }
+  if (truncated) {
+    parts.push(
+      "More projects exist than are listed, and the most recently updated come first, so a " +
+        "person none of them is about may already have one: ask the researcher before starting a new project.",
+    );
   }
   return parts.join(" ");
 }
@@ -83,17 +125,20 @@ export async function projectList(): Promise<ProjectListResult> {
   const listing = await store.listProjects();
   if (listing.mode === "folder") return { mode: "folder", message: FOLDER_MESSAGE };
 
+  const bounds = listing.mode === "owned" ? USER_LISTING : VERBATIM;
+  const truncated = listing.mode === "owned" && listing.truncated;
   const projects: ProjectListEntry[] = [];
   let newProjectPath: string | undefined;
   for (const projectPath of listing.projectPaths) {
-    if (await store.exists(projectPath, "research.json")) projects.push(await entry(projectPath));
+    if (await store.exists(projectPath, "research.json")) projects.push(await entry(projectPath, bounds));
     else newProjectPath ??= projectPath;
   }
   return {
     mode: "hosted",
     projects,
+    ...(truncated ? { truncated: true as const } : {}),
     ...(newProjectPath !== undefined ? { newProjectPath } : {}),
-    message: hostedMessage(projects.length, newProjectPath !== undefined),
+    message: hostedMessage(projects.length, newProjectPath !== undefined, truncated),
   };
 }
 
@@ -106,8 +151,11 @@ export const projectListSchema = {
     "Returns mode and message. mode \"folder\": the task's working folder is the project; pass " +
     "its absolute path as projectPath and call project_context with it before routing, since this answer " +
     "does not say whether a project exists there. mode \"hosted\": projects [{projectPath, " +
-    "objective, subjects [{id, name}], status, updated}] are the caller's projects, and " +
-    "newProjectPath, when present, is where a new project goes. Writes nothing.",
+    "objective, subjects [{id, name}], moreSubjects, status, updated}] are the caller's projects, " +
+    "and newProjectPath, when present, is where a new project goes. A signed-in user's list is " +
+    "bounded: a text ending in … was cut, moreSubjects counts subjects left out, and truncated: " +
+    "true means more projects exist than are listed, so a person not listed may still have one. " +
+    "Writes nothing.",
   inputSchema: {
     type: "object" as const,
     properties: {},

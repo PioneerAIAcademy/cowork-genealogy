@@ -50,6 +50,7 @@ import {
   ownedProjectsStore,
   runWithProjectStore,
   type ClaimFence,
+  type OwnedProjectIds,
   type ProjectStore,
 } from "./store/project-store.js";
 
@@ -340,11 +341,12 @@ export interface ToolServerOptions {
    */
   projectOwner: (projectId: string) => Promise<ProjectOwnerReport>;
   /**
-   * The project ids a connector caller owns. Called only when `project_list`
-   * reads the store; a rejection reaches the model as `isError`, never as an
-   * empty list, which would read as "No project yet".
+   * The project ids a connector caller owns, bounded, and whether more exist.
+   * Called only when `project_list` reads the store; a rejection reaches the
+   * model as `isError`, never as an empty list, which would read as "No project
+   * yet".
    */
-  ownedProjects: (userId: string) => Promise<string[]>;
+  ownedProjects: (userId: string) => Promise<OwnedProjectIds>;
   /**
    * The web tier's OAuth issuer, byte for byte. The protected-resource metadata
    * and the `WWW-Authenticate: resource_metadata=` URL are built from it, NEVER
@@ -664,13 +666,17 @@ async function handleMcpPost(
       const userId = caller.userId;
       store = ownedProjectsStore(NO_CONNECTOR_PROJECT_MESSAGE, {
         // The door refuses any other shape, so naming one would offer a dead path.
-        listOwned: async () =>
-          (await options.ownedProjects(userId))
-            .map((id) => `/${id}`)
-            .filter((path) => CONNECTOR_PROJECT_RE.test(path)),
+        listOwned: async () => {
+          const owned = await options.ownedProjects(userId);
+          return {
+            projectPaths: owned.ids.map((id) => `/${id}`).filter((path) => CONNECTOR_PROJECT_RE.test(path)),
+            truncated: owned.truncated,
+          };
+        },
         freshPath: `/proj_${randomBytes(8).toString("hex")}`,
         storeFor: (path) =>
           options.bindStore(path.slice(1), disconnected.signal, undefined, { anchorPath: path, ownerId: userId }),
+        signal: disconnected.signal,
       });
     } else {
       if (!CONNECTOR_PROJECT_RE.test(projectPath)) {

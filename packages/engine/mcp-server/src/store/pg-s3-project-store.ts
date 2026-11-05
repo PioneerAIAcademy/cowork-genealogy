@@ -86,6 +86,7 @@ import { PROJECT_ID_RE } from "./project-id.js";
 import type {
   ClaimFence,
   JsonWrite,
+  OwnedProjectIds,
   ProjectDirState,
   ProjectEntry,
   ProjectListing,
@@ -248,23 +249,35 @@ export async function projectOwnerOf(
   return row ? { exists: true, ownerId: row.owner_id ?? null } : { exists: false, ownerId: null };
 }
 
+/** How many projects one `project_list` names. Nothing caps a user's projects, and
+ *  the listing reads two documents for each on the shared pool. */
+export const MAX_LISTED_PROJECTS = 100;
+
 const OWNED_PROJECTS_SQL = `
   SELECT p.project_id
     FROM projects p
     JOIN documents d ON d.project_id = p.project_id AND d.name = 'research.json'
    WHERE p.owner_id = $1
    ORDER BY d.updated_at DESC, p.project_id
+   LIMIT $2
 `;
 
 /**
- * The ids a connector's `project_list` names: the user's projects, newest first.
+ * The ids a connector's `project_list` names: the user's projects, newest first,
+ * at most `MAX_LISTED_PROJECTS`; the query asks for one more to tell `truncated`.
  * Only those holding a `research.json`: `project_list` takes the first path with
  * none as `newProjectPath`, so an id a staged read claimed and nothing finished
  * would displace the fresh path and offer its stale staging.
  */
-export async function ownedProjectIds(backend: PgS3Backend, userId: string): Promise<string[]> {
-  const rows = await backend.pool.query<{ project_id: string }>(OWNED_PROJECTS_SQL, [userId]);
-  return rows.rows.map((row) => row.project_id);
+export async function ownedProjectIds(backend: PgS3Backend, userId: string): Promise<OwnedProjectIds> {
+  const rows = await backend.pool.query<{ project_id: string }>(OWNED_PROJECTS_SQL, [
+    userId,
+    MAX_LISTED_PROJECTS + 1,
+  ]);
+  return {
+    ids: rows.rows.slice(0, MAX_LISTED_PROJECTS).map((row) => row.project_id),
+    truncated: rows.rows.length > MAX_LISTED_PROJECTS,
+  };
 }
 
 /** One store check's outcome. `error` is a short label (an error code or name),

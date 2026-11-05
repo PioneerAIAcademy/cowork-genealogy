@@ -60,8 +60,13 @@ export interface JsonWrite {
 
 /** How this store keeps projects, for `project_list`. `folder`: the caller names
  *  each project by its own path. `hosted`: these are the paths the caller may
- *  use; one holding no `research.json` is where a new project goes. */
-export type ProjectListing = { mode: "folder" } | { mode: "hosted"; projectPaths: string[] };
+ *  use; one holding no `research.json` is where a new project goes. `owned`: the
+ *  same for a signed-in user, whose paths can be many, so `project_list` bounds
+ *  each entry; `truncated` says the user has more than `projectPaths` names. */
+export type ProjectListing =
+  | { mode: "folder" }
+  | { mode: "hosted"; projectPaths: string[] }
+  | { mode: "owned"; projectPaths: string[]; truncated: boolean };
 
 /**
  * One worker attempt's claim of one hosted turn (U6): the `turns` row and the
@@ -214,13 +219,21 @@ export function unboundProjectStore(message: string): ProjectStore {
   return new UnboundProjectStore(message);
 }
 
+/** The newest of a user's project ids; `truncated`: the user owns more. */
+export interface OwnedProjectIds {
+  ids: string[];
+  truncated: boolean;
+}
+
 export interface OwnedProjects {
   /** The caller's project paths. A rejection reaches the model as `isError`. */
-  listOwned: () => Promise<string[]>;
+  listOwned: () => Promise<{ projectPaths: string[]; truncated: boolean }>;
   /** Listed after them: nothing is there yet, so it is where a new project goes. */
   freshPath: string;
   /** The store for one listed path. */
   storeFor: (projectPath: string) => ProjectStore;
+  /** Aborted when the caller is gone: the next read rejects, ending the listing. */
+  signal: AbortSignal;
 }
 
 /** An unbound store that can also answer `project_list`, for a connector request
@@ -293,16 +306,19 @@ class OwnedProjectsStore extends UnboundProjectStore {
   }
 
   override async listProjects(): Promise<ProjectListing> {
-    const projectPaths = [...(await this.owned.listOwned()), this.owned.freshPath];
+    const owned = await this.owned.listOwned();
+    const projectPaths = [...owned.projectPaths, this.owned.freshPath];
     for (const path of projectPaths) this.listed.set(path, this.owned.storeFor(path));
-    return { mode: "hosted", projectPaths };
+    return { mode: "owned", projectPaths, truncated: owned.truncated };
   }
 
-  override exists(projectPath: string, ref: string): Promise<boolean> {
+  override async exists(projectPath: string, ref: string): Promise<boolean> {
+    this.owned.signal.throwIfAborted();
     return this.listed.get(projectPath)?.exists(projectPath, ref) ?? super.exists(projectPath, ref);
   }
 
-  override readText(projectPath: string, ref: string): Promise<string> {
+  override async readText(projectPath: string, ref: string): Promise<string> {
+    this.owned.signal.throwIfAborted();
     return this.listed.get(projectPath)?.readText(projectPath, ref) ?? super.readText(projectPath, ref);
   }
 }

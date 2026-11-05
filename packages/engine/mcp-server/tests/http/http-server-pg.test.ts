@@ -52,6 +52,7 @@ import {
   PgS3ProjectStore,
   type PgS3Backend,
   lookupConnectorToken,
+  MAX_LISTED_PROJECTS,
   ownedProjectIds,
   projectOwnerOf,
 } from "../../src/store/pg-s3-project-store.js";
@@ -640,6 +641,40 @@ if (!DSN || !ENDPOINT) {
         expect([claimed, ownerless]).not.toContain(body.newProjectPath);
       });
 
+      it("a user at the listing limit gets every project, and one past it the newest with the cut said", async () => {
+        const a = await seedConnector();
+        const oldest = await seedOwned(a.userId, "the oldest");
+        await backend.pool.query(
+          "UPDATE documents SET updated_at = now() - interval '1 day' WHERE project_id = $1 AND name = 'research.json'",
+          [oldest.slice(1)],
+        );
+        const rest: string[] = [];
+        for (let i = 1; i < MAX_LISTED_PROJECTS; i++) rest.push(await seedOwned(a.userId, `project ${i}`));
+
+        const atLimit = toolBody(await connCall(a.token, "project_list", {}));
+        expect(pathsOf(atLimit)).toHaveLength(MAX_LISTED_PROJECTS);
+        expect(pathsOf(atLimit)).toContain(oldest);
+        expect(atLimit).not.toHaveProperty("truncated");
+        expect(atLimit.message).not.toContain("More projects exist");
+
+        const newest = await seedOwned(a.userId, "the newest");
+        const pastLimit = toolBody(await connCall(a.token, "project_list", {}));
+        expect(pathsOf(pastLimit)).toHaveLength(MAX_LISTED_PROJECTS);
+        expect(pathsOf(pastLimit)).toContain(newest);
+        expect(pathsOf(pastLimit)).not.toContain(oldest);
+        expect(pastLimit.truncated).toBe(true);
+        expect(pastLimit.message).toContain("More projects exist than are listed");
+        expect(pastLimit.newProjectPath).toMatch(/^\/proj_[0-9a-f]{16}$/);
+
+        // The database stops at the limit: the rest never reach this process.
+        await seedOwned(a.userId, "two past the limit");
+        const query = vi.spyOn(backend.pool, "query");
+        await ownedProjectIds(backend, a.userId);
+        const { rows } = await (query.mock.results[0]!.value as Promise<{ rows: unknown[] }>);
+        query.mockRestore();
+        expect(rows).toHaveLength(MAX_LISTED_PROJECTS + 1);
+      }, 60_000);
+
       it("project_list then person_read then project_create builds a project the caller owns and the next project_list returns it", async () => {
         const a = await seedConnector();
         const first = toolBody(await connCall(a.token, "project_list", {}));
@@ -895,7 +930,7 @@ if (!DSN || !ENDPOINT) {
             // token, and a throw is a 503, never an admission.
             lookupConnector: async () => null,
             projectOwner: async () => ({ exists: false, ownerId: null }),
-            ownedProjects: async () => [],
+            ownedProjects: async () => ({ ids: [], truncated: false }),
             checkReady: () => unmigrated.checkReady(),
           });
           const address = door.address();
