@@ -16,9 +16,9 @@ door, sign-in, `project_list` and the self-hosted stack. The lead merges.
 
 ## Decisions (lead, 2026-11-03 to 2026-11-05)
 
-1. **Cowork first, and chat too.** Research runs in a Cowork task, so that is the main
-   surface. Cards must also work in claude.ai chat and Desktop Chat: the same page and
-   server, checked on each.
+1. **Cowork and chat are both first-class.** Project data lives on the remote server, so
+   a user can work in a Cowork task, claude.ai chat or Desktop Chat. Cards work the same
+   on all three: the same page and server, checked on each.
 2. **A card is a picture, never a reply.** Nothing on a card posts a message or
    runs a step. The reply stays with the platform's own carrier (in Cowork today,
    the "Continue with …?" line). At a stopping point the order is: the step report,
@@ -44,7 +44,7 @@ door, sign-in, `project_list` and the self-hosted stack. The lead merges.
    `docs/mcp-app-host-probe.md`'s record has an answer, the Artifact and local rows
    included. Five answers gate the fold: does `_meta` reach the model (the canary), the
    fullscreen events and remount, the mount size past 300 KB, `openLink`, and
-   `projectPath`.
+   `projectPath`. Each needs an answer in a Cowork task, claude.ai chat and Desktop Chat.
 9. **The demo shows page images.** The demo project is run so that the pages
    that matter are transcribed and attached (see "Data").
 10. **FamilySearch links replace identifiers.** Wherever the project holds an
@@ -741,8 +741,8 @@ The two tools and the page move onto the tool server, behind the door.
   seed route, which follows issue #3997.
 - **Never touch Tailscale or Funnel on the self-hosted server.**
 
-**Done when:** a card draws in a Cowork task, signed in through `Genealogy Research`,
-on a seeded project; the worker's and the `.mcpb`'s tool lists hold neither tool; and
+**Done when:** a card draws in a Cowork task, claude.ai chat and Desktop Chat, signed in
+through `Genealogy Research`, on a seeded project; the worker's and the `.mcpb`'s tool lists hold neither tool; and
 a signed image link serves a page from MinIO. Sign-in itself needs issues #3992 and
 #3997 as well as #3991. `Genealogy Viewer` then retires.
 

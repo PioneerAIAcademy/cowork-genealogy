@@ -514,8 +514,9 @@ as long as this runs. Go straight to **Stop** afterwards.
 
 Read **Approvals** first: it sets how many cards the demo can have. Then **Card
 renders**: it says which surfaces draw a card. **What the model receives**, **Fullscreen**,
-**Size**, **`openLink`** and **`projectPath`** gate the fold (Decision 8). A `—` cell does
-not apply on that route. `no card` means the step needed a card and none rendered, which
+**Size**, **`openLink`** and **`projectPath`** gate the fold (Decision 8), so each needs an
+answer in a Cowork task, claude.ai chat and Desktop Chat. Name the surface in the cell. A
+`—` cell does not apply on that route. `no card` means the step needed a card and none rendered, which
 is an answer.
 
 | Run | |
