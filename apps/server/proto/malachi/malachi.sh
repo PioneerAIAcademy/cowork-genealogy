@@ -344,7 +344,11 @@ check_reach() { # label url
 check_public() {
   local edge=$1
   bash "$ROOT/scripts/tailscale-services.sh" check || FAILED=1
-  [ "$edge" = off ] || check_http "$PUBLIC_URL_VALUE"
+  if [ "$edge" = off ]; then
+    expect_code "public slot empty" 502 "$PUBLIC_URL_VALUE/livez"
+  else
+    check_http "$PUBLIC_URL_VALUE"
+  fi
 }
 
 check_docker_root() {
@@ -474,8 +478,11 @@ cmd_backup() {
 }
 
 check_blobs() { # database objects_dir
-  local key bytes file got rows=0 missing=0
+  local key bytes file got listing rows=0 missing=0
+  # Into a variable first: a failed read must fail here, not read as zero rows.
+  listing=$(compose exec -T postgres psql -U postgres -d "$1" -v ON_ERROR_STOP=1 -At -F $'\t' -c "SELECT s3_key, bytes FROM blobs")
   while IFS=$'\t' read -r key bytes; do
+    [ -n "$key" ] || continue
     rows=$((rows + 1))
     file=$2/$key
     if [ ! -f "$file" ]; then
@@ -488,7 +495,7 @@ check_blobs() { # database objects_dir
       printf '  FAIL  object is %s bytes, the row says %s: %s\n' "$got" "$bytes" "$key"
       missing=$((missing + 1))
     fi
-  done < <(compose exec -T postgres psql -U postgres -d "$1" -v ON_ERROR_STOP=1 -At -F $'\t' -c "SELECT s3_key, bytes FROM blobs")
+  done <<<"$listing"
   [ "$missing" = 0 ] || FAILED=1
   printf '  %s blob rows checked, %s bad\n' "$rows" "$missing"
 }

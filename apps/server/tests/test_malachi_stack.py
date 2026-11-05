@@ -758,6 +758,9 @@ def test_check_public_runs_the_ingress_check_and_the_http_half(first_run, tmp_pa
     assert off.returncode == 0, off.stdout + off.stderr
     assert "checking https://example.test" not in off.stdout
 
+    held = _run(["check-public"], {**fake_env, "EDGE": "off", "FAKE_SLOT": "200"})
+    assert held.returncode == 1 and "public slot empty: got 200" in held.stdout
+
 
 # ── project_export ───────────────────────────────────────────────────────────
 

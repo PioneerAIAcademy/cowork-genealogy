@@ -64,6 +64,10 @@ rcompose() { docker compose -p "$STACK" --env-file "$ENV_FILE" -f "$WORK/host/ap
 
 code_of() { curl -s -o /dev/null -w '%{http_code}' --max-time 60 "$@" || true; }
 
+download() { # output file; prints the status
+  curl -s -o "$1" -w '%{http_code}' --max-time 120 -H "Cookie: wb_session=$COOKIE" "$BASE/api/projects/$PROJECT/download" || true
+}
+
 mcp() { # json body; prints the response
   curl -s --max-time 60 -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
     -H 'Accept: application/json, text/event-stream' -d "$1" "$BASE/mcp"
@@ -350,7 +354,7 @@ must_pass "malachi-down" malachi-down
 must_pass "malachi-up" malachi-up
 must_pass "malachi-check" malachi-check
 [ "$(doc_version)" = 2 ] || fail "the document is gone"
-got=$(code_of -H "Cookie: wb_session=$COOKIE" -o "$WORK/down.zip" "$BASE/api/projects/$PROJECT/download")
+got=$(download "$WORK/down.zip")
 [ "$got" = 200 ] || fail "the download answered $got"
 unzip -l "$WORK/down.zip" | grep -q 'uploads/rehearsal.png' || fail "the upload left the project"
 pass "the document and the upload are still there"
@@ -375,7 +379,7 @@ pass "the connector token decrypts its grant after the restore"
 append paused >"$WORK/append2.json"
 [ "$(doc_version)" = 3 ] || fail "no write after the restore: $(head -c 400 "$WORK/append2.json")"
 pass "the role writes after the restore"
-got=$(code_of -H "Cookie: wb_session=$COOKIE" -o "$WORK/restored.zip" "$BASE/api/projects/$PROJECT/download")
+got=$(download "$WORK/restored.zip")
 [ "$got" = 200 ] || fail "the download after the restore answered $got"
 mkdir "$WORK/restored"
 (cd "$WORK/restored" && unzip -q "$WORK/restored.zip")
