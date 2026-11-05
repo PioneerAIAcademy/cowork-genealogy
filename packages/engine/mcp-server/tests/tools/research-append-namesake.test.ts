@@ -1230,7 +1230,8 @@ describe("namesake cap", () => {
 
     // The hannah-earnest-children e2e run of 2026-10-30: both rows cited a
     // record_read, whose sidecar carries no primaryId, and one listed the read
-    // persona's wife on the same household record.
+    // persona's wife on the same household record. The three persona ids and
+    // arks are the run's own, from its transcript.
     describe("from a record's own persons", () => {
       const ARK = (bare: string) => `ark:/61903/1:1:${bare}`;
       const HANNAH_1901 = { id: "p_10259312010", ark: ARK("XS75-FJM") };
