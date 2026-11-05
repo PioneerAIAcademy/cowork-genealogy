@@ -52,6 +52,7 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import hmac
 import json
 import os
 import re
@@ -182,6 +183,16 @@ def is_https() -> bool:
 
 def session_secret() -> str:
     return _env("SESSION_SECRET", DEV_SESSION_SECRET)
+
+
+def deletion_code(user_id: str) -> str:
+    """The code a user quotes to ask for their account to be deleted: 20 lowercase hex characters.
+
+    Rotating ``SESSION_SECRET`` changes every code. That is harmless: rotation also signs
+    everyone out, and the account menu shows the new code. Never log it, put it in a
+    feedback bundle, or return it from any route but ``GET /api/account``.
+    """
+    return hmac.new(session_secret().encode(), b"deletion-code:" + user_id.encode(), hashlib.sha256).hexdigest()[:20]
 
 
 def fs_token_enc_key() -> str:
