@@ -42,6 +42,12 @@ function tsFiles(dir: string): string[] {
   return out;
 }
 
+/** `join()` is backslash-separated on Windows; the literals this file compares
+ *  against below are hardcoded forward-slash, so normalize before comparing. */
+function toPosix(p: string): string {
+  return p.replace(/\\/g, "/");
+}
+
 /** Block and line comments removed, so commented-out code never counts as code. */
 function stripComments(src: string): string {
   return src.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/[^\n]*/g, "");
@@ -57,8 +63,8 @@ describe("a FamilySearch rewrap lets the budget refusal past first", () => {
 
     for (const file of tsFiles(SRC)) {
       // fs-budget.ts defines the marker; it is not a call site.
-      if (file.endsWith("/fs-budget.ts")) continue;
-      if (EXEMPT_FILES.has(file.slice(SRC.length + 1))) continue;
+      if (toPosix(file).endsWith("/fs-budget.ts")) continue;
+      if (EXEMPT_FILES.has(toPosix(file.slice(SRC.length + 1)))) continue;
       const lines = readFileSync(file, "utf-8").split("\n");
 
       for (let i = 0; i < lines.length; i++) {
@@ -82,7 +88,7 @@ describe("a FamilySearch rewrap lets the budget refusal past first", () => {
         // shape that makes a lint read as coverage while catching nothing.
         const between = stripComments(lines.slice(ci, i).join("\n"));
         if (!/isFsBudgetExhausted\s*\(/.test(between)) {
-          offenders.push(`${file.slice(SRC.length + 1)}:${i + 1} — ${lines[i].trim().slice(0, 70)}`);
+          offenders.push(`${toPosix(file.slice(SRC.length + 1))}:${i + 1} — ${lines[i].trim().slice(0, 70)}`);
         }
       }
     }
