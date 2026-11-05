@@ -70,7 +70,7 @@
 # the one that deserves to be read.
 #
 # ── Pins that must NOT be floated ─────────────────────────────────────────────
-# Four pins are load-bearing and have explicit `ignore` rules below. They are
+# Five pins are load-bearing and have explicit `ignore` rules below. They are
 # correctness pins, not staleness:
 #
 #   mcp <2                mcp 2.0.0 removed/renamed Server.list_tools, which
@@ -99,12 +99,24 @@
 #                         not typecheck against zod 3 — `npm run typecheck`
 #                         fails with 8 errors. Raise this only together with
 #                         moving eval/app to zod 4.
+#   @types/node <23       The runtime is Node 22 (.nvmrc, package.json engines,
+#                         all four CI workflows). Dependabot proposed 26.x twice
+#                         (PRs #4109 and #4110, both closed); types for a Node
+#                         we don't run only invite code that 22 lacks. Raise
+#                         this together with the runtime line (see the docker
+#                         entry below for what a runtime move involves).
 #
-# All five ignores are scoped to `version-update:*` update-types, so they
-# suppress only routine version bumps rather than security advisories.
+# Of these six ignores, five are scoped to `version-update:*` update-types, so
+# they suppress only routine version bumps rather than security advisories. The
+# @types/node one is a `versions: [">=23"]` range instead — deliberately: it
+# must also suppress a security-labelled bump onto a types line for a Node we
+# don't run (a @types package carries no runnable code to be vulnerable in).
+# (The docker entry below carries its own wildcard ignore, counted there.)
 #
-# All five are live and doing work — each one is a thing that has already broken
-# this repo once. Do not "clean them up" because the packages look stale.
+# The four update-types pins are live and doing work — each one is a thing that
+# has already broken this repo once. @types/node is noise suppression for the
+# two closed PRs above, not a past breakage. Do not "clean them up" because the
+# packages look stale.
 #
 # TWO OF THESE WERE ALREADY PINNED, AND THE BOT FLOATED THEM ANYWAY. That is the
 # pattern worth internalizing, because it recurs:
@@ -171,6 +183,10 @@ updates:
         update-types:
           - version-update:semver-major
           - version-update:semver-minor
+      # A versions range, not update-types — see "Pins that must NOT be
+      # floated" above for why it also suppresses security-labelled bumps.
+      - dependency-name: "@types/node"
+        versions: [">=23"]
     groups:
       npm-minor-and-patch:
         patterns:
