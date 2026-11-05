@@ -1580,13 +1580,19 @@
       }
     },
     "proof_claim": {
-      "description": "One claim within a multi-claim question (e.g. paternity or maternity within a single parentage question), tiered independently of the proof_summary's scalar `tier`. Optional and additive — omit entirely for the default, single-conclusion case. `tier` on the parent proof_summary carries the stronger of the per-claim tiers; the tree-encoding gate reads each claim's own `proof_tier` to decide whether that claim's `relationship` is written, independent of the scalar.",
+      "description": "One claim of a proof summary, tiered independently of the summary's scalar `tier`, which may not exceed the strongest claim at `possible` or better. Optional and additive: omit `claims` for the single-conclusion case. A claim names exactly one object: a `relationship`, a `fact`, an `identity`, a `name`, or a `finding` (a conclusion that is no tree object). The tree-encoding gate reads each claim's own `proof_tier`.",
       "type": "object",
       "required": [
         "claim",
         "proof_tier",
-        "supporting_assertion_ids",
-        "relationship"
+        "supporting_assertion_ids"
+      ],
+      "oneOf": [
+        { "required": ["relationship"] },
+        { "required": ["fact"] },
+        { "required": ["identity"] },
+        { "required": ["name"] },
+        { "required": ["finding"] }
       ],
       "additionalProperties": false,
       "properties": {
@@ -1599,6 +1605,9 @@
         "shortfall": {
           "$ref": "enums.schema.json#/$defs/proof_shortfall"
         },
+        "polarity": {
+          "$ref": "enums.schema.json#/$defs/claim_polarity"
+        },
         "supporting_assertion_ids": {
           "type": "array",
           "items": {
@@ -1608,27 +1617,179 @@
         },
         "relationship": {
           "$ref": "#/$defs/proof_claim_relationship"
+        },
+        "fact": {
+          "$ref": "#/$defs/proof_claim_fact"
+        },
+        "identity": {
+          "$ref": "#/$defs/proof_claim_identity"
+        },
+        "name": {
+          "$ref": "#/$defs/proof_claim_name"
+        },
+        "finding": {
+          "$ref": "#/$defs/proof_claim_finding"
         }
       }
     },
     "proof_claim_relationship": {
-      "description": "The tree endpoint a proof_claim concludes — a ParentChild relationship in tree.gedcomx.json, named so the tree-encoding gate has something to bind to mechanically rather than a prose label. Scoped to ParentChild only (paternity/maternity); a Couple (marriage) claim split can be added later if a second concrete need for it arises.",
+      "description": "The tree relationship a claim concludes: a ParentChild edge (`parent`, `child`, optional `subtype`) or a Couple edge (`person1`, `person2`).",
       "type": "object",
       "required": [
-        "type",
-        "parent",
-        "child"
+        "type"
+      ],
+      "oneOf": [
+        {
+          "properties": { "type": { "const": "ParentChild" } },
+          "required": ["parent", "child"],
+          "not": { "anyOf": [{ "required": ["person1"] }, { "required": ["person2"] }] }
+        },
+        {
+          "properties": { "type": { "const": "Couple" } },
+          "required": ["person1", "person2"],
+          "not": { "anyOf": [{ "required": ["parent"] }, { "required": ["child"] }, { "required": ["subtype"] }] }
+        }
       ],
       "additionalProperties": false,
       "properties": {
         "type": {
-          "const": "ParentChild"
+          "type": "string"
         },
         "parent": {
           "type": "string"
         },
         "child": {
           "type": "string"
+        },
+        "subtype": {
+          "$ref": "enums.schema.json#/$defs/parent_subtype_recommended"
+        },
+        "person1": {
+          "type": "string"
+        },
+        "person2": {
+          "type": "string"
+        }
+      }
+    },
+    "proof_claim_fact": {
+      "description": "A fact a claim concludes. `subject` is a tree person id, or a `{person1, person2}` pair for a couple event such as a marriage. A date range is one `date` value.",
+      "type": "object",
+      "required": [
+        "subject",
+        "fact_type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subject": {
+          "oneOf": [
+            { "type": "string" },
+            { "$ref": "#/$defs/proof_claim_pair" }
+          ]
+        },
+        "fact_type": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "place": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "proof_claim_pair": {
+      "description": "Two tree persons, the subject of a couple fact.",
+      "type": "object",
+      "required": [
+        "person1",
+        "person2"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "person1": {
+          "type": "string"
+        },
+        "person2": {
+          "type": "string"
+        }
+      }
+    },
+    "proof_claim_identity": {
+      "description": "An identity a claim concludes: a record party is a tree person (`record_id`, `party`, `person`, where `party` is the record_persona_id, else the record_role), or two tree persons are one (`person`, `same_as`).",
+      "type": "object",
+      "required": [
+        "person"
+      ],
+      "oneOf": [
+        {
+          "required": ["record_id", "party"],
+          "not": { "required": ["same_as"] }
+        },
+        {
+          "required": ["same_as"],
+          "not": { "anyOf": [{ "required": ["record_id"] }, { "required": ["party"] }] }
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "record_id": {
+          "type": "string"
+        },
+        "party": {
+          "type": "string"
+        },
+        "person": {
+          "type": "string"
+        },
+        "same_as": {
+          "type": "string"
+        }
+      }
+    },
+    "proof_claim_name": {
+      "description": "A name a claim concludes for a tree person.",
+      "type": "object",
+      "required": [
+        "person"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "person": {
+          "type": "string"
+        },
+        "given": {
+          "type": "string"
+        },
+        "surname": {
+          "type": "string"
+        }
+      }
+    },
+    "proof_claim_finding": {
+      "description": "A conclusion that is no tree object. `log_entry_ids` names the searches it rests on, each a log entry that exists.",
+      "type": "object",
+      "required": [
+        "finding_type",
+        "statement"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "finding_type": {
+          "$ref": "enums.schema.json#/$defs/finding_type"
+        },
+        "statement": {
+          "type": "string"
+        },
+        "log_entry_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^log_"
+          }
         }
       }
     },

@@ -1,3 +1,4 @@
+import { CLAIM_KINDS } from "../../src/validation/validator.js";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
 import { join } from "path";
@@ -216,6 +217,15 @@ describe("project_context", () => {
     expect(bare.ok && bare.subjectPersonIds).toEqual([]);
   });
 
+  it("claimKinds lists every kind the engine accepts", async () => {
+    await writeProject(
+      { project: { id: "rp_001", objective: "Fresh", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      { persons: [], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok && r.claimKinds).toEqual([...CLAIM_KINDS]);
+  });
+
   it("returns empty arrays for an empty project", async () => {
     await writeProject(
       { project: { id: "rp_001", objective: "Fresh", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
@@ -246,6 +256,7 @@ describe("project_context", () => {
       ),
       unregisteredDisagreementCount: 0,
       exhaustedImageGroups: [],
+      claimKinds: ["relationship", "fact", "identity", "name", "finding"],
     });
   });
 
