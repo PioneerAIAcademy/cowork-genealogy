@@ -762,6 +762,9 @@
             "null"
           ]
         },
+        "image_ark": {
+          "type": "string"
+        },
         "log_entry_id": {
           "anyOf": [
             {
