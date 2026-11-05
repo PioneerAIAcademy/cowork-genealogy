@@ -331,8 +331,8 @@ relay where the tool's message says to set it — never ask for it to be pasted
 into the chat, which would land it in the session transcript. Do not retry with a browser or a web fetch;
 those are unavailable and waste turns. Never invent, infer, or guess a page's
 contents when the read failed. A browse stopped by the image cap is unfinished:
-in a project, log it `outcome: "partial"`, never `"error"`; either way, give its
-link after the final `---`.
+in a project, log it `outcome: "partial"`, never `"error"`; either way, keep its
+`NOT READ` line and also give its link after the final `---`.
 
 **Listing a volume's images IS a completed browse — log it (step 6) before you
 present anything or defer reading.** The `image_search` call is the browse event
