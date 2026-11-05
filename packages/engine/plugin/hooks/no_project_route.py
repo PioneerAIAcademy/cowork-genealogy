@@ -16,7 +16,8 @@ hosted planes append the same text; both harnesses add it from here.
 
 **Cowork only.** Both hosted planes set `GENEALOGY_HOSTED_PLANE` in the SDK env, and the
 hook is silent there: the hosted fix ruled for them is text only (a truthful `project_note`
-and a `DELIVERY_GUIDANCE` exclusion), with nothing routing the main thread.
+carrying `NO_PROJECT_NOTE`, which held the routing sentence once `research_delivered`'s
+guidance was deleted), with nothing routing the main thread.
 
 **The sentence is conditional because the hook cannot see the project.** Its cwd in the VM
 is not the project folder (ADR-0005, item 7), so it cannot tell whether `research.json`
