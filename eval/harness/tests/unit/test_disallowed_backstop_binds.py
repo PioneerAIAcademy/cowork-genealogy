@@ -6,7 +6,11 @@ NotebookEdit away from a skill under test. If a CLI upgrade stopped honouring
 every run would still pass. This spawns the bundled CLI and reads the init
 message's tool list, which the CLI sends before any model call. The key variables
 are blanked and ANTHROPIC_BASE_URL points at a closed local port, so a stored
-login cannot turn the run into a real request.
+login cannot turn the run into a real request. CLAUDE_CONFIG_DIR is a fresh
+directory, so the developer's own ~/.claude.json cannot change the tool list
+either: a live Claude Code session rewrites that file, and on 2026-11-02 one
+made the CLI stop offering WebFetch, failing the first test on that machine
+only.
 """
 
 from __future__ import annotations
@@ -32,7 +36,7 @@ def _init_tools(tmp_path, disallowed: list[str]) -> list[str]:
         setting_sources=[],
         permission_mode="bypassPermissions",
         disallowed_tools=disallowed,
-        env=_NO_CREDENTIALS,
+        env={**_NO_CREDENTIALS, "CLAUDE_CONFIG_DIR": str(tmp_path / "claude-config")},
         max_turns=1,
     )
 

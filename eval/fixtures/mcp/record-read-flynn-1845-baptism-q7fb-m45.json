@@ -1,0 +1,108 @@
+{
+  "tool": "record_read",
+  "description": "record_read of Q7FB-M45, the 1845 Aghamore baptism of Patrick, son of Michael Flynn and Ellen Walsh, served by record-search-flynn-1845-baptisms-pool. Stocked so a read does not abort; ut_search_records_031 does not require it.",
+  "args": {
+    "recordId": "~Q7FB-M45"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Patrick",
+            "surname": "Flynn",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Christening",
+            "date": "3 June 1845",
+            "place": "Aghamore, Mayo, Ireland"
+          }
+        ],
+        "ark": "ark:/61903/1:1:Q7FB-M45",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Ireland, Catholic Parish Registers, 1740-1900"
+          }
+        ]
+      },
+      {
+        "id": "P2",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N2",
+            "preferred": true,
+            "given": "Michael",
+            "surname": "Flynn",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Ireland, Catholic Parish Registers, 1740-1900"
+          }
+        ]
+      },
+      {
+        "id": "P3",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N3",
+            "preferred": true,
+            "given": "Ellen",
+            "surname": "Walsh",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Ireland, Catholic Parish Registers, 1740-1900"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "R1",
+        "type": "ParentChild",
+        "parent": "P2",
+        "child": "P1"
+      },
+      {
+        "id": "R2",
+        "type": "ParentChild",
+        "parent": "P3",
+        "child": "P1"
+      },
+      {
+        "id": "R3",
+        "type": "Couple",
+        "person1": "P2",
+        "person2": "P3"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Ireland, Catholic Parish Registers, 1740-1900",
+        "collectionId": "2788312",
+        "ark": "ark:/61903/1:1:Q7FB-M45"
+      }
+    ],
+    "places": []
+  }
+}

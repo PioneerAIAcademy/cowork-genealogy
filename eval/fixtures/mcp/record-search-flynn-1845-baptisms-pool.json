@@ -1,0 +1,209 @@
+{
+  "tool": "record_search",
+  "description": "record_search for a Patrick Flynn baptism returns two 1845 baptisms in Aghamore, County Mayo: Q7FB-T45, son of Thomas Flynn and Mary Gallagher (12 March 1845), and Q7FB-M45, son of Michael Flynn and Ellen Walsh (3 June 1845). The subject, Patrick Flynn (I1, born about 1845 in Ireland), has one parent in the tree, Thomas (I2), but the search is for his parents (pli_007, q_001), so the delegation names none: neither baptism is tied or ruled out and the two are a pool. Feeds ut_search_records_031 (issue #3363, PR 3). Matched on surname alone; record-search-flynn-any-variant-no-results follows it for the variant spellings.",
+  "args": {
+    "surname": "~Flynn"
+  },
+  "response": {
+    "query": {
+      "surname": "Flynn"
+    },
+    "totalMatches": 2,
+    "paginationCappedAt": 100,
+    "returned": 2,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "Q7FB-T45",
+        "recordId": "Q7FB-T45",
+        "personName": "Patrick Flynn",
+        "score": 0.83,
+        "sex": "Male",
+        "birthDate": "1845",
+        "birthPlace": "Aghamore, Mayo, Ireland",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "12 March 1845",
+            "place": "Aghamore, Mayo, Ireland"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:Q7FB-T45",
+        "collectionId": "2788312",
+        "collectionTitle": "Ireland, Catholic Parish Registers, 1740-1900",
+        "recordTitle": "Baptism of Patrick Flynn, son of Thomas Flynn and Mary Gallagher",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Patrick",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Christening",
+                  "date": "12 March 1845",
+                  "place": "Aghamore, Mayo, Ireland"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Thomas",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Mary",
+                  "surname": "Gallagher",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "R1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            },
+            {
+              "id": "R2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            },
+            {
+              "id": "R3",
+              "type": "Couple",
+              "person1": "P2",
+              "person2": "P3"
+            }
+          ]
+        }
+      },
+      {
+        "personId": "Q7FB-M45",
+        "recordId": "Q7FB-M45",
+        "personName": "Patrick Flynn",
+        "score": 0.82,
+        "sex": "Male",
+        "birthDate": "1845",
+        "birthPlace": "Aghamore, Mayo, Ireland",
+        "events": [
+          {
+            "type": "Christening",
+            "date": "3 June 1845",
+            "place": "Aghamore, Mayo, Ireland"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:Q7FB-M45",
+        "collectionId": "2788312",
+        "collectionTitle": "Ireland, Catholic Parish Registers, 1740-1900",
+        "recordTitle": "Baptism of Patrick Flynn, son of Michael Flynn and Ellen Walsh",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Patrick",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Christening",
+                  "date": "3 June 1845",
+                  "place": "Aghamore, Mayo, Ireland"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Michael",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Ellen",
+                  "surname": "Walsh",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "R1",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P1"
+            },
+            {
+              "id": "R2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            },
+            {
+              "id": "R3",
+              "type": "Couple",
+              "person1": "P2",
+              "person2": "P3"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

@@ -464,7 +464,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // list — is doing the work of restricting.
   "proof-conclusion.md": {
     tools: [
-      "Read",
       "merge_tree_persons",
       "merge_warnings",
       "project_context",
@@ -473,6 +472,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "source_attachments",
       "tree_correct",
       "tree_edit",
+      "tree_query",
     ],
     denies: [],
   },
@@ -501,7 +501,12 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // binds in Cowork and the hosted path and in NEITHER harness, so a harness run
   // is not evidence about this. The count in the sentence above is now seven.
   "research-exhaustiveness.md": {
-    tools: ["Read", "project_context", "research_append", "research_query", "wiki_read"],
+    tools: [
+      "project_context",
+      "research_append",
+      "research_query",
+      "wiki_read",
+    ],
     denies: [],
   },
   // The only caller permitted to write research.json's person_evidence; the
@@ -536,6 +541,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_query",
       "same_person",
       "tree_edit",
+      "tree_query",
       "wiki_read",
     ],
     denies: [],
@@ -570,8 +576,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // preconditions, not by tool identity.
   "citation.md": {
     tools: [
-      "Read",
+      "project_context",
       "research_append",
+      "research_query",
+      "tree_query",
       "validate_research_schema",
       "wiki_read",
     ],
@@ -588,11 +596,11 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // place names and does not search.
   "conflict-resolution.md": {
     tools: [
-      "Read",
       "convert_calendar",
       "place_distance",
       "place_search",
       "place_search_all",
+      "project_context",
       "research_append",
       "research_query",
       "wiki_read",
@@ -607,8 +615,8 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // hook routes anything to it.
   "convert-dates.md": {
     tools: [
-      "Read",
       "convert_calendar",
+      "project_context",
       "research_log_append",
     ],
     denies: [],
@@ -622,14 +630,15 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // no hook routes anything to it.
   "tree-edit.md": {
     tools: [
-      "Read",
+      "merge_tree_persons",
+      "person_person_matches",
+      "person_record_matches",
       "place_search",
       "place_search_all",
-      "tree_edit",
+      "project_context",
       "tree_correct",
-      "merge_tree_persons",
-      "person_record_matches",
-      "person_person_matches",
+      "tree_edit",
+      "tree_query",
     ],
     denies: [],
   },
@@ -664,11 +673,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // entry the hook lane allows it.
   "timeline.md": {
     tools: [
-      "Read",
       "place_distance",
-      "project_context",
       "place_search",
       "place_search_all",
+      "project_context",
       "research_append",
       "research_query",
       "wiki_read",
@@ -683,13 +691,13 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // collections list past the inline cap (#2995).
   "locality-guide.md": {
     tools: [
-      "Read",
       "catalog_search",
       "collections_search",
       "external_links_search",
       "place_population",
       "place_search",
       "place_search_all",
+      "project_context",
       "research_append",
       "research_query",
       "volume_search",
@@ -712,10 +720,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // (lead ruling 2026-09-23).
   "historical-context.md": {
     tools: [
-      "Read",
       "place_population",
       "place_search",
       "place_search_all",
+      "project_context",
       "research_log_append",
       "wiki_read",
       "wiki_search",
@@ -750,6 +758,21 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
+  // New agent (issue #3522), one spawn per full-text hit: it reads the hit with
+  // `sidecar_read`, the target and its one-hop family with `project_context` and
+  // `tree_query`, and writes one `hit_verdicts` row through `research_append`
+  // (its hook lane). A Match is labelled, not extracted (lead, 2026-10-18), so
+  // no `extraction_append`; and no `research_query` and no `Read`.
+  "evaluate-search-results.md": {
+    tools: [
+      "project_context",
+      "research_append",
+      "sidecar_read",
+      "tree_query",
+    ],
+    denies: [],
+  },
+
   // search-hints (issue #2029) reviews FamilySearch hints. Triage reads:
   // `person_record_matches` for the pending matches, `research_query` to find a
   // hint the project already extracted, `record_read` per hint,
@@ -759,7 +782,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // hint through `research_log_append`. No `research_append`, so no hook lane.
   "search-hints.md": {
     tools: [
-      "Read",
       "image_transcribe",
       "person_read",
       "person_record_matches",
@@ -768,6 +790,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_log_append",
       "research_query",
       "sidecar_read",
+      "tree_query",
     ],
     denies: [],
   },
@@ -778,7 +801,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // plan-item status only (a lane in guard_project_files.py, a repo requirement).
   "search-records.md": {
     tools: [
-      "Read",
       "catalog_search",
       "extraction_append",
       "project_context",
@@ -790,6 +812,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_query",
       "same_person",
       "source_attachments",
+      "tree_query",
       "wiki_read",
       "wiki_search",
     ],
@@ -797,12 +820,13 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
   "search-images.md": {
     tools: [
-      "Read",
       "catalog_search",
       "image_search",
       "image_transcribe",
+      "project_context",
       "research_append",
       "research_log_append",
+      "research_query",
       "sidecar_read",
       "volume_bisect",
       "volume_search",
@@ -820,8 +844,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "Read",
       "fulltext_search",
       "get_name_variants",
+      "project_context",
       "research_append",
       "research_log_append",
+      "research_query",
       "source_attachments",
       "wiki_read",
       "wiki_search",
@@ -840,12 +866,12 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // sources); the body forbids reading research.json with it.
   "question-selection.md": {
     tools: [
-      "Read",
       "census_children_gap",
       "person_warnings",
       "project_context",
       "research_append",
       "research_query",
+      "tree_query",
     ],
     denies: [],
   },
@@ -882,6 +908,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   "survey-surname.md": {
     tools: [
       "place_search",
+      "project_context",
       "record_search",
       "research_log_append",
     ],
@@ -930,7 +957,12 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // Agent grant outright; this comment records that the omission is deliberate
   // rather than an oversight.
   "hypothesis-tracking.md": {
-    tools: ["Read", "research_append", "validate_research_schema"],
+    tools: [
+      "project_context",
+      "research_append",
+      "research_query",
+      "validate_research_schema",
+    ],
     denies: [],
   },
   "search-wikipedia.md": {
@@ -949,13 +981,13 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // check-warnings or extraction is handed back by name, so no spawn tool.
   "source-evaluation.md": {
     tools: [
-      "Read",
-      "person_read",
-      "record_read",
-      "source_attachments",
       "person_quality",
+      "person_read",
       "person_warnings",
+      "project_context",
+      "record_read",
       "research_log_append",
+      "source_attachments",
     ],
     denies: [],
   },
@@ -964,7 +996,11 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // `research_log_append` (#3524): inside a project it logs its translation as
   // one `translation` entry. No other MCP tool.
   "translation.md": {
-    tools: ["Read", "research_log_append"],
+    tools: [
+      "Read",
+      "project_context",
+      "research_log_append",
+    ],
     denies: [],
   },
 
@@ -994,7 +1030,6 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // rather than spawning them, so no spawn tool.
   "research-plan.md": {
     tools: [
-      "Read",
       "collections_search",
       "external_links_search",
       "person_read",
@@ -1003,6 +1038,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "project_context",
       "research_append",
       "research_query",
+      "tree_query",
       "volume_search",
       "wiki_read",
     ],

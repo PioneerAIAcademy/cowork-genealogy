@@ -17,12 +17,11 @@ What counts, and what deliberately does not:
   id, with no `1:1:` prefix, is not matched: the rule is the token, and the
   corpus holds no such citation.
 - **Attached** is a person-, name- or fact-level source ref on a subject
-  person, mapped through the tree's `sources[].url`. Relationship-level refs
-  are excluded, because most name the other party and the extraction step does
-  not read them (lead, 2026-10-20). That is a known gap: umbelina-azevedo-death
-  cites three records attached to its subject only through ParentChild refs
-  (77F3-D8T2, 794X-QD3Z, 79FM-TFZM), and they would leak with this check green
-  if the extractor ever read relationship refs.
+  person, or a source ref on a relationship a subject is an endpoint of
+  (`person1`, `person2`, `parent` or `child`), mapped through the tree's
+  `sources[].url`. That is the set `extraction_append({ personId })` reads:
+  relationship-level records are extracted and linked since the lead's
+  2026-10-30 ruling. A relationship between two other persons is not counted.
 """
 
 from __future__ import annotations
@@ -49,17 +48,20 @@ def _attached_to_subjects(fixture_dir: Path) -> dict[str, str]:
     research = _read(fixture_dir / "starting-research.json")
     subjects = set((research.get("project") or {}).get("subject_person_ids") or [])
     url = {s.get("id"): s.get("url") or "" for s in tree.get("sources") or [] if isinstance(s, dict)}
-    out: dict[str, str] = {}
+    holders: list = []
     for person in tree.get("persons") or []:
-        if not isinstance(person, dict) or person.get("id") not in subjects:
-            continue
-        holders = [person, *(person.get("names") or []), *(person.get("facts") or [])]
-        for holder in holders:
-            for ref in (holder.get("sources") or []) if isinstance(holder, dict) else []:
-                sid = ref.get("ref") if isinstance(ref, dict) else None
-                match = _RECORD_TOKEN.search(url.get(sid, ""))
-                if match:
-                    out.setdefault(match.group(1), sid)
+        if isinstance(person, dict) and person.get("id") in subjects:
+            holders += [person, *(person.get("names") or []), *(person.get("facts") or [])]
+    for rel in tree.get("relationships") or []:
+        if isinstance(rel, dict) and subjects & {rel.get(k) for k in ("person1", "person2", "parent", "child")}:
+            holders.append(rel)
+    out: dict[str, str] = {}
+    for holder in holders:
+        for ref in (holder.get("sources") or []) if isinstance(holder, dict) else []:
+            sid = ref.get("ref") if isinstance(ref, dict) else None
+            match = _RECORD_TOKEN.search(url.get(sid, ""))
+            if match:
+                out.setdefault(match.group(1), sid)
     return out
 
 
@@ -166,6 +168,24 @@ def test_a_cited_record_attached_to_the_subject_fails_naming_fixture_and_id(tmp_
     assert "never strip a record-hint fixture" in problems[0]
 
 
+@pytest.mark.parametrize(
+    "relationship",
+    [
+        {"id": "R1", "type": "Couple", "person1": "P1", "person2": "P2", "sources": [{"ref": "S1"}]},
+        {"id": "R1", "type": "Couple", "person1": "P2", "person2": "P1", "sources": [{"ref": "S1"}]},
+        {"id": "R1", "type": "ParentChild", "parent": "P1", "child": "P2", "sources": [{"ref": "S1"}]},
+        {"id": "R1", "type": "ParentChild", "parent": "P2", "child": "P1", "sources": [{"ref": "S1"}]},
+    ],
+    ids=["couple-person1", "couple-person2", "parent", "child"],
+)
+def test_a_cited_record_on_a_subject_relationship_fails(tmp_path, relationship):
+    _fixture(tmp_path, "fx", cites=["ABCD-123"], subject=_person("P1"), others=[_person("P2")],
+             relationships=[relationship], sources={"S1": _url("ABCD-123")})
+    problems = attached_evidence_findings(tmp_path, {})
+    assert len(problems) == 1
+    assert problems[0].startswith("fx: ABCD-123 is cited") and "tree source S1" in problems[0]
+
+
 def test_a_strip_fixture_is_told_to_strip(tmp_path):
     _fixture(tmp_path, "fx", cites=["ABCD-123"], subject=_person("P1", refs=["S1"]),
              sources={"S1": _url("ABCD-123")}, genre="strip")
@@ -181,11 +201,11 @@ def test_an_allow_listed_record_passes(tmp_path):
     "kwargs",
     [
         {"subject": _person("P1"), "others": [_person("P2", refs=["S1"])]},
-        {"subject": _person("P1"), "relationships": [{"id": "R1", "person1": "P1", "person2": "P2", "sources": [{"ref": "S1"}]}]},
+        {"subject": _person("P1"), "relationships": [{"id": "R1", "parent": "P2", "child": "P3", "sources": [{"ref": "S1"}]}]},
         {"subject": _person("P1", refs=["S1"]), "url": _url("ABCD-1234")},
         {"subject": _person("P1", refs=["S1"]), "cites_bare": True},
     ],
-    ids=["relative-only", "relationship-level", "longer-token", "bare-id-out-of-scope"],
+    ids=["relative-only", "relationship-between-others", "longer-token", "bare-id-out-of-scope"],
 )
 def test_what_is_not_a_leak_passes(tmp_path, kwargs):
     url = kwargs.pop("url", _url("ABCD-123"))
