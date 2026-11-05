@@ -1432,8 +1432,9 @@ describe("project_create — a ParentChild loop in the FamilySearch read (#4085)
       LOCAL,
     );
 
-  // salvador-choc-daughter's loop (R27): Catarina, Salvador's child, recorded
-  // as the parent of Petrona, Salvador's wife.
+  // salvador-choc-daughter's loop, without its dates: Catarina, Salvador's
+  // child, recorded as the parent of Petrona, Salvador's wife. With no dates
+  // the generation walk decides.
   const SALVADOR_READ = {
     persons: [person("MGDD-CB5", "Salvador", "Choc"), person("GG1G-697", "Petrona", "Ba"), person("94B1-P5D", "Catarina", "Choc")],
     relationships: [
@@ -1461,6 +1462,24 @@ describe("project_create — a ParentChild loop in the FamilySearch read (#4085)
       .map((r: any) => `${byId[r.parent]}>${byId[r.child]}`);
     expect(parentChild).toEqual(["Salvador>Catarina", "Petrona>Catarina"]);
     expect(await readJson("starting-tree.gedcomx.json")).toEqual(tree);
+  });
+
+  it("with the fixture's real dates, leaves out Petrona as Catarina's parent and says so", async () => {
+    const withDates = structuredClone(SALVADOR_READ) as any;
+    withDates.persons[1].facts = [{ type: "Christening", date: "14 Jul 1867" }];
+    withDates.persons[2].facts = [{ type: "Birth", date: "1838" }];
+    const result = await createWith("MGDD-CB5", withDates);
+    expect(result.ok).toBe(true);
+    expect(result.notes[0]).toBe(
+      "FamilySearch records Petrona Ba as Catarina Choc's parent and Catarina Choc as Petrona Ba's; " +
+        "the first link was left out of the tree, since a person cannot be their own ancestor.",
+    );
+    const tree = await readJson("tree.gedcomx.json");
+    const byId = Object.fromEntries(tree.persons.map((p: any) => [p.id, p.names[0].given]));
+    const parentChild = tree.relationships
+      .filter((r: any) => r.type === "ParentChild")
+      .map((r: any) => `${byId[r.parent]}>${byId[r.child]}`);
+    expect(parentChild).toEqual(["Salvador>Catarina", "Catarina>Petrona"]);
   });
 
   it("words a longer loop without claiming a reciprocal link FamilySearch does not hold", async () => {

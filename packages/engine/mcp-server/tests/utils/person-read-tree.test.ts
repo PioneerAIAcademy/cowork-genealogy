@@ -188,7 +188,45 @@ describe("buildFromStagedRead — ParentChild loops in the read (#4085)", () => 
     pc("94B1-P5D", "GG1G-697"),
   ];
 
-  it("salvador shape: drops the child recorded as the spouse's parent, keeps the spouse as the child's parent", async () => {
+  type Fact = { type: string; date: string };
+  const dated = (p: ReturnType<typeof person>, ...facts: Fact[]) => ({ ...p, facts });
+  // The fixture's own dates: Catarina born 1838, Petrona christened 1867.
+  const CATARINA_1838 = dated(CATARINA, { type: "Birth", date: "1838" });
+  const PETRONA_1867 = dated(PETRONA, { type: "Christening", date: "14 Jul 1867" });
+
+  it.each([
+    ["read order", [0, 1, 2, 3]],
+    ["wrong-by-generation edge listed first", [0, 1, 3, 2]],
+  ])("dates decide first: salvador's real dates drop Petrona as Catarina's parent (%s)", async (_label, order) => {
+    // R8 makes Petrona (christened 1867) the mother of Catarina (born 1838),
+    // so it goes, though the generation walk would drop the other edge.
+    const built = await build("MGDD-CB5", [SALVADOR, PETRONA_1867, CATARINA_1838], order.map((i) => salvadorRels[i]));
+    expect(droppedPids(built)).toEqual(["GG1G-697>94B1-P5D"]);
+    expect(edges(built).sort()).toEqual(["94B1-P5D>GG1G-697", "MGDD-CB5>94B1-P5D"]);
+    expect(built.droppedLoopEdges[0]).toMatchObject({ parentName: "Petrona X", childName: "Catarina X" });
+  });
+
+  it("falls back to generations when a person on the loop has no birth-like date", async () => {
+    const built = await build("MGDD-CB5", [SALVADOR, PETRONA, CATARINA_1838], salvadorRels);
+    expect(droppedPids(built)).toEqual(["94B1-P5D>GG1G-697"]);
+  });
+
+  it("falls back to generations when the dates rule out neither edge", async () => {
+    const same = { type: "Birth", date: "1850" };
+    const built = await build("MGDD-CB5", [SALVADOR, dated(PETRONA, same), dated(CATARINA, same)], salvadorRels);
+    expect(droppedPids(built)).toEqual(["94B1-P5D>GG1G-697"]);
+  });
+
+  it("a death date alone does not count as a birth-like date", async () => {
+    const built = await build(
+      "MGDD-CB5",
+      [SALVADOR, dated(PETRONA, { type: "Death", date: "1900" }), dated(CATARINA, { type: "Death", date: "1800" })],
+      salvadorRels,
+    );
+    expect(droppedPids(built)).toEqual(["94B1-P5D>GG1G-697"]);
+  });
+
+  it("salvador shape with no dates: generations drop the child recorded as the spouse's parent", async () => {
     const built = await build("MGDD-CB5", [SALVADOR, PETRONA, CATARINA], salvadorRels);
     expect(droppedPids(built)).toEqual(["94B1-P5D>GG1G-697"]);
     expect(edges(built)).toEqual(["MGDD-CB5>94B1-P5D", "GG1G-697>94B1-P5D"]);

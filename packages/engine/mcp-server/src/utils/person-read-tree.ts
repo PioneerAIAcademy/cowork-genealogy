@@ -23,6 +23,8 @@
 
 import type { SimplifiedFact, SimplifiedRelationship } from "../types/gedcomx.js";
 import { treePidOfArk } from "./ark.js";
+import { earliestYearOfFacts, latestYearOfFacts } from "./fact-helpers.js";
+import { BIRTHLIKE_FACT_TYPES } from "./mob.js";
 import { collectFacts, standardizePlaces } from "./gedcomx-convert.js";
 import { isNonPlacePhrase } from "./place-resolver.js";
 // The one relationship identity. A private copy here keyed on type and
@@ -441,7 +443,13 @@ export async function buildFromStagedRead(args: {
  *   parent's − 1, a Couple partner the same. The first value assigned wins.
  *   Loop edges are left out of the walk so the wrong edge cannot set the
  *   generations it is then scored by.
- * - While a loop remains, drop the loop edge with the smallest
+ * - While a loop remains, dates decide first: a loop edge whose parent's
+ *   earliest birth-like year is after the child's latest is impossible, and
+ *   the impossible edge with the widest such gap is dropped (latest in
+ *   `relationships` on a tie). Generations are only consulted when no loop
+ *   edge is impossible by dates (a person with no birth-like date, or dates
+ *   that agree with every edge).
+ * - By generations: drop the loop edge with the smallest
  *   gen(parent) − gen(child). When that minimum is shared, or a person on the
  *   loop has no generation, drop the loop edge latest in `relationships`.
  *
@@ -539,13 +547,30 @@ function breakAncestryLoops(
     return undefined;
   };
 
+  const factsOf = new Map(
+    persons.map((p) => [p.id as string, (Array.isArray(p.facts) ? p.facts : []) as SimplifiedFact[]]),
+  );
+  // Years by which the parent is certainly younger than the child: the
+  // parent's earliest birth-like year after the child's latest. Null when
+  // either has no birth-like year, or the dates do not rule the edge out.
+  const parentYoungerBy = (e: Obj): number | null => {
+    const parentEarliest = earliestYearOfFacts(factsOf.get(e.parent) ?? [], BIRTHLIKE_FACT_TYPES);
+    const childLatest = latestYearOfFacts(factsOf.get(e.child) ?? [], BIRTHLIKE_FACT_TYPES);
+    if (parentEarliest === null || childLatest === null) return null;
+    return parentEarliest > childLatest ? parentEarliest - childLatest : null;
+  };
+
   const nameOf = new Map(persons.map((p) => [p.id as string, displayName(p)]));
   const dropped: DroppedLoopEdge[] = [];
   for (let loop = findLoop(); loop; loop = findLoop()) {
     const latest = (edges: Obj[]) =>
       edges.reduce((a, b) => (relationships.indexOf(b) > relationships.indexOf(a) ? b : a));
     let drop: Obj;
-    if (loop.some((e) => !generation.has(e.parent) || !generation.has(e.child))) {
+    const impossible = loop.filter((e) => parentYoungerBy(e) !== null);
+    if (impossible.length) {
+      const most = Math.max(...impossible.map((e) => parentYoungerBy(e)!));
+      drop = latest(impossible.filter((e) => parentYoungerBy(e) === most));
+    } else if (loop.some((e) => !generation.has(e.parent) || !generation.has(e.child))) {
       drop = latest(loop);
     } else {
       const score = (e: Obj) => generation.get(e.parent)! - generation.get(e.child)!;

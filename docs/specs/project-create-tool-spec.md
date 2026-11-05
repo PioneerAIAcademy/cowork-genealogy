@@ -142,7 +142,16 @@ count, not time.
 - **Loops:** a ParentChild loop in the read (a person recorded as their own
   ancestor, directly or through a chain) is a FamilySearch data error, and the
   validator refuses any tree that holds one, so the build breaks it rather than
-  fail the create. Each person first gets a generation, by a breadth-first walk
+  fail the create. **Dates decide first.** A loop edge is impossible by dates
+  when the parent's earliest birth-like year (`BIRTHLIKE_FACT_TYPES`: Birth,
+  Christening, Baptism and the rest) is after the child's latest; when the loop
+  holds one or more such edges, the one with the widest gap goes (latest in the
+  read's `relationships` order on a tie). Only when no loop edge is impossible
+  by dates — someone on the loop has no birth-like date, or the dates agree with
+  every edge — do generations decide. A tree can merge two people of one name,
+  so a generation read off it can be wrong where a date is not; that is why
+  dates come first (salvador-choc-daughter: R7 rests on a merged Salvador Choc).
+  For generations, each person gets one by a breadth-first walk
   from the subject (0) over every relationship in the read's order except the
   ParentChild edges that lie on a loop: a parent is its child's generation + 1,
   a child its parent's − 1, a Couple partner the same, and the first value
@@ -154,9 +163,12 @@ count, not time.
   when two or more loop edges share that smallest score, the one latest in the
   read's `relationships` order goes, and when a person on the loop has no
   generation (the subject cannot reach them off the loop), the loop edge latest
-  in that order goes. On both loops seen in real reads, where a spouse and a child of the
-  subject are each recorded as the other's parent, this drops the child as the
-  spouse's parent. Each dropped edge is reported as one plain sentence, first in
+  in that order goes. Both loops seen in real reads have a spouse and a child of
+  the subject each recorded as the other's parent. In salvador-choc-daughter the
+  dates decide: Petrona Ba (christened 1867) cannot be the parent of Catarina
+  Choc (born 1838), so Petrona as Catarina's parent is dropped. In
+  isabel-carvajal-daughter Emilio has no birth-like date, so generations decide
+  and drop Ramón, the child, as Emilio's parent. Each dropped edge is reported as one plain sentence, first in
   the summary's `notes` and also in `validation.warnings`, worded by the loop's
   size: a person recorded as their own parent; a pair ("FamilySearch records A
   as B's parent and B as A's; the first link was left out of the tree, since a
@@ -463,8 +475,11 @@ the write ahead of the validation and watching two cases go red.
 
 > `packages/engine/mcp-server/tests/utils/person-read-tree.test.ts` — the place
 > retry, its no-op when nothing needs it, that a refusal never waits on it, that
-> it touches only the read's facts, and the access-date form; and the loop rule
-> on both fixture shapes (salvador-choc-daughter, isabel-carvajal-daughter), the
+> it touches only the read's facts, and the access-date form; and the loop rule:
+> salvador-choc-daughter's real dates deciding in both orders, the fallback to
+> generations when a loop person is undated, when the dates rule out neither
+> edge, and when only a death date is held; the generation rule
+> on both fixture shapes without dates (salvador-choc-daughter, isabel-carvajal-daughter), the
 > same decision with the wrong edge listed first, the same decision seeded from
 > the child on the loop in both orders, a tie in both orders, a loop the subject
 > cannot reach, a three-person loop with and without an anchor off the loop, a
