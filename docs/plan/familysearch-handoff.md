@@ -411,32 +411,30 @@ Nothing scripts it against a deployed stack yet (`make proto-demo` and `make pro
 
 ## Alignment with the self-hosted beta
 
-The [self-hosted beta](self-hosted-mcp-beta.md) runs this plan's web and tools tiers for Cowork users, with chat off and no worker or queue. The team makes its changes to the shared code, from that plan's issues, and Richard reviews each. Each change is additive and keeps this plan's behavior as the default:
+The [self-hosted beta](self-hosted-mcp-beta.md) runs this plan's web and tools tiers for invited Cowork users, with chat off and no worker or queue. Its changes to the shared code come from that plan's issues, and Richard reviews each. Each change is additive and keeps this plan's behavior as the default:
 - **Web tier:**
   - a chat switch, on by default;
   - project-keyed routes beside the session routes;
-  - an admission setting: the allowlist, or a user cap;
+  - the allowlist as the admission check, with the user-cap setting left unset;
   - a connection pool, and `/livez`;
   - Claude's OAuth sign-in server on the Python MCP SDK (`mcp` joins `proto-web`);
   - users looked up by FamilySearch id, under a unique index;
   - the FamilySearch redirect URI as a setting, the public URL plus `/callback` by default;
-  - with chat off only: a 24-hour session cookie, a single-use sign-in state, the onboarding page at `/`, the policies, the deletion date and the deletion code;
+  - with chat off only: a 24-hour session cookie, a single-use sign-in state, no stored refresh token, plain pages at `/`, the policies and the deletion code;
   - a FamilySearch sign-in budget, off unless set;
-  - OpenRouter linking and a project download;
-  - a feedback sink setting: `FEEDBACK_URL`, else S3 as today.
-- **Web bundle:** an nginx file setting `client_max_body_size 26m` and `proxy_read_timeout 600s`. Today nginx's 1 MB default refuses the web tier's 25 MB uploads here too.
-- **Browser app:** `apps/web` and `packages/viewer-ui` read feature flags from `/auth/config`; a flag it does not send keeps today's behavior.
+  - OpenRouter linking and a project download.
+- **Web bundle:** an nginx file setting `client_max_body_size 26m` and `proxy_read_timeout 600s`.
 - **Schema:** new numbered files from 016.
 - **Tools:**
   - `project_list`, which here lists the worker's project (PR #3852); a worker bundle with the research router's project step needs a tools tier that has it, so tools deploys first;
-  - G4's writer-tool checks and a `record_search` schema trim, if the beta needs them;
   - one door that also takes connector tokens, keeps taking the worker's stamped bearer, and answers the worker's refusals 403 as today; a request without the worker's project header needs a connector token;
   - the HTTP smoke runs every row through its stamped-turn client, which seeds a user, a project that user owns and the turn, and runs a connector client only with `--connector`. Acceptance step 2's bearer becomes the one the seeded turn is stamped with, its no-bearer run passes on the tools' FamilySearch 401s, and its role also needs INSERT and DELETE on users and projects. Every door test that sends no project header (`http-server.test.ts` 1, 2b, 3, 4 and 2e's no-header case, and `http-server-pg.test.ts`'s "no project header") moves to the stamped or connector path;
   - `projectUrl` and `uploadUrl` only when the tools tier's public-URL and uploads settings are set;
-  - the session-end hook, `auth_status`'s session check, the per-user cap and the 429 pause for connector callers only;
-  - the FamilySearch budget, the transcription cap, the transcription switch and the shared collections cache, each keeping today's behavior when unset.
+  - `auth_status`'s session check, the per-user cap and the 429 pause for connector callers only;
+  - the FamilySearch budget, the transcription cap and the shared collections cache, each keeping today's behavior when unset;
+  - for connector callers only: a sign-in link in the session message, `image_read` refused, a per-user image cap, and the MCP App's tools.
 
-**Planned after the beta launches** (the beta plan's "After launch" section, February–March 2027): the worker hands its CLI a per-attempt token instead of the patron's FamilySearch token, so the tools tier, not the worker, holds `FS_TOKEN_ENC_KEY`; and server-side refresh goes, so a patron signs in again when FamilySearch ends the session, as a beta user does.
+**Held** (issue #4003, in the icebox): the worker hands its CLI a per-attempt token instead of the patron's FamilySearch token, so the tools tier, not the worker, holds `FS_TOKEN_ENC_KEY`; and server-side refresh goes, so a patron signs in again when FamilySearch ends the session, as a beta user does.
 
 **Later options for this plan.** None is decided. Each would simplify code already built here:
 - polling instead of the SSE stream;
@@ -450,5 +448,5 @@ The [self-hosted beta](self-hosted-mcp-beta.md) runs this plan's web and tools t
 - The E2B/Fly/Neon alpha's token-refresh race (issue #2887): PR #2977 merged 2026-09-29 (engine 401 re-read; it re-reads only under `LOCAL`, so a bearer is unaffected), PR #2973 merged 2026-09-29.
 - The eval harness: stays ours; U15, U16 port its measurements.
 - `apps/server/dev/p1/` and `apps/server/proto/{seed,export,grade,compare,drive,smoke,turn}.py`: the re-run kit, never deployed.
-- Opaque session tokens replacing the live bearer: planned after the beta launches (Alignment with the self-hosted beta, above).
+- Opaque session tokens replacing the live bearer: held (Alignment with the self-hosted beta, above).
 - The turn-scoped batch ledger: cut 2026-09-10 (P1: a resumed turn re-decides).
