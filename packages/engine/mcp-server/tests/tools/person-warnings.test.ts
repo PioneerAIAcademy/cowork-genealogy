@@ -2103,6 +2103,124 @@ describe("hasDeathBeforeChildBirthLike predicate (family-level)", () => {
   });
 });
 
+// Issue #4224: the parent's death used to be compared with the EARLIEST child
+// only, so one child born in time hid every posthumous one. Each offending
+// child now gets its own warning, through calculateWarnings (the drift lint
+// cannot see wiring).
+describe("hasDeathBeforeChildBirth* — one warning per posthumous child (#4224)", () => {
+  const person = (
+    id: string,
+    gender: string,
+    facts: Array<[string, string]>,
+  ): SimplifiedPerson => ({
+    id,
+    gender,
+    names: [{ id: `${id}-n`, given: id, surname: "X" }],
+    facts: facts.map(([type, date]) => ({
+      id: `${id}-${type}`,
+      type,
+      date,
+      standard_date: date,
+    })),
+  });
+  const family = (
+    persons: SimplifiedPerson[],
+    edges: Array<[string, string]>,
+  ): SimplifiedGedcomX => ({
+    persons,
+    relationships: edges.map(([parent, child], i) => ({
+      id: `R${i}`,
+      type: "ParentChild",
+      parent,
+      child,
+    })),
+  });
+  const deathTags = (tree: SimplifiedGedcomX, anchor: string) =>
+    finalWarnings(new Mob(tree, anchor))
+      .filter((w) => w.issueType.includes("DeathBeforeChildBirth"))
+      .map((w) => `${w.issueType}|${w.personId}|${w.relatedPersonId}`)
+      .sort();
+
+  const father = person("F", "Male", [
+    ["Birth", "1 Jan 1790"],
+    ["Death", "12 Jan 1859"],
+  ]);
+  const a = person("A", "Male", [["Birth", "1 Jan 1820"]]);
+  const b = person("B", "Female", [["Birth", "9 Aug 1935"]]);
+  const c = person("C", "Male", [["Birth", "1 Mar 1937"]]);
+
+  it("names the posthumous child even when an earlier child was born in time", () => {
+    const tree = family([father, a, b], [["F", "A"], ["F", "B"]]);
+    expect(deathTags(tree, "F")).toEqual([
+      "hasDeathBeforeChildBirth30_10|F|B",
+      "hasDeathBeforeChildBirth365_2|F|B",
+    ]);
+  });
+
+  it("gives two posthumous children two warnings per tag", () => {
+    const tree = family([father, a, b, c], [["F", "A"], ["F", "B"], ["F", "C"]]);
+    expect(deathTags(tree, "F")).toEqual([
+      "hasDeathBeforeChildBirth30_10|F|B",
+      "hasDeathBeforeChildBirth30_10|F|C",
+      "hasDeathBeforeChildBirth365_2|F|B",
+      "hasDeathBeforeChildBirth365_2|F|C",
+    ]);
+  });
+
+  it("does not newly fire on an imprecise date that may be in time (Abt 1860)", () => {
+    const abt = person("B", "Female", [["Birth", "Abt 1860"]]);
+    const tree = family([father, a, abt], [["F", "A"], ["F", "B"]]);
+    expect(deathTags(tree, "F")).toEqual([]);
+  });
+
+  it("names the posthumous child for a mother", () => {
+    const mother = person("M", "Female", [["Death", "1 Jan 1850"]]);
+    const early = person("A", "Male", [["Birth", "1 Jan 1840"]]);
+    const late = person("B", "Male", [["Birth", "1 Jun 1855"]]);
+    const tree = family([mother, early, late], [["M", "A"], ["M", "B"]]);
+    expect(deathTags(tree, "M")).toEqual([
+      "hasDeathBeforeChildBirthFemale2|M|B",
+      "hasDeathBeforeChildBirthFemale365|M|B",
+    ]);
+  });
+
+  it("relatives mirror names the posthumous sibling from an in-time child's anchor", () => {
+    const tree = family([father, a, b], [["F", "A"], ["F", "B"]]);
+    expect(deathTags(tree, "A")).toEqual([
+      "relativesHasDeathBeforeChildBirth30_10|F|B",
+      "relativesHasDeathBeforeChildBirth365_2|F|B",
+    ]);
+  });
+
+  it("femaleRelatives mirror covers every female relative, not the first", () => {
+    const m1 = person("M1", "Female", [["Death", "1 Jan 1840"]]);
+    const m2 = person("M2", "Female", [["Death", "1 Jan 1841"]]);
+    const child = person("C", "Male", [["Birth", "1 Jan 1850"]]);
+    const tree = family([m1, m2, child], [["M1", "C"], ["M2", "C"]]);
+    const fem2 = deathTags(tree, "C").filter((t) =>
+      t.startsWith("femaleRelativesHasDeathBeforeChildBirth2|"),
+    );
+    expect(fem2).toEqual([
+      "femaleRelativesHasDeathBeforeChildBirth2|C|M1",
+      "femaleRelativesHasDeathBeforeChildBirth2|C|M2",
+    ]);
+  });
+
+  it("femaleRelatives mirror reports the anchor's own birth, never a sibling's", () => {
+    const mother = person("M", "Female", [["Death", "1 Jan 1850"]]);
+    const early = person("A", "Male", [["Birth", "1 Jan 1840"]]);
+    const late = person("B", "Male", [["Birth", "1 Jun 1855"]]);
+    const tree = family([mother, early, late], [["M", "A"], ["M", "B"]]);
+    const fem = (anchor: string) =>
+      deathTags(tree, anchor).filter((t) => t.startsWith("femaleRelatives"));
+    expect(fem("A")).toEqual([]);
+    expect(fem("B")).toEqual([
+      "femaleRelativesHasDeathBeforeChildBirth2|B|M",
+      "femaleRelativesHasDeathBeforeChildBirth365|B|M",
+    ]);
+  });
+});
+
 // ────────────────────────────────────────────────────────────────────
 // calculateWarnings — orchestrator
 // ────────────────────────────────────────────────────────────────────

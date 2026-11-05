@@ -87,7 +87,8 @@ NEWLY_ENFORCED = {"localities"}
 #: row's `callers` -- person-evidence appears in none, so `writer_sets` resolves its
 #: agent owner nowhere. `person_evidence` is the empty set for the same reason.
 #: `namesakes` (issue #3363, PR 2) is search-records', which the row lists in its
-#: `callers`, so it resolves.
+#: `callers`, so it resolves. PR 3 adds search-images and search-full-text, which
+#: the row lists in `hookCallers` only (the hook's co-writers).
 #: `hit_verdicts` (issue #3522, PR 2) is evaluate-search-results', a new section and
 #: a new agent: one verdict per full-text hit, routed whole to the agent by the hook.
 #: The row claims the unit plane so the agent's own suite checks the section; without
@@ -96,7 +97,7 @@ NEWLY_ENFORCED = {"localities"}
 #: hook denies every caller but the agent.
 ADDED: dict[str, set[str]] = {
     "rejected_links": set(),
-    "namesakes": {"search-records"},
+    "namesakes": {"search-records", "search-images", "search-full-text"},
     "hit_verdicts": {"evaluate-search-results"},
 }
 
