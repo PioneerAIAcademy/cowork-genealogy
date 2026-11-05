@@ -65,7 +65,7 @@ door, sign-in, `project_list` and the self-hosted stack. The lead merges.
 Feedback; print and GEDCOM export; any button that posts; progress polling;
 fetching unsaved page images from FamilySearch; uploads; `allToolSchemas` and
 `manifest.json`; sign-in and `project_list`; `apps/web`. Main's research
-router waits until after the demo. Electron and the web viewer stay as they are
+router is issue #4297. Electron and the web viewer stay as they are
 through the demo, with fixes only.
 
 ## Scope for the demo
@@ -428,7 +428,7 @@ from it, and an unannotated tool defaults to "not read-only".
 - **Build:** `make mcp-viewer-build` builds the page and copies it to
   `packages/engine/mcp-server/viewer/page/viewer.html` (gitignored).
 
-### Router lines (a variant plugin build for the demo)
+### Router lines
 
 One line per stopping point in `skills/research/SKILL.md`: after the step report,
 call `show_project` with the step and the `questionId` it worked on, then the reply.
@@ -436,11 +436,12 @@ The tool is found by bare name
 (`+show_project` in ToolSearch). The bounded "where the project stands" row gains
 the same call with `show: latest`, after its paragraph.
 
-- **Where they live:** a local branch, `mcp-app-router-variant`, holding only the
-  router-line commit. For the demo the zip is built at one pinned commit of that
-  branch with `scripts/package-plugin.mjs` and installed on the lead's account. No PR
-  is opened from that branch. The PR to main and its paid `research` eval run come
-  after the demo, under issue #4297.
+- **Where they live:** on main, through issue #4297, which merges with the MCP App work
+  before launch in one paid `research` eval run. Invited users get the zip
+  `make plugin-connector` builds, and the acceptance run uses that zip on a new account.
+- **For the demo,** a variant plugin may stand in: local branch
+  `mcp-app-router-variant` at one pinned commit, built with
+  `scripts/package-plugin.mjs` and installed on the lead's account.
 - **Under Decision 3's fallback:** lines only for setup, search, conflict,
   hypothesis and conclusion, plus a link line only when the link step ends on a
   question for the researcher (no "Continue with …?" line).
@@ -526,8 +527,8 @@ show only on the connector surface.
    remote-server owns that file, so it gets the stub page first.
 3. Fold a skeleton into the tool server once issue #3991 lands.
 4. Build the demo scope (M1).
-5. For the demo, the router lines stay on the variant plugin at a pinned commit. The
-   PR to main and its paid `research` eval run come after, under issue #4297.
+5. Merge the router lines under issue #4297, with one paid `research` eval run, before
+   launch. Until then the demo may run the variant plugin at a pinned commit.
 
 ### M0: Skeleton and host probe
 
@@ -619,7 +620,7 @@ Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
   card with its recorded doubt → open the case file → the research log → an indexed
   record's search, in the side panel → Sources → the browsed record's page image and
   transcription. If they are built, the grid and Compare close the script. Light and
-  dark. Then a live run with the variant plugin calling the three cards and offering
+  dark. Then a live run with the router lines calling the three cards and offering
   named next steps at the forks.
 - A short screen recording of the demo script.
 
@@ -669,7 +670,7 @@ Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
 ### M2: The other step cards (after the demo)
 
 Plan, link (with the identity question side by side when it asks one), conflict,
-hypothesis, assess. The variant plugin gains the remaining router lines, or under
+hypothesis, assess. The router gains its remaining lines, or under
 Decision 3's fallback only conflict, hypothesis and the conditional link line, and
 the report line.
 
@@ -733,10 +734,9 @@ The two tools and the page move onto the tool server, behind the door.
   learns they are connector-only. `tests/http/http-server.test.ts` and the manifest's
   dispatch test change with them. The moved code runs on both store backends.
 - **A spec and the catalog:** both tools get a spec and a `docs/catalog.md` entry.
-- **The beta plan's viewer items** (W3's viewer routes, W4's viewer, polling and
-  print view, D4 step 5, acceptance 2.2 and 2.6) change to the card.
 - **Test projects:** seed them with `dev/seed-project.ts` and set `owner_id`, because
-  the door refuses a NULL owner. The script takes no owner yet.
+  the door refuses a NULL owner. The script takes no owner yet. remote-server owns the
+  seed route, which follows issue #3997.
 - **Never touch Tailscale or Funnel on the self-hosted server.**
 
 **Done when:** a card draws in a Cowork task, signed in through `Genealogy Research`,
@@ -752,7 +752,9 @@ a signed image link serves a page from MinIO. Sign-in itself needs issues #3992 
   it to `read_project_view`.
 - There is one public origin, `WEB_PUBLIC_URL`. The page's `resourceDomains` and every
   image link use it. `projectUrl` goes away.
-- A tool error reaches the card as text.
+- A tool error reaches the card as text. A 401 stays HTTP, because that is what makes
+  Claude refresh. Whether the door's 400, 403 and 503 become tool errors on the connector
+  path waits on what the stub card shows.
 - Later, `show_project`'s `_meta` carries `session: {signedIn, url}` for a sign-in
   banner.
 
@@ -762,11 +764,10 @@ a signed image link serves a page from MinIO. Sign-in itself needs issues #3992 
 - `src/server.ts` and the tools Dockerfile: this work.
 - Compose, nginx, `src/auth/config.ts` and `src/hosted-config-env.ts`: remote-server.
   This work asks it to add `/img` to the edge.
-- The plugin's research `SKILL.md`: last, after the demo.
+- The plugin's research `SKILL.md`: last, under issue #4297.
 
 ## After the demo
 
-- **The router lines on main,** with one paid `research` eval run, under issue #4297.
 - **Packaging:** build the page into `eb-tools.zip`, and the release smoke checks
   `resources/read`.
 - **Electron and the web viewer:** removing them is the lead's call after the demo. It
