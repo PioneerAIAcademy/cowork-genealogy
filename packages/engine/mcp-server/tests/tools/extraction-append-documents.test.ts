@@ -509,6 +509,22 @@ describe("extraction_append: documents", () => {
     expect((await read()).sources).toHaveLength(2);
   });
 
+  it("writes a top-level absentPersons entry on the document its recordId names, and on no other", async () => {
+    const r = await runExtractionAppend({
+      projectPath: dir,
+      documents: [
+        { recordId: "capture:obituary-named", document: obituary },
+        { recordId: "capture:obituary-other", document: obituary },
+      ],
+      absentPersons: [{ recordId: "capture:obituary-named", name: "Mary Whitaker", note: "Mary Whitaker is not named among the survivors" }],
+    } as any, noReader, LOCAL) as unknown as ExtractionBatchResult;
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const absent = (await read()).assertions.filter((a: any) => a.record_role === "absent");
+    expect(absent.map((a: any) => [a.record_id, a.value])).toEqual([
+      ["capture:obituary-named", "Mary Whitaker is not named among the survivors"],
+    ]);
+  });
+
   it("refuses a logged search sidecar passed as a transcription, and writes nothing", async () => {
     const staged = await stageSearchResults({
       projectPath: dir,
@@ -1780,6 +1796,17 @@ describe("extraction_append: documents", () => {
         expect(await readFile(join(dir, "research.json"), "utf8")).toBe(before);
       });
 
+      it("refuses swapped labels through a staged ref the log already consumed", async () => {
+        const ref = await stage(TEXT);
+        const pre = await researchLogAppend({
+          projectPath: dir, tool: "image_transcribe", query: { imageId: "deed384" }, outcome: "positive", resultsExamined: 1, stagedResultsRef: ref,
+        } as any);
+        if (!pre.ok) throw new Error(`setup log refused: ${JSON.stringify(pre)}`);
+        const r = await run([{ recordId: "capture:deed-held", document: swappedDeed(), transcriptionRef: ref }]);
+        expect(r.ok).toBe(false);
+        expect(r.errors?.join(" ")).toMatch(/KNOW YE, That I Paul Meacham/);
+      });
+
       it("writes the same deed when labelled as the page says", async () => {
         const r = await run([{ recordId: "capture:deed-ok", document: deed(meacham()), transcriptionRef: await stage(TEXT) }]);
         expect(r.ok).toBe(true);
@@ -1987,6 +2014,15 @@ describe("extraction_append: a full-text hit (#3522)", () => {
     expect(r.ok).toBe(false);
     expect(r.records[0].status).toBe("refused");
     expect((await read()).sources).toHaveLength(0);
+  });
+
+  it("cites a hit through a staged ref its search's log entry consumed", async () => {
+    const held = "results/.staging/held-search.json";
+    const doc = await read();
+    doc.log.find((e: any) => e.id === "log_003").staged_ref = held;
+    await writeFile(join(dir, "research.json"), JSON.stringify(doc), "utf8");
+    const r = await run([{ recordId: hits[4].id, document: birth(), transcriptionRef: `${held}#${arkToBareId(hits[4].id)}` }]);
+    expect(r.records[0], JSON.stringify(r)).toMatchObject({ status: "extracted", logId: "log_003" });
   });
 
   it("refuses a hit of a search not yet logged, without refusing the page beside it", async () => {

@@ -566,7 +566,7 @@ export default function ChatPane({
     return () => window.clearInterval(id)
   }, [busy])
 
-  const send = (text: string): void => {
+  const send = (text: string, { keepDraft = false } = {}): void => {
     const trimmed = text.trim()
     // 1b: `busy` is NOT a reason to refuse. Under continuous work a turn is the
     // whole job -- a median of 53 minutes -- so the old `|| busy` guard meant
@@ -581,7 +581,7 @@ export default function ChatPane({
     setOutcome(null) // 1c: a new message supersedes how the last turn ended
     setOutcomeKind(null)
     setBusy(true) // which also retires the offer: `busy` is what hides the buttons
-    setInput('')
+    if (!keepDraft) setInput('')
     // Sending is an unambiguous "I'm back at the live edge" — re-attach even if
     // the user had scrolled up to compose against something further back.
     scrollToBottom()
@@ -619,7 +619,8 @@ export default function ChatPane({
     setUploading(false)
     if (fileInputRef.current) fileInputRef.current.value = ''
     if (failed.length > 0) setUploadError(`Upload failed. ${failed.join('; ')}`)
-    if (paths.length > 0) send(uploadMessage(paths))
+    // The box stays open during uploads, so what it holds now is a note, not this message.
+    if (paths.length > 0) send(uploadMessage(paths), { keepDraft: true })
   }
 
   return (

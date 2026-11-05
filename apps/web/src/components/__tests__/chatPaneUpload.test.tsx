@@ -93,6 +93,27 @@ describe('attaching files', () => {
     expect(await screen.findByText(/p2\.jpg: too large/)).toBeTruthy()
   })
 
+  it('keeps a note typed while the set was uploading', async () => {
+    let finish: (v: { path: string; sizeBytes: number }) => void = () => {}
+    vi.spyOn(api, 'uploadSessionFile').mockReturnValue(new Promise((resolve) => (finish = resolve)))
+    const { conn, input } = mount()
+    pick(input, [file('p1.jpg')])
+    const box = screen.getByRole('textbox') as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: 'the fourth page is torn' } })
+    await act(async () => finish({ path: 'uploads/p1.jpg', sizeBytes: 1 }))
+    await waitFor(() => expect(conn.sent).toHaveLength(1))
+    expect(box.value).toBe('the fourth page is torn')
+  })
+
+  it('a typed message still clears the box', () => {
+    const { conn } = mount()
+    const box = screen.getByRole('textbox') as HTMLTextAreaElement
+    fireEvent.change(box, { target: { value: 'find his parents' } })
+    fireEvent.keyDown(box, { key: 'Enter' })
+    expect(conn.sent).toHaveLength(1)
+    expect(box.value).toBe('')
+  })
+
   it('sends nothing when no file landed', async () => {
     vi.spyOn(api, 'uploadSessionFile').mockRejectedValue(new ApiError(413, 'too large'))
     const { conn, input } = mount()

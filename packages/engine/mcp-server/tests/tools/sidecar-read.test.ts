@@ -612,6 +612,7 @@ describe("sidecar_read: a staged transcription, and several refs", () => {
   });
 
   it("a research.json it cannot read leaves a dead ref gone, and does not throw", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
     const ref = await stageTranscription("Harold Dean Whitaker, 91");
     await getProjectStore().remove(dir, ref);
     await writeFile(join(dir, "research.json"), "{ not json", "utf-8");

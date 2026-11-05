@@ -214,7 +214,7 @@ export interface ExtractionBatchInput {
   questionIds?: string[];
   /** A tree person (tree id or FamilySearch id) whose attached records to extract and link. */
   personId?: string;
-  /** Expected-but-absent persons for a record in `recordIds`, keyed by its id. */
+  /** Expected-but-absent persons for a record in `recordIds` or `documents`, keyed by its id. */
   absentPersons?: { recordId?: string; name: string; factType?: string; note?: string }[];
   /** Extract an already-extracted record again and retire its old assertions (#3678). */
   reextract?: boolean;
@@ -1108,9 +1108,7 @@ async function recordIdsMode(
         o.summary = `${o.recordId}: logged as ${o.logId}, but its sidecar does not hold that record.`;
         continue;
       }
-      const absent = (input.absentPersons ?? []).filter(
-        (p) => p.recordId !== undefined && arkToBareId(p.recordId) === arkToBareId(o.recordId),
-      );
+      const absent = absentPersonsFor(input, o.recordId);
       const { ops, sourceDescription, extraction } = buildExtractionOps(
         { recordId: doc.recordId ?? o.recordId, gedcomx: doc.gedcomx ?? {}, indexFields: doc.indexFields },
         { logEntryId: o.logId!, questionIds: input.questionIds, absentPersons: absent },
@@ -1427,6 +1425,13 @@ function coerceComputed(f: unknown): void {
   fact.computed = [...new Set(out)];
 }
 
+/** The call's top-level `absentPersons` keyed to one record. */
+function absentPersonsFor(input: ExtractionBatchInput, recordId: string) {
+  return (input.absentPersons ?? []).filter(
+    (p) => p.recordId !== undefined && arkToBareId(p.recordId) === arkToBareId(recordId),
+  );
+}
+
 type StagedPage = { live: string } | { logId: string; resultsRef: string } | { refusal: string };
 
 function loggedPage(at: Extract<StagedRefLocation, { state: "logged" }>): StagedPage {
@@ -1474,11 +1479,15 @@ async function citeFulltextHit(
   hit: string,
 ): Promise<{ logId: string; resultsRef: string; hit: FulltextHitRow } | string> {
   if (base.startsWith(`${STAGING_SUBDIR}/`)) {
-    return (
-      `transcriptionRef '${ref}' names a hit of a full-text search that is not logged yet: log the ` +
-      `search first (research_log_append with stagedResultsRef '${base}'), then cite the hit as ` +
-      `'<its results_ref>#<hit id>'.`
-    );
+    const at = await locateStagedRef(projectPath, base);
+    if (at.state !== "logged") {
+      return (
+        `transcriptionRef '${ref}' names a hit of a full-text search that is not logged yet: log the ` +
+        `search first (research_log_append with stagedResultsRef '${base}'), then cite the hit as ` +
+        `'<its results_ref>#<hit id>'.`
+      );
+    }
+    base = at.resultsRef;
   }
   const entry = log.find((e) => e?.results_ref === base && typeof e?.id === "string");
   if (!entry || entry.tool !== "fulltext_search") {
@@ -1544,7 +1553,12 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     if (!d.transcriptionRef || (d.document.recordType !== "land" && d.document.recordType !== "probate")) continue;
     let text: string | undefined;
     try {
-      const rows = await readStagedResults(input.projectPath, d.transcriptionRef);
+      // A consumed staged ref still names the page, and a held ref is what
+      // `reextract` sends, so this must not read as a page it cannot check.
+      const at = d.transcriptionRef.startsWith(`${STAGING_SUBDIR}/`)
+        ? await locateStagedRef(input.projectPath, d.transcriptionRef)
+        : null;
+      const rows = await readStagedResults(input.projectPath, at?.state === "logged" ? at.resultsRef : d.transcriptionRef);
       text = (rows as any[]).find((r) => typeof r?.transcription === "string")?.transcription;
     } catch {
       continue;
@@ -1723,7 +1737,7 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
             op: "append" as const,
             entry: a as unknown as Record<string, unknown>,
           })),
-          ...(o.d.document.absentPersons ?? []).map((p) => ({
+          ...[...(o.d.document.absentPersons ?? []), ...absentPersonsFor(input, o.recordId)].map((p) => ({
             section: "assertions" as const,
             op: "append" as const,
             entry: {
