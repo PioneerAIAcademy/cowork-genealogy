@@ -330,7 +330,7 @@ def _protected_name(path: str) -> str | None:
     """The protected file `path` names, as its canonical lowercase name, or None.
 
     Folded the way a Windows or macOS host resolves a name: case is folded
-    (`casefold`, so `reſearch.json` matches as APFS matches it), and a stream
+    (`casefold`, so a long-s spelling (U+017F) matches as APFS matches it), and a stream
     suffix (`research.json::$DATA`) and trailing dots and spaces
     (`research.json.`) are dropped, since Windows ignores both. An 8.3 short
     name (`RESEAR~1.JSO`) is not matched: it cannot be told from a real file
