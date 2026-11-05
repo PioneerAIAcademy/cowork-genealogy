@@ -56,12 +56,14 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
 
 ## Fixed
 
-- **certifi** (CRITICAL, GHSA-6q48-6c7w-9gw2) and **PyJWT** (HIGH, GHSA-pxh4-856f-4h89 and
-  GHSA-p4g4-x82p-q773; MEDIUM, GHSA-jwrc-g2q2-pq5p and GHSA-2gx3-rcp4-g85q) — both Python
-  trees and the three `requirements.txt` files exported from `apps/server/uv.lock`, runtime.
-  **Fixed 2026-11-05.** Patched at certifi 2026.10.18 and PyJWT 2.14.0; both locks now resolve
-  certifi 2026.10.23 and PyJWT 2.15.1 (`apps/server` took both in #4207's pin bump, `eval/harness`
-  in a full `uv lock --upgrade`). Severities as the public advisory database gives them.
+- **certifi** (CRITICAL, GHSA-6q48-6c7w-9gw2) and **PyJWT** (every advisory the database
+  lists for 2.13.0, up to CRITICAL: GHSA-ffc3-869f-jxw9) — both Python trees and the three
+  `requirements.txt` files exported from `apps/server/uv.lock`, runtime. **Fixed
+  2026-11-05.** certifi is patched at 2026.10.18. PyJWT needs 2.15.0: most of its
+  advisories are patched at 2.14.0, but GHSA-x33g-cr3x-6449 and GHSA-42vr-xj54-vc7v cover
+  2.14.0 as well. Both locks now resolve certifi 2026.10.23 and PyJWT 2.15.1 (`apps/server`
+  and its exports took both in #4207's pin bump, `eval/harness` in a full
+  `uv lock --upgrade`). Severities as the public advisory database gives them.
 
 - **cryptography** (HIGH, GHSA-g6cj-pr64-35w5) — **Fixed 2026-11-05.** Patched at 50.0.0.
   `apps/server` was already on 50.0.2; `eval/harness` moved 49.0.0 → 50.0.2 in a full
@@ -69,6 +71,16 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
 
 - **h2** (MEDIUM, GHSA-6hr6-w5qg-qmwg) — `apps/server/uv.lock`. **Fixed 2026-11-05.** Patched at
   4.4.1, which a full `uv lock --upgrade` took (from 4.3.0). Under Deferred from 2026-09-21 until then.
+
+- **mcp** (MEDIUM: GHSA-w4fh-qvv9-3v23, GHSA-5h93-6whr-6q8j, GHSA-rwrf-2pqf-9j8j and
+  GHSA-84m7-p3x7-pcfv) — both Python trees and the `sandbox/` and `proto/worker/` exports.
+  **Fixed 2026-11-05** by the same `uv lock --upgrade`: 1.28.1 / 1.29.0 → 1.30.0, the 1.x
+  patch for all four, so the `<2` cap that keeps `claude-agent-sdk` working stays.
+
+- **hpack** (MEDIUM, GHSA-8v8h-hg4w-mvq2) and **opentelemetry-api** (MEDIUM,
+  GHSA-xcq7-p3pf-p88h) — `apps/server/uv.lock` only. **Fixed 2026-11-05** by the same
+  `uv lock --upgrade`: hpack 4.1.0 → 4.2.0 (patched at 4.2.0) and opentelemetry-api
+  1.44.0 → 1.45.2 (patched at 1.45.1).
 
 - **Root pnpm workspace minor/patch sweep** — **Fixed 2026-11-04** (issue #4185,
   the minor-and-patch half of the 54-alert `pnpm-lock.yaml` backlog; the majors
@@ -473,13 +485,15 @@ not digests, so it catches tag moves (`python:3.12` → `3.13`) and nothing else
 patch-level base-image CVEs land when upstream rebuilds the same tag, which a
 rebuild picks up and Dependabot never sees. Pin by digest if that ever matters.
 
-Two `ignore` rules protect load-bearing pins in
-`eval/harness/pyproject.toml` — `mcp>=1.29,<2` (PR #932; mcp 2.0.0 removed
-`Server.list_tools`, which `claude_agent_sdk.create_sdk_mcp_server` calls) and
-the exact `claude-agent-sdk==` pin, which moves only with apps/server's
-`sandbox` group (`eval/harness/tests/unit/test_sdk_pin_matches_hosted.py`), so
-every version update to it is ignored. Both are scoped to `version-update:*`,
-so a genuine security advisory on either package still opens a PR.
+Three `ignore` rules protect load-bearing Python pins. Both uv trees cap mcp below 2
+(`mcp>=1.29,<2` in `eval/harness/pyproject.toml`, `mcp>=1.28.1,<2` in
+`apps/server/pyproject.toml`; PR #932: mcp 2.0.0 removed `Server.list_tools`, which
+`claude_agent_sdk.create_sdk_mcp_server` calls), and each tree's entry ignores mcp
+majors. The third is the exact `claude-agent-sdk==` pin in `eval/harness`, which moves
+only with apps/server's `sandbox` group
+(`eval/harness/tests/unit/test_sdk_pin_matches_hosted.py`), so every version update to
+it is ignored. All three are scoped to `version-update:*`, so a genuine security
+advisory on either package still opens a PR.
 
 One known rough edge: `packages/engine/mcp-server` pins `npm@11.12.1` and
 `check-engine-lockfile.yml` fails any PR whose lockfile that exact npm would
@@ -537,17 +551,25 @@ clears in passing) is issue #4188; zod 3 → 4 in eval/app (1) is issue #4190.
 Issues #4188 and #4190 each still edit this section — whoever lands next recounts
 it with the `gh` command above rather than hand-merging.
 
-**#4187 (the Python trees).** `uv lock --upgrade` in both trees, and the three
-exports regenerated from `apps/server/uv.lock`, clear the Python manifests' rows above:
-the public advisory database lists no advisory for any package version in either new
-lock (the exports carry the same versions), and it does list the certifi, PyJWT,
-cryptography and h2 advisories for the old versions:
+**#4187 (the Python trees), 2026-11-05.** `uv lock --upgrade` in both trees, and the
+three exports regenerated from `apps/server/uv.lock`, leave no locked version inside any
+advisory range the public advisory database lists, and OSV's `querybatch` finds none
+either. The reliable query lists every advisory for each package and leaves the version
+test to you, against each `vulnerabilities[].vulnerable_version_range`:
 
-    gh api "/advisories?ecosystem=pip&affects=<package>@<version>,<package>@<version>"
+    gh api --paginate "/advisories?ecosystem=pip&affects=<package>,<package>&per_page=100"
 
-The alerts close when Dependabot rescans `main`. This is a per-version check, not a
-recount: the alert list needs repository security access, which the triage role
-lacks (HTTP 403).
+Do not add `@<version>` to `affects`: that form matches the advisory's recorded package
+name case-sensitively. On 2026-11-05, `pyjwt@2.13.0` returned 4 of the 15 advisories
+whose ranges cover 2.13.0, and missed every one recorded as `PyJWT` or `pyJWT`.
+
+Against the table above, this clears the `apps/server/uv.lock`, `eval/harness/uv.lock`
+and `sandbox/` rows, and `proto/worker/`'s mcp. The `proto/worker/` PyJWT and certifi
+alerts and `proto/web/`'s certifi alert are on versions those exports already left in
+#4207 (PyJWT 2.15.1, certifi 2026.10.23), so they close on the same rescan either way.
+Alerts close when Dependabot rescans `main`. This is a per-version check, not the
+recount the paragraph above asks for: the alert list needs repository security access,
+which the triage role lacks (HTTP 403), so the next recount needs someone who has it.
 
 *Previous measurements: 164 on 2026-11-03; 14 on 2026-09-21; 75 on 2026-09-10;
 53 on 2026-08-23 (issue #1036); 24 before PR #1030.*
