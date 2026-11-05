@@ -23,19 +23,31 @@
 // loopback redirect's port vary per RFC 8252) rather than its framework. Here
 // there is no `/register`, the metadata sets
 // `client_id_metadata_document_supported`, `/authorize` fetches the `client_id`
-// document only from claude.ai, and `/token` issues no refresh token.
+// document only from claude.ai, and `/token` issues a refresh token only under
+// `--refresh`.
 //
 // Every request is logged to stdout as one JSON line (`ev=…`). Values of
 // `code`, `state`, `code_verifier`, `code_challenge` and every token are
 // redacted before logging; parameter names are kept, since they are the
-// measurement. Never paste a token into the issue.
+// measurement. Never paste a token into the issue. Each access token gets a
+// `token_seq`, and every accepted /mcp request logs `mcp_ok` with it, so the
+// log shows which token a task used.
 //
 // Run:
 //   PROBE_PUBLIC_URL=https://<tunnel-host> npx tsx dev/probe-connector-server.ts \
-//     [--token-ttl <seconds>] [--deny-flag <path>] [--host <address>]
+//     [--token-ttl <seconds>] [--deny-flag <path>] [--signin-flag <path>] \
+//     [--refresh] [--host <address>]
 // --token-ttl   access-token lifetime, default 600 (10 minutes).
 // --deny-flag   while this file exists every /mcp call answers 401; default
 //               ./probe-deny-401.flag. `touch` it to start, `rm` it to stop.
+//               The old token works again after the `rm`; to end a token for
+//               real, restart the probe.
+// --signin-flag while this file exists record_read, record_search and
+//               person_read answer with the sign-in error and its link to
+//               `/signin-again`, whose button removes the file. Without this
+//               flag there is no `/signin-again`.
+// --refresh     `/token` also issues a refresh token, accepts the grant, and
+//               rotates the refresh token on use.
 // --host        interface to bind, default 127.0.0.1 (as `src/http.ts`). A
 //               tunnel and Beanstalk's nginx both reach the probe over
 //               loopback; a container or a host with no local proxy needs `--host 0.0.0.0`.
@@ -43,7 +55,7 @@
 // Claude cannot tell from expiry. Do not restart during the expiry test.
 import http from "node:http";
 import { createHash, randomBytes } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, rmSync } from "node:fs";
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { redirectUriMatches } from "@modelcontextprotocol/sdk/server/auth/handlers/authorize.js";
@@ -84,6 +96,8 @@ if (!Number.isInteger(TOKEN_TTL_S) || TOKEN_TTL_S <= 0) {
   throw new Error(`--token-ttl must be a whole number of seconds, got "${flag("--token-ttl", "")}"`);
 }
 const DENY_FLAG = flag("--deny-flag", "probe-deny-401.flag");
+const SIGNIN_FLAG = flag("--signin-flag", "");
+const REFRESH = process.argv.includes("--refresh");
 // Loopback by default, as `src/http.ts`'s `--host` does: a probe reached through
 // a tunnel needs no other interface, and binding them all also publishes it to
 // everything else on the operator's network. P0.3's Beanstalk nginx also
@@ -163,7 +177,7 @@ const authorizationServerMetadata = {
   authorization_endpoint: `${PUBLIC_URL}/authorize`,
   token_endpoint: `${PUBLIC_URL}/token`,
   response_types_supported: ["code"],
-  grant_types_supported: ["authorization_code"],
+  grant_types_supported: REFRESH ? ["authorization_code", "refresh_token"] : ["authorization_code"],
   code_challenge_methods_supported: ["S256"],
   token_endpoint_auth_methods_supported: ["none"],
   scopes_supported: [SCOPE],
@@ -230,7 +244,10 @@ interface Grant {
 }
 const pending = new Map<string, Grant>();
 const codes = new Map<string, Grant>();
-const tokens = new Map<string, { clientId: string; expiresAt: number }>();
+const tokens = new Map<string, { clientId: string; seq: number; expiresAt: number }>();
+// Never swept: a used refresh token has to stay to be recognised when it returns.
+const refreshTokens = new Map<string, { clientId: string; seq: number; resource: string | undefined; used: boolean }>();
+let lastTokenSeq = 0;
 
 /** Drop expired sign-ins, codes and tokens, so a long-running deployment's maps
  *  do not grow without bound. */
@@ -319,6 +336,43 @@ async function handleApprove(req: http.IncomingMessage, res: http.ServerResponse
   res.end();
 }
 
+/** A new access token and, under `--refresh`, a refresh token: the `/token` body
+ *  and the access token's seq. */
+function mintTokens(clientId: string, resource: string | undefined): { seq: number; body: Record<string, unknown> } {
+  const seq = ++lastTokenSeq;
+  const accessToken = newSecret();
+  tokens.set(accessToken, { clientId, seq, expiresAt: Date.now() + TOKEN_TTL_S * 1000 });
+  const body: Record<string, unknown> = { access_token: accessToken, token_type: "Bearer", expires_in: TOKEN_TTL_S };
+  if (REFRESH) {
+    const refreshToken = newSecret();
+    refreshTokens.set(refreshToken, { clientId, seq, resource, used: false });
+    body.refresh_token = refreshToken;
+  }
+  return { seq, body };
+}
+
+/** `scope` and `client_id` are optional: a refresh can arrive without either.
+ *  A reuse logs only `refresh_reuse`, so `oauth_error` still means a probe fault. */
+function handleRefresh(res: http.ServerResponse, params: Record<string, string>): void {
+  const paramNames = Object.keys(params);
+  const entry = params.refresh_token ? refreshTokens.get(params.refresh_token) : undefined;
+  if (!entry) return oauthError(res, 400, "invalid_grant", "refresh token unknown");
+  if (entry.used) {
+    log("refresh_reuse", { token_seq: entry.seq, param_names: paramNames });
+    return sendJson(res, 400, { error: "invalid_grant", error_description: "refresh token already used" });
+  }
+  if (params.client_id !== undefined && params.client_id !== entry.clientId) {
+    return oauthError(res, 400, "invalid_grant", "client_id does not match the refresh token");
+  }
+  if (params.resource !== undefined && params.resource !== MCP_URL) {
+    return oauthError(res, 400, "invalid_target", `resource must be ${MCP_URL}`);
+  }
+  entry.used = true;
+  const { seq, body } = mintTokens(entry.clientId, entry.resource);
+  log("token_refreshed", { old_token_seq: entry.seq, token_seq: seq, param_names: paramNames, expires_in: TOKEN_TTL_S });
+  sendJson(res, 200, body);
+}
+
 async function handleToken(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   let params: Record<string, string>;
   try {
@@ -333,6 +387,7 @@ async function handleToken(req: http.IncomingMessage, res: http.ServerResponse):
     user_agent: req.headers["user-agent"],
   });
   sweep();
+  if (REFRESH && params.grant_type === "refresh_token") return handleRefresh(res, params);
   if (params.grant_type !== "authorization_code") {
     return oauthError(res, 400, "unsupported_grant_type", `grant_type "${params.grant_type}" is not supported`);
   }
@@ -353,13 +408,34 @@ async function handleToken(req: http.IncomingMessage, res: http.ServerResponse):
   if (createHash("sha256").update(verifier).digest("base64url") !== grant.codeChallenge) {
     return oauthError(res, 400, "invalid_grant", "code_verifier does not match the code_challenge");
   }
-  const accessToken = newSecret();
-  tokens.set(accessToken, { clientId: grant.clientId, expiresAt: Date.now() + TOKEN_TTL_S * 1000 });
-  log("token_issued", { client_id: grant.clientId, expires_in: TOKEN_TTL_S, resource: grant.resource });
-  sendJson(res, 200, { access_token: accessToken, token_type: "Bearer", expires_in: TOKEN_TTL_S });
+  const { seq, body } = mintTokens(grant.clientId, grant.resource);
+  log("token_issued", { token_seq: seq, client_id: grant.clientId, expires_in: TOKEN_TTL_S, resource: grant.resource });
+  sendJson(res, 200, body);
+}
+
+// ---- /signin-again: the stand-in for FamilySearch sign-in ----
+
+function signinHtml(res: http.ServerResponse, body: string): void {
+  res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
+  res.end(`<!doctype html><meta charset="utf-8"><title>Sign in again</title>\n${body}`);
+}
+
+/** Only the POST clears the flag, so a link preview cannot. */
+function handleSigninAgain(req: http.IncomingMessage, res: http.ServerResponse): void {
+  if (req.method === "POST") {
+    rmSync(SIGNIN_FLAG, { force: true });
+    log("signin_done", { user_agent: req.headers["user-agent"] });
+    return signinHtml(res, `<h1>Signed in</h1>\n<p>Go back to Claude and ask it to continue.</p>`);
+  }
+  log("signin_page", { user_agent: req.headers["user-agent"] });
+  signinHtml(res, `<h1>Sign in again</h1>
+<form method="post" action="/signin-again"><button type="submit">Sign in</button></form>`);
 }
 
 // ---- /mcp: the stub tools ----
+
+const SIGNIN_TOOLS = new Set(["record_read", "record_search", "person_read"]);
+const SIGNIN_MESSAGE = `Your FamilySearch sign-in has expired. Open this link to sign in again, then ask me to continue: ${PUBLIC_URL}/signin-again`;
 
 const probeTools = [
   {
@@ -426,18 +502,25 @@ function stubServer(signal: AbortSignal): Server {
     if (!allToolSchemas.some((s) => s.name === name)) {
       return { ...text(`Unknown tool: ${name}`), isError: true };
     }
+    if (SIGNIN_TOOLS.has(name) && existsSync(SIGNIN_FLAG)) {
+      log("signin_required", { name });
+      return {
+        content: [{ type: "text" as const, text: JSON.stringify({ error: SIGNIN_MESSAGE }) }],
+        isError: true,
+      };
+    }
     return text(`Connector probe stub: ${name} was called and did nothing. This server holds no data.`);
   });
   return server;
 }
 
-function bearerValid(req: http.IncomingMessage): { ok: true; clientId: string } | { ok: false; why: string } {
+function bearerValid(req: http.IncomingMessage): { ok: true; clientId: string; seq: number } | { ok: false; why: string } {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) return { ok: false, why: "no bearer" };
   const entry = tokens.get(header.slice("Bearer ".length));
   if (!entry) return { ok: false, why: "unknown token" };
   if (entry.expiresAt < Date.now()) return { ok: false, why: "expired token" };
-  return { ok: true, clientId: entry.clientId };
+  return { ok: true, clientId: entry.clientId, seq: entry.seq };
 }
 
 async function handleMcp(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
@@ -451,6 +534,7 @@ async function handleMcp(req: http.IncomingMessage, res: http.ServerResponse): P
     const tokenRefused = auth.why !== "no bearer";
     return sendJson(res, 401, tokenRefused ? { error: "invalid_token" } : { error: "unauthorized" }, challenge(tokenRefused));
   }
+  log("mcp_ok", { token_seq: auth.seq, user_agent: req.headers["user-agent"], x_forwarded_for: req.headers["x-forwarded-for"] });
   const disconnected = new AbortController();
   res.on("close", () => {
     if (!res.writableEnded) disconnected.abort();
@@ -479,6 +563,7 @@ async function route(req: http.IncomingMessage, res: http.ServerResponse): Promi
   if (path === "/authorize" && req.method === "GET") return handleAuthorize(req, res, url.searchParams);
   if (path === "/authorize/approve" && req.method === "POST") return handleApprove(req, res);
   if (path === "/token" && req.method === "POST") return handleToken(req, res);
+  if (path === "/signin-again" && SIGNIN_FLAG && (req.method === "GET" || req.method === "POST")) return handleSigninAgain(req, res);
   if (path === "/mcp") return handleMcp(req, res);
   log("not_found", { method: req.method, path });
   sendJson(res, 404, { error: "Not found" });
@@ -499,6 +584,8 @@ http
       public_url: PUBLIC_URL,
       token_ttl_s: TOKEN_TTL_S,
       deny_flag: DENY_FLAG,
+      signin_flag: SIGNIN_FLAG || null,
+      refresh: REFRESH,
       tools: allToolSchemas.length + probeTools.length,
     });
   });
