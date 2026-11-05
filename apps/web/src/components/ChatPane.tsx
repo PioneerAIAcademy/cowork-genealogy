@@ -224,6 +224,14 @@ function renderChipRuns(
   return out
 }
 
+function uploadMessage(paths: string[]): string {
+  if (paths.length === 1) {
+    return `I've uploaded a file to \`${paths[0]}\`. Please read it and use it in this research.`
+  }
+  const named = paths.map((p) => `\`${p}\``).join(', ')
+  return `I've uploaded ${paths.length} files: ${named}. Please read them and use them in this research.`
+}
+
 export default function ChatPane({
   conn,
   sessionId,
@@ -589,23 +597,29 @@ export default function ChatPane({
     conn.send({ type: 'interrupt' })
   }
 
-  // Upload a document/image, then tell the agent where it landed. The upload
-  // alone is invisible to the agent — it only learns about the file from a turn,
-  // so the two steps are deliberately coupled here.
-  const handleFile = async (file: File): Promise<void> => {
+  // Upload documents/images, then tell the agent where they landed. An upload
+  // alone is invisible to the agent — it only learns about a file from a turn,
+  // so the two steps are deliberately coupled here. One message for the whole set:
+  // a message per file starts the agent on page one while the rest are still coming.
+  // A failed file does not end the set, because the turn the message starts
+  // disables attach, and the rest could not be added without pressing Stop.
+  const handleFiles = async (files: File[]): Promise<void> => {
     setUploadError('')
     setUploading(true)
-    try {
-      const { path } = await api.uploadSessionFile(sessionId, file)
-      send(
-        `I've uploaded a file to \`${path}\`. Please read it and use it in this research.`
-      )
-    } catch (err) {
-      setUploadError(err instanceof ApiError ? err.message : `Upload failed: ${String(err)}`)
-    } finally {
-      setUploading(false)
-      if (fileInputRef.current) fileInputRef.current.value = ''
+    const paths: string[] = []
+    const failed: string[] = []
+    for (const file of files) {
+      try {
+        const { path } = await api.uploadSessionFile(sessionId, file)
+        paths.push(path)
+      } catch (err) {
+        failed.push(`${file.name}: ${err instanceof ApiError ? err.message : String(err)}`)
+      }
     }
+    setUploading(false)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+    if (failed.length > 0) setUploadError(`Upload failed. ${failed.join('; ')}`)
+    if (paths.length > 0) send(uploadMessage(paths))
   }
 
   return (
@@ -819,10 +833,11 @@ export default function ChatPane({
           <input
             ref={fileInputRef}
             type="file"
+            multiple
             style={{ display: 'none' }}
             onChange={(e) => {
-              const f = e.target.files?.[0]
-              if (f) void handleFile(f)
+              const picked = Array.from(e.target.files ?? [])
+              if (picked.length > 0) void handleFiles(picked)
             }}
           />
           {/* The box spans its own row; the controls sit beneath it.

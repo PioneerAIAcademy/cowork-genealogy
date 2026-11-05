@@ -3104,7 +3104,7 @@ write (sentinel decided by Richard, 2026-10-27):
 
 ### 11.7 Document mode — unindexed sources extracted in code
 
-> **Status:** specified, not built. It lands in the same merge to `main` as §11.6's call shape (lead, 2026-09-29).
+> **Status:** built.
 
 §11.6 extracts FamilySearch records. Document mode runs **the same extractor** on
 sources with no index: image transcriptions, full-text hits, external sites,
@@ -3135,7 +3135,7 @@ document travels as a tool parameter.
 | `documents` | yes | A non-empty list, one entry per source: `{ recordId, document, transcriptionRef?, imageFilename? }`. |
 | `documents[].recordId` | yes | The `capture:<descriptive>`, `ancestry:<collection>:<id>` or ARK that identifies the source. |
 | `documents[].document` | yes | The document below. |
-| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. A staged ref (`results/.staging/…`) is finalized into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`). A ref already finalized as `results/<log_id>.json` is cited under the `image_transcribe` log entry that names it, and nothing new is logged; a finalized ref no `image_transcribe` entry names refuses that document, so a search sidecar cannot be cited as a page. Two documents sharing one staged ref log it once and both cite that entry. Either way its `transcription` is copied into the source entry, so no model re-emits the page text. **A full-text hit** (Richard, 2026-10-28), `results/<log_id>.json#<hit id>` (a `ref` from `sidecar_read`'s `#hits`), is cited under the logged `fulltext_search` entry whose `results_ref` is the part before `#`, and nothing new is logged; the hit's `textDocument` is copied as the `transcription`, the source's `url` defaults to the hit's `sourceUrl`, and no `image_filename` is written. That document is refused when the search is still staged (log the search first), the base is not a logged `fulltext_search`, the hit is not in its results or carries no transcript, `recordId` is not the hit's id, or an earlier document in the call cites the same hit: one document per hit. |
+| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. A staged ref (`results/.staging/…`) is finalized into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`). A staged ref whose page a log entry already consumed is cited under that entry, whatever its outcome, and nothing new is logged; one consumed by another tool refuses that document, as does one that is gone or holds another tool's file. A ref already finalized as `results/<log_id>.json` is cited under the `image_transcribe` log entry that names it, and nothing new is logged; a finalized ref no `image_transcribe` entry names refuses that document, so a search sidecar cannot be cited as a page. Two documents sharing one staged ref log it once and both cite that entry. Either way its `transcription` is copied into the source entry, so no model re-emits the page text. **A full-text hit** (Richard, 2026-10-28), `results/<log_id>.json#<hit id>` (a `ref` from `sidecar_read`'s `#hits`), is cited under the logged `fulltext_search` entry whose `results_ref` is the part before `#`, and nothing new is logged; the hit's `textDocument` is copied as the `transcription`, the source's `url` defaults to the hit's `sourceUrl`, and no `image_filename` is written. That document is refused when the search is still staged (log the search first), the base is not a logged `fulltext_search`, the hit is not in its results or carries no transcript, `recordId` is not the hit's id, or an earlier document in the call cites the same hit: one document per hit. |
 | `documents[].imageFilename` | no | `image_transcribe`'s `imageRef`, relayed. The source's `image_filename` comes from the staged transcription's `image_ref` when `transcriptionRef` is set and that row has one, which wins over this value; otherwise this is written, except for a full-text hit `transcriptionRef`, which writes no `image_filename`. §5.4's warning still fires when a transcription lands without one. |
 | `questionIds` | no | Stamped on every assertion in the batch, as in §11.6. |
 | `absentPersons` | no | Expected-but-absent persons, keyed by `recordId`, as in §11.6. |
@@ -3148,9 +3148,10 @@ written: one malformed document refuses the call, naming its index and JSON
 path, and writes nothing. After validation, the writes are §11.6's. There is one
 log batch, with one op per distinct staged ref, so documents for two entries on
 one page share its log entry. Then there is one `research_append` per source, in
-document order, so a refusal on document *k* leaves the earlier ones written. A
-document citing an already-finalized page is written even when the staged batch
-beside it is refused. The resend skip (a `recordId` that already has
+document order, so a refusal on document *k* leaves the earlier ones written.
+Each staged ref is checked before the log batch, so one bad ref refuses its own
+document and not the documents beside it. A document citing a logged page is
+written even when the log batch beside it is refused. The resend skip (a `recordId` that already has
 a source is skipped and named) makes a corrected resend of the whole batch
 safe. It ties a re-sent document to the call's `questionIds`, and plan-item
 completion runs afterwards, both as in §11.6.

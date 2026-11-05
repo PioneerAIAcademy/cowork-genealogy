@@ -405,6 +405,110 @@ describe("extraction_append: documents", () => {
     expect(after.sources[0].log_entry_id).toBe(pre.logId);
   });
 
+  // ─── one bad staged ref refuses its own document, not the batch (issue #2490) ─
+  // The neighbour is a live STAGED page in each: a cited one was already safe.
+
+  const live = async () => ({ recordId: "capture:obituary-live", document: obituary, transcriptionRef: await stageScan() });
+  const logPage = async (outcome: string) => {
+    const ref = await stageScan();
+    const pre = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", query: { imageId: "004022578_00190" }, outcome, resultsExamined: 1, stagedResultsRef: ref,
+    } as any);
+    if (!pre.ok || !("resultsRef" in pre)) throw new Error(`setup log refused: ${JSON.stringify(pre)}`);
+    return { ref, logId: pre.logId };
+  };
+  const nearCopy = (ref: string) => ref.replace(/.\.json$/, (m) => `${m[0] === "0" ? "1" : "0"}.json`);
+
+  it("a pruned staged ref refuses only its own document", async () => {
+    const r = await run([
+      await live(),
+      { recordId: "capture:obituary-pruned", document: obituary, transcriptionRef: "results/.staging/pruned-after-24h.json" },
+    ]);
+    expect(r.records.map((x: any) => x.status)).toEqual(["extracted", "refused"]);
+    expect(r.records[1].summary).toMatch(/capture:obituary-pruned: not extracted: .*image_transcribe/);
+    const after = await read();
+    expect(after.sources).toHaveLength(1);
+    expect(after.sources[0].transcription).toMatch(/Harold Dean Whitaker/);
+  });
+
+  it("a staged file of the wrong tool refuses only its own document", async () => {
+    const staged = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { query: { surname: "Whitaker" }, results: [{ recordId: "ark:/61903/1:1:QVS9-DHDB", names: ["Harold Whitaker"] }] },
+    });
+    const r = await run([
+      await live(),
+      { recordId: "capture:obituary-search", document: obituary, transcriptionRef: staged!.resultsRef },
+    ]);
+    expect(r.records.map((x: any) => x.status)).toEqual(["extracted", "refused"]);
+    expect((await read()).sources).toHaveLength(1);
+  });
+
+  it("a page logged negative beside a live staged page is cited, and both are written", async () => {
+    const { ref, logId } = await logPage("negative");
+    const r = await run([
+      await live(),
+      { recordId: "capture:obituary-logged", document: obituary, transcriptionRef: ref },
+    ]);
+    expect(r.records.map((x: any) => x.status), JSON.stringify(r)).toEqual(["extracted", "extracted"]);
+    expect(r.records[1].logId).toBe(logId);
+    const after = await read();
+    expect(after.log).toHaveLength(2);
+    expect(after.sources.find((s: any) => s.log_entry_id === logId).transcription).toMatch(/Harold Dean Whitaker/);
+  });
+
+  it("a consumed record_read ref beside a live staged page refuses only its own document", async () => {
+    const staged = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_read",
+      response: { query: { recordId: "MXHY-TP4" }, results: [{ recordId: "MXHY-TP4", gedcomx: { persons: [] } }] },
+    });
+    const pre = await researchLogAppend({
+      projectPath: dir, tool: "record_read", query: { recordId: "MXHY-TP4" }, outcome: "positive", resultsExamined: 1, stagedResultsRef: staged!.resultsRef,
+    } as any);
+    if (!pre.ok || !("resultsRef" in pre)) throw new Error(`setup log refused: ${JSON.stringify(pre)}`);
+    const r = await run([
+      await live(),
+      { recordId: "capture:obituary-record", document: obituary, transcriptionRef: staged!.resultsRef },
+    ]);
+    expect(r.records.map((x: any) => x.status)).toEqual(["extracted", "refused"]);
+    expect(r.records[1].summary).toMatch(new RegExp(`logged as ${pre.logId} by record_read`));
+  });
+
+  it("one page spelled exactly and as a near-copy is logged once", async () => {
+    const ref = await stageScan();
+    const r = await run([
+      { recordId: "capture:obituary-exact", document: obituary, transcriptionRef: ref },
+      { recordId: "capture:obituary-near", document: obituary, transcriptionRef: nearCopy(ref) },
+    ]);
+    expect(r.records.map((x: any) => x.status), JSON.stringify(r)).toEqual(["extracted", "extracted"]);
+    expect((await read()).log).toHaveLength(1);
+  });
+
+  it("a near-copy staged ref is still extracted", async () => {
+    const r = await run([{ recordId: "capture:obituary-near", document: obituary, transcriptionRef: nearCopy(await stageScan()) }]);
+    expect(r.records[0].status, JSON.stringify(r)).toBe("extracted");
+    expect((await read()).sources[0].transcription).toMatch(/Harold Dean Whitaker/);
+  });
+
+  it("a positive already-logged staged ref is still accepted", async () => {
+    const { ref, logId } = await logPage("positive");
+    const r = await run([{ recordId: "capture:obituary-logged", document: obituary, transcriptionRef: ref }]);
+    expect(r.records[0]).toMatchObject({ status: "extracted", logId });
+    expect((await read()).log).toHaveLength(1);
+  });
+
+  it("two documents citing one logged page are both written", async () => {
+    const { ref, logId } = await logPage("positive");
+    const r = await run([
+      { recordId: "capture:obituary-one", document: obituary, transcriptionRef: ref },
+      { recordId: "capture:obituary-two", document: obituary, transcriptionRef: ref },
+    ]);
+    expect(r.records.map((x: any) => x.logId), JSON.stringify(r)).toEqual([logId, logId]);
+    expect((await read()).sources).toHaveLength(2);
+  });
+
   it("refuses a logged search sidecar passed as a transcription, and writes nothing", async () => {
     const staged = await stageSearchResults({
       projectPath: dir,

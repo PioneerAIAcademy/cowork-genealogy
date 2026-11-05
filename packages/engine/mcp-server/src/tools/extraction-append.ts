@@ -44,12 +44,15 @@ import {
 } from "../utils/record-extract.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import {
+  checkStagedResults,
   findFulltextHit,
+  locateStagedRef,
   readResultsEnvelope,
   readStagedResults,
   splitHitRef,
   STAGING_SUBDIR,
   type FulltextHitRow,
+  type StagedRefLocation,
 } from "../utils/results-staging.js";
 import { deedFormulaErrors } from "../utils/deed-formula.js";
 import { arkToBareId } from "../utils/ark.js";
@@ -1423,6 +1426,37 @@ function coerceComputed(f: unknown): void {
   fact.computed = [...new Set(out)];
 }
 
+type StagedPage = { live: string } | { logId: string; resultsRef: string } | { refusal: string };
+
+function loggedPage(at: Extract<StagedRefLocation, { state: "logged" }>): StagedPage {
+  if (at.tool === "image_transcribe") return { logId: at.logId, resultsRef: at.resultsRef };
+  return {
+    refusal:
+      `transcriptionRef '${at.ref}' was logged as ${at.logId} by ${at.tool ?? "an unknown tool"}, ` +
+      `not as an image_transcribe read, so it holds no page to extract.`,
+  };
+}
+
+/**
+ * Sort one document's staged ref before anything is logged. `research_log_append`
+ * is all-or-nothing, so left to it one bad ref refuses every document beside it.
+ * A logged page is cited, never re-logged: the log's re-send check compares
+ * outcomes, so a page logged `negative` would refuse the batch from there too.
+ * It is located after the check fails, not before, so a concurrent call consuming
+ * the file between the two reads lands on the same path.
+ */
+async function stagedPage(projectPath: string, rawRef: string): Promise<StagedPage> {
+  const { ref } = await locateStagedRef(projectPath, rawRef);
+  try {
+    await checkStagedResults({ projectPath, stagedResultsRef: ref, expectedTool: "image_transcribe" });
+    return { live: ref };
+  } catch (e) {
+    const at = await locateStagedRef(projectPath, ref);
+    if (at.state === "logged") return loggedPage(at);
+    return { refusal: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 /**
  * Cite one full-text hit (`<base>#<hit>`) for a document, or say why not. The
  * hit must belong to a LOGGED `fulltext_search` (a staged search has no entry to
@@ -1601,7 +1635,20 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
       }
       continue;
     }
-    if (ref.startsWith(`${STAGING_SUBDIR}/`)) continue;
+    if (ref.startsWith(`${STAGING_SUBDIR}/`)) {
+      const page = await stagedPage(input.projectPath, ref);
+      if ("live" in page) {
+        // One spelling per page, or an exact ref and a near-copy of it become two ops.
+        o.d.transcriptionRef = page.live;
+      } else if ("logId" in page) {
+        cited.set(o, page);
+      } else {
+        o.status = "refused";
+        o.errors = [page.refusal];
+        o.summary = `${o.recordId}: not extracted: ${page.refusal}`;
+      }
+      continue;
+    }
     // Only a page logged as image_transcribe: a search sidecar cited here would
     // be written as a source with no text, and its search would read as extracted.
     const entry = log.find((e) => e?.results_ref === ref && e?.tool === "image_transcribe" && typeof e?.id === "string");

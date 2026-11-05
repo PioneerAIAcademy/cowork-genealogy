@@ -21,10 +21,12 @@ import { getProjectStore } from "../store/project-store.js";
 import {
   findFulltextHit,
   HIT_INDEX_FRAGMENT,
+  locateStagedRef,
   readResultsEnvelope,
   readStagedResults,
   ResultsEnvelopeError,
   splitHitRef,
+  STAGING_SUBDIR,
   type ResultsEnvelope,
 } from "../utils/results-staging.js";
 import { arkToBareId } from "../utils/ark.js";
@@ -216,6 +218,15 @@ function notATranscription(base: string, tool: string | null): string {
   );
 }
 
+/** Both causes, because a ref garbled in compaction reads exactly like an expired one. */
+function stagedRefGone(base: string): string {
+  return (
+    `${base} is no longer staged: staged files are pruned after 24 hours and no log entry holds ` +
+    "this one, or it was never staged under this name. Read the page again with " +
+    "`image_transcribe`, or re-run the search, and copy the new ref exactly."
+  );
+}
+
 /**
  * The text a `results/` ref names (spec §7): one full-text hit's `textDocument`
  * (`#<hit id>`), a full-text sidecar's hit list (`#hits`), or a staged
@@ -238,6 +249,13 @@ async function resultsText(
     env = await readResultsEnvelope(projectPath, base);
   } catch (e) {
     if (!(e instanceof ResultsEnvelopeError)) throw e;
+    if (e.kind === "missing" && base.startsWith(`${STAGING_SUBDIR}/`)) {
+      const at = await locateStagedRef(projectPath, base);
+      if (at.state === "logged") return resultsText(projectPath, at.resultsRef, hit);
+      if (at.state === "gone") throw new SidecarReadFailure("not_found", stagedRefGone(base));
+      // A selector is never corrected: `<near-copy>#x` must not read as the whole page.
+      if (hit === undefined && at.ref !== base) return resultsText(projectPath, at.ref, undefined);
+    }
     if (hit !== undefined) {
       throw new SidecarReadFailure(e.kind === "missing" ? "not_found" : "invalid_ref", e.message);
     }
