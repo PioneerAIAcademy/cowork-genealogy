@@ -2757,7 +2757,9 @@ def create_app(
 
     # -- chat-off pages and account (#3993) -----------------------------------------
     # The inverse of `sessions` above: registered on the app only with the chat off, so a
-    # chat-on tier answers 404 for all three, as before.
+    # chat-on tier answers 404 for all three, as before. With the chat on the router is
+    # deliberately never included: it is a sink so the decorators below have somewhere to
+    # register. Do not "fix" it by including it.
     beta = APIRouter() if app.state.chat else app
 
     @beta.get("/privacy")
