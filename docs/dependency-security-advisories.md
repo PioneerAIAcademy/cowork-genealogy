@@ -5,7 +5,7 @@ dependency trees (root pnpm workspace — which since #1488 includes `eval/app` 
 and `packages/engine/mcp-server` npm). Re-run the audits after any dependency
 bump and update this file.
 
-Last reviewed: **2026-09-21**.
+Last reviewed: **2026-09-21** for the two JS trees; **2026-11-05** for the Python entries.
 
 > **This file is the mechanism, by decision.** @DallanQ ruled on 2026-09-09 (#2352)
 > that no CI job will audit any dependency tree: failing the build, warning without
@@ -31,8 +31,9 @@ Weigh fix churn against that before treating a dev-only HIGH as urgent.
 
 **Scope widened 2026-09-21.** The Dependabot backlog at the end counts the two Python
 `uv.lock` trees (`apps/server`, `eval/harness`) as well, and their runtime findings are
-recorded under Deferred. The audits above do not reach them — Dependabot alerts are
-their only signal.
+recorded under Deferred or Fixed. The audits above do not reach them: Dependabot alerts
+are their signal, and without alert access the public advisory database answers the
+same question (the backlog section has the command).
 
 **`electron` ships, and it is the exception to the paragraph above.** It reaches
 production two ways, and either alone is enough. It is in the production graph:
@@ -49,6 +50,20 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
 `extract-zip`. `pnpm why --prod -r extract-zip` prints that path.
 
 ## Fixed
+
+- **certifi** (CRITICAL, GHSA-6q48-6c7w-9gw2) and **PyJWT** (HIGH, GHSA-pxh4-856f-4h89 and
+  GHSA-p4g4-x82p-q773; MEDIUM, GHSA-jwrc-g2q2-pq5p and GHSA-2gx3-rcp4-g85q) — both Python
+  trees and the three `requirements.txt` files exported from `apps/server/uv.lock`, runtime.
+  **Fixed 2026-11-05.** Patched at certifi 2026.10.18 and PyJWT 2.14.0; both locks now resolve
+  certifi 2026.10.23 and PyJWT 2.15.1 (`apps/server` took both in #4207's pin bump, `eval/harness`
+  in a full `uv lock --upgrade`). Severities as the public advisory database gives them.
+
+- **cryptography** (HIGH, GHSA-g6cj-pr64-35w5) — **Fixed 2026-11-05.** Patched at 50.0.0.
+  `apps/server` was already on 50.0.2; `eval/harness` moved 49.0.0 → 50.0.2 in a full
+  `uv lock --upgrade`. Under Deferred from 2026-09-21 until then.
+
+- **h2** (MEDIUM, GHSA-6hr6-w5qg-qmwg) — `apps/server/uv.lock`. **Fixed 2026-11-05.** Patched at
+  4.4.1, which a full `uv lock --upgrade` took (from 4.3.0). Under Deferred from 2026-09-21 until then.
 
 - **The engine's entire production tree** — `packages/engine/mcp-server`.
   **Fixed 2026-09-08.** Went from **5 packages carrying 17 advisories** (npm's summary
@@ -284,20 +299,6 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   **Revisit when** `@anthropic-ai/mcpb` publishes a release that bumps the
   `@inquirer`/`tmp` chain.
 
-- **cryptography** (HIGH) — `apps/server/uv.lock` and `eval/harness/uv.lock`,
-  runtime. **Deferred 2026-09-21 — outside the three JS trees this doc was scoped
-  to, but recorded here because the Dependabot backlog below counts it.** The
-  hosted control plane (`apps/server`) and the eval harness both depend on
-  `cryptography` via `pyjwt[crypto]` → `mcp[crypto]` → `claude-agent-sdk`
-  (and as a direct dependency in `apps/server`). A patched version exists
-  upstream but requires a coordinated `uv lock --upgrade-package cryptography`
-  across both lockfiles.
-  **Revisit when** either lockfile is next refreshed for another reason.
-
-- **h2** (MEDIUM) — `apps/server/uv.lock` only, runtime. **Deferred 2026-09-21 —
-  same scope note as `cryptography` above.** Pulled transitively via `e2b`.
-  **Revisit when** the `apps/server` lockfile is next refreshed.
-
 - **esbuild** — **withdrawn 2026-09-09, see the Fixed entry above.** This entry said
   clearing it needed a vite 7→8 migration across three packages. `vite@7.3.6` already
   admits the 0.28.1 patch inside the declared `^7.2.6`, so it was a lockfile refresh.
@@ -388,9 +389,20 @@ through a pnpm workspace lockfile. The `extract-zip` rows are genuinely runtime.
 All JS-side development alerts (and the two misclassified vitest/mocker rows
 above) map to entries already recorded under Deferred (vitest, tmp). The two
 `extract-zip` runtime alerts are also under Deferred (no patch exists). The
-Python alerts (`cryptography`, `h2`) are under Deferred as well — outside this
-doc's original three-JS-tree scope but recorded here because this backlog counts
-them and they have no other register.
+Python alerts (`cryptography`, `h2`) were under Deferred until 2026-11-05 and are
+now under Fixed.
+
+**2026-11-05, Python trees only.** The Python rows above, and the certifi and PyJWT
+alerts raised since, are cleared by `uv lock --upgrade` in both trees and the three
+exports (see Fixed); the alerts close when Dependabot rescans `main`. The alert list
+needs repository security access (the triage role gets HTTP 403), so the check used the
+public advisory database, which needs none and answers per package version:
+
+    gh api "/advisories?ecosystem=pip&affects=<package>@<version>,<package>@<version>"
+
+It returned no advisory for any package version in either new lock, and the advisories
+above for the old versions. The table stays as measured on 2026-09-21: re-counting the
+alerts needs the same access.
 
 *Previous measurement: 75 open alerts on 2026-09-10. Before that: 53 on 2026-08-23
 (issue #1036).*
