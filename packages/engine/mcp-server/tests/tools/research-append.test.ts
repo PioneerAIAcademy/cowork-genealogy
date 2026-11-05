@@ -100,6 +100,7 @@ import {
   planItemCompletionRecordTypeInvariants,
   recordDocumentArk,
 } from "../../src/tools/research-append.js";
+import { materializeFacts } from "../../src/tools/materialize-facts.js";
 import { toSimplified } from "../../src/utils/gedcomx-convert.js";
 import { validateProject, VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
@@ -224,12 +225,12 @@ function liveLinks(...assertionIds: string[]): Record<string, unknown>[] {
  */
 async function attestPairing(
   dir: string,
-  opts: { recordId?: string; assertionId?: string; personId?: string } = {},
+  opts: { recordId?: string; assertionId?: string; personId?: string; recordRole?: string } = {},
 ): Promise<void> {
   await recordMatchScore(dir, {
     record_id: opts.recordId ?? "rec1",
     record_persona_id: null,
-    record_role: "principal",
+    record_role: opts.recordRole ?? "principal",
     tree_person_id: opts.personId ?? "I1",
     score: 0.9,
     scorer: "familysearch",
@@ -17967,5 +17968,186 @@ describe("a searched plan item the record-type check will not complete can be sk
     const probate = { log: [{ ...research.log[0], query: { recordType: "probate" } }] };
     expect(planItemCompletionRecordTypeInvariants({ ...item, status: "completed" }, probate)).toEqual([]);
     expect(planItemSearchedSkipInvariants({ ...item, status: "skipped", skip_category: "not_applicable" }, probate)).toHaveLength(1);
+  });
+});
+
+// A probable or confident link to a person this research added with no provenance
+// at all (`tree_edit add_person`), which nothing ties to a record (#2475,
+// clack391's row). The refusal's advice completes: a scored speculative link,
+// materialize_facts, then the raise.
+describe("research_append — person_evidence to a ref-less added person", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-refless-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const REFUSAL = /added during this research with no source ref/;
+  const named = (id: string, given: string, sourced = false) => ({
+    id,
+    gender: "Male",
+    names: [{ id: `N${id}`, given, surname: "Janeczky", ...(sourced ? { sources: [{ ref: "SD-001" }] } : {}) }],
+  });
+  const baseTreeWith = (relationships: any[] = []) => ({
+    persons: [
+      { id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] },
+      named("I2", "Joannes"),
+      named("I3", "Josef", true),
+      named("I4", "Jakob"),
+    ],
+    relationships,
+    sources: [
+      { id: "SD-001", title: "1850 U.S. Census" },
+      { id: "SD-002", title: "Baptism of a Janeczky child" },
+    ],
+  });
+  // I4 is a stub the researcher stated: its source is on the relationship, as
+  // init-project writes it, not on its name.
+  const tree = baseTreeWith([
+    { id: "R1", type: "ParentChild", parent: "I4", child: "I1", sources: [{ ref: "SD-001" }] },
+  ]);
+  const research = (extra: Record<string, unknown>[] = []) => {
+    const r = baseResearch();
+    // rec2 has a source of its own, as almost every source does, so after
+    // materialize_facts the person's every ref points at that one record.
+    r.sources.push({ ...validSource("src_002"), gedcomx_source_description_id: "SD-002" });
+    r.assertions.push(
+      {
+        ...validAssertion("a_002", "src_002"), record_id: "rec2", record_role: "father_1", fact_type: "name",
+        value: "Joannes Janeczky", structured_value: { given: "Joannes", surname: "Janeczky" },
+      },
+      {
+        ...validAssertion("a_003"), record_id: "rec3", record_role: "absent", record_basis: "absent",
+        fact_type: "residence", value: "Joannes absent from the 1891 household",
+      },
+      {
+        ...validAssertion("a_004"), record_id: "rec4", record_role: "child_1", fact_type: "relationship",
+        value: "child of Joannes Janeczky", structured_value: { related_person_role: "father" },
+      },
+      (() => {
+        const { record_basis: _drop, ...legacy } = validAssertion("a_005") as any;
+        return { ...legacy, record_id: "rec5", record_role: "principal", evidence_type: "negative", fact_type: "residence", value: "Joannes not in the 1880 household" };
+      })(),
+    );
+    r.person_evidence.push(...extra);
+    return r;
+  };
+  async function write(r: any, withStartingTree = true, t: any = tree) {
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(t, null, 2));
+    if (withStartingTree) {
+      await writeProjectFile(
+        join(dir, "starting-tree.gedcomx.json"),
+        JSON.stringify({ persons: [t.persons[0]], relationships: [], sources: [] }, null, 2),
+      );
+    }
+  }
+  const link = (person_id: string, assertion_id: string, confidence = "probable") => ({
+    projectPath: dir,
+    section: "person_evidence" as const,
+    op: "append" as const,
+    entry: { assertion_id, person_id, confidence, match_score: null, rationale: "named on the record" },
+  });
+  const errorsOf = (r: any) => (r.ok ? "" : r.errors.join(" "));
+
+  it("refuses a probable link to an added person with no provenance, naming the materialize_facts call", async () => {
+    await write(research());
+    const r = await researchAppend(link("I2", "a_002"));
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toMatch(REFUSAL);
+    expect(errorsOf(r)).toMatch(
+      /at 'speculative' with its same_person score.*materialize_facts\(\{ projectPath, personId: 'I2', recordId: 'rec2', recordRole: 'father_1' \}\), then raise the link to 'probable'/,
+    );
+    expect(JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).person_evidence).toHaveLength(0);
+  });
+
+  it("the refusal's own advice completes: a scored speculative link, materialize_facts, then the raise", async () => {
+    await write(research());
+    await attestPairing(dir, { recordId: "rec2", assertionId: "a_002", personId: "I2", recordRole: "father_1" });
+    const spec = link("I2", "a_002", "speculative");
+    const a = await researchAppend({ ...spec, entry: { ...spec.entry, match_score: 0.9 } });
+    expect(a.ok, errorsOf(a)).toBe(true);
+    const m = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "rec2", recordRole: "father_1" } as any);
+    expect((m as any).ok, JSON.stringify((m as any).errors ?? m)).toBe(true);
+    const r = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: "pe_001", fields: { confidence: "probable" } });
+    expect(r.ok, errorsOf(r)).toBe(true);
+    const stored = JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).person_evidence;
+    expect(stored[0]).toMatchObject({ person_id: "I2", confidence: "probable", match_score: 0.9 });
+  });
+
+  it("materialize_facts refuses a blank added person no link ties to the record, so the score comes first", async () => {
+    await write(research());
+    const m = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "rec2", recordRole: "father_1" } as any);
+    expect((m as any).ok).toBe(false);
+    expect(JSON.stringify(m)).toMatch(/'speculative' link carrying its same_person score is enough/);
+    const t = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+    expect(t.persons.find((p: any) => p.id === "I2").names[0].sources ?? []).toHaveLength(0);
+  });
+
+  it("refuses an update that moves a probable link onto such a person", async () => {
+    await write(research([
+      { id: "pe_001", assertion_id: "a_002", person_id: "I3", confidence: "probable", match_score: null, rationale: "x", created: "2026-01-02", superseded_by: null },
+    ]));
+    const r = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: "pe_001", fields: { person_id: "I2" } });
+    expect(errorsOf(r)).toMatch(REFUSAL);
+  });
+
+  it("refuses raising a speculative link on such a person to probable", async () => {
+    await write(research());
+    await attestPairing(dir, { recordId: "rec2", assertionId: "a_002", personId: "I2", recordRole: "father_1" });
+    const a = await researchAppend({ ...link("I2", "a_002", "speculative"), entry: { ...link("I2", "a_002", "speculative").entry, match_score: 0.9 } });
+    expect(a.ok, errorsOf(a)).toBe(true);
+    const r = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: "pe_001", fields: { confidence: "probable" } });
+    expect(errorsOf(r)).toMatch(REFUSAL);
+    const stored = JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).person_evidence;
+    expect(stored[0].confidence).toBe("speculative");
+  });
+
+  it("a blank stub with a namesake stays on the namesake cap: the record cannot land on it first", async () => {
+    // Sr./Jr.: the researcher adds a blank "John Smith" as the father of the
+    // subject "John Smith", with no source on the edge.
+    const sm = (id: string) => ({ id, gender: "Male", names: [{ id: `N${id}`, given: "John", surname: "Smith" }] });
+    const t = {
+      persons: [sm("I1"), sm("I2")],
+      relationships: [{ id: "R1", type: "ParentChild", parent: "I2", child: "I1" }],
+      sources: [{ id: "SD-001", title: "1850 U.S. Census" }, { id: "SD-002", title: "Baptism" }],
+    };
+    const r = research();
+    const a2 = r.assertions.find((a: any) => a.id === "a_002") as any;
+    Object.assign(a2, { record_role: "principal", value: "John Smith", structured_value: { given: "John", surname: "Smith" } });
+    await write(r, true, t);
+    await attestPairing(dir, { recordId: "rec2", assertionId: "a_002", personId: "I2" });
+    const spec = link("I2", "a_002", "speculative");
+    const a = await researchAppend({ ...spec, entry: { ...spec.entry, match_score: 0.9 } });
+    expect(a.ok, errorsOf(a)).toBe(true);
+    const m = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "rec2", recordRole: "principal" } as any);
+    expect((m as any).ok).toBe(false);
+    const after = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+    expect(after.persons.find((p: any) => p.id === "I2").names[0].sources ?? []).toHaveLength(0);
+    // research_append leaves that person's links to the namesake cap, not this gate.
+    const probable = await researchAppend({ ...link("I2", "a_002"), entry: { ...link("I2", "a_002").entry, match_score: 0.9 } });
+    expect(errorsOf(probable)).not.toMatch(REFUSAL);
+  });
+
+  it("names the named-party form when the assertion names a second party", async () => {
+    await write(research());
+    const r = await researchAppend(link("I2", "a_004"));
+    expect(errorsOf(r)).toMatch(/assertionId: 'a_004', relatedRole: 'father', name: \{ given, surname \}/);
+  });
+
+  it.each([
+    ["a starting-tree person with no ref", "I1", "a_002", "probable", true],
+    ["an added person whose name is sourced", "I3", "a_002", "probable", true],
+    ["a stub the researcher stated, sourced on its relationship", "I4", "a_002", "probable", true],
+    ["a speculative link, which asserts no identity", "I2", "a_002", "speculative", true],
+    ["negative evidence, which no persona can materialize", "I2", "a_003", "probable", true],
+    ["legacy negative evidence (evidence_type, no record_basis)", "I2", "a_005", "probable", true],
+    ["a project with no starting-tree baseline", "I2", "a_002", "probable", false],
+  ])("does not refuse %s", async (_label, personId, assertionId, confidence, withStartingTree) => {
+    await write(research(), withStartingTree as boolean);
+    const r = await researchAppend(link(personId as string, assertionId as string, confidence as string));
+    expect(errorsOf(r)).not.toMatch(REFUSAL);
   });
 });
