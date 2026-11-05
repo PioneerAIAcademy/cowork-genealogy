@@ -219,17 +219,22 @@ def openrouter_linking_enabled() -> bool:
     return _switch("OPENROUTER_LINKING_ENABLED") is True
 
 
-def max_users() -> int | None:
-    """``GENEALOGY_MAX_USERS``: the user cap, or None (unset or empty) for the allowlist.
-    Raises unless it is a positive integer, so a typo never falls back to the allowlist."""
-    raw = _env("GENEALOGY_MAX_USERS")
+def positive_int_env(name: str) -> int | None:
+    """``name`` as a positive integer, or None when unset or empty. Raises otherwise, so a
+    typo never falls back to the unset behaviour."""
+    raw = _env(name)
     if not raw:
         return None
     # ASCII digits only: int() would also take "1_000", "+5" and non-ASCII digits.
     value = int(raw) if re.fullmatch(r"[0-9]+", raw) else 0
     if value < 1:
-        raise RuntimeError(f"GENEALOGY_MAX_USERS is {raw!r}: set it to a positive integer, or leave it unset")
+        raise RuntimeError(f"{name} is {raw!r}: set it to a positive integer, or leave it unset")
     return value
+
+
+def max_users() -> int | None:
+    """``GENEALOGY_MAX_USERS``: the user cap, or None (unset or empty) for the allowlist."""
+    return positive_int_env("GENEALOGY_MAX_USERS")
 
 
 def familysearch_enabled() -> bool:

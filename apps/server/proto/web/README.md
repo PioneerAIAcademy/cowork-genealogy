@@ -231,6 +231,19 @@ refuses to start; SAS unreachable, or slower than 5 s, leaves the tier listening
 every 30 s, and retries the connect once with the new password. The start line names
 `pg_credentials=SAS object <name>` or `environment DSN`, never a credential.
 
+`PG_POOL_MAX_SIZE` (#3980; unset: one connection per query, as before) turns on a
+`psycopg-pool` pool of at most that many query connections, checked as each is handed out,
+so one the server closed while idle is replaced rather than used; anything but a positive
+integer refuses to start. Pooled connects go through the same credentials (a rotation
+re-reads SAS as above). The pool opens after the inline startup steps, which connect on
+their own as without it, and never waits, so the tier listens at once with Postgres down.
+After that a borrow waits up to 10 s before failing: requests during an outage fail after
+10 s rather than at once, and the allowlist step's background retries, cut at 5 s, report
+`TimeoutError`. Readiness (`postgres`), the schema step and each grant refresh keep
+connections of their own and name the real cause. A connection Neon closed is skipped
+without the pool's own check backoff: every pooled connection dies together when Neon
+suspends an idle compute.
+
 ## The driver (`../drive.py`)
 
 The lead's acceptance for D13, zero model cost: post, stream, drop the connection
