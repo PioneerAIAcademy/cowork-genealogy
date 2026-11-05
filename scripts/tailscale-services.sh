@@ -144,10 +144,12 @@ cmd_status() {
 # app itself -- correct, but indistinguishable from a broken mapping. openapi.json
 # is a real route, so a 200 proves the whole path end to end.
 #
-# The reserved slot is probed on /livez, the malachi stack's public liveness route:
-# 502 means nothing is listening on 8006 and 200 means the stack's edge is up. 404
-# means the mapping is gone; anything else means some other process bound 8006 and
-# is now public -- the hazard the header warns about, which nothing else detects.
+# The reserved slot is probed on /livez, the malachi stack's public liveness route,
+# and on /auth/config, which only that stack's web tier serves: 502 means nothing is
+# listening on 8006 and 200 means the stack's edge is up. 404 at /livez means the
+# mapping is gone; 404 at /auth/config alone is a tool server or the connector probe,
+# which answer /livez too. Anything else means some other process bound 8006 and is
+# now public -- the hazard the header warns about, which nothing else detects.
 cmd_check() {
   local fail=0
   _probe() { # label expected url, where expected is a space-separated list
@@ -167,6 +169,7 @@ cmd_check() {
   _probe "wiki"            200 "https://${HOST_FQDN}/wiki/openapi.json"
   _probe "pop-stats"       200 "https://${HOST_FQDN}/pop-stats/openapi.json"
   _probe "reserved /livez (502 or 200)" "502 200" "https://${HOST_FQDN}/livez"
+  _probe "reserved /auth/config (502 or 200)" "502 200" "https://${HOST_FQDN}/auth/config"
   if (( fail )); then
     printf '\nA probe failure is either the mapping or the service behind it.\n'
     printf 'Check both: ./scripts/tailscale-services.sh status\n'

@@ -1097,7 +1097,7 @@ malachi-deploy: ## Deploy a commit: REF=<sha>, a clean tree, then up and check
 	$(MAKE) malachi-check
 
 .PHONY: malachi-backup
-malachi-backup: ## Dump Postgres and mirror MinIO to DATA_DIR/backups/<UTC> [KEEP=14]
+malachi-backup: ## Dump Postgres and mirror MinIO to DATA_DIR/backups/<UTC> [KEEP=14; under 14 needs CONFIRM=yes]
 	$(MALACHI) backup
 
 .PHONY: malachi-restore-check
@@ -1111,6 +1111,14 @@ malachi-restore: ## Load a backup into a wiped stack: CONFIRM=yes [BACKUP=<name>
 .PHONY: malachi-export
 malachi-export: ## A project's files to DATA_DIR/exports/<id>/: EMAIL= or PROJECT=
 	$(MALACHI) export
+
+.PHONY: malachi-openrouter
+malachi-openrouter: ## Encrypt the env file's OPENROUTER_SEED_KEY onto one user's row: EMAIL=
+	$(MALACHI) openrouter
+
+.PHONY: malachi-prune
+malachi-prune: ## Free Docker's root: this stack's old images, and everyone's build cache older than a week
+	$(MALACHI) prune
 
 .PHONY: malachi-down
 malachi-down: ## Stop the stack; the data stays

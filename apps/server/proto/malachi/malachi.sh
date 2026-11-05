@@ -18,6 +18,7 @@ REQUIRED_KEYS="PUBLIC_URL DATA_DIR MINIO_ROOT_USER $SECRET_KEYS"
 DEV_VALUES="dev-insecure-secret-change-me dev-insecure-fs-token-key-change-me"
 DEFAULT_WIKI_URL=https://malachi.taild68f1b.ts.net/wiki
 DEFAULT_POP_STATS_URL=https://malachi.taild68f1b.ts.net/pop-stats
+DEFAULT_KEEP=14
 
 FAILED=0
 
@@ -222,6 +223,8 @@ cmd_up() {
   cmd_env_init
   load_env
   check_memory
+  check_docker_root
+  [ "$FAILED" = 0 ] || die "refusing to build under the floor. make malachi-prune frees space; MIN_DOCKER_FREE_GB= overrides."
   prepare_data_dir
   compose up -d --build web tools
   # --wait fails the moment a one-shot exits, so it names the long-running services only.
@@ -232,6 +235,19 @@ cmd_up() {
   else
     compose up -d --wait edge
   fi
+  prune_images
+}
+
+# What a rebuild left behind, this stack's alone: the daemon is shared.
+prune_images() {
+  docker image prune -f --filter "label=com.docker.compose.project=$STACK"
+}
+
+# Build cache carries no project label, so this reaches everyone's on the host. It stays a
+# target of its own, never part of a deploy.
+cmd_prune() {
+  prune_images
+  docker builder prune -f --filter until=168h
 }
 
 cmd_logs() {
@@ -305,10 +321,11 @@ check_http() { # base url
   expect_code "/api/sessions (chat off)" 404 "$base/api/sessions"
 
   out=$(curl -s --max-time 15 "$base/auth/config" || true)
-  if printf '%s' "$out" | grep -Eq '"familysearch" *: *true' && printf '%s' "$out" | grep -Eq '"devLogin" *: *false'; then
-    ok "/auth/config: familysearch on, dev-login off"
+  if printf '%s' "$out" | grep -Eq '"familysearch" *: *true' && printf '%s' "$out" | grep -Eq '"devLogin" *: *false' &&
+    printf '%s' "$out" | grep -Eq '"openrouter" *: *false'; then
+    ok "/auth/config: familysearch on, dev-login and OpenRouter linking off"
   else
-    bad "/auth/config: want familysearch true and devLogin false, got: $out"
+    bad "/auth/config: want familysearch true, devLogin false and openrouter false, got: $out"
   fi
 }
 
@@ -464,8 +481,11 @@ mirror_objects() { # backup dir
 
 cmd_backup() {
   local keep floor stamp final partial ledger
-  keep=$(whole_number KEEP "${KEEP:-14}")
+  keep=$(whole_number KEEP "${KEEP:-$DEFAULT_KEEP}")
   [ "$keep" -ge 1 ] || die "KEEP must be at least 1"
+  # Pruning follows the new backup at once, before any restore check can vouch for it.
+  [ "$keep" -ge "$DEFAULT_KEEP" ] || [ "${CONFIRM:-}" = yes ] ||
+    die "KEEP=$keep deletes good backups on the strength of this one: pass CONFIRM=yes"
   floor=$(whole_number MIN_FREE_GB "${MIN_FREE_GB:-20}")
   load_env
   check_disk "$DATA" "$floor" "DATA_DIR"
@@ -557,6 +577,20 @@ cmd_restore() {
   printf 'malachi: restored %s. make malachi-up re-grants the role and starts the rest.\n' "$dir"
 }
 
+# ── OpenRouter ───────────────────────────────────────────────────────────────
+
+# printf is a builtin, so the key reaches stdin with no argv in between.
+cmd_openrouter() {
+  [ -n "${EMAIL:-}" ] || die "EMAIL= is required"
+  load_env
+  local key
+  key=$(env_get OPENROUTER_SEED_KEY)
+  [ -n "$key" ] || die "OPENROUTER_SEED_KEY is blank in $ENV_FILE"
+  printf '%s' "$key" | compose run --rm --no-deps -T -e PYTHONPATH=/app \
+    -v "$HERE/openrouter_seed.py:/opt/malachi/openrouter_seed.py:ro" \
+    web python /opt/malachi/openrouter_seed.py --email "$EMAIL"
+}
+
 # ── export ───────────────────────────────────────────────────────────────────
 
 cmd_export() {
@@ -587,7 +621,9 @@ case "${1:-}" in
   restore-check) cmd_restore_check ;;
   restore) cmd_restore ;;
   export) cmd_export ;;
+  openrouter) cmd_openrouter ;;
+  prune) cmd_prune ;;
   down) cmd_down ;;
   wipe) cmd_wipe ;;
-  *) die "usage: malachi.sh env-init|up|check|check-http <url>|check-public|logs|backup|restore-check|restore|export|down|wipe" ;;
+  *) die "usage: malachi.sh env-init|up|check|check-http <url>|check-public|logs|backup|restore-check|restore|export|openrouter|prune|down|wipe" ;;
 esac

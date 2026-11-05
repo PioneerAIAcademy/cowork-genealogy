@@ -93,6 +93,8 @@ services:
   # --no-access-log: uvicorn's access log prints the query string, sign-in codes included.
   # WEB_DIST_DIR: the image bakes web-dist, so only an explicit blank serves no SPA.
   # OPENSSL_armcap: the cryptography wheel needs it in a VM on Apple silicon; x86 ignores it.
+  # OPENROUTER_LINKING_ENABLED: a linked key reaches image_transcribe, so here only
+  # `make malachi-openrouter` puts one on a user's row.
   web:
     build:
       context: ../../../..
@@ -106,8 +108,8 @@ services:
     environment:
       GENEALOGY_CHAT: "false"
       FAMILYSEARCH_WEB_ENABLED: "true"
-      UPLOADS_ENABLED: "true"
-      OPENROUTER_LINKING_ENABLED: "true"
+      UPLOADS_ENABLED: ${UPLOADS_ENABLED:-false}
+      OPENROUTER_LINKING_ENABLED: "false"
       WEB_DIST_DIR: ""
       PUBLIC_URL: ${PUBLIC_URL:?set in the env file}
       SESSION_SECRET: ${SESSION_SECRET:?set in the env file}
@@ -128,7 +130,6 @@ services:
         condition: service_completed_successfully
 
   # OAUTH_ISSUER alone marks this a deployment, so the default FS_TOKEN_ENC_KEY refuses start.
-  # TRANSCRIPTION_ENABLED: off until FamilySearch's approval is in writing.
   tools:
     build:
       context: ../../../..
@@ -144,8 +145,10 @@ services:
     environment:
       OAUTH_ISSUER: ${PUBLIC_URL:?set in the env file}
       WEB_PUBLIC_URL: ${WEB_PUBLIC_URL:-}
-      UPLOADS_ENABLED: "true"
-      TRANSCRIPTION_ENABLED: "false"
+      UPLOADS_ENABLED: ${UPLOADS_ENABLED:-false}
+      GENEALOGY_SHARED_COLLECTIONS_CACHE: "true"
+      GENEALOGY_FS_CALLS_PER_MINUTE: ${GENEALOGY_FS_CALLS_PER_MINUTE:-}
+      GENEALOGY_MAX_TRANSCRIPTIONS: ${GENEALOGY_MAX_TRANSCRIPTIONS:-}
       FS_TOKEN_ENC_KEY: ${FS_TOKEN_ENC_KEY:?set in the env file}
       WIKI_API_URL: ${WIKI_API_URL:-}
       POP_STATS_URL: ${POP_STATS_URL:-}

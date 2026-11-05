@@ -16,9 +16,13 @@ from psycopg.conninfo import make_conninfo
 
 from tests import _proto_pg
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "proto" / "malachi"))
+PROTO = Path(__file__).resolve().parents[1] / "proto"
+sys.path.insert(0, str(PROTO))
+sys.path.insert(0, str(PROTO / "malachi"))
 
 import dml_role  # noqa: E402
+import openrouter_seed  # noqa: E402
+from web import auth  # noqa: E402
 
 PASSWORD = "dml-role-test-password"
 
@@ -112,3 +116,16 @@ def test_the_ledger_read_survives_a_restore_with_no_acl(owner_dsn):
     _apply(owner_dsn)
     with psycopg.connect(_as_role(owner_dsn), autocommit=True) as conn:
         assert conn.execute("SELECT count(*) FROM schema_migrations").fetchone()[0] > 0
+
+
+def test_the_seed_writes_ciphertext_through_the_role(owner_dsn, monkeypatch):
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 32)
+    _apply(owner_dsn)
+    with psycopg.connect(_as_role(owner_dsn), autocommit=True) as conn:
+        conn.execute("INSERT INTO users (id, email) VALUES ('u1', 'a@example.test')")
+    assert openrouter_seed.seed(_as_role(owner_dsn), "A@Example.test", "sk-or-secret") is True
+    assert openrouter_seed.seed(_as_role(owner_dsn), "nobody@example.test", "sk-or-secret") is False
+    with psycopg.connect(_as_role(owner_dsn), autocommit=True) as conn:
+        stored = conn.execute("SELECT openrouter_key_enc FROM users WHERE id = 'u1'").fetchone()[0]
+    assert stored.startswith("gAAAAA") and "sk-or-secret" not in stored
+    assert auth.decrypt(stored) == "sk-or-secret"

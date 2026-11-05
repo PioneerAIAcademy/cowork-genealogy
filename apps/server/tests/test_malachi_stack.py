@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import copy
 import http.server
+import io
 import json
 import os
 import re
@@ -163,8 +164,16 @@ def shape_violations(doc: dict) -> list[str]:
         out.append("spa: web must set WEB_DIST_DIR to a literal blank")
     if "--no-access-log" not in _argv(services["web"]):
         out.append("logs: uvicorn's access log prints query strings")
-    if tools.get("TRANSCRIPTION_ENABLED") != "false":
-        out.append("transcription: tools must set TRANSCRIPTION_ENABLED to false")
+    if web.get("OPENROUTER_LINKING_ENABLED") != "false":
+        out.append("openrouter: web must set OPENROUTER_LINKING_ENABLED to a literal false")
+    for name, env in (("web", web), ("tools", tools)):
+        if env.get("UPLOADS_ENABLED") != "${UPLOADS_ENABLED:-false}":
+            out.append(f"uploads: {name}'s UPLOADS_ENABLED comes from the env file and defaults to false")
+    if tools.get("GENEALOGY_SHARED_COLLECTIONS_CACHE") != "true":
+        out.append("collections: tools must share one catalog cache across patrons")
+    for key in ("GENEALOGY_FS_CALLS_PER_MINUTE", "GENEALOGY_MAX_TRANSCRIPTIONS"):
+        if tools.get(key) != f"${{{key}:-}}":
+            out.append(f"limits: tools' {key} comes from the env file")
     if tools.get("WEB_PUBLIC_URL") != "${WEB_PUBLIC_URL:-}":
         out.append("links: tools' WEB_PUBLIC_URL comes from the env file alone")
     if tools.get("OAUTH_ISSUER", "").split(":")[0] != "${PUBLIC_URL":
@@ -321,7 +330,16 @@ DEFECTS: list[tuple[str, str, Callable[[dict], None]]] = [
     ("shape", "tools writable", _set("tools", "read_only", False)),
     ("shape", "edge writable", _unset("edge", "read_only")),
     ("shape", "dml_role.py not mounted", _unset("migrate", "volumes")),
-    ("shape", "transcription switch missing", _drop_env("tools", "TRANSCRIPTION_ENABLED")),
+    ("shape", "OpenRouter linking on", _set_env("web", "OPENROUTER_LINKING_ENABLED", "true")),
+    ("shape", "OpenRouter linking left out", _drop_env("web", "OPENROUTER_LINKING_ENABLED")),
+    ("shape", "OpenRouter linking from the env file", _set_env("web", "OPENROUTER_LINKING_ENABLED",
+                                                               "${OPENROUTER_LINKING_ENABLED:-false}")),
+    ("shape", "uploads on in web", _set_env("web", "UPLOADS_ENABLED", "true")),
+    ("shape", "uploads on in tools", _set_env("tools", "UPLOADS_ENABLED", "true")),
+    ("shape", "uploads default to on", _set_env("web", "UPLOADS_ENABLED", "${UPLOADS_ENABLED:-true}")),
+    ("shape", "uploads off in tools alone", _drop_env("tools", "UPLOADS_ENABLED")),
+    ("shape", "collections cache per token", _drop_env("tools", "GENEALOGY_SHARED_COLLECTIONS_CACHE")),
+    ("shape", "a limit the env file cannot reach", _drop_env("tools", "GENEALOGY_MAX_TRANSCRIPTIONS")),
     ("shape", "dead links", _set_env("tools", "WEB_PUBLIC_URL", "${PUBLIC_URL:?x}")),
     ("shape", "owner DSN on web", _set_env("web", "MIGRATE_PG_DSN", "x")),
     ("shape", "owner on tools", _set_env("tools", "GENEALOGY_PG_DSN",
@@ -347,6 +365,8 @@ LEGITIMATE: list[tuple[str, str, Callable[[dict], None]]] = [
     ("dev-login", "a key that merely contains DEV", _set_env("web", "DEVICE_NAME", "x")),
     ("chat", "list form", _all(_drop_env("web", "GENEALOGY_CHAT"), _env_as_list("web", "GENEALOGY_CHAT=false"))),
     ("chat", "unquoted", _set_env("web", "GENEALOGY_CHAT", False)),
+    ("shape", "linking off, unquoted", _set_env("web", "OPENROUTER_LINKING_ENABLED", False)),
+    ("shape", "list form", _env_as_list("web")),
 ]
 
 
@@ -384,11 +404,17 @@ def test_the_template_carries_no_secret_and_no_port():
     values = dict(line.split("=", 1) for line in TEMPLATE.read_text(encoding="utf-8").splitlines()
                   if line and not line.startswith("#"))
     for key in ("POSTGRES_PASSWORD", "DML_PASSWORD", "MINIO_ROOT_PASSWORD", "SESSION_SECRET", "FS_TOKEN_ENC_KEY",
-                "ALLOWED_EMAILS", "WIKI_API_URL", "POP_STATS_URL", "WEB_PUBLIC_URL"):
+                "ALLOWED_EMAILS", "WIKI_API_URL", "POP_STATS_URL", "WEB_PUBLIC_URL", "OPENROUTER_SEED_KEY",
+                "GENEALOGY_FS_CALLS_PER_MINUTE", "GENEALOGY_MAX_TRANSCRIPTIONS"):
         assert values[key] == "", key
+    assert values["UPLOADS_ENABLED"] == "false"
     assert values["DATA_DIR"] == "/home/data/genealogy-beta"
     assert values["PUBLIC_URL"] == "https://malachi.taild68f1b.ts.net"
     assert "EDGE_PORT" not in values
+
+
+def test_no_service_sees_the_seed_key():
+    assert "OPENROUTER_SEED_KEY" not in COMPOSE.read_text(encoding="utf-8")
 
 
 def test_malachi_sh_knows_the_development_keys():
@@ -516,13 +542,23 @@ def _read_env(path: Path) -> dict[str, str]:
                 if "=" in line and not line.startswith("#"))
 
 
+FAKE_DOCKER = """#!/bin/sh
+if [ "$1" = info ]; then
+  printf '%s\\n' "${FAKE_DOCKER_ROOT-}"
+  exit 0
+fi
+[ -z "${FAKE_DOCKER_STDIN-}" ] || cat >"$FAKE_DOCKER_STDIN"
+printf '%s|%s|%s\\n' "${FS_TOKEN_ENC_KEY-unset}" "${EDGE_PORT-unset}" "$*"
+"""
+
+
 def _with_fake_docker(folder: Path, env: dict[str, str]) -> dict[str, str]:
-    """``env`` with a docker first on PATH that prints what reached it and succeeds."""
+    """``env`` with a docker first on PATH that prints what reached it and succeeds. ``docker
+    info`` answers ``FAKE_DOCKER_ROOT``, and ``FAKE_DOCKER_STDIN`` names a file for its stdin."""
     bin_dir = folder / "docker-bin"
     bin_dir.mkdir(exist_ok=True)
     fake = bin_dir / "docker"
-    fake.write_text('#!/bin/sh\nprintf "%s|%s|%s\\n" "${FS_TOKEN_ENC_KEY-unset}" "${EDGE_PORT-unset}" "$*"\n',
-                    encoding="utf-8")
+    fake.write_text(FAKE_DOCKER, encoding="utf-8")
     fake.chmod(0o755)
     return {**env, "PATH": f"{bin_dir}{os.pathsep}{env['PATH']}"}
 
@@ -694,7 +730,58 @@ def test_up_refuses_under_the_memory_floor(first_run):
 
 
 @needs_bash
-@pytest.mark.parametrize(("name", "command"), [("MIN_FREE_MEM_GB", "up"), ("MIN_FREE_GB", "backup"), ("KEEP", "backup"),
+def test_up_refuses_under_the_docker_root_floor_before_it_builds(first_run, tmp_path):
+    path, env = first_run
+    result = _run(["up"], {**_with_fake_docker(path.parent, env), "FAKE_DOCKER_ROOT": str(tmp_path),
+                           "MIN_DOCKER_FREE_GB": "99999999"})
+    assert result.returncode == 1 and "under the floor" in result.stderr and "malachi-prune" in result.stderr
+    assert "FAIL  docker root" in result.stdout
+    assert "compose" not in result.stdout
+    assert not Path(env["DATA_DIR"]).exists()
+
+
+@needs_bash
+def test_up_builds_over_the_docker_root_floor(first_run, tmp_path):
+    path, env = first_run
+    result = _run(["up"], {**_with_fake_docker(path.parent, env), "FAKE_DOCKER_ROOT": str(tmp_path),
+                           "MIN_DOCKER_FREE_GB": "0", "EDGE": "off"})
+    assert result.returncode == 0, result.stderr
+    assert "up -d --build web tools" in result.stdout
+
+
+@needs_bash
+def test_up_builds_when_docker_root_is_not_on_this_host(first_run):
+    path, env = first_run
+    result = _run(["up"], {**_with_fake_docker(path.parent, env), "FAKE_DOCKER_ROOT": "/no/such/root",
+                           "MIN_DOCKER_FREE_GB": "99999999", "EDGE": "off"})
+    assert result.returncode == 0, result.stderr
+    assert "skip  docker root" in result.stdout
+
+
+@needs_bash
+@pytest.mark.parametrize("edge", ["on", "off"])
+def test_up_prunes_this_stacks_images_and_no_one_elses(first_run, edge):
+    path, env = first_run
+    result = _run(["up"], {**_with_fake_docker(path.parent, env), "MALACHI_PROJECT": "own-stack", "EDGE": edge})
+    assert result.returncode == 0, result.stderr
+    rows = [row.split("|")[2] for row in result.stdout.splitlines() if "prune -f" in row]
+    assert rows == ["image prune -f --filter label=com.docker.compose.project=own-stack"]
+
+
+@needs_bash
+def test_prune_reaches_the_build_cache_only_when_asked(first_run):
+    path, env = first_run
+    result = _run(["prune"], {**_with_fake_docker(path.parent, env), "MALACHI_PROJECT": "own-stack"})
+    assert result.returncode == 0, result.stderr
+    assert [row.split("|")[2] for row in result.stdout.splitlines()] == [
+        "image prune -f --filter label=com.docker.compose.project=own-stack",
+        "builder prune -f --filter until=168h",
+    ]
+
+
+@needs_bash
+@pytest.mark.parametrize(("name", "command"), [("MIN_FREE_MEM_GB", "up"), ("MIN_DOCKER_FREE_GB", "up"),
+                                               ("MIN_FREE_GB", "backup"), ("KEEP", "backup"),
                                                ("TAIL", "logs"), ("MIN_FREE_GB", "check")])
 @pytest.mark.parametrize("value", ["abc", "1.5", "-1"])
 def test_a_number_that_is_not_one_is_refused(first_run, name, command, value):
@@ -714,13 +801,57 @@ def test_backup_refuses_under_the_disk_floor(first_run):
     assert list((data / "backups").iterdir()) == []
 
 
+def _finished_backups(env: dict[str, str], *names: str) -> Path:
+    backups = Path(env["DATA_DIR"]) / "backups"
+    for name in names:
+        (backups / name).mkdir(parents=True)
+        (backups / name / "manifest.txt").write_text("git_sha=x\nledger_rows=1\n", encoding="utf-8")
+    return backups
+
+
+def _finished(backups: Path) -> list[str]:
+    return sorted(p.name for p in backups.iterdir() if (p / "manifest.txt").exists())
+
+
+@needs_bash
+@pytest.mark.parametrize("keep", ["1", "2", "13"])
+def test_backup_under_the_default_keep_asks_first(first_run, keep):
+    """KEEP is read from the ambient shell as well, and pruning runs before any restore check."""
+    path, env = first_run
+    backups = _finished_backups(env, "20260101T000000Z", "20260102T000000Z")
+    result = _run(["backup"], {**_with_fake_docker(path.parent, env), "KEEP": keep, "MIN_FREE_GB": "0"})
+    assert result.returncode == 1 and "pass CONFIRM=yes" in result.stderr
+    assert "compose" not in result.stdout
+    assert _finished(backups) == ["20260101T000000Z", "20260102T000000Z"]
+
+
+@needs_bash
+def test_backup_under_the_default_keep_prunes_once_confirmed(first_run):
+    path, env = first_run
+    backups = _finished_backups(env, "20260101T000000Z", "20260102T000000Z")
+    result = _run(["backup"], {**_with_fake_docker(path.parent, env), "KEEP": "2", "CONFIRM": "yes", "MIN_FREE_GB": "0"})
+    assert result.returncode == 0, result.stderr
+    kept = _finished(backups)
+    assert len(kept) == 2 and "20260101T000000Z" not in kept and "20260102T000000Z" in kept
+
+
+@needs_bash
+@pytest.mark.parametrize("given", [{}, {"KEEP": "14"}, {"KEEP": "30"}])
+def test_backup_at_or_over_the_default_keep_does_not_ask(first_run, given):
+    path, env = first_run
+    backups = _finished_backups(env, "20260101T000000Z")
+    result = _run(["backup"], {**_with_fake_docker(path.parent, env), **given, "MIN_FREE_GB": "0"})
+    assert result.returncode == 0, result.stderr
+    assert len(_finished(backups)) == 2
+
+
 # ── malachi-check's HTTP half ────────────────────────────────────────────────
 
 GOOD_ROUTES: dict[tuple[str, str], tuple[int, dict[str, str], bytes]] = {
     ("GET", "/livez"): (200, {}, b'{"ok":true}'),
     ("GET", "/.well-known/oauth-protected-resource/mcp"): (200, {}, b'{"resource":"http://x/mcp"}'),
     ("POST", "/mcp"): (401, {"WWW-Authenticate": 'Bearer resource_metadata="http://x/m"'}, b"{}"),
-    ("GET", "/auth/config"): (200, {}, b'{"familysearch":true,"devLogin":false,"openrouter":true}'),
+    ("GET", "/auth/config"): (200, {}, b'{"familysearch":true,"devLogin":false,"openrouter":false}'),
 }
 
 
@@ -784,8 +915,10 @@ FAULTS = [
     ("metadata", {"metadata": (404, {}, b"{}")}),
     ("/index.html", {"index": (200, {}, b"<html>")}),
     ("/api/sessions", {"sessions": (200, {}, b"[]")}),
-    ("/auth/config", {"config": (200, {}, b'{"familysearch":true,"devLogin":true}')}),
-    ("/auth/config", {"config": (200, {}, b'{"familysearch":false,"devLogin":false}')}),
+    ("/auth/config", {"config": (200, {}, b'{"familysearch":true,"devLogin":true,"openrouter":false}')}),
+    ("/auth/config", {"config": (200, {}, b'{"familysearch":false,"devLogin":false,"openrouter":false}')}),
+    ("/auth/config", {"config": (200, {}, b'{"familysearch":true,"devLogin":false,"openrouter":true}')}),
+    ("/auth/config", {"config": (200, {}, b'{"familysearch":true,"devLogin":false}')}),
 ]
 
 
@@ -811,6 +944,7 @@ case $url in
   */wiki/openapi.json) printf %s "$FAKE_WIKI" ;;
   */pop-stats/openapi.json) printf %s "$FAKE_POP" ;;
   */livez) printf %s "$FAKE_SLOT" ;;
+  */auth/config) printf %s "${FAKE_CONFIG:-$FAKE_SLOT}" ;;
   *) printf 000; exit 7 ;;
 esac
 """
@@ -825,9 +959,9 @@ def _fake_curl(tmp_path: Path) -> Path:
     return bin_dir
 
 
-def _tailscale_check(tmp_path: Path, wiki: str, pop: str, slot: str) -> subprocess.CompletedProcess:
+def _tailscale_check(tmp_path: Path, wiki: str, pop: str, slot: str, config: str = "") -> subprocess.CompletedProcess:
     env = {"PATH": f"{_fake_curl(tmp_path)}{os.pathsep}{os.environ['PATH']}", "FAKE_WIKI": wiki, "FAKE_POP": pop,
-           "FAKE_SLOT": slot}
+           "FAKE_SLOT": slot, "FAKE_CONFIG": config}
     return subprocess.run([BASH, str(TAILSCALE), "check"], env=env, capture_output=True, text=True, encoding="utf-8",
                           timeout=60)
 
@@ -844,6 +978,19 @@ def test_tailscale_check_accepts_an_empty_slot_and_a_live_edge(tmp_path, slot):
 def test_tailscale_check_fails_anything_else_at_the_slot(tmp_path, slot):
     result = _tailscale_check(tmp_path, "200", "200", slot)
     assert result.returncode == 1 and "FAIL" in result.stdout
+
+
+@needs_bash
+def test_tailscale_check_fails_a_process_that_answers_livez_but_is_not_the_stack(tmp_path):
+    """The connector probe and a bare tool server both serve /livez, and neither /auth/config."""
+    result = _tailscale_check(tmp_path, "200", "200", "200", "404")
+    assert result.returncode == 1
+    assert any(row.strip().startswith("FAIL") and "/auth/config" in row for row in result.stdout.splitlines())
+
+
+@needs_bash
+def test_tailscale_check_passes_a_web_tier_gone_behind_a_live_edge(tmp_path):
+    assert _tailscale_check(tmp_path, "200", "200", "502", "502").returncode == 0
 
 
 @needs_bash
@@ -869,6 +1016,100 @@ def test_check_public_runs_the_ingress_check_and_the_http_half(first_run, tmp_pa
 
     held = _run(["check-public"], {**fake_env, "EDGE": "off", "FAKE_SLOT": "200"})
     assert held.returncode == 1 and "public slot empty: got 200" in held.stdout
+
+
+# ── openrouter_seed ──────────────────────────────────────────────────────────
+
+
+@pytest.fixture
+def seed_module():
+    sys.path.insert(0, str(SERVER / "proto"))
+    sys.path.insert(0, str(MALACHI))
+    try:
+        import openrouter_seed
+        yield openrouter_seed
+    finally:
+        sys.path.remove(str(MALACHI))
+        sys.path.remove(str(SERVER / "proto"))
+
+
+def _seed_main(module: Any, monkeypatch: pytest.MonkeyPatch, stdin: str, found: bool) -> tuple[int, list[tuple]]:
+    calls: list[tuple] = []
+
+    def seed(dsn: str, email: str, key: str) -> bool:
+        calls.append((dsn, email, key))
+        return found
+
+    monkeypatch.setenv("PG_DSN", "unused")
+    monkeypatch.setattr(module, "seed", seed)
+    monkeypatch.setattr(sys, "stdin", io.StringIO(stdin))
+    return module.main(["--email", "a@example.test"]), calls
+
+
+def test_seed_takes_the_key_from_stdin_and_never_prints_it(seed_module, monkeypatch, capsys):
+    status, calls = _seed_main(seed_module, monkeypatch, "sk-or-secret\n", True)
+    assert status == 0 and calls == [("unused", "a@example.test", "sk-or-secret")]
+    printed = capsys.readouterr()
+    assert "sk-or-secret" not in printed.out + printed.err and "a@example.test" in printed.out
+
+
+def test_seed_refuses_a_blank_key_without_touching_a_row(seed_module, monkeypatch, capsys):
+    status, calls = _seed_main(seed_module, monkeypatch, " \n", True)
+    assert status == 2 and calls == []
+    assert "no key" in capsys.readouterr().err
+
+
+def test_seed_says_when_no_such_user_exists(seed_module, monkeypatch, capsys):
+    status, _calls = _seed_main(seed_module, monkeypatch, "sk-or-secret", False)
+    assert status == 1
+    printed = capsys.readouterr()
+    assert "no user a@example.test" in printed.err and "sk-or-secret" not in printed.out + printed.err
+
+
+def test_seed_takes_no_key_on_the_command_line(seed_module):
+    with pytest.raises(SystemExit):
+        seed_module.main(["--email", "a@example.test", "--key", "sk-or-secret"])
+
+
+@needs_bash
+def test_malachi_openrouter_needs_an_email(first_run):
+    path, env = first_run
+    result = _run(["openrouter"], _with_fake_docker(path.parent, env))
+    assert result.returncode == 1 and "EMAIL= is required" in result.stderr
+    assert "compose" not in result.stdout
+
+
+@needs_bash
+def test_malachi_openrouter_refuses_a_blank_key(first_run):
+    path, env = first_run
+    result = _run(["openrouter"], {**_with_fake_docker(path.parent, env), "EMAIL": "a@example.test"})
+    assert result.returncode == 1 and "OPENROUTER_SEED_KEY is blank" in result.stderr
+    assert "compose" not in result.stdout
+
+
+@needs_bash
+def test_malachi_openrouter_sends_the_key_on_stdin_and_never_argv(first_run, tmp_path):
+    path, env = first_run
+    path.write_text(path.read_text(encoding="utf-8").replace("OPENROUTER_SEED_KEY=\n", "OPENROUTER_SEED_KEY=sk-or-secret\n"),
+                    encoding="utf-8")
+    stdin = tmp_path / "stdin"
+    result = _run(["openrouter"], {**_with_fake_docker(path.parent, env), "EMAIL": "a@example.test",
+                                   "FAKE_DOCKER_STDIN": str(stdin)})
+    assert result.returncode == 0, result.stderr
+    assert stdin.read_text(encoding="utf-8") == "sk-or-secret"
+    assert "sk-or-secret" not in result.stdout + result.stderr
+    assert "openrouter_seed.py --email a@example.test" in result.stdout
+
+
+@needs_bash
+def test_malachi_openrouter_fails_when_the_seed_does(first_run):
+    path, env = first_run
+    path.write_text(path.read_text(encoding="utf-8").replace("OPENROUTER_SEED_KEY=\n", "OPENROUTER_SEED_KEY=k\n"),
+                    encoding="utf-8")
+    fake_env = _with_fake_docker(path.parent, env)
+    fake = Path(fake_env["PATH"].split(os.pathsep)[0]) / "docker"
+    fake.write_text("#!/bin/sh\ncat >/dev/null\nexit 1\n", encoding="utf-8")
+    assert _run(["openrouter"], {**fake_env, "EMAIL": "a@example.test"}).returncode != 0
 
 
 # ── project_export ───────────────────────────────────────────────────────────

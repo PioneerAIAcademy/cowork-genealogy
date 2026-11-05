@@ -17,6 +17,7 @@ SEED_EMAIL=rehearsal@example.test
 FIXTURE=eval/fixtures/scenarios/empty-project-just-created
 
 WORK=''
+OTHER_IMAGE=''
 PASSED=0
 STEP='start'
 
@@ -89,6 +90,7 @@ teardown() {
       exit "$status"
     fi
     rcompose down --remove-orphans --rmi local >/dev/null 2>&1 || true
+    [ -z "$OTHER_IMAGE" ] || docker rmi "$OTHER_IMAGE" >/dev/null 2>&1 || true
     rm -rf "$WORK"
   fi
   if [ "$status" = 0 ]; then
@@ -155,6 +157,9 @@ for service in web tools; do
   fi
 done
 pass "neither tier carries QUEUE_URL or DEV_LOGIN"
+host_make malachi-logs SERVICE=tools TAIL=500 >"$WORK/tools.log" 2>&1
+grep -q 'collections cache: shared' "$WORK/tools.log" || fail "the tool server does not share the collections cache"
+pass "the tool server shares the collections cache"
 want=$(find "$WORK/host/apps/server/proto/sql" -name '*.sql' | wc -l | tr -d ' ')
 got=$(rcompose exec -T postgres psql -U postgres -d genealogy -Atc 'SELECT count(*) FROM schema_migrations')
 [ "$got" = "$want" ] || fail "ledger holds $got rows, the repo ships $want files"
@@ -240,11 +245,49 @@ rcompose exec -T web python -c "import urllib.request; print(urllib.request.urlo
 grep -q '"ok":true' "$WORK/tools.json" || fail "tools /healthz: $(cat "$WORK/tools.json")"
 pass "tools /healthz is ok under the DML role"
 
-say "9. uploads through the edge"
+say "9. OpenRouter: linking off, one key seeded by hand"
+[ "$(code_of "$BASE/openrouter/link")" = 404 ] || fail "/openrouter/link does not answer 404"
+pass "the linking routes answer 404"
+stored_key() { rcompose exec -T postgres psql -U postgres -d genealogy -Atc "SELECT openrouter_key_enc FROM users WHERE email = '$SEED_EMAIL'"; }
+[ -z "$(stored_key)" ] || fail "a key is on the row before any seed"
+must_refuse "malachi-openrouter with no EMAIL" "EMAIL= is required" malachi-openrouter
+must_refuse "malachi-openrouter with a blank key" "OPENROUTER_SEED_KEY is blank" malachi-openrouter "EMAIL=$SEED_EMAIL"
+SEED_KEY=rehearsal-openrouter-key
+sed -i '' "s/^OPENROUTER_SEED_KEY=.*/OPENROUTER_SEED_KEY=$SEED_KEY/" "$ENV_FILE"
+must_refuse "malachi-openrouter for nobody" "no user nobody@example.test" malachi-openrouter EMAIL=nobody@example.test
+must_pass "malachi-openrouter" malachi-openrouter "EMAIL=$SEED_EMAIL"
+if grep -q "$SEED_KEY" "$WORK/last.log"; then fail "the key reached the target's output"; fi
+STORED=$(stored_key)
+case $STORED in
+  gAAAAA*) ;;
+  *) fail "the row does not hold ciphertext" ;;
+esac
+got=$(rcompose exec -T -e STORED="$STORED" web python -c "import os; from web import auth; print(auth.decrypt(os.environ['STORED']))")
+[ "$got" = "$SEED_KEY" ] || fail "the stored key does not decrypt to the seeded one"
+pass "the key is ciphertext on the row, and decrypts under the stack's key"
+for service in web tools; do
+  if docker inspect -f '{{json .Config.Env}}' "$(container_id "$service")" | grep -q "$SEED_KEY\|OPENROUTER_SEED_KEY"; then
+    fail "$service carries the seed key"
+  fi
+done
+pass "neither tier carries the seed key"
+
+say "10. uploads off, then on through the env file"
 {
   printf '\211PNG\r\n\032\n'
   head -c 20000000 /dev/urandom
 } >"$WORK/rehearsal.png"
+got=$(code_of -H "Cookie: wb_session=$COOKIE" -F "file=@$WORK/rehearsal.png" "$BASE/api/projects/$PROJECT/files")
+[ "$got" = 404 ] || fail "an upload with the template's setting answered $got, want 404"
+curl -s --max-time 10 "$BASE/auth/config" | grep -q '"uploads":false' || fail "/auth/config does not say uploads are off"
+pass "the template's setting leaves uploads off"
+sed -i '' 's/^UPLOADS_ENABLED=.*/UPLOADS_ENABLED=true/' "$ENV_FILE"
+ENV_SUM=$(shasum "$ENV_FILE")
+must_pass "malachi-up" malachi-up
+curl -s --max-time 10 "$BASE/auth/config" | grep -q '"uploads":true' || fail "/auth/config does not say uploads are on"
+pass "the env file turns uploads on"
+
+say "11. uploads through the edge"
 got=$(code_of -H "Cookie: wb_session=$COOKIE" -F "file=@$WORK/rehearsal.png" "$BASE/api/projects/$PROJECT/files")
 [ "$got" = 200 ] || fail "a 20 MB upload answered $got"
 pass "a 20 MB upload through a read-only edge answered 200"
@@ -263,7 +306,7 @@ got=$(code_of -H 'Transfer-Encoding: chunked' -F "file=@$WORK/rehearsal.png" "$B
 [ "$got" = 401 ] || fail "a chunked upload with no session answered $got, want 401"
 pass "a chunked upload with no session is refused by the web tier, since bodies stream"
 
-say "10. no sign-in code reaches a log"
+say "12. no sign-in code reaches a log"
 got=$(code_of "$BASE/callback?code=SECRETCODE&state=SECRETSTATE")
 [ "$got" = 400 ] || fail "/callback answered $got, want 400"
 sleep 1
@@ -273,7 +316,7 @@ grep -q '"path":"/callback","status":400' "$WORK/edge.log" || fail "the edge log
 if grep -q 'SECRET' "$WORK/edge.log" "$WORK/web.log"; then fail "a secret reached a log"; fi
 pass "edge log shows /callback 400, and neither log holds the code or state"
 
-say "11. export by email and by project"
+say "13. export by email and by project"
 must_refuse "malachi-export with no selector" "exactly one" malachi-export
 must_pass "malachi-export EMAIL=" malachi-export "EMAIL=$SEED_EMAIL"
 [ -f "$DATA/exports/$PROJECT/research.json" ] || fail "no research.json in the export"
@@ -285,7 +328,7 @@ want=$(wc -c <"$WORK/rehearsal.png" | tr -d ' ')
 [ "$got" = "$want" ] || fail "the exported upload is $got bytes, want $want"
 pass "the export holds the upload at its full size"
 
-say "12. backup and restore check"
+say "14. backup and restore check"
 must_refuse "KEEP=x is refused" "must be a whole number" malachi-backup KEEP=x
 must_pass "malachi-backup" malachi-backup
 must_pass "malachi-restore-check" malachi-restore-check
@@ -312,13 +355,14 @@ pass "failed checks left no scratch database"
 sleep 1
 must_pass "a second backup" malachi-backup
 sleep 1
-must_pass "a third backup with KEEP=2" malachi-backup KEEP=2
+must_refuse "KEEP=2 with no CONFIRM" "pass CONFIRM=yes" malachi-backup KEEP=2
+must_pass "a third backup with KEEP=2" malachi-backup KEEP=2 CONFIRM=yes
 got=$(find "$DATA/backups" -mindepth 1 -maxdepth 1 -type d | wc -l | tr -d ' ')
 [ "$got" = 2 ] || fail "KEEP=2 left $got backups"
 GOOD=$(basename "$(find "$DATA/backups" -mindepth 1 -maxdepth 1 -type d | sort | tail -n 1)")
 pass "KEEP=2 left 2 backups"
 
-say "13. deploy a commit that leaves nginx.conf alone"
+say "15. deploy a commit that leaves nginx.conf alone"
 EDGE_START=$(started_at edge)
 WEB_ID=$(container_id web)
 TOOLS_ID=$(container_id tools)
@@ -344,10 +388,16 @@ printf 'dirt\n' >"$WORK/host/dirt.txt"
 must_refuse "malachi-deploy on a dirty tree" "the tree is not clean" malachi-deploy "REF=$REF"
 rm "$WORK/host/dirt.txt"
 
-say "14. deploy a commit that changes nginx.conf"
+say "16. deploy a commit that changes nginx.conf and web's image"
 EDGE_ID=$(container_id edge)
+WEB_IMAGE=$(docker inspect -f '{{.Image}}' "$(container_id web)")
+mkdir "$WORK/other"
+printf 'rehearsal\n' >"$WORK/other/marker"
+printf 'FROM scratch\nCOPY marker /marker\n' >"$WORK/other/Dockerfile"
+OTHER_IMAGE=$(docker build -q --label com.docker.compose.project="$STACK-other" "$WORK/other")
 sed -i '' 's/^        listen 8006;$/        listen 8006; add_header X-Rehearsal deployed always;/' "$WORK/dev/$MALACHI_DIR/nginx.conf"
 grep -q 'X-Rehearsal' "$WORK/dev/$MALACHI_DIR/nginx.conf" || fail "the planted line did not land"
+printf '\n# rehearsal\n' >>"$WORK/dev/apps/server/proto/web/auth.py"
 git -C "$WORK/dev" -c user.name=rehearsal -c user.email=rehearsal@example.test commit -q -am "rehearsal: change the edge"
 git -C "$WORK/dev" push -q origin HEAD:refs/heads/rehearsal-deploy
 REF=$(git -C "$WORK/dev" rev-parse HEAD)
@@ -355,8 +405,15 @@ must_pass "malachi-deploy REF=" malachi-deploy "REF=$REF"
 [ "$(container_id edge)" != "$EDGE_ID" ] || fail "the edge was not recreated"
 curl -s -D - -o /dev/null --max-time 10 "$BASE/livez" | grep -qi 'x-rehearsal: deployed' || fail "the edge does not serve the new file"
 pass "the edge recreated and serves the new file"
+[ "$(docker inspect -f '{{.Image}}' "$(container_id web)")" != "$WEB_IMAGE" ] || fail "web's image was not rebuilt"
+if docker image inspect "$WEB_IMAGE" >/dev/null 2>&1; then fail "the superseded web image is still here"; fi
+pass "the deploy removed the superseded web image"
+docker image inspect "$OTHER_IMAGE" >/dev/null 2>&1 || fail "the deploy removed another project's image"
+docker rmi "$OTHER_IMAGE" >/dev/null
+OTHER_IMAGE=''
+pass "another project's untagged image survived the deploy"
 
-say "15. down and up keep the data"
+say "17. down and up keep the data"
 must_pass "malachi-down" malachi-down
 [ -z "$(docker ps -q --filter label=com.docker.compose.project="$STACK")" ] || fail "containers survive malachi-down"
 must_pass "malachi-up" malachi-up
@@ -369,7 +426,7 @@ pass "the document and the upload are still there"
 must_refuse "malachi-restore over live data" "A restore goes into an empty stack" malachi-restore CONFIRM=yes "BACKUP=$GOOD"
 must_refuse "malachi-restore without CONFIRM" "pass CONFIRM=yes" malachi-restore "BACKUP=$GOOD"
 
-say "16. wipe, restore, and read it back"
+say "18. wipe, restore, and read it back"
 must_refuse "malachi-wipe without CONFIRM" "pass CONFIRM=yes" malachi-wipe
 [ -d "$DATA/postgres" ] || fail "the refused wipe removed data"
 must_pass "malachi-wipe CONFIRM=yes" malachi-wipe CONFIRM=yes
@@ -395,10 +452,10 @@ cmp -s "$WORK/restored/uploads/rehearsal.png" "$WORK/rehearsal.png" || fail "the
 [ ! -e "$WORK/restored/MISSING.txt" ] || fail "the restored download names missing files: $(cat "$WORK/restored/MISSING.txt")"
 pass "the restored upload matches the original byte for byte"
 
-say "17. the reach probe reports a real status"
+say "19. the reach probe reports a real status"
 must_refuse "REACH=1 against a path nothing serves" "wiki from inside tools: 404" malachi-check REACH=1
 
-say "18. proto"
+say "20. proto"
 PROTO_AFTER=$(proto_state)
 if [ "$PROTO_AFTER" = "$PROTO_BEFORE" ]; then
   pass "proto containers unchanged"
