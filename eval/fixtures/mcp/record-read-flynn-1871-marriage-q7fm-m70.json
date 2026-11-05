@@ -1,0 +1,109 @@
+{
+  "tool": "record_read",
+  "description": "record_read of Q7FM-M70, the 1871 Mahanoy City marriage of Patrick Flynn, son of Michael, to Catherine Boyle, served by record-search-flynn-1870-marriages-other-parents. Stocked; ut_search_records_032 does not require the read.",
+  "args": {
+    "recordId": "~Q7FM-M70"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Patrick",
+            "surname": "Flynn",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Marriage",
+            "date": "9 October 1871",
+            "place": "Mahanoy City, Schuylkill, Pennsylvania, United States"
+          }
+        ],
+        "ark": "ark:/61903/1:1:Q7FM-M70",
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Pennsylvania, Catholic Church Records, 1765-1940"
+          }
+        ]
+      },
+      {
+        "id": "P2",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "N2",
+            "preferred": true,
+            "given": "Catherine",
+            "surname": "Boyle",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F3",
+            "type": "Marriage",
+            "date": "9 October 1871",
+            "place": "Mahanoy City, Schuylkill, Pennsylvania, United States"
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Pennsylvania, Catholic Church Records, 1765-1940"
+          }
+        ]
+      },
+      {
+        "id": "P3",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N3",
+            "preferred": true,
+            "given": "Michael",
+            "surname": "Flynn",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "Pennsylvania, Catholic Church Records, 1765-1940"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "R1",
+        "type": "Couple",
+        "person1": "P1",
+        "person2": "P2"
+      },
+      {
+        "id": "R2",
+        "type": "ParentChild",
+        "parent": "P3",
+        "child": "P1"
+      }
+    ],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "Pennsylvania, Catholic Church Records, 1765-1940",
+        "collectionId": "1951741",
+        "ark": "ark:/61903/1:1:Q7FM-M70"
+      }
+    ],
+    "places": []
+  }
+}
