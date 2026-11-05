@@ -122,6 +122,7 @@ repo's identifier-casing rule):
     sourceId: string,
     ref: string,                         // the staged page
   }],
+  claimKinds: string[],                  // proof_summaries claim kinds this engine accepts: relationship, fact, identity, name, finding
   externalCollections?: {                // stored curated collections, counts only — §2.4
     [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
   },

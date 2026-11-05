@@ -119,6 +119,60 @@ def test_creates_no_project_when_none_exists(before_state, after_state, test):
     )
 
 
+_NEW_PROJECT_CALLEES = ("init-project", "tree-survey")
+
+
+def test_no_init_project_on_existing_project(before_state, skills_invoked, builtin_tool_calls):
+    """Ungated: with a research.json already present, no hand-off may go to a
+    new-project callee (``init-project`` or ``tree-survey``).
+
+    SKILL.md's routing row for "No research.json at all" says "With one present,
+    do NOT invoke it". Checked over every hand-off rather than the first, and
+    regardless of whether ``project_context`` was called: in research v32 the
+    router spawned ``init-project`` on ``mid-research-flynn`` and only then read
+    the project (issue #3766), so a "did it read the project?" check passes that
+    run.
+    """
+    from harness.skill_runner import handoffs
+
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json before the run")
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    wrong = [s for s in handed if s in _NEW_PROJECT_CALLEES]
+    assert not wrong, (
+        f"research.json existed before the run, but the router handed off to {wrong}, "
+        f"which start a new project. handoffs={handed}"
+    )
+
+
+def test_reads_project_state_before_routing(before_state, tool_calls, test):
+    """Tag-gated (``reads-project-first``): with a research.json present, the run
+    calls ``project_context``.
+
+    Catches a router that decides without reading the project at all — research
+    v32's ut_research_004 asked for a FamilySearch person ID and stopped, with no
+    hand-off for ``test_no_init_project_on_existing_project`` to see (issue #3766).
+
+    Presence, not order: ``tool_calls`` carries no caller and is a separate list
+    from the spawns in ``builtin_tool_calls``, so the two cannot be ordered. Tag
+    only a test with no ``run_agents``: every spawn is then denied and any
+    ``project_context`` call is the router's. Not ungated, because a bounded
+    request legitimately skips the read (SKILL.md, "Bounded request or job").
+    """
+    if "reads-project-first" not in test.get("tags", []):
+        pytest.skip("not a reads-project-first test")
+    assert before_state.get("research_json") is not None, (
+        "a reads-project-first test needs a scenario with a research.json; this one "
+        "had none. Scenario drift — fix the fixture rather than the skill."
+    )
+    called = [c for c in tool_calls or [] if bare_tool_name(str(c.get("tool") or "")) == "project_context"]
+    assert called, (
+        "research.json existed before the run, but the router never called "
+        "project_context, so it routed or asked without reading the project. "
+        f"tools called: {[bare_tool_name(str(c.get('tool') or '')) for c in tool_calls or []]}"
+    )
+
+
 def _paired_names() -> set[str]:
     """Plugin agents the research router spawns by ``@plugin:<name>``.
 
