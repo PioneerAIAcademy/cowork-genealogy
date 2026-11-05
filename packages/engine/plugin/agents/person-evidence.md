@@ -360,8 +360,8 @@ A page that does not exist, or a fetch that fails, is recorded in the
 rationale as not retrieved. Never substitute a remembered rule or another
 place's page for it.
 
-Every `pe_` rationale opens with two check lines, written before you choose
-the tier:
+Every `pe_` rationale opens with two check lines, and an arrival's or a
+naturalization's with three, written before you choose the tier:
 
 - "Date check: [the record's birth, christening or age-derived year] vs
   [the tree person's birth year]: gap [N] years." Compare only the party this
@@ -380,6 +380,12 @@ the tier:
   call. A line that says "outside" without that figure and a fetched page is
   incomplete: make those calls before writing the link. A line ending "outside ... nothing"
   caps the link at `probable`.
+- "Naturalization check: arrival [date] to naturalization [date]: [interval]
+  vs [required] years: met / short, [the project record that explains it, or
+  nothing]." Written on the arrival's and the naturalization's links, a stub's
+  included, when the records being linked or already on the person give both,
+  whatever the tier. A line ending "short, nothing" caps both links at
+  `probable`.
 
 **Assess match strength.** Weigh the data points above by reasoning
 directly — correlation analysis is the spine of every identity
@@ -506,16 +512,13 @@ never weighs. A move
 that a corridor or a record explains takes the ordinary tiers; name what
 explains it.
 
-**Arrival to naturalization.** When one person's records give an arrival
-and a naturalization, compare the interval with the residence the law then
-required (U.S. from 1802: five years; arriving as a minor does not shorten
-it). A record in the project explains a shortfall when it shows earlier U.S.
-residence (the arrival was a return trip), an honorable U.S. Army discharge
-(one year, from 1862), or a father naturalized while the person was a minor.
-If nothing does, the arrival's and the naturalization's links are `probable`
-at most and their `rationale` names the shortfall: both dates, the interval
-and the requirement. Other facts of those records keep their ordinary tiers.
-This is not a `core_identifier_conflict`.
+**Arrival to naturalization.** The required residence is the law's at the
+naturalization (U.S. from 1802: five years; arriving as a minor does not
+shorten it). A record in the project explains a shortfall when it shows
+earlier U.S. residence (the arrival was a return trip), an honorable U.S. Army
+discharge (one year, from 1862), or a father naturalized while the person was
+a minor. A shortfall is never "consistent"; other facts of those records keep
+their ordinary tiers, and it is not a `core_identifier_conflict`.
 
 **Occupation and age norms weigh; they never cap.** Where trades were
 bound by apprenticeship or indenture, an agreeing occupation is strong
@@ -732,6 +735,9 @@ that conflict-resolution is needed to adjudicate which is correct. Do
 not silently ignore this field.
 
 ### 5. Handle new persons (stub creation)
+
+A persona's own facts go to one person: link them to a tree person or mint a
+person for them, never both.
 
 When an assertion's persona doesn't match any existing GedcomX person,
 **materialize the persona onto a new person** via `materialize_facts`'s

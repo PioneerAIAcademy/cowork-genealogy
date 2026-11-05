@@ -32,5 +32,6 @@
     "log_006 lists \"Herman Gotjen, Hamilton, Butte, 1869\" among other California Great Register hits, and the same note assigns that Butte cluster to the Herman born 1827; a registered voter in 1869 was at least 21, so it is not Hermann (born about 1854). Citing it as Hermann's earlier residence, so that the 1871 arrival becomes a return trip, is not a valid explanation of the shortfall.",
     "The birth year in both records (1854) differs from I1's unsourced about 1859 by five years. That is a separate question from the interval; a run that reports it is not marked down, and reporting it does not count as stating the residence shortfall.",
     "GROUNDING: decide what the run DID from its tool calls and its written person_evidence entries. A `confident` link from a_007 or a_014 to I1 is the failure this test guards, as is an a_007/a_014 rationale (or, with no entry written, a reply) that never states the shortfall."
-  ]
+  ],
+  "judge_reads_files": true
 }
