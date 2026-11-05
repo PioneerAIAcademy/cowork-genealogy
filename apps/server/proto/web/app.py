@@ -382,8 +382,8 @@ ADMISSION_REFUSALS: dict[str, tuple[int, str, str]] = {
 class AdmissionBusy(Exception):
     """A capped sign-in could not take the user's row (a returning user) or the admission
     lock (a new one) within ``grants.QUEUE_LOCK_TIMEOUT_S``, or a racing sign-in took the
-    email or the FamilySearch id between this one's read and its write (#3992); the callback
-    answers 503 and nothing is written. A retry lands on the right branch."""
+    email or the FamilySearch id between this one's read and its write, or deadlocked with it
+    (#3992); the callback answers 503 and nothing is written. A retry lands on the right branch."""
 
 
 @dataclass(frozen=True)
@@ -1466,8 +1466,9 @@ class PgStore:
         ``users`` holds fewer rows, else AdmissionRefused. Only a new user takes the tier-wide
         admission lock, and counts and inserts under it, so two sign-ins at cap-1 cannot both
         pass; a wait past ``grants.QUEUE_LOCK_TIMEOUT_S`` on that lock or on the user's row
-        raises AdmissionBusy. So does a unique violation: a racing sign-in took this email or
-        id between the read and the write, and a retry finds the row it wrote."""
+        raises AdmissionBusy. So does a unique violation (a racing sign-in took this email or
+        id between the read and the write, and a retry finds the row it wrote) and a deadlock
+        (two users each reporting the other's email at once)."""
         from psycopg import errors
 
         email = email.strip().lower()
@@ -1525,14 +1526,17 @@ class PgStore:
                         # The insert hit a conflict whose row neither read finds: another
                         # identity's row holds this email and a racing sign-in changed it.
                         raise AdmissionBusy(email)
-        except (errors.LockNotAvailable, errors.UniqueViolation) as exc:
+        except (errors.LockNotAvailable, errors.UniqueViolation, errors.DeadlockDetected) as exc:
+            # DeadlockDetected: two users each took their own row and then the other's, each
+            # reporting the other's email. Postgres aborts one; a retry refuses it as EmailTaken.
             raise AdmissionBusy(email) from exc
         return user
 
     async def create_signin_state(self, state_sha256: str) -> None:
         """Record one sign-in's state (#3992, chat off). Rows older than the state cookie's life
         (``auth.FS_OAUTH_MAX_AGE``) can never pass the callback, whose cookie has expired, so
-        each insert deletes them: the table holds about ten minutes of sign-ins."""
+        each insert deletes them, through 019's index on ``created_at``: the table holds about
+        ten minutes of sign-ins."""
         async with await self._connect() as conn:
             async with conn.transaction():
                 await conn.execute(
@@ -2151,7 +2155,7 @@ def create_app(
 
     async def current_user(request: Request) -> User:
         """The signed-in patron, or 401/403. On every /api/sessions and /api/projects route."""
-        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
+        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME), chat=app.state.chat)
         if data is None:
             raise HTTPException(status_code=401, detail="Not signed in")
         store = _store(request)
@@ -2224,7 +2228,8 @@ def create_app(
 
     def _signed_in(response: Response, user: User) -> dict:
         response.set_cookie(
-            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.session_max_age(), **auth.cookie_kwargs()
+            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.session_max_age(chat=app.state.chat),
+            **auth.cookie_kwargs(),
         )
         return {"id": user.id, "email": user.email}
 
@@ -2253,7 +2258,7 @@ def create_app(
 
     @app.post("/auth/logout")
     async def logout(request: Request, response: Response) -> dict:
-        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
+        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME), chat=app.state.chat)
         if data is not None:
             await _store(request).revoke_sessions(data["uid"])
         response.delete_cookie(auth.COOKIE_NAME, path=auth.cookie_path(), samesite="lax", secure=auth.is_https())
@@ -2271,7 +2276,7 @@ def create_app(
         if not app.state.chat:
             # #3992: the single-use record the callback consumes before it calls FamilySearch.
             await _store(request).create_signin_state(auth.state_sha256(state))
-        resp = RedirectResponse(auth.authorize_url(challenge, state))
+        resp = RedirectResponse(auth.authorize_url(challenge, state, chat=app.state.chat))
         resp.set_cookie(
             auth.FS_OAUTH_COOKIE, auth.oauth_state_cookie(verifier, state, next),
             max_age=auth.FS_OAUTH_MAX_AGE, **auth.cookie_kwargs(),
@@ -2295,6 +2300,8 @@ def create_app(
         if budget is not None and not budget.try_take(2):  # the code exchange and the identity read
             return HTMLResponse("Sign-in is busy; try again.", status_code=503)
         if not app.state.chat and not await store.consume_signin_state(digest):
+            if budget is not None:
+                budget.give_back(2)  # a racing callback won; this one calls nothing
             return HTMLResponse(f"This sign-in link was already used or has expired. {fail}", status_code=400)
         return None
 
@@ -2378,7 +2385,8 @@ def create_app(
             return HTMLResponse(f"Sign-in is busy; try again. {fail}", status_code=503)
         resp = RedirectResponse(auth.redirect_target(data.get("next")))
         resp.set_cookie(
-            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.session_max_age(), **auth.cookie_kwargs()
+            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.session_max_age(chat=app.state.chat),
+            **auth.cookie_kwargs(),
         )
         resp.delete_cookie(auth.FS_OAUTH_COOKIE, path=auth.cookie_path())
         return resp

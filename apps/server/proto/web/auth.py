@@ -43,8 +43,9 @@ Settings are read from the environment at call time, so a test can set them per 
   FS_REDIRECT_URI            the FamilySearch redirect URI (#3992); the callback is served at
                              its path, less PUBLIC_URL's prefix. Unset: PUBLIC_URL + /callback.
                              Refuses to start unless it is an absolute http(s) URL whose path is
-                             unreserved segments, with no query or fragment, and, on PUBLIC_URL's
-                             host, under its prefix (``callback_path``)
+                             unreserved segments (no '.' or '..'), with no user info, query or
+                             fragment, and, on PUBLIC_URL's host, PUBLIC_URL's scheme and a path
+                             under its prefix (``callback_path``)
   GENEALOGY_SIGNIN_CALLS_PER_MINUTE  the sign-in budget (#3992): the code exchange and the
                              identity read share this many calls per sliding minute, two per
                              sign-in. Unset: no budget. Anything but a whole number of at least
@@ -176,12 +177,19 @@ def base_path() -> str:
     outside ``BASE_PATH_RE`` or any query or fragment, at any scheme."""
     parts = urlsplit(public_url())
     path = parts.path.rstrip("/")
-    if parts.query or parts.fragment or "?" in public_url() or "#" in public_url() or not BASE_PATH_RE.match(path):
+    if (parts.query or parts.fragment or "?" in public_url() or "#" in public_url() or not BASE_PATH_RE.match(path)
+            or _has_dot_segment(path)):
         raise RuntimeError(
             f"Refusing to start: PUBLIC_URL {public_url()!r} must be an origin plus an optional path of "
             "unreserved segments (A-Z a-z 0-9 . _ ~ -), with no query or fragment"
         )
     return path
+
+
+def _has_dot_segment(path: str) -> bool:
+    """``.`` or ``..`` as a whole segment: ``BASE_PATH_RE`` admits them, and a browser
+    normalizes them away, so the path it sends is not the one written."""
+    return any(seg in (".", "..") for seg in path.split("/"))
 
 
 def cookie_path() -> str:
@@ -275,9 +283,12 @@ def signin_calls_per_minute() -> int | None:
     return value
 
 
-def session_max_age() -> int:
-    """The session's life in seconds (#3992): 24 hours with the chat off, 30 days with it on."""
-    return SESSION_MAX_AGE_CHAT_S if chat_enabled() else SESSION_MAX_AGE_NO_CHAT_S
+def session_max_age(*, chat: bool | None = None) -> int:
+    """The session's life in seconds (#3992): 24 hours with the chat off, 30 days with it on.
+    The tier passes ``app.state.chat``, the value its routes were built with; ``None`` reads
+    ``GENEALOGY_CHAT`` (a script with no app)."""
+    on = chat_enabled() if chat is None else chat
+    return SESSION_MAX_AGE_CHAT_S if on else SESSION_MAX_AGE_NO_CHAT_S
 
 
 def familysearch_enabled() -> bool:
@@ -405,12 +416,13 @@ def session_cookie_value(user_id: str, *, iat: float | None = None) -> str:
     return _session_serializer().dumps({"uid": user_id, "iat": time.time() if iat is None else iat})
 
 
-def read_session_cookie(token: str | None) -> dict[str, Any] | None:
-    """``{uid, iat}``, or None for a missing, forged or expired cookie."""
+def read_session_cookie(token: str | None, *, chat: bool | None = None) -> dict[str, Any] | None:
+    """``{uid, iat}``, or None for a missing, forged or expired cookie. ``chat`` as for
+    ``session_max_age``: the signature check is what ends the session."""
     if not token:
         return None
     try:
-        data = _session_serializer().loads(token, max_age=session_max_age())
+        data = _session_serializer().loads(token, max_age=session_max_age(chat=chat))
     except BadSignature:
         return None
     return data if isinstance(data, dict) and isinstance(data.get("uid"), str) else None
@@ -507,14 +519,23 @@ def callback_path() -> str:
     uri = redirect_uri()
     parts = urlsplit(uri)
     path = parts.path
-    if (parts.scheme not in ("http", "https") or not parts.netloc or parts.query or parts.fragment
-            or "?" in uri or "#" in uri or not path or not BASE_PATH_RE.match(path) or path == prefix):
+    if (parts.scheme not in ("http", "https") or not parts.hostname or "@" in parts.netloc
+            or parts.query or parts.fragment or "?" in uri or "#" in uri or not path
+            or not BASE_PATH_RE.match(path) or _has_dot_segment(path) or path == prefix):
         raise RuntimeError(
-            f"Refusing to start: FS_REDIRECT_URI {uri!r} must be an absolute http(s) URL whose path is "
-            "one or more unreserved segments (A-Z a-z 0-9 . _ ~ -) other than PUBLIC_URL's own path, "
-            "with no trailing slash, query or fragment"
+            f"Refusing to start: FS_REDIRECT_URI {uri!r} must be an absolute http(s) URL with no user "
+            "info, whose path is one or more unreserved segments (A-Z a-z 0-9 . _ ~ -, no '.' or '..' "
+            "segment) other than PUBLIC_URL's own path, with no trailing slash, query or fragment"
         )
-    if prefix and parts.netloc.lower() == urlsplit(public_url()).netloc.lower() and not path.startswith(prefix + "/"):
+    public = urlsplit(public_url())
+    # Cookies are scoped to a host, whatever its port or spelling.
+    same_host = parts.hostname.rstrip(".") == (public.hostname or "").rstrip(".")
+    if same_host and parts.scheme != public.scheme:
+        raise RuntimeError(
+            f"Refusing to start: FS_REDIRECT_URI {uri!r} is on PUBLIC_URL's host under another scheme, "
+            "where the sign-in cookies are not sent"
+        )
+    if prefix and same_host and not path.startswith(prefix + "/"):
         raise RuntimeError(
             f"Refusing to start: FS_REDIRECT_URI {uri!r} is on PUBLIC_URL's host but outside its path "
             f"{prefix!r}, where the sign-in cookies are not sent"
@@ -530,9 +551,10 @@ def state_sha256(state: str) -> str:
     return hashlib.sha256(state.encode("utf-8")).hexdigest()
 
 
-def authorize_url(challenge: str, state: str) -> str:
+def authorize_url(challenge: str, state: str, *, chat: bool | None = None) -> str:
     """With the chat off (#3992) no ``scope`` at all: the beta refreshes nothing, so it asks
-    for no ``offline_access``. With it on, exactly the handoff's request."""
+    for no ``offline_access``. With it on, exactly the handoff's request. ``chat`` as for
+    ``session_max_age``."""
     from urllib.parse import urlencode
 
     params = {
@@ -544,7 +566,7 @@ def authorize_url(challenge: str, state: str) -> str:
         "code_challenge": challenge,
         "code_challenge_method": "S256",
     }
-    if not chat_enabled():
+    if not (chat_enabled() if chat is None else chat):
         del params["scope"]
     return FS_AUTHORIZE_URL + "?" + urlencode(params)
 
@@ -572,6 +594,12 @@ class SigninBudget:
             return False
         self._taken.extend([now] * n)
         return True
+
+    def give_back(self, n: int) -> None:
+        """Return the ``n`` most recent units: a sign-in that took them and then made no
+        FamilySearch call (it lost the state's consume) spent nothing."""
+        for _ in range(min(n, len(self._taken))):
+            self._taken.pop()
 
 
 async def exchange_code(code: str, verifier: str) -> dict[str, Any] | None:

@@ -338,3 +338,10 @@ async def test_two_concurrent_consumes_of_one_state_admit_exactly_one(pg_dsn):
             await asyncio.sleep(0.05)
         holder.commit()
     assert sorted(await asyncio.gather(*sides)) == [False, True]
+
+
+async def test_the_signin_state_cleanup_has_its_index(pg_dsn):
+    """019: the login's DELETE of expired states reads created_at through an index."""
+    assert sql(pg_dsn, "SELECT indexdef FROM pg_indexes WHERE indexname = 'signin_states_created_at_idx'") == [
+        ("CREATE INDEX signin_states_created_at_idx ON public.signin_states USING btree (created_at)",),
+    ]

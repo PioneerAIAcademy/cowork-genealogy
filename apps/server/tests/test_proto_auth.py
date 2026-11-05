@@ -228,6 +228,8 @@ def test_base_path_and_cookie_path_follow_public_url(monkeypatch):
     "http://edge.test/a b",
     "http://edge.test/a<b",
     'http://edge.test/a"b',
+    "http://edge.test/a/../b",
+    "http://edge.test/./a",
 ])
 def test_a_bad_public_url_path_refuses_at_any_scheme(monkeypatch, url):
     monkeypatch.setenv("PUBLIC_URL", url)
@@ -1373,7 +1375,9 @@ def test_preflight_refuses_a_bad_redirect_setting(monkeypatch, redirect):
         auth.preflight()
 
 
-@pytest.mark.parametrize("redirect", ["https://edge.test/pfx/cb", "https://EDGE.test/cb"])
+@pytest.mark.parametrize("redirect", [
+    "https://edge.test/pfx/cb", "https://EDGE.test/cb", "https://edge.test:443/cb", "https://edge.test./cb",
+])
 def test_preflight_refuses_a_redirect_on_the_public_host_outside_its_prefix(monkeypatch, redirect):
     """Both cookies are scoped to the prefix, so a callback on the same host outside it never
     gets the state cookie back. Another host (the loopback bounce, P0.4) stays allowed."""
@@ -1382,6 +1386,21 @@ def test_preflight_refuses_a_redirect_on_the_public_host_outside_its_prefix(monk
     monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 32)
     monkeypatch.setenv("FS_REDIRECT_URI", redirect)
     with pytest.raises(RuntimeError, match="outside its path"):
+        auth.preflight()
+
+
+@pytest.mark.parametrize("redirect", [
+    "http://edge.test/pf/cb",          # the Secure state cookie is not sent over http
+    "https://user@edge.test/pf/cb",    # user info
+    "https://edge.test/pf/../cb",      # the browser sends /cb, outside the prefix
+    "https://edge.test/pf/./cb",       # the browser sends /pf/cb, not the route /./cb
+])
+def test_preflight_refuses_a_redirect_the_browser_would_not_bring_back(monkeypatch, redirect):
+    monkeypatch.setenv("PUBLIC_URL", "https://edge.test/pf")
+    monkeypatch.setenv("SESSION_SECRET", "s" * 32)
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 32)
+    monkeypatch.setenv("FS_REDIRECT_URI", redirect)
+    with pytest.raises(RuntimeError, match="FS_REDIRECT_URI"):
         auth.preflight()
 
 
@@ -1432,3 +1451,68 @@ async def test_an_identity_with_no_email_is_refused_and_writes_nothing(fs_on):
     r = await _callback(store)
     assert r.status_code == 403 and "no email" in r.text
     assert store.users == users_before and store.grants == {}
+
+
+async def test_the_app_keeps_the_chat_mode_it_was_built_with(chat_off):
+    """The routes, the scope, the state record and the session's life all follow the
+    ``GENEALOGY_CHAT`` value ``create_app`` read, even if the environment changes later."""
+    _fake_fs(chat_off)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    application, c = _app_client(store)
+    chat_off.setenv("GENEALOGY_CHAT", "true")
+    async with c:
+        r = await c.get("/auth/familysearch/login")
+        assert "scope" not in parse_qs(urlparse(r.headers["location"]).query)
+        state = parse_qs(urlparse(r.headers["location"]).query)["state"][0]
+        assert auth.state_sha256(state) in store.signin_states
+        r = await _sign_in(c, state, r.cookies[auth.FS_OAUTH_COOKIE])
+        assert _max_age(r) == auth.SESSION_MAX_AGE_NO_CHAT_S
+        c.cookies.set(auth.COOKIE_NAME, _signed_at(chat_off, USER_A.id, auth.SESSION_MAX_AGE_NO_CHAT_S + 1))
+        assert (await c.get("/auth/me")).status_code == 401
+
+
+def test_the_budget_gives_back_the_most_recent_units():
+    now = [0.0]
+    budget = auth.SigninBudget(2, clock=lambda: now[0])
+    assert budget.try_take(2) and not budget.try_take(2)
+    budget.give_back(2)
+    assert budget.try_take(2)
+
+
+async def test_a_callback_that_loses_the_consume_gives_its_units_back(chat_off):
+    """Two callbacks with one state: both pass the unused check and take the budget, one
+    consumes. The loser calls nothing, so it must not keep the next patron's units."""
+    chat_off.setenv("GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "2")
+    calls = _fake_fs(chat_off)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    application, c = _app_client(store)
+
+    async def lost(state_sha256: str) -> bool:
+        return False
+
+    async with c:
+        state, oauth = await _login(c)
+        store.consume_signin_state = lost  # type: ignore[method-assign]
+        r = await _sign_in(c, state, oauth)
+        assert r.status_code == 400 and calls == []
+        assert len(application.state.signin_budget._taken) == 0
+
+
+async def test_pgstore_upsert_user_turns_a_deadlock_into_busy():
+    """Two users each reporting the other's email lock their own row, then the other's;
+    Postgres aborts one. The callback answers 503, never a 500."""
+    from psycopg import errors
+
+    conn, store = _scripted(_row("old@example.org", FS_ID), _row("b@example.org", "OTHER-ID", uid="usr_b"))
+    original_execute = conn.execute
+
+    async def execute(sql, params=()):
+        if "WHERE email = %s FOR UPDATE" in " ".join(sql.split()):
+            raise errors.DeadlockDetected("deadlock detected")
+        return await original_execute(sql, params)
+
+    conn.execute = execute  # type: ignore[method-assign]
+    with pytest.raises(app.AdmissionBusy):
+        await store.upsert_user("b@example.org", FS_ID)
