@@ -25,6 +25,12 @@ The `assertions[]` and `log[]` live in the `run-<ts>.final-research.json` siblin
 which the 14-day capture strip never touches, so the join still works on stripped
 runs (only the transcription's *completeness* is then unknown).
 
+A page that went through `record-structurer` breaks that chain: `extraction_append`
+logs it with `query: {recordId: "capture:…"}`, which names no image. Its entry does
+record `staged_ref`, the `staged.resultsRef` the read returned, so that ref leads
+back to the call. The ref lives in `response_summary`, so on a stripped run this
+leg finds nothing and those assertions count as unmatched.
+
 We match the image key by EXACT string, not the card's `norm()` regex: `args.ark`
 is byte-equal to `log[].query.imageArk`, while `norm()`'s two patterns silently
 drop every call whose ark/imageId matches neither (e.g. `ark:/61903/1:2:...`,
@@ -53,6 +59,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from dataclasses import dataclass
 from pathlib import Path
@@ -70,6 +77,9 @@ TRANSCRIBE_SUFFIX = "image_transcribe"
 #: Mirrors `e2e.orchestrator.STAGED_TRANSCRIPTION_KEY`; not imported, because
 #: that module pulls in the agent SDK and this reader runs without it.
 STAGED_TRANSCRIPTION_KEY = "staged_transcription"
+
+#: A read's own `resultsRef`, in either the escaped or the unwrapped summary shape.
+_STAGED_REF = re.compile(r'resultsRef[\\"]*\s*:\s*[\\"]*(results/\.staging/[^"\\\s]+)')
 
 
 @dataclass
@@ -162,6 +172,7 @@ def _scan_one(run_path: Path, result: ScanResult) -> None:
     # Capture-side: classify each image_transcribe call and collect its image key.
     tc_keys: set[str] = set()  # every key seen in this run's transcribe calls
     complete_keys: set[str] = set()  # keys whose call is a COMPLETE transcription
+    ref_keys: dict[str, str] = {}  # a read's staged ref -> its image key
     run_has_transcribe = False
     for tc in tool_calls:
         if not (isinstance(tc, dict) and str(tc.get("tool") or "").endswith(TRANSCRIBE_SUFFIX)):
@@ -172,6 +183,9 @@ def _scan_one(run_path: Path, result: ScanResult) -> None:
         key = args.get("ark") or args.get("imageId") if isinstance(args, dict) else None
         if key:
             tc_keys.add(key)
+            staged_ref = _STAGED_REF.search(_summary_text(tc.get("response_summary")))
+            if staged_ref:
+                ref_keys[staged_ref.group(1)] = key
 
         if stripped:
             result.stripped_captures += 1
@@ -221,7 +235,11 @@ def _scan_one(run_path: Path, result: ScanResult) -> None:
                 and entry.get("id") is not None
                 and "transcribe" in str(entry.get("tool") or "")
             ):
-                logkeys[entry["id"]] = _flat_str_values(entry.get("query"))
+                keys = _flat_str_values(entry.get("query"))
+                page = ref_keys.get(entry.get("staged_ref"))
+                if page:
+                    keys.add(page)
+                logkeys[entry["id"]] = keys
         for assertion in research.get("assertions") or []:
             if not isinstance(assertion, dict):
                 continue
@@ -271,7 +289,7 @@ def format_report(result: ScanResult) -> str:
     if result.stripped_captures:
         out.append(
             f"  captures STRIPPED (>14d):     {result.stripped_captures} "
-            f"in {result.stripped_runs} run(s) — completeness unknown, still joined below"
+            f"in {result.stripped_runs} run(s) — completeness unknown, joined below by image key only"
         )
     out.append(f"  measurable for completeness:  {measurable}")
     if result.unreadable:

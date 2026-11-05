@@ -54,6 +54,7 @@ function loadHooks(): Record<string, Matcher[]> {
  */
 function guardToolNames(): {
   fileWriteTools: string[];
+  fileReadTools: string[];
   deviceWriteTools: string[];
   delegationTools: string[];
   ownerRoutedTools: string[];
@@ -74,6 +75,7 @@ function guardToolNames(): {
   };
   return {
     fileWriteTools: tuple("FILE_WRITE_TOOLS"),
+    fileReadTools: tuple("FILE_READ_TOOLS"),
     deviceWriteTools: tuple("DEVICE_WRITE_TOOLS"),
     delegationTools: tuple("DELEGATION_TOOLS"),
     ownedSections: ownedSections(src),
@@ -523,12 +525,13 @@ describe("plugin hooks are packaged and wired", () => {
     // That shipped the device-bridge route open while the predicate, its three
     // copies, and their parity vectors all said it was closed.
     const matcher = loadHooks().PreToolUse[0].matcher ?? "";
-    const { fileWriteTools, deviceWriteTools, delegationTools, ownerRoutedTools } =
+    const { fileWriteTools, fileReadTools, deviceWriteTools, delegationTools, ownerRoutedTools } =
       guardToolNames();
 
     // The extraction is load-bearing: an empty list makes every assertion below
     // vacuously true, which is the same false green in a new costume.
     expect(fileWriteTools.length).toBeGreaterThan(0);
+    expect(fileReadTools.length).toBeGreaterThan(0);
     expect(deviceWriteTools.length).toBeGreaterThan(0);
     expect(delegationTools.length).toBeGreaterThan(0);
     expect(ownerRoutedTools.length).toBeGreaterThan(0);
@@ -538,7 +541,7 @@ describe("plugin hooks are packaged and wired", () => {
     // here proves it under either form (ADR-0005: "both matcher forms bind").
     const matches = (tool: string) => new RegExp(`^(${matcher})$`).test(tool);
 
-    for (const tool of fileWriteTools) {
+    for (const tool of [...fileWriteTools, ...fileReadTools]) {
       expect(matches(tool), `matcher does not cover ${tool}`).toBe(true);
     }
     for (const tool of delegationTools) {
@@ -660,7 +663,6 @@ describe("the guard script's decisions", () => {
   });
 
   it.each([
-    ["Read", { file_path: "/project/research.json" }],
     ["mcp__genealogy__research_append", { file_path: "/project/research.json" }],
     ["Bash", { command: "cat /project/research.json" }],
     ["Write", { file_path: "/project/results/log_001.json" }],
@@ -668,6 +670,60 @@ describe("the guard script's decisions", () => {
     ["Write", {}],
   ])("has no opinion on %s", (tool_name, tool_input) => {
     expect(runGuard({ tool_name, tool_input })).toEqual({});
+  });
+
+  // ── raw reads of the two files a tool serves (#3836) ──
+  //
+  // The folder is not readable from Cowork's VM (measured 2026-11-04: a Read of
+  // research.json returned "File does not exist" before and after an MCP write)
+  // and a hosted project has none, so a read is a miss and the reason names the
+  // tool that serves the same data.
+  it.each([
+    ["Read", { file_path: "/project/research.json" }, "research_query"],
+    ["Read", { file_path: "research.json" }, "project_context"],
+    ["Read", { file_path: "/mnt/user-data/uploads/tree.gedcomx.json" }, "tree_query"],
+    // Windows separators, as for the write arm.
+    ["Read", { file_path: "C:\\Users\\Dell\\project\\research.json" }, "research_query"],
+    ["Read", { file_path: "C:\\Users\\Dell\\project\\tree.gedcomx.json" }, "tree_query"],
+    ["Grep", { pattern: "plan", path: "/project/tree.gedcomx.json" }, "tree_query"],
+    ["Grep", { pattern: "plan", path: "/project", glob: "**/research.json" }, "research_query"],
+    ["Glob", { pattern: "**/research.json" }, "project_context"],
+    ["Glob", { pattern: "*.json", path: "/project/tree.gedcomx.json" }, "tree_query"],
+  ])("denies %s %j and names the tool that serves it", (tool_name, tool_input, route) => {
+    const out = runGuard({ tool_name, tool_input });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain(route);
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("projectPath");
+    // A denied read is recoverable: the turn continues so the model can call the tool.
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    // Another project file has no tool serving it, so a read of it stays allowed.
+    ["Read", { file_path: "/project/results/log_001.json" }],
+    ["Read", { file_path: "/project/images/page_1.png" }],
+    ["Read", { file_path: "/project/starting-tree.gedcomx.json" }],
+    // A different file that merely contains the name.
+    ["Read", { file_path: "/project/research.json.bak" }],
+    ["Read", { file_path: "/project/notes-on-research.json" }],
+    // A directory or a wildcard names no file: the hook cannot tell what it reaches.
+    ["Grep", { pattern: "research.json", path: "/project" }],
+    ["Grep", { pattern: "x", path: "/project", glob: "*.json" }],
+    ["Glob", { pattern: "**/*.json" }],
+    // Malformed inputs fall through to allow: the script must never raise.
+    ["Read", {}],
+    ["Read", { file_path: 123 }],
+    ["Read", { file_path: null }],
+    ["Grep", { path: ["research.json"] }],
+    // Shell reads are deliberately not covered (see the guardrail spec).
+    ["Bash", { command: "cat /project/tree.gedcomx.json" }],
+    ["mcp__remote-devices__device_bash", { command: "cat research.json" }],
+  ])("has no opinion on a read: %s %j", (tool_name, tool_input) => {
+    expect(runGuard({ tool_name, tool_input })).toEqual({});
+  });
+
+  it("has no opinion on a read when the payload has no tool_input", () => {
+    expect(runGuard({ tool_name: "Read" })).toEqual({});
   });
 
   it.each([
@@ -1583,7 +1639,14 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
       /Name a source, collection, book or citation only if a tool result in this session returned it/,
     );
     expect(out.hookSpecificOutput.additionalContext).toMatch(/FamilySearch collections come from collections_search, which locality-guide and research-plan run/);
-    expect(out.hookSpecificOutput.additionalContext).toMatch(/pursue first\.\n\nName a source/);
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/verbatim\.\n\nName a source/);
+  });
+
+  it("routes a no-project, no-PID ask for the names in a record set to search-images (#4136)", () => {
+    const out = runNoProjectRoute(JSON.stringify({ prompt: "Identify all soldiers in Captain Moses Dustin's Company." }));
+    expect(out.hookSpecificOutput.additionalContext).toMatch(
+      /no FamilySearch person ID, a request for the names and details\s+recorded in a record set .* goes to the\s+search-images agent with no projectPath/s,
+    );
   });
 
   it("stays silent on a subagent hand-back", () => {

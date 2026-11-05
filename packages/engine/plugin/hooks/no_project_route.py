@@ -16,7 +16,8 @@ hosted planes append the same text; both harnesses add it from here.
 
 **Cowork only.** Both hosted planes set `GENEALOGY_HOSTED_PLANE` in the SDK env, and the
 hook is silent there: the hosted fix ruled for them is text only (a truthful `project_note`
-and a `DELIVERY_GUIDANCE` exclusion), with nothing routing the main thread.
+carrying `NO_PROJECT_NOTE`, which held the routing sentence once `research_delivered`'s
+guidance was deleted), with nothing routing the main thread.
 
 **The sentence is conditional because the hook cannot see the project.** Its cwd in the VM
 is not the project folder (ADR-0005, item 7), so it cannot tell whether `research.json`
@@ -43,7 +44,11 @@ CONTEXT = (
     "If project_context reports no project in this folder, a request to research a person "
     "is a research job: hand it to the research skill, which starts the project, rather "
     "than answering it from a single lookup. In that case, if the message names more than "
-    "one goal, you may summarise what the tree says and ask which to pursue first."
+    "one goal, you may summarise what the tree says and ask which to pursue first. "
+    "With no project and no FamilySearch person ID, a request for the names and details "
+    "recorded in a record set (a roll, register, muster list or volume) goes to the "
+    "search-images agent with no projectPath, even when it names no images; relay "
+    "everything after its final --- verbatim."
 )
 
 # Issue #4011: unconditional, so it holds with or without a project. The hosted planes

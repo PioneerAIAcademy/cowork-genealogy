@@ -44,12 +44,16 @@ import {
 } from "../utils/record-extract.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import {
+  checkStagedResults,
   findFulltextHit,
+  locateStagedRef,
   readResultsEnvelope,
   readStagedResults,
+  resolveStagedRef,
   splitHitRef,
   STAGING_SUBDIR,
   type FulltextHitRow,
+  type StagedRefLocation,
 } from "../utils/results-staging.js";
 import { deedFormulaErrors } from "../utils/deed-formula.js";
 import { arkToBareId } from "../utils/ark.js";
@@ -210,7 +214,7 @@ export interface ExtractionBatchInput {
   questionIds?: string[];
   /** A tree person (tree id or FamilySearch id) whose attached records to extract and link. */
   personId?: string;
-  /** Expected-but-absent persons for a record in `recordIds`, keyed by its id. */
+  /** Expected-but-absent persons for a record in `recordIds` or `documents`, keyed by its id. */
   absentPersons?: { recordId?: string; name: string; factType?: string; note?: string }[];
   /** Extract an already-extracted record again and retire its old assertions (#3678). */
   reextract?: boolean;
@@ -1104,9 +1108,7 @@ async function recordIdsMode(
         o.summary = `${o.recordId}: logged as ${o.logId}, but its sidecar does not hold that record.`;
         continue;
       }
-      const absent = (input.absentPersons ?? []).filter(
-        (p) => p.recordId !== undefined && arkToBareId(p.recordId) === arkToBareId(o.recordId),
-      );
+      const absent = absentPersonsFor(input, o.recordId);
       const { ops, sourceDescription, extraction } = buildExtractionOps(
         { recordId: doc.recordId ?? o.recordId, gedcomx: doc.gedcomx ?? {}, indexFields: doc.indexFields },
         { logEntryId: o.logId!, questionIds: input.questionIds, absentPersons: absent },
@@ -1423,6 +1425,44 @@ function coerceComputed(f: unknown): void {
   fact.computed = [...new Set(out)];
 }
 
+/** The call's top-level `absentPersons` keyed to one record. */
+function absentPersonsFor(input: ExtractionBatchInput, recordId: string) {
+  return (input.absentPersons ?? []).filter(
+    (p) => p.recordId !== undefined && arkToBareId(p.recordId) === arkToBareId(recordId),
+  );
+}
+
+type StagedPage = { live: string } | { logId: string; resultsRef: string } | { refusal: string };
+
+function loggedPage(at: Extract<StagedRefLocation, { state: "logged" }>): StagedPage {
+  if (at.tool === "image_transcribe") return { logId: at.logId, resultsRef: at.resultsRef };
+  return {
+    refusal:
+      `transcriptionRef '${at.ref}' was logged as ${at.logId} by ${at.tool ?? "an unknown tool"}, ` +
+      `not as an image_transcribe read, so it holds no page to extract.`,
+  };
+}
+
+/**
+ * Sort one document's staged ref before anything is logged. `research_log_append`
+ * is all-or-nothing, so left to it one bad ref refuses every document beside it.
+ * A logged page is cited, never re-logged: the log's re-send check compares
+ * outcomes, so a page logged `negative` would refuse the batch from there too.
+ * It is located after the check fails, not before, so a concurrent call consuming
+ * the file between the two reads lands on the same path.
+ */
+async function stagedPage(projectPath: string, rawRef: string): Promise<StagedPage> {
+  const { ref } = await resolveStagedRef(projectPath, rawRef);
+  try {
+    await checkStagedResults({ projectPath, stagedResultsRef: ref, expectedTool: "image_transcribe" });
+    return { live: ref };
+  } catch (e) {
+    const at = await locateStagedRef(projectPath, ref);
+    if (at.state === "logged") return loggedPage(at);
+    return { refusal: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 /**
  * Cite one full-text hit (`<base>#<hit>`) for a document, or say why not. The
  * hit must belong to a LOGGED `fulltext_search` (a staged search has no entry to
@@ -1439,11 +1479,15 @@ async function citeFulltextHit(
   hit: string,
 ): Promise<{ logId: string; resultsRef: string; hit: FulltextHitRow } | string> {
   if (base.startsWith(`${STAGING_SUBDIR}/`)) {
-    return (
-      `transcriptionRef '${ref}' names a hit of a full-text search that is not logged yet: log the ` +
-      `search first (research_log_append with stagedResultsRef '${base}'), then cite the hit as ` +
-      `'<its results_ref>#<hit id>'.`
-    );
+    const at = await locateStagedRef(projectPath, base);
+    if (at.state !== "logged") {
+      return (
+        `transcriptionRef '${ref}' names a hit of a full-text search that is not logged yet: log the ` +
+        `search first (research_log_append with stagedResultsRef '${base}'), then cite the hit as ` +
+        `'<its results_ref>#<hit id>'.`
+      );
+    }
+    base = at.resultsRef;
   }
   const entry = log.find((e) => e?.results_ref === base && typeof e?.id === "string");
   if (!entry || entry.tool !== "fulltext_search") {
@@ -1509,7 +1553,12 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     if (!d.transcriptionRef || (d.document.recordType !== "land" && d.document.recordType !== "probate")) continue;
     let text: string | undefined;
     try {
-      const rows = await readStagedResults(input.projectPath, d.transcriptionRef);
+      // A consumed staged ref still names the page, and a held ref is what
+      // `reextract` sends, so this must not read as a page it cannot check.
+      const at = d.transcriptionRef.startsWith(`${STAGING_SUBDIR}/`)
+        ? await locateStagedRef(input.projectPath, d.transcriptionRef)
+        : null;
+      const rows = await readStagedResults(input.projectPath, at?.state === "logged" ? at.resultsRef : d.transcriptionRef);
       text = (rows as any[]).find((r) => typeof r?.transcription === "string")?.transcription;
     } catch {
       continue;
@@ -1601,7 +1650,20 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
       }
       continue;
     }
-    if (ref.startsWith(`${STAGING_SUBDIR}/`)) continue;
+    if (ref.startsWith(`${STAGING_SUBDIR}/`)) {
+      const page = await stagedPage(input.projectPath, ref);
+      if ("live" in page) {
+        // One spelling per page, or an exact ref and a near-copy of it become two ops.
+        o.d.transcriptionRef = page.live;
+      } else if ("logId" in page) {
+        cited.set(o, page);
+      } else {
+        o.status = "refused";
+        o.errors = [page.refusal];
+        o.summary = `${o.recordId}: not extracted: ${page.refusal}`;
+      }
+      continue;
+    }
     // Only a page logged as image_transcribe: a search sidecar cited here would
     // be written as a source with no text, and its search would read as extracted.
     const entry = log.find((e) => e?.results_ref === ref && e?.tool === "image_transcribe" && typeof e?.id === "string");
@@ -1675,7 +1737,7 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
             op: "append" as const,
             entry: a as unknown as Record<string, unknown>,
           })),
-          ...(o.d.document.absentPersons ?? []).map((p) => ({
+          ...[...(o.d.document.absentPersons ?? []), ...absentPersonsFor(input, o.recordId)].map((p) => ({
             section: "assertions" as const,
             op: "append" as const,
             entry: {
@@ -1964,7 +2026,7 @@ export const extractionAppendSchema = {
           properties: {
             recordId: {
               type: "string",
-              description: "Which of the `recordIds` this person was expected on.",
+              description: "Which record in `recordIds` or `documents` this person was expected on.",
             },
             name: { type: "string", description: "Who was expected." },
             factType: { type: "string", description: "Defaults to `name`." },

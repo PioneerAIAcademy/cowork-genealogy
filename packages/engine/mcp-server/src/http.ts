@@ -16,7 +16,7 @@
 // that turn must belong to the project, and it must not be completed. So the
 // fence is required with a project; anything else is a 403 before any store
 // exists, and a failed lookup is a 503. There is no opt-out. A request with no
-// project header is not checked and runs store-less tools only.
+// project header takes the connector door (E1, src/http-server.ts).
 // The process store is an `unboundProjectStore`, so a code path that runs
 // outside a request binding fails instead of reaching the file backend. The
 // Pg/S3 configuration is the one process-wide thing, read from the
@@ -57,7 +57,10 @@ import { parseArgs } from "node:util";
 import { LOCAL } from "./auth/principal.js";
 import { loadConfig } from "./auth/config.js";
 import { startHttpServer, MCP_PATH } from "./http-server.js";
-import { authorizeAttempt, createPgS3Backend, PgS3ProjectStore, readyLabel } from "./store/pg-s3-project-store.js";
+import { authorizeAttempt, createPgS3Backend, PgS3ProjectStore, readyLabel,
+  lookupConnectorToken,
+  projectOwnerOf,
+} from "./store/pg-s3-project-store.js";
 import { readLimitsEnv } from "./store/limits-env.js";
 import { configureFsBudget } from "./utils/fs-budget.js";
 import { configureTranscriptionCap } from "./utils/ocr.js";
@@ -66,7 +69,8 @@ import { readPgS3Env } from "./store/pg-s3-env.js";
 import { loadSasClient, SasClientMissing, SasObjectInvalid, SasPgCredentials } from "./store/pg-credentials.js";
 import { startOrphanSweep, type OrphanSweepTimer } from "./store/s3-orphan-sweep.js";
 import { setProjectStore, unboundProjectStore } from "./store/project-store.js";
-import { configFromEnv } from "./hosted-config-env.js";
+import { decrypt, DEV_FS_TOKEN_ENC_KEY } from "./auth/fernet.js";
+import { configFromEnv, isPlainHttpUrl } from "./hosted-config-env.js";
 import type { AppConfig } from "./types/auth.js";
 import { debugHoldStartupLine } from "./debug-holds.js";
 
@@ -168,6 +172,85 @@ process.stderr.write(
 );
 configureCollectionsCache({ shared: limitsEnv.sharedCollectionsCache === true });
 process.stderr.write(`collections cache: ${collectionsCacheMode()}\n`);
+// The connector door's two settings (self-hosted beta E1), read once here the
+// way readPgS3Env is; no getter reads process.env.
+//
+// FS_TOKEN_ENC_KEY falls back to the SAME development default as
+// apps/server/proto/grants.py, because compose passes ${FS_TOKEN_ENC_KEY:-} to
+// web and worker and all tiers must agree byte for byte -- without the fallback
+// a --connector smoke on a plain `make proto-up` decrypts nothing.
+const fsTokenEncKey = (process.env.FS_TOKEN_ENC_KEY ?? "").trim() || DEV_FS_TOKEN_ENC_KEY;
+// The web tier's issuer, printed byte for byte. Unset, the metadata route 404s
+// and a 401 carries a bare `Bearer`.
+const issuer = (process.env.OAUTH_ISSUER ?? "").trim() || undefined;
+
+// It is interpolated into a `WWW-Authenticate` header value and served as the
+// metadata document, so it gets the SAME shape check WEB_PUBLIC_URL already
+// has (`isPlainHttpUrl`): a control character in a header value makes
+// `writeHead` throw, turning every 401 on this door into a 500 with no
+// challenge at all, and a quote or comma produces a challenge clients parse
+// into the wrong metadata URL.
+if (issuer !== undefined && !isPlainHttpUrl(issuer)) {
+  process.stderr.write(
+    "http: OAUTH_ISSUER must be a plain http(s) URL with no credentials, space, " +
+      "backslash, '#', '?' or control character. It is served as the " +
+      "protected-resource metadata and sent in the WWW-Authenticate header.\n",
+  );
+  process.exit(2);
+}
+
+// The development key is public in this repository, so a real deployment
+// running on it has every stored FamilySearch token encrypted under a key
+// anyone can derive.
+//
+// "Real deployment" is NOT just an https issuer. apps/server/proto/web/auth.py
+// `preflight()` refuses on `is_https() OR familysearch_enabled()`, and its
+// docstring says the second disjunct exists precisely for the non-https case.
+// The first version of this guard kept only the https half, which could not
+// fire at all in the documented default (OAUTH_ISSUER unset) -- so the one
+// configuration everyone runs was the one configuration unprotected.
+//
+// Loopback is a developer's own machine; any other host one of these URLs
+// names is a deployment other people reach. The first version tested
+// `https://` only -- case-sensitively, against a scheme that is not -- so an
+// `HTTPS://` issuer, and every non-loopback `http://` one, started on the
+// public key.
+function isLoopbackUrl(url: string): boolean {
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    return host === "127.0.0.1" || host === "localhost" || host === "[::1]" || host === "::1";
+  } catch {
+    return false;
+  }
+}
+
+// BOTH public URLs this tier can be given, not just the issuer. OAUTH_ISSUER
+// is documented as unset by default, so a guard keyed on it alone cannot fire
+// in the configuration the handoff tells an operator to deploy -- which is how
+// the worst case gets through: a real key on web and worker, none on tools, no
+// issuer, every connector call then decrypting to null and answering the
+// deliberately-opaque 401 for every patron, forever. WEB_PUBLIC_URL is the
+// other marker of a deployment people reach, and compose leaves both unset, so
+// a developer's `make proto-up` is untouched. The worker refuses the default
+// key outright (`grants.key_mode`, worker.py); this is the tools tier's
+// nearest equivalent.
+const publicUrls = [issuer, baseConfig.webPublicUrl].filter(
+  (url): url is string => typeof url === "string" && url !== "",
+);
+const deploymentUrl = publicUrls.find((url) => !isLoopbackUrl(url));
+if (fsTokenEncKey === DEV_FS_TOKEN_ENC_KEY && deploymentUrl !== undefined) {
+  process.stderr.write(
+    `http: FS_TOKEN_ENC_KEY is unset while this tier is configured with a ` +
+      `non-loopback public URL (${deploymentUrl}), so every stored FamilySearch ` +
+      `token would be encrypted under a key that is public in this repository. ` +
+      `Set FS_TOKEN_ENC_KEY to the value the web and worker tiers use.\n`,
+  );
+  process.exit(2);
+}
+process.stderr.write(
+  `connector door: issuer=${issuer ?? "unset"} fs-token-key=${fsTokenEncKey === DEV_FS_TOKEN_ENC_KEY ? "default" : "set"}\n`,
+);
+
 const holdLine = debugHoldStartupLine(process.env);
 if (holdLine) process.stderr.write(holdLine);
 
@@ -189,9 +272,22 @@ const server = await startHttpServer({
   host: values.host as string,
   port,
   baseConfig,
-  bindStore: (projectId, signal, fence) =>
-    new PgS3ProjectStore(backend, { projectId, anchorPath: storeEnv.anchorPath, signal, fence }),
+  bindStore: (projectId, signal, fence, opts) =>
+    new PgS3ProjectStore(backend, {
+      projectId,
+      // A connector names its own project path, and the store's anchor MUST be
+      // that path: every tool call's projectPath is checked against it exactly.
+      // The worker keeps GENEALOGY_ANCHOR_PATH.
+      anchorPath: opts?.anchorPath ?? storeEnv.anchorPath,
+      signal,
+      fence,
+      ownerId: opts?.ownerId,
+    }),
   authorize: (req) => authorizeAttempt(backend, req),
+  lookupConnector: (tokenSha256) =>
+    lookupConnectorToken(backend, tokenSha256, (ciphertext) => decrypt(ciphertext, fsTokenEncKey)),
+  projectOwner: (projectId) => projectOwnerOf(backend, projectId),
+  issuer,
   checkReady: () => backend.checkReady(),
 });
 

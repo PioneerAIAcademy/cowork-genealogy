@@ -1,0 +1,15 @@
+{
+  "tool": "catalog_search",
+  "description": "catalog_search catch-all for any `title` call — 0 hits. Order it after any title-specific catalog fixture: the first matching fixture wins. Mirrors catalog-search-empty-keywords (issue #4136, plan critique R2-3).",
+  "args": {
+    "title": "~"
+  },
+  "response": {
+    "totalHits": 0,
+    "returned": 0,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 4,
+    "hits": []
+  }
+}
