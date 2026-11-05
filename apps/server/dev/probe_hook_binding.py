@@ -386,6 +386,9 @@ async def run_arm(case: str, hooks_present: bool, key: str, reason: str) -> dict
             shutil.rmtree(plugin / "hooks")
         project = tmp / "project"
         project.mkdir()
+        if case == "read":
+            # A real file, so the control arm (hooks/ removed) shows a Read that succeeds.
+            (project / READ_FILE).write_text('{"project": {"id": "rp_probe"}}', encoding="utf-8")
 
         real_agent._PLUGIN_DIR = str(plugin)
         real_agent._MCP_BUILD = str(ENGINE_BUILD)
