@@ -95,6 +95,11 @@
             "id": "F3",
             "type": "Birth",
             "date": "~1818"
+          },
+          {
+            "id": "F5",
+            "type": "Death",
+            "date": "1945"
           }
         ]
       }
