@@ -14,6 +14,9 @@
 <body>
 <h1 id="headline">Page loaded. Waiting for the host.</h1>
 <button id="again" type="button" disabled>Call read_project_view again</button>
+<button class="refusal" type="button" data-label="400" data-path="not-a-project" disabled>Door refuses: 400</button>
+<button class="refusal" type="button" data-label="403" data-path="/proj_0000000000000403" disabled>Door refuses: 403</button>
+<button class="refusal" type="button" data-label="503" data-path="/proj_0000000000000503" disabled>Door refuses: 503</button>
 <pre id="report"></pre>
 <script>
 // A dev stub for dev/probe-connector-server.ts: no build, no dependencies, no
@@ -91,10 +94,10 @@ function seen() {
   };
 }
 
-async function hiddenCall(trigger) {
+async function hiddenCall(trigger, refusedPath) {
   const call = { n: state.calls.length + 1, trigger, status: "running" };
   // The brief's interface: the card passes the model's projectPath to read_project_view.
-  const projectPath = state.input?.projectPath ?? state.meta?.echo?.projectPath;
+  const projectPath = refusedPath ?? state.input?.projectPath ?? state.meta?.echo?.projectPath;
   const args = { part: "document", seen: JSON.stringify(seen()), ...(typeof projectPath === "string" ? { projectPath } : {}) };
   state.calls.push(call);
   render();
@@ -253,6 +256,9 @@ function render() {
 }
 
 document.getElementById("again").addEventListener("click", () => hiddenCall("tap"));
+for (const button of document.querySelectorAll(".refusal")) {
+  button.addEventListener("click", () => hiddenCall(`door ${button.dataset.label}`, button.dataset.path));
+}
 
 async function connect() {
   render();
@@ -274,7 +280,7 @@ async function connect() {
     onContext(result.hostContext ?? {});
     post({ method: "ui/notifications/initialized" });
     trackSize();
-    document.getElementById("again").disabled = false;
+    for (const button of document.querySelectorAll("button")) button.disabled = false;
   } catch (error) {
     state.connect = "failed";
     state.pageErrors.push(error.message);

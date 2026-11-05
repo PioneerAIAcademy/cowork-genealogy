@@ -13,7 +13,8 @@
 // fixed text. Two probe-only tools are added: `probe_sleep` (the per-call
 // timeout) and `probe_large_result` (the result-size limit). Two more,
 // `show_project` and `read_project_view`, draw a stub card (`dev/probe-card.html`)
-// behind the same sign-in, with the MCP App's names, arguments and `_meta`.
+// behind the same sign-in, with the MCP App's names, arguments and `_meta`. For
+// those two, the project paths in `doorRefusal` answer the door's HTTP refusals.
 //
 // Sign-in is the probe's own OAuth server, written on `node:http` rather than
 // the SDK's express router: the router's metadata cannot carry the
@@ -84,6 +85,8 @@ const CODE_TTL_MS = 2 * 60_000;
 const MAX_SLEEP_S = 600;
 const MAX_RESULT_CHARS = 1_000_000;
 const MAX_FORM_BYTES = 64 * 1024;
+// src/http-server.ts's MAX_BODY_BYTES, so a body behaves here as it will there.
+const MAX_MCP_BODY_BYTES = 1024 * 1024;
 const VERIFIER_RE = /^[A-Za-z0-9\-._~]{43,128}$/;
 const SECRET_KEYS = new Set([
   "code", "state", "code_verifier", "code_challenge",
@@ -138,12 +141,12 @@ function oauthError(res: http.ServerResponse, status: number, error: string, des
 
 class BodyTooLarge extends Error {}
 
-async function readBody(req: http.IncomingMessage): Promise<string> {
+async function readBody(req: http.IncomingMessage, limit = MAX_FORM_BYTES): Promise<string> {
   const chunks: Buffer[] = [];
   let size = 0;
   for await (const chunk of req) {
     size += (chunk as Buffer).length;
-    if (size > MAX_FORM_BYTES) throw new BodyTooLarge(`body over ${MAX_FORM_BYTES} bytes`);
+    if (size > limit) throw new BodyTooLarge(`body over ${limit} bytes`);
     chunks.push(chunk as Buffer);
   }
   return Buffer.concat(chunks).toString("utf8");
@@ -517,6 +520,31 @@ const cardTools = [
   },
 ];
 
+// The door's refusals, copied from src/http-server.ts. They are HTTP errors, not tool
+// results: no tool runs, so the host alone decides what the researcher sees. The project
+// path picks the refusal, for the two card tools only, so other sittings are untouched.
+const PROJECT_PATH_SHAPE = /^\/proj_[0-9a-f]{16}$/;
+const REFUSED_NOT_YOURS = "/proj_0000000000000403";
+const REFUSED_UNAVAILABLE = "/proj_0000000000000503";
+
+function doorRefusal(body: unknown): { status: number; body: unknown } | null {
+  const call = body as { method?: unknown; params?: { name?: unknown; arguments?: { projectPath?: unknown } } } | null;
+  if (call?.method !== "tools/call") return null;
+  if (call.params?.name !== SHOW_PROJECT && call.params?.name !== READ_PROJECT_VIEW) return null;
+  const projectPath = call.params.arguments?.projectPath;
+  if (projectPath === undefined) return null;
+  const refuse = (status: number, code: number, message: string) => ({
+    status,
+    body: { jsonrpc: "2.0", error: { code, message }, id: null },
+  });
+  if (typeof projectPath !== "string" || !PROJECT_PATH_SHAPE.test(projectPath)) {
+    return refuse(400, -32600, "projectPath must be /proj_ followed by 16 lowercase hex characters.");
+  }
+  if (projectPath === REFUSED_NOT_YOURS) return refuse(403, -32600, "This project is not yours.");
+  if (projectPath === REFUSED_UNAVAILABLE) return refuse(503, -32603, "Project authorization is unavailable.");
+  return null;
+}
+
 let hiddenCalls = 0;
 
 function cardResult(name: string, args: Record<string, unknown>, tokenSeq: number) {
@@ -620,6 +648,21 @@ async function handleMcp(req: http.IncomingMessage, res: http.ServerResponse): P
     return sendJson(res, 401, tokenRefused ? { error: "invalid_token" } : { error: "unauthorized" }, challenge(tokenRefused));
   }
   log("mcp_ok", { token_seq: auth.seq, user_agent: req.headers["user-agent"], x_forwarded_for: req.headers["x-forwarded-for"] });
+  let parsedBody: unknown;
+  if (req.method === "POST") {
+    try {
+      parsedBody = JSON.parse(await readBody(req, MAX_MCP_BODY_BYTES));
+    } catch (error) {
+      if (error instanceof BodyTooLarge) return badBody(res, error);
+      return sendJson(res, 400, { jsonrpc: "2.0", error: { code: -32700, message: "Request body is not JSON." }, id: null });
+    }
+    const refusal = doorRefusal(parsedBody);
+    if (refusal) {
+      const name = (parsedBody as { params: { name: string } }).params.name;
+      log("door_refusal", { status: refusal.status, tool: name, token_seq: auth.seq, user_agent: req.headers["user-agent"] });
+      return sendJson(res, refusal.status, refusal.body);
+    }
+  }
   const disconnected = new AbortController();
   res.on("close", () => {
     if (!res.writableEnded) disconnected.abort();
@@ -639,7 +682,7 @@ async function handleMcp(req: http.IncomingMessage, res: http.ServerResponse): P
   };
   try {
     await server.connect(transport);
-    await transport.handleRequest(req, res);
+    await transport.handleRequest(req, res, parsedBody);
   } finally {
     await server.close();
   }
