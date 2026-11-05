@@ -510,6 +510,17 @@ def _read_env(path: Path) -> dict[str, str]:
                 if "=" in line and not line.startswith("#"))
 
 
+def _with_fake_docker(folder: Path, env: dict[str, str]) -> dict[str, str]:
+    """``env`` with a docker first on PATH that prints what reached it and succeeds."""
+    bin_dir = folder / "docker-bin"
+    bin_dir.mkdir(exist_ok=True)
+    fake = bin_dir / "docker"
+    fake.write_text('#!/bin/sh\nprintf "%s|%s|%s\\n" "${FS_TOKEN_ENC_KEY-unset}" "${EDGE_PORT-unset}" "$*"\n',
+                    encoding="utf-8")
+    fake.chmod(0o755)
+    return {**env, "PATH": f"{bin_dir}{os.pathsep}{env['PATH']}"}
+
+
 @pytest.fixture
 def first_run(tmp_path: Path) -> tuple[Path, dict[str, str]]:
     data = tmp_path / "data"
@@ -593,16 +604,81 @@ def test_a_shell_variable_does_not_replace_the_env_files_value(first_run):
     """Shell variables beat --env-file, so the script must drop them; this reads what the
     wrapper hands docker, through a fake docker first on PATH."""
     path, env = first_run
-    bin_dir = path.parent / "bin"
-    bin_dir.mkdir()
-    fake = bin_dir / "docker"
-    fake.write_text('#!/bin/sh\nprintf "%s|%s|%s\\n" "${FS_TOKEN_ENC_KEY-unset}" "${EDGE_PORT-unset}" "$*"\n',
-                    encoding="utf-8")
-    fake.chmod(0o755)
-    result = _run(["logs"], {**env, "PATH": f"{bin_dir}{os.pathsep}{env['PATH']}", "FS_TOKEN_ENC_KEY": "stray",
-                             "EDGE_PORT": "9999"})
+    result = _run(["logs"], {**_with_fake_docker(path.parent, env), "FS_TOKEN_ENC_KEY": "stray", "EDGE_PORT": "9999"})
     assert result.returncode == 0, result.stderr
     assert result.stdout.startswith("unset|unset|compose -p genealogy-beta --env-file"), result.stdout
+
+
+@needs_bash
+def test_up_creates_data_dir_private_and_marked(first_run):
+    path, env = first_run
+    result = _run(["up"], {**_with_fake_docker(path.parent, env), "EDGE": "off"})
+    assert result.returncode == 0, result.stderr
+    data = Path(env["DATA_DIR"])
+    assert stat.S_IMODE(data.stat().st_mode) == 0o700
+    assert (data / ".genealogy-beta").exists()
+    assert all((data / name).is_dir() for name in ("postgres", "minio", "backups", "exports"))
+
+
+@needs_bash
+def test_up_leaves_the_mode_of_a_directory_it_did_not_create(first_run):
+    path, env = first_run
+    data = Path(env["DATA_DIR"])
+    data.mkdir()
+    data.chmod(0o755)
+    assert _run(["up"], {**_with_fake_docker(path.parent, env), "EDGE": "off"}).returncode == 0
+    assert stat.S_IMODE(data.stat().st_mode) == 0o755
+
+
+@needs_bash
+def test_up_refuses_a_populated_directory_it_does_not_own(first_run):
+    path, env = first_run
+    data = Path(env["DATA_DIR"])
+    data.mkdir()
+    (data / "someone-elses").touch()
+    result = _run(["up"], _with_fake_docker(path.parent, env))
+    assert result.returncode == 1 and "not this stack's" in result.stderr
+    assert sorted(p.name for p in data.iterdir()) == ["someone-elses"]
+
+
+@needs_bash
+@pytest.mark.parametrize("edge", ["of", "OFF", "no"])
+def test_up_refuses_an_edge_value_it_does_not_know(first_run, edge):
+    """Read before anything starts: a typo must not open the public port."""
+    path, env = first_run
+    result = _run(["up"], {**_with_fake_docker(path.parent, env), "EDGE": edge})
+    assert result.returncode == 1 and "EDGE must be on or off" in result.stderr
+    assert "compose" not in result.stdout
+
+
+@needs_bash
+@pytest.mark.skipif(not Path("/proc/meminfo").exists(), reason="reads /proc/meminfo")
+def test_up_refuses_under_the_memory_floor(first_run):
+    path, env = first_run
+    result = _run(["up"], {**_with_fake_docker(path.parent, env), "MIN_FREE_MEM_GB": "999999"})
+    assert result.returncode == 1 and "memory free" in result.stderr
+    assert "compose" not in result.stdout
+
+
+@needs_bash
+@pytest.mark.parametrize(("name", "command"), [("MIN_FREE_MEM_GB", "up"), ("MIN_FREE_GB", "backup"), ("KEEP", "backup"),
+                                               ("TAIL", "logs"), ("MIN_FREE_GB", "check")])
+@pytest.mark.parametrize("value", ["abc", "1.5", "-1"])
+def test_a_number_that_is_not_one_is_refused(first_run, name, command, value):
+    path, env = first_run
+    Path(env["DATA_DIR"]).mkdir(exist_ok=True)
+    result = _run([command], {**_with_fake_docker(path.parent, env), name: value})
+    assert result.returncode == 1 and "whole number" in result.stderr
+
+
+@needs_bash
+def test_backup_refuses_under_the_disk_floor(first_run):
+    path, env = first_run
+    data = Path(env["DATA_DIR"])
+    (data / "backups").mkdir(parents=True)
+    result = _run(["backup"], {**_with_fake_docker(path.parent, env), "MIN_FREE_GB": "99999999"})
+    assert result.returncode == 1 and "under the floor" in result.stderr
+    assert list((data / "backups").iterdir()) == []
 
 
 # ── malachi-check's HTTP half ────────────────────────────────────────────────
