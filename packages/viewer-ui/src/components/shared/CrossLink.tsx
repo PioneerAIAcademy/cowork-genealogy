@@ -14,6 +14,7 @@ const sectionNavMap: Record<string, string> = {
   sources: 'sources',
   assertions: 'assertions',
   person_evidence: 'person_evidence',
+  rejected_links: 'rejected_links',
   conflicts: 'conflicts',
   hypotheses: 'hypotheses',
   timelines: 'timelines',
