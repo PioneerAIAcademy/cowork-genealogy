@@ -519,13 +519,13 @@ hypothesis and conclusion get a card, and the router lines shrink to match.
 | | Connector | Local |
 |---|---|---|
 | Task run mode | | |
-| `show_project`, first call in a task | | |
+| `show_project`, first call in a task | Asked; allowed once | |
 | `show_project`, second call | | |
 | `show_project`, third call | | |
 | `show_project`, next call after "always allow" | | |
 | `show_project`, first call in a new task after "always allow" | | |
-| A tapped button makes a hidden call | | |
-| `read_project_view`, first tap | | |
+| A tapped button makes a hidden call | Yes | |
+| `read_project_view`, first tap | No prompt | |
 | `read_project_view`, next tap after "always allow" | | |
 | `read_project_view`, first tap in a new task after "always allow" | | |
 
@@ -632,11 +632,11 @@ of the largest project's research.json, `document` gains paging.
 
 | Rung | Mount, connector | Mount, local | Hidden call, connector | Hidden call, local | Hidden call, artifact |
 |---|---|---|---|---|---|
-| 400k characters | | | | | |
+| 400k characters | | | Whole, 699,798 bytes | | |
 | 1M characters | | | | | |
 | 1.3M characters | | | | | |
 | 2M characters | | | | | |
-| Largest `resultBytes` accepted | | | | | |
+| Largest `resultBytes` accepted | 299,925 so far | | 699,798 so far | | |
 | What happens past it | | | | | |
 
 ### Image
@@ -646,7 +646,7 @@ needs. An artifact's answer is in **Artifact**.
 
 | | Connector | Local |
 |---|---|---|
-| The image loads from the declared host | | — |
+| The image loads from the declared host | Yes, 1200 x 675 | — |
 
 ### `ui/update-model-context`
 
