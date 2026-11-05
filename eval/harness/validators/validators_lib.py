@@ -585,6 +585,7 @@ def assert_topical_fixture_used(
     tag: str = "topical-fixture-required",
     map_name: str = "the topical-fixture map",
     prefix_match: bool = False,
+    builtin_tool_calls: list[dict] | None = None,
 ) -> str | None:
     """Assert a tagged test actually consumed its subject-matter fixture.
 
@@ -622,7 +623,19 @@ def assert_topical_fixture_used(
     # this helper existed; dropping it turned a skip into a FAILURE for a
     # historical-context run that never activates, which is a behaviour change
     # inside what was described as a pure refactor.
+    # A caller that passes `builtin_tool_calls` narrows "never activated" to
+    # "its agent was never spawned". A spawned agent with no fixture-backed
+    # call answered from memory: since #4218 a no-project historical-context
+    # run makes no other call, so the skip let that pass (#4253).
     if not hit:
+        if builtin_tool_calls is not None:
+            from harness.skill_runner import spawned_agents
+
+            assert test.get("skill") not in spawned_agents(builtin_tool_calls), (
+                f"{test_id}: {test.get('skill')} was spawned but made no "
+                f"fixture-backed tool call - it answered without reading "
+                f"'{expected}'"
+            )
         pytest.skip("no fixture-backed tool calls - non-activation is reported elsewhere")
 
     def matches(stem: object) -> bool:
