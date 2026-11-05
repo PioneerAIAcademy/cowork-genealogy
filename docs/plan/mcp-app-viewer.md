@@ -1,6 +1,6 @@
 # MCP App viewer: research cards and a case file inside Cowork
 
-**Status:** Not started (2026-11-04).
+**Status:** M0 in progress; the build is on branch `mcp-app-viewer-m0` (2026-11-05).
 **Owner:** the lead, building it himself, independent of the beta's timeline.
 
 ## Goal

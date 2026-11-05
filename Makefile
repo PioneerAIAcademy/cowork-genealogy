@@ -268,6 +268,20 @@ server-e2b: e2b-preflight ## E2B sandboxes + REAL agent + FamilySearch login, :1
 electron: $(JS_DEPS) ## Run the Electron viewer (consumes the shared viewer-ui)
 	pnpm --filter @genealogy/electron dev
 
+.PHONY: mcp-viewer-build
+mcp-viewer-build: $(JS_DEPS) ## Build the MCP App page and copy it to the viewer server
+	pnpm --filter mcp-viewer build
+	mkdir -p $(ENGINE_DIR)/viewer/page
+	cp apps/mcp-viewer/dist/index.html $(ENGINE_DIR)/viewer/page/viewer.html
+
+# `cd … && pwd` rather than abspath: Cowork project folders often hold spaces.
+.PHONY: viewer
+viewer: mcp-viewer-build $(ENGINE_DEPS) ## Open the MCP App viewer in a browser tab: make viewer PROJECT=<folder> [PORT=8090]
+	@test -n "$(PROJECT)" || { echo "usage: make viewer PROJECT=<folder> [PORT=8090]"; exit 2; }
+	@test -d "$(PROJECT)" || { echo "make viewer: no such folder: $(PROJECT)"; exit 2; }
+	root="$$(cd "$(PROJECT)" && pwd)" && cd $(ENGINE_DIR) && \
+	  npx tsx viewer/cli.ts --local --root "$$root" $(if $(PORT),--port $(PORT))
+
 # ── Quality / tests ──────────────────────────────────────────────
 .PHONY: typecheck
 typecheck: $(JS_DEPS) ## Typecheck the whole JS workspace (turbo)
