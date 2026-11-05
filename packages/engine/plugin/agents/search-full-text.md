@@ -15,8 +15,8 @@ description: >-
   extraction (use the record-structurer agent), to browse unindexed image volumes
   page-by-page (use search-images), or to scope a new project (use
   question-selection).
-model: claude-sonnet-4-6
-effort: high
+model: claude-haiku-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
