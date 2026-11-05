@@ -1148,6 +1148,23 @@ Grep for `calculateWarnings` when sizing the blast radius.
   message age now read the latest bound too, or they name the earliest-POSSIBLE
   child and print an age that never triggered them.
 
+  **The eight `hasDeathBeforeChildBirth*` tags are emitted per posthumous child
+  too**, for the same gate-key reason. Java compares the parent's
+  death with the EARLIEST child only, so one child born in time hid every later
+  one, and adding a second posthumous child changed no key and landed. Each
+  child born more than the tag's threshold after the death now gets its own
+  warning naming that child. The two `femaleRelatives*` forms check every female
+  relative, not the first, but report only the ANCHOR's own birth: they key on
+  the anchor as `personId`, and a relative mob with children is a parent mob
+  (anchor plus siblings), so a per-sibling form would mint a new key whenever an
+  in-time child is linked to a mother who already has a posthumous one, and
+  refuse a write that introduced nothing. The posthumous sibling is still
+  reported by the mother's self form and by that sibling's own anchor.
+  Re-measured 2026-11-04 at b0e57bde2a (235 trees, 2593 edges): the change moves
+  refusals from **101 to 104** edges (74 distinct warnings, was 51). All the new
+  ones are in `elsa-heikkinen-birth`, and each links a mother who died in
+  February 1826 to a child born 1827–1832. No child born in time is refused.
+
   Measured over the committed e2e final trees at a36651a33, 203 trees and 2266
   ParentChild edges: gating parentage edges unexempted refuses **419 of 2266** (18.5%) — 559
   instances across 74 runs (`--all`; 506 with `--all --no-widen-hop`). After the

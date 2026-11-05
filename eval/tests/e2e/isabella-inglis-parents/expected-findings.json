@@ -29,7 +29,7 @@
       "supporting_sources": [
         "Scotland, Civil Registration, 1855-1875, 1881, 1891 — marriage entry of 25 Dec 1867 for David Young and Isabella Inglis (ark:/61903/1:1:X9T4-M2N2). The index gives no registration district, parish or county, so the place is recorded only to national level."
       ],
-      "required": true
+      "required": false
     },
     {
       "id": "f3",
