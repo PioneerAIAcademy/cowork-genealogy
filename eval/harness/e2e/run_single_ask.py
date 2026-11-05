@@ -244,7 +244,6 @@ async def run_one(
                     "checks": {k: {"ok": ok, "detail": d} for k, (ok, d) in g.checks.items()},
                     "first_unit": g.first_unit,
                     "units": g.units,
-                    "delivered": g.delivered,
                     "extraction_appends": g.extraction_appends,
                     "stop": g.stop,
                     "background_spawns": g.background_spawns,

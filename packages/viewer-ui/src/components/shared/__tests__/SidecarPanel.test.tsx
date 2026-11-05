@@ -5,6 +5,7 @@ import SidecarPanel from '../SidecarPanel'
 import { patrickFlynnSidecar } from '../../../lib/__fixtures__/patrick-flynn-sidecar'
 import { flynnRecordReadSidecar } from '../../../lib/__fixtures__/flynn-record-read-sidecar'
 import { externalLinksSidecar } from '../../../lib/__fixtures__/external-links-sidecar'
+import type { SidecarFile } from '../../../lib/schema'
 import type { SidecarState } from '../../../contexts/ResearchDataContext'
 import { buildMockContext } from '../../../contexts/__tests__/mockContext'
 
@@ -317,6 +318,59 @@ describe('SidecarPanel — clearFocusPersona', () => {
     render(<SidecarPanel />)
     await userEvent.click(screen.getByRole('dialog'))
     expect(clearFocusPersona).not.toHaveBeenCalled()
+  })
+})
+
+describe('SidecarPanel — fulltext_search / Evaluate button', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  const fulltextSidecar = {
+    log_id: 'log_001',
+    tool: 'fulltext_search' as const,
+    retrieved: '2026-10-01T12:00:00Z',
+    returned_count: 2,
+    payload: {
+      results: [
+        {
+          id: 'ark:/61903/3:1:AAAA-0001',
+          collectionTitle: 'Pennsylvania Probate Records',
+          textDocument: 'First hit.',
+          names: [],
+          places: []
+        },
+        {
+          id: 'ark:/61903/3:1:AAAA-0002',
+          collectionTitle: 'New York Census',
+          textDocument: 'Second hit.',
+          names: [],
+          places: []
+        }
+      ]
+    }
+  } as unknown as SidecarFile
+
+  const sidecarState: SidecarState = {
+    status: 'loaded',
+    logId: 'log_001',
+    payload: fulltextSidecar,
+    lastMtime: 1
+  }
+
+  it('shows no Evaluate hits button when sendPrompt is absent', () => {
+    mountWithState(sidecarState)
+    render(<SidecarPanel />)
+    expect(screen.queryByRole('button', { name: 'Evaluate hits' })).toBeNull()
+  })
+
+  it('clicking Evaluate hits calls sendPrompt with the sidecar log id', async () => {
+    const sendPrompt = vi.fn()
+    vi.mocked(useResearchData).mockReturnValue({
+      ...buildMockContext({ sidecar: sidecarState }),
+      sendPrompt
+    })
+    render(<SidecarPanel />)
+    await userEvent.click(screen.getByRole('button', { name: 'Evaluate hits' }))
+    expect(sendPrompt).toHaveBeenCalledWith('Evaluate the hits from log_001 against the tree.')
   })
 })
 

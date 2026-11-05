@@ -1,8 +1,9 @@
-"""Step mode phase 2: neither hosted plane vetoes a stop.
+"""Step mode phase 2: neither hosted plane vetoes a stop or halts on `research_delivered`.
 
 A step-mode turn ends at its boundary on purpose, and "Keep going" is the host's reply,
-not a veto (docs/plan/research-step-mode.md, section A2 and Phase 2). The worker half is
-in test_proto_worker.py, next to the fixture it drives.
+not a veto (docs/plan/research-step-mode.md, section A2 and Phase 2). A one-off ask ends
+on the model's own end of turn, so the delivered halt went too. The worker half is in
+test_proto_worker.py, next to the fixture it drives.
 """
 
 from __future__ import annotations
@@ -14,7 +15,9 @@ from pathlib import Path
 from app.agent import real_agent
 
 _SERVER = Path(__file__).resolve().parents[1]
-_VETO_NAMES = {"should_continue_run", "CONTINUE_REASON", "make_stop_hook"}
+_VETO_NAMES = {"should_continue_run", "CONTINUE_REASON", "make_stop_hook",
+               "DELIVERED_TOOL", "DELIVERY_GUIDANCE", "delivered_stop_reason"}
+_DELIVERED_CALL = "mcp__genealogy__research_delivered"
 
 
 class _Matcher:
@@ -94,6 +97,10 @@ def test_the_guard_sees_each_shape_of_a_planted_veto():
         "hooks = {'Stop': [matcher]}\n",
         "hooks = dict(Stop=[matcher])\n",
         "hooks.update({'Stop': [matcher]})\n",
+        "DELIVERED_TOOL = 'mcp__genealogy__research_delivered'\n",
+        "DELIVERY_GUIDANCE = 'call research_delivered'\n",
+        "def delivered_stop_reason(summary):\n    return summary\n",
+        "from .continue_policy import DELIVERED_TOOL\n",
     ):
         assert _veto_names_in(ast.parse(planted)), planted
     for legitimate in (
@@ -103,3 +110,20 @@ def test_the_guard_sees_each_shape_of_a_planted_veto():
         "counts = {'stop': 1}\n",
     ):
         assert not _veto_names_in(ast.parse(legitimate)), legitimate
+
+
+def test_the_alpha_does_not_halt_on_a_delivered_call(tmp_path):
+    hooks = real_agent._build_hooks(_Matcher, tmp_path)
+    count_only = hooks["PreToolUse"][0].kw["hooks"][0]
+    import asyncio
+
+    out = asyncio.run(count_only({"tool_name": _DELIVERED_CALL, "tool_input": {"summary": "x"}}, "t", None))
+    assert out == {}
+
+
+def test_the_alpha_still_routes_a_first_message_with_no_project_to_research(tmp_path):
+    """#3768's hosted routing sentence lived in DELIVERY_GUIDANCE; it moved to the project
+    note rather than going with the tool. The worker's twin is in test_proto_worker.py."""
+    alpha = real_agent.build_options(tmp_path).system_prompt["append"]
+    assert "a request to research a person is a research job, not a single lookup" in alpha
+    assert "research_delivered" not in alpha
