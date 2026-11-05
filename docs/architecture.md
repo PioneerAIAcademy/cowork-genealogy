@@ -289,7 +289,7 @@ how to word it:
 | across hours, many turns, past compaction | **a tool contract** — validate and reject | the write-boundary invariants in `research_append` |
 | for the main thread, which no allow-list can narrow | **a `PreToolUse` hook** (§5.4) | the raw-write lockdown |
 | for one delegated agent | **that agent's `tools:`** — omit the capability — or a narrowed tool (§5.3) | `extraction_append` |
-| within a single skill invocation | **skill prose** — this is what prose is *for* | "consult the stop criteria before draining the plan" |
+| within a single skill invocation | **skill prose** — this is what prose is *for* | "dispose of the remaining plan items in one call, then consult the gate" |
 
 > **Direction.** Both gates the §4 law named moved into the tool: the
 > **mentor gate** as a refusal — since removed, with gps-mentor off the default
