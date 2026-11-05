@@ -47,7 +47,9 @@ ENV_VAR = "WEB_DIST_DIR"
 NO_CACHE = "no-cache"
 IMMUTABLE = "public, max-age=31536000, immutable"
 HASHED_DIR = "assets"
-RESERVED = frozenset({"api", "auth", "callback"})
+# "openrouter" whether or not OPENROUTER_LINKING_ENABLED registers it (#3988), so turning
+# the switch on can never make a dist that started yesterday collide today.
+RESERVED = frozenset({"api", "auth", "callback", "openrouter"})
 HEAD_RE = re.compile(rb"<head(\s[^>]*)?>", re.IGNORECASE)
 
 
