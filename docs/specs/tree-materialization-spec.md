@@ -383,7 +383,26 @@ qualify.
   its own on the record for the pair tests to compare, so its refusal keeps no
   suffix whenever the person has a namesake in the tree.
 
-Known let-throughs, none with an executed op in the corpus:
+**The recorded party (both arms).** A link whose `same_person` score is on
+record says which party it is about: the score file
+(`results/.scores/`, same-person-tool-spec "The recorded score") keeps the
+`record_role` the call compared, which is the call's `recordRole`, else the
+assertion's own role. An assertion whose recorded score for the target names a
+role other than the one the op writes (the persona's `recordRole`, or the named
+party's `relatedRole`; compared trimmed and case-folded) does not qualify for
+that target, and the refusal names it: "the link of '<a>' to '<id>' does not
+count: its same_person score compared a different party of this record". It does
+not suggest re-scoring: a new score replaces the old one whatever role it names. No score, or one with no role, changes nothing. The tool reads the
+score files of the records the call's ops touch. Measured by the `scored` line
+of `dev/replay-materialize-link.ts`, which rebuilds each run's score files from
+its `same_person` calls: 0 of the corpus's persona and named-party ops change
+verdict (109 of 1,224 calls scored a party other than the assertion's own;
+with every scored link read as another party's, 168 ops would).
+
+Known let-throughs, none with an executed op in the corpus. The first two close
+when the link carries a score that compared the other party; they stay open for
+an unscored link, and for one scored as the assertion's own party, the default
+when `same_person` is called without `recordRole`:
 
 - On the persona arm, a one-party assertion the agent linked to both people
   still carries the persona onto the other one when no other persona of the
@@ -395,14 +414,24 @@ Known let-throughs, none with an executed op in the corpus:
   someone else), the named role's own one-party assertions carry no `probable`
   or `confident` link, and the gender check cannot tell them apart: the op
   passes no gender, the target's gender is `Unknown` (which the op's gender then
-  fills), or the two match. Nothing in the documents says which party the
+  fills), or the two match. Nothing else in the documents says which party the
   naming assertion's link to the target is about.
 - A same-named father's persona still lands on his son's name-only stub made
   from the same record: the stub's name equals the father's, so it traces to
   the father's party, and nothing else on it tells them apart.
 
-Minting needs no link (the link to a new person is written after it exists),
-and neither does re-running a record onto the stub it minted
+Minting needs no link (the link to a new person is written after it exists).
+Writing onto a person the run added that carries no provenance at all
+(`blankAddedPerson`: not imported, no source ref on its node, names, facts
+or any relationship it is in, and no namesake, whose links the namesake cap
+decides as before) needs a live link of any confidence, a
+`speculative` one included: `research_append` refuses a `probable` or
+`confident` link to such a person until it has been written onto, and the
+`speculative` link has already passed `same_person`'s score gate. Requiring no
+link at all would skip that score: once the persona is written, every ref on
+the person reaches this one record, so it reads as minted from it and the link
+written after needs no score. The order is a scored `speculative` link, then
+`materialize_facts`, then raising the link. Nor does re-running a record onto the stub it minted
 (`mintedFromThisRecord`: a person the run added, not shaped like a FamilySearch
 id, whose refs reach only this record), judged against the write-once starting
 tree so that a person the project began with is never taken for a stub, even

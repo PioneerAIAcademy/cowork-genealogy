@@ -628,6 +628,10 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     // network leg, so the smoke never spends a billed OCR probe. The happy path
     // needs a real Natural Group name and is dev/try-volume-bisect.ts's job.
     tool: "volume_bisect",
+    // Offline: the bare image-group prefix is refused by assertSplitGroup in
+    // the exported wrapper, before the transcription slot and before any
+    // network leg, so this row reaches no upstream.
+    offline: true,
     args: () => ({ imageGroupNumber: "004516861", targetYear: 1695 }),
     expect: (res) => ({
       ok: res.isError === true && carries(res, "volume_search"),
@@ -645,11 +649,6 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     count: 3,
     hydrate: 2,
   }),
-
-  // Pure signal: no network, no token, no project state. The hosted PreToolUse hook
-  // ends the turn on its NAME before it executes, so this exercises the arm that
-  // runs only where no hook binds (Cowork, the e2e harness, the unit harness).
-  { tool: "research_delivered", args: () => ({ summary: "the plan you asked for" }), expect: noError },
 
   // Public-network tools: no token, must succeed.
   { tool: "wikipedia_search", args: () => ({ query: "Genealogy" }), expect: noError },

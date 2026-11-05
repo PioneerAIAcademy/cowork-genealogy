@@ -1,11 +1,11 @@
-# Thomas Young & Elizabeth Martin — marriage and maiden name (1828)
+# Thomas Young & Elizabeth Martin — marriage (1828)
 
 **Source PID:** `PID-TODO`
 **Elizabeth Young (née Martin) is deceased.** (FamilySearch ToS requires all committed e2e fixtures to be about deceased persons.)
 
 ## Research question
 
-> What was Elizabeth Young's maiden name, and where and when did she marry Thomas Young?
+> Where and when did Elizabeth Young marry Thomas Young?
 
 ## What was removed from the starting tree
 
@@ -21,6 +21,30 @@ moderate — The marriage is indexed on FamilySearch but requires the agent to r
 
 ## Notes for reviewers
 
-Three required findings: (f1) the marriage event itself at Bristol St. James on 16 November 1828, (f2) Elizabeth's maiden name as Martin confirmed by multiple sources, and (f3) the Betty Martin christening in Bitton 1 November 1812 as a candidate for Elizabeth's own christening record. The document notes a date discrepancy — one narrative passage suggests 1829 but the authoritative Research Summary states 16 November 1828; use 1828. The GRO birth-index entries (Martha and Robert Young, mother's maiden name Martin) are on Ancestry and the GRO website, not natively on FamilySearch — the agent may or may not be able to reach them; grade on whether the marriage register finding and maiden name are recovered, regardless of which source path was used.
+**2026-11-03 — re-scoped for step mode (issue #4145).** The old question asked
+two independent facts (the marriage, and her maiden name): "What was
+Elizabeth Young's maiden name, and where and when did she marry Thomas
+Young?" Reworded `researcher_question` to the marriage only ("Where and when
+did Elizabeth Young marry Thomas Young?"); demoted `f2` (maiden name) and
+`f3` (the Betty Martin christening, which only serves the maiden-name
+identification) to `required: false`, so a run that recovers them anyway
+still gets credit. The marriage register itself already names her "Elizabeth
+Martin" in `f1`'s own description, so the maiden name is not lost from the
+graded picture even though it is no longer separately required. No finding
+wording changed.
+
+One required finding, two bonus findings (as re-scoped above): (f1, required)
+the marriage event itself at Bristol St. James on 16 November 1828; (f2, not
+required) Elizabeth's maiden name as Martin confirmed by multiple sources;
+(f3, not required) the Betty Martin christening in Bitton 1 November 1812 as
+a candidate for Elizabeth's own christening record. The document notes a date
+discrepancy — one narrative passage suggests 1829 but the authoritative
+Research Summary states 16 November 1828; use 1828. The GRO birth-index
+entries (Martha and Robert Young, mother's maiden name Martin) are on
+Ancestry and the GRO website, not natively on FamilySearch — the agent may or
+may not be able to reach them; grade on whether the marriage register finding
+is recovered, with credit for the maiden name and the Betty Martin
+christening if a run reaches them too, regardless of which source path was
+used.
 
 **Authoring note (PID-less / Path 3):** Built from the bundled research document(s) (KoriRobbins/Research Report.pdf) with no FamilySearch access, so the starting tree was *constructed* from the document rather than captured from a live `person_read` snapshot — sanity-check its fidelity before relying on it. `source_pid` is an unused placeholder (`PID-TODO`): §6.1 blocks every person-keyed tool, so neither the benchmark run nor the judge ever reads the PID — it is provenance only, and may optionally be filled in later if a re-snapshot or provenance link is wanted. The landing gate is the same as for every fixture (Path 1 included): a committed §14 validity run that passes (`uv run python -m e2e.validate_fixture young-marriage-1828`). Recoverability from FamilySearch records is flagged in the reviewer notes above.

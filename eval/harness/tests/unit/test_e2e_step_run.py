@@ -1,16 +1,10 @@
 """A step-mode run driven end to end through a fake `ClaudeSDKClient`.
 
-Written because the structural tests in `test_e2e_step_mode_stop.py` cannot
-fail on the mutations that matter (re-review item 5): they check the SHAPE of a
-comparison, not its operator, so inverting `is not None` to `is None` passes
-them — while bringing the Stop veto back for every step run AND dropping it
-from every ordinary one. A substring check on the source has the same hole: the
-string survives when the statement is disabled.
-
-This drives the real `_run_agent`. The fake client calls the real PreToolUse
-and Stop hooks off the options it was built with, so what is asserted is what
-the run actually did: every Stop return, the messages the host sent, the step
-stamped on each turn, and that the session was disconnected once.
+Written because structural tests check the SHAPE of a statement, not what it
+does (re-review item 5). This drives the real `_run_agent`. The fake client calls
+the real PreToolUse hook off the options it was built with, so what is asserted
+is what the run actually did: the hooks it bound, the messages the host sent, the
+step stamped on each turn, and that the session was disconnected once.
 """
 
 from __future__ import annotations
@@ -37,7 +31,6 @@ class FakeStepClient:
         self.options = options
         self.sent: list[str] = []
         self.disconnects = 0
-        self.stop_returns: list[dict] = []
         self.pretool_returns: list[dict] = []
         self._turns: list[tuple[str | None, str]] = []
 
@@ -62,9 +55,13 @@ class FakeStepClient:
 
     #: Set to a workspace Path to mark the project completed after the first turn.
     completes_after_first: Path | None = None
+    #: The CLI's init message, yielded before the first turn's messages.
+    init: SystemMessage | None = None
 
     async def receive_response(self):
         index = len(self.sent) - 1
+        if index == 0 and self.init is not None:
+            yield self.init
         spawn, text = self._turns[index] if index < len(self._turns) else (None, "done.")
         if index == 0 and self.completes_after_first is not None:
             (self.completes_after_first / "research.json").write_text(
@@ -72,24 +69,19 @@ class FakeStepClient:
                             "questions": [{"id": "q_1", "status": "resolved"}]}),
                 encoding="utf-8",
             )
-        if spawn:
+        # A list is several spawns in one turn, fired in order -- the shape of a
+        # parallel dispatch, which reaches the gate before the model sees a deny.
+        for name in (spawn if isinstance(spawn, list) else [spawn] if spawn else []):
             for callback in self._hook("PreToolUse"):
                 self.pretool_returns.append(
                     await callback({"tool_name": "Task",
-                                    "tool_input": {"subagent_type": spawn}}, None, None) or {}
+                                    "tool_input": {"subagent_type": name}}, None, None) or {}
                 )
         yield AssistantMessage(content=[TextBlock(text=text)], model="m")
-        for callback in self._hook("Stop"):
-            self.stop_returns.append(await callback({}, None, None) or {})
         yield _result()
 
 
-def _drive(tmp_path, monkeypatch, turns, completes=False, **kwargs):
-    # `should_continue_run` allows every stop when there is no research.json
-    # (issue #3274), so without one the Stop hook returns {} for a reason that
-    # has nothing to do with step mode -- and the blocker's guard could be
-    # inverted with every assertion still passing. An unfinished project is what
-    # makes the veto reachable, which is what these tests are here to observe.
+def _drive(tmp_path, monkeypatch, turns, completes=False, init=None, **kwargs):
     (tmp_path / "research.json").write_text(
         json.dumps({"project": {"status": "active"},
                     "questions": [{"id": "q_1", "status": "in_progress"}]}),
@@ -104,6 +96,7 @@ def _drive(tmp_path, monkeypatch, turns, completes=False, **kwargs):
     def _factory(options=None, **_kw):
         client = FakeStepClient(options).script(turns)
         client.completes_after_first = tmp_path if completes else None
+        client.init = init
         made["client"] = client
         return client
 
@@ -115,23 +108,120 @@ def _drive(tmp_path, monkeypatch, turns, completes=False, **kwargs):
     result = asyncio.run(_run_agent(fixture=_fixture(tmp_path), workspace=tmp_path,
                                     mcp_server_entry=Path("dummy"), **kwargs))
     made["client"].usage = result[2]
+    made["client"].result = result
     return made["client"]
 
 
 OFFER = "The report.\n\nContinue with linking the records?"
 
 
-def test_no_stop_call_vetoes_a_step_run(tmp_path, monkeypatch):
-    """The blocker, asserted on the hook's RETURN rather than on the shape of
-    the statement that produces it. With the guard inverted this records three
-    `decision: block` returns instead of three empty ones."""
+def test_a_step_run_binds_no_stop_hook_and_records_no_nudge_counters(tmp_path, monkeypatch):
+    """Step mode phase 2 deleted the e2e Stop veto. A step turn ends at its boundary
+    on purpose and the host's reply continues the run, so no Stop hook is bound, and
+    the run writes neither nudge counter: a run that could not be nudged must read
+    as "not measured" to `nudge_report`, not as "never nudged"."""
     client = _drive(
         tmp_path, monkeypatch,
         [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
         step_mode="job",
     )
-    assert client.stop_returns, "the Stop hook never ran, so this proves nothing"
-    assert all(r == {} for r in client.stop_returns), client.stop_returns
+    assert "Stop" not in client.options.hooks, client.options.hooks
+    assert "continue_nudges" not in client.usage
+    assert "hand_back_classes" not in client.usage
+
+
+def test_a_dead_genealogy_server_aborts_a_step_run_at_init(tmp_path, monkeypatch):
+    """`make agent-smoke`'s dead-stub arm runs `run_e2e` with no `--step-mode`, which
+    now means `job`, so the #941 init abort is reached through the persistent client."""
+    dead = SystemMessage(
+        subtype="init",
+        data={"session_id": "S1", "mcp_servers": [{"name": "genealogy", "status": "failed"}]},
+    )
+    client = _drive(tmp_path, monkeypatch, [("research-plan", OFFER)], init=dead, step_mode="job")
+    assert client.result[3] == "mcp_unavailable", client.result[3:5]
+
+
+def _results(monkeypatch, **fields):
+    """Every turn's ResultMessage carries `fields` (cost is a running total)."""
+    import sys
+
+    from claude_agent_sdk import ResultMessage
+
+    def _r(session="S1"):
+        return ResultMessage(subtype="result", duration_ms=1, duration_api_ms=1,
+                             is_error=False, session_id=session,
+                             **{"num_turns": 1, **fields})
+
+    monkeypatch.setattr(sys.modules[__name__], "_result", _r)
+
+
+def test_the_cost_cap_is_reported_and_does_not_stop_a_step_run(tmp_path, monkeypatch):
+    """`max_cost_usd` is a reporting threshold (lead, #757; e2e-test-spec.md, the
+    `cost_cap` note). A step run COULD stop at a boundary, but stopping would end
+    the over-budget runs that pass today (hannah-earnest-children, 4 of 4) before
+    proof-conclusion, so the run is labelled `cost_cap` and the host keeps replying."""
+    _results(monkeypatch, total_cost_usd=999.0)
+    client = _drive(
+        tmp_path, monkeypatch,
+        [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
+        step_mode="job",
+    )
+    assert len(client.sent) == 3, client.sent
+    assert client.result[3] == "cost_cap", client.result[3:5]
+
+
+def test_the_turn_cap_still_stops_a_run_already_over_its_cost_cap(tmp_path, monkeypatch):
+    """A `cost_cap` label set on an early turn must not switch the turn cap off."""
+    _results(monkeypatch, total_cost_usd=999.0, num_turns=200)
+    client = _drive(
+        tmp_path, monkeypatch,
+        [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
+        step_mode="job",
+    )
+    assert len(client.sent) == 2, client.sent
+    assert client.result[3] == "max_turns", client.result[3:5]
+
+
+def test_an_error_after_the_cost_cap_is_recorded_as_an_error(tmp_path, monkeypatch):
+    """A step run has one `ResultMessage` per turn, so a later step can end in an SDK
+    error after an earlier one set `cost_cap`. That error must not read as "spent too
+    much": it replaces the label, as the turn cap does."""
+    import sys
+
+    from claude_agent_sdk import ResultMessage
+
+    calls = []
+
+    def _r(session="S1"):
+        calls.append(1)
+        failed = len(calls) == 2
+        return ResultMessage(subtype="result", duration_ms=1, duration_api_ms=1,
+                             is_error=failed, num_turns=1, session_id=session,
+                             total_cost_usd=999.0,
+                             result="API Error: 500 overloaded" if failed else None)
+
+    monkeypatch.setattr(sys.modules[__name__], "_result", _r)
+    client = _drive(
+        tmp_path, monkeypatch,
+        [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
+        step_mode="job",
+    )
+    assert client.result[3] == "error", client.result[3:5]
+    assert "API Error: 500 overloaded" in (client.result[4] or ""), client.result[3:5]
+    assert len(client.sent) == 2, client.sent
+
+
+def test_the_turn_cap_bounds_the_whole_run_not_one_step(tmp_path, monkeypatch):
+    """`num_turns` arrives per turn on a persistent session, so the SDK's own
+    `max_turns` stops one step only. The host checks the run's sum."""
+    _results(monkeypatch, num_turns=200)
+    client = _drive(
+        tmp_path, monkeypatch,
+        [("research-plan", OFFER), ("person-evidence", OFFER), (None, "Research complete.")],
+        step_mode="job",
+    )
+    assert len(client.sent) == 2, client.sent
+    assert client.result[3] == "max_turns", client.result[3:5]
 
 
 def test_the_host_replies_between_turns(tmp_path, monkeypatch):
@@ -144,6 +234,23 @@ def test_the_host_replies_between_turns(tmp_path, monkeypatch):
     )
     assert len(client.sent) >= 2, client.sent
     assert client.sent[1] == "Keep going.", client.sent
+
+
+def test_the_host_answers_a_turn_the_step_gate_halted(tmp_path, monkeypatch):
+    """clark-parents, 2026-11-02: two searches spawned in one message after a hints step.
+    The second halts, so the turn ends on "Now dispatching..." with no offer line, and
+    the run ended there with nothing searched. The halt named the offer; the host
+    answers that, as the prototype worker does."""
+    client = _drive(
+        tmp_path, monkeypatch,
+        [("research-plan", OFFER),
+         (["search-hints", "search-records", "search-records"], "Now dispatching both searches."),
+         (None, "done.")],
+        step_mode="job",
+    )
+    assert [r.get("continue_") for r in client.pretool_returns][-1] is False, \
+        "the second parallel spawn no longer halts, so this proves nothing"
+    assert len(client.sent) == 3, client.sent
 
 
 def test_each_turn_records_the_step_it_opened_with(tmp_path, monkeypatch):
@@ -223,9 +330,9 @@ def test_a_question_on_a_completed_project_is_not_answered(tmp_path, monkeypatch
     assert "Who were John's parents?" not in client.sent, client.sent
 
 
-def test_an_ordinary_run_still_opens_a_query_and_is_vetoed(tmp_path, monkeypatch):
-    """The other half of the inverted guard: a run WITHOUT step mode must keep
-    the veto. Inverting it drops the veto here, which no step-mode test can see."""
+def test_a_run_without_step_mode_opens_a_query_and_binds_no_stop_hook(tmp_path, monkeypatch):
+    """Only the single-ask runner calls `_run_agent` without a step mode now. It opens
+    a one-shot query, and no veto comes back with it."""
     monkeypatch.setattr(
         orchestrator, "resolve_auth",
         lambda: AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub"),
@@ -258,4 +365,5 @@ def test_an_ordinary_run_still_opens_a_query_and_is_vetoed(tmp_path, monkeypatch
     monkeypatch.setattr(orchestrator, "open_query", fake_query)
     asyncio.run(_run_agent(fixture=_fixture(tmp_path), workspace=tmp_path,
                            mcp_server_entry=Path("dummy")))
-    assert opened["options"].hooks.get("Stop"), "an ordinary run must still bind the Stop hook"
+    assert "PreToolUse" in opened["options"].hooks
+    assert "Stop" not in opened["options"].hooks, opened["options"].hooks

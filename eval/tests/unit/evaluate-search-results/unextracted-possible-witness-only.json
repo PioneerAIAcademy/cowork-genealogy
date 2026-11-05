@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_evaluate_search_results_w9t",
+    "skill": "evaluate-search-results",
+    "name": "An 1828 Jackson deed that names Iram Hyde only as a witness is a Possible Match with nothing new",
+    "type": "positive",
+    "description": "Edmond Oware's review of PR #4095: name, time and place agreeing, and nothing more, is a Possible Match. On g9gj-fulltext-hits-unextracted, log_022 holds one constructed hit (FTXT-JX28; see the scenario README): an 1828 deed between John Foster and Samuel Gould of the town of Jackson, Washington County, 'Signed Sealed and delivered in presence of Iram Hyde'. The name is legible and Jackson in 1828 fits Iram, but the hit names no relative of his and no occupation or age. Gold, confirmed by the genealogist (Ikennaya1) on 2026-11-02: Possible Match; no new vital information, because a witness line dates and places no birth, death or marriage and names no relative.",
+    "tags": [
+      "hit-verdict",
+      "expect-possible-match",
+      "no-new-vital",
+      "not-extracted",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Evaluate this full-text search hit against the tree person.\n\nprojectPath: <workspace>\nhitRef: results/log_022.json#FTXT-JX28\ntarget: I1",
+    "scenario": "g9gj-fulltext-hits-unextracted"
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm: the delegation is relayed verbatim to evaluate-search-results and no router is staged. project_context, sidecar_read, tree_query and research_append run live against the scenario.",
+    "Gold: Possible Match, no new vital information, not already extracted. The hit is an 1828 deed between John Foster and Samuel Gould of the town of Jackson, Washington County, New York, 'Signed Sealed and delivered in presence of Iram Hyde'. The name is legible and Jackson in 1828 fits Iram, who lived there; the hit names no relative of his and no occupation or age. Name, time and place agreeing, and nothing more, is a Possible Match: a Match needs a relative in the same relationship or a point independent of time and place.",
+    "Nothing is new: a witness line dates and places no birth, death or marriage, names no spouse, parent or child, and a residence is not a vital fact.",
+    "The verdict, the flag, the single hit_verdicts row, the one read of the hit, the tree_query call and the contract lines are checked by validators. Grade whether the rationale names the facts that decide them (what agrees, and that nothing beyond name, time and place ties the witness to Iram), and the plain summary after the `---`."
+  ]
+}

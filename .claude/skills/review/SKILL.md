@@ -223,7 +223,7 @@ unverified.
 
 ```sh
 cd packages/engine/mcp-server && npx vitest run            # engine
-cd packages/engine/mcp-server && npx tsc --noEmit -p tsconfig.json
+cd packages/engine/mcp-server && npm run typecheck         # src/, dev/ and tests/
 npx turbo test typecheck --force                           # web workspace
 cd eval/harness && uv run --frozen pytest -q               # harness
 cd apps/server && uv run pytest -q                         # control plane
@@ -231,7 +231,10 @@ cd apps/server && uv run pytest -q                         # control plane
 
 A fresh worktree has no compiled engine output, so `eval/harness`'s CLI tests
 fail there until `npm run build` has run in `packages/engine/mcp-server` —
-environmental, not a regression. The `post-checkout` hook links the rest.
+environmental, not a regression. The `post-checkout` hook links the rest,
+including the engine's `node_modules`, which is a symlink to the main
+checkout's. Never run `npm ci` in a worktree: it empties that directory for
+the main checkout and every worktree at once.
 
 **"Pre-existing failure" is not a finding and not an excuse.** A test that does
 not run is indistinguishable from a test that passes. Diagnose it to a cause —

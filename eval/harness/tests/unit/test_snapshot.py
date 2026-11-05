@@ -680,3 +680,40 @@ def test_build_snapshot_skill_with_no_same_named_agent_embeds_nothing_extra(tmp_
     repo = _skill_repo(tmp_path)
     snap = build_snapshot(skill="s1", repo_root=repo)
     assert not [k for k in snap if k.startswith("packages/engine/plugin/agents/")]
+
+
+# ---- tag-gated inputs (issue #4011) --------------------------------------
+
+
+def _tagged_repo(tmp_path: Path, tags: list[str]) -> Path:
+    (tmp_path / "packages/engine/plugin/skills/research").mkdir(parents=True)
+    (tmp_path / "packages/engine/plugin/skills/research/SKILL.md").write_text("# research\n", encoding="utf-8")
+    hook = tmp_path / "packages/engine/plugin/hooks/no_project_route.py"
+    hook.parent.mkdir(parents=True)
+    hook.write_text('SOURCES_NOTE = "one"\n', encoding="utf-8")
+    tests_dir = tmp_path / "eval/tests/unit/research"
+    tests_dir.mkdir(parents=True)
+    (tests_dir / "t.json").write_text(
+        json.dumps({"test": {"id": "ut_research_t", "tags": tags}, "input": {"user_message": "hi"}}),
+        encoding="utf-8",
+    )
+    return hook
+
+
+def test_a_tagged_suite_fingerprints_the_hook_it_grades(tmp_path: Path):
+    """The harnesses add `no_project_route.SOURCES_NOTE` to every message, and the
+    `names-collections-only-from-search` validators grade it, so a rewording must
+    stale that suite's log."""
+    hook = _tagged_repo(tmp_path, ["names-collections-only-from-search"])
+    rel = "packages/engine/plugin/hooks/no_project_route.py"
+    snap = build_snapshot(skill="research", repo_root=tmp_path)
+    assert rel in snap
+    hook.write_text('SOURCES_NOTE = "two"\n', encoding="utf-8")
+    assert rel in diff_snapshot_vs_disk(snap, tmp_path)
+
+
+def test_an_untagged_suite_does_not_fingerprint_the_hook(tmp_path: Path):
+    _tagged_repo(tmp_path, ["routing"])
+    assert "packages/engine/plugin/hooks/no_project_route.py" not in build_snapshot(
+        skill="research", repo_root=tmp_path
+    )

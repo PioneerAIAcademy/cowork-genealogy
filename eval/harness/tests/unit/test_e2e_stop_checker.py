@@ -7,15 +7,11 @@ import re
 from pathlib import Path
 
 from e2e.stop_checker import (
-    COUNTED_TERMINAL_REASONS,
     classify_hand_back,
-    hand_back_key,
-    terminal_reason,
     derive_stop_reason,
     project_completed,
     read_research_json,
     read_tree_json,
-    should_continue_run,
 )
 
 
@@ -202,82 +198,6 @@ def test_derive_stop_reason_natural_end_when_no_abort_and_incomplete():
     )
 
 
-# --- should_continue_run (continue-nudge decision) -------------------
-
-_INCOMPLETE = {"project": {"status": "in_progress"}}
-_DONE = {"project": {"status": "completed"}}
-
-
-def test_should_continue_blocks_when_unfinished_and_progressing():
-    """Unfinished project, budget left, and tool calls made since the last
-    nudge → veto the stop and nudge onward."""
-    assert should_continue_run(
-        research=_INCOMPLETE, nudges_used=1, max_nudges=5,
-        tool_count=12, tool_count_at_last_nudge=8,
-    ) is True
-
-
-def test_should_continue_allows_when_completed():
-    assert should_continue_run(
-        research=_DONE, nudges_used=0, max_nudges=5,
-        tool_count=20, tool_count_at_last_nudge=-1,
-    ) is False
-
-
-def test_should_continue_allows_when_nudge_budget_spent():
-    assert should_continue_run(
-        research=_INCOMPLETE, nudges_used=5, max_nudges=5,
-        tool_count=30, tool_count_at_last_nudge=10,
-    ) is False
-
-
-def test_should_continue_allows_when_no_progress_since_last_nudge():
-    """A prior nudge produced no tool call → another won't help; let the run
-    end and fail rather than nudge a stuck agent forever."""
-    assert should_continue_run(
-        research=_INCOMPLETE, nudges_used=2, max_nudges=5,
-        tool_count=15, tool_count_at_last_nudge=15,
-    ) is False
-
-
-def test_should_continue_blocks_first_nudge_even_with_equal_counts():
-    """The no-progress guard only applies after the first nudge — the very
-    first voluntary yield is always eligible."""
-    assert should_continue_run(
-        research=_INCOMPLETE, nudges_used=0, max_nudges=5,
-        tool_count=5, tool_count_at_last_nudge=-1,
-    ) is True
-
-
-def test_should_continue_allows_when_mcp_unavailable():
-    """#941 ask (3). Every other input says "nudge it onward" — unfinished
-    project, full budget, progress since the last nudge — and the absent MCP
-    surface still wins: there is nothing to resume into."""
-    assert should_continue_run(
-        research=_INCOMPLETE, nudges_used=1, max_nudges=5,
-        tool_count=12, tool_count_at_last_nudge=8,
-        mcp_unavailable=True,
-    ) is False
-
-
-def test_should_continue_allows_when_there_is_no_research_json():
-    """#3274. Every other input says "nudge it onward" — budget left, progress since the
-    last nudge — and a missing or unreadable research.json still wins: there is no
-    project to resume, and the nudge tells the agent to re-read it."""
-    assert should_continue_run(
-        research=None, nudges_used=1, max_nudges=5,
-        tool_count=12, tool_count_at_last_nudge=8,
-    ) is False
-
-
-def test_mcp_unavailable_defaults_false_so_existing_callers_are_unchanged():
-    """The flag is opt-in: the same inputs that vetoed a stop before still do."""
-    assert should_continue_run(
-        research=_INCOMPLETE, nudges_used=1, max_nudges=5,
-        tool_count=12, tool_count_at_last_nudge=8,
-    ) is True
-
-
 # --- hand-back classification (#2328) ----------------------------------------
 
 
@@ -307,59 +227,10 @@ def test_classify_hand_back_rejects_free_prose_that_merely_names_a_step():
 
 
 def test_classify_hand_back_takes_no_research_argument():
-    """Form only: whether a completion claim is true is hand_back_key's question."""
+    """Form only: whether a completion claim is true is the caller's question."""
     import inspect
 
     assert list(inspect.signature(classify_hand_back).parameters) == ["text"]
-
-
-def test_a_truthful_completion_is_not_a_false_completion():
-    """The defect is claiming done while the project is NOT completed. 134 of the 181
-    committed run logs stop on `completed`; counting those would make the rate
-    dominated by runs that did exactly the right thing."""
-    assert hand_back_key("completion_claim", project_is_completed=True) == "terminal_completed"
-    assert hand_back_key("completion_claim", project_is_completed=False) == "false_completion"
-
-
-def test_hand_back_key_is_a_counter_key_and_nothing_else():
-    """No class carries a reply any more: the hook answers every vetoed stop with one
-    fixed text (U17), once the worker's CONTINUE_REASON. A tuple coming back here is the
-    old "Yes." branch."""
-    assert hand_back_key("step", project_is_completed=False) == "step"
-    assert hand_back_key("silent", project_is_completed=False) == "silent"
-
-
-def test_terminal_reason_mirrors_should_continue_run_precedence():
-    """should_continue_run returns a bare bool for five reasons and only two are
-    defects. These must agree on order or the counts attribute the wrong cause."""
-    done = {"project": {"status": "completed"}}
-    assert terminal_reason(research=done, nudges_used=0, max_nudges=40, mcp_unavailable=False) == "completed"
-    # mcp_unavailable outranks everything, exactly as should_continue_run has it
-    assert terminal_reason(research=done, nudges_used=0, max_nudges=40, mcp_unavailable=True) == "mcp_unavailable"
-    # An unfinished project, so the budget and the no-progress fall-through are what is
-    # being told apart. With no research.json neither is reachable (below).
-    assert terminal_reason(research=_INCOMPLETE, nudges_used=40, max_nudges=40, mcp_unavailable=False) == "budget"
-    assert terminal_reason(research=_INCOMPLETE, nudges_used=1, max_nudges=40, mcp_unavailable=False) == "no_progress"
-    # No research.json (#3274): `ok`, and ahead of the budget, which is spent here.
-    assert terminal_reason(research=None, nudges_used=40, max_nudges=40, mcp_unavailable=False) == "ok"
-
-    # and only the two defect reasons are counted
-    assert COUNTED_TERMINAL_REASONS == {"budget", "no_progress"}
-    assert "completed" not in COUNTED_TERMINAL_REASONS
-    assert "mcp_unavailable" not in COUNTED_TERMINAL_REASONS
-
-
-def test_project_completed_still_short_circuits_should_continue_run():
-    """The card notes the completion-claim-while-completed path was unreachable because
-    this gate fires first. Classification now happens ABOVE the gate, so it IS
-    reachable — which is exactly why hand_back_key must not call it a defect."""
-    assert should_continue_run(
-        research={"project": {"status": "completed"}},
-        nudges_used=0,
-        max_nudges=40,
-        tool_count=5,
-        tool_count_at_last_nudge=0,
-    ) is False
 
 
 SKILLS = Path(__file__).resolve().parents[4] / "packages/engine/plugin/skills"

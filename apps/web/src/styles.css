@@ -267,17 +267,6 @@ button {
   min-width: 280px;
   flex-wrap: wrap;
 }
-.newSessionField {
-  display: flex;
-  flex-direction: column;
-}
-.newSessionField:not(.newSessionFieldGrow) {
-  width: 220px;
-}
-.newSessionFieldGrow {
-  flex: 1;
-  min-width: 240px;
-}
 .newSessionActions {
   display: flex;
   gap: 10px;

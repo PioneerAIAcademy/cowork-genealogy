@@ -127,6 +127,7 @@ SECTION_ID_PREFIX = {
     "localities": "loc_",
     "namesakes": "ns_",
     "rejected_links": "rj_",
+    "hit_verdicts": "hv_",
 }
 
 _ID_RE = re.compile(r'"(?:entryId|logId)"\s*:\s*"([^"]+)"')

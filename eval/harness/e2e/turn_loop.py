@@ -1,7 +1,7 @@
 """One session, many turns: the e2e harness answering its own step boundaries.
 
 Section F. Until step mode the e2e harness ran a fixture as ONE `process_query`
-call kept alive by the Stop hook's nudges. Under step mode a turn runs one step
+call kept alive by the Stop hook's nudges (deleted in step mode phase 2). Under step mode a turn runs one step
 and ends, so a one-shot query would stop after the first step and the run would
 look finished. This drives turn after turn on one `ClaudeSDKClient` session,
 sending the reply production's host would send.
@@ -48,6 +48,10 @@ class Turn:
     #: The step this turn ran, as the caller's step gate saw it. None when the
     #: turn spawned nothing.
     step: str | None = None
+    #: The step the caller's step gate offered when it HALTED this turn, or None.
+    #: A halt ends the turn before the model writes its offer line, so the host
+    #: answers this instead -- as the prototype worker does.
+    halt_offer: str | None = None
     #: The mode the turn RAN under (`step` / `job` / `wrapup`). A wrap-up turn
     #: runs several steps, so the per-step report must keep it out of the step it
     #: opened with -- as `proto/steps.py` does on the prototype side.

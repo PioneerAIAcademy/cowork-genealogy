@@ -114,12 +114,11 @@ async def test_each_turn_reports_its_own_cost_not_the_session_total(tmp_path, mo
         if len(posted) == 2:
             done.set()
 
-    monkeypatch.setenv("MODEL", "claude-sonnet-4-6")
     monkeypatch.setattr(real_agent, "_turn_cost_url", lambda: "https://wb/api/turn-cost")
     monkeypatch.setattr(real_agent, "_post_turn_cost", capture)
     monkeypatch.setattr(real_agent, "_sandbox_build", lambda: "abc123+dirty")
     agent = real_agent.RealAgent(tmp_path)
-    agent._hook_counter = counter = {"delivered": False, "continuations": 0}
+    agent._hook_counter = counter = {"continuations": 0}
 
     def two_overridden_stops():
         counter["continuations"] += 2
@@ -135,7 +134,8 @@ async def test_each_turn_reports_its_own_cost_not_the_session_total(tmp_path, mo
         [ev async for ev in agent.handle_turn("go")]
     await asyncio.to_thread(done.wait, 5)
 
-    assert [p["model"] for _, p in posted] == ["claude-sonnet-4-6"] * 2
+    main_model = real_agent.load_main_thread(real_agent._PLUGIN_DIR).model
+    assert [p["model"] for _, p in posted] == [main_model] * 2
     assert [p["cost_usd"] for _, p in posted] == pytest.approx([0.30, 0.20])
     assert [(p["input_tokens"], p["output_tokens"]) for _, p in posted] == [(1000, 100), (600, 150)]
     assert [p["build"] for _, p in posted] == ["abc123+dirty"] * 2

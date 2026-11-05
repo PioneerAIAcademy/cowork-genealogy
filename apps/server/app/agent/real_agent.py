@@ -46,11 +46,9 @@ from pathlib import Path
 from .build_info import BUILD_INFO_PATH, build_label
 from .continue_policy import (
     DELEGATION_TOOLS,
-    DELIVERED_REASON,  # noqa: F401 - tests read it off this module
-    DELIVERED_TOOL,
-    delivered_stop_reason,
     foreground_rewrite,
-    DELIVERY_GUIDANCE,
+    NO_PROJECT_NOTE,
+    SOURCES_GUIDANCE,
     HOSTED_PLANE_ENV,
     completion_halt_summary,
     status_before_call,
@@ -58,6 +56,7 @@ from .continue_policy import (
     wants_status_before,
 )
 from .errors import UNEXPECTED, classify, log_operator
+from .main_thread import EFFORT_LEVELS, load_main_thread  # noqa: F401 - EFFORT_LEVELS re-exported
 from .mcp_health import (
     GENEALOGY_TOOL_PREFIX,
     classify_server_status,
@@ -421,111 +420,18 @@ def credential_read_denied(tool_name: str, tool_input) -> str | None:
     return None
 
 
-# ── Reasoning effort (T4.1) ─────────────────────────────────────────────────
-# Three operator settings, all unset by default, reach a sandbox at create() only
-# (`sandbox.base.agent_effort_env`): ORCHESTRATOR_EFFORT is the session's `--effort`;
-# SUBAGENT_EFFORT and SUBAGENT_EFFORT_BY_AGENT (JSON {agent: level}) are written into
-# each Agent/Task call's `effort` by `_pretool_hook`. The per-spawn field exists from
-# CLI 2.1.294; it outranks the agent definition's `effort:` and stops the CLI's
-# flag-driven lowering of an unpinned subagent, so setting the orchestrator alone
-# also pins every helper to HELPER_DEFAULT_EFFORT and only the main thread moves.
-# Read on every call, never cached, so a probe or test that sets the variable after
-# import is honoured. `CLAUDE_CODE_EFFORT_LEVEL` is deliberately not the channel: it
-# outranks every pin and removes `effort` from the Agent tool's schema.
-EFFORT_ENV = ("ORCHESTRATOR_EFFORT", "SUBAGENT_EFFORT", "SUBAGENT_EFFORT_BY_AGENT")
-try:
-    from typing import get_args as _get_args
-
-    from claude_agent_sdk import EffortLevel as _EffortLevel
-    EFFORT_LEVELS: tuple[str, ...] = tuple(_get_args(_EffortLevel))
-except Exception:  # noqa: BLE001 - mock mode runs without the SDK installed
-    EFFORT_LEVELS = ("low", "medium", "high", "xhigh", "max")
-#: What a helper ran at on 2.1.294 with nothing set (`dev/probe_effort_capture.py`, arm
-#: `a-none`, 2026-10-20: `high`). Pinning to it keeps an orchestrator-only arm changing one
-#: thing. Re-measure when the CLI moves: 2.1.294 can lower an unpinned helper by remote flag.
-HELPER_DEFAULT_EFFORT = "high"
-
-
-def _plugin_name() -> str:
-    """The plugin's `name`, which prefixes its namespaced agents
-    (`genealogy-research:person-evidence`). Read from the shipped manifest so a rename
-    cannot silently stop every namespaced spawn matching its pin."""
-    try:
-        doc = json.loads((Path(_PLUGIN_DIR) / ".claude-plugin" / "plugin.json")
-                         .read_text(encoding="utf-8"))
-        name = doc.get("name") if isinstance(doc, dict) else None
-        if isinstance(name, str) and name:
-            return name
-    except (OSError, ValueError):
-        pass
-    return "genealogy-research"
-
-
-PLUGIN_NAME = _plugin_name()
-_effort_warned: set[str] = set()
-
-
-def _warn_once(msg: str) -> None:
-    if msg not in _effort_warned:
-        _effort_warned.add(msg)
-        _log(msg)
-
-
-def _effort_settings(env=None) -> tuple[str | None, str | None, dict[str, str]]:
-    """(orchestrator, every-subagent, per-agent) levels from the environment. An invalid
-    level is dropped with one log line rather than raised: a raising runner kills the
-    session, and the control plane's `Settings` already refuses a bad value at start-up."""
-    env = os.environ if env is None else env
-
-    def level(name: str, raw) -> str | None:
-        if raw in (None, ""):
-            return None
-        if raw in EFFORT_LEVELS:
-            return raw
-        _warn_once(f"[agent] {name}={raw!r} is not one of {list(EFFORT_LEVELS)}; ignoring it")
-        return None
-
-    orchestrator = level("ORCHESTRATOR_EFFORT", env.get("ORCHESTRATOR_EFFORT"))
-    subagent = level("SUBAGENT_EFFORT", env.get("SUBAGENT_EFFORT"))
-    by_agent: dict[str, str] = {}
-    raw_map = env.get("SUBAGENT_EFFORT_BY_AGENT")
-    if raw_map:
-        try:
-            parsed = json.loads(raw_map)
-        except ValueError:
-            parsed = None
-        if not isinstance(parsed, dict):
-            _warn_once("[agent] SUBAGENT_EFFORT_BY_AGENT is not a JSON object; ignoring it")
-            parsed = {}
-        for agent_name, lvl in parsed.items():
-            ok = level(f"SUBAGENT_EFFORT_BY_AGENT[{agent_name}]", lvl)
-            if ok is not None:
-                by_agent[str(agent_name)] = ok
-    return orchestrator, subagent, by_agent
-
-
-def spawn_effort(tool_name: str, tool_input, env=None) -> str | None:
-    """The `effort` the hook writes into this delegation, or None to leave it alone."""
-    if tool_name not in DELEGATION_TOOLS:
-        return None
-    orchestrator, subagent, by_agent = _effort_settings(env)
-    agent = (tool_input or {}).get("subagent_type") if isinstance(tool_input, dict) else None
-    agent = agent if isinstance(agent, str) else ""
-    bare = agent.removeprefix(f"{PLUGIN_NAME}:")
-    if bare in by_agent:
-        return by_agent[bare]
-    if subagent is not None:
-        return subagent
-    if orchestrator is not None:
-        return HELPER_DEFAULT_EFFORT
-    return None
+# ── Reasoning effort ────────────────────────────────────────────────────────
+# The main thread's model and effort come from the plugin's main-thread.json
+# (`main_thread.load_main_thread`); each agent's from its own frontmatter, which the
+# CLI applies and which outranks the session's `--effort`. `CLAUDE_CODE_EFFORT_LEVEL`
+# outranks both and removes `effort` from the Agent tool's schema, so it must stay unset.
 
 
 def note_effort(counter: dict, data) -> None:
-    """Record, for this turn, the effort level each thread ran a tool call at, and
-    whether a delegation's `effort` was injected by the operator setting or chosen by
-    the model. The level is the CLI's own, from the hook input (2.1.294: "after any
-    silent downgrade for the selected model"), so this is what ran, not what was asked."""
+    """Record, for this turn, the effort level each thread ran a tool call at, and how
+    many delegations carried an `effort` the model chose, which outranks the agent's
+    own. The level is the CLI's own, from the hook input (2.1.294: "after any silent
+    downgrade for the selected model"), so this is what ran, not what was asked."""
     if not isinstance(data, dict):
         return
     effort = data.get("effort")
@@ -538,9 +444,7 @@ def note_effort(counter: dict, data) -> None:
     tool = data.get("tool_name")
     if tool in DELEGATION_TOOLS:
         tool_input = data.get("tool_input")
-        if spawn_effort(tool, tool_input) is not None:
-            counter["effort_injected"] = counter.get("effort_injected", 0) + 1
-        elif isinstance(tool_input, dict) and tool_input.get("effort") is not None:
+        if isinstance(tool_input, dict) and tool_input.get("effort") is not None:
             counter["effort_model_chosen"] = counter.get("effort_model_chosen", 0) + 1
 
 
@@ -550,14 +454,13 @@ def effort_turn_summary(counter: dict | None) -> str | None:
     if not counter:
         return None
     seen = counter.get("effort_seen") or {}
-    injected = counter.get("effort_injected", 0)
     chosen = counter.get("effort_model_chosen", 0)
-    if not seen and not injected and not chosen:
+    if not seen and not chosen:
         return None
     labels = sorted(seen, key=lambda k: (k != "main", k))
     levels = " ".join(f"{k}={'/'.join(seen[k])}" for k in labels)
     return (f"[agent] effort this turn: {levels or '(none seen)'} "
-            f"(spawns with effort: {injected} injected, {chosen} model-chosen)")
+            f"(spawns with a model-chosen effort: {chosen})")
 
 
 async def _pretool_hook(input_data, _tool_use_id, _ctx):
@@ -631,8 +534,8 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
         }
 
     # Run every delegation in the FOREGROUND. Not a deny: the call is allowed and
-    # its input rewritten -- with the effort arm below, one of the two arms here that
-    # change a call rather than refusing it. Without it the turn ends while its own
+    # its input rewritten -- the one arm here that changes a call rather than
+    # refusing it. Without it the turn ends while its own
     # background subagent is still running (decision 26; see DELEGATION_TOOLS). Every
     # call not explicitly False is rewritten; `foreground_rewrite` says why.
     # Shared with the prototype: one predicate, one rewrite, so a mutation in either
@@ -642,26 +545,6 @@ async def _pretool_hook(input_data, _tool_use_id, _ctx):
     rewritten = foreground_rewrite(tool_name, tool_input)
     if rewritten is not None:
         _log(f"[agent] foregrounded {tool_name} delegation")
-
-    # T4.1: the operator's effort for this delegation, composed onto the foreground
-    # rewrite (which stays the prototype's shared one, unedited). An explicit
-    # `run_in_background: False` gets no foreground rewrite, so this arm builds its own
-    # allow there -- the one shape where alpha and prototype differ, by design. Unset
-    # settings leave the call exactly as above, including an `effort` the model chose.
-    level = spawn_effort(tool_name, tool_input)
-    if level is not None:
-        base = rewritten["hookSpecificOutput"]["updatedInput"] if rewritten else dict(tool_input)
-        chosen = base.get("effort")
-        _log(f"[agent] effort {level} on {tool_name} {base.get('subagent_type')!s}"
-             + (f" (model chose {chosen!r})" if chosen is not None else ""))
-        return {
-            "hookSpecificOutput": {
-                "hookEventName": "PreToolUse",
-                "permissionDecision": "allow",
-                "updatedInput": {**base, "effort": level},
-            },
-        }
-    if rewritten is not None:
         return rewritten
 
     return {}
@@ -776,7 +659,7 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     The counter lives here rather than on a module global, so two sandboxes in one
     process cannot read each other's state."""
     counter = {
-        "turn_tool_calls": 0, "delivered": False, "continuations": 0,
+        "turn_tool_calls": 0, "continuations": 0,
         # The completion halt (#3542 lead 1): the status just before each main-thread
         # proof-conclusion call, by tool_use_id, and the summary to show.
         "status_before": {},
@@ -810,26 +693,12 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
             note_effort(counter, data)
         except Exception as exc:  # noqa: BLE001 - a raising hook fails the tool call
             _log(f"[agent] effort note failed: {type(exc).__name__}: {exc}")
-        # Both arms below are gated on the MAIN thread -- membership, not truthiness: the
-        # key is absent on the main thread, and a subagent whose `agent_id` is None or ""
-        # is still a subagent. Delivered: a subagent calling it means only its own leg is
-        # done. Pending message (#3376): halting a subagent mid-task strands the
-        # orchestrator, which takes its last in-progress note as the final report and
+        # The arm below is gated on the MAIN thread -- membership, not truthiness: the key
+        # is absent on the main thread, and a subagent whose `agent_id` is None or "" is
+        # still a subagent. Pending message (#3376): halting a subagent mid-task strands
+        # the orchestrator, which takes its last in-progress note as the final report and
         # re-does the work in a fresh subagent.
         main_thread = "agent_id" not in data
-        # A bounded request was met and the model is stopping on purpose (#2813 item 1).
-        if data.get("tool_name") == DELIVERED_TOOL and main_thread:
-            counter["delivered"] = True
-            _log("[agent] delivered — allowing the stop")
-            # Prepend the model's own one-sentence summary, as the prototype does
-            # (`options.py`). It is the whole reason the tool takes a `summary`:
-            # without it the researcher is told a delivery happened but not what
-            # was delivered, and the two planes claim a parity they do not have.
-            delivered_input = data.get("tool_input") or {}
-            return {
-                "continue": False,
-                "stopReason": delivered_stop_reason(delivered_input.get("summary")),
-            }
         # The researcher typed mid-turn. Main-thread only (#3376): a subagent runs to the
         # end of its task and the message is taken at the orchestrator's next tool call.
         # The count guard is the prototype's one-call rule (worker.py, handover_clause):
@@ -925,15 +794,17 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         "researcher_profile.narration_guidance from research.json as your "
         "narration style."
     )
+    main = load_main_thread(_PLUGIN_DIR)
     kwargs = dict(
         cwd=str(project_dir),
         add_dirs=[str(project_dir)],
-        model=os.environ.get("MODEL") or None,
+        model=main.model,
+        effort=main.effort,
         permission_mode="bypassPermissions",  # operator-controlled, headless
         system_prompt={
             "type": "preset",
             "preset": "claude_code",
-            "append": f"{project_note}\n\n{DELIVERY_GUIDANCE}",
+            "append": f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{NO_PROJECT_NOTE}",
         },
         # "project" only — the same source both eval harnesses load
         # (workspace.py, e2e/orchestrator.py) and what registers the agents
@@ -981,19 +852,7 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         # orchestrator either way.
         env=_sdk_env(api_key),
     )
-    # T4.1: the session effort, only when the operator set one; unset passes no
-    # `--effort` and the CLI keeps its own default, as before this setting existed.
-    orchestrator, subagent, by_agent = _effort_settings()
-    if orchestrator is not None:
-        kwargs["effort"] = orchestrator
-    _log(f"[agent] effort requested: orchestrator={orchestrator or 'cli-default'} "
-         f"subagents={subagent or ('pinned ' + HELPER_DEFAULT_EFFORT if orchestrator else 'unset')} "
-         f"by_agent={json.dumps(by_agent, sort_keys=True)}")
-    if by_agent:
-        known = {p.stem for p in (Path(project_dir) / ".claude" / "agents").glob("*.md")}
-        unknown = sorted(set(by_agent) - known)
-        if unknown:
-            _log(f"[agent] SUBAGENT_EFFORT_BY_AGENT names no agent: {', '.join(unknown)}")
+    _log(f"[agent] main thread: {main.model} at effort {main.effort}; agents use their own")
     if os.environ.get("CLAUDE_CODE_EFFORT_LEVEL"):
         _log("[agent] CLAUDE_CODE_EFFORT_LEVEL is set in this environment: it outranks every "
              "effort setting and removes `effort` from the Agent tool, so per-agent levels "
@@ -1525,27 +1384,18 @@ class RealAgent:
     def _begin_turn_hook_state(self) -> None:
         """Clear the per-TURN half of the hook counter. Called at the turn boundary.
 
-        `delivered` means "THIS turn delivered what was asked". The hooks dict is
-        built once per SESSION, because the SDK client is cached (`if self._client
-        is None`), so without this the flag set by one bounded turn authorises a
-        voluntary stop in every later turn -- the next research job ends after a
-        single sub-skill, with no error and nothing in the log.
-
-        A method rather than three inline lines so it can be driven by a test. The
-        first cut cleared on the next tool call instead, and was wrong twice: a turn
-        that yields without calling any tool never cleared it, and the clearing was
-        not main-thread gated, so a straggler subagent call could clear a
-        main-thread delivery. `continuations` is the cost report's count of overridden
+        The hooks dict is built once per SESSION, because the SDK client is cached
+        (`if self._client is None`), so per-turn state must be cleared here. A method
+        rather than inline lines so it can be driven by a test. `continuations` is the
+        cost report's count of overridden
         stops, always 0 since the Stop hook was deleted (step mode phase 2). `turn_tool_calls`
         is the pending-message halt's one-call guard.
         """
         counter = getattr(self, "_hook_counter", None)
         if counter is not None:
             counter["turn_tool_calls"] = 0
-            counter["delivered"] = False
             counter["continuations"] = 0
             counter["effort_seen"] = {}
-            counter["effort_injected"] = 0
             counter["effort_model_chosen"] = 0
             # The completion halt's per-turn state: the summary to show, and the statuses
             # read before this turn's proof-conclusion calls.
@@ -1798,7 +1648,7 @@ class RealAgent:
                         asyncio.get_running_loop().run_in_executor(
                             None, _post_turn_cost, url, current_api_key(), {
                                 "cost_usd": d_cost,
-                                "model": os.environ.get("MODEL") or None,
+                                "model": load_main_thread(_PLUGIN_DIR).model,
                                 "input_tokens": d_in,
                                 "output_tokens": d_out,
                                 "build": _sandbox_build(),

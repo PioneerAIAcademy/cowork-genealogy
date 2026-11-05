@@ -64,12 +64,9 @@ entry's canned text. On a test that sets `execution.stop_at_stub`, such as
 `ut_research_015` below, a spawn of any stubbed name is denied too and ends the
 run.
 
-A test tagged `relays-agent-tail` also asserts that the router's reply carries,
-verbatim, everything after the final `---` of its `routes-to:` callee's canned
-response (`test_relays_the_agents_tail_verbatim`, issue #3862). The expected text
-is read from the test's own `stub_skills` entry, not from the agent return the
-harness recorded, which wraps it in scaffolding the router must not print.
-`ut_research_zfp` carries it.
+`ut_research_zfp` grades the router's relay of search-hints' summary on meaning,
+through the judge: rewording and added text pass (lead, 2026-11-03, on PR #4148,
+which retired the word-for-word `relays-agent-tail` check of issue #3862).
 
 Every agent spawn in this suite is denied, listed or not, unless the test names
 the agent in `execution.run_agents`. That is how the negative tests whose
@@ -90,8 +87,11 @@ extension gives. `ut_research_hnp` and `ut_research_hsp` instead serve it from
 with one project. They are the hosted pairs of `ut_research_tsi` and
 `ut_research_011`. `uses-new-project-path` and `uses-listed-project` gate the
 validators that read which `projectPath` the router took from that answer. The
-mock serves every project tool from the test's one workspace, whatever path is
-passed, so each test's scenario is the project its route should open.
+mock serves every project tool from the test's one workspace, so each test's
+scenario is the project its route should open. In these two tests it behaves as
+a hosted store does (`mock_mcp._hosted_store`): a `projectPath` the listing does
+not name is refused, and `project_context` at a listed project carries its
+`projectUrl`.
 
 ## Reads project state first (issue #3766)
 
@@ -268,15 +268,23 @@ deliver one answer and stop on those. Its message carries the leading `/research
 once PR #3146 made `skills_invoked` record a slash-command entry at index 0, so this
 is the e2e entry form exactly.
 
-**What they do NOT cover, and cannot:** that a bounded turn ends with the
-`delivered` OUTCOME. `research_delivered` IS in this harness's `LIVE_TOOLS` now, so the
-CALL is observable and `test_a_bounded_turn_ends_with_the_delivery_signal` grades it
-(gated on the `ends-with-delivery` tag). What stays unobservable is the effect: no hook
-binds here, so nothing halts the turn and the outcome is whatever the run would otherwise
-have been. Both hosted planes now halt on the signal — the prototype
-via its own `PreToolUse` arm plus `DELIVERY_GUIDANCE`, the alpha via `count_only` and
-`should_continue_run(delivered=...)` — and that half is covered by
-`apps/server/tests/test_alpha_stop_hook.py`, not here.
+## Search-hit review (issue #3522)
+
+All three run on `g9gj-fulltext-hits-unextracted`, where no full-text hit is
+extracted yet. `ut_research_hv3` (`review-search-hits.json`, hits 2, 4 and 7 of
+`log_008`) and `ut_research_hva` (`review-all-search-hits.json`, all eleven hits
+of `log_017`) stub `evaluate-search-results` with one canned Match and no
+`hitRef` line, so the offered count is the spawn count. Both carry
+`reviews-search-hits` plus a data tag, `reviews-hits:<log_id>:<hit numbers|all>`;
+`test_search_hit_review_spawns_one_agent_per_hit` reads the scenario's own
+sidecar and asserts one spawn per requested hit, a tree-person `target`, and a
+last line `step_boundary.offered_step` reads as `extract-matches` with that count.
+`ut_research_hvy` (`extract-reviewed-match.json`) is the yes-path in the "You
+offered … Continue." shape, `stop_at_stub` on `record-structurer`; its
+`extracts-reviewed-matches` and `extracts-hit:<hitRef>` tags gate
+`test_search_hit_review_yes_extracts_the_matches`, which asserts one spawn whose
+single source carries the hit's id and the ref verbatim. The width of five spawns
+per message is not checked: no run record says which message a spawn came from.
 
 ## Moved negatives (issue #2268)
 

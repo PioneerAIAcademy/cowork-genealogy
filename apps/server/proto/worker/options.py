@@ -29,8 +29,9 @@ D9-10, D15), not the hosted one in ``app.agent.real_agent.build_options``:
 - the SDK session id is the worker's choice: ``session_id=`` on a fresh session,
   ``resume=`` when the store holds entries -- exactly one, never both (the SDK's own
   rule without ``fork_session``).
-- the model is pinned per ``MODEL_PROVIDER``, which has no default (``model_provider``):
-  ``anthropic`` is ``claude-sonnet-4-6`` on ``ANTHROPIC_API_KEY``; ``gateway`` points the
+- the main thread's model and effort come from the plugin's ``main-thread.json``; the
+  provider is pinned per ``MODEL_PROVIDER``, which has no default (``model_provider``):
+  ``anthropic`` sends that model on ``ANTHROPIC_API_KEY``; ``gateway`` points the
   CLI at an Anthropic-Messages gateway (``GATEWAY_BASE_URL``, ``GATEWAY_API_KEY``) and sends Bedrock ids for the main thread, the small model and
   every agent (``gateway_agent_models``, and ``gateway_plugin_copy`` for the plugin's own
   namespaced registration of them), since a gateway passes unmapped ids through.
@@ -61,18 +62,15 @@ from typing import Any
 
 from app.agent.continue_policy import (
     DELEGATION_TOOLS,
-    DELIVERED_REASON,  # noqa: F401 - tests read it off this module
-    delivered_stop_reason,
     foreground_rewrite,
-    DELIVERY_GUIDANCE,
+    NO_PROJECT_NOTE,
+    SOURCES_GUIDANCE,
     HOSTED_PLANE_ENV,
-    DELIVERED_TOOL,
     env_float,
     env_int,
     TERMINAL_BUDGET,
     TERMINAL_COMPLETED,
     TERMINAL_DECISION,
-    TERMINAL_DELIVERED,
     TERMINAL_MCP_UNAVAILABLE,
     TERMINAL_QUEUED,
     TERMINAL_STOPPED,
@@ -81,6 +79,7 @@ from app.agent.continue_policy import (
     status_before_call,
     wants_status_before,
 )
+from app.agent.main_thread import MainThread, load_main_thread
 from app.agent.spend import PRICE_PER_MTOK, SPEND_CAP_USD
 from app.agent.spend import price_usd as shared_price_usd
 from app.agent.real_agent import direct_project_file_write
@@ -91,10 +90,11 @@ from proto.worker.writer_record import writer_record
 # DesignSync/Monitor/PushNotification: the CLI adds them only for a non-Bedrock base URL
 # (plan P3g), ~5k tokens per call with tool search off, and none is reachable here.
 DISALLOWED_TOOLS = ["Bash", "WebFetch", "WebSearch", "NotebookEdit", "DesignSync", "Monitor", "PushNotification"]
-ANTHROPIC_MODEL = "claude-sonnet-4-6"
-# [1m]: the CLI strips it, sends context-1m-2025-08-07 and sizes its window (and so its
-# compaction) at 1M; without it a gateway session gets 200k (plan P3j).
-GATEWAY_MODEL = "us.anthropic.claude-sonnet-4-6[1m]"
+# The main thread's model and effort come from the plugin's main-thread.json
+# (`app.agent.main_thread`). A gateway gets its Bedrock id from GATEWAY_AGENT_MODELS plus
+# [1m]: the CLI strips that suffix, sends context-1m-2025-08-07 and sizes its window (and
+# so its compaction) at 1M; without it a gateway session gets 200k (plan P3j).
+GATEWAY_MAIN_SUFFIX = "[1m]"
 GATEWAY_SMALL_MODEL = "us.anthropic.claude-haiku-4-5-20251001-v1:0"
 # Bare ids the plugin's agents declare -> the Bedrock ids a gateway must receive. The
 # CLI sends an agent's model verbatim, and a gateway without a matching alias answers
@@ -268,19 +268,22 @@ def model_provider(worker_env: Mapping[str, str]) -> str:
     return provider
 
 
-def provider_env(worker_env: Mapping[str, str]) -> tuple[str | None, dict[str, str]]:
+def provider_env(worker_env: Mapping[str, str], main: MainThread) -> tuple[str | None, dict[str, str]]:
     """``(model, env)`` for ``MODEL_PROVIDER``: the CLI ``--model`` and the variables
-    that pin the provider. The gateway's model travels as ``ANTHROPIC_MODEL`` (the ``[1m]``
-    suffix is read off that string), so ``model`` is None there."""
+    that pin the provider, for the main thread's model ``main.model``. The gateway's model
+    travels as ``ANTHROPIC_MODEL`` (the ``[1m]`` suffix is read off that string), so
+    ``model`` is None there; a model the gateway has no Bedrock id for raises."""
     if model_provider(worker_env) == "anthropic":
-        return ANTHROPIC_MODEL, {"ANTHROPIC_API_KEY": worker_env.get("ANTHROPIC_API_KEY", "")}
+        return main.model, {"ANTHROPIC_API_KEY": worker_env.get("ANTHROPIC_API_KEY", "")}
+    if main.model not in GATEWAY_AGENT_MODELS:
+        raise ValueError(f"main-thread.json model {main.model!r} has no Bedrock id in GATEWAY_AGENT_MODELS")
     return None, {
         "ANTHROPIC_BASE_URL": worker_env["GATEWAY_BASE_URL"].strip(),
         "ANTHROPIC_AUTH_TOKEN": worker_env.get("GATEWAY_API_KEY", ""),
         # Blank, not absent: the CLI inherits the worker's environment, and an
         # inherited Anthropic key rides to the gateway as x-api-key beside the bearer.
         "ANTHROPIC_API_KEY": "",
-        "ANTHROPIC_MODEL": GATEWAY_MODEL,
+        "ANTHROPIC_MODEL": GATEWAY_AGENT_MODELS[main.model] + GATEWAY_MAIN_SUFFIX,
         "ANTHROPIC_DEFAULT_HAIKU_MODEL": GATEWAY_SMALL_MODEL,
         # On by default (Richard, 2026-10-31): TAP's EKS gateway runs agentgateway
         # 1.6.0, and tool search held through kills, resumes, compactions and Sonnet 5
@@ -544,7 +547,6 @@ def make_pretool_hook(
     # (`halt(subagent=...)`), a contract a positional-only annotation would misstate --
     # and a conforming positional-only halt would TypeError into STORE_UNAVAILABLE.
     halt: Callable[..., str | None] | None = None,
-    on_delivered: Callable[[], None] | None = None,
     on_halt_failed: Callable[[], None] | None = None,
     step_gate: Any | None = None,
 ):
@@ -565,9 +567,9 @@ def make_pretool_hook(
     ``halt``, so the audit trail shows where the turn was cut.
 
     ``step_gate`` is decision 25's carrier: a ``StepGate`` for THIS turn, or None to
-    enforce no boundary. It is consulted after the halt and delivered arms, so a
-    researcher's stop and a met bounded request both still outrank it -- a turn being
-    stopped on purpose must not be re-decided as a boundary crossing. Its first
+    enforce no boundary. It is consulted after the halt arm, so a researcher's stop
+    still outranks it -- a turn being stopped on purpose must not be re-decided as a
+    boundary crossing. Its first
     crossing DENIES and its second HALTS, and a gate that raises is treated as no
     opinion, because a hook that raises fails a call the user was entitled to make.
 
@@ -620,63 +622,9 @@ def make_pretool_hook(
                     reason=stop_now)
             return _halt(stop_now)
 
-        # A bounded request that is met must not run on to the proof or the
-        # spend bound. It sits AFTER the halt check, so the researcher's own stop still
-        # outranks it.
-        #
-        # MAIN THREAD ONLY. The arm matches on tool NAME, and a subagent holds the
-        # session's tool set, so without this a record-extractor saying "delivered" would
-        # halt the extraction; the parent carries on (U23's Q2: a subagent's halt does not
-        # stop the parent, 3 of 3 on compose). `agent_id` is tested for
-        # MEMBERSHIP, not truthiness: it is absent as a KEY on the main thread, and
-        # `agent_type` alone is not sufficient because it is present on the main thread of
-        # a session started with `--agent`. That is the discriminator the shipped plugin
-        # hook already uses (`owner_denied`, hooks/guard_project_files.py), reused rather
-        # than re-derived.
-        # A subagent's call falls through to ordinary handling, where the tool returns its
-        # harmless acknowledgement and the run carries on.
-        if tool_name == DELIVERED_TOOL and "agent_id" not in data:
-            try:
-                record({
-                    "turn_id": turn_id, "session_id": session_id,
-                    "agent_id": data.get("agent_id"), "agent_type": data.get("agent_type"),
-                    "tool_name": tool_name,
-                    "input_path": input_path(tool_name, tool_input, cwd=cwd),
-                    "decision": "delivered",
-                    # `research_delivered` is not a writer, so this is always None; the
-                    # key is carried so every recorded row has the same shape.
-                    "wrote": writer_record(tool_name, tool_input),
-                    "tool_use_id": tool_use_id or data.get("tool_use_id"),
-                })
-            except Exception as exc:  # noqa: BLE001 - the log must not change the decision
-                if log is not None:
-                    log(ev="tool_call_log_failed", turn_id=turn_id, tool_name=tool_name,
-                        error=f"{type(exc).__name__}: {exc}")
-            if on_delivered is not None:
-                try:
-                    on_delivered()
-                except Exception as exc:  # noqa: BLE001 - reporting must not fail the call
-                    if log is not None:
-                        log(ev="delivered_report_failed", turn_id=turn_id,
-                            error=f"{type(exc).__name__}: {exc}")
-            # The summary is the one field the researcher-facing contract is built on,
-            # and the hook halts BEFORE the tool body runs -- so if it is not captured
-            # here it reaches nobody: `input_path` is None for this tool, the tool_calls
-            # row has no column for it, and the browser renders a fixed string. Logged,
-            # and appended to the stop reason so the text the model is handed names what
-            # it said it delivered.
-            summary = str((tool_input or {}).get("summary") or "").strip()
-            if log is not None:
-                log(ev="delivered", turn_id=turn_id, tool_name=tool_name,
-                    tool_use_id=tool_use_id, summary=summary)
-            # Summary FIRST: the browser replaces the chip with the result text cut at
-            # 160 chars, and DELIVERED_REASON alone is 124 (re-measured 2026-10-06; the
-            # comment said 157). Appended rather than prepended, the reason eats most of
-            # the window and the summary is cut. What the researcher most needs leads.
-            return _halt(delivered_stop_reason(summary))
-        # The step boundary (decision 25). It sits AFTER the halt and delivered arms, so
-        # the researcher's own stop and a met bounded request both still outrank it: a
-        # turn being stopped on purpose must not be re-decided as a boundary crossing.
+        # The step boundary (decision 25). It sits AFTER the halt arm, so the researcher's
+        # own stop still outranks it: a turn being stopped on purpose must not be
+        # re-decided as a boundary crossing.
         step_verdict = None
         try:
             if step_gate is not None:
@@ -917,7 +865,8 @@ def build_worker_options(
     if resume and session_id:
         raise ValueError("resume and session_id are mutually exclusive: pass exactly one")
     env_in = os.environ if worker_env is None else worker_env
-    model, model_env = provider_env(env_in)
+    main = load_main_thread(plugin_dir)
+    model, model_env = provider_env(env_in, main)
     if model_provider(env_in) == "gateway":
         agents = gateway_agent_models(agents)
     project_note = (
@@ -931,10 +880,8 @@ def build_worker_options(
         "apply researcher_profile.narration_guidance from research.json as your "
         "narration style."
     )
-    # Unconditional, on the opening turn too: "start a project on X and just give me a
-    # plan" is a legitimate turn-1 bounded request, so gating this on `resume` would
-    # exempt the very case it exists for.
-    project_note = f"{project_note}\n\n{DELIVERY_GUIDANCE}"
+    # Unconditional, on the opening turn too: the opening turn is the one #3768 is about.
+    project_note = f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{NO_PROJECT_NOTE}"
     env: dict[str, str] = {
         "ENABLE_TOOL_SEARCH": "true",
         # No `subagent_type: "fork"` (SDK default from CLI 2.1.302): a fork inherits the
@@ -977,6 +924,7 @@ def build_worker_options(
         include_partial_messages=True,
         max_buffer_size=MAX_BUFFER_BYTES,
         env=env,
+        effort=main.effort,
     )
     if model is not None:
         kwargs["model"] = model

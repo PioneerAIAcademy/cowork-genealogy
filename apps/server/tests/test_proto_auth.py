@@ -402,6 +402,78 @@ async def test_the_lifespan_listens_with_postgres_down(monkeypatch, refused_pg, 
     assert "probeuser" not in r.text and "127.0.0.1" not in r.text
 
 
+# ── U29: PG_SAS_OBJECT ───────────────────────────────────────────────────────────
+
+
+async def test_the_lifespan_reads_pg_from_sas(monkeypatch, refused_pg, caplog):
+    """SAS set and PG_DSN unset: the store's credentials come from the SAS object, the tier
+    listens with that Postgres down, and the password never reaches the body or the log."""
+    import logging
+    import pg_credentials
+
+    caplog.set_level(logging.DEBUG)
+    fetched: list[str] = []
+
+    def fetch(name: str) -> dict[str, str]:
+        fetched.append(name)
+        return {"fchUser": "sasuser", "fchPassword": "rotating-pw-7",
+                "fchDbConnectUrl": f"jdbc:postgresql://127.0.0.1:{refused_pg.port}/proto"}
+
+    monkeypatch.delenv("PG_DSN", raising=False)
+    monkeypatch.setenv("PG_SAS_OBJECT", "fch-web")
+    monkeypatch.setattr(pg_credentials, "sas_installed", lambda: True)
+    monkeypatch.setattr(pg_credentials, "_fetch_sas_object", fetch)
+    monkeypatch.setattr(app, "READY_TIMEOUT_S", 0.3)
+    application = create_app(queue=FakeQueue())
+    async with application.router.lifespan_context(application):
+        async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t") as c:
+            r = await c.get("/api/health")
+        store = application.state.store
+        assert application.state.pg_creds is store.creds, "one holder for the async and sync paths"
+        assert store.creds.mode == "sas" and store.dsn.endswith(f"@127.0.0.1:{refused_pg.port}/proto")
+    assert r.status_code == 503 and not r.json()["checks"]["postgres"]["ok"]
+    assert fetched and set(fetched) == {"fch-web"}
+    assert "pg_credentials=SAS object fch-web" in caplog.text
+    for text in (r.text, caplog.text):
+        assert "rotating-pw-7" not in text and "sasuser" not in text
+
+
+
+async def test_an_injected_pgstore_keeps_its_own_credentials_for_the_sync_routes(monkeypatch, refused_pg):
+    monkeypatch.setenv("PG_DSN", "postgresql://u:p@127.0.0.1:1/other")
+    monkeypatch.setattr(app, "READY_TIMEOUT_S", 0.3)
+    store = app.PgStore(refused_pg.dsn)
+    application = create_app(store, FakeQueue())
+    async with application.router.lifespan_context(application):
+        assert application.state.pg_creds is store.creds
+
+async def test_the_lifespan_refuses_both_pg_variables(monkeypatch):
+    import pg_credentials
+
+    monkeypatch.setenv("PG_DSN", "postgresql://u:p@127.0.0.1:1/proto")
+    monkeypatch.setenv("PG_SAS_OBJECT", "fch-web")
+    monkeypatch.setattr(pg_credentials, "sas_installed", lambda: True)
+    monkeypatch.setattr(pg_credentials, "_fetch_sas_object", lambda name: pytest.fail("fetched"))
+    application = create_app(queue=FakeQueue())
+    with pytest.raises(RuntimeError, match="both PG_DSN and PG_SAS_OBJECT are set"):
+        async with application.router.lifespan_context(application):
+            pass
+    assert getattr(application.state, "store", None) is None
+
+
+async def test_the_lifespan_refuses_sas_without_the_client(monkeypatch):
+    import pg_credentials
+
+    monkeypatch.delenv("PG_DSN", raising=False)
+    monkeypatch.setenv("PG_SAS_OBJECT", "fch-web")
+    monkeypatch.setattr(pg_credentials, "sas_installed", lambda: False)
+    application = create_app(queue=FakeQueue())
+    with pytest.raises(RuntimeError, match="PG_SAS_OBJECT is set but the sas_client package is not installed"):
+        async with application.router.lifespan_context(application):
+            pass
+    assert getattr(application.state, "store", None) is None
+
+
 async def test_signed_in_routes_are_503_until_the_allowlist_syncs(fs_on):
     _fake_fs(fs_on)
     store = FakeStore()
@@ -445,7 +517,7 @@ async def test_the_allowlist_gate_lifts_when_the_background_sync_succeeds(fs_on)
     fs_on.setenv("ALLOWED_EMAILS", "a@example.org")
     fs_on.setattr(app, "STARTUP_BACKOFF_FIRST_S", 0.0)
     store = FlakyStore()
-    fs_on.setattr(app, "PgStore", lambda dsn: store)
+    fs_on.setattr(app, "PgStore", lambda dsn, **kw: store)
     application = create_app(queue=FakeQueue())
     cookies = {auth.COOKIE_NAME: auth.session_cookie_value(USER_A.id)}
     async with application.router.lifespan_context(application):
@@ -864,7 +936,8 @@ async def test_token_calls_send_the_browser_user_agent(monkeypatch):
     (FS_ID, FS_ID, False), (None, FS_ID, False), (FS_ID, None, False), (FS_ID, "ZZZZ-999", True),
 ])
 async def test_pgstore_upsert_user_pins_the_familysearch_id(stored, presented, raises):
-    row = {"id": "usr_a", "email": "a@example.org", "familysearch_id": stored, "sessions_revoked_at": None}
+    row = {"id": "usr_a", "email": "a@example.org", "familysearch_id": stored, "sessions_revoked_at": None,
+           "blocked_at": None}
     conn = ScriptedConn(lambda sql: row if sql.startswith("SELECT id, email") else None)
     store = _store(conn)
     if raises:

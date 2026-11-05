@@ -98,7 +98,10 @@ import {
   NARRATIVE_WORD_BUDGET,
   planItemSearchedSkipInvariants,
   planItemCompletionRecordTypeInvariants,
+  recordDocumentArk,
 } from "../../src/tools/research-append.js";
+import { materializeFacts } from "../../src/tools/materialize-facts.js";
+import { toSimplified } from "../../src/utils/gedcomx-convert.js";
 import { validateProject, VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
 import { ATTACHMENT_LINK_RATIONALE } from "../../src/utils/tree-person.js";
@@ -222,12 +225,12 @@ function liveLinks(...assertionIds: string[]): Record<string, unknown>[] {
  */
 async function attestPairing(
   dir: string,
-  opts: { recordId?: string; assertionId?: string; personId?: string } = {},
+  opts: { recordId?: string; assertionId?: string; personId?: string; recordRole?: string } = {},
 ): Promise<void> {
   await recordMatchScore(dir, {
     record_id: opts.recordId ?? "rec1",
     record_persona_id: null,
-    record_role: "principal",
+    record_role: opts.recordRole ?? "principal",
     tree_person_id: opts.personId ?? "I1",
     score: 0.9,
     scorer: "familysearch",
@@ -2931,6 +2934,123 @@ describe("research_append (Phase 2)", () => {
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/resolution_rationale/);
     expect((await readResearch()).conflicts[0].status).toBe("unresolved"); // nothing written
+  });
+
+  // The same conflict_type over the same competing assertions is the conflict
+  // already recorded: ut_conflict_resolution_008 appended a twin of an unresolved
+  // c_001, and ut_research_001 one of a resolved c_001.
+  describe("a conflict append that restates an existing conflict", () => {
+    const appendConflict = (entry: any) =>
+      researchAppend({ projectPath: dir, section: "conflicts", op: "append", entry });
+
+    it.each([
+      ["unresolved", {}],
+      [
+        "resolved",
+        {
+          status: "resolved",
+          resolution_kind: "competitor",
+          preferred_assertion_id: "a_001",
+          independence_analysis: "Independent informants.",
+          weighing_analysis: "The earlier record is closer to the event.",
+          resolution_rationale: "a_001 is preferred over a_002.",
+        },
+      ],
+    ])("is refused when the existing one is %s, naming it", async (status, settled) => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), ...settled, id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({ ...validConflict(), competing_assertion_ids: ["a_002", "a_001"] });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const errors = r.errors.join(" ");
+      expect(errors).toMatch(new RegExp(`restates 'c_001' \\(status '${status}'\\).*conflictId 'c_001'`));
+      // A settled conflict is reopened, not updated in place, and a cited one is uncited first.
+      expect(errors).toMatch(status === "resolved" ? /clears its resolution.*proof-conclusion/ : /Update 'c_001' instead/);
+      // The worked example is an update of the existing conflict, not another append.
+      expect(errors).not.toMatch(/op: "append"/);
+      expect((await readResearch()).conflicts).toHaveLength(1); // nothing written
+    });
+
+    it("is refused when the same batch appends it twice", async () => {
+      await writeProject(phase2Research());
+      const r = await researchAppend({
+        projectPath: dir,
+        ops: [
+          { section: "conflicts", op: "append", entry: validConflict() },
+          { section: "conflicts", op: "append", entry: validConflict() },
+        ],
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      // c_001 was never written, so the refusal does not point at it.
+      expect(r.errors.join(" ")).toMatch(/writes the same conflict twice/);
+      expect(r.errors.join(" ")).not.toMatch(/'c_001'/);
+    });
+
+    it("is refused on an update that turns one conflict into another's twin", async () => {
+      const research = phase2Research();
+      research.assertions.push(validAssertion("a_003"));
+      research.conflicts = [
+        { ...validConflict(), id: "c_001" },
+        { ...validConflict(), id: "c_002", competing_assertion_ids: ["a_001", "a_002", "a_003"] },
+      ];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "update",
+        entryId: "c_002",
+        fields: { competing_assertion_ids: ["a_001", "a_002"] },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors.join(" ")).toMatch(/restates 'c_001'/);
+    });
+
+    it("writes an update that leaves what the conflict is about unchanged", async () => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "conflicts",
+        op: "update",
+        entryId: "c_001",
+        fields: { competing_assertion_ids: ["a_002", "a_001"] },
+      });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
+
+    it("writes a fact conflict over the same assertions on another attribute", async () => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({ ...validConflict(), disputed_attribute: "birthplace" });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
+
+    it("writes a conflict over a different set of assertions", async () => {
+      const research = phase2Research();
+      research.assertions.push(validAssertion("a_003"));
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({ ...validConflict(), competing_assertion_ids: ["a_001", "a_002", "a_003"] });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
+
+    it("writes a conflict of another type over the same assertions", async () => {
+      const research = phase2Research();
+      research.conflicts = [{ ...validConflict(), id: "c_001" }];
+      await writeProject(research);
+      const r = await appendConflict({
+        ...validConflict(),
+        conflict_type: "identity",
+        disputed_attribute: null,
+        identity_question: "Are the persons in a_001 and a_002 the same man?",
+      });
+      expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    });
   });
 
   it("rejects resolving a conflict whose analysis fields are whitespace only", async () => {
@@ -6898,23 +7018,40 @@ describe("research_append (project singleton section)", () => {
     expect(r.ok).toBe(true);
   });
 
-  it("refuses to rewrite an objective that is already set", async () => {
-    // `objective` moved onto allowedFields so init-project can write it once.
-    // The refusal it now hits is the set-once one, not the not-allowed one —
-    // the ownership declaration's stated harm is a skill REWRITING the goal
-    // every later step plans against.
+  it("rewrites an objective that is already set", async () => {
+    // Not set-once since issue #3975: a website user has no file access, so the
+    // researcher's correction has to go through the tool. The plugin hook keeps
+    // the write on the main thread; the tool cannot see the caller.
     await writeProject(); // baseResearch() seeds objective: "Test"
     const r = await researchAppend({
       projectPath: dir,
       section: "project",
       op: "update",
-      fields: { objective: "rewritten" },
+      fields: { objective: "Who were the parents of John Smith?" },
     });
+    expect(r.ok).toBe(true);
+    const research = await readResearch();
+    expect(research.project.objective).toBe("Who were the parents of John Smith?");
+  });
+
+  it("refuses to rewrite a title that is already set, naming no file-edit route", async () => {
+    const r0 = baseResearch();
+    r0.project = { ...r0.project, title: "Smith parentage" };
+    await writeProject(r0);
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "project",
+      op: "update",
+      fields: { title: "rewritten" },
+    } as never);
     expect(r.ok).toBe(false);
     if (r.ok) return;
-    expect(r.errors.join(" ")).toMatch(/already set on 'project' and not rewritable: objective/);
+    const errors = r.errors.join(" ");
+    expect(errors).toMatch(/already set on 'project' and not rewritable: title/);
+    expect(errors).toMatch(/fixed for the life of the project/);
+    expect(errors).not.toMatch(/research\.json directly/);
     const research = await readResearch();
-    expect(research.project.objective).toBe("Test"); // nothing written
+    expect(research.project.title).toBe("Smith parentage"); // nothing written
   });
 
   it("rejects an invalid status value (whole-project validation)", async () => {
@@ -7256,6 +7393,93 @@ describe("research_append (project singleton section)", () => {
       fields: { rationale: "Clarified after review." },
     } as never);
     expect(r.ok).toBe(true);
+  });
+
+  // ── the last open question resolving removes unanchored minted persons ──
+  // Lead ruling 2026-11-04 (issue #3032): when the project's last open question
+  // resolves, every minted person no edge connects to an imported person goes,
+  // in the same write.
+  describe("resolving the last open question removes unanchored minted persons", () => {
+    const person = (id: string, given: string) => ({ id, gender: "Male", names: [{ id: `N_${id}`, given, surname: "Smith" }] });
+    const link = (id: string, personId: string) => ({
+      id, assertion_id: "a_001", person_id: personId, confidence: "probable", rationale: "household match",
+      created: "2026-01-01", superseded_by: null,
+    });
+    // I1 is the imported subject (in the starting tree). I2 is minted and its
+    // father edge reaches I1. I3 and I4 are a minted couple no edge connects to
+    // I1. I5 is minted and unconnected, but a timeline names it.
+    const tree = () => ({
+      persons: [person("I1", "John"), person("I2", "Henry"), person("I3", "Josef"), person("I4", "Marie"), person("I5", "Karl")],
+      relationships: [
+        { id: "R1", type: "ParentChild", parent: "I1", child: "I2" },
+        { id: "R2", type: "Couple", person1: "I3", person2: "I4" },
+      ],
+      sources: [{ id: "SD-001", title: "1850 U.S. Census" }],
+    });
+    const research = (questions: any[]) => {
+      const r = baseResearch();
+      r.questions.push(...questions);
+      r.proof_summaries.push(summary());
+      r.person_evidence.push(link("pe_001", "I2"), link("pe_002", "I3"), link("pe_003", "I4"));
+      r.timelines.push({ id: "t_001", person_ids: ["I5"], events: [] });
+      return r;
+    };
+    const openQuestion = () => ({ ...resolvedQuestion(), status: "open", resolved: null });
+    const resolveQ1 = () =>
+      researchAppend({ projectPath: dir, section: "questions", op: "update", entryId: "q_001", fields: { status: "resolved" } } as never);
+    const readTree = async () => JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+    const writeStartingTree = (t: any) => writeFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify(t));
+
+    it("removes the unconnected minted persons, their edges and their links, and says so", async () => {
+      await writeProject(research([openQuestion()]), tree());
+      await writeStartingTree({ persons: [person("I1", "John")], relationships: [] });
+      const r = await resolveQ1();
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      if (!r.ok) return;
+      const t = await readTree();
+      expect(t.persons.map((p: any) => p.id)).toEqual(["I1", "I2", "I5"]);
+      expect(t.relationships.map((e: any) => e.id)).toEqual(["R1"]);
+      const after = await readResearch();
+      expect(after.person_evidence.map((pe: any) => pe.id)).toEqual(["pe_001"]);
+      expect(after.questions[0].status).toBe("resolved");
+      expect(r.validation.warnings.join("\n")).toMatch(/2 person\(s\): I3 Josef Smith, I4 Marie Smith; 1 relationship\(s\); 2 person_evidence link\(s\)/);
+    });
+
+    it("anchors on a FamilySearch id with no starting tree", async () => {
+      const t = tree();
+      t.persons[0].id = "KWCB-100";
+      t.relationships[0].parent = "KWCB-100";
+      await writeProject(research([openQuestion()]), t);
+      const r = await resolveQ1();
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect((await readTree()).persons.map((p: any) => p.id)).toEqual(["KWCB-100", "I2", "I5"]);
+    });
+
+    it("removes nothing while another question is still open", async () => {
+      await writeProject(research([openQuestion(), { ...openQuestion(), id: "q_002" }]), tree());
+      await writeStartingTree({ persons: [person("I1", "John")], relationships: [] });
+      const r = await resolveQ1();
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect((await readTree()).persons).toHaveLength(5);
+      expect((await readResearch()).person_evidence).toHaveLength(3);
+    });
+
+    it("removes nothing on a write that resolves no question", async () => {
+      await writeProject(research([resolvedQuestion()]), tree());
+      await writeStartingTree({ persons: [person("I1", "John")], relationships: [] });
+      const r = await researchAppend({
+        projectPath: dir, section: "questions", op: "update", entryId: "q_001", fields: { rationale: "Clarified after review." },
+      } as never);
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect((await readTree()).persons).toHaveLength(5);
+    });
+
+    it("removes nothing when no person is known to be imported", async () => {
+      await writeProject(research([openQuestion()]), tree());
+      const r = await resolveQ1();
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+      expect((await readTree()).persons).toHaveLength(5);
+    });
   });
 
   it("a batch cannot resolve its own blocking conflict and complete", async () => {
@@ -10200,6 +10424,92 @@ describe("research_append (composite persist + enforcement)", () => {
     const persisted = (await readResearch()).assertions[1];
     expect(persisted.record_persona_id).toBe("p_1"); // auto-filled, never silently null
     expect(persisted.record_id).toBe("ark:/61903/1:1:ABCD-123"); // canonicalized
+  });
+
+  // ── The document stamp (record_document_id, #2537) ──
+
+  describe("record_document_id", () => {
+    const appendFrom = async (record: any, extra: Record<string, unknown> = {}) => {
+      await writeProject(sidecarResearch());
+      await writeSidecar([record]);
+      const { source_id: _s, ...a } = noId(validAssertion("x"));
+      return researchAppend({
+        projectPath: dir,
+        ops: [
+          {
+            section: "assertions",
+            op: "append",
+            entry: { ...a, source_id: "src_001", record_id: "ark:/61903/1:1:ABCD-123", log_entry_id: "log_001", ...extra },
+          },
+        ],
+      });
+    };
+    const stamped = async () => (await readResearch()).assertions[1].record_document_id;
+
+    it("stamps record_search's 1:2 recordArk, over a caller's value", async () => {
+      const r = await appendFrom(
+        { ...sidecarRecord(), recordArk: "ark:/61903/1:2:DOCS-001" },
+        { record_document_id: "ark:/61903/1:2:MADE-UP" },
+      );
+      expect(r.ok).toBe(true);
+      expect(await stamped()).toBe("ark:/61903/1:2:DOCS-001");
+    });
+
+    it("falls back to the record's own Record source, as record_read stages it", async () => {
+      const record = sidecarRecord() as any;
+      record.gedcomx.sources = [
+        { id: "src_c", resource_type: "Collection", url: "https://www.familysearch.org/ark:/61903/1:2:NOTI-TTHS" },
+        { id: "src_r", resource_type: "Record", url: "https://www.familysearch.org/ark:/61903/1:2:DOCS-002" },
+      ];
+      expect((await appendFrom(record)).ok).toBe(true);
+      expect(await stamped()).toBe("ark:/61903/1:2:DOCS-002");
+    });
+
+    it("stamps nothing, and keeps no caller value, when the sidecar names no 1:2 document", async () => {
+      const r = await appendFrom(
+        { ...sidecarRecord(), recordArk: "ark:/61903/1:1:ABCD-123" },
+        { record_document_id: "ark:/61903/1:2:MADE-UP" },
+      );
+      expect(r.ok).toBe(true);
+      expect(await stamped()).toBeUndefined();
+    });
+
+    it("refuses an update that sets it, and drops it when record_id changes", async () => {
+      await appendFrom({ ...sidecarRecord(), recordArk: "ark:/61903/1:2:DOCS-001" });
+      const set = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_002",
+        fields: { record_document_id: "ark:/61903/1:2:OTHR-001" },
+      });
+      expect(set.ok).toBe(false);
+      expect((errorsOf(set) ?? []).join(" ")).toContain("record_document_id is not updatable");
+      expect(await stamped()).toBe("ark:/61903/1:2:DOCS-001");
+
+      await writeSidecar([
+        { ...sidecarRecord(), recordArk: "ark:/61903/1:2:DOCS-001" },
+        { ...sidecarRecord(), recordId: "ark:/61903/1:1:WXYZ-999", recordArk: "ark:/61903/1:2:DOCS-009" },
+      ]);
+      const moved = await researchAppend({
+        projectPath: dir,
+        section: "assertions",
+        op: "update",
+        entryId: "a_002",
+        fields: { record_id: "ark:/61903/1:1:WXYZ-999" },
+      });
+      expect(moved.ok).toBe(true);
+      expect(await stamped()).toBeUndefined();
+    });
+
+    it("reads a live record_read's Record source (6J8F-6678), and not a 1:1 one (baker M62F-BST)", async () => {
+      const raw = JSON.parse(await readFile(resolve(__dirname, "../fixtures/record-read/6J8F-6678.recapi.json"), "utf-8"));
+      expect(recordDocumentArk({ gedcomx: toSimplified(raw) })).toBe("ark:/61903/1:2:H9BP-G4TW");
+      const baker = JSON.parse(
+        await readFile(resolve(__dirname, "../../../../../eval/fixtures/mcp/record-read-baker-1870-m62f-bst.json"), "utf-8"),
+      );
+      expect(recordDocumentArk({ gedcomx: baker.response })).toBeNull();
+    });
   });
 
   // ── D2: non-persona producers (fulltext_search / legacy external_links_search) ──
@@ -13276,6 +13586,20 @@ describe("research_append — worked examples are themselves valid", () => {
         notes: null,
         external_site: null,
       },
+      // The full-text search whose hit the hit_verdicts example judges.
+      {
+        id: "log_005",
+        plan_item_id: null,
+        performed: "2026-07-18",
+        tool: "fulltext_search",
+        query: "Patrick Flynn Pottsville",
+        outcome: "positive",
+        results_examined: 1,
+        results_ref: "results/log_005.json",
+        results_available: 1,
+        notes: null,
+        external_site: null,
+      },
     ];
     r.sources = [validSource("src_001"), { ...validSource("src_004") }];
     // The person_evidence example now carries a real match_score (#1731 step 3),
@@ -13373,6 +13697,18 @@ describe("research_append — worked examples are themselves valid", () => {
     },
   };
 
+  /** Staged full-text hits for log_005 — the hit_verdicts example names one,
+   *  and research_append refuses a hit its search did not return. */
+  const fulltextSidecar = {
+    log_id: "log_005",
+    tool: "fulltext_search",
+    retrieved: "2026-07-18T14:00:00Z",
+    returned_count: 1,
+    payload: {
+      results: [{ id: "ark:/61903/3:1:3Q9M-CSK3-ZSLR", title: "Pottsville baptisms", textDocument: "Patrick Flynn bapt." }],
+    },
+  };
+
   // Derived from the registry, so an example added for a new section is
   // round-tripped without anyone remembering to list it here.
   const SECTIONS_WITH_EXAMPLES = Object.keys(__testing.EXAMPLES);
@@ -13396,6 +13732,7 @@ describe("research_append — worked examples are themselves valid", () => {
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(baseTree, null, 2));
     await mkdir(join(dir, "results"), { recursive: true });
     await writeFile(join(dir, "results", "log_004.json"), JSON.stringify(sidecar, null, 2));
+    await writeFile(join(dir, "results", "log_005.json"), JSON.stringify(fulltextSidecar, null, 2));
     await attestEveryAssertion(dir);
 
     const entry = JSON.parse(__testing.EXAMPLES[section]);
@@ -16756,8 +17093,10 @@ describe("research_append — a resolve names how it was settled (resolution_kin
     if (kind === "synthesis") expect(c.resolved_value).toBe("about 1844");
   });
 
+  // No conflict in the starting state: appending state()'s own conflict again
+  // would be refused as a restatement of it.
   it("accepts an append that lands resolved with a kind", async () => {
-    await writeProject(state());
+    await writeProject({ ...state(), conflicts: [] });
     const { id: _id, ...entry } = conflict({
       ...ANALYSES,
       status: "resolved",
@@ -16770,7 +17109,7 @@ describe("research_append — a resolve names how it was settled (resolution_kin
   });
 
   it("refuses an append that lands resolved with no kind", async () => {
-    await writeProject(state());
+    await writeProject({ ...state(), conflicts: [] });
     const { id: _id, ...entry } = conflict({
       ...ANALYSES,
       status: "resolved",
@@ -17570,5 +17909,186 @@ describe("a searched plan item the record-type check will not complete can be sk
     const probate = { log: [{ ...research.log[0], query: { recordType: "probate" } }] };
     expect(planItemCompletionRecordTypeInvariants({ ...item, status: "completed" }, probate)).toEqual([]);
     expect(planItemSearchedSkipInvariants({ ...item, status: "skipped", skip_category: "not_applicable" }, probate)).toHaveLength(1);
+  });
+});
+
+// A probable or confident link to a person this research added with no provenance
+// at all (`tree_edit add_person`), which nothing ties to a record (#2475,
+// clack391's row). The refusal's advice completes: a scored speculative link,
+// materialize_facts, then the raise.
+describe("research_append — person_evidence to a ref-less added person", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-refless-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const REFUSAL = /added during this research with no source ref/;
+  const named = (id: string, given: string, sourced = false) => ({
+    id,
+    gender: "Male",
+    names: [{ id: `N${id}`, given, surname: "Janeczky", ...(sourced ? { sources: [{ ref: "SD-001" }] } : {}) }],
+  });
+  const baseTreeWith = (relationships: any[] = []) => ({
+    persons: [
+      { id: "I1", gender: "Male", names: [{ id: "N1", given: "John", surname: "Smith" }] },
+      named("I2", "Joannes"),
+      named("I3", "Josef", true),
+      named("I4", "Jakob"),
+    ],
+    relationships,
+    sources: [
+      { id: "SD-001", title: "1850 U.S. Census" },
+      { id: "SD-002", title: "Baptism of a Janeczky child" },
+    ],
+  });
+  // I4 is a stub the researcher stated: its source is on the relationship, as
+  // init-project writes it, not on its name.
+  const tree = baseTreeWith([
+    { id: "R1", type: "ParentChild", parent: "I4", child: "I1", sources: [{ ref: "SD-001" }] },
+  ]);
+  const research = (extra: Record<string, unknown>[] = []) => {
+    const r = baseResearch();
+    // rec2 has a source of its own, as almost every source does, so after
+    // materialize_facts the person's every ref points at that one record.
+    r.sources.push({ ...validSource("src_002"), gedcomx_source_description_id: "SD-002" });
+    r.assertions.push(
+      {
+        ...validAssertion("a_002", "src_002"), record_id: "rec2", record_role: "father_1", fact_type: "name",
+        value: "Joannes Janeczky", structured_value: { given: "Joannes", surname: "Janeczky" },
+      },
+      {
+        ...validAssertion("a_003"), record_id: "rec3", record_role: "absent", record_basis: "absent",
+        fact_type: "residence", value: "Joannes absent from the 1891 household",
+      },
+      {
+        ...validAssertion("a_004"), record_id: "rec4", record_role: "child_1", fact_type: "relationship",
+        value: "child of Joannes Janeczky", structured_value: { related_person_role: "father" },
+      },
+      (() => {
+        const { record_basis: _drop, ...legacy } = validAssertion("a_005") as any;
+        return { ...legacy, record_id: "rec5", record_role: "principal", evidence_type: "negative", fact_type: "residence", value: "Joannes not in the 1880 household" };
+      })(),
+    );
+    r.person_evidence.push(...extra);
+    return r;
+  };
+  async function write(r: any, withStartingTree = true, t: any = tree) {
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(t, null, 2));
+    if (withStartingTree) {
+      await writeProjectFile(
+        join(dir, "starting-tree.gedcomx.json"),
+        JSON.stringify({ persons: [t.persons[0]], relationships: [], sources: [] }, null, 2),
+      );
+    }
+  }
+  const link = (person_id: string, assertion_id: string, confidence = "probable") => ({
+    projectPath: dir,
+    section: "person_evidence" as const,
+    op: "append" as const,
+    entry: { assertion_id, person_id, confidence, match_score: null, rationale: "named on the record" },
+  });
+  const errorsOf = (r: any) => (r.ok ? "" : r.errors.join(" "));
+
+  it("refuses a probable link to an added person with no provenance, naming the materialize_facts call", async () => {
+    await write(research());
+    const r = await researchAppend(link("I2", "a_002"));
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)).toMatch(REFUSAL);
+    expect(errorsOf(r)).toMatch(
+      /at 'speculative' with its same_person score.*materialize_facts\(\{ projectPath, personId: 'I2', recordId: 'rec2', recordRole: 'father_1' \}\), then raise the link to 'probable'/,
+    );
+    expect(JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).person_evidence).toHaveLength(0);
+  });
+
+  it("the refusal's own advice completes: a scored speculative link, materialize_facts, then the raise", async () => {
+    await write(research());
+    await attestPairing(dir, { recordId: "rec2", assertionId: "a_002", personId: "I2", recordRole: "father_1" });
+    const spec = link("I2", "a_002", "speculative");
+    const a = await researchAppend({ ...spec, entry: { ...spec.entry, match_score: 0.9 } });
+    expect(a.ok, errorsOf(a)).toBe(true);
+    const m = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "rec2", recordRole: "father_1" } as any);
+    expect((m as any).ok, JSON.stringify((m as any).errors ?? m)).toBe(true);
+    const r = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: "pe_001", fields: { confidence: "probable" } });
+    expect(r.ok, errorsOf(r)).toBe(true);
+    const stored = JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).person_evidence;
+    expect(stored[0]).toMatchObject({ person_id: "I2", confidence: "probable", match_score: 0.9 });
+  });
+
+  it("materialize_facts refuses a blank added person no link ties to the record, so the score comes first", async () => {
+    await write(research());
+    const m = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "rec2", recordRole: "father_1" } as any);
+    expect((m as any).ok).toBe(false);
+    expect(JSON.stringify(m)).toMatch(/'speculative' link carrying its same_person score is enough/);
+    const t = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+    expect(t.persons.find((p: any) => p.id === "I2").names[0].sources ?? []).toHaveLength(0);
+  });
+
+  it("refuses an update that moves a probable link onto such a person", async () => {
+    await write(research([
+      { id: "pe_001", assertion_id: "a_002", person_id: "I3", confidence: "probable", match_score: null, rationale: "x", created: "2026-01-02", superseded_by: null },
+    ]));
+    const r = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: "pe_001", fields: { person_id: "I2" } });
+    expect(errorsOf(r)).toMatch(REFUSAL);
+  });
+
+  it("refuses raising a speculative link on such a person to probable", async () => {
+    await write(research());
+    await attestPairing(dir, { recordId: "rec2", assertionId: "a_002", personId: "I2", recordRole: "father_1" });
+    const a = await researchAppend({ ...link("I2", "a_002", "speculative"), entry: { ...link("I2", "a_002", "speculative").entry, match_score: 0.9 } });
+    expect(a.ok, errorsOf(a)).toBe(true);
+    const r = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: "pe_001", fields: { confidence: "probable" } });
+    expect(errorsOf(r)).toMatch(REFUSAL);
+    const stored = JSON.parse(await readFile(join(dir, "research.json"), "utf-8")).person_evidence;
+    expect(stored[0].confidence).toBe("speculative");
+  });
+
+  it("a blank stub with a namesake stays on the namesake cap: the record cannot land on it first", async () => {
+    // Sr./Jr.: the researcher adds a blank "John Smith" as the father of the
+    // subject "John Smith", with no source on the edge.
+    const sm = (id: string) => ({ id, gender: "Male", names: [{ id: `N${id}`, given: "John", surname: "Smith" }] });
+    const t = {
+      persons: [sm("I1"), sm("I2")],
+      relationships: [{ id: "R1", type: "ParentChild", parent: "I2", child: "I1" }],
+      sources: [{ id: "SD-001", title: "1850 U.S. Census" }, { id: "SD-002", title: "Baptism" }],
+    };
+    const r = research();
+    const a2 = r.assertions.find((a: any) => a.id === "a_002") as any;
+    Object.assign(a2, { record_role: "principal", value: "John Smith", structured_value: { given: "John", surname: "Smith" } });
+    await write(r, true, t);
+    await attestPairing(dir, { recordId: "rec2", assertionId: "a_002", personId: "I2" });
+    const spec = link("I2", "a_002", "speculative");
+    const a = await researchAppend({ ...spec, entry: { ...spec.entry, match_score: 0.9 } });
+    expect(a.ok, errorsOf(a)).toBe(true);
+    const m = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "rec2", recordRole: "principal" } as any);
+    expect((m as any).ok).toBe(false);
+    const after = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+    expect(after.persons.find((p: any) => p.id === "I2").names[0].sources ?? []).toHaveLength(0);
+    // research_append leaves that person's links to the namesake cap, not this gate.
+    const probable = await researchAppend({ ...link("I2", "a_002"), entry: { ...link("I2", "a_002").entry, match_score: 0.9 } });
+    expect(errorsOf(probable)).not.toMatch(REFUSAL);
+  });
+
+  it("names the named-party form when the assertion names a second party", async () => {
+    await write(research());
+    const r = await researchAppend(link("I2", "a_004"));
+    expect(errorsOf(r)).toMatch(/assertionId: 'a_004', relatedRole: 'father', name: \{ given, surname \}/);
+  });
+
+  it.each([
+    ["a starting-tree person with no ref", "I1", "a_002", "probable", true],
+    ["an added person whose name is sourced", "I3", "a_002", "probable", true],
+    ["a stub the researcher stated, sourced on its relationship", "I4", "a_002", "probable", true],
+    ["a speculative link, which asserts no identity", "I2", "a_002", "speculative", true],
+    ["negative evidence, which no persona can materialize", "I2", "a_003", "probable", true],
+    ["legacy negative evidence (evidence_type, no record_basis)", "I2", "a_005", "probable", true],
+    ["a project with no starting-tree baseline", "I2", "a_002", "probable", false],
+  ])("does not refuse %s", async (_label, personId, assertionId, confidence, withStartingTree) => {
+    await write(research(), withStartingTree as boolean);
+    const r = await researchAppend(link(personId as string, assertionId as string, confidence as string));
+    expect(errorsOf(r)).not.toMatch(REFUSAL);
   });
 });

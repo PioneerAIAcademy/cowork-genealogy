@@ -6,7 +6,8 @@ sees the model stream: the worker (D9-10) writes ``map_message`` output into
 turn's evidence reaches Postgres without a hop that dies with the worker.
 
 Routes are on the same paths ``apps/web`` already calls (``api.ts``), so the SPA is
-reused verbatim with ``VITE_SESSION_TRANSPORT=sse``:
+reused verbatim with ``VITE_SESSION_TRANSPORT=sse``. Every ``/api/sessions`` route exists only
+with the chat on (#3985, ``GENEALOGY_CHAT``):
 
   POST /api/sessions/{id}/messages {text}      mint turn_id, record it, enqueue it   -> 202
   GET  /api/sessions/{id}/events?after=N       one-shot poll read (JSON)
@@ -16,12 +17,16 @@ reused verbatim with ``VITE_SESSION_TRANSPORT=sse``:
   GET  /api/projects/{id}/state               viewer state; ETag revalidation
   GET  /api/projects/{id}/sidecar/{log_id}     search-result body
   GET  /api/projects/{id}/image?filename=      persisted source page scan
+  POST /api/projects/{id}/files                a researcher upload and its text layer (#3987;
+                                                404 unless UPLOADS_ENABLED=true)
+  GET  /api/projects/{id}/download             the project as a zip, streamed from /var/tmp (#3987)
   GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout, GET /auth/familysearch/login,
   GET  /callback   (patron sign-in, web/auth.py; every /api/sessions and /api/projects route needs the cookie)
   GET  /api/sessions/{id}/sidecar/{log_id}     search-result body, or 404 when absent
   GET  /api/sessions/{id}/image?filename=      persisted source page scan, or 404 when absent
   GET  /api/sessions/{id}/logs -> 501; POST .../files stores a researcher upload
   POST /api/sessions/{id}/interrupt                Stop: raise the flag        -> 202
+  GET  /livez                                   200 {ok: true}, touching no store (#3985)
   GET  /api/feedback/context?sessionId=         the files and transcript size a report would carry
   POST /api/feedback {sessionId, ...}           bundle the project + transcript to S3 (U20,
                                                 web/feedback.py); stored, sent nowhere
@@ -46,8 +51,13 @@ Only ``session_events`` frames carry ``id: <seq>``, so ``Last-Event-ID`` is alwa
 and the transient frames are never replayed -- the same split as TRANSIENT_KINDS in the
 hosted runner.
 
-Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto), QUEUE_URL (a full SQS
-queue URL, the shim's shape; required -- unset or empty refuses to start),
+Env: PG_DSN (postgresql://postgres:proto@localhost:5434/proto) or PG_SAS_OBJECT (the SAS
+fchDatabase object to read instead, U29; both set refuses to start), QUEUE_URL (a full SQS
+queue URL, the shim's shape; required with the chat on -- unset or empty refuses to start),
+GENEALOGY_CHAT (unset or true; false serves no /api/sessions route and needs no queue),
+GENEALOGY_MAX_USERS (unset: the allowlist admits; a positive integer: the user cap does),
+PG_POOL_MAX_SIZE (unset: one connection per query; a positive integer: a checked pool of that size),
+UPLOADS_ENABLED (unset or false: the project upload route answers 404; true or false only),
 POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
@@ -57,8 +67,8 @@ it with the proto/sql/*.sql this tier ships, running no DDL (U9) -- and syncs th
 allowlist, one inline attempt each under one ``STARTUP_BUDGET_S``; a failure is retried
 in the background and never stops the tier listening (U10). It logs
 ``queue: <url>; sqs credentials: <mode>; region <r>``. Until the allowlist has synced, a
-FamilySearch-configured tier answers 503 at both allowlist checks rather than read a
-table an earlier boot left. ``GET /api/health`` is readiness: 200 or 503, the same keys
+FamilySearch-configured tier admitting by allowlist (no ``GENEALOGY_MAX_USERS``) answers
+503 at both allowlist checks rather than read a table an earlier boot left. ``GET /api/health`` is readiness: 200 or 503, the same keys
 either way, plus ``checks`` (``postgres``, ``schema``, ``allowlist``) whose ``error`` is a
 label, never a message.
 
@@ -91,17 +101,19 @@ import os
 import re
 import secrets
 import sys
+import tempfile
 import time
 import uuid
+import zipfile
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Protocol
 from urllib.parse import urlparse
 
-from fastapi import Depends, FastAPI, HTTPException, Request, File, UploadFile
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, File, UploadFile
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
 from pydantic import BaseModel, Field, ValidationError, field_validator
@@ -112,7 +124,7 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 HERE = Path(__file__).resolve().parent
 PROTO_DIR = HERE.parent
 SQL_DIR = PROTO_DIR / "sql"
-# enqueue.py, grants.py and migrate.py are siblings of this package in the repo (proto/)
+# enqueue.py, grants.py, migrate.py and pg_credentials.py are siblings of this package in the repo (proto/)
 # and in the container (/app); make them importable from wherever uvicorn, the driver or
 # pytest started.
 if str(PROTO_DIR) not in sys.path:
@@ -122,6 +134,8 @@ import enqueue  # noqa: E402  (the SQS query-API client; signs SigV4)
 import grants  # noqa: E402  (U3: grant custody, shared with the worker)
 import turn_message  # noqa: E402  (the queue body, shared with the worker)
 import migrate  # noqa: E402  (U9: the ledger and the verdict; this tier runs no DDL)
+import pg_credentials  # noqa: E402  (U29: the DSN from the environment or from SAS)
+from pg_credentials import PgCredentials  # noqa: E402
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 from web import blobstore  # noqa: E402  (U20: the S3 client, the engine's GENEALOGY_S3_* semantics)
 from web import feedback  # noqa: E402  (U20: the feedback bundle)
@@ -130,9 +144,13 @@ from web.job_state import job_state  # noqa: E402  (the four states the list sho
 from web.project_blobs import (  # noqa: E402  (source scans in, researcher uploads out)
     IMAGE_REF_RE,
     UPLOAD_MAX_BYTES,
+    delete_blob,
     fetch_blob,
+    pdf_page_count,
     put_blob,
     safe_upload_name,
+    sniff,
+    text_key,
     upload_key,
 )
 from web.sidecar import (  # noqa: E402  (search-result chip bodies, from the blob store)
@@ -178,6 +196,18 @@ STARTUP_BACKOFF_MAX_S = 30.0
 # The edge's alias path cuts a stream silent for ~45 s (handoff F11), so the ping stays
 # well under it whatever SSE_PING_S says.
 SSE_PING_MAX_S = 15.0
+# #3987: the project upload and download routes. Each refuses (429) rather than queues when
+# its slots are full. The download's zip is built on the instance's disk, never in memory:
+# AL2023's /tmp is a tmpfs, so /var/tmp. A host without it (a Windows `make proto-web`)
+# falls back to the platform temp dir.
+UPLOAD_SLOTS = 3
+DOWNLOAD_SLOTS = 1
+SLOTS_RETRY_AFTER_S = 5
+DOWNLOAD_TMP_DIR = "/var/tmp"
+DOWNLOAD_CHUNK = 1024 * 1024
+# Stored rather than deflated: scans and PDFs do not compress, and this tier's CPU also
+# serves every patron's SSE.
+DOWNLOAD_DEFLATE_EXTS = frozenset({".json", ".md", ".txt", ".csv", ".tsv", ".yaml", ".yml", ".jsonl"})
 DEFAULT_TITLE = "New research session"
 DEFAULT_MODEL = "claude-sonnet-4-6"
 EVENTS_PAGE = 500
@@ -282,6 +312,8 @@ class User:
     email: str
     familysearch_id: str | None = None
     sessions_revoked_at: datetime | None = None
+    # 016: set by an operator to refuse the patron at sign-in and on every request.
+    blocked_at: datetime | None = None
 
 
 class ProjectNotOwned(Exception):
@@ -311,6 +343,29 @@ class IdentityMismatch(Exception):
     FamilySearch account. The alpha's upsert never compared the two
     (apps/server/app/auth.py _upsert_user), so any account carrying an allowlisted email
     signed in as the existing user."""
+
+
+class AdmissionRefused(Exception):
+    """A new user's sign-in found ``GENEALOGY_MAX_USERS`` users already (blocked users
+    count). No row is written; the callback answers 403 before any grant."""
+
+
+# #3985: status, API detail and sign-in page text ({who}: the escaped account, {fail}: the
+# try-again line) for each reason ``_admission_refusal`` returns. upsert_user's own outcomes
+# (AdmissionRefused, AdmissionBusy) are answered at the callback's ``except``s.
+ADMISSION_REFUSALS: dict[str, tuple[int, str, str]] = {
+    "blocked": (403, "Account blocked", "{who} is blocked. Ask the administrator."),
+    "not_ready": (503, "Not ready", "Not ready: the allowlist has not loaded yet. {fail}"),
+    "not_allowed": (403, "Account removed from allowlist",
+                    "{who} is not on the allowlist. Ask the administrator to add this exact address, "
+                    "then sign in again."),
+}
+
+
+class AdmissionBusy(Exception):
+    """A capped sign-in could not take the user's row (a returning user) or the admission
+    lock (a new one) within ``grants.QUEUE_LOCK_TIMEOUT_S``; the callback answers 503 and
+    nothing is written."""
 
 
 @dataclass(frozen=True)
@@ -361,7 +416,7 @@ class Store(Protocol):
     async def request_stop(self, session_id: str) -> bool: ...
     # 008: sign-in. store_grant takes CIPHERTEXT; web/auth.py encrypts before the call.
     async def get_user(self, user_id: str) -> User | None: ...
-    async def upsert_user(self, email: str, familysearch_id: str | None) -> User: ...
+    async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None) -> User: ...
     async def is_allowed(self, email: str) -> bool: ...
     async def sync_allowlist(self, emails: set[str]) -> None: ...
     async def revoke_sessions(self, user_id: str) -> None: ...
@@ -385,19 +440,123 @@ class Queue(Protocol):
 # ── pure helpers (tested without I/O) ────────────────────────────────────────────
 
 
+def _refuse_declared_oversize(request: Request, detail: str) -> None:
+    """413 on a declared Content-Length over the upload cap, before anything is read; 400 on
+    one that is not a number. An absent one passes: the routes check sizes again."""
+    declared = request.headers.get("content-length")
+    if declared is None:
+        return
+    try:
+        too_big = int(declared) > UPLOAD_MAX_BYTES
+    except ValueError:
+        raise HTTPException(status_code=400, detail="bad content-length") from None
+    if too_big:
+        raise HTTPException(status_code=413, detail=detail)
 
 
-def _pg_dsn() -> str:
-    """The web tier's Postgres DSN, resolved as the lifespan resolves it (``PgStore``).
+def _once(fn: Callable[[], None]) -> Callable[[], None]:
+    """``fn`` callable any number of times, run at most once: a semaphore released twice
+    would admit one download too many for the life of the process."""
+    done = False
+
+    def run() -> None:
+        nonlocal done
+        if not done:
+            done = True
+            fn()
+
+    return run
+
+
+def _download_tmp_dir() -> str | None:
+    """``DOWNLOAD_TMP_DIR`` when it exists, else None (the platform temp dir)."""
+    return DOWNLOAD_TMP_DIR if os.path.isdir(DOWNLOAD_TMP_DIR) else None
+
+
+def _download_files(
+    docs: Any, index: list[tuple[str, str, int]]
+) -> tuple[list[feedback.ProjectFile], list[str]]:
+    """``feedback.project_files`` plus what it left out that a patron would miss: stale copies
+    and files over its 25 MiB cap. Paths with a dot segment (the engine's staging) are
+    internal and not named."""
+    files, _stale = feedback.project_files(docs, index)
+    kept = {f.rel for f in files}
+    left_out = sorted({rel for rel in [*docs, *(key for key, _s3, _n in index)]
+                       if rel not in kept and not any(p.startswith(".") or not p for p in rel.split("/"))})
+    return files, left_out
+
+
+def _build_project_zip(out: Any, files: list[feedback.ProjectFile], get: Callable[[str], bytes],
+                       left_out: list[str] = ()) -> int:
+    """Write ``files`` into a zip on ``out``, fetching one blob at a time and dropping it
+    once written; ``left_out`` and any blob that cannot be read are named in
+    ``MISSING.txt``. Returns the zip's size and leaves ``out`` at offset 0. Synchronous
+    (``get`` is a blocking S3 read): run it in a thread."""
+    missing: list[str] = list(left_out)
+    with zipfile.ZipFile(out, "w", allowZip64=True) as zf:
+        for f in files:
+            data = f.data
+            if data is None:
+                try:
+                    data = get(f.s3_key or "")
+                except Exception:  # noqa: BLE001 - one unreadable blob must not cost the download
+                    missing.append(f.rel)
+                    continue
+            dot = f.rel.rfind(".")
+            deflate = dot > 0 and f.rel[dot:].lower() in DOWNLOAD_DEFLATE_EXTS
+            zf.writestr(f.rel, data, compress_type=zipfile.ZIP_DEFLATED if deflate else zipfile.ZIP_STORED)
+            del data
+        if missing:
+            note = ("These files are not in this download (a stale copy, over 25 MiB, or "
+                    "could not be read):\n") + "".join(
+                f"{rel}\n" for rel in missing)
+            zf.writestr("MISSING.txt", note, compress_type=zipfile.ZIP_DEFLATED)
+    size = out.tell()
+    out.seek(0)
+    return size
+
+
+class _CleanupStreamingResponse(StreamingResponse):
+    """A ``StreamingResponse`` that runs ``cleanup`` however the response ends. Neither the
+    body generator's ``finally`` (never run when the client goes before the first chunk)
+    nor ``background`` (skipped on ASGI 2.4's ``ClientDisconnect``) covers every case."""
+
+    def __init__(self, content: Any, cleanup: Callable[[], None], **kw: Any) -> None:
+        super().__init__(content, **kw)
+        self._cleanup = cleanup
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        try:
+            await super().__call__(scope, receive, send)
+        finally:
+            self._cleanup()
+
+
+
+
+def _pg_connect_sync(request: Request, **kw: Any):
+    """A synchronous connection from the lifespan's credentials (``app.state.pg_creds``),
+    the holder ``PgStore`` reads, so a rotation one path recovers from reaches the other.
 
     `_sidecar`, `_image` and the upload route below open their own SYNCHRONOUS connection --
     `fetch_sidecar`, `fetch_blob` and `put_blob` are sync, and `app.state.store` is async --
-    so they cannot borrow the store's. They referenced a bare `PG_DSN` that this module has
-    never defined, which made all three raise `NameError` and answer 500 on every call
-    that got past validation. Nothing caught it: the route tests stub the client, and
-    `make harness-lint`'s F821 pass covered `eval/harness` but not `apps/server`.
+    so they cannot borrow the store's. They once referenced a bare `PG_DSN` this module
+    never defined, which made all three answer 500; the route tests stub the client.
     """
-    return os.environ.get("PG_DSN") or DEFAULT_PG_DSN
+    import psycopg
+
+    creds = request.app.state.pg_creds
+    if creds is None:  # no lifespan ran: a test's ASGITransport
+        creds = request.app.state.pg_creds = _pg_creds_from_env()
+    return pg_credentials.connect(creds, lambda d, **k: psycopg.connect(d, **k), **kw)
+
+
+def _pg_creds_from_env() -> PgCredentials:
+    """``PG_DSN`` or ``PG_SAS_OBJECT`` (U29); a configuration error raises ``RuntimeError``."""
+    creds = PgCredentials.from_env(dsn_var="PG_DSN", sas_var="PG_SAS_OBJECT", default=DEFAULT_PG_DSN)
+    if creds.problem:
+        raise RuntimeError(creds.problem)
+    return creds
 
 
 # ── rows ─────────────────────────────────────────────────────────────────────────
@@ -605,8 +764,9 @@ def ready_label(exc: BaseException) -> str:
 
 
 def redact(text: str) -> str:
-    """A message for the log, with any ``scheme://user:password@`` taken out."""
-    return _DSN_CREDENTIALS.sub("", text)
+    """A message for the log, with any ``scheme://user:password@`` and any password read
+    from SAS taken out."""
+    return pg_credentials.scrub(_DSN_CREDENTIALS.sub("", text))
 
 
 def check_out(state: str) -> dict[str, Any]:
@@ -617,19 +777,66 @@ def check_out(state: str) -> dict[str, Any]:
 # ── Postgres store ───────────────────────────────────────────────────────────────
 
 
+# #3980: the optional pool's bounds. A borrow waits at most POOL_TIMEOUT_S, as a direct
+# connect does (U23's connect_timeout); a failing background connect keeps retrying on its
+# backoff for at most POOL_RECONNECT_TIMEOUT_S (psycopg_pool's default is 300 s), so a borrow
+# after Postgres returns starts a fresh attempt instead of waiting out a long backoff.
+POOL_TIMEOUT_S = 10.0
+POOL_RECONNECT_TIMEOUT_S = 10.0
+# Each hand-out check's own cap, inside POOL_TIMEOUT_S: a connection whose peer went silent
+# (no RST) would otherwise hold the check until the kernel gives up, about 15 minutes.
+POOL_CHECK_TIMEOUT_S = 2.0
+
+
+def _abandon_check(conn: Any, check: asyncio.Future) -> None:
+    """Give up on a hand-out check still running: close the socket, which psycopg would
+    otherwise keep waiting on even to cancel, so the check ends and the pool discards it."""
+    if not check.done():
+        conn.pgconn.finish()
+        check.cancel()
+    check.add_done_callback(lambda f: f.cancelled() or f.exception())
+
+
+def pool_max_size() -> int | None:
+    """``PG_POOL_MAX_SIZE`` (#3980): the query pool's size, or None (unset) for one
+    connection per call, the handoff's behaviour. Anything but a positive integer refuses."""
+    return auth.positive_int_env("PG_POOL_MAX_SIZE")
+
+
 class PgStore:
-    """One AsyncConnection per call -- streams included, so an open stream costs three or
-    four short connects per poll. n=1 in the prototype; a pool is a production concern.
+    """Queries run on ``_connect``: one AsyncConnection per call by default -- streams
+    included, so an open stream costs three or four short connects per poll -- or, with
+    ``pool_max_size`` (``PG_POOL_MAX_SIZE``, #3980), a connection borrowed from a
+    ``psycopg_pool`` pool that checks each one as it hands it out, so one the server closed
+    while idle (Neon does) is replaced rather than handed to a query. The lifespan opens and
+    closes the pool. Readiness, the schema check and each grant refresh (``refresh_grant``)
+    always connect on their own (``_aconn``); the refresher loop's ``due_grant_users`` borrows.
 
     Connections are ``autocommit=True``: a read is one round trip, and the writers that
-    need several statements to land together say so with ``conn.transaction()``."""
+    need several statements to land together say so with ``conn.transaction()``. Nothing on
+    ``_connect`` sets session state: lock timeouts are transaction-local, and the session
+    advisory locks live on ``_grant_connect``. So a pooled connection carries nothing to its
+    next borrower."""
 
-    def __init__(self, dsn: str) -> None:
-        self.dsn = dsn
+    def __init__(self, creds: PgCredentials | str, *, pool_max_size: int | None = None) -> None:
+        self.creds = PgCredentials.fixed(creds) if isinstance(creds, str) else creds
+        self.pool_max_size = pool_max_size
+        self._pool: Any = None
         # U10: the one readiness probe in flight, shared by concurrent /api/health calls,
         # and the postgres check's last outcome for the transition log.
         self._ready_task: asyncio.Task | None = None
         self._ready_last: bool | None = None
+
+    @property
+    def dsn(self) -> str:
+        return self.creds.cached() or ""
+
+    async def _aconn(self, **kw: Any):
+        """Every connection this store opens: re-resolves once on an invalid password (U29)."""
+        import psycopg
+
+        return await pg_credentials.aconnect(
+            self.creds, lambda d, **k: psycopg.AsyncConnection.connect(d, **k), **kw)
 
     async def check_ready(self, timeout_s: float | None = None) -> dict[str, Any]:
         """``{ok, checks: {postgres}}`` from a connection of its own that must see every
@@ -664,10 +871,8 @@ class PgStore:
         return {"ok": check["ok"], "checks": {"postgres": check}}
 
     async def _probe_postgres(self) -> None:
-        import psycopg
-
-        conn = await psycopg.AsyncConnection.connect(
-            self.dsn, autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
+        conn = await self._aconn(
+            autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
             options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
         )
         try:
@@ -680,12 +885,91 @@ class PgStore:
             raise ReadyCheckError(f"schema: missing {names}", f"web tables or functions missing: {names}")
 
     async def _connect(self):
-        import psycopg
+        """An async context manager over one query connection: a pooled one, returned to the
+        pool on exit, or a connection of its own, closed on exit. Used as
+        ``async with await self._connect() as conn``."""
+        if self._pool is not None:
+            return self._borrow()
         from psycopg.rows import dict_row
 
         # U23: a connect to a vanished host fails in 10 s rather than the OS's TCP timeout.
-        return await psycopg.AsyncConnection.connect(self.dsn, row_factory=dict_row, autocommit=True,
-                                                     connect_timeout=10)
+        return await self._aconn(row_factory=dict_row, autocommit=True, connect_timeout=10)
+
+    @contextlib.asynccontextmanager
+    async def _borrow(self):
+        """A pooled connection that has just answered a check, within one POOL_TIMEOUT_S.
+        A dead one is discarded (the pool replaces it in the background) and the next is
+        tried at once. The pool's own ``check=`` would sleep its reconnect backoff (1 s, 2 s,
+        4 s...) after each failure, and Neon suspending an idle compute kills every pooled
+        connection together. Each check is capped at POOL_CHECK_TIMEOUT_S, for a peer that
+        went silent rather than closing; a cancelled borrow gives its connection back."""
+        from psycopg_pool import AsyncConnectionPool, PoolTimeout
+
+        pool = self._pool
+        deadline = time.monotonic() + POOL_TIMEOUT_S
+        for _ in range(pool.max_size + 1):
+            conn = await pool.getconn(max(deadline - time.monotonic(), 0.001))
+            check = asyncio.ensure_future(AsyncConnectionPool.check_connection(conn))
+            try:
+                limit = min(POOL_CHECK_TIMEOUT_S, max(deadline - time.monotonic(), 0.001))
+                done, _ = await asyncio.wait({check}, timeout=limit)
+                if not done:
+                    raise TimeoutError(f"the connection check did not answer in {limit:.1f}s")
+                check.result()
+            except Exception:  # noqa: BLE001 - a dead or silent connection; putconn discards it
+                _abandon_check(conn, check)
+                await pool.putconn(conn)
+                continue
+            except BaseException:  # cancellation (a closed SSE tab, a timed-out step): give it back
+                _abandon_check(conn, check)
+                await pool.putconn(conn)
+                raise
+            try:
+                async with conn:
+                    yield conn
+            finally:
+                await pool.putconn(conn)
+            return
+        raise PoolTimeout(f"no live connection in {pool.max_size + 1} hand-outs")
+
+    async def open_pool(self) -> None:
+        """Open the query pool when ``pool_max_size`` is set; a no-op otherwise, so no
+        ``psycopg_pool`` object exists. Never waits for a connection: the tier listens and
+        reports 503 while Postgres is down (U10 D8). Every pooled connect goes through
+        ``pg_credentials.aconnect``, so it resolves the current DSN and re-reads SAS once on
+        an invalid password (U29), as ``_aconn`` does; the pool's own conninfo is unused.
+        ``kwargs`` names no ``sslmode``/``sslrootcert``: libpq reads ``PGSSL*`` from the
+        environment."""
+        if self.pool_max_size is None or self._pool is not None:
+            return
+        import psycopg
+        from psycopg.rows import dict_row
+        from psycopg_pool import AsyncConnectionPool
+
+        creds = self.creds
+
+        class CredentialsConnection(psycopg.AsyncConnection):
+            @classmethod
+            async def connect(cls, conninfo: str = "", **kwargs: Any):
+                return await pg_credentials.aconnect(
+                    creds, lambda d, **k: super(CredentialsConnection, cls).connect(d, **k), **kwargs)
+
+        self._pool = AsyncConnectionPool(
+            "", connection_class=CredentialsConnection, open=False, name="web",
+            min_size=0, max_size=self.pool_max_size,
+            timeout=POOL_TIMEOUT_S, reconnect_timeout=POOL_RECONNECT_TIMEOUT_S,
+            # prepare_threshold=None: psycopg prepares a query server-side after five runs on
+            # one connection, and a pooled one lives long enough; a migration that changes a
+            # result type would then fail that statement until the connection expired.
+            kwargs={"row_factory": dict_row, "autocommit": True, "connect_timeout": 10,
+                    "prepare_threshold": None},
+        )
+        await self._pool.open(wait=False)
+
+    async def close_pool(self) -> None:
+        pool, self._pool = self._pool, None
+        if pool is not None:
+            await pool.close()
 
     async def verify_schema(self, sql_dir: Path = SQL_DIR) -> list[str]:
         """The ledger ``migrate.py`` keeps against the files under ``sql_dir``: the shipped
@@ -695,11 +979,9 @@ class PgStore:
         migrated. A connection of its own with positional rows and a server-side
         statement_timeout, like ``_probe_postgres``, and awaited rather than run on a
         thread, so the shared startup budget can cancel it."""
-        import psycopg
-
         shipped = migrate.load(sql_dir)
-        conn = await psycopg.AsyncConnection.connect(
-            self.dsn, autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
+        conn = await self._aconn(
+            autocommit=True, connect_timeout=READY_CONNECT_TIMEOUT_S,
             options=f"-c statement_timeout={READY_STATEMENT_TIMEOUT_MS}",
         )
         try:
@@ -709,7 +991,7 @@ class PgStore:
             await conn.close()
         found = migrate.verdict(shipped, migrate.ledger_from_rows(exists, rows))
         if found.label is not None:
-            raise ReadyCheckError(found.label, f"{found.label}; run migrate.py with MIGRATE_PG_DSN")
+            raise ReadyCheckError(found.label, f"{found.label}; run migrate.py with MIGRATE_PG_DSN or MIGRATE_PG_SAS_OBJECT")
         return [m.name for m in shipped]
 
     @staticmethod
@@ -1130,10 +1412,10 @@ class PgStore:
     def _user(r: dict[str, Any]) -> User:
         return User(
             id=r["id"], email=r["email"], familysearch_id=r["familysearch_id"],
-            sessions_revoked_at=r["sessions_revoked_at"],
+            sessions_revoked_at=r["sessions_revoked_at"], blocked_at=r["blocked_at"],
         )
 
-    _USER = "SELECT id, email, familysearch_id, sessions_revoked_at FROM users"
+    _USER = "SELECT id, email, familysearch_id, sessions_revoked_at, blocked_at FROM users"
 
     async def get_user(self, user_id: str) -> User | None:
         async with await self._connect() as conn:
@@ -1141,26 +1423,57 @@ class PgStore:
             row = await cur.fetchone()
         return self._user(row) if row else None
 
-    async def upsert_user(self, email: str, familysearch_id: str | None) -> User:
+    async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None) -> User:
         """The user for this email, created on first sign-in. The FamilySearch id is
         pinned on first sight; a later sign-in presenting a DIFFERENT one raises
-        IdentityMismatch (trust on first use)."""
+        IdentityMismatch (trust on first use). A blocked user is returned unpinned, so the
+        caller's refusal writes nothing.
+
+        With ``max_users`` (#3985, ``GENEALOGY_MAX_USERS``), an existing user is returned
+        whatever the count, without the admission lock; a new one is inserted only while
+        ``users`` holds fewer rows, else AdmissionRefused. Only a new email takes the
+        tier-wide admission lock, and counts and inserts under it, so two sign-ins at cap-1
+        cannot both pass; a wait past ``grants.QUEUE_LOCK_TIMEOUT_S`` on that lock or on the
+        user's row raises AdmissionBusy."""
+        from psycopg import errors
+
         email = email.strip().lower()
-        async with await self._connect() as conn:
-            async with conn.transaction():
-                await conn.execute(
-                    "INSERT INTO users (id, email) VALUES (%s, %s) ON CONFLICT (email) DO NOTHING",
-                    ("usr_" + uuid.uuid4().hex[:16], email),
-                )
-                cur = await conn.execute(self._USER + " WHERE email = %s FOR UPDATE", (email,))
-                user = self._user(await cur.fetchone())
-                if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
-                    raise IdentityMismatch(email)
-                if familysearch_id and not user.familysearch_id:
-                    await conn.execute(
-                        "UPDATE users SET familysearch_id = %s WHERE id = %s", (familysearch_id, user.id)
-                    )
-                    user = User(user.id, user.email, familysearch_id, user.sessions_revoked_at)
+        new_id = "usr_" + uuid.uuid4().hex[:16]
+        insert = "INSERT INTO users (id, email) VALUES (%s, %s) ON CONFLICT (email) DO NOTHING"
+        select = self._USER + " WHERE email = %s FOR UPDATE"
+        try:
+            async with await self._connect() as conn:
+                async with conn.transaction():
+                    row = None
+                    if max_users is None:
+                        await conn.execute(insert, (new_id, email))
+                    else:
+                        # One bounded wait for both locks below. An existing user, row-locked
+                        # so a concurrent delete waits; else the admission lock, the same read
+                        # again (a sign-in for this email may have inserted while this one
+                        # waited), the count, the insert.
+                        await conn.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(),))
+                        row = await (await conn.execute(select, (email,))).fetchone()
+                        if row is None:
+                            await conn.execute(grants.ADMISSION_LOCK_SQL, (grants.ADMISSION_LOCK_NS,))
+                            row = await (await conn.execute(select, (email,))).fetchone()
+                        if row is None:
+                            cur = await conn.execute("SELECT count(*) AS n FROM users")
+                            if (await cur.fetchone())["n"] >= max_users:
+                                raise AdmissionRefused(email)
+                            await conn.execute(insert, (new_id, email))
+                    if row is None:
+                        row = await (await conn.execute(select, (email,))).fetchone()
+                    user = self._user(row)
+                    if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
+                        raise IdentityMismatch(email)
+                    if familysearch_id and not user.familysearch_id and user.blocked_at is None:
+                        await conn.execute(
+                            "UPDATE users SET familysearch_id = %s WHERE id = %s", (familysearch_id, user.id)
+                        )
+                        user = replace(user, familysearch_id=familysearch_id)
+        except errors.LockNotAvailable as exc:
+            raise AdmissionBusy(email) from exc
         return user
 
     async def is_allowed(self, email: str) -> bool:
@@ -1227,12 +1540,9 @@ class PgStore:
     async def _grant_connect(self):
         """A connection of its own for one refresh: its session advisory locks die with it,
         and the server's keepalives end its backend if this host vanishes mid-refresh."""
-        import psycopg
         from psycopg.rows import dict_row
 
-        return await psycopg.AsyncConnection.connect(
-            self.dsn, row_factory=dict_row, autocommit=True, options=grants.GRANT_KEEPALIVE_OPTIONS,
-        )
+        return await self._aconn(row_factory=dict_row, autocommit=True, options=grants.GRANT_KEEPALIVE_OPTIONS)
 
     async def refresh_grant(
         self, user_id: str, *, refresh: Callable[[str], Awaitable[grants.RefreshResult]], refresh_age_s: float,
@@ -1499,17 +1809,20 @@ def create_app(
     stream_max_polls: int | None = None,
     blobs: Any = None,
 ) -> FastAPI:
-    """Factory. With no arguments the lifespan builds PgStore(PG_DSN) + SqsQueue(QUEUE_URL)
-    from env, refusing to start without a QUEUE_URL; tests pass fakes and shrink the timings.
+    """Factory. With no arguments the lifespan builds PgStore(PG_DSN or PG_SAS_OBJECT) + SqsQueue(QUEUE_URL)
+    from env, refusing to start without a QUEUE_URL while the chat is on (#3985,
+    ``GENEALOGY_CHAT``, read once here); tests pass fakes and shrink the timings.
     ``blobs`` (U20) is the feedback bucket (``blobstore.S3Blobs``); None with no store
     passed means the lifespan builds it from GENEALOGY_S3_*."""
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         auth.preflight()  # before anything binds: a misconfigured tier must not come up
+        pool_size = pool_max_size()  # #3980: a bad PG_POOL_MAX_SIZE refuses here too
         # U7: a half SQS pair refuses here, before a startup step or its background retry
-        # exists, so the refusal leaves nothing running.
-        if app.state.queue is None:
+        # exists, so the refusal leaves nothing running. #3985: with the chat off there is no
+        # queue to need, and app.state.queue stays None.
+        if app.state.chat and app.state.queue is None:
             # U11: no queue means a turn is recorded and nothing ever runs it.
             queue_url = (os.environ.get("QUEUE_URL") or "").strip()
             if not queue_url:
@@ -1533,9 +1846,18 @@ def create_app(
             log.info("%s", blobstore.describe(os.environ))
         # U10 D8: the store goes on app.state before either step, so every route and
         # /api/health see it while Postgres is down; neither step can stop the tier listening.
+        # U29: SAS unreachable, or slower than STARTUP_BUDGET_S, is an outage (the tier
+        # listens, readiness reports it); a configuration error refuses here.
+        creds = _pg_creds_from_env()
+        try:
+            await asyncio.to_thread(creds.check_at_start, STARTUP_BUDGET_S)
+        except pg_credentials.PgCredentialsError as exc:
+            raise RuntimeError(str(exc)) from None
+        app.state.pg_creds = getattr(app.state.store, "creds", None) or creds
+        log.info("postgres: pg_credentials=%s", app.state.pg_creds.description)
         steps: dict[str, Callable[[], Awaitable[Any]]] = {}
         if app.state.store is None:
-            app.state.store = PgStore(os.environ.get("PG_DSN") or DEFAULT_PG_DSN)
+            app.state.store = PgStore(creds, pool_max_size=pool_size)
             steps["schema"] = app.state.store.verify_schema
         store = app.state.store
         if hasattr(store, "sync_allowlist"):
@@ -1557,8 +1879,9 @@ def create_app(
         failing = {name: step for name, step in steps.items() if startup[name] != "ok"}
         retry = asyncio.create_task(retry_startup(startup, failing)) if failing else None
         # U3: only a store that can refresh (PgStore) gets the loop; a test's FakeStore never.
+        # #3985: nor a chat-off tier, which runs no turn a grant could serve.
         refresher = None
-        if hasattr(store, "refresh_grant"):
+        if app.state.chat and hasattr(store, "refresh_grant"):
             interval = grants.env_seconds(os.environ, "FS_GRANT_REFRESH_INTERVAL_S", grants.DEFAULT_REFRESH_INTERVAL_S)
             refresher = asyncio.create_task(grant_refresh_loop(
                 store, refresh=auth.refresh_tokens,
@@ -1566,6 +1889,12 @@ def create_app(
                 refresh_age_s=grants.env_seconds(os.environ, "FS_GRANT_REFRESH_AGE_S", grants.DEFAULT_REFRESH_AGE_S),
             ))
         try:
+            # #3980: inside the try, so a startup cancelled from here on still closes it, and
+            # after the inline steps, which run on connections of their own exactly as with
+            # no pool: the tier listens at once with Postgres down, each check naming its
+            # cause. Opening never waits for a connection (U10 D8).
+            if hasattr(store, "open_pool"):
+                await store.open_pool()
             yield
         finally:
             for task in (retry, refresher):
@@ -1573,14 +1902,22 @@ def create_app(
                     task.cancel()
                     with contextlib.suppress(asyncio.CancelledError):
                         await task
+            if hasattr(store, "close_pool"):
+                await store.close_pool()
 
     # U12: no /docs, /redoc or /openapi.json -- FastAPI serves them unauthenticated on a
     # public host, and nothing in the repo reads them.
     app = FastAPI(title="Genealogy search-agent prototype - web tier", lifespan=lifespan,
                   docs_url=None, redoc_url=None, openapi_url=None)
+    # #3985: read once, so the routes and the lifespan cannot disagree; a bad value refuses here.
+    app.state.chat = auth.chat_enabled()
+    # #3987: None (unset), True or False; a bad value refuses here, as GENEALOGY_CHAT does.
+    app.state.uploads = auth.uploads_setting()
     app.state.store = store
-    app.state.queue = queue
+    # #3985: a chat-off tier has no queue, even when a caller passes one.
+    app.state.queue = queue if app.state.chat else None
     app.state.blobs = blobs
+    app.state.pg_creds = getattr(store, "creds", None)
     # U10: what the lifespan's startup steps reached (`ok`, `pending` or a label). None
     # when no lifespan ran (a test's ASGITransport), which leaves the allowlist ungated.
     app.state.startup = None
@@ -1684,6 +2021,23 @@ def create_app(
         startup = request.app.state.startup
         return startup is None or startup.get("allowlist", "ok") == "ok"
 
+    async def _admission_refusal(request: Request, email: str, user: User | None) -> str | None:
+        """The one admission check (#3985), for ``current_user`` and ``/callback``: the
+        ``ADMISSION_REFUSALS`` reason to refuse with, or None. A blocked user is refused always, FamilySearch
+        configured or not. Otherwise, with FamilySearch configured and no
+        ``GENEALOGY_MAX_USERS``, the allowlist decides (fail-closed until it has loaded); with
+        a cap, nothing here: an existing user is admitted, and a new one only through
+        ``upsert_user(max_users=...)``. ``user`` is None before the callback's upsert, so the
+        allowlist refuses a stranger before any row is written."""
+        if user is not None and user.blocked_at is not None:
+            return "blocked"
+        if auth.familysearch_configured() and auth.max_users() is None:
+            if not _allowlist_ready(request):
+                return "not_ready"
+            if not await _store(request).is_allowed(email):
+                return "not_allowed"
+        return None
+
     async def current_user(request: Request) -> User:
         """The signed-in patron, or 401/403. On every /api/sessions and /api/projects route."""
         data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
@@ -1695,11 +2049,9 @@ def create_app(
             raise HTTPException(status_code=401, detail="Unknown user")
         if auth.revoked(data.get("iat"), user.sessions_revoked_at):
             raise HTTPException(status_code=401, detail="Session revoked")
-        if auth.familysearch_configured():
-            if not _allowlist_ready(request):
-                raise HTTPException(status_code=503, detail="Not ready")
-            if not await store.is_allowed(user.email):
-                raise HTTPException(status_code=403, detail="Account removed from allowlist")
+        if (reason := await _admission_refusal(request, user.email, user)) is not None:
+            status, detail, _page = ADMISSION_REFUSALS[reason]
+            raise HTTPException(status_code=status, detail=detail)
         return user
 
     async def _session(request: Request, session_id: str, user: User) -> SessionRow:
@@ -1721,6 +2073,12 @@ def create_app(
 
     # -- health ---------------------------------------------------------------------
 
+    @app.get("/livez")
+    async def livez() -> dict:
+        """Liveness (#3985): the process answers. Touches no store and no startup step, so a
+        Postgres outage never cycles an instance; in both chat modes."""
+        return {"ok": True}
+
     @app.get("/api/health")
     async def health(request: Request) -> JSONResponse:
         """Readiness (U10): 200 or 503, the same keys either way so every script reading
@@ -1731,7 +2089,8 @@ def create_app(
         body: dict[str, Any] = {
             "ok": True,
             "tier": "proto-web",
-            "queue": type(state.queue).__name__,
+            # #3985: null with the chat off, never "NoneType".
+            "queue": None if state.queue is None else type(state.queue).__name__,
             "poll_s": state.poll_s,
             "ping_s": state.ping_s,
             "base_path": state.base_path,
@@ -1760,7 +2119,11 @@ def create_app(
 
     @app.get("/auth/config")
     async def auth_config() -> dict:
-        return {"familysearch": auth.familysearch_configured(), "devLogin": auth.dev_login_enabled()}
+        config = {"familysearch": auth.familysearch_configured(), "devLogin": auth.dev_login_enabled()}
+        # #3987: only when UPLOADS_ENABLED is set, so an unset tier answers as it always did.
+        if app.state.uploads is not None:
+            config["uploads"] = app.state.uploads
+        return config
 
     @app.get("/auth/me")
     async def auth_me(user: User = Depends(current_user)) -> dict:
@@ -1804,8 +2167,9 @@ def create_app(
         """The registered FamilySearch redirect: a TOP-LEVEL /callback (auth.redirect_uri).
 
         Order matters, and each refusal writes nothing: state, code exchange, identity,
-        allowlist, then the user (refused if the email is pinned to another FamilySearch
-        account), and only then the grant -- encrypted here, so the store sees ciphertext.
+        allowlist (none under ``GENEALOGY_MAX_USERS``), then the user (refused if the email is
+        pinned to another FamilySearch account, if it is new and the cap is reached, or if it
+        is blocked), and only then the grant -- encrypted here, so the store sees ciphertext.
         The write takes the patron's grant write lock (``PgStore.store_grant``), so it never
         interleaves with a refresh; while a refresher holds the lock past
         ``grants.WRITE_LOCK_TIMEOUT_S`` it answers 503 and the patron signs in again. Every
@@ -1830,23 +2194,32 @@ def create_app(
                 status_code=403,
             )
         store = _store(request)
-        if not _allowlist_ready(request):
-            return HTMLResponse(f"Not ready: the allowlist has not loaded yet. {fail}", status_code=503)
-        if not await store.is_allowed(email):
-            return HTMLResponse(
-                f"The FamilySearch account <strong>{html.escape(email)}</strong> is not on the allowlist. "
-                "Ask the administrator to add this exact address, then sign in again.",
-                status_code=403,
-            )
+
+        def refused(reason: str) -> HTMLResponse:
+            status, _detail, page = ADMISSION_REFUSALS[reason]
+            who = f"The FamilySearch account <strong>{html.escape(email)}</strong>"
+            return HTMLResponse(page.format(who=who, fail=fail), status_code=status)
+
+        if (reason := await _admission_refusal(request, email, None)) is not None:
+            return refused(reason)
         fs_id = identity.get("id")
         try:
-            user = await store.upsert_user(email, str(fs_id) if fs_id else None)
+            user = await store.upsert_user(email, str(fs_id) if fs_id else None, max_users=auth.max_users())
         except IdentityMismatch:
             return HTMLResponse(
                 f"<strong>{html.escape(email)}</strong> is already linked to a different FamilySearch "
                 "account. Sign in with that account, or ask the administrator.",
                 status_code=403,
             )
+        except AdmissionRefused:
+            return HTMLResponse(
+                "This app has reached its user limit, so a new account cannot sign in. Ask the administrator.",
+                status_code=403,
+            )
+        except AdmissionBusy:
+            return HTMLResponse(f"Sign-in is busy; try again. {fail}", status_code=503)
+        if (reason := await _admission_refusal(request, email, user)) is not None:
+            return refused(reason)
         refresh = token_json.get("refresh_token")
         try:
             await store.store_grant(
@@ -1914,12 +2287,16 @@ def create_app(
         return await _image(request, project_id, filename)
 
     # -- sessions -----------------------------------------------------------------
+    # #3985: with the chat on these register on the app, as before; with it off, on a router
+    # nothing includes, so a chat-off tier serves no /api/sessions route. (An included router
+    # stays one lazy entry in app.routes on this FastAPI, which the route sweeps cannot see.)
+    sessions = app if app.state.chat else APIRouter()
 
-    @app.get("/api/sessions")
+    @sessions.get("/api/sessions")
     async def list_sessions(request: Request, user: User = Depends(current_user)) -> list[dict]:
         return [session_out(r) for r in await _store(request).list_sessions(user.id)]
 
-    @app.post("/api/sessions")
+    @sessions.post("/api/sessions")
     async def create_session(body: CreateSessionBody, request: Request, user: User = Depends(current_user)) -> dict:
         try:
             row = await _store(request).create_session(
@@ -1930,7 +2307,7 @@ def create_app(
             raise HTTPException(status_code=404, detail="Project not found") from exc
         return session_out(row)
 
-    @app.post("/api/sessions/{session_id}/continue")
+    @sessions.post("/api/sessions/{session_id}/continue")
     async def continue_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         """U19: a new session on a retired session's project, so its research goes on."""
         row = await _session(request, session_id, user)
@@ -1942,11 +2319,11 @@ def create_app(
             raise HTTPException(status_code=404, detail="Project not found") from exc
         return session_out(new)
 
-    @app.get("/api/sessions/{session_id}")
+    @sessions.get("/api/sessions/{session_id}")
     async def get_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         return session_out(await _session(request, session_id, user))
 
-    @app.patch("/api/sessions/{session_id}")
+    @sessions.patch("/api/sessions/{session_id}")
     async def patch_session(
         session_id: str, body: PatchSessionBody, request: Request, user: User = Depends(current_user)
     ) -> dict:
@@ -1958,11 +2335,11 @@ def create_app(
             raise HTTPException(status_code=404, detail="Session not found")
         return session_out(row)
 
-    @app.post("/api/sessions/{session_id}/resume")
+    @sessions.post("/api/sessions/{session_id}/resume")
     async def resume_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         return session_out(await _session(request, session_id, user))  # nothing to resume: no sandbox
 
-    @app.delete("/api/sessions/{session_id}")
+    @sessions.delete("/api/sessions/{session_id}")
     async def delete_session(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         await _session(request, session_id, user)
         try:
@@ -1976,7 +2353,7 @@ def create_app(
             raise HTTPException(status_code=404, detail="Session not found")
         return {"ok": True}
 
-    @app.get("/api/sessions/{session_id}/state")
+    @sessions.get("/api/sessions/{session_id}/state")
     async def session_state(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         row = await _session(request, session_id, user)
         docs = await _store(request).documents(row.project_id)
@@ -1987,7 +2364,7 @@ def create_app(
             "sidecars": [],
         }
 
-    @app.get("/api/sessions/{session_id}/sidecar/{log_id}")
+    @sessions.get("/api/sessions/{session_id}/sidecar/{log_id}")
     async def session_sidecar(
         session_id: str, log_id: str, request: Request, user: User = Depends(current_user)
     ) -> dict:
@@ -2010,14 +2387,12 @@ def create_app(
         if blobs is None:
             # 404, not 503: a scan reads as ABSENT rather than unimplemented.
             raise HTTPException(status_code=404, detail="no blob store configured")
-        import psycopg
-
         # Off the event loop: psycopg.connect and the S3 GET inside fetch_sidecar
         # are both blocking, and this tier runs ONE uvicorn worker (eb-web/Procfile),
         # so a slow round trip freezes every live SSE stream. The feedback route
         # below already does this; these three did not.
         def _read() -> object:
-            with psycopg.connect(_pg_dsn(), connect_timeout=10) as conn:
+            with _pg_connect_sync(request, connect_timeout=10) as conn:
                 return fetch_sidecar(conn, blobs, project_id, log_id)
 
         blob = await asyncio.to_thread(_read)
@@ -2033,12 +2408,12 @@ def create_app(
         "logs": "There are no sandbox logs on this backend; read the worker's stdout",
     }
 
-    @app.get("/api/sessions/{session_id}/logs")
+    @sessions.get("/api/sessions/{session_id}/logs")
     async def not_in_prototype_get(session_id: str, request: Request, user: User = Depends(current_user)) -> None:
         await _session(request, session_id, user)
         raise HTTPException(status_code=501, detail=_NOT_IN_PROTOTYPE[request.url.path.rsplit("/", 1)[-1]])
 
-    @app.get("/api/sessions/{session_id}/image")
+    @sessions.get("/api/sessions/{session_id}/image")
     async def session_image(
         session_id: str, request: Request, filename: str | None = None,
         user: User = Depends(current_user),
@@ -2063,11 +2438,9 @@ def create_app(
         if blobs is None:
             # 404, not 503: most projects hold no scans, so absent is the honest answer.
             raise HTTPException(status_code=404, detail="no blob store configured")
-        import psycopg
-
         # Off the event loop, for the reason given on the sidecar route above.
         def _read() -> object:
-            with psycopg.connect(_pg_dsn(), connect_timeout=10) as conn:
+            with _pg_connect_sync(request, connect_timeout=10) as conn:
                 return fetch_blob(conn, blobs, project_id, filename)
 
         blob = await asyncio.to_thread(_read)
@@ -2079,7 +2452,7 @@ def create_app(
         # PNG bytes; browsers sniff, and matching the alpha beats a third behaviour.
         return Response(content=blob.body, media_type="image/jpeg")
 
-    @app.post("/api/sessions/{session_id}/files")
+    @sessions.post("/api/sessions/{session_id}/files")
     async def upload_session_file(
         session_id: str,
         request: Request,
@@ -2100,17 +2473,7 @@ def create_app(
         # only then refused 401. The form is parsed below, after auth.
         row = await _session(request, session_id, user)
 
-        # Reject on the declared length before reading anything. `max_part_size` then
-        # caps what is actually read, so a lying or absent Content-Length cannot load
-        # more than the limit into memory.
-        declared = request.headers.get("content-length")
-        if declared is not None:
-            try:
-                if int(declared) > UPLOAD_MAX_BYTES:
-                    raise HTTPException(status_code=413, detail="the file is larger than 25 MB")
-            except ValueError:
-                raise HTTPException(status_code=400, detail="bad content-length") from None
-
+        _refuse_declared_oversize(request, "the file is larger than 25 MB")
         try:
             form = await request.form(max_part_size=UPLOAD_MAX_BYTES)
         except Exception:
@@ -2126,6 +2489,10 @@ def create_app(
                     status_code=400,
                     detail="filename must be a plain basename of letters, digits, dot, dash, space or underscore",
                 )
+            # The spooled size before the read: a chunked body has no Content-Length to
+            # refuse above, and `max_part_size` does not bound a file part.
+            if file.size is not None and file.size > UPLOAD_MAX_BYTES:
+                raise HTTPException(status_code=413, detail="the file is larger than 25 MB")
             body = await file.read()
             if not body:
                 raise HTTPException(status_code=400, detail="the file is empty")
@@ -2141,12 +2508,10 @@ def create_app(
             # missing store is "unavailable", not "absent". Matches the feedback route.
             raise HTTPException(status_code=503, detail="no blob store configured")
         key = upload_key(name)
-        import psycopg
-
         # Off the event loop, for the reason given on the sidecar route above: this one
         # also does an S3 PUT, so it is the longest of the three.
         def _write() -> int:
-            with psycopg.connect(_pg_dsn(), connect_timeout=10) as conn:
+            with _pg_connect_sync(request, connect_timeout=10) as conn:
                 n = put_blob(conn, blobs, row.project_id, key, body, content_type=content_type)
                 conn.commit()
                 return n
@@ -2154,7 +2519,161 @@ def create_app(
         written = await asyncio.to_thread(_write)
         return {"path": key, "sizeBytes": written}
 
-    @app.post("/api/sessions/{session_id}/interrupt", status_code=202)
+    # -- project uploads and the download (#3987) ------------------------------------
+    # Refuse, never queue: a full semaphore answers 429. Checking `locked()` and then
+    # acquiring has no await between them on one loop, so it cannot race.
+    upload_gate = asyncio.Semaphore(UPLOAD_SLOTS)
+    download_gate = asyncio.Semaphore(DOWNLOAD_SLOTS)
+
+    def _busy(what: str) -> HTTPException:
+        return HTTPException(status_code=429, detail=f"too many {what} in progress; try again shortly",
+                             headers={"Retry-After": str(SLOTS_RETRY_AFTER_S)})
+
+    @app.post("/api/projects/{project_id}/files")
+    async def upload_project_file(project_id: str, request: Request, user: User = Depends(current_user)) -> dict:
+        """Store a researcher's file in ``<project>/uploads/``, with its text layer beside it.
+
+        Request: ``multipart/form-data`` with ``file`` (required) and ``text`` (optional, the
+        browser's text layer, a plain field). The file and its text together fit in 25 MB.
+        Response 200: ``{path: "uploads/<name>", sizeBytes, textPath: "uploads/<name>.txt" |
+        null, contentType}`` -- ``contentType`` is sniffed from the bytes, never the
+        client's. The text is stored at ``uploads/<name>.txt``, the name ``project_context``
+        reads; uploading a name again with no ``text`` drops the old one, so the agent
+        never reads the previous file's text.
+
+        Refusals: 404 for a missing or foreign project (before the body is read), and for
+        every project while ``UPLOADS_ENABLED`` is unset or false; 413 over 25 MB; 415 for
+        TIFF and HEIC/HEIF; 422 for a PDF of more than one page with no text; 429 with
+        ``Retry-After`` while ``UPLOAD_SLOTS`` uploads are in flight; 503 with no blob store.
+
+        The page count reads raw bytes with no PDF parser (``pdf_page_count``). A PDF that
+        keeps its pages in compressed object streams undercounts, so a multi-page scan saved
+        that way can be admitted; a single page is never refused. On a chunked body only
+        nginx's ``client_max_body_size`` bounds what Starlette spools before the size check.
+        """
+        await _project(request, project_id, user)
+        if request.app.state.uploads is not True:
+            raise HTTPException(status_code=404, detail="Not found")
+        _refuse_declared_oversize(request, "the file and its text together are larger than 25 MB")
+        if upload_gate.locked():
+            raise _busy("uploads")
+        async with upload_gate:
+            return await _store_project_upload(request, project_id)
+
+    async def _store_project_upload(request: Request, project_id: str) -> dict:
+        too_big = "the file and its text together are larger than 25 MB"
+        # Before the body is spooled: a tier with no store cannot keep it anyway.
+        blobs = request.app.state.blobs
+        if blobs is None:
+            raise HTTPException(status_code=503, detail="no blob store configured")
+        try:
+            form = await request.form(max_part_size=UPLOAD_MAX_BYTES)
+        except Exception:
+            raise HTTPException(status_code=413, detail=too_big) from None
+        try:
+            file = form.get("file")
+            if file is None or not hasattr(file, "read"):
+                raise HTTPException(status_code=400, detail="no file in the request")
+            text_field = form.get("text")
+            if text_field is not None and not isinstance(text_field, str):
+                raise HTTPException(status_code=400, detail="text must be a plain form field")
+            text = (text_field or "").encode("utf-8") if (text_field or "").strip() else b""
+            name = safe_upload_name(file.filename)
+            if name is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="filename must be a plain basename of letters, digits, dot, dash, space or underscore",
+                )
+            if file.size is not None and file.size + len(text) > UPLOAD_MAX_BYTES:
+                raise HTTPException(status_code=413, detail=too_big)
+            body = await file.read()
+        finally:
+            await form.close()
+        if not body:
+            raise HTTPException(status_code=400, detail="the file is empty")
+        if len(body) + len(text) > UPLOAD_MAX_BYTES:
+            raise HTTPException(status_code=413, detail=too_big)
+        kind = sniff(body[:16])
+        if kind.refused:
+            raise HTTPException(status_code=415,
+                                detail=f"{kind.refused} images are not accepted; save the page as JPEG or PNG")
+        if kind.content_type == "application/pdf" and not text and await asyncio.to_thread(pdf_page_count, body) > 1:
+            raise HTTPException(status_code=422, detail=(
+                "a PDF of more than one page needs its text layer; upload it from the browser app, "
+                "or one page at a time"))
+        key, tkey = upload_key(name), text_key(name)
+
+        def _write() -> int:
+            # One transaction for both rows, so the text layer never describes another file.
+            with _pg_connect_sync(request, connect_timeout=10) as conn:
+                n = put_blob(conn, blobs, project_id, key, body, content_type=kind.content_type)
+                if text:
+                    put_blob(conn, blobs, project_id, tkey, text, content_type="text/plain; charset=utf-8")
+                else:
+                    delete_blob(conn, project_id, tkey)
+                conn.commit()
+                return n
+
+        written = await asyncio.to_thread(_write)
+        return {"path": key, "sizeBytes": written, "textPath": tkey if text else None,
+                "contentType": kind.content_type}
+
+    @app.get("/api/projects/{project_id}/download")
+    async def download_project(project_id: str, request: Request, user: User = Depends(current_user)) -> Response:
+        """The whole project as ``application/zip``, ``Content-Disposition: attachment;
+        filename="<project_id>.zip"``, with ``Content-Length``.
+
+        Every file ``feedback.project_files`` returns -- the documents and every blob, minus
+        dot paths, stale copies and any file over 25 MiB (no upload is) -- with no redaction:
+        it is the owner's own project. A stale copy or oversize file left out by that walk,
+        and a blob that cannot be read, is named in ``MISSING.txt``; dot paths (the engine's
+        own staging) are not. 404 for a missing or foreign project and with no blob store; 429 with
+        ``Retry-After`` while a download is in progress.
+
+        Built one object at a time into a temporary file under ``DOWNLOAD_TMP_DIR``, then
+        streamed in 1 MiB chunks, so memory does not grow with the project. The slot is
+        held until the stream ends or the client goes, not until this handler returns. No
+        byte is sent while the zip builds; the web environment's ALB idle timeout is
+        unverified against a large one.
+        """
+        await _project(request, project_id, user)
+        blobs = request.app.state.blobs
+        if blobs is None:
+            raise HTTPException(status_code=404, detail="no blob store configured")
+        if download_gate.locked():
+            raise _busy("downloads")
+        await download_gate.acquire()
+        release = _once(download_gate.release)
+        tmp = None
+        try:
+            store = _store(request)
+            docs, index = await store.documents(project_id), await store.blob_index(project_id)
+            # Off the loop: project_files pretty-prints every document.
+            files, left_out = await asyncio.to_thread(_download_files, docs, index)
+            tmp = tempfile.TemporaryFile(dir=_download_tmp_dir())
+            size = await asyncio.to_thread(_build_project_zip, tmp, files, blobs.get, left_out)
+        except BaseException:
+            if tmp is not None:
+                tmp.close()
+            release()
+            raise
+
+        def cleanup() -> None:
+            tmp.close()
+            release()
+
+        async def chunks() -> AsyncIterator[bytes]:
+            while chunk := await asyncio.to_thread(tmp.read, DOWNLOAD_CHUNK):
+                yield chunk
+
+        filename = re.sub(r"[^A-Za-z0-9._-]", "_", project_id)
+        return _CleanupStreamingResponse(
+            chunks(), cleanup, media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{filename}.zip"',
+                     "Content-Length": str(size)},
+        )
+
+    @sessions.post("/api/sessions/{session_id}/interrupt", status_code=202)
     async def interrupt(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
         """1c: Stop. This used to answer 501 -- "the worker owns the turn" -- and the whole
         design rests on it, so it is phase-1 work rather than a later nicety.
@@ -2171,7 +2690,7 @@ def create_app(
 
     # -- turns and events ---------------------------------------------------------
 
-    @app.post("/api/sessions/{session_id}/messages", status_code=202)
+    @sessions.post("/api/sessions/{session_id}/messages", status_code=202)
     async def post_message(
         session_id: str, body: MessageBody, request: Request, user: User = Depends(current_user)
     ) -> dict:
@@ -2224,7 +2743,7 @@ def create_app(
             ) from exc
         return {"turn_id": turn.turn_id, "seq": turn.seq, "message_id": message_id, "queued": held}
 
-    @app.get("/api/sessions/{session_id}/events")
+    @sessions.get("/api/sessions/{session_id}/events")
     async def get_events(
         session_id: str, request: Request, after: str | None = None, user: User = Depends(current_user)
     ) -> dict:
@@ -2244,7 +2763,7 @@ def create_app(
             "next_after": rows[-1].seq if rows else cursor,
         }
 
-    @app.get("/api/sessions/{session_id}/events/stream")
+    @sessions.get("/api/sessions/{session_id}/events/stream")
     async def stream_events(
         session_id: str, request: Request, after: str | None = None, user: User = Depends(current_user)
     ) -> StreamingResponse:

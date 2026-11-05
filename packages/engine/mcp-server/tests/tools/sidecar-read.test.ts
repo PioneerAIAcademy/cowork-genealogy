@@ -522,6 +522,103 @@ describe("sidecar_read: a staged transcription, and several refs", () => {
     expect(r.errors[0]).toMatch(/not a staged transcription.*record_read/);
   });
 
+  // ─── a held ref that outlived its staged file (issue #2490) ────────────────
+  // Logging removes the staged file, and an agent still holds the ref.
+
+  const consume = async (ref: string, tool = "image_transcribe") => {
+    const store = getProjectStore();
+    const staged = JSON.parse(await store.readText(dir, ref));
+    await store.writeJson(dir, "results/log_001.json", { log_id: "log_001", tool, retrieved: staged.retrieved, returned_count: 1, payload: staged.payload });
+    await store.remove(dir, ref);
+    await store.writeJson(dir, "research.json", { log: [{ id: "log_001", tool, results_ref: "results/log_001.json", staged_ref: ref }] });
+  };
+  const stageRecord = async () =>
+    (await stageSearchResults({
+      projectPath: dir,
+      tool: "record_read",
+      response: { query: { recordId: "MXHY-TP4" }, results: [{ recordId: "MXHY-TP4", gedcomx: { persons: [] } }] },
+    }))!.resultsRef;
+  const stageHits = async () =>
+    (await stageSearchResults({
+      projectPath: dir,
+      tool: "fulltext_search",
+      response: { query: {}, results: [{ id: "ark:/61903/1:1:QVS9-DHDB", textDocument: "Harold Dean Whitaker, 91" }] },
+    }))!.resultsRef;
+  /** One character off, which `resolveStagedRef` corrects. */
+  const nearCopy = (ref: string) => ref.replace(/.\.json$/, (m) => `${m[0] === "0" ? "1" : "0"}.json`);
+
+  it("reads a page through its log entry after extraction consumed the staged ref", async () => {
+    const ref = await stageTranscription("Harold Dean Whitaker, 91");
+    await consume(ref);
+    expect(await sidecarRead({ projectPath: dir, ref })).toMatchObject({ ok: true, ref, content: "Harold Dean Whitaker, 91" });
+  });
+
+  it("reads a full-text hit through its log entry after the staged ref is consumed", async () => {
+    const ref = await stageHits();
+    await consume(ref, "fulltext_search");
+    const r = await sidecarRead({ projectPath: dir, ref: `${ref}#QVS9-DHDB` });
+    expect(r).toMatchObject({ ok: true, content: "Harold Dean Whitaker, 91", logId: "log_001" });
+  });
+
+  it("says a staged ref is gone, not that it is the wrong kind of sidecar", async () => {
+    const ref = await stageTranscription("Harold Dean Whitaker, 91");
+    await getProjectStore().remove(dir, ref);
+    const r = await sidecarRead({ projectPath: dir, ref });
+    expect(r).toMatchObject({ ok: false, reason: "not_found" });
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/image_transcribe/);
+    expect(r.errors[0]).toMatch(/never staged/);
+    expect(r.errors[0]).not.toMatch(/record_read/);
+  });
+
+  it("a staged ref whose log entry has no results_ref is gone", async () => {
+    const ref = await stageTranscription("Harold Dean Whitaker, 91");
+    await getProjectStore().remove(dir, ref);
+    await getProjectStore().writeJson(dir, "research.json", { log: [{ id: "log_001", tool: "image_transcribe", staged_ref: ref }] });
+    expect(await sidecarRead({ projectPath: dir, ref })).toMatchObject({ ok: false, reason: "not_found" });
+  });
+
+  it("a consumed record_read ref is refused at its finalized path", async () => {
+    const ref = await stageRecord();
+    await consume(ref, "record_read");
+    const r = await sidecarRead({ projectPath: dir, ref });
+    expect(r).toMatchObject({ ok: false, reason: "invalid_ref" });
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/results\/log_001\.json.*record_read/);
+  });
+
+  it("a near-copy of a live full-text file gets the #hits refusal", async () => {
+    const r = await sidecarRead({ projectPath: dir, ref: nearCopy(await stageHits()) });
+    expect(r).toMatchObject({ ok: false, reason: "invalid_ref" });
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/#hits/);
+  });
+
+  it("still reads a near-copy of a live staged page", async () => {
+    const ref = await stageTranscription("Harold Dean Whitaker, 91");
+    expect(await sidecarRead({ projectPath: dir, ref: nearCopy(ref) })).toMatchObject({ ok: true, content: "Harold Dean Whitaker, 91" });
+  });
+
+  it("a near-copy of a live record_read file still points at record_read", async () => {
+    const r = await sidecarRead({ projectPath: dir, ref: nearCopy(await stageRecord()) });
+    expect(r).toMatchObject({ ok: false, reason: "invalid_ref" });
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/record_read/);
+  });
+
+  it("a near-copy with a selector stays not_found, and never reads as the whole page", async () => {
+    const ref = await stageTranscription("Harold Dean Whitaker, 91");
+    expect(await sidecarRead({ projectPath: dir, ref: `${nearCopy(ref)}#hits` })).toMatchObject({ ok: false, reason: "not_found" });
+  });
+
+  it("a research.json it cannot read leaves a dead ref gone, and does not throw", async () => {
+    fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
+    const ref = await stageTranscription("Harold Dean Whitaker, 91");
+    await getProjectStore().remove(dir, ref);
+    await writeFile(join(dir, "research.json"), "{ not json", "utf-8");
+    expect(await sidecarRead({ projectPath: dir, ref })).toMatchObject({ ok: false, reason: "not_found" });
+  });
+
   it("reads several refs in one call, each on its own", async () => {
     const t = await stageTranscription("Harold Dean Whitaker, 91");
     const r = await sidecarRead({ projectPath: dir, refs: [t, "uploads/note.txt", "uploads/missing.txt"] });
@@ -549,7 +646,7 @@ const SCENARIOS = join(dirname(fileURLToPath(import.meta.url)), "..", "..", ".."
 interface FulltextEnvelope {
   log_id: string;
   tool: string;
-  payload: { results: Array<{ id: string; textDocument?: string }> };
+  payload: { results: Array<{ id: string; title?: string; recordDate?: string; recordPlace?: string; textDocument?: string }> };
 }
 
 /** A committed, real fulltext_search sidecar. */
@@ -564,6 +661,13 @@ describe("sidecar_read: one full-text hit", () => {
   const hits = g9gj.payload.results;
   const transcript = (i: number) => hits[i].textDocument as string;
   const hitRef = (i: number) => `results/log_003.json#${arkToBareId(hits[i].id)}`;
+  // Hit 5's row, verbatim: literals, so a field the tool dropped cannot match an
+  // `undefined` read off the fixture.
+  const HIT_5_RECORD = {
+    title: "Boston, Suffolk, Massachusetts, United States Birth 1895",
+    recordDate: "1895",
+    recordPlace: "Boston, Suffolk, Massachusetts, United States",
+  };
 
   let dir: string;
   beforeEach(async () => {
@@ -584,8 +688,28 @@ describe("sidecar_read: one full-text hit", () => {
       if (!r.ok) return;
       expect(r.content).toBe(transcript(4));
       expect(r.truncated).toBe(false);
-      expect(r).toMatchObject({ hitId: id, hitIndex: 5, logId: "log_003" });
+      expect(r).toMatchObject({ hitId: id, hitIndex: 5, logId: "log_003", ...HIT_5_RECORD });
     }
+  });
+
+  it("carries the hit's title, recordDate and recordPlace, and leaves out the ones its row lacks", async () => {
+    const five = await sidecarRead({ projectPath: dir, ref: hitRef(4) });
+    expect(five).toMatchObject({ ok: true, ...HIT_5_RECORD });
+
+    const one = await sidecarRead({ projectPath: dir, ref: hitRef(0) });
+    expect(one).toMatchObject({
+      ok: true,
+      title: "Washington, New York, United States Land",
+      recordPlace: "Washington, New York, United States",
+    });
+    expect(one).not.toHaveProperty("recordDate");
+
+    const flynn = fulltextFixture("flynn-record-matching", "log_004.json");
+    await getProjectStore().writeJson(dir, "results/log_004.json", flynn);
+    const placeOnly = await sidecarRead({ projectPath: dir, ref: `results/log_004.json#${arkToBareId(flynn.payload.results[0].id)}` });
+    expect(placeOnly).toMatchObject({ ok: true, recordPlace: "Schuylkill, Pennsylvania, United States" });
+    expect(placeOnly).not.toHaveProperty("title");
+    expect(placeOnly).not.toHaveProperty("recordDate");
   });
 
   it("reads a hit from a staged full-text result too, with no logId yet", async () => {
@@ -594,7 +718,7 @@ describe("sidecar_read: one full-text hit", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.content).toBe(transcript(1));
-    expect(r).toMatchObject({ hitId: hits[1].id, hitIndex: 2, logId: null });
+    expect(r).toMatchObject({ hitId: hits[1].id, hitIndex: 2, logId: null, title: "Washington, New York, United States Mortgage" });
   });
 
   it("lists the hits with #hits, one JSON line each, and no transcript text", async () => {
@@ -608,6 +732,7 @@ describe("sidecar_read: one full-text hit", () => {
       expect(row).not.toHaveProperty("textDocument");
     });
     for (let i = 0; i < hits.length; i++) expect(r.content).not.toContain(transcript(i).slice(0, 80));
+    for (const k of ["hitId", "hitIndex", "logId", "title", "recordDate", "recordPlace"]) expect(r).not.toHaveProperty(k);
   });
 
   it("refuses a bare full-text ref, naming the hit count and both ways in", async () => {
@@ -624,6 +749,7 @@ describe("sidecar_read: one full-text hit", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.results.map((x) => (x.ok ? x.content : x.reason))).toEqual([transcript(0), transcript(7)]);
+    expect(r.results[1]).toMatchObject({ title: "Chicago, Cook, Illinois, United States Local History 1881", recordDate: "1881" });
   });
 
   it("pages within one hit's transcript", async () => {
@@ -635,6 +761,7 @@ describe("sidecar_read: one full-text hit", () => {
     expect(second.ok).toBe(true);
     if (!second.ok) return;
     expect(second.content).toBe(transcript(longest).slice(first.nextOffset, first.nextOffset + second.content.length));
+    expect(second).toMatchObject({ hitIndex: 13, title: "Missouri, United States Newspaper 1975", recordDate: "1975" });
   });
 
   it("answers an unknown hit, an empty selector and a missing file", async () => {

@@ -16,6 +16,7 @@ description: >-
   (use conflict-resolution); or merge confirmed-identical persons (use tree-edit
   after proof-conclusion).
 model: claude-sonnet-4-6
+effort: high
 tools:
   # Every MCP tool appears under ALL THREE server spellings, because the name is
   # chosen by whoever registers the server and the VM-side plugin cannot control
@@ -66,12 +67,15 @@ tools:
   - mcp__Genealogy_Research__place_distance
   - mcp__Genealogy_Research__wiki_read
   - mcp__Genealogy_Research__project_context
+  - mcp__genealogy__tree_query
+  - mcp__remote-devices__Genealogy_Research__tree_query
+  - mcp__Genealogy_Research__tree_query
 ---
 
 
 # Person Evidence
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 Links assertions (attached to records and roles) to persons (in
 tree.gedcomx.json). This is the identity-resolution step — the bridge
@@ -270,14 +274,13 @@ the same response.
 Find the assertions that have no corresponding `person_evidence` entry
 (or whose existing links need revision). If extraction just ran
 in this same continuous run and you already hold the new `a_` ids and the
-current `person_evidence` set in context, work from that — don't re-read
-`research.json` "to be safe"; the writer tools validate the whole project
+current `person_evidence` set in context, work from that — don't re-query
+"to be safe"; the writer tools validate the whole project
 on every write, so the in-context view can't be silently stale.
 
 When you *do* need to look — entering this skill cold, or a sub-skill or
 the user changed assertions/links since you last saw them — use
-**`research_query`, not a whole-file `Read`** of research.json (which
-grows all session):
+**`research_query`**:
 
 - `research_query({ section: "assertions", recordId: [ … ] })` — every persona
   of every record you are about to link, in one call; group the items by
@@ -302,7 +305,7 @@ assertions from the same persona should be linked together.
 For each unlinked persona (record_id + record_role group), determine
 which GedcomX person(s) it might be:
 
-**Check tree.gedcomx.json persons:**
+**Check the tree's persons** with `tree_query({ projectPath, personIds })`:
 - Name match (exact, phonetic variant, abbreviation)
 - Age/birth year compatibility (±5 years)
 - Location compatibility: the record's place against the tree person's own
@@ -710,7 +713,12 @@ is correct. Batch one record's personas into a single `materialize_facts({ ops:
 `marriage`, `parentage`, `parentchild`, or `age`: the tool skips those fact_types, so there is nothing to
 write **onto that persona**. The other party such an assertion names is still
 written, per Step 5. The facts you land here are what the next search reads off the tree
-person.
+person. Check `conflicts_surfaced` in the response: when it is
+non-empty, each entry names a vital fact type on which two coexisting
+values now disagree on that person. Name every such conflict in your
+reply — person id, fact type, and the coexisting values — and note
+that conflict-resolution is needed to adjudicate which is correct. Do
+not silently ignore this field.
 
 ### 5. Handle new persons (stub creation)
 

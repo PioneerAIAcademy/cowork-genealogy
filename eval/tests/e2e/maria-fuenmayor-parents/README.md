@@ -1,4 +1,4 @@
-# María Concepción Fuenmayor — parents Juan and Graciliana, and a 1912 Maracaibo marriage
+# María Concepción Fuenmayor — parents Juan and Graciliana
 
 **Source PID:** `GMH9-3BJ`
 **María Concepción Fuenmayor is deceased.** (FamilySearch ToS requires
@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.) Born 1893 in Maracaibo
 
 ## Research question
 
-> Who were the parents of María Concepción Fuenmayor of Maracaibo, and when did she marry Eduardo Berrueta Fernández?
+> Who were the parents of María Concepción Fuenmayor of Maracaibo, who married Eduardo Berrueta Fernández?
 
 ## What was removed from the starting tree
 
@@ -27,6 +27,18 @@ medium — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4144).** The old question asked
+two independent facts (her parents, and her marriage): "Who were the parents
+of María Concepción Fuenmayor of Maracaibo, and when did she marry Eduardo
+Berrueta Fernández?" Reworded `researcher_question` to the parents only
+(matching `tags.question_type`), keeping "who married Eduardo Berrueta
+Fernández" as identifying context without the exact date, since that date is
+`f2`'s own answer. Demoted `f2` (the marriage) to `required: false`, so a run
+that recovers it anyway still gets credit. No finding wording changed. Its one
+stamped annotation (`run-2026-09-15_11-41-45`) is re-graded below, per the
+spec's rule that an `expected-findings.json` edit is always a re-grade, never
+a re-stamp.
 
 **Resolved 2026-09-14 — outcome 1, true match.** The hint record
 `ark:/61903/1:1:QVMV-ZVBD` is the marriage of María Concepción Fuenmayor
