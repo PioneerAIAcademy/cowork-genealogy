@@ -2473,17 +2473,23 @@ export function importedPerson(personId: string, research: any, startingPersonId
  *  and no source ref on its own node, its names, its facts, or any relationship it
  *  is in. `tree_edit add_person` makes one; a stub the researcher stated carries
  *  its source on the relationship, and is not blank. False with no starting-tree
- *  baseline, which cannot tell an imported person from an added one. Both
- *  `research_append`'s link gate and `materialize_facts`' read this, so the step
- *  one refuses for is the step the other allows. */
+ *  baseline, which cannot tell an imported person from an added one. False for a
+ *  person with a namesake (a `namesakes` row, or a same-named relative in
+ *  `namesakeTree`): the namesake cap decides that person's links, and a speculative
+ *  link must not let a record land on it first. Both `research_append`'s link gate
+ *  and `materialize_facts`' read this, so the step one refuses for is the step the
+ *  other allows. */
 export function blankAddedPerson(
   personId: string,
   research: any,
   tree: any,
   startingPersonIds?: ReadonlySet<string>,
+  namesakeTree: any = tree,
 ): boolean {
   if (!startingPersonIds || startingPersonIds.size === 0) return false;
   if (importedPerson(personId, research, startingPersonIds)) return false;
+  if (((research?.namesakes ?? []) as any[]).some((r: any) => r?.person_id === personId)) return false;
+  if (derivedNamesakePairs(namesakeTree, personId).length > 0) return false;
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
   if (!person || personSourceRefs(person).size > 0) return false;
   return !((tree?.relationships ?? []) as any[]).some(
@@ -2520,7 +2526,7 @@ function refLessAddedPersonInvariants(
   const assertion =
     batchAssertions?.get(entry.assertion_id) ??
     ((research?.assertions ?? []) as any[]).find((a: any) => a?.id === entry.assertion_id);
-  if (assertion?.record_role === "absent" || assertion?.record_basis === "absent") return [];
+  if (assertion?.record_role === "absent" || recordBasisOf(assertion) === "absent") return [];
   const persona =
     typeof assertion?.record_id === "string" && typeof assertion?.record_role === "string"
       ? `materialize_facts({ projectPath, personId: '${personId}', recordId: '${assertion.record_id}', ` +

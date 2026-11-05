@@ -422,8 +422,9 @@ when `same_person` is called without `recordRole`:
 
 Minting needs no link (the link to a new person is written after it exists).
 Writing onto a person the run added that carries no provenance at all
-(`blankAddedPerson`: not imported, and no source ref on its node, names, facts
-or any relationship it is in) needs a live link of any confidence, a
+(`blankAddedPerson`: not imported, no source ref on its node, names, facts
+or any relationship it is in, and no namesake, whose links the namesake cap
+decides as before) needs a live link of any confidence, a
 `speculative` one included: `research_append` refuses a `probable` or
 `confident` link to such a person until it has been written onto, and the
 `speculative` link has already passed `same_person`'s score gate. Requiring no

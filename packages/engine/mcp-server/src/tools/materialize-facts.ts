@@ -968,7 +968,7 @@ function linkGate(
   // same_person's score gate, which keeps the identity check ahead of the write.
   // Without that link, the write would make the person look minted from this
   // record and the raise after it would need no score.
-  const blank = blankAddedPerson(personId, research, tree, startingPersonIds);
+  const blank = blankAddedPerson(personId, research, tree, startingPersonIds, namesakeTree);
   if (
     blank &&
     ((research?.person_evidence ?? []) as any[]).some(

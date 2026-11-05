@@ -17912,12 +17912,10 @@ describe("a searched plan item the record-type check will not complete can be sk
   });
 });
 
-// A link to a person this research added with no source ref on any name or fact
-// (`tree_edit add_person`), which nothing ties to a record (#2475, clack391's row).
 // A probable or confident link to a person this research added with no provenance
 // at all (`tree_edit add_person`), which nothing ties to a record (#2475,
-// clack391's row). materialize_facts writes the persona onto such a person without
-// a prior link, so the refusal's own advice is a path that completes.
+// clack391's row). The refusal's advice completes: a scored speculative link,
+// materialize_facts, then the raise.
 describe("research_append — person_evidence to a ref-less added person", () => {
   let dir: string;
   beforeEach(async () => {
@@ -17969,6 +17967,10 @@ describe("research_append — person_evidence to a ref-less added person", () =>
         ...validAssertion("a_004"), record_id: "rec4", record_role: "child_1", fact_type: "relationship",
         value: "child of Joannes Janeczky", structured_value: { related_person_role: "father" },
       },
+      (() => {
+        const { record_basis: _drop, ...legacy } = validAssertion("a_005") as any;
+        return { ...legacy, record_id: "rec5", record_role: "principal", evidence_type: "negative", fact_type: "residence", value: "Joannes not in the 1880 household" };
+      })(),
     );
     r.person_evidence.push(...extra);
     return r;
@@ -18044,6 +18046,32 @@ describe("research_append — person_evidence to a ref-less added person", () =>
     expect(stored[0].confidence).toBe("speculative");
   });
 
+  it("a blank stub with a namesake stays on the namesake cap: the record cannot land on it first", async () => {
+    // Sr./Jr.: the researcher adds a blank "John Smith" as the father of the
+    // subject "John Smith", with no source on the edge.
+    const sm = (id: string) => ({ id, gender: "Male", names: [{ id: `N${id}`, given: "John", surname: "Smith" }] });
+    const t = {
+      persons: [sm("I1"), sm("I2")],
+      relationships: [{ id: "R1", type: "ParentChild", parent: "I2", child: "I1" }],
+      sources: [{ id: "SD-001", title: "1850 U.S. Census" }, { id: "SD-002", title: "Baptism" }],
+    };
+    const r = research();
+    const a2 = r.assertions.find((a: any) => a.id === "a_002");
+    Object.assign(a2, { record_role: "principal", value: "John Smith", structured_value: { given: "John", surname: "Smith" } });
+    await write(r, true, t);
+    await attestPairing(dir, { recordId: "rec2", assertionId: "a_002", personId: "I2" });
+    const spec = link("I2", "a_002", "speculative");
+    const a = await researchAppend({ ...spec, entry: { ...spec.entry, match_score: 0.9 } });
+    expect(a.ok, errorsOf(a)).toBe(true);
+    const m = await materializeFacts({ projectPath: dir, personId: "I2", recordId: "rec2", recordRole: "principal" } as any);
+    expect((m as any).ok).toBe(false);
+    const after = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+    expect(after.persons.find((p: any) => p.id === "I2").names[0].sources ?? []).toHaveLength(0);
+    // research_append leaves that person's links to the namesake cap, not this gate.
+    const probable = await researchAppend({ ...link("I2", "a_002"), entry: { ...link("I2", "a_002").entry, match_score: 0.9 } });
+    expect(errorsOf(probable)).not.toMatch(REFUSAL);
+  });
+
   it("names the named-party form when the assertion names a second party", async () => {
     await write(research());
     const r = await researchAppend(link("I2", "a_004"));
@@ -18056,6 +18084,7 @@ describe("research_append — person_evidence to a ref-less added person", () =>
     ["a stub the researcher stated, sourced on its relationship", "I4", "a_002", "probable", true],
     ["a speculative link, which asserts no identity", "I2", "a_002", "speculative", true],
     ["negative evidence, which no persona can materialize", "I2", "a_003", "probable", true],
+    ["legacy negative evidence (evidence_type, no record_basis)", "I2", "a_005", "probable", true],
     ["a project with no starting-tree baseline", "I2", "a_002", "probable", false],
   ])("does not refuse %s", async (_label, personId, assertionId, confidence, withStartingTree) => {
     await write(research(), withStartingTree as boolean);
