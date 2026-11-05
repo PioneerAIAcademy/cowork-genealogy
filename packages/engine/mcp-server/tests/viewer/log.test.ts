@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { describeRpc, headerVersion, logLine } from "../../viewer/request-log.js";
+import { describeRpc, headerFields, logLine } from "../../viewer/request-log.js";
 import {
   DEEP_JSON,
   PUBLIC_URL,
@@ -128,8 +128,15 @@ describe("describeRpc", () => {
   });
 
   it("logs a protocol version header only when it looks like one", () => {
-    expect(headerVersion("2026-07-28")).toEqual({ protocolVersion: "2026-07-28" });
-    for (const value of [undefined, "/Users/x", ["2026-07-28"], "2026-07-28x"]) expect(headerVersion(value)).toEqual({});
+    expect(headerFields({ "mcp-protocol-version": "2026-07-28" })).toEqual({ protocolVersion: "2026-07-28" });
+    for (const value of [undefined, "/Users/x", ["2026-07-28"], "2026-07-28x"]) {
+      expect(headerFields({ "mcp-protocol-version": value })).toEqual({});
+    }
+  });
+
+  it("logs a user agent only when it looks like one", () => {
+    expect(headerFields({ "user-agent": "claude-code/2.1.318 (cli)" })).toEqual({ userAgent: "claude-code/2.1.318 (cli)" });
+    for (const value of [undefined, "x".repeat(121), 'a"b', "line\nbreak"]) expect(headerFields({ "user-agent": value })).toEqual({});
   });
 
   it("takes clientInfo and the declared extensions from initialize", () => {

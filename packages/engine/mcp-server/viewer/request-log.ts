@@ -23,10 +23,17 @@ const KNOWN_TOOLS = new Set([SHOW_PROJECT, READ_PROJECT_VIEW]);
  *  slash, so it cannot carry a path with a leading slash, a secret or a token. */
 const METHOD_SHAPE = /^[a-z]+\/[a-zA-Z]{1,40}$/;
 const VERSION_SHAPE = /^\d{4}-\d{2}-\d{2}$/;
+const USER_AGENT_SHAPE = /^[\w .,;:()/+-]{1,120}$/;
 
-/** The protocol version a request's header names, when it looks like one. */
-export function headerVersion(value: unknown): LogFields {
-  return typeof value === "string" && VERSION_SHAPE.test(value) ? { protocolVersion: value } : {};
+/** The protocol version and client a request's headers name, when each looks like one.
+ *  A stateless call carries no clientInfo, so this is the only way to tell who made it. */
+export function headerFields(headers: { "mcp-protocol-version"?: unknown; "user-agent"?: unknown }): LogFields {
+  const version = headers["mcp-protocol-version"];
+  const agent = headers["user-agent"];
+  return {
+    ...(typeof version === "string" && VERSION_SHAPE.test(version) ? { protocolVersion: version } : {}),
+    ...(typeof agent === "string" && USER_AGENT_SHAPE.test(agent) ? { userAgent: agent } : {}),
+  };
 }
 
 interface RpcShape {

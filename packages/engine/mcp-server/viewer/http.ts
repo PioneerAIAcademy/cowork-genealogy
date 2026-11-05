@@ -8,7 +8,7 @@ import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/
 import { getProjectStore } from "../src/store/project-store.js";
 import { createMcpServer } from "./mcp.js";
 import { reopenProject } from "./project.js";
-import { describeRpc, headerVersion, logLine, observeSends, type LogFields } from "./request-log.js";
+import { describeRpc, headerFields, logLine, observeSends, type LogFields } from "./request-log.js";
 import { imageTokens } from "./tokens.js";
 
 export const MAX_BODY_BYTES = 1024 * 1024;
@@ -102,7 +102,7 @@ export function createViewer(options: ViewerOptions): RequestListener {
       sendJson(res, 400, rpcError(-32600, "Batches are not supported."));
       return;
     }
-    Object.assign(entry, describeRpc(body), headerVersion(req.headers["mcp-protocol-version"]), { resultBytes: 0 });
+    Object.assign(entry, describeRpc(body), headerFields(req.headers), { resultBytes: 0 });
     const server = mcpServer();
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
     observeSends(transport, (_message, bytes) => {
