@@ -16,7 +16,7 @@
 // that turn must belong to the project, and it must not be completed. So the
 // fence is required with a project; anything else is a 403 before any store
 // exists, and a failed lookup is a 503. There is no opt-out. A request with no
-// project header is not checked and runs store-less tools only.
+// project header takes the connector door (E1, src/http-server.ts).
 // The process store is an `unboundProjectStore`, so a code path that runs
 // outside a request binding fails instead of reaching the file backend. The
 // Pg/S3 configuration is the one process-wide thing, read from the

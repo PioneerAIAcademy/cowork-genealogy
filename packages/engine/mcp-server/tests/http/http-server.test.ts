@@ -119,8 +119,6 @@ function textOf(result: Awaited<ReturnType<Client["callTool"]>>): string {
 // must present this token; a request with neither a project header nor a
 // connector token is a 401, which is the point.
 export const TEST_CONNECTOR_TOKEN = "connector-token-for-tests";
-/** A user admitted with no FamilySearch token at all (see CONNECTOR_USERS). */
-const UNLINKED_CONNECTOR_TOKEN = "connector-token-unlinked";
 export const TEST_USER_ID = "u_test";
 
 /** Connector tokens this double admits, each mapping to its own user AND its
@@ -130,11 +128,6 @@ const CONNECTOR_USERS: Record<string, { userId: string; familySearchToken: strin
   [TEST_CONNECTOR_TOKEN]: { userId: TEST_USER_ID, familySearchToken: "fs-access-token" },
   "connector-token-A": { userId: "u_A", familySearchToken: "fs-tok-A" },
   "connector-token-B": { userId: "u_B", familySearchToken: "fs-tok-B" },
-  // Signed in, never linked FamilySearch: `lookupConnectorToken` admits this
-  // user with an EMPTY token on purpose (016_users_beta.sql keeps them alive,
-  // and compose runs with FamilySearch sign-in off). The only caller that
-  // reaches `getValidToken`'s empty-token branch.
-  [UNLINKED_CONNECTOR_TOKEN]: { userId: "u_unlinked", familySearchToken: "" },
 };
 const lookupConnector = vi.fn(async (tokenSha256: string) => {
   for (const [token, who] of Object.entries(CONNECTOR_USERS)) {
@@ -634,29 +627,7 @@ describe("tool server over Streamable HTTP", () => {
     });
   });
 
-  it("3b. a connector user who never linked FamilySearch gets the hosted reauth text, never the desktop one", async () => {
-    // The ONLY caller that reaches `getValidToken`'s empty-token branch, and
-    // since E1 nothing else does: `connect()` with no arguments now presents a
-    // connector token whose FamilySearch token is non-empty, so case 3 below
-    // arrives at the same message by a different route (an upstream 401) and
-    // cannot catch a LOCAL-principal regression. Verified by planting the
-    // desktop wording on that branch: case 3 stayed green, this one reddens.
-    //
-    // CLAUDE.md calls binding LOCAL in a hosted entrypoint "the cross-patron
-    // impersonation the parameter exists to prevent", so the desktop wording
-    // reaching a hosted caller is the regression worth a test of its own.
-    const client = await connect({ Authorization: `Bearer ${UNLINKED_CONNECTOR_TOKEN}` });
-    const result = await client.callTool({
-      name: "record_read",
-      arguments: { recordId: "QVS9-DHDB" },
-    });
-    expect(result.isError).toBe(true);
-    const body = JSON.parse(textOf(result)) as { error: string };
-    expect(body.error).toBe(HOSTED_REAUTH_INSTRUCTION);
-    expect(body.error).not.toContain("not logged in");
-  });
-
-  it("3. a FamilySearch tool with no Authorization header gets the hosted reauth text, never the desktop one", async () => {
+  it("3. a FamilySearch token the upstream refuses gets the hosted reauth text, never the desktop one", async () => {
     const client = await connect();
     const result = await client.callTool({
       name: "record_read",
@@ -764,6 +735,21 @@ describe("tool server over Streamable HTTP", () => {
       // One body for every reason, so a caller learns nothing about which
       // check failed -- expired, ended, blocked and undecryptable included.
       expect(await unknown.json()).toEqual(await none.json());
+    });
+
+    it.each([
+      ["a string", "not-an-object"],
+      ["a number", 7],
+      ["a boolean", true],
+    ])("arguments that are %s bind no store and are not a 500", async (_label, args) => {
+      bindStore.mockClear();
+      const res = await rpc(
+        { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "convert_calendar", arguments: args } },
+        connectorHeaders(),
+      );
+      expect(res.status).not.toBe(500);
+      await res.text();
+      expect(bindStore).not.toHaveBeenCalled();
     });
 
     it("a JSON-RPC batch is refused before any tool runs", async () => {
@@ -1000,7 +986,7 @@ describe("tool server over Streamable HTTP", () => {
       // baseConfig carries the TOOLS TIER's own OPENROUTER_API_KEY. Spreading
       // it into the connector principal would bill every patron's
       // transcriptions to the operator's account — and openrouter_key_enc is
-      // null for every patron until W3/#3988 links one, so that is not an edge
+      // null for every patron who has not linked one, so that is not an edge
       // case, it is the default path.
       const base = {
         openRouterApiKey: "operator-key-sentinel",

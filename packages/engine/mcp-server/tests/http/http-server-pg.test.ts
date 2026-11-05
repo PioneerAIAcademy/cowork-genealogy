@@ -339,7 +339,9 @@ if (!DSN || !ENDPOINT) {
     // ── E1: the connector door, against real Postgres (issue #3984) ────────
     describe("the connector door (E1)", () => {
       /** A user with a Fernet-encrypted FamilySearch token and a live token. */
-      async function seedConnector(opts: { blocked?: boolean; ended?: boolean } = {}) {
+      async function seedConnector(
+        opts: { blocked?: boolean; ended?: boolean; familySearch?: "none" | "undecryptable" } = {},
+      ) {
         const userId = `u_${randomUUID()}`;
         const token = `conn-${randomUUID()}`;
         const sha = createHash("sha256").update(token, "utf8").digest("hex");
@@ -347,11 +349,14 @@ if (!DSN || !ENDPOINT) {
           "INSERT INTO users (id, email, blocked_at) VALUES ($1, $2, $3)",
           [userId, `${userId}@test.invalid`, opts.blocked ? new Date() : null],
         );
-        await backend.pool.query(
-          "INSERT INTO familysearch_tokens (user_id, access_token_enc, expires_at, granted_at) " +
-            "VALUES ($1, $2, now() + interval '1 hour', now())",
-          [userId, encrypt(`fs-token-for-${userId}`, TEST_ENC_KEY)],
-        );
+        if (opts.familySearch !== "none") {
+          const key = opts.familySearch === "undecryptable" ? `${TEST_ENC_KEY}-another-key` : TEST_ENC_KEY;
+          await backend.pool.query(
+            "INSERT INTO familysearch_tokens (user_id, access_token_enc, expires_at, granted_at) " +
+              "VALUES ($1, $2, now() + interval '1 hour', now())",
+            [userId, encrypt(`fs-token-for-${userId}`, key)],
+          );
+        }
         await backend.pool.query(
           "INSERT INTO connector_tokens (token_sha256, user_id, client_id, scopes, expires_at, ended_at) " +
             "VALUES ($1, $2, 'test', ARRAY['mcp'], now() + interval '1 hour', $3)",
@@ -401,6 +406,19 @@ if (!DSN || !ENDPOINT) {
         const { token } = await seedConnector({ blocked: true });
         const r = await connCall(token, "convert_calendar", {});
         expect(r.status, r.text).toBe(401);
+      });
+
+      it.each([
+        ["with no FamilySearch token", "none"],
+        ["whose FamilySearch token will not decrypt", "undecryptable"],
+      ] as const)("a user %s is a 401 with the SAME body as an unknown token", async (_label, familySearch) => {
+        const { token } = await seedConnector({ familySearch });
+        const [refused, unknown] = await Promise.all([
+          connCall(token, "convert_calendar", {}),
+          connCall(`conn-${randomUUID()}`, "convert_calendar", {}),
+        ]);
+        expect(refused.status, refused.text).toBe(401);
+        expect(JSON.parse(refused.text)).toEqual(JSON.parse(unknown.text));
       });
 
       it("an ended grant and a blocked user get the SAME body as an unknown token", async () => {

@@ -192,6 +192,10 @@ export async function authorizeAttempt(
  * refresh, so FamilySearch's own 401 is what ends a session (E3's hook), and an
  * expired token is a sign-in prompt either way. Checking it here would refuse at
  * the door with a different message for the same user-visible state.
+ *
+ * A user with no FamilySearch token is refused: the join finds no row. So is a
+ * token that will not decrypt: it was written under another key, so it is not a
+ * token, and sending it would put gibberish on the wire.
  */
 export async function lookupConnectorToken(
   backend: PgS3Backend,
@@ -201,32 +205,18 @@ export async function lookupConnectorToken(
   const rows = await backend.pool.query<{
     user_id: string;
     blocked_at: Date | null;
-    access_token_enc: string | null;
+    access_token_enc: string;
     openrouter_key_enc: string | null;
   }>(CONNECTOR_DOOR_SQL, [tokenSha256]);
   const row = rows.rows[0];
   if (!row) return null;
   if (row.blocked_at !== null) return null;
-  // Two different states, and only one of them is a refusal.
-  //
-  // NO ROW (access_token_enc null) is a user who never linked FamilySearch —
-  // 016_users_beta.sql keeps those alive on purpose, and compose runs with
-  // FamilySearch sign-in off. Refusing them 401s `initialize`, `tools/list`
-  // and every tool that needs no FamilySearch token at all. They are admitted
-  // with an EMPTY token, which `getValidToken` turns into the per-tool reauth
-  // instruction — a message naming the one thing the user can do.
-  //
-  // A row that will NOT DECRYPT is a refusal: it was written under another
-  // key, so it is not a token, and sending it would put gibberish on the wire.
-  if (row.access_token_enc === null) {
-    return { userId: row.user_id, familySearchToken: "", openRouterApiKey: decryptWithKey(row.openrouter_key_enc) };
-  }
   const familySearchToken = decryptWithKey(row.access_token_enc);
   if (!familySearchToken) return null;
   return {
     userId: row.user_id,
     familySearchToken,
-    // Null until W3/#3988 links an account; the door treats it as "no key".
+    // Null for a user who linked no account; the door treats it as "no key".
     openRouterApiKey: decryptWithKey(row.openrouter_key_enc),
   };
 }
@@ -235,7 +225,7 @@ const CONNECTOR_DOOR_SQL = `
   SELECT ct.user_id, u.blocked_at, ft.access_token_enc, u.openrouter_key_enc
     FROM connector_tokens ct
     JOIN users u ON u.id = ct.user_id
-    LEFT JOIN familysearch_tokens ft ON ft.user_id = ct.user_id
+    JOIN familysearch_tokens ft ON ft.user_id = ct.user_id
    WHERE ct.token_sha256 = $1 AND ct.expires_at > now() AND ct.ended_at IS NULL
 `;
 

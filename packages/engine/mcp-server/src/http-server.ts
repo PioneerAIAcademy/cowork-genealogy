@@ -152,15 +152,6 @@ export function claimFenceFromHeaders(headers: IncomingHttpHeaders): ClaimFenceF
   return { kind: "present", fence: { turnId, claimEpoch } };
 }
 
-/** What a request that names no project is told when it reaches the store. The
- *  dispatcher turns the thrown Error into an `isError` result, so this reaches
- *  the model as an instruction. */
-const NO_PROJECT_BOUND_MESSAGE =
-  "This request carries no X-Genealogy-Project-Id header, so no project is bound: " +
-  "project tools (project_create, research_append, research_query, tree_edit, …) cannot " +
-  "run. Tools that take no projectPath (convert_calendar, place_search, record_read, …) " +
-  "still work. Send the header to use project tools.";
-
 const METHOD_NOT_ALLOWED = {
   jsonrpc: "2.0",
   error: { code: -32000, message: "Method not allowed." },
@@ -257,8 +248,8 @@ const MALFORMED_BODY = {
 };
 
 /** The same body for every connector refusal, so a caller learns nothing about
- *  which check failed: no such token, expired, ended grant, blocked user, or a
- *  FamilySearch token that will not decrypt. */
+ *  which check failed: no such token, expired, ended grant, blocked user, no
+ *  FamilySearch token, or one that will not decrypt. */
 const UNAUTHORIZED = {
   jsonrpc: "2.0",
   error: { code: -32600, message: "Not authenticated. Sign in again to reconnect." },
@@ -281,8 +272,9 @@ const NOT_YOUR_PROJECT = {
   id: null,
 };
 
-/** The connector door's version of NO_PROJECT_BOUND_MESSAGE. Reaches the model
- *  as a tool error it can act on, so it names the argument, not a header. */
+/** What a connector call naming no project is told when it reaches the store.
+ *  The dispatcher turns the thrown Error into an `isError` result, so this
+ *  reaches the model as an instruction; it names the argument, not a header. */
 const NO_CONNECTOR_PROJECT_MESSAGE =
   "This call named no project, so no project is bound: project tools cannot run. " +
   "Pass projectPath: \"/proj_<16 lowercase hex>\" — one of the paths project_list " +
@@ -294,7 +286,7 @@ export interface ConnectorCaller {
   userId: string;
   /** The DECRYPTED FamilySearch access token — never the connector token. */
   familySearchToken: string;
-  /** The decrypted OpenRouter key, or null until W3/#3988 links one. */
+  /** The decrypted OpenRouter key, or null for a user who linked none. */
   openRouterApiKey: string | null;
 }
 
@@ -442,7 +434,7 @@ function connectorProjectPath(body: unknown): ConnectorProject {
   if (msg.method !== "tools/call") return { kind: "absent" };
   const params = msg.params as { arguments?: unknown } | undefined;
   const args = params?.arguments as { projectPath?: unknown } | undefined;
-  if (args === undefined || args === null || !("projectPath" in args)) return { kind: "absent" };
+  if (typeof args !== "object" || args === null || !("projectPath" in args)) return { kind: "absent" };
   if (typeof args.projectPath !== "string") return { kind: "not_a_string" };
   return { kind: "named", projectPath: args.projectPath };
 }
@@ -453,9 +445,9 @@ function connectorProjectPath(body: unknown): ConnectorProject {
  * Built from an explicit ALLOW-LIST of operator settings, never by spreading
  * `baseConfig`. Spreading leaks the tools tier's own per-user secrets to every
  * patron: `hosted-config-env.ts` puts the operator's `OPENROUTER_API_KEY` on
- * `baseConfig.openRouterApiKey`, and a caller whose own key is null — which is
- * every patron until W3/#3988 links accounts — would silently inherit it and
- * bill `image_transcribe` and `volume_bisect` to the operator's account.
+ * `baseConfig.openRouterApiKey`, and a caller whose own key is null — every
+ * patron who has not linked one — would silently inherit it and bill
+ * `image_transcribe` and `volume_bisect` to the operator's account.
  *
  * The line is: settings that describe the DEPLOYMENT are shared; a credential
  * that identifies a PERSON is not. `matcherApiKey` and `matcherUrl` are on the
@@ -639,7 +631,7 @@ async function handleMcpPost(
     }
     if (!caller) {
       // One body for every reason: no token, expired, ended grant, blocked
-      // user, or a FamilySearch token that will not decrypt.
+      // user, no FamilySearch token, or one that will not decrypt.
       process.stderr.write("ev=tool_refused reason=no_connector_token surface=connector\n");
       sendUnauthorized(res, options);
       return;
