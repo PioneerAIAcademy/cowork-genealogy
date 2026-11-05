@@ -1809,6 +1809,10 @@ def create_app(
     prefix_mismatch_logged = False
     app.state.stream_max_polls = stream_max_polls
 
+    # Every route that returns one user's data goes here: it gets `private, no-store` and
+    # `Vary: Cookie`, refusals included. A new per-user route outside these prefixes gets neither.
+    PER_USER_CACHE_PATHS = ("/api/account", "/api/projects")
+
     class ProjectCacheHeaders:
         def __init__(self, app: ASGIApp) -> None:
             self.app = app
@@ -1818,7 +1822,7 @@ def create_app(
                 await self.app(scope, receive, send)
                 return
             path = get_route_path(scope)
-            if not (path == "/api/account" or path == "/api/projects" or path.startswith("/api/projects/")):
+            if not any(path == p or path.startswith(p + "/") for p in PER_USER_CACHE_PATHS):
                 await self.app(scope, receive, send)
                 return
 

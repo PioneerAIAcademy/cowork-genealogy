@@ -301,6 +301,14 @@ async def test_account_needs_a_session(monkeypatch):
     assert r.headers["cache-control"] == "private, no-store" and "cookie" in r.headers["vary"].lower()
 
 
+async def test_account_does_not_shadow_a_sibling_path(monkeypatch):
+    """The prefix match is on a path segment: /api/accountant is not an account route."""
+    monkeypatch.setenv("GENEALOGY_CHAT", "false")
+    async with make_client(FakeStore(), None) as c:
+        r = await c.get("/api/accountant")
+    assert "no-store" not in r.headers.get("cache-control", "")
+
+
 @pytest.mark.parametrize("how", ["blocked", "revoked"])
 async def test_account_refuses_a_blocked_or_revoked_session(monkeypatch, how):
     monkeypatch.setenv("GENEALOGY_CHAT", "false")
