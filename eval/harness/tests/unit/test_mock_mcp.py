@@ -676,6 +676,92 @@ def test_fulltext_search_keeps_textDocument_when_not_staged(tmp_path):
     assert "textDocument" in body["results"][0]
 
 
+# --- fulltext_search serves facets only on includeFacets (#3973) ---------------
+# Production adds `facets` only under `input.includeFacets && data.facets`
+# (fulltext-search.ts) and stages after; a fixture carries them unconditionally.
+
+_FACETS_FIXTURE = "fulltext-search-flynn-broad-with-facets"
+
+
+def _fixture_facets():
+    raw = json.loads((FIXTURES_DIR / f"{_FACETS_FIXTURE}.json").read_text(encoding="utf-8"))
+    assert raw["response"].get("facets"), "test assumes the fixture carries facets"
+    return raw["response"]["facets"]
+
+
+def test_fulltext_search_withholds_facets_without_include_facets(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        [_FACETS_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", {"keywords": "~Flynn"}))
+    assert "error" not in body, body
+    assert body["results"], "the rest of the response is still served"
+    assert "facets" not in body
+
+
+def test_fulltext_search_withholds_facets_when_include_facets_is_false(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        [_FACETS_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": "~Flynn", "includeFacets": False})
+    )
+    assert "facets" not in body
+
+
+def test_fulltext_search_serves_facets_on_include_facets(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        [_FACETS_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": "~Flynn", "includeFacets": True})
+    )
+    assert body["facets"] == _fixture_facets()
+
+
+def test_fulltext_search_withholding_facets_does_not_strip_them_from_the_fixture(tmp_path):
+    """The fixture response is shared across calls: a call without includeFacets
+    must not cost a later includeFacets call its facets."""
+    server, call_log, tools_by_name = create_mock_server(
+        [_FACETS_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    _invoke(tools_by_name, "fulltext_search", {"keywords": "~Flynn"})
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": "~Flynn", "includeFacets": True})
+    )
+    assert body["facets"] == _fixture_facets()
+
+
+def test_facets_gate_has_not_drifted_from_the_typescript_source():
+    """The mock's gate restates the tool's condition: it selects the response
+    rather than transforming a staged one, and the tool exports no function for
+    it. A stale copy is silent, so pin the expression and its place before staging."""
+    src = (REPO_ROOT / "packages/engine/mcp-server/src/tools/fulltext-search.ts").read_text(
+        encoding="utf-8"
+    )
+    gate = src.find("if (input.includeFacets && data.facets) {")
+    assert gate != -1, "fulltext-search.ts no longer gates facets on includeFacets; update the mock"
+    assert src.count("out.facets =") == 1, "fulltext-search.ts sets facets somewhere else too"
+    stage = src.find("stageSearchResults(", gate)
+    assert gate < src.find("out.facets =") < stage, "facets are no longer set before staging"
+
+
+@pytest.mark.requires_engine_build
+def test_fulltext_search_stages_no_facets_without_include_facets(tmp_path):
+    """The sidecar records what the search returned, so it lacks them too."""
+    server, call_log, tools_by_name = create_mock_server(
+        [_FACETS_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "fulltext_search", {"keywords": "~Flynn", "projectPath": str(tmp_path)})
+    )
+    assert body.get("staged"), "test assumes staging succeeded — check the build"
+    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    assert envelope["payload"]["results"], "test assumes the staged payload is the response"
+    assert "facets" not in envelope["payload"]
+    assert "facets" not in body
+
+
 # --- The search response echoes the call's args (mirrors echoQuery) -----------
 
 _ECHO_ARGS = {
@@ -2751,25 +2837,25 @@ def test_guard_checks_the_models_args_not_the_injected_projectPath(tmp_path):
     """The ordering trap, on a LIVE compiled tool.
 
     `_make_compiled_tool_handler` adds `projectPath` to its own copy of the
-    args. `research_delivered` does not declare `projectPath` (nor do
-    `project_list` or `convert_calendar`), so a guard run AFTER that injection
-    would refuse every call to those three. Checking the model's own args is
+    args. `convert_calendar` does not declare `projectPath` (nor does
+    `project_list`), so a guard run AFTER that injection would refuse every call
+    to those two. Checking the model's own args is
     what keeps this call legal.
     """
     _seed_project(tmp_path)
     _server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
 
-    _invoke(tools_by_name, "research_delivered", {"summary": "done"})
+    _invoke(tools_by_name, "convert_calendar", {"date": {"year": 1700}, "jurisdiction": "England"})
 
     assert call_log[-1]["matched"]["kind"] != "unknown_args_refused", (
-        "research_delivered was refused — the guard is reading the post-injection "
+        "convert_calendar was refused — the guard is reading the post-injection "
         "copy (input_obj) instead of the model's own args"
     )
     # And the guard itself agrees, driven directly: the bare call is legal, the
     # post-injection shape is not.
-    assert mock_mcp._reject_unknown_args("research_delivered", {"summary": "x"}) is None
+    assert mock_mcp._reject_unknown_args("convert_calendar", {"date": {"year": 1700}}) is None
     assert mock_mcp._reject_unknown_args(
-        "research_delivered", {"summary": "x", "projectPath": "/p"}
+        "convert_calendar", {"date": {"year": 1700}, "projectPath": "/p"}
     ) is not None
 
 
@@ -2780,7 +2866,7 @@ def test_guard_refuses_on_a_live_compiled_tool_too(tmp_path):
     _seed_project(tmp_path)
     _server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
 
-    result = _invoke(tools_by_name, "research_delivered", {"summary": "x", "bogusKey": 1})
+    result = _invoke(tools_by_name, "convert_calendar", {"date": {"year": 1700}, "bogusKey": 1})
 
     assert result["is_error"] is True
     assert "bogusKey" in _extract_response_dict(result)["error"]

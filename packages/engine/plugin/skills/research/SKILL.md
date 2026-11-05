@@ -22,7 +22,6 @@ allowed-tools:
   - validate_research_schema
   - research_query
   - extraction_append
-  - research_delivered
   - person_read
   - source_attachments
 ---
@@ -139,6 +138,8 @@ destination: take it through "Hint review" below.
 - `mode: "hosted"`, and the message names a person no listed project is about, or none is listed: `newProjectPath`. It holds no `research.json` yet.
 - Otherwise: list each project's subjects, objective and `projectUrl`, ask which one to continue, and stop.
 
+**When `project_context` answers `no_project`, ask the researcher nothing.** With no person and question in the message, spawn `@plugin:tree-survey`. With one, spawn `@plugin:init-project`. The routing table's first two rows give the details.
+
 **If `project_list` is not among your tools, even through tool search,** say the genealogy tools are not connected: start or update the Genealogy Research desktop extension, or reconnect the genealogy connector. Then stop.
 
 **When a tool gave you the project's `projectUrl`, end the reply that ends your turn with it:** after the "Continue with …?" offer, on the same line, when there is one; otherwise as the last line.
@@ -162,8 +163,8 @@ Two or more of them in one message is still bounded: deliver the first this
 turn, name the others, and offer the next, ending on its "Continue with …?" line
 when it is a step in the label table. **The others are not started this turn:**
 when the first is a transcription, a records-request letter or a status answer,
-the turn spawns no agent at all: deliver it, name the next, end on its offer
-line, then call `research_delivered`. A message that also asks for open-ended
+the turn spawns no agent at all: deliver it, name the next, and end your turn
+on its offer line. A message that also asks for open-ended
 research is a job.
 
 **A job** — everything else. Route it exactly as the rest of this file says.
@@ -206,17 +207,13 @@ is already attached. Never search for a record that is already attached,
 and never offer to add a person who is already in the tree.
 
 When this turn's deliverable is produced — the only one asked for, or the first
-of several — **end your turn by calling `research_delivered`**.
-Say what you produced first: the turn ends where you stop, so anything you were
-going to add afterwards never reaches the researcher. Name what this turn saved
+of several — **no further step runs this turn: no spawn and no `Skill` call,
+whatever else the message asked for.** Name what this turn saved
 and where — "Saved to Susan Cornwell: death index, 4 Apr 1892" — and name
 anything this turn found but did not save: the record and the person it was for,
-not "an extraction did not finish". Then offer to take it further. The offer is
-not something you wait for — their answer arrives as the next message.
-
-Call it last, with a one-sentence summary of what you delivered, after everything
-you want the researcher to read. If you do not already hold its schema, search for
-it by name.
+not "an extraction did not finish". Then offer to take it further and **end your
+turn**. The offer is not something you wait for — their answer arrives as the next
+message.
 
 ## What to do
 
@@ -278,6 +275,17 @@ it by name.
    is skipping it while leaving state that looks like it ran. See the
    **Exhaustiveness/proof-conclusion contract** below.
 
+   **Unregistered inferred relationships — check before anything else.**
+   Before consulting the routing table or acting on `project_context.nextStep`,
+   scan every log entry's `notes` field for hedged language about family
+   relationships: "look like", "appear to be", "likely are", or "seem to be"
+   used to infer that people are relatives from shared surname, place or era
+   with no record linking them. If any such phrasing exists and `hypotheses`
+   has no entry for that relationship, the one step this turn is
+   `@plugin:hypothesis-tracking`, naming the people and the inferred
+   relationship. Do not read the table or follow `nextStep` until this check
+   is clean.
+
    **Researcher-reported evidence.** When the message describes a record not
    yet in the project, with no record id or ARK, take only what the
    researcher stated: add no place, date, origin or relationship they did not
@@ -289,11 +297,18 @@ it by name.
    search for each, or ask the researcher for the record's identifier, before
    `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`. If the
    record contradicts a hypothesis, say so — do not present its facts as
-   support for that hypothesis or any theory built on it. The same holds for a
-   relationship you or an earlier log note inferred from shared surname, place
-   or era with no record linking the people: it is a hypothesis, not a fact.
-   Spawn `@plugin:hypothesis-tracking` to register it before any search,
-   filter or rejection relies on it.
+   support for that hypothesis or any theory built on it. The same holds for
+   a relationship you or an earlier log note inferred from shared surname,
+   place or era with no record linking the people: it is a hypothesis, not a
+   fact. Log notes that say people "look like", "appear to be", "likely are",
+   or "seem to be" relatives qualify. Spawn `@plugin:hypothesis-tracking` to
+   hand it off — the agent writes the entry; say only that it was handed off,
+   not that it is registered. When reporting, describe the inferred
+   relationship as the log's speculation ("the log treats them as siblings"),
+   never as a fact the router established. Do this before any plan item
+   dispatch, person-evidence pass, research-exhaustiveness call, search,
+   filter or rejection relies on it — regardless of what
+   `project_context.nextStep` suggests.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
@@ -302,10 +317,10 @@ it by name.
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `@plugin:research-plan` |
-   | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until it is registered |
+   | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item, routing to person-evidence, **or** invoking research-exhaustiveness | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until hypothesis-tracking has written the entry |
    | The question's **`active`** plan has a not-yet-executed `record_type: "fs_hints"` item (`project_context.nextStep` reads `search-hints — <pli_>`) — on an identity or parentage question research-plan emits one at `sequence` 1 | `@plugin:search-hints`, handing it the item's `planItemId`, its plan's `planId`, the `personId` you read out of the item's `rationale` ("Review pending FamilySearch hints on <PID> before…"), and `userPresent: no` ONLY on an `--autonomous` run (otherwise omit it; absent means yes). It reviews the subject's pending FamilySearch hints and sets the item's own status — a hint that already answers the question can save a search. A hints item awaiting verdicts is not "next" (`project_context` skips it), so this never holds up the other searches |
    | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `completed` plan, which a revision leaves behind still `planned` | `@plugin:search-records`, handing it the item you just queried as a `plan_item:` JSON block and the subject you hold as a `subject:` block, learned from `project_context` and `tree_query` with the subject person id and `factTypes` `["Birth","Death","Marriage"]` (or `@plugin:search-external-sites` for non-FS sources) |
-   | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly, and the item is in no `project_context` `exhaustedImageGroups[].planItemIds` | `@plugin:search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`) |
+   | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly, and the item is in no `project_context` `exhaustedImageGroups[].planItemIds` | `@plugin:search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`), handing it the subject you hold as a `subject:` block |
    | A plan item is listed in `project_context`'s **`exhaustedImageGroups[].planItemIds`** — its film's image cap is spent in this project, and no new agent or session resets it. Call `project_context` again before re-spawning `@plugin:search-images` after it reports a cap refusal | `@plugin:research-plan` to **dispose of that item**, naming the film. Never spawn `@plugin:search-images` for it |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | FamilySearch records: `extraction_append({ recordIds })`, one call for every pending record. Any other source: `@plugin:record-structurer`, one spawn for the batch. (See the **Extraction contract** below.) |
    | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). Extraction never links; its output ALWAYS flows through person-evidence next |
@@ -396,14 +411,21 @@ it by name.
    otherwise `yes`) for `@plugin:person-evidence`, the conflict or competing assertion ids for
    `@plugin:conflict-resolution`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, one jurisdiction and its period per call for
-   `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), the `questionId`, the `planItemId`, its plan's `planId` as a line of its own, and the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, with nothing added to it, and the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`), for `@plugin:search-records`, and the `planItemId` (plus the parish page as
+   `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), the `questionId`, the `planItemId`, its plan's `planId` as a line of its own, and the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, with nothing added to it, for `@plugin:search-records`, and the `planItemId` (plus the parish page as
    `baseUrl` when one is known, `userPresent` — `no` in an autonomous run, otherwise `yes` —
    and for a returned capture its
    file path or the results text) for `@plugin:search-external-sites`, and the
    `personId` (and, on the second spawn, the researcher's verdicts) for
    `@plugin:search-hints`, the `hitRef` and `target` for
    `@plugin:evaluate-search-results`, and the `planItemId` plus the volume's `standardPlace` (with its
-   years) or `imageGroupNumber`, as the plan item names it, for `@plugin:search-images`. In a wrap-up turn
+   years) or `imageGroupNumber`, as the plan item names it, for `@plugin:search-images`, and the
+   `planItemId` for `@plugin:search-full-text`, and the subject you already hold as a `subject:` JSON
+   block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in
+   the subject's `project_context` `parentIds`, left out when it has more than two), for
+   `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`. **When the
+   question or request a search serves asks about the subject's parentage, even one parent (who a
+   parent was, or whether the subject was someone's son or daughter), leave `parents` out of that
+   block.** In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and
    `@plugin:proof-conclusion` also take `wrapUp: yes`, and
    `@plugin:proof-conclusion` takes `newQuestion: yes` when the researcher
@@ -418,8 +440,9 @@ it by name.
 
    **Three rules the caller holds, because on this route the agent's own
    body never loads here.** Do not pre-judge the agent's gate — read nothing
-   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already
-   queried and the subject you already hold, passed verbatim and unread), and judge nothing. For
+   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,
+   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and
+   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing. For
    `@plugin:evaluate-search-results`, read also the `#hits` list its refs come from. Do not
    override a decline: when an agent blocks on a precondition, route to the
    destination it names, by the call that destination's routing row names —
@@ -597,7 +620,7 @@ turn made):
 7. N is the Matches not already extracted; a Possible Match is not offered.
    N ≥ 1: end "Continue with `extracting the N Matches`?" ("the Match" for
    one). N = 0: no "Continue with …?" line.
-8. `research_delivered`.
+8. End your turn.
 
 When the researcher answers "Continue." to that offer, in a later turn, spawn
 `@plugin:record-structurer` once with `projectPath`, `questionIds` and `sources`

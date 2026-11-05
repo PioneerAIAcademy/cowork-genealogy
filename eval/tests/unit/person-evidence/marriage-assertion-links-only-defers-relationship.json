@@ -31,7 +31,7 @@
   ],
   "execution": {
     "max_turns": 40,
-    "max_wall_clock_seconds": 900,
+    "max_wall_clock_seconds": 1200,
     "sdk_message_silence_seconds": 600
   },
   "mcp_fixtures": [

@@ -12,7 +12,7 @@ vi.mock('../../../contexts/ResearchDataContext', async () => {
   return { ...actual, useResearchData: vi.fn() }
 })
 
-import { useResearchData } from '../../../contexts/ResearchDataContext'
+import { useResearchData, buildIndex } from '../../../contexts/ResearchDataContext'
 import { buildMockContext } from '../../../contexts/__tests__/mockContext'
 import { expandFirstCard } from './expandCard'
 
@@ -84,5 +84,37 @@ describe('PersonEvidenceSection — match_score presence', () => {
     await expandFirstCard()
     expect(screen.getByText('Match:')).toBeInTheDocument()
     expect(screen.getByText(/88%/)).toBeInTheDocument()
+  })
+})
+
+/**
+ * A rejection retires the person-evidence row it contradicts, and the row shows
+ * "Superseded by rj_…". The REAL buildIndex is used: a mocked getById passes even
+ * when rejected_links is missing from the index.
+ */
+describe('PersonEvidenceSection — superseded by a rejection', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('navigates to rejected_links from the Superseded by link', async () => {
+    const [first, ...rest] = patrickFlynnResearch.person_evidence!
+    const research = {
+      ...patrickFlynnResearch,
+      person_evidence: [{ ...first, superseded_by: 'rj_001' }, ...rest]
+    } as ResearchData
+    const index = buildIndex(research, patrickFlynnGedcomx)
+    const setActiveSection = vi.fn()
+    vi.mocked(useResearchData).mockReturnValue(
+      buildMockContext({
+        research,
+        gedcomx: patrickFlynnGedcomx,
+        activeSection: 'person_evidence',
+        getById: (id) => index.get(id) ?? null,
+        setActiveSection
+      })
+    )
+    render(<PersonEvidenceSection />)
+    await expandFirstCard()
+    await userEvent.click(screen.getByTitle('Go to rj_001'))
+    expect(setActiveSection).toHaveBeenCalledWith('rejected_links')
   })
 })

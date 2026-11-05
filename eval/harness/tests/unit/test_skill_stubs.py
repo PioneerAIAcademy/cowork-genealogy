@@ -244,7 +244,7 @@ def test_hand_back_defers_to_a_canned_stop_rather_than_overriding_it():
 @pytest.mark.parametrize("response", [None, "some result"])
 def test_text_names_no_tool_or_step_a_test_could_be_graded_on(response):
     """Every stubbed test shares this text. Naming the step one test grades
-    (research_delivered, loaded through ToolSearch) would hand that test its
+    (a tool loaded through ToolSearch) would hand that test its
     pass and every other test an instruction it does not have."""
     text = _all_text(stub_denial("s", response))
     for token in ("research_", "mcp__", "ToolSearch"):

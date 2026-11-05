@@ -80,9 +80,31 @@ export function wholeSectionOwners(src: string = readFileSync(GUARD, "utf-8")): 
 }
 
 /**
+ * `SECTION_CO_WRITERS`: routed section → the bare agents the hook also lets
+ * write it, beside its `OWNED_SECTIONS` owner. Throws on an entry this reader
+ * cannot parse, since a dropped one would make a permitted writer read as
+ * refused.
+ */
+export function sectionCoWriters(src: string = readFileSync(GUARD, "utf-8")): Record<string, string[]> {
+  const body = src.match(/^SECTION_CO_WRITERS\s*=\s*\{([^}]*)\}/m)?.[1];
+  if (body === undefined) throw new Error(`SECTION_CO_WRITERS not found in ${GUARD}`);
+  const out: Record<string, string[]> = {};
+  for (const m of body.matchAll(/["']([^"']+)["']\s*:\s*\(([^)]*)\)/g)) {
+    out[m[1]] = [...m[2].matchAll(/["']([^"']+)["']/g)].map((s) => s[1]);
+  }
+  const keys = [...body.matchAll(/["']([^"']+)["']\s*:/g)].map((m) => m[1]);
+  const unparsed = keys.filter((k) => !(k in out) || out[k].length === 0);
+  if (unparsed.length > 0) {
+    throw new Error(`SECTION_CO_WRITERS entries this reader could not parse: ${unparsed.join(", ")}`);
+  }
+  return out;
+}
+
+/**
  * Whether the hook lets `agent` (bare name) write this manifest row with a
  * hook-routed tool: the row's section must be inside the agent's lane and not
- * routed to another agent. The rule is the section route, so it holds for either
+ * routed to another agent, unless the agent is one of that section's
+ * co-writers. The rule is the section route, so it holds for either
  * `HOOK_ROUTED_TOOLS` member (`research_append` and `evaluation_append` route a
  * section identically). An agent with no lane reaches nothing the hook can vouch
  * for, so this returns false for every row — callers that need a lane for every
@@ -93,9 +115,10 @@ export function researchAppendReaches(
   row: { artifact: string; section: string },
   lanes: Map<string, string[]>,
   owners: Record<string, string>,
+  coWriters: Record<string, string[]> = sectionCoWriters(),
 ): boolean {
   const via = row.artifact === "research.json" ? row.section : TREE_ROW_VIA[row.section];
   if (via === undefined) return false;
-  if (owners[via] !== undefined && owners[via] !== agent) return false;
+  if (owners[via] !== undefined && owners[via] !== agent && !(coWriters[via] ?? []).includes(agent)) return false;
   return lanes.get(agent)?.includes(via) ?? false;
 }

@@ -514,7 +514,7 @@ proto-smoke: proto-up-core ## D3 acceptance, no model cost: ok / fail / crash / 
 
 .PHONY: proto-test
 proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's decide(), the web tier, the worker
-	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_admission.py tests/test_proto_admission_pg.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_projects_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py tests/test_proto_pg_credentials.py tests/test_proto_pg_credentials_pg.py
+	cd apps/server && uv run pytest -q tests/test_proto_config.py tests/test_proto_decide.py tests/test_proto_enqueue.py tests/test_proto_web.py tests/test_proto_feedback.py tests/test_proto_worker.py tests/test_proto_worker_start.py tests/test_proto_shutdown.py tests/test_proto_d17.py tests/test_proto_demo.py tests/test_proto_kill.py tests/test_proto_d18.py tests/test_proto_auth.py tests/test_proto_admission.py tests/test_proto_admission_pg.py tests/test_proto_pool.py tests/test_proto_pool_pg.py tests/test_proto_bundles.py tests/test_eb_bundles.py tests/test_proto_grants.py tests/test_proto_grants_pg.py tests/test_proto_turn_users.py tests/test_proto_migrate.py tests/test_proto_migrate_pg.py tests/test_proto_bounds.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_projects_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_rehearsal.py tests/test_proto_target.py tests/test_proto_blob_routes_aws.py tests/test_proto_job_state_pg.py tests/test_proto_project_blobs.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py tests/test_proto_pg_credentials.py tests/test_proto_pg_credentials_pg.py
 
 # U3: the grant-lock tests against real Postgres -- the lock semantics are the point, and no
 # fake can prove pg_try_advisory_lock. U9's migration runner the same way: its lock, its
@@ -530,7 +530,7 @@ proto-test: ## Prototype offline tests: compose/conf/schema shape, the shim's de
 proto-grants-test: ## U3 + U6 + U9 + U23: the grant-lock interleavings, the claim fence, the migration runner and the held-message claim against the compose postgres (real advisory locks)
 	npm --prefix packages/engine/mcp-server run build
 	$(PROTO_COMPOSE) up -d --wait postgres
-	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_admission_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_projects_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py tests/test_proto_pg_credentials_pg.py
+	cd apps/server && PROTO_TEST_PG_DSN=postgresql://postgres:proto@localhost:5434/postgres uv run pytest -q tests/test_proto_grants_pg.py tests/test_proto_admission_pg.py tests/test_proto_pool_pg.py tests/test_proto_migrate_pg.py tests/test_proto_queue_pg.py tests/test_proto_fencing_pg.py tests/test_proto_session_store_pg.py tests/test_proto_projects_pg.py tests/test_proto_delete_pg.py tests/test_proto_alarms_pg.py tests/test_proto_feedback_pg.py tests/test_proto_retention_pg.py tests/test_proto_writer_record_pg.py tests/test_proto_blobs_pg.py tests/test_proto_steps_pg.py tests/test_proto_pg_credentials_pg.py
 
 # U3: store an encrypted FamilySearch grant for the dev-login patron (EMAIL, default
 # dev@localhost, who owns every seeded project): a PKCE sign-in on the dev key through a
@@ -1104,7 +1104,6 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# single-digit dollars, with a long tail.
 	# Keep the machine awake for the whole run — see eval/README.md "Keep the
 	# machine awake" (a sleep inflates real-clock time; the harness flags it).
-	# Stall recovery is ON by default; disable with RESUME_ON_STALL=0.
 	# Reasoning is pinned so runs are reproducible (see the runlog's usage block:
 	# agent_model / subagent_model_override / effort_level / max_output_tokens / cli_version).
 	# Override:
@@ -1125,7 +1124,8 @@ e2e-run: $(ENGINE_BUILD) ## Run ONE e2e benchmark fixture against live FamilySea
 	# subagent_capture_status before reading that as 'no runaway').
 	# e.g. make e2e-run TEST=... AGENT_MODEL=claude-sonnet-4-6
 	@test -n "$(TEST)" || { echo "ERROR: set TEST, e.g. make e2e-run TEST=kenneth-quass-death" >&2; exit 1; }
-	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(filter 0 false no off,$(RESUME_ON_STALL)),--no-resume-on-stall,) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,) $(if $(filter 1 true yes on,$(CONTEXT_1M)),--context-1m,) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,) $(if $(RUNLOG_ROOT),--runlog-root $(abspath $(RUNLOG_ROOT)),)
+	@test -z "$(RESUME_ON_STALL)" || { echo "ERROR: RESUME_ON_STALL was removed: every e2e run is a step-mode run, which ends on a stall rather than resuming." >&2; exit 1; }
+	cd eval/harness && uv run python -m e2e.run_e2e --test $(TEST) $(if $(EFFORT_LEVEL),--effort-level $(EFFORT_LEVEL),) $(if $(MAX_OUTPUT_TOKENS),--max-output-tokens $(MAX_OUTPUT_TOKENS),) $(if $(AGENT_MODEL),--agent-model $(AGENT_MODEL),) $(if $(filter 1 true yes on,$(DENY_SHELL)),--deny-shell,) $(if $(filter 1 true yes on,$(DENY_PROJECT_READS)),--deny-project-reads,) $(if $(filter 1 true yes on,$(CONTEXT_1M)),--context-1m,) $(if $(filter 0 false no off,$(TOOL_SEARCH)),--no-tool-search,) $(if $(RUNLOG_ROOT),--runlog-root $(abspath $(RUNLOG_ROOT)),)
 
 .PHONY: e2e-single-ask
 e2e-single-ask: $(ENGINE_BUILD) ## Run the single-ask e2e panel — one ordinary turn per fixture, graded on which unit ran and what was saved (live, billed): make e2e-single-ask [TEST=<slug>]
@@ -1353,8 +1353,10 @@ e2e-nudges: ## How /research hands back at a step boundary, over committed e2e r
 	# continue-nudge with the seam it sits on and its hand-back class --
 	# step / silent / completion_claim, per classify_hand_back.
 	#
-	# Every yield before project.status == completed is vetoed with the
-	# worker's continue text (handoff U17), so every class is a stall. `step`
+	# Reads runs made before step mode phase 2, when every yield before
+	# project.status == completed was vetoed with one continue text (handoff
+	# U17), so every class is a stall. A step-mode run records no nudge
+	# counter and is left out, and the report says how many. `step`
 	# is the hand-back line issue #2292 retired (PR #2870, 2026-09-27): runs
 	# since then should read 0, and earlier runs carry it from init-project
 	# and question-selection (PR #2649).

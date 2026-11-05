@@ -5,9 +5,9 @@ this venv cannot import; tests/unit/test_foreground_rewrite_parity.py runs both
 on the same inputs. The CLI backgrounds an agent when `run_in_background` is
 absent ("Agents run in the background by default", 2.1.220 and 2.1.294). A run
 here ends at the main thread's result, so a background agent still running then
-loses its work, and the e2e Stop hook's nudge makes the model spawn a duplicate
-of an agent it is still waiting on: both measured on the alpha before its
-rewrite (feedback issues #3156, #3159).
+loses its work, and a nudge to continue (the alpha's Stop hook, deleted in step mode
+phase 2) made the model spawn a duplicate of an agent it was still waiting on: both
+measured on the alpha before its rewrite (feedback issues #3156, #3159).
 """
 
 from __future__ import annotations
