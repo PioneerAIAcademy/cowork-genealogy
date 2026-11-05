@@ -2026,7 +2026,7 @@ export const extractionAppendSchema = {
           properties: {
             recordId: {
               type: "string",
-              description: "Which of the `recordIds` this person was expected on.",
+              description: "Which record in `recordIds` or `documents` this person was expected on.",
             },
             name: { type: "string", description: "Who was expected." },
             factType: { type: "string", description: "Defaults to `name`." },
