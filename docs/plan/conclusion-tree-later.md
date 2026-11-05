@@ -42,8 +42,10 @@ unchanged.
 - The status answer (per `project_context`'s description) leads a resumed project with its first owed item that is not advisory, in plain words. This is
   Cowork's lever: 10 deeply linked Cowork projects ended with no proof.
 - After an unrecorded answer about a project person, the agent offers in one line to save it as a
-  finding. On yes, the light path runs and the finding may stand at `possible`. `DELIVERY_GUIDANCE`
-  lists the save as a bounded deliverable. When no question matches, proof-conclusion appends one
+  finding. On yes, the light path runs and the finding may stand at `possible`. The research router's
+  bounded routing list (`research/SKILL.md`, "the message asks for one or more deliverables")
+  has no save item yet; adding one is owed with this plan (`DELIVERY_GUIDANCE`, which this first
+  named, was deleted in step mode phase 2). When no question matches, proof-conclusion appends one
   in the same batch, exempt from `newQuestionWhileSearchInFlightInvariants`.
 - **Decided (2026-10-07): no hosted "Save as finding" button.** The one-line chat offer does the
   same work with no UI. Revisit if fewer than 10 of the 20 sessions in the acceptance check below
@@ -88,7 +90,8 @@ census that links the person stays at `possible` unless a record carries the val
 
 ## Part 3 — the hosted delivery check (decided: hold)
 
-A check on `research_delivered` that refuses to end a bounded turn until its answer is recorded.
+**Premise lapsed:** `research_delivered` was deleted in step mode phase 2, so there is no call to
+check. A check on `research_delivered` that refuses to end a bounded turn until its answer is recorded.
 It is held because it puts the 13–19 minute recording tail back on bounded asks; issue #2921's
 tester asked "Why is it building a tree when I simply asked it to help me find a christening
 record?".

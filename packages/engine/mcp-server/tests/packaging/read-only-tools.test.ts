@@ -68,8 +68,6 @@ const WRITERS = [
   "tree_correct",
   "tree_edit",
   "tree_forget",
-  // Not a writer: it ends the turn, so it must run after every call before it.
-  "research_delivered",
 ];
 
 describe("READ_ONLY", () => {

@@ -7,7 +7,6 @@
 import { volumeBisectSchema } from "./tools/volume-bisect.js";
 import { catalogSearchSchema } from "./tools/catalog-search.js";
 import { wikipediaSearchSchema } from "./tools/wikipedia.js";
-import { researchDeliveredSchema } from "./tools/research-delivered.js";
 import {
   placeSearchToolSchema,
   placeSearchAllToolSchema,
@@ -76,13 +75,6 @@ export const ALWAYS_LOAD: ReadonlySet<string> = new Set([
   "research_append", // most-loaded tool; 76 of its 82 re-loads follow a compaction
   "research_log_append", // logs every search; 67 of its 68 re-loads follow a compaction
   "record_read", // 2.3 KB and loaded in 31/34 runs. record_search stays deferred at 20.6 KB
-  // 802 B -- the 11th smallest of the 54 schemas the server ships, and under a third
-  // of record_read above (2,363 B). Not the smallest: logout is 185 B.
-  // Deferred, it costs a ToolSearch round trip at the one moment that must not
-  // fail: a bounded turn ending. The hosted Stop hook allows that stop ONLY on
-  // this call, so a model that has not loaded the schema gets nudged onward
-  // instead (#2813 item 1).
-  "research_delivered",
 ]);
 
 // Tools Claude Code may run side by side (annotations.readOnlyHint): concurrent calls cannot corrupt
@@ -192,7 +184,6 @@ export const allToolSchemas = [
   buildExternalSearchUrlSchema,
   sidecarReadSchema,
   getNameVariantsSchema,
-  researchDeliveredSchema,
 ];
 
 // Set in place, not copied: ownership-manifest.test.ts matches schemas by object identity.
