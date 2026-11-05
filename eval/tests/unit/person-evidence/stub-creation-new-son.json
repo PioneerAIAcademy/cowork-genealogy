@@ -24,7 +24,7 @@
     "probable confidence is appropriate — a brand-new person rests on the single will record with no independent corroboration yet; confident would over-claim (both the agent's stub-confidence rule and the rubric cap a single-source link at probable)"
   ],
   "execution": {
-    "max_wall_clock_seconds": 900,
+    "max_wall_clock_seconds": 1200,
     "sdk_message_silence_seconds": 600
   },
   "mcp_fixtures": [

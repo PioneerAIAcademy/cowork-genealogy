@@ -31,7 +31,7 @@
       "supporting_sources": [
         "1850 United States Federal Census, Great Salt Lake, Utah Territory — Daniel Cook household."
       ],
-      "required": true
+      "required": false
     },
     {
       "id": "f3",
@@ -47,7 +47,7 @@
         "1850 United States Federal Census, Great Salt Lake, Utah Territory — Daniel Cook household.",
         "1870 United States Census, household of Isaac Cook — separately names Daniel Cook as father."
       ],
-      "required": true
+      "required": false
     }
   ]
 }

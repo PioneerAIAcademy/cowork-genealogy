@@ -1,0 +1,524 @@
+{
+  "_why": "US 1880, Saratoga: six household personas, each with its own 1:1 ark; Mary b. 1865 and John b. 1872 in New York",
+  "_capturedFrom": "MZF2-Y55",
+  "element": {
+    "recordId": "ark:/61903/1:1:MZF2-Y55",
+    "gedcomx": {
+      "persons": [
+        {
+          "id": "p_255715044",
+          "ark": "ark:/61903/1:1:MZF2-Y55",
+          "principal": true,
+          "gender": "Male",
+          "names": [
+            {
+              "id": "bbfb884a-4122-4ec3-a211-dfa85009caee",
+              "type": "BirthName",
+              "given": "Thomas",
+              "surname": "Hanrahan"
+            }
+          ],
+          "facts": [
+            {
+              "type": "MaritalStatus",
+              "value": "Married"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "Occupation",
+              "value": "Stone Mason"
+            },
+            {
+              "id": "547a623f-9840-4170-ab07-bc2ed1196ced",
+              "type": "Birth",
+              "date": "1840",
+              "standard_date": "1840",
+              "place": "Ireland"
+            },
+            {
+              "id": "f3614ea1-7d3f-4905-9ddb-70bd3875ed2d",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Saratoga, District 2, Saratoga, NY, United States",
+              "standard_place": "Saratoga, Saratoga, New York, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_255715045",
+          "ark": "ark:/61903/1:1:MZF2-Y5R",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "fe1c827f-8bc2-427c-9088-f38cf419ddae",
+              "type": "BirthName",
+              "given": "Johannah",
+              "surname": "Hanrahan"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Occupation",
+              "value": "Keeping House"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "MaritalStatus",
+              "value": "Married"
+            },
+            {
+              "id": "f8980d99-d2ce-4e11-bd52-5d506df14b0f",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Saratoga, District 2, Saratoga, NY, United States",
+              "standard_place": "Saratoga, Saratoga, New York, United States"
+            },
+            {
+              "id": "a7d39b82-2dbd-46ec-91b2-8a681fd43490",
+              "type": "Birth",
+              "date": "1845",
+              "standard_date": "1845",
+              "place": "Ireland"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_255715046",
+          "ark": "ark:/61903/1:1:MZF2-Y5T",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "a6e2d570-6160-499a-9970-9763541a4acc",
+              "type": "BirthName",
+              "given": "Mary",
+              "surname": "Hanrahan"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Occupation",
+              "value": "Works In Cotton Mill"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "id": "edf0ef4e-c94e-45f9-8909-ae58c7a33056",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Saratoga, District 2, Saratoga, NY, United States",
+              "standard_place": "Saratoga, Saratoga, New York, United States"
+            },
+            {
+              "id": "a9875ba6-ffd4-4020-9910-7ca4b340e71f",
+              "type": "Birth",
+              "date": "1865",
+              "standard_date": "1865",
+              "place": "New York, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_255715047",
+          "ark": "ark:/61903/1:1:MZF2-Y5Y",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "id": "eae59f0d-4abe-483b-82f3-175b219baa82",
+              "type": "BirthName",
+              "given": "Elizabeth",
+              "surname": "Hanrahan"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Occupation",
+              "value": "At School"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "id": "cb6c9c14-f55e-4c78-a490-396dc76f0f18",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Saratoga, District 2, Saratoga, NY, United States",
+              "standard_place": "Saratoga, Saratoga, New York, United States"
+            },
+            {
+              "id": "e9185138-0dde-47bb-a336-39cb719285e4",
+              "type": "Birth",
+              "date": "1869",
+              "standard_date": "1869",
+              "place": "New York, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_255715048",
+          "ark": "ark:/61903/1:1:MZF2-Y5B",
+          "principal": true,
+          "gender": "Male",
+          "names": [
+            {
+              "id": "2be80682-8b93-44ab-909e-7d43a3dac464",
+              "type": "BirthName",
+              "given": "Thomas",
+              "surname": "Hanrahan"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Occupation",
+              "value": "At School"
+            },
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "id": "b8a66f1c-c422-4f1f-98d2-2e3f9af391a8",
+              "type": "Birth",
+              "date": "1870",
+              "standard_date": "1870",
+              "place": "New York, United States"
+            },
+            {
+              "id": "cc479510-cb21-4e35-a504-d5e3f18a46f7",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Saratoga, District 2, Saratoga, NY, United States",
+              "standard_place": "Saratoga, Saratoga, New York, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        },
+        {
+          "id": "p_255715049",
+          "ark": "ark:/61903/1:1:MZF2-Y51",
+          "principal": true,
+          "gender": "Male",
+          "names": [
+            {
+              "id": "e9bbad63-f77d-4fff-a3ac-560c29d1db35",
+              "type": "BirthName",
+              "given": "John",
+              "surname": "Hanrahan"
+            }
+          ],
+          "facts": [
+            {
+              "type": "MaritalStatus",
+              "value": "Single"
+            },
+            {
+              "type": "Race",
+              "value": "White"
+            },
+            {
+              "type": "Occupation",
+              "value": "At School"
+            },
+            {
+              "id": "c2f82c29-5ef4-4264-ab8d-f9566e49fa78",
+              "type": "Birth",
+              "date": "1872",
+              "standard_date": "1872",
+              "place": "New York, United States"
+            },
+            {
+              "id": "bee314ed-68f5-4b82-9c24-b03e4485b8ab",
+              "type": "Census",
+              "primary": true,
+              "date": "1880",
+              "standard_date": "1880",
+              "place": "Saratoga, District 2, Saratoga, NY, United States",
+              "standard_place": "Saratoga, Saratoga, New York, United States"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd_da1"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "id": "76578821-0d89-49a8-8bed-f5bb2fb3f322",
+          "type": "ParentChild",
+          "parent": "p_255715045",
+          "child": "p_255715048"
+        },
+        {
+          "id": "30ddb401-3307-40d5-86b7-3bea01e897d4",
+          "type": "ParentChild",
+          "parent": "p_255715044",
+          "child": "p_255715048"
+        },
+        {
+          "id": "93b5bc3c-75d3-44ef-bd59-8eef5dd1241f",
+          "type": "ParentChild",
+          "parent": "p_255715044",
+          "child": "p_255715049"
+        },
+        {
+          "id": "fda82a96-5e9d-4aa6-9e6f-975bec32563a",
+          "type": "ParentChild",
+          "parent": "p_255715045",
+          "child": "p_255715049"
+        },
+        {
+          "id": "d946e479-b5f9-4917-84cb-58ce0c9e30e3",
+          "type": "ParentChild",
+          "parent": "p_255715045",
+          "child": "p_255715047"
+        },
+        {
+          "id": "7468e0d1-a6bc-401e-ada5-5660deee4a36",
+          "type": "Couple",
+          "person1": "p_255715044",
+          "person2": "p_255715045"
+        },
+        {
+          "id": "13791325-ae68-46f6-af9c-b092899d53cb",
+          "type": "ParentChild",
+          "parent": "p_255715045",
+          "child": "p_255715046"
+        },
+        {
+          "id": "e5b78cbf-e803-417a-84c5-d9687830c78b",
+          "type": "ParentChild",
+          "parent": "p_255715044",
+          "child": "p_255715046"
+        },
+        {
+          "id": "1c8e1292-69c5-4fa1-b239-b9f1ce01c104",
+          "type": "ParentChild",
+          "parent": "p_255715044",
+          "child": "p_255715047"
+        }
+      ],
+      "sources": [
+        {
+          "id": "src_r_184447976",
+          "resource_type": "Record",
+          "title": "Household of Thomas Hanrahan, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZF2-Y55 : Wed Sep 09 10:55:38 UTC 2026), Entry for Thomas Hanrahan and Johannah Hanrahan, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:2:M4JL-D7T",
+          "coverage": {
+            "place_rep_id": "4613285",
+            "date_range": "1880",
+            "record_type": "Census",
+            "standard_place": "Saratoga, Saratoga, New York, United States"
+          }
+        },
+        {
+          "id": "sd_c_1417683",
+          "resource_type": "Collection",
+          "title": "United States, Census, 1880",
+          "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+          "coverage": {
+            "place_rep_id": "1",
+            "date_range": "1880/1880",
+            "record_type": "Census",
+            "standard_place": "United States"
+          }
+        },
+        {
+          "id": "sd_da1",
+          "resource_type": "DigitalArtifact",
+          "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YBJ-QL4",
+          "coverage": {
+            "place_rep_id": "339",
+            "date_range": "1880",
+            "record_type": "CensusIndex",
+            "standard_place": "New York, United States"
+          }
+        },
+        {
+          "id": "sd_p_255715048",
+          "resource_type": "Person",
+          "title": "Thomas Hanrahan, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZF2-Y5B : Wed Sep 09 10:55:38 UTC 2026), Thomas Hanrahan in entry for Thomas Hanrahan, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MZF2-Y5B"
+        },
+        {
+          "id": "sd_p_255715049",
+          "resource_type": "Person",
+          "title": "John Hanrahan, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZF2-Y51 : Wed Sep 09 10:55:38 UTC 2026), John Hanrahan in entry for Thomas Hanrahan, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MZF2-Y51"
+        },
+        {
+          "id": "sd_p_255715045",
+          "resource_type": "Person",
+          "title": "Johannah Hanrahan, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZF2-Y5R : Wed Sep 09 10:55:38 UTC 2026), Johannah Hanrahan in entry for Thomas Hanrahan, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MZF2-Y5R"
+        },
+        {
+          "id": "sd_p_255715044",
+          "resource_type": "Person",
+          "title": "Thomas Hanrahan, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZF2-Y55 : Wed Sep 09 10:55:38 UTC 2026), Thomas Hanrahan, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MZF2-Y55"
+        },
+        {
+          "id": "sd_p_255715046",
+          "resource_type": "Person",
+          "title": "Mary Hanrahan, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZF2-Y5T : Wed Sep 09 10:55:38 UTC 2026), Mary Hanrahan in entry for Thomas Hanrahan, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MZF2-Y5T"
+        },
+        {
+          "id": "sd_p_255715047",
+          "resource_type": "Person",
+          "title": "Elizabeth Hanrahan, \"United States, Census, 1880\"",
+          "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZF2-Y5Y : Wed Sep 09 10:55:38 UTC 2026), Elizabeth Hanrahan in entry for Thomas Hanrahan, 1880.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:MZF2-Y5Y"
+        },
+        {
+          "id": "sd_auto_M9JT-92D",
+          "resource_type": "auto",
+          "title": "United States, Residences, Census, from 1793 to 1964",
+          "coverage": {
+            "place_rep_id": "1",
+            "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+            "standard_place": "United States"
+          }
+        }
+      ],
+      "places": [
+        {
+          "id": "place_4613285"
+        }
+      ]
+    },
+    "indexFields": {
+      "p_255715044": {
+        "relationshipToHead": "Head",
+        "sortKey": "0000000005161731_00757_39101861_0000000184447976_000",
+        "personNbr": "0",
+        "lineNbr": "00082",
+        "householdId": "11326930",
+        "age": "40 years",
+        "fatherBirthPlace": "Ireland",
+        "motherBirthPlace": "Ireland",
+        "censusPlace": "Saratoga, Saratoga, New York, United States"
+      },
+      "p_255715045": {
+        "relationshipToHead": "Wife",
+        "sortKey": "0000000005161731_00757_39101861_0000000184447976_001",
+        "personNbr": "1",
+        "lineNbr": "00083",
+        "householdId": "11326930",
+        "age": "35 years",
+        "fatherBirthPlace": "Ireland",
+        "motherBirthPlace": "Ireland",
+        "censusPlace": "Saratoga, Saratoga, New York, United States"
+      },
+      "p_255715046": {
+        "relationshipToHead": "Daughter",
+        "sortKey": "0000000005161731_00757_39101861_0000000184447976_002",
+        "personNbr": "2",
+        "lineNbr": "00084",
+        "householdId": "11326930",
+        "age": "15 years",
+        "fatherBirthPlace": "Ireland",
+        "motherBirthPlace": "Ireland",
+        "censusPlace": "Saratoga, Saratoga, New York, United States"
+      },
+      "p_255715047": {
+        "relationshipToHead": "Daughter",
+        "sortKey": "0000000005161731_00757_39101861_0000000184447976_003",
+        "personNbr": "3",
+        "lineNbr": "00085",
+        "householdId": "11326930",
+        "age": "11 years",
+        "fatherBirthPlace": "Ireland",
+        "motherBirthPlace": "Ireland",
+        "censusPlace": "Saratoga, Saratoga, New York, United States"
+      },
+      "p_255715048": {
+        "relationshipToHead": "Son",
+        "sortKey": "0000000005161731_00757_39101861_0000000184447976_004",
+        "personNbr": "4",
+        "lineNbr": "00086",
+        "householdId": "11326930",
+        "age": "10 years",
+        "fatherBirthPlace": "Ireland",
+        "motherBirthPlace": "Ireland",
+        "censusPlace": "Saratoga, Saratoga, New York, United States"
+      },
+      "p_255715049": {
+        "relationshipToHead": "Son",
+        "sortKey": "0000000005161731_00757_39101861_0000000184447976_005",
+        "personNbr": "5",
+        "lineNbr": "00087",
+        "householdId": "11326930",
+        "age": "8 years",
+        "fatherBirthPlace": "Ireland",
+        "motherBirthPlace": "Ireland",
+        "censusPlace": "Saratoga, Saratoga, New York, United States"
+      }
+    }
+  }
+}

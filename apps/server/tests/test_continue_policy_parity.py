@@ -1,10 +1,8 @@
 """What the hosted planes still share with the e2e harness (PR #2870 items 1b/1c/1d).
 
-The Stop veto was deleted from the hosted planes in step mode's phase 2, so
-``should_continue_run`` and ``terminal_reason`` now live only in
-``eval/harness/e2e/stop_checker.py``, and the continue text only as a string literal in
-``eval/harness/e2e/orchestrator.py``'s ``stop_hook``; the e2e half of phase 2 retires both. What the two
-packages still share is ``project_completed``:
+Step mode's phase 2 deleted the Stop veto from the hosted planes and then from the e2e
+harness, so ``should_continue_run``, ``terminal_reason`` and the continue text are gone
+from all three. What the two packages still share is ``project_completed``:
 
     apps/server/app/agent/continue_policy.py      hosted alpha AND the prototype worker
     eval/harness/e2e/stop_checker.py              the e2e harness

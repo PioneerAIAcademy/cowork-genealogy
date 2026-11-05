@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_evaluate_search_results_p5c",
+    "skill": "evaluate-search-results",
+    "name": "An Ohio history's 'Cynthia married Iram Packard' is Not a Match, and its marriage is not new",
+    "type": "positive",
+    "description": "log_003 hit 7 (3Q9M-CSZ6-J7JT) is a Medina County, Ohio township history whose sketches say 'Cynthia married Iram Packard'. Gold (PLAN §4, to be confirmed by a genealogist before the paid run): Not a Match, because the Iram there is a Packard who settled in Ohio, and the Hydes the page names are other families. The hit carries a marriage, but a Not a Match holds no fact the person lacks, so new_vital_info is false; research_append refuses true beside not_a_match.",
+    "tags": [
+      "hit-verdict",
+      "expect-not-a-match",
+      "no-new-vital",
+      "not-extracted",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Evaluate this full-text search hit against the tree person.\n\nprojectPath: <workspace>\nhitRef: results/log_003.json#3Q9M-CSZ6-J7JT\ntarget: I1",
+    "scenario": "g9gj-proof-update-after-later-search"
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm: the delegation is relayed verbatim to evaluate-search-results and no router is staged. project_context, sidecar_read, tree_query and research_append run live against the scenario.",
+    "Gold: Not a Match, no new vital information, not already extracted. The hit is a page of biographical sketches from a Medina County, Ohio township history: 'Cynthia married Iram Packard, who settled the farm now owned by George Holbern'. The Hydes on the page are Henry Hyde's family of Montville, Ohio. Iram F. Hyde married Mary Robertson and lived in Jackson, New York; the Iram on this page is another man.",
+    "The hit names a marriage, but a Not a Match holds no fact the person lacks, so the flag is false. research_append refuses new_vital_info true beside not_a_match; one refusal followed by a corrected resend is the documented path, not a fault.",
+    "The verdict, the flag, the single hit_verdicts row, the one read of the hit, the tree_query call and the contract lines are checked by validators. Grade whether the rationale names the facts that decide them, and the plain summary after the `---`."
+  ]
+}

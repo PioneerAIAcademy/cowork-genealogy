@@ -4,7 +4,7 @@
     "skill": "research",
     "name": "Routes a no-project request that states an objective to init-project, not tree-survey",
     "type": "positive",
-    "description": "The pair of ut_research_tsv. The user starts /research in an empty folder and names a person and a question. No research.json exists, but the message states an objective, so the router spawns @plugin:init-project with that person and objective, not @plugin:tree-survey (issue #3273). Both are stubbed; the test checks only the first hand-off, so a body that sent every empty-folder message to tree-survey fails here.",
+    "description": "The pair of ut_research_tsv, removed until #4246. The user starts /research in an empty folder and names a person and a question. No research.json exists, but the message states an objective, so the router spawns @plugin:init-project with that person and objective, not @plugin:tree-survey (issue #3273). Both are stubbed; the test checks only the first hand-off, so a body that sent every empty-folder message to tree-survey fails here.",
     "tags": [
       "routing",
       "routes-to:init-project"

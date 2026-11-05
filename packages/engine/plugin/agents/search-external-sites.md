@@ -56,7 +56,7 @@ hand it over with exactly what to look for, and triage what comes back. You are
 the external counterpart to search-records (FamilySearch indexed search) and
 search-images (FamilySearch image browsing).
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 **Places:** When resolving places, follow "Working with places" below — resolve with `place_search` and use its `standardPlace`.
 
@@ -238,8 +238,7 @@ paper that was never there to find. The place's `localities` entry often names
 the right regional archive in `guide_markdown` (`research_query` section
 `localities`; `project_context` omits it); read it before guessing.
 
-**Check access.** Read `researcher_profile.subscriptions` in
-`research.json`.
+**Check access.** Use `subscriptions` from `project_context({ projectPath })`.
 
 A site the tool reports as `free` or `free_bot_protected` needs no
 subscription — never raise access for it, unless the
@@ -254,7 +253,7 @@ check before paying.
   to [SITE] on file — the link will hit a login wall or a
   limited-results preview. Continue, or pick a site you have access
   to?" Flag, don't block.
-- Profile absent or `subscriptions: ["none"]` → treat all sites equally,
+- No project, empty `subscriptions`, or `subscriptions: ["none"]` → treat all sites equally,
   don't pester about access.
 - FindAGrave is always worth generating — basic search is free.
 
@@ -271,7 +270,7 @@ either when the researcher wants that domain specifically.
 
 ### 1. Find the plan item
 
-Read `research.json` `plans[]` and pick the item(s) targeting an external
+Call `research_query({ projectPath, section: "plans" })` and pick the item(s) targeting an external
 repository. Note the record type, the place, the year window, and its
 `collection_url` if it has one.
 

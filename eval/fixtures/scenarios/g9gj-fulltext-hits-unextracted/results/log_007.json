@@ -1,0 +1,2076 @@
+{
+  "log_id": "log_007",
+  "tool": "record_search",
+  "retrieved": "2026-10-09T15:11:39.414Z",
+  "returned_count": 20,
+  "payload": {
+    "query": {
+      "birthYearFrom": 1793,
+      "birthYearTo": 1802,
+      "count": 20,
+      "givenName": "Iram",
+      "givenNameAlt": "Hiram",
+      "projectPath": "<workspace>",
+      "residencePlace": "New York, United States",
+      "residenceYearFrom": 1865,
+      "residenceYearTo": 1865,
+      "surname": "Hyde"
+    },
+    "totalMatches": 1529,
+    "paginationCappedAt": 4999,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:QVNF-LDNP",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1865",
+            "place": ", Lima, Livingston, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 5.9186,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1796",
+        "collectionId": "1491284",
+        "collectionTitle": "New York, State Census, 1865",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1491284",
+        "recordTitle": "Household of Patrick Osborn, \"New York, State Census, 1865\"",
+        "recordArk": "ark:/61903/1:2:QK1J-NSM9",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_101003528303",
+              "ark": "ark:/61903/1:1:QVNF-LDNP",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1865",
+                  "standard_date": "1865",
+                  "place": ", Lima, Livingston, New York, United States",
+                  "standard_place": "Lima, Livingston, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1796",
+                  "standard_date": "1796"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_101003528301",
+              "ark": "ark:/61903/1:1:QVNF-LDNL",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Osborn",
+                  "given": "Patrick"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1803",
+                  "standard_date": "1803"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1865",
+                  "standard_date": "1865",
+                  "place": ", Lima, Livingston, New York, United States",
+                  "standard_place": "Lima, Livingston, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_101003528302",
+              "ark": "ark:/61903/1:1:QVNF-LDNG",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Osborn",
+                  "given": "Margaret"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1865",
+                  "standard_date": "1865",
+                  "place": ", Lima, Livingston, New York, United States",
+                  "standard_place": "Lima, Livingston, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1808",
+                  "standard_date": "1808"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_101003528304",
+              "ark": "ark:/61903/1:1:QVNF-LDN5",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Charles E"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1865",
+                  "standard_date": "1865",
+                  "place": ", Lima, Livingston, New York, United States",
+                  "standard_place": "Lima, Livingston, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1842",
+                  "standard_date": "1842"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102049903801",
+              "title": "Household of Patrick Osborn, \"New York, State Census, 1865\"",
+              "citation": "\"New York, State Census, 1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNF-LDNL : Sun Jan 19 02:28:29 UTC 2025), Entry for Patrick Osborn and Margaret Osborn, 1865.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QK1J-NSM9"
+            },
+            {
+              "id": "sd_c_1491284",
+              "title": "New York, State Census, 1865",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1491284"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6Q2W-HHH"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_101003528303",
+              "url": "#p_101003528303"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608239",
+              "name": "Lima, Livingston, New York, United States",
+              "latitude": 42.8964,
+              "longitude": -77.6086
+            }
+          ]
+        },
+        "primaryId": "p_101003528303"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZVW-BMYN",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1865 to 1868",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram T Hyde",
+        "score": 5.2836,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Hiram T Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BHF-B6M4",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292043016826",
+              "ark": "ark:/61903/1:1:6ZVW-BMYN",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram T"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1865 to 1868",
+                  "standard_date": "Bet 1865 and 1868",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173709317707",
+              "title": "Entry for Hiram T Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZVW-BMYN : Sun Mar 10 12:52:01 UTC 2024), Entry for Hiram T Hyde, from 1865 to 1868.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BHF-B6M4"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-V3DB-LT9D"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292043016826",
+              "url": "#p_292043016826"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292043016826"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZVY-S3WQ",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "New York City, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram T Hyde",
+        "score": 5.2836,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Hiram T Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BHB-7ZJ8",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292059326884",
+              "ark": "ark:/61903/1:1:6ZVY-S3WQ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hiram T",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "New York City, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173719224521",
+              "title": "Entry for Hiram T Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZVY-S3WQ : Tue May 13 11:17:39 UTC 2025), Entry for Hiram T Hyde.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BHB-7ZJ8"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-V3DB-LYV6"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292059326884",
+              "url": "#p_292059326884"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292059326884"
+      },
+      {
+        "recordId": "ark:/61903/1:1:F911-VNY",
+        "events": [
+          {
+            "type": "MilitaryService",
+            "date": "from 1861 to 1865",
+            "place": "New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 4.0236,
+        "confidence": 2,
+        "collectionId": "1910717",
+        "collectionTitle": "United States, Civil War Soldiers Index, 1861-1865",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1910717",
+        "recordTitle": "Entry for Hiram H. Hyde, \"United States, Civil War Soldiers Index, 1861-1865\"",
+        "recordArk": "ark:/61903/1:2:1LB7-1YX",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10983589707",
+              "ark": "ark:/61903/1:1:F911-VNY",
+              "names": [
+                {
+                  "type": "AlsoKnownAs",
+                  "given": "Hiram H.",
+                  "surname": "Hyde"
+                },
+                {
+                  "type": "BirthName",
+                  "given": "Hiram",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MilitaryService",
+                  "primary": true,
+                  "date": "from 1861 to 1865",
+                  "standard_date": "Bet 1861 and 1865",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21674141924",
+              "title": "Entry for Hiram H. Hyde, \"United States, Civil War Soldiers Index, 1861-1865\"",
+              "citation": "\"United States, Civil War Soldiers Index, 1861-1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F911-VNY : Wed Feb 12 23:23:06 UTC 2025), Entry for Hiram Hyde, from 1861 to 1865.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1LB7-1YX"
+            },
+            {
+              "id": "sd_c_1910717",
+              "title": "United States, Civil War Soldiers Index, 1861-1865",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1910717"
+            },
+            {
+              "id": "src_p_p_10983589707",
+              "url": "#p_10983589707"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            }
+          ]
+        },
+        "primaryId": "p_10983589707"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FSDD-X6R",
+        "events": [
+          {
+            "type": "MilitaryService",
+            "date": "from 1861 to 1865",
+            "place": "New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 4.0236,
+        "confidence": 2,
+        "collectionId": "1910717",
+        "collectionTitle": "United States, Civil War Soldiers Index, 1861-1865",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1910717",
+        "recordTitle": "Entry for Hiram Hyde, \"United States, Civil War Soldiers Index, 1861-1865\"",
+        "recordArk": "ark:/61903/1:2:1GM2-Y17",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10993657015",
+              "ark": "ark:/61903/1:1:FSDD-X6R",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MilitaryService",
+                  "primary": true,
+                  "date": "from 1861 to 1865",
+                  "standard_date": "Bet 1861 and 1865",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21676165175",
+              "title": "Entry for Hiram Hyde, \"United States, Civil War Soldiers Index, 1861-1865\"",
+              "citation": "\"United States, Civil War Soldiers Index, 1861-1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FSDD-X6R : Thu Feb 13 01:56:36 UTC 2025), Entry for Hiram Hyde, from 1861 to 1865.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1GM2-Y17"
+            },
+            {
+              "id": "sd_c_1910717",
+              "title": "United States, Civil War Soldiers Index, 1861-1865",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1910717"
+            },
+            {
+              "id": "src_p_p_10993657015",
+              "url": "#p_10993657015"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            }
+          ]
+        },
+        "primaryId": "p_10993657015"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NHZ4-661",
+        "events": [
+          {
+            "type": "Pension",
+            "date": "22 Mar 1875",
+            "place": "New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 4.0236,
+        "confidence": 2,
+        "collectionId": "1471019",
+        "collectionTitle": "United States, Civil War and Later Pension Index, 1861-1917",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1471019",
+        "recordTitle": "Entry for Hiram Hyde, \"United States, Civil War and Later Pension Index, 1861-1917\"",
+        "recordArk": "ark:/61903/1:2:9JGK-FXC",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11866701119",
+              "ark": "ark:/61903/1:1:NHZ4-661",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hiram",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Pension",
+                  "primary": true,
+                  "date": "22 Mar 1875",
+                  "standard_date": "22 Mar 1875",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_1160446929",
+              "title": "Entry for Hiram Hyde, \"United States, Civil War and Later Pension Index, 1861-1917\"",
+              "citation": "\"United States, Civil War and Later Pension Index, 1861-1917\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NHZ4-661 : Sun Dec 07 06:57:14 UTC 2025), Entry for Hiram Hyde, 22 Mar 1875.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9JGK-FXC"
+            },
+            {
+              "id": "sd_c_1471019",
+              "title": "United States, Civil War and Later Pension Index, 1861-1917",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1471019"
+            },
+            {
+              "id": "sd_da1",
+              "url": "http://www.fold3.com/document.php?doc=4676619&xid=215&p=ma"
+            },
+            {
+              "id": "src_p_p_11866701119",
+              "url": "#p_11866701119"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            }
+          ]
+        },
+        "primaryId": "p_11866701119"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NHD9-7QS",
+        "events": [
+          {
+            "type": "Pension",
+            "date": "11 May 1872",
+            "place": "New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram C. Hyde",
+        "score": 4.0236,
+        "confidence": 2,
+        "collectionId": "1471019",
+        "collectionTitle": "United States, Civil War and Later Pension Index, 1861-1917",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1471019",
+        "recordTitle": "Entry for Hiram C. Hyde, \"United States, Civil War and Later Pension Index, 1861-1917\"",
+        "recordArk": "ark:/61903/1:2:9JGK-FX6",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11868151622",
+              "ark": "ark:/61903/1:1:NHD9-7QS",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hiram C.",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Pension",
+                  "primary": true,
+                  "date": "11 May 1872",
+                  "standard_date": "11 May 1872",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_1160446933",
+              "title": "Entry for Hiram C. Hyde, \"United States, Civil War and Later Pension Index, 1861-1917\"",
+              "citation": "\"United States, Civil War and Later Pension Index, 1861-1917\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NHD9-7QS : Fri Dec 05 18:03:15 UTC 2025), Entry for Hiram C. Hyde, 11 May 1872.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9JGK-FX6"
+            },
+            {
+              "id": "sd_c_1471019",
+              "title": "United States, Civil War and Later Pension Index, 1861-1917",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1471019"
+            },
+            {
+              "id": "sd_da1",
+              "url": "http://www.fold3.com/document.php?doc=5620701&xid=215&p=ma"
+            },
+            {
+              "id": "src_p_p_11868151622",
+              "url": "#p_11868151622"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            }
+          ]
+        },
+        "primaryId": "p_11868151622"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QLRR-M1PK",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 4.0236,
+        "confidence": 2,
+        "sex": "Male",
+        "birthPlace": "New York, United States",
+        "collectionId": "1923472",
+        "collectionTitle": "Michigan, County Births, 1867-1917",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1923472",
+        "recordTitle": "Entry for Franklin Hyde, \"Michigan, County Births, 1867-1917\"",
+        "recordArk": "ark:/61903/1:2:Q574-J1T1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_103416776809",
+              "ark": "ark:/61903/1:1:QLRR-M1PK",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hiram",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "N Y",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_103416776808",
+              "ark": "ark:/61903/1:1:QLRR-M1PV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Franklin",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "primary": true,
+                  "date": "26 Jan 1868",
+                  "standard_date": "26 Jan 1868",
+                  "place": "Comstock, Kalamazoo, Michigan, United States",
+                  "standard_place": "Comstock, Kalamazoo, Michigan, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_103416776810",
+              "ark": "ark:/61903/1:1:QLRR-M1P2",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Martha J",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "N Y",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_103416776810",
+              "child": "p_103416776808"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_103416776809",
+              "child": "p_103416776808"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_103416776809",
+              "person2": "p_103416776810"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_105103655909",
+              "title": "Entry for Franklin Hyde, \"Michigan, County Births, 1867-1917\"",
+              "citation": "\"Michigan, County Births, 1867-1917\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLRR-M1PV : Sat Mar 09 03:27:21 UTC 2024), Entry for Franklin Hyde and Hiram Hyde, 26 Jan 1868.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q574-J1T1"
+            },
+            {
+              "id": "sd_c_1923472",
+              "title": "Michigan, County Births, 1867-1917",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1923472"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-LBZX-HTS"
+            },
+            {
+              "id": "sd_auto_M9J1-QTG",
+              "title": "United States, Michigan, Births, from 0035 to 2007"
+            },
+            {
+              "id": "src_p_p_103416776809",
+              "url": "#p_103416776809"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "4224989",
+              "name": "Comstock, Kalamazoo, Michigan, United States",
+              "latitude": 42.2867,
+              "longitude": -85.5133
+            }
+          ]
+        },
+        "primaryId": "p_103416776809"
+      },
+      {
+        "recordId": "ark:/61903/1:1:NQN4-FLX",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 4.0236,
+        "confidence": 2,
+        "sex": "Male",
+        "birthPlace": "New York, United States",
+        "collectionId": "1459684",
+        "collectionTitle": "Michigan, Births, 1867-1902",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1459684",
+        "recordTitle": "Entry for Franklin Hyde, \"Michigan, Births, 1867-1902\"",
+        "recordArk": "ark:/61903/1:2:M3RV-29P",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11774363144",
+              "ark": "ark:/61903/1:1:NQN4-FLX",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "N.Y.",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11774363143",
+              "ark": "ark:/61903/1:1:NQN4-FL6",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Franklin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "primary": true,
+                  "date": "26 January 1868",
+                  "standard_date": "26 Jan 1868",
+                  "place": "Charter Township of Comstock, Kalamazoo, Michigan, United States",
+                  "standard_place": "Charter Township of Comstock, Kalamazoo, Michigan, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_11774363145",
+              "ark": "ark:/61903/1:1:NQN4-FLF",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Martha J."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "N.Y.",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11774363144",
+              "person2": "p_11774363145"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11774363144",
+              "child": "p_11774363143"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11774363145",
+              "child": "p_11774363143"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_93654053",
+              "title": "Entry for Franklin Hyde, \"Michigan, Births, 1867-1902\"",
+              "citation": "\"Michigan, Births, 1867-1902\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:NQN4-FL6 : Tue Aug 04 16:33:06 UTC 2026), Entry for Franklin Hyde and Hiram Hyde, 26 January 1868.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M3RV-29P"
+            },
+            {
+              "id": "sd_c_1459684",
+              "title": "Michigan, Births, 1867-1902",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1459684"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6953-7TX"
+            },
+            {
+              "id": "sd_auto_M9J1-QTG",
+              "title": "United States, Michigan, Births, from 0035 to 2007"
+            },
+            {
+              "id": "src_p_p_11774363144",
+              "url": "#p_11774363144"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "5447782",
+              "name": "Charter Township of Comstock, Kalamazoo, Michigan, United States",
+              "latitude": 42.2903,
+              "longitude": -85.4719
+            }
+          ]
+        },
+        "primaryId": "p_11774363144"
+      },
+      {
+        "recordId": "ark:/61903/1:1:D6SM-PGW2",
+        "events": [
+          {
+            "type": "LandAssessment",
+            "date": "28 Mar 1883",
+            "place": "Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 4.0166,
+        "confidence": 2,
+        "collectionId": "2078654",
+        "collectionTitle": "New York, Land Records, 1630-1975",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2078654",
+        "recordTitle": "Entry for Hiram Hyde, \"New York, Land Records, 1630-1975\"",
+        "recordArk": "ark:/61903/1:2:4N5L-9M2M",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_271966241000",
+              "ark": "ark:/61903/1:1:D6SM-PGW2",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hiram",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "LandAssessment",
+                  "primary": true,
+                  "date": "28 Mar 1883",
+                  "standard_date": "28 Mar 1883",
+                  "place": "Washington, New York, United States",
+                  "standard_place": "Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_271966241100",
+              "ark": "ark:/61903/1:1:D6SM-PGZM",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Lucy J",
+                  "surname": "Hyde"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_165354237600",
+              "title": "Entry for Hiram Hyde, \"New York, Land Records, 1630-1975\"",
+              "citation": "\"New York, Land Records, 1630-1975\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D6SM-PGW2 : Sun Apr 13 03:47:45 UTC 2025), Entry for Hiram Hyde and Lucy J Hyde, 28 Mar 1883.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4N5L-9M2M"
+            },
+            {
+              "id": "sd_c_2078654",
+              "title": "New York, Land Records, 1630-1975",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2078654"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9WC-XR6L"
+            },
+            {
+              "id": "sd_auto_M9KR-359",
+              "title": "United States, New York, Properties, from 1483 to 2000"
+            },
+            {
+              "id": "src_p_p_271966241000",
+              "url": "#p_271966241000"
+            }
+          ],
+          "places": [
+            {
+              "id": "393112",
+              "name": "Washington, New York, United States",
+              "latitude": 43.33333,
+              "longitude": -73.43333
+            }
+          ]
+        },
+        "primaryId": "p_271966241000"
+      },
+      {
+        "recordId": "ark:/61903/1:1:D6SM-PGMM",
+        "events": [
+          {
+            "type": "LandAssessment",
+            "date": "28 Mar 1883",
+            "place": "Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 4.0166,
+        "confidence": 2,
+        "collectionId": "2078654",
+        "collectionTitle": "New York, Land Records, 1630-1975",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2078654",
+        "recordTitle": "Entry for Hiram Hyde, \"New York, Land Records, 1630-1975\"",
+        "recordArk": "ark:/61903/1:2:4N5L-9MN2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_271966240800",
+              "ark": "ark:/61903/1:1:D6SM-PGMM",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "LandAssessment",
+                  "primary": true,
+                  "date": "28 Mar 1883",
+                  "standard_date": "28 Mar 1883",
+                  "place": "Washington, New York, United States",
+                  "standard_place": "Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_271966240900",
+              "ark": "ark:/61903/1:1:D6SM-PG3Z",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Dan M"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_165354237500",
+              "title": "Entry for Hiram Hyde, \"New York, Land Records, 1630-1975\"",
+              "citation": "\"New York, Land Records, 1630-1975\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:D6SM-PGMM : Sun Apr 13 02:24:43 UTC 2025), Entry for Hiram Hyde and Dan M Hyde, 28 Mar 1883.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4N5L-9MN2"
+            },
+            {
+              "id": "sd_c_2078654",
+              "title": "New York, Land Records, 1630-1975",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2078654"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G9WC-XR6L"
+            },
+            {
+              "id": "sd_auto_M9KR-359",
+              "title": "United States, New York, Properties, from 1483 to 2000"
+            },
+            {
+              "id": "src_p_p_271966240800",
+              "url": "#p_271966240800"
+            }
+          ],
+          "places": [
+            {
+              "id": "393112",
+              "name": "Washington, New York, United States",
+              "latitude": 43.33333,
+              "longitude": -73.43333
+            }
+          ]
+        },
+        "primaryId": "p_271966240800"
+      },
+      {
+        "recordId": "ark:/61903/1:1:24SD-Q6D",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 4.0066,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "2143225",
+        "collectionTitle": "New York, New York City Marriage Records, 1829-1938",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2143225",
+        "recordTitle": "Entry for Isaac Atkins and Delia Hyde, \"New York, New York City Marriage Records, 1829-1938\"",
+        "recordArk": "ark:/61903/1:2:997C-9Z3Y",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14752048002",
+              "ark": "ark:/61903/1:1:24SD-Q6D",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ]
+            },
+            {
+              "id": "p_14752048001",
+              "ark": "ark:/61903/1:1:24SD-Q68",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Delia"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1861",
+                  "standard_date": "1861",
+                  "place": "Hartford, Conn",
+                  "standard_place": "Hartford, Connecticut, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_14752048003",
+              "ark": "ark:/61903/1:1:24SD-Q66",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Baker",
+                  "given": "Adline"
+                }
+              ]
+            },
+            {
+              "id": "p_14752046598",
+              "ark": "ark:/61903/1:1:24SD-STV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Atkins",
+                  "given": "Isaac"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1867",
+                  "standard_date": "1867",
+                  "place": "Hartford, Conn.",
+                  "standard_place": "Hartford, Connecticut, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_14752046599",
+              "ark": "ark:/61903/1:1:24SD-STK",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Atkins",
+                  "given": "Nathan"
+                }
+              ]
+            },
+            {
+              "id": "p_14752046600",
+              "ark": "ark:/61903/1:1:24SD-ST2",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Sayles",
+                  "given": "Anna"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_14752048003",
+              "child": "p_14752048001"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_14752048002",
+              "person2": "p_14752048003"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_14752046598",
+              "person2": "p_14752048001"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_14752048002",
+              "child": "p_14752048001"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22727826117",
+              "title": "Entry for Isaac Atkins and Delia Hyde, \"New York, New York City Marriage Records, 1829-1938\"",
+              "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:24SD-STV : Thu Jul 24 20:31:27 UTC 2025), Entry for Isaac Atkins and Delia Hyde, 23 January 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:997C-9Z3Y"
+            },
+            {
+              "id": "sd_c_2143225",
+              "title": "New York, New York City Marriage Records, 1829-1938",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2143225"
+            },
+            {
+              "id": "src_p_p_14752048002",
+              "url": "#p_14752048002"
+            }
+          ],
+          "places": [
+            {
+              "id": "393803",
+              "name": "Hartford, Connecticut, United States",
+              "latitude": 41.81,
+              "longitude": -72.73
+            }
+          ]
+        },
+        "primaryId": "p_14752048002"
+      },
+      {
+        "recordId": "ark:/61903/1:1:24HF-QX3",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 4.0066,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "2143225",
+        "collectionTitle": "New York, New York City Marriage Records, 1829-1938",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2143225",
+        "recordTitle": "Entry for William Hoes and Edith Hyde Gaynot, \"New York, New York City Marriage Records, 1829-1938\"",
+        "recordArk": "ark:/61903/1:2:997Z-97W5",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14756989023",
+              "ark": "ark:/61903/1:1:24HF-QX3",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ]
+            },
+            {
+              "id": "p_14756989022",
+              "ark": "ark:/61903/1:1:24HF-QXS",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Edith",
+                  "surname": "Hyde Gaynot"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1862",
+                  "standard_date": "1862",
+                  "place": "Halifax, N S",
+                  "standard_place": "Halifax, Nova Scotia, Canada"
+                }
+              ]
+            },
+            {
+              "id": "p_14756989024",
+              "ark": "ark:/61903/1:1:24HF-QXQ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Esta",
+                  "surname": "Hough"
+                }
+              ]
+            },
+            {
+              "id": "p_14756989019",
+              "ark": "ark:/61903/1:1:24HF-Q61",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "William",
+                  "surname": "Hoes"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1865",
+                  "standard_date": "1865",
+                  "place": "Valatie Col Co N Y",
+                  "standard_place": "Valatie, Columbia, New York, United States"
+                }
+              ]
+            },
+            {
+              "id": "p_14756989020",
+              "ark": "ark:/61903/1:1:24HF-QXM",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hoes",
+                  "given": "Edwin"
+                }
+              ]
+            },
+            {
+              "id": "p_14756989021",
+              "ark": "ark:/61903/1:1:24HF-QX9",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Margaret",
+                  "surname": "Bain"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_14756989024",
+              "child": "p_14756989022"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_14756989023",
+              "person2": "p_14756989024"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_14756989023",
+              "child": "p_14756989022"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_14756989019",
+              "person2": "p_14756989022"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22728631704",
+              "title": "Entry for William Hoes and Edith Hyde Gaynot, \"New York, New York City Marriage Records, 1829-1938\"",
+              "citation": "\"New York, New York City Marriage Records, 1829-1938\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:24HF-Q61 : Fri Jul 25 03:53:37 UTC 2025), Entry for William Hoes and Edith Hyde Gaynot, 14 January 1891.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:997Z-97W5"
+            },
+            {
+              "id": "sd_c_2143225",
+              "title": "New York, New York City Marriage Records, 1829-1938",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2143225"
+            },
+            {
+              "id": "src_p_p_14756989023",
+              "url": "#p_14756989023"
+            }
+          ],
+          "places": [
+            {
+              "id": "12104760",
+              "name": "Valatie, Columbia, New York, United States",
+              "latitude": 42.4139,
+              "longitude": -73.6775
+            },
+            {
+              "id": "12459214",
+              "name": "Halifax, Nova Scotia, Canada",
+              "latitude": 44.6489,
+              "longitude": -63.606
+            }
+          ]
+        },
+        "primaryId": "p_14756989023"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZGD-NZ6P",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1862 to 1869",
+            "place": "New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "H Hyde",
+        "score": 3.67198,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BZZ-319C",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292144761413",
+              "ark": "ark:/61903/1:1:6ZGD-NZ6P",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1862 to 1869",
+                  "standard_date": "Bet 1862 and 1869",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173753207139",
+              "title": "Entry for H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZGD-NZ6P : Sat Jan 18 09:37:45 UTC 2025), Entry for H Hyde, from 1862 to 1869.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BZZ-319C"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-J3DY-Y1QM"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292144761413",
+              "url": "#p_292144761413"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            }
+          ]
+        },
+        "primaryId": "p_292144761413"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZGJ-92BS",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1862 to 1869",
+            "place": "New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Henery H Hyde",
+        "score": 3.67198,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Henery H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BZ8-58V2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292148415842",
+              "ark": "ark:/61903/1:1:6ZGJ-92BS",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Henery H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1862 to 1869",
+                  "standard_date": "Bet 1862 and 1869",
+                  "place": "New York, United States",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173754568460",
+              "title": "Entry for Henery H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZGJ-92BS : Tue Jul 09 04:56:38 UTC 2024), Entry for Henery H Hyde, from 1862 to 1869.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BZ8-58V2"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-V3DY-YBQ3"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292148415842",
+              "url": "#p_292148415842"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            }
+          ]
+        },
+        "primaryId": "p_292148415842"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZGV-Z4TV",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1862 to 1869",
+            "place": "Brooklyn, Kings, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "James H Hyde",
+        "score": 3.66198,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for James H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BZD-DR1F",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292149457098",
+              "ark": "ark:/61903/1:1:6ZGV-Z4TV",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "James H",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1862 to 1869",
+                  "standard_date": "Bet 1862 and 1869",
+                  "place": "Brooklyn, Kings, New York, United States",
+                  "standard_place": "Brooklyn, Kings, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173755067385",
+              "title": "Entry for James H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZGV-Z4TV : Thu Mar 07 01:17:50 UTC 2024), Entry for James H Hyde, from 1862 to 1869.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BZD-DR1F"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-V3DY-Y17P"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292149457098",
+              "url": "#p_292149457098"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608874",
+              "name": "Brooklyn, Kings, New York, United States",
+              "latitude": 40.636,
+              "longitude": -73.951
+            }
+          ]
+        },
+        "primaryId": "p_292149457098"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZVZ-C58W",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1865 to 1868",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "William H Hyde",
+        "score": 3.66198,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for William H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BHJ-1M38",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292045764936",
+              "ark": "ark:/61903/1:1:6ZVZ-C58W",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "William H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1865 to 1868",
+                  "standard_date": "Bet 1865 and 1868",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173710953101",
+              "title": "Entry for William H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZVZ-C58W : Sun Mar 10 08:38:33 UTC 2024), Entry for William H Hyde, from 1865 to 1868.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BHJ-1M38"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-V3DB-LY3C"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292045764936",
+              "url": "#p_292045764936"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292045764936"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZG8-SPSL",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1862 to 1869",
+            "place": "Brooklyn, Kings, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Charles H Hyde",
+        "score": 3.66198,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Charles H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BZC-FN8M",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292143584781",
+              "ark": "ark:/61903/1:1:6ZG8-SPSL",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Charles H",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1862 to 1869",
+                  "standard_date": "Bet 1862 and 1869",
+                  "place": "Brooklyn, Kings, New York, United States",
+                  "standard_place": "Brooklyn, Kings, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173752709730",
+              "title": "Entry for Charles H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZG8-SPSL : Fri Mar 08 14:56:16 UTC 2024), Entry for Charles H Hyde, from 1862 to 1869.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BZC-FN8M"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-J3DY-YRH6"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292143584781",
+              "url": "#p_292143584781"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608874",
+              "name": "Brooklyn, Kings, New York, United States",
+              "latitude": 40.636,
+              "longitude": -73.951
+            }
+          ]
+        },
+        "primaryId": "p_292143584781"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZG8-SP37",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "from 1862 to 1869",
+            "place": "Brooklyn, Kings, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "J H Hyde",
+        "score": 3.66198,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for J H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BZC-FN8X",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292143584795",
+              "ark": "ark:/61903/1:1:6ZG8-SP37",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "J H",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "from 1862 to 1869",
+                  "standard_date": "Bet 1862 and 1869",
+                  "place": "Brooklyn, Kings, New York, United States",
+                  "standard_place": "Brooklyn, Kings, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173752709744",
+              "title": "Entry for J H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZG8-SP37 : Fri Mar 08 14:56:17 UTC 2024), Entry for J H Hyde, from 1862 to 1869.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BZC-FN8X"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-J3DY-YRH6"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292143584795",
+              "url": "#p_292143584795"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608874",
+              "name": "Brooklyn, Kings, New York, United States",
+              "latitude": 40.636,
+              "longitude": -73.951
+            }
+          ]
+        },
+        "primaryId": "p_292143584795"
+      },
+      {
+        "recordId": "ark:/61903/1:1:6ZVY-S37K",
+        "events": [
+          {
+            "type": "Residence",
+            "place": "New York City, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Charles H Hyde",
+        "score": 3.66198,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for Charles H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BHB-7ZNT",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292059326869",
+              "ark": "ark:/61903/1:1:6ZVY-S37K",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Charles H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "place": "New York City, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173719224506",
+              "title": "Entry for Charles H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:6ZVY-S37K : Tue May 13 11:34:57 UTC 2025), Entry for Charles H Hyde.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BHB-7ZNT"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QHV-V3DB-LYV6"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1997"
+            },
+            {
+              "id": "src_p_p_292059326869",
+              "url": "#p_292059326869"
+            }
+          ],
+          "places": [
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_292059326869"
+      }
+    ]
+  }
+}
