@@ -74,7 +74,8 @@ through the demo, with fixes only.
   `ViewerBody` in fullscreen; and the display rules those need, on Postgres and MinIO
   behind sign-in.
 - **Only if the first runs go well:** the evidence grid and Compare with FamilySearch.
-- **Out:** M2, M3, a feedback flag, and removing Electron or the web viewer.
+- **Also in:** the other step cards (M2).
+- **Out:** M3, a feedback flag, and removing Electron or the web viewer.
 - **`ViewerBody` keeps** its ids, its retired rows and its section order until M3. The
   display rules apply to the cards.
 
@@ -523,10 +524,11 @@ show only on the connector surface.
 
 1. Sit with the lead and remote-server, and fill the five answers that gate the fold
    (Decision 8).
-2. Put a card on an OAuth connector, with `dev/probe-connector-server.ts`.
-   remote-server owns that file, so it gets the stub page first.
+2. Put a card on an OAuth connector, with `dev/probe-connector-server.ts`, and read what
+   the door's refusals do there. remote-server owns that file, so it gets the stub page
+   first.
 3. Fold a skeleton into the tool server once issue #3991 lands.
-4. Build the demo scope (M1).
+4. Build the demo scope (M1 and M2).
 5. Merge the router lines under issue #4297, with one paid `research` eval run, before
    launch. Until then the demo may run the variant plugin at a pinned commit.
 
@@ -667,7 +669,7 @@ Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
   rejects when the call fails, it returns a non-null `label` for a project with no
   title, and a card from snapshot A opens a file showing document B.
 
-### M2: The other step cards (after the demo)
+### M2: The other step cards (before the demo)
 
 Plan, link (with the identity question side by side when it asks one), conflict,
 hypothesis, assess. The router gains its remaining lines, or under

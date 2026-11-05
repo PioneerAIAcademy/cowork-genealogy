@@ -673,6 +673,21 @@ rules' links need.
 | Claude asks first | | |
 | `Link probe` line | | |
 
+### Door refusals
+
+**Decides:** whether the door's 400, 403 and 503 stay HTTP errors or become tool errors on
+the connector path. A 401 stays HTTP, because that is what makes Claude refresh. Read on
+the sign-in probe with the stub card: a project path picks the refusal, and the card's
+`Door refuses` buttons send the same three.
+
+| | 400 bad path | 403 not yours | 503 unavailable |
+|---|---|---|---|
+| `show_project`: what the researcher sees | | | |
+| `show_project`: a card draws | | | |
+| `show_project`: what the model does next | | | |
+| Hidden call: what the card shows | | | |
+| The connector still works afterwards, with no new sign-in | | | |
+
 ### `ui/update-model-context`
 
 **Decides:** whether selecting a row in the case file can tell Claude what the
