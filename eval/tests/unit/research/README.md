@@ -64,12 +64,9 @@ entry's canned text. On a test that sets `execution.stop_at_stub`, such as
 `ut_research_015` below, a spawn of any stubbed name is denied too and ends the
 run.
 
-A test tagged `relays-agent-tail` also asserts that the router's reply carries,
-verbatim, everything after the final `---` of its `routes-to:` callee's canned
-response (`test_relays_the_agents_tail_verbatim`, issue #3862). The expected text
-is read from the test's own `stub_skills` entry, not from the agent return the
-harness recorded, which wraps it in scaffolding the router must not print.
-`ut_research_zfp` carries it.
+`ut_research_zfp` grades the router's relay of search-hints' summary on meaning,
+through the judge: rewording and added text pass (lead, 2026-11-03, on PR #4148,
+which retired the word-for-word `relays-agent-tail` check of issue #3862).
 
 Every agent spawn in this suite is denied, listed or not, unless the test names
 the agent in `execution.run_agents`. That is how the negative tests whose
@@ -254,16 +251,6 @@ SHAPE is on the bounded list. Without the `--autonomous` carve-out the router wo
 deliver one answer and stop on those. Its message carries the leading `/research`, restored
 once PR #3146 made `skills_invoked` record a slash-command entry at index 0, so this
 is the e2e entry form exactly.
-
-**What they do NOT cover, and cannot:** that a bounded turn ends with the
-`delivered` OUTCOME. `research_delivered` IS in this harness's `LIVE_TOOLS` now, so the
-CALL is observable and `test_a_bounded_turn_ends_with_the_delivery_signal` grades it
-(gated on the `ends-with-delivery` tag). What stays unobservable is the effect: no hook
-binds here, so nothing halts the turn and the outcome is whatever the run would otherwise
-have been. Both hosted planes now halt on the signal — the prototype
-via its own `PreToolUse` arm plus `DELIVERY_GUIDANCE`, the alpha via `count_only` and
-`should_continue_run(delivered=...)` — and that half is covered by
-`apps/server/tests/test_alpha_stop_hook.py`, not here.
 
 ## Search-hit review (issue #3522)
 

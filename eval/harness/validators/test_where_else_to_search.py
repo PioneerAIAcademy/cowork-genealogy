@@ -28,6 +28,8 @@ _FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "mcp"
 _TOOLS = {"place_search", "external_links_search", "build_external_search_url"}
 _URL = re.compile(r"https?://[^\s<>()\[\]\"'`]+")
 _MAX_ENTRIES = 8
+_ANCESTRY_ID = re.compile(r"ancestry\.[a-z.]+/search/collections/(\d+)/?(?:[?#]|$)|[?&]dbid=(\d+)", re.I)
+_MYHERITAGE_COLLECTION = re.compile(r"myheritage\.[a-z.]+/research/collection-\d+", re.I)
 
 
 def _reply(agent_returns, text_response, test):
@@ -81,6 +83,18 @@ def _built(tool_calls) -> list[str]:
         if isinstance(r, dict) and r.get("ok") is True and isinstance(r.get("url"), str):
             out.append(r["url"])
     return out
+
+
+def _collection_key(url: str) -> str:
+    """Mirrors `collectionKey` (external-collections-store.ts): an Ancestry
+    collection with or without a trailing `/` is one collection, and so is a
+    MyHeritage one with or without a query. Every other host stays exact."""
+    m = _ANCESTRY_ID.search(url)
+    if m and re.search(r"ancestry\.", url, re.I):
+        return f"ancestry:{m.group(1) or m.group(2)}"
+    if _MYHERITAGE_COLLECTION.search(url):
+        return re.split(r"[?#]", url)[0]
+    return url
 
 
 def _positive(test):
@@ -139,7 +153,7 @@ def test_every_build_starts_from_a_curated_row(tool_calls, test):
         if bare_tool_name(c.get("tool", "")) != "build_external_search_url":
             continue
         base = (c.get("args") or {}).get("baseUrl")
-        assert base in curated, (
+        assert isinstance(base, str) and _collection_key(base) in curated, (
             f"build_external_search_url called with baseUrl {base!r}, which is not a curated row "
             "external_links_search returned: a site-wide search is a site chosen from memory"
         )
@@ -152,7 +166,7 @@ def _curated_rows(tool_calls) -> dict[str, dict]:
             r = _response(c)
             for row in (r.get("results") or []) if isinstance(r, dict) else []:
                 if isinstance(row, dict) and isinstance(row.get("url"), str):
-                    rows[row["url"]] = row
+                    rows[_collection_key(row["url"])] = row
     return rows
 
 
@@ -202,7 +216,8 @@ def test_each_entry_states_its_rows_span_and_nothing_more(tool_calls, agent_retu
             continue
         checked += 1
         assert len(lines) == 3, f"an entry must be exactly three lines, got {len(lines)}: {lines}"
-        row = rows.get(base_of[built[0]]) or {}
+        base = base_of[built[0]]
+        row = rows.get(_collection_key(base) if isinstance(base, str) else None) or {}
         coverage = _dash(lines[1])
         spans = _grounded_spans(row)
         if row.get("startYear") is None and coverage.strip().lower() == "undated collection.":
@@ -228,6 +243,7 @@ _OPENING = (
 _SHORT = "That is every collection FamilySearch lists with a filled-in search for that place and period."
 _CLOSING = "Open a link and bring back anything found to keep researching."
 _ALSO_HEADER = "Also listed, without a filled-in search:"
+_ENTRY_FIRST = re.compile(r"\*\*[^*]+\*\* — (?:[^,.]|\.(?=\S))+, (?:free|needs a subscription)")
 _ALSO_ROW = re.compile(r"^(.+): (\S+)$")
 
 
@@ -264,6 +280,13 @@ def test_user_block_is_the_fixed_shape_and_nothing_more(tool_calls, agent_return
     short_seen = also_seen = False
     for p in paragraphs[1:-1]:
         if any(u in built for u in _urls(p)):
+            lines = [ln.strip() for ln in p.splitlines() if ln.strip()]
+            assert len(lines) == 3, f"an entry must be exactly three lines, got {len(lines)}: {lines}"
+            assert _ENTRY_FIRST.fullmatch(lines[0]), (
+                f"an entry's first line is '**<linkText>** — <site name>, <free | needs a subscription>' "
+                f"and nothing more, got: {lines[0]}"
+            )
+            assert lines[2] in built, f"an entry's third line is exactly one url a build call returned, got: {lines[2]}"
             continue
         if _norm(p) == _norm(_SHORT):
             short_seen = True
@@ -273,7 +296,7 @@ def test_user_block_is_the_fixed_shape_and_nothing_more(tool_calls, agent_return
             also_seen = True
             lines = lines[1:]
         rows = [_ALSO_ROW.match(ln) for ln in lines]
-        is_also = also_seen and all(m and m.group(2).rstrip(".,;") in curated for m in rows)
+        is_also = also_seen and all(m and _collection_key(m.group(2).rstrip(".,;")) in curated for m in rows)
         assert is_also, f"nothing outside the fixed shape belongs below the `---`, got: {p}"
     if len(built) <= 2:
         assert short_seen, f"1 or 2 entries need the fixed sentence: {_SHORT}"
