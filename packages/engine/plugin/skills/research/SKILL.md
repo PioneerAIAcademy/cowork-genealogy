@@ -17,10 +17,11 @@ description: >-
   (answered from project_context, no skill).
 allowed-tools:
   - project_list
+  - project_context
+  - tree_query
   - validate_research_schema
   - research_query
   - extraction_append
-  - research_delivered
   - person_read
   - source_attachments
 ---
@@ -29,11 +30,11 @@ allowed-tools:
 
 **If you have no `Agent` tool to spawn the plugin's agents with, say that this research runs only in a Cowork task, and stop.**
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** the researcher watches this as a live feed, so every phase boundary gets its line — followed by the actual tool call, except at the step boundary that ends the turn. Whatever the narration style, when an agent returns, its relayed return is that step's report: add no summary, table or question of your own to it, only the turn's closing line. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to one short preamble **per phase / per record** (e.g. once before a record's extraction, not before each individual write or `ops` op). **Never go silent:** the researcher watches this as a live feed, so every phase boundary gets its line — followed by the actual tool call, except at the step boundary that ends the turn. Whatever the narration style, when an agent returns, its relayed return is that step's report: add no summary, table or question of your own to it, only the turn's closing line. Per-entry detail belongs in the persisted `rationale`/`notes` fields, not in chat.
 
 You drive the full Genealogical Proof Standard (GPS) workflow on the
 user's research objective. Rather than the user invoking each
-sub-skill in turn, you read `research.json` to determine the current
+sub-skill in turn, you call `project_context` and `research_query` to determine the current
 state and invoke the one sub-skill that step calls for.
 
 This skill is intentionally a thin orchestrator — the GPS work
@@ -69,6 +70,8 @@ one in prose you then act on.
 | the current question, before a different one | wrapping up |
 | tree-survey | surveying the tree |
 | search-hints | checking the record hints |
+| evaluate-search-results | evaluating the search hits |
+| record-structurer, on the Matches of a search-hit review (N = their count; "the Match" for one) | extracting the N Matches |
 | source-evaluation | evaluating the source |
 | gps-mentor | the GPS review |
 
@@ -97,7 +100,7 @@ in one line that there is nothing to search more of yet and re-offer.
 runs the steps itself: plan at most one extra round, then wrap up.
 
 **Re-reading state.** Trust the compact summaries the sub-skills and writer
-tools return plus the state you hold — re-read `research.json` only when you
+tools return plus the state you hold — re-query the project only when you
 enter a phase cold without the relevant state, or when a sub-skill or the
 researcher changed the file in a way you do not already have.
 
@@ -111,7 +114,7 @@ to that outcome" — not as permission to invoke that skill immediately.
 (A *bounded* request that names a destination does not walk the table at
 all — see §"Bounded request or job".)
 Re-enter step 1 of "What to do," re-derive the current state from
-`research.json`, and walk the routing table from wherever the project
+`project_context` and `research_query`, and walk the routing table from wherever the project
 actually is: unclassified assertions, unresolved conflicts, and any person
 the conclusion depends on not yet identity-linked all still apply. Only reach the downstream destination once the routing table's
 precondition row for it is actually satisfied — by whichever call that row
@@ -135,6 +138,8 @@ destination: take it through "Hint review" below.
 - `mode: "hosted"`, and the message names a person no listed project is about, or none is listed: `newProjectPath`. It holds no `research.json` yet.
 - Otherwise: list each project's subjects, objective and `projectUrl`, ask which one to continue, and stop.
 
+**When `project_context` answers `no_project`, ask the researcher nothing.** With no person and question in the message, spawn `@plugin:tree-survey`. With one, spawn `@plugin:init-project`. The routing table's first two rows give the details.
+
 **If `project_list` is not among your tools, even through tool search,** say the genealogy tools are not connected: start or update the Genealogy Research desktop extension, or reconnect the genealogy connector. Then stop.
 
 **When a tool gave you the project's `projectUrl`, end the reply that ends your turn with it:** after the "Continue with …?" offer, on the same line, when there is one; otherwise as the last line.
@@ -153,10 +158,14 @@ finding a record; reviewing the sources already attached to a person; whether
 two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
+with no project and no FamilySearch person ID, the names and details recorded in a record set (a roll, register, muster list or volume) rather than research on one person;
 where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers).
 Two or more of them in one message is still bounded: deliver the first this
 turn, name the others, and offer the next, ending on its "Continue with …?" line
-when it is a step in the label table. A message that also asks for open-ended
+when it is a step in the label table. **The others are not started this turn:**
+when the first is a transcription, a records-request letter or a status answer,
+the turn spawns no agent at all: deliver it, name the next, and end your turn
+on its offer line. A message that also asks for open-ended
 research is a job.
 
 **A job** — everything else. Route it exactly as the rest of this file says.
@@ -178,11 +187,17 @@ only when the user's message itself states a mother's 1900 or 1910 US census
 children-born and children-living counts — "are any missing?" with no counts is
 `@plugin:search-records` alone. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
 of two persons already confirmed identical; a "should these be merged?" never goes
-to `@plugin:tree-edit`. A records-request letter you write yourself in this turn,
+to `@plugin:tree-edit`. The names and details in a record set, with no project and no FamilySearch
+person ID, go to `@plugin:search-images` with the message copied verbatim and no
+`projectPath`, even when the message names no images; relay everything after
+its final `---` verbatim, and never `@plugin:init-project`. A records-request letter you write yourself in this turn,
 with no hand-off. A transcription you deliver yourself: call
-`image_transcribe({ projectPath, imageId | ark | file })`, show the page from
+`image_transcribe({ projectPath, imageId | ark | file })` — always with
+`projectPath` when a project exists, however new or empty — show the page from
 `sidecar_read({ projectPath, ref: staged.resultsRef })`, and give `viewerUrl` as a
-link. A reading the user gives that differs from the page goes to
+link. Only when `project_context` returns `reason: "no_project"`: one named image, called
+without `projectPath`, its `transcription` shown inline; finding or reading more
+pages goes to `@plugin:search-images`. A reading the user gives that differs from the page goes to
 `@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
@@ -199,21 +214,17 @@ is already attached. Never search for a record that is already attached,
 and never offer to add a person who is already in the tree.
 
 When this turn's deliverable is produced — the only one asked for, or the first
-of several — **end your turn by calling `research_delivered`**.
-Say what you produced first: the turn ends where you stop, so anything you were
-going to add afterwards never reaches the researcher. Name what this turn saved
+of several — **no further step runs this turn: no spawn and no `Skill` call,
+whatever else the message asked for.** Name what this turn saved
 and where — "Saved to Susan Cornwell: death index, 4 Apr 1892" — and name
 anything this turn found but did not save: the record and the person it was for,
-not "an extraction did not finish". Then offer to take it further. The offer is
-not something you wait for — their answer arrives as the next message.
-
-Call it last, with a one-sentence summary of what you delivered, after everything
-you want the researcher to read. If you do not already hold its schema, search for
-it by name.
+not "an extraction did not finish". Then offer to take it further and **end your
+turn**. The offer is not something you wait for — their answer arrives as the next
+message.
 
 ## What to do
 
-1. **Query `research.json` — don't `Read` the whole file.** Open the routing
+1. **Query the project with tools — never read project files.** Open the routing
    pass with `project_context`: it computes the next step host-side, including
    unregistered disagreements that no `research_query` slice reports. Then use
    `research_query` to pull just the slice you need: which questions
@@ -223,11 +234,11 @@ it by name.
    resolved.
 
    `research.json` grows all run — dozens of sources, 100+ assertions by
-   late run — so a whole-file `Read` (or a `grep`) costs more context every
+   late run — so a whole-section query costs more context every
    time you route, and routing happens constantly. `research_query` answers
    the routing question host-side and returns only the ids, statuses and
-   counts. Reach for `Read` only when you genuinely need a full entry body
-   that `research_query` cannot project.
+   counts. For tree facts (birth, death, marriage) call `tree_query` with
+   `personIds` and `factTypes`.
 
    **`research_query` returns at most 50 `items` per call; `count` is the true
    total.** When `truncated` is true you are routing on part of the set — page
@@ -271,6 +282,17 @@ it by name.
    is skipping it while leaving state that looks like it ran. See the
    **Exhaustiveness/proof-conclusion contract** below.
 
+   **Unregistered inferred relationships — check before anything else.**
+   Before consulting the routing table or acting on `project_context.nextStep`,
+   scan every log entry's `notes` field for hedged language about family
+   relationships: "look like", "appear to be", "likely are", or "seem to be"
+   used to infer that people are relatives from shared surname, place or era
+   with no record linking them. If any such phrasing exists and `hypotheses`
+   has no entry for that relationship, the one step this turn is
+   `@plugin:hypothesis-tracking`, naming the people and the inferred
+   relationship. Do not read the table or follow `nextStep` until this check
+   is clean.
+
    **Researcher-reported evidence.** When the message describes a record not
    yet in the project, with no record id or ARK, take only what the
    researcher stated: add no place, date, origin or relationship they did not
@@ -282,23 +304,31 @@ it by name.
    search for each, or ask the researcher for the record's identifier, before
    `@plugin:research-exhaustiveness` or `@plugin:proof-conclusion`. If the
    record contradicts a hypothesis, say so — do not present its facts as
-   support for that hypothesis or any theory built on it. The same holds for a
-   relationship you or an earlier log note inferred from shared surname, place
-   or era with no record linking the people: it is a hypothesis, not a fact.
-   Spawn `@plugin:hypothesis-tracking` to register it before any search,
-   filter or rejection relies on it.
+   support for that hypothesis or any theory built on it. The same holds for
+   a relationship you or an earlier log note inferred from shared surname,
+   place or era with no record linking the people: it is a hypothesis, not a
+   fact. Log notes that say people "look like", "appear to be", "likely are",
+   or "seem to be" relatives qualify. Spawn `@plugin:hypothesis-tracking` to
+   hand it off — the agent writes the entry; say only that it was handed off,
+   not that it is registered. When reporting, describe the inferred
+   relationship as the log's speculation ("the log treats them as siblings"),
+   never as a fact the router established. Do this before any plan item
+   dispatch, person-evidence pass, research-exhaustiveness call, search,
+   filter or rejection relies on it — regardless of what
+   `project_context.nextStep` suggests.
 
    | If research.json has... | Invoke |
    |-------------------------|--------|
-   | **No `research.json` at all**, and the message states **no objective** (no person and question to research) | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay everything after its final `---` verbatim, or its whole return when it has none, and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
-   | **No `research.json` at all**, and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
+   | **No project** (`project_context` returns `reason: "no_project"`), and the message states **no objective** — no FamilySearch person ID and no specific research question. An expression of intent without a person ("Let's start a new research project.", "I want to start researching", "begin a new project") is **no objective**: do not answer the user directly, always invoke `@plugin:tree-survey` | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay everything after its final `---` verbatim, or its whole return when it has none, and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
+   | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume) rather than research on one person | `@plugin:search-images` with the message verbatim and no `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
+   | **No project** (`project_context` returns `reason: "no_project"`), and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `@plugin:research-plan` |
-   | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until it is registered |
+   | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item, routing to person-evidence, **or** invoking research-exhaustiveness | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until hypothesis-tracking has written the entry |
    | The question's **`active`** plan has a not-yet-executed `record_type: "fs_hints"` item (`project_context.nextStep` reads `search-hints — <pli_>`) — on an identity or parentage question research-plan emits one at `sequence` 1 | `@plugin:search-hints`, handing it the item's `planItemId`, its plan's `planId`, the `personId` you read out of the item's `rationale` ("Review pending FamilySearch hints on <PID> before…"), and `userPresent: no` ONLY on an `--autonomous` run (otherwise omit it; absent means yes). It reviews the subject's pending FamilySearch hints and sets the item's own status — a hint that already answers the question can save a search. A hints item awaiting verdicts is not "next" (`project_context` skips it), so this never holds up the other searches |
-   | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `completed` plan, which a revision leaves behind still `planned` | `@plugin:search-records`, handing it the item you just queried as a `plan_item:` JSON block and the subject you hold as a `subject:` block (or `@plugin:search-external-sites` for non-FS sources) |
-   | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly, and the item is in no `project_context` `exhaustedImageGroups[].planItemIds` | `@plugin:search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`) |
+   | The question's **`active`** plan has items not yet executed, and no analyzed evidence yet plausibly answers it — query `plans` with `status: "active"`; never dispatch an item off a `superseded` or `completed` plan, which a revision leaves behind still `planned` | `@plugin:search-records`, handing it the item you just queried as a `plan_item:` JSON block and the subject you hold as a `subject:` block, learned from `project_context` and `tree_query` with the subject person id and `factTypes` `["Birth","Death","Marriage"]` (or `@plugin:search-external-sites` for non-FS sources) |
+   | A plan item targets a **digitized-but-unindexed** FamilySearch record set (browse-only images — `volume_search` shows image groups with ~0% record-searchable), or indexed/full-text search has been exhausted and the remaining path is reading register pages directly, and the item is in no `project_context` `exhaustedImageGroups[].planItemIds` | `@plugin:search-images` (browses the volume page-by-page: `volume_search` → `image_search` → `image_transcribe`), handing it the subject you hold as a `subject:` block |
    | A plan item is listed in `project_context`'s **`exhaustedImageGroups[].planItemIds`** — its film's image cap is spent in this project, and no new agent or session resets it. Call `project_context` again before re-spawning `@plugin:search-images` after it reports a cap refusal | `@plugin:research-plan` to **dispose of that item**, naming the film. Never spawn `@plugin:search-images` for it |
    | **Any** log entry with a positive/partial outcome and no assertion referencing it — even one such entry, even if other entries from the same or a later search already went through extraction | FamilySearch records: `extraction_append({ recordIds })`, one call for every pending record. Any other source: `@plugin:record-structurer`, one spawn for the batch. (See the **Extraction contract** below.) |
    | Assertions not yet linked to persons | `@plugin:person-evidence` — **always the agent, never inline.** You (the orchestrator) never write `person_evidence` entries or add record-derived facts/relationships to tree persons yourself: person-evidence owns the identity decision and scores every cross-record link with `same_person` before it links. Writing `pe_` links inline skips that check — it is exactly how a same-named stranger's record gets attached to the subject (a b. 1814 man was given a 1918 death, age 104, this way). Extraction never links; its output ALWAYS flows through person-evidence next |
@@ -312,9 +342,9 @@ it by name.
    | `research-exhaustiveness` returned "not yet exhaustive" naming gaps it wants planned — a verdict, not the decline above | `@plugin:research-plan` (extend the plan). A FAN pivot is plan items on this question too — never a new question. When it DECLINED instead, the row above owns it: report and offer, do not pick |
    | `research-exhaustiveness` reported the declaration refused because items on the active plan are still `planned` **or `in_progress`** | `@plugin:research-plan` to **dispose of the named items** — complete each one whose search was done, or skip it with a `skip_category`. Not an extension: the stop criteria have already been judged. An item waiting only on the researcher's upload is left alone |
    | `research-plan` returned that a jurisdiction it must plan has no `localities` entry | `@plugin:locality-guide` for that jurisdiction, then `@plugin:research-plan` again |
-    | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in `tree.gedcomx.json`** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
+    | `proof-conclusion` wrote `<ps_id>` at tier ≥ probable **but the concluded relationship or fact is not yet in the tree (`tree_query`)** (a parentage link, a Couple, or a vital fact — e.g. the concluded death date/place, bounded expressions included; check each claim's own relationship when `claims[]` is present, not just the scalar's) | `@plugin:proof-conclusion` again for the same question — it must encode the conclusion before you proceed (see **Tree-encoding gate**) |
     | A question is at `status: "exhaustive_declared"` with no `proof_summaries` entry yet | `@plugin:proof-conclusion` |
-    | All questions are `resolved` and `project.status` still `active` | **First check the objective, not the question list.** An objective can hold several independent facts ("where was she born, and who were her parents" is two). If any fact the objective asks for has no question covering it, name it and end the turn with "Continue with `setting up the project`?" — do not spawn `@plugin:question-selection` in the turn that finds it, and do not continue this row; a "Continue." or "Keep going." in reply to that offer runs `@plugin:question-selection` — a fact with no question is a NEW question, which is the one thing question-selection is still for. A sub-question of a fact already covered is not: that is plan items on the question that covers it (§"A different question, or a steer") — a relationship already in `tree.gedcomx.json` without a resolved question behind it does not cover it, and a fact the project's questions or proofs mention but the objective does not ask for is not part of it. When every fact the objective asks for has a resolved question, go straight to the tree-encoding gate — do not call question-selection to confirm it. Once question-selection has returned "no further questions — objective answered" for the current state, treat the objective as covered. **Then verify the tree-encoding gate — do not write `completed` until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** a `project.status` write is refused unless it comes from `@plugin:proof-conclusion`. Then stop. |
+    | All questions are `resolved` and `project.status` still `active` | **First check the objective, not the question list, and never the tree: a fact or relationship already in `tree.gedcomx.json` covers nothing unless a resolved question stands behind it.** An objective can hold several independent facts ("where was she born, and who were her parents" is two). If any fact the objective asks for has no question covering it, name it and end the turn with "Continue with `setting up the project`?" — do not spawn `@plugin:question-selection` in the turn that finds it, and do not continue this row; a "Continue." or "Keep going." in reply to that offer runs `@plugin:question-selection` — a fact with no question is a NEW question, which is the one thing question-selection is still for. A sub-question of a fact already covered is not: that is plan items on the question that covers it (§"A different question, or a steer") — a relationship already in `tree.gedcomx.json` without a resolved question behind it does not cover it, and a fact the project's questions or proofs mention but the objective does not ask for is not part of it. When every fact the objective asks for has a resolved question, go straight to the tree-encoding gate — do not call question-selection to confirm it. Once question-selection has returned "no further questions — objective answered" for the current state, treat the objective as covered. **Then verify the tree-encoding gate — do not write `completed` until it holds:** every tier-≥-probable conclusion is encoded in `tree.gedcomx.json` (see **Tree-encoding gate**; per claim where a `claims[]` breakdown exists); if not, re-invoke `@plugin:proof-conclusion` for that question. Marking a question `resolved` is not, by itself, evidence the check happened. Once it is verified, re-invoke `@plugin:proof-conclusion` for the last resolved question — its §8 owns the `project.status` write. **You never write it yourself:** a `project.status` write is refused unless it comes from `@plugin:proof-conclusion`. Then stop. |
    | All questions are `resolved` and `project.status` is `completed` | Stop — **unless the message carries a new question**, which goes to `@plugin:question-selection` (§"A different question, or a steer") |
 
    **The search step runs the plan's items together.** Dispatch one search
@@ -389,13 +419,21 @@ it by name.
    otherwise `yes`) for `@plugin:person-evidence`, the conflict or competing assertion ids for
    `@plugin:conflict-resolution`, the `h_`/`c_`/assertion ids at issue for
    `@plugin:hypothesis-tracking`, one jurisdiction and its period per call for
-   `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), the `questionId`, the `planItemId`, its plan's `planId` as a line of its own, and the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, with nothing added to it, and the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`), for `@plugin:search-records`, and the `planItemId` (plus the parish page as
+   `@plugin:locality-guide` (several jurisdictions mean several separate calls in the same turn), the `questionId`, the `planItemId`, its plan's `planId` as a line of its own, and the plan item itself as a `plan_item:` JSON block, exactly as `research_query` returned it, with nothing added to it, for `@plugin:search-records`, and the `planItemId` (plus the parish page as
    `baseUrl` when one is known, `userPresent` — `no` in an autonomous run, otherwise `yes` —
    and for a returned capture its
    file path or the results text) for `@plugin:search-external-sites`, and the
    `personId` (and, on the second spawn, the researcher's verdicts) for
-   `@plugin:search-hints`, and the `planItemId` plus the volume's `standardPlace` (with its
-   years) or `imageGroupNumber`, as the plan item names it, for `@plugin:search-images`. In a wrap-up turn
+   `@plugin:search-hints`, the `hitRef` and `target` for
+   `@plugin:evaluate-search-results`, and the `planItemId` plus the volume's `standardPlace` (with its
+   years) or `imageGroupNumber`, as the plan item names it, for `@plugin:search-images`, and the
+   `planItemId` for `@plugin:search-full-text`, and the subject you already hold as a `subject:` JSON
+   block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in
+   the subject's `project_context` `parentIds`, left out when it has more than two), for
+   `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`. **When the
+   question or request a search serves asks about the subject's parentage, even one parent (who a
+   parent was, or whether the subject was someone's son or daughter), leave `parents` out of that
+   block.** In a wrap-up turn
    (§"Wrap it up") `@plugin:research-exhaustiveness` and
    `@plugin:proof-conclusion` also take `wrapUp: yes`, and
    `@plugin:proof-conclusion` takes `newQuestion: yes` when the researcher
@@ -410,8 +448,10 @@ it by name.
 
    **Three rules the caller holds, because on this route the agent's own
    body never loads here.** Do not pre-judge the agent's gate — read nothing
-   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already
-   queried and the subject you already hold, passed verbatim and unread), and judge nothing. Do not
+   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,
+   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and
+   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing. For
+   `@plugin:evaluate-search-results`, read also the `#hits` list its refs come from. Do not
    override a decline: when an agent blocks on a precondition, route to the
    destination it names, by the call that destination's routing row names —
    the routing table has no row for a decline. Relay everything after the
@@ -509,7 +549,7 @@ writes the summary and skips the tree write — so verify it, don't assume it.
 
 After `proof-conclusion` writes `<ps_id>` at tier ≥ probable:
 
-1. **Read `tree.gedcomx.json` and confirm the concluded relationship or fact is
+1. **Call `tree_query` and confirm the concluded relationship or fact is
    present** — match the check to the question type: a `ParentChild` linking
    the concluded parent(s) to the child for a parentage question, a `Couple`
    for a marriage, **a `Death`/`Birth`/`Marriage` fact carrying the concluded
@@ -557,13 +597,44 @@ When the user asks to check, review or validate the FamilySearch hints on a
 person, spawn `@plugin:search-hints` with `personId` and `projectPath`, relay
 everything after its final `---` verbatim, or its whole return when it has
 none, and stop: whether to accept a hint is the researcher's decision,
-which only the user can supply (§"When to stop"). When the researcher answers,
+which only the user can supply (§"When to stop"). Print nothing from above
+that line: not the arks, the confidence scores or the per-record lines, and do
+not restate or reformat them. When the researcher answers,
 spawn `@plugin:search-hints` again with `personId`, `projectPath` and their
 verdicts as `{ark, verdict}` per hint, verbatim, plus `planItemId` and `planId`
 when the question's active plan holds an `in_progress` `fs_hints` item whose
 `rationale` names that `personId`. Never pass a verdict the
 researcher did not state — a triage recommendation is not one. The accepted
 hints' positive log entries then route to extraction through the table.
+
+## Search-hit review
+
+When the user asks to evaluate hits of a full-text search log entry ("hits 1,
+4 and 7 of log_012", "all hits of log_012"), or answers "Continue." to
+`evaluating the search hits` (all hits of the full-text log entry the previous
+turn made):
+
+1. `project_context({ projectPath })`.
+2. `sidecar_read({ projectPath, ref: "results/log_012.json#hits" })`. While
+   `truncated` is true, call again with `offset: nextOffset`.
+3. Take the named `hitIndex` rows, or all of them, skipping `hasTranscript: false`.
+4. Spawn one `@plugin:evaluate-search-results` per row with `projectPath`,
+   `hitRef` (the row's `ref`, verbatim) and `target` (a tree person id: the
+   `persons` row from `project_context` for the person the user names, else
+   `subjectPersonIds[0]`), **at most 5 per message**, until every row has one.
+   Together they are one step: write no text to the researcher until every batch has returned.
+5. Judge nothing from the list.
+6. When all have returned, print each return's text after its `---`, verbatim and once, and nothing above it. Add no summary of your own, and show no log, hit, record or person id.
+7. N is the Matches not already extracted; a Possible Match is not offered.
+   N ≥ 1: end "Continue with `extracting the N Matches`?" ("the Match" for
+   one). N = 0: no "Continue with …?" line.
+8. End your turn.
+
+When the researcher answers "Continue." to that offer, in a later turn, spawn
+`@plugin:record-structurer` once with `projectPath`, `questionIds` and `sources`
+holding
+`{ recordId: <the hit id after '#'>, resultsRef: <the hitRef, verbatim> }` for
+each of those Matches, taken from the returns you hold. Name the records to the researcher by kind, date and place, never by log, hit or record id or agent name, and relay the summary it returns, verbatim.
 
 ## When a search stops short
 
@@ -698,6 +769,9 @@ A single plausible candidate is still a candidate. The researcher decides
 whether it is their person; your job is to show them what you found and
 what it rests on.
 
+This does not apply to §"Search-hit review", which relays the agent's verdicts
+and offers to extract the Matches.
+
 ## What this skill does not do
 
 - It introduces no new GPS *method*: every sub-skill encodes its own portion of
@@ -709,15 +783,17 @@ what it rests on.
   person-linking, person-linking precedes conflict detection, conflict
   resolution precedes proof. Shortcuts break the audit trail.
 - It does not interview the user for project setup. If
-  `research.json` does not exist and the message states an objective, route to
-  `@plugin:init-project` first, passing the researcher's own words verbatim, plus
-  `projectPath`, and nothing else. With no objective stated, the first row of the
-  table applies.
+  `project_context` returns `no_project` and the message states an objective, route to
+  `@plugin:init-project` first (except an ask for the names and details in a
+  record set with no FamilySearch person ID, which goes to `@plugin:search-images`), passing the researcher's own words verbatim, plus
+  `projectPath`, and nothing else. With no objective stated, spawn
+  `@plugin:tree-survey` (the table's first row); do not ask the researcher for a
+  person or objective first.
 
 ## Re-invocation behavior
 
 **Writes:** nothing directly except the `extraction_append` batch. This skill is a thin
-orchestrator: it reads `research.json` to decide the next step, reads a linked
+orchestrator: it queries the project to decide the next step, reads a linked
 person's attached sources (`person_read`, `source_attachments`) before any
 search, and delegates every write to the sub-skill it routes to. It does **not** insert defensive
 `validate_research_schema` passes between steps (the writer tools each
@@ -727,8 +803,8 @@ edit to the files. When the user asks for a second opinion, the
 `gps-mentor` subagent it invokes records its verdict in `evaluations[]`
 and never touches `tree.gedcomx.json`.
 
-**On repeat invocation:** safe to re-run at any point. It re-reads
-`research.json` and resumes routing from the current state — the same
+**On repeat invocation:** safe to re-run at any point. It re-queries
+the project and resumes routing from the current state — the same
 sub-skill may fire many times across a project. Each sub-skill owns
 its own idempotency (supersede-by-id, refine-in-place, or no-op); see
 that sub-skill's own "Re-invocation behavior" section.

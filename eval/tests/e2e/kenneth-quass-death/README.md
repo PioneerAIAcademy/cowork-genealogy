@@ -1,4 +1,4 @@
-# Kenneth Werner Quass — death and burial (1982)
+# Kenneth Werner Quass — death (1982)
 
 **Source PID:** `KNS4-P6W`
 **Kenneth Werner Quass is deceased.** (FamilySearch ToS requires
@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.)
 
 ## Research question
 
-> When and where did Kenneth Werner Quass die, and where was he buried?
+> When and where did Kenneth Werner Quass die?
 
 ## What was removed from the starting tree
 
@@ -48,7 +48,14 @@ the agent must recover a death and a geographically separate burial.
 
 ## Notes for reviewers
 
-The two required findings are the death (place/date in Texas) and the
-burial (place/date in Minnesota). The agent may legitimately reach the
+**2026-11-04 — re-scoped for step mode (issue #4144).** The old question asked
+two independent facts (death, and burial): "When and where did Kenneth Werner
+Quass die, and where was he buried?" Reworded `researcher_question` to the
+death only; demoted `f2` (burial) to `required: false`, so a run that recovers
+it anyway still gets credit. No finding wording changed, and this fixture has
+no committed runs to re-grade.
+
+The death (place/date in Texas) is now the one required finding; the burial
+(place/date in Minnesota) is a bonus. The agent may legitimately reach the
 same answer through a different source path than the three stripped
 sources — grade on the recovered facts, not on which record was cited.

@@ -210,3 +210,49 @@ describe("fact-rewrite rollback (#2472)", () => {
     expect(w).not.toMatch(/lost its /);
   });
 });
+
+describe("fact-rewrite rollback keeps the last-question removal (#3032)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "ra-degrade-removal-"));
+    failOnce.remaining = 0;
+    seenTrees.length = 0;
+  });
+  afterEach(async () => { await rm(dir, { recursive: true, force: true }); });
+
+  it("writes the tree without the removed person when the rewrite is rolled back", async () => {
+    const r0: any = research();
+    r0.questions.push({
+      id: "q_001", question: "When did John Smith immigrate?", rationale: "Objective.",
+      selection_basis: "objective_decomposition", priority: "high", status: "open", depends_on: [], unblocks: [],
+      created: "2026-01-01", resolved: null, resolution_assertion_ids: ["a_011"],
+      search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
+    });
+    r0.proof_summaries.push({
+      id: "ps_001", question_id: "q_001", tier: "not_proved", vehicle: "summary", shortfall: "gap",
+      supporting_assertion_ids: [], resolved_conflict_ids: [],
+      exhaustive_search_summary: "Searched.", narrative_markdown: "Not settled.",
+    });
+    const t: any = tree();
+    t.persons.push({ id: "I9", gender: "Female", names: [{ id: "N9", given: "Ann", surname: "Doe" }] });
+    await writeFile(join(dir, "research.json"), JSON.stringify(r0, null, 2), "utf-8");
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(t, null, 2), "utf-8");
+    await writeFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify(tree()), "utf-8");
+    failOnce.remaining = 1;
+
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "assertions", op: "update", entryId: "a_011", fields: { place: "Odessa, Francis No. 127, Saskatchewan, Canada" } },
+        { section: "questions", op: "update", entryId: "q_001", fields: { status: "resolved" } },
+      ],
+    } as any);
+
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    if (!r.ok) return;
+    expect(r.filesWritten).toContain("tree.gedcomx.json");
+    const onDisk = JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8"));
+    expect(onDisk.persons.map((p: any) => p.id)).toEqual(["I1"]);
+    expect(onDisk.persons[0].facts[0].place).toBe("Wellburn, Thames Centre, Middlesex, Ontario, Canada");
+  });
+});

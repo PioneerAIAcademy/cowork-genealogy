@@ -106,6 +106,7 @@ const DEF_FOR: Record<string, string> = {
   evaluations: "evaluation_entry",
   localities: "locality",
   namesakes: "namesake",
+  hit_verdicts: "hit_verdict_entry",
 };
 
 /**

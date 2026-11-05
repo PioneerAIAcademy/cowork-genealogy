@@ -26,11 +26,29 @@ const START_TIMEOUT_MS = 15_000;
 // A test's own budget: one child start plus 5s for what follows it.
 const TEST_TIMEOUT_MS = START_TIMEOUT_MS + 5_000;
 
-/** The environment `build/http.js` sees: the inherited one minus every GENEALOGY_* variable, plus `storeEnv`. */
+/**
+ * The environment `build/http.js` sees: the inherited one minus every variable
+ * the entrypoint reads, plus `storeEnv`.
+ *
+ * The prefix test alone was not enough once E1 added two settings that are NOT
+ * `GENEALOGY_`-prefixed. The Makefile's `engine-smoke-http` recipe passes
+ * `FS_TOKEN_ENC_KEY`, and `apps/server/proto/tools/README.md` tells developers
+ * to export both — so a developer's own shell would leak them in and flip
+ * cases here: an inherited `FS_TOKEN_ENC_KEY` makes the dev-key refusal start
+ * instead of exiting 2, and an inherited `OAUTH_ISSUER` kills every unrelated
+ * case in this file. `WEB_PUBLIC_URL` joined them when the dev-key refusal
+ * started reading it: compose takes it from the shell too (`${WEB_PUBLIC_URL:-}`),
+ * and inherited it makes the three "starts on the development key" cases exit 2.
+ * Any future setting this entrypoint reads un-prefixed belongs here as well.
+ */
+const UNPREFIXED_ENTRYPOINT_ENV = ["FS_TOKEN_ENC_KEY", "OAUTH_ISSUER", "WEB_PUBLIC_URL"];
+
 function childEnv(storeEnv: Record<string, string>): NodeJS.ProcessEnv {
   const env: NodeJS.ProcessEnv = {};
   for (const [name, value] of Object.entries(process.env)) {
-    if (!name.startsWith("GENEALOGY_")) env[name] = value;
+    if (name.startsWith("GENEALOGY_")) continue;
+    if (UNPREFIXED_ENTRYPOINT_ENV.includes(name)) continue;
+    env[name] = value;
   }
   return Object.assign(env, storeEnv);
 }
@@ -66,7 +84,11 @@ function runHttp(
 }
 
 /** Start `build/http.js` and resolve with the child and its port once it prints the listening line. */
-function startHttp(storeEnv: Record<string, string>): Promise<{ child: ChildProcess; port: number }> {
+function startHttp(
+  storeEnv: Record<string, string>,
+  // `stderr()` is everything the child has written so far, for the cases that
+  // assert on a START-UP line rather than on an exit code.
+): Promise<{ child: ChildProcess; port: number; stderr: () => string }> {
   return new Promise((resolvePromise, reject) => {
     const child = spawn(process.execPath, [HTTP_JS, "--port", "0"], {
       env: childEnv(storeEnv),
@@ -83,7 +105,7 @@ function startHttp(storeEnv: Record<string, string>): Promise<{ child: ChildProc
       const m = /listening on http:\/\/[^:]+:(\d+)\//.exec(stderr);
       if (m) {
         clearTimeout(timer);
-        resolvePromise({ child, port: Number(m[1]) });
+        resolvePromise({ child, port: Number(m[1]), stderr: () => stderr });
       }
     });
     child.on("error", (e) => {
@@ -122,6 +144,100 @@ describe("build/http.js readiness", () => {
       await new Promise((r) => setTimeout(r, 200));
       expect(child.exitCode).toBeNull();
       expect(child.signalCode).toBeNull();
+    } finally {
+      child.kill("SIGKILL");
+    }
+  }, TEST_TIMEOUT_MS);
+});
+
+describe("build/http.js connector door environment (E1, issue #3984)", () => {
+  // The development key is public in this repository, so a real deployment
+  // running on it would have every stored FamilySearch token encrypted under a
+  // key anyone can derive. An https issuer is what says "real deployment", the
+  // same call apps/server/proto/web/auth.py makes.
+  // Every non-loopback issuer, not just a lowercase `https://` one. The first
+  // version of this guard tested `startsWith("https://")`, which is
+  // case-sensitive against a scheme that is not, and left every non-loopback
+  // `http://` issuer starting on the publicly-known development key.
+  it.each([
+    ["https", "https://beta.example"],
+    ["HTTPS (schemes are case-insensitive)", "HTTPS://beta.example"],
+    ["non-loopback http", "http://beta.example"],
+  ])("exits 2 on a %s OAUTH_ISSUER with no FS_TOKEN_ENC_KEY", async (_label, OAUTH_ISSUER) => {
+    const r = await runHttp({ ...BASE, OAUTH_ISSUER });
+    expect(r.code, r.stderr).toBe(2);
+    expect(r.stderr).toMatch(/FS_TOKEN_ENC_KEY is unset while this tier is configured with a/);
+    // The refusal must not print the key it is complaining about.
+    expect(r.stderr).not.toMatch(/dev-insecure-fs-token-key/);
+  }, TEST_TIMEOUT_MS);
+
+  // OAUTH_ISSUER is documented as unset by default, so a guard keyed on it
+  // alone cannot fire in the configuration the handoff tells an operator to
+  // deploy. WEB_PUBLIC_URL is the other marker of a deployment people reach.
+  it.each([
+    ["https", "https://beta.example"],
+    ["non-loopback http", "http://beta.example"],
+  ])(
+    "exits 2 on a %s WEB_PUBLIC_URL with no FS_TOKEN_ENC_KEY and NO issuer",
+    async (_label, WEB_PUBLIC_URL) => {
+      const r = await runHttp({ ...BASE, WEB_PUBLIC_URL });
+      expect(r.code, r.stderr).toBe(2);
+      expect(r.stderr).toMatch(/FS_TOKEN_ENC_KEY is unset while this tier is configured with a/);
+      expect(r.stderr).not.toMatch(/dev-insecure-fs-token-key/);
+    },
+    TEST_TIMEOUT_MS,
+  );
+
+  // The other direction: a developer's own machine must still start on the
+  // development key, which is the whole reason the fallback exists. Both
+  // public URLs loopback, and both unset, are that machine.
+  it.each([
+    ["both unset", {}],
+    ["a loopback issuer", { OAUTH_ISSUER: "http://127.0.0.1:1837" }],
+    ["a loopback web origin", { WEB_PUBLIC_URL: "http://localhost:5173" }],
+  ])("starts on the development key with %s", async (_label, extra) => {
+    const r = await runHttp({ ...BASE, ...(extra as Record<string, string>) }, /connector door:/);
+    expect(r.stderr, r.stderr).toMatch(/fs-token-key=default/);
+    expect(r.stderr).not.toMatch(/FS_TOKEN_ENC_KEY is unset while/);
+  }, TEST_TIMEOUT_MS);
+
+  // It is interpolated into a WWW-Authenticate header value, so a control
+  // character would make writeHead throw and turn every 401 into a 500 with no
+  // challenge at all. Same shape check WEB_PUBLIC_URL already has.
+  it.each([
+    ["a CRLF header injection", "https://beta.example\r\nX-Injected: 1"],
+    ["a quote that breaks the challenge", 'https://beta.example" , evil="x'],
+    ["credentials", "https://user:pw@beta.example"],
+    ["not a URL at all", "beta.example"],
+  ])("exits 2 on an OAUTH_ISSUER with %s", async (_label, OAUTH_ISSUER) => {
+    const r = await runHttp({ ...BASE, OAUTH_ISSUER, FS_TOKEN_ENC_KEY: "a-real-key" });
+    expect(r.code, r.stderr).toBe(2);
+    expect(r.stderr).toMatch(/OAUTH_ISSUER must be a plain http\(s\) URL/);
+  }, TEST_TIMEOUT_MS);
+
+  // The other direction, so this guard cannot quietly become one that refuses
+  // every local run: on http the default IS the point -- compose passes
+  // ${FS_TOKEN_ENC_KEY:-} and all three tiers fall back to the same value.
+  it("starts on an http issuer with no FS_TOKEN_ENC_KEY, and says the key is the default", async () => {
+    const { child, stderr } = await startHttp({ ...BASE, OAUTH_ISSUER: "http://127.0.0.1:8080" });
+    try {
+      expect(child.exitCode).toBeNull();
+      expect(stderr()).toMatch(/connector door: issuer=http:\/\/127\.0\.0\.1:8080 fs-token-key=default/);
+    } finally {
+      child.kill("SIGKILL");
+    }
+  }, TEST_TIMEOUT_MS);
+
+  it("starts on an https issuer once FS_TOKEN_ENC_KEY is set, and never prints it", async () => {
+    const { child, stderr } = await startHttp({
+      ...BASE,
+      OAUTH_ISSUER: "https://beta.example",
+      FS_TOKEN_ENC_KEY: "a-real-key-sentinel",
+    });
+    try {
+      expect(child.exitCode).toBeNull();
+      expect(stderr()).toMatch(/fs-token-key=set/);
+      expect(stderr()).not.toMatch(/a-real-key-sentinel/);
     } finally {
       child.kill("SIGKILL");
     }
@@ -171,19 +287,30 @@ describe("build/http.js store environment", () => {
     const words = await runHttp({ ...BASE, GENEALOGY_MAX_TRANSCRIPTIONS: "abc" });
     expect(words.code, words.stderr).toBe(2);
     expect(words.stderr).toMatch(/invalid value: GENEALOGY_MAX_TRANSCRIPTIONS/);
-  }, TEST_TIMEOUT_MS * 2);
 
-  it("names both limits on start-up, and says when each is off", async () => {
+    const yes = await runHttp({ ...BASE, GENEALOGY_SHARED_COLLECTIONS_CACHE: "yes" });
+    expect(yes.code, yes.stderr).toBe(2);
+    expect(yes.stderr).toMatch(/invalid value: GENEALOGY_SHARED_COLLECTIONS_CACHE/);
+  }, TEST_TIMEOUT_MS * 3);
+
+  it("names each limit on start-up, and says when each is off", async () => {
     const off = await runHttp(BASE, /listening on .*\n/);
     expect(off.stderr).toMatch(/fs budget: off\n/);
     expect(off.stderr).toMatch(/transcription cap: off\n/);
+    expect(off.stderr).toMatch(/collections cache: per token\n/);
 
     const on = await runHttp(
-      { ...BASE, GENEALOGY_FS_CALLS_PER_MINUTE: "120", GENEALOGY_MAX_TRANSCRIPTIONS: "4" },
+      {
+        ...BASE,
+        GENEALOGY_FS_CALLS_PER_MINUTE: "120",
+        GENEALOGY_MAX_TRANSCRIPTIONS: "4",
+        GENEALOGY_SHARED_COLLECTIONS_CACHE: "true",
+      },
       /listening on .*\n/,
     );
     expect(on.stderr).toMatch(/fs budget: 120 calls\/min\n/);
     expect(on.stderr).toMatch(/transcription cap: 4 at a time\n/);
+    expect(on.stderr).toMatch(/collections cache: shared\n/);
   }, (START_TIMEOUT_MS + TEST_TIMEOUT_MS) * 2);
 
   it("names the orphan sweep's schedule on start-up, and says when it is off", async () => {

@@ -525,13 +525,15 @@ up while the body ran on the main thread, and each cost a run to find.
    field name reaches the researcher. In the autonomous `/research` loop that
    relayed tail is also the phase's narration line, so the router writes no
    separate one in its place (issue #3862: with both rules side by side, 0 of 85
-   e2e relays survived). `agents/citation.md`'s "Return contract"
+   e2e relays survived). The router is still told to relay verbatim, but since
+   the lead's 2026-11-03 ruling on PR #4148 a unit test grades the relay on
+   meaning, not word for word: rewording and added text pass, a dropped or
+   changed finding fails. `agents/citation.md`'s "Return contract"
    is the worked form, and
    `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
    refuses an agent body without the heading once its name leaves that test's
-   pending list. Three agents are EXCLUDED from the contract rather than
-   pending: `image-reader`, which by spec returns a transcription and nothing
-   else; under lead ruling "PS return: A" (2026-09-24, issue #2793),
+   pending list. Two agents are EXCLUDED from the contract rather than
+   pending: under lead ruling "PS return: A" (2026-09-24, issue #2793),
    `source-evaluation` (issue #2796), which logs its report verbatim and writes
    nothing else, so its id-bearing report IS its whole output — conforming would
    push it below the caller's print line, where a production relay drops it; and `record-structurer`,

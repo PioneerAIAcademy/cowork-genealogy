@@ -67,6 +67,10 @@ repo's identifier-casing rule):
   }],
   questionStatuses: [{                   // ADVISORY — see below. One per question,
     id: string,                          //   including resolved ones.
+    question: string,                    // truncated as in openQuestions; "" when absent.
+                                         //   The one place a resolved question's
+                                         //   text appears, so the objective can be
+                                         //   read against every question.
     state: "framed" | "planned" | "searching"
          | "evidence-gathered" | "concluded" | "critiqued",
     nextStep: string | null,             // null = nothing outstanding
