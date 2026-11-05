@@ -112,7 +112,7 @@ faithful text transcription.
 
 ## 2. The bet (why Phase 0 exists)
 
-Moving OCR off the caller's model (Claude Sonnet vision, via the current
+Moving OCR off the caller's model (Claude Sonnet vision, via the then-current
 `image-reader` subagent) onto a cheap hosted VLM is a **quality bet on a brutal
 domain**: 18th–19th-century German church-register hands (Kurrent /
 Fraktur), faint ink, uneven exposure. The pre-spike `image-reader` spec
@@ -1414,7 +1414,7 @@ one, because the key is `image_filename`, not imageId:
 
 *Phase 0 passed, so this fallback is not used; kept as a record of the
 alternatives that were considered.* If Qwen (any variant) cannot match the
-Claude path on the hard corpus, do **not** ship `image_transcribe`. Fall back to keeping the current
+Claude path on the hard corpus, do **not** ship `image_transcribe`. Fall back to keeping the then-current
 `image-reader` subagent (Claude vision) and solving T13's *size* problem by
 response-shaping `image_read` itself, per the earlier brainstorm:
 
@@ -1502,8 +1502,8 @@ Record the passing scored run + `.ann.json` per the usual e2e gate.
 
 ## 14. Files to create / modify
 
-> Shipped, then superseded. `image-reader` and its spec were retired on 2026-10-16
-> (issue #2490), so the list below is the change list as it stood when this tool shipped.
+> Shipped, then superseded. `image-reader` and its spec were retired on 2026-10-16,
+> so the list below is the change list as it stood when this tool shipped.
 
 **Create**
 - `docs/specs/image-transcribe-tool-spec.md` (this doc)

@@ -86,7 +86,7 @@ describe('attaching files', () => {
     const { conn, input } = mount()
     pick(input, [file('p1.jpg'), file('p2.jpg'), file('p3.jpg')])
     await waitFor(() => expect(conn.sent).toHaveLength(1))
-    const text = (conn.sent[0] as { text: string }).text
+    const text = String(conn.sent[0].text)
     expect(text).toContain('`uploads/p1.jpg`')
     expect(text).toContain('`uploads/p3.jpg`')
     expect(text).not.toContain('p2.jpg')

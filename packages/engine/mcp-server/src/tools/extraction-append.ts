@@ -49,6 +49,7 @@ import {
   locateStagedRef,
   readResultsEnvelope,
   readStagedResults,
+  resolveStagedRef,
   splitHitRef,
   STAGING_SUBDIR,
   type FulltextHitRow,
@@ -1446,7 +1447,7 @@ function loggedPage(at: Extract<StagedRefLocation, { state: "logged" }>): Staged
  * the file between the two reads lands on the same path.
  */
 async function stagedPage(projectPath: string, rawRef: string): Promise<StagedPage> {
-  const { ref } = await locateStagedRef(projectPath, rawRef);
+  const { ref } = await resolveStagedRef(projectPath, rawRef);
   try {
     await checkStagedResults({ projectPath, stagedResultsRef: ref, expectedTool: "image_transcribe" });
     return { live: ref };
