@@ -240,6 +240,12 @@ Open every task on `~/mcp-probe/mcandrew`, with the connector on.
 16. **Image.** On a card, tap `Load an image`. The **Image probe** lines end in
     `loaded`, `the image failed to load` or `refused`. Fills **Image**.
 
+    In Chrome on a device on your tailnet, the image fails with `Permission was denied
+    for this request to access the local address space`, and no `/img` line reaches the
+    log. The hostname resolves to a private Tailscale address there, and Chrome will not
+    let a public page load from one. Test from Claude Desktop, or from a browser off the
+    tailnet. A server on a public address is not affected.
+
 17. **Fullscreen.** New task, call `show_project`.
 
     1. Read `availableDisplayModes`. With no `fullscreen` there, the card has no `Open
@@ -646,7 +652,7 @@ needs. An artifact's answer is in **Artifact**.
 
 | | Connector | Local |
 |---|---|---|
-| The image loads from the declared host | Yes, 1200 x 675 | — |
+| The image loads from the declared host | Yes, 1200 x 675, in a Cowork task, Desktop Chat and claude.ai off the tailnet. Blocked in Chrome on a tailnet device | — |
 
 ### `ui/update-model-context`
 
