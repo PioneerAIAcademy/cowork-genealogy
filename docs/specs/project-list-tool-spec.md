@@ -48,7 +48,7 @@ Wire-side **camelCase**:
   }],
   truncated?: true,                   // more projects exist than are listed; absent when all are
   newProjectPath?: string,            // where a new project goes; absent when none can be started
-  message: string,                    // what to pass as projectPath, in one or two sentences
+  message: string,                    // what to pass as projectPath, and whether the list was cut
 }
 ```
 
