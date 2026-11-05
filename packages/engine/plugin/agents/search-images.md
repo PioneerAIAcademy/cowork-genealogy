@@ -314,7 +314,7 @@ For each page, judge from `found`, the `digest` and any page you read whether
 the target record appears and whether the place and approximate date are
 consistent. A person of the subject's name on a page you read who cannot be
 the subject is a namesake (step 7b). Present the promising
-images with the image ID, what each shows and its `viewerUrl` as a link; let the user confirm which to
+images with the image ID and what each shows; let the user confirm which to
 examine in detail. Never fabricate the contents of a page — report only what
 `image_transcribe` actually returned.
 

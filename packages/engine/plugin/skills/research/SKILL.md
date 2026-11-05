@@ -191,9 +191,7 @@ with no hand-off. A transcription you deliver yourself: call
 `image_transcribe({ projectPath, imageId | ark | file })`, show the page from
 `sidecar_read({ projectPath, ref: staged.resultsRef })`, and give `viewerUrl` as a
 link. A reading the user gives that differs from the page goes to
-`@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`. An image
-dropped into the chat cannot reach the tools: ask the user to put it in the project folder,
-or to use `project_context`'s `uploadUrl`, then read it by `file`. Do not walk the routing table from the top for one: that table
+`@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
 must not go. Deliver this turn's deliverable, and stop: at least one hand-off
