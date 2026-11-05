@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
+import { mkdtemp, mkdir, writeFile, readFile, rm, utimes } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
@@ -90,6 +90,8 @@ describe("project_context", () => {
       { id: "q_003", question: "Where was he in 1880?" },
       { id: "q_004", question: "Declared exhaustive" },
     ]);
+    // The text an objective's facts are checked against before completing.
+    expect(r.resolvedQuestions).toEqual([{ id: "q_002", question: "Resolved already" }]);
     const noFamily = { spouseIds: [], parentIds: [], childIds: [] };
     expect(r.persons).toEqual([
       { id: "I1", name: "William Bottermiller", gender: "Male", sourceRefs: ["S1", "S2"], ...noFamily, diedByYear: 1929 },
@@ -231,6 +233,7 @@ describe("project_context", () => {
       narrationGuidance: null,
       subscriptions: [],
       openQuestions: [],
+      resolvedQuestions: [],
       questionStatuses: [],
       persons: [],
       sources: [],
@@ -857,5 +860,51 @@ describe("project_context: an extraction step the thin-subject gate would refuse
   it("keeps extraction for a search with no subject", async () => {
     await seed("1872", { subjectTooThin: true }, {});
     expect(await nextStep()).toBe(EXTRACTION);
+  });
+
+  /** After `seed`: a later nil record_search (log_002) whose sidecar saved
+   *  `later`, with every plan item completed. */
+  async function searchedAgain(later: Record<string, unknown>, dropLog001 = false) {
+    await writeFile(
+      join(dir, "results", "log_002.json"),
+      JSON.stringify({
+        log_id: "log_002",
+        tool: "record_search",
+        retrieved: "2026-10-20T10:00:00Z",
+        returned_count: 0,
+        payload: { query: { surname: "Brown", subjectId: "I1", ...later.query as object }, ...later, results: [] },
+      }),
+    );
+    const r = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r.plans[0].items[0].status = "completed";
+    r.log.push({
+      ...r.log[0],
+      id: "log_002",
+      performed: "2026-10-20T10:00:00Z",
+      outcome: "negative",
+      results_examined: 0,
+      results_ref: "results/log_002.json",
+    });
+    if (dropLog001) r.log = r.log.filter((e: any) => e.id !== "log_001");
+    await writeFile(join(dir, "research.json"), JSON.stringify(r));
+  }
+
+  it("lets the question move on once a later search has saved the person as not thin", async () => {
+    await seed("Mar 1872", { subjectTooThin: true });
+    await searchedAgain({ subjectTooThin: false });
+    const step = await nextStep();
+    expect(step.startsWith("search-records — I1 is anchored now")).toBe(false);
+    await seed("Mar 1872", { subjectTooThin: true });
+    await searchedAgain({ subjectTooThin: false }, true);
+    expect(step).toBe(await nextStep());
+  });
+
+  it.each([
+    ["the later search still saved the person as thin", { subjectTooThin: true }],
+    ["the later search was for another person", { subjectTooThin: false, query: { subjectId: "I2" } }],
+  ])("still names a new search when %s", async (_label, later) => {
+    await seed("Mar 1872", { subjectTooThin: true });
+    await searchedAgain(later);
+    expect((await nextStep()).startsWith("search-records — I1 is anchored now")).toBe(true);
   });
 });

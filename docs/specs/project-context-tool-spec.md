@@ -65,6 +65,10 @@ repo's identifier-casing rule):
     id: string,                          // q_*
     question: string,                    // truncated to ≤140 chars (139 + "…")
   }],
+  resolvedQuestions: [{                  // same shape, resolved questions only
+    id: string,
+    question: string,
+  }],
   questionStatuses: [{                   // ADVISORY — see below. One per question,
     id: string,                          //   including resolved ones.
     state: "framed" | "planned" | "searching"
@@ -143,6 +147,12 @@ Projection rules:
   not `resolved` (i.e. `open`, `in_progress`, `exhaustive_declared`), in
   array order. `question` text over 140 characters is truncated to 139 + a
   `…` (the id is the handle; the text is a reminder, not the record).
+- **`resolvedQuestions`** — the `resolved` entries, the same shape and
+  truncation. Before the project completes, the router checks each fact the
+  objective asks for against these: a fact no resolved question's own text
+  asks is uncovered, whatever the tree holds. `questionStatuses` carries no
+  question text, so without this list that check needed a second read, and a
+  router that skipped it took facts already in the tree as covered.
 - **`persons`** — every `tree.persons[]` entry, in array order. `name` is
   the `preferred: true` names entry (first names entry when none is
   flagged), rendered `given surname` (whichever parts exist; `null` when the
@@ -271,7 +281,7 @@ question owns is a `record_search` whose sidecar names a `subjectId` and lists o
 `extraction_append`'s thin-subject scan refuses (the same function, so the two cannot
 disagree), `nextStep` reads `researcher's anchor — <subject>: <log ids> …` while the searched
 person is still thin, and `search-records — <subject> is anchored now …` once they are not:
-the saved search keeps gating what it listed, so only a new search gets a record through. One
+the saved search keeps gating what it listed, so only a new search gets a record through. Once a later search for the same person has saved them as not thin, the earlier search no longer holds the step. One
 pending entry of any other kind, a record the scan would let through, or a sidecar with no
 subject keeps the extraction step. Without this rung the router is sent, on every pass, to
 extract records `extraction_append` refuses.

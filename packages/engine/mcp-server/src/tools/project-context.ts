@@ -48,10 +48,14 @@ const EXTRACTION_STEP = "extraction (";
  * scan decides it) names the way through instead: the researcher's anchor while
  * the searched person is still thin, a new search once they are not. Left as
  * extraction, the router sends records `extraction_append` refuses on every pass.
+ * Once that new search has run (`redoneAfter`), the stuck entries no longer hold
+ * the step: the log is append-only, so a namesake's record the new search does
+ * not list would otherwise read "search again" for good.
  */
 async function holdThinSubjectExtraction(
   projectPath: string,
   research: any,
+  tree: any,
   statuses: QuestionStatus[],
 ): Promise<QuestionStatus[]> {
   if (!statuses.some((s) => s.nextStep?.startsWith(EXTRACTION_STEP))) return statuses;
@@ -80,6 +84,10 @@ async function holdThinSubjectExtraction(
     const who = [...subjects].join(", ");
     const logIds = pending.map((e) => e.id).join(", ");
     const thinNow = await Promise.all([...subjects].map((sid) => subjectTooThinNow(projectPath, sid)));
+    if (thinNow.every((thin) => thin === false) && (await redoneAfter(projectPath, research, pending, subjects))) {
+      const rest = { ...research, log: research.log.filter((e: any) => !pending.includes(e)) };
+      return questionStates(rest, tree).find((s) => s.id === status.id) ?? status;
+    }
     const nextStep = thinNow.some((thin) => thin !== false)
       ? `researcher's anchor — ${who}: ${logIds} listed only records extraction_append refuses, because ` +
         "the tree gives the person searched for no date narrower than a year and no named spouse, parent " +
@@ -89,6 +97,25 @@ async function holdThinSubjectExtraction(
         "thin and extraction_append still refuses what it listed";
     return { ...status, nextStep };
   }
+}
+
+/** Whether every subject has a logged `record_search`, later in the log than
+ *  every pending entry, whose sidecar saved them as not thin. */
+async function redoneAfter(
+  projectPath: string,
+  research: any,
+  pending: any[],
+  subjects: ReadonlySet<string>,
+): Promise<boolean> {
+  const log: any[] = Array.isArray(research?.log) ? research.log : [];
+  const last = Math.max(...pending.map((e) => log.indexOf(e)));
+  const redone = new Set<string>();
+  for (const entry of log.slice(last + 1)) {
+    if (entry?.tool !== "record_search" || typeof entry?.results_ref !== "string") continue;
+    const read = await readSidecarSearch(projectPath, entry.results_ref);
+    if (read?.subjectId && subjects.has(read.subjectId) && read.subjectTooThin === false) redone.add(read.subjectId);
+  }
+  return [...subjects].every((sid) => redone.has(sid));
 }
 
 export interface ProjectContextInput {
@@ -252,6 +279,9 @@ export type ProjectContextResult =
       /** research.researcher_profile.subscriptions, strings only; [] when absent. */
       subscriptions: string[];
       openQuestions: ProjectContextQuestion[];
+      /** Resolved questions, text truncated: what an objective's facts are checked
+       *  against before the project completes. */
+      resolvedQuestions: ProjectContextQuestion[];
       /** Advisory per-question state and next step. Nothing gates on it. */
       questionStatuses: QuestionStatus[];
       persons: ProjectContextPerson[];
@@ -324,10 +354,12 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // exhaustive_declared), in array order. Text truncated — the id is the
   // handle; the text is a reminder, not the record.
   const openQuestions: ProjectContextQuestion[] = [];
+  const resolvedQuestions: ProjectContextQuestion[] = [];
   for (const q of Array.isArray(research?.questions) ? research.questions : []) {
     if (!q || typeof q !== "object" || typeof q.id !== "string") continue;
-    if (q.status === "resolved" || q.status === "superseded") continue;
-    openQuestions.push({ id: q.id, question: truncateQuestion(typeof q.question === "string" ? q.question : "") });
+    if (q.status === "superseded") continue;
+    const row = { id: q.id, question: truncateQuestion(typeof q.question === "string" ? q.question : "") };
+    (q.status === "resolved" ? resolvedQuestions : openQuestions).push(row);
   }
 
   const family = familyIndex(tree);
@@ -423,7 +455,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // question is waiting on, computed from the document rather than from
   // session history (the only durable state this system has). The gates in
   // research_append compute their own preconditions independently.
-  const questionStatuses = await holdThinSubjectExtraction(input.projectPath, research, questionStates(research, tree));
+  const questionStatuses = await holdThinSubjectExtraction(input.projectPath, research, tree, questionStates(research, tree));
 
   const awaitingUser = awaitingUserHandOffs(research?.log);
 
@@ -464,6 +496,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
       : []
     ).filter((x: unknown): x is string => typeof x === "string"),
     openQuestions,
+    resolvedQuestions,
     questionStatuses,
     persons,
     sources,
@@ -546,7 +579,8 @@ export const projectContextSchema = {
     "reading research.json or tree.gedcomx.json. Returns projectStatus; " +
     "objective (research.project.objective verbatim, including any stated doubt " +
     "about its premise); " +
-    "openQuestions [{id, question}] (unresolved only, text truncated); persons " +
+    "openQuestions [{id, question}] (unresolved only, text truncated); resolvedQuestions " +
+    "[{id, question}] (resolved only, text truncated); persons " +
     "[{id, name, gender, sourceRefs, spouseIds, parentIds, childIds, diedByYear}] — every " +
     "tree person with the distinct S ids it already cites, its one-hop family from " +
     "the tree's Couple and ParentChild edges, and the year it was certainly dead " +
