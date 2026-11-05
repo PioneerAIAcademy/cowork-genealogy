@@ -1,7 +1,7 @@
 {
   "project": {
     "id": "rp_naveda_spain_origin",
-    "objective": "Where in Spain was Francisco Naveda Somarriba born or baptized, and who were his parents?",
+    "objective": "Who were the parents of Francisco Naveda Somarriba, a native of Spain living in Papantla, Veracruz, Mexico circa 1862?",
     "subject_person_ids": ["PID-TODO"],
     "status": "active",
     "created": "2026-06-19",

@@ -13,10 +13,6 @@ from typing import Literal
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-#: The levels the agent SDK's `EffortLevel` accepts (a test keeps the two equal). Kept
-#: here rather than imported, so the control plane's settings never need the SDK.
-EffortSetting = Literal["low", "medium", "high", "xhigh", "max"]
-
 # Repo root = .../cowork-genealogy (apps/server/app/config.py -> parents[3])
 REPO_ROOT = Path(__file__).resolve().parents[3]
 
@@ -29,7 +25,8 @@ class Settings(BaseSettings):
     # "real" → the Claude Agent SDK driving the genealogy skills + MCP server.
     agent_mode: str = "mock"
     anthropic_api_key: str | None = None
-    default_model: str = "claude-sonnet-4-6"
+    # The main thread's model and effort are not settings here: they come from the
+    # plugin's main-thread.json (`agent.main_thread`), and each agent's from its file.
     # Lay mode's auto-continue (issue #2653): the in-sandbox runner answers the
     # hand-back literal `Next: <step>. Continue?` with `Yes.` itself, so a stated
     # objective runs step by step with no click. Both reach the runner as
@@ -40,25 +37,6 @@ class Settings(BaseSettings):
     # with the experience-level user setting (PR #2649).
     auto_continue: bool = True
     auto_continue_max_steps: int = 30
-    # T4.1: reasoning effort for hosted sessions. ALL UNSET BY DEFAULT, which passes no
-    # `--effort` and leaves every call at the CLI's own default -- exactly what ran before
-    # these existed. Like MODEL they reach a sandbox once, at
-    # create(), so a session keeps the levels it was born with and an existing project
-    # never changes mid-life (read an old session's effort as its creation-time setting).
-    #   ORCHESTRATOR_EFFORT       the main thread's level (`ClaudeAgentOptions.effort`).
-    #                             Alone, it also pins every helper to the level a helper
-    #                             runs at with nothing set (real_agent.HELPER_DEFAULT_EFFORT),
-    #                             so only the orchestrator moves.
-    #   SUBAGENT_EFFORT           one level for every delegation.
-    #   SUBAGENT_EFFORT_BY_AGENT  JSON {"agent-name": level}, overriding SUBAGENT_EFFORT.
-    # The helper levels are written onto each Agent call by the PreToolUse hook (the call's
-    # own `effort`, CLI 2.1.294+), not into the agent files. A bad level fails start-up
-    # here; inside the sandbox the CLI would only warn and ignore it. The lead set the
-    # alpha's main thread to low on 2026-10-21 (`deploy/fly.toml`); the helper levels stay
-    # unset until the lead sets them (cost-latency plan T4.1, Q4).
-    orchestrator_effort: EffortSetting | None = None
-    subagent_effort: EffortSetting | None = None
-    subagent_effort_by_agent: dict[str, EffortSetting] = {}
     # The main thread's prompt-cache lifetime, stamped into a NEW sandbox as
     # CLAUDE_CODE_PROMPT_CACHE_TTL (CLI >= 2.1.294 reads it for the main thread only;
     # helpers and the compaction call keep 5 minutes). UNSET BY DEFAULT = stamp nothing,

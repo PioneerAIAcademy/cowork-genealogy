@@ -161,11 +161,12 @@ entry carries `blocked_by: "context"`, but **two different guards land here and
   not own. This is the arm that actually fires; every entry in the committed
   corpus is one. **Not** evidence of a spawn failure, and the shipped plugin hook
   holds the same rule, so a user would hit it too. Do not assume the main thread:
-  `owner_denied` has six rules — `routed`, `out_of_lane`, `declaration`,
+  `owner_denied` has seven rules — `routed`, `out_of_lane`, `declaration`,
   `owned_field` (a field routed on presence, `project.status`), `claim` (a
   conflict's analysis) and `owned_append` (a new question from anyone but
-  question-selection) — and `out_of_lane` fires for a **named subagent**
-  reaching outside its own lanes. `tool` is `research_append` for all six, so it cannot tell them apart — read
+  question-selection) and `main_thread_field` (`project.objective` from any
+  subagent) — and `out_of_lane` fires for a **named subagent**
+  reaching outside its own lanes. `tool` is `research_append` for all seven, so it cannot tell them apart — read
   `narration[]` for the rule and `tool_calls[]` for the caller.
 - **`image_read`** — the one subagent-only tool, called on the main thread. No
   agent owns it, so this is the router reaching for a scan inline instead of
@@ -238,10 +239,16 @@ Translate `stop_reason` into something a researcher can act on:
 
 - `completed` — agent set `project.status == "completed"`. Happy path,
   proof-conclusion fired. Look at the final tree to judge quality.
-- `natural_end` — SDK ended the conversation but the agent didn't
-  declare done. Either the agent thought it was done without setting
-  the flag (skill regression), or the conversation drifted to silence.
-  Check the last few `narration` entries.
+- `natural_end` — the run ended with the project not completed. On a
+  step-mode run (`usage.step_mode`, every run since step mode phase 2)
+  this usually means the host sent no reply to the last turn
+  (`next_auto_reply`): the turn made no "Continue with …?" offer, offered
+  wrap-up, repeated a step it had already offered, started a second
+  planning round, or hit the reply cap. Read the last entry of
+  `usage.per_turn` (its step and the reply sent) and the last `narration`
+  entry to tell which. A turn that should have offered a next step and
+  did not is a skill regression; a repeated step or a spent cap is a loop.
+  On an older run it meant the agent stopped without setting the flag.
 - `inactivity` — agent went silent for the inactivity cap window
   (default ~10 min). It's stuck. `tool_calls_before` counts the calls that
   preceded an entry, so for the last call — index `len(tool_calls) - 1` — the
@@ -255,8 +262,9 @@ Translate `stop_reason` into something a researcher can act on:
   shape is usually obvious.
 - `cost_cap` — spent past the cost threshold. **Not an interruption** — it
   is a post-hoc label (the cost-cap row of the stop-reason table in
-  `docs/specs/e2e-test-spec.md`), so read `usage.stop_reason` to see how the
-  run actually ended before calling it unfinished.
+  `docs/specs/e2e-test-spec.md`); on a step-mode run the host keeps replying
+  past it. Read `usage.stop_reason` to see how the run actually ended before
+  calling it unfinished.
 - `max_turns` — SDK turn limit fired. Rare; usually means a
   conversational loop rather than a tool loop.
 - `error` — SDK or harness exception. Read `result.error` for the
@@ -316,8 +324,8 @@ useful questions are about *this* run:
 - **It ran out of budget** — `stop_reason` is `max_turns` / `timeout` /
   `tool_cap`. It researched but didn't finish. Pointer: high
   turn/tool counts; check whether `proof-conclusion` was ever reached.
-  (`cost_cap` is deliberately not in this list — it is applied after the
-  run has already ended, so it never cut a run short.)
+  (`cost_cap` is deliberately not in this list — it is a label, and it never
+  cuts a run short, step-mode runs included.)
 - **The evidence wasn't recoverable** — it searched genuinely but the
   finding isn't findable from records (and isn't a `provided-documents/`
   case). The fixture may be unsolvable as authored — a fixture problem,

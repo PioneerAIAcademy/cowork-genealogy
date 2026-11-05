@@ -1,0 +1,41 @@
+{
+  "test": {
+    "id": "ut_search_full_text_021",
+    "skill": "search-full-text",
+    "name": "A transcript hit naming a same-named man the search rules out is recorded as a namesake, and the untied links it warns about go to person-evidence",
+    "type": "positive",
+    "description": "An ad-hoc full-text search for Patrick Flynn in Pennsylvania deeds returns one hit: an 1834 Berks County deed in which Patrick Flynn of Reading, laborer, and Margaret his wife sell a lot. An adult grantor in 1834 cannot be the subject, Patrick Flynn (I1), born about 1845. The delegation hands the subject, so the agent records that man as a namesakes row on I1 listing the hit's id (step 8b), with no plan item to update, and the write's warning about pe_004 and pe_005 goes to person-evidence in a Hand-back line. The Umbelina shape: issue #3363, PR 3.",
+    "tags": [
+      "fulltext",
+      "principal-search",
+      "namesake",
+      "namesake-row",
+      "namesake-warning",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Search FamilySearch's full-text deed transcriptions for Patrick Flynn as a grantor or grantee in Pennsylvania before 1880.\n\nlooking_for: Patrick Flynn in a deed\nprojectPath: <workspace>\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Patrick\",\n      \"surname\": \"Flynn\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"about 1845\",\n    \"place\": \"Ireland\"\n  },\n  \"death\": {\n    \"date\": \"12 March 1908\",\n    \"place\": \"Schuylkill County, Pennsylvania\"\n  },\n  \"parents\": [\n    {\n      \"personId\": \"I2\",\n      \"name\": \"Thomas Flynn\"\n    }\n  ]\n}",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "fulltext-search-flynn-1834-deed-namesake",
+    "fulltext-search-flynn-1834-deed-namesake-by-name",
+    "fulltext-search-flinn-variant-zero",
+    "source-attachments-flynn-1834-deed",
+    "wiki-read-any",
+    "wiki-search-any"
+  ],
+  "execution": {
+    "max_turns": 35,
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour.",
+    "CORE (Correctness): the only hit is an 1834 Berks County deed by Patrick Flynn of Reading, laborer, and Margaret his wife. A married adult grantor in 1834 cannot be the subject, Patrick Flynn (I1), born about 1845. The agent must not present the deed as the subject's and must say plainly the grantor is someone else.",
+    "Namesake row: having ruled that man out, the agent records him as a namesakes row on I1 (one research_append call, section namesakes, after the search is logged), listing the hit's id in record_ids, the search's log id, and the ground (an adult with a wife in 1834; the subject was born about 1845) as notes. There is no planItemId, so no plan item is updated; that is correct. Recording him does not adopt him; do not mark it down as extraction.",
+    "Hand-back: the namesakes write returns a warning that links pe_004 and pe_005 to I1 stand with nothing in their records tying them to him. search-full-text cannot write person_evidence, so its return must carry a 'Hand-back: person-evidence' line naming both links. Lowering or tying them itself, or leaving them unmentioned, is the failure this test guards.",
+    "TOOL ARGUMENTS NOTE: keywords-first is preferred, but a name-field query that finds the hit is also acceptable, and a fixture_not_found on a structurally correct variant query is not a Tool Arguments failure."
+  ],
+  "judge_reads_files": true
+}

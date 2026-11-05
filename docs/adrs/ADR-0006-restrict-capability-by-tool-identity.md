@@ -48,8 +48,9 @@ the prompt.**
 
 `extraction_append` is `research_append` restricted, per call, to a section set
 code chooses: `sources` and `assertions` to extract and tie, `plan_items` alone
-to complete an item, or `person_evidence` alone, in `personId` mode, to link a
-person's attachments. It is the *same implementation*, gated by a **second
+to complete an item, or `person_evidence` alone, in `personId` mode, to link the
+personas of a person's attached records to the tree persons who attach them. It
+is the *same implementation*, gated by a **second
 function parameter**:
 
 ```ts
@@ -91,6 +92,12 @@ No input field reaches any of these writes, so the lane is still unforgeable fro
 caller's side. The "a second lane needs narrowing" condition under **Revisit
 when** fired here; the answer was a per-call section set inside the same tool,
 not a `PreToolUse` policy.
+
+**Amended 2026-10-30 (lead, issue #3516).** `personId` mode's attachment links
+may name tree persons other than the run person: a household persona whose ark
+another tree person's own refs attach, and a relationship party's persona chosen
+by its role in the record. The link shape and the lane are unchanged, and whom a
+link names is decided in code from the tree, so no input field reaches it.
 
 ## Alternatives considered
 

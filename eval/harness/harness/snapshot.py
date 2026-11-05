@@ -261,6 +261,15 @@ def hash_file(repo_relative_path: str, abs_path: Path) -> str:
     return hash_content(normalize(repo_relative_path, abs_path.read_bytes()))
 
 
+# Files outside the skill tree that reach every run and are what a tag-gated
+# validator grades. The harnesses add `no_project_route.SOURCES_NOTE` to every
+# message (issue #4011); fingerprinting it in every suite would stale every
+# committed log on a rewording, so it is tracked where it is graded.
+TAG_INPUTS = {
+    "names-collections-only-from-search": "packages/engine/plugin/hooks/no_project_route.py",
+}
+
+
 def build_snapshot(
     *,
     skill: str,
@@ -290,6 +299,7 @@ def build_snapshot(
       - `eval/fixtures/scenarios/<name>/**` for each scenario referenced
         by an included test
       - `eval/fixtures/mcp/<name>.json` for each MCP fixture referenced
+      - each `TAG_INPUTS` file whose tag an included test carries
 
     MCP tool source (`packages/engine/mcp-server/src/**`) is deliberately
     NOT embedded. The harness serves every tool call from a mock fixture
@@ -343,6 +353,10 @@ def build_snapshot(
         if fixture_path.is_file():
             rel = f"eval/fixtures/mcp/{fixture}.json"
             snapshot[rel] = normalize(rel, fixture_path.read_bytes())
+
+    for tag, rel in sorted(TAG_INPUTS.items()):
+        if tag in refs["tags"]:
+            snapshot[rel] = normalize(rel, (repo_root / rel).read_bytes())
 
     return hash_snapshot(snapshot)
 
@@ -487,14 +501,15 @@ def collect_refs(
     tests_dir: Path, test_ids: Iterable[str] | None
 ) -> dict[str, set[str]]:
     """What the included tests reference: scenarios, MCP fixtures, and the
-    agents they run live (`execution.run_agents`, #3568)."""
+    agents they run live (`execution.run_agents`, #3568), and their tags."""
     scenarios: set[str] = set()
     fixtures: set[str] = set()
     run_agents: set[str] = set()
+    tags: set[str] = set()
     ids_filter = set(test_ids) if test_ids is not None else None
 
     if not tests_dir.is_dir():
-        return {"scenarios": scenarios, "fixtures": fixtures, "run_agents": run_agents}
+        return {"scenarios": scenarios, "fixtures": fixtures, "run_agents": run_agents, "tags": tags}
 
     for path in tests_dir.rglob("*.json"):
         try:
@@ -507,6 +522,7 @@ def collect_refs(
         test_id = test_block.get("id", "")
         if ids_filter is not None and test_id not in ids_filter:
             continue
+        tags.update(t for t in test_block.get("tags") or [] if isinstance(t, str))
         scenario = (data.get("input") or {}).get("scenario")
         if scenario:
             scenarios.add(scenario)
@@ -517,4 +533,4 @@ def collect_refs(
             for name in execution.get("run_agents") or []:
                 if isinstance(name, str) and name:
                     run_agents.add(name)
-    return {"scenarios": scenarios, "fixtures": fixtures, "run_agents": run_agents}
+    return {"scenarios": scenarios, "fixtures": fixtures, "run_agents": run_agents, "tags": tags}

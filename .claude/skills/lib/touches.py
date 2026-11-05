@@ -53,6 +53,8 @@ SNAPSHOT = (
     re.compile(r"^eval/tests/unit/[a-z0-9-]+/"),
     re.compile(r"^packages/engine/plugin/agents/[a-z0-9-]+\.md$"),
     re.compile(r"^eval/fixtures/(scenarios|mcp)/"),
+    # `TAG_INPUTS` in snapshot.py: embedded in every suite whose tests carry its tag.
+    re.compile(r"^packages/engine/plugin/hooks/no_project_route\.py$"),
 )
 
 # The name of the eval slot a snapshot path belongs to. The slot is what a paid run

@@ -12,7 +12,10 @@ from __future__ import annotations
 
 import json
 
-from e2e.nudge_report import EXCERPT_CHARS, _tail, classify, counter_totals, format_report, scan
+from e2e import nudge_report
+from e2e.nudge_report import (
+    EXCERPT_CHARS, _tail, classify, counter_totals, format_report, runs_carrying_the_counter, scan,
+)
 
 NUDGE = "continue-nudge 1/20: agent yielded before project.status=='completed'; instructing it to resume the loop."
 
@@ -251,3 +254,43 @@ def test_the_report_counts_every_class_the_predicate_can_return():
     assert set(HAND_BACK_CLASSES) == reachable, (
         f"listed but not reachable: {sorted(set(HAND_BACK_CLASSES) - reachable)}"
     )
+
+
+def test_a_run_with_no_counter_is_left_out_not_counted_as_clean(tmp_path, monkeypatch, capsys):
+    """Step mode phase 2: a run made with no Stop veto records no `continue_nudges`.
+    Read as 0 it would join the "never nudged" runs and put its tool calls in the
+    rate's denominator, so it is excluded, and the report says how many."""
+    nudged = _write_run(
+        tmp_path,
+        narration=[
+            {"kind": "assistant", "text": "Plan written."},
+            {"kind": "harness", "text": NUDGE, "tool_calls_before": 1},
+        ],
+        tool_calls=[{"tool": "mcp__genealogy__research_append"}],
+        continue_nudges=1,
+    )
+    clean = _write_run(tmp_path, continue_nudges=0, stem="run-2026-08-09_11-11-11")
+    step = _write_run(
+        tmp_path, tool_calls=[{"tool": "x"}] * 50, stem="run-2026-11-03_00-00-00",
+    )
+    assert runs_carrying_the_counter([nudged, clean, step]) == [nudged, clean]
+
+    monkeypatch.setattr(nudge_report, "all_result_jsons", lambda: [nudged, clean, step])
+    monkeypatch.setattr(nudge_report, "filter_since", lambda paths, _cutoff: paths)
+    monkeypatch.setattr(nudge_report, "describe_window", lambda *_a, **_k: "window")
+    assert nudge_report.main([]) == 0
+    out = capsys.readouterr().out
+    assert "1 of 3 run(s) record no usage.continue_nudges" in out
+    assert "across 1 of 2 run(s)" in out
+    assert "over 1 tool call(s)" in out
+
+
+def test_a_window_of_step_runs_alone_reports_nothing_measured(tmp_path, monkeypatch, capsys):
+    step = _write_run(tmp_path, tool_calls=[{"tool": "x"}])
+    monkeypatch.setattr(nudge_report, "all_result_jsons", lambda: [step])
+    monkeypatch.setattr(nudge_report, "filter_since", lambda paths, _cutoff: paths)
+    monkeypatch.setattr(nudge_report, "describe_window", lambda *_a, **_k: "window")
+    assert nudge_report.main([]) == 0
+    out = capsys.readouterr().out
+    assert "could be nudged" in out
+    assert "completed its loop" not in out

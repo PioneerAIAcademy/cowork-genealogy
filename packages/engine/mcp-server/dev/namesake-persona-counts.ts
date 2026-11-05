@@ -6,8 +6,13 @@ import { arkToBareId } from "../src/utils/ark.js";
 import { PERSONA_BEARING_PRODUCERS } from "../src/utils/results-staging.js";
 
 export interface PersonaStampCounts {
-  /** Records the rows list. */
+  /** Records the rows list that a stamp can reach: on a row citing a persona
+   *  search that staged a sidecar, or already stamped. */
   listed: number;
+  /** (e) Records listed on rows no persona search reaches: a page's image id, a
+   *  full-text hit's id, or a row citing no persona search with a sidecar. No
+   *  stamp can land on them, so they stay out of `listed`. */
+  unstampable: number;
   /** (c) Listed records stamped with a persona. */
   stamped: number;
   /** (d) Listed records left unstamped although their row cites a persona search
@@ -24,7 +29,7 @@ export interface PersonaStampCounts {
 const STRONG = new Set(["probable", "confident"]);
 
 export function personaStampCounts(research: any): PersonaStampCounts {
-  const counts: PersonaStampCounts = { listed: 0, stamped: 0, absent: 0, wouldRefuse: 0, spared: 0 };
+  const counts: PersonaStampCounts = { listed: 0, unstampable: 0, stamped: 0, absent: 0, wouldRefuse: 0, spared: 0 };
   const logById = new Map<string, any>(
     (Array.isArray(research?.log) ? research.log : []).filter((e: any) => e && typeof e.id === "string").map((e: any) => [e.id, e]),
   );
@@ -53,9 +58,13 @@ export function personaStampCounts(research: any): PersonaStampCounts {
       if (typeof rid !== "string") continue;
       const bare = arkToBareId(rid);
       listed.add(bare);
-      counts.listed += 1;
-      if (stampByBare.has(bare)) counts.stamped += 1;
-      else if (citesPersonaSidecar) counts.absent += 1;
+      if (stampByBare.has(bare)) {
+        counts.listed += 1;
+        counts.stamped += 1;
+      } else if (citesPersonaSidecar) {
+        counts.listed += 1;
+        counts.absent += 1;
+      } else counts.unstampable += 1;
     }
     for (const link of strongLinks) {
       if (link.person_id !== row.person_id) continue;

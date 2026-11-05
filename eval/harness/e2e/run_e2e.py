@@ -263,31 +263,13 @@ def main(argv: list[str] | None = None) -> int:
         help="Skip the judge step (writes result with verdict=skipped)",
     )
     parser.add_argument(
-        "--resume-on-stall",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help=(
-            "On a no-progress stall (see progress_stall_seconds), tear down the "
-            "hung query and resume the session — but only in a provably-safe "
-            "state (no in-flight tool call), else fail fast. ON by default "
-            "(the safe-state gate means the worst case is a clean fail-fast, "
-            "not a double-applied write); pass --no-resume-on-stall to disable."
-        ),
-    )
-    parser.add_argument(
         "--effort-level",
         choices=["low", "medium", "high", "xhigh", "max"],
-        default="high",
+        default=None,
         help=(
-            "Pin the run's reasoning effort via a project-level setting "
-            "(.claude/settings.json effortLevel). Session-wide. Default: high "
-            "(matches Cowork). setting_sources=['project'] already isolates from "
-            "the user's effortLevel, and CLAUDE_EFFORT is output-only. This is "
-            "not the only lever — ClaudeAgentOptions.effort also works, and both "
-            "reached subagents on CLI 2.1.215/2.1.220/2.1.294 (probe_effort_capture.py; "
-            "this harness runs the hosted 2.1.294). Vary it to test whether a "
-            "runaway-thinking subagent freeze clears (see "
-            "subagents[].runaway_thinking; if empty, read subagent_capture_status)."
+            "Override the main thread's reasoning effort (the session's --effort). "
+            "Default: packages/engine/plugin/main-thread.json's, which every platform "
+            "runs. Agents keep their own `effort:`, which outranks the session's."
         ),
     )
     parser.add_argument(
@@ -347,13 +329,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--step-mode",
         choices=("step", "job"),
-        default=None,
+        default="job",
         help=(
-            "Run under step mode (docs/plan/research-step-mode.md section F): one "
-            "persistent session, one step per turn, each boundary answered by the "
-            "host's own next_auto_reply. `job` opens as a \"Keep going\" run, which "
-            "is what a fixture that should reach a proof wants; `step` runs one step "
-            "and stops. Default off: the one long turn every committed run used. "
+            "Step mode (docs/plan/research-step-mode.md section F): one persistent "
+            "session, one step per turn, each boundary answered by the host's own "
+            "next_auto_reply. `job` (the default) opens as a \"Keep going\" run, "
+            "which is what a fixture that should reach a proof wants; `step` runs "
+            "one step and stops. A stall ends the run rather than resuming it. "
             "Recorded in the runlog's usage block as `step_mode`."
         ),
     )
@@ -395,8 +377,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     # Three shapes used to exit 0 having done nothing, and record
-    # `usage.wrap_up_after` as if the arm had run: no --step-mode, --step-mode
-    # step (where `next_auto_reply` never replies, so there is nothing to swap),
+    # `usage.wrap_up_after` as if the arm had run: no --step-mode (before `job`
+    # became the default), --step-mode step (where `next_auto_reply` never replies, so there is nothing to swap),
     # and a step name the gate never records -- a misspelling, or a GROUP key
     # like `search` rather than the member `search-records`. A bought run that
     # measures nothing is the failure worth refusing loudly.
@@ -498,7 +480,6 @@ def main(argv: list[str] | None = None) -> int:
         "mcp_server_entry": args.mcp_server_entry,
         "skills_dir": args.skills_dir,
         "skip_judge": args.skip_judge,
-        "resume_on_stall": args.resume_on_stall,
         "effort_level": args.effort_level,
         "max_output_tokens": args.max_output_tokens,
         "agent_model": args.agent_model,

@@ -1,6 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { spawn, type ChildProcess } from "node:child_process";
-import { dirname, resolve } from "node:path";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // The real build/http.js (`pretest` builds it) refusing to start on a store
@@ -37,6 +39,7 @@ function childEnv(storeEnv: Record<string, string>): NodeJS.ProcessEnv {
 function runHttp(
   storeEnv: Record<string, string>,
   until?: RegExp,
+  timeoutMs = START_TIMEOUT_MS,
 ): Promise<{ code: number | null; stderr: string }> {
   return new Promise((resolvePromise, reject) => {
     const child = spawn(process.execPath, [HTTP_JS, "--port", "0"], {
@@ -50,7 +53,7 @@ function runHttp(
       if (until?.test(stderr)) child.kill("SIGKILL");
     });
     // A process that listens instead of exiting is killed, and reads as code null.
-    const timer = setTimeout(() => child.kill("SIGKILL"), START_TIMEOUT_MS);
+    const timer = setTimeout(() => child.kill("SIGKILL"), timeoutMs);
     child.on("error", (e) => {
       clearTimeout(timer);
       reject(e);
@@ -156,6 +159,44 @@ describe("build/http.js store environment", () => {
     expect(r.stderr).toMatch(/invalid value: GENEALOGY_ORPHAN_GRACE_S .*at least 3600/);
   }, TEST_TIMEOUT_MS);
 
+  // The two process-wide limits (self-hosted beta E4). These cases are what
+  // stops a PR shipping a fully unit-tested parser that src/http.ts never
+  // merges into its exit branch and never hands to either module -- every
+  // other test would still be green.
+  it("exits 2 naming a limit set to a value it may not take", async () => {
+    const zero = await runHttp({ ...BASE, GENEALOGY_FS_CALLS_PER_MINUTE: "0" });
+    expect(zero.code, zero.stderr).toBe(2);
+    expect(zero.stderr).toMatch(/invalid value: GENEALOGY_FS_CALLS_PER_MINUTE/);
+
+    const words = await runHttp({ ...BASE, GENEALOGY_MAX_TRANSCRIPTIONS: "abc" });
+    expect(words.code, words.stderr).toBe(2);
+    expect(words.stderr).toMatch(/invalid value: GENEALOGY_MAX_TRANSCRIPTIONS/);
+
+    const yes = await runHttp({ ...BASE, GENEALOGY_SHARED_COLLECTIONS_CACHE: "yes" });
+    expect(yes.code, yes.stderr).toBe(2);
+    expect(yes.stderr).toMatch(/invalid value: GENEALOGY_SHARED_COLLECTIONS_CACHE/);
+  }, TEST_TIMEOUT_MS * 3);
+
+  it("names each limit on start-up, and says when each is off", async () => {
+    const off = await runHttp(BASE, /listening on .*\n/);
+    expect(off.stderr).toMatch(/fs budget: off\n/);
+    expect(off.stderr).toMatch(/transcription cap: off\n/);
+    expect(off.stderr).toMatch(/collections cache: per token\n/);
+
+    const on = await runHttp(
+      {
+        ...BASE,
+        GENEALOGY_FS_CALLS_PER_MINUTE: "120",
+        GENEALOGY_MAX_TRANSCRIPTIONS: "4",
+        GENEALOGY_SHARED_COLLECTIONS_CACHE: "true",
+      },
+      /listening on .*\n/,
+    );
+    expect(on.stderr).toMatch(/fs budget: 120 calls\/min\n/);
+    expect(on.stderr).toMatch(/transcription cap: 4 at a time\n/);
+    expect(on.stderr).toMatch(/collections cache: shared\n/);
+  }, (START_TIMEOUT_MS + TEST_TIMEOUT_MS) * 2);
+
   it("names the orphan sweep's schedule on start-up, and says when it is off", async () => {
     const on = await runHttp(BASE, /listening on .*\n/);
     expect(on.stderr).toMatch(/orphan sweep: every 3600 s, grace 86400 s\n/);
@@ -191,5 +232,108 @@ describe("build/http.js debug holds", () => {
       /debug holds set \(never in production\): GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS="45000"\n(.|\n)*listening on/,
     );
     expect(r.stderr).not.toMatch(/GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS/);
+  }, TEST_TIMEOUT_MS);
+});
+
+// U29: GENEALOGY_PG_SAS_OBJECT. The fake @fs/sas-client (tests/fixtures/fake-sas)
+// is reached through NODE_PATH, as the bundle's node_modules would be.
+describe("build/http.js with GENEALOGY_PG_SAS_OBJECT", () => {
+  const SAS = { GENEALOGY_PG_SAS_OBJECT: "pgobj", GENEALOGY_S3_BUCKET: "projects" };
+  const PASSWORD = "pw-sentinel-29";
+  const OBJECT = JSON.stringify({
+    fchUser: "app",
+    fchPassword: PASSWORD,
+    fchDbConnectUrl: "jdbc:postgresql://127.0.0.1:1/proto?sslmode=require",
+  });
+  let nodePath = "";
+  let tmp = "";
+
+  beforeAll(() => {
+    tmp = mkdtempSync(join(tmpdir(), "fake-sas-"));
+    const pkg = join(tmp, "node_modules", "@fs", "sas-client");
+    mkdirSync(pkg, { recursive: true });
+    const fixture = resolve(dirname(fileURLToPath(import.meta.url)), "../fixtures/fake-sas/sas-client.cjs");
+    writeFileSync(join(pkg, "package.json"), JSON.stringify({ name: "@fs/sas-client", main: "index.js" }), "utf8");
+    writeFileSync(join(pkg, "index.js"), `module.exports = require(${JSON.stringify(fixture)});\n`, "utf8");
+    nodePath = join(tmp, "node_modules");
+  });
+
+  afterAll(() => {
+    if (tmp) rmSync(tmp, { recursive: true, force: true });
+  });
+
+  it("exits 2 when @fs/sas-client is not installed", async () => {
+    const r = await runHttp({ ...SAS, NODE_PATH: "" });
+    expect(r.code, r.stderr).toBe(2);
+    expect(r.stderr).toContain(
+      "http: GENEALOGY_PG_SAS_OBJECT is set but @fs/sas-client is not installed " +
+        "(FamilySearch's build installs it; use GENEALOGY_PG_DSN elsewhere)\n",
+    );
+  }, TEST_TIMEOUT_MS);
+
+  it("exits 2 when GENEALOGY_PG_DSN is set as well", async () => {
+    const r = await runHttp({ ...BASE, ...SAS, NODE_PATH: nodePath, FAKE_SAS_OBJECT_JSON: OBJECT });
+    expect(r.code, r.stderr).toBe(2);
+    expect(r.stderr).toMatch(/invalid value: GENEALOGY_PG_SAS_OBJECT .*exclusive/);
+  }, TEST_TIMEOUT_MS);
+
+  it("exits 2 naming the field when the object is unusable, never its values", async () => {
+    const r = await runHttp({
+      ...SAS,
+      NODE_PATH: nodePath,
+      FAKE_SAS_OBJECT_JSON: JSON.stringify({ fchUser: "app", fchDbConnectUrl: "jdbc:postgresql://h/d" }),
+    });
+    expect(r.code, r.stderr).toBe(2);
+    expect(r.stderr).toContain("http: SAS object pgobj unusable: SAS object has no fchPassword\n");
+  }, TEST_TIMEOUT_MS);
+
+  it("exits 1 with the error label when SAS stays unreachable through three tries", async () => {
+    const r = await runHttp(
+      { ...SAS, NODE_PATH: nodePath, FAKE_SAS_ERROR_CODE: "ECONNREFUSED" },
+      undefined,
+      START_TIMEOUT_MS + 15_000,
+    );
+    expect(r.code, r.stderr).toBe(1);
+    expect(r.stderr).toContain("http: SAS object pgobj unavailable (ECONNREFUSED)\n");
+    expect(r.stderr).not.toContain("fake SAS refused");
+  }, TEST_TIMEOUT_MS + 15_000);
+
+  it("names the SAS object, listens, and answers 503 on /healthz without the password", async () => {
+    const { child, port } = await startHttp({
+      ...SAS,
+      NODE_PATH: nodePath,
+      FAKE_SAS_OBJECT_JSON: OBJECT,
+      GENEALOGY_S3_ENDPOINT: "http://127.0.0.1:1",
+      GENEALOGY_ORPHAN_SWEEP_INTERVAL_S: "0",
+    });
+    let stderr = "";
+    child.stderr!.on("data", (chunk: string) => {
+      stderr += chunk;
+    });
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/healthz`);
+      const text = await res.text();
+      expect(res.status, text).toBe(503);
+      expect(JSON.parse(text)).toMatchObject({ ok: false, checks: { postgres: { ok: false } } });
+      expect(text).not.toContain(PASSWORD);
+      expect((await fetch(`http://127.0.0.1:${port}/livez`)).status).toBe(200);
+      expect(stderr).not.toContain(PASSWORD);
+    } finally {
+      child.kill("SIGKILL");
+    }
+  }, TEST_TIMEOUT_MS);
+
+  it("prints the SAS mode line before listening", async () => {
+    const r = await runHttp(
+      { ...SAS, NODE_PATH: nodePath, FAKE_SAS_OBJECT_JSON: OBJECT, GENEALOGY_ORPHAN_SWEEP_INTERVAL_S: "0" },
+      /listening on .*\n/,
+    );
+    expect(r.stderr).toMatch(/pg credentials: SAS object pgobj\n(.|\n)*listening on/);
+    expect(r.stderr).not.toContain(PASSWORD);
+  }, TEST_TIMEOUT_MS);
+
+  it("names the environment DSN when only GENEALOGY_PG_DSN is set", async () => {
+    const r = await runHttp(BASE, /listening on .*\n/);
+    expect(r.stderr).toMatch(/pg credentials: environment DSN\n/);
   }, TEST_TIMEOUT_MS);
 });

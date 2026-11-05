@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.) Born 1867 in Puerto Ri
 
 ## Research question
 
-> Who were the parents of Domingo Olivera y Valadyo (b. 1867), and is the Domingo Olivera named as a father on the 1925 Vega Baja birth registration of Carmen Ester Olivera Martínez this man or his son?
+> Who were the parents of Domingo Olivera y Valadyo (b. 1867), who the 1925 Vega Baja birth registration of Carmen Ester Olivera Martínez may name as father — or may instead name his son?
 
 ## What was removed from the starting tree
 
@@ -27,6 +27,19 @@ hard — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4143).** The old question
+coordinated two asks: "Who were the parents of Domingo Olivera y Valadyo
+(b. 1867), and is the Domingo Olivera named as a father on the 1925 Vega Baja
+birth registration of Carmen Ester Olivera Martínez this man or his son?"
+Reworded it to one question — the parents — with the registration's
+generation ambiguity folded in as identifying detail about *why* the hint is
+tricky, rather than a second coordinate ask. This matches how the fixture's
+own findings already treat it: `f2` (the "is it him or his son" half) was
+already `required: false` — "bonus because recall is graded from the tree
+only... outside a parents question" — so the rewording brings the question's
+scope in line with what was already gated. No finding wording changed, and
+this fixture has no committed runs to re-grade.
 
 **Resolved: answerable, but differently. The hint is a generation shift (issue #2317).**
 
@@ -105,8 +118,9 @@ Domingo Olivera with spouse Francisca González, and for Domingo Olivera born
 **The findings.**
 
 - **f1 (required):** the subject's parents.
-- **f2 (bonus, `required: false`):** the second half of the research question,
-  that the 1925 father is the son. It is a bonus because recall is graded from
+- **f2 (bonus, `required: false`):** that the 1925 father is the son, not the
+  subject — now carried in the question only as identifying context about the
+  hint, not asked for directly. It is a bonus because recall is graded from
   the tree only. The tree can show it only if the agent adds the granddaughter
   Carmen under GN52-SH9, which is outside a parents question. A run that
   correctly concludes "it's the son" in `research.json` alone would otherwise

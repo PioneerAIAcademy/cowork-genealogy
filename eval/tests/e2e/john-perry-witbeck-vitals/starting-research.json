@@ -1,7 +1,7 @@
 {
   "project": {
     "id": "rp_john_perry_witbeck_vitals",
-    "objective": "What are the birth date, death date, and burial date of John Perry Witbeck, and what evidence confirms each event in Schenectady County, New York?",
+    "objective": "What is the birth date of John Perry Witbeck of Schenectady County, New York, and what evidence confirms it?",
     "subject_person_ids": [
       "MGRB-VP2"
     ],

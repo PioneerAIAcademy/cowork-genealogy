@@ -24,6 +24,10 @@
 // never a variable); a missing variable, a half-set S3 key pair or an invalid
 // GENEALOGY_S3_FORCE_PATH_STYLE (or orphan sweep variable) is one stderr line
 // and exit 2 before listen.
+// GENEALOGY_PG_SAS_OBJECT (U29) reads the Postgres credentials from that SAS
+// fchDatabase object instead of GENEALOGY_PG_DSN (both set is exit 2). It is
+// resolved before listen: @fs/sas-client absent or an unusable object is exit 2,
+// SAS unreachable after 3 tries is exit 1. A 28P01 re-reads it (pg-credentials.ts).
 // With neither S3 key set the AWS SDK default chain supplies credentials
 // (environment, ~/.aws shared config/SSO, web identity, then instance
 // metadata); one stderr line names the mode, never a key. A set debug hold
@@ -32,6 +36,17 @@
 // before listen: `GET /healthz` probes Postgres (schema included) and S3 per
 // request and answers 503 while either is unreachable, never exiting; `GET /livez`
 // probes neither and answers 200.
+//
+// Two process-wide limits are read here too (store/limits-env.ts, self-hosted
+// beta E4), each OFF unless set, so an unset environment behaves as it always
+// has: GENEALOGY_FS_CALLS_PER_MINUTE, a sliding-60s FamilySearch request budget
+// for the whole process, and GENEALOGY_MAX_TRANSCRIPTIONS, a cap on concurrent
+// transcriptions (set it at 5 or above -- person_read transcribes five memories
+// at a time). Either set to anything but a whole number in range joins the same
+// invalid-value line and exit 2 above; otherwise one stderr line names each, or
+// says "off". GENEALOGY_SHARED_COLLECTIONS_CACHE=true makes collections_search's
+// catalog cache one for the process rather than one slot per token; unset or
+// false keeps it per token, and anything but true/false is exit 2 the same way.
 //
 // The process also runs the S3 orphan sweep (store/s3-orphan-sweep.ts, U19):
 // GENEALOGY_ORPHAN_SWEEP_INTERVAL_S (3600; 0 = off; at most 2147483, setTimeout's
@@ -42,8 +57,13 @@ import { parseArgs } from "node:util";
 import { LOCAL } from "./auth/principal.js";
 import { loadConfig } from "./auth/config.js";
 import { startHttpServer, MCP_PATH } from "./http-server.js";
-import { authorizeAttempt, createPgS3Backend, PgS3ProjectStore } from "./store/pg-s3-project-store.js";
+import { authorizeAttempt, createPgS3Backend, PgS3ProjectStore, readyLabel } from "./store/pg-s3-project-store.js";
+import { readLimitsEnv } from "./store/limits-env.js";
+import { configureFsBudget } from "./utils/fs-budget.js";
+import { configureTranscriptionCap } from "./utils/ocr.js";
+import { collectionsCacheMode, configureCollectionsCache } from "./tools/collections-search.js";
 import { readPgS3Env } from "./store/pg-s3-env.js";
+import { loadSasClient, SasClientMissing, SasObjectInvalid, SasPgCredentials } from "./store/pg-credentials.js";
 import { startOrphanSweep, type OrphanSweepTimer } from "./store/s3-orphan-sweep.js";
 import { setProjectStore, unboundProjectStore } from "./store/project-store.js";
 import { configFromEnv } from "./hosted-config-env.js";
@@ -64,15 +84,22 @@ if (!Number.isInteger(port) || port < 0 || port > 65535) {
 }
 
 const storeEnv = readPgS3Env(process.env);
+const limitsEnv = readLimitsEnv(process.env);
 if (storeEnv.missing.length > 0) {
   process.stderr.write(`http: required environment not set: ${storeEnv.missing.join(", ")}\n`);
   process.exit(2);
 }
-if (storeEnv.invalid.length > 0) {
+// One branch for both parsers: an invalid value from either exits 2 before
+// `listen`, so a mistyped limit cannot start a server that silently has none.
+const invalidEnv = [...storeEnv.invalid, ...limitsEnv.invalid];
+if (invalidEnv.length > 0) {
   process.stderr.write(
-    `http: environment set to an invalid value: ${storeEnv.invalid.join(", ")} ` +
+    `http: environment set to an invalid value: ${invalidEnv.join(", ")} ` +
       "(GENEALOGY_S3_FORCE_PATH_STYLE takes true or false; the GENEALOGY_ORPHAN_* variables whole seconds, " +
-      "the grace at least 3600, the interval at most 2147483)\n",
+      "the grace at least 3600, the interval at most 2147483; " +
+      "GENEALOGY_PG_SAS_OBJECT and GENEALOGY_PG_DSN are exclusive; " +
+      "GENEALOGY_FS_CALLS_PER_MINUTE and GENEALOGY_MAX_TRANSCRIPTIONS whole numbers above 0; " +
+      "GENEALOGY_SHARED_COLLECTIONS_CACHE true or false)\n",
   );
   process.exit(2);
 }
@@ -90,6 +117,31 @@ try {
   process.stderr.write(`http: environment set to an invalid value: ${e instanceof Error ? e.message : String(e)}\n`);
   process.exit(2);
 }
+const { pgSasObject } = storeEnv;
+if (pgSasObject) {
+  let sas;
+  try {
+    sas = loadSasClient();
+  } catch (e) {
+    if (!(e instanceof SasClientMissing)) throw e;
+    process.stderr.write(
+      "http: GENEALOGY_PG_SAS_OBJECT is set but @fs/sas-client is not installed " +
+        "(FamilySearch's build installs it; use GENEALOGY_PG_DSN elsewhere)\n",
+    );
+    process.exit(2);
+  }
+  try {
+    storeEnv.backendOptions.pgCredentials = await SasPgCredentials.resolveAtStart(sas, pgSasObject);
+  } catch (e) {
+    if (e instanceof SasObjectInvalid) {
+      process.stderr.write(`http: SAS object ${pgSasObject} unusable: ${e.message}\n`);
+      process.exit(2);
+    }
+    process.stderr.write(`http: SAS object ${pgSasObject} unavailable (${readyLabel(e)})\n`);
+    process.exit(1);
+  }
+}
+process.stderr.write(`pg credentials: ${pgSasObject ? `SAS object ${pgSasObject}` : "environment DSN"}\n`);
 const s3Options = storeEnv.backendOptions.s3;
 process.stderr.write(
   `s3 credentials: ${s3Options.accessKeyId ? "static keys" : "SDK default chain"}; ` +
@@ -99,6 +151,23 @@ const { intervalS, graceS } = storeEnv.orphanSweep;
 process.stderr.write(
   intervalS > 0 ? `orphan sweep: every ${intervalS} s, grace ${graceS} s\n` : "orphan sweep: off\n",
 );
+// `invalid` was non-empty above and exited 2, so neither value is `null` here.
+// Narrowed explicitly rather than cast: this is the point the parser's three
+// states collapse to two, and it should be visible.
+const fsPerMinute = limitsEnv.fsCallsPerMinute ?? undefined;
+const maxTranscriptions = limitsEnv.maxTranscriptions ?? undefined;
+configureFsBudget({ perMinute: fsPerMinute });
+process.stderr.write(
+  fsPerMinute !== undefined ? `fs budget: ${fsPerMinute} calls/min\n` : "fs budget: off\n",
+);
+configureTranscriptionCap({ max: maxTranscriptions });
+process.stderr.write(
+  maxTranscriptions !== undefined
+    ? `transcription cap: ${maxTranscriptions} at a time\n`
+    : "transcription cap: off\n",
+);
+configureCollectionsCache({ shared: limitsEnv.sharedCollectionsCache === true });
+process.stderr.write(`collections cache: ${collectionsCacheMode()}\n`);
 const holdLine = debugHoldStartupLine(process.env);
 if (holdLine) process.stderr.write(holdLine);
 

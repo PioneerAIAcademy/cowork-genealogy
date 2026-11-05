@@ -1553,6 +1553,20 @@ def create_mock_server(
             ):
                 response = _stage_person_read(_workspace, args, response)
 
+            # Production's fulltext_search adds `facets` only when the call sent
+            # `includeFacets` (`if (input.includeFacets && data.facets)`,
+            # fulltext-search.ts), and stages after, so neither the reply nor the
+            # sidecar carries them otherwise. A fixture's canned `facets` served to
+            # a call that never asked handed the agent partition ids it could not
+            # have seen, and it scoped to one (#3973).
+            if (
+                _name == "fulltext_search"
+                and isinstance(response, dict)
+                and "facets" in response
+                and not args.get("includeFacets")
+            ):
+                response = {k: v for k, v in response.items() if k != "facets"}
+
             # Production's record_search and fulltext_search return (and stage)
             # `query: echoQuery(input)` — every argument the call sent — while a
             # fixture carries whatever query it was recorded with, and a
@@ -1926,8 +1940,31 @@ def _make_live_handler(
     compiled = _COMPILED_TOOLS.get(tool_name)
     if compiled is not None:
         js_file, export_name = compiled
-        return _make_compiled_tool_handler(tool_name, js_file, export_name, workspace, call_log)
+        return _make_compiled_tool_handler(
+            tool_name, js_file, export_name, workspace, call_log, hosted=_hosted_store(manifest or {}),
+        )
     raise ValueError(f"No live handler defined for {tool_name!r}")
+
+
+def _hosted_store(manifest: dict[str, Any]) -> dict[str, str | None] | None:
+    """The paths a hosted store answers for, each with its `projectUrl`, when the test
+    serves a hosted `project_list` answer; None for every other test.
+
+    A hosted store has no folder: it is bound to the projects it lists, refuses any
+    other `projectPath` (`PgS3ProjectStore`, "is not this store's project"), and its
+    `project_context` carries the bound project's link (`utils/project-links.ts`). The
+    file store this harness runs does neither, so a hosted test emulates both.
+    """
+    paths: dict[str, str | None] = {}
+    for _args, listing, _src in (manifest.get("project_list") or {}).get("predicated") or []:
+        if not isinstance(listing, dict) or listing.get("mode") != "hosted":
+            continue
+        for project in listing.get("projects") or []:
+            if isinstance(project, dict) and isinstance(project.get("projectPath"), str):
+                paths[project["projectPath"]] = project.get("projectUrl")
+        if isinstance(listing.get("newProjectPath"), str):
+            paths.setdefault(listing["newProjectPath"], None)
+    return paths or None
 
 
 def _place_table(place_predicated: list, args: dict[str, Any]) -> dict[str, str | None]:
@@ -2372,6 +2409,7 @@ def _make_compiled_tool_handler(
     workspace: Path | None,
     call_log: list[dict[str, Any]],
     place_table=None,
+    hosted: dict[str, str | None] | None = None,
 ):
     """Build the live handler for a compiled single-export tool — the tree
     writers (tree_edit / tree_correct) and the read-only project_context all
@@ -2389,7 +2427,13 @@ def _make_compiled_tool_handler(
     tool_js = _MCP_BUILD / "tools" / js_filename
 
     async def handler(args, _ws=workspace, _tjs=tool_js):
-        if _ws is None or not _tjs.exists():
+        sent_path = args.get("projectPath") if isinstance(args, dict) else None
+        if hosted is not None and isinstance(sent_path, str) and sent_path not in hosted:
+            response = {
+                "ok": False,
+                "errors": [f"projectPath '{sent_path}' is not this store's project"],
+            }
+        elif _ws is None or not _tjs.exists():
             reason = "workspace not provided" if _ws is None else f"build not found: {_tjs}"
             response = {
                 "ok": False,
@@ -2462,6 +2506,9 @@ def _make_compiled_tool_handler(
                     "ok": False,
                     "errors": [f"{tool_name}: {e}"],
                 }
+            link = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
+            if tool_name == "project_context" and link and isinstance(response, dict) and response.get("objective"):
+                response = {**response, "projectUrl": link}
 
         entry: dict[str, Any] = {
             "tool": f"mcp__genealogy__{tool_name}",
@@ -2483,8 +2530,10 @@ _RECORD_TOKEN = re.compile(r"1:1:([A-Z0-9]+(?:-[A-Z0-9]+)+)", re.IGNORECASE)
 def _attached_record_ids(workspace: Path, person_id: str) -> list[str]:
     """The bare `1:1:` ids attached to a tree person (by tree id, or by a
     FamilySearch id their `ark` names), from the person's own, name and fact
-    refs: the set `extraction_append({ personId })` reads. Mirrors
-    `findAnchor` + `collectSourceRefs` closely enough to stage fixtures."""
+    refs and the `sources` of every relationship the person is an endpoint of:
+    the set `extraction_append({ personId })` reads. Mirrors `findAnchor`,
+    `collectSourceRefs` and `personIdMode`'s relationship read closely enough
+    to stage fixtures."""
     try:
         tree = json.loads((workspace / "tree.gedcomx.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -2497,8 +2546,14 @@ def _attached_record_ids(workspace: Path, person_id: str) -> list[str]:
     if person is None:
         return []
     url = {s.get("id"): s.get("url") or "" for s in tree.get("sources") or [] if isinstance(s, dict)}
+    own_id = person.get("id")
+    relationships = [
+        r for r in tree.get("relationships") or []
+        if isinstance(r, dict) and isinstance(own_id, str)
+        and own_id in (r.get("person1"), r.get("person2"), r.get("parent"), r.get("child"))
+    ]
     out: list[str] = []
-    for holder in [person, *(person.get("names") or []), *(person.get("facts") or [])]:
+    for holder in [person, *(person.get("names") or []), *(person.get("facts") or []), *relationships]:
         for ref in (holder.get("sources") or []) if isinstance(holder, dict) else []:
             sid = (ref.get("ref") or "").lstrip("#") if isinstance(ref, dict) else ""
             m = _RECORD_TOKEN.search(url.get(sid, ""))

@@ -84,6 +84,8 @@ const NOT_RENDERED: Record<string, string> = {
     "Machine-resolved sidecar of `place`, which IS rendered. Showing both would double every row.",
   "assertion.standard_place":
     "Same sidecar relationship as timeline_event.standard_place — `place` is rendered.",
+  "assertion.record_document_id":
+    "Tool-stamped 1:2 record ARK that keeps two documents of one source apart for the namesake cap; the researcher reads the source and record, and the raw-data view still shows it.",
   "assertion.extracted_for_question_ids":
     "Provenance FK used by projections and the exhaustiveness check; the assertion is already shown under its question.",
   "search_stop.justification":
