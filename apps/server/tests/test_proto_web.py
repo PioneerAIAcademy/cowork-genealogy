@@ -107,6 +107,8 @@ class FakeStore:
         # U23: turns a worker has received (a put-back must leave them running), and put-backs.
         self.received: set[str] = set()
         self.put_back: list[str] = []
+        # #3988: users.openrouter_key_enc, as the route passed it (ciphertext).
+        self.openrouter_keys: dict[str, str] = {}
 
     def seed_session(
         self, session_id: str = "sess_1", project_id: str = "proj_1", owner: str | None = USER_A.id
@@ -192,6 +194,10 @@ class FakeStore:
         self, project_id: str, names: tuple[str, ...] | None = None
     ) -> dict[str, tuple[int, Any]]:
         return {name: doc for name, doc in self.docs.get(project_id, {}).items() if names is None or name in names}
+
+    async def blob_index(self, project_id: str) -> list[tuple[str, str, int]]:
+        """(key, s3_key, bytes) rows, as PgStore reads `blobs` (#3987's download)."""
+        return list(getattr(self, "blob_rows", {}).get(project_id, []))
 
     async def admit_message(self, session: SessionRow, text: str) -> tuple[Turn, bool, dict | None]:
         """PgStore.admit_message's sequence over the fake's own steps (U23 D7: an older held
@@ -301,6 +307,15 @@ class FakeStore:
             "granted_at": datetime.now(tz=timezone.utc),
             "writes": old.get("writes", 0) + 1,
         }
+
+    async def openrouter_key_enc(self, user_id: str) -> str | None:
+        return self.openrouter_keys.get(user_id)
+
+    async def set_openrouter_key(self, user_id: str, key_enc: str) -> None:
+        self.openrouter_keys[user_id] = key_enc
+
+    async def clear_openrouter_key(self, user_id: str) -> None:
+        self.openrouter_keys.pop(user_id, None)
 
 
 class FakeQueue:
@@ -482,7 +497,7 @@ async def test_state_reads_documents_and_the_unserved_routes_say_so():
         # design rests on, so a 501 here is the feature missing, not a gap in the tier.
         assert (await c.post(f"/api/sessions/{row.session_id}/interrupt")).status_code == 202
         config = (await c.get("/auth/config")).json()
-        assert config == {"familysearch": False, "devLogin": True}
+        assert config == {"familysearch": False, "devLogin": True, "openrouter": False}
         assert (await c.get("/auth/me")).json() == {"id": USER_A.id, "email": USER_A.email}
 
 
@@ -1430,7 +1445,8 @@ async def test_create_session_on_a_seeded_project_and_refuse_a_bad_project_id():
 # ── U2: patron sign-in and owner scoping ────────────────────────────────────────
 
 AUTH_ENV = ("PUBLIC_URL", "WEB_ORIGIN", "SESSION_SECRET", "FS_TOKEN_ENC_KEY", "ALLOWED_EMAILS",
-            "FAMILYSEARCH_WEB_ENABLED", "FAMILYSEARCH_CONFIG", "DEV_LOGIN", "GENEALOGY_CHAT", "GENEALOGY_MAX_USERS")
+            "FAMILYSEARCH_WEB_ENABLED", "FAMILYSEARCH_CONFIG", "DEV_LOGIN", "GENEALOGY_CHAT", "GENEALOGY_MAX_USERS",
+            "UPLOADS_ENABLED", "OPENROUTER_LINKING_ENABLED")
 
 
 @pytest.fixture(autouse=True)
@@ -1469,8 +1485,9 @@ def _project_path(path: str, project_id: str) -> str:
 
 
 def test_the_route_sweep_sees_every_per_project_route():
-    # 3 routes: state, sidecar, image. A new one must be decided on, not missed.
-    assert len(_per_project_routes()) == 3, _per_project_routes()
+    # 5 routes: state, sidecar, image, and #3987's files (upload) and download. A new one
+    # must be decided on, not missed.
+    assert len(_per_project_routes()) == 5, _per_project_routes()
 
 
 @pytest.mark.parametrize(("method", "path"), _per_project_routes())
@@ -2673,6 +2690,9 @@ async def test_a_trailing_slash_redirect_stays_under_the_prefix_and_relative(mon
     ("http://h.test:8085/x", "h.test", PREFIX, "http://h.test:8085/x"),
     ("/already/relative", "h.test", PREFIX, "/already/relative"),
     ("http://h.test/x", None, PREFIX, "http://h.test/x"),
+    # #3988: the callback's SPA route survives.
+    ("http://h.test/#/openrouter", "h.test", "", "/#/openrouter"),
+    ("http://h.test/?a=1#/s/x", "h.test", PREFIX, f"{PREFIX}/?a=1#/s/x"),
 ])
 def test_self_redirects_become_root_relative_under_the_prefix_and_others_are_untouched(location, host, base, want):
     assert app._relative_self_location(location, host, base) == want
@@ -2687,3 +2707,390 @@ def test_redact_scrubs_a_password_read_from_sas():
     creds.dsn()
     out = app.redact("server said p@ss w/rd-31 and p%40ss%20w%2Frd-31 for host=db")
     assert "p@ss w/rd-31" not in out and "p%40ss%20w%2Frd-31" not in out and "host=db" in out
+
+
+# ── #3987: project uploads and the project download ──────────────────────────────
+
+import contextlib  # noqa: E402
+import io  # noqa: E402
+import os  # noqa: E402
+import tracemalloc  # noqa: E402
+import zipfile  # noqa: E402
+
+ONE_PAGE_PDF = b"%PDF-1.4\n1 0 obj<</Type /Pages /Kids[2 0 R]>>endobj\n2 0 obj<</Type /Page>>endobj\n%%EOF"
+TWO_PAGE_PDF = (b"%PDF-1.4\n1 0 obj<</Type /Pages /Kids[2 0 R 3 0 R]>>endobj\n"
+                b"2 0 obj<</Type /Page>>endobj\n3 0 obj<</Type /Page>>endobj\n%%EOF")
+JPEG = b"\xff\xd8\xff\xe0" + b"\x00" * 64
+
+
+class MemBlobs:
+    """The `S3Blobs` facade (get/put only). `get` hands back the stored object itself, so a
+    memory measurement sees the route's copies and none of the fake's."""
+
+    def __init__(self) -> None:
+        self.objects: dict[str, bytes] = {}
+        self.types: dict[str, str] = {}
+        self.fail: set[str] = set()
+
+    def put(self, key: str, data: bytes, content_type: str) -> None:
+        self.objects[key] = data
+        self.types[key] = content_type
+
+    def get(self, key: str) -> bytes:
+        if key in self.fail:
+            raise RuntimeError("NoSuchKey")
+        return self.objects[key]
+
+
+class UploadDb:
+    """`_pg_connect_sync`'s stand-in: one `blobs` table, changed only on `commit()`.
+    With `hold` set up, every statement parks on it so a test can fill the upload slots."""
+
+    def __init__(self) -> None:
+        self.rows: dict[tuple[str, str], str] = {}
+        self.hold: threading.Event | None = None
+        self.entered = 0
+
+    def connect(self):
+        db = self
+
+        class Conn:
+            def __init__(self) -> None:
+                self.pending = dict(db.rows)
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *exc):
+                return False
+
+            def execute(self, sql: str, params: tuple):
+                if db.hold is not None:
+                    db.entered += 1
+                    db.hold.wait(10)
+                if sql.startswith("INSERT INTO blobs"):
+                    self.pending[(params[0], params[1])] = params[2]
+                    return type("C", (), {"rowcount": 1})()
+                if sql.startswith("DELETE FROM blobs"):
+                    gone = self.pending.pop((params[0], params[1]), None)
+                    return type("C", (), {"rowcount": int(gone is not None)})()
+                raise AssertionError(f"unexpected SQL: {sql[:60]}")
+
+            def commit(self) -> None:
+                db.rows = dict(self.pending)
+
+        return Conn()
+
+    def body(self, blobs: MemBlobs, project_id: str, key: str) -> bytes | None:
+        s3_key = self.rows.get((project_id, key))
+        return None if s3_key is None else blobs.objects[s3_key]
+
+
+@pytest.fixture
+def uploads_on(monkeypatch):
+    """UPLOADS_ENABLED=true, a store where USER_A owns proj_a, and the write path faked."""
+    monkeypatch.setenv("UPLOADS_ENABLED", "true")
+    db = UploadDb()
+    monkeypatch.setattr(app, "_pg_connect_sync", lambda request, **kw: db.connect())
+    store = FakeStore()
+    store.owners["proj_a"] = USER_A.id
+    return store, db, MemBlobs()
+
+
+async def _upload(c, name: str, data: bytes, text: str | None = None, project: str = "proj_a",
+                  client_type: str = "application/octet-stream"):
+    return await c.post(f"/api/projects/{project}/files", files={"file": (name, data, client_type)},
+                        data={"text": text} if text is not None else None)
+
+
+async def test_an_upload_stores_the_original_and_its_text_layer(uploads_on):
+    store, db, blobs = uploads_on
+    async with make_client(store, FakeQueue(), blobs=blobs) as c:
+        r = await _upload(c, "deed.pdf", TWO_PAGE_PDF, text="Know all men by these presents",
+                          client_type="image/jpeg")
+    assert r.status_code == 200, r.text
+    assert r.json() == {"path": "uploads/deed.pdf", "sizeBytes": len(TWO_PAGE_PDF),
+                        "textPath": "uploads/deed.pdf.txt", "contentType": "application/pdf"}
+    assert db.body(blobs, "proj_a", "uploads/deed.pdf") == TWO_PAGE_PDF
+    assert db.body(blobs, "proj_a", "uploads/deed.pdf.txt") == b"Know all men by these presents"
+    # The sniffed type is stored, not the client's.
+    assert blobs.types[db.rows[("proj_a", "uploads/deed.pdf")]] == "application/pdf"
+
+
+async def test_reuploading_a_name_with_no_text_drops_the_old_text_layer(uploads_on):
+    store, db, blobs = uploads_on
+    async with make_client(store, FakeQueue(), blobs=blobs) as c:
+        assert (await _upload(c, "deed.pdf", ONE_PAGE_PDF, text="the first deed")).status_code == 200
+        r = await _upload(c, "deed.pdf", ONE_PAGE_PDF)
+    assert r.status_code == 200, r.text
+    assert r.json()["textPath"] is None
+    assert ("proj_a", "uploads/deed.pdf.txt") not in db.rows
+    assert ("proj_a", "uploads/deed.pdf") in db.rows
+
+
+@pytest.mark.parametrize(("data", "fmt"), [
+    (b"II*\x00" + b"\x00" * 32, "TIFF"),
+    (b"MM\x00*" + b"\x00" * 32, "TIFF"),
+    (b"\x00\x00\x00\x18ftypheic" + b"\x00" * 32, "HEIC"),
+    (b"\x00\x00\x00\x18ftypmif1" + b"\x00" * 32, "HEIC"),
+])
+async def test_tiff_and_heic_are_refused(uploads_on, data, fmt):
+    store, db, blobs = uploads_on
+    async with make_client(store, FakeQueue(), blobs=blobs) as c:
+        r = await _upload(c, "page.jpg", data, client_type="image/jpeg")
+    assert r.status_code == 415, r.text
+    assert fmt in r.json()["detail"]
+    assert db.rows == {}
+
+
+async def test_a_multi_page_pdf_needs_its_text_and_a_single_page_does_not(uploads_on):
+    store, db, blobs = uploads_on
+    async with make_client(store, FakeQueue(), blobs=blobs) as c:
+        refused = await _upload(c, "scan.pdf", TWO_PAGE_PDF)
+        blank_text = await _upload(c, "scan.pdf", TWO_PAGE_PDF, text="   ")
+        one_page = await _upload(c, "one.pdf", ONE_PAGE_PDF)
+        with_text = await _upload(c, "scan.pdf", TWO_PAGE_PDF, text="page one, page two")
+    assert refused.status_code == 422 and blank_text.status_code == 422, (refused.text, blank_text.text)
+    assert one_page.status_code == 200 and with_text.status_code == 200
+
+
+async def test_the_file_and_its_text_together_must_fit_in_25_mb(uploads_on):
+    store, db, blobs = uploads_on
+    async with make_client(store, FakeQueue(), blobs=blobs) as c:
+        r = await _upload(c, "big.jpg", JPEG + b"\x00" * (20 * 1024 * 1024), text="x" * (6 * 1024 * 1024))
+    assert r.status_code == 413, r.text[:200]
+    assert "together" in r.json()["detail"]
+    assert db.rows == {}
+
+
+async def test_a_foreign_project_is_404_before_the_body_is_read(uploads_on):
+    store, db, blobs = uploads_on
+    store.owners["proj_b"] = USER_B.id
+    for project, expect_pulled in (("proj_b", False), ("proj_missing", False), ("proj_a", True)):
+        pulled = []
+
+        async def body():
+            pulled.append(True)
+            yield b'--x\r\nContent-Disposition: form-data; name="file"; filename="a.jpg"\r\n\r\n'
+            yield JPEG + b"\r\n--x--\r\n"
+
+        async with make_client(store, FakeQueue(), blobs=blobs) as c:
+            r = await c.post(f"/api/projects/{project}/files", content=body(),
+                             headers={"content-type": "multipart/form-data; boundary=x"})
+        if expect_pulled:
+            assert r.status_code == 200, r.text
+        else:
+            assert r.status_code == 404 and r.json() == {"detail": "Project not found"}, r.text
+        assert bool(pulled) is expect_pulled, (project, pulled)
+
+
+async def test_an_upload_with_no_blob_store_is_503_before_the_body_is_read(uploads_on):
+    store, db, _blobs = uploads_on
+    pulled = []
+
+    async def body():
+        pulled.append(True)
+        yield b'--x\r\nContent-Disposition: form-data; name="file"; filename="a.jpg"\r\n\r\n'
+        yield JPEG + b"\r\n--x--\r\n"
+
+    async with make_client(store, FakeQueue(), blobs=None) as c:
+        r = await c.post("/api/projects/proj_a/files", content=body(),
+                         headers={"content-type": "multipart/form-data; boundary=x"})
+    assert r.status_code == 503 and not pulled and db.rows == {}, r.text
+
+
+@pytest.mark.parametrize("setting", [None, "false", "FALSE"])
+async def test_the_upload_route_is_404_unless_uploads_are_enabled(monkeypatch, setting, uploads_on):
+    store, db, blobs = uploads_on
+    if setting is None:
+        monkeypatch.delenv("UPLOADS_ENABLED")
+    else:
+        monkeypatch.setenv("UPLOADS_ENABLED", setting)
+    async with make_client(store, FakeQueue(), blobs=blobs) as c:
+        r = await _upload(c, "a.jpg", JPEG)
+        config = (await c.get("/auth/config")).json()
+    assert r.status_code == 404 and db.rows == {}, r.text
+    assert ("uploads" in config) is (setting is not None)
+    if setting is not None:
+        assert config["uploads"] is False
+
+
+async def test_auth_config_says_uploads_true_when_enabled(uploads_on):
+    store, _db, blobs = uploads_on
+    async with make_client(store, FakeQueue(), blobs=blobs) as c:
+        assert (await c.get("/auth/config")).json()["uploads"] is True
+
+
+@pytest.mark.parametrize("bad", ["yes", "1", "on", "tru"])
+def test_a_bad_uploads_setting_refuses_to_construct(monkeypatch, bad):
+    monkeypatch.setenv("UPLOADS_ENABLED", bad)
+    with pytest.raises(RuntimeError, match="UPLOADS_ENABLED"):
+        create_app(FakeStore(), FakeQueue())
+
+
+async def test_a_fourth_concurrent_upload_is_refused_with_retry_after(uploads_on):
+    store, db, blobs = uploads_on
+    db.hold = threading.Event()
+    async with make_client(store, FakeQueue(), blobs=blobs) as c:
+        parked = [asyncio.create_task(_upload(c, f"p{i}.jpg", JPEG)) for i in range(3)]
+        for _ in range(500):
+            if db.entered >= 3:
+                break
+            await asyncio.sleep(0.01)
+        assert db.entered >= 3, "three uploads never reached the write"
+        r = await _upload(c, "p3.jpg", JPEG)
+        db.hold.set()
+        done = await asyncio.gather(*parked)
+        after = await _upload(c, "p4.jpg", JPEG)
+    assert r.status_code == 429 and r.headers["retry-after"] == "5", r.text
+    assert [d.status_code for d in done] == [200, 200, 200]
+    assert after.status_code == 200
+
+
+# The download is driven over raw ASGI: httpx's ASGITransport buffers the whole body, so
+# neither memory nor "the slot is held while it streams" can be seen through it.
+
+def _download_scope(project_id: str, spec: str | None = None, user: str = USER_A.id) -> dict:
+    cookie = f"{auth.COOKIE_NAME}={auth.session_cookie_value(user)}".encode()
+    path = f"/api/projects/{project_id}/download"
+    return {"type": "http", "asgi": {"version": "3.0", **({"spec_version": spec} if spec else {})},
+            "http_version": "1.1", "method": "GET", "scheme": "http", "path": path,
+            "raw_path": path.encode(), "root_path": "", "query_string": b"",
+            "headers": [(b"host", b"t"), (b"cookie", cookie)], "client": ("127.0.0.1", 1),
+            "server": ("t", 80)}
+
+
+async def _download(application, project_id: str, *, spec: str | None = None, on_body=None,
+                    start_raises: bool = False, keep: bool = False) -> tuple[int | None, dict, int, bytes]:
+    """(status, headers, body bytes seen, the body when ``keep``). Chunks are counted and
+    dropped unless ``keep``; ``on_body`` is awaited on each one."""
+    asked = False
+
+    async def receive():
+        nonlocal asked
+        if not asked:
+            asked = True
+            return {"type": "http.request", "body": b"", "more_body": False}
+        await asyncio.Event().wait()
+
+    status, headers, total, kept = None, {}, 0, io.BytesIO()
+
+    async def send(message):
+        nonlocal status, total
+        if message["type"] == "http.response.start":
+            if start_raises:
+                raise OSError("client went away")
+            status = message["status"]
+            headers.update({k.decode().lower(): v.decode() for k, v in message["headers"]})
+        elif message["type"] == "http.response.body":
+            chunk = message.get("body", b"")
+            total += len(chunk)
+            if keep:
+                kept.write(chunk)
+            if on_body is not None:
+                await on_body(chunk)
+
+    await application(_download_scope(project_id, spec), receive, send)
+    return status, headers, total, kept.getvalue()
+
+
+def _project_with_blobs(n: int, size: int = 1024 * 1024) -> tuple[FakeStore, MemBlobs]:
+    store, blobs = FakeStore(), MemBlobs()
+    store.owners["proj_a"] = USER_A.id
+    store.docs["proj_a"] = {"research.json": (1, {"project": {"title": "t"}})}
+    store.blob_rows = {"proj_a": []}
+    for i in range(n):
+        key, s3_key = f"uploads/scan{i:03}.jpg", f"proj_a/uploads/scan{i:03}.jpg/u{i}"
+        blobs.objects[s3_key] = os.urandom(size)
+        store.blob_rows["proj_a"].append((key, s3_key, size))
+    return store, blobs
+
+
+@pytest.fixture
+def download_tmp(monkeypatch, tmp_path):
+    monkeypatch.setattr(app, "DOWNLOAD_TMP_DIR", str(tmp_path))
+    return tmp_path
+
+
+async def test_the_download_zips_what_the_project_walk_returns_unredacted(download_tmp):
+    store, blobs = FakeStore(), MemBlobs()
+    store.owners["proj_a"] = USER_A.id
+    living = {"persons": [{"id": "P1", "names": [{"given": "Ada", "surname": "Lovell"}],
+                           "facts": [{"type": "Birth", "date": "1990"}]}], "relationships": []}
+    store.docs["proj_a"] = {"research.json": (3, {"project": {"title": "t"}}), "tree.gedcomx.json": (2, living)}
+    blobs.objects.update({"s/deed": b"%PDF-1.4 deed", "s/txt": b"deed text", "s/stage": b"x",
+                          "s/bak": b"y", "s/gone": b"z"})
+    blobs.fail.add("s/gone")
+    store.blob_rows = {"proj_a": [("uploads/deed.pdf", "s/deed", 13), ("uploads/deed.pdf.txt", "s/txt", 9),
+                                  ("results/.staging/q.json", "s/stage", 1), ("tree.gedcomx.json.bak", "s/bak", 1),
+                                  ("uploads/gone.jpg", "s/gone", 1),
+                                  ("images/huge.jpg", "s/huge", 30 * 1024 * 1024)]}
+    application = create_app(store, FakeQueue(), blobs=blobs)
+    status, headers, total, body = await _download(application, "proj_a", keep=True)
+    assert status == 200, body[:200]
+    assert headers["content-type"] == "application/zip"
+    assert headers["content-disposition"] == 'attachment; filename="proj_a.zip"'
+    assert int(headers["content-length"]) == total == len(body)
+    zf = zipfile.ZipFile(io.BytesIO(body))
+    assert sorted(zf.namelist()) == ["MISSING.txt", "research.json", "tree.gedcomx.json",
+                                     "uploads/deed.pdf", "uploads/deed.pdf.txt"]
+    assert zf.read("uploads/deed.pdf") == b"%PDF-1.4 deed"
+    # Unreadable, stale and oversize files are named; the engine's dot-path staging is not.
+    missing = zf.read("MISSING.txt").decode().splitlines()[1:]
+    assert missing == ["images/huge.jpg", "tree.gedcomx.json.bak", "uploads/gone.jpg"], missing
+    # No redaction: the owner's own living person comes back as written.
+    assert json.loads(zf.read("tree.gedcomx.json"))["persons"][0]["names"][0]["given"] == "Ada"
+
+
+async def test_a_second_download_is_refused_while_the_first_streams(download_tmp):
+    store, blobs = _project_with_blobs(3)
+    application = create_app(store, FakeQueue(), blobs=blobs)
+    first_chunk, let_go = asyncio.Event(), asyncio.Event()
+
+    async def park(chunk):
+        if chunk and not first_chunk.is_set():
+            first_chunk.set()
+            await let_go.wait()
+
+    first = asyncio.create_task(_download(application, "proj_a", on_body=park))
+    await asyncio.wait_for(first_chunk.wait(), 10)
+    # The handler returned long ago; the stream must still hold the slot.
+    status, headers, _total, _ = await _download(application, "proj_a")
+    assert status == 429 and headers["retry-after"] == "5"
+    let_go.set()
+    assert (await first)[0] == 200
+    assert (await _download(application, "proj_a"))[0] == 200
+
+
+async def test_a_client_gone_before_the_first_byte_frees_the_download_slot(download_tmp):
+    # ASGI 2.4: Starlette turns the OSError into ClientDisconnect and skips `background`,
+    # and the body generator never starts, so neither of those would free the slot.
+    store, blobs = _project_with_blobs(2)
+    application = create_app(store, FakeQueue(), blobs=blobs)
+    with contextlib.suppress(Exception):
+        await _download(application, "proj_a", spec="2.4", start_raises=True)
+    assert (await _download(application, "proj_a", spec="2.4"))[0] == 200
+    assert list(download_tmp.iterdir()) == []
+
+
+async def test_the_download_does_not_grow_in_memory_with_the_project(download_tmp):
+    peaks = {}
+    for n in (5, 50):
+        store, blobs = _project_with_blobs(n)
+        application = create_app(store, FakeQueue(), blobs=blobs)
+        tracemalloc.start()
+        try:
+            status, _h, total, _ = await _download(application, "proj_a")
+            peaks[n] = tracemalloc.get_traced_memory()[1]
+        finally:
+            tracemalloc.stop()
+        assert status == 200 and total > n * 1024 * 1024
+    # 45 MiB more project; the peak may not follow it.
+    assert peaks[50] < peaks[5] + 4 * 1024 * 1024, peaks
+
+
+async def test_the_download_is_404_for_a_foreign_project_and_without_a_store(download_tmp):
+    store, blobs = _project_with_blobs(1)
+    store.owners["proj_b"] = USER_B.id
+    assert (await _download(create_app(store, FakeQueue(), blobs=blobs), "proj_b"))[0] == 404
+    assert (await _download(create_app(store, FakeQueue(), blobs=None), "proj_a"))[0] == 404

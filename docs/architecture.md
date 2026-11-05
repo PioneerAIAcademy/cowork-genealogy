@@ -222,15 +222,15 @@ are relative to `packages/engine/mcp-server/` unless shown otherwise.)*
 |---|---|---|---|
 | **MCP tools** — `src/tools/`, advertised via `allToolSchemas` in `src/tool-schemas.ts` | every tool in `allToolSchemas` | host | Network access (FamilySearch, the wiki sidecar, OpenRouter OCR) and **validate-before-persist** writes to project state. Invariants live here because a tool contract cannot be argued past. |
 | **Skills** — `packages/engine/plugin/skills/<name>/SKILL.md` | **2** | VM, in the session's own context | Judgment and procedure: GPS doctrine, routing, when-to-stop criteria. A skill folder may also carry `references/` (§3.3) and `templates/`. |
-| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **30** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
+| **Plugin agents** — `packages/engine/plugin/agents/*.md` | **31** | VM, **fresh context** | Heavy or capability-restricted work delegated off the main thread. Each spawns with **no session state** — only its own `tools:` allow-list and its `model:` pin. (`disallowedTools:` was deleted from all five on 2026-08-30 — §5.2.) |
 
-The thirty agents are `gps-mentor`, `record-structurer`,
+The thirty-one agents are `gps-mentor`, `record-structurer`,
 `proof-conclusion`, `research-exhaustiveness`, `person-evidence`,
 `search-full-text`, `search-images`, `search-records`, `citation`, `question-selection`, `search-wikipedia`, `convert-dates`,
 `search-familysearch-wiki`, `check-warnings`, `translation`, `tree-edit`, `validate-schema`,
 `hypothesis-tracking`, `locality-guide`, `historical-context`,
 `timeline`, `search-external-sites`, `source-evaluation`, `survey-surname`, `search-hints`, `conflict-resolution`,
-`init-project`, `tree-survey`, `research-plan` and `where-else-to-search`.
+`init-project`, `tree-survey`, `research-plan`, `where-else-to-search` and `evaluate-search-results`.
 
 > Plugin agents (`packages/engine/plugin/agents/`) are consumed by the **Cowork
 > runtime** and are a different thing from Claude Code subagents
@@ -563,9 +563,9 @@ agents.**
 | Surface | Honored where | Today |
 |---|---|---|
 | **Main thread** `model` + `effort` | hosted alpha and beta, both harnesses — not Cowork | `packages/engine/plugin/main-thread.json`: `claude-sonnet-4-6` at `medium`. Read by `apps/server/app/agent/main_thread.py` (the alpha's runner and control plane, the beta worker) and `eval/harness/harness/main_thread.py` (both harnesses), and passed as `ClaudeAgentOptions(model=, effort=)`, the `--model` / `--effort` flags. Nothing else sets either: no `fly.toml` key, no environment variable, no per-project model. The control-plane image copies the file (`deploy/Dockerfile`); the Cowork zip leaves it out |
-| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking`, `citation` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking`, `citation`, `timeline` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
 | **Skill `model:` / `effort:`** | nowhere | a skill cannot set either, and none declares one |
-| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites` → `low`; `survey-surname`, `search-images`, `search-hints`, `citation` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites`, `timeline` → `low`; `survey-surname`, `search-images`, `search-hints`, `citation` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
 | **Per-spawn effort** (CLI 2.1.294+) | the `Agent` call's own `effort` field, which outranks the agent's `effort:` | nothing sets it, and the model set it on none of ~7,000 recorded spawns (committed e2e and unit run logs, and medium and low runs, 2026-11-03). The alpha logs a per-turn count of spawns that carry one; `api_calls.effort` records each request's `output_config.effort`, and `make alpha-costs` splits the by-agent table on it |
 
 > **A skill cannot set its model or effort.** To route a step to a different
@@ -904,9 +904,9 @@ There **is** an orchestrator, and it is a skill:
    `docs/plan/research-step-mode.md`): it reports the step and ends with
    "Continue with &lt;label&gt;?", so finishing a sub-skill is where the turn
    stops. `packages/engine/plugin/hooks/step_boundary.py`, loaded as a library,
-   enforces that boundary on the FS prototype always, and in the eval harnesses
-   only where a test opts in through `execution.step_mode`, which no test sets
-   today. Cowork and the hosted alpha follow the router's own text with no
+   enforces that boundary on the FS prototype always, on every e2e run (the e2e
+   harness runs `--step-mode job` by default since step mode phase 2), and in the
+   unit harness only where a test opts in through `execution.step_mode`. Cowork and the hosted alpha follow the router's own text with no
    such hook, and in Cowork a "keep going" runs the remaining steps in one turn,
    since no host is there to reply.
 
@@ -1245,9 +1245,11 @@ that a tool caller structurally cannot reach, because dispatch builds only the
 first argument from tool input. Since 2026-10-20 the lane is chosen per call,
 not per tool. A separate `plan_items`-only call completes the plan item behind
 an extracted record, and in `personId` mode a `person_evidence`-only call links
-a person's attached records as unchecked candidates. Code composes each op whole,
-as it does the `extracted_for_question_ids` growth a re-found record gets, so no
-input field reaches any of them (ADR-0006, amended 2026-10-20).
+the personas of a person's attached records, and of their relationships'
+records, to the tree persons who attach them as unchecked candidates. Code
+composes each op whole, as it does the `extracted_for_question_ids` growth a
+re-found record gets, so no input field reaches any of them (ADR-0006, amended
+2026-10-20 and 2026-10-30).
 
 `evaluation_append` is the second variant: `research_append` restricted to the
 single `evaluations` section, held only by the `gps-mentor` agent — the most
@@ -1278,8 +1280,9 @@ Full rationale and error contract: `research-append-tool-spec.md` §11.
 
 The plugin ships one `PreToolUse` hook (`packages/engine/plugin/hooks/hooks.json`
 + `guard_project_files.py`) and one `UserPromptSubmit` hook, `no_project_route.py`, which
-is not a guardrail: it adds one conditional sentence to each Cowork researcher message (with
-no project, a request to research a person goes to the research skill) and is silent
+is not a guardrail: it adds two sentences to each Cowork researcher message (with no project,
+a request to research a person goes to the research skill; and a source, collection, book or
+citation is named only from a tool result) and is silent
 wherever `GENEALOGY_HOSTED_PLANE` is set, which both hosted planes set. It is the first plugin
 hook that adds context rather than deciding a call. The `PreToolUse` hook, despite this section's name, enforces **five**
 rules, not one. Its matcher is
@@ -1295,8 +1298,10 @@ on the delegation tools, and one on the tools only agents hold, which the final
 2. **Section ownership by caller.** `owner_denied()` refuses a `research_append`
    op writing a section another unit owns — `OWNED_SECTIONS` reserves
    `proof_summaries` to `proof-conclusion`, `person_evidence` and
-   `rejected_links` to `person-evidence`, `namesakes` to `search-records`, and
-   `evaluations` to `gps-mentor`, `OWNED_DECLARATIONS` reserves
+   `rejected_links` to `person-evidence`, `namesakes` to `search-records` (with
+   `search-images` and `search-full-text` as its co-writers, `SECTION_CO_WRITERS`),
+   `evaluations` to `gps-mentor`, and `hit_verdicts` to
+   `evaluate-search-results`, `OWNED_DECLARATIONS` reserves
    `questions.search_stop` (any non-null `stopped_because`) to `research-exhaustiveness`, and
    `OWNED_FIELDS` reserves `project.status` to `proof-conclusion`, and
    `OWNED_CLAIMS` reserves a conflict's analytical product — a resolve, a moot,
@@ -1493,6 +1498,14 @@ replay with `GENEALOGY_HOSTED_PLANE` unset whose transcript carries its text. Wh
 > the caller-ownership rules are covered too (§5.4, and
 > `guardrail-enforcement-spec.md` §4). What is still uncovered is *binding*, in
 > every environment but the hosted one.
+>
+> **One `UserPromptSubmit` sentence does reach both harnesses.** They bind
+> `context_policy.sources_note_hook`, which adds `no_project_route.SOURCES_NOTE` (imported,
+> not copied; `test_sources_note_hook.py`) as context on each user message, as Cowork does.
+> They do **not** add the hook's routing sentence. It is message context rather than the
+> system prompt because, as the harnesses' whole (otherwise empty) system prompt, it read as
+> an identity and broke routing: `ut_research_027` passed 1 of 5 that way, 4 of 5 without it
+> (measured 2026-11-02).
 
 ---
 
@@ -1656,10 +1669,10 @@ duplicated and the *value* it reads is centralized in project state.
 
 ### If you're asked to…
 
-**Add a field or section to `research.json`.** Fourteen sites in the shipping
-product, the last four only for a new section or a field holding tree person ids
-— and **three of them (8, 11 and 14) are checked by nothing**, while 2 is checked
-only for closed-enum values. *(Unprefixed paths are under
+**Add a field or section to `research.json`.** Seventeen sites, the last seven
+only for a new section or a field holding tree person ids — and **four of them
+(8, 11, 14 and 17) are checked by nothing**, two more (15 and 16) only in part,
+while 2 is checked only for closed-enum values. *(Unprefixed paths are under
 `packages/engine/mcp-server/`. The eval CRUD UI carries a parallel scenario
 viewer, `eval/app/components/scenario/`. Its **types** are no longer a site:
 `lib/schema.ts` re-exports `@genealogy/schema`, so site 5 covers it and
@@ -1688,6 +1701,9 @@ product one.)*
 | 12 | *(new section)* its row in `docs/specs/schemas/ownership.json` | `make engine-test` (`ownership-manifest.test.ts`: one row per schema property and `research_append` section, and `merge_tree_persons` among the writer tools of every section the site-14 walker reaches) |
 | 13 | *(new array section)* `src/tools/research-query.ts`: `RESEARCH_QUERY_SECTIONS` with a `SECTION_FILTERS` entry, or `RESEARCH_QUERY_EXCLUDED` with its reason; `RESEARCH_QUERY_OPTIONAL_SECTIONS` when the schema does not require it; the section list in the tool's description | `make engine-test` (`research-query.test.ts`: every array section queryable or excluded, the optional set exact; `tsc`: the filter entry); the description, nothing |
 | 14 | *(holds tree person ids)* `src/validation/person-id-refs.ts` — `PersonIdRefField`, `PERSON_ID_REF_FIELDS` and a block in `iteratePersonIdRefs`, the one walker behind the validator's dangling-id check and `merge_tree_persons`' re-key; `ResearchRefsUpdated` and its zero object in `src/tools/merge-shared.ts`; the re-pointed list in `merge_tree_persons`' description | **nothing** for the walker: an unwalked id is never re-keyed by a merge or reported once it dangles. Once walked, `make engine-test` requires the `ResearchRefsUpdated` key (`tsc`) and site 12's writer tool |
+| 15 | *(new section whose site-12 row claims `hook`)* `packages/engine/plugin/hooks/guard_project_files.py` — the route (`OWNED_SECTIONS`, or the field, claim or append map that fits) and the owner's `AGENT_WRITABLE_SECTIONS` lane; a behavioural block in `tests/packaging/plugin-hooks.test.ts`; its row in the register of `docs/specs/guardrail-enforcement-spec.md` §4. Then `make hook-smoke` | `make engine-test` (`plugin-hooks.test.ts`: the routed sections equal the manifest rows claiming `hook`, every routed agent has a lane, every lane section names the agent on its row); the deny itself, only the behavioural block; the binding, `make hook-smoke`, which no CI job runs; the register row, nothing |
+| 16 | *(new array section)* the harness tables: `eval/harness/validators/test_research.py` `_PROJECT_ID_PREFIXES`, `eval/harness/validators/test_universal.py` `DIFFED_SECTIONS`, `eval/harness/harness/replay.py` `SECTION_ID_PREFIX`, and, for a site-12 row claiming `unit`, an `ADDED` entry with its reason in `eval/harness/tests/unit/test_ownership_manifest.py` | `make harness-test` for all four: the three prefix and section tables against site 3's `ID_PREFIXES` (`test_status_question_validator.py` for `_PROJECT_ID_PREFIXES`, `test_section_tables.py` for `DIFFED_SECTIONS` and `SECTION_ID_PREFIX`), and `ADDED` against the manifest's unit-plane writer sets |
+| 17 | *(new section)* the tool specs: `docs/specs/research-append-tool-spec.md` (the section union, and a §5 row per precondition), `docs/specs/research-query-tool-spec.md` (the union, the filter row, the optional list); *(holds tree person ids)* `docs/specs/tree-forget-tool-spec.md` §4's walked list and `docs/specs/merge-gedcomx-spec.md`'s `researchRefsUpdated`, re-point and remap lists | **nothing** |
 
 Two things the site list alone won't tell you:
 
@@ -1697,9 +1713,10 @@ Two things the site list alone won't tell you:
   schema and 7 for sibling-outlier rendering; **nothing checks that 8 exists.**
   A change touching only 1–5 is a schema change, not a feature.
 - **Run `make test-all`.** A schema field lands in four different suites —
-  `engine-test` (sites 1, 3, 6, 7, 12 and 13, and 14 once the walker yields the
+  `engine-test` (sites 1, 3, 6, 7, 12, 13 and 15, and 14 once the walker yields the
   field), `harness-test` (the JSON-schema mirror, site 4,
-  byte-identical across both trees via `test_schema_mirrors.py`), `test-js` (the
+  byte-identical across both trees via `test_schema_mirrors.py`, and site 16's
+  four tables), `test-js` (the
   TS-interface mirror, site 5) and `typecheck` (site 10) — and no shorter target
   reaches all four. Naming them individually is how the last one gets skipped.
 
@@ -2094,7 +2111,7 @@ outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a 
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: per-test pass rates are `make eval-health`'s job. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. |
 | `make matcher-accuracy` | the **matcher's ranking** over the record-hint fixtures whose `fixture.json` `hint.identity` is `same` or `different`, each pair scored through `matchPairs` (`packages/engine/mcp-server/src/utils/matcher.ts`, the call `same_person` and ranking make, so it measures whichever matcher config.json names): the AUC, the confusion table at the person-evidence bands (score > 0.7 and > 0.4), and the pairs those bands misrank. Needs a FamilySearch login (`make e2e-login`), so no CI job runs it. Exits non-zero when the AUC falls below `MIN_AUC` (default 0.65), and when nothing was scored, a class is empty or a labelled fixture could not be scored (e2e spec §3.6.2) | `unresolved`, `null` and draft hints — listed as skipped, never scored; the inputs `rank_search_matches` hands the matcher (a staged search hit, not a `record_read` of the hinted persona); FamilySearch's own hint ranking; whether an agent acts on the score. A floor, not a pinned value: a matcher change that lowers the AUC but stays above `MIN_AUC` passes |
-| `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first (or that none did), that no research job started, that the expected source or log entry was saved (or, for an "answer already attached" ask, that none was), and that named tools were or were not called — deterministic, no judge. Live and billed | the hosted alpha, which appends DELIVERY_GUIDANCE (it no longer nudges a stop: step mode's phase 2 deleted the Stop veto); Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
+| `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first (or that none did), that no research job started, that the expected source or log entry was saved (or, for an "answer already attached" ask, that none was), and that named tools were or were not called — deterministic, no judge. Live and billed | the hosted alpha's own system prompt, which differs from the harness's; Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
 
 ### 9.2 The lint layer
 
@@ -2271,10 +2288,10 @@ changes how a correct change is made:
      stops a model starting the next step without asking differs by plane: the FS
      prototype gets a `PreToolUse` deny and then a halt; **Cowork and the alpha get
      router prose and no hook at all**. There is no plugin step hook anywhere.
-     **None of it is built yet.** When it is, the gap will be that PR 1 gives the e2e
-     orchestrator the step check (rider 3) while the plane it tracks, `real_agent`
+     It is built (PR 1), and since step mode phase 2 every e2e run applies the step
+     check (rider 3), while the plane it tracks, `real_agent`
      (`eval/harness/e2e/orchestrator.py`), is the alpha — which enforces nothing. So the
-     suite will enforce a boundary that neither Cowork nor the alpha has, and the one
+     suite enforces a boundary that neither Cowork nor the alpha has, and the one
      plane that DOES enforce it, the prototype worker, goes ungraded. **A green eval
      suite will therefore say nothing about whether the boundary holds where researchers
      actually are.**

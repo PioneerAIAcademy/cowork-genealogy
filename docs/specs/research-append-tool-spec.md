@@ -103,9 +103,11 @@ research_append({
   section:
     | "sources" | "assertions" | "person_evidence"
     | "questions" | "plans" | "plan_items"
-    | "conflicts" | "hypotheses" | "timelines" | "rejected_links"
+    | "conflicts" | "hypotheses" | "timelines"
+    | "rejected_links" // update limited to its reason, §3.1
     | "proof_summaries" | "evaluations" | "localities"
     | "namesakes"   // namesakes: update limited to its updatableFields, §3.1
+    | "hit_verdicts" // hit checked against its search and folded, §3.10; update limited, §3.1
     | "project",    // project: update-only singleton, §3.1
   op: "append" | "update",
 
@@ -232,11 +234,15 @@ camelCase convenience fields the same way `research_log_append` does.
   singleton's wording:
   `field(s) not updatable on '<section>': <fields> (allowed: <list>)`. An `id`
   equal to the entry's own passes; a different one is refused, as on every
-  section. `namesakes` is the one list section that declares it, with `name`,
+  section. Three list sections declare it. `rejected_links` names only
+  `reason`: a rejection is never re-pointed, and `researcher_words` is a record
+  (§5). `namesakes` names `name`,
   `place`, `time_period`, `record_ids`, `log_entry_ids` and `notes`: a row is
   never re-pointed to another `person_id`, and having no `status` or
-  `superseded_by` it is never retired either. A section without the list keeps
-  the default, every field but `id` updatable.
+  `superseded_by` it is never retired either. `hit_verdicts` names `verdict`,
+  `new_vital_info` and `rationale`: a verdict is never re-pointed to another
+  search, hit or person (§3.10). A section without the list keeps the default,
+  every field but `id` updatable.
 
 ### 3.2 Return value (compact — never echoes the section)
 
@@ -260,6 +266,10 @@ camelCase convenience fields the same way `research_log_append` does.
 }
 // on failure: { ok: false, errors: string[] } — nothing written
 ```
+
+A `hit_verdicts` append that §3.10 folds into an update of an existing row
+returns `op: "update"` and that row's `entryId`, and a warning naming the row; in
+a batch, its `results[i]` carries `op: "update"`.
 
 `validation.warnings` carries non-blocking advisories: `standard_place` that
 could not be resolved (§3.6), tree-heal notes, an already-`exhaustive_declared`
@@ -1118,6 +1128,50 @@ rebuilds the field.
   checked and before any place lookup, because a call that fails here would
   otherwise geocode assertion places for nothing.
 
+### 3.10 `hit_verdicts` — the hit is checked, and stored once per person
+
+A `hit_verdicts` row (`research-schema-spec.md` §5.16) judges one hit of a logged
+full-text search against one tree person. Each `hit_verdicts` **append** is
+checked against that search before anything is applied (`prepareHitVerdicts`,
+inside the §4.1 lock):
+
+- **The search.** `log_id` must name a `log[]` entry whose `tool` is
+  `fulltext_search` and whose `results_ref` is set. Any other entry, a null
+  `results_ref`, an unknown id and an unreadable sidecar are refused.
+- **The hit.** `hit_id` must be a row of that sidecar's `payload.results`,
+  matched by bare id (`findFulltextHit`, the matcher `sidecar_read` and
+  `extraction_append` use), so a bare id, an ARK and a resolver URL all name the
+  same hit. A hit the search did not return is refused, and the refusal names the
+  hit count.
+- **The stored form.** `hit_id` is rewritten to the sidecar row's own `id`, so
+  every row stores one spelling per hit whatever the caller sent.
+- **One row per hit and person.** An append whose (`log_id`, `hit_id`,
+  `person_id`) — `hit_id` compared by bare id — matches an existing row is
+  **folded into an update** of that row: the op becomes
+  `{ op: "update", entryId: <the row's id>, fields }`, where `fields` is the entry
+  without `log_id`, `hit_id`, `person_id` and `created`. An entry that
+  carries an `id` is never folded: it meets the append's own "must not carry an
+  id" refusal, so the fold cannot launder one into an update. **A folded append
+  must carry `verdict`, `new_vital_info` and `rationale`, as a fresh append
+  must**: one that leaves any of them out is refused before the fold, one line per
+  absent field, `missing required field '<field>'` (op-indexed in a batch), and
+  nothing is written, so a re-evaluation never pairs a new verdict with the
+  stored row's flag or rationale. A field present with a bad value (`null`, a
+  blank rationale) reaches the whole-document validator on the merged row, as an
+  update's does. Beyond those three, a key no row may hold reaches the
+  `updatableFields` refusal of §3.1 rather than being dropped. `created` keeps the
+  first write's date. The return
+  says so (§3.2). This is what lets the router evaluate one hit in parallel
+  agents, and re-evaluate it later, without a second row: precedent §3.4.1's
+  `updated_existing`.
+- **Two in one call.** A second append for the same key in the same call is
+  refused: it cannot become an update of an id the call is still creating (§3.3).
+
+An **update** is not re-checked against the search: it cannot set `log_id`,
+`hit_id` or `person_id` (§3.1). The two write-time preconditions on
+`new_vital_info` are in §5; they run on the merged row, after the fold, so a
+folded append meets them as the update it has become.
+
 ---
 
 ## 4. Persistence — validate-before-persist, atomic
@@ -1258,8 +1312,9 @@ audit's recommendation #5):
 | `person_evidence` append/update at `confident`/`probable` | rejected when the record's own assertions about the SAME party (the persona id, else the role, read across the record: an assertion with no persona id joins the one persona carrying its role when it comes from an extraction that set no persona id and names one person at that role, and a persona id worn by several roles keys on the role — `recordPartyKeyer`) state a birth place, or a birth/christening date, that contradicts the tree person's birth fact. Place compares `birth` only (a christening place is the church, not the birthplace). Two places agree on their text or, when both carry one, on their resolved `standard_place`, and they agree when one is `compatiblePlace` with the other — the top level one names appears in the other with every level below matching — so a place written without its country ("Staffordshire, England" against "West Bromwich, Staffordshire, England, United Kingdom"; "Georgia" against "Georgia, United States") is not a contradiction. A disagreeing pair then counts only when the two places are in **different countries** (read offline: the last segment `canonicalCountry` recognizes, else a standard place's last segment, which is always its country; a trailing United Kingdom gives way to a country named before it, so England against Scotland, or against "Dublin, Ireland, United Kingdom", differs, while a bare United Kingdom does not differ from a constituent; a US state is not read as the United States, since "CA" is also Canada) or further apart than the era allows: 25 mi before 1850, 250 mi for 1850–1949, 500 mi from 1950, a range touching two eras taking the larger (`birthThresholdMiles`, shared with `person_warnings`), over every year in the tree birth's `date`/`standard_date` and the assertion's `date`. The coordinates of both `standard_place`s are looked up before the ops apply, replaying the call's own assertion updates, from the FamilySearch Places API under a 10 s budget, only for pairs that disagree and are not already known to be in different countries; a Places outage leaves the pair without coordinates. It **fails closed**: with no country difference, a pair caps unless both sides carry a `standard_place` with coordinates, neither is a whole region and they are not two counties against each other (Places type continent, country, dependency or protectorate, colony, state, province, territory, region, prefecture, governorate, or principality or emirate, read case-insensitively without a "(Top level)" qualifier, whose coordinates are its centre; a county or municipality still gets a distance, except against another county, since two counties named as a birthplace are two places), and some year is known (fail-closed: review-ready decision, 2026-10-14; the region and county rules: decided at implementation, 2026-10-15). A birth place that is a non-place phrase ("Same House", `isNonPlacePhrase`) states nothing and is skipped. Date compares birth and christening alike (a baptism follows birth closely) at a 5-year threshold, since the tree side is routinely a circa year. Silent when the contradicting claim is `information_quality: secondary` or an informant with no proximity to the birth, or lost a `resolved` **fact** conflict on the attribute that arm checks (a competitor that is not its `preferred_assertion_id`, released on the place arm when `disputed_attribute` is a birthplace and on the date arm when it is a birth date or year, matched against an exact list so a free-text attribute releases nothing; an identity conflict, an unresolved or moot one, or one about another attribute still caps). A two-party relationship assertion is checked on both arms when another live link (the document's, with this call's appends and updates replayed over it) ties a one-party assertion of the same record to the same person through one of the assertion's two parties — its own, or the one `structured_value.related_person_role` names: the link is then about that party, and when siblings tie both parties to the person both are checked. With no such sibling it is silent, because which of the two people the link names is not decidable from the documents. Which link lands first does not matter: an append or re-pointing update of a one-party link, at any tier, is refused when it gives a party to a live `confident`/`probable` relationship link that this gate would then refuse, unless the same call lowers that link (`scopedRelationalLinkInvariants`); a relationship link already refused without this link is not counted against it. An `update` that sets `superseded_by` is exempt, since it retires a link; an `append` is never exempt, whatever `superseded_by` it carries | Refuses **0 of 323** committed confident/probable fixture entries. Over the 323 committed fixture and e2e documents (10,086 confident/probable links) the place arm refused **1,067** with `compatiblePlace` alone, almost all one place written with and without its country, and refuses **138** with the alignment above, nothing it did not refuse before (2026-10-12). Over the 337 committed fixture and e2e documents (10,438 confident/probable links) the arm before the distance test still refuses 138, the non-place-phrase skip silences none of them, and the country and distance test leaves **64**; the 74 it silences were read individually, and are one place spelled two ways or neighbouring places (most within 20 mi) and the cruz-corona-ancestry premise against its record (85 mi, 1910) (measured 2026-10-15, `npx tsx dev/measure-birthplace-cap.ts`). The four scopings and what each removed are in `guardrail-enforcement-spec.md`'s §5 row for this cap. Replaces three prose attempts and one self-declared field, each measured not to bind (`ut_person_evidence_012`, `_024`). The two-party arm adds 11 refusals over 302 committed fixture and e2e documents (9,736 confident/probable links), every one already refused for that persona by the one-party arm; running its place arm too would then have added 247, every one a less specific place that `compatiblePlace`'s country-first comparison read as a contradiction. With the comparator aligned on the top level and both arms and both parties live, over 350 documents (10,607 links, live coordinates) the gate refuses 165 against main's 142: 44 added, every one citing an assertion the one-party arm already refuses in the same document, and 21 released — 14 on a resolved-and-lost assertion and 7 in one spriggs-parents-1898 run whose extraction stamped one persona id on the whole household (measured 2026-10-21, `npx tsx dev/measure-core-identifier-gate.ts --coords`, diffed against main with `--list`) |
 | `person_evidence` append/update → `confident` | rejected when the linked assertion's `value` carries an uncertain reading (`[?]`) **and** no other live `person_evidence` row ties that `person_id` to a distinct record. Conjunctive on purpose: a `confident` link off a single *clean* record is the ordinary case and stays legal | audit theme 8; `record-extractor.md` (since retired) epistemic cap |
 | `person_evidence` append, or update that moves a live link onto a new pair or revives a retired one | rejected when `rejected_links` names that exact `(assertion_id, person_id)` pair. The refusal quotes the researcher's `reason` when one was given. Exact pair only: rejecting "this record is not Mary" says nothing about her sister or about another record for Mary. An edit to a link that already exists (a rationale, a lower tier, a supersede) is not refused | `rejectedLinkInvariants`; `research-schema-spec.md` §5.14 |
+| `person_evidence` append, or update that moves a live link onto a new pair, revives a retired one, or raises a `speculative` link, at `probable` or `confident` | **rejected when the person is a `blankAddedPerson`**: added during this research (not a FamilySearch id, not in `starting-tree.gedcomx.json`, holding no attachment link) and carrying no source ref on its node, names, facts or any relationship it is in, with no namesake (a `namesakes` row, or a same-named relative in the tree): the namesake cap decides that person's links, and a speculative link must not let a record land on it first. `tree_edit add_person` makes such a person, so nothing records which record it came from, and the link would vouch for it anyway. A stub the researcher stated carries its source on the relationship and is not blank. The refusal names the order that keeps `same_person` ahead of the write: a `speculative` link with its score, then the `materialize_facts` call that writes the persona onto the person (with the linked assertion's `recordId` and `recordRole`, and for a two-party assertion the named-party form as well), then raising the link. `materialize_facts` writes onto a blank added person once any live link ties the record to it (`tree-materialization-spec.md`, the link rule); with no link at all the write would make the person read as minted from the record, and the link after it would need no score. Silent at `speculative`, which asserts no identity; with no starting-tree baseline, which cannot tell an imported person from an added one; for an attachment link; for a retired link; and for negative evidence (`record_role` or `record_basis` `absent`, an assertion written before the `record_basis` rename included), since no persona can be materialized from an absence. Reads the live tree | Measured 2026-11-04 over the committed e2e final documents: 1,121 of June and July's 6,113 links pointed at a person with no ref on any name or fact, and 8 of the 5,061 since August (3 persons: 2 record-derived stubs, 1 negative-evidence link, now exempt). `refLessAddedPersonInvariants`, `blankAddedPerson` |
 | `rejected_links` append | **`researcher_words` is a non-empty string**: the researcher's own message saying the pair is not a match, verbatim. Only the researcher rejects a pair (lead, 2026-10-20), and the engine cannot see who spoke, so the quoted words make a rejection written on a hedge, or in a turn the researcher never spoke in, visible. Required here and optional in the JSON Schema, so a row written before the field existed still validates. **The same write undoes the link**: every live `person_evidence` entry on that exact pair gets `superseded_by: "<rj_ id>"`, and every fact on that tree person carrying the pair's `assertion_id` is removed, unless the fact's `sources[]` also carries a `ref` other than the `gedcomx_source_description_id` of the assertion's research source. Another ref means another record (`materialize_facts` stamps `assertion_id` only when it mints a fact and adds a ref when it corroborates one), so that fact is kept and named in the response. A fact with no `assertion_id` is never removed, and names and relationships carry none, so the response names the person and says they may still carry names or relationships from that record. Nothing changes when the pair has no live link. All-or-nothing with the rest of the call. **`rejected_links` update** may set only `reason`: re-pointing a rejection would move it onto a linked pair without retiring the link, and `researcher_words` is a record | Lead ruling 2026-10-20; `retireRejectedLinks`; `research-schema-spec.md` §5.14 |
-| `person_evidence` link a call asserts at `probable`/`confident` (an append, a re-point, an un-supersede or a raise) to a person with a `namesakes` row | **A recorded namesake caps the link at `speculative` unless something in its source ties it to the person.** One check, `namesakeCallCheck` over `assertedNamesakeVerdicts`, runs once on the call's end state, after the ops and §3.1's fact rewrite and before whole-document validation, so a row, an assertion and a tie may come in any op order. It judges only the links the call asserts: live at `probable`/`confident` after the call with an (`assertion_id`, `person_id`) pairing that was not before, or with a confidence above the strongest live link of that pairing before the call. A standing link, even one from before the row, is not re-judged, and a link from an absent-basis assertion is never judged and never ties. So a call that retires the only tie of a standing link is not refused: the link then stands untied, §5.6 lists it whenever a row of its person is written, and `materialize_facts` copies nothing through it (tree-materialization-spec §4.3). No committed document records a row, so no committed run shows it; the first runs that write rows measure it. Tree writes are judged as well: a record cited onto a row holder's fact or name through `tree_edit` or `tree_correct` must tie (`tree-edit-tool-spec.md` §4.5). In `namesakeVerdicts` the link's source R is its assertion's `source_id`; tie (a) reads R's document instead when every live assertion of R carries `record_document_id` (§3.5), so a party of another document of the source does not tie the link, and the refusal names the document. Tie (b)'s same-source skip, the co-resident exclusion, the created-from-this-source rule and the verdict's `source` stay on the `source_id`, so a split adds no voucher. And a party is the bare record id with the party `recordPartyKeyer` reads across that record (the persona id, else the role, read as the core identifier row reads it), so personas a source keeps on separate record ids stay apart. The link speaks for its own party, unless its assertion names a second person (`isTwoParty`) and no one-party assertion of that party on R is linked to the person; then it speaks for the parties of R whose one-party assertions are linked to the person at any confidence, possibly none. Either tie allows it. **(a)** Another live `probable`/`confident` link from R, by a party it does not speak for, to the person's spouse, parent or child in the tree (`gatherRelatives`) who has a given name of their own (`givenNameProblem`: not a placeholder, and not one that only repeats the given name of their own spouse, the way an unnamed wife is recorded: {prefix "Mrs.", given "James"}, "Wife of James" or "Mrs. J." for the wife of James) and was not made from R alone (`mintedFromThisSource`: every research source that relative's refs reach cites R's `S` entry; never a FamilySearch or starting-tree person), and whom the record does not give another relation (the role check): it fails when a party the link speaks for heads the household (role `head`, `head_of_household` or `self`; a numbered head is not read) and the co-party's role (`wife`, `husband`, `spouse`, `son`, `daughter`, `child`, `father`, `mother` or `parent`, any `_<n>` suffix dropped) names another relation, or when a relationship statement on R between the two, whose type and value agree, does; or, R stating nothing between them, when the two parties' roles do, read as circular corroboration reads them (`coPartyRelation`, either way round: a `father` beside a `mother`, or a `father_of_<x>` beside a `mother_of_<x>`, is her spouse, a `father_of_<x>` the parent of the `<x>`, so the `<x>` his child; a co-party assertion naming a second person and linked to the person it names is read by the role it names, `related_person_role`; chesworthrm, 2026-10-29). Only roles of the principal's own family are read (the principal, a spouse or head, and a parent of the principal: a grandparent such as `paternal_grandfather` or `father_of_father` reads wrongly there), only from the person's own one-party assertions on R (a link naming the person shows no role of theirs), and a numbered head is not. A two-party co-party assertion linked to the party it names is not checked. **(b)** An occupation, or a street address (a residence or census value that is no date, differs from its place and carries a house number: `#12`, `house 12`, `no. 12`, a number before a street name, past a direction letter or as an ordinal street, or after a street word as in `Hauptstraße 12`; a number from 1000 to 2200 before a name with no street word is a year, and a number after a division word, as in `District No. 7`, `Ward 12` or `Route 2`, is the division's), on R for a party the link speaks for (its own, if none), equal case-folded to the same field on the own assertion of another source's link to the person that was live at `probable` or better both before and after the call: a link cannot vouch in the call that writes it. The voucher must itself be allowed (grounding: the allowed set grows from the links tie (a) holds, through allowed vouchers, until nothing changes), and neither record may list a second party with the same first given name and surname, which the match could not tell apart (the co-resident exclusion). Grounding, the co-resident exclusion and the role check are the lead's items 6 and 7, ruled 2026-10-18. Findings come before any whole-document validation error, op-indexed to the last op that wrote each link; the call writes nothing and appends the `person_evidence` worked example. Each opens `confidence '<c>' is not available on link '<pe>' to '<P>': namesake(s) of '<P>' are recorded (<ns_id>: <name>, <place>, <time_period>), and nothing in source '<src>' ties assertion '<a>' to '<P>'.` (a row from the same call reads `added in this call: …`), gives a clause for each tie that failed, and names the two ways out: write it `speculative` naming the namesake in the rationale, or first link what ties it. **Known let-throughs**, each a labelled `known_let_through` case: a co-party the agent links to a same-named relative; a relative with no sources, never read as made from the record; a relationship recorded from the record being tied, to a relative whose refs reach another record; a son's own household linked to his father and tied by the occupation they share; a two-party assertion linked to the person and to a relative, with nothing one-party of the person's party linked, which ties itself (refusing it would narrow tie (a) too; with no committed instance it stays a known let through under the lead's scope note of 2026-10-18). **Second caller:** `merge_tree_persons`, through `mergeNamesakeRefusals`, judges each live `probable`/`confident` link of one pair member as a link to the other when that other holds a row, on whichever side of the pair, on the pre-merge project with only the row holder's own pre-merge links vouching and a spouse, parent or child of the row holder whom the same call merges with someone judged as the person the merge makes, and refuses the merge if one fails (`merge-gedcomx-spec.md` §5b.2). Labelled cases: `packages/engine/mcp-server/tests/guard-cases/namesake-tie.json`, replayed through `namesakeTieInvariants` | Tie rules and the merge: the lead's answers of 2026-10-16. **Refuses nothing today**: 0 of 560 tracked research documents carry the section; its writer, the search-records agent, records a row once a search rules a same-named person out. With a row planted on every person holding a live `probable`/`confident` link across 211 committed e2e final states, each such link judged with every other as a voucher, it refuses **2,260** of 10,011 reading relatives from the final tree, among them 385 of the 2,297 subject links (43 in fixtures whose hint is the subject's own record, 45 a namesake's, 297 unlabelled) and 26 of 129 in must-fire fixtures, and **6,266** reading them from the starting tree (subject 894: 101 / 50 / 743; must-fire 31 of 129). Reading parties with `recordPartyKeyer`, as the cap now does, clears 69 final tree refusals and 24 starting tree ones against the per assertion key on the 212 final states at `b89d6add0`, 19 and 12 of them subject links (12 each in fixtures whose hint is the subject's own record, none whose hint is a namesake's), and changes no write time verdict, must fire refusal or voided tie. Allowed only through a co-party on another record id of the same source: 310 (119 from the starting tree); by occupation alone: 6 (0); by street address alone: none. A source holding two documents, mikkel-blyeberg-father's `src_004` (found by reading the 27 multi-record sources), let 2 links through, 4 with any cross-document tie, reading relatives from the final tree (none from the starting tree). Tie (a) now splits such a source by `record_document_id`; the committed runs carry no `results/` sidecars, so none of their assertions carries the field and the replay is unchanged by construction. At write time, over the 63 committed runs whose `person_evidence` `harness.replay` rebuilds exactly (of the 210 with a fixture), 187 calls carry `person_evidence` ops and 153 of them assert 3,509 links: it refuses **959** in 88 calls reading relatives from the final tree (subject 17 / 41 / 67) and **1,656** in 114 reading the relationships, refs and sources the run had recorded by the call (subject 22 / 46 / 136). The 47 must-fire links (8 hint records in georg-gajdosch-spouse and robert-lord-children, 2 runs) are all judged: 31 refused on the recorded relationships, 22 on the final tree; X9G3-FRG's 12 and NKKY-C2T's 4 (a co-party linked to a same-named relative) pass on both, and the final tree also passes the 2026-09-16 georg-gajdosch-spouse run's 9, tied through a Couple the run recorded from a marriage after linking it. Item 14b's two-party set clears 7 links on the final tree and adds no refusal; judging by source rather than one source per record clears the 310 (119) and adds none; and 11 (12) links are allowed only through their own assertion linked to a relative, the let-through above. Of the links it refuses, grounding voided a tie for 20 (33); the co-resident exclusion changes no committed verdict, and the role check none until it read roles: since then (2026-10-29) it voids a tie for 22 (2), refusing 2,333 rather than 2,311, every one a parent's entry linked to the child as well (birkeland-parents-1817 4, hannah-earnest-children 4, laurie-scotland-parents 4, angelina-aiello-parents 2, crowther-parents-marriage 2, ferber-grandparents 2, susan-miller-birth 2, wardell-parents 2). Measured at ed4f73911 by `packages/engine/mcp-server/dev/measure-namesake-cap.ts`, which runs `eval/harness/scripts/dump_namesake_call_states.py` for the write-time figures |
+| `person_evidence` link a call asserts at `probable`/`confident` (an append, a re-point, an un-supersede or a raise) to a person with a `namesakes` row | **A recorded namesake caps the link at `speculative` unless something in its source ties it to the person.** One check, `namesakeCallCheck` over `assertedNamesakeVerdicts`, runs once on the call's end state, after the ops and §3.1's fact rewrite and before whole-document validation, so a row, an assertion and a tie may come in any op order. It judges only the links the call asserts: live at `probable`/`confident` after the call with an (`assertion_id`, `person_id`) pairing that was not before, or with a confidence above the strongest live link of that pairing before the call. A standing link, even one from before the row, is not re-judged, and a link from an absent-basis assertion is never judged and never ties. So a call that retires the only tie of a standing link is not refused: the link then stands untied, §5.6 lists it whenever a row of its person is written, and `materialize_facts` copies nothing through it (tree-materialization-spec §4.3). No committed document records a row, so no committed run shows it; the first runs that write rows measure it. Tree writes are judged as well: a record cited onto a row holder's fact or name through `tree_edit` or `tree_correct` must tie (`tree-edit-tool-spec.md` §4.5). In `namesakeVerdicts` the link's source R is its assertion's `source_id`; tie (a) reads R's document instead when every live assertion of R carries `record_document_id` (§3.5), so a party of another document of the source does not tie the link, and the refusal names the document. Tie (b)'s same-source skip, the co-resident exclusion, the created-from-this-source rule and the verdict's `source` stay on the `source_id`, so a split adds no voucher. And a party is the bare record id with the party `recordPartyKeyer` reads across that record (the persona id, else the role, read as the core identifier row reads it), so personas a source keeps on separate record ids stay apart. The link speaks for its own party, unless its assertion names a second person (`isTwoParty`) and no one-party assertion of that party on R is linked to the person; then it speaks for the parties of R whose one-party assertions are linked to the person at any confidence, possibly none. Either tie allows it. **(a)** Another live `probable`/`confident` link from R, by a party it does not speak for, to the person's spouse, parent or child in the tree (`gatherRelatives`) who has a given name of their own (`givenNameProblem`: not a placeholder, and not one that only repeats the given name of their own spouse, the way an unnamed wife is recorded: {prefix "Mrs.", given "James"}, "Wife of James" or "Mrs. J." for the wife of James) and was not made from R alone (`mintedFromThisSource`: every research source that relative's refs reach cites R's `S` entry; never a FamilySearch or starting-tree person), and whom the record does not give another relation (the role check): it fails when a party the link speaks for heads the household (role `head`, `head_of_household` or `self`; a numbered head is not read) and the co-party's role (`wife`, `husband`, `spouse`, `son`, `daughter`, `child`, `father`, `mother` or `parent`, any `_<n>` suffix dropped) names another relation, or when a relationship statement on R between the two, whose type and value agree, does; or, R stating nothing between them, when the two parties' roles do, read as circular corroboration reads them (`coPartyRelation`, either way round: a `father` beside a `mother`, or a `father_of_<x>` beside a `mother_of_<x>`, is her spouse, a `father_of_<x>` the parent of the `<x>`, so the `<x>` his child; a co-party assertion naming a second person and linked to the person it names is read by the role it names, `related_person_role`; chesworthrm, 2026-10-29). Only roles of the principal's own family are read (the principal, a spouse or head, and a parent of the principal: a grandparent such as `paternal_grandfather` or `father_of_father` reads wrongly there), only from the person's own one-party assertions on R (a link naming the person shows no role of theirs), and a numbered head is not. A two-party co-party assertion linked to the party it names is not checked. **(b)** An occupation, or a street address (a residence or census value that is no date, differs from its place and carries a house number: `#12`, `house 12`, `no. 12`, a number before a street name, past a direction letter or as an ordinal street, or after a street word as in `Hauptstraße 12`; a number from 1000 to 2200 before a name with no street word is a year, and a number after a division word, as in `District No. 7`, `Ward 12` or `Route 2`, is the division's), on R for a party the link speaks for (its own, if none), equal case-folded to the same field on the own assertion of another source's link to the person that was live at `probable` or better both before and after the call: a link cannot vouch in the call that writes it. The voucher must itself be allowed (grounding: the allowed set grows from the links tie (a) holds, through allowed vouchers, until nothing changes), and neither record may list a second party with the same first given name and surname, which the match could not tell apart (the co-resident exclusion). Grounding, the co-resident exclusion and the role check are the lead's items 6 and 7, ruled 2026-10-18. Findings come before any whole-document validation error, op-indexed to the last op that wrote each link; the call writes nothing and appends the `person_evidence` worked example. Each opens `confidence '<c>' is not available on link '<pe>' to '<P>': namesake(s) of '<P>' are recorded (<ns_id>: <name>, <place>, <time_period>), and nothing in source '<src>' ties assertion '<a>' to '<P>'.` (a row from the same call reads `added in this call: …`), gives a clause for each tie that failed, and names the two ways out: write it `speculative` naming the namesake in the rationale, or first link what ties it. **Known let-throughs**, each a labelled `known_let_through` case: a co-party the agent links to a same-named relative; a relative with no sources, never read as made from the record; a relationship recorded from the record being tied, to a relative whose refs reach another record; a son's own household linked to his father and tied by the occupation they share; a two-party assertion linked to the person and to a relative, with nothing one-party of the person's party linked, which ties itself (refusing it would narrow tie (a) too; with no committed instance it stays a known let through under the lead's scope note of 2026-10-18). **Second caller:** `merge_tree_persons`, through `mergeNamesakeRefusals`, judges each live `probable`/`confident` link of one pair member as a link to the other when that other holds a row, on whichever side of the pair, on the pre-merge project with only the row holder's own pre-merge links vouching and a spouse, parent or child of the row holder whom the same call merges with someone judged as the person the merge makes, and refuses the merge if one fails (`merge-gedcomx-spec.md` §5b.2). Labelled cases: `packages/engine/mcp-server/tests/guard-cases/namesake-tie.json`, replayed through `namesakeTieInvariants` | Tie rules and the merge: the lead's answers of 2026-10-16. **Refuses nothing today**: 0 of 560 tracked research documents carry the section; its writers, the search-records, search-images and search-full-text agents, record a row once a search, page or transcript hit rules a same-named person out. With a row planted on every person holding a live `probable`/`confident` link across 211 committed e2e final states, each such link judged with every other as a voucher, it refuses **2,260** of 10,011 reading relatives from the final tree, among them 385 of the 2,297 subject links (43 in fixtures whose hint is the subject's own record, 45 a namesake's, 297 unlabelled) and 26 of 129 in must-fire fixtures, and **6,266** reading them from the starting tree (subject 894: 101 / 50 / 743; must-fire 31 of 129). Reading parties with `recordPartyKeyer`, as the cap now does, clears 69 final tree refusals and 24 starting tree ones against the per assertion key on the 212 final states at `b89d6add0`, 19 and 12 of them subject links (12 each in fixtures whose hint is the subject's own record, none whose hint is a namesake's), and changes no write time verdict, must fire refusal or voided tie. Allowed only through a co-party on another record id of the same source: 310 (119 from the starting tree); by occupation alone: 6 (0); by street address alone: none. A source holding two documents, mikkel-blyeberg-father's `src_004` (found by reading the 27 multi-record sources), let 2 links through, 4 with any cross-document tie, reading relatives from the final tree (none from the starting tree). Tie (a) now splits such a source by `record_document_id`; the committed runs carry no `results/` sidecars, so none of their assertions carries the field and the replay is unchanged by construction. At write time, over the 63 committed runs whose `person_evidence` `harness.replay` rebuilds exactly (of the 210 with a fixture), 187 calls carry `person_evidence` ops and 153 of them assert 3,509 links: it refuses **959** in 88 calls reading relatives from the final tree (subject 17 / 41 / 67) and **1,656** in 114 reading the relationships, refs and sources the run had recorded by the call (subject 22 / 46 / 136). The 47 must-fire links (8 hint records in georg-gajdosch-spouse and robert-lord-children, 2 runs) are all judged: 31 refused on the recorded relationships, 22 on the final tree; X9G3-FRG's 12 and NKKY-C2T's 4 (a co-party linked to a same-named relative) pass on both, and the final tree also passes the 2026-09-16 georg-gajdosch-spouse run's 9, tied through a Couple the run recorded from a marriage after linking it. Item 14b's two-party set clears 7 links on the final tree and adds no refusal; judging by source rather than one source per record clears the 310 (119) and adds none; and 11 (12) links are allowed only through their own assertion linked to a relative, the let-through above. Of the links it refuses, grounding voided a tie for 20 (33); the co-resident exclusion changes no committed verdict, and the role check none until it read roles: since then (2026-10-29) it voids a tie for 22 (2), refusing 2,333 rather than 2,311, every one a parent's entry linked to the child as well (birkeland-parents-1817 4, hannah-earnest-children 4, laurie-scotland-parents 4, angelina-aiello-parents 2, crowther-parents-marriage 2, ferber-grandparents 2, susan-miller-birth 2, wardell-parents 2). Measured at ed4f73911 by `packages/engine/mcp-server/dev/measure-namesake-cap.ts`, which runs `eval/harness/scripts/dump_namesake_call_states.py` for the write-time figures |
 | `person_evidence` link a call asserts at `probable`/`confident` (the same links as the namesake cap above) to a person with a namesake in the tree: a parent, child or sibling of the same first given name, not known to be of the other sex | **A namesake in the tree caps the link at `speculative` unless the record tells the two apart** (§5.9). The same check, `namesakeCallCheck` over `assertedNamesakeVerdicts`, now judges a person who holds no row but forms such a pair, through `namesakeVerdicts` with `derivedPairs`. The link stands when tie (a) or (b) holds and the record would not tie the namesake as well, the namesake's siblings read among their relatives, or when the record still fits the person and rules every partner out by age, lifespan, adult role, the same record or the family limit, on dates from records other than this one. A row holder still needs tie (a) or (b), since a pair test says nothing about a stranger. `materialize_facts`' copy gate reads pairs the same way (tree-materialization-spec §4.3). |
 | `person_evidence` link a call asserts at `probable`/`confident` (the same links as the namesake cap above) to a person in the write-once `starting-tree.gedcomx.json` | **A doubted record is not proved by tree facts that came from it (circular corroboration).** `circularCorroborationCallCheck` runs beside the namesake check on the call's end state and refuses the link when the starting tree's only corroboration is the record's own. **Which tree facts corroborate (the proxy).** The link names none, so the tool reads what the documents decide: the tree *relationship* between the linked person and each parent or spouse the record's other parties name, read from the starting tree (not the live tree, and not the relative's own sources: a sibling's christening sits on a different edge and counts neither way; a live `person_read` of KP7G-9HX gave John and Harriet 18 and 20 sources, mostly siblings', while each edge to William carried only the christening). Role matching is `coPartyRelation`: `father`, `mother`, `parent` and `father_of_<role>` name a parent (of that role only); the other parent beside a father or mother, a `mother_of_<x>` beside a `father_of_<x>` (the same `<x>` only, never a `mother_of_bride` beside a `father_of_groom`; chesworthrm, 2026-10-29), `husband`/`wife`/`spouse`/`groom`/`bride`, and a household head against a spouse role, name a spouse; a relative of known gender must fit the role. **Circular** when the relationship carries at least one source, bar tree-as-source (a source titled "FamilySearch Family Tree", or with a `/tree/` url, counts as none), and every source is *this entry*: its url names one of the entry's record ids, or a research source of the entry cites its description. **Refused** when every role-matched relationship the baseline holds is circular and uncleared; one independent or unsourced relationship allows the link (an unsourced relationship is provenance unknown, per the 2026-09-11 ruling; this is a choice made here, since the 2026-10-18 wording reads per relationship). **This entry** (`sameEntryOf`): the linked assertion's record id, every record sharing a research source or a `gedcomx_source_description_id` with it, and every record carrying only names, genders, relationships and births, christenings or baptisms where a party's birth, christening or baptism has the same full date, the same place (`standard_place`, else `place`) and the same given name (a death certificate or census repeating the date is another record), which is how two indexes of one baptism that share no identifier are recognised (lead, 2026-10-18, "A — Same-day match"; no schema change). A year-only date matches nothing. **Cleared** by a source on that relationship in the live tree that is not this entry, or by one record outside the entry linked live at `probable`/`confident` to both the person and the relative, in any call (a census naming them together); a parent's link alone does not. **Subject alone.** When no role-matched relative exists in the baseline the same test runs on the person's own sources (person, names, facts): when every one is this entry the link is refused at `confident` and allowed at `probable` (Richard, 2026-10-12; the research schema calls one primary-informant source with no corroborating record `probable`). The refusal names the way through: find a record independent of `<record_id>` that corroborates it, or lower confidence to `speculative`. Not judged: a project with no starting tree, a person it does not hold, a standing link, negative evidence, and a two-party assertion (`relationship`, `marriage`), whose role is not the linked person's. **What it knowingly lets through.** An index the agent never extracted (its event cannot be matched); two indexes dated only to the year; an edge source naming another party's persona of a record that was never extracted, which reads as another record; any proof claim (`proof_summaries` is being reworked on its own); a two-party assertion. **The over-fire rate is unmeasurable today:** the committed starting trees predate relationship sources (20 of 2,036 relationships carry one), and re-capturing them now that `person_read` carries relationship sources is the step that measures it. | Alpha feedback, 2026-09-25: the agent "proved" a christening from the parents' tree edges that the christening itself had created. **Measured at `e28bffc08`, `dev/measure-circular-corroboration.ts`** over 227 committed e2e final states and 10,417 live strong links: the gate applies to 3,360 (1,672 through a role-matched relative, 1,688 on the subject alone) and refuses **6**, all `confident`, subject-alone, in `ferber-marriage` (`guardrail-enforcement-spec.md` §4 reads those six). Planted, with the role-matched edges sourced to the record alone: **486 of 1,672** refused, 0 once another record sits on the edge; production starting trees now carry relationship sources, so the planted run is the closer guide (chesworthrm, 2026-10-29). A mother of `<x>` beside a father of `<x>` reads as a couple since 2026-10-29, so those parent entries go through the relationship path, where `probable` can be refused: 355 links moved there from the subject alone (1,317 reached it before), and planted they add 61 refusals, 27 `probable` and 34 `confident` (425 of 1,317 before). Re-derive before quoting |
 | `proof_summaries` append/update setting `tier: proved`/`disproved` | the referenced question must already carry `search_stop.stopped_because` set to a stop-gate value (`question_answered`, `record_exhausted`, or `nothing_further_reachable`) **as of the start of this call**. Renamed from `exhaustive_declaration.declared === true` (2026-10-07) | `guardrail-enforcement-spec.md` §5; `proofSummaryInvariants` |
@@ -1283,6 +1338,10 @@ audit's recommendation #5):
 | A `plan_items` append, a `plan_items` update that changes `jurisdiction`, or an inline item of a `plans` op whose `jurisdiction` changed | **refused** when the `jurisdiction` splits on "and", "or", "&", ";" or "/" into two or more parts and every part sits inside, or encloses, a recorded `localities[].place` (the same tail match as the locality warning) | search-records hands a plan item's jurisdiction to `record_search` as its one `residencePlace`, so "Alabama and Texas, United States" names no searchable place. Requiring every part to be a researched locality is what leaves a single place with a joiner in its name ("Lewis and Clark County, Montana") alone; an elided part ("Smith County and Hill County, Texas") is not caught. Not applied to an edit that leaves a stored item's jurisdiction unchanged, even one re-sending it, so an item written before the rule stays editable. A two-place jurisdiction with one part the project has not researched ("Alabama and Georgia" where only Alabama is recorded) passes. The message tells the agent to write one item per place. | `compoundJurisdictionError` |
 | any section | a **required-object field** holding a primitive is rejected — `search_stop`, `external_site`, `citation_detail`. Absent and null stay with the required-field check, which already reports them, so the message is never doubled. `search_stop` renamed from `exhaustive_declaration` (2026-10-07) | The three sites opened with `if (typeof X === "object" && X !== null)`, which is right about not crashing and silent about everything else: a primitive skipped the whole block, so `citation_detail: "Schuylkill County registrar, certificate 24601"` validated clean while `research.schema.json` requires the six-key object. **Measured cost, per ADR-0011 limit 2, measured at 9a0eb98e5: 17 of 323 (5.3%), in 4 run-log files across 3 e2e fixtures.** The denominator is stated because it moves with the method: count `sources` ops with `op: "append"` in the `args` of every `tool_calls[]` entry whose tool is **`research_append`**, over the tracked files under `eval/runlogs/` excluding `.ann.json`, and take those whose `entry.citation_detail` is non-null. That gives 323 supplying the field, 306 objects and 17 strings. The primary figure does not depend on the method: it comes out the same under every traversal and op filter tried. A parenthetical here used to give the both-writers total as well, and it is deleted rather than corrected: three people produced three different values for it across three review rounds, one of them mine from a throwaway script, while the 17 never moved. Re-derive it if you need it. All of it sits in the e2e logs; the unit run logs carry no `citation_detail` at all. Nothing teaches the string form — `citation/SKILL.md` and `record-extractor.md` both teach the six keys — so the satisfying shape is the only documented one. Unlike the `stop_criteria` row above, the owning skill running does not prevent this shape: all 17 come from e2e runs that invoked `record-extraction` and ran the `record-extractor` agent, so its `0 of 241 writes made by runs that invoked the owning skill` has no analogue here. The satisfiability argument rests on the 5.3% rate alone. Run granularity: the `tool_calls[]` records carry `tool` and `args` only, so this shows the skill and agent ran, not that the agent made the write |
 | any section | `entry` for `append` must NOT carry an `id`; `update` must NOT change the `id` or the entry's prefix | `research-append.ts` ("must not carry an id — the tool assigns it"); id immutability: [`research-schema-spec.md` §"3. ID Conventions"](research-schema-spec.md#3-id-conventions) |
+| `hit_verdicts` append | **the hit is a retained hit of a full-text search** — `log_id` names a `fulltext_search` entry with a `results_ref`, and `hit_id` is a row of that sidecar (by bare id). Refused otherwise, naming the entry's tool or the hit count; a second append for one (`log_id`, `hit_id`, `person_id`) in the same call is refused too. An append for a key that already has a row is not refused: it is folded into an update of it (§3.10), and refused, `missing required field '<field>'`, when it leaves out `verdict`, `new_vital_info` or `rationale`, which a fresh append must also carry | `prepareHitVerdicts` in `research-append.ts`; `research-append-hit-verdicts.test.ts` |
+| `hit_verdicts` update | **sets only `verdict`, `new_vital_info` and `rationale`** — `log_id`, `hit_id`, `person_id` and `created` are refused (`updatableFields`, §3.1), so a verdict is never re-pointed | `SECTIONS.hit_verdicts` in `research-append.ts` |
+| `hit_verdicts` append, folded append, or update setting `verdict` or `new_vital_info` | **write-time precondition: `new_vital_info: true` is refused beside `verdict: "not_a_match"`** — a hit that is not the target holds no fact the target lacks. Checked on the merged row from either side, as `declarationStatusInvariants` is: an update that flips the verdict of a row flagged `true` is refused like one that sets the flag | `hitVerdictInvariants` in `research-append.ts` |
+| `hit_verdicts` append, folded append, or update setting `verdict` or `new_vital_info` | **write-time precondition: `new_vital_info: true` is refused on a hit already extracted** — some `research.assertions[].record_id` has the same bare id as `hit_id` (`arkToBareId`; assertions often hold the resolver URL, hit ids the bare ARK). Record-level on purpose, matching `extraction_append`'s resend skip (`sourceIdsForRecordIds`): an extracted hit is never extracted again, so it has no new information left to extract. A write-time check only: a row written `true` stays `true` after its hit is extracted, and an update touching neither field does not re-check it (`research-schema-spec.md` §5.16 says how a reader re-derives "not new") | `hitVerdictInvariants` in `research-append.ts` |
 | `assertions` append | **not a second copy of a fact the same extraction pass already wrote** (§3.4.3): in a batch that re-persists an already-persisted record (§3.4.1 `updated_existing`), refused, op-indexed, when the PRE-CALL document holds an assertion with the same (`source_id`, canonical `record_id`, `log_entry_id`, person — `record_persona_id` when set, else `record_role` — canonical `fact_type`). Batch-internal pairs are never compared; values are ignored; `record_role: "absent"` is exempt. Cost on the committed corpus (189 e2e runs, 4,817 writer calls, replayed by `dev/replay-reextraction-guard.ts`, 2026-09-23): of 145 folding calls it refuses 73, every one a re-send of the same pass (60 verbatim, 13 reworded) and none a call that recorded success; 0 image passes refused; the gate spares 26 calls the ungated key would have hit, the distinct later facts (a second parentage) among them | ADR-0011; D17 live run 2026-09-23 (`docs/plan/search-agent-prototype.md`); lead ruling 2026-09-23 |
 
 The LLM still makes every substantive decision and supplies the fields — the tool
@@ -1629,9 +1688,11 @@ is listed, and the name sentence only when a name is. It rides
   58 of 181, listing 366 links (31 in fixtures whose hint is the subject's own
   record, 45 a namesake's, 290 unlabelled; at most 24 in one state), 77 facts
   and 35 names.
-- **Who acts on it.** The row's only writer, `search-records`, holds no
-  `person_evidence` write, so its return carries the listed `pe_` ids in a
-  `Hand-back: person-evidence` line (`ut_search_records_028` asserts it). Whether
+- **Who acts on it.** None of the row's three writers (`search-records`,
+  `search-images`, `search-full-text`) holds a `person_evidence` write, so each
+  one's return carries the listed `pe_` ids in a `Hand-back: person-evidence`
+  line (`ut_search_records_028` asserts it, and one planted test in each of the
+  other two suites). Whether
   the main thread then routes them to person-evidence is not checked; the first
   e2e runs that write rows measure it.
 - **The same call stamps `record_persona_ids`.** On an append, and on an update
@@ -1956,6 +2017,42 @@ be the same place (`samePlace`: one place id, as `place_distance` reads each nam
 keeps them. `timeline_build` writes through `researchAppend` directly, from the
 project's own standard places, and is not judged.
 
+### 5.11 The last open question resolving removes unanchored minted persons
+
+A call that takes the project from at least one open question (any status but
+`resolved`, in the pre-call snapshot) to none removes, in the same write, every
+tree person no relationship edge connects, directly or through other persons, to
+an **anchor**. Anchors are the persons the project did not mint:
+
+- a FamilySearch-shaped id or a person in `starting-tree.gedcomx.json`
+  (`pidOrStartingPerson`);
+- a person carrying an attachment link (`isAttachmentLink`);
+- a `project.subject_person_ids` entry;
+- a person `timelines`, `proof_summaries` claims, `namesakes` or
+  `warning_justifications` name;
+- a person whose `person_evidence` links are the last proof-gate links
+  (`countsForProofGate`) behind a proof summary above `not_proved`. Without it,
+  `unlinkedProofInvariants` would refuse every later write to that summary, and
+  person-evidence could not relink a person that no longer exists.
+
+With the removed persons go every relationship touching one, and every
+`person_evidence` and `rejected_links` entry naming one, so no reference
+dangles: the 2026-09-30 "keep the rejection memory" rule does not outlive the
+person it names. Sources, assertions and log entries stay. With no anchor among the tree
+persons, nothing is removed: every person would read as minted. The tool result
+carries one `validation.warnings` line naming each removed person by id and
+name and counting the relationships and links, so the agent can tell the researcher. There is no
+undo field; restoring a person means re-adding it from its record.
+
+Code: `src/utils/unanchored-persons.ts`, called from `researchAppend` before
+the namesake judgement and validation, so both read the documents the call
+writes, and the removal is written with the call (`closesLastOpenQuestion`). A
+fact-rewrite rollback (§4) does not drop it. Decided by the lead, 2026-11-04. Measured on the 31
+e2e runs dated October 2026 (final tree and research, these anchor rules): 15
+ended with every question resolved, and in 6 of them the rule removes 17
+persons. The only `research.json` entries naming those persons are 91
+`person_evidence` links.
+
 ## 6. Decisions recorded
 
 - **One tool with `section` + `op`, not per-section tools.** Same rationale as
@@ -2113,6 +2210,24 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   stub minted from its record passes, and is refused once another record has been
   materialized onto the stub. Writing one source's links in the pass that mints
   its stub keeps that order out of reach.
+- **hit_verdicts (§3.10, §5)** — `research-append-hit-verdicts.test.ts`, end to
+  end through the caller entry point. `hit_id` stored in the sidecar's form from a
+  bare id and from a resolver URL; refused: a hit the search did not return
+  (nothing written), a blank or empty `hit_id`, a `record_search` entry, a
+  full-text entry with no `results_ref`, an unknown log id, two appends for one key
+  in one call, an append carrying an `id` (also where it would fold), an update
+  setting `log_id`, `hit_id`, `person_id` or `created`, a folding append
+  missing `new_vital_info`, `rationale` or `verdict` (the stored row
+  byte-unchanged; in a batch, one `ops[i]:` line per field). A repeat append
+  carrying all three returns `op: "update"` and the existing id, single and
+  batched, leaving one row whose identity and `created` are unchanged. A second
+  row on one key is a validation error `validateIntroduced` blocks when a write
+  introduces it, and a hand-edited one rides an unrelated append. Must fire: `not_a_match` with
+  `true` on an append, an update flipping a flagged row to `not_a_match`, `true`
+  on an extracted hit by append, update and folded append. Must not fire:
+  `possible_match` and `match` with `true`, `not_a_match` with `false`, `true` on
+  an unextracted hit, a `rationale` update on a stored `true` row whose hit is
+  extracted.
 - **namesake cap (§5)** — `research-append-namesake.test.ts`, end to end through
   `researchAppend`. **U1**: a row appends as `ns_001` with `created` stamped; an
   update setting `person_id`, alone or beside allowed fields, is refused and
@@ -3026,7 +3141,7 @@ write (sentinel decided by Richard, 2026-10-27):
 
 ### 11.7 Document mode — unindexed sources extracted in code
 
-> **Status:** specified, not built. It lands in the same merge to `main` as §11.6's call shape (lead, 2026-09-29).
+> **Status:** built.
 
 §11.6 extracts FamilySearch records. Document mode runs **the same extractor** on
 sources with no index: image transcriptions, full-text hits, external sites,
@@ -3057,10 +3172,10 @@ document travels as a tool parameter.
 | `documents` | yes | A non-empty list, one entry per source: `{ recordId, document, transcriptionRef?, imageFilename? }`. |
 | `documents[].recordId` | yes | The `capture:<descriptive>`, `ancestry:<collection>:<id>` or ARK that identifies the source. |
 | `documents[].document` | yes | The document below. |
-| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. A staged ref (`results/.staging/…`) is finalized into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`). A ref already finalized as `results/<log_id>.json` is cited under the `image_transcribe` log entry that names it, and nothing new is logged; a finalized ref no `image_transcribe` entry names refuses that document, so a search sidecar cannot be cited as a page. Two documents sharing one staged ref log it once and both cite that entry. Either way its `transcription` is copied into the source entry, so no model re-emits the page text. **A full-text hit** (Richard, 2026-10-28), `results/<log_id>.json#<hit id>` (a `ref` from `sidecar_read`'s `#hits`), is cited under the logged `fulltext_search` entry whose `results_ref` is the part before `#`, and nothing new is logged; the hit's `textDocument` is copied as the `transcription`, the source's `url` defaults to the hit's `sourceUrl`, and no `image_filename` is written. That document is refused when the search is still staged (log the search first), the base is not a logged `fulltext_search`, the hit is not in its results or carries no transcript, `recordId` is not the hit's id, or an earlier document in the call cites the same hit: one document per hit. |
+| `documents[].transcriptionRef` | no | The `results/` ref of the `StagedTranscription` the agent read. A staged ref (`results/.staging/…`) is finalized into this source's log entry (`tool: "image_transcribe"`, `stagedResultsRef`). A staged ref whose page a log entry already consumed is cited under that entry, whatever its outcome, and nothing new is logged; one consumed by another tool refuses that document, as does one that is gone or holds another tool's file. A ref already finalized as `results/<log_id>.json` is cited under the `image_transcribe` log entry that names it, and nothing new is logged; a finalized ref no `image_transcribe` entry names refuses that document, so a search sidecar cannot be cited as a page. Two documents sharing one staged ref log it once and both cite that entry. Either way its `transcription` is copied into the source entry, so no model re-emits the page text. **A full-text hit** (Richard, 2026-10-28), `results/<log_id>.json#<hit id>` (a `ref` from `sidecar_read`'s `#hits`), is cited under the logged `fulltext_search` entry whose `results_ref` is the part before `#`, and nothing new is logged; a held `results/.staging/…#<hit id>` ref is cited the same way once its search is logged; the hit's `textDocument` is copied as the `transcription`, the source's `url` defaults to the hit's `sourceUrl`, and no `image_filename` is written. That document is refused when the search is still staged (log the search first), the base is not a logged `fulltext_search`, the hit is not in its results or carries no transcript, `recordId` is not the hit's id, or an earlier document in the call cites the same hit: one document per hit. |
 | `documents[].imageFilename` | no | `image_transcribe`'s `imageRef`, relayed. The source's `image_filename` comes from the staged transcription's `image_ref` when `transcriptionRef` is set and that row has one, which wins over this value; otherwise this is written, except for a full-text hit `transcriptionRef`, which writes no `image_filename`. §5.4's warning still fires when a transcription lands without one. |
 | `questionIds` | no | Stamped on every assertion in the batch, as in §11.6. |
-| `absentPersons` | no | Expected-but-absent persons, keyed by `recordId`, as in §11.6. |
+| `absentPersons` | no | Expected-but-absent persons, keyed by `recordId`, as in §11.6. They join the document's own `absentPersons`. |
 
 A source with no `transcriptionRef` (pasted prose, PDF text, external-site text)
 is logged `tool: "user_provided"` with no sidecar.
@@ -3070,9 +3185,10 @@ written: one malformed document refuses the call, naming its index and JSON
 path, and writes nothing. After validation, the writes are §11.6's. There is one
 log batch, with one op per distinct staged ref, so documents for two entries on
 one page share its log entry. Then there is one `research_append` per source, in
-document order, so a refusal on document *k* leaves the earlier ones written. A
-document citing an already-finalized page is written even when the staged batch
-beside it is refused. The resend skip (a `recordId` that already has
+document order, so a refusal on document *k* leaves the earlier ones written.
+Each staged ref is checked before the log batch, so one bad ref refuses its own
+document and not the documents beside it. A document citing a logged page is
+written even when the log batch beside it is refused. The resend skip (a `recordId` that already has
 a source is skipped and named) makes a corrected resend of the whole batch
 safe. It ties a re-sent document to the call's `questionIds`, and plan-item
 completion runs afterwards, both as in §11.6.
@@ -3318,54 +3434,101 @@ such text would read as an instruction.
 ### 11.8 Person mode — a person's attached records, extracted and linked
 
 `extraction_append({ projectPath, personId })` is the baseline step (lead,
-2026-10-19 and 2026-10-20). It extracts every indexed record FamilySearch has
-attached to one tree person, and links each to that person as an unchecked
-candidate. It assumes every attachment is correct: no agent runs, and there is
-no `same_person` gate. Checking the attachments is a separate request.
+2026-10-19, 2026-10-20 and 2026-10-30). It extracts every indexed record
+FamilySearch has attached to one tree person or to a relationship they are an
+endpoint of, and links each persona to the tree person who attaches it as an
+unchecked candidate. It assumes every attachment is correct: no agent runs, and
+there is no `same_person` gate. Checking the attachments is a separate request.
 
 - **`personId`** is a tree id, or a FamilySearch id matched through the
   person's `ark` (`findAnchor`). It is sent alone: with `recordIds`,
   `documents` or `absences` it is refused like any two shapes together.
-- **Which records.** Only the person's own refs count: person-, name- and
-  fact-level (`collectSourceRefs`). Relationship-level refs are excluded,
-  because 32 of 42 in the e2e trees name the other party (decision 11). Each
+- **Which records.** The person's own refs: person-, name- and fact-level
+  (`collectSourceRefs`). And the `sources` refs of every tree relationship the
+  person is `person1`, `person2`, `parent` or `child` of (lead, 2026-10-30); a
+  relationship fact's own refs are not read. A relationship ref naming a record
+  already in the person's own set, or another persona of a record the own set
+  already reaches through its sidecar, is not extracted a second time. Each
   ref's tree source `url` must carry a `1:1:` record id; any other source (a
   memory, an artifact) is counted in `skipped` and named in the summary.
-- **No attachment.** A person with no `1:1:` attachment returns `ok: true` with
-  nothing written, the skipped count, and a summary saying no attached indexed
-  record exists.
+- **No attachment.** A person with no `1:1:` attachment on themselves or their
+  relationships returns `ok: true` with nothing written, the skipped count, and
+  a summary saying no attached indexed record exists on the person or the
+  person's relationships.
 - **Extraction** goes through the record-id path (§11.6), with no
   `questionIds`. Each record's source cites the tree `S` the import already
   made for it (`gedcomx_source_description_id`, matched on the bare `1:1:` id,
   never the URL string), so no second `S` is minted. Reusing that `S` does not
   make `same_person`'s leave-one-out work, because imported facts cite it too.
-- **Links.** For each record, the attached persona is the one whose
-  `persons[].ark` names the attached id, read off the record's sidecar; its
-  `id` (`p_…`) selects the assertions carrying it as `record_persona_id`. Each
-  becomes a `person_evidence` append with `confidence: "speculative"`,
-  `match_score: null` and `ATTACHMENT_LINK_RATIONALE` ("Linked because
-  FamilySearch has this record attached to this person; not verified."), in
-  a call whose lane is `person_evidence` alone, past the score gate on an
-  internal flag (§5). A record is linked only when none of that persona's
+- **Links.** A record group is a record and the other persona entries of the
+  same record its sidecar names (`personaGroups`). Each group gets one claim
+  map from persona (`p_…`, read off the sidecar's `persons[].ark`) to tree
+  person, filled in this order (lead, 2026-10-30):
+  1. **Own.** The persona whose ark the run person's own refs attach is
+     claimed by the run person, unless another tree person's own refs attach
+     the same ark: then nobody claims it (`ambiguous`), since a second
+     attacher is the sign the record was attached to the whole family.
+  2. **Household.** Any other persona whose ark exactly one tree person's own
+     refs attach is claimed by that person. Two attachers claim it for nobody
+     (`ambiguous`). A tree person who reaches the ark only through a
+     relationship ref claims nothing here.
+  3. **Party.** For a record read through a relationship ref, each endpoint of
+     each citing relationship is a party. A party whose own refs attach any
+     persona of the group gets no pick, even one that rule 1 or 2 left to
+     nobody: the set is taken before any party is asked, so the order of the
+     parties cannot change it. For each
+     other party, `selectSubjectPersona` (the
+     party's relationship role and gender against the record's own
+     relationships) picks its persona; a party with no known gender gets no
+     pick, since a lone candidate could be the other parent or partner. An
+     `unscored` selection (`record_unreadable`, `no_gender`,
+     `no_relationship`, `ambiguous`, `edges_disagree`) claims nothing and is
+     counted in `unselected`. A party pick that disagrees with any other
+     claim on the same persona leaves it to nobody (`ambiguous`).
+
+  Last, a tree person left claiming two personas of one record gets neither
+  (`ambiguous`), the run person included. So no persona is ever linked to two
+  tree persons, and no tree person to two personas of one record. Each count
+  is per persona, however many routes contest it.
+
+  Each claimed persona's assertions (`record_persona_id`) become
+  `person_evidence` appends to their claimant with `confidence:
+  "speculative"`, `match_score: null` and `ATTACHMENT_LINK_RATIONALE`
+  ("Linked because FamilySearch has this record attached to this person; not
+  verified."), in a call whose lane is `person_evidence` alone, past the score
+  gate on an internal flag (§5). A household or party link carries the same
+  rationale: "this person" is the claimant, whose own refs or relationship
+  attach the record. A persona is linked only when none of its
   assertions has a live link yet, so a persona someone already decided about
-  is never split across two tree persons; such a record is counted in
-  `alreadyLinked`. A pair `rejected_links` names is never re-linked, and is
-  counted in `rejectedSkipped`. Each record's links are one write, retried one
-  link at a time on a refusal, so one refused pair never sinks the rest. A
-  record whose persona cannot be found (a reused hint, whose entry keeps no
-  sidecar) is extracted and not linked.
+  is never split across two tree persons; it is counted in `alreadyLinked`. A
+  pair `rejected_links` names is never re-linked, and is counted in
+  `rejectedSkipped`. Each group's links are one write, retried one link at a
+  time on a refusal, so one refused pair never sinks the rest; a link still
+  refused is counted in `refused`. A record whose persona cannot be found (a
+  reused hint, whose entry keeps no sidecar) is extracted and not linked.
 - **Afterwards** an attachment link is only ever superseded (§5): raising it is
   a `same_person` score and a new link.
 - **Return:** `{ ok, records, extracted, linked, skipped, alreadyLinked?,
-  rejectedSkipped?, summary }`, with `records` as §11.6 returns them and one
-  code-written `summary` for the whole call, which says checking the
-  attachments is a separate request.
-- **Tool time,** measured 2026-10-20 against live FamilySearch with
-  `dev/try-extraction-append-person.ts` on william-sloan-spouse's subject LHG6-L26,
-  the largest attached set in the committed e2e starting trees (20 indexed
-  records): **19.1 s cold** (20 extracted, 119 assertions linked), **0.14 s** on a
-  re-send (all 20 records left as already linked). Cowork aborts a call at 60 s.
-  46 of 186 e2e subjects have at least one attached indexed record.
+  rejectedSkipped?, relationshipRecords?, ambiguous?, unselected?,
+  refused?, linkedPersons?, summary }`, with `records` as §11.6 returns them. `linked` is
+  the total over every tree person; `linkedPersons` (`{ [treePersonId]: count
+  }`) counts the links made to each tree person other than the run person. The
+  optional counts are present only when non-zero. One code-written `summary`
+  covers the whole call: it names the other persons linked, the
+  relationship-level records and the personas left unlinked as ambiguous or
+  unselected, and says checking the attachments is a separate request.
+- **Tool time,** measured 2026-11-04 against live FamilySearch with
+  `dev/try-extraction-append-person.ts`. Cowork aborts a call at 60 s.
+
+  | Subject (e2e fixture) | Records | Cold | Re-send | Linked | Other persons linked | `unselected` |
+  |---|---|---|---|---|---|---|
+  | LHG6-L26 (william-sloan-spouse), the largest own set | 20 own | 19.7 s | 0.06 s | 338 | 8 | 0 |
+  | LL4N-82C (maria-bracero-marriage), the most relationship refs | 14 own, 8 relationship | 11.6 s | 0.05 s | 244 | 13 | 1 |
+  | KHGX-XWG (thomas-hanrahan-marriage) | 3 own, 2 relationship | 5.0 s | 0.01 s | 81 | 5 | 0 |
+
+  No record group is read twice: LL4N-82C's 22 attached records are 15
+  extractions. Its `ambiguous: 2` is one tree person claiming two personas of
+  one record, so neither is linked. 46 of 186 e2e subjects have at least one attached indexed record.
 
 ## 12. `evaluation_append` — the second lane-scoped variant
 

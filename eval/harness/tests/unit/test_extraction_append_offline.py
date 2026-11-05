@@ -95,3 +95,25 @@ def test_a_person_id_call_stages_the_persons_attached_fixtures(tmp_path: Path):
     assert out["extracted"] == 1, out
     after = json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))
     assert after["person_evidence"] and all(pe["confidence"] == "speculative" for pe in after["person_evidence"])
+
+
+@pytest.mark.requires_engine_build
+def test_a_person_id_call_stages_a_record_attached_only_on_the_persons_relationship(tmp_path: Path):
+    """A record cited only by a relationship the person is an endpoint of is
+    staged too, since extraction_append reads relationship refs (issue #3516)."""
+    shutil.copy(SCENARIOS_DIR / "empty-project-just-created" / "research.json", tmp_path / "research.json")
+    tree = {
+        "persons": [
+            {"id": "I1", "gender": "Male", "names": [{"id": "N1", "given": "A", "surname": "B"}]},
+            {"id": "I2", "gender": "Female", "names": [{"id": "N2", "given": "C", "surname": "B"}]},
+        ],
+        "relationships": [{"id": "R1", "type": "Couple", "person1": "I1", "person2": "I2", "sources": [{"ref": "S1"}]}],
+        "sources": [{"id": "S1", "title": "a record", "url": "https://familysearch.org/ark:/61903/1:1:68Q9-K34P"}],
+    }
+    for name in ("tree.gedcomx.json", "starting-tree.gedcomx.json"):
+        (tmp_path / name).write_text(json.dumps(tree), encoding="utf-8")
+    _s, _c, tools = create_mock_server(["record-read-68Q9-K34P"], FIXTURES_DIR, workspace=tmp_path)
+    out = json.loads(asyncio.run(tools["extraction_append"].handler({"projectPath": str(tmp_path), "personId": "I1"}))["content"][0]["text"])
+    assert out.get("ok"), out
+    assert out["extracted"] == 1, out
+    assert out.get("relationshipRecords") == 1, out

@@ -215,7 +215,15 @@ not exposed; facets are not returned by this tool, and nor are the
 route to Format, Record Type and Language (`q.format`, `q.language` and
 `q.recordType` all 400), but nothing in the shipped reference docs asks for
 them: they ask for microfilmed and image-only holdings, which `filmNotes[]` and
-`availableOnline` answer. Declined for that reason, not overlooked.
+`availableOnline` answer. Declined for that reason, not overlooked. So
+`recordType`, `record_type`, `recordTypes`, `recordTypeGroup` and
+`recordTypeGroups` are refused before any request by the server's
+unknown-argument guard (`rejectUnknownArgs`, `src/utils/unknown-args.ts`),
+with a message that says to drop the key and search by place, and points to
+`volume_search`'s `recordTypeGroups` with its valid groups. It does not offer
+`subject` or `keywords` as a record-type filter: the two agents that call this
+tool search by place only, and `subject` was never measured narrowing by
+record type.
 
 **Always sent:** `m.queryRequireDefault=on`. Without it the query term
 constrains almost nothing — `q.keywords=lutheran` is **2,046,826** hits
@@ -655,6 +663,7 @@ result set rather than as another page.
 
 | condition | message |
 |---|---|
+| `recordType`, `record_type`, `recordTypes`, `recordTypeGroup` or `recordTypeGroups` supplied | refused by `server.ts`'s unknown-argument guard before the handler runs: `"catalog_search has no record-type filter, so drop {field} and search by place. To list record volumes by type, use volume_search's recordTypeGroups (an array of group names). Valid groups: {RECORD_TYPE_GROUP_NAMES}."` |
 | no searchable field given | names the eight fields and says at least one is required — refused before any request. "Given" means a value the query can **carry**: the guard and `buildQuery` ask the same question (`searchableValue`), because a guard testing presence while `buildQuery` tested `typeof === "string"` let `filmNumber: 568142` through to a query with no `q.*` filter at all — the whole catalogue's top 25, returned as if they answered. The MCP boundary checks argument names, not types (`server.ts` casts `arguments`), so a number, `null` or a blank string is a live input |
 | `standardPlace` present but not a usable name (object, array, blank) | names the value. It was the one field read unguarded, so the resolver's internal `s.trim is not a function` reached the agent verbatim. A number is coerced to its text, as `str` does for unquoted film numbers, and simply fails to resolve |
 | `exactPlace` without a place | refused, not dropped: `.exact` alone 400s, and silently dropping it returned the WIDER set with nothing saying so, so the agent read the hit count as an answer to the narrower question it asked |
