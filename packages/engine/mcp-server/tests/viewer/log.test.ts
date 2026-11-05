@@ -1,7 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
-import { describeRpc, logLine } from "../../viewer/request-log.js";
+import { describeRpc, headerVersion, logLine } from "../../viewer/request-log.js";
 import {
   DEEP_JSON,
   PUBLIC_URL,
@@ -118,6 +118,18 @@ describe("describeRpc", () => {
       method: "tools/call",
       tool: "read_project_view",
     });
+  });
+
+  it("names an unknown method only when it has a method's shape", () => {
+    expect(describeRpc({ method: "server/discover" })).toEqual({ method: "other", name: "server/discover" });
+    for (const method of ["/Users/x", "a/b/c", "server/abc123", "x".repeat(60), "bare"]) {
+      expect(describeRpc({ method })).toEqual({ method: "other" });
+    }
+  });
+
+  it("logs a protocol version header only when it looks like one", () => {
+    expect(headerVersion("2026-07-28")).toEqual({ protocolVersion: "2026-07-28" });
+    for (const value of [undefined, "/Users/x", ["2026-07-28"], "2026-07-28x"]) expect(headerVersion(value)).toEqual({});
   });
 
   it("takes clientInfo and the declared extensions from initialize", () => {

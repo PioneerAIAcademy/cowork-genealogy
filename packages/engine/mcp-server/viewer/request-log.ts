@@ -19,6 +19,15 @@ const KNOWN_METHODS = new Set([
   "resources/templates/list",
 ]);
 const KNOWN_TOOLS = new Set([SHOW_PROJECT, READ_PROJECT_VIEW]);
+/** An unknown method worth naming: M0 needs to see what a host tries. Letters and one
+ *  slash, so it cannot carry a path with a leading slash, a secret or a token. */
+const METHOD_SHAPE = /^[a-z]+\/[a-zA-Z]{1,40}$/;
+const VERSION_SHAPE = /^\d{4}-\d{2}-\d{2}$/;
+
+/** The protocol version a request's header names, when it looks like one. */
+export function headerVersion(value: unknown): LogFields {
+  return typeof value === "string" && VERSION_SHAPE.test(value) ? { protocolVersion: value } : {};
+}
 
 interface RpcShape {
   method?: unknown;
@@ -43,6 +52,9 @@ export function describeRpc(body: unknown): LogFields {
   const message = body as RpcShape | null | undefined;
   const method = typeof message?.method === "string" && KNOWN_METHODS.has(message.method) ? message.method : "other";
   const params = message?.params;
+  if (method === "other" && typeof message?.method === "string" && METHOD_SHAPE.test(message.method)) {
+    return { method, name: message.method };
+  }
   if (method === "tools/call") {
     const name = params?.name;
     return { method, tool: typeof name === "string" && KNOWN_TOOLS.has(name) ? name : "other" };
