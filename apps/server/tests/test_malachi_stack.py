@@ -12,6 +12,7 @@ from __future__ import annotations
 import copy
 import http.server
 import io
+import ipaddress
 import json
 import os
 import re
@@ -154,12 +155,23 @@ def chat_violations(doc: dict) -> list[str]:
     return [] if value == "false" else [f"chat: web's GENEALOGY_CHAT is {value!r}, not false"]
 
 
+def _is_public_address(text: Any) -> bool:
+    try:
+        return ipaddress.ip_address(str(text)).is_global
+    except ValueError:
+        return False
+
+
 def shape_violations(doc: dict) -> list[str]:
     out = []
     services = doc["services"]
     if set(services) != SERVICES:
         out.append(f"services: {sorted(set(services) ^ SERVICES)}")
     web, tools = _env(services["web"]), _env(services["tools"])
+    resolvers = services["tools"].get("dns") or []
+    resolvers = [resolvers] if isinstance(resolvers, str) else resolvers
+    if not resolvers or not all(_is_public_address(r) for r in resolvers):
+        out.append("dns: tools needs public resolvers, or the public name gives the tailnet address and is refused")
     if web.get("WEB_DIST_DIR") != "":
         out.append("spa: web must set WEB_DIST_DIR to a literal blank")
     if "--no-access-log" not in _argv(services["web"]):
@@ -357,6 +369,13 @@ DEFECTS: list[tuple[str, str, Callable[[dict], None]]] = [
     ("shape", "no memory cap", _unset("tools", "mem_limit")),
     ("shape", "no rotation", _unset("minio", "logging")),
     ("shape", "one-shot restarts", _set("migrate", "restart", "unless-stopped")),
+    ("shape", "tools on the host's resolver", _unset("tools", "dns")),
+    ("shape", "no resolvers", _set("tools", "dns", [])),
+    ("shape", "the tailnet's resolver", _set("tools", "dns", ["100.100.100.100"])),
+    ("shape", "the host's stub resolver", _set("tools", "dns", ["127.0.0.53"])),
+    ("shape", "a private resolver as a string", _set("tools", "dns", "192.168.1.1")),
+    ("shape", "one public, one tailnet", _set("tools", "dns", ["1.1.1.1", "100.100.100.100"])),
+    ("shape", "a resolver from the shell", _set("tools", "dns", ["${DNS:-}"])),
 ]
 
 LEGITIMATE: list[tuple[str, str, Callable[[dict], None]]] = [
@@ -375,6 +394,8 @@ LEGITIMATE: list[tuple[str, str, Callable[[dict], None]]] = [
     ("chat", "unquoted", _set_env("web", "GENEALOGY_CHAT", False)),
     ("shape", "linking off, unquoted", _set_env("web", "OPENROUTER_LINKING_ENABLED", False)),
     ("shape", "list form", _env_as_list("web")),
+    ("shape", "one resolver as a string", _set("tools", "dns", "9.9.9.9")),
+    ("shape", "an IPv6 resolver", _set("tools", "dns", ["2606:4700:4700::1111"])),
 ]
 
 

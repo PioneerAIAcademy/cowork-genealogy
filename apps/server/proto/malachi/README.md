@@ -53,9 +53,10 @@ make malachi-check PUBLIC=1
 `PUBLIC=1` runs on `malachi`, where that name may resolve to the tailnet, so it does not prove
 Funnel. Only a request from a machine off the tailnet does.
 
-If `REACH=1` fails, the sidecars bind host loopback only, so a container reaches them through the
-public hostname or not at all. Set `WIKI_API_URL` and `POP_STATS_URL` in the env file. The next
-thing to try is `extra_hosts` mapping the hostname to the host's tailnet address; it is untested.
+`tools` reaches the sidecars through Funnel, because they bind host loopback. It names public
+resolvers in `compose.yml` for that: the host's resolver answers with the tailnet address, whose
+listener refuses a container. If `REACH=1` fails with `ECONNREFUSED`, look there first. A plain
+`malachi-check` does not run `REACH=1`, so `tests/test_malachi_stack.py` pins the setting.
 
 Another process may hold port 8006 for a while, such as a probe. `EDGE=off` on `malachi-up` stops
 the edge and leaves everything else running. `malachi-check` fails while the edge is stopped
