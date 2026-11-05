@@ -20,9 +20,9 @@
  * MEASURED AND NEVER SHIPPED: it runs past Cowork's ~60 s call ceiling and
  * spends the hosted FamilySearch budget.
  *
- * RESULTS (2026-11-04, ark:/61903/3:1:33SQ-GYY1-B2G). No endpoint found that
- * returns the index entries on one image. Every scripted lead is closed; what
- * remains is the browser capture, which is NOT optional (see STILL OPEN).
+ * RESULTS (2026-11-04, ark:/61903/3:1:33SQ-GYY1-B2G). THE ENDPOINT EXISTS, and
+ * the browser capture is what found it -- no amount of guessing at paths would
+ * have. Candidates 0-3 below are all negative; candidate 4 is the answer.
  *
  *   Key shapes resolved (step 0), all distinct and all needed:
  *     imageId    005155907_00688          film 005155907
@@ -80,13 +80,44 @@
  *       being hunted. Now an explicit ERROR verdict, plus a second attempt,
  *       which took thrown requests to zero.
  *
- * STILL OPEN - the one step a script cannot take
- *   The viewer's index panel is an XHR. Open the ARK in a browser, DevTools ->
- *   Network -> XHR, and record every request the panel fires, plus the panel's
- *   own row count and whether "Michael Barry" and "Mila Fuller" are among
- *   them. The issue names this step first ("Start from the viewer's network
- *   tab on the Peru image"). Until it is taken, "no endpoint exists" is NOT a
- *   finished answer for this card.
+ * THE ANSWER (candidate 4). The viewer fills its index panel with a TWO-CALL
+ * chain against https://www.familysearch.org/search/filmdatainfo, both POST,
+ * both bodies shaped {"type":"<type>","args":{...}}:
+ *
+ *   1. image-data -- args {imageURL, locale, state}. 196 BYTES; the imageURL is
+ *      the viewer URL (…?lang=en&i=6). Returns recordList (27 record URLs for
+ *      this image) and a partial records array (12).
+ *   2. image-data-indexed-records -- args {imageData: <the whole object step 1
+ *      returned>, locale, state}. Hydrates records to all 27.
+ *
+ *   For the Peru page: 27 entries. MICHAEL BARRY IS ENTRY 0 AND MILA FULLER IS
+ *   ENTRY 1 (persona arks 1:1:XHPP-F3V and 1:1:XHPP-FQX) -- the two the agent
+ *   reported to the researcher as missed by the index are the first two names
+ *   on the page.
+ *
+ *   ORDER IS CARRIED, NOT INFERRED. Every record has a SortKey field,
+ *   000000000_<film>_<imageNbr>_<seq>_<id>, strictly ascending in array order
+ *   (02145816 … 02145842), alongside ImageNbr (688) and DigitalFilmNbr. So a
+ *   tool can return page order from the source, which the issue requires.
+ *
+ *   AUTH, and the finding that shapes step 2:
+ *     - Step 2 answers 200 with NO bearer at all, given a valid imageData body
+ *       (measured by replaying the captured 134 KB body: 200, records=12 with
+ *       and without Authorization).
+ *     - Step 1 refuses our OAuth bearer: 403 {"error":{"message":"User not
+ *       authorized to see this image."}}. That is an APPLICATION refusal, not
+ *       the Imperva UA gate, and the two are distinguishable by body (8,290 B
+ *       with error.message, versus 347 B with an incidentId). The same human
+ *       sees this image in a signed-in browser, so what differs is the
+ *       credential type: this route appears to want the web session's cookies.
+ *     - imageData.records and imageData.recordList are both REQUIRED by step 2
+ *       (dropping either gives 500), so the chain cannot be entered at step 2.
+ *     - BROWSER_USER_AGENT is required throughout.
+ *
+ *   So the capability exists and returns exactly what the researcher asked for,
+ *   but the chain's entry point is not callable with the credential the engine
+ *   holds. Step 2 of the CARD has to decide what to do about that; this probe
+ *   does not.
  *
  * VANTAGE POINT
  *   2026-11-04, from the developer's own machine on a home connection, not a
@@ -482,6 +513,64 @@ async function main() {
     "    NOTE: probe-catalog section D's 200/400 method was measured on catalog/v3/search,\n" +
       "    a different service. Whether hr/v2/personas hard-400s on an unknown parameter is\n" +
       "    itself unmeasured, so IGNORED is the expected shape of a negative here.",
+  );
+
+  // ── Candidate 4: the endpoint the viewer actually uses ────────────────────
+  // FOUND, by capturing the viewer's Network tab -- the step the issue names
+  // first and the only one that answers the question by observation. The index
+  // panel is filled by a TWO-CALL chain against /search/filmdatainfo, and
+  // neither call is reachable by guessing at paths.
+  //
+  //   1. POST .../image-data   body {"type":"image-data","args":{imageURL,
+  //      locale,state}} -- 196 bytes, just the viewer URL. Returns recordList
+  //      (every record URL on the image) and a partial records array.
+  //   2. POST .../image-data-indexed-records  body {"type":...,"args":
+  //      {"imageData":<the whole object step 1 returned>,locale,state}}.
+  //      Hydrates records to the full set.
+  //
+  // Step 2 is reachable with NO bearer at all. Step 1 refuses ours.
+  console.log("\n## Candidate 4 — /search/filmdatainfo (the viewer's own chain)");
+  const FILMDATA = "https://www.familysearch.org/search/filmdatainfo";
+  const viewerUrl = `${arkToUrl(ark)}?lang=en&i=6`;
+  const state = { imageOrFilmUrl: "", selectedImageIndex: -1, viewMode: "i" };
+
+  async function filmdata(type: string, args: unknown, arm: ArmName): Promise<ArmResult> {
+    const headers: Record<string, string> = {
+      ...armHeaders(arm, token, "application/json, text/plain, */*"),
+      "Content-Type": "application/json",
+    };
+    try {
+      const res = await fetchWithRetry(
+        `${FILMDATA}/${type}`,
+        { method: "POST", headers, body: JSON.stringify({ type, args }) },
+        60_000,
+        { attempts: 2, budgetMs: 90_000 },
+      );
+      const text = await res.text();
+      let entries: number | null = null;
+      try {
+        const b = JSON.parse(text) as { records?: unknown[] };
+        entries = Array.isArray(b.records) ? b.records.length : null;
+      } catch {
+        entries = null;
+      }
+      return { arm, status: res.status, contentType: res.headers.get("content-type"), bytes: text.length, entries, sample: text.slice(0, 200).replace(/\s+/g, " "), text };
+    } catch (e) {
+      return { arm, status: `THREW ${(e as Error).name}`, contentType: null, bytes: 0, entries: null, sample: (e as Error).message.slice(0, 150), text: "" };
+    }
+  }
+
+  console.log("\n### step 1 — image-data (the chain's entry point)");
+  for (const arm of ARMS) {
+    const r = await filmdata("image-data", { imageURL: viewerUrl, locale: "en", state }, arm);
+    console.log(`    ${arm.padEnd(20)} ${String(r.status).padEnd(8)} ${r.bytes}B  ${r.sample.slice(0, 90)}`);
+  }
+  console.log(
+    "    The 403 body here is an APPLICATION refusal (\"User not authorized to see\n" +
+      "    this image.\"), not the Imperva UA gate -- the UA gate returns HTML. The same\n" +
+      "    human sees this image in a signed-in browser, so what differs is the\n" +
+      "    credential type: this route wants the web session's cookies, not our OAuth\n" +
+      "    bearer. That is the finding that shapes step 2.",
   );
 
   // ── The fallback: measured, never shipped ─────────────────────────────────
