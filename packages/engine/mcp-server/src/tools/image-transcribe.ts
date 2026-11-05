@@ -492,7 +492,7 @@ export async function imageTranscribeMcpTool(
   principal: Principal,
 ): Promise<ImageTranscribeToolResponse | NoProjectResult> {
   if (input?.file !== undefined) return compactOrPass(await imageTranscribeTool(input, principal));
-  const cls = await classifyProjectPath(input?.projectPath);
+  const cls = input?.projectPath === undefined ? "missing_arg" : await classifyProjectPath(input.projectPath);
   if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
   if (cls === "missing_arg" || cls === "no_project") {
     const { projectPath: _dropped, ...unsaved } = input;

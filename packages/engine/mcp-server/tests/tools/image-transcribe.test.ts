@@ -49,6 +49,7 @@ import { __clearImageBrowseMemoryForTests } from "../../src/utils/browse-budget.
 import { imageReadTool } from "../../src/tools/image-read.js";
 import {
   runWithProjectStore,
+  unboundProjectStore,
   type ProjectStore,
 } from "../../src/store/project-store.js";
 import type { ImageTranscribeInput, ImageTranscribeResult } from "../../src/types/image-transcribe.js";
@@ -1638,6 +1639,15 @@ describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the pag
     if ("ok" in r) throw new Error("unexpected no-project answer");
     expect(r.transcription).toBe("Moses Dustin, Captain");
     for (const key of ["staged", "digest", "imageRef", "stagingError"]) expect(r).not.toHaveProperty(key);
+  });
+
+  it("reads the page with no projectPath under a store that refuses every call (the connector)", async () => {
+    mockOpenRouterOk("Moses Dustin, Captain");
+    const r = await runWithProjectStore(unboundProjectStore("This call named no project."), () =>
+      imageTranscribeMcpTool({ imageId: "004884748_02613" }, LOCAL),
+    );
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r.transcription).toBe("Moses Dustin, Captain");
   });
 
   it("returns the page inline for a folder that is not a project, writing nothing into it", async () => {
