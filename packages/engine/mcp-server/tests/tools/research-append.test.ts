@@ -18056,7 +18056,7 @@ describe("research_append — person_evidence to a ref-less added person", () =>
       sources: [{ id: "SD-001", title: "1850 U.S. Census" }, { id: "SD-002", title: "Baptism" }],
     };
     const r = research();
-    const a2 = r.assertions.find((a: any) => a.id === "a_002");
+    const a2 = r.assertions.find((a: any) => a.id === "a_002") as any;
     Object.assign(a2, { record_role: "principal", value: "John Smith", structured_value: { given: "John", surname: "Smith" } });
     await write(r, true, t);
     await attestPairing(dir, { recordId: "rec2", assertionId: "a_002", personId: "I2" });
