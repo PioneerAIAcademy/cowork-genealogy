@@ -621,15 +621,17 @@ describe("project_context", () => {
     expect(q2?.storedStatus).toBeNull();
   });
 
-  it("questionStatuses carries each question's text, resolved ones included, so it can be read against the objective", async () => {
-    const long = "x".repeat(200);
+  // A resolved question is absent from openQuestions, so this is the only place its
+  // text reaches the router reading the objective against every question.
+  it("questionStatuses carries each question's text, resolved ones included, truncated", async () => {
+    const long = "W".repeat(200);
     await writeProject(
       {
-        project: { id: "rp_001", objective: "Where was she born, and who were her parents?", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+        project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
         questions: [
-          { id: "q_001", question: "Where was she born?", status: "resolved" },
+          { id: "q_001", question: "Where was Elizabeth born?", status: "resolved" },
           { id: "q_002", question: long, status: "in_progress" },
-          { id: "q_003", status: "open" },
+          { id: "q_003", status: "framed" },
         ],
       },
       { persons: [], relationships: [], sources: [] },
@@ -639,12 +641,12 @@ describe("project_context", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
 
-    expect(r.openQuestions.map((q) => q.id)).toEqual(["q_002", "q_003"]);
-    const byId = new Map(r.questionStatuses.map((q) => [q.id, q]));
-    expect(byId.get("q_001")).toMatchObject({ question: "Where was she born?", storedStatus: "resolved" });
-    expect(byId.get("q_002")?.question).toBe(r.openQuestions[0].question);
-    expect(byId.get("q_002")?.question).toHaveLength(140);
-    expect(byId.get("q_003")?.question).toBe("");
+    expect(r.openQuestions.map((q) => q.id)).not.toContain("q_001");
+    const byId = new Map(r.questionStatuses.map((q) => [q.id, q.question]));
+    expect(byId.get("q_001")).toBe("Where was Elizabeth born?");
+    expect(byId.get("q_002")).toBe(`${"W".repeat(139)}…`);
+    expect(byId.get("q_002")).toBe(r.openQuestions.find((q) => q.id === "q_002")?.question);
+    expect(byId.get("q_003")).toBe("");
   });
 });
 

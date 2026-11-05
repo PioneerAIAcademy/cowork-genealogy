@@ -158,6 +158,7 @@ finding a record; reviewing the sources already attached to a person; whether
 two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
+with no project and no FamilySearch person ID, the names and details recorded in a record set (a roll, register, muster list or volume) rather than research on one person;
 where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers).
 Two or more of them in one message is still bounded: deliver the first this
 turn, name the others, and offer the next, ending on its "Continue with …?" line
@@ -186,11 +187,17 @@ only when the user's message itself states a mother's 1900 or 1910 US census
 children-born and children-living counts — "are any missing?" with no counts is
 `@plugin:search-records` alone. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
 of two persons already confirmed identical; a "should these be merged?" never goes
-to `@plugin:tree-edit`. A records-request letter you write yourself in this turn,
+to `@plugin:tree-edit`. The names and details in a record set, with no project and no FamilySearch
+person ID, go to `@plugin:search-images` with the message copied verbatim and no
+`projectPath`, even when the message names no images; relay everything after
+its final `---` verbatim, and never `@plugin:init-project`. A records-request letter you write yourself in this turn,
 with no hand-off. A transcription you deliver yourself: call
-`image_transcribe({ projectPath, imageId | ark | file })`, show the page from
+`image_transcribe({ projectPath, imageId | ark | file })` — always with
+`projectPath` when a project exists, however new or empty — show the page from
 `sidecar_read({ projectPath, ref: staged.resultsRef })`, and give `viewerUrl` as a
-link. A reading the user gives that differs from the page goes to
+link. Only when `project_context` returns `reason: "no_project"`: one named image, called
+without `projectPath`, its `transcription` shown inline; finding or reading more
+pages goes to `@plugin:search-images`. A reading the user gives that differs from the page goes to
 `@plugin:record-structurer` with that `staged.resultsRef`, as the source's `flags`. Do not walk the routing table from the top for one: that table
 sequences a *job*, and on a project with no questions yet its first satisfiable
 row sends you to `@plugin:question-selection` — the one place a bounded request
@@ -313,6 +320,7 @@ message.
    | If research.json has... | Invoke |
    |-------------------------|--------|
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states **no objective** — no FamilySearch person ID and no specific research question. An expression of intent without a person ("Let's start a new research project.", "I want to start researching", "begin a new project") is **no objective**: do not answer the user directly, always invoke `@plugin:tree-survey` | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay everything after its final `---` verbatim, or its whole return when it has none, and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
+   | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume) rather than research on one person | `@plugin:search-images` with the message verbatim and no `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | `project_context` lists **`waitingPages`** | `extraction_append({ projectPath, attachWaitingPages: true })`: one call, no hand-off. Then route again. |
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
@@ -777,9 +785,11 @@ and offers to extract the Matches.
   resolution precedes proof. Shortcuts break the audit trail.
 - It does not interview the user for project setup. If
   `project_context` returns `no_project` and the message states an objective, route to
-  `@plugin:init-project` first, passing the researcher's own words verbatim, plus
-  `projectPath`, and nothing else. With no objective stated, the first row of the
-  table applies.
+  `@plugin:init-project` first (except an ask for the names and details in a
+  record set with no FamilySearch person ID, which goes to `@plugin:search-images`), passing the researcher's own words verbatim, plus
+  `projectPath`, and nothing else. With no objective stated, spawn
+  `@plugin:tree-survey` (the table's first row); do not ask the researcher for a
+  person or objective first.
 
 ## Re-invocation behavior
 

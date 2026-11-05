@@ -1,5 +1,5 @@
 {
-  "$comment": "Shared test vectors pinning the agreement (and the documented seams) between the three tree.gedcomx.json validity gates: `schema` = the JSON Schema (tree-gedcomx.schema.json, run by harness.schema_validator), `integrity` = the fixture gate's structural mirror (tree_integrity_errors in eval/harness/e2e/validate_fixture.py — reference integrity, id uniqueness, and the fixture-only living-person ToS rule), `runtime` = the engine's validateGedcomx (packages/engine/mcp-server/src/validation/validator.ts, the tree_edit write gate). Each expectation is `true` when that gate reports zero errors. Consumed by eval/harness/tests/unit/test_gate_vectors.py (schema + integrity) and packages/engine/mcp-server/tests/validation/gate-vectors.test.ts (runtime) — one gate relaxing or tightening breaks its consumer, forcing this file (and therefore the other gates' review) to be updated in the same PR. The battery deliberately includes a passes-everything control and a fails-everything control so a silently no-opping checker cannot go unnoticed; any future gate audit should keep both. Note the intentional seams the vectors document rather than hide: duplicate ids and the living-person rules are fixture-gate-only (the runtime validator accepts them), and everything under `living` is invisible to the JSON Schema. The fact-type pattern is NOT a seam: the runtime check mirrors the schema's ^[A-Z] exactly (digit-initial and empty types fail both).",
+  "$comment": "Shared test vectors pinning the agreement (and the documented seams) between the three tree.gedcomx.json validity gates: `schema` = the JSON Schema (tree-gedcomx.schema.json, run by harness.schema_validator), `integrity` = the fixture gate's structural mirror (tree_integrity_errors in eval/harness/e2e/validate_fixture.py — reference integrity, id uniqueness, ancestry cycles, and the fixture-only living-person ToS rule), `runtime` = the engine's validateGedcomx (packages/engine/mcp-server/src/validation/validator.ts, the tree_edit write gate). Each expectation is `true` when that gate reports zero errors. Consumed by eval/harness/tests/unit/test_gate_vectors.py (schema + integrity) and packages/engine/mcp-server/tests/validation/gate-vectors.test.ts (runtime) — one gate relaxing or tightening breaks its consumer, forcing this file (and therefore the other gates' review) to be updated in the same PR. The battery deliberately includes a passes-everything control and a fails-everything control so a silently no-opping checker cannot go unnoticed; any future gate audit should keep both. Note the intentional seams the vectors document rather than hide: duplicate ids and the living-person rules are fixture-gate-only (the runtime validator accepts them), and everything under `living` is invisible to the JSON Schema. The fact-type pattern is NOT a seam: the runtime check mirrors the schema's ^[A-Z] exactly (digit-initial and empty types fail both).",
   "vectors": [
     {
       "name": "sane-control",
@@ -958,6 +958,439 @@
         ],
         "relationships": [],
         "sources": []
+      }
+    },
+    {
+      "name": "parentchild-2-cycle",
+      "description": "sane-control plus R3 recording I3 as I1's parent while R1 records I1 as I3's: a two-person ParentChild loop. Nothing else differs, so only the ancestry-cycle rule can fail it. Invisible to the JSON Schema (a cycle is not expressible there); the fixture gate and the runtime both refuse it (#4085).",
+      "expect": {
+        "schema": true,
+        "integrity": false,
+        "runtime": false
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "I1",
+            "ark": "ark:/61903/4:1:KGS8-LY1",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N1",
+                "preferred": true,
+                "given": "Patrick",
+                "surname": "Flynn",
+                "prefix": "Rev.",
+                "type": "BirthName",
+                "sources": [
+                  {
+                    "ref": "S1"
+                  }
+                ]
+              }
+            ],
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "primary": true,
+                "date": "~1845",
+                "standard_date": "Abt 1845",
+                "place": "Ireland",
+                "standard_place": "Ireland",
+                "sources": [
+                  {
+                    "ref": "S1",
+                    "page": "p. 4",
+                    "quality": 0
+                  }
+                ]
+              },
+              {
+                "id": "F2",
+                "type": "Occupation",
+                "value": "Miner"
+              }
+            ]
+          },
+          {
+            "id": "I2",
+            "living": false,
+            "gender": "Female",
+            "names": [
+              {
+                "id": "N2",
+                "given": "Mary",
+                "surname": "Flynn"
+              }
+            ]
+          },
+          {
+            "id": "I3",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N3",
+                "given": "Thomas",
+                "surname": "Flynn"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "id": "R1",
+            "type": "ParentChild",
+            "parent": "I1",
+            "child": "I3",
+            "subtype": "Biological",
+            "notes": [
+              "Relationship inferred from the 1850 household."
+            ],
+            "sources": [
+              {
+                "ref": "S1",
+                "quality": 3
+              }
+            ]
+          },
+          {
+            "id": "R2",
+            "type": "Couple",
+            "person1": "I1",
+            "person2": "I2",
+            "facts": [
+              {
+                "id": "F3",
+                "type": "Marriage",
+                "date": "1867",
+                "sources": [
+                  {
+                    "ref": "S1",
+                    "page": "line 12"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "R3",
+            "type": "ParentChild",
+            "parent": "I3",
+            "child": "I1",
+            "sources": [
+              {
+                "ref": "S1",
+                "quality": 3
+              }
+            ]
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "1850 U.S. Federal Census"
+          }
+        ]
+      }
+    },
+    {
+      "name": "parentchild-3-cycle",
+      "description": "sane-control plus R3 (I3 parent of I2) and R4 (I2 parent of I1), closing I1 -> I3 -> I2 -> I1 through three people with no direct reverse link. Only the ancestry-cycle rule can fail it (#4085).",
+      "expect": {
+        "schema": true,
+        "integrity": false,
+        "runtime": false
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "I1",
+            "ark": "ark:/61903/4:1:KGS8-LY1",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N1",
+                "preferred": true,
+                "given": "Patrick",
+                "surname": "Flynn",
+                "prefix": "Rev.",
+                "type": "BirthName",
+                "sources": [
+                  {
+                    "ref": "S1"
+                  }
+                ]
+              }
+            ],
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "primary": true,
+                "date": "~1845",
+                "standard_date": "Abt 1845",
+                "place": "Ireland",
+                "standard_place": "Ireland",
+                "sources": [
+                  {
+                    "ref": "S1",
+                    "page": "p. 4",
+                    "quality": 0
+                  }
+                ]
+              },
+              {
+                "id": "F2",
+                "type": "Occupation",
+                "value": "Miner"
+              }
+            ]
+          },
+          {
+            "id": "I2",
+            "living": false,
+            "gender": "Female",
+            "names": [
+              {
+                "id": "N2",
+                "given": "Mary",
+                "surname": "Flynn"
+              }
+            ]
+          },
+          {
+            "id": "I3",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N3",
+                "given": "Thomas",
+                "surname": "Flynn"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "id": "R1",
+            "type": "ParentChild",
+            "parent": "I1",
+            "child": "I3",
+            "subtype": "Biological",
+            "notes": [
+              "Relationship inferred from the 1850 household."
+            ],
+            "sources": [
+              {
+                "ref": "S1",
+                "quality": 3
+              }
+            ]
+          },
+          {
+            "id": "R2",
+            "type": "Couple",
+            "person1": "I1",
+            "person2": "I2",
+            "facts": [
+              {
+                "id": "F3",
+                "type": "Marriage",
+                "date": "1867",
+                "sources": [
+                  {
+                    "ref": "S1",
+                    "page": "line 12"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "R3",
+            "type": "ParentChild",
+            "parent": "I3",
+            "child": "I2",
+            "sources": [
+              {
+                "ref": "S1",
+                "quality": 3
+              }
+            ]
+          },
+          {
+            "id": "R4",
+            "type": "ParentChild",
+            "parent": "I2",
+            "child": "I1",
+            "sources": [
+              {
+                "ref": "S1",
+                "quality": 3
+              }
+            ]
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "1850 U.S. Federal Census"
+          }
+        ]
+      }
+    },
+    {
+      "name": "pedigree-collapse-diamond",
+      "description": "Pedigree collapse, the real genealogy shape a cycle check must not refuse: I1 is the parent of both I2 and I4, who are both recorded as parents of I3, so I3 reaches I1 by two lines. No person is their own ancestor. sane-control's persons plus I4 (living false, a given name); the Couple is left out so no parent is married to their child. Passes every gate (#4085).",
+      "expect": {
+        "schema": true,
+        "integrity": true,
+        "runtime": true
+      },
+      "tree": {
+        "persons": [
+          {
+            "id": "I1",
+            "ark": "ark:/61903/4:1:KGS8-LY1",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N1",
+                "preferred": true,
+                "given": "Patrick",
+                "surname": "Flynn",
+                "prefix": "Rev.",
+                "type": "BirthName",
+                "sources": [
+                  {
+                    "ref": "S1"
+                  }
+                ]
+              }
+            ],
+            "facts": [
+              {
+                "id": "F1",
+                "type": "Birth",
+                "primary": true,
+                "date": "~1845",
+                "standard_date": "Abt 1845",
+                "place": "Ireland",
+                "standard_place": "Ireland",
+                "sources": [
+                  {
+                    "ref": "S1",
+                    "page": "p. 4",
+                    "quality": 0
+                  }
+                ]
+              },
+              {
+                "id": "F2",
+                "type": "Occupation",
+                "value": "Miner"
+              }
+            ]
+          },
+          {
+            "id": "I2",
+            "living": false,
+            "gender": "Female",
+            "names": [
+              {
+                "id": "N2",
+                "given": "Mary",
+                "surname": "Flynn"
+              }
+            ]
+          },
+          {
+            "id": "I3",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N3",
+                "given": "Thomas",
+                "surname": "Flynn"
+              }
+            ]
+          },
+          {
+            "id": "I4",
+            "living": false,
+            "gender": "Male",
+            "names": [
+              {
+                "id": "N4",
+                "given": "James",
+                "surname": "Flynn"
+              }
+            ]
+          }
+        ],
+        "relationships": [
+          {
+            "id": "R3",
+            "type": "ParentChild",
+            "parent": "I1",
+            "child": "I4",
+            "sources": [
+              {
+                "ref": "S1",
+                "quality": 3
+              }
+            ]
+          },
+          {
+            "id": "R4",
+            "type": "ParentChild",
+            "parent": "I2",
+            "child": "I3",
+            "sources": [
+              {
+                "ref": "S1",
+                "quality": 3
+              }
+            ]
+          },
+          {
+            "id": "R5",
+            "type": "ParentChild",
+            "parent": "I4",
+            "child": "I3",
+            "sources": [
+              {
+                "ref": "S1",
+                "quality": 3
+              }
+            ]
+          },
+          {
+            "id": "R6",
+            "type": "ParentChild",
+            "parent": "I1",
+            "child": "I2",
+            "sources": [
+              {
+                "ref": "S1",
+                "quality": 3
+              }
+            ]
+          }
+        ],
+        "sources": [
+          {
+            "id": "S1",
+            "title": "1850 U.S. Federal Census"
+          }
+        ]
       }
     }
   ]

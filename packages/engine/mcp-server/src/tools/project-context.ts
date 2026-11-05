@@ -193,7 +193,8 @@ export type ProjectContextResult =
       /** research.researcher_profile.subscriptions, strings only; [] when absent. */
       subscriptions: string[];
       openQuestions: ProjectContextQuestion[];
-      /** Advisory per-question state and next step. Nothing gates on it. */
+      /** Advisory per-question state and next step, resolved questions included,
+       *  each with its text truncated as in openQuestions. Nothing gates on it. */
       questionStatuses: (QuestionStatus & { question: string })[];
       persons: ProjectContextPerson[];
       sources: ProjectContextSource[];
@@ -230,8 +231,7 @@ export type ProjectContextResult =
   // third arm — every `if (!r.ok) r.errors…` keeps narrowing as it does today.
   | { ok: false; errors: string[]; reason?: "no_project"; buildId: string };
 
-function truncateQuestion(text: unknown): string {
-  if (typeof text !== "string") return "";
+function truncateQuestion(text: string): string {
   if (text.length <= QUESTION_TRUNCATE_AT) return text;
   return `${text.slice(0, QUESTION_TRUNCATE_AT - 1)}…`;
 }
@@ -271,7 +271,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   for (const q of Array.isArray(research?.questions) ? research.questions : []) {
     if (!q || typeof q !== "object" || typeof q.id !== "string") continue;
     if (q.status === "resolved" || q.status === "superseded") continue;
-    openQuestions.push({ id: q.id, question: truncateQuestion(q.question) });
+    openQuestions.push({ id: q.id, question: truncateQuestion(typeof q.question === "string" ? q.question : "") });
   }
 
   const family = familyIndex(tree);
@@ -367,14 +367,16 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // question is waiting on, computed from the document rather than from
   // session history (the only durable state this system has). The gates in
   // research_append compute their own preconditions independently.
-  // The text rides here, resolved questions included: `openQuestions` drops them,
-  // and the router reads what they ask against the objective.
-  const questionText = new Map<unknown, unknown>(
-    (Array.isArray(research?.questions) ? research.questions : []).map((q: any) => [q?.id, q?.question]),
-  );
-  const questionStatuses = questionStates(research, tree).map((s) => ({
-    ...s,
-    question: truncateQuestion(questionText.get(s.id)),
+  const questionText = new Map<string, string>();
+  for (const q of Array.isArray(research?.questions) ? research.questions : []) {
+    if (q && typeof q === "object" && typeof q.id === "string" && !questionText.has(q.id)) {
+      questionText.set(q.id, truncateQuestion(typeof q.question === "string" ? q.question : ""));
+    }
+  }
+  const questionStatuses = questionStates(research, tree).map(({ id, ...rest }) => ({
+    id,
+    question: questionText.get(id) ?? "",
+    ...rest,
   }));
 
   const awaitingUser = awaitingUserHandOffs(research?.log);
@@ -510,9 +512,8 @@ export const projectContextSchema = {
     "forPlace, timePeriod, jurisdictions, collections, quirks, pagesRead}] — the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
     "to stage searches (guide_markdown prose is omitted here); and questionStatuses " +
-    "[{id, question, state, nextStep, openConflictIds, storedStatus, " +
-    "unregisteredDisagreements, competingParentSets}] — per question, resolved ones " +
-    "included, its text (truncated), how far it " +
+    "[{id, question, state, nextStep, openConflictIds, storedStatus, unregisteredDisagreements, " +
+    "competingParentSets}] — per question, resolved ones included, its text (truncated) and how far it " +
     "has got (framed / planned / searching / evidence-gathered / concluded / critiqued — " +
     "critiqued means an on-demand gps-mentor review exists and is never a step to take), " +
     "what it is waiting on, and storedStatus, the question's own questions[].status " +

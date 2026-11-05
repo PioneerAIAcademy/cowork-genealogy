@@ -67,7 +67,10 @@ repo's identifier-casing rule):
   }],
   questionStatuses: [{                   // ADVISORY — see below. One per question,
     id: string,                          //   including resolved ones.
-    question: string,                    // truncated as in openQuestions
+    question: string,                    // truncated as in openQuestions; "" when absent.
+                                         //   The one place a resolved question's
+                                         //   text appears, so the objective can be
+                                         //   read against every question.
     state: "framed" | "planned" | "searching"
          | "evidence-gathered" | "concluded" | "critiqued",
     nextStep: string | null,             // null = nothing outstanding
@@ -195,11 +198,6 @@ non-object entries.
 
 Per **question**, never per project: a project holds several questions at
 several states at once, so any single project-wide phase is wrong on arrival.
-
-Each row carries the question's text, because `openQuestions` leaves resolved
-questions out and the router reads what they ask against the objective. Without
-it, the router has to query for that text, and a run that skips the query takes
-the objective as covered.
 
 The ladder is monotonic on what was **produced**, not on tidiness — a question
 with a proof summary is `concluded` even if its plan is thin, because the
