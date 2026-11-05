@@ -2440,15 +2440,7 @@ export function mintedFromThisRecord(
   // in the write-once starting-tree baseline. Without them the exemption
   // refused 232 committed links, 206 of which were pre-existing people (184
   // caught by both discriminators, 22 by the starting-tree baseline alone).
-  if (pidOrStartingPerson(personId, startingPersonIds)) return false;
-  // A person with an attachment link came from FamilySearch: only an imported
-  // person has records attached there. Without this, reusing the import's S for
-  // an attached record makes that person's only ref reach this record, and a
-  // project with no starting-tree baseline would read them as minted from it,
-  // exempting any caller's link to them from the score gate.
-  if (((research?.person_evidence ?? []) as any[]).some((pe) => pe?.person_id === personId && isAttachmentLink(pe))) {
-    return false;
-  }
+  if (importedPerson(personId, research, startingPersonIds)) return false;
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
   if (!person) return false;
   const refs = personSourceRefs(person);
@@ -2463,6 +2455,97 @@ export function mintedFromThisRecord(
  *  `mintedFromThisRecord` applies first, measured in its docblock. */
 export function pidOrStartingPerson(personId: string, startingPersonIds?: ReadonlySet<string>): boolean {
   return FS_PERSON_PID.test(personId) || startingPersonIds?.has(personId) === true;
+}
+
+/** Whether this person came from FamilySearch: a FamilySearch id, a starting-tree
+ *  person, or one holding an attachment link (only an imported person has records
+ *  attached there). Without the attachment test, reusing the import's S for an
+ *  attached record makes that person's only ref reach this record, and a project
+ *  with no starting-tree baseline would read them as minted from it. */
+export function importedPerson(personId: string, research: any, startingPersonIds?: ReadonlySet<string>): boolean {
+  return (
+    pidOrStartingPerson(personId, startingPersonIds) ||
+    ((research?.person_evidence ?? []) as any[]).some((pe) => pe?.person_id === personId && isAttachmentLink(pe))
+  );
+}
+
+/** A person this research added that carries no provenance at all: not imported,
+ *  and no source ref on its own node, its names, its facts, or any relationship it
+ *  is in. `tree_edit add_person` makes one; a stub the researcher stated carries
+ *  its source on the relationship, and is not blank. False with no starting-tree
+ *  baseline, which cannot tell an imported person from an added one. False for a
+ *  person with a namesake (a `namesakes` row, or a same-named relative in
+ *  `namesakeTree`): the namesake cap decides that person's links, and a speculative
+ *  link must not let a record land on it first. Both `research_append`'s link gate
+ *  and `materialize_facts`' read this, so the step one refuses for is the step the
+ *  other allows. */
+export function blankAddedPerson(
+  personId: string,
+  research: any,
+  tree: any,
+  startingPersonIds?: ReadonlySet<string>,
+  namesakeTree: any = tree,
+): boolean {
+  if (!startingPersonIds || startingPersonIds.size === 0) return false;
+  if (importedPerson(personId, research, startingPersonIds)) return false;
+  if (((research?.namesakes ?? []) as any[]).some((r: any) => r?.person_id === personId)) return false;
+  if (derivedNamesakePairs(namesakeTree, personId).length > 0) return false;
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
+  if (!person || personSourceRefs(person).size > 0) return false;
+  return !((tree?.relationships ?? []) as any[]).some(
+    (r: any) =>
+      r &&
+      [r.person1, r.person2, r.parent, r.child].includes(personId) &&
+      [r, ...(Array.isArray(r.facts) ? r.facts : [])].flatMap(sourceRefsOf).length > 0,
+  );
+}
+
+/** A live probable or confident link to a `blankAddedPerson`: nothing records
+ *  which record that person came from, and the link would vouch for it anyway.
+ *  The order that keeps `same_person` ahead of the write: a speculative link with
+ *  its score, then `materialize_facts`, which accepts a blank person once any live
+ *  link to it exists, then raise the link. A speculative
+ *  link asserts no identity and is not refused, but raising one to probable is
+ *  judged like an append. Silent for an attachment link and
+ *  for negative evidence, which no record's persona can materialize. Measured
+ *  2026-11-04 over the e2e final documents: of 5,061 links since August, 8 point
+ *  at a person with no ref on any name or fact (3 persons, 1 of them negative
+ *  evidence, now exempt); 1,121 of June and July's 6,113 did. */
+function refLessAddedPersonInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  startingPersonIds?: ReadonlySet<string>,
+  batchAssertions?: Map<string, any>,
+  attachmentLink = false,
+): string[] {
+  const personId = entry?.person_id;
+  if (typeof personId !== "string" || attachmentLink || isAttachmentLink(entry)) return [];
+  if (entry.confidence !== "probable" && entry.confidence !== "confident") return [];
+  if (!blankAddedPerson(personId, research, tree, startingPersonIds)) return [];
+  const assertion =
+    batchAssertions?.get(entry.assertion_id) ??
+    ((research?.assertions ?? []) as any[]).find((a: any) => a?.id === entry.assertion_id);
+  if (assertion?.record_role === "absent" || recordBasisOf(assertion) === "absent") return [];
+  const persona =
+    typeof assertion?.record_id === "string" && typeof assertion?.record_role === "string"
+      ? `materialize_facts({ projectPath, personId: '${personId}', recordId: '${assertion.record_id}', ` +
+        `recordRole: '${assertion.record_role}' })`
+      : `materialize_facts({ projectPath, personId: '${personId}', recordId, recordRole })`;
+  const related = assertion?.structured_value?.related_person_role;
+  const named =
+    isTwoParty(assertion?.fact_type) && typeof related === "string" && related !== ""
+      ? ` If '${personId}' is the ${related} this assertion names rather than its ` +
+        `${assertion.record_role}, write the named party instead: materialize_facts({ projectPath, ` +
+        `personId: '${personId}', assertionId: '${entry.assertion_id}', relatedRole: '${related}', ` +
+        `name: { given, surname } }), with the name the record gives them.`
+      : "";
+  return [
+    `person_evidence links '${personId}' at ${entry.confidence}, a person added during this research ` +
+      `with no source ref on any name, fact or relationship, so nothing records which record it came ` +
+      `from. Link it at 'speculative' with its same_person score (a live speculative link to it will ` +
+      `do), write the persona onto it with ${persona}, then raise the link to '${entry.confidence}'.${named}`,
+  ];
 }
 
 /** Every source ref a tree person carries. Person-level refs count too (#2696):
@@ -8314,7 +8397,9 @@ function applyOne(
   let priorNarrative: unknown;
   // An update's link pair and retired state as they stood BEFORE its fields merge,
   // so the rejected-link gate below can tell an edit from a re-link.
-  let priorPair: { assertion_id: unknown; person_id: unknown; superseded_by: unknown } | undefined;
+  let priorPair:
+    | { assertion_id: unknown; person_id: unknown; superseded_by: unknown; confidence: unknown }
+    | undefined;
   let keptCompletedWarning: string | undefined;
 
   if (op.op === "append") {
@@ -8400,6 +8485,7 @@ function applyOne(
       assertion_id: existing?.assertion_id,
       person_id: existing?.person_id,
       superseded_by: existing?.superseded_by,
+      confidence: existing?.confidence,
     };
 
     // Questions: re-declaring exhaustiveness on an already-declared question is
@@ -8906,6 +8992,12 @@ function applyOne(
       (op.op === "update" && !resultEntry.superseded_by && (pairChanged || wasRetired));
     if (reRaising) {
       invariantErrors.push(...rejectedLinkInvariants(resultEntry, research));
+    }
+    const raisedFromSpeculative = op.op === "update" && priorPair?.confidence === "speculative";
+    if ((reRaising || raisedFromSpeculative) && !resultEntry.superseded_by) {
+      invariantErrors.push(
+        ...refLessAddedPersonInvariants(resultEntry, research, tree, startingPersonIds, batchAssertions, attachmentLink),
+      );
     }
     // An attachment link is only ever superseded. Raising it in place would skip
     // same_person: the score gate checks an update only when it writes

@@ -217,7 +217,9 @@ def fake_sas_package(monkeypatch, calls: list) -> None:
 
     class SasClient:
         async def get_secure_object(self, sas_object_name):
-            calls.append((id(self), sas_object_name, threading.get_ident()))
+            # The client itself, not its id(): holding it stops a freed client's address
+            # being reused by the next one, which read as "the same client" 2 runs in 40.
+            calls.append((self, sas_object_name, threading.get_ident()))
             return obj()
 
     module.SasClient = SasClient
@@ -232,7 +234,7 @@ def test_fetch_awaits_the_real_client_shape(monkeypatch):
     assert pc._fetch_sas_object("fch-db") == obj()
     assert pc._fetch_sas_object("fch-db") == obj()
     assert [c[1] for c in calls] == ["fch-db", "fch-db"]
-    assert calls[0][0] != calls[1][0], "a new client per fetch, so its cache cannot serve a rotated password"
+    assert calls[0][0] is not calls[1][0], "a new client per fetch, so its cache cannot serve a rotated password"
 
 
 def test_fetch_works_from_inside_a_running_loop(monkeypatch):
