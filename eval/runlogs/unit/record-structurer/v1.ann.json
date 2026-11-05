@@ -47,8 +47,8 @@
       "dimension_source": "rubric",
       "dimension_name": "Verbatim relay",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 1,
+      "comment": "Did: added a framing line and a Notes for your review block. Should: return only the summaries. Gap: the Return section is being ignored."
     },
     {
       "test_id": "ut_record_structurer_002",
@@ -111,8 +111,8 @@
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "Did: left out Harold's stated age, 91. Should: an age fact on the principal. Gap: the body names no rule for a stated age."
     },
     {
       "test_id": "ut_record_structurer_001",
@@ -127,8 +127,8 @@
       "dimension_source": "rubric",
       "dimension_name": "Faithful reading",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "Did: dropped the age, gave Karen Foster a residence with no place, and put four places in value. Should: each place in place, no residence for Karen. Gap: the Residence rule does not name the field."
     },
     {
       "test_id": "ut_record_structurer_001",
