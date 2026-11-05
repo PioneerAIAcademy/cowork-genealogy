@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a public beta, February to July 2027
 
-**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26). W3's viewer data, uploads, download and OpenRouter linking are implemented in the web tier. E2's settings, links and uploads list are implemented in the tool server; its connector `project_list` is not. The rest is filed as issues ("Who builds what"), not started: what is likely to go wrong only live is due by 14 December, for a dress rehearsal before the holidays, and the rest by 31 December. Launch is the week of 1 February. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
+**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26). E1's one front door shipped in PR #4225 (2026-11-05); nothing reaches its connector path until W2 mints a token. W3's viewer data, uploads, download and OpenRouter linking are implemented in the web tier. E2's settings, links and uploads list are implemented in the tool server; its connector `project_list` is not. The rest is filed as issues ("Who builds what"), not started: what is likely to go wrong only live is due by 14 December, for a dress rehearsal before the holidays, and the rest by 31 December. Launch is the week of 1 February. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
 
 ## What this is
 
