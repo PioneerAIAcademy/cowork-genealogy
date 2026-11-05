@@ -31,14 +31,7 @@ def test_it_reads_the_real_live_tools_set():
     live = check_tool_coverage.live_tools()
     # Spot-check rather than pin the whole set: pinning it would make every new
     # live tool edit this test, which is the hand-copying this replaced.
-    assert {"research_append", "validate_research_schema", "research_delivered"} <= live
-
-
-def test_the_delivery_tool_is_exempt_so_declaring_it_warns_about_nothing():
-    """THE regression this was written for: `research` declares `research_delivered`
-    (the skill body now tells the model to call it), and the forward check demanded a
-    fixture for a tool that can never have one."""
-    assert "research_delivered" in check_tool_coverage.live_tools()
+    assert {"research_append", "validate_research_schema"} <= live
 
 
 def test_a_tool_that_is_not_live_is_not_exempted():
@@ -56,8 +49,8 @@ def test_main_actually_subtracts_the_live_set(capsys):
     Deleting ` - LIVE` from `missing` left every test above green, because they all
     exercise `live_tools()` alone. This runs the real check over the real corpus and
     asserts the warning the subtraction removes stays removed. `research` declares
-    `research_delivered` and `validate_research_schema`, both live and both
-    fixture-less, so without the subtraction it warns.
+    `validate_research_schema`, live and fixture-less, so without the subtraction it
+    warns.
     """
     check_tool_coverage.main()
     # ONE readouterr(): a second call returns an empty buffer, so `out + err` built
@@ -91,4 +84,4 @@ def test_the_derived_exemption_is_printed(capsys):
     check_tool_coverage.main()
     out = capsys.readouterr().out
     assert "derived from LIVE_TOOLS" in out, "the derived exemptions are silent"
-    assert "research_delivered" in out, "and must name what they cover"
+    assert "validate_research_schema" in out, "and must name what they cover"
