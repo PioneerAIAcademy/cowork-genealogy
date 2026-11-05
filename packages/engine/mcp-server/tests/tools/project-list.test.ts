@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mkdtemp, mkdir, writeFile, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -95,6 +95,22 @@ describe("project_list", () => {
       { projectPath: SCOPED_ANCHOR, objective: null, subjects: [], status: null, updated: null },
     ]);
   });
+
+  it.each(["research.json", "tree.gedcomx.json"])(
+    "a read of %s that fails other than by absence rejects, so the project never lists as one with no subject",
+    async (failing) => {
+      await seed("p1", { project: { objective: "o", subject_person_ids: ["I1"] } }, { persons: [] });
+      const store = new ScopedFsStore(root, "p1");
+      const readText = store.readText.bind(store);
+      vi.spyOn(store, "readText").mockImplementation(async (projectPath, ref) => {
+        if (ref === failing) throw new Error("timeout exceeded when trying to connect");
+        return readText(projectPath, ref);
+      });
+      await expect(runWithProjectStore(store, () => projectList())).rejects.toThrow(
+        "timeout exceeded when trying to connect",
+      );
+    },
+  );
 
   it("on an unbound store rejects with that store's message", async () => {
     const message = "no project bound: send X-Genealogy-Project-Id";

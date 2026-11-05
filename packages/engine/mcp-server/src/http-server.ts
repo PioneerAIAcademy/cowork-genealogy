@@ -545,8 +545,8 @@ async function handleMcpPost(
   options: ToolServerOptions,
 ): Promise<void> {
   // The store is decided before any transport exists: a malformed id never
-  // reaches a tool, and a missing one binds a store whose every call answers
-  // with the instruction rather than falling through to the process store.
+  // reaches a tool, and a missing one takes the connector path, which binds its
+  // own store rather than falling through to the process store.
   const projectId = projectIdFromHeaders(req.headers);
   if (projectId.kind === "malformed") {
     sendJson(res, 400, INVALID_PROJECT_ID);

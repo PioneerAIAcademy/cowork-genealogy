@@ -34,12 +34,14 @@ const FOLDER_MESSAGE =
   "This answer does not say whether the folder holds a project yet: call project_context " +
   "with that path before routing, and route on what it returns.";
 
-/** Parsed JSON at `ref`, or null when it is absent, unreadable or not JSON. */
+/** Parsed JSON at `ref`, or null when it is absent or not JSON. Any other failure
+ *  rejects: nulls would read as a project about nobody. */
 async function readJson(projectPath: string, ref: string): Promise<any> {
   try {
     return JSON.parse(await getProjectStore().readText(projectPath, ref));
-  } catch {
-    return null;
+  } catch (e: any) {
+    if (e instanceof SyntaxError || e?.code === "ENOENT") return null;
+    throw e;
   }
 }
 

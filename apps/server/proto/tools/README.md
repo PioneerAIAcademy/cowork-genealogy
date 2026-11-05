@@ -81,11 +81,8 @@ missing a field; SAS unreachable through three tries at start exits 1. The JDBC 
 parameters are dropped, so TLS stays with `PGSSLMODE`. A new connection failing 28P01 re-reads
 the object (at most once per 30 s) and connects once more; 28000 never does. One stderr line
 names the mode (`pg credentials: SAS object <name>` or `environment DSN`). The projectPath every call passes
-is the anchor (`/project`). With the header **missing**, the request is bound to an
-`unboundProjectStore` whose every method rejects with an instruction naming the header:
-tools that take no `projectPath` (`convert_calendar`, the FamilySearch searches, …) still
-answer, and the project tools (`project_create`, `research_append`, …) return that
-instruction as an `isError` result. The process store is the same unbound store, so no
+is the anchor (`/project`). With the header **missing**, the request takes the connector
+door, above. The process store is an `unboundProjectStore` whose every method rejects, so no
 path — inside a request or outside one — ever reaches `FsProjectStore`. Malformed → `400`,
 above.
 

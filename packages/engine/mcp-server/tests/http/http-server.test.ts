@@ -1124,6 +1124,20 @@ describe("tool server over Streamable HTTP", () => {
         expect(listed.text).not.toContain("No project yet");
       });
 
+      it("a document read that fails mid-listing is isError, never a project with no subject", async () => {
+        const id = "proj_dddddddddddddddd";
+        await seedOwned(id);
+        ownedProjects.mockResolvedValueOnce([id]);
+        const store = new ScopedFsStore(root, id, `/${id}`);
+        vi.spyOn(store, "readText").mockRejectedValue(new Error("pool is down"));
+        bindStore.mockReturnValueOnce(store);
+
+        const listed = await listProjects();
+        expect(listed.isError, listed.text).toBe(true);
+        expect(listed.text).toContain("pool is down");
+        expect(listed.text).not.toContain("newProjectPath");
+      });
+
       it("a connector call naming no project still refuses project tools and queries nothing", async () => {
         bindStore.mockClear();
         ownedProjects.mockClear();

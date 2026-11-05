@@ -67,7 +67,9 @@ otherwise skipped that read and sent an existing project to `init-project`.
 The store names the paths the caller may use. Each path that holds a
 `research.json` is listed as a project; the first that holds none is returned as
 `newProjectPath`. A document that does not parse lists its project with `null`
-fields rather than failing the call.
+fields rather than failing the call, as an absent `tree.gedcomx.json` does; a read
+that fails any other way fails the call, because `null` fields read as a project
+about nobody.
 
 - **A store bound to one project** (the prototype worker's `PgS3ProjectStore`,
   bound per request by `X-Genealogy-Project-Id`) names its anchor. The anchor is
@@ -99,12 +101,13 @@ older than this tool), it says the genealogy tools are not connected and stops.
 - `tests/tools/project-list.test.ts` — folder mode on the process store, with no
   `projects` key; a bound
   store with a project, with none yet, and with a document that does not parse;
-  an unbound store's rejection.
+  a read that fails other than by absence; an unbound store's rejection.
 - `tests/http/http-server.test.ts` — the connector's listing over a file double:
   the caller's paths and one fresh path, a caller with none, an id of another
-  shape, a failed query, and a project tool naming no project querying nothing.
-- `tests/http/http-server-pg.test.ts` — two projects newest first and another
-  user's never, an ownerless project and a claimed id left out, and
+  shape, a failed query, a failed document read, and a project tool naming no
+  project querying nothing.
+- `tests/http/http-server-pg.test.ts` — three projects newest first in no id order
+  and another user's never, an ownerless project and a claimed id left out, and
   `project_list`, `person_read`, `project_create`, `project_list` end to end.
 - `dev/smoke-calls.ts` — the stdio smoke expects folder mode; the HTTP smoke
   expects the project its earlier `project_create` row wrote to be listed, and

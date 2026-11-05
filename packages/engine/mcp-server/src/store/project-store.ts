@@ -208,10 +208,8 @@ export function runWithProjectStore<T>(store: ProjectStore, fn: () => Promise<T>
 
 /** A store whose every method rejects with `new Error(message)`. A shared
  *  server installs one as the process store so nothing runs against the file
- *  backend outside a request binding, and binds one per request that names no
- *  project, so the message reaches the model through the dispatcher's
- *  `isError` path. Implementing the interface makes a forgotten method a tsc
- *  error. */
+ *  backend outside a request binding. Implementing the interface makes a
+ *  forgotten method a tsc error. */
 export function unboundProjectStore(message: string): ProjectStore {
   return new UnboundProjectStore(message);
 }

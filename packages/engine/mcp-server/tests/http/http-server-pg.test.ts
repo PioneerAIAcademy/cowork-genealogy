@@ -592,22 +592,29 @@ if (!DSN || !ENDPOINT) {
 
       const pathsOf = (body: Record<string, any>): string[] => body.projects.map((p: any) => p.projectPath);
 
-      it("a user who owns two projects gets both plus one fresh path, and another user's project is never listed", async () => {
+      it("a user's projects list newest document first plus one fresh path, and another user's project is never listed", async () => {
         const a = await seedConnector();
         const b = await seedConnector();
-        const [older, newer] = [await seedOwned(a.userId, "one"), await seedOwned(a.userId, "two")].sort();
+        const [low, mid, high] = [
+          await seedOwned(a.userId, "one"),
+          await seedOwned(a.userId, "two"),
+          await seedOwned(a.userId, "three"),
+        ].sort();
         const foreign = await seedOwned(b.userId, "not yours");
-        // The newest document sorts last by id, so neither id order passes.
-        await backend.pool.query(
-          "UPDATE documents SET updated_at = now() - interval '1 day' WHERE project_id = $1 AND name = 'research.json'",
-          [older!.slice(1)],
-        );
+        // The middle id is the newest, so neither id order passes.
+        const backdate = (projectPath: string, days: number) =>
+          backend.pool.query(
+            "UPDATE documents SET updated_at = now() - make_interval(days => $2) WHERE project_id = $1 AND name = 'research.json'",
+            [projectPath.slice(1), days],
+          );
+        await backdate(high!, 1);
+        await backdate(low!, 2);
 
         const body = toolBody(await connCall(a.token, "project_list", {}));
         expect(body.mode).toBe("hosted");
-        expect(pathsOf(body)).toEqual([newer, older]);
+        expect(pathsOf(body)).toEqual([mid, high, low]);
         expect(body.newProjectPath).toMatch(/^\/proj_[0-9a-f]{16}$/);
-        expect([newer, older, foreign]).not.toContain(body.newProjectPath);
+        expect([low, mid, high, foreign]).not.toContain(body.newProjectPath);
         expect(JSON.stringify(body)).not.toContain(foreign);
         expect(JSON.stringify(body)).not.toContain("not yours");
       });
