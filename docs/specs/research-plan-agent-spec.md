@@ -127,6 +127,20 @@ that would replace it (probed 2026-10-02, §5):
   search asserts nothing, so a search keyed on a surname from a single marriage
   record may be planned freely. The caution applies to what is written down: no
   rationale calls it her maiden name, and a companion item must test it.
+- **The dedicated parents'-marriage item, re-checked at return time.** The
+  body's parentage rule (a dedicated item for the candidate parents' marriage
+  to each other, Appendix B) slipped roughly one full run in seven by folding
+  the marriage into a generic church item — the 2026-10-29 full run's church
+  item carried "Thomas's marriage record would supply her maiden name" beside
+  sibling baptisms. Reinforcing the rule's prose was rejected (the measured
+  position behind the body's style rules), so the return contract carries a
+  matching line instead: for a parentage question whose plan was written this
+  turn (create or supersede), the `pli_` id of the dedicated item, appended
+  before returning when missing. The turn scoping is load-bearing — the
+  contract applies in every mode, and review and dispose modes may not touch
+  `plans[]` (their validators fail any appended item). This spec has no fuller
+  return-contract description; the agent body's "Return contract" section is
+  the source. The validator is in §7.
 
 **r3d deleted (lead, 2026-10-06).** `ut_research_plan_r3d` failed in every
 committed research-plan run, including a same-day run of the unchanged skill:
@@ -218,3 +232,11 @@ change; keep no local copy.
   `fs_hints` item. Either tag fails when no person the question names has an
   `ark`. Proven to fail in
   `eval/harness/tests/unit/test_research_plan_hints_review_validator.py`.
+- `test_research_plan_plans_parents_marriage`: on `parents-marriage-item`
+  tests, some sentence of a new plan item's rationale names the candidate
+  father together with a marriage word (marri*/wed*/bond*/licen*) and no
+  baptism, christening or sibling target in that sentence — sentence-scoped
+  because a dedicated marriage item may legitimately note what else the same
+  register holds. `record_type` is deliberately untested — a church marriage
+  register is a valid dedicated item (review decision, 2026-10-30). Proven to
+  fail in `eval/harness/tests/unit/test_research_plan_validator.py`.

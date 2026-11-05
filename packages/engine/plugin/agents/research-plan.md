@@ -879,6 +879,10 @@ the caller, in this order:
 - when a baptism may not exist (Step 3), the `pli_` id of the item for the
   subject's own death or burial entry; if the plan has none, append it before
   you return
+- for a parentage question whose plan you wrote this turn (create or
+  supersede), the `pli_` id of the dedicated item for the candidate parents'
+  marriage to each other; if the plan you wrote has none, append it before
+  you return
 - for a review, the next item and why, then what follows it and why; when
   nothing was written, the one-line reason
 - the hand-back: search-records for FamilySearch items, search-external-sites

@@ -1521,6 +1521,7 @@ def test_v1_grounds_ark_served_by_person_read():
 
 from test_research_plan import (  # noqa: E402
     test_pre_register_birth_plans_death_route as check_death_route,
+    test_research_plan_plans_parents_marriage as check_parents_marriage,
     test_wiki_prework_fetches_triggered_pages as check_prework,
 )
 
@@ -1883,3 +1884,119 @@ def test_both_sheahan_tests_carry_the_purchase_tag():
 def test_purchase_check_skips_an_untagged_test():
     with pytest.raises(pytest.skip.Exception):
         _purchase("nothing", test={"tags": [], "skill": "research-plan"})
+
+
+# --- Parentage: the parents' marriage is a dedicated item (issue #4022) ------
+
+PM = {"id": "ut_research_plan_014", "tags": ["planning", "parents-marriage-item"]}
+
+# The v14_2026-10-29 folded shape: pli_009, record_type church, the marriage
+# mention embedded beside sibling baptisms, one sentence (semicolon-joined).
+FOLDED = _pli(
+    9, "church", "1840-1850",
+    "A marriage record for Thomas Flynn and his wife in Schuylkill County "
+    "would supply her maiden name; baptismal records for Patrick's siblings "
+    "corroborate parentage.",
+    jurisdiction="Schuylkill County, Pennsylvania",
+)
+CENSUS = _pli(5, "census", "1850-1880", "Track Patrick with his household.",
+              jurisdiction="Schuylkill County, Pennsylvania")
+
+
+def test_parents_marriage_fires_on_the_v14_folded_shape():
+    b, a = _plan_states([CENSUS, FOLDED])
+    with pytest.raises(AssertionError, match="dedicated to the candidate parents' marriage"):
+        check_parents_marriage(b, a, PM)
+
+
+def test_parents_marriage_fires_when_only_the_subjects_own_marriage_is_planned():
+    own = _pli(3, "vital_record", "1865-1880",
+               "Patrick Flynn's own marriage record would state his age and birthplace.",
+               jurisdiction="Schuylkill County, Pennsylvania")
+    b, a = _plan_states([CENSUS, own])
+    with pytest.raises(AssertionError, match="dedicated to the candidate parents' marriage"):
+        check_parents_marriage(b, a, PM)
+
+
+def test_parents_marriage_fires_when_no_plan_was_written():
+    b, a = _plan_states([])
+    a["research_json"]["plans"] = []
+    with pytest.raises(AssertionError, match="no new plan items"):
+        check_parents_marriage(b, a, PM)
+
+
+@pytest.mark.parametrize("record_type,rationale", [
+    ("church", "The church marriage register for Thomas Flynn and his wife, "
+               "the hypothesized parents; it would supply her maiden name."),
+    ("vital_record", "The marriage of Thomas Flynn and his wife bears on "
+                     "paternity by its date relative to Patrick's ~1845 birth."),
+    ("vital_record", "Thomas and his wife's marriage; the county bond or "
+                     "license names her."),
+    ("vital_record", "Thomas Flynn wedded before 1845; the county register "
+                     "would name the bride."),
+])
+def test_parents_marriage_passes_a_dedicated_item(record_type, rationale):
+    item = _pli(3, record_type, "1835-1846", rationale,
+                jurisdiction="Schuylkill County, Pennsylvania")
+    b, a = _plan_states([CENSUS, item])
+    check_parents_marriage(b, a, PM)
+
+
+def test_parents_marriage_passes_a_dedicated_item_noting_the_registers_other_yields():
+    """The 2026-11-03 targeted-run shape: the item IS the dedicated marriage
+    search, and a later sentence notes what else the same parish registers may
+    hold. Sentence-scoping exists for exactly this item — a whole-rationale
+    anti-word scan false-failed it."""
+    item = _pli(8, "church", "1835-1846",
+                "Dedicated search for Thomas Flynn's marriage to Patrick's "
+                "mother. The county church records collection is "
+                "name-searchable and covers 1708-1985. A Catholic parish may "
+                "hold a sibling's baptism naming both parents, a burial "
+                "naming the spouse, or a sacramental entry supplying the "
+                "mother's maiden name.",
+                jurisdiction="Schuylkill County, Pennsylvania")
+    b, a = _plan_states([CENSUS, item])
+    check_parents_marriage(b, a, PM)
+
+
+def test_parents_marriage_known_limit_another_item_naming_the_marriage_passes():
+    """Accepted limit (predicate is the issue's own): a FAN item pairing the
+    father's name with a marriage word satisfies the check even while the
+    marriage itself stays folded elsewhere."""
+    fan = _pli(4, "court", "1840-1860",
+               "Thomas's marriage bondsman may appear in county court records.",
+               jurisdiction="Schuylkill County, Pennsylvania")
+    b, a = _plan_states([CENSUS, FOLDED, fan])
+    check_parents_marriage(b, a, PM)
+
+
+def test_parents_marriage_known_limit_a_two_sentence_fold_passes():
+    """Accepted limit of sentence-scoping: the v14 fold restated as two
+    sentences leaves the marriage sentence clean, so it passes. The measured
+    folded shape joins them with a semicolon — one sentence — and still
+    fires."""
+    two = _pli(9, "church", "1840-1850",
+               "A marriage record for Thomas Flynn and his wife would supply "
+               "her maiden name. Baptismal records for Patrick's siblings "
+               "corroborate parentage.",
+               jurisdiction="Schuylkill County, Pennsylvania")
+    b, a = _plan_states([CENSUS, two])
+    check_parents_marriage(b, a, PM)
+
+
+def test_parents_marriage_skips_an_untagged_test():
+    b, a = _plan_states([CENSUS])
+    with pytest.raises(pytest.skip.Exception):
+        check_parents_marriage(b, a, {"id": "ut_research_plan_005", "tags": ["planning"]})
+
+
+def test_parents_marriage_map_entry_without_its_tag_fails_before_the_skip():
+    b, a = _plan_states([CENSUS])
+    with pytest.raises(AssertionError, match="no 'parents-marriage-item'"):
+        check_parents_marriage(b, a, {"id": "ut_research_plan_014", "tags": ["planning"]})
+
+
+def test_parents_marriage_tag_without_a_map_entry_fails():
+    b, a = _plan_states([CENSUS])
+    with pytest.raises(AssertionError, match="no entry"):
+        check_parents_marriage(b, a, {"id": "ut_research_plan_zzz", "tags": ["parents-marriage-item"]})
