@@ -6065,6 +6065,25 @@ function declarationStatusInvariants(entry: any): string[] {
   ];
 }
 
+/** Each stop criterion is 1–2 sentences (the agent's Step 2). 800 chars sits above
+ *  the corpus p90 (708); over 188 committed `stop_criteria` objects it refuses 38
+ *  (#3546, measured 2026-11-02). Runs only when the op writes `search_stop`, so a later edit to a
+ *  question that already stores a longer criterion is not refused. */
+export const STOP_CRITERION_MAX_CHARS = 800;
+
+function stopCriteriaLengthInvariants(entry: any): string[] {
+  const sc = entry?.search_stop?.stop_criteria;
+  if (!sc || typeof sc !== "object") return [];
+  return Object.entries(sc)
+    .filter(([, v]) => typeof v === "string" && v.length > STOP_CRITERION_MAX_CHARS)
+    .map(
+      ([k, v]) =>
+        `question ${entry?.id ?? "(new entry)"}: search_stop.stop_criteria.${k} is ${(v as string).length} ` +
+        `characters; the cap is ${STOP_CRITERION_MAX_CHARS}. Write 1–2 sentences per criterion and put ` +
+        `the reasoning in one place, then send this write again.`,
+    );
+}
+
 /** Exhaustiveness may not be declared while the question's own plan says a
  *  search is still running.
  *
@@ -6095,11 +6114,9 @@ function declarationStatusInvariants(entry: any): string[] {
  *  write boundary. The decision, the case against it and the conditions it
  *  ships under are on issue #1830.
  *
- *  The orchestrator still consults this gate BEFORE the plan is drained
- *  (`research/SKILL.md:146`, unchanged): the judgement stays here, and only the
- *  route taken on a refusal changed, to dispose of the named items rather than
- *  extend the plan. Were disposal to happen first, the planner would be making
- *  this gate's call for it.
+ *  The orchestrator disposes of every item first and consults this gate after
+ *  (lead, #3546, restating the 2026-09-02 ruling): "answered early" is a valid
+ *  skip reason. `project_context` names the disposal while items are `planned`.
  *
  *  **Reads the PRE-CALL snapshot, unlike the sibling above, and the asymmetry is
  *  the whole gate.** Plan-item completion is the search work's step, not this
@@ -8692,6 +8709,7 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(fields, "search_stop");
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
+      invariantErrors.push(...stopCriteriaLengthInvariants(resultEntry));
     }
     if (op.op === "append") {
       invariantErrors.push(...newQuestionWhileAnotherIsOpenInvariants(resultEntry, preCallResearch));

@@ -27,5 +27,8 @@
   ],
   "mcp_fixtures": [
     "wiki-read-pennsylvania-vital-records"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 900
+  }
 }
