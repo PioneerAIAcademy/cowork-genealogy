@@ -246,7 +246,11 @@ describe("a real client", () => {
     await client.connect(new StreamableHTTPClientTransport(new URL(`${viewer.origin}/${SECRET}/mcp`)));
     try {
       expect(client.getServerVersion()).toMatchObject({ title: "Genealogy Viewer" });
-      expect(client.getServerCapabilities()).toMatchObject({ tools: {}, resources: {} });
+      expect(client.getServerCapabilities()).toMatchObject({
+        tools: {},
+        resources: {},
+        extensions: { "io.modelcontextprotocol/ui": { mimeTypes: ["text/html;profile=mcp-app"] } },
+      });
       const result = await client.callTool({ name: "show_project", arguments: { show: "setup" } });
       expect(result.isError).toBeUndefined();
     } finally {

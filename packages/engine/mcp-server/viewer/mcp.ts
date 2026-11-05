@@ -13,6 +13,7 @@ import { callTool, PAGE_URI, toolSchemas, type ToolContext } from "./tools.js";
 
 export const PAGE_MIME_TYPE = "text/html;profile=mcp-app";
 export const DISPLAY_NAME = "Genealogy Viewer";
+const UI_EXTENSION = "io.modelcontextprotocol/ui";
 
 export interface McpOptions extends ToolContext {
   pageHtml: string;
@@ -23,7 +24,8 @@ export interface McpOptions extends ToolContext {
 export function createMcpServer(options: McpOptions): Server {
   const server = new Server(
     { name: "genealogy-viewer", title: DISPLAY_NAME, version: "0.1.0" },
-    { capabilities: { tools: {}, resources: {} } },
+    // ext-apps' helpers set the tool _meta but not this; hosts look for it on the wire.
+    { capabilities: { tools: {}, resources: {}, extensions: { [UI_EXTENSION]: { mimeTypes: [PAGE_MIME_TYPE] } } } },
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: toolSchemas }));
   server.setRequestHandler(CallToolRequestSchema, (request) =>
