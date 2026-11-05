@@ -1092,9 +1092,13 @@ def test_grant_script_points_the_redirect_at_the_dev_keys_registration(monkeypat
 
     monkeypatch.setattr(grant, "serve_once", serve_once)
     monkeypatch.setattr(grant.webbrowser, "open", lambda url: seen.setdefault("url", url))
+    # #3992: a developer shell's redirect setting or chat switch must not reach the script.
+    monkeypatch.setenv("FS_REDIRECT_URI", "https://elsewhere.test/cb")
+    monkeypatch.setenv("GENEALOGY_CHAT", "false")
     assert grant.main(["--pg-dsn", "postgresql://unused"]) == 1
     assert seen["redirect"] == "http://127.0.0.1:1837/callback"
     assert "redirect_uri=http%3A%2F%2F127.0.0.1%3A1837%2Fcallback" in seen["url"]
+    assert "scope=offline_access" in seen["url"], "the grant is for the chat-on refresher"
 
 
 # ── #3992: sign-in with the chat off ────────────────────────────────────────────
@@ -1349,7 +1353,6 @@ async def test_the_redirect_setting_moves_the_request_and_the_route(fs_on):
 
 @pytest.mark.parametrize("public, redirect, path", [
     ("https://edge.test/pf", "https://edge.test/pf/cb", "/cb"),
-    ("https://edge.test/pf", "https://edge.test/pfx/cb", "/pfx/cb"),
     ("https://edge.test/pf", "http://127.0.0.1:1837/callback", "/callback"),
     ("https://edge.test", "https://edge.test/a/b", "/a/b"),
 ])
@@ -1367,6 +1370,18 @@ def test_the_callback_path_strips_the_prefix_only_on_a_segment(monkeypatch, publ
 def test_preflight_refuses_a_bad_redirect_setting(monkeypatch, redirect):
     monkeypatch.setenv("FS_REDIRECT_URI", redirect)
     with pytest.raises(RuntimeError, match="FS_REDIRECT_URI"):
+        auth.preflight()
+
+
+@pytest.mark.parametrize("redirect", ["https://edge.test/pfx/cb", "https://EDGE.test/cb"])
+def test_preflight_refuses_a_redirect_on_the_public_host_outside_its_prefix(monkeypatch, redirect):
+    """Both cookies are scoped to the prefix, so a callback on the same host outside it never
+    gets the state cookie back. Another host (the loopback bounce, P0.4) stays allowed."""
+    monkeypatch.setenv("PUBLIC_URL", "https://edge.test/pf")
+    monkeypatch.setenv("SESSION_SECRET", "s" * 32)
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 32)
+    monkeypatch.setenv("FS_REDIRECT_URI", redirect)
+    with pytest.raises(RuntimeError, match="outside its path"):
         auth.preflight()
 
 

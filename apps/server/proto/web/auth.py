@@ -42,8 +42,9 @@ Settings are read from the environment at call time, so a test can set them per 
                              Anything else refuses to start
   FS_REDIRECT_URI            the FamilySearch redirect URI (#3992); the callback is served at
                              its path, less PUBLIC_URL's prefix. Unset: PUBLIC_URL + /callback.
-                             Not an absolute http(s) URL with a path, or with a query or
-                             fragment, refuses to start
+                             Refuses to start unless it is an absolute http(s) URL whose path is
+                             unreserved segments, with no query or fragment, and, on PUBLIC_URL's
+                             host, under its prefix (``callback_path``)
   GENEALOGY_SIGNIN_CALLS_PER_MINUTE  the sign-in budget (#3992): the code exchange and the
                              identity read share this many calls per sliding minute, two per
                              sign-in. Unset: no budget. Anything but a whole number of at least
@@ -499,7 +500,9 @@ def callback_path() -> str:
     browser back to it, so it must be unreserved segments (``BASE_PATH_RE``: no trailing
     slash, no percent-encoding, which the route would match differently). Raises on a
     redirect that is not an absolute http(s) URL, carries a query or fragment, or whose path
-    is empty, ``/`` or the prefix itself (each of those is the SPA's root)."""
+    is empty, ``/`` or the prefix itself (each of those is the SPA's root), and on one on
+    PUBLIC_URL's host outside its prefix, where the cookies are scoped. Another host stays
+    allowed: P0.4's loopback bounce forwards to this one."""
     prefix = base_path()  # first, so a bad PUBLIC_URL is reported as itself
     uri = redirect_uri()
     parts = urlsplit(uri)
@@ -510,6 +513,11 @@ def callback_path() -> str:
             f"Refusing to start: FS_REDIRECT_URI {uri!r} must be an absolute http(s) URL whose path is "
             "one or more unreserved segments (A-Z a-z 0-9 . _ ~ -) other than PUBLIC_URL's own path, "
             "with no trailing slash, query or fragment"
+        )
+    if prefix and parts.netloc.lower() == urlsplit(public_url()).netloc.lower() and not path.startswith(prefix + "/"):
+        raise RuntimeError(
+            f"Refusing to start: FS_REDIRECT_URI {uri!r} is on PUBLIC_URL's host but outside its path "
+            f"{prefix!r}, where the sign-in cookies are not sent"
         )
     if prefix and path.startswith(prefix + "/"):
         path = path[len(prefix):]
