@@ -620,6 +620,32 @@ describe("project_context", () => {
     const q2 = r.questionStatuses.find((q) => q.id === "q_002");
     expect(q2?.storedStatus).toBeNull();
   });
+
+  it("questionStatuses carries each question's text, resolved ones included, so it can be read against the objective", async () => {
+    const long = "x".repeat(200);
+    await writeProject(
+      {
+        project: { id: "rp_001", objective: "Where was she born, and who were her parents?", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+        questions: [
+          { id: "q_001", question: "Where was she born?", status: "resolved" },
+          { id: "q_002", question: long, status: "in_progress" },
+          { id: "q_003", status: "open" },
+        ],
+      },
+      { persons: [], relationships: [], sources: [] },
+    );
+
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    expect(r.openQuestions.map((q) => q.id)).toEqual(["q_002", "q_003"]);
+    const byId = new Map(r.questionStatuses.map((q) => [q.id, q]));
+    expect(byId.get("q_001")).toMatchObject({ question: "Where was she born?", storedStatus: "resolved" });
+    expect(byId.get("q_002")?.question).toBe(r.openQuestions[0].question);
+    expect(byId.get("q_002")?.question).toHaveLength(140);
+    expect(byId.get("q_003")?.question).toBe("");
+  });
 });
 
 const EMPTY_RESEARCH = {
