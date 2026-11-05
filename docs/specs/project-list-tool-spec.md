@@ -1,9 +1,8 @@
 # `project_list` — which projects this server keeps — Spec
 
-> **Status:** New (2026-10-26). The folder and single-project modes are built.
-> The signed-in user's listing (§2.3) is the contract the remote MCP server
-> must serve; until it does, the research suite's hosted tests serve it from
-> fixtures.
+> **Status:** Built, in all three modes: folder, a store bound to one project,
+> and the signed-in user's listing (§2.3) on the connector door. The research
+> suite's hosted tests serve the listing from fixtures.
 
 ```
 project_list({}) -> { mode, projects?, newProjectPath?, message }   (read-only)
@@ -77,12 +76,17 @@ fields rather than failing the call.
 - **A store bound to one project** (the prototype worker's `PgS3ProjectStore`,
   bound per request by `X-Genealogy-Project-Id`) names its anchor. The anchor is
   listed once it holds a `research.json`, and is the `newProjectPath` until then.
-- **The signed-in user's listing.** A server that admits a user to many projects
-  names each project the user owns that holds a `research.json`, plus one fresh
-  path, `/proj_<16 lowercase hex>`, that no project uses yet. The first write to
-  the fresh path makes the caller its owner.
-- **A shared server's unbound store** rejects, so a request that names no
-  project gets the dispatcher's `isError` answer with that store's message.
+- **The signed-in user's listing.** A connector call naming no project names each
+  project the user owns that holds a `research.json`, newest document first, and
+  only ids of the door's `/proj_<16 lowercase hex>` shape, then one fresh path of
+  that shape that no project uses yet. A fresh path reads as an empty project
+  (`project_context` answers `reason: "no_project"`), and the first write to it,
+  a staged read included, makes the caller its owner. An id claimed that way and
+  still holding no `research.json` is not listed, so it never displaces the fresh
+  path. A failed listing is the dispatcher's `isError`, never an empty list. Every
+  other project tool on such a call still rejects with the connector's message.
+- **A shared server's process store** is unbound: anything that runs outside a
+  request's binding rejects with that store's message.
 
 ### 2.4 How the research router uses it
 
@@ -102,7 +106,17 @@ tool returned one.
   `projects` key; a bound
   store with a project, with none yet, and with a document that does not parse;
   an unbound store's rejection.
+- `tests/http/http-server.test.ts` — the connector's listing over a file double:
+  the caller's paths and one fresh path, a caller with none, an id of another
+  shape, a failed query, and a project tool naming no project querying nothing.
+- `tests/http/http-server-pg.test.ts` — two projects newest first and another
+  user's never, an ownerless project and a claimed id left out, and
+  `project_list`, `person_read`, `project_create`, `project_list` end to end.
 - `dev/smoke-calls.ts` — the stdio smoke expects folder mode; the HTTP smoke
-  expects the project its earlier `project_create` row wrote to be listed.
+  expects the project its earlier `project_create` row wrote to be listed, and
+  the connector pass a fresh `newProjectPath` beside it.
+- `dev/smoke-http.ts` — the connector pass seeds the caller's second project and
+  another user's, and requires both of the caller's, a fresh path, and not the
+  other user's.
 - `eval/tests/unit/research/` — the router's hosted routes, served by the
   `project-list-hosted-*` fixtures.

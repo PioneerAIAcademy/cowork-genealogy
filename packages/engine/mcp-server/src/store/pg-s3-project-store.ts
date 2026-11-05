@@ -248,6 +248,25 @@ export async function projectOwnerOf(
   return row ? { exists: true, ownerId: row.owner_id ?? null } : { exists: false, ownerId: null };
 }
 
+const OWNED_PROJECTS_SQL = `
+  SELECT p.project_id
+    FROM projects p
+    JOIN documents d ON d.project_id = p.project_id AND d.name = 'research.json'
+   WHERE p.owner_id = $1
+   ORDER BY d.updated_at DESC, p.project_id
+`;
+
+/**
+ * The ids a connector's `project_list` names: the user's projects, newest first.
+ * Only those holding a `research.json`: `project_list` takes the first path with
+ * none as `newProjectPath`, so an id a staged read claimed and nothing finished
+ * would displace the fresh path and offer its stale staging.
+ */
+export async function ownedProjectIds(backend: PgS3Backend, userId: string): Promise<string[]> {
+  const rows = await backend.pool.query<{ project_id: string }>(OWNED_PROJECTS_SQL, [userId]);
+  return rows.rows.map((row) => row.project_id);
+}
+
 /** One store check's outcome. `error` is a short label (an error code or name),
  *  never a message: `/healthz` is unauthenticated and messages can carry the
  *  host, the user name or the bucket. */

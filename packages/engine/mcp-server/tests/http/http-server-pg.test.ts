@@ -4,6 +4,45 @@ import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import type { Server as HttpServer } from "node:http";
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { CreateBucketCommand } from "@aws-sdk/client-s3";
+
+// Nothing in this file reaches FamilySearch: the one person the flow below reads
+// answers from here, and every other URL is a 404. `vi.mock` is hoisted above the
+// imports, so the server and its tools bind this.
+const upstream = vi.hoisted(() => ({
+  personId: "FLOW-123",
+  person: {
+    persons: [
+      {
+        id: "FLOW-123",
+        living: false,
+        gender: { type: "http://gedcomx.org/Male" },
+        names: [
+          {
+            nameForms: [
+              {
+                parts: [
+                  { type: "http://gedcomx.org/Given", value: "Flow" },
+                  { type: "http://gedcomx.org/Surname", value: "Person" },
+                ],
+              },
+            ],
+          },
+        ],
+        facts: [],
+      },
+    ],
+  },
+}));
+
+vi.mock("../../src/utils/http.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/utils/http.js")>();
+  const answer = async (url: string | URL): Promise<Response> =>
+    new URL(String(url)).pathname === `/platform/tree/persons/${upstream.personId}`
+      ? new Response(JSON.stringify(upstream.person), { status: 200 })
+      : new Response("{}", { status: 404 });
+  return { ...actual, fetchWithRetry: answer, fetchWithTimeout: answer };
+});
+
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import { startHttpServer } from "../../src/http-server.js";
@@ -13,6 +52,7 @@ import {
   PgS3ProjectStore,
   type PgS3Backend,
   lookupConnectorToken,
+  ownedProjectIds,
   projectOwnerOf,
 } from "../../src/store/pg-s3-project-store.js";
 import { runWithProjectStore, type ClaimFence, type ProjectStore } from "../../src/store/project-store.js";
@@ -267,6 +307,7 @@ if (!DSN || !ENDPOINT) {
         lookupConnector: (sha) =>
           lookupConnectorToken(backend, sha, (c) => decrypt(c, TEST_ENC_KEY)),
         projectOwner: (projectId) => projectOwnerOf(backend, projectId),
+        ownedProjects: (userId) => ownedProjectIds(backend, userId),
         checkReady: () => backend.checkReady(),
       });
       const address = server.address();
@@ -529,6 +570,100 @@ if (!DSN || !ENDPOINT) {
         expect(await ownerOf(projectPath)).toEqual([a.userId]);
       });
 
+      /** A project `userId` owns, written through the store a connector binds. */
+      async function seedOwned(userId: string, objective: string): Promise<string> {
+        const projectPath = freshPath();
+        const store = new PgS3ProjectStore(backend, {
+          projectId: projectPath.slice(1),
+          anchorPath: projectPath,
+          ownerId: userId,
+        });
+        await store.writeJson(projectPath, "research.json", { project: { objective } });
+        return projectPath;
+      }
+
+      /** What a tool answered: the body of an admitted, non-error result. */
+      function toolBody(r: { status: number; text: string }): Record<string, any> {
+        expect(r.status, r.text).toBe(200);
+        const { result } = JSON.parse(r.text);
+        expect(result.isError, r.text).not.toBe(true);
+        return JSON.parse(result.content[0].text);
+      }
+
+      const pathsOf = (body: Record<string, any>): string[] => body.projects.map((p: any) => p.projectPath);
+
+      it("a user who owns two projects gets both plus one fresh path, and another user's project is never listed", async () => {
+        const a = await seedConnector();
+        const b = await seedConnector();
+        const [older, newer] = [await seedOwned(a.userId, "one"), await seedOwned(a.userId, "two")].sort();
+        const foreign = await seedOwned(b.userId, "not yours");
+        // The newest document sorts last by id, so neither id order passes.
+        await backend.pool.query(
+          "UPDATE documents SET updated_at = now() - interval '1 day' WHERE project_id = $1 AND name = 'research.json'",
+          [older!.slice(1)],
+        );
+
+        const body = toolBody(await connCall(a.token, "project_list", {}));
+        expect(body.mode).toBe("hosted");
+        expect(pathsOf(body)).toEqual([newer, older]);
+        expect(body.newProjectPath).toMatch(/^\/proj_[0-9a-f]{16}$/);
+        expect([newer, older, foreign]).not.toContain(body.newProjectPath);
+        expect(JSON.stringify(body)).not.toContain(foreign);
+        expect(JSON.stringify(body)).not.toContain("not yours");
+      });
+
+      it("an ownerless project and a claimed id with no research.json are not listed, and the claimed id does not displace the fresh path", async () => {
+        const a = await seedConnector();
+        const ownerless = freshPath();
+        await new PgS3ProjectStore(backend, { projectId: ownerless.slice(1), anchorPath: ownerless }).writeJson(
+          ownerless,
+          "research.json",
+          { project: { objective: "nobody's" } },
+        );
+        const claimed = freshPath();
+        await new PgS3ProjectStore(backend, {
+          projectId: claimed.slice(1),
+          anchorPath: claimed,
+          ownerId: a.userId,
+        }).writeBytes(claimed, "images/scan.jpg", new Uint8Array([1]));
+
+        const body = toolBody(await connCall(a.token, "project_list", {}));
+        expect(pathsOf(body)).toEqual([]);
+        expect(body.newProjectPath).toMatch(/^\/proj_[0-9a-f]{16}$/);
+        expect([claimed, ownerless]).not.toContain(body.newProjectPath);
+      });
+
+      it("project_list then person_read then project_create builds a project the caller owns and the next project_list returns it", async () => {
+        const a = await seedConnector();
+        const first = toolBody(await connCall(a.token, "project_list", {}));
+        expect(pathsOf(first)).toEqual([]);
+        const projectPath = first.newProjectPath as string;
+        seededProjects.push(projectPath.slice(1));
+
+        const read = toolBody(
+          await connCall(a.token, "person_read", { personId: upstream.personId, projectPath }),
+        );
+        expect(read.stagingError).toBeUndefined();
+        expect(read.staged).not.toBeNull();
+        expect(await ownerOf(projectPath)).toEqual([a.userId]);
+
+        const created = toolBody(
+          await connCall(a.token, "project_create", {
+            projectPath,
+            objective: "Does a connector build a project end to end?",
+            personId: upstream.personId,
+          }),
+        );
+        expect(created.ok, JSON.stringify(created)).toBe(true);
+        expect(await ownerOf(projectPath)).toEqual([a.userId]);
+
+        const next = toolBody(await connCall(a.token, "project_list", {}));
+        expect(pathsOf(next)).toEqual([projectPath]);
+        expect(next.projects[0].subjects[0].name).toBe("Flow Person");
+        expect(next.newProjectPath).toMatch(/^\/proj_[0-9a-f]{16}$/);
+        expect(next.newProjectPath).not.toBe(projectPath);
+      });
+
       it("a two-call batch is refused", async () => {
         const a = await seedConnector();
         const one = { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "convert_calendar", arguments: {} } };
@@ -753,6 +888,7 @@ if (!DSN || !ENDPOINT) {
             // token, and a throw is a 503, never an admission.
             lookupConnector: async () => null,
             projectOwner: async () => ({ exists: false, ownerId: null }),
+            ownedProjects: async () => [],
             checkReady: () => unmigrated.checkReady(),
           });
           const address = door.address();

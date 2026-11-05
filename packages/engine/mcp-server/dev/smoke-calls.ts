@@ -292,16 +292,21 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: okTrue,
   },
   {
-    // The stdio smoke runs the file store, which lists nothing; over HTTP the
-    // bound store lists the project the create above wrote.
+    // The stdio smoke runs the file store, which lists nothing. Over HTTP the
+    // bound store lists the project the create above wrote; a connector's store
+    // lists it too, plus the fresh path a new project would go to.
     tool: "project_list",
     offline: true,
     args: () => ({}),
     expect: (res, ctx) => {
       const listed =
         Array.isArray(res.body?.projects) && res.body.projects.some((p: any) => p?.projectPath === ctx.projectPath);
+      const fresh = res.body?.newProjectPath;
+      const freshOk =
+        !ctx.connector ||
+        (typeof fresh === "string" && /^\/proj_[0-9a-f]{16}$/.test(fresh) && fresh !== ctx.projectPath);
       return {
-        ok: !res.isError && (res.body?.mode === "folder" || (res.body?.mode === "hosted" && listed)),
+        ok: !res.isError && (res.body?.mode === "folder" || (res.body?.mode === "hosted" && listed && freshOk)),
         detail: brief(res, 300),
       };
     },

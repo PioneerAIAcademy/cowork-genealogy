@@ -216,6 +216,23 @@ export function unboundProjectStore(message: string): ProjectStore {
   return new UnboundProjectStore(message);
 }
 
+export interface OwnedProjects {
+  /** The caller's project paths. A rejection reaches the model as `isError`. */
+  listOwned: () => Promise<string[]>;
+  /** Listed after them: nothing is there yet, so it is where a new project goes. */
+  freshPath: string;
+  /** The store for one listed path. */
+  storeFor: (projectPath: string) => ProjectStore;
+}
+
+/** An unbound store that can also answer `project_list`, for a connector request
+ *  naming no project: it reads each path it listed, through that path's own
+ *  store, and rejects everything else with `message`. Nothing is queried or
+ *  bound until `listProjects` runs. */
+export function ownedProjectsStore(message: string, owned: OwnedProjects): ProjectStore {
+  return new OwnedProjectsStore(message, owned);
+}
+
 class UnboundProjectStore implements ProjectStore {
   constructor(private readonly message: string) {}
 
@@ -235,10 +252,10 @@ class UnboundProjectStore implements ProjectStore {
   findNestingAncestor(): Promise<string | null> {
     return this.reject();
   }
-  exists(): Promise<boolean> {
+  exists(_projectPath: string, _ref: string): Promise<boolean> {
     return this.reject();
   }
-  readText(): Promise<string> {
+  readText(_projectPath: string, _ref: string): Promise<string> {
     return this.reject();
   }
   readBytes(): Promise<Uint8Array> {
@@ -264,5 +281,30 @@ class UnboundProjectStore implements ProjectStore {
   }
   listProjects(): Promise<ProjectListing> {
     return this.reject();
+  }
+}
+
+class OwnedProjectsStore extends UnboundProjectStore {
+  private readonly listed = new Map<string, ProjectStore>();
+
+  constructor(
+    message: string,
+    private readonly owned: OwnedProjects,
+  ) {
+    super(message);
+  }
+
+  override async listProjects(): Promise<ProjectListing> {
+    const projectPaths = [...(await this.owned.listOwned()), this.owned.freshPath];
+    for (const path of projectPaths) this.listed.set(path, this.owned.storeFor(path));
+    return { mode: "hosted", projectPaths };
+  }
+
+  override exists(projectPath: string, ref: string): Promise<boolean> {
+    return this.listed.get(projectPath)?.exists(projectPath, ref) ?? super.exists(projectPath, ref);
+  }
+
+  override readText(projectPath: string, ref: string): Promise<string> {
+    return this.listed.get(projectPath)?.readText(projectPath, ref) ?? super.readText(projectPath, ref);
   }
 }

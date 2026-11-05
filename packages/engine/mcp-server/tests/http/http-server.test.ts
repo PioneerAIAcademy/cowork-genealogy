@@ -37,6 +37,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import {
   CLAIM_EPOCH_HEADER,
   claimFenceFromHeaders,
+  CONNECTOR_PROJECT_RE,
   HEALTHZ_TIMEOUT_MS,
   PROJECT_ID_HEADER,
   MAX_BODY_BYTES,
@@ -69,8 +70,8 @@ const bindStore = vi.fn(
     _signal: AbortSignal,
     _fence?: ClaimFence,
     // E1: a connector request names its own anchor and owner.
-    _opts?: { anchorPath?: string; ownerId?: string },
-  ): ProjectStore => new ScopedFsStore(root, projectId),
+    opts?: { anchorPath?: string; ownerId?: string },
+  ): ProjectStore => new ScopedFsStore(root, projectId, opts?.anchorPath),
 );
 // Allow-all unless a case says otherwise: the project check itself is U4's
 // section below and tests/http/http-server-pg.test.ts.
@@ -145,6 +146,9 @@ const projectOwner = vi.fn(
   }),
 );
 
+/** The caller owns nothing unless a case says otherwise. */
+const ownedProjects = vi.fn(async (_userId: string): Promise<string[]> => []);
+
 /** The headers a connector request carries. */
 function connectorHeaders(extra: Record<string, string> = {}): Record<string, string> {
   return { Authorization: `Bearer ${TEST_CONNECTOR_TOKEN}`, ...extra };
@@ -160,6 +164,7 @@ beforeAll(async () => {
     authorize,
     lookupConnector,
     projectOwner,
+    ownedProjects,
   });
   const address = server.address();
   if (!address || typeof address !== "object") throw new Error("server did not bind a port");
@@ -316,7 +321,8 @@ describe("tool server over Streamable HTTP", () => {
       bindStore,
       authorize,
       lookupConnector,
-      projectOwner
+      projectOwner,
+      ownedProjects,
     });
     const address = linked.address();
     if (!address || typeof address !== "object") throw new Error("server did not bind a port");
@@ -852,6 +858,7 @@ describe("tool server over Streamable HTTP", () => {
         authorize,
         lookupConnector,
         projectOwner,
+        ownedProjects,
         issuer,
       });
       const addr = withIssuer.address();
@@ -1048,6 +1055,86 @@ describe("tool server over Streamable HTTP", () => {
       expect(res.status).toBe(503);
       await res.text();
     });
+
+    describe("project_list on a connector (#3991)", () => {
+      /** A project on disk under `id`, as `ownedProjects` would name it. */
+      async function seedOwned(id: string): Promise<void> {
+        await mkdir(join(root, id), { recursive: true });
+        await writeFile(join(root, id, "research.json"), JSON.stringify({ project: { objective: `about ${id}` } }));
+      }
+
+      async function listProjects(): Promise<{ isError?: boolean; text: string }> {
+        const res = await rpc(call("project_list", {}), connectorHeaders());
+        expect(res.status).toBe(200);
+        const { result } = (await res.json()) as {
+          result: { isError?: boolean; content: Array<{ text: string }> };
+        };
+        return { isError: result.isError, text: result.content[0]!.text };
+      }
+
+      it("a connector's project_list names the caller's projects and one fresh path", async () => {
+        const ids = ["proj_aaaaaaaaaaaaaaaa", "proj_bbbbbbbbbbbbbbbb"];
+        await Promise.all(ids.map(seedOwned));
+        bindStore.mockClear();
+        ownedProjects.mockClear();
+        ownedProjects.mockResolvedValueOnce(ids);
+
+        const listed = await listProjects();
+        expect(listed.isError, listed.text).not.toBe(true);
+        const body = JSON.parse(listed.text);
+        expect(ownedProjects).toHaveBeenCalledExactlyOnceWith(TEST_USER_ID);
+        expect(body.mode).toBe("hosted");
+        expect(body.projects.map((p: { projectPath: string }) => p.projectPath)).toEqual(ids.map((id) => `/${id}`));
+        expect(body.projects[0].objective).toBe(`about ${ids[0]}`);
+        expect(body.newProjectPath).toMatch(CONNECTOR_PROJECT_RE);
+        expect(ids.map((id) => `/${id}`)).not.toContain(body.newProjectPath);
+
+        // Each path's store: anchored at that path, for this caller, with no fence.
+        expect(bindStore.mock.calls.map(([id]) => `/${id}`)).toEqual([...ids.map((id) => `/${id}`), body.newProjectPath]);
+        for (const [id, , fence, opts] of bindStore.mock.calls) {
+          expect(fence).toBeUndefined();
+          expect(opts).toEqual({ anchorPath: `/${id}`, ownerId: TEST_USER_ID });
+        }
+      });
+
+      it("a caller who owns nothing still gets a fresh path", async () => {
+        const body = JSON.parse((await listProjects()).text);
+        expect(body.projects).toEqual([]);
+        expect(body.newProjectPath).toMatch(CONNECTOR_PROJECT_RE);
+        expect(body.message).toBe("No project yet: pass newProjectPath as projectPath to start one.");
+      });
+
+      it("an id that is not /proj_ shaped is not listed", async () => {
+        const good = "proj_cccccccccccccccc";
+        const claimedByDevLogin = "a-web-tier-project";
+        await Promise.all([good, claimedByDevLogin].map(seedOwned));
+        bindStore.mockClear();
+        ownedProjects.mockResolvedValueOnce([claimedByDevLogin, good]);
+
+        const body = JSON.parse((await listProjects()).text);
+        expect(body.projects.map((p: { projectPath: string }) => p.projectPath)).toEqual([`/${good}`]);
+        expect(bindStore.mock.calls.map(([id]) => id)).not.toContain(claimedByDevLogin);
+      });
+
+      it("a failing ownedProjects is isError, never No project yet", async () => {
+        ownedProjects.mockRejectedValueOnce(new Error("pool is down"));
+        const listed = await listProjects();
+        expect(listed.isError).toBe(true);
+        expect(listed.text).toContain("pool is down");
+        expect(listed.text).not.toContain("No project yet");
+      });
+
+      it("a connector call naming no project still refuses project tools and queries nothing", async () => {
+        bindStore.mockClear();
+        ownedProjects.mockClear();
+        const res = await rpc(call("tree_query", {}), connectorHeaders());
+        expect(res.status).toBe(200);
+        const text = await res.text();
+        expect(text).toContain("This call named no project");
+        expect(ownedProjects).not.toHaveBeenCalled();
+        expect(bindStore).not.toHaveBeenCalled();
+      });
+    });
   });
 
   it("5. /healthz is 200 with the tool count; GET (SSE accept) and DELETE on /mcp are 405 with Allow: POST", async () => {
@@ -1090,7 +1177,8 @@ describe("tool server over Streamable HTTP", () => {
       authorize,
       checkReady: () => probe(),
       lookupConnector,
-      projectOwner
+      projectOwner,
+      ownedProjects,
     });
     const address = ready.address();
     if (!address || typeof address !== "object") throw new Error("server did not bind a port");

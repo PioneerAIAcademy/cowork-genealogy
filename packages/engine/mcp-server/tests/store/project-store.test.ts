@@ -1,7 +1,8 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { FsProjectStore } from "../../src/store/fs-project-store.js";
 import {
   getProjectStore,
+  ownedProjectsStore,
   runWithProjectStore,
   setProjectStore,
   unboundProjectStore,
@@ -89,6 +90,35 @@ describe("project store binding", () => {
       const method = store[name] as (...args: unknown[]) => Promise<unknown>;
       await expect(method.call(store, "/project", "research.json"), name).rejects.toThrow(message);
     }
+  });
+
+  it("an owned-projects store rejects every method but listProjects until it has listed, and any path it did not list after", async () => {
+    const message = "name a project";
+    const forPath = (path: string) =>
+      ({
+        exists: async (projectPath: string, ref: string) => projectPath === path && ref === "research.json",
+        readText: async (projectPath: string, ref: string) => `${projectPath}:${ref}`,
+      }) as unknown as ProjectStore;
+    const storeFor = vi.fn(forPath);
+    const listOwned = vi.fn(async () => ["/proj_a"]);
+    const store = ownedProjectsStore(message, { listOwned, freshPath: "/proj_fresh", storeFor });
+
+    for (const name of Object.keys(METHODS).filter((n) => n !== "listProjects") as (keyof ProjectStore)[]) {
+      const method = store[name] as (...args: unknown[]) => Promise<unknown>;
+      await expect(method.call(store, "/proj_a", "research.json"), name).rejects.toThrow(message);
+    }
+    expect(listOwned).not.toHaveBeenCalled();
+    expect(storeFor).not.toHaveBeenCalled();
+
+    expect(await store.listProjects()).toEqual({ mode: "hosted", projectPaths: ["/proj_a", "/proj_fresh"] });
+    expect(storeFor.mock.calls.map(([path]) => path)).toEqual(["/proj_a", "/proj_fresh"]);
+    expect(await store.exists("/proj_a", "research.json")).toBe(true);
+    expect(await store.exists("/proj_fresh", "tree.gedcomx.json")).toBe(false);
+    expect(await store.readText("/proj_a", "research.json")).toBe("/proj_a:research.json");
+
+    await expect(store.exists("/proj_other", "research.json")).rejects.toThrow(message);
+    await expect(store.readText("/proj_other", "research.json")).rejects.toThrow(message);
+    await expect(store.writeJson("/proj_a", "research.json", {})).rejects.toThrow(message);
   });
 
   it("installed as the process store with nothing bound, getProjectStore returns it and never builds FsProjectStore", async () => {

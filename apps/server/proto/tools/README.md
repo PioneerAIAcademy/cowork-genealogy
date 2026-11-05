@@ -59,6 +59,10 @@ the `WWW-Authenticate: resource_metadata=` URL, never derived from the request's
 `Bearer`. One stderr line names both (`connector door: issuer=… fs-token-key=default|set`)
 and never the key itself.
 
+A connector call naming no project binds a store that refuses every project tool and
+answers `project_list` with the user's projects plus one fresh `/proj_` path, which reads
+as an empty project until its first write claims it.
+
 The door reads each request body once, capped at **1 MiB**, and answers 413 past
 it. The cap binds the worker's writes too, because the body must be read to
 refuse a JSON-RPC batch before any tool runs; it is sized from the largest
@@ -172,7 +176,9 @@ smoke names all three.
   Two clients. The first presents the connector token under `--connector`, otherwise the
   stamped turn's headers and bearer; it lists the tools. Every plan row runs through the
   stamped-turn client, and with `--connector` a second pass runs the plan's store rows
-  through the connector door on its own `/proj_<16 hex>` project.
+  through the connector door on its own `/proj_<16 hex>` project, then seeds the caller's
+  second project and another user's and requires `project_list` to name both of the
+  caller's, a fresh path, and not the other user's.
   The second runs every row that passes `--project-path` (the anchor,
   `/project`) as its `projectPath`: it sends `X-Genealogy-Project-Id: <--project-id>` — a
   fresh `smoke-<uuid>` by default, `SMOKE_PROJECT_ID=…` to override — and the fence of a
