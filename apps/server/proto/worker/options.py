@@ -878,7 +878,11 @@ def build_worker_options(
         "that holds the write (`@plugin:init-project` creates a project, `@plugin:tree-edit` "
         "edits the tree). Follow the genealogy skills, and "
         "apply researcher_profile.narration_guidance from research.json as your "
-        "narration style."
+        "narration style. "
+        "With no project and no FamilySearch person ID, a request for the names and details "
+        "recorded in a record set (a roll, register, muster list or volume) goes to the "
+        "search-images agent with no projectPath, even when it names no images; relay "
+        "everything after its final --- verbatim."
     )
     # Unconditional, on the opening turn too: the opening turn is the one #3768 is about.
     project_note = f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{NO_PROJECT_NOTE}"
