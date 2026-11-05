@@ -24,6 +24,7 @@ import { getStandardDate } from "../utils/fact-helpers.js";
 import { latestYear, latestIsUnbounded } from "../utils/date-helpers.js";
 import { collectSourceRefs } from "../utils/tree-person.js";
 import { awaitingUserHandOffs, type AwaitingHandOff } from "../utils/awaiting-hand-offs.js";
+import { CLAIM_KINDS } from "../validation/validator.js";
 import { exhaustedImageGroups } from "../utils/browse-budget.js";
 import { projectLinks } from "../utils/project-links.js";
 import { getProjectStore } from "../store/project-store.js";
@@ -202,6 +203,10 @@ export type ProjectContextResult =
       awaitingUser: ProjectContextAwaitingUser[];
       /** Films whose browse cap is spent in this project; nothing resets it. */
       exhaustedImageGroups: ProjectContextExhaustedImageGroup[];
+      /** The proof_summaries claim kinds this engine accepts. A body that writes a
+       *  kind checks it is listed, so a newer body on an older engine keeps
+       *  today's behaviour instead of having its write refused. */
+      claimKinds: string[];
       /** Per place stored in external-collections.json: how many curated collections,
        *  and how many per FamilySearch record type. Counts only, never rows — read the
        *  rows with research_query({section: "external_collections"}). Absent when no
@@ -419,6 +424,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     localities,
     awaitingUser,
     exhaustedImageGroups: exhausted,
+    claimKinds: [...CLAIM_KINDS],
     ...(externalCollections ? { externalCollections } : {}),
     sectionCounts,
     unregisteredDisagreementCount,
@@ -534,6 +540,7 @@ export const projectContextSchema = {
     "exhaustedImageGroups [{imageGroup, imagesRead, planItemIds}] lists films whose 20-image " +
     "browse cap is spent in this project; nothing resets it, not a new agent or session. Never " +
     "delegate a browse of one: send its planItemIds to research-plan to dispose of. " +
+    "claimKinds lists the proof_summaries claim kinds this engine accepts. " +
     "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +

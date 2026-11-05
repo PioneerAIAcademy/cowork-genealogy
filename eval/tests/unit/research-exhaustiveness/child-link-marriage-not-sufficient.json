@@ -29,5 +29,8 @@
   ],
   "mcp_fixtures": [
     "wiki-read-ireland-civil-registration"
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 900
+  }
 }

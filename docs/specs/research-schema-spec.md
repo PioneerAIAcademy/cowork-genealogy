@@ -15,7 +15,7 @@ A genealogy research project consists of two files:
 
 `research.json` references `tree.gedcomx.json` at two points:
 
-1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`, `proof_summaries.claims[].relationship.parent` / `.child`, `namesakes.person_id`, and `hit_verdicts.person_id` reference person IDs in `tree.gedcomx.json`.
+1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`, every person a `proof_summaries.claims[]` entry names (a relationship's ends, a fact's subject or subject pair, an identity's `person` and `same_as`, a name's `person`), `namesakes.person_id`, and `hit_verdicts.person_id` reference person IDs in `tree.gedcomx.json`.
 2. **Source description IDs** — `sources.gedcomx_source_description_id` references source description IDs in `tree.gedcomx.json`.
 
 At upload time, resolved person identities flow into `tree.gedcomx.json` while the assertion-to-record-role linkages stay in `research.json` as the audit trail.
@@ -105,6 +105,8 @@ flagged. (One row below is the exception, and says so.)
 | `hypothesis_status` | `active`, `supported`, `ruled_out` | hypotheses |
 | `proof_tier` | `proved`, `probable`, `possible`, `not_proved`, `disproved` | proof_summaries |
 | `proof_shortfall` | `ceiling`, `gap`, `conflict`, `none` | proof_summaries |
+| `claim_polarity` | `affirmed`, `denied` | proof_summaries claims |
+| `finding_type` | `absence`, `completeness`, `record_content`, `rejected_candidate` | proof_summaries finding claims |
 | `proof_vehicle` | `statement`, `summary`, `argument` | proof_summaries |
 | `person_evidence_confidence` | `confident`, `probable`, `speculative` | person_evidence |
 | `project_status` | `active`, `paused`, `completed` | project |
@@ -592,7 +594,7 @@ Array of question objects.
 | `stop_criteria` | object or null | yes | Null when `stopped_because` is null or a non-gate value; required object when `stopped_because` is a gate value. Always present as a key (null, not omitted) for consistency. See below |
 | `not_reached` | object[] | yes | Sources that could not be reached, each with `kind`, `description`, `log_entry_id` and `wiki_title` (both nullable). May be empty. See below |
 
-**`stop_criteria`** — Structured assessment against the GPS 7-Point Stop Criteria. Each field is a brief assessment (1-2 sentences).
+**`stop_criteria`** — Structured assessment against the GPS 7-Point Stop Criteria. Each field is a brief assessment (1-2 sentences), at most 800 characters: `research_append` refuses a longer one on any op that writes `search_stop` (over 188 committed `stop_criteria` objects, measured 2026-11-02, it refuses 38, p90 708 — `research-append-tool-spec.md`).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -1011,13 +1013,29 @@ it always has. When present, each entry is a `proof_claim`:
 | `claim` | string | yes | Free-text label (e.g. `"paternity"`, `"maternity"`). Must be unique within one proof_summary's `claims[]` — the eval validator looks a claim up by this label and the viewer keys its rendered list by it, so a duplicate silently shadows the earlier entry in both. The validator rejects a repeat |
 | `proof_tier` | `proof_tier` | yes | This claim's own confidence tier — same enum and rules as the scalar `tier`, applied to only the evidence bearing on this claim |
 | `supporting_assertion_ids` | string[] | yes | `a_` references grounding this claim specifically |
-| `relationship` | `proof_claim_relationship` | yes | The tree endpoint this claim concludes — currently `{ type: "ParentChild", parent: "<tree person id>", child: "<tree person id>" }`. Named so the tree-encoding gate has a mechanical target rather than a prose label. `parent`/`child` are checked against `tree.gedcomx.json persons[].id` by the same walker (`person-id-refs.ts`) that drives `merge_tree_persons`'s remap, so a dangling id is caught and a merged-away id is repointed to its survivor rather than going stale |
+| `shortfall` | `proof_shortfall` | no | Why this claim is not at a higher tier, from the scalar's enum. The write boundary checks only the enum, not its agreement with the claim's tier |
+| `polarity` | `claim_polarity` | no | `affirmed` (the default when absent) or `denied`: a grounded "probably not", at `probable` or `possible` only. A `disproved` claim carries no polarity |
+| `relationship` | `proof_claim_relationship` | one of five | A tree edge: `{ type: "ParentChild", parent, child, subtype? }` or `{ type: "Couple", person1, person2 }` |
+| `fact` | `proof_claim_fact` | one of five | `{ subject, fact_type, date?, place?, value? }`; `subject` is a tree person id, or a `{ person1, person2 }` pair for a couple event. A range is one `date` value |
+| `identity` | `proof_claim_identity` | one of five | A record party is a tree person, `{ record_id, party, person }` (`party` is the record_persona_id, else the record_role), or two tree persons are one, `{ person, same_as }` |
+| `name` | `proof_claim_name` | one of five | `{ person, given?, surname? }` |
+| `finding` | `proof_claim_finding` | one of five | A conclusion that is no tree object: `{ finding_type, statement, log_entry_ids? }`, each log id an entry that exists |
 
-**The scalar `tier` carries the stronger of the per-claim tiers** when `claims`
-is present (see §7 for why). **The tree-encoding gate (proof-conclusion §6)
+A claim names **exactly one** of `relationship`, `fact`, `identity`, `name` and
+`finding`; the validator refuses none or two. Every person a claim names is
+checked against `tree.gedcomx.json persons[].id` by the walker
+(`person-id-refs.ts`) that drives `merge_tree_persons`'s remap, so a dangling id
+is caught and a merged-away id is repointed to its survivor. A `same_as` claim
+on the merged pair therefore names the survivor twice; that is the record of the
+identity decision the merge rested on, and the validator accepts it. Each cited
+assertion must exist. `project_context.claimKinds` lists the kinds the running
+engine accepts.
+
+**The scalar `tier` may not exceed the strongest claim**, when it stands at
+`possible` or better (see §7 for why). **The tree-encoding gate (proof-conclusion §6)
 reads per claim when `claims` is present, and falls back to the scalar when it
-is absent** — a claim at `possible` stays off the tree even though the scalar
-(the stronger claim) may already read `probable`. Splitting a question into
+is absent** — a claim at `possible` stays off the tree even though the scalar,
+backed by a stronger claim, may already read `probable`. Splitting a question into
 separate paternity/maternity questions remains available, but only when the
 two parents need genuinely different research plans (different jurisdictions,
 different record sets) — not merely different evidence strength, which
@@ -1389,7 +1407,7 @@ proof_summaries
   ├─ supporting_assertion_ids ───────────────────► assertions[].id
   ├─ resolved_conflict_ids (status resolved|moot) ► conflicts[].id
   ├─ claims[].supporting_assertion_ids ─────────► assertions[].id
-  └─ claims[].relationship.parent / .child ─────► tree.gedcomx.json persons[].id
+  └─ every person a claim names ────────────────► tree.gedcomx.json persons[].id
 
 evaluations
   ├─ target_id (when target_type == "question") ─► questions[].id
@@ -1428,9 +1446,7 @@ hit_verdicts
 
 **Why `independence_analysis` is per-conflict, not per-source-pair.** Independence depends on context. Two sources may be independent for one fact but not another — e.g., two census records with different enumerators are independent as sources, but if the same household member answered both times, their assertions about birth facts may share a single informant and are not fully independent for those facts. The skill writer must assess independence in the context of the specific conflict, not globally.
 
-**Why the scalar `tier` carries the stronger claim once a `claims` breakdown exists.** Three things still read the scalar after a question splits into per-claim tiers: the orchestrator's routing table, its completion gate, and the tree-write invariant tests — all keyed on "tier ≥ probable." The scalar has to resolve to one of the per-claim tiers, and the chosen rule is the **stronger** one. The rejected alternative is scalar-follows-weakest-claim: it reads more conservative, but it would suppress a proved paternal link from the orchestrator's routing for as long as the maternal claim stayed weak, leaving a mechanically resolvable question permanently invisible to the routing table that is supposed to drive it to completion. Taking the stronger claim is safe specifically because the *scalar* no longer decides what gets written to the tree — the `claims` breakdown does that, per claim, at each claim's own tier (§5.11) — so a `probable` scalar next to a `possible` maternity claim can no longer license writing the weak claim.
-
-This rule is **mechanically enforced by the validator**, not left to agent prose alone: `tier` must equal the strongest of `claims[].proof_tier` whenever `claims` is present, checked against `PROOF_TIER_RANK` in `validator.ts`. It started as prose-only, and a PR review of the first cut of this feature caught exactly the failure that omission allows — an unrelated agent-body edit destabilized a *different* test's tier selection, and nothing would have caught a scalar silently drifting from its own claims had that edit gone the other way. `tier === max(claims[].proof_tier)` is decidable from the document alone, which is why it belongs in the validator rather than only in `proof-conclusion.md`.
+**Why the scalar `tier` may not exceed the strongest claim, and need not equal it.** The scalar answers the question as a whole, and three things read it: the orchestrator's routing table, its completion gate and the tree-write invariant tests, all keyed on "tier ≥ probable". A scalar above every claim would claim more than any one conclusion behind it supports, so the validator refuses one at `possible` or better that exceeds the strongest of `claims[].proof_tier` (`PROOF_TIER_RANK` in `validator.ts`). It used to have to *equal* the strongest claim, which forced "proved as bookkeeping" headlines: a question answered at `probable` overall had to read `proved` because one claim was. The scalar no longer decides what reaches the tree — each claim does, at its own tier — so a weaker headline is safe. Two `research_append` rules ship with the bound: a tier change on a summary holding claims re-states the claims in the same op, so a downgrade cannot leave a claim standing on evidence the summary no longer vouches for; and a `proved` or `disproved` claim meets the scalar's conclusive floor (the question declared exhaustive before the call) on its own, or the bound would accept a lone `disproved` claim under a `not_proved` scalar. The conflict gate runs per claim, over each claim's cited assertions, for the same reason, and the identity and parentage gates (an unlinked proof, an unlinked parent, competing parent sets) read the strongest affirmed tier among the scalar and its claims, also when an update sends only `claims`. A `denied` claim is a grounded "probably not" and raises no gate. All of it is decidable from the document alone, which is why it lives at the write boundary rather than only in `proof-conclusion.md`.
 
 ---
 
