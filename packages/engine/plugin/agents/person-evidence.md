@@ -713,7 +713,12 @@ is correct. Batch one record's personas into a single `materialize_facts({ ops:
 `marriage`, `parentage`, `parentchild`, or `age`: the tool skips those fact_types, so there is nothing to
 write **onto that persona**. The other party such an assertion names is still
 written, per Step 5. The facts you land here are what the next search reads off the tree
-person.
+person. Check `conflicts_surfaced` in the response: when it is
+non-empty, each entry names a vital fact type on which two coexisting
+values now disagree on that person. Name every such conflict in your
+reply — person id, fact type, and the coexisting values — and note
+that conflict-resolution is needed to adjudicate which is correct. Do
+not silently ignore this field.
 
 ### 5. Handle new persons (stub creation)
 
