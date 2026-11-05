@@ -67,7 +67,7 @@ from harness.ts_validator import validate_parsed
 # Python.
 #
 # It was called REQUIRED_SECTIONS and was neither: it omitted `evaluations`,
-# which the schema does require, and now carries two sections the schema makes
+# which the schema does require, and now carries sections the schema makes
 # optional. What it actually is is the diff set, so that is its name.
 #
 # Every top-level property EXCEPT `researcher_profile`, which is an object rather
@@ -84,6 +84,7 @@ DIFFED_SECTIONS = [
     "assertions", "person_evidence", "conflicts",
     "hypotheses", "timelines", "proof_summaries",
     "evaluations", "localities", "rejected_links", "namesakes",
+    "hit_verdicts",
 ]
 
 
@@ -1752,6 +1753,9 @@ def test_skill_calls_name_a_shipped_skill(builtin_tool_calls, test=None):
 
 # --- An out-of-lane request is handed back to its owner ------------------
 
+_HAND_BACK_READS = frozenset({"project_context", "tree_query", "research_query"})
+
+
 def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_returns=None):
     """On a hand-back test the agent makes no MCP tool call and its reply names
     the owner, read off `negative.correct_skill[0]`.
@@ -1774,6 +1778,11 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
     The 'project-context-guard' tag admits one call: a `project_context` that
     opens the run, which is how init-project learns a project already exists
     (it writes nothing). Any second call, or any other tool, still fails.
+
+    The 'reads-before-hand-back' tag admits the read-only project tools
+    (`project_context`, `tree_query`, `research_query`) in any number: an agent
+    that must look at the project to see the request is out of its lane has
+    still not done the work. Any other tool, a writer included, still fails.
     """
     from harness.skill_runner import subject_reply_text
 
@@ -1788,12 +1797,17 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
         and _bare_tool_name(calls[0].get("tool") or "") == "project_context"
     ):
         calls = calls[1:]
+    if "reads-before-hand-back" in test.get("tags", []):
+        calls = [c for c in calls if _bare_tool_name(c.get("tool") or "") not in _HAND_BACK_READS]
     assert calls == [], (
         "a hand-back makes no tool call; got "
         f"{len(calls)} call(s): "
         + ", ".join(c.get("tool", "?") for c in calls)
     )
-    reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
+    # A failed spawn is recorded under the agent's name with `is_error`, and its
+    # runtime text ("Available agents: ...") names every owner (issue #3935).
+    own_returns = [r for r in (agent_returns or []) if not r.get("is_error")]
+    reply = subject_reply_text(own_returns, text_response, test.get("skill") or "", test)
     if not owners:
         assert "hand-back:" in reply.lower(), "the reply carries no `Hand-back:` line"
         return

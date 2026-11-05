@@ -35,7 +35,7 @@
         "\"Find a Grave Index\" — entry for John Perry Witbeck",
         "Find a Grave — findagrave.com Memorial #140729859 — John Perry Witbeck, died 28 Feb 1819, Niskayuna Reformed Church Cemetery, Schenectady County, New York (bundled capture findagrave-john-perry-witbeck-140729859.pdf)."
       ],
-      "required": true
+      "required": false
     },
     {
       "id": "f3",
@@ -53,7 +53,7 @@
         "\"Find a Grave Index\" — entry for John Perry Witbeck",
         "Find a Grave — findagrave.com Memorial #140729859 — John Perry Witbeck, buried Niskayuna Reformed Church Cemetery, Schenectady County, New York (bundled capture findagrave-john-perry-witbeck-140729859.pdf)."
       ],
-      "required": true
+      "required": false
     }
   ]
 }
