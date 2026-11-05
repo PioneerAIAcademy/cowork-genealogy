@@ -525,12 +525,12 @@ function bearerValid(req: http.IncomingMessage): { ok: true; clientId: string; s
 
 async function handleMcp(req: http.IncomingMessage, res: http.ServerResponse): Promise<void> {
   if (existsSync(DENY_FLAG)) {
-    log("mcp_401", { why: "deny flag present", flag: DENY_FLAG });
+    log("mcp_401", { why: "deny flag present", flag: DENY_FLAG, user_agent: req.headers["user-agent"] });
     return sendJson(res, 401, { error: "invalid_token" }, challenge(true));
   }
   const auth = bearerValid(req);
   if (!auth.ok) {
-    log("mcp_401", { why: auth.why });
+    log("mcp_401", { why: auth.why, user_agent: req.headers["user-agent"] });
     const tokenRefused = auth.why !== "no bearer";
     return sendJson(res, 401, tokenRefused ? { error: "invalid_token" } : { error: "unauthorized" }, challenge(tokenRefused));
   }
