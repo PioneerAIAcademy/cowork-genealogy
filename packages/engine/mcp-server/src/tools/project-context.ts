@@ -192,8 +192,9 @@ export type ProjectContextResult =
       /** research.researcher_profile.subscriptions, strings only; [] when absent. */
       subscriptions: string[];
       openQuestions: ProjectContextQuestion[];
-      /** Advisory per-question state and next step. Nothing gates on it. */
-      questionStatuses: QuestionStatus[];
+      /** Advisory per-question state and next step, resolved questions included,
+       *  each with its text truncated as in openQuestions. Nothing gates on it. */
+      questionStatuses: (QuestionStatus & { question: string })[];
       persons: ProjectContextPerson[];
       sources: ProjectContextSource[];
       localities: ProjectContextLocality[];
@@ -363,7 +364,17 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // question is waiting on, computed from the document rather than from
   // session history (the only durable state this system has). The gates in
   // research_append compute their own preconditions independently.
-  const questionStatuses = questionStates(research, tree);
+  const questionText = new Map<string, string>();
+  for (const q of Array.isArray(research?.questions) ? research.questions : []) {
+    if (q && typeof q === "object" && typeof q.id === "string" && !questionText.has(q.id)) {
+      questionText.set(q.id, truncateQuestion(typeof q.question === "string" ? q.question : ""));
+    }
+  }
+  const questionStatuses = questionStates(research, tree).map(({ id, ...rest }) => ({
+    id,
+    question: questionText.get(id) ?? "",
+    ...rest,
+  }));
 
   const awaitingUser = awaitingUserHandOffs(research?.log);
 
@@ -496,8 +507,8 @@ export const projectContextSchema = {
     "forPlace, timePeriod, jurisdictions, collections, quirks, pagesRead}] — the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
     "to stage searches (guide_markdown prose is omitted here); and questionStatuses " +
-    "[{id, state, nextStep, openConflictIds, storedStatus, unregisteredDisagreements, " +
-    "competingParentSets}] — per question, how far it " +
+    "[{id, question, state, nextStep, openConflictIds, storedStatus, unregisteredDisagreements, " +
+    "competingParentSets}] — per question, resolved ones included, its text (truncated) and how far it " +
     "has got (framed / planned / searching / evidence-gathered / concluded / critiqued — " +
     "critiqued means an on-demand gps-mentor review exists and is never a step to take), " +
     "what it is waiting on, and storedStatus, the question's own questions[].status " +
