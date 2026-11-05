@@ -15,6 +15,10 @@ else. A `text` block is what you type in the Cowork task. **New task** means exa
 that: an earlier result in the same task spoils the next probe. Each step names the
 record blocks it fills.
 
+Claude Desktop's button is **New**. Attaching a folder makes it a Cowork task, a cloud
+`cse_` session: `claude-code` connects to the server seconds after the folder is
+granted. With no folder it is a chat, and no `claude-code` line appears.
+
 ### Set up
 
 1. **Build the page,** and fill the **Run** block in the record. Open Claude Desktop
@@ -524,16 +528,16 @@ hypothesis and conclusion get a card, and the router lines shrink to match.
 
 | | Connector | Local |
 |---|---|---|
-| Task run mode | | |
+| Task run mode | Cloud (`cse_` session) | |
 | `show_project`, first call in a task | Asked; allowed once | |
-| `show_project`, second call | | |
-| `show_project`, third call | | |
-| `show_project`, next call after "always allow" | | |
-| `show_project`, first call in a new task after "always allow" | | |
+| `show_project`, second call | Asked | |
+| `show_project`, third call | Asked; chose "always allow" | |
+| `show_project`, next call after "always allow" | No prompt | |
+| `show_project`, first call in a new task after "always allow" | No prompt | |
 | A tapped button makes a hidden call | Yes | |
 | `read_project_view`, first tap | No prompt | |
-| `read_project_view`, next tap after "always allow" | | |
-| `read_project_view`, first tap in a new task after "always allow" | | |
+| `read_project_view`, next tap after "always allow" | Never asked | |
+| `read_project_view`, first tap in a new task after "always allow" | Never asked, in any new task | |
 
 ### Card renders
 
@@ -638,11 +642,11 @@ of the largest project's research.json, `document` gains paging.
 
 | Rung | Mount, connector | Mount, local | Hidden call, connector | Hidden call, local | Hidden call, artifact |
 |---|---|---|---|---|---|
-| 400k characters | | | Whole, 699,798 bytes | | |
-| 1M characters | | | | | |
-| 1.3M characters | | | | | |
-| 2M characters | | | | | |
-| Largest `resultBytes` accepted | 299,925 so far | | 699,798 so far | | |
+| 400k characters | | | Whole, 699,798 bytes, 2.0 to 7.1 s | | |
+| 1M characters | | | Whole, 1,299,798 bytes, 19.5 s | | |
+| 1.3M characters | | | Whole, 1,599,798 bytes, 14.5 s | | |
+| 2M characters | | | Whole, 2,299,798 bytes, 8.0 s | | |
+| Largest `resultBytes` accepted | 299,925 so far | | 2,299,798 so far | | |
 | What happens past it | | | | | |
 
 ### Image
