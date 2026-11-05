@@ -230,7 +230,8 @@ export default function ChatPane({
   isNew,
   onUsage,
   projectId,
-  onContinueOnProject
+  onContinueOnProject,
+  onSendReady
 }: {
   conn: SessionConnection
   sessionId: string
@@ -240,6 +241,10 @@ export default function ChatPane({
    *  on the SAME project rather than a fresh one. */
   projectId?: string
   onContinueOnProject?: (newSessionId: string) => void
+  /** Called once on mount with a stable function that delegates to send(). Used by
+   *  the sidecar's Evaluate button to inject a prompt without coupling to this pane's
+   *  internal state. */
+  onSendReady?: (fn: (text: string) => void) => void
 }): React.JSX.Element {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   // The spend bound is only knowable HERE. The session list folds `budget`, a user
@@ -578,6 +583,14 @@ export default function ChatPane({
     // the user had scrolled up to compose against something further back.
     scrollToBottom()
   }
+
+  // Expose a stable send delegate so external callers (the sidecar's Evaluate
+  // button) can inject a prompt without coupling to this closure directly.
+  const sendRef = useRef(send)
+  sendRef.current = send
+  const stableSend = useCallback((text: string) => { sendRef.current(text) }, [])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { onSendReady?.(stableSend) }, [])
 
   // Ask the agent to abort the running turn. On the alpha the runner forwards this to
   // the SDK (or cancels the mock); on the prototype POST /interrupt raises a flag the
