@@ -2,13 +2,10 @@
 // The connector probe (issue #3529; docs/plan/self-hosted-mcp-beta.md, P0.2): a
 // stand-in for the beta's remote MCP connector, added to Cowork through a
 // public HTTPS tunnel so the facts the beta builds on can be measured in a live
-// task before the real server exists. P0.3 deploys this same file as its
-// "probe bundle", so it keeps the tools tier's shape: `PORT` (default 8080),
-// `GET /livez`, and `/mcp` served without sessions as plain JSON, as
-// `src/http-server.ts` does. It is not deployable as-is: the tools bundle
-// compiles only `src/`, and `tsx` is a dev tool. P0.3 compiles it with its own
-// tsconfig (as `tsconfig.smoke.json` does for the smoke script), runs the
-// emitted `.js`, and sets `PROBE_PUBLIC_URL` as an environment property.
+// task before the real server exists. It keeps the tools tier's shape: `PORT`
+// (default 8080), `GET /livez`, and `/mcp` served without sessions as plain
+// JSON, as `src/http-server.ts` does. Run it with `tsx`; `PROBE_PUBLIC_URL` is
+// the public origin.
 //
 // It holds no credentials and no store. Every advertised tool keeps its real
 // name and schema (copied from `allToolSchemas`, never hand-written, because
@@ -49,8 +46,8 @@
 // --refresh     `/token` also issues a refresh token, accepts the grant, and
 //               rotates the refresh token on use.
 // --host        interface to bind, default 127.0.0.1 (as `src/http.ts`). A
-//               tunnel and Beanstalk's nginx both reach the probe over
-//               loopback; a container or a host with no local proxy needs `--host 0.0.0.0`.
+//               tunnel reaches the probe over loopback; a container or a host
+//               with no local proxy needs `--host 0.0.0.0`.
 // Tokens live in memory: a restart makes every token "unknown token", which
 // Claude cannot tell from expiry. Do not restart during the expiry test.
 import http from "node:http";
@@ -100,8 +97,7 @@ const SIGNIN_FLAG = flag("--signin-flag", "");
 const REFRESH = process.argv.includes("--refresh");
 // Loopback by default, as `src/http.ts`'s `--host` does: a probe reached through
 // a tunnel needs no other interface, and binding them all also publishes it to
-// everything else on the operator's network. P0.3's Beanstalk nginx also
-// reaches it over loopback, so P0.3 passes no `--host`.
+// everything else on the operator's network.
 const HOST = flag("--host", "127.0.0.1");
 
 function log(ev: string, fields: Record<string, unknown> = {}): void {
@@ -435,7 +431,7 @@ function handleSigninAgain(req: http.IncomingMessage, res: http.ServerResponse):
 // ---- /mcp: the stub tools ----
 
 const SIGNIN_TOOLS = new Set(["record_read", "record_search", "person_read"]);
-const SIGNIN_MESSAGE = `FamilySearch session not accepted: the researcher's sign-in has ended and retrying cannot fix it. Make no more FamilySearch calls in this step and leave plan items as they are. Tell the researcher exactly this, after your final --- if you write one: Your FamilySearch sign-in has ended. Sign in again at ${PUBLIC_URL}/signin-again, then come back here and say "continue". Nothing is lost.`;
+const SIGNIN_MESSAGE = `FamilySearch session not accepted. Sign in again at ${PUBLIC_URL}/signin-again, then come back here and say "continue". Nothing is lost.`;
 
 const probeTools = [
   {
