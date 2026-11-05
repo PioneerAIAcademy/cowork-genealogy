@@ -52,6 +52,7 @@ import {
   PgS3ProjectStore,
   type PgS3Backend,
   lookupConnectorToken,
+  MAX_DOCUMENT_BYTES,
   MAX_LISTED_PROJECTS,
   ownedProjectIds,
   projectOwnerOf,
@@ -705,6 +706,62 @@ if (!DSN || !ENDPOINT) {
         expect(next.newProjectPath).toMatch(/^\/proj_[0-9a-f]{16}$/);
         expect(next.newProjectPath).not.toBe(projectPath);
       });
+
+      it("a research_append carrying a document past the cap is refused in words, and one under it still lands", async () => {
+        const a = await seedConnector();
+        const projectPath = freshPath();
+        const created = await connCall(a.token, "project_create", { ...createArgs("Alpha"), projectPath });
+        expect(created.text).not.toContain('"isError":true');
+
+        // Filled to 5,000 bytes under the cap: room for a question, not for the
+        // long rationale the update below gives it.
+        const store = new PgS3ProjectStore(backend, {
+          projectId: projectPath.slice(1),
+          anchorPath: projectPath,
+          ownerId: a.userId,
+        });
+        const research = JSON.parse(await store.readText(projectPath, "research.json"));
+        const size = Buffer.byteLength(JSON.stringify(research, null, 2));
+        research.project.objective += "x".repeat(MAX_DOCUMENT_BYTES - size - 5_000);
+        await store.writeJson(projectPath, "research.json", research);
+        const rationale = async () => JSON.parse(await store.readText(projectPath, "research.json")).questions[0].rationale;
+
+        const asked = await connCall(a.token, "research_append", {
+          projectPath,
+          section: "questions",
+          op: "append",
+          entry: {
+            question: "Who were his parents?",
+            rationale: "A gap in the timeline",
+            selection_basis: "objective_decomposition",
+            priority: "high",
+            status: "open",
+            depends_on: [],
+            unblocks: [],
+            resolved: null,
+            resolution_assertion_ids: [],
+            search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
+          },
+        });
+        expect(toolBody(asked).ok, asked.text).toBe(true);
+
+        const refused = await connCall(a.token, "research_append", {
+          projectPath,
+          section: "questions",
+          op: "update",
+          entryId: "q_001",
+          fields: { rationale: "x".repeat(6_000) },
+        });
+        expect(refused.status, refused.text).toBe(200);
+        const { result } = JSON.parse(refused.text);
+        expect(result.isError, refused.text).toBe(true);
+        expect(JSON.parse(result.content[0].text)).toEqual({
+          error: "Nothing was saved: research.json would be larger than the 16 MB a project document may hold.",
+        });
+        expect(await rationale()).toBe("A gap in the timeline");
+
+        expect(pathsOf(toolBody(await connCall(a.token, "project_list", {})))).toEqual([projectPath]);
+      }, 30_000);
 
       it("a two-call batch is refused", async () => {
         const a = await seedConnector();

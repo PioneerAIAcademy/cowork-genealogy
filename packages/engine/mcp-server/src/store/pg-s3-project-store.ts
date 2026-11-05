@@ -13,7 +13,8 @@
 //   and any ref not ending in .json    → the `blobs` table + an S3 object
 //   every other *.json ref             → the `documents` table (jsonb)
 // A document's `readText` is `JSON.stringify(doc, null, 2)` — jsonb keeps
-// neither key order nor whitespace, so the bytes are not the bytes written.
+// neither key order nor whitespace, so the bytes are not the bytes written. A
+// write over `MAX_DOCUMENT_BYTES` is refused before it touches anything.
 //
 // `withTransaction` is one pool connection holding `pg_advisory_xact_lock` on
 // the project id for the whole callback; every store method called inside the
@@ -104,6 +105,11 @@ export const S3_REQUEST_TIMEOUT_MS = 90_000;
 /** The whole readiness probe's deadline: under the image HEALTHCHECK's 3 s and
  *  `make engine-smoke-http`'s final 2 s curl. */
 export const READY_TIMEOUT_MS = 1_500;
+/** The largest document a write may store, in bytes of its pretty text. A read
+ *  loads the whole document into a Postgres backend, and ten reads at once of a
+ *  100 MB one restarted every backend on a 2 GiB server; ten at this size did not.
+ *  The largest real research.json is about 1.55 MB. */
+export const MAX_DOCUMENT_BYTES = 16 * 1024 * 1024;
 /** The tables every store method queries; a missing one fails readiness.
  *  `turns` is the claim fence's (U6): a fenced store cannot commit without it. */
 // `connector_tokens` is here for the same reason `turns` is: the door READS it
@@ -630,6 +636,18 @@ function serialize(data: unknown): string {
   return text;
 }
 
+/** `serialize` for a write to `rel`, refusing a document over `MAX_DOCUMENT_BYTES`.
+ *  Called before the first store call, so a refused document writes nothing. */
+function serializeFor(rel: string, data: unknown): string {
+  const text = serialize(data);
+  if (routeRef(rel).kind === "document" && Buffer.byteLength(text, "utf-8") > MAX_DOCUMENT_BYTES) {
+    throw new Error(
+      `Nothing was saved: ${rel} would be larger than the ${MAX_DOCUMENT_BYTES / (1024 * 1024)} MB a project document may hold.`,
+    );
+  }
+  return text;
+}
+
 /** An absent ref, with the `.code` callers classify by (sidecar_read → not_found). */
 function enoent(projectId: string, ref: string): NodeJS.ErrnoException {
   const e: NodeJS.ErrnoException = new Error(`'${ref}' does not exist in project ${projectId}`);
@@ -945,7 +963,7 @@ export class PgS3ProjectStore implements ProjectStore {
   async writeJson(projectPath: string, ref: string, data: unknown): Promise<void> {
     this.assertAnchor(projectPath);
     const rel = assertRelativeRef(ref);
-    const text = serialize(data);
+    const text = serializeFor(rel, data);
     const route = routeRef(rel);
     if (this.fence && !this.tx() && route.kind !== "document") {
       await this.putObjectFenced(this.fence, rel, route, Buffer.from(text, "utf-8"));
@@ -960,9 +978,9 @@ export class PgS3ProjectStore implements ProjectStore {
   /**
    * Every write in ONE transaction: the bound one when called inside
    * `withTransaction`, otherwise a transaction of its own. Every value is
-   * serialized before the first write, so an unserialisable one writes nothing.
-   * The file backend's `onBeforeSecondRename` seam has no rename to sit between
-   * here and is ignored.
+   * serialized before the first write, so an unserialisable or oversized one
+   * writes nothing. The file backend's `onBeforeSecondRename` seam has no rename
+   * to sit between here and is ignored.
    */
   async writeJsonBoth(
     projectPath: string,
@@ -970,7 +988,10 @@ export class PgS3ProjectStore implements ProjectStore {
     _options?: WriteJsonBothOptions,
   ): Promise<void> {
     this.assertAnchor(projectPath);
-    const prepared = writes.map((w) => ({ ref: assertRelativeRef(w.ref), text: serialize(w.data) }));
+    const prepared = writes.map((w) => {
+      const ref = assertRelativeRef(w.ref);
+      return { ref, text: serializeFor(ref, w.data) };
+    });
     const run = async () => {
       await this.touchProject();
       for (const p of prepared) await this.putSerialized(p.ref, p.text);

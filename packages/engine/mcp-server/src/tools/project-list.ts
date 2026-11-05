@@ -3,8 +3,8 @@
 // The file backend keeps each project in a folder the caller names, so it lists
 // none and says so. A hosted store names the paths it answers for: each holding a
 // research.json is a project, and the first holding none is where a new project
-// goes. A signed-in user's listing bounds each entry, because nothing bounds the
-// documents it reads. Spec: docs/specs/project-list-tool-spec.md.
+// goes. A signed-in user's listing bounds each entry, because the documents it
+// reads can run to megabytes. Spec: docs/specs/project-list-tool-spec.md.
 
 import { getProjectStore } from "../store/project-store.js";
 import { preferredDisplayName } from "./project-context.js";

@@ -92,9 +92,9 @@ about nobody.
 
 #### 2.3.1 Bounds on the signed-in user's listing
 
-Any signed-in account can reach this listing on the shared tool server, and nothing
-caps how many projects it owns or how long an objective is, so the listing bounds
-itself:
+Any signed-in account can reach this listing on the shared tool server, nothing caps
+how many projects it owns, and an objective can run to the store's document cap, so
+the listing bounds itself:
 
 | What | Bound | Why this value |
 |---|---|---|
@@ -117,11 +117,35 @@ left after the door's shape filter: a listing shortened by that filter still say
 and never says "No project yet". There is no way to page past the limit; a project
 beyond it is still reachable by its `projectPath`.
 
-A listing holds one project's documents and one pool connection at a time, and its
+One call holds one project's documents and one pool connection at a time, and its
 answer is a few hundred kilobytes at most. It still reads each listed project's whole
 `research.json` and `tree.gedcomx.json`, three sequential queries a project with the
 `exists` check, because `ProjectStore` reads whole documents and a narrower read would
 be new surface on every backend. The limit is what bounds that work.
+
+A call's tree read queues behind every other call on the pool, so `research.json` is
+cut down to the entry's fields and let go before that read starts. Holding it across
+the wait is what crashed the server: 1,000 concurrent calls on one project with a 1 MB
+objective aborted V8 on a 1 GiB heap.
+
+These bounds are per call. Nothing here limits how many calls one account has running,
+so the pool queue grows with them and `project_context` holds whole documents across
+the same waits. Only a per-user limit on calls in flight, at the door, closes that.
+
+#### 2.3.2 The cap on a document
+
+`PgS3ProjectStore` refuses a write of a document over 16 MiB of pretty text
+(`MAX_DOCUMENT_BYTES`), answering `Nothing was saved: research.json would be larger
+than the 16 MB a project document may hold.` A read loads the whole document into a
+Postgres backend. With Postgres limited to 2 GiB, ten concurrent reads of 100 MB
+documents had a backend killed and every connection dropped; ten of 16 MiB did not.
+The largest real `research.json` is about 1.55 MB, so a real project does not reach it.
+
+The refusal comes before the first store call, so it writes nothing, not even the
+project's row, and one document over the cap in `writeJsonBoth` writes neither. A read
+is never refused. Results and staged reads are S3 objects no Postgres backend loads, so
+the cap leaves them alone, and the file store has no cap: it is one user's own folder.
+It bounds one document, not a project or an account.
 
 A client that disconnects ends the listing at its next read: the store rejects, so the
 loop stops rather than answering short.
@@ -145,8 +169,9 @@ older than this tool), it says the genealogy tools are not connected and stops.
   store with a project, with none yet, and with a document that does not parse;
   a read that fails other than by absence; an unbound store's rejection. The user
   listing's bounds at and past each limit, a cut objective's text released from the
-  heap, a surrogate pair at the cut, `truncated` with and without projects, a read
-  stopped by an abort, and a bound store left verbatim.
+  heap, concurrent calls waiting on their tree read holding none of a huge field, a
+  surrogate pair at the cut, `truncated` with and without projects, a read stopped by
+  an abort, and a bound store left verbatim.
 - `tests/http/http-server.test.ts` — the connector's listing over a file double:
   the caller's paths and one fresh path, a caller with none, an id of another
   shape, `truncated` surviving the shape filter, a failed query, a failed document
@@ -156,8 +181,13 @@ older than this tool), it says the genealogy tools are not connected and stops.
   once its signal aborts.
 - `tests/http/http-server-pg.test.ts` — three projects newest first in no id order
   and another user's never, an ownerless project and a claimed id left out, a user
-  exactly at the listing limit and one past it, and
+  exactly at the listing limit and one past it, a `research_append` under the document
+  cap landing and one past it refused in words, and
   `project_list`, `person_read`, `project_create`, `project_list` end to end.
+- `tests/store/pg-s3-project-store.test.ts` — a document at the cap stored and one byte
+  past it refused with no project left behind, bytes counted rather than characters, a
+  refused rewrite keeping the old document, `writeJsonBoth` writing neither, and results
+  left alone.
 - `dev/smoke-calls.ts` — the stdio smoke expects folder mode; the HTTP smoke
   expects the project its earlier `project_create` row wrote to be listed, and
   the connector pass a fresh `newProjectPath` beside it.
