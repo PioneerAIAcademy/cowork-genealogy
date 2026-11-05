@@ -64,12 +64,9 @@ entry's canned text. On a test that sets `execution.stop_at_stub`, such as
 `ut_research_015` below, a spawn of any stubbed name is denied too and ends the
 run.
 
-A test tagged `relays-agent-tail` also asserts that the router's reply carries,
-verbatim, everything after the final `---` of its `routes-to:` callee's canned
-response (`test_relays_the_agents_tail_verbatim`, issue #3862). The expected text
-is read from the test's own `stub_skills` entry, not from the agent return the
-harness recorded, which wraps it in scaffolding the router must not print.
-`ut_research_zfp` carries it.
+`ut_research_zfp` grades the router's relay of search-hints' summary on meaning,
+through the judge: rewording and added text pass (lead, 2026-11-03, on PR #4148,
+which retired the word-for-word `relays-agent-tail` check of issue #3862).
 
 Every agent spawn in this suite is denied, listed or not, unless the test names
 the agent in `execution.run_agents`. That is how the negative tests whose
@@ -95,6 +92,22 @@ scenario is the project its route should open. In these two tests it behaves as
 a hosted store does (`mock_mcp._hosted_store`): a `projectPath` the listing does
 not name is refused, and `project_context` at a listed project carries its
 `projectUrl`.
+
+## Reads project state first (issue #3766)
+
+Two validators catch a router that treats an existing project as new.
+`test_no_init_project_on_existing_project` is ungated: when the scenario has a
+`research.json`, no hand-off may go to `init-project` or `tree-survey`. It reads
+every hand-off, not the first, because in research v32 the router spawned
+`init-project` and only then called `project_context`.
+`test_reads_project_state_before_routing` is gated on `reads-project-first`
+(`ut_research_001`, `ut_research_004`): with a `research.json` present, the run
+must call `project_context`. It checks presence, not order, since `tool_calls` and
+the spawns in `builtin_tool_calls` are separate lists with no shared sequence. It
+is not ungated because a bounded request may skip the read. Tag only a test with
+no `run_agents`, or a subagent's `project_context` call would hide the router's
+omission. `eval/harness/tests/unit/test_research_reads_project_first_validator.py`
+replays both over committed run logs.
 
 ## Agent dispatch tests (issue #1851)
 
@@ -254,16 +267,6 @@ SHAPE is on the bounded list. Without the `--autonomous` carve-out the router wo
 deliver one answer and stop on those. Its message carries the leading `/research`, restored
 once PR #3146 made `skills_invoked` record a slash-command entry at index 0, so this
 is the e2e entry form exactly.
-
-**What they do NOT cover, and cannot:** that a bounded turn ends with the
-`delivered` OUTCOME. `research_delivered` IS in this harness's `LIVE_TOOLS` now, so the
-CALL is observable and `test_a_bounded_turn_ends_with_the_delivery_signal` grades it
-(gated on the `ends-with-delivery` tag). What stays unobservable is the effect: no hook
-binds here, so nothing halts the turn and the outcome is whatever the run would otherwise
-have been. Both hosted planes now halt on the signal — the prototype
-via its own `PreToolUse` arm plus `DELIVERY_GUIDANCE`, the alpha via `count_only` and
-`should_continue_run(delivered=...)` — and that half is covered by
-`apps/server/tests/test_alpha_stop_hook.py`, not here.
 
 ## Search-hit review (issue #3522)
 

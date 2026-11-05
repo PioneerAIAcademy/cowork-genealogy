@@ -67,6 +67,10 @@ repo's identifier-casing rule):
   }],
   questionStatuses: [{                   // ADVISORY — see below. One per question,
     id: string,                          //   including resolved ones.
+    question: string,                    // truncated as in openQuestions; "" when absent.
+                                         //   The one place a resolved question's
+                                         //   text appears, so the objective can be
+                                         //   read against every question.
     state: "framed" | "planned" | "searching"
          | "evidence-gathered" | "concluded" | "critiqued",
     nextStep: string | null,             // null = nothing outstanding
@@ -114,6 +118,7 @@ repo's identifier-casing rule):
     imagesRead: number,                  // distinct images counted, >= 20
     planItemIds: string[],               // open plan items with an image_search log entry on it
   }],
+  claimKinds: string[],                  // proof_summaries claim kinds this engine accepts: relationship, fact, identity, name, finding
   externalCollections?: {                // stored curated collections, counts only — §2.4
     [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
   },
@@ -315,8 +320,17 @@ Any other repository reports `search-external-sites — <item id> (<repository>)
 the routing table's own split for that row. With no such item left, the question
 reports `research-exhaustiveness`.
 
-A question at `evidence-gathered` reports `research-exhaustiveness` whatever its
-log holds. An uncited entry does not move it back to extraction: agents log an
+A question at `evidence-gathered` reports `research-exhaustiveness` only when no
+item on its active plan is `planned`. With planned items it reports
+`<search lane> — next item <id>, or research-plan — dispose of <ids> if the
+evidence already answers the question` (the external lane keeps its own form,
+`search-external-sites — <id> (<repo>)`, and an `fs_hints` item reads
+`search-hints — <id>`): the search is offered first so a still-needed item is not
+skipped by default. `in_progress` items, and a planned item waiting only on the
+researcher's upload, do not change it. Over the
+corpus on 2026-11-02 (every scenario, unit-test state and e2e final state, 484
+question entries) this moves 13 entries off `research-exhaustiveness`: 3 scenarios
+and 10 e2e final states. An uncited entry does not move it back to extraction: agents log an
 inconclusive search as `partial` and a link list as `positive`, and those entries
 stay uncited. Over the corpus on 2026-10-16 (every scenario plus every e2e final
 state, 421 question entries), holding the question on extraction would have moved

@@ -318,7 +318,7 @@ same ground truth production does.
   already logged, and is answered with that entry (`research-log-editor-spec.md`,
   "A staged ref that was already logged"). Any other missing ref, pruned or never
   staged, gets a message saying each staged ref can be logged once, and whether to
-  re-run the search or leave it.
+  re-run the search (`image_transcribe`, for a page) or leave it.
 - **Un-finalized staging files** (the LLM searched but never logged, or the turn
   died) are pruned opportunistically: on each `stageSearchResults` write, delete
   `results/.staging/*.json` older than a TTL (24h, by `mtime`). Safe unconditionally
@@ -430,8 +430,8 @@ output change.
   until finalized, and the orphan check already ignores the subdir.
 - `image-transcribe-tool-spec.md` §5.4/§5.5, `record_read` and `person-read-tool-spec.md` — the three acquisition producers. **Ownership boundary:** this spec and those tools own the writer, the envelope
   and finalize. *Reading a staged transcription's full text back* is the consumer's design —
-  the `document-capture` agent returns `{ recordId, logId, resultsRef, digest }` and decides
-  whether extraction reads the text host-side or through a paged reader. `sidecar_read` is
+  the caller hands `staged.resultsRef` to `record-structurer`, which reads the text through a
+  paged reader. `sidecar_read` is
   that paged reader: it serves a transcription's `transcription`, and one full-text hit's
   `textDocument` through `results/<file>#<hit id>` (`#hits` lists the hits), and refuses
   every other `results/` sidecar (its spec §7), so no reader was added here.

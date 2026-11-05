@@ -439,6 +439,16 @@ export const patrickFlynnResearch: ResearchData = {
       superseded_by: null
     }
   ],
+  rejected_links: [
+    {
+      id: 'rj_001',
+      assertion_id: 'a_001',
+      person_id: 'I2',
+      reason: 'The 1880 census Patrick is the head of household, not his father Thomas.',
+      researcher_words: "No, that census entry isn't Thomas. It's Patrick himself.",
+      created: '2026-05-02'
+    }
+  ],
   conflicts: [
     {
       id: 'c_001',
