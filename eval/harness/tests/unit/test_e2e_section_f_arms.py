@@ -140,11 +140,21 @@ def test_no_flag_means_no_override(monkeypatch, tmp_path):
     assert calls and calls[0]["wrap_up_after"] is None
 
 
-def test_the_flag_is_refused_without_step_mode(monkeypatch, tmp_path, capsys):
-    """Without `--step-mode` no host reply is sent at all, so there is nothing
+def test_the_flag_is_refused_under_step_mode_step(monkeypatch, tmp_path, capsys):
+    """Under `--step-mode step` no host reply is sent at all, so there is nothing
     to override — and a run that silently ignored the flag would be bought and
     would measure the wrong thing."""
     calls = _record_run(monkeypatch)
-    assert run_e2e.main(_argv(tmp_path, "--wrap-up-after", "search-records")) == 2
+    assert run_e2e.main(_argv(tmp_path, "--step-mode", "step",
+                              "--wrap-up-after", "search-records")) == 2
     assert not calls
-    assert "needs --step-mode" in capsys.readouterr().err
+    assert "needs --step-mode job" in capsys.readouterr().err
+
+
+def test_the_flag_needs_no_step_mode_now_that_job_is_the_default(monkeypatch, tmp_path):
+    """Step mode phase 2 made `job` the e2e default, so the override works with no
+    `--step-mode` at all."""
+    calls = _record_run(monkeypatch)
+    assert run_e2e.main(_argv(tmp_path, "--wrap-up-after", "search-records")) == 0
+    assert calls[0]["wrap_up_after"] == "search-records"
+    assert calls[0]["step_mode"] == "job"

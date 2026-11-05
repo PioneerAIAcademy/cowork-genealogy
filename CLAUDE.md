@@ -341,13 +341,19 @@ path runs `bypassPermissions`. Cowork's `permission_mode` was recorded as
 (ADR-0005); whether that is a per-session setting is not known. **Do not rely on
 which one it is** — the hook bound under both, which is the part that matters.
 
-A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds one conditional
-sentence to each Cowork researcher message (no project → a research request goes to the
-research skill). It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
+A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds two sentences
+to each Cowork researcher message: a conditional one (no project → a research request goes
+to the research skill) and one naming a source, collection, book or citation only from a
+tool result. It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
 the SDK env, so the hosted planes keep their own text-only fix (`project_note`,
 `DELIVERY_GUIDANCE`). The name is defined twice, `continue_policy.HOSTED_PLANE_ENV` and
 `no_project_route.HOSTED_PLANE_ENV`; change both together, and
-`test_the_hosted_flag_is_the_one_the_plugin_hook_reads` fails if they differ.
+`test_the_hosted_flag_is_the_one_the_plugin_hook_reads` fails if they differ. The sources
+sentence is too (`continue_policy.SOURCES_GUIDANCE`, which both hosted planes append, and
+`no_project_route.SOURCES_NOTE`), pinned by
+`test_the_sources_sentence_is_the_one_the_plugin_hook_adds`. Both harnesses add it the
+same way, as `UserPromptSubmit` context (`context_policy.sources_note_hook`), and not the
+routing sentence.
 
 **Fork subagents are off on every path, two ways.** Claude Code offers
 `subagent_type: "fork"` by default from 2.1.302; a fork runs a step without the
@@ -462,7 +468,7 @@ not add the line to it. The exception moved from the skills to the agents when
 that skill was replaced by an agent on 2026-09-27; re-derive both lists with
 `grep -rL '\*\*Narration' packages/engine/plugin/skills/*/SKILL.md` and
 `grep -rL '\*\*Narration' packages/engine/plugin/agents/*.md`, and note that
-ten other agents also carry no line — `search-wikipedia` is the one whose
+eleven other agents also carry no line — `search-wikipedia` is the one whose
 absence is a *rule*, pinned by
 `tests/packaging/search-wikipedia-no-narration.test.ts`.
 

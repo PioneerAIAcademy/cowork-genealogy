@@ -1,6 +1,6 @@
 # Research one step at a time
 
-**Status:** **Phase 0 complete (2026-10-19). Phase 1's PRs are all merged (2026-10-30):** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914, #3915 and #3916, PR 2 (#3917) and the conflict PR (#3937). Step mode is live on the alpha (build `365f4d903`), and the manual alpha check passed on 2026-11-02. Still open from Phase 1: the re-scoping of the two-question e2e fixtures. **Phase 2 in flight:** the hosted half of deleting the Stop veto is PR #4146, `research_delivered`'s deletion is PR #4148 (stacked on it), and the e2e half is still owed. Phase 0's answers are in
+**Status:** **Phase 0 complete (2026-10-19). Phase 1's PRs are all merged (2026-10-30):** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914, #3915 and #3916, PR 2 (#3917) and the conflict PR (#3937). Step mode is live on the alpha (build `365f4d903`), and the manual alpha check passed on 2026-11-02. Still open from Phase 1: the re-scoping of the two-question e2e fixtures. **Phase 2 in flight:** the hosted half of deleting the Stop veto merged in PR #4146, `research_delivered`'s deletion is PR #4148, and the e2e half is PR #4206. Phase 0's answers are in
 ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
 research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
@@ -841,8 +841,9 @@ that apply:
   a second time would be a loop, and a run that asks twice has not understood the answer,
   which is a finding rather than something to paper over.
 - **The run ends** when the function stops: a turn with no "Continue with …?" line, a finished
-  wrap-up turn, or the reply cap, which replaces `max_continue_nudges` (a Stop-veto counter
-  today). The no-progress stop remains. Both caps are runaway guards only.
+  wrap-up turn, or the reply cap, which replaced `max_continue_nudges` (the Stop veto's
+  counter, deleted in phase 2). The no-progress stop remains. Both caps are runaway guards
+  only.
 - **Production's mechanism runs unchanged** inside the harness, so e2e tests exactly what
   "Keep going" does.
 - **Also:**
@@ -856,11 +857,9 @@ that apply:
   B2's link-then-conclude path. **Built** as `--wrap-up-after <step>`: an override of the
   REPLY, not a session mode, so `next_auto_reply` keeps no test-only branch. It swaps a reply
   and never invents one, and the run ends after it because the turn that reply opens reads
-  `wrapup`. Refused without `--step-mode`, where no host reply is sent at all.
-- **Interim, if the persistent session slips:** the harness runs each fixture as one turn in
-  mode `job`, as Cowork does, a stopgap that measures the old continuous flow. It keeps
-  `stop_checker.py`'s veto and `max_continue_nudges`, so a conflict that cannot be settled runs
-  to that cap there.
+  `wrapup`. Refused under `--step-mode step`, where no host reply is sent at all.
+- **`--step-mode job` is the e2e default** (phase 2), and the one-long-turn interim with its
+  Stop veto is deleted. A stall ends a step run rather than resuming it.
 
 ### G. Editing the plan at the plan step
 A free-text reply after the plan step is a plan edit. Today research-plan's review mode forbids
@@ -1173,7 +1172,11 @@ in parallel with PR 2.
     enforces the boundary, so this list is the prototype plus the harnesses):
     - the worker's `PreToolUse`, with `turns.step`, `turns.mode` and the redelivery seed.
       **Deny first, halt only on a second attempt** — the halt is the BACKSTOP, not the first
-      move, and it denies the call it stops (decision 25). Rider 2: log every halt, because
+      move, and it denies the call it stops (decision 25). A halt still offers the step it
+      named: two spawns in one message both reach the gate before the model reads a deny, so
+      the second halts a turn that never wrote its offer line. The gate keeps that offer
+      (`StepGate.halt_offer`), and the worker and the e2e host answer it as if the model had
+      written it (found by the 2026-11-02 `clark-parents` step-mode check). Rider 2: log every halt, because
       the router prose is identical on both planes, so the rate measures how often Cowork
       runs past a boundary;
     - ~~the alpha's hooks, with the `Skill` coverage~~ — **removed by decision 25: the alpha
@@ -1312,7 +1315,7 @@ in parallel with PR 2.
   - **Open, for Praise:** decision 25's prototype halt reuses `_halt`, which a main-thread
     `research_delivered` triggers today (`apps/server/proto/worker/options.py`). Say whether
     this bullet still stands under decision 25, and if it does, what ends a bounded ask.
-- **Delete the Stop veto:** **Hosted half done** (the alpha and the prototype: no `Stop` hook binds, the cap and its settings are gone, `proto-demo-auto` retired, `turns.nudges` and `turn_costs.continuations` kept and now always 0). **Owed, in its own PR:** the e2e half — make `--step-mode job` the e2e default, then delete `eval/harness/e2e/stop_checker.py`'s veto and `max_continue_nudges`. The alpha's runner chain and `auto_continue_max_steps` were left in place (Praise, 2026-11-02): the chain matches only the retired `Next: <step>. Continue?` line, so it never starts, and the alpha is being retired. Original scope: `should_continue_run`'s nudge path, `CONTINUE_REASON`, the nudge
+- **Delete the Stop veto:** **Hosted half done** (the alpha and the prototype: no `Stop` hook binds, the cap and its settings are gone, `proto-demo-auto` retired, `turns.nudges` and `turn_costs.continuations` kept and now always 0). **e2e half done** (PR #4206): `--step-mode job` is the e2e default; `stop_checker.py`'s veto, the orchestrator's Stop hook, `max_continue_nudges` and the `--resume-on-stall` flag are deleted; runs no longer write `usage.continue_nudges` or `usage.hand_back_classes`, and `make e2e-nudges` leaves such runs out. The alpha's runner chain and `auto_continue_max_steps` were left in place (Praise, 2026-11-02): the chain matches only the retired `Next: <step>. Continue?` line, so it never starts, and the alpha is being retired. Original scope: `should_continue_run`'s nudge path, `CONTINUE_REASON`, the nudge
   counters, `stop_checker.py`'s veto, and `AUTONOMOUS_MAX_NUDGES` with its compose, Beanstalk
   and bundle settings, and the alpha's `autonomous_max_nudges` and `auto_continue_max_steps`.
   `hand_back.py` and the runner's chain stay; they carry "Keep going". `foreground_rewrite` and

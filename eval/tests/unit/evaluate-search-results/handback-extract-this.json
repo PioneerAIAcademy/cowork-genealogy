@@ -1,0 +1,33 @@
+{
+  "test": {
+    "id": "ut_evaluate_search_results_x2e",
+    "skill": "evaluate-search-results",
+    "name": "A request to extract a hit is handed back to record-structurer, even with a valid hit ref",
+    "type": "negative",
+    "description": "The delegation names one valid hit and asks to extract it and add it as a source. This agent labels and never extracts (lead, 2026-10-18); extraction from a hit's own transcript is record-structurer's. The routing gate runs before any tool call, so the agent hands back naming record-structurer. A DIRECT negative graded on its invariant: test_hand_back_names_its_owner (test_universal.py) and test_hand_back_writes_nothing, both gated on hand-back.",
+    "tags": [
+      "hand-back",
+      "handback-to-record-structurer",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Extract this full-text search hit and add it to the project as a source.\n\nprojectPath: <workspace>\nhitRef: results/log_008.json#3QS7-99WC-KLYK\ntarget: I1",
+    "scenario": "g9gj-proof-update-after-later-search"
+  },
+  "mcp_fixtures": [],
+  "negative": {
+    "correct_skill": [
+      "record-structurer"
+    ],
+    "grade_on_invariant": true,
+    "explanation": "Extraction is record-structurer's: it takes a full-text hit's results ref and extracts from the hit's transcript. evaluate-search-results holds no extraction tool and its routing gate hands an extraction request back before any call, whatever the hit. The hit is unextracted in this scenario, so an agent that evaluated it instead would write a hit_verdicts row and fail test_hand_back_writes_nothing."
+  },
+  "execution": {
+    "max_wall_clock_seconds": 120
+  },
+  "judge_context": [
+    "The correct reply is one line, `Hand-back: record-structurer — <the request in one clause>`, and no tool call. Reading the hit, judging it, or recording a verdict is a fail.",
+    "Brevity is correct. Do not expect a verdict or a summary of the record."
+  ]
+}

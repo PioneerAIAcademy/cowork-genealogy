@@ -16,7 +16,6 @@ description: >-
   persons a specific record belongs to (use person-evidence), or wants to write a
   conclusion (use proof-conclusion).
 tools:
-  - Read
   - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__Genealogy_Research__project_context
@@ -38,6 +37,8 @@ tools:
   - mcp__genealogy__wiki_read
   - mcp__remote-devices__Genealogy_Research__wiki_read
   - mcp__Genealogy_Research__wiki_read
+model: claude-haiku-5-5
+effort: low
 ---
 
 # Timeline
@@ -56,7 +57,7 @@ from multiple independent sources in chronological order to:
 A timeline built from a single source has limited analytical power; always note
 which sources contribute to each event.
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 ## Invocation contract
 
@@ -70,7 +71,7 @@ You are invoked with a delegation message naming what to build:
 | `timelineId` | no | The `t_` id to regenerate in place (Mode C). |
 | `label` | no | The label for a new timeline. Derive one if absent. |
 
-Read what you need from the project yourself — do not expect the caller to have
+Gather what you need with `project_context` and `research_query` yourself — do not expect the caller to have
 gathered the assertions. If neither `personId` nor `hypothesisId` is resolvable
 from the delegation, ask for one rather than guessing at a subject.
 
@@ -94,11 +95,11 @@ reached, not as a fact established:
   check-warnings is the complete answer.
 
 Never report an event, a distance, or a census year you did not obtain from a
-tool return or from `research.json`.
+tool return.
 
 ## ROUTING — run this FIRST, before any tool call
 
-Before reading `research.json`, before narration guidance, **before any tool
+Before narration guidance, **before any tool
 call**: read the delegation and check the cases below. If one matches, say the
 single-sentence redirect and **return immediately** — do NOT read any files, do
 NOT call any tool, do NOT build a partial timeline to illustrate the point.
@@ -152,7 +153,7 @@ added. Timelines are regeneratable — replaced wholesale when regenerated.
 
 ### 2. Gather assertions
 
-Use `project_context` and `research_query` — never `Read` the project files directly:
+Use `project_context` and `research_query`:
 - `research_query({ section: "person_evidence", personId })` for each target
   person; page with `offset` until the response's `truncated` is false. Keep
   only entries where `superseded_by` is null and collect their `assertion_id`.

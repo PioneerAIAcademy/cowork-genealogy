@@ -35,7 +35,7 @@
       "supporting_sources": [
         "Find a Grave Index — burial in Madelia, Minnesota"
       ],
-      "required": true
+      "required": false
     }
   ]
 }

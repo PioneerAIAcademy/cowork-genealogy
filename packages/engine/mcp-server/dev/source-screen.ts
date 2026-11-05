@@ -38,6 +38,7 @@ import { personWarningsTool } from "../src/tools/person-warnings.js";
 import { samePerson } from "../src/tools/same-person.js";
 import { sanitizeTree } from "../src/validation/tree-sanitize.js";
 import { arkToBareId, toArk } from "../src/utils/ark.js";
+import { personaFor, selectSubjectPersona } from "../src/utils/record-persona-select.js";
 import { fsFetch } from "../src/utils/fs-fetch.js";
 import { BROWSER_USER_AGENT } from "../src/constants.js";
 import type { PersonReadResult, TreeSource } from "../src/types/person-read.js";
@@ -341,11 +342,6 @@ const sharedRecordPath = (out: string, id: string) => join(out, "records", `${id
 /** A copy's own records/ first (an indexing plant), then the shared cache. */
 export function readRecord(out: string, copyKey: string, id: string): Json | undefined {
   return readJsonIf(join(personsDir(out, copyKey), "records", `${id}.json`)) ?? readJsonIf(sharedRecordPath(out, id));
-}
-
-/** The record's persona whose ARK is the source's. */
-export function personaFor(record: Json, ark: string): Json | undefined {
-  return (record?.persons ?? []).find((p: Json) => typeof p?.ark === "string" && toArk(p.ark) === ark);
 }
 
 /** The record as `same_person` takes it: response-only keys dropped. */
@@ -701,72 +697,6 @@ export async function snapshotPerson(ctx: Ctx, inputPid: string, opts: SnapshotP
   };
 }
 
-export type PersonaSelection = { persona_id: string; selected_by: string } | { unscored: string };
-
-type EdgeRole = "parent" | "child" | "spouse";
-
-/** The subject's role on each tree edge that cites the source, from `person-read.json`. */
-function subjectRoles(read: PersonReadResult, sid: string, entry: AuditEntry): EdgeRole[] {
-  const ids = new Set(entry.source_ids);
-  const roles = new Set<EdgeRole>();
-  for (const r of read.relationships ?? []) {
-    if (!(r.sources ?? []).some((s) => ids.has(s.ref))) continue;
-    if (r.type === "Couple" && (r.person1 === sid || r.person2 === sid)) roles.add("spouse");
-    else if (r.type === "ParentChild" && r.parent === sid) roles.add("parent");
-    else if (r.type === "ParentChild" && r.child === sid) roles.add("child");
-  }
-  return [...roles];
-}
-
-/** The record personas that hold `role` relative to P, plus P if P already holds it. */
-function roleCandidates(record: Json, p: Json, role: EdgeRole): Json[] {
-  const rels: Json[] = record.relationships ?? [];
-  const ids = new Set<string>();
-  for (const r of rels) {
-    if (role === "spouse") {
-      if (r.type !== "Couple") continue;
-      if (r.person1 === p.id) ids.add(r.person2);
-      if (r.person2 === p.id) ids.add(r.person1);
-      if (r.person1 === p.id || r.person2 === p.id) ids.add(p.id);
-    } else if (r.type === "ParentChild") {
-      const holder = role === "parent" ? r.parent : r.child;
-      const other = role === "parent" ? r.child : r.parent;
-      if (other === p.id) ids.add(holder);
-      if (holder === p.id) ids.add(p.id);
-    }
-  }
-  return (record.persons ?? []).filter((x: Json) => ids.has(x.id));
-}
-
-/**
- * The record persona that is the audited person, or why none can be chosen.
- * Subject-level: the ARK's own persona. Relationship-level: the ARK names the
- * other party, so take the persona holding the subject's role relative to it,
- * narrowed by the subject's gender. Never guesses.
- */
-export function selectSubjectPersona(read: PersonReadResult, sid: string, entry: AuditEntry, record: Json): PersonaSelection {
-  if (!record || record.is_error || !entry.ark) return { unscored: "record_unreadable" };
-  const p = personaFor(record, entry.ark);
-  if (!p) return { unscored: "record_unreadable" };
-  if (entry.level === "subject") return { persona_id: p.id, selected_by: "ark" };
-
-  const gender = read.persons?.find((x) => x.id === sid)?.gender;
-  const picks = new Map<string, EdgeRole>();
-  let ambiguous = false;
-  const roles = subjectRoles(read, sid, entry);
-  if (roles.length === 0) return { unscored: "no_relationship" };
-  for (const role of roles) {
-    let cands = roleCandidates(record, p, role);
-    if (gender && gender !== "Unknown") cands = cands.filter((c) => c.gender === gender);
-    if (cands.length === 0) return { unscored: "no_relationship" };
-    if (cands.length > 1) ambiguous = true;
-    else picks.set(cands[0].id, role);
-  }
-  if (ambiguous) return { unscored: "ambiguous" };
-  if (picks.size > 1) return { unscored: "edges_disagree" };
-  const [[persona_id, role]] = [...picks];
-  return { persona_id, selected_by: `role:${role}` };
-}
 
 /** Score one persona source: pick the persona, then ask `same_person`. An unselectable relationship-level source gets an `unscored` row. */
 async function scoreEntry(

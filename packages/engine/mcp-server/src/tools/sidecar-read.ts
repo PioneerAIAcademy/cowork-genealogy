@@ -90,6 +90,10 @@ export type SidecarReadResult =
       hitIndex?: number;
       /** On a hit read: the finalized sidecar's log entry; null for a staged file. */
       logId?: string | null;
+      /** On a hit read, when the row has them: its title, date and place as the search returned them. */
+      title?: string;
+      recordDate?: string;
+      recordPlace?: string;
     }
   | { ok: false; reason: SidecarReadFailureReason; errors: string[] };
 
@@ -194,7 +198,13 @@ interface HitFields {
   hitId: string;
   hitIndex: number;
   logId: string | null;
+  title?: string;
+  recordDate?: string;
+  recordPlace?: string;
 }
+
+/** The row fields a hit read copies when present: the transcript alone can lack the place. */
+const HIT_RECORD_FIELDS = ["title", "recordDate", "recordPlace"] as const;
 
 /** Where a bare `results/` ref that is not a staged transcription is read. */
 function notATranscription(base: string, tool: string | null): string {
@@ -285,10 +295,12 @@ async function resultsText(
       `hit ${found.hitIndex} of ${base} (${found.row.id}) carries no transcript: FamilySearch returned none for it.`,
     );
   }
-  return {
-    text: found.row.textDocument,
-    hit: { hitId: found.row.id, hitIndex: found.hitIndex, logId: env!.logId },
-  };
+  const hitFields: HitFields = { hitId: found.row.id, hitIndex: found.hitIndex, logId: env!.logId };
+  for (const k of HIT_RECORD_FIELDS) {
+    const v = found.row[k];
+    if (typeof v === "string") hitFields[k] = v;
+  }
+  return { text: found.row.textDocument, hit: hitFields };
 }
 
 /** The text of a staged transcription, or null when `ref` holds something else
@@ -428,7 +440,8 @@ export const sidecarReadSchema = {
     "this tool's: a staged TRANSCRIPTION (`results/…` from `image_transcribe`), and ONE " +
     "full-text hit's transcript, `results/<file>#<hit id>` (a `fulltext_search` result; " +
     "`results/<file>#hits` lists its hits, one JSON line each with a ready-made `ref` to copy). " +
-    "A hit read adds `hitId`, `hitIndex` (1-based) and `logId` to the result. Returns " +
+    "A hit read adds `hitId`, `hitIndex` (1-based) and `logId` to the result, plus the hit's " +
+    "`title`, `recordDate` and `recordPlace` when it has them. Returns " +
     "`{ ref, totalChars, offset, content, truncated, nextOffset? }`: `content` is at most " +
     "40,000 characters (less when the text is heavy with quotes or backslashes, so the " +
     "result never overflows the tool-result limit); when `truncated` is true, call again " +

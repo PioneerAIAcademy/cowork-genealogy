@@ -25,6 +25,10 @@ from pathlib import Path
 
 import pytest
 
+from validators_lib import as_mapping as _as_mapping
+from validators_lib import assert_namesake_rows_cite as _assert_namesake_rows_cite
+from validators_lib import assert_namesake_warning_handed_back as _assert_namesake_warning_handed_back
+from validators_lib import assert_no_namesake_row_without_subject as _assert_no_namesake_row_without_subject
 from validators_lib import new_log_entries as _new_log_entries
 
 
@@ -249,3 +253,84 @@ def test_lookingfor_has_no_navigation_phrase(tool_calls, test):
         and _NAVIGATION_PHRASE.search(looking_for)
     ]
     assert not bad, f"lookingFor carries a navigation phrase: {bad}"
+
+
+# --- Namesake rows (issue #3363, PR 3) ---------------------------------------
+
+
+def _image_inputs(tool_calls) -> set[str]:
+    """Each `imageId` or `ark` this run passed to image_transcribe, as passed."""
+    out: set[str] = set()
+    for _, c in _calls_named(tool_calls, "image_transcribe"):
+        args = _as_mapping(c.get("input") or c.get("args"))
+        for key in ("imageId", "ark"):
+            value = args.get(key)
+            if isinstance(value, str) and value.strip():
+                out.add(value.strip())
+    return out
+
+
+def test_namesake_row_recorded(before_state, after_state, tool_calls, test):
+    """Tag-gated (namesake-row): a page that shows a same-named person the browse
+    rules out is recorded as a namesakes row on the subject (step 7b), listing
+    the page's `imageId` exactly as passed to image_transcribe (or its `ark`, if
+    read by `ark`) and citing the browse's `image_search` log. An `imageRef` or a
+    `staged.resultsRef` in `record_ids` names no page a reader can open again."""
+    if "namesake-row" not in test.get("tags", []):
+        pytest.skip("not a namesake-row scenario")
+    _assert_namesake_rows_cite(
+        before_state,
+        after_state,
+        log_tool="image_search",
+        ids_read=_image_inputs(tool_calls),
+        compare_bare=False,
+        what="an imageId or ark this run passed to image_transcribe",
+    )
+
+
+def test_no_namesake_row_without_subject(before_state, after_state, test):
+    """No `subject:` block in the delegation, no namesakes row (step 7b)."""
+    _assert_no_namesake_row_without_subject(before_state, after_state, test)
+
+
+def test_namesake_warning_handed_to_person_evidence(tool_calls, agent_returns, text_response, test):
+    """Tag-gated (namesake-warning): when the namesakes write warns that links to
+    the subject are untied, the return hands every listed `pe_` id to
+    person-evidence (the same line search-records owes)."""
+    if "namesake-warning" not in test.get("tags", []):
+        pytest.skip("not a namesake-warning scenario")
+    _assert_namesake_warning_handed_back(tool_calls, agent_returns, text_response, "search-images")
+
+
+# --- A browse log entry is never relabelled image_transcribe (#4012) ---------
+
+def test_browse_log_never_labelled_image_transcribe(before_state, after_state, test):
+    """A browse's log entry names the browse tool (image_search, or
+    volume_search when no volume was found) — never image_transcribe. On Haiku
+    low, research_log_append refused to attach a page's staged file to an
+    image_search entry, and the agent relabelled the entry
+    `tool: "image_transcribe"` so the file was accepted — writing the results/
+    sidecar the browse rules forbid and leaving the browse itself unlogged
+    (#4012). In the split shape (a correct image_search entry PLUS a relabelled
+    one) test_positive_appends_browse_log_entry still passes and, when no
+    staged ref was attached, test_no_results_sidecar_written does too — this
+    check is what fails it. The one legitimate image_transcribe label is a cap
+    refusal's partial log, whose tests carry the cap-refusal tag."""
+    if test.get("type") != "positive":
+        pytest.skip("only positive tests perform a browse")
+    if "cap-refusal" in test.get("tags", []):
+        pytest.skip(
+            "a cap refusal stops the browse at a page read, so its partial log "
+            "may name image_transcribe"
+        )
+    relabelled = [
+        entry.get("id")
+        for entry in _new_log_entries(before_state, after_state)
+        if "image_transcribe" in (entry.get("tool") or "")
+    ]
+    assert not relabelled, (
+        "a browse log entry must name the browse tool (image_search or "
+        f"volume_search), never image_transcribe; got entries {relabelled}. "
+        "Relabelling the entry to attach a staged page file writes a results/ "
+        "sidecar and leaves the browse unlogged."
+    )

@@ -1,7 +1,7 @@
 // Refusal wording shared by a tool's handler and server.ts's unknown-argument
-// guard (`unknown-args.ts`): the guard answers over MCP, the handler answers a
-// caller that reaches it directly (the unit harness). One copy, so the two
-// cannot drift.
+// guard (`unknown-args.ts`): the guard answers over MCP and in the unit harness,
+// the handler answers a caller that reaches it directly (a test, a dev script).
+// One copy, so the two cannot drift.
 
 /** The hand-built `extraction_append` forms, in both spellings (`ops` with its
  *  `sourceDescription`, and one flat op), and the one-record extractor mode

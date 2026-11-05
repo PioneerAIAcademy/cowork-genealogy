@@ -5,7 +5,7 @@
 // per-user config — they do not belong on `AppConfig`, which is read through a
 // `Principal`. No `fs`.
 //
-// Both limits are off unless set, so `src/index.ts` (the `.mcpb`), which never
+// Every setting is off unless set, so `src/index.ts` (the `.mcpb`), which never
 // calls this, behaves exactly as it does today.
 
 // Module-private: nothing outside this file needs them, and they resolve to
@@ -32,6 +32,10 @@ export interface LimitsEnv {
   fsCallsPerMinute: number | Unset | Invalid;
   /** Concurrent transcriptions across the process; same three states. */
   maxTranscriptions: number | Unset | Invalid;
+  /** One collections catalog for the process (`GENEALOGY_SHARED_COLLECTIONS_CACHE`)
+   *  rather than one slot per token. `true`/`false`, as
+   *  `GENEALOGY_S3_FORCE_PATH_STYLE` takes; same three states. */
+  sharedCollectionsCache: boolean | Unset | Invalid;
   /** Variables set to a value they may not take. Unusable unless empty — the
    *  caller decides how to report it, as it does for `PgS3Env.invalid`. */
   invalid: string[];
@@ -59,6 +63,15 @@ function wholeNumber(
   return Number.isInteger(n) && n >= min && n <= max ? n : null;
 }
 
+/** `true` or `false` exactly, `undefined` when unset or empty, `null` when it is
+ *  anything else -- so "yes", "1" or "TRUE" exits 2 rather than reading as off. */
+function flag(raw: string | undefined): boolean | Unset | Invalid {
+  if (raw === undefined || raw.trim() === "") return undefined;
+  if (raw.trim() === "true") return true;
+  if (raw.trim() === "false") return false;
+  return null;
+}
+
 export function readLimitsEnv(env: NodeJS.ProcessEnv): LimitsEnv {
   const invalid: string[] = [];
 
@@ -76,7 +89,10 @@ export function readLimitsEnv(env: NodeJS.ProcessEnv): LimitsEnv {
   );
   if (maxTranscriptions === null) invalid.push("GENEALOGY_MAX_TRANSCRIPTIONS");
 
+  const sharedCollectionsCache = flag(env.GENEALOGY_SHARED_COLLECTIONS_CACHE);
+  if (sharedCollectionsCache === null) invalid.push("GENEALOGY_SHARED_COLLECTIONS_CACHE");
+
   // The union is returned as-is: `null` reaches the caller, which must send it
   // to the exit-2 branch rather than to a `configure*` call.
-  return { fsCallsPerMinute, maxTranscriptions, invalid };
+  return { fsCallsPerMinute, maxTranscriptions, sharedCollectionsCache, invalid };
 }

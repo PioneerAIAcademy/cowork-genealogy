@@ -11,6 +11,7 @@ import {
   standardPlaceToCollectionsQuery,
   fetchAllCollections,
   clearCollectionsCache,
+  configureCollectionsCache,
 } from "../../src/tools/collections-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { BROWSER_USER_AGENT } from "../../src/constants.js";
@@ -73,6 +74,7 @@ beforeEach(() => {
   mockFetch.mockReset();
   mockedGetValidToken.mockReset();
   clearCollectionsCache();
+  configureCollectionsCache({});
 });
 
 afterEach(() => {
@@ -396,5 +398,100 @@ describe("collectionsSearchTool — User-Agent contract", () => {
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const headers = new Headers(init.headers as HeadersInit);
     expect(headers.get("User-Agent")).toBe(BROWSER_USER_AGENT);
+  });
+});
+
+describe("fetchAllCollections cache", () => {
+  const ok = () => ({ ok: true, json: async () => mockApiResponse });
+  const forbidden = () => ({ ok: false, status: 403, statusText: "Forbidden", headers: new Headers() });
+
+  beforeEach(() => {
+    mockedGetValidToken.mockResolvedValue("fs-token");
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  describe("setting unset (today's behaviour)", () => {
+    it("serves the same token from cache, and refetches for another token", async () => {
+      mockFetch.mockResolvedValue(ok());
+      await fetchAllCollections("token-a", LOCAL);
+      await fetchAllCollections("token-a", LOCAL);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      await fetchAllCollections("token-b", LOCAL);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("keeps one slot: the second token's fetch replaces the first's", async () => {
+      mockFetch.mockResolvedValue(ok());
+      await fetchAllCollections("token-a", LOCAL);
+      await fetchAllCollections("token-b", LOCAL);
+      await fetchAllCollections("token-a", LOCAL);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
+    });
+
+    it("is what an explicit shared: false gives", async () => {
+      configureCollectionsCache({ shared: false });
+      mockFetch.mockResolvedValue(ok());
+      await fetchAllCollections("token-a", LOCAL);
+      await fetchAllCollections("token-b", LOCAL);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  describe("shared", () => {
+    beforeEach(() => configureCollectionsCache({ shared: true }));
+
+    it("serves one patron's cached catalog to another patron's call", async () => {
+      mockFetch.mockResolvedValue(ok());
+      const a = await fetchAllCollections("token-a", LOCAL);
+      const b = await fetchAllCollections("token-b", LOCAL);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(b).toBe(a);
+    });
+
+    it("never hands one patron's failed fetch to another: the next call fetches for itself", async () => {
+      mockFetch.mockResolvedValueOnce(forbidden()).mockResolvedValueOnce(ok());
+      await expect(fetchAllCollections("token-a", LOCAL)).rejects.toThrow(
+        "FamilySearch collections API error: 403 Forbidden",
+      );
+      await expect(fetchAllCollections("token-b", LOCAL)).resolves.toEqual(mockApiResponse);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("does not share an in-flight fetch: two cold calls each fetch, and one failing leaves the other whole", async () => {
+      let release!: (v: unknown) => void;
+      mockFetch
+        .mockImplementationOnce(() => new Promise((r) => { release = r; }))
+        .mockResolvedValueOnce(ok());
+      const a = fetchAllCollections("token-a", LOCAL);
+      const b = fetchAllCollections("token-b", LOCAL);
+      await expect(b).resolves.toEqual(mockApiResponse);
+      release(forbidden());
+      await expect(a).rejects.toThrow("403 Forbidden");
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("still expires after an hour", async () => {
+      vi.useFakeTimers({ toFake: ["Date"] });
+      vi.setSystemTime(new Date("2026-11-02T00:00:00Z"));
+      mockFetch.mockResolvedValue(ok());
+      await fetchAllCollections("token-a", LOCAL);
+      vi.setSystemTime(new Date("2026-11-02T00:59:59Z"));
+      await fetchAllCollections("token-b", LOCAL);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      vi.setSystemTime(new Date("2026-11-02T01:00:01Z"));
+      await fetchAllCollections("token-b", LOCAL);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
+
+    it("turned back off, keys on the token again", async () => {
+      mockFetch.mockResolvedValue(ok());
+      await fetchAllCollections("token-a", LOCAL);
+      configureCollectionsCache({});
+      await fetchAllCollections("token-b", LOCAL);
+      expect(mockFetch).toHaveBeenCalledTimes(2);
+    });
   });
 });

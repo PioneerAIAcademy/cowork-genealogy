@@ -12,7 +12,10 @@
 
 import type { PgS3BackendOptions } from "./pg-s3-project-store.js";
 
-export const PG_S3_REQUIRED_ENV = ["GENEALOGY_PG_DSN", "GENEALOGY_S3_BUCKET"] as const;
+export const PG_S3_REQUIRED_ENV = ["GENEALOGY_S3_BUCKET"] as const;
+/** The fchDatabase SAS object to read Postgres credentials from (U29), in place
+ *  of GENEALOGY_PG_DSN; setting both is invalid. */
+export const PG_SAS_OBJECT_ENV = "GENEALOGY_PG_SAS_OBJECT";
 
 export const DEFAULT_ANCHOR_PATH = "/project";
 export const DEFAULT_S3_REGION = "us-east-1";
@@ -30,6 +33,9 @@ export const ORPHAN_SWEEP_INTERVAL_MAX_S = Math.floor((2 ** 31 - 1) / 1000);
 
 export interface PgS3Env {
   backendOptions: PgS3BackendOptions;
+  /** `GENEALOGY_PG_SAS_OBJECT`: the caller resolves it and sets
+   *  `backendOptions.pgCredentials`; `backendOptions.dsn` is then "". */
+  pgSasObject?: string;
   /** The one `projectPath` the tools pass for a project (`GENEALOGY_ANCHOR_PATH`). */
   anchorPath: string;
   /** Required variables that are unset or empty, plus the unset partner when
@@ -40,7 +46,8 @@ export interface PgS3Env {
   orphanSweep: { intervalS: number; graceS: number };
   /** Variables that are set to a value they may not take
    *  (`GENEALOGY_S3_FORCE_PATH_STYLE` other than `true`/`false`; an orphan
-   *  sweep variable that is not a whole number of seconds, a grace under
+   *  sweep variable that is not a whole number of seconds; both
+   *  `GENEALOGY_PG_DSN` and `GENEALOGY_PG_SAS_OBJECT`; a grace under
    *  `ORPHAN_GRACE_FLOOR_S`, or an interval over `ORPHAN_SWEEP_INTERVAL_MAX_S`). Unusable unless empty, like `missing`. */
   invalid: string[];
 }
@@ -62,8 +69,11 @@ function seconds(
 }
 
 export function readPgS3Env(env: NodeJS.ProcessEnv): PgS3Env {
-  const missing: string[] = PG_S3_REQUIRED_ENV.filter((name) => !env[name]);
+  const pgSasObject = env[PG_SAS_OBJECT_ENV] || undefined;
+  const missing: string[] = pgSasObject || env.GENEALOGY_PG_DSN ? [] : ["GENEALOGY_PG_DSN"];
+  missing.push(...PG_S3_REQUIRED_ENV.filter((name) => !env[name]));
   const invalid: string[] = [];
+  if (pgSasObject && env.GENEALOGY_PG_DSN) invalid.push(PG_SAS_OBJECT_ENV);
 
   const accessKeyId = env.GENEALOGY_S3_ACCESS_KEY || undefined;
   const secretAccessKey = env.GENEALOGY_S3_SECRET_KEY || undefined;
@@ -94,7 +104,7 @@ export function readPgS3Env(env: NodeJS.ProcessEnv): PgS3Env {
 
   return {
     backendOptions: {
-      dsn: env.GENEALOGY_PG_DSN ?? "",
+      dsn: pgSasObject ? "" : (env.GENEALOGY_PG_DSN ?? ""),
       s3: {
         bucket: env.GENEALOGY_S3_BUCKET ?? "",
         region: env.GENEALOGY_S3_REGION || DEFAULT_S3_REGION,
@@ -103,6 +113,7 @@ export function readPgS3Env(env: NodeJS.ProcessEnv): PgS3Env {
         ...(accessKeyId && secretAccessKey ? { accessKeyId, secretAccessKey } : {}),
       },
     },
+    ...(pgSasObject ? { pgSasObject } : {}),
     anchorPath: env.GENEALOGY_ANCHOR_PATH || DEFAULT_ANCHOR_PATH,
     orphanSweep: { intervalS: intervalS ?? 0, graceS: graceS ?? DEFAULT_ORPHAN_GRACE_S },
     missing,

@@ -13,6 +13,7 @@ description: >-
   research-exhaustiveness), or wants to search records (use search-records
   or search-external-sites).
 model: claude-sonnet-4-6
+effort: high
 tools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
@@ -29,7 +30,9 @@ tools:
   - mcp__genealogy__census_children_gap
   - mcp__remote-devices__Genealogy_Research__census_children_gap
   - mcp__Genealogy_Research__census_children_gap
-  - Read
+  - mcp__genealogy__tree_query
+  - mcp__remote-devices__Genealogy_Research__tree_query
+  - mcp__Genealogy_Research__tree_query
 ---
 
 # Question Selection
@@ -52,8 +55,8 @@ You need the current project state to select a question. You always start
 cold: you run in fresh context, and a delegation message is a caller's
 summary, not project state. So first, every time, call `project_context` —
 its `objective` is the objective verbatim, including any doubt it states about
-its own premise — and `Read` `tree.gedcomx.json` for persons' dates, places and
-sources. Do not `Read` `research.json`: take every section from
+its own premise — and call `tree_query({ projectPath })` for persons' dates, places and
+sources. Take every `research.json` section from
 `research_query`, as listed below. Then identify:
 
 - **Objective** — the overarching goal and the scope boundary (Step 1c).

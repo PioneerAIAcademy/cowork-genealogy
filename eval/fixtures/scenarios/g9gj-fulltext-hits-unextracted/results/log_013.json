@@ -1,0 +1,3738 @@
+{
+  "log_id": "log_013",
+  "tool": "record_search",
+  "retrieved": "2026-10-09T15:21:55.468Z",
+  "returned_count": 20,
+  "payload": {
+    "query": {
+      "count": 20,
+      "givenName": "Iram",
+      "givenNameAlt": "Hiram",
+      "marriageYearFrom": 1819,
+      "marriageYearTo": 1822,
+      "projectPath": "<workspace>",
+      "spouseGivenName": "Mary",
+      "surname": "Hyde"
+    },
+    "totalMatches": 21653,
+    "paginationCappedAt": 4999,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:X8CY-9PD",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 5.3936,
+        "confidence": 3,
+        "sex": "Male",
+        "collectionId": "1614804",
+        "collectionTitle": "Ohio, County Marriages, 1789-2016",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1614804",
+        "recordTitle": "Entry for Thomas H. Hyde and Ada Baker, \"Ohio, County Marriages, 1789-2016\"",
+        "recordArk": "ark:/61903/1:2:MX8S-VTM",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10481320602",
+              "ark": "ark:/61903/1:1:X8CY-9PD",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10481320601",
+              "ark": "ark:/61903/1:1:X8CY-9P8",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Thomas H."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "22 Jul",
+                  "place": "Troy, Ohio",
+                  "standard_place": "Troy, Miami, Ohio, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10481320603",
+              "ark": "ark:/61903/1:1:X8CY-9P6",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Mahaffey",
+                  "given": "Mary"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10481320604",
+              "ark": "ark:/61903/1:1:X8CY-9PX",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Baker",
+                  "given": "Ada"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "19 Jan",
+                  "place": "Champaign County",
+                  "standard_place": "Champaign, Illinois, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10481320605",
+              "ark": "ark:/61903/1:1:X8CY-9PF",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Baker",
+                  "given": "W.M."
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10481320606",
+              "ark": "ark:/61903/1:1:X8CY-9PN",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Wilson"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_10481320601",
+              "person2": "p_10481320604"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10481320602",
+              "person2": "p_10481320603"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10481320602",
+              "child": "p_10481320601"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10481320603",
+              "child": "p_10481320601"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_349180980",
+              "title": "Entry for Thomas H. Hyde and Ada Baker, \"Ohio, County Marriages, 1789-2016\"",
+              "citation": "\"Ohio, County Marriages, 1789-2016\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X8CY-9P8 : Thu Jul 18 04:52:26 UTC 2024), Entry for Thomas H. Hyde and Ada Baker, 25 May 1902.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MX8S-VTM"
+            },
+            {
+              "id": "sd_c_1614804",
+              "title": "Ohio, County Marriages, 1789-2016",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1614804"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939K-BPC8-7"
+            },
+            {
+              "id": "sd_auto_M9JR-1K6",
+              "title": "United States, Ohio, Marriages, from 1600 to 2023"
+            },
+            {
+              "id": "src_p_p_10481320602",
+              "url": "#p_10481320602"
+            }
+          ],
+          "places": [
+            {
+              "id": "8473563",
+              "name": "Troy, Miami, Ohio, United States",
+              "latitude": 40.03944,
+              "longitude": -84.20333
+            }
+          ]
+        },
+        "primaryId": "p_10481320602"
+      },
+      {
+        "recordId": "ark:/61903/1:1:K63S-P69",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1855",
+            "place": "Jackson, Washington, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hiram Hide",
+        "score": 4.5428805,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1798",
+        "collectionId": "1937366",
+        "collectionTitle": "New York, State Census, 1855",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1937366",
+        "recordTitle": "Household of Hiram Hide, \"New York, State Census, 1855\"",
+        "recordArk": "ark:/61903/1:2:9MVQ-T5JD",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14169405091",
+              "ark": "ark:/61903/1:1:K63S-P69",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hiram",
+                  "surname": "Hide"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1798",
+                  "standard_date": "1798"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Jackson, Washington, New York, United States",
+                  "standard_place": "Jackson, Washington, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14169405092",
+              "ark": "ark:/61903/1:1:K63S-P6S",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hide"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Jackson, Washington, New York, United States",
+                  "standard_place": "Jackson, Washington, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1797",
+                  "standard_date": "1797"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_14169405091",
+              "person2": "p_14169405092"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22311364122",
+              "title": "Household of Hiram Hide, \"New York, State Census, 1855\"",
+              "citation": "\"New York, State Census, 1855\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K63S-P69 : Fri Jul 05 17:50:05 UTC 2024), Entry for Hiram Hide and Mary Hide, 1855.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9MVQ-T5JD"
+            },
+            {
+              "id": "sd_c_1937366",
+              "title": "New York, State Census, 1855",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1937366"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GBP2-Q28"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_14169405091",
+              "url": "#p_14169405091"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608450",
+              "name": "Jackson, Washington, New York, United States",
+              "latitude": 43.0883,
+              "longitude": -73.3767
+            }
+          ]
+        },
+        "primaryId": "p_14169405091"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MCJQ-WX7",
+        "events": [
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Census",
+            "date": "1850",
+            "place": "West Baton Rouge, Port Allen, West Baton Rouge, Louisiana, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "H I Hyde",
+        "score": 3.82596,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1814",
+        "birthPlace": "Ohio, United States",
+        "collectionId": "1401638",
+        "collectionTitle": "United States, Census, 1850",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1401638",
+        "recordTitle": "Household of H I Hyde, \"United States, Census, 1850\"",
+        "recordArk": "ark:/61903/1:2:M44L-C67",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_232583825",
+              "ark": "ark:/61903/1:1:MCJQ-WX7",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "H I"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1850",
+                  "standard_date": "1850",
+                  "place": "West Baton Rouge, Port Allen, West Baton Rouge, Louisiana, United States",
+                  "standard_place": "Port Allen, West Baton Rouge, Louisiana, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1814",
+                  "standard_date": "1814",
+                  "place": "Ohio",
+                  "standard_place": "Ohio, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_176345495",
+              "title": "Household of H I Hyde, \"United States, Census, 1850\"",
+              "citation": "\"United States, Census, 1850\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MCJQ-WX7 : Fri Aug 29 19:01:59 UTC 2025), Entry for H I Hyde, 1850.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M44L-C67"
+            },
+            {
+              "id": "sd_c_1401638",
+              "title": "United States, Census, 1850",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1401638"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-63KH-VX"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_232583825",
+              "url": "#p_232583825"
+            }
+          ],
+          "places": [
+            {
+              "id": "357",
+              "name": "Ohio, United States",
+              "latitude": 40.25028,
+              "longitude": -83.00028
+            },
+            {
+              "id": "5441643",
+              "name": "Port Allen, West Baton Rouge, Louisiana, United States",
+              "latitude": 30.452,
+              "longitude": -91.21
+            }
+          ]
+        },
+        "primaryId": "p_232583825"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2QG-LFJZ",
+        "events": [
+          {
+            "type": "TaxAssessment",
+            "date": "1843",
+            "place": "Harrison Land District, Texas, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "I H Hyde",
+        "score": 3.82596,
+        "confidence": 2,
+        "collectionId": "1827575",
+        "collectionTitle": "Texas, County Tax Rolls, 1837-1910",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1827575",
+        "recordTitle": "Entry for I H Hyde, \"Texas, County Tax Rolls, 1837-1910\"",
+        "recordArk": "ark:/61903/1:2:QL9L-6MRZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102175601020",
+              "ark": "ark:/61903/1:1:Q2QG-LFJZ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "I H",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "TaxAssessment",
+                  "primary": true,
+                  "date": "1843",
+                  "standard_date": "1843",
+                  "place": "Harrison Land District, Texas, United States",
+                  "standard_place": "Harrison Land District, Texas, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102830661760",
+              "title": "Entry for I H Hyde, \"Texas, County Tax Rolls, 1837-1910\"",
+              "citation": "\"Texas, County Tax Rolls, 1837-1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2QG-LFJZ : Fri Mar 08 19:02:32 UTC 2024), Entry for I H Hyde, 1843.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QL9L-6MRZ"
+            },
+            {
+              "id": "sd_c_1827575",
+              "title": "Texas, County Tax Rolls, 1837-1910",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1827575"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939F-WH33-9"
+            },
+            {
+              "id": "sd_auto_M9KR-7TL",
+              "title": "United States, Texas, Legal, from 1517 to 2019"
+            },
+            {
+              "id": "src_p_p_102175601020",
+              "url": "#p_102175601020"
+            }
+          ],
+          "places": [
+            {
+              "id": "3459196",
+              "name": "Harrison Land District, Texas, United States",
+              "latitude": 32.383,
+              "longitude": -94.316997
+            }
+          ]
+        },
+        "primaryId": "p_102175601020"
+      },
+      {
+        "recordId": "ark:/61903/1:1:68MS-JVVQ",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1898",
+            "place": "Norwich, Chenango, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "I H Hyde",
+        "score": 3.82596,
+        "confidence": 2,
+        "collectionId": "3754697",
+        "collectionTitle": "United States City and Business Directories, ca. 1749 - ca. 1990",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/3754697",
+        "recordTitle": "Entry for I H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+        "recordArk": "ark:/61903/1:2:4BDT-75GJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_292331095744",
+              "ark": "ark:/61903/1:1:68MS-JVVQ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "I H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Residence",
+                  "primary": true,
+                  "date": "1898",
+                  "standard_date": "1898",
+                  "place": "Norwich, Chenango, New York, United States",
+                  "standard_place": "Norwich, Chenango, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_173814817277",
+              "title": "Entry for I H Hyde, \"United States City and Business Directories, ca. 1749 - ca. 1990\"",
+              "citation": "\"United States City and Business Directories, ca. 1749 - ca. 1990\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:68MS-JVVQ : Sat Mar 09 18:13:35 UTC 2024), Entry for I H Hyde, 1898.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:4BDT-75GJ"
+            },
+            {
+              "id": "sd_c_3754697",
+              "title": "United States City and Business Directories, ca. 1749 - ca. 1990",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/3754697"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9BP-3JQP"
+            },
+            {
+              "id": "sd_auto_M9J1-316",
+              "title": "United States, New York, Residences, from 1600 to 1994"
+            },
+            {
+              "id": "src_p_p_292331095744",
+              "url": "#p_292331095744"
+            }
+          ],
+          "places": [
+            {
+              "id": "4627013",
+              "name": "Norwich, Chenango, New York, United States",
+              "latitude": 42.5311,
+              "longitude": -75.5239
+            }
+          ]
+        },
+        "primaryId": "p_292331095744"
+      },
+      {
+        "recordId": "ark:/61903/1:1:FCGM-T26",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Thos. H. Hyde",
+        "score": 3.7719798,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1675359",
+        "collectionTitle": "Michigan, Marriages, 1822-1995",
+        "collectionUrl": "https://familysearch.org/collections/1675359",
+        "recordTitle": "Entry for Charles E. Swart, \"Michigan, Marriages, 1822-1995\"",
+        "recordArk": "ark:/61903/1:2:MR28-WLK",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_11171544013",
+              "ark": "ark:/61903/1:1:FCGM-T26",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Thos. H.",
+                  "surname": "Hyde"
+                }
+              ]
+            },
+            {
+              "id": "p_11171544014",
+              "ark": "ark:/61903/1:1:FCGM-T2X",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Stickley"
+                }
+              ]
+            },
+            {
+              "id": "p_11171544012",
+              "ark": "ark:/61903/1:1:FCGM-T2D",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Annie",
+                  "surname": "Hyde"
+                }
+              ]
+            },
+            {
+              "id": "p_11171544015",
+              "ark": "ark:/61903/1:1:FCGM-T2F",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Charles E.",
+                  "surname": "Swart"
+                }
+              ]
+            },
+            {
+              "id": "p_11171544016",
+              "ark": "ark:/61903/1:1:FCGM-T2N",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Geo",
+                  "surname": "Swart"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_11171544013",
+              "person2": "p_11171544014"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_11171544015",
+              "person2": "p_11171544012"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11171544013",
+              "child": "p_11171544012"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_11171544014",
+              "child": "p_11171544012"
+            }
+          ],
+          "sources": [
+            {
+              "id": "sd_c_1675359",
+              "title": "Michigan, Marriages, 1822-1995",
+              "url": "https://familysearch.org/collections/1675359"
+            },
+            {
+              "id": "src_r_624003049",
+              "title": "Entry for Charles E. Swart, \"Michigan, Marriages, 1822-1995\"",
+              "citation": "\"Michigan, Marriages, 1822-1995,\" database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:2:MR28-WLK : 17 January 2020), Entry for Charles E. Swart, ; citing reference ; FHL microfilm .",
+              "url": "https://familysearch.org/ark:/61903/1:2:MR28-WLK"
+            },
+            {
+              "id": "src_p_p_11171544013",
+              "url": "#p_11171544013"
+            }
+          ]
+        },
+        "primaryId": "p_11171544013"
+      },
+      {
+        "recordId": "ark:/61903/1:1:K67Y-622",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1855",
+            "place": "E.D. 2, Ward 1, Brooklyn City, Kings, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Joseph H Hyde",
+        "score": 3.65198,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1811",
+        "collectionId": "1937366",
+        "collectionTitle": "New York, State Census, 1855",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1937366",
+        "recordTitle": "Household of Joseph H Hyde, \"New York, State Census, 1855\"",
+        "recordArk": "ark:/61903/1:2:9MV7-6HG7",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14171691320",
+              "ark": "ark:/61903/1:1:K67Y-622",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Joseph H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "E.D. 2, Ward 1, Brooklyn City, Kings, New York, United States",
+                  "standard_place": "Brooklyn, Kings, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1811",
+                  "standard_date": "1811"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14171691321",
+              "ark": "ark:/61903/1:1:K67Y-62L",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Mary L"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "E.D. 2, Ward 1, Brooklyn City, Kings, New York, United States",
+                  "standard_place": "Brooklyn, Kings, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1817",
+                  "standard_date": "1817"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14171691322",
+              "ark": "ark:/61903/1:1:K67Y-62G",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Mary E"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "E.D. 2, Ward 1, Brooklyn City, Kings, New York, United States",
+                  "standard_place": "Brooklyn, Kings, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1835",
+                  "standard_date": "1835"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14171691323",
+              "ark": "ark:/61903/1:1:K67Y-62P",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Harriot"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "E.D. 2, Ward 1, Brooklyn City, Kings, New York, United States",
+                  "standard_place": "Brooklyn, Kings, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1841",
+                  "standard_date": "1841"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14171691324",
+              "ark": "ark:/61903/1:1:K67Y-625",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Joseph H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "E.D. 2, Ward 1, Brooklyn City, Kings, New York, United States",
+                  "standard_place": "Brooklyn, Kings, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1836",
+                  "standard_date": "1836"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14171691325",
+              "ark": "ark:/61903/1:1:K67Y-62R",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Darrow",
+                  "given": "Persis"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1805",
+                  "standard_date": "1805"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "E.D. 2, Ward 1, Brooklyn City, Kings, New York, United States",
+                  "standard_place": "Brooklyn, Kings, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14171691326",
+              "ark": "ark:/61903/1:1:K67Y-62T",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Chas"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1837",
+                  "standard_date": "1837"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "E.D. 2, Ward 1, Brooklyn City, Kings, New York, United States",
+                  "standard_place": "Brooklyn, Kings, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14171691327",
+              "ark": "ark:/61903/1:1:K67Y-62Y",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Oneil",
+                  "given": "Bridget"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1821",
+                  "standard_date": "1821"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "E.D. 2, Ward 1, Brooklyn City, Kings, New York, United States",
+                  "standard_place": "Brooklyn, Kings, New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14171691328",
+              "ark": "ark:/61903/1:1:K67Y-62B",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Oneil",
+                  "given": "Catherine"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "E.D. 2, Ward 1, Brooklyn City, Kings, New York, United States",
+                  "standard_place": "Brooklyn, Kings, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1834",
+                  "standard_date": "1834"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_14171691321",
+              "child": "p_14171691324"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_14171691320",
+              "person2": "p_14171691321"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_14171691321",
+              "child": "p_14171691323"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_14171691321",
+              "child": "p_14171691322"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_14171691320",
+              "child": "p_14171691323"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_14171691320",
+              "child": "p_14171691324"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_14171691325",
+              "child": "p_14171691320"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_14171691320",
+              "child": "p_14171691322"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_14171691325",
+              "child": "p_14171691326"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22311808865",
+              "title": "Household of Joseph H Hyde, \"New York, State Census, 1855\"",
+              "citation": "\"New York, State Census, 1855\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K67Y-622 : Fri Mar 08 18:21:38 UTC 2024), Entry for Joseph H Hyde and Mary L Hyde, 1855.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9MV7-6HG7"
+            },
+            {
+              "id": "sd_c_1937366",
+              "title": "New York, State Census, 1855",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1937366"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GBR8-2WP"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_14171691320",
+              "url": "#p_14171691320"
+            }
+          ],
+          "places": [
+            {
+              "id": "4608874",
+              "name": "Brooklyn, Kings, New York, United States",
+              "latitude": 40.636,
+              "longitude": -73.951
+            }
+          ]
+        },
+        "primaryId": "p_14171691320"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MLZ6-LXW",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1910",
+            "place": "Portsmouth Ward 2, Rockingham, New Hampshire, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Patrick H Hyde",
+        "score": 3.65198,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1727033",
+        "collectionTitle": "United States, Census, 1910",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1727033",
+        "recordTitle": "Household of Patrick H Hyde, \"United States, Census, 1910\"",
+        "recordArk": "ark:/61903/1:2:9XHJ-QFF",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_518770326",
+              "ark": "ark:/61903/1:1:MLZ6-LXW",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Patrick H",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Portsmouth Ward 2, Rockingham, New Hampshire, United States",
+                  "standard_place": "Portsmouth, Rockingham, New Hampshire, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_518770327",
+              "ark": "ark:/61903/1:1:MLZ6-LX4",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Portsmouth Ward 2, Rockingham, New Hampshire, United States",
+                  "standard_place": "Portsmouth, Rockingham, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_518770328",
+              "ark": "ark:/61903/1:1:MLZ6-LXH",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Sullivan"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Portsmouth Ward 2, Rockingham, New Hampshire, United States",
+                  "standard_place": "Portsmouth, Rockingham, New Hampshire, United States"
+                },
+                {
+                  "type": "Birth",
+                  "place": "Maine",
+                  "standard_place": "Maine, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_518770329",
+              "ark": "ark:/61903/1:1:MLZ6-LXC",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Sullivan"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Vermont",
+                  "standard_place": "Vermont, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Portsmouth Ward 2, Rockingham, New Hampshire, United States",
+                  "standard_place": "Portsmouth, Rockingham, New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_518770330",
+              "ark": "ark:/61903/1:1:MLZ6-LXZ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Frank",
+                  "surname": "Sullivan"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1910",
+                  "standard_date": "1910",
+                  "place": "Portsmouth Ward 2, Rockingham, New Hampshire, United States",
+                  "standard_place": "Portsmouth, Rockingham, New Hampshire, United States"
+                },
+                {
+                  "type": "Birth",
+                  "place": "New Hampshire",
+                  "standard_place": "New Hampshire, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_518770326",
+              "person2": "p_518770327"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_1076143065",
+              "title": "Household of Patrick H Hyde, \"United States, Census, 1910\"",
+              "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MLZ6-LXW : Wed Aug 13 16:21:18 UTC 2025), Entry for Patrick H Hyde and Mary Hyde, 1910.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9XHJ-QFF"
+            },
+            {
+              "id": "sd_c_1727033",
+              "title": "United States, Census, 1910",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1727033"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GRV8-SRG"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1400 to 2021"
+            },
+            {
+              "id": "src_p_p_518770326",
+              "url": "#p_518770326"
+            }
+          ],
+          "places": [
+            {
+              "id": "333",
+              "name": "Maine, United States",
+              "latitude": 45.50028,
+              "longitude": -69.25028
+            },
+            {
+              "id": "359",
+              "name": "New Hampshire, United States",
+              "latitude": 43.67,
+              "longitude": -71.5
+            },
+            {
+              "id": "361",
+              "name": "Vermont, United States",
+              "latitude": 44,
+              "longitude": -72.75
+            },
+            {
+              "id": "4577042",
+              "name": "Portsmouth, Rockingham, New Hampshire, United States",
+              "latitude": 43.0762,
+              "longitude": -70.754999
+            }
+          ]
+        },
+        "primaryId": "p_518770326"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q5S6-DKDR",
+        "events": [
+          {
+            "type": "Obituary",
+            "date": "13 Dec 1888",
+            "place": "Boston, Massachusetts"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Henry H Hyde",
+        "score": 3.65198,
+        "confidence": 2,
+        "sex": "Male",
+        "deathDate": "about 13 December 1888",
+        "collectionId": "2860782",
+        "collectionTitle": "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2860782",
+        "recordTitle": "Entry for Frank Wilson and Allen, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+        "recordArk": "ark:/61903/1:2:QT3Z-7JFS",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_105035471485",
+              "ark": "ark:/61903/1:1:Q5S6-DKDR",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Henry H"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "date": "About 13 Dec 1888",
+                  "standard_date": "Abt 13 Dec 1888"
+                },
+                {
+                  "type": "Obituary",
+                  "primary": true,
+                  "date": "13 Dec 1888",
+                  "standard_date": "13 Dec 1888",
+                  "place": "Boston, Massachusetts",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471480",
+              "ark": "ark:/61903/1:1:Q5S6-DKD2",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Doherty"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471486",
+              "ark": "ark:/61903/1:1:Q5S6-DKDT",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471496",
+              "ark": "ark:/61903/1:1:Q5S6-DK6W",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wilson",
+                  "given": "Frank"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "about 1837",
+                  "standard_date": "Abt 1837"
+                },
+                {
+                  "type": "Obituary",
+                  "primary": true,
+                  "date": "13 Dec 1888",
+                  "standard_date": "13 Dec 1888",
+                  "place": "Boston, Massachusetts",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "About 13 Dec 1888",
+                  "standard_date": "Abt 13 Dec 1888"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471473",
+              "ark": "ark:/61903/1:1:Q5S6-DKD6",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Allen"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Obituary",
+                  "primary": true,
+                  "date": "13 Dec 1888",
+                  "standard_date": "13 Dec 1888",
+                  "place": "Boston, Massachusetts",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "About 13 Dec 1888",
+                  "standard_date": "Abt 13 Dec 1888"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471475",
+              "ark": "ark:/61903/1:1:Q5S6-DKDF",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John W"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Obituary",
+                  "primary": true,
+                  "date": "13 Dec 1888",
+                  "standard_date": "13 Dec 1888",
+                  "place": "Boston, Massachusetts",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "About 13 Dec 1888",
+                  "standard_date": "Abt 13 Dec 1888"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471481",
+              "ark": "ark:/61903/1:1:Q5S6-DKDL",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Doherty",
+                  "given": "Bernard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Obituary",
+                  "primary": true,
+                  "date": "13 Dec 1888",
+                  "standard_date": "13 Dec 1888",
+                  "place": "Boston, Massachusetts",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "About 13 Dec 1888",
+                  "standard_date": "Abt 13 Dec 1888"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471483",
+              "ark": "ark:/61903/1:1:Q5S6-DKDP",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hibhard",
+                  "given": "Benjamin O"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Obituary",
+                  "primary": true,
+                  "date": "13 Dec 1888",
+                  "standard_date": "13 Dec 1888",
+                  "place": "Boston, Massachusetts",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "about 1815",
+                  "standard_date": "Abt 1815"
+                },
+                {
+                  "type": "Death",
+                  "date": "About 13 Dec 1888",
+                  "standard_date": "Abt 13 Dec 1888"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471488",
+              "ark": "ark:/61903/1:1:Q5S6-DKDB",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Molloy",
+                  "given": "Edward N"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Obituary",
+                  "primary": true,
+                  "date": "13 Dec 1888",
+                  "standard_date": "13 Dec 1888",
+                  "place": "Boston, Massachusetts",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "About 13 Dec 1888",
+                  "standard_date": "Abt 13 Dec 1888"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471489",
+              "ark": "ark:/61903/1:1:Q5S6-DKD1",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Murphy",
+                  "given": "John P"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Obituary",
+                  "primary": true,
+                  "date": "13 Dec 1888",
+                  "standard_date": "13 Dec 1888",
+                  "place": "Boston, Massachusetts",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "about 1862",
+                  "standard_date": "Abt 1862"
+                },
+                {
+                  "type": "Death",
+                  "date": "About 13 Dec 1888",
+                  "standard_date": "Abt 13 Dec 1888"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471492",
+              "ark": "ark:/61903/1:1:Q5S6-DK6S",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Patten",
+                  "given": "Sarah J"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Obituary",
+                  "primary": true,
+                  "date": "13 Dec 1888",
+                  "standard_date": "13 Dec 1888",
+                  "place": "Boston, Massachusetts",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "About 13 Dec 1888",
+                  "standard_date": "Abt 13 Dec 1888"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471494",
+              "ark": "ark:/61903/1:1:Q5S6-DK6Q",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Talbot",
+                  "given": "O M"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "date": "About 13 Dec 1888",
+                  "standard_date": "Abt 13 Dec 1888"
+                },
+                {
+                  "type": "Obituary",
+                  "primary": true,
+                  "date": "13 Dec 1888",
+                  "standard_date": "13 Dec 1888",
+                  "place": "Boston, Massachusetts",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "about 1818",
+                  "standard_date": "Abt 1818"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471495",
+              "ark": "ark:/61903/1:1:Q5S6-DK67",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Templeman",
+                  "given": "Samuel"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Obituary",
+                  "primary": true,
+                  "date": "13 Dec 1888",
+                  "standard_date": "13 Dec 1888",
+                  "place": "Boston, Massachusetts",
+                  "standard_place": "Boston, Suffolk, Massachusetts, United States"
+                },
+                {
+                  "type": "Death",
+                  "date": "About 13 Dec 1888",
+                  "standard_date": "Abt 13 Dec 1888"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471474",
+              "ark": "ark:/61903/1:1:Q5S6-DKDX",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Allen",
+                  "given": "Richard"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471476",
+              "ark": "ark:/61903/1:1:Q5S6-DKDN",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Anderson",
+                  "given": "Elias"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471477",
+              "ark": "ark:/61903/1:1:Q5S6-DKDJ",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Anderson",
+                  "given": "Nellie"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471478",
+              "ark": "ark:/61903/1:1:Q5S6-DKDV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Bergin",
+                  "given": "Patrick"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471479",
+              "ark": "ark:/61903/1:1:Q5S6-DKDK",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Byrne",
+                  "given": "Patrick"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471482",
+              "ark": "ark:/61903/1:1:Q5S6-DKDG",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Flynn",
+                  "given": "Matthew J"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471484",
+              "ark": "ark:/61903/1:1:Q5S6-DKD5",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Huckens",
+                  "given": "Stephen"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471487",
+              "ark": "ark:/61903/1:1:Q5S6-DKDY",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Jones",
+                  "given": "Thomas"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471490",
+              "ark": "ark:/61903/1:1:Q5S6-DK6M",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Murphy",
+                  "given": "Dominic"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_105035471491",
+              "ark": "ark:/61903/1:1:Q5S6-DK69",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Orne",
+                  "given": "William"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_105035471486",
+              "person2": "p_105035471485"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_105035471480",
+              "person2": "p_105035471475"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_105035471480",
+              "person2": "p_105035471481"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_105035471480",
+              "person2": "p_105035471485"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106515150752",
+              "title": "Entry for Frank Wilson and Allen, \"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\"",
+              "citation": "\"United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q5S6-DK6W : Sun Jul 26 10:32:52 UTC 2026), Entry for Frank Wilson and Allen, 13 Dec 1888.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QT3Z-7JFS"
+            },
+            {
+              "id": "sd_c_2860782",
+              "title": "United States, GenealogyBank Historical Newspaper Obituaries, 1815-2013",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2860782"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSPW-G2R9"
+            },
+            {
+              "id": "sd_auto_M9J1-W32",
+              "title": "United States, Massachusetts, Biographies, from 0198 to 2019"
+            },
+            {
+              "id": "src_p_p_105035471485",
+              "url": "#p_105035471485"
+            }
+          ],
+          "places": [
+            {
+              "id": "4229284",
+              "name": "Boston, Suffolk, Massachusetts, United States",
+              "latitude": 42.3605,
+              "longitude": -71.0591
+            }
+          ]
+        },
+        "primaryId": "p_105035471485"
+      },
+      {
+        "recordId": "ark:/61903/1:1:M8WF-YYM",
+        "events": [
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Occupation",
+            "value": "Farmer"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Sudbury, Rutland, Vermont, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "W. P. I. Hyde",
+        "score": 3.65198,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1814",
+        "birthPlace": "Vermont, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of W. P. I. Hyde, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:M45Q-ZBH",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_272590110",
+              "ark": "ark:/61903/1:1:M8WF-YYM",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "W. P. I.",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Farmer"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1814",
+                  "standard_date": "1814",
+                  "place": "Vermont, United States",
+                  "standard_place": "Vermont, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Sudbury, Rutland, Vermont, United States",
+                  "standard_place": "Sudbury, Rutland, Vermont, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_272590111",
+              "ark": "ark:/61903/1:1:M8WF-YY9",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1812",
+                  "standard_date": "1812",
+                  "place": "Vermont, United States",
+                  "standard_place": "Vermont, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Sudbury, Rutland, Vermont, United States",
+                  "standard_place": "Sudbury, Rutland, Vermont, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_272590112",
+              "ark": "ark:/61903/1:1:M8WF-YYS",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Cora",
+                  "surname": "Gibbs"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1859",
+                  "standard_date": "1859",
+                  "place": "Vermont, United States",
+                  "standard_place": "Vermont, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Sudbury, Rutland, Vermont, United States",
+                  "standard_place": "Sudbury, Rutland, Vermont, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_272590113",
+              "ark": "ark:/61903/1:1:M8WF-YY3",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "John",
+                  "surname": "Dolan"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Sudbury, Rutland, Vermont, United States",
+                  "standard_place": "Sudbury, Rutland, Vermont, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1861",
+                  "standard_date": "1861",
+                  "place": "Vermont, United States",
+                  "standard_place": "Vermont, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_272590110",
+              "person2": "p_272590111"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_189657848",
+              "title": "Household of W. P. I. Hyde, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M8WF-YYM : Wed Sep 09 11:24:04 UTC 2026), Entry for W. P. I. Hyde and Mary Hyde, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M45Q-ZBH"
+            },
+            {
+              "id": "sd_c_1417683",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBF-FJD"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1793 to 1964"
+            },
+            {
+              "id": "src_p_p_272590110",
+              "url": "#p_272590110"
+            }
+          ],
+          "places": [
+            {
+              "id": "361",
+              "name": "Vermont, United States",
+              "latitude": 44,
+              "longitude": -72.75
+            },
+            {
+              "id": "5405383",
+              "name": "Sudbury, Rutland, Vermont, United States",
+              "latitude": 43.7995,
+              "longitude": -73.2048
+            }
+          ]
+        },
+        "primaryId": "p_272590110"
+      },
+      {
+        "recordId": "ark:/61903/1:1:MFZS-Y2P",
+        "events": [
+          {
+            "type": "Occupation",
+            "value": "Farmer"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "Stafford, Tolland, Connecticut, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "E.H. Hyde",
+        "score": 3.65198,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1813",
+        "birthPlace": "Connecticut, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of E.H. Hyde, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MC93-S6K",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_372678923",
+              "ark": "ark:/61903/1:1:MFZS-Y2P",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "E.H."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Occupation",
+                  "value": "Farmer"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stafford, Tolland, Connecticut, United States",
+                  "standard_place": "Stafford, Tolland, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1813",
+                  "standard_date": "1813",
+                  "place": "Connecticut, United States",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_372678924",
+              "ark": "ark:/61903/1:1:MFZS-Y25",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Mary S."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1825",
+                  "standard_date": "1825",
+                  "place": "Massachusetts, United States",
+                  "standard_place": "Massachusetts, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stafford, Tolland, Connecticut, United States",
+                  "standard_place": "Stafford, Tolland, Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_372678925",
+              "ark": "ark:/61903/1:1:MFZS-Y2R",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Arnis",
+                  "given": "Phebe"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stafford, Tolland, Connecticut, United States",
+                  "standard_place": "Stafford, Tolland, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1793",
+                  "standard_date": "1793",
+                  "place": "Massachusetts, United States",
+                  "standard_place": "Massachusetts, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_372678926",
+              "ark": "ark:/61903/1:1:MFZS-Y2T",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burke",
+                  "given": "Ella L."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "Stafford, Tolland, Connecticut, United States",
+                  "standard_place": "Stafford, Tolland, Connecticut, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1858",
+                  "standard_date": "1858",
+                  "place": "Connecticut, United States",
+                  "standard_place": "Connecticut, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_372678923",
+              "person2": "p_372678924"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_372678925",
+              "child": "p_372678924"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_219593209",
+              "title": "Household of E.H. Hyde, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MFZS-Y2P : Wed Sep 09 14:17:30 UTC 2026), Entry for E.H. Hyde and Mary S. Hyde, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MC93-S6K"
+            },
+            {
+              "id": "sd_c_1417683",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YB7-YKT"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "title": "United States, Residences, Census, from 1793 to 1964"
+            },
+            {
+              "id": "src_p_p_372678923",
+              "url": "#p_372678923"
+            }
+          ],
+          "places": [
+            {
+              "id": "346",
+              "name": "Connecticut, United States",
+              "latitude": 41.62,
+              "longitude": -72.75
+            },
+            {
+              "id": "371",
+              "name": "Massachusetts, United States",
+              "latitude": 42.25,
+              "longitude": -71.5
+            },
+            {
+              "id": "3779966",
+              "name": "Stafford, Tolland, Connecticut, United States",
+              "latitude": 41.9833,
+              "longitude": -72.3167
+            }
+          ]
+        },
+        "primaryId": "p_372678923"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFV5-SXW",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6436,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1784223",
+        "collectionTitle": "Vermont, Vital Records, 1760-1954",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "recordTitle": "Entry for Lafayette Hyde, \"Vermont, Vital Records, 1760-1954\"",
+        "recordArk": "ark:/61903/1:2:1G38-HHH",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10585730226",
+              "ark": "ark:/61903/1:1:XFV5-SXW",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10585730225",
+              "ark": "ark:/61903/1:1:XFV5-SX7",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Lafayette"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "01 Oct 1857",
+                  "standard_date": "1 Oct 1857",
+                  "place": "Hyde Park, Vermont, United States",
+                  "standard_place": "Hyde Park, Lamoille, Vermont, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1841",
+                  "standard_date": "1841"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10585730227",
+              "ark": "ark:/61903/1:1:XFV5-SX4",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "M"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10585730226",
+              "child": "p_10585730225"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10585730227",
+              "child": "p_10585730225"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10585730226",
+              "person2": "p_10585730227"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21678334448",
+              "title": "Entry for Lafayette Hyde, \"Vermont, Vital Records, 1760-1954\"",
+              "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFV5-SX7 : Sun Mar 10 05:57:36 UTC 2024), Entry for Lafayette Hyde and Hiram Hyde, 01 Oct 1857.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1G38-HHH"
+            },
+            {
+              "id": "sd_c_1784223",
+              "title": "Vermont, Vital Records, 1760-1954",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939V-S67M-L"
+            },
+            {
+              "id": "sd_auto_M9J1-78M",
+              "title": "United States, Vermont, Births, from 0003 to 2009"
+            },
+            {
+              "id": "src_p_p_10585730226",
+              "url": "#p_10585730226"
+            }
+          ],
+          "places": [
+            {
+              "id": "5405019",
+              "name": "Hyde Park, Lamoille, Vermont, United States",
+              "latitude": 44.61944,
+              "longitude": -72.56139
+            }
+          ]
+        },
+        "primaryId": "p_10585730226"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFV5-S4V",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6436,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1784223",
+        "collectionTitle": "Vermont, Vital Records, 1760-1954",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "recordTitle": "Entry for John O Hyde, \"Vermont, Vital Records, 1760-1954\"",
+        "recordArk": "ark:/61903/1:2:1G38-HWL",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10585730028",
+              "ark": "ark:/61903/1:1:XFV5-S4V",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10585730027",
+              "ark": "ark:/61903/1:1:XFV5-S4J",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "John O"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1845",
+                  "standard_date": "1845"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "17 Nov 1849",
+                  "standard_date": "17 Nov 1849",
+                  "place": "Hyde Park, Vermont, United States",
+                  "standard_place": "Hyde Park, Lamoille, Vermont, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10585730029",
+              "ark": "ark:/61903/1:1:XFV5-S4K",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "M"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_10585730028",
+              "person2": "p_10585730029"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10585730029",
+              "child": "p_10585730027"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10585730028",
+              "child": "p_10585730027"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21678334401",
+              "title": "Entry for John O Hyde, \"Vermont, Vital Records, 1760-1954\"",
+              "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFV5-S4J : Sun Jul 21 20:07:46 UTC 2024), Entry for John O Hyde and Hiram Hyde, 17 Nov 1849.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1G38-HWL"
+            },
+            {
+              "id": "sd_c_1784223",
+              "title": "Vermont, Vital Records, 1760-1954",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939V-S6WB-G"
+            },
+            {
+              "id": "sd_auto_M9J1-78M",
+              "title": "United States, Vermont, Births, from 0003 to 2009"
+            },
+            {
+              "id": "src_p_p_10585730028",
+              "url": "#p_10585730028"
+            }
+          ],
+          "places": [
+            {
+              "id": "5405019",
+              "name": "Hyde Park, Lamoille, Vermont, United States",
+              "latitude": 44.61944,
+              "longitude": -72.56139
+            }
+          ]
+        },
+        "primaryId": "p_10585730028"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPQP-6MSV",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6436,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1987653",
+        "collectionTitle": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1987653",
+        "recordTitle": "Entry for John O Hyde, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "recordArk": "ark:/61903/1:2:QR24-FDNZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104363181078",
+              "ark": "ark:/61903/1:1:QPQP-6MSV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104363181077",
+              "ark": "ark:/61903/1:1:QPQP-6MSJ",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "John O"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1845",
+                  "standard_date": "1845"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "17 November 1849",
+                  "standard_date": "17 Nov 1849",
+                  "place": "Vermont, United States",
+                  "standard_place": "Vermont, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104363181081",
+              "ark": "ark:/61903/1:1:QPQP-6MSL",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "M"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_104363181078",
+              "person2": "p_104363181081"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104363181081",
+              "child": "p_104363181077"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104363181078",
+              "child": "p_104363181077"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106197086290",
+              "title": "Entry for John O Hyde, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+              "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQP-6MSJ : Sat Mar 09 21:55:08 UTC 2024), Entry for John O Hyde and Hiram Hyde, 17 November 1849.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QR24-FDNZ"
+            },
+            {
+              "id": "sd_c_1987653",
+              "title": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1987653"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-8999-GRFK"
+            },
+            {
+              "id": "sd_auto_M9J1-78M",
+              "title": "United States, Vermont, Births, from 0003 to 2009"
+            },
+            {
+              "id": "src_p_p_104363181078",
+              "url": "#p_104363181078"
+            }
+          ],
+          "places": [
+            {
+              "id": "361",
+              "name": "Vermont, United States",
+              "latitude": 44,
+              "longitude": -72.75
+            }
+          ]
+        },
+        "primaryId": "p_104363181078"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPQP-8ZXL",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Hiram Hyde",
+        "score": 3.6436,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1987653",
+        "collectionTitle": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1987653",
+        "recordTitle": "Entry for Delafayette Hyde, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "recordArk": "ark:/61903/1:2:QR2H-FX35",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104363136441",
+              "ark": "ark:/61903/1:1:QPQP-8ZXL",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Hiram"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104363136439",
+              "ark": "ark:/61903/1:1:QPQP-8ZXK",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Delafayette"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "1 October 1857",
+                  "standard_date": "1 Oct 1857",
+                  "place": "Vermont, United States",
+                  "standard_place": "Vermont, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1841",
+                  "standard_date": "1841"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104363136442",
+              "ark": "ark:/61903/1:1:QPQP-8ZXG",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "M"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_104363136441",
+              "person2": "p_104363136442"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104363136442",
+              "child": "p_104363136439"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104363136441",
+              "child": "p_104363136439"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106197897714",
+              "title": "Entry for Delafayette Hyde, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+              "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQP-8ZXK : Sat Mar 09 21:55:08 UTC 2024), Entry for Delafayette Hyde and Hiram Hyde, 1 October 1857.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QR2H-FX35"
+            },
+            {
+              "id": "sd_c_1987653",
+              "title": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1987653"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-8999-GRFK"
+            },
+            {
+              "id": "sd_auto_M9J1-78M",
+              "title": "United States, Vermont, Births, from 0003 to 2009"
+            },
+            {
+              "id": "src_p_p_104363136441",
+              "url": "#p_104363136441"
+            }
+          ],
+          "places": [
+            {
+              "id": "361",
+              "name": "Vermont, United States",
+              "latitude": 44,
+              "longitude": -72.75
+            }
+          ]
+        },
+        "primaryId": "p_104363136441"
+      },
+      {
+        "recordId": "ark:/61903/1:1:X8L3-67V",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Edwin I. Hyde",
+        "score": 3.64198,
+        "confidence": 2,
+        "sex": "Male",
+        "birthPlace": "New York, United States",
+        "collectionId": "1307272",
+        "collectionTitle": "Ohio, Deaths, 1908-1953",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1307272",
+        "recordTitle": "Entry for Margaret Jane Rufle, \"Ohio, Deaths, 1908-1953\"",
+        "recordArk": "ark:/61903/1:2:M3X4-TDN",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10490402868",
+              "ark": "ark:/61903/1:1:X8L3-67V",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Edwin I."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "... Town, New York",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10490402867",
+              "ark": "ark:/61903/1:1:X8L3-67J",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Rufle",
+                  "given": "Margaret Jane"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "20 Jun 1849",
+                  "standard_date": "20 Jun 1849",
+                  "place": "No. Olmsted, Ohio",
+                  "standard_place": "North Olmsted, Cuyahoga, Ohio, United States"
+                },
+                {
+                  "type": "Burial",
+                  "date": "03 Apr 1927",
+                  "standard_date": "3 Apr 1927",
+                  "place": "North Olmsted, Ohio",
+                  "standard_place": "North Olmsted, Cuyahoga, Ohio, United States"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "01 Apr 1927",
+                  "standard_date": "1 Apr 1927",
+                  "place": "Willoughby, Lake, Ohio",
+                  "standard_place": "Willoughby, Lake, Ohio, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10490402869",
+              "ark": "ark:/61903/1:1:X8L3-67K",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Webster",
+                  "given": "Mary Ann"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Candagua, New York",
+                  "standard_place": "New York, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10490402869",
+              "child": "p_10490402867"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10490402868",
+              "person2": "p_10490402869"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10490402868",
+              "child": "p_10490402867"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_84452776",
+              "title": "Entry for Margaret Jane Rufle, \"Ohio, Deaths, 1908-1953\"",
+              "citation": "\"Ohio, Deaths, 1908-1953\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X8L3-67J : Tue Jan 21 19:56:20 UTC 2025), Entry for Margaret Jane Rufle and Edwin I. Hyde, 01 Apr 1927.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M3X4-TDN"
+            },
+            {
+              "id": "sd_c_1307272",
+              "title": "Ohio, Deaths, 1908-1953",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1307272"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GPK4-18B"
+            },
+            {
+              "id": "sd_auto_M9J1-9HK",
+              "title": "United States, Ohio, Deaths, from 8 January 1271 to 2026"
+            },
+            {
+              "id": "src_p_p_10490402868",
+              "url": "#p_10490402868"
+            }
+          ],
+          "places": [
+            {
+              "id": "339",
+              "name": "New York, United States",
+              "latitude": 43,
+              "longitude": -75.5
+            },
+            {
+              "id": "4813231",
+              "name": "North Olmsted, Cuyahoga, Ohio, United States",
+              "latitude": 41.4181,
+              "longitude": -81.9165
+            },
+            {
+              "id": "4813786",
+              "name": "Willoughby, Lake, Ohio, United States",
+              "latitude": 41.64361,
+              "longitude": -81.41639
+            }
+          ]
+        },
+        "primaryId": "p_10490402868"
+      },
+      {
+        "recordId": "ark:/61903/1:1:2V32-FWB",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Rufus H Hyde",
+        "score": 3.64198,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1784223",
+        "collectionTitle": "Vermont, Vital Records, 1760-1954",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "recordTitle": "Entry for Benjamin F Hyde, \"Vermont, Vital Records, 1760-1954\"",
+        "recordArk": "ark:/61903/1:2:99FX-YFG1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_15020383708",
+              "ark": "ark:/61903/1:1:2V32-FWB",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Rufus H"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_15020383707",
+              "ark": "ark:/61903/1:1:2V32-FWY",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Benjamin F",
+                  "surname": "Hyde"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1843",
+                  "standard_date": "1843"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "26 Jun 1911",
+                  "standard_date": "26 Jun 1911",
+                  "place": "West Fairlee, Vermont, United States",
+                  "standard_place": "West Fairlee, Orange, Vermont, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_15020383709",
+              "ark": "ark:/61903/1:1:2V32-FW1",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary",
+                  "surname": "Buckham"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_15020383708",
+              "person2": "p_15020383709"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_15020383709",
+              "child": "p_15020383707"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_15020383708",
+              "child": "p_15020383707"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22975583189",
+              "title": "Entry for Benjamin F Hyde, \"Vermont, Vital Records, 1760-1954\"",
+              "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2V32-FWY : Sat Mar 09 13:14:13 UTC 2024), Entry for Benjamin F Hyde and Rufus H Hyde, 26 Jun 1911.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:99FX-YFG1"
+            },
+            {
+              "id": "sd_c_1784223",
+              "title": "Vermont, Vital Records, 1760-1954",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-LB22-61W"
+            },
+            {
+              "id": "sd_auto_M9J1-78M",
+              "title": "United States, Vermont, Births, from 0003 to 2009"
+            },
+            {
+              "id": "src_p_p_15020383708",
+              "url": "#p_15020383708"
+            }
+          ],
+          "places": [
+            {
+              "id": "5405411",
+              "name": "West Fairlee, Orange, Vermont, United States",
+              "latitude": 43.94306,
+              "longitude": -72.22667
+            }
+          ]
+        },
+        "primaryId": "p_15020383708"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFV5-92Q",
+        "events": [],
+        "treeMatches": [],
+        "personName": "John H Hyde",
+        "score": 3.64198,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1784223",
+        "collectionTitle": "Vermont, Vital Records, 1760-1954",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "recordTitle": "Entry for George Hyde, \"Vermont, Vital Records, 1760-1954\"",
+        "recordArk": "ark:/61903/1:2:1G38-HSW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10585729504",
+              "ark": "ark:/61903/1:1:XFV5-92Q",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "John H"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10585729503",
+              "ark": "ark:/61903/1:1:XFV5-923",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "George"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "primary": true,
+                  "date": "04 Jan 1857",
+                  "standard_date": "4 Jan 1857",
+                  "place": "Vermont, United States",
+                  "standard_place": "Vermont, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10585729505",
+              "ark": "ark:/61903/1:1:XFV5-927",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_10585729504",
+              "person2": "p_10585729505"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10585729505",
+              "child": "p_10585729503"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10585729504",
+              "child": "p_10585729503"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21678334266",
+              "title": "Entry for George Hyde, \"Vermont, Vital Records, 1760-1954\"",
+              "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFV5-923 : Sat Mar 09 22:42:35 UTC 2024), Entry for George Hyde and John H Hyde, 04 Jan 1857.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1G38-HSW"
+            },
+            {
+              "id": "sd_c_1784223",
+              "title": "Vermont, Vital Records, 1760-1954",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939V-S64M-S"
+            },
+            {
+              "id": "sd_auto_M9J1-78M",
+              "title": "United States, Vermont, Births, from 0003 to 2009"
+            },
+            {
+              "id": "src_p_p_10585729504",
+              "url": "#p_10585729504"
+            }
+          ],
+          "places": [
+            {
+              "id": "361",
+              "name": "Vermont, United States",
+              "latitude": 44,
+              "longitude": -72.75
+            }
+          ]
+        },
+        "primaryId": "p_10585729504"
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFV5-92Z",
+        "events": [],
+        "treeMatches": [],
+        "personName": "J H Hyde",
+        "score": 3.64198,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1784223",
+        "collectionTitle": "Vermont, Vital Records, 1760-1954",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "recordTitle": "Entry for George Hyde, \"Vermont, Vital Records, 1760-1954\"",
+        "recordArk": "ark:/61903/1:2:1G38-HSC",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10585729510",
+              "ark": "ark:/61903/1:1:XFV5-92Z",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "J H"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10585729509",
+              "ark": "ark:/61903/1:1:XFV5-92C",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "George"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1858",
+                  "standard_date": "1858"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "09 Jun 1860",
+                  "standard_date": "9 Jun 1860",
+                  "place": "Swanton, Vermont, United States",
+                  "standard_place": "Swanton, Franklin, Vermont, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10585729511",
+              "ark": "ark:/61903/1:1:XFV5-928",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mary"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10585729510",
+              "child": "p_10585729509"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10585729510",
+              "person2": "p_10585729511"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10585729511",
+              "child": "p_10585729509"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21678334269",
+              "title": "Entry for George Hyde, \"Vermont, Vital Records, 1760-1954\"",
+              "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFV5-92C : Thu Mar 07 00:11:09 UTC 2024), Entry for George Hyde and J H Hyde, 09 Jun 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1G38-HSC"
+            },
+            {
+              "id": "sd_c_1784223",
+              "title": "Vermont, Vital Records, 1760-1954",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939V-S6WB-5"
+            },
+            {
+              "id": "sd_auto_M9J1-78M",
+              "title": "United States, Vermont, Births, from 0003 to 2009"
+            },
+            {
+              "id": "src_p_p_10585729510",
+              "url": "#p_10585729510"
+            }
+          ],
+          "places": [
+            {
+              "id": "5405390",
+              "name": "Swanton, Franklin, Vermont, United States",
+              "latitude": 44.918,
+              "longitude": -73.124
+            }
+          ]
+        },
+        "primaryId": "p_10585729510"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPQP-D2SG",
+        "events": [],
+        "treeMatches": [],
+        "personName": "J H Hyde",
+        "score": 3.64198,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1987653",
+        "collectionTitle": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1987653",
+        "recordTitle": "Entry for George Hyde, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "recordArk": "ark:/61903/1:2:QR24-ZB4Z",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104363172082",
+              "ark": "ark:/61903/1:1:QPQP-D2SG",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "J H"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104363172078",
+              "ark": "ark:/61903/1:1:QPQP-D2SV",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "George"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "9 June 1860",
+                  "standard_date": "9 Jun 1860",
+                  "place": "Swanton, Franklin, Vermont, United States",
+                  "standard_place": "Swanton, Franklin, Vermont, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1858",
+                  "standard_date": "1858"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104363172088",
+              "ark": "ark:/61903/1:1:QPQP-D2SB",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Hyde",
+                  "given": "Mary"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_104363172082",
+              "child": "p_104363172078"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_104363172082",
+              "person2": "p_104363172088"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104363172088",
+              "child": "p_104363172078"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106196965420",
+              "title": "Entry for George Hyde, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+              "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQP-D2SV : Fri Mar 08 13:48:53 UTC 2024), Entry for George Hyde and J H Hyde, 9 June 1860.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QR24-ZB4Z"
+            },
+            {
+              "id": "sd_c_1987653",
+              "title": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1987653"
+            },
+            {
+              "id": "sd_da1",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G99D-YSC5"
+            },
+            {
+              "id": "src_p_p_104363172082",
+              "url": "#p_104363172082"
+            }
+          ],
+          "places": [
+            {
+              "id": "5405390",
+              "name": "Swanton, Franklin, Vermont, United States",
+              "latitude": 44.918,
+              "longitude": -73.124
+            }
+          ]
+        },
+        "primaryId": "p_104363172082"
+      }
+    ]
+  }
+}

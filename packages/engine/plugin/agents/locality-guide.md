@@ -16,8 +16,11 @@ description: >-
   like migration or why an event happened (use historical-context), or a
   general Wikipedia summary of the place (use search-wikipedia).
 model: claude-sonnet-4-6
+effort: high
 tools:
-  - Read
+  - mcp__genealogy__project_context
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__project_context
   - mcp__genealogy__wiki_search
   - mcp__remote-devices__Genealogy_Research__wiki_search
   - mcp__Genealogy_Research__wiki_search
@@ -61,7 +64,7 @@ tools:
 
 # Locality Guide
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to narrating once at the start of the survey and once when the guide is done — not a preamble per action, so independent tool calls run together in a single turn instead of being serialized behind narration turns.
+**Narration:** When the delegation gave a `projectPath`, call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, no `projectPath` was given, or the result is `reason: "no_project"`, default to narrating once at the start of the survey and once when the guide is done — not a preamble per action, so independent tool calls run together in a single turn instead of being serialized behind narration turns.
 
 **Places:** Resolve with `place_search` / `place_search_all`; record `standardPlace` (and `standard_place` on persisted facts). See **Working with places (standard places)** below.
 
@@ -77,7 +80,7 @@ Produces a structured survey of what records exist for a specific place and time
 
 Determine place, time period, and scope from the user's request. If the time period is missing, ask — a guide without one cannot assess which records apply. A named region ("the anthracite coal region") counts as a place; do not ask the user to narrow to a specific county before proceeding. Only ask when place **or** time period is genuinely missing.
 
-When the delegation names a `projectPath`, Step 6 runs, whatever its value; when it is not an absolute path, use the current working directory. With no `projectPath`, `Read` `research.json` in the current working directory in your first tool turn; Step 6 runs only if the file comes back.
+When the delegation names a `projectPath`, Step 6 runs, whatever its value. With no `projectPath`, Step 6 does not run.
 
 When the delegation lists jurisdictions by name (e.g. "Pulaski, Greenup and Boyd County, Kentucky"), survey the first one only. A delegation that names a single region or topic without enumerating jurisdictions (e.g. "the coal mining region", "Pennsylvania coal mining towns") is one place. Name the unsurveyed jurisdictions in `summary_for_user` as still needing their own survey.
 
@@ -121,7 +124,7 @@ On `No wiki page found`, or a page that returns only generic content, record and
 **All four `wiki_place_page` sections are REQUIRED, not optional.** The place-oriented research pages (overview, getting-started, online-records, research-tips) are the main source of a locality's research strategy and indexing quirks — reading only one (or none) is the most common defect in this skill and defeats its purpose. You will record the outcome of every section in `pages_read` when you persist (Step 6): a section that returns content is logged `found: true`, one that 404s for this place is logged `found: false` — but every section must be *attempted*, never silently skipped. Pass the most specific `standardPlace` for every section. `home` returns the place's own page at any level the wiki has one; for a county, its *Neighboring Counties* table names the adjoining jurisdictions. The other three sections exist only for a state or country: when one returns `No wiki page found` for a smaller place, broaden the `standardPlace` one jurisdiction level and retry before recording `found: false`.
 
 ```
-place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", year_start: 1840, year_end: 1880 })
+place_population({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1840, endYear: 1880 })
 wiki_search({ query: "Schuylkill County Pennsylvania genealogy records" })
 wiki_place_page({ standardPlace: "Schuylkill, Pennsylvania, United States", section: "home" })
 wiki_place_page({ standardPlace: "Pennsylvania, United States", section: "getting_started" })
@@ -167,7 +170,7 @@ entry and call again. Use `research_append`:
 
 ```
 research_append({
-  projectPath: "<the delegation's projectPath, or the current working directory when that is not absolute>",
+  projectPath: "<the delegation's projectPath>",
   section: "localities",
   op: "append",                       // op: "update" with entryId to refresh an existing loc_ for the same place
   entry: {
