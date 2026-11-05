@@ -1065,6 +1065,64 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
 	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
 
+# ── The malachi stack (apps/server/proto/malachi/) ──
+# Run on the host from a plain clone: no prerequisite here touches node or uv. README.md there
+# has the bring-up order. Make hands command-line variables to malachi.sh as environment.
+MALACHI_ENV ?= $(HOME)/.config/genealogy-beta/env
+MALACHI_PROJECT ?= genealogy-beta
+MALACHI := MALACHI_ENV="$(MALACHI_ENV)" MALACHI_PROJECT="$(MALACHI_PROJECT)" apps/server/proto/malachi/malachi.sh
+
+.PHONY: malachi-up
+malachi-up: ## Build and start the stack, the edge last; EDGE=off leaves port 8006 free
+	$(MALACHI) up
+
+.PHONY: malachi-check
+malachi-check: ## Health, routes, deployed sha, disk: [BASE_URL=] [EDGE=off] [PUBLIC=1] [REACH=1]
+	$(MALACHI) check
+
+.PHONY: malachi-logs
+malachi-logs: ## One service's recent log: SERVICE= [TAIL=200] [FOLLOW=1]
+	$(MALACHI) logs
+
+# A Make recipe, not a script function: the checkout replaces malachi.sh, and a running bash
+# reads its script as it goes. Each $(MAKE) reads the checked-out Makefile.
+.PHONY: malachi-deploy
+malachi-deploy: ## Deploy a commit: REF=<sha>, a clean tree, then up and check
+	@test -n "$(REF)" || { echo "malachi-deploy: REF=<sha> is required" >&2; exit 2; }
+	@test -z "$$(git status --porcelain)" || { echo "malachi-deploy: the tree is not clean" >&2; exit 1; }
+	git fetch origin
+	git checkout --detach "$(REF)"
+	$(MAKE) malachi-up
+	$(MAKE) malachi-check
+
+.PHONY: malachi-backup
+malachi-backup: ## Dump Postgres and mirror MinIO to DATA_DIR/backups/<UTC> [KEEP=14]
+	$(MALACHI) backup
+
+.PHONY: malachi-restore-check
+malachi-restore-check: ## Restore the newest backup into a scratch database and check its objects [BACKUP=<name>]
+	$(MALACHI) restore-check
+
+.PHONY: malachi-restore
+malachi-restore: ## Load a backup into a wiped stack: CONFIRM=yes [BACKUP=<name>], then malachi-up
+	$(MALACHI) restore
+
+.PHONY: malachi-export
+malachi-export: ## A project's files to DATA_DIR/exports/<id>/: EMAIL= or PROJECT=
+	$(MALACHI) export
+
+.PHONY: malachi-down
+malachi-down: ## Stop the stack; the data stays
+	$(MALACHI) down
+
+.PHONY: malachi-wipe
+malachi-wipe: ## Delete Postgres and MinIO data: CONFIRM=yes. Keeps backups and the env file
+	$(MALACHI) wipe
+
+.PHONY: malachi-rehearsal
+malachi-rehearsal: ## Bring the whole stack up, through every target, on this Mac under its own name; cleans up after itself
+	apps/server/proto/malachi/rehearsal.sh
+
 # ── Source screen (issue #3408) ──
 # Every path is outside the repo: the truth set is restricted. Report counts only.
 .PHONY: source-screen-snapshot source-screen-attachments source-screen-tree-sources source-screen-baseline source-screen-plant source-screen-judge source-screen-score
