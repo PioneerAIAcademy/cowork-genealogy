@@ -364,7 +364,7 @@ def plugin_copy_missing(plugin_dir: str, dest: str) -> list[str]:
 # U4: the door is owner-checked. A request naming a project must also carry the fence, and
 # the server answers 403 before any transport unless the bearer's sha256 is the one this
 # attempt stamped on that open turn of that project (worker.STAMP_BEARER_SQL); a request
-# with no project header is not checked.
+# with no project header takes the connector door instead (E1).
 # TOOL_SERVER_URL has no default (U11): a guessed host would be handed the patron's bearer.
 PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 TURN_ID_HEADER = "X-Genealogy-Turn-Id"
@@ -878,7 +878,11 @@ def build_worker_options(
         "that holds the write (`@plugin:init-project` creates a project, `@plugin:tree-edit` "
         "edits the tree). Follow the genealogy skills, and "
         "apply researcher_profile.narration_guidance from research.json as your "
-        "narration style."
+        "narration style. "
+        "With no project and no FamilySearch person ID, a request for the names and details "
+        "recorded in a record set (a roll, register, muster list or volume) goes to the "
+        "search-images agent with no projectPath, even when it names no images; relay "
+        "everything after its final --- verbatim."
     )
     # Unconditional, on the opening turn too: the opening turn is the one #3768 is about.
     project_note = f"{project_note}\n\n{SOURCES_GUIDANCE}\n\n{NO_PROJECT_NOTE}"
