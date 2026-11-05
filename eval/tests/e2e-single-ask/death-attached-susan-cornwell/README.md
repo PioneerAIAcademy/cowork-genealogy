@@ -27,6 +27,8 @@ PASS death-attached-susan-cornwell  expected=none|search-records  first=none  sa
     units: research  extraction_append=0
 ```
 
+The `delivered=` column was retired with `research_delivered` (PR #4148); the line above is the output as measured.
+
 The router ran, then the main thread called `person_read` and `record_read` on the attached index entry
 and answered.
 

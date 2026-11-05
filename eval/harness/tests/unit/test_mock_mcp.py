@@ -2837,25 +2837,25 @@ def test_guard_checks_the_models_args_not_the_injected_projectPath(tmp_path):
     """The ordering trap, on a LIVE compiled tool.
 
     `_make_compiled_tool_handler` adds `projectPath` to its own copy of the
-    args. `research_delivered` does not declare `projectPath` (nor do
-    `project_list` or `convert_calendar`), so a guard run AFTER that injection
-    would refuse every call to those three. Checking the model's own args is
+    args. `convert_calendar` does not declare `projectPath` (nor does
+    `project_list`), so a guard run AFTER that injection would refuse every call
+    to those two. Checking the model's own args is
     what keeps this call legal.
     """
     _seed_project(tmp_path)
     _server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
 
-    _invoke(tools_by_name, "research_delivered", {"summary": "done"})
+    _invoke(tools_by_name, "convert_calendar", {"date": {"year": 1700}, "jurisdiction": "England"})
 
     assert call_log[-1]["matched"]["kind"] != "unknown_args_refused", (
-        "research_delivered was refused — the guard is reading the post-injection "
+        "convert_calendar was refused — the guard is reading the post-injection "
         "copy (input_obj) instead of the model's own args"
     )
     # And the guard itself agrees, driven directly: the bare call is legal, the
     # post-injection shape is not.
-    assert mock_mcp._reject_unknown_args("research_delivered", {"summary": "x"}) is None
+    assert mock_mcp._reject_unknown_args("convert_calendar", {"date": {"year": 1700}}) is None
     assert mock_mcp._reject_unknown_args(
-        "research_delivered", {"summary": "x", "projectPath": "/p"}
+        "convert_calendar", {"date": {"year": 1700}, "projectPath": "/p"}
     ) is not None
 
 
@@ -2866,7 +2866,7 @@ def test_guard_refuses_on_a_live_compiled_tool_too(tmp_path):
     _seed_project(tmp_path)
     _server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
 
-    result = _invoke(tools_by_name, "research_delivered", {"summary": "x", "bogusKey": 1})
+    result = _invoke(tools_by_name, "convert_calendar", {"date": {"year": 1700}, "bogusKey": 1})
 
     assert result["is_error"] is True
     assert "bogusKey" in _extract_response_dict(result)["error"]

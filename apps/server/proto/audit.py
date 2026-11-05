@@ -10,7 +10,8 @@ reported as their own count. Criterion 4: every completed call's duration, and t
 longest against the step ceiling. An allowed row with no duration is a call that was in
 flight when its attempt was killed, or one that never returned -- reported, not failed.
 Beside them: allowed calls by tool (MCP prefixes stripped, the person_* tools always
-listed) and every decision that is neither allow nor deny (``halt``, ``delivered``).
+listed) and every decision that is neither allow nor deny (``halt``; ``delivered`` on rows written before
+step mode phase 2 deleted it).
 Exit 1 when criterion 3 fails; 2 when Postgres is unreachable.
 """
 
