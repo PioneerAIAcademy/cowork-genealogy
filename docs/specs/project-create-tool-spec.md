@@ -286,14 +286,14 @@ standard form to miss and is left out. Both are absent when every place was
 standardized.
 
 **A state the text and the standard place disagree on is reported, never
-silent** (issue #4299). After the fill, each distinct `place` / `standard_place`
+silent.** After the fill, each distinct `place` / `standard_place`
 pair on the tree's facts that `divisionContradiction` finds in conflict — the
 text ends with one US state, Puerto Rico or Canadian province and the standard
 place lies in another ("Washington County, Texas" with "Texas, Washington,
 Kentucky, United States", a FamilySearch `place.normalized` value) — is named in
 one `validation.warnings` line, `Place '…' names one state or province but its
 standard place '…' lies in another`. The value is kept as read, as the converter
-keeps every FamilySearch-supplied value (#3976); only the warning is new.
+keeps every FamilySearch-supplied value; only the warning is new.
 
 **The result, with `personId`,** is a summary, never the tree, held under
 `SUMMARY_MAX_CHARS` (2,000 serialized characters): `subject` (`id`,
