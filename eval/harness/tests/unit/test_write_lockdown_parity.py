@@ -131,6 +131,20 @@ VECTORS: list[tuple[str, dict | None, str | None]] = [
     ("Write", {"file_path": r"C:\Users\gen\proj\research.json"}, "research.json"),
     ("Edit", {"file_path": r"C:\Users\gen\proj\tree.gedcomx.json"}, "tree.gedcomx.json"),
     ("Write", {"file_path": "research.json"}, "research.json"),  # bare, no dir
+    # --- case variants: Windows and macOS file systems ignore case ---
+    ("Write", {"file_path": "/project/Research.JSON"}, "research.json"),
+    ("Edit", {"file_path": r"C:\Users\gen\proj\TREE.GEDCOMX.JSON"}, "tree.gedcomx.json"),
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": [{"path": "Starting-Tree.Gedcomx.Json", "content": "{}"}]},
+        "starting-tree.gedcomx.json",
+    ),
+    # --- names Windows resolves to the same file: trailing dot or space, a stream ---
+    ("Write", {"file_path": r"C:\proj\research.json."}, "research.json"),
+    ("Write", {"file_path": "/project/research.json "}, "research.json"),
+    ("Write", {"file_path": r"C:\proj\research.json::$DATA"}, "research.json"),
+    # --- Unicode case folding, as APFS folds: U+017F long s ---
+    ("Write", {"file_path": "/project/re\u017fearch.json"}, "research.json"),
     # --- the device bridge: the route the ordinary onboarding path took ---
     # Measured live 2026-08-15: with a connected folder `init-project` created
     # both protected files through `device_commit_files`, across a run in which
@@ -234,6 +248,14 @@ VECTORS: list[tuple[str, dict | None, str | None]] = [
     # --- no opinion: basename match, not substring ---
     ("Write", {"file_path": "/project/results/log_001.json"}, None),
     ("Write", {"file_path": "/project/research.json.bak"}, None),
+    ("Write", {"file_path": "/project/Research.JSON.bak"}, None),
+    ("Write", {"file_path": "/project/research.jsonx"}, None),
+    # One-line file content on the device bridge is not a stream suffix.
+    (
+        "mcp__remote-devices__device_commit_files",
+        {"files": [{"path": "notes.md", "content": "research.json: project state"}]},
+        None,
+    ),
     ("Write", {"file_path": "/project/my-research.json"}, None),
     ("Write", {"file_path": "/project/notes/tree.gedcomx.json.tmp"}, None),
     # --- degenerate input: must return None, never raise ---
