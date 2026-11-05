@@ -434,7 +434,7 @@ The [self-hosted beta](self-hosted-mcp-beta.md) runs this plan's web and tools t
   - the FamilySearch budget, the transcription cap and the shared collections cache, each keeping today's behavior when unset;
   - for connector callers only: a sign-in link in the session message, `image_read` refused, a per-user image cap, and the MCP App's tools.
 
-**Held** (issue #4003, in the icebox): the worker hands its CLI a per-attempt token instead of the patron's FamilySearch token, so the tools tier, not the worker, holds `FS_TOKEN_ENC_KEY`; and server-side refresh goes, so a patron signs in again when FamilySearch ends the session, as a beta user does.
+**Held** (issue #4003, in the icebox): how the worker gets a patron's FamilySearch token, whether its CLI holds that token or a per-attempt one, and whether server-side refresh stays. The design is not settled.
 
 **Later options for this plan.** None is decided. Each would simplify code already built here:
 - polling instead of the SSE stream;

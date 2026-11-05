@@ -21,7 +21,7 @@
 | Shape | Two of the handoff's tiers: the Python web tier, chat off, and the MCP tool server. No worker, queue or model gateway. |
 | Host | `malachi`, in one standalone compose file, until FamilySearch hosts the open beta. |
 | Database and storage | Postgres and MinIO in that compose stack, with their data under `/home/data`. |
-| Data at rest | `/home/data` is not encrypted at the disk level. The lead accepts that for a limited beta. FamilySearch tokens and OpenRouter keys are encrypted by our code. The privacy policy promises no encryption at rest. Revisit this if the beta grows. |
+| Data at rest | This is a beta, not production: nothing promises durability or encryption at rest, and `/home/data` is one unencrypted disk. FamilySearch tokens and OpenRouter keys are still encrypted by our code. Users are told not to store information about living people. |
 | Schema | The handoff's numbered files in `apps/server/proto/sql/`, plus new numbered files for the beta's tables. One schema for both. |
 | Sign-in | Claude's sign-in server lives in the web tier, on the Python MCP SDK's handlers, and shares one FamilySearch callback with browser sign-in. |
 | Re-sign-in | Users sign in again when their FamilySearch session ends. Nothing refreshes a FamilySearch token on the server. |
@@ -29,7 +29,7 @@
 | Front door | One door on the tool server. Every caller presents our own token, and the door loads that user's stored FamilySearch token and OpenRouter key. |
 | Projects | `projectPath` carries an id the server mints. The user who first writes to it owns it. |
 | UI | MCP App cards and a case file, in one connector named exactly "Genealogy Research". |
-| Surface | Cowork tasks, claude.ai chat and Desktop Chat are all first-class, because project data lives on the server. What research a chat user gets is undecided: the plugin's skills, agents and hook have been measured only in Cowork. |
+| Surface | Cowork tasks, claude.ai chat and Desktop Chat are all first-class, because project data lives on the server. The plugin is installed once and must load on all three. Claude's plugin docs say chat loads a plugin's skills, commands and connectors but not its agents or hooks, so what research a chat user gets is undecided. |
 | Sign-up | An allowlist the lead keeps. Each user needs a FamilySearch account whose email no other user has. Removing an email does not end a connector token; one SQL update does, if it is ever needed. |
 | Web pages | Plain pages from the web tier. No SPA in the beta. |
 | Uploads | Plain files, on a plain upload page: the original, plus a PDF's own text when the browser finds a text layer. Claude reads or transcribes them with existing tools. |
@@ -41,9 +41,10 @@
 | Limits | Per user, 4 calls at a time and a pause when FamilySearch answers 429. One shared FamilySearch budget and a transcription cap. A blocked user is refused at the door. |
 | Plugin | A hand-installed zip for the demo and the first users. A GitHub marketplace if the beta grows. |
 | Policies | A short privacy policy and terms from GeneFun, Inc., in place before the first invited user. |
-| Other deployments | The desktop extension, the Fly-hosted alpha, the handoff's chat and Electron keep running through the demo, with fixes only and no new features. The lead decides again after it. |
+| Other deployments | The desktop extension, the Fly-hosted alpha, the handoff's chat screens and Electron keep running through the demo, with fixes only and no new features. The lead decides again after it. |
 | Older extensions | Not supported. The research router needs `project_list`; without it, the router says the genealogy tools are not connected and stops. |
 | Client | The server stays client-neutral, so a second client can use it. |
+| One server | The public connector server and the worker's tool server stay as close to identical as possible: one `createServer`, with any difference at the door or named in this plan. |
 
 ## What does not change
 
@@ -122,7 +123,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 | 9. PDF text | Not measured: three real browser-saved Ancestry captures through pdf.js. |
 | 10. Reconnect | Not measured: with a live connector token and an expired FamilySearch session, whether the tools stay, whether the link reaches the user from the main thread and from an agent, and whether "continue" works in the same task. |
 | 11. Long token | Not measured: whether a long `expires_in` with no refresh token still works, in a new task and in the open one, and, when that token dies, what reconnecting takes. |
-| 12. Chat surfaces | Not measured: whether the card and the sign-in link behave in claude.ai chat and Desktop Chat as they do in a Cowork task, and whether the plugin's skills, agents and hook load there at all. |
+| 12. Chat surfaces | Claude's plugin docs say chat loads skills, commands and connectors, and not agents or hooks. Not measured: that, on this plugin, and whether the card and the sign-in link behave in claude.ai chat and Desktop Chat as they do in a Cowork task. |
 | 13. Door refusals | Not measured: what the researcher, the model and the card see when the door answers 400, 403 or 503, and whether the connector then works with no new sign-in. A bad result could move these to `isError`, on the connector path only. 401 stays HTTP. |
 
 **When each runs:**
@@ -225,7 +226,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 **S1 Schema.** Shipped: numbered files from 016.
 
 **S2 Deleting and blocking one user (issue #4000).**
-- **Deleting.** `make beta-delete-user ACCOUNT=<id> CODE=<deletion code>` refuses a wrong code. Otherwise it deletes the user's rows and objects, and says how long backups keep them.
+- **Deleting.** `make beta-delete-user ACCOUNT=<id> CODE=<deletion code>` refuses a wrong code. Otherwise it deletes the user's rows and objects.
 - **Blocking.** `make beta-block-user ACCOUNT=<id>` sets `blocked_at` and `sessions_revoked_at`.
 - Both run on `malachi`, inside the compose network.
 - **Done when:** a test deletes a seeded user and finds none of their rows, connector tokens or objects, and a blocked user's cookie is refused and their token gets 401.
@@ -236,11 +237,11 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 
 **G3 Connector name (issue #3529 item 1).** The connector is named exactly "Genealogy Research", so `mcp__Genealogy_Research__…` is the bare spelling every agent already lists. No agent or test changes. Under any other name, agents spawn with only `Read`. The org admin page has no rename, and one org cannot add the same URL twice, so a wrong name means deleting and re-adding the connector. A user who also runs the `.mcpb` gets two servers on that prefix, so D4 tells them to turn it off.
 
-**G4 Hook-only rules.** The hook fires on connector calls (issue #3529 item 3), so these rules hold there as they do on the desktop. Today the research skill says that without an `Agent` tool, research runs only in a Cowork task, and stops. The Surface decision settles whether that line stays.
+**G4 Hook-only rules.** The hook fires on connector calls in a Cowork task (issue #3529 item 3), so these rules hold there as they do on the desktop. Claude's docs say chat runs no hooks and no agents. Today the research skill says that without an `Agent` tool, research runs only in a Cowork task, and stops. The Surface decision settles that line.
 
 **G5 Capture wording (issue #3990).** `search-external-sites`' `capture` accepts three forms: an upload's `.txt`, read with `sidecar_read`; the upload itself, to be transcribed; or the text itself. The upload wording shows only when `project_context` returns an `uploadUrl`.
 
-**G6 The router PR (issue #4297).** Merges with the MCP App work before launch, in one paid `research` run: the card lines, removing `projectUrl`, showing `signInUrl`, logging an upload the main thread reads, an answer to "where is my report?", and the agent lines that lean on the viewer. Until then the card lines exist only in a variant plugin, which the demo may run at a pinned commit. Invited users get the zip `make plugin-connector` builds.
+**G6 The router PR (issue #4297).** Merges with the MCP App work before launch, in one paid `research` run: the card lines, removing `projectUrl`, showing `signInUrl`, logging an upload the main thread reads, an answer to "where is my report?", the agent lines that lean on the viewer, what `project_list`'s cut-short and error answers mean, and the no-`Agent` line the Surface decision sets. Until then the card lines exist only in a variant plugin, which the demo may run at a pinned commit. Invited users get the zip `make plugin-connector` builds.
 
 **Issue #3836**, agents reading project files directly, is closed: the tools, the agents' reads and the hook's deny have shipped. E5 takes the last two reads.
 
@@ -256,7 +257,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 - **Make targets:** `malachi-up`, `-check`, `-logs`, `-deploy REF=<sha>`, `-backup`, `-restore-check`, `-restore`, `-export`, `-openrouter EMAIL=`, `-prune`, `-down`, `-wipe` and `-rehearsal`.
 - **Never** run `tailscale serve reset`, `tailscale funnel --https=443 off` or `make proto-up` with defaults on `malachi`, and do not reboot it for a test: `/wiki` and `/pop-stats` are production ingress for every installed `.mcpb`.
 
-**D2 Monitoring and backups.** Before invited users: a nightly `make malachi-backup` and `make malachi-restore-check`, keeping 14, so a deleted user leaves the backups in 14 days; a per-user storage total; a scheduled check that emails the lead; and logs that survive a redeploy. `make malachi-check` is the manual check, and the per-call log line ties a call to a user. A copy of the backups off that disk, and a per-user project cap, are the lead's decisions.
+**D2 Monitoring.** Before invited users: a scheduled check that emails the lead, and logs that survive a redeploy. `make malachi-check` is the manual check, and the per-call log line ties a call to a user. `make malachi-backup` runs by hand, and nothing schedules it.
 
 **Done when:** stopping `tools` emails the lead, and yesterday's `ev=tool_call` lines survive a redeploy.
 
@@ -265,10 +266,13 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 **D4 Onboarding page.**
 1. Add the custom connector through the prefilled link (`https://claude.ai/customize/connectors?modal=add-custom-connector&connectorName=Genealogy%20Research&connectorUrl=…`), keeping its name. Any other name leaves every agent without its tools.
 2. Sign in.
-3. Install the plugin.
+3. Install the plugin once, under Customize → Plugins. It follows the Claude account.
 
 The page also says:
 - **Where research runs,** from the Surface decision.
+- **A paid Claude plan:** plugins need one.
+- **Living people:** do not store information about living people.
+- **This is a beta:** nothing promises your work survives, so download what you want to keep.
 - **No desktop extension** on that Claude account: turn it off under Settings → Extensions on each computer, or use a second Claude account.
 - **Signing in again:** what to expect when FamilySearch ends a session, and when the connector token itself expires (reconnect under Settings → Connectors), written from the sittings.
 - **Feedback:** where to email it, with the conversation pasted in.
@@ -278,19 +282,20 @@ The page also says:
 
 The privacy policy covers:
 - what is collected, and why;
-- where it is stored: on the lead's server, without promising encryption at rest;
+- where it is stored: on the lead's server, with no promise of durability or encryption at rest;
 - who receives it: Anthropic, OpenRouter and Google for transcription, FamilySearch, Wikipedia, and our wiki and population host;
 - that the lead may read a user's project when they write in, and may turn a case into a public test with living people removed;
 - that everything is deleted when the beta ends, and how to ask for deletion sooner.
 
 The terms say:
-- this is a beta, with no warranty;
+- this is a beta, with no warranty and no promise that work survives;
+- users do not store information about living people;
 - what acceptable use is;
 - FamilySearch's terms apply to FamilySearch content.
 
 A public text or unit test drawn from a report names no account id or anyone who may be living, and quotes the user only as far as the fix needs.
 
-**Done when:** neither page in `apps/server/proto/web/policies.py` says Placeholder, and neither promises encryption at rest.
+**Done when:** neither page in `apps/server/proto/web/policies.py` says Placeholder, and neither promises durability or encryption at rest.
 
 ## Phase 4: launch gates
 
@@ -305,9 +310,8 @@ The first invited user waits for all of these.
    5. let the session end, sign in again from the link, and continue;
    6. install a newer zip over the old one.
 3. **Approvals.** After "Always allow" once per tool, an agent's call to that tool does not prompt, in the same task or a new one. If it prompts, launch waits for a fix.
-4. **The restore drill.** Delete a project, then run `make malachi-wipe CONFIRM=yes`, `make malachi-restore CONFIRM=yes BACKUP=<name>`, `make malachi-up` and `make malachi-check`, and the project is back. After launch the drill is `make malachi-restore-check`.
-5. **FamilySearch's approval** is in, and the cross-account sign-in test (P0.2 item 6) has passed. Then the lead seeds keys, and the acceptance account transcribes a FamilySearch page image and an uploaded page image within E5's time budget.
-6. **What users rely on is done:** E3, E4's per-user limits, S2, D2 and L1.
+4. **FamilySearch's approval** is in, and the cross-account sign-in test (P0.2 item 6) has passed. Then the lead seeds keys, and the acceptance account transcribes a FamilySearch page image and an uploaded page image within E5's time budget.
+5. **What users rely on is done:** E3, E4's per-user limits, S2, G5, D2 and L1.
 
 ## Ending the beta
 
@@ -336,7 +340,7 @@ The lead's two agents hold the first group. The team builds the rest; an issue l
 | E2 The connector's `project_list` | issue #3991 | remote-server agent | 13 Nov |
 | W2 Claude's authorization server | issue #3997 | remote-server agent | 19 Nov |
 | E3 Sign-in link and wording | issue #3995 | remote-server agent | 23 Nov |
-| D2 Monitoring and backups, and the plugin build | none | remote-server agent | Before invited users |
+| D2 Monitoring | none | remote-server agent | Before invited users |
 | MCP App cards, case file and fold | [the MCP App plan](mcp-app-viewer.md) | MCP App agent | The demo |
 | G6 The router PR | issue #4297 | MCP App agent | Before launch |
 | W2 Users, sessions, state, redirect, budget | issue #3992 | clack391 | 19 Nov |
@@ -350,7 +354,7 @@ P0.2 is issue #3529. Issue #3994, the browser app, is in the icebox until cards 
 
 ## After launch
 
-Issue #4003, in the icebox, holds the worker's half of the one door and the removal of server-side refresh. It waits on whether the handoff's worker is still wanted.
+Issue #4003, in the icebox, holds the worker's half of the one door and server-side refresh. Its design is not settled.
 
 ## Timeline (proposed)
 
@@ -364,7 +368,7 @@ Issue #4003, in the icebox, holds the worker's half of the one door and the remo
 | By 1 Dec | Policy text and plain pages |
 | Before the demo | The MCP App's step cards (M2), then one pinned commit, schemas frozen, approvals warmed, and timed rehearsals |
 | When it is ready | The demo, which has no date |
-| After the demo | The lead decides what happens to the alpha, Electron and the handoff's chat |
+| After the demo | The lead decides what happens to the alpha, Electron and the handoff's chat screens |
 | Before launch | The MCP App work and G6 merged |
 | When Phase 4 passes | Launch: the first invited users |
 
@@ -379,8 +383,8 @@ Issue #4003, in the icebox, holds the worker's half of the one door and the remo
 - **Approvals.** A run makes over 100 tool calls, mostly in agents. If "Always allow" does not reach agents, a run prompts on nearly every call.
 - **The per-call limit.** Unmeasured in Claude or Funnel. `project_create` needs about 55 s, and `image_transcribe` longer.
 - **The wrong server.** A `.mcpb` left on shares the connector's prefix, so research can land on disk and look right. The first reply must say `hosted`.
-- **One host.** A single server, with `/wiki` and `/pop-stats` on the same machine and the same Funnel. Backups are the only protection for users' research, they sit on the same disk, and a restore rewinds every user to the backup.
-- **Research in chat.** No plugin has been measured there. If its agents and hook do not load, a chat user holds the raw tools with none of the hook's rules.
+- **One host.** A single server, with `/wiki` and `/pop-stats` on the same machine and the same Funnel. A lost disk loses users' research, and D4 and the terms say so.
+- **Research in chat.** Claude's docs say hooks and agents do not run there, so a chat user holds the raw tools with none of the hook's rules. A rule that must hold in chat has to be a tool rule.
 - **A test on the lead's account.** It runs a variant plugin, so cards working there say nothing about the zip users install. Only acceptance step 2 does.
 - **One account's load.** Until E4's per-user cap lands, one account can exhaust the tool server with concurrent calls, so it lands before invited users.
 - **Code moving under a rehearsal.** One pinned commit for web, tools and the zip.
