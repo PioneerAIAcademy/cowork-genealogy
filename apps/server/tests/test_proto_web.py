@@ -2803,6 +2803,46 @@ async def test_an_upload_stores_the_original_and_its_text_layer(uploads_on):
     assert blobs.types[db.rows[("proj_a", "uploads/deed.pdf")]] == "application/pdf"
 
 
+async def test_a_project_upload_cleans_an_ancestry_filename_and_its_text_key(uploads_on):
+    store, db, blobs = uploads_on
+    async with make_client(store, FakeQueue(), blobs=blobs) as c:
+        r = await _upload(c, "Ancestry Download - Massachusetts, U.S., Wills and Probate Records.pdf",
+                          TWO_PAGE_PDF, text="probate records")
+    assert r.status_code == 200, r.text
+    path = "uploads/Ancestry Download - Massachusetts_ U.S._ Wills and Probate Records.pdf"
+    assert r.json()["path"] == path
+    assert r.json()["textPath"] == path + ".txt"
+    assert db.body(blobs, "proj_a", path) == TWO_PAGE_PDF
+    assert db.body(blobs, "proj_a", path + ".txt") == b"probate records"
+
+
+async def test_a_session_upload_cleans_an_ancestry_filename(uploads_on):
+    store, db, blobs = uploads_on
+    row = store.seed_session(project_id="proj_a")
+    async with make_client(store, FakeQueue(), blobs=blobs) as c:
+        r = await c.post(f"/api/sessions/{row.session_id}/files", files={"file": (
+            "Ancestry Download - Massachusetts, U.S., Wills and Probate Records.pdf",
+            ONE_PAGE_PDF, "application/pdf")})
+    assert r.status_code == 200, r.text
+    path = "uploads/Ancestry Download - Massachusetts_ U.S._ Wills and Probate Records.pdf"
+    assert r.json()["path"] == path
+    assert db.body(blobs, "proj_a", path) == ONE_PAGE_PDF
+
+
+@pytest.mark.parametrize("route", ["project", "session"])
+async def test_an_upload_rejects_a_name_with_no_letters_or_digits(uploads_on, route):
+    store, db, blobs = uploads_on
+    row = store.seed_session(project_id="proj_a")
+    async with make_client(store, FakeQueue(), blobs=blobs) as c:
+        if route == "project":
+            r = await _upload(c, ",,,", JPEG)
+        else:
+            r = await c.post(f"/api/sessions/{row.session_id}/files", files={"file": (",,,", JPEG)})
+    assert r.status_code == 400, r.text
+    assert r.json()["detail"] == "filename is empty, starts with a dot, contains '..', or has no letters or digits"
+    assert db.rows == {}
+
+
 async def test_reuploading_a_name_with_no_text_drops_the_old_text_layer(uploads_on):
     store, db, blobs = uploads_on
     async with make_client(store, FakeQueue(), blobs=blobs) as c:
