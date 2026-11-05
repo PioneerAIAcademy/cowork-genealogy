@@ -794,3 +794,44 @@ def test_repo_link_quiet_when_no_planitemid_is_sent():
 def test_repo_link_skips_a_run_with_no_linked_call():
     with pytest.raises(pytest.skip.Exception):
         check_repo_link(_link_before(), [], LINK_TEST)
+
+
+def test_repo_link_quiet_on_an_aliased_repository_spelling():
+    """review, 2026-11-05: `archives_gov`'s recommended repository spelling is
+    "NARA", not a substring of the site's own enum value - a correct link
+    must not fail for this mismatch."""
+    calls = [_build(site="archives_gov", baseUrl="https://catalog.archives.gov/search", planItemId="pli_006")]
+    expect_passes(
+        lambda: check_repo_link(_link_before("NARA", "pli_006"), calls, LINK_TEST)
+    )
+
+
+def test_repo_link_quiet_on_an_other_repository():
+    """`repository_recommended` is an open enum whose own documented example
+    includes "other" - a plan item with nothing concrete to match against
+    must not be flagged."""
+    calls = [_build(site="archive_org", baseUrl="https://archive.org/search", planItemId="pli_006")]
+    expect_passes(
+        lambda: check_repo_link(_link_before("other", "pli_006"), calls, LINK_TEST)
+    )
+
+
+def test_repo_link_still_fires_on_a_familysearch_item_via_ancestry():
+    """The alias/open-enum carve-outs must not swallow the original
+    regression: a FamilySearch-only plan item is still wrong for any
+    external site."""
+    calls = [_build(site="ancestry", baseUrl=ANCESTRY_URL, planItemId="pli_006")]
+    expect_fires(
+        lambda: check_repo_link(_link_before("FamilySearch", "pli_006"), calls, LINK_TEST),
+        "different repositories",
+    )
+
+
+def test_repo_link_still_fires_on_a_nonexistent_plan_item_with_aliases_present():
+    """The alias/open-enum carve-outs must not swallow the nonexistent-id
+    check either."""
+    calls = [_build(site="archives_gov", baseUrl="https://catalog.archives.gov/search", planItemId="pli_000")]
+    expect_fires(
+        lambda: check_repo_link(_link_before("NARA", "pli_006"), calls, LINK_TEST),
+        "names no plan item",
+    )

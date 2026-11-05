@@ -600,6 +600,17 @@ def test_fs_holdings_note_reaches_the_researcher(text_response, test, agent_retu
     )
 
 
+# A site's bare enum value doesn't always appear as a substring of its
+# repository's recommended spelling (`repository_recommended` is an open
+# enum; `external_site` is closed) — these are the known mismatches a
+# correct link would otherwise fail on (review, 2026-11-05).
+_REPOSITORY_ALIASES = {
+    "archivesgov": ("nara",),
+    "archiveorg": ("internetarchive",),
+    "libraryarchivescanada": ("libraryandarchivescanada",),
+}
+
+
 def test_plan_item_links_match_the_searched_repository(before_state, tool_calls, test):
     """A `build_external_search_url` call's `planItemId` must name a plan
     item that exists, on the same repository as the site actually searched
@@ -614,6 +625,13 @@ def test_plan_item_links_match_the_searched_repository(before_state, tool_calls,
     item on the matching repository is correctly left alone — the point is
     repository agreement, not whether the delegation's text happens to name a
     `pli_` id. Not tag-gated: every call to the tool is in scope.
+
+    `repository` is an open, free-text enum (`repository_recommended`), so a
+    plan item whose repository is the recommended `"other"` (or blank) names
+    nothing to compare against and is skipped — "other" is not a site this
+    tool could ever match. `_REPOSITORY_ALIASES` covers the sites whose
+    `external_site` enum value isn't a substring of the recommended
+    repository spelling that names them (review, 2026-11-05).
     """
     calls = [
         c for c in (tool_calls or [])
@@ -631,9 +649,11 @@ def test_plan_item_links_match_the_searched_repository(before_state, tool_calls,
         if item is None:
             errors.append(f"planItemId {item_id!r} names no plan item in this project")
             continue
-        site = str(args.get("site") or "").strip().lower()
-        repository = str(item.get("repository") or "").strip().lower().replace(" ", "")
-        if site and site not in repository:
+        site = re.sub(r"[^a-z0-9]", "", str(args.get("site") or "").lower())
+        repository = re.sub(r"[^a-z0-9]", "", str(item.get("repository") or "").lower())
+        if repository in ("", "other"):
+            continue
+        if site and site not in repository and repository not in _REPOSITORY_ALIASES.get(site, ()):
             errors.append(
                 f"{item_id} (repository: {item.get('repository')!r}) was linked to a "
                 f"{args.get('site')!r} search — different repositories, not this search"
