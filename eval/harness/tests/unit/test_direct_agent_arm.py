@@ -347,6 +347,27 @@ def test_verbatim_validator_accepts_a_relay_that_adds_harmless_framing():
     _universal().test_direct_delegation_relayed_verbatim(DIRECT_TEST, calls)
 
 
+PATH_TEST = {
+    "skill": "research-exhaustiveness",
+    "delegation": f"{DELEGATION}\n\nprojectPath: C:/Users/X~1/AppData/Local/Temp/eval-ws",
+}
+
+
+def test_verbatim_validator_reads_mixed_path_separators_as_the_same_path():
+    """A Windows relay that writes part of the workspace path with backslashes is
+    the same path (ut_search_records_hbk, 2026-11-05)."""
+    prompt = f"{DELEGATION}\n\nprojectPath: C:/Users/X~1/AppData\\Local\\Temp\\eval-ws"
+    calls = [_agent_call(subagent_type="research-exhaustiveness", prompt=prompt)]
+    _universal().test_direct_delegation_relayed_verbatim(PATH_TEST, calls)
+
+
+def test_verbatim_validator_still_refuses_a_different_path():
+    prompt = f"{DELEGATION}\n\nprojectPath: C:/Users/X~1/AppData/Local/Temp/other-ws"
+    calls = [_agent_call(subagent_type="research-exhaustiveness", prompt=prompt)]
+    with pytest.raises(AssertionError):
+        _universal().test_direct_delegation_relayed_verbatim(PATH_TEST, calls)
+
+
 @pytest.mark.parametrize(
     "prompt_or_none",
     [None, "Check whether q_001 is exhaustive.", DELEGATION[:20]],

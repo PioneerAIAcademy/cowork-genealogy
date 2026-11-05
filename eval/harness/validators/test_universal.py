@@ -1645,6 +1645,11 @@ def test_direct_test_spawned_its_agent(test, builtin_tool_calls):
     )
 
 
+def _same_seps(text: str) -> str:
+    """`text` with every backslash read as a forward slash."""
+    return text.replace("\\", "/")
+
+
 def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
     """The recorded spawn prompt must contain the test's delegation verbatim.
 
@@ -1658,12 +1663,16 @@ def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
     `in`, not `==`: a harmless preamble is tolerated, a reword is not. What the
     substring check permits is reported separately by
     `report_direct_delegation_extra_text`.
+
+    Path separators are compared as one: on Windows the main thread sometimes
+    relays the workspace `projectPath` with backslashes partway through, which
+    is the same path, not a reword.
     """
     delegation = test.get("delegation")
     if not delegation:
         pytest.skip("not a direct-agent test")
     _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
-    if any(delegation in p for p in prompts):
+    if any(_same_seps(delegation) in _same_seps(p) for p in prompts):
         return
     from harness.skill_runner import BUILTIN_ARG_TRUNCATE, _UNTRUNCATED_ARGS
 
