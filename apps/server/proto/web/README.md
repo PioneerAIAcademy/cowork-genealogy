@@ -21,6 +21,8 @@ bundle both set it.
 | `GET /api/projects/{id}/state` | Owner-checked `{label, research, gedcomx, sidecars: [], version}`; `ETag: "rN-tN"` from document versions, or an empty 304 when `If-None-Match` matches. |
 | `GET /api/projects/{id}/sidecar/{log_id}` | Owner-checked search-result body, `{raw, mtime}`; 404 when absent. |
 | `GET /api/projects/{id}/image?filename=` | Owner-checked persisted source page scan, `image/jpeg`; 404 when absent. |
+| `POST /api/projects/{id}/files` | Owner-checked upload (#3987), 404 unless `UPLOADS_ENABLED=true`. Multipart `file` plus an optional plain `text` field, together at most 25 MB; the text is stored as `uploads/<name>.txt`, and a re-upload with no `text` drops the old one. 200 `{path, sizeBytes, textPath, contentType}`, the type sniffed from the bytes. 413 oversize; 415 TIFF or HEIC; 422 a multi-page PDF with no text; 429 `Retry-After: 5` with three in flight. |
+| `GET /api/projects/{id}/download` | Owner-checked zip of the project (#3987): every document and blob `feedback.project_files` walks, unredacted, built in a temp file under `/var/tmp` and streamed with `Content-Length`; an unreadable blob is named in `MISSING.txt`. 404 with no blob store; 429 `Retry-After: 5` while another download streams. |
 | `GET /auth/config`, `GET /auth/me`, `POST /auth/dev-login`, `POST /auth/logout`, `GET /auth/familysearch/login`, `GET /callback` | Patron sign-in (U2, below). Every `/api/sessions` and `/api/projects` route needs the session cookie. Session routes answer 404 for a session on a project the caller does not own. |
 | `GET /api/sessions/{id}/sidecar/{log_id}`, `GET …/image`, `GET …/logs`, `POST …/files` | Sidecars return `{raw, mtime}` and images return the persisted scan (404 when absent); logs answer 501; file uploads are stored and return `{path, sizeBytes}`. |
 | `GET /`, each top-level file of the dist, `GET /assets/…` | The SPA, when `WEB_DIST_DIR` is set (below). `/docs`, `/redoc` and `/openapi.json` are off. |
@@ -209,7 +211,9 @@ turn is recorded (a `turns` row, a `user_msg` event) and never enqueued, and sta
 Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape; required with the chat on),
 `GENEALOGY_CHAT` (unset: on; `false`: off; anything else refuses to start),
 `GENEALOGY_MAX_USERS` (a positive integer: sign-in admits by user cap, blocked users counted,
-and ignores `ALLOWED_EMAILS`; unset: the allowlist; anything else refuses to start), `POLL_S` (1),
+and ignores `ALLOWED_EMAILS`; unset: the allowlist; anything else refuses to start),
+`UPLOADS_ENABLED` (unset or `false`: `POST /api/projects/{id}/files` answers 404 and
+`/auth/config` has no `uploads` key; `true`: uploads on; anything else refuses to start), `POLL_S` (1),
 `SSE_PING_S` (15, capped at 15), `WEB_DIST_DIR` (unset: no SPA), `GENEALOGY_SQS_ACCESS_KEY` +
 `GENEALOGY_SQS_SECRET_KEY` (both or neither; neither signs with the default AWS chain, the
 instance profile on AWS; one alone refuses to start) and `GENEALOGY_SQS_REGION` (else the

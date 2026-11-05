@@ -180,6 +180,18 @@ def chat_enabled() -> bool:
     raise RuntimeError(f"GENEALOGY_CHAT is {_env('GENEALOGY_CHAT')!r}: set it to true or false, or leave it unset")
 
 
+def uploads_setting() -> bool | None:
+    """``UPLOADS_ENABLED`` (#3987): None when unset or empty, else ``true``/``false`` in any
+    case. Any other value raises: the tools tier's rule (``envSwitch``,
+    ``hosted-config-env.ts``), so the two tiers cannot read one setting two ways."""
+    raw = _env("UPLOADS_ENABLED").lower()
+    if raw == "":
+        return None
+    if raw in ("true", "false"):
+        return raw == "true"
+    raise RuntimeError(f"UPLOADS_ENABLED is {_env('UPLOADS_ENABLED')!r}: set it to true or false, or leave it unset")
+
+
 def positive_int_env(name: str) -> int | None:
     """``name`` as a positive integer, or None when unset or empty. Raises otherwise, so a
     typo never falls back to the unset behaviour."""

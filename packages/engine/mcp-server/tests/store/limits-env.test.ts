@@ -11,6 +11,7 @@ describe("readLimitsEnv", () => {
     const r = readLimitsEnv({});
     expect(r.fsCallsPerMinute).toBeUndefined();
     expect(r.maxTranscriptions).toBeUndefined();
+    expect(r.sharedCollectionsCache).toBeUndefined();
     expect(r.invalid).toEqual([]);
   });
 
@@ -96,5 +97,27 @@ describe("readLimitsEnv", () => {
     expect(r.fsCallsPerMinute).toBeUndefined();
     expect(r.maxTranscriptions).toBe(4);
     expect(r.invalid).toEqual([]);
+  });
+});
+
+describe("readLimitsEnv: GENEALOGY_SHARED_COLLECTIONS_CACHE", () => {
+  it.each([
+    ["true", true],
+    [" true ", true],
+    ["false", false],
+    ["", undefined],
+    ["  ", undefined],
+  ])("reads %j as %s", (raw, want) => {
+    const r = readLimitsEnv({ GENEALOGY_SHARED_COLLECTIONS_CACHE: raw });
+    expect(r.sharedCollectionsCache).toBe(want);
+    expect(r.invalid).toEqual([]);
+  });
+
+  // A spelling a person might reach for must not read as "off" and start a
+  // server whose cache is quietly per token.
+  it.each([["TRUE"], ["yes"], ["1"], ["on"], ["0"]])("refuses %j", (raw) => {
+    const r = readLimitsEnv({ GENEALOGY_SHARED_COLLECTIONS_CACHE: raw });
+    expect(r.sharedCollectionsCache).toBeNull();
+    expect(r.invalid).toEqual(["GENEALOGY_SHARED_COLLECTIONS_CACHE"]);
   });
 });

@@ -146,7 +146,7 @@ Test metadata.
 | `difficulty` | string | no | `easy` / `medium` / `hard` — author's estimate |
 | `notes` | string | no | Free-form authoring notes |
 | `blocked_tools` | array of strings | no | Extra MCP tools (bare advertised names, e.g. `"wiki_search"`) denied for this fixture's runs, beyond the universal §6.1 tree block. For fixtures whose ground truth a specific tool can surface directly — e.g. a fixture built from a public wiki case-study article that names the answer. Document the reason in the fixture README |
-| `caps` | object | no | Per-fixture stop-condition overrides — any of the seven keys `wall_clock_seconds`, `inactivity_seconds`, `progress_stall_seconds`, `tool_calls`, `max_turns`, `max_cost_usd`, `max_continue_nudges`. Omitted keys inherit the defaults in `FixtureCaps` (`eval/harness/e2e/orchestrator.py`), which is the single source of truth for their values — do not copy them here. A **new** override must give its reason in the fixture README. (`susan-miller-birth` is the precedent for stating one at all: it records the raised wall-clock cap and the timed-out run that motivated it in the fixture's `notes`. From now on that reasoning belongs in the README, where a reader looks for it.) An **unrecognised** key inside `caps` is silently ignored — the loader reads the seven names above and fills the rest from defaults, and nothing validates the keys inside `caps`, so a typo'd cap looks applied and is not. |
+| `caps` | object | no | Per-fixture stop-condition overrides — any of the six keys `wall_clock_seconds`, `inactivity_seconds`, `progress_stall_seconds`, `tool_calls`, `max_turns`, `max_cost_usd`. Omitted keys inherit the defaults in `FixtureCaps` (`eval/harness/e2e/orchestrator.py`), which is the single source of truth for their values — do not copy them here. A **new** override must give its reason in the fixture README. (`susan-miller-birth` is the precedent for stating one at all: it records the raised wall-clock cap and the timed-out run that motivated it in the fixture's `notes`. From now on that reasoning belongs in the README, where a reader looks for it.) An **unrecognised** key inside `caps` is silently ignored — the loader reads the six names above and fills the rest from defaults, and nothing validates the keys inside `caps`, so a typo'd cap looks applied and is not. |
 
 
 ### 3.2 `starting-research.json`
@@ -742,9 +742,9 @@ the `max_cost_usd` note in §6 step 5.
    | Inactivity | `inactivity` | No SDK message at all for `caps.inactivity_seconds` (silence), OR no *progress* — no assistant text and no tool call/result — for `caps.progress_stall_seconds` while the stream stays alive (the **progress watchdog**: a stall can keep emitting non-progress messages, so a plain silence timer misses it) |
    | Wall-clock cap | `timeout` | **Active** (monotonic) elapsed time > `caps.wall_clock_seconds` |
    | Tool-call cap | `tool_cap` | Total tool calls > `caps.tool_calls`. The run ends at the first SDK message after the crossing call, and the label outranks a `cost_cap` the final message would set. |
-   | Turn cap | `max_turns` | SDK turn count > `caps.max_turns` |
-   | Cost cap | `cost_cap` | Final cost (the last CLI process's, on a resumed run) > `caps.max_cost_usd`. **Label only — this does not stop a run.** See note below. |
-   | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"` after the continue-nudge budget is exhausted (or a nudge made no progress), or with `research.json` missing or unreadable, which is never nudged. The terminal hand-back is classified and counted in `usage.hand_back_classes` — the first two are the gate-False reasons that ARE agent defects; the last is counted as `terminal_ok` — see note below |
+   | Turn cap | `max_turns` | SDK turn count > `caps.max_turns`. On a step run `num_turns` arrives per turn, so the host sums it across the run and sends no further reply once the sum crosses the cap |
+   | Cost cap | `cost_cap` | Cost (the session's running total) > `caps.max_cost_usd`. **Label only — this does not stop a run, a step run included: the host keeps replying past it.** A later turn cap, tool cap or SDK error still stops the run and replaces the label. See note below. |
+   | SDK natural end | `natural_end` | Voluntary end with `project.status != "completed"`: the host sent no reply to the last turn (`next_auto_reply` — no "Continue with …?" line, a finished wrap-up turn, a repeated step, or its reply cap). Runs made before step mode phase 2 reached it after the continue-nudge budget was exhausted (or a nudge made no progress) — see note below |
    | Harness error | `error` | Unhandled exception in the harness or SDK |
    | **Genealogy MCP surface absent** | `mcp_unavailable` | The CLI's `system`/`init` message reports the `genealogy` server `failed` / `needs-auth` / `disabled`, or does not list it at all; **or** the mid-run backstop sees `CONSECUTIVE_TOOL_SEARCH_MISSES` no-match `ToolSearch` results with no `mcp__` call dispatched in between. A *matched* lookup does **not** clear that count — tool search defers the built-ins too, so matching one of those is no evidence about the genealogy surface, and treating it as such let a dead server starve the counter indefinitely. **This run writes no files — see the retention rule below.** |
    | **Host slept** | `host_slept` | The heartbeat (`SleepDetector`) counted `usage.counted_sleep_seconds >= caps.inactivity_seconds` of host sleep. Outranks the cap/watchdog reason it replaces (`timeout` / `inactivity`) and `completed`, because on Windows `time.monotonic()` advances through Modern Standby, so the sleep is billed against the wall-clock cap and the run is cut mid-standby. **This run IS committed but is not graded and is excluded from outcome rates — see the retention rule below.** |
@@ -752,9 +752,9 @@ the `max_cost_usd` note in §6 step 5.
    The `caps.*` values default to those in
    `eval/harness/e2e/orchestrator.py` (`FixtureCaps`), which a fixture may
    override per key (§3.1). The caps a past run actually used are recorded
-   in its run log at `usage.caps` — the six enforcement caps only;
-   `max_continue_nudges` is not in that block, and `usage.continue_nudges`
-   records how many were spent. A turn-cap hit the SDK reports as an
+   in its run log at `usage.caps` — the six enforcement caps. Runs made before
+   step mode phase 2 also had `max_continue_nudges`, outside that block, with
+   `usage.continue_nudges` recording how many were spent. A turn-cap hit the SDK reports as an
    error result (rather than a clean `max_turns`) is reclassified to
    `max_turns`.
 
@@ -837,10 +837,15 @@ the `max_cost_usd` note in §6 step 5.
    SDK loop. **Nothing checks the live behaviour** — no CI job sleeps a Windows
    machine; the guarantee rests on the injected-clock unit tests alone.
 
-   **`cost_cap` is a post-hoc label, not an enforced cap.** The check reads
+   **`cost_cap` is a post-hoc label, not an enforced cap.** A step run could stop at
+   the first step boundary after the cap fires, by not replying, and deliberately
+   does not: that would reverse the decision at the end of this note, and would have
+   cut short runs that pass today — 19 of the 232 committed runs went past $15
+   (2026-11-04), among them all four `hannah-earnest-children` runs over it, each a
+   pass. Reopening it is the lead's call. The check reads
    `message.total_cost_usd`, which exists only on the SDK's `ResultMessage` —
-   the message that arrives once the run has *already finished* and the money
-   is already spent. All **eleven** `cost_cap` runs in the corpus ended with the
+   the message that arrives once the run (now: the step) has *already finished*
+   and the money is already spent. All **eleven** `cost_cap` runs in the corpus ended with the
    SDK's own `end_turn` and `is_error: false`; none was interrupted — spend ran
    to **$15.78–$21.50** (median $16.99) against a $15 cap. Two things block real
    enforcement, so
@@ -876,18 +881,26 @@ the `max_cost_usd` note in §6 step 5.
    sweep that lowers effort changes the conditions that forced this pin, and a
    sweep that keeps `high` must not also repin the extractor back to sonnet-5.
 
-   **Continue-nudge on a hand-back.** An autonomous `/research` run must end at
-   `project.status == "completed"`. A `Stop` hook vetoes every voluntary yield before
-   that (except on a session with no `research.json`) with **one** reply, a fixed continue
-   text (`stop_checker.py`). The hosted planes no longer veto a stop (step mode phase 2),
-   so a paired grade no longer compares one Stop policy; the e2e half of phase 2 deletes
-   this veto. Nothing pins the text. The hosted planes' completion halt is NOT emulated: they end the turn at the
-   PostToolUse of the proof-conclusion call that completes the project
-   (`completion_halt_summary`), so a completed e2e run still pays the closing relay call
-   those planes no longer make, and its cost overstates a hosted one by that call. Before replying, the hook classifies the agent's closing words
-   (`classify_hand_back`, `eval/harness/e2e/stop_checker.py`) for telemetry only. The
-   class is the FORM; the key counted in `usage.hand_back_classes` is the OUTCOME, and
-   for a completion claim the two differ — no run log ever carries a
+   **No continue-nudge (step mode phase 2).** A run is a step-mode run (`--step-mode
+   job` is the default) and nothing vetoes a stop: a step turn ends at its boundary on
+   purpose, and the host's reply, `next_auto_reply`, continues the run (section F of
+   `docs/plan/research-step-mode.md`). No Stop hook is bound, and a run writes neither
+   `usage.continue_nudges` nor `usage.hand_back_classes`; `make e2e-nudges` leaves such
+   a run out and says how many it left out. `test_e2e_step_mode_stop.py` fails if any
+   harness module binds a Stop hook again. The hosted planes' completion halt is NOT
+   emulated: they end the turn at the PostToolUse of the proof-conclusion call that
+   completes the project (`completion_halt_summary`), so a completed e2e run still pays
+   the closing relay call those planes no longer make, and its cost overstates a hosted
+   one by that call.
+
+   **Before phase 2** an autonomous run had to end at `project.status == "completed"`,
+   and a `Stop` hook vetoed every voluntary yield before that (except on a session with
+   no `research.json`) with one fixed continue text, bounded by
+   `caps.max_continue_nudges` (40) and a no-progress guard. Before replying it
+   classified the agent's closing words (`classify_hand_back`,
+   `eval/harness/e2e/stop_checker.py`, which `nudge_report` still reads the committed
+   runs with). The class is the FORM; the key counted in `usage.hand_back_classes` was
+   the OUTCOME, and for a completion claim the two differ — no run log ever carries a
    `completion_claim` key:
 
    | class | form | counted as |
@@ -914,46 +927,24 @@ the `max_cost_usd` note in §6 step 5.
    so the three-class taxonomy has no separate slot for it. Recorded here rather than
    left implicit; a fourth class is a live option if the distinction starts mattering.
 
-   **What is NOT counted as a defect.** `should_continue_run` returns False for five
-   reasons and only two are about the agent: budget exhausted and no-progress. A stop
-   on `project.status == "completed"` is the successful path (134 of the 181 committed
-   run logs), `mcp_unavailable` is an infrastructure failure rather than agent
-   behaviour, and a missing or unreadable `research.json` leaves no project for a
-   hand-back to be a defect against; all three are recorded as
-   `terminal_completed` / `terminal_mcp_unavailable` / `terminal_ok` and none counts
-   as a hand-back defect. In particular a `completion_claim` on a project that *is*
-   completed is a **truthful** completion, never a `false_completion`. The nudge is bounded by
-   `caps.max_continue_nudges` (**40**, raised from 20) plus a no-progress guard. The
-   raise is sized for the regime in which the skill emits the hand-back line, where a
-   well-formed hand-back at every step boundary consumes a nudge and a full GPS proof
-   runs ten-plus of them — **not** because the old cap was observed binding: the single run that
-   reached 20/20 was an MCP-unavailable run from 2026-08-05, and `should_continue_run`
-   has short-circuited that case since 2026-08-07. The observed ceiling over the
-   14-day window is 4. The cost of the raise is that a stall which defeats the
-   no-progress guard (one tool call between nudges) can now burn 40 turns instead of
-   20 before `natural_end`, bounded only by `max_wall_clock_seconds` / `max_cost_usd`.
-   That cap is generous by design — a full GPS proof yields after each of ~10+ sub-skill steps, so
-   a stingy one ends the loop before proof-conclusion; it only bounds the
-   worst case, and the no-progress check is the real backstop against a
-   genuinely idle agent. If a nudge produces no tool call, or the budget is
-   spent, the run is allowed to end as `natural_end` and fail honestly rather
-   than loop. The nudge
-   reason is procedural only (no research hints), so it cannot affect
-   recall; the number of nudges used is recorded in
-   `usage.continue_nudges`, so a run that needed many pokes reads as weaker
-   signal. `usage.hand_back_classes` sits beside it and counts hand-backs **including the
-   terminal one that ends the run**, so where a run ends through the Stop hook it
-   carries one more entry than `continue_nudges`. It is **not** universally larger: a run
-   killed by the wall clock, the tool cap, inactivity or an error never reaches the
-   hook at all and records no terminal class. (A count is deliberately not quoted —
-   `cost_cap` is a post-hoc label applied at the `ResultMessage`, so grouping by
-   `stop_reason` alone does not cleanly separate the two populations.) `continue_nudges` stays the count of nudges actually issued.
-   Both are additive — branch on key presence, no `harness_schema_version` bump. The decision logic is `should_continue_run` in
-   `eval/harness/e2e/stop_checker.py`.
+   **What was NOT counted as a defect.** Of the five reasons the veto allowed a stop,
+   only two were about the agent: budget exhausted and no-progress. A stop on a
+   completed project, `mcp_unavailable`, and a missing `research.json` were recorded
+   as `terminal_completed` / `terminal_mcp_unavailable` / `terminal_ok`, and a
+   `completion_claim` on a completed project is a truthful completion, never a
+   `false_completion`. `usage.continue_nudges` is the count of nudges issued;
+   `usage.hand_back_classes` counts hand-backs including the terminal one, so a run that
+   ended through the Stop hook carries one more entry than `continue_nudges`, and a run
+   killed by a cap or an error carries no terminal class. Both are absent from runs made
+   since phase 2; branch on key presence.
 
-   **Stall-detect + resume.** The progress watchdog above doesn't only abort:
-   with `--resume-on-stall` (default ON; `RESUME_ON_STALL=0` to disable) the
-   harness closes the hung stream, waits for its CLI to exit, and only then
+   **Stall-detect + resume.** A step-mode run, which is every `make e2e-run`, ends
+   on a stall rather than resuming (lead, 2026-10-26), with the turn named in the
+   error text. The resume path is still in `_run_agent` for a run with no step mode,
+   but no entry point turns it on: `run_e2e` always runs a step mode
+   (`--resume-on-stall` was deleted with the veto) and the single-ask runner
+   passes `resume_on_stall=False`. Only the stall tests drive it. There the harness closes the
+   hung stream, waits for its CLI to exit, and only then
    **resumes the same session**
    (`fork_session=False`), bounded to 2 attempts — but only in a provably-safe
    state (no in-flight tool call), else it fails fast. The safe-state gate means
@@ -1067,8 +1058,8 @@ mode; lead ruling 2026-09-27).
 > A project also extracts every indexed record attached to its subject
 > before its first question, with no search at all. So a record that an
 > expected finding cites by its `1:1:` ark, and that is attached to a
-> subject person in the starting tree (at person, name or fact level),
-> is a leak unless `eval/tests/e2e/attached-evidence-allowlist.json`
+> subject person in the starting tree (at person, name or fact level, or
+> on a relationship the subject is an endpoint of), is a leak unless `eval/tests/e2e/attached-evidence-allowlist.json`
 > lists it for that fixture. The leak check,
 > `test_e2e_attached_evidence.py`, fails on an unlisted one, on a stale
 > entry and on a malformed one. An entry means the record is evidence
@@ -1196,8 +1187,8 @@ covered here automatically.
 Semantics match the tree block — the denied call doesn't run, doesn't count
 toward the cap, and doesn't stop the run. Here, continuing is the **intended**
 response: the denial reason names a reachable recovery — read the page with
-`image_transcribe`, which stages it and returns a ref `sidecar_read` reads — not an unreachable
-"stop" the Stop hook would override anyway. The router must never read the scan
+`image_transcribe`, which stages it and returns a ref `sidecar_read` reads — not a bare "stop", which
+would end the turn with the goal unmet. The router must never read the scan
 itself or retry another way (a deny that leaves the goal in place just relocates the substitution). Denied attempts are
 recorded in a separate `blocked_context_calls` array
 (`{tool, args, blocked_by: "context"}`), kept apart from `blocked_tree_reads`
@@ -1257,13 +1248,14 @@ entries in the committed corpus. `research_append` writes a named section, and
 
 **This arm is caller-scoped, not main-thread-scoped**, which is the trap: it is
 easy to describe as "the router doing a delegate's job" because that is the
-`routed` rule, and miss that `owner_denied` has **six**. `out_of_lane` fires
+`routed` rule, and miss that `owner_denied` has **seven**. `out_of_lane` fires
 for a **named** subagent reaching outside the lanes `AGENT_WRITABLE_SECTIONS`
 grants it; `declaration` fires on a routed claim, field-scoped rather than
 section-scoped; and `owned_field` fires on a routed field keyed on presence
 rather than on a claim value (`project.status`); `claim` fires on a conflict's
 analytical product; and `owned_append` fires on a `questions` append from
-anyone but question-selection. All reach this array — the append happens before the rule
+anyone but question-selection; and `main_thread_field` fires on a
+`project.objective` write from **any** subagent. All reach this array — the append happens before the rule
 branch — so an entry here does not imply a main-thread caller. Most committed
 entries are `routed`; at least one is `out_of_lane` (6 and 1 of 7 — measured at
 7315364c).
@@ -2030,8 +2022,8 @@ editing one unreadable line, and it had already accreted a duplicated clause.
 | `usage_source` | `result_message` (the SDK's `ResultMessage` arrived — authoritative, except on a run with more than one query, where its tokens, turns and `duration_ms` cover the last query and its cost and `duration_api_ms` the last CLI process, §8.1.5) or `streamed_fallback` (it did not). **A step-mode run is the case this field's caveat cannot see.** The caveat is detected by `result_message_covers_last_query_only`, which counts `system:init` rows; a persistent `ClaudeSDKClient` is one CLI process emitting one init however many turns it serves, so a many-turn step run is never flagged even though a `ResultMessage` arrived per turn. What makes the figures whole-run there is not the flag but `accumulate_usage` summing them at assembly (`usage.per_turn`) — do not remove that on the strength of the flag reading clean. |
 | `usage.message_usage` | Per-assistant-message context window, split by thread: `[thread, input, cache_read, cache_creation]`. See 8.1.4. |
 | `usage.thread_windows` | Per-thread summary — `main: {peak_window_tokens, message_count}`, `sub: {message_count}`. See 8.1.4. |
-| `usage.continue_nudges` | How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, all with the same continue text (U17). The weak-signal reading belongs to `silent`, `step` and `false_completion` in `hand_back_classes`, not to this total. |
-| `usage.hand_back_classes` | Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` / `terminal_ok` for the three gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is the retired hand-back line, so 0 on runs since 2026-09-27. **`step_offer`** is the offer line itself ("Continue with <label>?") — and it is **0 on a `--step-mode` run**, which returns from the Stop hook before any hand-back is classified. It counts a run WITHOUT `--step-mode` that was vetoed at that line. `nudge_report.py` derives the classes it counts from `HAND_BACK_CLASSES`, which a unit test holds equal to what `classify_hand_back` can return, so a class added to the predicate cannot go uncounted. See the Continue-nudge note in §6. |
+| `usage.continue_nudges` | **Runs before step mode phase 2 only; absent since.** How many times the Stop hook vetoed a voluntary yield and told the agent to resume — every class, all with the same continue text (U17). The weak-signal reading belongs to `silent`, `step` and `false_completion` in `hand_back_classes`, not to this total. |
+| `usage.hand_back_classes` | **Runs before step mode phase 2 only; absent since.** Per-class tally of how the agent handed back: `step` / `silent` / `false_completion`, plus `terminal_completed` / `terminal_mcp_unavailable` / `terminal_ok` for the three gate-False reasons that are **not** agent defects. Counts hand-backs **including the terminal one**, so a hook-terminated run carries one more than `continue_nudges` — but a run killed by a cap or an error never reaches the hook and records no terminal class at all, so this is not universally the larger number. `step` is the retired hand-back line, so 0 on runs since 2026-09-27. **`step_offer`** is the offer line itself ("Continue with <label>?"); it counts a run made without `--step-mode` that was vetoed at that line. `nudge_report.py` derives the classes it counts from `HAND_BACK_CLASSES`, which a unit test holds equal to what `classify_hand_back` can return, so a class added to the predicate cannot go uncounted. See the "Before phase 2" note in §6. |
 | `wall_clock_seconds` | Active time: monotonic minus `counted_sleep_seconds` — §6 "Clocks". Alongside `real_clock_seconds`, `slept_seconds`, `counted_sleep_seconds` (sleep the heartbeat counted because monotonic did not leave it out, the Windows case), `judge_seconds`. |
 | `resumes`, `session_id` | §6 "Stall-detect + resume". |
 | `agent_model` | Effective parent model. |
@@ -2571,7 +2563,7 @@ changing anything, because the fix differs completely by cause.
    `harness_schema_version` 8 and above, `thread` (`main` / `sub`) — with
    `kind` one of `assistant` (the
    agent's own prose), `blocked` (a denied tool), or `harness` (a
-   continue-nudge, or a harness-side status note — every run carries one at
+   continue-nudge on a run made before step mode phase 2, or a harness-side status note — every run carries one at
    `tool_calls_before: 0` recording whether the genealogy MCP surface was
    present at session start; see §6's `mcp_unavailable` row).
    `tool_calls_before` is how many tool calls had already
@@ -2734,8 +2726,8 @@ There is no `expected-findings.json` and no judge.
 - The message is sent **verbatim**: no `/research` prefix, no `--autonomous`, no
   provided-documents suffix. The system prompt is the autonomous mode's (no
   DELIVERY_GUIDANCE).
-- **No continue nudges.** The Stop hook returns `{}` at once, and there is no
-  stall resume (it sends a second message). This matches Cowork today and step
+- **No continue nudges.** No harness run binds a Stop hook (step mode phase 2), and
+  there is no stall resume (it sends a second message). This matches Cowork today and step
   mode's cap 0 (`docs/plan/research-step-mode.md`, decision 1).
 - **No live-tree block.** §6.1 exists to hide an answer key; a single-ask fixture
   has none, and asks like "review the sources attached to <PID>" need

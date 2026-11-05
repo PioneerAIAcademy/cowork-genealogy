@@ -1,4 +1,4 @@
-# Kristian Fredrik Tollefsen Birkeland — death and burial (1883)
+# Kristian Fredrik Tollefsen Birkeland — death (1883)
 
 **Source PID:** `K87G-T89`
 **Kristian Fredrik Tollefsen Birkeland is deceased.** (FamilySearch ToS requires
@@ -12,7 +12,7 @@ died 23 Dec 1883.
 ## Research question
 
 > When and where did Kristian Fredrik Tollefsen Birkeland (born 1817, Stavanger)
-> die, and where was he buried?
+> die?
 
 ## What was removed from the starting tree
 
@@ -41,6 +41,15 @@ an exact name string. All required evidence is nonetheless reachable through the
 FamilySearch record/fulltext search tools — no external sites are involved.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4143).** The old question asked
+two independent facts (death, and burial): "When and where did Kristian
+Fredrik Tollefsen Birkeland (born 1817, Stavanger) die, and where was he
+buried?" Reworded `researcher_question` to the death only; demoted `f2`
+(burial) to `required: false`, so a run that recovers it anyway still gets
+credit. No finding wording changed. Its one annotation carries neither
+`findings_hash` nor `blind_bundle_digest`, so it stays valid with no
+re-grading needed.
 
 Death (23 Dec 1883) and burial (31 Dec 1883, Stavanger) stripped from the
 subject's facts, together with the two sources that attest them. Unlike

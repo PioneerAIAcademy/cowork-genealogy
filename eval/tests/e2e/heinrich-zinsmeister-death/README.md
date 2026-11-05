@@ -1,4 +1,4 @@
-# Heinrich Zinsmeister — birth, death and burial (Bavaria, 1854)
+# Heinrich Zinsmeister — death (Bavaria, 1854)
 
 **Source PID:** `KD72-C6D`
 **Heinrich Zinsmeister is deceased.** (FamilySearch ToS requires
@@ -7,7 +7,7 @@ not recorded in the tree; died not recorded in the tree (undated Death fact only
 
 ## Research question
 
-> When and where was Heinrich Zinsmeister of Steinwenden, Pfalz, Bavaria born, and when and where did he die?
+> When and where did Heinrich Zinsmeister of Steinwenden, Pfalz, Bavaria die?
 
 ## What was removed from the starting tree
 
@@ -28,6 +28,15 @@ hard — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4143).** The old question asked
+two independent facts (birth, and death): "When and where was Heinrich
+Zinsmeister of Steinwenden, Pfalz, Bavaria born, and when and where did he
+die?" Reworded `researcher_question` to death only — no finding in this
+fixture tests his birth at all (both `f1` and `f2` are about the death-record
+hint), so there was nothing to demote. No finding wording changed, and this
+fixture's one annotation carries neither `findings_hash` nor
+`blind_bundle_digest`, so it stays valid with no re-grading needed.
 
 **Resolved 2026-07-30 (supersedes an earlier, incorrect 2026-07-29 resolution below): false match, no findable substitute.** This fixture came from a hint batch (`filtered-list-samples.csv` row 5, flags `adds_birth`/`adds_death`/`adds_burial`, confidence 3) in which roughly half the hint records are false matches. This one is false: **the record at `ark:/61903/1:1:JWBL-QXJ` was directly examined on FamilySearch and is for Elisabetha Meininger** (female), died 15 Jan 1857, buried 17 Jan 1857, event place Bayern, Deutschland, parents Philipp Meininger and Katharina Heinz — an unrelated individual, sharing no name, sex, date, or family connection with Heinrich Zinsmeister or his wife Elisabetha Engelskircher.
 

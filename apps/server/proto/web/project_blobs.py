@@ -11,14 +11,16 @@ would show up as an orphaned object or a row pointing at nothing:
   - a FRESH object key per write (`<project>/<ref>/<uuid>`), never overwriting in place;
   - `INSERT … ON CONFLICT (project_id, key) DO UPDATE` — re-uploading a name replaces
     it, which is the researcher's mental model of a folder;
-  - the superseded object deleted only AFTER the row change is durable, so a crash
-    leaves an unreferenced object rather than a row pointing at a deleted one.
+  - no write path here removes an S3 object: a superseded or dropped one is left
+    unreferenced, and U19's orphan sweep on the tools tier collects it (the web role has
+    no `s3:DeleteObject` on AWS).
 
 Pure where it can be: the key and name rules are testable without S3 or Postgres.
 """
 
 from __future__ import annotations
 
+import bisect
 import hashlib
 import re
 import uuid
@@ -43,6 +45,65 @@ class Blob:
 def upload_key(name: str) -> str:
     """The project-relative key for an upload. `name` must already be a basename."""
     return f"uploads/{name}"
+
+
+def text_key(name: str) -> str:
+    """Where an upload's text layer lives: `uploads/<name>.txt`, the name `project_context`
+    reads as the text layer (`project-context.ts`, `projectUploads`)."""
+    return upload_key(name) + ".txt"
+
+
+@dataclass(frozen=True)
+class Sniffed:
+    """What the first bytes declare. `refused` names the format when the upload must be
+    turned away."""
+
+    content_type: str
+    refused: str | None = None
+
+
+_HEIF_BRANDS = frozenset({b"heic", b"heix", b"hevc", b"heim", b"heis", b"mif1", b"msf1"})
+
+
+def sniff(head: bytes) -> Sniffed:
+    """The content type the first bytes declare, never the client's. TIFF and HEIC/HEIF are
+    refused. Anything unrecognised is stored as `application/octet-stream`."""
+    if head.startswith(b"%PDF-"):
+        return Sniffed("application/pdf")
+    if head.startswith(b"\xff\xd8\xff"):
+        return Sniffed("image/jpeg")
+    if head.startswith(b"\x89PNG\r\n\x1a\n"):
+        return Sniffed("image/png")
+    if head.startswith((b"GIF87a", b"GIF89a")):
+        return Sniffed("image/gif")
+    if head[:4] == b"RIFF" and head[8:12] == b"WEBP":
+        return Sniffed("image/webp")
+    if head.startswith((b"II*\x00", b"MM\x00*")):
+        return Sniffed("image/tiff", refused="TIFF")
+    if head[4:8] == b"ftyp" and head[8:12] in _HEIF_BRANDS:
+        return Sniffed("image/heic", refused="HEIC")
+    return Sniffed("application/octet-stream")
+
+
+_OBJ_HEADER_RE = re.compile(rb"(?<![0-9])(\d{1,10})\s{1,16}\d{1,5}\s{1,16}obj\b")
+_PAGE_RE = re.compile(rb"/Type\s*/Page\b")
+
+
+def pdf_page_count(body: bytes) -> int:
+    """Page objects in a raw PDF, by distinct object number, so an incrementally saved
+    single page (each revision repeats `5 0 obj ... /Type /Page`) counts once.
+
+    A heuristic with no PDF parser, so no new dependency on the web tier. It UNDERCOUNTS a
+    PDF whose page objects sit in compressed object streams, so a multi-page scan saved
+    that way can be admitted; it never counts a single page as two.
+    """
+    headers = [(m.start(), m.group(1)) for m in _OBJ_HEADER_RE.finditer(body)]
+    starts = [start for start, _ in headers]
+    pages: set[bytes] = set()
+    for m in _PAGE_RE.finditer(body):
+        i = bisect.bisect_right(starts, m.start()) - 1
+        pages.add(headers[i][1] if i >= 0 else b"@%d" % m.start())
+    return len(pages)
 
 
 def safe_upload_name(raw: str | None) -> str | None:
@@ -106,3 +167,14 @@ def put_blob(conn: Any, blobs: Any, project_id: str, key: str, body: bytes,
         (project_id, key, s3_key, len(body), hashlib.sha256(body).hexdigest()),
     )
     return len(body)
+
+
+def delete_blob(conn: Any, project_id: str, key: str) -> bool:
+    """Drop the index row for a project-relative key. True when a row went.
+
+    The row only. The object it pointed at is left unreferenced for U19's orphan sweep,
+    as `put_blob` leaves a superseded one: the web role has no `s3:DeleteObject`, and
+    removing the object before the caller commits would strand the row on nothing.
+    """
+    cur = conn.execute("DELETE FROM blobs WHERE project_id = %s AND key = %s", (project_id, key))
+    return bool(getattr(cur, "rowcount", 0))
