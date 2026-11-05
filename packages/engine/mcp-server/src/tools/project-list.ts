@@ -79,23 +79,37 @@ function cut(s: string, max: number): string {
 
 const text = (v: unknown, max: number): string | null => (typeof v === "string" ? cut(v, max) : null);
 
-async function entry(projectPath: string, bounds: EntryBounds): Promise<ProjectListEntry> {
+/** What an entry keeps of research.json, already bounded. A call of its own so the
+ *  document is gone before the tree read: that read queues behind every other call
+ *  on the pool, and each of a caller's concurrent listings would hold it there. */
+async function projectFields(projectPath: string, bounds: EntryBounds) {
   const project = (await readJson(projectPath, "research.json"))?.project;
-  const tree = await readJson(projectPath, "tree.gedcomx.json");
-  const persons: any[] = Array.isArray(tree?.persons) ? tree.persons : [];
   const ids: unknown[] = Array.isArray(project?.subject_person_ids) ? project.subject_person_ids : [];
   const subjectIds = ids.filter((id): id is string => typeof id === "string");
-  const left = subjectIds.length - bounds.subjects;
   return {
-    projectPath,
     objective: text(project?.objective, bounds.objective),
-    subjects: subjectIds.slice(0, bounds.subjects).map((id) => ({
-      id: cut(id, bounds.field),
-      name: text(preferredDisplayName(persons.find((p) => p?.id === id)), bounds.field),
-    })),
-    ...(left > 0 ? { moreSubjects: left } : {}),
+    subjectIds: subjectIds.slice(0, bounds.subjects).map((id) => cut(id, bounds.field)),
+    left: subjectIds.length - bounds.subjects,
     status: text(project?.status, bounds.field),
     updated: text(project?.updated, bounds.field),
+  };
+}
+
+async function entry(projectPath: string, bounds: EntryBounds): Promise<ProjectListEntry> {
+  const { objective, subjectIds, left, status, updated } = await projectFields(projectPath, bounds);
+  const tree = await readJson(projectPath, "tree.gedcomx.json");
+  const persons: any[] = Array.isArray(tree?.persons) ? tree.persons : [];
+  const personWith = (id: string) => persons.find((p) => typeof p?.id === "string" && cut(p.id, bounds.field) === id);
+  return {
+    projectPath,
+    objective,
+    subjects: subjectIds.map((id) => ({
+      id,
+      name: text(preferredDisplayName(personWith(id)), bounds.field),
+    })),
+    ...(left > 0 ? { moreSubjects: left } : {}),
+    status,
+    updated,
   };
 }
 

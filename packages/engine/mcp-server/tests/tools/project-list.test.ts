@@ -217,6 +217,56 @@ describe("project_list", () => {
       expect(grew).toBeLessThan(10_000_000);
     });
 
+    // A real pool queues the tree read behind every other call, so what a listing
+    // holds there is multiplied by however many a caller has running.
+    it.each<[string, (big: string) => unknown]>([
+      ["objective", (big) => ({ objective: big })],
+      ["subject id", (big) => ({ subject_person_ids: [big] })],
+      ["status", (big) => ({ status: big })],
+      ["list of subject ids", (big) => ({ subject_person_ids: big.split(" ") })],
+    ])("concurrent listings waiting on their tree read hold none of a huge %s", async (_field, projectOf) => {
+      setFlagsFromString("--expose-gc");
+      const gc = runInNewContext("gc") as () => void;
+      await seed("p1", { project: projectOf("xy ".repeat(350_000)) }, { persons: [] });
+
+      const count = 30;
+      const waiting: Array<() => void> = [];
+      let allWaiting!: () => void;
+      const reachedTreeRead = new Promise<void>((resolve) => (allWaiting = resolve));
+      const listing = () =>
+        ownedProjectsStore("name a project", {
+          listOwned: async () => ({ projectPaths: ["/p1"], truncated: false }),
+          freshPath: FRESH,
+          storeFor: (path) => {
+            const scoped = new ScopedFsStore(root, path.slice(1), path);
+            const readText = scoped.readText.bind(scoped);
+            // Not a spy: a mock keeps every value it returns, which is what this measures.
+            scoped.readText = async (projectPath, ref) => {
+              if (ref === "tree.gedcomx.json") {
+                await new Promise<void>((go) => {
+                  if (waiting.push(go) === count) allWaiting();
+                });
+              }
+              return readText(projectPath, ref);
+            };
+            return scoped;
+          },
+          signal: new AbortController().signal,
+        });
+
+      gc();
+      const before = process.memoryUsage().heapUsed;
+      const listings = Array.from({ length: count }, () => runWithProjectStore(listing(), () => projectList()));
+      await reachedTreeRead;
+      gc();
+      const grew = process.memoryUsage().heapUsed - before;
+      for (const go of waiting) go();
+
+      // Each document holds about 1 MB of text, so all of them is 30 MB.
+      expect((await Promise.all(listings)).map((r) => r.projects)).toHaveLength(count);
+      expect(grew).toBeLessThan(10_000_000);
+    });
+
     it("never leaves half a surrogate pair at the cut, which a client could not send on", async () => {
       const objective = `${"x".repeat(MAX_OBJECTIVE_CHARS - 1)}\u{1F600}y`;
       expect((await onlyEntry({ objective })).objective).toBe(`${"x".repeat(MAX_OBJECTIVE_CHARS - 1)}\uFFFD…`);
