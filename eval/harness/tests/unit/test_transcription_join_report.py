@@ -240,6 +240,44 @@ def test_staged_call_with_captured_page_is_complete(tmp_path):
     assert r.complete_joined_assertions == 1
 
 
+def _structured_page_research(staged_ref: str) -> dict:
+    """A page that went through record-structurer: its entry names no image."""
+    return {
+        "log": [{
+            "id": "log_1",
+            "tool": "image_transcribe",
+            "query": {"recordId": "capture:schreck-baptism-1783"},
+            "staged_ref": staged_ref,
+        }],
+        "assertions": [{"id": "a1", "log_entry_id": "log_1"}],
+    }
+
+
+def test_page_logged_by_recordid_joins_through_its_staged_ref(tmp_path):
+    """`extraction_append` logs the page under a capture id, so only the
+    entry's `staged_ref` leads back to the read."""
+    call = _transcribe(image_id="007767897_00942", response_summary=_STAGED_SUMMARY, staged_transcription="T" * 9000)
+    r = scan([_write_run(tmp_path, [call], _structured_page_research("results/.staging/u.json"))])
+    assert r.chained_assertions == 1
+    assert r.joined_assertions == 1 and r.complete_joined_assertions == 1
+
+
+def test_staged_ref_no_call_made_does_not_join(tmp_path):
+    """The other direction: an entry whose staged ref no captured read returned
+    stays unmatched."""
+    call = _transcribe(image_id="007767897_00942", response_summary=_STAGED_SUMMARY, staged_transcription="T" * 9000)
+    r = scan([_write_run(tmp_path, [call], _structured_page_research("results/.staging/other.json"))])
+    assert r.chained_assertions == 1 and r.joined_assertions == 0
+
+
+def test_a_stripped_run_has_no_staged_ref_to_join_on(tmp_path):
+    """The strip drops `response_summary`, so a structured page falls back to
+    unmatched, as the module docstring says."""
+    call = _transcribe(image_id="007767897_00942")
+    r = scan([_write_run(tmp_path, [call], _structured_page_research("results/.staging/u.json"), stripped=True)])
+    assert r.chained_assertions == 1 and r.joined_assertions == 0
+
+
 def test_staged_call_without_captured_page_is_not_complete(tmp_path):
     """The other direction: a staged summary is short, unmarked JSON, so read
     alone it looks complete — but it holds only the digest, not the page."""

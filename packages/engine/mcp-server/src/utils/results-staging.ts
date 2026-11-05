@@ -213,7 +213,8 @@ export async function checkStagedResults(args: {
       `stagedResultsRef '${stagedResultsRef}' is not in ${STAGING_SUBDIR}/ — each staged ref can ` +
         `be logged once, so it was either already finalized by an earlier successful ` +
         `research_log_append, pruned after 24h, or never staged. If this search already has a ` +
-        `log entry, do not log it again; if it has none, re-run the search to re-stage it.`,
+        `log entry, do not log it again; if it has none, re-run the search, or image_transcribe ` +
+        `for a page, to re-stage it.`,
     );
   }
   try {
@@ -316,6 +317,45 @@ export async function findLoggedStagedRef(
   const entry = log.find((e) => e?.staged_ref === ref && typeof e.id === "string");
   if (!entry) return undefined;
   return { logId: entry.id as string, resultsRef: typeof entry.results_ref === "string" ? entry.results_ref : null };
+}
+
+/** Where a staged ref stands. `ref` is the canonical name, after near-copy correction. */
+export type StagedRefLocation =
+  | { state: "live"; ref: string }
+  | { state: "logged"; ref: string; logId: string; tool: string | null; resultsRef: string }
+  | { state: "gone"; ref: string };
+
+/**
+ * Whether a staged ref's file is live, was consumed into a log entry, or is gone.
+ * A held ref outlives its file: once logged the file is removed, and only the
+ * entry's `staged_ref` still leads to the page.
+ *
+ * Reads research.json itself, and only once the file is missing. A commit lands
+ * before its staged file is consumed, so a log read after seeing the file gone
+ * cannot miss an entry a concurrent call just wrote, as a caller's earlier read
+ * could. Never throws: a caller sorts several refs in one loop, so an unreadable
+ * research.json answers `gone` for this ref rather than ending the call.
+ */
+export async function locateStagedRef(projectPath: string, rawRef: string): Promise<StagedRefLocation> {
+  const { ref } = await resolveStagedRef(projectPath, rawRef);
+  if (await getProjectStore().exists(projectPath, ref).catch(() => false)) return { state: "live", ref };
+  let log: unknown;
+  try {
+    log = (await readProjectJson(projectPath, "research.json"))?.log;
+  } catch {
+    return { state: "gone", ref };
+  }
+  if (!Array.isArray(log)) return { state: "gone", ref };
+  const found = await findLoggedStagedRef(projectPath, ref, log);
+  if (!found?.resultsRef) return { state: "gone", ref };
+  const tool = log.find((e) => e?.id === found.logId)?.tool;
+  return {
+    state: "logged",
+    ref,
+    logId: found.logId,
+    tool: typeof tool === "string" ? tool : null,
+    resultsRef: found.resultsRef,
+  };
 }
 
 /**
