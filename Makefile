@@ -415,6 +415,8 @@ hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook act
 	# which reaches the script only through the matcher's AGENT_ONLY_TOOLS
 	# alternative, and requires agent_only_reason's text. First run 2026-10-29
 	# (Claude Code 2.1.308, SDK 0.2.172): BOUND on all three cases.
+	# The read case (issue #3836) provokes a built-in Read of research.json and requires
+	# READ_REASON's text. Not yet run: it needs a real python3 (macOS or Linux).
 	#
 	# A pass proves the HOSTED loader binds. Cowork is a different loader,
 	# reachable only by a human in a live session, so issue #1160 stays on the

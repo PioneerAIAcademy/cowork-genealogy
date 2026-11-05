@@ -140,6 +140,7 @@ sys.path.insert(0, str(SERVER_DIR))
 
 SECTION = "proof_summaries"
 AGENT_ONLY_TOOL = "convert_calendar"
+READ_FILE = "research.json"
 
 
 def api_key() -> str:
@@ -189,6 +190,16 @@ def expected_agent_only_reason() -> str:
     import guard_project_files as guard
 
     return guard.agent_only_reason(AGENT_ONLY_TOOL)
+
+
+def expected_read_reason() -> str:
+    """The guard's deny text for a built-in Read of research.json."""
+    sys.path.insert(0, str(PLUGIN_DIR / "hooks"))
+    import guard_project_files as guard
+
+    return guard.READ_REASON.format(
+        tool="Read", name=READ_FILE, route=guard.READ_ROUTES[READ_FILE]
+    )
 
 
 def preflight(plugin: Path) -> tuple[bool, str]:
@@ -278,7 +289,19 @@ def preflight(plugin: Path) -> tuple[bool, str]:
             f"guard script did not deny a main-thread {AGENT_ONLY_TOOL} "
             f"(decision={agent_only_got!r})"
         )
-    return True, "guard script denies all three probe payloads when run directly"
+    read = subprocess.run(
+        ["python3", str(script)],
+        input=json.dumps({"tool_name": "Read", "tool_input": {"file_path": f"/p/{READ_FILE}"}}),
+        capture_output=True, text=True, encoding="utf-8", timeout=20, check=False,
+    )
+    try:
+        read_got = (json.loads(read.stdout or "{}").get("hookSpecificOutput") or {}).get(
+            "permissionDecision")
+    except json.JSONDecodeError:
+        read_got = None
+    if read_got != "deny":
+        return False, f"guard script did not deny a Read of {READ_FILE} (decision={read_got!r})"
+    return True, "guard script denies all four probe payloads when run directly"
 
 
 FORK_QUERY = (
@@ -310,6 +333,18 @@ AGENT_ONLY_QUERY = (
     "PROBE_RESULT: DENIED <the exact refusal text>\n\n"
     "Do not retry. Do not call any tool other than the two named above. Do not "
     "ask for permission. Do not explain. Do not do anything else."
+)
+
+
+READ_QUERY = (
+    "Call the built-in `Read` tool exactly once on the file `{project}/research.json`, "
+    "then stop.\n\n"
+    "Then output ONE line and nothing else:\n"
+    "  - if the call returned file contents, write:  PROBE_RESULT: ALLOWED\n"
+    "  - if the call was refused, blocked, denied or errored, write:  "
+    "PROBE_RESULT: DENIED <the exact refusal text>\n\n"
+    "Do not retry. Do not call any other tool. Do not ask for permission. Do not "
+    "explain. Do not do anything else."
 )
 
 
@@ -375,6 +410,8 @@ async def run_arm(case: str, hooks_present: bool, key: str, reason: str) -> dict
                 query = FORK_QUERY
             elif case == "agent_only":
                 query = AGENT_ONLY_QUERY
+            elif case == "read":
+                query = READ_QUERY.format(project=str(project).replace("\\", "/"))
             else:
                 query = QUERY.format(project=str(project).replace("\\", "/"))
             await client.query(query)
@@ -421,6 +458,9 @@ async def run_arm(case: str, hooks_present: bool, key: str, reason: str) -> dict
         elif case == "agent_only":
             if not call["name"].endswith(AGENT_ONLY_TOOL):
                 continue
+        elif case == "read":
+            if call["name"] != "Read":
+                continue
         elif not call["name"].endswith("research_append"):
             continue
         called = True
@@ -441,7 +481,8 @@ async def run_arm(case: str, hooks_present: bool, key: str, reason: str) -> dict
     )
 
     if not called:
-        what = {"fork": "a fork", "agent_only": AGENT_ONLY_TOOL}.get(case, "research_append")
+        what = {"fork": "a fork", "agent_only": AGENT_ONLY_TOOL, "read": "Read"}.get(
+            case, "research_append")
         verdict = f"VOID (never called {what})"
     elif denied_by_guard:
         verdict = "DENIED_BY_GUARD"
@@ -480,6 +521,7 @@ async def main() -> None:
         "owner": expected_reason(),
         "fork": expected_fork_reason(),
         "agent_only": expected_agent_only_reason(),
+        "read": expected_read_reason(),
     }
     ok, detail = preflight(PLUGIN_DIR)
     print(f"preflight: {'PASS' if ok else 'FAIL'} - {detail}", flush=True)
@@ -492,7 +534,7 @@ async def main() -> None:
         )
 
     rows = []
-    for case in ("owner", "fork", "agent_only"):
+    for case in ("owner", "fork", "agent_only", "read"):
         for hooks_present in (True, False):
             label = f"{case}/{'a-hooks-present' if hooks_present else 'b-hooks-removed'}"
             print(f"... running {label}", flush=True)
@@ -525,9 +567,10 @@ async def main() -> None:
         "owner": "research_append",
         "fork": "an Agent call with subagent_type fork",
         "agent_only": f"a main-thread {AGENT_ONLY_TOOL}",
+        "read": f"a built-in Read of {READ_FILE}",
     }
     failures = []
-    for case in ("owner", "fork", "agent_only"):
+    for case in ("owner", "fork", "agent_only", "read"):
         arm_a = next((r for r in rows if r["case"] == case and r["hooks_present"]), {})
         arm_b = next((r for r in rows if r["case"] == case and not r["hooks_present"]), {})
         if arm_b.get("verdict") != "NOT_DENIED":
