@@ -1,9 +1,9 @@
 {
-  "run_log": "v43_2026-11-04_21-58-41.json",
-  "annotator": "edmondoware70@gmail.com",
+  "run_log": "v47_2026-11-05_19-28-36.json",
+  "annotator": "dallan@quass.org",
   "corrections": [
     {
-      "test_id": "ut_research_005",
+      "test_id": "ut_research_dq1",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_005",
+      "test_id": "ut_research_dq1",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_005",
+      "test_id": "ut_research_dq1",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,15 +27,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_008",
+      "test_id": "ut_research_rpn",
       "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_research_008",
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "not a failure"
+    },
+    {
+      "test_id": "ut_research_rpn",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -43,11 +51,27 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_008",
+      "test_id": "ut_research_017",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_017",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
@@ -75,7 +99,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_012",
+      "test_id": "ut_research_es9",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -83,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_012",
+      "test_id": "ut_research_es9",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -91,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_012",
+      "test_id": "ut_research_es9",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -99,7 +123,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_011",
+      "test_id": "ut_research_fsh",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_fsh",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -107,15 +139,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_011",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_011",
+      "test_id": "ut_research_fsh",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -125,10 +149,10 @@
     {
       "test_id": "ut_research_gm4",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "look into this later"
     },
     {
       "test_id": "ut_research_gm4",
@@ -136,38 +160,62 @@
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "Asking for the ARK, or offering a Kentucky Deaths and Burials search, is a legitimate first step that judge_context says \"counts as following the lead\". What keeps it from a 3 is that the contradicted hypothesis is never flagged."
+      "comment": "look into this later"
     },
     {
       "test_id": "ut_research_gm4",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
-      "corrected_score": 1,
-      "comment": "The reply says the 1861 death \"fits that person almost exactly\" and calls the parents' names \"a substantial step forward for both hypotheses\". It never notices that h_002's Robert Eastham Jr. married Margaret Rucker in Boyd County in January 1870, nine years after this death. judge_context names presenting a contradicting record as corroboration as the failure, the same call as v42_2026-11-03_13-53-18."
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_research_ken",
+      "test_id": "ut_research_9k4",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 3,
-      "comment": " judge_context says this test is graded only by the deterministic validator: no collection title that collections_search did not return. test_names_collections_only_from_search passed, and the reply names record types and the Catalog, not collection titles. It hedges with \"most likely\" rather than saying nothing was confirmed, which is weaker than the v43_2026-11-04_10-02-27 reply, but that is not what this test grades."
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "look into this later"
     },
     {
-      "test_id": "ut_research_ken",
+      "test_id": "ut_research_9k4",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 1,
+      "llm_score": 3,
       "corrected_score": 3,
-      "comment": "same reason. Declining is not what this test asks for. The reply gives record types to look for, the Catalog filtered by place to confirm FamilySearch's holdings, and a next step."
+      "comment": null
     },
     {
-      "test_id": "ut_research_ken",
+      "test_id": "ut_research_9k4",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     }
   ]
