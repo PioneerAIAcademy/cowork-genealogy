@@ -56,6 +56,7 @@ fchDatabase object to read instead, U29; both set refuses to start), QUEUE_URL (
 queue URL, the shim's shape; required with the chat on -- unset or empty refuses to start),
 GENEALOGY_CHAT (unset or true; false serves no /api/sessions route and needs no queue),
 GENEALOGY_MAX_USERS (unset: the allowlist admits; a positive integer: the user cap does),
+PG_POOL_MAX_SIZE (unset: one connection per query; a positive integer: a checked pool of that size),
 UPLOADS_ENABLED (unset or false: the project upload route answers 404; true or false only),
 POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
@@ -776,15 +777,51 @@ def check_out(state: str) -> dict[str, Any]:
 # ── Postgres store ───────────────────────────────────────────────────────────────
 
 
+# #3980: the optional pool's bounds. A borrow waits at most POOL_TIMEOUT_S, as a direct
+# connect does (U23's connect_timeout); a failing background connect keeps retrying on its
+# backoff for at most POOL_RECONNECT_TIMEOUT_S (psycopg_pool's default is 300 s), so a borrow
+# after Postgres returns starts a fresh attempt instead of waiting out a long backoff.
+POOL_TIMEOUT_S = 10.0
+POOL_RECONNECT_TIMEOUT_S = 10.0
+# Each hand-out check's own cap, inside POOL_TIMEOUT_S: a connection whose peer went silent
+# (no RST) would otherwise hold the check until the kernel gives up, about 15 minutes.
+POOL_CHECK_TIMEOUT_S = 2.0
+
+
+def _abandon_check(conn: Any, check: asyncio.Future) -> None:
+    """Give up on a hand-out check still running: close the socket, which psycopg would
+    otherwise keep waiting on even to cancel, so the check ends and the pool discards it."""
+    if not check.done():
+        conn.pgconn.finish()
+        check.cancel()
+    check.add_done_callback(lambda f: f.cancelled() or f.exception())
+
+
+def pool_max_size() -> int | None:
+    """``PG_POOL_MAX_SIZE`` (#3980): the query pool's size, or None (unset) for one
+    connection per call, the handoff's behaviour. Anything but a positive integer refuses."""
+    return auth.positive_int_env("PG_POOL_MAX_SIZE")
+
+
 class PgStore:
-    """One AsyncConnection per call -- streams included, so an open stream costs three or
-    four short connects per poll. n=1 in the prototype; a pool is a production concern.
+    """Queries run on ``_connect``: one AsyncConnection per call by default -- streams
+    included, so an open stream costs three or four short connects per poll -- or, with
+    ``pool_max_size`` (``PG_POOL_MAX_SIZE``, #3980), a connection borrowed from a
+    ``psycopg_pool`` pool that checks each one as it hands it out, so one the server closed
+    while idle (Neon does) is replaced rather than handed to a query. The lifespan opens and
+    closes the pool. Readiness, the schema check and each grant refresh (``refresh_grant``)
+    always connect on their own (``_aconn``); the refresher loop's ``due_grant_users`` borrows.
 
     Connections are ``autocommit=True``: a read is one round trip, and the writers that
-    need several statements to land together say so with ``conn.transaction()``."""
+    need several statements to land together say so with ``conn.transaction()``. Nothing on
+    ``_connect`` sets session state: lock timeouts are transaction-local, and the session
+    advisory locks live on ``_grant_connect``. So a pooled connection carries nothing to its
+    next borrower."""
 
-    def __init__(self, creds: PgCredentials | str) -> None:
+    def __init__(self, creds: PgCredentials | str, *, pool_max_size: int | None = None) -> None:
         self.creds = PgCredentials.fixed(creds) if isinstance(creds, str) else creds
+        self.pool_max_size = pool_max_size
+        self._pool: Any = None
         # U10: the one readiness probe in flight, shared by concurrent /api/health calls,
         # and the postgres check's last outcome for the transition log.
         self._ready_task: asyncio.Task | None = None
@@ -848,10 +885,91 @@ class PgStore:
             raise ReadyCheckError(f"schema: missing {names}", f"web tables or functions missing: {names}")
 
     async def _connect(self):
+        """An async context manager over one query connection: a pooled one, returned to the
+        pool on exit, or a connection of its own, closed on exit. Used as
+        ``async with await self._connect() as conn``."""
+        if self._pool is not None:
+            return self._borrow()
         from psycopg.rows import dict_row
 
         # U23: a connect to a vanished host fails in 10 s rather than the OS's TCP timeout.
         return await self._aconn(row_factory=dict_row, autocommit=True, connect_timeout=10)
+
+    @contextlib.asynccontextmanager
+    async def _borrow(self):
+        """A pooled connection that has just answered a check, within one POOL_TIMEOUT_S.
+        A dead one is discarded (the pool replaces it in the background) and the next is
+        tried at once. The pool's own ``check=`` would sleep its reconnect backoff (1 s, 2 s,
+        4 s...) after each failure, and Neon suspending an idle compute kills every pooled
+        connection together. Each check is capped at POOL_CHECK_TIMEOUT_S, for a peer that
+        went silent rather than closing; a cancelled borrow gives its connection back."""
+        from psycopg_pool import AsyncConnectionPool, PoolTimeout
+
+        pool = self._pool
+        deadline = time.monotonic() + POOL_TIMEOUT_S
+        for _ in range(pool.max_size + 1):
+            conn = await pool.getconn(max(deadline - time.monotonic(), 0.001))
+            check = asyncio.ensure_future(AsyncConnectionPool.check_connection(conn))
+            try:
+                limit = min(POOL_CHECK_TIMEOUT_S, max(deadline - time.monotonic(), 0.001))
+                done, _ = await asyncio.wait({check}, timeout=limit)
+                if not done:
+                    raise TimeoutError(f"the connection check did not answer in {limit:.1f}s")
+                check.result()
+            except Exception:  # noqa: BLE001 - a dead or silent connection; putconn discards it
+                _abandon_check(conn, check)
+                await pool.putconn(conn)
+                continue
+            except BaseException:  # cancellation (a closed SSE tab, a timed-out step): give it back
+                _abandon_check(conn, check)
+                await pool.putconn(conn)
+                raise
+            try:
+                async with conn:
+                    yield conn
+            finally:
+                await pool.putconn(conn)
+            return
+        raise PoolTimeout(f"no live connection in {pool.max_size + 1} hand-outs")
+
+    async def open_pool(self) -> None:
+        """Open the query pool when ``pool_max_size`` is set; a no-op otherwise, so no
+        ``psycopg_pool`` object exists. Never waits for a connection: the tier listens and
+        reports 503 while Postgres is down (U10 D8). Every pooled connect goes through
+        ``pg_credentials.aconnect``, so it resolves the current DSN and re-reads SAS once on
+        an invalid password (U29), as ``_aconn`` does; the pool's own conninfo is unused.
+        ``kwargs`` names no ``sslmode``/``sslrootcert``: libpq reads ``PGSSL*`` from the
+        environment."""
+        if self.pool_max_size is None or self._pool is not None:
+            return
+        import psycopg
+        from psycopg.rows import dict_row
+        from psycopg_pool import AsyncConnectionPool
+
+        creds = self.creds
+
+        class CredentialsConnection(psycopg.AsyncConnection):
+            @classmethod
+            async def connect(cls, conninfo: str = "", **kwargs: Any):
+                return await pg_credentials.aconnect(
+                    creds, lambda d, **k: super(CredentialsConnection, cls).connect(d, **k), **kwargs)
+
+        self._pool = AsyncConnectionPool(
+            "", connection_class=CredentialsConnection, open=False, name="web",
+            min_size=0, max_size=self.pool_max_size,
+            timeout=POOL_TIMEOUT_S, reconnect_timeout=POOL_RECONNECT_TIMEOUT_S,
+            # prepare_threshold=None: psycopg prepares a query server-side after five runs on
+            # one connection, and a pooled one lives long enough; a migration that changes a
+            # result type would then fail that statement until the connection expired.
+            kwargs={"row_factory": dict_row, "autocommit": True, "connect_timeout": 10,
+                    "prepare_threshold": None},
+        )
+        await self._pool.open(wait=False)
+
+    async def close_pool(self) -> None:
+        pool, self._pool = self._pool, None
+        if pool is not None:
+            await pool.close()
 
     async def verify_schema(self, sql_dir: Path = SQL_DIR) -> list[str]:
         """The ledger ``migrate.py`` keeps against the files under ``sql_dir``: the shipped
@@ -1700,6 +1818,7 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         auth.preflight()  # before anything binds: a misconfigured tier must not come up
+        pool_size = pool_max_size()  # #3980: a bad PG_POOL_MAX_SIZE refuses here too
         # U7: a half SQS pair refuses here, before a startup step or its background retry
         # exists, so the refusal leaves nothing running. #3985: with the chat off there is no
         # queue to need, and app.state.queue stays None.
@@ -1738,7 +1857,7 @@ def create_app(
         log.info("postgres: pg_credentials=%s", app.state.pg_creds.description)
         steps: dict[str, Callable[[], Awaitable[Any]]] = {}
         if app.state.store is None:
-            app.state.store = PgStore(creds)
+            app.state.store = PgStore(creds, pool_max_size=pool_size)
             steps["schema"] = app.state.store.verify_schema
         store = app.state.store
         if hasattr(store, "sync_allowlist"):
@@ -1770,6 +1889,12 @@ def create_app(
                 refresh_age_s=grants.env_seconds(os.environ, "FS_GRANT_REFRESH_AGE_S", grants.DEFAULT_REFRESH_AGE_S),
             ))
         try:
+            # #3980: inside the try, so a startup cancelled from here on still closes it, and
+            # after the inline steps, which run on connections of their own exactly as with
+            # no pool: the tier listens at once with Postgres down, each check naming its
+            # cause. Opening never waits for a connection (U10 D8).
+            if hasattr(store, "open_pool"):
+                await store.open_pool()
             yield
         finally:
             for task in (retry, refresher):
@@ -1777,6 +1902,8 @@ def create_app(
                     task.cancel()
                     with contextlib.suppress(asyncio.CancelledError):
                         await task
+            if hasattr(store, "close_pool"):
+                await store.close_pool()
 
     # U12: no /docs, /redoc or /openapi.json -- FastAPI serves them unauthenticated on a
     # public host, and nothing in the repo reads them.
