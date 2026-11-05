@@ -289,7 +289,7 @@ how to word it:
 | across hours, many turns, past compaction | **a tool contract** — validate and reject | the write-boundary invariants in `research_append` |
 | for the main thread, which no allow-list can narrow | **a `PreToolUse` hook** (§5.4) | the raw-write lockdown |
 | for one delegated agent | **that agent's `tools:`** — omit the capability — or a narrowed tool (§5.3) | `extraction_append` |
-| within a single skill invocation | **skill prose** — this is what prose is *for* | "consult the stop criteria before draining the plan" |
+| within a single skill invocation | **skill prose** — this is what prose is *for* | "dispose of the remaining plan items in one call, then consult the gate" |
 
 > **Direction.** Both gates the §4 law named moved into the tool: the
 > **mentor gate** as a refusal — since removed, with gps-mentor off the default
@@ -563,9 +563,9 @@ agents.**
 | Surface | Honored where | Today |
 |---|---|---|
 | **Main thread** `model` + `effort` | hosted alpha and beta, both harnesses — not Cowork | `packages/engine/plugin/main-thread.json`: `claude-sonnet-4-6` at `medium`. Read by `apps/server/app/agent/main_thread.py` (the alpha's runner and control plane, the beta worker) and `eval/harness/harness/main_thread.py` (both harnesses), and passed as `ClaudeAgentOptions(model=, effort=)`, the `--model` / `--effort` flags. Nothing else sets either: no `fly.toml` key, no environment variable, no per-project model. The control-plane image copies the file (`deploy/Dockerfile`); the Cowork zip leaves it out |
-| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor`, `record-structurer` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking`, `citation`, `timeline` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking`, `citation`, `timeline`, `record-structurer` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
 | **Skill `model:` / `effort:`** | nowhere | a skill cannot set either, and none declares one |
-| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites`, `timeline` → `low`; `survey-surname`, `search-images`, `search-hints`, `citation` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites`, `timeline`, `record-structurer` → `low`; `survey-surname`, `search-images`, `search-hints`, `citation` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
 | **Per-spawn effort** (CLI 2.1.294+) | the `Agent` call's own `effort` field, which outranks the agent's `effort:` | nothing sets it, and the model set it on none of ~7,000 recorded spawns (committed e2e and unit run logs, and medium and low runs, 2026-11-03). The alpha logs a per-turn count of spawns that carry one; `api_calls.effort` records each request's `output_config.effort`, and `make alpha-costs` splits the by-agent table on it |
 
 > **A skill cannot set its model or effort.** To route a step to a different
@@ -672,10 +672,15 @@ Architecturally:
   call with CI green; that is now a CI failure. The chain lives in
   `createServer(principal)` there; `src/index.ts` (the shipped `.mcpb`, binding
   `LOCAL`) and `src/http.ts` (the search-agent prototype's Streamable HTTP
-  tool server, binding each request's bearer and a `PgS3ProjectStore` from its
-  `X-Genealogy-Project-Id` header, fenced on the worker attempt's claim
-  (`X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch`), and 403 unless the bearer is
-  the one stamped on that open turn of that project, U4) are entrypoints that only connect
+  tool server — ONE front door with two paths since self-hosted beta E1. A
+  request carrying `X-Genealogy-Project-Id` is the worker path: a
+  `PgS3ProjectStore` bound from that header, fenced on the attempt's claim
+  (`X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch`), and 403 unless the bearer
+  is the one stamped on that open turn of that project (U4). Every other request
+  is the connector path: the bearer is looked up by sha256 in
+  `connector_tokens`, the project comes from the call's own `/proj_<16 hex>`
+  `projectPath` rather than a header, and a refusal is 401 with
+  `WWW-Authenticate`) are entrypoints that only connect
   a transport, so a new arm goes in `server.ts` and both get it. A
   commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the

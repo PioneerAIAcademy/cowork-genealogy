@@ -82,6 +82,7 @@ import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId, toArk } from "../utils/ark.js";
+import { personaFor } from "../utils/record-persona-select.js";
 import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint, sidecarReader } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
@@ -2988,7 +2989,7 @@ function capSource(a: any): unknown {
  *  `record_document_id` when every assertion of that source carries one (a
  *  source can hold two documents, #2537). A source with any assertion that
  *  names no document keys as `capSource`, as before the field existed. */
-function capDocumentKeyer(assertions: Iterable<any>): (a: any) => unknown {
+export function capDocumentKeyer(assertions: Iterable<any>): (a: any) => unknown {
   const unsplit = new Set<unknown>();
   for (const a of assertions) {
     const doc = a?.record_document_id;
@@ -4240,12 +4241,14 @@ export function factEvidenceParties(
   return [...refsReach(sourceRefsOf(fact), research).sourceIds].map((source) => ({ source, party: null }));
 }
 
+const isPersonaId = (v: unknown): v is string => typeof v === "string" && v !== "";
+
 /** Item 10 of #3363 (chesworthrm, 2026-10-24): stamps `record_persona_ids` on
  *  each row the call appended, or updated through `record_ids` or
- *  `log_entry_ids`, from the row's own search sidecars, so the first runs can
- *  count what a persona-keyed refusal would catch. Overwrites whatever the
- *  caller supplied; an update cannot set the field (`updatableFields`). A found
- *  record id is stored in the sidecar's form, as an assertion's is. */
+ *  `log_entry_ids`, from the row's own search and read sidecars, so the first
+ *  runs can count what a persona-keyed refusal would catch. Overwrites whatever
+ *  the caller supplied; an update cannot set the field (`updatableFields`). A
+ *  found record id is stored in the sidecar's form, as an assertion's is. */
 export async function stampNamesakePersonas(
   research: any,
   ops: ReadonlyArray<ResearchAppendOp>,
@@ -4267,18 +4270,36 @@ export async function stampNamesakePersonas(
     const stamp: Record<string, string> = {};
     const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
       if (typeof id !== "string") return id;
+      const bare = arkToBareId(id);
+      // A bare id is a record persona's.
+      const ark = toArk(id).startsWith("ark:/") ? toArk(id) : `ark:/61903/1:1:${bare}`;
+      // The form of a log that finds the record but names no persona for it; a
+      // later cited log may still name one.
+      let found: string | undefined;
       for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
         const entry = logById.get(logId);
         if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
-        const hit = (await readResults(entry.results_ref))?.find(
-          (r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === arkToBareId(id),
-        );
-        if (!hit) continue;
-        if (typeof hit.primaryId === "string" && hit.primaryId !== "") stamp[hit.recordId] = hit.primaryId;
-        return hit.recordId;
+        const results = (await readResults(entry.results_ref)) ?? [];
+        const hit = results.find((r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === bare);
+        let persona: unknown = hit?.primaryId;
+        let form: unknown = hit?.recordId;
+        if (!isPersonaId(persona)) {
+          // A record_read names its persona only among the record's persons, and a
+          // row may list another member of a hit's or a read's household.
+          const persons = results.flatMap((r) => (Array.isArray(r?.gedcomx?.persons) ? r.gedcomx.persons : []));
+          const person = personaFor({ persons }, ark);
+          persona = person?.id;
+          form ??= person?.ark;
+        }
+        if (typeof form !== "string") continue;
+        if (isPersonaId(persona)) {
+          stamp[form] = persona;
+          return form;
+        }
+        found ??= form;
       }
       // Accepted unstamped, unlike #699's assertions: the cap reads only that a row exists, so this loses a count, not identity.
-      return id;
+      return found ?? id;
     });
     row.record_ids = await Promise.all(recordIds);
     if (Object.keys(stamp).length > 0) row.record_persona_ids = stamp;
@@ -6044,6 +6065,25 @@ function declarationStatusInvariants(entry: any): string[] {
   ];
 }
 
+/** Each stop criterion is 1–2 sentences (the agent's Step 2). 800 chars sits above
+ *  the corpus p90 (708); over 188 committed `stop_criteria` objects it refuses 38
+ *  (#3546, measured 2026-11-02). Runs only when the op writes `search_stop`, so a later edit to a
+ *  question that already stores a longer criterion is not refused. */
+export const STOP_CRITERION_MAX_CHARS = 800;
+
+function stopCriteriaLengthInvariants(entry: any): string[] {
+  const sc = entry?.search_stop?.stop_criteria;
+  if (!sc || typeof sc !== "object") return [];
+  return Object.entries(sc)
+    .filter(([, v]) => typeof v === "string" && v.length > STOP_CRITERION_MAX_CHARS)
+    .map(
+      ([k, v]) =>
+        `question ${entry?.id ?? "(new entry)"}: search_stop.stop_criteria.${k} is ${(v as string).length} ` +
+        `characters; the cap is ${STOP_CRITERION_MAX_CHARS}. Write 1–2 sentences per criterion and put ` +
+        `the reasoning in one place, then send this write again.`,
+    );
+}
+
 /** Exhaustiveness may not be declared while the question's own plan says a
  *  search is still running.
  *
@@ -6074,11 +6114,9 @@ function declarationStatusInvariants(entry: any): string[] {
  *  write boundary. The decision, the case against it and the conditions it
  *  ships under are on issue #1830.
  *
- *  The orchestrator still consults this gate BEFORE the plan is drained
- *  (`research/SKILL.md:146`, unchanged): the judgement stays here, and only the
- *  route taken on a refusal changed, to dispose of the named items rather than
- *  extend the plan. Were disposal to happen first, the planner would be making
- *  this gate's call for it.
+ *  The orchestrator disposes of every item first and consults this gate after
+ *  (lead, #3546, restating the 2026-09-02 ruling): "answered early" is a valid
+ *  skip reason. `project_context` names the disposal while items are `planned`.
  *
  *  **Reads the PRE-CALL snapshot, unlike the sibling above, and the asymmetry is
  *  the whole gate.** Plan-item completion is the search work's step, not this
@@ -8671,6 +8709,7 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(fields, "search_stop");
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
+      invariantErrors.push(...stopCriteriaLengthInvariants(resultEntry));
     }
     if (op.op === "append") {
       invariantErrors.push(...newQuestionWhileAnotherIsOpenInvariants(resultEntry, preCallResearch));

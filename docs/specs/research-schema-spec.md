@@ -592,7 +592,7 @@ Array of question objects.
 | `stop_criteria` | object or null | yes | Null when `stopped_because` is null or a non-gate value; required object when `stopped_because` is a gate value. Always present as a key (null, not omitted) for consistency. See below |
 | `not_reached` | object[] | yes | Sources that could not be reached, each with `kind`, `description`, `log_entry_id` and `wiki_title` (both nullable). May be empty. See below |
 
-**`stop_criteria`** — Structured assessment against the GPS 7-Point Stop Criteria. Each field is a brief assessment (1-2 sentences).
+**`stop_criteria`** — Structured assessment against the GPS 7-Point Stop Criteria. Each field is a brief assessment (1-2 sentences), at most 800 characters: `research_append` refuses a longer one on any op that writes `search_stop` (over 188 committed `stop_criteria` objects, measured 2026-11-02, it refuses 38, p90 708 — `research-append-tool-spec.md`).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -1212,7 +1212,7 @@ measured by `packages/engine/mcp-server/dev/measure-namesake-cap.ts` §0).
 | `time_period` | string or null | no | When, as free text (e.g. "born about 1873") |
 | `record_ids` | string[] | yes | The ids of the namesake's own records: a record id in the form assertions carry in `record_id`, a page's image id exactly as `image_transcribe` was given it (or its `ark`), or a full-text hit's `id`. Empty on a pool row |
 | `log_entry_ids` | string[] | no | `log_` references to the searches that found the namesake; each must name an existing log entry |
-| `record_persona_ids` | object | no | Tool-stamped, never the caller's: each listed record found in a sidecar of the row's `log_entry_ids`, mapped to the persona that search result names (`primaryId`). A record found in none has no key |
+| `record_persona_ids` | object | no | Tool-stamped, never the caller's: each listed record found in a sidecar of the row's `log_entry_ids`, mapped to the persona that search or read result names: its `primaryId`, or, where it has none, the person of its record whose ark is the listed id, a household member of a hit or read included. A record found in none has no key |
 | `notes` | string or null | no | Free text |
 | `created` | string | yes | Tool-stamped ISO 8601 date |
 
@@ -1229,14 +1229,24 @@ the record id alone, since a household record gives every member one id, so
 `research_append` stamps the namesake's own persona per listed record, the way it
 fills an assertion's `record_persona_id`: on an append, and on an update that
 sets `record_ids` or `log_entry_ids`, overwriting whatever the caller sent. Each
-listed id found in the sidecar of a persona-bearing search the row cites is stored
-in that sidecar's form, as an assertion's is. A record found in no sidecar is left
+listed id found in the sidecar of a persona-bearing search or read the row cites,
+as a result or as a person of a result's record, is stored in that sidecar's form,
+as an assertion's is. A record found in no sidecar is left
 unstamped and the row is still written: unlike an assertion, whose persona is
 lost for good when its search staged no sidecar, a missing stamp costs a count,
 not an identity, because the cap reads only that a row exists. The first runs that write rows count, with
 `dev/measure-namesake-cap.ts` §7, how many listed records were stamped, how many
 were not though their row cites such a search, and what a persona-keyed refusal
-would refuse and spare; item 10 is decided on those counts. Ids no persona
+would refuse and spare; item 10 is decided on those counts. A run whose engine
+cannot stamp a read, or whose engine commit is not in the clone, is left out and
+named rather than counted as zeros (chesworthrm, 2026-11-05). "Would refuse" counts
+a strong link whose assertion's persona is any persona the row stamped, from any
+record id, a household member's included; "spare" counts links to another persona
+of a record the row stamped, the record found as the cap finds a link's (its
+source, split by `record_document_id`), so a household member's record id reaches
+it as it reaches "would refuse". Together they are what a rule keyed on those
+records would refuse; a persona-keyed rule refuses the first and spares the
+second. Ids no persona
 search can stamp, a page's image id (which every entry on that page shares) and
 a full-text hit's id, are counted on a line of their own, outside the stamped
 share, so a refusal never keys on an image id alone.
