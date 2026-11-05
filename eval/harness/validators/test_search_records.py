@@ -1075,21 +1075,30 @@ def test_namesake_other_parents_row(before_state, after_state, test):
 
 
 PARENT_NAME_FIELDS = ("fatherGivenName", "fatherSurname", "motherGivenName", "motherSurname")
+SOURCE_PIN_FIELDS = ("collectionId", "batchNumber")
+CHILD_PLACE_FIELDS = ("birthPlace", "residencePlace", "anyPlace")
+
+
+def _sent(args, fields):
+    return sorted({f"{f}={args[f]}" for f in fields if args.get(f)})
 
 
 def test_children_enumeration_unpinned(tool_calls, test):
     """Tag-gated (children-enumeration-unpinned): issue #3948
     (maria-stockburger-son) -- a children-enumeration plan item runs at least
-    one record_search that names a parent and carries no `collectionId`.
+    one record_search that names a parent, is pinned to no single source
+    (`collectionId`, `batchNumber`) and carries no place.
 
     Ground truth: feedback bundle 2026-10-28T11-47-20, build 8728d29f3 -- every
     children search was pinned to collection 3015626 or 1395660, and the four
-    children indexed only in 1473000 never surfaced. The scenario's catch-all
-    fixture answers a pin to 1473000 and an unpinned search alike, so the judge
-    cannot tell them apart; this check can.
+    children indexed only in 1473000 never surfaced; Andreas is indexed under
+    "Sankt Georgen, Freiburg", so a Villingen place misses him as well. The
+    scenario's catch-all fixtures answer a pin to 1473000, a batch pin and a
+    place-anchored search alike, so the judge cannot tell them apart; this
+    check can.
 
-    A call the tool refused (`is_error`) does not count. Only a non-empty
-    `collectionId` pins: an empty one filters nothing.
+    A call the tool refused (`is_error`) does not count. A field whose value is
+    null or "" was not sent as a filter.
     """
     if "children-enumeration-unpinned" not in test.get("tags", []):
         pytest.skip("not a children-enumeration-unpinned scenario")
@@ -1101,9 +1110,15 @@ def test_children_enumeration_unpinned(tool_calls, test):
         and any(_as_mapping(c.get("args")).get(f) for f in PARENT_NAME_FIELDS)
     ]
     assert parent_searches, "no record_search named a parent: the children enumeration never ran"
-    unpinned = [a for a in parent_searches if not a.get("collectionId")]
+    unpinned = [a for a in parent_searches if not _sent(a, SOURCE_PIN_FIELDS)]
     assert unpinned, (
-        "every record_search naming a parent was pinned to a collectionId "
-        f"({sorted({str(a.get('collectionId')) for a in parent_searches})}); "
-        "a children enumeration needs one parent-name search with no collectionId"
+        "every record_search naming a parent was pinned to one source "
+        f"({sorted({s for a in parent_searches for s in _sent(a, SOURCE_PIN_FIELDS)})}); "
+        "a children enumeration needs one parent-name search with no collectionId or batchNumber"
+    )
+    place_free = [a for a in unpinned if not _sent(a, CHILD_PLACE_FIELDS)]
+    assert place_free, (
+        "every unpinned parent-name record_search still carried a place "
+        f"({sorted({s for a in unpinned for s in _sent(a, CHILD_PLACE_FIELDS)})}); "
+        "the children-enumeration search clears birthPlace, residencePlace and anyPlace"
     )

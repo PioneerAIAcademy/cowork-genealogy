@@ -62,6 +62,36 @@ def test_pin_to_the_right_collection_still_fails():
         check([rs_call({**PARENTS, "collectionId": "1473000"})], TAGGED)
 
 
+def test_batch_pin_fails():
+    """batchNumber pins a search to one source, as collectionId does."""
+    with pytest.raises(AssertionError) as e:
+        check([rs_call({**PARENTS, "batchNumber": "C99999-1"})], TAGGED)
+    assert "batchNumber=C99999-1" in str(e.value)
+
+
+@pytest.mark.parametrize("field", ["birthPlace", "residencePlace", "anyPlace"])
+def test_unpinned_but_place_anchored_fails(field):
+    """No collection, but a Villingen place: Andreas, indexed under
+    'Sankt Georgen, Freiburg', is still missed."""
+    calls = [rs_call({**PARENTS, field: "Sankt Georgen im Schwarzwald, Villingen, Baden"})]
+    with pytest.raises(AssertionError) as e:
+        check(calls, TAGGED)
+    assert field in str(e.value)
+
+
+def test_place_on_pinned_search_does_not_count_against_unpinned_one():
+    """A place on a pinned search is fine; only the unpinned search must be place-free."""
+    calls = [
+        rs_call({**PARENTS, "collectionId": "3015626", "birthPlace": "Oberkirnach"}),
+        rs_call(dict(PARENTS)),
+    ]
+    check(calls, TAGGED)
+
+
+def test_empty_place_counts_as_place_free():
+    check([rs_call({**PARENTS, "birthPlace": "", "anyPlace": None})], TAGGED)
+
+
 def test_no_parent_name_search_fails():
     calls = [rs_call({"surname": "Meyer", "recordCountry": "Germany"})]
     with pytest.raises(AssertionError) as e:
