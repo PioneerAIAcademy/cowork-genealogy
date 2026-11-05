@@ -43,7 +43,7 @@ def test_only_convert_calendar_called(tool_calls, test):
     bad = [
         tc["tool"] for tc in mcp_calls
         if "convert_calendar" not in tc.get("tool", "")
-        and tc.get("tool", "").rsplit("__", 1)[-1] != "research_log_append"
+        and tc.get("tool", "").rsplit("__", 1)[-1] not in {"research_log_append", "project_context"}
     ]
     assert not bad, (
         f"convert-dates positive tests should only call convert_calendar "

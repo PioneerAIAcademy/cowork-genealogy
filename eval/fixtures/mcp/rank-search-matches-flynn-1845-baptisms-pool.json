@@ -1,0 +1,48 @@
+{
+  "tool": "rank_search_matches",
+  "description": "rank_search_matches ranks the two 1845 Aghamore baptisms against subject I1 (Patrick Flynn, born about 1845 in Ireland) nearly level: same name, year and country, neither attached, no birth-year conflict. Feeds ut_search_records_031. Matched on subjectId.",
+  "args": {
+    "subjectId": "~"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 2,
+    "returnedCount": 2,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:Q7FB-T45",
+        "primaryId": "P1",
+        "personName": "Patrick Flynn",
+        "sex": "Male",
+        "birthDate": "1845",
+        "birthPlace": "Aghamore, Mayo, Ireland",
+        "collectionTitle": "Ireland, Catholic Parish Registers, 1740-1900",
+        "matchScore": 0.68,
+        "attachedToSubject": false,
+        "attachedToOther": false,
+        "birthYearConflict": false,
+        "birthYearGap": 0
+      },
+      {
+        "matchRank": 2,
+        "searchRank": 2,
+        "recordId": "ark:/61903/1:1:Q7FB-M45",
+        "primaryId": "P1",
+        "personName": "Patrick Flynn",
+        "sex": "Male",
+        "birthDate": "1845",
+        "birthPlace": "Aghamore, Mayo, Ireland",
+        "collectionTitle": "Ireland, Catholic Parish Registers, 1740-1900",
+        "matchScore": 0.67,
+        "attachedToSubject": false,
+        "attachedToOther": false,
+        "birthYearConflict": false,
+        "birthYearGap": 0
+      }
+    ]
+  }
+}

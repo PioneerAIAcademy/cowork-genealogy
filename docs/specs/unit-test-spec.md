@@ -2540,7 +2540,7 @@ Key settings:
 - `allowed_tools` — the filesystem baseline plus every registered MCP tool (see below). No per-skill narrowing: `allowed-tools` frontmatter is a grant, not a restriction, and the `test_tool_allowlist` validator reports undeclared calls after the fact.
 - `model` — pinned to a specific version for reproducibility across runs.
 - `temperature=0` — deterministic decoding within a single run. **v1.5 implementation note:** the installed `claude-agent-sdk` does not currently expose a `temperature` field on `ClaudeAgentOptions` — the harness relies on the underlying Claude Code CLI's default decoding behaviour. Variance is acknowledged in `harness/skill_runner.py` and captured by bumping `runs_per_test` when needed.
-- `hooks` — `PreToolUse` hooks let the harness observe every tool invocation, including `Skill` calls (one of the two paths that populate `skills_invoked`; a slash entry is the other, and fires no hook) and MCP calls (used to populate `tool_calls` and route to the mock server).
+- `hooks` — `PreToolUse` hooks let the harness observe every tool invocation, including `Skill` calls (one of the two paths that populate `skills_invoked`; a slash entry is the other, and fires no hook) and MCP calls (used to populate `tool_calls` and route to the mock server). A `UserPromptSubmit` hook (`context_policy.sources_note_hook`) adds the shipped `no_project_route.SOURCES_NOTE` to each user message, as Cowork does. It is message context, not the system prompt: as the whole system prompt it broke routing (`ut_research_027` 1 of 5, against 4 of 5 without it).
 
 ### Deriving `allowed_tools` per skill
 

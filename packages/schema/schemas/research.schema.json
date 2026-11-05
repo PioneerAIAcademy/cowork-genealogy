@@ -116,6 +116,13 @@
       "items": {
         "$ref": "#/$defs/rejected_link_entry"
       }
+    },
+    "hit_verdicts": {
+      "type": "array",
+      "description": "The evaluate-search-results agent's verdicts on full-text search hits: one row per hit and target person.",
+      "items": {
+        "$ref": "#/$defs/hit_verdict_entry"
+      }
     }
   },
   "$defs": {
@@ -853,6 +860,12 @@
           "$ref": "enums.schema.json#/$defs/record_role_recommended"
         },
         "record_persona_id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "record_document_id": {
           "type": [
             "string",
             "null"
@@ -1965,7 +1978,7 @@
       }
     },
     "namesake": {
-      "description": "A different person who shares the name of a tree person, recorded so that a probable or confident person_evidence link to the tree person needs something in its record that ties the record to that person. Keyed by the tree person_id it shadows. Never retired; an update never changes its person_id, and merge_tree_persons re-keys it onto the merge survivor; see research-schema-spec.md.",
+      "description": "A different person who shares the name of a tree person, or a pool of such people one of whom may be that person (notes starting 'pool:', record_ids empty), recorded so that a probable or confident person_evidence link to the tree person needs something in its record that ties the record to that person. Keyed by the tree person_id it shadows. Never retired; an update never changes its person_id, and merge_tree_persons re-keys it onto the merge survivor; see research-schema-spec.md.",
       "type": "object",
       "required": [
         "id",
@@ -2025,6 +2038,55 @@
             "string",
             "null"
           ]
+        },
+        "created": {
+          "$ref": "enums.schema.json#/$defs/iso_date"
+        }
+      }
+    },
+    "hit_verdict_entry": {
+      "description": "A verdict on whether one full-text search hit is about one tree person, and whether it holds a vital fact that person lacks. research_append rewrites hit_id to the hit's stored id, refuses a hit not in that search, and folds a second append for the same log_id, hit_id and person_id into an update of the first. Never retired; an update sets only verdict, new_vital_info and rationale, and merge_tree_persons re-keys person_id onto the merge survivor; see research-schema-spec.md.",
+      "type": "object",
+      "required": [
+        "id",
+        "log_id",
+        "hit_id",
+        "person_id",
+        "verdict",
+        "new_vital_info",
+        "rationale",
+        "created"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^hv_"
+        },
+        "log_id": {
+          "description": "The fulltext_search log entry whose retained results hold the hit.",
+          "type": "string",
+          "pattern": "^log_"
+        },
+        "hit_id": {
+          "description": "The hit's id as that search's sidecar stores it.",
+          "type": "string",
+          "minLength": 1
+        },
+        "person_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verdict": {
+          "$ref": "enums.schema.json#/$defs/hit_verdict"
+        },
+        "new_vital_info": {
+          "description": "As of the evaluation: the hit dates or places a birth, death or marriage, or names a spouse, parent or child, that the target lacks. A later extraction does not clear it.",
+          "type": "boolean"
+        },
+        "rationale": {
+          "type": "string",
+          "pattern": "\\S"
         },
         "created": {
           "$ref": "enums.schema.json#/$defs/iso_date"

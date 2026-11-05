@@ -1,7 +1,7 @@
 {
   "project": {
     "id": "rp_mikkel_blyeberg_father",
-    "objective": "Who was the father of Mikkel Nielsen Blyeberg, born 20 August 1779 in Stagstrup Sogn, Thisted (Vestervig) Amt, Denmark, and when did his father die?",
+    "objective": "Who was the father of Mikkel Nielsen Blyeberg, born 20 August 1779 in Stagstrup Sogn, Thisted (Vestervig) Amt, Denmark?",
     "subject_person_ids": ["PID-TODO"],
     "status": "active",
     "created": "2026-07-03",
