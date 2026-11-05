@@ -151,7 +151,7 @@ julianToGregorianDay, = 20 June 1650 (Gregorian)". Take the offset from
 always preserve both the original and converted forms.
 
 State the original date and the converted date in a notation a genealogist
-would recognize (`11 Mar 1752/3`) — never only buried inside a sentence of
+would recognize (`15 Feb 1749/50`) — never only buried inside a sentence of
 explanation. On the rejection above, give the one labelled-Julian line in its
 place; never add a second, unconditional line calling it "Converted".
 
