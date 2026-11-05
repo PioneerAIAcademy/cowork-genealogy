@@ -1291,8 +1291,8 @@ A reasonably exhaustive indexed Records search has been performed when:
 When a plan item enumerates a couple's children (its `record_type` is a birth search run across all children, not one specific child's vital record), run **one place-free search** in addition to the place-anchored sequences above:
 
 - Clear all place parameters (`birthPlace`, `residencePlace`, `anyPlace`).
-- Anchor on `recordCountry` + the birth `collectionId`; set both parents' given names and surnames.
-- **Why:** FamilySearch sometimes indexes a child under an unexpected jurisdiction. Any place filter — even broadened — never reaches it. A place-anchored search that returns some children never trips the zero-hit lever, so the missed child stays invisible without this step.
+- Set `recordCountry` and both parents' given names and surnames, with **no `collectionId`**. A collection-pinned search may follow it but never replaces it.
+- If this search returns more than 5,000 hits, narrow it by the birth date range, not by `collectionId`; this overrides rule 1 of "Decision rules by hit count".
 - Run this **once** per enumeration plan item; do not apply it to every ordinary birth search.
 - Verify any hit outside the family's expected place against the parents' names before accepting.
 

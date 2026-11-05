@@ -1,0 +1,47 @@
+{
+  "test": {
+    "id": "ut_search_records_033",
+    "skill": "search-records",
+    "name": "Children enumeration: run one parent-name search with no collectionId, to catch children indexed in another collection",
+    "type": "positive",
+    "description": "Executing pli_001 (enumerate the children of Johann Georg Meyer and Maria Dorothea Stockburger, Sankt Georgen im Schwarzwald, Baden), a search pinned to collection 3015626 returns 9 hits and misses Christina 1809, Andreas 1812, Dorothea 1814 and Johannes 1820, who are indexed only in collection 1473000 (record-search-stockburger-children-pinned-3015626). The skill must apply the children-enumeration rule: run a place-free search on both parents' names and recordCountry with no collectionId, which returns all 11 children (record-search-stockburger-children-unpinned-father/-mother). Guards issue #3948 (maria-stockburger-son): a collection-pinned search that returns some children is not sufficient.",
+    "tags": [
+      "search",
+      "vital",
+      "germany",
+      "children-enumeration",
+      "children-enumeration-unpinned",
+      "place-free",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Execute plan item pli_001 — enumerate all children born to Johann Georg Meyer and Maria Dorothea Stockburger of the Sankt Georgen im Schwarzwald parish, Baden, approximately 1808–1830, to complete the family's child list. The tree already holds Magdalena (born 5 March 1817) and Anna Maria (born 9 November 1821).\n\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"vital_record\",\n  \"jurisdiction\": \"Sankt Georgen im Schwarzwald, Villingen, Baden, Germany\",\n  \"date_range\": \"1808-1830\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"Enumerate all children of Johann Georg Meyer and Maria Dorothea Stockburger. The Sankt Georgen parish baptisms are name-searchable in FamilySearch collection 3015626 (Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971).\",\n  \"fallback_for\": null,\n  \"status\": \"in_progress\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Maria Dorothea\",\n      \"surname\": \"Stockburger\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": null,\n  \"death\": null\n}",
+    "scenario": "stockburger-children-collection-pin"
+  },
+  "mcp_fixtures": [
+    "record-search-stockburger-children-pinned-3015626",
+    "record-search-stockburger-children-pinned-1395660",
+    "record-search-stockburger-children-unpinned-father",
+    "record-search-stockburger-children-unpinned-mother",
+    "record-search-catch-all-empty",
+    "rank-search-matches-stockburger-children-pinned-3015626",
+    "rank-search-matches-stockburger-children-pinned-1395660",
+    "rank-search-matches-stockburger-children",
+    "record-read-andreas-mayer-nnxz-4l9",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "CORE (Tool Arguments): the children enumeration must include at least one record_search that names a parent (fatherGivenName, fatherSurname, motherGivenName or motherSurname) and carries NO collectionId. Every search pinned to collection 3015626 returns the same 9 children (record-search-stockburger-children-pinned-3015626). Score Tool Arguments 3 if an unpinned parent-name search is issued, whether before or after a pinned one. Score 1 if every parent-name search carries a collectionId — including a pin to 1473000, which is still a pin.",
+    "CORE (Correctness): the unpinned search (record-search-stockburger-children-unpinned-father/-mother) returns 20 hits covering all 11 children, including four the pinned search never returns: Christina 22 Oct 1809 (NRG5-HRM), Andreas 5 Sep 1812 (NNXZ-4L9), Dorothea 18 Jan 1814 (NV6K-789) and Johannes 8 Mar 1820 (NLWF-JHK), all in collection 1473000. Surfacing these four in the log or the reply is the successful outcome.",
+    "FAIL: the skill runs only collection-pinned searches (3015626, 1395660, or both), reports the 9 children of 3015626, and stops. A pinned search that returns some children does not satisfy the rule — this is the run that issue #3948 records.",
+    "Completeness: the search should be logged. Do NOT require extraction or attachment of the four children in this test.",
+    "Do NOT penalize noting that Andreas is indexed under 'Sankt Georgen, Freiburg' rather than Villingen, or that his mother is spelled 'Stokburger', or that surnames vary (Meyer/Mayer). Flagging an out-of-place hit for verification against the parents' names is correct behavior.",
+    "record_read is stocked but OPTIONAL. Score neither path down."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}
