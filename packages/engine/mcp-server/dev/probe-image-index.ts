@@ -120,8 +120,9 @@
  *   does not.
  *
  * VANTAGE POINT
- *   2026-11-04, from the developer's own machine on a home connection, not a
- *   church-network host, on an ordinary FamilySearch account. The outside run
+ *   2026-11-04, from the developer's own machine on a consumer home connection
+ *   (a mobile 5G router), NOT a church-network host, on an ordinary
+ *   FamilySearch account. The outside run
  *   is the binding one: inside the church network Imperva clears requests
  *   ahead of the checks it applies to public traffic, so a 200 there would not
  *   prove the shipped .mcpb can make the same call, and an in-network run
@@ -129,11 +130,14 @@
  *   was measured from the hosted tool server; that is a separate run this host
  *   cannot perform, and no result above is presented as covering it.
  *
- * GROUND TRUTH, taken by hand in a browser before this runs (§1 of the plan):
- *   the index-panel row count for the target image, and whether "Michael Barry"
- *   and "Mila Fuller" are among them. Every entry count below is reported
- *   against that number. "Mila Fuller" is the entry the agent's OCR read as
- *   "Milo Hall" and then reported as missing from the index.
+ * GROUND TRUTH. 27 entries, with "Michael Barry" first and "Mila Fuller"
+ *   second. Taken from the viewer's OWN response in the browser capture, which
+ *   is what the index panel renders -- so it is the panel's content by
+ *   construction, not a second measurement of it. The one thing that reading
+ *   cannot rule out is the panel paging or filtering the payload before
+ *   display; a human glance at the panel settles that and nothing else.
+ *   "Mila Fuller" is the entry the agent's OCR read as "Milo Hall" and then
+ *   reported to the researcher as missing from the index.
  */
 import { LOCAL } from "../src/auth/principal.js";
 import { getValidToken } from "../src/auth/refresh.js";
