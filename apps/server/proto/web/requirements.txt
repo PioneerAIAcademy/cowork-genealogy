@@ -330,6 +330,9 @@ psycopg-binary==3.3.8 ; implementation_name != 'pypy' \
     --hash=sha256:f31dea98f8c5c6c60e8e049388f24eec14088518e2ded0f892d96c785401e688 \
     --hash=sha256:fc134798cd646a15326004bbeff4c2719e000a9ac52f6b893a767f7c5276e24b
     # via psycopg
+psycopg-pool==3.3.3 \
+    --hash=sha256:9b9cd6a4fcec47a410f7e82d408540e7f77b478509e91b44c1a5457a13e5ff37 \
+    --hash=sha256:df87b5d9d0ad7db37f6cdad4fa8ce113d250f5997f6db38e9a99192fb67f9e1d
 pycparser==3.12 ; implementation_name != 'PyPy' and platform_python_implementation != 'PyPy' \
     --hash=sha256:a076f3f489b39b43ed13563a1dafe42447445bec2e294154ec5c57fcdda4c85e \
     --hash=sha256:f03387877eab82ce01bbdfd0ba7252ee55a90b1c708d5129e2ce915475cf1db6
@@ -508,6 +511,7 @@ typing-extensions==4.16.0 \
     #   fastapi
     #   opentelemetry-api
     #   psycopg
+    #   psycopg-pool
     #   pydantic
     #   pydantic-core
     #   starlette
