@@ -556,7 +556,8 @@ async function main() {
   //      {"imageData":<the whole object step 1 returned>,locale,state}}.
   //      Hydrates records to the full set.
   //
-  // Step 2 is reachable with NO bearer at all. Step 1 refuses ours.
+  // Step 2 is reachable with NO bearer at all. Step 1 refuses from outside the
+  // church network, with or without ours.
   console.log("\n## Candidate 4 — /search/filmdatainfo (the viewer's own chain)");
   const FILMDATA = "https://www.familysearch.org/search/filmdatainfo";
   const viewerUrl = `${arkToUrl(ark)}?lang=en&i=6`;
@@ -612,9 +613,9 @@ async function main() {
     );
   }
 
-  // ── The fallback: measured, never shipped ─────────────────────────────────
+  // ── The fallback: a plan only, never measured and never shipped ───────────
   if (withFallback) {
-    console.log("\n## Fallback measurement (NOT a tool — see the issue)");
+    console.log("\n## Fallback plan (NOT measured, NOT a tool — see the issue)");
     console.log("    leg 1: record_search by imageGroupNumber + place, paged to exhaustion or 200 results");
     console.log("    leg 2: record_read per candidate, reading imageArk, capped at 200 calls");
     console.log("    (run with a film and place; a capped run reports 'not found within 200',");
