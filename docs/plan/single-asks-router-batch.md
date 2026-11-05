@@ -56,7 +56,7 @@ The other three #2813 items are deliberately NOT here:
 
 - **Item 2** (end a bounded turn at its deliverable) **SHIPPED** in PR #3147, merged
   2026-10-05 as `39a1c7ac7`. The `delivered` exit, `research_delivered` and
-  `DELIVERY_GUIDANCE` are on `main`.
+  `DELIVERY_GUIDANCE` were on `main` until step mode phase 2 deleted them (PR #4148).
 - **Item 5** (save what the turn finds) is **dropped for THREE of its four clauses, which are
   already built elsewhere. The fourth is not built anywhere** — see below.
   `search-records` already owns this: it **holds `research_log_append`** in its own
@@ -122,11 +122,11 @@ identified that a toolless voluntary stop is vetoed and nudged, and concluded th
 works "only because the per-turn `DELIVERY_GUIDANCE` names the tool". The field says it did
 not: alpha reported the agent answering a bounded question and carrying on. "End your turn"
 in the body and "call `research_delivered`" in the prompt competed, and the body won. The
-router's bounded close names the tool now. On the hosted path a toolless voluntary stop is vetoed
+router's bounded close then named the tool, until step mode phase 2 deleted it (PR #4148). On the hosted path a toolless voluntary stop is vetoed
 and nudged with `CONTINUE_REASON` (then "invoke the next GPS sub-skill now"; now
 "invoke the `research` skill now"), which contradicts
-the rule being added mid-run. The pairing works only because the per-turn `DELIVERY_GUIDANCE`
-names the tool; the prototype-worker acceptance bullet is what catches it if the two drift.
+the rule being added mid-run. The pairing worked only because the per-turn `DELIVERY_GUIDANCE`
+named the tool; both the veto and the tool are now deleted (step mode phase 2).
 
 ## The one design question to settle BEFORE writing prose
 
