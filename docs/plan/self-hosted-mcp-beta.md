@@ -29,7 +29,7 @@
 | Front door | One door on the tool server. Every caller presents our own token, and the door loads that user's stored FamilySearch token and OpenRouter key. |
 | Projects | `projectPath` carries an id the server mints. The user who first writes to it owns it. |
 | UI | MCP App cards and a case file, in one connector named exactly "Genealogy Research". |
-| Surface | Cowork tasks, claude.ai chat and Desktop Chat are all first-class, because project data lives on the server. The plugin is installed once and must load on all three. Claude's plugin docs say chat loads a plugin's skills, commands and connectors but not its agents or hooks, so what research a chat user gets is undecided. |
+| Surface | claude.ai and Desktop Chat are the primary surfaces, and Cowork works too, because project data lives on the server and nothing sits on the user's disk. Claude's plugin docs say a chat session ignores a plugin's agents and hooks and a Cowork task loads them, and that chat and Cowork now share one home. What research a chat session gets is undecided. |
 | Sign-up | An allowlist the lead keeps. Each user needs a FamilySearch account whose email no other user has. Removing an email does not end a connector token; one SQL update does, if it is ever needed. |
 | Web pages | Plain pages from the web tier. No SPA in the beta. |
 | Uploads | Plain files, on a plain upload page: the original, plus a PDF's own text when the browser finds a text layer. Claude reads or transcribes them with existing tools. |
@@ -39,7 +39,7 @@
 | Retention | Everything is deleted when the beta ends, sign-ins and OpenRouter keys included. Nothing is migrated. |
 | Settings | One env file on `malachi`, mode 600, outside the repo. |
 | Limits | Per user, 4 calls at a time and a pause when FamilySearch answers 429. One shared FamilySearch budget and a transcription cap. A blocked user is refused at the door. |
-| Plugin | A hand-installed zip for the demo and the first users. A GitHub marketplace if the beta grows. |
+| Plugin | A hand-installed zip for the demo and the first users, and a GitHub marketplace if the beta grows. The goal is one install on the account, covering web and desktop, with the connector bundled if item 14 passes. |
 | Policies | A short privacy policy and terms from GeneFun, Inc., in place before the first invited user. |
 | Other deployments | The desktop extension, the Fly-hosted alpha, the handoff's chat screens and Electron keep running through the demo, with fixes only and no new features. The lead decides again after it. |
 | Older extensions | Not supported. The research router needs `project_list`; without it, the router says the genealogy tools are not connected and stops. |
@@ -123,12 +123,13 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 | 9. PDF text | Not measured: three real browser-saved Ancestry captures through pdf.js. |
 | 10. Reconnect | Not measured: with a live connector token and an expired FamilySearch session, whether the tools stay, whether the link reaches the user from the main thread and from an agent, and whether "continue" works in the same task. |
 | 11. Long token | Not measured: whether a long `expires_in` with no refresh token still works, in a new task and in the open one, and, when that token dies, what reconnecting takes. |
-| 12. Chat surfaces | Claude's plugin docs say chat loads skills, commands and connectors, and not agents or hooks. Not measured: that, on this plugin, and whether the card and the sign-in link behave in claude.ai chat and Desktop Chat as they do in a Cowork task. |
+| 12. Surfaces | Claude's plugin docs say chat ignores agents and hooks, and a Cowork task in the desktop app loads them. Not measured: whether a Cowork session on claude.ai loads them, what a chat session does with this plugin, and whether the card and the sign-in link behave alike on each. |
 | 13. Door refusals | Not measured: what the researcher, the model and the card see when the door answers 400, 403 or 503, and whether the connector then works with no new sign-in. A bad result could move these to `isError`, on the connector path only. 401 stays HTTP. |
+| 14. One install | Not measured: a plugin whose `.mcp.json` names the server. Claude's docs say the entry appears on the plugin's Connectors tab, where the user connects and signs in, so skills, agents, hook and connector arrive together on the account. Still to learn: whether its tools keep the `mcp__Genealogy_Research__` prefix the agents list. |
 
 **When each runs:**
-- **Sitting 1:** item 10 on the main thread and in an agent, approvals in agents, item 4, a stub card on a signed-in connector, the MCP App's open cells, and items 12 and 13. The card and the refusals run on all three surfaces, and the refusals run last.
-- **Sitting 2, at least 25 hours later, 45 minutes:** item 11.
+- **Sitting 1:** item 10 on the main thread and in an agent, approvals in agents, item 4, a stub card on a signed-in connector, the MCP App's open cells, and items 12 and 13. The card and the refusals run on each surface, and the refusals run last.
+- **Sitting 2, at least 25 hours later, 45 minutes:** item 11, then item 14, which removes the connector.
 - **Before the first invited user:** items 6, 8 and 9.
 
 **Done when:** each item has a recorded result in a comment on issue #3529.
@@ -384,7 +385,7 @@ Issue #4003, in the icebox, holds the worker's half of the one door and server-s
 - **The per-call limit.** Unmeasured in Claude or Funnel. `project_create` needs about 55 s, and `image_transcribe` longer.
 - **The wrong server.** A `.mcpb` left on shares the connector's prefix, so research can land on disk and look right. The first reply must say `hosted`.
 - **One host.** A single server, with `/wiki` and `/pop-stats` on the same machine and the same Funnel. A lost disk loses users' research, and D4 and the terms say so.
-- **Research in chat.** Claude's docs say hooks and agents do not run there, so a chat user holds the raw tools with none of the hook's rules. A rule that must hold in chat has to be a tool rule.
+- **Research in chat.** Claude's docs say a chat session runs no hooks or agents, and this plugin is 2 skills and 31 agents. So a chat user holds the raw tools with none of the hook's rules, and a rule that must hold there has to be a tool rule.
 - **A test on the lead's account.** It runs a variant plugin, so cards working there say nothing about the zip users install. Only acceptance step 2 does.
 - **One account's load.** Until E4's per-user cap lands, one account can exhaust the tool server with concurrent calls, so it lands before invited users.
 - **Code moving under a rehearsal.** One pinned commit for web, tools and the zip.
