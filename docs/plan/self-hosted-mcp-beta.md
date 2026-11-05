@@ -177,7 +177,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 - **The image cap** is keyed per user, so a connector call that names no project cannot spend a film's cap for everyone.
 - **`TRANSCRIPTION_ENABLED` goes,** with its plumbing.
 - **Direct reads.** `search-full-text` uses `Read` on a staged result and `translation` on an image path, and neither file exists for a connector. Both move to tools, and each agent's edit owes its eval.
-- **Done when:** tests pin the time budget, the refusal and the per-user cap, and `git grep -E 'TRANSCRIPTION_ENABLED|transcriptionEnabled'` returns nothing.
+- **Done when:** tests pin the time budget, the refusal and the per-user cap, and `git grep -E 'TRANSCRIPTION_ENABLED|transcriptionEnabled' -- ':!docs/plan'` returns nothing.
 
 ### The web tier (`apps/server/proto/web`)
 
