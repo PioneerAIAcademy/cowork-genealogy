@@ -672,10 +672,15 @@ Architecturally:
   call with CI green; that is now a CI failure. The chain lives in
   `createServer(principal)` there; `src/index.ts` (the shipped `.mcpb`, binding
   `LOCAL`) and `src/http.ts` (the search-agent prototype's Streamable HTTP
-  tool server, binding each request's bearer and a `PgS3ProjectStore` from its
-  `X-Genealogy-Project-Id` header, fenced on the worker attempt's claim
-  (`X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch`), and 403 unless the bearer is
-  the one stamped on that open turn of that project, U4) are entrypoints that only connect
+  tool server — ONE front door with two paths since self-hosted beta E1. A
+  request carrying `X-Genealogy-Project-Id` is the worker path: a
+  `PgS3ProjectStore` bound from that header, fenced on the attempt's claim
+  (`X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch`), and 403 unless the bearer
+  is the one stamped on that open turn of that project (U4). Every other request
+  is the connector path: the bearer is looked up by sha256 in
+  `connector_tokens`, the project comes from the call's own `/proj_<16 hex>`
+  `projectPath` rather than a header, and a refusal is 401 with
+  `WWW-Authenticate`) are entrypoints that only connect
   a transport, so a new arm goes in `server.ts` and both get it. A
   commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
