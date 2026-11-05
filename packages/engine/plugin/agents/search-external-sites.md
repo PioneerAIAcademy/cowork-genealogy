@@ -559,8 +559,13 @@ which this is not. The outcomes:
   the user says "nothing came up, there's nothing to save." If the user
   *reports* a nil without a capture, still append the `negative` entry
   immediately, and in `notes` mark the absence **unconfirmed pending a
-  capture**; then give them the click-capture steps (step 4) so a PDF of the
-  empty results page can later upgrade it from "unconfirmed" to "conclusive."
+  capture**; then, in `summary_for_user` (after the `---`), paste the URL you
+  built for the log — the researcher has to open that same search to capture
+  it, not a different one — plus the click-capture steps (step 4), so a PDF of
+  the empty results page can later upgrade it from "unconfirmed" to
+  "conclusive." Pasting a different search's URL instead (a free alternative)
+  does not satisfy this — offer it in addition, never in place of the
+  original search's own link.
   Logging the search is not the same as declaring the record absent — never
   defer the log entry while you wait for the capture.
 - **No access** (subscription/login wall the user can't pass) →
