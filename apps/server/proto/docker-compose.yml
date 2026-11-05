@@ -320,6 +320,7 @@ services:
       # default everywhere; set them in the shell to exercise the on state.
       GENEALOGY_FS_CALLS_PER_MINUTE: ${GENEALOGY_FS_CALLS_PER_MINUTE:-}
       GENEALOGY_MAX_TRANSCRIPTIONS: ${GENEALOGY_MAX_TRANSCRIPTIONS:-}
+      GENEALOGY_SHARED_COLLECTIONS_CACHE: ${GENEALOGY_SHARED_COLLECTIONS_CACHE:-}
       # The per-user config, the keys src/hosted-config-env.ts reads from the env:
       # one shared process, so these are per-STACK here rather than per patron, which is
       # what a one-patron prototype wants. Without the OpenRouter key `image_transcribe`

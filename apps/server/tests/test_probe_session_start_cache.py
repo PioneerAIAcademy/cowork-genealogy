@@ -136,7 +136,7 @@ def test_usage_is_read_from_the_stream_head():
 
 def test_always_load_is_read_from_the_engine_source():
     names = always_load_tools()
-    assert "project_context" in names and "research_delivered" in names
+    assert "project_context" in names and "research_delivered" not in names
     assert always_load_tools('x ALWAYS_LOAD: S = new Set([\n  "a", // c\n  // "b"\n  "c",\n]);'
                              ) == ["a", "c"]
 

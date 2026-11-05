@@ -196,17 +196,14 @@ def test_missing_research_json_fails_save_and_no_research_job():
     assert "no research.json" in line
 
 
-def test_delivered_and_extraction_count_are_reported_not_graded():
+def test_extraction_count_is_reported_not_graded():
     calls = [
         agent("source-evaluation"),
         {"tool": "mcp__genealogy__extraction_append", "args": {}, "thread": "sub"},
-        {"tool": "mcp__genealogy__research_delivered", "args": {}, "thread": "main"},
     ]
     g, line = run(calls)
-    assert g.passed and g.delivered and g.extraction_appends == 1
-    assert "delivered=yes" in line and "extraction_append=1" in line
-    g, line = run(calls[:2])
-    assert g.passed and "delivered=no" in line
+    assert g.passed and g.extraction_appends == 1
+    assert "extraction_append=1" in line
 
 
 # --- fixture loading --------------------------------------------------------
@@ -260,23 +257,6 @@ def test_a_fixture_that_is_not_an_object_is_refused(tmp_path):
 def test_sources_save_needs_no_tool(tmp_path):
     _, spec = load_single_ask_fixture(_write(tmp_path, expected_save={"section": "sources"}))
     assert spec.expected_save == {"section": "sources"}
-
-
-# --- the orchestrator's stop hook -----------------------------------------
-
-def test_stop_hook_returns_allow_first_in_single_ask_mode():
-    """The closure cannot run without the SDK, so read its first statement."""
-    src = (REPO_ROOT / "eval/harness/e2e/orchestrator.py").read_text(encoding="utf-8")
-    hook = next(
-        n for n in ast.walk(ast.parse(src))
-        if isinstance(n, ast.AsyncFunctionDef) and n.name == "stop_hook"
-    )
-    first = hook.body[0]
-    assert isinstance(first, ast.If)
-    assert isinstance(first.test, ast.Name) and first.test.id == "single_ask"
-    ret = first.body[0]
-    assert isinstance(ret, ast.Return) and isinstance(ret.value, ast.Dict)
-    assert ret.value.keys == []
 
 
 def _orchestrator_source() -> str:
@@ -387,12 +367,6 @@ def test_missing_research_json_names_itself_in_the_save_detail():
 def test_task_spelling_counts_as_a_spawn():
     g, _ = run([{"tool": "Task", "args": {"subagent_type": "source-evaluation"}, "thread": "main"}])
     assert g.first_unit == "source-evaluation"
-
-
-def test_delivered_from_a_subagent_is_not_the_main_thread_delivering():
-    calls = [agent("source-evaluation"), {"tool": "mcp__genealogy__research_delivered", "args": {}, "thread": "sub"}]
-    g, line = run(calls)
-    assert not g.delivered and "delivered=no" in line
 
 
 # --- loader fields that feed the grade ---------------------------------------

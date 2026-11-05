@@ -43,14 +43,16 @@ tools:
   - mcp__genealogy__source_attachments
   - mcp__remote-devices__Genealogy_Research__source_attachments
   - mcp__Genealogy_Research__source_attachments
-  - Read
+  - mcp__genealogy__tree_query
+  - mcp__remote-devices__Genealogy_Research__tree_query
+  - mcp__Genealogy_Research__tree_query
 ---
 
 # Proof Conclusion
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
-You are invoked with a `questionId` and a `projectPath`. Read what you need from the project yourself — do not expect the caller to have gathered it.
+You are invoked with a `questionId` and a `projectPath`. Gather what you need yourself with `project_context`, `research_query` and `tree_query` — do not expect the caller to have gathered it.
 
 **Confirm the question before you conclude.** The delegation's `questionId` is
 authoritative when it resolves to a question in `openQuestions`. If it does not
@@ -180,15 +182,11 @@ regardless of exhaustiveness tier.
 
 ## Steps
 
-### 1. Gather evidence from research.json
+### 1. Gather evidence
 
 All assertions linked to the question via `extracted_for_question_ids`, their person_evidence entries, resolved conflicts, related hypotheses, the exhaustive declaration, and the timeline for the subject.
 
-**Use `research_query`, not a raw `Read` of research.json, to gather this.**
-research.json grows for the whole session — by the time a question reaches
-proof-conclusion, reading (and, once it's large, paginating through) the
-whole file to find one question's evidence is the single biggest reclaimable
-cost in this skill. Scope every lookup to the question/persons at hand:
+**Use `research_query` to gather this.** Scope every lookup to the question/persons at hand:
 
 - `research_query({ section: "assertions", questionId })` — every assertion
   linked via `extracted_for_question_ids`.
@@ -207,8 +205,7 @@ cost in this skill. Scope every lookup to the question/persons at hand:
 - `research_query({ section: "timelines", personId })` — the subject's
   timeline, if one exists.
 
-Each call returns only what matches, so cost does not grow as research.json
-accumulates over the session. **But `items` caps at 50 and `count` is the true
+**But `items` caps at 50 and `count` is the true
 total.** While `truncated` is true, matches remain beyond the page in hand:
 re-query the same section with `offset` at 50, then 100, until you hold `count`
 items. Step 1's "collect every assertion" is not satisfied by the first page,
@@ -248,9 +245,9 @@ Do not restate evidence already quoted verbatim elsewhere — cite it. Most conc
 
 The `narrative_markdown` is the **authoritative GPS conclusion** — if structured fields disagree, the narrative governs. It must be **self-contained**: readable without the JSON and uploadable to FamilySearch as a Memory/Document. Write in the Statement / Summary / Argument form selected above (section headings, evidence summary, conflict resolution, tier declaration, inline citations on every factual claim). Organize by significance, not chronology. Name informants when their identity affects weighing. State source classifications explicitly so the reader sees the three-layer analysis.
 
-**Citations in the narrative must be copied directly from research.json, not recalled or paraphrased.** Before writing any footnote or inline citation, read the relevant source entry's `citation` and `citation_detail` fields from research.json and copy the text verbatim. Do not write collection names, repository names, or URLs from memory. A paraphrased citation that differs even slightly from the stored citation is a citation error — it sends future researchers to the wrong place.
+**Citations in the narrative must be copied directly from the `research_query` source entry, not recalled or paraphrased.** Before writing any footnote or inline citation, read the relevant source entry's `citation` and `citation_detail` fields from `research_query` (`sources`) and copy the text verbatim. Do not write collection names, repository names, or URLs from memory. A paraphrased citation that differs even slightly from the stored citation is a citation error — it sends future researchers to the wrong place.
 
-**A tree fact is evidence that was consulted. Name the evidence, then the gap — in that order.** A fact already on `tree.gedcomx.json` — materialized by person-evidence, or carried in from the starting tree — may have no `sources[]` entry and no assertion in `research.json` behind it. Write it in three moves: (1) **read the fact from `tree.gedcomx.json`** and name it as the record it is — id, type, place, date. If you are describing it from the question's rationale rather than from the tree, you do not have the fact yet: go and read it; (2) state what it establishes for this conclusion; (3) then, separately, that the project carries no source entry for it. Shape: *"<Subject> was alive in <year> per existing tree fact <Fn> (<Type>, <place>, <year> census), which establishes the <lower/upper> bound of the bracket. <Fn> carries no linked source entry in research.json."* Move 3 on its own is not enough — a bare gap reads as missing evidence rather than a missing citation. It is **not** the same as the record being unsearched, and writing that it "was not formally searched" misstates what evidence the conclusion consulted. Be precise about which is true, because the two point at different next steps — one needs a citation, the other needs a search. Say it and stop: do not append that the record was "not independently verified", "not independently searched", "not confirmed as consulted" or "not checked this session" — those clauses re-import the very claim this rule exists to prevent.
+**A tree fact is evidence that was consulted. Name the evidence, then the gap — in that order.** A fact already on `tree.gedcomx.json` — materialized by person-evidence, or carried in from the starting tree — may have no `sources[]` entry and no assertion in `research.json` behind it. Write it in three moves: (1) **read the fact with `tree_query({ projectPath, personIds, factTypes })`** and name it as the record it is — id, type, place, date. If you are describing it from the question's rationale rather than from the tree, you do not have the fact yet: go and read it; (2) state what it establishes for this conclusion; (3) then, separately, that the project carries no source entry for it. Shape: *"<Subject> was alive in <year> per existing tree fact <Fn> (<Type>, <place>, <year> census), which establishes the <lower/upper> bound of the bracket. <Fn> carries no linked source entry in research.json."* Move 3 on its own is not enough — a bare gap reads as missing evidence rather than a missing citation. It is **not** the same as the record being unsearched, and writing that it "was not formally searched" misstates what evidence the conclusion consulted. Be precise about which is true, because the two point at different next steps — one needs a citation, the other needs a search. Say it and stop: do not append that the record was "not independently verified", "not independently searched", "not confirmed as consulted" or "not checked this session" — those clauses re-import the very claim this rule exists to prevent.
 
 **Never claim a digital image exists unless the tool data confirms it.** Only describe a source as having an "accessible" or "digitized" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `collections_search`/`volume_search`). A source-description ARK or citation URL is not itself proof of a linked image — many FamilySearch collections are index-only, and telling a reader an image is "accessible" when it isn't sends them looking for something that doesn't exist.
 

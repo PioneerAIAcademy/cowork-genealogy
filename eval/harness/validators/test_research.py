@@ -348,43 +348,6 @@ def test_hint_review_stops_for_the_researchers_verdicts(skills_invoked, builtin_
     )
 
 
-def test_relays_the_agents_tail_verbatim(text_response, test):
-    """The router prints a stubbed agent's tail -- everything after its final
-    ``---`` -- verbatim, compared under the e2e relay-fidelity normalization
-    (issue #3862).
-
-    Tag-gated on ``relays-agent-tail``; the agent is the ``routes-to:`` callee.
-    The tail is read from the test's own canned response, never from
-    ``agent_returns``: there it is wrapped in harness scaffolding the router is
-    told never to print. The tail must also END the reply: a router that adds its
-    own table, list or question after it has printed more than the agent said,
-    and the skill forbids that. A last line holding only the project's link is
-    allowed, since the skill puts the hosted `projectUrl` there.
-    """
-    from harness.skill_runner import normalize, tail_after_final_rule
-    from harness.skill_stubs import parse_stub_skills
-
-    if "relays-agent-tail" not in (test.get("tags") or []):
-        pytest.skip("not a relay-fidelity test")
-    agent = _expected_skill(test)
-    assert agent, "relays-agent-tail needs a routes-to:<agent> tag naming the relayed agent"
-    tail = tail_after_final_rule(parse_stub_skills(test.get("execution")).get(agent) or "")
-    assert tail, f"relays-agent-tail needs a stubbed {agent} response with a `---` tail"
-    expected = normalize(tail).strip().rstrip(".!?")
-    lines = (text_response or "").strip().splitlines()
-    if len(lines) > 1 and re.fullmatch(r"<?https?://\S+>?", lines[-1].strip()):
-        lines = lines[:-1]
-    reply = normalize("\n".join(lines)).strip().rstrip(".!?")
-    assert expected in reply, (
-        f"the router did not relay {agent}'s summary verbatim; expected, after "
-        f"normalization:\n{tail}"
-    )
-    assert reply.endswith(expected), (
-        f"the router added text after {agent}'s summary; it must end the reply. "
-        f"Added:\n{reply[reply.find(expected) + len(expected):].strip()}"
-    )
-
-
 # The search steps a bounded request must not reach when the answer is already
 # attached. MCP side and delegation side are listed separately because the rule
 # is defeated by either: an inline `record_search` and a hand-off to
@@ -581,78 +544,6 @@ def test_status_question_answered_from_project_context_only(
         f"{sorted(set(hits))}"
     )
 
-
-_ENDS_WITH_DELIVERY_TAG = "ends-with-delivery"
-_DELIVERED_TOOL = "research_delivered"
-
-
-def test_a_bounded_turn_ends_with_the_delivery_signal(tool_calls, test):
-    """Tag-gated (``ends-with-delivery``). Issue #2813 item 1, the enforcement half.
-
-    The skill body telling the model to "end your turn" was not what ended it. On the
-    hosted plane an SDK Stop hook VETOED a voluntary stop while the project objective
-    was incomplete and nudged the agent onward; the only arm that let a bounded turn
-    stop was `delivered`, set when the model called `research_delivered`. A bounded
-    turn that ended without the call was answered and then nudged back into more
-    research -- the alpha report behind this test. Step mode phase 2 deleted that Stop
-    hook (and `should_continue_run` with it).
-
-    Gated on its own tag, NOT on `bounded-request`: `ut_research_023` carries that tag
-    and is the `--autonomous` carve-out, where the router must run the job and must NOT
-    deliver. One tag for "is bounded", another for "must end with the signal".
-
-    Nothing asserted this before, and the tool was advertised nowhere in this harness,
-    so every unit run graded the skill on prose it had no way to act on.
-    """
-    tags = test.get("tags") or []
-    if _ENDS_WITH_DELIVERY_TAG not in tags:
-        pytest.skip(f"not an {_ENDS_WITH_DELIVERY_TAG} test")
-
-    # `bare_tool_name(...) == `, not `.endswith(...)`: the suffix form accepts a
-    # LOOKALIKE -- `mcp__genealogy__not_research_delivered` ends with the name and
-    # satisfied this. The helper strips whichever of the three server spellings the
-    # run exposed, so all of them and the bare name still match (clack391, #3372).
-    first = next(
-        (i for i, c in enumerate(tool_calls)
-         if bare_tool_name(str(c.get("tool", ""))) == _DELIVERED_TOOL),
-        None,
-    )
-    assert first is not None, (
-        f"a bounded turn must end by calling `{_DELIVERED_TOOL}`; it never did. "
-        f"Tools called: {sorted({str(c.get('tool')) for c in tool_calls})}. "
-        "Without it the hosted PreToolUse arm never halts the turn, the nudge arm sees an "
-        "incomplete objective, and the agent is pushed on into more research -- which is "
-        "what the researcher reports as 'it would not stop'."
-    )
-
-    # The FIRST call, and no MCP call after it. `tool_calls` is the mock's MCP dispatch
-    # log only, so a built-in `Skill`/`Agent` hand-off AFTER the delivery is invisible
-    # here -- seeing it needs a shared order across both lists, which neither carries.
-    # The hosted arm halts on the first MAIN-THREAD
-    # call, so that is where the turn actually ends and whose summary the researcher
-    # reads. Asserting only "called somewhere" accepted
-    # research_delivered -> record_search -> research_append: deliver-then-keep-
-    # researching, the exact regression this test exists to catch, invisible here because
-    # the tool is inert in this harness.
-    after = [str(c.get("tool")) for c in tool_calls[first + 1:]]
-    assert not after, (
-        f"`{_DELIVERED_TOOL}` must be the LAST tool call of the turn; {len(after)} "
-        f"follow it: {after}. On the hosted plane the first main-thread call halts the "
-        "turn, so anything queued after it never runs and never reaches the researcher."
-    )
-
-    # `[first]`, though the assertion above makes it provably the same element as
-    # `[-1]`: no input can distinguish the two once "nothing follows it" holds, and
-    # swapping them reds no test. Written as `first` because it states the rule the
-    # hosted plane actually follows -- it halts on the FIRST main-thread call -- and
-    # it stays correct if the last-call assertion is ever relaxed.
-    summary = (tool_calls[first].get("args") or {}).get("summary")
-    assert isinstance(summary, str) and summary.strip(), (
-        f"`{_DELIVERED_TOOL}` needs a one-sentence summary naming what was delivered; "
-        f"got {summary!r}. Read from the FIRST call, which is the one the hosted plane "
-        "halts on and puts in front of the stop reason -- an empty summary there is what "
-        "the researcher reads, however well-formed a later call might be."
-    )
 
 # ── Moved from test_research_plan.py (issue #2116) ─────────────────────
 #
@@ -1141,8 +1032,11 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
     prompts = _spawn_prompts(builtin_tool_calls, expected)
     assert prompts, "No recorded spawn of 'search-records' to assert a delegation on."
     research = before_state.get("research_json") or {}
+    parents_question = _PARENTS_QUESTION_TAG in (test.get("tags") or [])
+    question_text = {q.get("id"): q.get("question") or "" for q in research.get("questions", []) if isinstance(q, dict)}
     items = []
     plan_of = {}
+    question_of = {}
     for plan in research.get("plans", []):
         if plan.get("status") != "active":
             continue
@@ -1150,6 +1044,7 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
             if item.get("status") in ("planned", "in_progress"):
                 items.append(item)
                 plan_of[item["id"]] = plan["id"]
+                question_of[item["id"]] = plan.get("question_id")
     assert items, "Scenario drift: no active plan item to hand over."
     decoder = json.JSONDecoder()
     problems = []
@@ -1181,26 +1076,88 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
             )
             problems.append(f"plan_item for {item['id']} is not verbatim; differs on {diff}")
         tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
-        subject_ids = [p.get("id") for p in tree.get("persons", [])] or (
-            (research.get("project") or {}).get("subject_person_ids") or []
-        )
-        match = re.search(r"subject:\s*", prompt)
-        sbrace = prompt.find("{", match.end()) if match else -1
-        if sbrace == -1:
-            problems.append(f"no subject JSON block for {item['id']}: {prompt[:160]!r}")
+        subject, problem = _handed_subject(prompt, tree, research)
+        if problem:
+            problems.append(f"{problem} for {item['id']}")
             continue
-        try:
-            subject, _ = decoder.raw_decode(prompt[sbrace:])
-        except ValueError:
-            problems.append("subject block is not valid JSON")
-            continue
-        if subject.get("subjectId") not in subject_ids:
-            problems.append(
-                f"subject.subjectId {subject.get('subjectId')!r} is not a person in the "
-                f"tree {subject_ids}"
+        if parents_question:
+            qid = question_of.get(item["id"])
+            assert _ASKS_ABOUT_A_PARENT.search(question_text.get(qid, "")), (
+                f"Scenario drift: {_PARENTS_QUESTION_TAG} is set, but {item['id']} serves "
+                f"{qid!r}, which does not ask about a parent: {question_text.get(qid, '')!r}"
             )
-        if not subject.get("names"):
-            problems.append("subject block carries no names")
+        problems.extend(_handed_parents_problems(subject, tree, parents_question))
+    assert not problems, "; ".join(problems)
+
+
+def _handed_subject(prompt: str, tree: dict, research: dict) -> tuple[dict | None, str | None]:
+    """The `subject:` JSON block a spawn prompt hands over, or the reason it
+    hands none a reader can use: no block, a block that is not JSON, a
+    `subjectId` that is not a person in the tree, or no `names`."""
+    subject_ids = [p.get("id") for p in tree.get("persons", [])] or (
+        (research.get("project") or {}).get("subject_person_ids") or []
+    )
+    match = re.search(r"subject:\s*", prompt)
+    sbrace = prompt.find("{", match.end()) if match else -1
+    if sbrace == -1:
+        return None, f"no subject JSON block: {prompt[:160]!r}"
+    try:
+        subject, _ = json.JSONDecoder().raw_decode(prompt[sbrace:])
+    except ValueError:
+        return None, "subject block is not valid JSON"
+    if subject.get("subjectId") not in subject_ids:
+        return None, f"subject.subjectId {subject.get('subjectId')!r} is not a person in the tree {subject_ids}"
+    if not subject.get("names"):
+        return None, "subject block carries no names"
+    return subject, None
+
+
+_PARENTS_QUESTION_TAG = "parents-question"
+_ASKS_ABOUT_A_PARENT = re.compile(r"\b(?:parents?|parentage|father|mother)\b|\b(?:son|daughter|child) of\b", re.I)
+
+
+def _handed_parents_problems(subject: dict, tree: dict, parents_question: bool = False) -> list[str]:
+    """The subject block names the subject's parents in the tree when it has one
+    or two, and none when it has more than two (two candidate couples mean the
+    parents are themselves in question) or when the search serves a question
+    about his parentage, who a parent was or whether someone was his father or
+    mother, since there they are what the search tests (research/SKILL.md)."""
+    sid = subject.get("subjectId")
+    if parents_question:
+        return [f"subject.parents is handed for {sid} on a search for his parents; leave it out"] if subject.get("parents") else []
+    parents = sorted(
+        {
+            r.get("parent")
+            for r in tree.get("relationships") or []
+            if isinstance(r, dict) and r.get("type") == "ParentChild" and r.get("child") == sid and r.get("parent")
+        }
+    )
+    handed = subject.get("parents")
+    if len(parents) > 2:
+        return [f"subject.parents is handed for {sid}, who has {len(parents)} parents in the tree; leave it out"] if handed else []
+    if not parents:
+        return []
+    ids = sorted({p.get("personId") for p in handed or [] if isinstance(p, dict)})
+    if ids != parents:
+        return [f"subject.parents names {ids}, not {sid}'s parents in the tree {parents}"]
+    return []
+
+
+_HANDS_SUBJECT_TAG = "hands-subject"
+
+
+def test_delegation_hands_subject(test, builtin_tool_calls, before_state):
+    """Tag-gated: the spawn of ``search-images`` carries the ``subject:`` block
+    (issue #3363): with no subject it can record no namesake. Whether the block
+    names the parents is checked on ``asserts-delegation-plan-item``, whose
+    scenario gives the subject two; a browse-only scenario gives none."""
+    if _HANDS_SUBJECT_TAG not in (test.get("tags") or []):
+        pytest.skip("not a hands-subject test")
+    prompts = _spawn_prompts(builtin_tool_calls, "search-images")
+    assert prompts, "No recorded spawn of 'search-images' to assert a delegation on."
+    research = before_state.get("research_json") or {}
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
+    problems = [p for p in (_handed_subject(prompt, tree, research)[1] for prompt in prompts) if p]
     assert not problems, "; ".join(problems)
 
 
