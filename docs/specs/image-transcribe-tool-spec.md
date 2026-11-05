@@ -1202,6 +1202,10 @@ built now.)
   path; `image_read`'s inline-base64 return stays only for the Issue #28 pixel
   consumer.
 
+A read of a page an indexed record sits on is not kept until
+`extraction_append({ attachWaitingPages: true })` copies it onto that record's source
+(`research-append-tool-spec.md` §11.9). This tool writes nothing to `research.json`.
+
 ## 8.5 Image persistence + viewing (retained sources only)
 
 `image_transcribe` returns text, but the researcher will want to **see the

@@ -185,6 +185,9 @@ export interface Source {
   /** Project-relative path of the saved page scan (images/<key>.jpg), when the
    *  source is image-backed and image_transcribe persisted it (§8.5). */
   image_filename?: string | null
+  /** The ARK of the page this indexed record sits on, with any `i=` or `groupId=`
+   *  that selects the image. Stamped at extraction; absent on older sources. */
+  image_ark?: string
 }
 
 export interface Assertion {

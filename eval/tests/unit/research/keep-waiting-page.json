@@ -1,0 +1,28 @@
+{
+  "test": {
+    "id": "ut_research_wp1",
+    "skill": "research",
+    "name": "A read page of a held record is kept with one call before the next step",
+    "type": "positive",
+    "description": "`flynn-read-page-waiting` has a read page of src_003 staged, which `project_context` lists under `waitingPages`. The router must keep it with extraction_append({ attachWaitingPages: true }) from the main thread, then route as usual.",
+    "tags": [
+      "keeps-waiting-page",
+      "step-mode"
+    ]
+  },
+  "input": {
+    "user_message": "/research Let's keep going.",
+    "scenario": "flynn-read-page-waiting"
+  },
+  "execution": {
+    "max_turns": 14,
+    "max_wall_clock_seconds": 600
+  },
+  "judge_reads_files": true,
+  "judge_context": [
+    "`extraction_append({ projectPath, attachWaitingPages: true })` comes first, from the main thread. A deterministic validator (test_keeps_waiting_page) checks the call and the kept text; do not re-grade those.",
+    "The page names Michael Flynn, whom the project does not hold. Keeping a page writes no assertion, so leaving him out is correct. Do not mark it as a missed fact.",
+    "Agents are stubbed here: a step routed after the page is kept changes nothing, and that is not a failure.",
+    "The turn ends with one \"Continue with …?\" line for whatever comes next."
+  ]
+}

@@ -114,6 +114,10 @@ repo's identifier-casing rule):
     imagesRead: number,                  // distinct images counted, >= 20
     planItemIds: string[],               // open plan items with an image_search log entry on it
   }],
+  waitingPages?: [{                      // read pages of held records — §2.8; absent when none
+    sourceId: string,
+    ref: string,                         // the staged page
+  }],
   externalCollections?: {                // stored curated collections, counts only — §2.4
     [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
   },
@@ -576,6 +580,16 @@ links read the per-user config.
 
 What nothing checks: that the web tier writes the text layer under the name
 this side reads. Each side is tested against its own fixture.
+
+### 2.8 `waitingPages` — read pages of held records
+
+A source whose record has a known page (`image_ark`) and no `transcription`, joined
+to a staged `image_transcribe` read of that page: bare ARK plus any `i=` and
+`groupId=`, because those select a different image. The oldest read wins. Read-only.
+Absent when nothing waits. The router answers with one
+`extraction_append({ attachWaitingPages: true })`. A page that expires from staging
+drops out. It reads every fresh staged file while any source waits, as
+`unloggedStagedSearches` does on a search.
 
 ## 3. Decisions recorded
 

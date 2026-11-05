@@ -617,6 +617,28 @@ def _explained_by_appends(before_section, after_section) -> bool:
     return len(after_section) > len(before_section)
 
 
+_PAGE_FIELDS = {"transcription", "transcription_truncated", "image_filename"}
+
+
+def _explained_by_appends_or_page_attach(before_section, after_section) -> bool:
+    """`sources` changed only by `extraction_append`: new entries, and existing
+    ones gaining a read page and nothing else (attachWaitingPages). Code writes
+    both whole, so a caller reaches neither."""
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    after_by_id = {e.get("id"): e for e in after_section if isinstance(e, dict)}
+    changed = False
+    for e in before_section:
+        if not isinstance(e, dict) or e.get("id") not in after_by_id:
+            return False
+        after = after_by_id[e["id"]]
+        keys = {k for k in set(e) | set(after) if e.get(k) != after.get(k)}
+        if not keys <= _PAGE_FIELDS or any(e.get(k) for k in keys):
+            return False
+        changed = changed or bool(keys)
+    return changed or len(after_section) > len(before_section)
+
+
 def _ids_unique(section) -> list[str] | None:
     """The section's entry ids in order, or None when one is missing or repeated."""
     if not isinstance(section, list):
@@ -948,6 +970,8 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
                 if section == "assertions"
                 else _explained_by_attachment_links(before.get(section), after.get(section))
                 if section == "person_evidence"
+                else _explained_by_appends_or_page_attach(before.get(section), after.get(section))
+                if section == "sources"
                 else _explained_by_appends(before.get(section), after.get(section))
             ):
                 continue

@@ -728,7 +728,7 @@ export const RESEARCH_SHAPES = {
     "id", "gedcomx_source_description_id", "citation", "citation_detail",
     "source_classification", "repository", "access_date", "url",
     "url_archived", "notes", "transcription", "transcription_truncated",
-    "image_filename", "log_entry_id",
+    "image_filename", "image_ark", "log_entry_id",
   ]),
   citation_detail: new Set([
     "who", "what", "when_created", "when_accessed", "where", "where_within",
@@ -1264,6 +1264,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // flag rather than the tool deriving it, and the tool never emits it (a
     // zero-content capped read throws instead of returning `truncated: true`,
     // image-transcribe.ts) — so the persisted writer rejects it too.
+    if ("image_ark" in src && typeof src.image_ark !== "string") {
+      addError(report, sp, "image_ark must be a string: the ARK of the page the record sits on.");
+    }
     if ("transcription_truncated" in src) {
       const flag = src.transcription_truncated;
       if (flag !== true) {
