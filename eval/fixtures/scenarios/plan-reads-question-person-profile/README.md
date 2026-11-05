@@ -11,8 +11,8 @@ already proposes Patrick Kerrigan and Mary Gallagher and holds a baptism naming 
 written from the project tree alone searches for them from scratch.
 
 Every person carries an `ark` (`ark:/61903/4:1:<PID>`), the shape `project_create` writes.
-Only this scenario and `plan-subject-from-tree` do, so they are the only two where the
-profile rule can fire: here for a relative (the read is required), there for the subject
+The profile rule fires on both this scenario and `plan-subject-from-tree`: here for a
+relative (the read is required), there for the subject
 (the read is forbidden).
 
 ## Notes for reviewers

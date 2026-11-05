@@ -281,7 +281,15 @@ def test_tools_and_worker_read_one_store():
     assert set(tools) == {
         "GENEALOGY_PG_DSN", "GENEALOGY_S3_ENDPOINT", "GENEALOGY_S3_BUCKET",
         "GENEALOGY_S3_ACCESS_KEY", "GENEALOGY_S3_SECRET_KEY", "GENEALOGY_ANCHOR_PATH",
-    }, "the five store variables plus the anchor, and no GENEALOGY_PROJECT_ID: the id is per request"
+        # The process-wide settings (self-hosted beta E4, issues #3979 and #4048). Passed
+        # through from the shell and EMPTY by default, which readLimitsEnv reads
+        # as off -- so compose behaves as it always has unless an operator sets
+        # one. They are listed here rather than exempted from the set: this
+        # assertion is what would catch a GENEALOGY_PROJECT_ID being added, and
+        # that only works while the set stays closed.
+        "GENEALOGY_FS_CALLS_PER_MINUTE", "GENEALOGY_MAX_TRANSCRIPTIONS",
+        "GENEALOGY_SHARED_COLLECTIONS_CACHE",
+    }, "the five store variables, the anchor and the three E4 settings, and no GENEALOGY_PROJECT_ID: the id is per request"
 
 
 def test_compose_runs_the_worker_with_dev_paths_and_names_its_tool_server():

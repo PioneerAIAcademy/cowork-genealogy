@@ -1,0 +1,69 @@
+{
+  "test": {
+    "id": "ut_research_pq1",
+    "skill": "research",
+    "name": "A search for the subject's parents hands search-records the subject without his parents",
+    "type": "positive",
+    "description": "research/SKILL.md hands search-records the subject as a `subject:` block and leaves `parents` out when the question the search serves asks who the subject's parents are: there the tree's parents are what the search tests, and a search agent handed them reads them as settled and rules out a same-named baptism naming other parents (issue #3363, PR 3). anders-monsen-parents-search has one in_progress question, who Anders Monsen's parents were, and one plan with one planned item, a search for his Hamre baptism; no log entries and no assertions. The tree gives Anders two parents. The router must hand pli_001 to search-records, and test_delegation_hands_plan_item_verbatim checks that the block names no parents. search-records is stubbed.",
+    "tags": [
+      "routing",
+      "routes-to:search-records",
+      "asserts-delegation-plan-item",
+      "parents-question"
+    ]
+  },
+  "input": {
+    "user_message": "Research the next open question on this project — drive the workflow forward.",
+    "scenario": "anders-monsen-parents-search"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. What matters is whether the router's first hand-off is search-records and what that hand-off carries. Deterministic validators own both (test_routes_to_expected_skill and test_delegation_hands_plan_item_verbatim): do not grade the routing decision or the hand-off's contents yourself.",
+    "The project has one question, who Anders Monsen's parents were, a plan with one unexecuted (planned) item, a search for his Hamre baptism, and no evidence yet. The routing table says: 'Plan items not yet executed, and no analyzed evidence yet plausibly answers the active question -> search-records'.",
+    "search-records is stubbed. Grade only the quality of the router's own work.",
+    "Do not penalize the router for not completing the full research cycle.",
+    "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records -- ground truth the harness calls out precisely because a transcript can be misread. You cannot see those records. Do NOT score Correctness or Completeness on whether the router reached the right callee, on the order of skills_invoked, or on which entry is 'first': the skill under test appears in that list under its own name, so the first DELEGATED skill is the second entry, and reading it as the first has already failed a run whose routing the validator confirmed correct. Grade only the router's own work: whether its narration is honest about what it delegated and did not do, and whether its state derivation and gap explanation are sound."
+  ],
+  "judge_reads_files": true
+}

@@ -16,6 +16,7 @@ description: >-
   mother's 1900 or 1910 US census children-born and children-living counts, it
   also reports which of her children the tree is missing and when each was born.
 model: claude-sonnet-4-6
+effort: high
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
@@ -74,7 +75,7 @@ The `personId` is the simplified GedcomX id from `tree.gedcomx.json` (e.g. `I1` 
 
 Once you've confirmed this is a warnings task (not a handoff — see the Handoff rules; a source-vs-source disagreement goes to `conflict-resolution`, not here), then for each person to check:
 
-1. Call `person_warnings({ projectPath, personId })` — the impossibility check that runs for every person you check. `projectPath` is the absolute path of the current working directory. The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`.
+1. Call `person_warnings({ projectPath, personId })` — the impossibility check that runs for every person you check. `projectPath` is the delegation's; when none was given, treat it as `no_project` (step 2). The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`.
 2. **No project here.** If `person_warnings` returns `reason: "no_project"`, make no further call and return `Hand-back: init-project — create a project for <the person id>, then check it`, then the return contract. Never create the project yourself.
 3. **Census counts.** If the request gives a mother's 1900 or 1910 US census counts of children born and children living, call `census_children_gap({ censuses: [{ year, childrenBorn, childrenLiving }], projectPath, motherId })` once for that mother, with `motherId` her person id. Never pass `knownChildren`, and never work out the missing children yourself, even when the tool errors.
 
@@ -422,6 +423,7 @@ treating as established.
 
 #### Event in another country
 - `hasEventInOtherCountry` -- an event other than a migration or a residence (on the person or on a couple relationship) is in a country that contradicts both the birth and the death country, when those two agree. Usually a record attached to the wrong person, or a mis-standardised place.
+- `hasPlaceStandardOtherCountry` -- a fact's `place` text names a country its own `standard_place` contradicts (on the person, then on a couple relationship). Usually a mis-standardised place, and usually the standardized value rather than the event is wrong -- correct it on FamilySearch.
 
 #### Birthplace far from the parents' residence
 - `hasBirthFarFromParentsResidence` -- the birthplace (Birth, else Christening, else Baptism) is farther from a parent's residence dated within 20 years of the birth than the era allows: 25 mi before 1850, 250 mi 1850-1949, 500 mi from 1950. Usually a record of a different person attached, or a mis-standardised place. Skipped when the place lookup fails, so its absence proves nothing.

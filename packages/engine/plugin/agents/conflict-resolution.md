@@ -16,21 +16,21 @@ description: >-
   extraction_append), build a timeline (use timeline), or write a conclusion (use
   proof-conclusion).
 model: claude-sonnet-4-6
+effort: high
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
   # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   #
-  # The tool set the skill declared, plus `Read` (the skill relied on the
-  # built-in to read research.json; an agent must list it) and `research_query`
-  # (Step 1 reads assertions and person_evidence with it). The place tools
+  # The tool set the skill declared, plus `research_query` (Step 1 reads
+  # assertions and person_evidence with it) and `project_context`
+  # (narration guidance). The place tools
   # Appendix D lists as taking a standardPlace for RESEARCH (collections,
   # volumes, external links, population, wiki place pages) are deliberately
   # absent: this agent resolves place names, it does not search, and a tool it
   # does not need is capability a delegation could steer
   # (docs/skill-to-agent-pair-conversion.md, section 2).
-  - Read
   - mcp__genealogy__research_query
   - mcp__remote-devices__Genealogy_Research__research_query
   - mcp__Genealogy_Research__research_query
@@ -52,12 +52,15 @@ tools:
   - mcp__genealogy__convert_calendar
   - mcp__remote-devices__Genealogy_Research__convert_calendar
   - mcp__Genealogy_Research__convert_calendar
+  - mcp__genealogy__project_context
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__project_context
 ---
 
 
 # Conflict Resolution
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 **Places:** When resolving or writing places, follow Appendix D, Working with places, below — resolve with `place_search` / `place_search_all` and record the `standardPlace` (and `standard_place` on persisted facts/assertions/events).
 
@@ -168,7 +171,7 @@ Look for:
   conflict (§6): the two parents may be one person entered twice, or
   rival candidates. Each value names a parent and the evidence behind it, as
   assertion ids or, failing that, `source S…`; for a source ref, find its
-  assertions through the `research.json` source whose
+  assertions through the `sources` entry (`research_query`) whose
   `gedcomx_source_description_id` matches. Record the conflict with those
   assertions in `competing_assertion_ids`. Never pass
   `warningJustifications` to a writer to get the edge past the refusal,
@@ -597,7 +600,7 @@ Suggest next steps:
   conflict — do not create a conflict entry.
 - **Work with the assertions already in `research.json`.** When the
   user reports a disagreement, read the existing assertions and
-  person_evidence first. Do not ask the user for an image or for data
+  person_evidence first with `research_query`. Do not ask the user for an image or for data
   that the project already contains. Do not ask for permission to
   proceed and do not stop after presenting findings — call
   `research_append` to create the conflict entry, then call it again

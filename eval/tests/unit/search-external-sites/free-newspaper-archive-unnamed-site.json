@@ -25,7 +25,8 @@
     "place-search-schuylkill-by-name",
     "place-search-schuylkill-by-place",
     "external-links-search-schuylkill",
-    "collections-search-schuylkill"
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania"
   ],
   "judge_context": [
     "A free digitized-newspaper archive URL must be generated — Chronicling America on the loc.gov collections path (www.loc.gov/collections/chronicling-america/) carrying dl=page so the search targets digitised PAGES rather than the U.S. Newspaper Directory's title catalogue, with the name in q, a dates=YYYY/YYYY window covering 1908, and the state as the facet fa=location_state:<full lowercase state name> (fa=location_state:pennsylvania). The bare location_state= parameter does NOT filter — measured 2026-09-15, identical hit counts with and without it — so a URL carrying only location_state= does not satisfy this. Neither the retired legacy form (chroniclingamerica.loc.gov/search/pages/results/ with andtext/date1/date2/state, retired 2025-08-04) nor the dead start_date/end_date pair nor the also-dead qs parameter (returns the site's whole corpus total regardless of what it's set to) is acceptable — all are silently ignored or unfiltering, producing an unscoped search.",

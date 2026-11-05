@@ -1,0 +1,38 @@
+{
+  "test": {
+    "id": "ut_research_ken",
+    "skill": "research",
+    "name": "A first message asking what records to search names FamilySearch collections only from a collections_search result",
+    "type": "negative",
+    "description": "Issue #4011. In the Kenya alpha session, a first message arriving before any project existed was answered on the main thread, which listed 'Kenya, African Court Records, 1904-1967' and 'Kenya, Civil Registration, deaths 1904-1967' as searchable from memory; FamilySearch has no Kenya collections. Graded solely by the tag-gated validator test_names_collections_only_from_search: the reply may name a collection only if a collections_search result in the session returned it. `type: negative` with `grade_on_invariant` for the reason ut_research_008 gives: a positive test fails whenever research does not activate, and this failure happens on a main thread that may never load research. init-project and tree-survey are stubbed; a denied spawn continues the turn, so the main thread may still answer, and that answer is what is graded. The person is synthetic.",
+    "tags": [
+      "boundary",
+      "names-collections-only-from-search"
+    ]
+  },
+  "input": {
+    "user_message": "Wadhala Wadhala, FamilySearch ID GKNY-W88, lived in Kenya from 1888 to 1960. What Kenyan records can I search for him on FamilySearch?",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "person-read-wadhala",
+    "collections-search-kenya-empty",
+    "collections-search-any"
+  ],
+  "judge_context": [
+    "FamilySearch has no record collections for Kenya; collections_search returns none for it.",
+    "Graded only by the deterministic validator: the reply must not present a FamilySearch collection title that no collections_search result returned. Saying no collections were found, or that one is unconfirmed, is correct."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 300,
+    "stub_skills": [
+      "init-project",
+      "tree-survey"
+    ]
+  },
+  "negative": {
+    "correct_skill": [],
+    "grade_on_invariant": true,
+    "explanation": "Graded solely on the tag-gated invariant test_names_collections_only_from_search. correct_skill is [] because no skill is required to fire: the failure under test happens on the main thread whether or not research opens."
+  }
+}

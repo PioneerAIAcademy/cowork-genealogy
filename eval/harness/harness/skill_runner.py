@@ -53,6 +53,7 @@ from claude_agent_sdk import (
 
 from harness.auth import AuthConfig, env_for_sdk
 from harness.context_policy import (
+    sources_note_hook,
     owned_section_denial,
     owner_denied,
     protected_file_denial,
@@ -60,6 +61,7 @@ from harness.context_policy import (
     subagent_only_violation,
 )
 from harness.delegation import foreground_rewrite
+from harness.main_thread import MAIN_THREAD
 from harness.mock_mcp import create_mock_server
 from harness.sdk_query import close_query, open_query
 from harness.skill_stubs import stub_denial
@@ -99,7 +101,8 @@ BASELINE_ALLOWED = [
 ]
 DISALLOWED_BACKSTOP = ["Bash", "WebFetch", "WebSearch", "NotebookEdit"]
 
-DEFAULT_MODEL = "claude-sonnet-4-6"
+DEFAULT_MODEL = MAIN_THREAD.model
+DEFAULT_EFFORT = MAIN_THREAD.effort
 DEFAULT_MAX_TURNS = 20
 DEFAULT_MAX_WALL_CLOCK_SECONDS = 300
 DEFAULT_MAX_TOOL_CALLS = 50
@@ -272,7 +275,8 @@ _UNTRUNCATED_ARGS: set[tuple[str, str]] = {("Agent", "prompt")}
 DIRECT_DISPATCH_PROMPT = """\
 You are relaying one message to a subagent. Do exactly this, and nothing else:
 
-1. Call the Agent tool with subagent_type "{agent}".
+1. Call the Agent tool with subagent_type "{agent}" and a `description` of a few
+   words naming the task. The Agent tool rejects a call without one.
 2. Pass, as the `prompt`, the text between the DELEGATION markers below — copied
    character for character. Do not summarise, reword, soften, add to, or omit any
    part of it. Do not include the markers themselves.
@@ -988,6 +992,7 @@ async def run_skill(
     fixtures_dir: Path,
     auth: AuthConfig,
     model: str = DEFAULT_MODEL,
+    effort: str = DEFAULT_EFFORT,
     max_turns: int = DEFAULT_MAX_TURNS,
     max_wall_clock_seconds: int = DEFAULT_MAX_WALL_CLOCK_SECONDS,
     max_tool_calls: int = DEFAULT_MAX_TOOL_CALLS,
@@ -1424,9 +1429,14 @@ async def run_skill(
         # path-level approval prompts that Write/Edit require.
         permission_mode="bypassPermissions",
         model=model,
+        effort=effort,
         max_turns=max_turns,
         env=env_for_sdk(auth, tool_search=tool_search),
-        hooks={"PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])]},
+        hooks={
+            "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
+            # Issue #4011: the sentence every production path carries, added as Cowork does.
+            "UserPromptSubmit": [HookMatcher(matcher=None, hooks=[sources_note_hook])],
+        },
         # Intercept the CLI subprocess stderr so we can drop teardown noise
         # (see _filter_cli_stderr) instead of letting it flood the console on
         # aborted runs. Setting this is also what makes the SDK pipe stderr.

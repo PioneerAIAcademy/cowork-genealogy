@@ -1,0 +1,150 @@
+{
+  "_why": "Ireland baptism read through the father's ark: Mary, Birth 17 Feb 1871, Ireland; parents Thomas Hanrahan and Johanna Ryan",
+  "_capturedFrom": "F5GR-QBN",
+  "element": {
+    "recordId": "ark:/61903/1:1:F5GR-QBN",
+    "gedcomx": {
+      "persons": [
+        {
+          "id": "p_11536699455",
+          "ark": "ark:/61903/1:1:F5GR-QBF",
+          "principal": true,
+          "gender": "Female",
+          "names": [
+            {
+              "type": "BirthName",
+              "given": "Mary",
+              "surname": "Hanrahan"
+            }
+          ],
+          "facts": [
+            {
+              "type": "Birth",
+              "primary": true,
+              "date": "17 Feb 1871",
+              "standard_date": "17 Feb 1871",
+              "place": "Irel, Ireland",
+              "standard_place": "Ireland"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd2"
+            }
+          ]
+        },
+        {
+          "id": "p_11536699456",
+          "ark": "ark:/61903/1:1:F5GR-QBN",
+          "gender": "Male",
+          "names": [
+            {
+              "type": "BirthName",
+              "given": "Thomas",
+              "surname": "Hanrahan"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd2"
+            }
+          ]
+        },
+        {
+          "id": "p_11536699457",
+          "ark": "ark:/61903/1:1:F5GR-QBJ",
+          "gender": "Female",
+          "names": [
+            {
+              "type": "BirthName",
+              "given": "Johanna",
+              "surname": "Ryan"
+            }
+          ],
+          "sources": [
+            {
+              "ref": "sd2"
+            }
+          ]
+        }
+      ],
+      "relationships": [
+        {
+          "id": "MM9.1.6/PT2Y-J2MR",
+          "type": "ParentChild",
+          "parent": "p_11536699456",
+          "child": "p_11536699455"
+        },
+        {
+          "id": "MM9.1.6/PT2Y-J2MT",
+          "type": "ParentChild",
+          "parent": "p_11536699457",
+          "child": "p_11536699455"
+        },
+        {
+          "id": "MM9.1.6/PT2Y-J2MY",
+          "type": "Couple",
+          "person1": "p_11536699456",
+          "person2": "p_11536699457"
+        }
+      ],
+      "sources": [
+        {
+          "id": "sd_c_1584963",
+          "resource_type": "Collection",
+          "title": "Ireland, Births and Baptisms, 1620-1881",
+          "url": "https://www.familysearch.org/service/cds/recapi/collections/1584963",
+          "coverage": {
+            "date_range": "1620/1881",
+            "record_type": "Vital"
+          }
+        },
+        {
+          "id": "src_r_822066295",
+          "resource_type": "Record",
+          "title": "Entry for Mary Hanrahan, \"Ireland, Births and Baptisms, 1620-1881\"",
+          "citation": "\"Ireland, Births and Baptisms, 1620-1881\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:935T-T1R : 13 September 2026), Entry for Mary Hanrahan, 1871.",
+          "url": "https://www.familysearch.org/ark:/61903/1:2:935T-T1R",
+          "coverage": {
+            "place_rep_id": "208",
+            "date_range": "17 Feb 1871",
+            "record_type": "Vital",
+            "standard_place": "Ireland"
+          }
+        },
+        {
+          "id": "sd_p_11536699455",
+          "resource_type": "Person",
+          "title": "Mary Hanrahan, \"Ireland, Births and Baptisms, 1620-1881\"",
+          "citation": "\"Ireland, Births and Baptisms, 1620-1881\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F5GR-QBF : 13 September 2026), Mary Hanrahan, 1871.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:F5GR-QBF"
+        },
+        {
+          "id": "sd_p_11536699456",
+          "resource_type": "Person",
+          "title": "Thomas Hanrahan in entry for Mary Hanrahan, \"Ireland, Births and Baptisms, 1620-1881\"",
+          "citation": "\"Ireland, Births and Baptisms, 1620-1881\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F5GR-QBN : 13 September 2026), Thomas Hanrahan in entry for Mary Hanrahan, 1871.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:F5GR-QBN"
+        },
+        {
+          "id": "sd_p_11536699457",
+          "resource_type": "Person",
+          "title": "Johanna Ryan in entry for Mary Hanrahan, \"Ireland, Births and Baptisms, 1620-1881\"",
+          "citation": "\"Ireland, Births and Baptisms, 1620-1881\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F5GR-QBJ : 13 September 2026), Johanna Ryan in entry for Mary Hanrahan, 1871.",
+          "url": "https://www.familysearch.org/ark:/61903/1:1:F5GR-QBJ"
+        },
+        {
+          "id": "sd2",
+          "resource_type": "DigitalArtifact",
+          "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C9BX-XSS2-6?cc=1584963"
+        }
+      ],
+      "places": [
+        {},
+        {
+          "id": "place_1927084"
+        }
+      ]
+    }
+  }
+}

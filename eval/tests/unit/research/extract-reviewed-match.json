@@ -1,0 +1,48 @@
+{
+  "test": {
+    "id": "ut_research_hvy",
+    "skill": "research",
+    "name": "\"Continue.\" to a search-hit review's offer spawns record-structurer on the Match's hit",
+    "type": "positive",
+    "description": "Issue #3522, research/SKILL.md \"Search-hit review\", the yes. The previous turn reviewed log_017 and offered \"Continue with extracting the Match?\" for hit 9 (3Q9M-CSK3-ZSLR). The unit harness is single-turn, so the message names the offer it answers and the hit, as ut_research_cq7 does. The router spawns @plugin:record-structurer once, with one source: recordId the hit's id (the id after '#' or its ARK; research_append stores the sidecar's ARK either way) and resultsRef the hitRef verbatim, plus questionIds. The hit is not extracted in this scenario. test_search_hit_review_yes_extracts_the_matches asserts the source from the hook record (extracts-reviewed-matches, extracts-hit:results/log_017.json#3Q9M-CSK3-ZSLR); the run ends at that hand-off (stop_at_stub).",
+    "tags": [
+      "routing",
+      "step-mode",
+      "routes-to:record-structurer",
+      "extracts-reviewed-matches",
+      "extracts-hit:results/log_017.json#3Q9M-CSK3-ZSLR"
+    ]
+  },
+  "input": {
+    "user_message": "/research You offered to extract the Match from the review of log_017 (hit 9, results/log_017.json#3Q9M-CSK3-ZSLR). Continue.",
+    "scenario": "g9gj-fulltext-hits-unextracted"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stop_at_stub": true,
+    "stub_skills": [
+      {
+        "skill": "record-structurer",
+        "response": "Church register, Cambridge (Coila) and Jackson congregation, Washington County, New York (other, 1834, Jackson, Washington, New York).\n- Chanty Hyde: baptism 1834, Jackson, Washington, New York\n- Hiram Hyde: father of Chanty Hyde\n- Mary Robertson: mother of Chanty Hyde"
+      },
+      "evaluate-search-results",
+      "search-full-text",
+      "question-selection",
+      "locality-guide",
+      "research-plan",
+      "search-records",
+      "person-evidence",
+      "conflict-resolution",
+      "research-exhaustiveness",
+      "proof-conclusion",
+      "gps-mentor"
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. The researcher is replying \"Continue.\" to the offer \"Continue with extracting the Match?\", made by a search-hit review of log_017 whose one Match is hit 9. Running record-structurer on that hit is the step being accepted.",
+    "The hand-off and its source are asserted deterministically from the hook records (test_routes_to_expected_skill, test_search_hit_review_yes_extracts_the_matches). You cannot see the spawn. Do not grade it.",
+    "record-structurer is STUBBED, so nothing is written to the project. The run ends at that hand-off by design (execution.stop_at_stub), with no closing summary: do not mark a summary as missing.",
+    "Judging the hit again, re-running the review, or offering the step again without running it is the failure. Grade only the router's own narration up to the hand-off: honest, and free of internal ids shown to the user."
+  ]
+}

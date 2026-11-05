@@ -125,7 +125,8 @@ For each claim, say which it is:
 
 **Record the model and effort.** Each assistant line in the session log carries
 `requestedModel` and `effort`, and each subagent's `.meta.json` carries `effort`.
-Compare them with `deploy/fly.toml` (`DEFAULT_MODEL`, `ORCHESTRATOR_EFFORT`) and
+Compare them with `packages/engine/plugin/main-thread.json` (the main thread) and each
+agent's own `model:` / `effort:` in `packages/engine/plugin/agents/`, at the bundle's build, and
 say in one line whether the session ran as configured. That rules configuration
 in or out before a prompt or a tool is blamed.
 
@@ -166,6 +167,13 @@ missed, and this skill is not the whole-board pass.
 ## 4. The three verdicts
 
 Put one to the lead with a recommendation and the context behind it. He decides.
+
+**Check every remedy before you recommend it, not when you write the issue.** Any
+tool, agent or edit you propose must work on this input. Check its spec's limits,
+what the bundle showed it doing, and the code at the fix site, including any hook
+that denies the call. An `image_read` re-read was once written into an issue after
+the same bundle's log had shown `image_read` refusing that page as too large. A
+capability nobody has verified does not go to the lead or into an issue.
 
 | Verdict | When | What you do |
 |---|---|---|
@@ -225,12 +233,6 @@ Write into the body:
   his answer, the option it beat, and why. A ruling made on one item binds the
   rest of the run. Apply it to every later item it touches, and say so where you
   do.
-
-**Check every remedy before you write it.** Any tool or agent named in "What to
-do" must work on this input. Check its spec's limits, and what the bundle showed
-it doing. An `image_read` re-read was once written into an issue after the same
-bundle's log had shown `image_read` refusing that page as too large. A
-capability nobody has verified does not go into an issue.
 
 **Prefer a tool rule to skill prose.** If the thing can be decided by reading the
 project documents alone, it is a writer-tool precondition, where it binds

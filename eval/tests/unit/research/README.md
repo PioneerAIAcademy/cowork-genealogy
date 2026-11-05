@@ -90,8 +90,11 @@ extension gives. `ut_research_hnp` and `ut_research_hsp` instead serve it from
 with one project. They are the hosted pairs of `ut_research_tsi` and
 `ut_research_011`. `uses-new-project-path` and `uses-listed-project` gate the
 validators that read which `projectPath` the router took from that answer. The
-mock serves every project tool from the test's one workspace, whatever path is
-passed, so each test's scenario is the project its route should open.
+mock serves every project tool from the test's one workspace, so each test's
+scenario is the project its route should open. In these two tests it behaves as
+a hosted store does (`mock_mcp._hosted_store`): a `projectPath` the listing does
+not name is refused, and `project_context` at a listed project carries its
+`projectUrl`.
 
 ## Agent dispatch tests (issue #1851)
 
@@ -261,6 +264,24 @@ have been. Both hosted planes now halt on the signal — the prototype
 via its own `PreToolUse` arm plus `DELIVERY_GUIDANCE`, the alpha via `count_only` and
 `should_continue_run(delivered=...)` — and that half is covered by
 `apps/server/tests/test_alpha_stop_hook.py`, not here.
+
+## Search-hit review (issue #3522)
+
+All three run on `g9gj-fulltext-hits-unextracted`, where no full-text hit is
+extracted yet. `ut_research_hv3` (`review-search-hits.json`, hits 2, 4 and 7 of
+`log_008`) and `ut_research_hva` (`review-all-search-hits.json`, all eleven hits
+of `log_017`) stub `evaluate-search-results` with one canned Match and no
+`hitRef` line, so the offered count is the spawn count. Both carry
+`reviews-search-hits` plus a data tag, `reviews-hits:<log_id>:<hit numbers|all>`;
+`test_search_hit_review_spawns_one_agent_per_hit` reads the scenario's own
+sidecar and asserts one spawn per requested hit, a tree-person `target`, and a
+last line `step_boundary.offered_step` reads as `extract-matches` with that count.
+`ut_research_hvy` (`extract-reviewed-match.json`) is the yes-path in the "You
+offered … Continue." shape, `stop_at_stub` on `record-structurer`; its
+`extracts-reviewed-matches` and `extracts-hit:<hitRef>` tags gate
+`test_search_hit_review_yes_extracts_the_matches`, which asserts one spawn whose
+single source carries the hit's id and the ref verbatim. The width of five spawns
+per message is not checked: no run record says which message a spawn came from.
 
 ## Moved negatives (issue #2268)
 

@@ -16,6 +16,7 @@ description: >-
   page-by-page (use search-images), or to scope a new project (use
   question-selection).
 model: claude-sonnet-4-6
+effort: high
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
@@ -43,6 +44,12 @@ tools:
   - mcp__genealogy__wiki_read
   - mcp__remote-devices__Genealogy_Research__wiki_read
   - mcp__Genealogy_Research__wiki_read
+  - mcp__genealogy__research_query
+  - mcp__remote-devices__Genealogy_Research__research_query
+  - mcp__Genealogy_Research__research_query
+  - mcp__genealogy__project_context
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__project_context
 ---
 
 # Search Full-Text
@@ -57,7 +64,7 @@ record that was never name-indexed.
 This agent is the FTS counterpart to search-records (indexed search) and
 search-external-sites (non-FamilySearch repositories).
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 ## Invocation contract
 
@@ -68,6 +75,7 @@ You are invoked with a delegation message naming what to search:
 | `projectPath` | yes | The absolute project-folder path. |
 | `planItemId` | no | The `pli_` id this search executes. Absent for an ad-hoc search. |
 | `looking_for` | no | Who or what to find — a search key, never an assertion of what a record says. |
+| `subject` | no | The research subject as a JSON block: `subjectId`, `names`, `birth`, `death`, and `parents` (each `personId`, `name`), as the tree holds them. Data, never a finding. Without it, record no namesake. |
 
 Read what you need from the project yourself — do not expect the caller to have
 gathered it. If `projectPath` is absent, ask for it rather than guessing.
@@ -95,7 +103,7 @@ Never report a result you did not obtain from a tool return.
 
 ## ROUTING — run this FIRST, before any tool call
 
-Before reading `research.json`, before narration guidance, **before any tool
+Before calling `project_context`, before narration guidance, **before any tool
 call**: read the delegation and check the cases below. If one matches, say the
 single-sentence redirect and **return immediately** — do NOT read any files, do
 NOT call any tool, do NOT look for a matching plan item. Just redirect and stop.
@@ -144,8 +152,7 @@ FTS results are derivative sources (original → image → AI transcript,
 
 ### 1. Identify the plan item to execute
 
-Read `research.json` directly (its `plans[]` and `log[]`) — not via
-`project_context`, which returns neither. Find the next plan item
+Call `research_query` with `section: "plans"` and with `section: "log"`. Find the next plan item
 with `status: "planned"` that targets full-text search. If the user
 specifies a particular search, match it to a plan item or create
 an ad-hoc search (with `plan_item_id: null` in the log).
@@ -262,8 +269,7 @@ in the appendix ("Full-Text Search Query Syntax").
   two-step: (1) send a call with `includeFacets: true` explicitly and wait
   for its response, (2) use a `filterParam` value from that response's
   `facets` array as the `collectionId` on the follow-up call. You MUST send
-  `includeFacets: true` — the server may return facets without it, but
-  those do not authorize a scoped follow-up. Never submit the scoped
+  `includeFacets: true`. Never submit the scoped
   call in the same parallel batch as the `includeFacets: true` call.**
 - **Decompose a compound surname into co-occurrence, not a phrase.**
   For an Iberian / Latin-American name (`Given Paterno Materno`, e.g.
@@ -280,7 +286,7 @@ in the appendix ("Full-Text Search Query Syntax").
 - **Abbreviations must be searched explicitly** in all fields. FTS does not auto-expand (Wm/William, Thos/Thomas).
   Use `get_name_variants` to build an explicit given-name variant set and run each as a separate query.
 - **Mine prior records for known surname variants before querying.**
-  Scan existing `research.json` assertions and log entries for the
+  Call `research_query` for `assertions` and `log` and scan them for the
   target surname. If prior records show a transcription variant,
   include it in your initial query set.
 
@@ -369,6 +375,9 @@ each record is already attached to a tree person.
 - **Attached to the target person** → deprioritize for extraction.
 - **Attached to a different person** → flag as potentially relevant.
 - **Unattached** → prioritize for extraction — this is new evidence.
+
+A person of the subject's name in a hit who cannot be the subject is a namesake
+(step 8b).
 
 Present triage to the user with match quality, document role, and
 attachment status. Let the user confirm which records to examine.
@@ -470,6 +479,22 @@ or marking one `completed`, check that the search's own record type and
 purpose match that specific plan item's `record_type`/rationale, not
 just that a name matches.
 
+### 8b. Record namesakes
+
+Only when `subject` arrived, and whether or not a plan item did. For each
+person a hit names who bears the subject's name and whom you conclude is not the
+subject, on a stated ground — a date that cannot be his (an adult before his
+birth, a death before an event of his), other parents than `subject.parents`, or
+another spouse — call `research_append` once, after steps 7 and 8:
+`section: "namesakes"`, `op: "append"`,
+`entry: { person_id, name, place, time_period, record_ids, log_entry_ids, notes }`
+— `person_id` the `subjectId`; `name`, `place` and `time_period` as the hit gives
+them; `record_ids` the hit's `id`, verbatim; `log_entry_ids` the step 7 log id;
+`notes` the ground. Other parents are no ground when `subject` has no `parents`.
+Never record one who may still be the subject. If the
+call returns a warning listing links, put their `pe_` ids in a
+`Hand-back: person-evidence` line (Return contract).
+
 ### 9. Handle nil results
 
 When a search returns no results:
@@ -554,7 +579,8 @@ suggest next steps (more plan items, cross-references, or re-plan).
 
 **Writes:** `research_log_append` appends to `log[]` plus its
 `results/log_NNN.json` sidecar; `research_append` updates the plan
-item `status`. On repeat invocation, always appends a new `log_`
+item `status` and appends a `namesakes` row for each same-named person a hit
+rules out (step 8b). On repeat invocation, always appends a new `log_`
 entry. Prior entries and sidecars are never touched.
 
 ## Return contract
@@ -568,6 +594,8 @@ Return the following to the caller:
   `title` / `recordType`, and the `log_` id created
 - for nil results: what was searched and why it is declared negative
 - the plan item's new `status` if it moved
+- each `ns_` row written, and when its call warned, `Hand-back: person-evidence
+  — namesake <ns_ id> recorded for <person_id>; links <pe_ ids> are untied`
 - next-step hint (e.g. "three records ready for the record-structurer agent",
   "no results — try search-records for this period", "coverage gap in
   continental European records")

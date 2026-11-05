@@ -1,6 +1,6 @@
 # g9gj-proof-update-after-later-search
 
-Mined from issue #3177, puzzle 4 (Family Tree G9GJ-959, Iram F. Hyde, b. about 1796–98, of Jackson, Washington Co., NY, d. after 1870 in White Co., IN). The source is the graded Cowork run of 2026-10-09 (`puzzle4-g9gj-run2`, plugin and `.mcpb` built from `main` at `bf77695b`). Used by `ut_proof_conclusion_g9j`.
+Mined from issue #3177, puzzle 4 (Family Tree G9GJ-959, Iram F. Hyde, b. about 1796–98, of Jackson, Washington Co., NY, d. after 1870 in White Co., IN). The source is the graded Cowork run of 2026-10-09 (`puzzle4-g9gj-run2`, plugin and `.mcpb` built from `main` at `bf77695b`). Used by `ut_proof_conclusion_g9j`, and by six evaluate-search-results tests: `ut_evaluate_search_results_w4k`, `_b7x`, `_m2q`, `_d9r`, `_p5c` and `_x2e`.
 
 The run concluded both questions and then kept searching. `log_019` (16:02 UTC) read the 1855 NY state census image, `log_020` (16:37) read daughter Margaret Clark's 1880 census entry, and `log_021` (17:21) searched the full text of Walworth's *Hyde Genealogy*. Each proof was then updated one field at a time:
 

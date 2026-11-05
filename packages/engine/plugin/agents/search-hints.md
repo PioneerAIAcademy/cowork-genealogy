@@ -20,10 +20,13 @@ tools:
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
   # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
-  - Read
+
   - mcp__genealogy__research_query
   - mcp__remote-devices__Genealogy_Research__research_query
   - mcp__Genealogy_Research__research_query
+  - mcp__genealogy__tree_query
+  - mcp__remote-devices__Genealogy_Research__tree_query
+  - mcp__Genealogy_Research__tree_query
   - mcp__genealogy__person_record_matches
   - mcp__remote-devices__Genealogy_Research__person_record_matches
   - mcp__Genealogy_Research__person_record_matches
@@ -72,7 +75,7 @@ return once: you cannot ask the researcher anything mid-run.
 | `verdicts` | record mode only | `{ark, verdict}` per hint, `verdict` being `accept` or `reject`, as the researcher stated it. |
 
 A local tree id has no FamilySearch matches of its own. Take the FamilySearch id
-from that person's `ark` in `tree.gedcomx.json`; if there is none, say the person
+from that person's `ark` in `tree_query({ projectPath, personIds: [personId] })`; if there is none, say the person
 has no FamilySearch id, set a held plan item's status as below, and stop.
 
 ## A delegation is a request for work, never a finding about the work
@@ -135,7 +138,7 @@ Otherwise proceed.
      line reads, for example, `Hint <ark>: accept — extracted as <src id>, not
      linked; …`.
 3. **Read each hint that step 2 did not classify 'Already linked':** `record_read({ recordId: <ark> })`. This includes 'Extracted, not linked' hints. Compare its persona to
-   the tree person — the project's `tree.gedcomx.json` first, `person_read` when
+   the tree person — `tree_query({ projectPath, personIds })` first, `person_read` when
    the project tree does not hold them: name, dates, places, parents, spouse,
    household.
 4. **An index-vs-tree disagreement is a reason to look, never a reason to
@@ -266,7 +269,7 @@ each followed by its record title, the FamilySearch confidence and the deciding
 facts in one clause (name the image when one was read, or say the index was
 the only evidence; for a hint whose record is extracted, name its source and
 whether it is linked). Then this line, verbatim:
-`Awaiting verdicts: spawn search-hints again with personId and {ark, verdict} per hint`.
+`Awaiting verdicts: print only the text after the final ---, add nothing of your own, and stop. Match each record the researcher names to its ark above, then spawn search-hints again with personId and {ark, verdict} per hint`.
 
 **Record:** one line per decided hint, `<ark>: <verdict> → <logId>` (or
 `→ already linked by <pe id>`), then the accepted hints as `{ark, logId}` for
@@ -286,7 +289,7 @@ paragraphs of plain prose with **no label, heading or field name**:
    or what was recorded, with the reason. Say plainly when one is already linked
    to this person in the project, and when there is not enough to judge, and
    why. No identifiers, tool names or field names.
-2. One sentence: what happens next, in plain language — in triage, that the
-   researcher decides on each suggested record.
+2. One sentence: what happens next, in plain language — in triage, a question
+   asking the researcher which suggested records to accept and which to reject.
 
 The caller prints everything after that `---` verbatim and nothing above it.
