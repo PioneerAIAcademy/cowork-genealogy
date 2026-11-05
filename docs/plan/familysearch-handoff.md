@@ -427,6 +427,9 @@ The [self-hosted beta](self-hosted-mcp-beta.md) runs this plan's web and tools t
 - **Web bundle:** an nginx file setting `client_max_body_size 26m` and `proxy_read_timeout 600s`. Today nginx's 1 MB default refuses the web tier's 25 MB uploads here too.
 - **Browser app:** `apps/web` and `packages/viewer-ui` read feature flags from `/auth/config`; a flag it does not send keeps today's behavior.
 - **Schema:** new numbered files from 016.
+- **Two changes reach the worker, so they are not additive:**
+  - a 16 MiB cap on a project document, refused on write, because it sits in the store;
+  - `project_list` answers a failed document read with an error, not an entry with empty fields, and the research router calls it at its project step.
 - **Tools:**
   - `project_list`, which here lists the worker's project (PR #3852); a worker bundle with the research router's project step needs a tools tier that has it, so tools deploys first;
   - G4's writer-tool checks and a `record_search` schema trim, if the beta needs them;
