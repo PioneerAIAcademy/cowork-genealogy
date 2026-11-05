@@ -199,3 +199,38 @@
   outline: 2px solid var(--accent-gold-strong);
   outline-offset: 1px;
 }
+
+.evaluateStrip {
+  padding: var(--spacing-sm) var(--spacing-lg) 0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.evaluateButton {
+  font-family: var(--font-body);
+  font-size: 13px;
+  padding: var(--spacing-xs) var(--spacing-md);
+  background: var(--accent-gold-soft);
+  color: var(--accent-gold-strong);
+  border: 1px solid var(--accent-gold-strong);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.evaluateButton:hover {
+  background: var(--accent-gold-soft);
+  opacity: 0.8;
+}
+
+.evaluateButton:focus-visible {
+  outline: 2px solid var(--accent-gold-strong);
+  outline-offset: 1px;
+}
+
+.evaluateProgress {
+  padding: 0 var(--spacing-lg);
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: var(--spacing-sm) 0 0;
+}
