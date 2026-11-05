@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.) Born about 1910 in Tov
 
 ## Research question
 
-> When and where did Elio María Méndez marry Domitila Castro, the mother of his children born 1926–1931 in Guaraque and Tovar, Mérida, Venezuela, and who were his parents?
+> When and where did Elio María Méndez marry Domitila Castro, the mother of his children born 1926–1931 in Guaraque and Tovar, Mérida, Venezuela?
 
 ## What was removed from the starting tree
 
@@ -27,6 +27,15 @@ medium — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4143).** The old question asked
+two independent facts (the marriage, and his parents): "When and where did
+Elio María Méndez marry Domitila Castro, the mother of his children born
+1926–1931 in Guaraque and Tovar, Mérida, Venezuela, and who were his parents?"
+Reworded `researcher_question` to the marriage only; demoted `f2` (his
+parents) to `required: false`, so a run that recovers it anyway still gets
+credit. No finding wording changed, and this fixture has no committed runs to
+re-grade.
 
 **Resolved 2026-10-16 (#3349): true match.** The hint record —
 "Venezuela, Registro Civil, 1843-2021", marriage of Elio María Méndez and

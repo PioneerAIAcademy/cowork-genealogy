@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_evaluate_search_results_c3n",
+    "skill": "evaluate-search-results",
+    "name": "An unextracted baptism naming Mary Robertson and Hiram Hyde as parents is a Match that adds a child",
+    "type": "positive",
+    "description": "On g9gj-fulltext-hits-unextracted, where no log_017 hit is extracted. log_017 hit 9 (3Q9M-CSK3-ZSLR), the Jackson church's baptisms of 1834-36, names 'Mary Robertson & Hiram Hy' as parents of a child. Gold (PLAN §4, to be confirmed by a genealogist before the paid run): Match, on his wife's full name and the Jackson congregation; new vital information, because the child (transcribed 'Chanty') is on no edge of his, whose only child in the tree is Margaret E.",
+    "tags": [
+      "hit-verdict",
+      "expect-match",
+      "new-vital",
+      "not-extracted",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Evaluate this full-text search hit against the tree person.\n\nprojectPath: <workspace>\nhitRef: results/log_017.json#3Q9M-CSK3-ZSLR\ntarget: I1",
+    "scenario": "g9gj-fulltext-hits-unextracted"
+  },
+  "mcp_fixtures": [],
+  "execution": {
+    "max_wall_clock_seconds": 300
+  },
+  "judge_context": [
+    "This is the direct-agent arm: the delegation is relayed verbatim to evaluate-search-results and no router is staged. project_context, sidecar_read, tree_query and research_append run live against the scenario.",
+    "Gold: Match, new vital information, not already extracted. The page lists baptisms of 1834-36 in the Cambridge/Coila/Jackson congregation; one child ('Chanty, Hyde') has parents 'Mary Robertson & Hiram Hy'. Iram's Couple in the tree is with Mary Robertson, and he lived in Jackson.",
+    "New: the hit names a child of Iram's who is on no edge of his; his only child in the tree is I3 Margaret E. Hyde. The baptism is a fact about the child, so it counts only through that relationship, and the rationale should name the child as what is new.",
+    "The verdict, the flag, the single hit_verdicts row, the one read of the hit, the tree_query call and the contract lines are checked by validators. Grade whether the rationale names the facts that decide them, and the plain summary after the `---`."
+  ]
+}

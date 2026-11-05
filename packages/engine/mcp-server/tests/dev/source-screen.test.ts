@@ -43,7 +43,6 @@ import {
   classifyArk,
   runSnapshot,
   scoreFindings,
-  selectSubjectPersona,
   SPEC_PATH,
   unplantedKey,
   writeJson,
@@ -51,6 +50,7 @@ import {
   type FixtureSpec,
   type Tools,
 } from "../../dev/source-screen.js";
+import { selectSubjectPersona } from "../../src/utils/record-persona-select.js";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type Json = any;
@@ -475,10 +475,23 @@ describe("selectSubjectPersona", () => {
     expect(select(edgeRead([asSpouse], "Female"), coupleRecord())).toEqual({ persona_id: "w", selected_by: "role:spouse" });
   });
 
-  it("(d) two same-gender children are ambiguous, and so are two parents when the subject's gender is unknown", () => {
+  it("(d) two same-gender children are ambiguous, and an unknown or missing gender chooses nothing", () => {
     const sibs: Json = { persons: [rp("mo", "Female", ark("E1")), rp("c1", "Female"), rp("c2", "Female")], relationships: [pc("mo", "c1"), pc("mo", "c2")] };
     expect(select(edgeRead([asChild], "Female"), sibs)).toEqual({ unscored: "ambiguous" });
-    expect(select(edgeRead([asParent], "Unknown"), parentsRecord())).toEqual({ unscored: "ambiguous" });
+    expect(select(edgeRead([asParent], "Unknown"), parentsRecord())).toEqual({ unscored: "no_gender" });
+    // A lone parent persona is not this person when the gender cannot rule out the other parent.
+    const oneParent: Json = { persons: [rp("f", "Male"), rp("c", "Female", ark("E1"))], relationships: [pc("f", "c")] };
+    expect(select(edgeRead([asParent], "Unknown"), oneParent)).toEqual({ unscored: "no_gender" });
+    const genderless = edgeRead([asParent]);
+    delete genderless.persons[0].gender;
+    expect(select(genderless, oneParent)).toEqual({ unscored: "no_gender" });
+  });
+
+  it("matches a relationship whose source ref carries a leading #", () => {
+    const plain = edgeRead([asParent], "Male");
+    const hashed = edgeRead([asParent], "Male");
+    hashed.relationships[0].sources = [{ ref: "#r_E1" }];
+    expect(selectSubjectPersona(hashed, "AAAA-111", entryOf(plain), parentsRecord())).toEqual({ persona_id: "f", selected_by: "role:parent" });
   });
 
   it("a persona holding the role itself is a candidate (a parent named by the ARK, subject also a parent)", () => {

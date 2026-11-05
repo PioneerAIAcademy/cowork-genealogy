@@ -1,4 +1,4 @@
-# Victoriano Macatangay — parents and additional son Miguel (b. 1915)
+# Victoriano Macatangay — parents
 
 **Source PID:** `GV6J-VZC`
 **Victoriano Macatangay is deceased.** (FamilySearch ToS requires
@@ -7,7 +7,7 @@ not recorded in the tree; died not recorded in the tree.
 
 ## Research question
 
-> Who were the parents of Victoriano Macatangay of Batangas, Philippines, and did he and his wife Gabina Sisquinto have a son named Miguel, born 1915, in addition to their six known children?
+> Who were the parents of Victoriano Macatangay of Batangas, Philippines?
 
 ## What was removed from the starting tree
 
@@ -28,6 +28,15 @@ hard — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-03 — re-scoped for step mode (issue #4145).** The old question asked
+two independent facts (his parents, and a specific additional son): "Who were
+the parents of Victoriano Macatangay of Batangas, Philippines, and did he and
+his wife Gabina Sisquinto have a son named Miguel, born 1915, in addition to
+their six known children?" Reworded `researcher_question` to the parents only
+("Who were the parents of Victoriano Macatangay of Batangas, Philippines?");
+demoted `f3` (son Miguel) to `required: false` so a run that recovers it
+anyway still gets credit. No finding wording changed.
 
 **Resolved: true match.** The hint record —
 Philippines, Catholic Church Records, 1520-2014: christening entry,

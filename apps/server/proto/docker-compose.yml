@@ -269,6 +269,9 @@ services:
       # off. DEV_LOGIN is the opt-in no template may set (U11); a literal, so no host
       # variable at `up` time switches it.
       DEV_LOGIN: "true"
+      # #3987: unset or false, POST /api/projects/{id}/files answers 404 and /auth/config
+      # carries no `uploads` key; anything but true/false refuses to start.
+      UPLOADS_ENABLED: ${UPLOADS_ENABLED:-}
       PUBLIC_URL: ${PUBLIC_URL:-http://127.0.0.1:8085}
       WEB_ORIGIN: ${WEB_ORIGIN:-}
       SESSION_SECRET: ${SESSION_SECRET:-}
@@ -317,6 +320,7 @@ services:
       # default everywhere; set them in the shell to exercise the on state.
       GENEALOGY_FS_CALLS_PER_MINUTE: ${GENEALOGY_FS_CALLS_PER_MINUTE:-}
       GENEALOGY_MAX_TRANSCRIPTIONS: ${GENEALOGY_MAX_TRANSCRIPTIONS:-}
+      GENEALOGY_SHARED_COLLECTIONS_CACHE: ${GENEALOGY_SHARED_COLLECTIONS_CACHE:-}
       # The connector door (self-hosted beta E1). NOT GENEALOGY_-prefixed, so
       # these are outside test_proto_config's closed GENEALOGY_ set by design;
       # a separate test asserts the passthrough.

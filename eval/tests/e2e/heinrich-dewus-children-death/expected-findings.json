@@ -16,7 +16,7 @@
         "A separate death notice and a memorial the family published exactly one year later both give the actual date of death as 23 Aug 1936 (the obituary's 28 Aug 1936 is the print date)",
         "Wisconsin, U.S., Death Records, 1872–2004 (Ancestry) — state death registration for Henry Dewus, 28 Aug 1936, Milwaukee, Wisconsin (the 28 Aug is the registration date; the actual death date of 23 Aug is established by the death notice and one-year memorial) (bundled capture ancestry-wi-death-cert-dewus-henry-1936.pdf)"
       ],
-      "required": true
+      "required": false
     },
     {
       "id": "f2",

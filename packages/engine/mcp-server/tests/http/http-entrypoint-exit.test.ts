@@ -287,19 +287,30 @@ describe("build/http.js store environment", () => {
     const words = await runHttp({ ...BASE, GENEALOGY_MAX_TRANSCRIPTIONS: "abc" });
     expect(words.code, words.stderr).toBe(2);
     expect(words.stderr).toMatch(/invalid value: GENEALOGY_MAX_TRANSCRIPTIONS/);
-  }, TEST_TIMEOUT_MS * 2);
 
-  it("names both limits on start-up, and says when each is off", async () => {
+    const yes = await runHttp({ ...BASE, GENEALOGY_SHARED_COLLECTIONS_CACHE: "yes" });
+    expect(yes.code, yes.stderr).toBe(2);
+    expect(yes.stderr).toMatch(/invalid value: GENEALOGY_SHARED_COLLECTIONS_CACHE/);
+  }, TEST_TIMEOUT_MS * 3);
+
+  it("names each limit on start-up, and says when each is off", async () => {
     const off = await runHttp(BASE, /listening on .*\n/);
     expect(off.stderr).toMatch(/fs budget: off\n/);
     expect(off.stderr).toMatch(/transcription cap: off\n/);
+    expect(off.stderr).toMatch(/collections cache: per token\n/);
 
     const on = await runHttp(
-      { ...BASE, GENEALOGY_FS_CALLS_PER_MINUTE: "120", GENEALOGY_MAX_TRANSCRIPTIONS: "4" },
+      {
+        ...BASE,
+        GENEALOGY_FS_CALLS_PER_MINUTE: "120",
+        GENEALOGY_MAX_TRANSCRIPTIONS: "4",
+        GENEALOGY_SHARED_COLLECTIONS_CACHE: "true",
+      },
       /listening on .*\n/,
     );
     expect(on.stderr).toMatch(/fs budget: 120 calls\/min\n/);
     expect(on.stderr).toMatch(/transcription cap: 4 at a time\n/);
+    expect(on.stderr).toMatch(/collections cache: shared\n/);
   }, (START_TIMEOUT_MS + TEST_TIMEOUT_MS) * 2);
 
   it("names the orphan sweep's schedule on start-up, and says when it is off", async () => {

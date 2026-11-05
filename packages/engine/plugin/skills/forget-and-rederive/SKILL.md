@@ -6,8 +6,8 @@ allowed-tools:
   - tree_forget
 ---
 
-**Narration:** read `researcher_profile.narration_guidance` in `research.json` and
-apply it as the narration style for this invocation.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as the
+narration style for this invocation. If null or there is no project, use one short preamble per action.
 
 # Forget and re-derive
 
@@ -85,7 +85,7 @@ returns each tree person's `id` and preferred name. That is all you need: the
 selectors below take ids, and `tree_forget` walks the relationships itself to
 resolve parents, children and spouses.
 
-**Do not read `tree.gedcomx.json`.** You do not need the names and dates you are
+**Do not read `tree.gedcomx.json` or call `tree_query`.** You do not need the names and dates you are
 about to remove, and you are better off not having them in context. For the same
 reason, use the year (or year range) the researcher gave you and stop. A single
 call packing more than one threshold onto the same date selector is rejected by

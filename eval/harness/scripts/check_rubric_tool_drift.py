@@ -603,20 +603,6 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
-        "file": "eval/tests/unit/tree-edit/guardian-after-remarriage-step-hypothesis.json",
-        "tool": "project_context",
-        "quotes": [
-            "if the run DOES attempt ANY tool - a writer, or a reader such as `project_context` probing for a project - and the call fails BECAUSE NO PROJECT EXISTS (`no_project`), that attempt is NOT a fault in itself",
-        ],
-        "reason": (
-            "not-needed: a stateless test where the tool is named only to "
-            "exempt a failed probe - 'if the run DOES attempt ANY tool - a "
-            "writer, or a reader such as `project_context` probing for a "
-            "project - and the call fails BECAUSE NO PROJECT EXISTS "
-            "(`no_project`), that attempt is NOT a fault in itself'"
-        ),
-    },
-    {
         "file": "eval/tests/unit/tree-edit/rubric.md",
         "tool": "validate_research_schema",
         "quotes": [
