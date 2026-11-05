@@ -74,6 +74,7 @@ import {
   factsOf,
   unresolvedPlacesOf,
   type BuiltTree,
+  type DroppedLoopEdge,
   type IdMap,
 } from "../utils/person-read-tree.js";
 import {
@@ -183,7 +184,8 @@ export interface ProjectCreateSummary {
   relatives: SummaryPerson[];
   counts: { persons: number; relationships: number; sources: number; memorySources: number };
   memories: { transcribed: string[]; notTranscribed: string[] };
-  /** The read's own notes (a relative FamilySearch names but does not describe). */
+  /** A sentence per ParentChild loop the build broke, first, then the read's
+   *  own notes (a relative FamilySearch names but does not describe). */
   notes?: string[];
   /** How many entries each list lost to the size cap; absent when none did. */
   omitted?: Partial<Record<"relatives" | "transcribed" | "notTranscribed" | "notes" | "warnings", number>>;
@@ -338,7 +340,8 @@ export async function runProjectCreate(
       throw e;
     }
     const { tree, idMap, subjectPersonIds } = built;
-    const refWarnings: string[] = [];
+    const loopNotes = built.droppedLoopEdges.map(loopNote);
+    const refWarnings: string[] = [...loopNotes];
 
     // `assertion_id` is stamped by `materialize_facts`, never supplied. This
     // tool copies the read's facts as given, and the document validator type-
@@ -446,6 +449,7 @@ export async function runProjectCreate(
       objective: storedObjective,
       ...(storedTitle ? { title: storedTitle } : {}),
       memorySourceCount: memorySources.length,
+      loopNotes,
       warnings,
     });
   } catch (e) {
@@ -583,6 +587,7 @@ function summarize(args: {
   objective: string;
   title?: string;
   memorySourceCount: number;
+  loopNotes: string[];
   warnings: string[];
 }): ProjectCreateSummary {
   const { outcome, tree, subjectId, memorySourceCount } = args;
@@ -594,7 +599,8 @@ function summarize(args: {
       .map((p): SummaryPerson => ({ id: p.id, name: displayName(p), relationship: relationTo(subjectId, p, tree.relationships) })),
     transcribed: memories.filter((m) => typeof m.text === "string" && m.text.trim() !== "").map((m) => m.title),
     notTranscribed: memories.filter((m) => !(typeof m.text === "string" && m.text.trim() !== "")).map((m) => m.title),
-    notes: Array.isArray(outcome.result.notes) ? [...outcome.result.notes] : [],
+    // First: the trimmer drops a list's last entry first.
+    notes: [...args.loopNotes, ...(Array.isArray(outcome.result.notes) ? outcome.result.notes : [])],
     warnings: [...args.warnings],
   };
   const omitted: NonNullable<ProjectCreateSummary["omitted"]> = {};
@@ -646,6 +652,23 @@ function summarize(args: {
     summary = build();
   }
   return summary;
+}
+
+/** The researcher-facing sentence for an edge the build dropped to break a
+ *  loop, worded by the loop's size so it never claims a link FamilySearch does
+ *  not hold. */
+export function loopNote(edge: DroppedLoopEdge): string {
+  const name = (n: string, pid: string) => (n === "Unknown" ? `the person with FamilySearch ID ${pid}` : n);
+  const parent = name(edge.parentName, edge.parentPid);
+  const child = name(edge.childName, edge.childPid);
+  const tail = "since a person cannot be their own ancestor.";
+  if (edge.cycleLength === 1) {
+    return `FamilySearch records ${parent} as their own parent; that link was left out of the tree, ${tail}`;
+  }
+  if (edge.cycleLength === 2) {
+    return `FamilySearch records ${parent} as ${child}'s parent and ${child} as ${parent}'s; the first link was left out of the tree, ${tail}`;
+  }
+  return `FamilySearch records ${parent} as ${child}'s parent, but also records ${child} as ${parent}'s ancestor; that link was left out of the tree, ${tail}`;
 }
 
 export const projectCreateSchema = {

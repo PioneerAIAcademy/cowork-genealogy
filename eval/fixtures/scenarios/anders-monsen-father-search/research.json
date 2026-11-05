@@ -1,0 +1,64 @@
+{
+  "project": {
+    "id": "rp_anders_monsen_father",
+    "objective": "Was Anders Monsen (LKFW-9XH, christened 1759 at Hamre) the son of Mons Monsen?",
+    "subject_person_ids": [
+      "LKFW-9XH"
+    ],
+    "status": "active",
+    "created": "2026-07-09",
+    "updated": "2026-07-09"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Was Anders Monsen (LKFW-9XH), christened 7 April 1759 at Hamre kirke, the son of Mons Monsen?",
+      "rationale": "The tree names Mons Monsen (LKFW-9ML) as his father with no record cited for the link. His Hamre baptism is the record that would name his father.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "created": "2026-07-09",
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-07-09",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Hamre prestegjeld, Hordaland, Norway",
+          "date_range": "1757-1761",
+          "repository": "FamilySearch",
+          "rationale": "FamilySearch's indexed Norwegian church-book baptisms cover Hamre. The baptism of Anders, christened 7 April 1759, may name his father.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

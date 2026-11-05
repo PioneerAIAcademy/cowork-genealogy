@@ -426,8 +426,9 @@ export interface WarningJustification {
   recorded_at: string
 }
 
-/** A different person who shares a tree person's name, keyed by the tree
- *  person_id it shadows. */
+/** A different person who shares a tree person's name, or a pool of such
+ *  people one of whom may be that person (notes starting `pool:`, no
+ *  record_ids), keyed by the tree person_id it shadows. */
 export interface Namesake {
   id: string
   person_id: string
@@ -436,7 +437,7 @@ export interface Namesake {
   time_period?: string | null
   record_ids: string[]
   log_entry_ids?: string[]
-  /** Stamped by research_append: listed record id to the persona its search result names. */
+  /** Stamped by research_append: listed record id to the persona its search or read result names. */
   record_persona_ids?: Record<string, string>
   notes?: string | null
   created: string

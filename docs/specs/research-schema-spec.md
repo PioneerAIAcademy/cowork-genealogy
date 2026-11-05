@@ -65,8 +65,9 @@ entirely:
   it (Section 5.13).
 - `warning_justifications` — appended by the tree-writer tools as a side
   effect of a justified write (Section 4).
-- `namesakes` — written by the `search-records` agent alone; absent until a
-  namesake is recorded (Section 5.15).
+- `namesakes` — written by the `search-records` agent and its two co-writers,
+  the `search-images` and `search-full-text` agents; absent until a namesake is
+  recorded (Section 5.15).
 - `rejected_links` — written by the `person-evidence` agent; absent on projects
   that predate it (Section 5.14).
 - `hit_verdicts` — written by the `evaluate-search-results` agent alone; absent
@@ -316,7 +317,7 @@ described under "Who actually writes a row" below.
 | `evaluations` | **the gps-mentor agent** | proof-conclusion, question-selection | Retire an entry by pointing `superseded_by` at its replacement; never delete. The owner is an agent, and the harness ownership check keys on the calling *skill's* name, so this row is not enforced there; the plugin hook routes the section to the gps-mentor agent instead, denying every other caller including the main thread |
 | `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
 | `warning_justifications` | (none — writer-tool only) | none: no tool returns it (`research_query` excludes it, `project_context` omits it) | Append-only; written by `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` as a side-effect of a justified write. Each entry carries `warning_id`, `justification`, `person_ids`, `tool`, `recorded_at`. |
-| `namesakes` | search-records (sole writer: the plugin hook routes the section to it); `research_append` stamps `record_persona_ids` | `research_append` (the namesake cap and its §5.6 warning), `merge_tree_persons`, `materialize_facts` (the copy gate), `tree_edit` and `tree_correct` (the citation check) | Mutable (`name`, `place`, `time_period`, `record_ids`, `log_entry_ids`, `notes`); never delete. A row is never retired, and `research_append` refuses an update that sets `person_id` or `record_persona_ids` (Section 5.15). Optional section — absent until a namesake is recorded |
+| `namesakes` | search-records (the owner: the plugin hook routes the section to it), with search-images and search-full-text as co-writers; `research_append` stamps `record_persona_ids` | `research_append` (the namesake cap and its §5.6 warning), `merge_tree_persons`, `materialize_facts` (the copy gate), `tree_edit` and `tree_correct` (the citation check) | Mutable (`name`, `place`, `time_period`, `record_ids`, `log_entry_ids`, `notes`); never delete. A row is never retired, and `research_append` refuses an update that sets `person_id` or `record_persona_ids` (Section 5.15). Optional section — absent until a namesake is recorded |
 | `rejected_links` | person-evidence | any caller via `research_query` | Immutable except `reason`, which may be filled in later; `research_append` refuses an update that sets any other field (Section 5.14). Never delete — the whole point is that the record outlives the session that made it. Optional section — absent on projects that predate it. Sole owner: ruling a candidate link out is `person-evidence`'s judgement and no other skill produces it. **No skill body reads this section**: the re-link refusal is a `research_append` precondition, not a rule anyone has to remember (ADR-0011). It is queryable so an agent can *explain* a refusal, not so it can enforce one |
 | `hit_verdicts` | the evaluate-search-results agent (sole writer: the plugin hook routes the section to it); `research_append` rewrites `hit_id` to the stored form and folds a repeat append into an update | any caller via `research_query`; `merge_tree_persons` | Mutable (`verdict`, `new_vital_info`, `rationale`); never deleted, except that `merge_tree_persons` removes a collapsed person's row that agrees with its survivor's on the same hit. A row is never retired, and `research_append` refuses an update that sets any other field (Section 5.16). Optional section — absent until a hit is evaluated |
 
@@ -591,7 +592,7 @@ Array of question objects.
 | `stop_criteria` | object or null | yes | Null when `stopped_because` is null or a non-gate value; required object when `stopped_because` is a gate value. Always present as a key (null, not omitted) for consistency. See below |
 | `not_reached` | object[] | yes | Sources that could not be reached, each with `kind`, `description`, `log_entry_id` and `wiki_title` (both nullable). May be empty. See below |
 
-**`stop_criteria`** — Structured assessment against the GPS 7-Point Stop Criteria. Each field is a brief assessment (1-2 sentences).
+**`stop_criteria`** — Structured assessment against the GPS 7-Point Stop Criteria. Each field is a brief assessment (1-2 sentences), at most 800 characters: `research_append` refuses a longer one on any op that writes `search_stop` (over 188 committed `stop_criteria` objects, measured 2026-11-02, it refuses 38, p90 708 — `research-append-tool-spec.md`).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -1135,7 +1136,7 @@ are unsure, it neither links nor rejects. In an autonomous or "Keep going" turn 
 weak match is simply left unlinked. The engine cannot see who spoke, so each row
 carries the researcher's exact words in `researcher_words`: a hedge read as a no,
 or a rejection written in a turn the researcher never spoke in, is then visible in
-feedback triage. That makes a slip visible, not impossible.
+the viewer and in feedback triage. That makes a slip visible, not impossible.
 
 `researcher_words` is its own field, not `reason` made required and verbatim:
 `reason` is optional on purpose (below) and mutable, so it cannot hold a record.
@@ -1186,23 +1187,32 @@ Array of namesake rows. A row records a different person who shares a tree
 person's name, place and time, keyed by the `person_id` of the tree person the
 namesake is **not**, so that a `probable` or `confident` `person_evidence` link
 to that person needs something in its record that ties the record to them.
+A **pool row** records instead a pool of people of the name, one of whom may be
+the subject, who cannot all be one person and of whom none is yet tied to the
+subject or ruled out. Its `record_ids` is empty, since listing a candidate who
+may be the subject would mark that record as not theirs, and its `notes` start
+`pool:` and name each candidate's record. The cap reads only that a row exists,
+so a pool row caps the person's untied links the same way.
 **Optional section** (not in `required`): absent until a namesake is recorded.
 The `search-records` agent records a row when a search turns up such a person and
-it concludes he is not the subject, in its own `research_append` call after the
-search is logged; the plugin hook routes the whole section to that agent. No
+it concludes he is not the subject, or a pool row, in its own `research_append`
+call after the search is logged; the `search-images` and `search-full-text`
+agents record a row for a same-named person a page or a transcript hit rules
+out. The plugin hook routes the whole section to `search-records` and lets those
+two write it too. No
 committed document carries the section yet (0 of 560 tracked research documents,
 measured by `packages/engine/mcp-server/dev/measure-namesake-cap.ts` §0).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `id` | string | yes | `ns_` prefix |
-| `person_id` | string | yes | GedcomX person ID of the tree person the namesake is **not**, whose links the row caps. An update cannot change it (see below) |
+| `person_id` | string | yes | GedcomX person ID of the tree person whose links the row caps: the person the namesake is **not**, or, on a pool row, the person one of the pool may be. An update cannot change it (see below) |
 | `name` | string | yes | The namesake's name. Non-empty |
 | `place` | string | yes | Where the namesake is recorded. Non-empty |
 | `time_period` | string or null | no | When, as free text (e.g. "born about 1873") |
-| `record_ids` | string[] | yes | The record ids of the namesake's own records, in the form assertions carry in `record_id` |
+| `record_ids` | string[] | yes | The ids of the namesake's own records: a record id in the form assertions carry in `record_id`, a page's image id exactly as `image_transcribe` was given it (or its `ark`), or a full-text hit's `id`. Empty on a pool row |
 | `log_entry_ids` | string[] | no | `log_` references to the searches that found the namesake; each must name an existing log entry |
-| `record_persona_ids` | object | no | Tool-stamped, never the caller's: each listed record found in a sidecar of the row's `log_entry_ids`, mapped to the persona that search result names (`primaryId`). A record found in none has no key |
+| `record_persona_ids` | object | no | Tool-stamped, never the caller's: each listed record found in a sidecar of the row's `log_entry_ids`, mapped to the persona that search or read result names: its `primaryId`, or, where it has none, the person of its record whose ark is the listed id, a household member of a hit or read included. A record found in none has no key |
 | `notes` | string or null | no | Free text |
 | `created` | string | yes | Tool-stamped ISO 8601 date |
 
@@ -1219,14 +1229,27 @@ the record id alone, since a household record gives every member one id, so
 `research_append` stamps the namesake's own persona per listed record, the way it
 fills an assertion's `record_persona_id`: on an append, and on an update that
 sets `record_ids` or `log_entry_ids`, overwriting whatever the caller sent. Each
-listed id found in the sidecar of a persona-bearing search the row cites is stored
-in that sidecar's form, as an assertion's is. A record found in no sidecar is left
+listed id found in the sidecar of a persona-bearing search or read the row cites,
+as a result or as a person of a result's record, is stored in that sidecar's form,
+as an assertion's is. A record found in no sidecar is left
 unstamped and the row is still written: unlike an assertion, whose persona is
 lost for good when its search staged no sidecar, a missing stamp costs a count,
 not an identity, because the cap reads only that a row exists. The first runs that write rows count, with
 `dev/measure-namesake-cap.ts` §7, how many listed records were stamped, how many
 were not though their row cites such a search, and what a persona-keyed refusal
-would refuse and spare; item 10 is decided on those counts.
+would refuse and spare; item 10 is decided on those counts. A run whose engine
+cannot stamp a read, or whose engine commit is not in the clone, is left out and
+named rather than counted as zeros (chesworthrm, 2026-11-05). "Would refuse" counts
+a strong link whose assertion's persona is any persona the row stamped, from any
+record id, a household member's included; "spare" counts links to another persona
+of a record the row stamped, the record found as the cap finds a link's (its
+source, split by `record_document_id`), so a household member's record id reaches
+it as it reaches "would refuse". Together they are what a rule keyed on those
+records would refuse; a persona-keyed rule refuses the first and spares the
+second. Ids no persona
+search can stamp, a page's image id (which every entry on that page shares) and
+a full-text hit's id, are counted on a line of their own, outside the stamped
+share, so a refusal never keys on an image id alone.
 
 **Why a section keyed on the tree person** (lead, 2026-10-13). The cap looks a
 row up by the link's `person_id`. A list on the question was rejected: questions

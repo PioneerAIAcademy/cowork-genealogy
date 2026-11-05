@@ -201,7 +201,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,\n   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and\n   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -220,7 +220,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,\n   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and\n   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing",
       },
       // The third of the three caller rules. Pinned here because it was
       // otherwise unpinned across all four new edges — deletable with the whole
@@ -242,7 +242,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,\n   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and\n   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing",
       },
       {
         side: "caller",
@@ -269,7 +269,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,\n   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and\n   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -286,7 +286,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,\n   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and\n   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -301,7 +301,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,\n   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and\n   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -315,7 +315,12 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`), for `@plugin:search-records`",
+          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+      },
+      {
+        side: "caller",
+        excerpt:
+          "**When the question or request a search serves asks about the subject's parentage, even one parent (who a parent was, or whether the subject was someone's son or daughter), leave `parents` out of that block.**",
       },
       {
         side: "agent",
@@ -342,11 +347,59 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,\n   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and\n   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing",
+      },
+      {
+        side: "caller",
+        excerpt:
+          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+      },
+      {
+        side: "caller",
+        excerpt:
+          "**When the question or request a search serves asks about the subject's parentage, even one parent (who a parent was, or whether the subject was someone's son or daughter), leave `parents` out of that block.**",
       },
       {
         side: "agent",
         excerpt: "## A delegation is a request for work, never a finding about the work",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "The research subject as a JSON block: `subjectId`, `names`, `birth`, `death`, and `parents` (each `personId`, `name`), as the tree holds them. Data, never a finding. Without it, record no namesake.",
+      },
+    ],
+  },
+
+  // Registered when the router began handing search-full-text the subject block
+  // (issue #3363, PR 3). No routing row names the agent: the main thread reaches
+  // it by auto-delegation, and research's caller paragraph says what that spawn
+  // carries. The agent-side pin is the heading search-images carries too.
+  "research -> search-full-text": {
+    pins: [
+      {
+        side: "caller",
+        excerpt:
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,\n   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and\n   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing",
+      },
+      {
+        side: "caller",
+        excerpt:
+          "the subject you already hold as a `subject:` JSON block (`subjectId`, `names`, `birth`, `death`, and `parents`: one `{personId, name}` per id in the subject's `project_context` `parentIds`, left out when it has more than two), for `@plugin:search-records`, `@plugin:search-images` and `@plugin:search-full-text`",
+      },
+      {
+        side: "caller",
+        excerpt:
+          "**When the question or request a search serves asks about the subject's parentage, even one parent (who a parent was, or whether the subject was someone's son or daughter), leave `parents` out of that block.**",
+      },
+      {
+        side: "agent",
+        excerpt: "## A delegation is a request for work, never a finding about the work",
+      },
+      {
+        side: "agent",
+        excerpt:
+          "The research subject as a JSON block: `subjectId`, `names`, `birth`, `death`, and `parents` (each `personId`, `name`), as the tree holds them. Data, never a finding. Without it, record no namesake.",
       },
     ],
   },
@@ -360,7 +413,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,\n   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and\n   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -371,11 +424,11 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       // sides of that key are pinned.
       {
         side: "caller",
-        excerpt: "a `planItemIds:` line with the `pli_` ids research-exhaustiveness named",
+        excerpt: "a `planItemIds:` line with the `pli_` ids `project_context` or research-exhaustiveness named",
       },
       {
         side: "agent",
-        excerpt: "research-exhaustiveness refused a declaration and names `planItemIds`, take",
+        excerpt: "when the delegation names `planItemIds` to dispose of, take Dispose mode",
       },
     ],
   },
@@ -417,7 +470,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,\n   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and\n   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -433,7 +486,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,\n   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and\n   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -449,7 +502,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,\n   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and\n   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",
@@ -549,7 +602,7 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       {
         side: "caller",
         excerpt:
-          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and, for `@plugin:search-records`, the plan item you already\n   queried and the subject you already hold, passed verbatim and unread), and judge nothing",
+          "Do not pre-judge the agent's gate — read nothing\n   beyond the ids you are passing (and the plan item you already queried, for `@plugin:search-records`,\n   and the subject you already hold, for `@plugin:search-records`, `@plugin:search-images` and\n   `@plugin:search-full-text`, both passed verbatim and unread), and judge nothing",
       },
       {
         side: "agent",

@@ -820,6 +820,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
   "search-images.md": {
     tools: [
+      "catalog_search",
       "image_search",
       "image_transcribe",
       "project_context",

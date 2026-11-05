@@ -82,6 +82,7 @@ import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId, toArk } from "../utils/ark.js";
+import { personaFor } from "../utils/record-persona-select.js";
 import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint, sidecarReader } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
@@ -2440,15 +2441,7 @@ export function mintedFromThisRecord(
   // in the write-once starting-tree baseline. Without them the exemption
   // refused 232 committed links, 206 of which were pre-existing people (184
   // caught by both discriminators, 22 by the starting-tree baseline alone).
-  if (pidOrStartingPerson(personId, startingPersonIds)) return false;
-  // A person with an attachment link came from FamilySearch: only an imported
-  // person has records attached there. Without this, reusing the import's S for
-  // an attached record makes that person's only ref reach this record, and a
-  // project with no starting-tree baseline would read them as minted from it,
-  // exempting any caller's link to them from the score gate.
-  if (((research?.person_evidence ?? []) as any[]).some((pe) => pe?.person_id === personId && isAttachmentLink(pe))) {
-    return false;
-  }
+  if (importedPerson(personId, research, startingPersonIds)) return false;
   const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
   if (!person) return false;
   const refs = personSourceRefs(person);
@@ -2463,6 +2456,97 @@ export function mintedFromThisRecord(
  *  `mintedFromThisRecord` applies first, measured in its docblock. */
 export function pidOrStartingPerson(personId: string, startingPersonIds?: ReadonlySet<string>): boolean {
   return FS_PERSON_PID.test(personId) || startingPersonIds?.has(personId) === true;
+}
+
+/** Whether this person came from FamilySearch: a FamilySearch id, a starting-tree
+ *  person, or one holding an attachment link (only an imported person has records
+ *  attached there). Without the attachment test, reusing the import's S for an
+ *  attached record makes that person's only ref reach this record, and a project
+ *  with no starting-tree baseline would read them as minted from it. */
+export function importedPerson(personId: string, research: any, startingPersonIds?: ReadonlySet<string>): boolean {
+  return (
+    pidOrStartingPerson(personId, startingPersonIds) ||
+    ((research?.person_evidence ?? []) as any[]).some((pe) => pe?.person_id === personId && isAttachmentLink(pe))
+  );
+}
+
+/** A person this research added that carries no provenance at all: not imported,
+ *  and no source ref on its own node, its names, its facts, or any relationship it
+ *  is in. `tree_edit add_person` makes one; a stub the researcher stated carries
+ *  its source on the relationship, and is not blank. False with no starting-tree
+ *  baseline, which cannot tell an imported person from an added one. False for a
+ *  person with a namesake (a `namesakes` row, or a same-named relative in
+ *  `namesakeTree`): the namesake cap decides that person's links, and a speculative
+ *  link must not let a record land on it first. Both `research_append`'s link gate
+ *  and `materialize_facts`' read this, so the step one refuses for is the step the
+ *  other allows. */
+export function blankAddedPerson(
+  personId: string,
+  research: any,
+  tree: any,
+  startingPersonIds?: ReadonlySet<string>,
+  namesakeTree: any = tree,
+): boolean {
+  if (!startingPersonIds || startingPersonIds.size === 0) return false;
+  if (importedPerson(personId, research, startingPersonIds)) return false;
+  if (((research?.namesakes ?? []) as any[]).some((r: any) => r?.person_id === personId)) return false;
+  if (derivedNamesakePairs(namesakeTree, personId).length > 0) return false;
+  const person = ((tree?.persons ?? []) as any[]).find((p: any) => p?.id === personId);
+  if (!person || personSourceRefs(person).size > 0) return false;
+  return !((tree?.relationships ?? []) as any[]).some(
+    (r: any) =>
+      r &&
+      [r.person1, r.person2, r.parent, r.child].includes(personId) &&
+      [r, ...(Array.isArray(r.facts) ? r.facts : [])].flatMap(sourceRefsOf).length > 0,
+  );
+}
+
+/** A live probable or confident link to a `blankAddedPerson`: nothing records
+ *  which record that person came from, and the link would vouch for it anyway.
+ *  The order that keeps `same_person` ahead of the write: a speculative link with
+ *  its score, then `materialize_facts`, which accepts a blank person once any live
+ *  link to it exists, then raise the link. A speculative
+ *  link asserts no identity and is not refused, but raising one to probable is
+ *  judged like an append. Silent for an attachment link and
+ *  for negative evidence, which no record's persona can materialize. Measured
+ *  2026-11-04 over the e2e final documents: of 5,061 links since August, 8 point
+ *  at a person with no ref on any name or fact (3 persons, 1 of them negative
+ *  evidence, now exempt); 1,121 of June and July's 6,113 did. */
+function refLessAddedPersonInvariants(
+  entry: any,
+  research: any,
+  tree: any,
+  startingPersonIds?: ReadonlySet<string>,
+  batchAssertions?: Map<string, any>,
+  attachmentLink = false,
+): string[] {
+  const personId = entry?.person_id;
+  if (typeof personId !== "string" || attachmentLink || isAttachmentLink(entry)) return [];
+  if (entry.confidence !== "probable" && entry.confidence !== "confident") return [];
+  if (!blankAddedPerson(personId, research, tree, startingPersonIds)) return [];
+  const assertion =
+    batchAssertions?.get(entry.assertion_id) ??
+    ((research?.assertions ?? []) as any[]).find((a: any) => a?.id === entry.assertion_id);
+  if (assertion?.record_role === "absent" || recordBasisOf(assertion) === "absent") return [];
+  const persona =
+    typeof assertion?.record_id === "string" && typeof assertion?.record_role === "string"
+      ? `materialize_facts({ projectPath, personId: '${personId}', recordId: '${assertion.record_id}', ` +
+        `recordRole: '${assertion.record_role}' })`
+      : `materialize_facts({ projectPath, personId: '${personId}', recordId, recordRole })`;
+  const related = assertion?.structured_value?.related_person_role;
+  const named =
+    isTwoParty(assertion?.fact_type) && typeof related === "string" && related !== ""
+      ? ` If '${personId}' is the ${related} this assertion names rather than its ` +
+        `${assertion.record_role}, write the named party instead: materialize_facts({ projectPath, ` +
+        `personId: '${personId}', assertionId: '${entry.assertion_id}', relatedRole: '${related}', ` +
+        `name: { given, surname } }), with the name the record gives them.`
+      : "";
+  return [
+    `person_evidence links '${personId}' at ${entry.confidence}, a person added during this research ` +
+      `with no source ref on any name, fact or relationship, so nothing records which record it came ` +
+      `from. Link it at 'speculative' with its same_person score (a live speculative link to it will ` +
+      `do), write the persona onto it with ${persona}, then raise the link to '${entry.confidence}'.${named}`,
+  ];
 }
 
 /** Every source ref a tree person carries. Person-level refs count too (#2696):
@@ -2905,7 +2989,7 @@ function capSource(a: any): unknown {
  *  `record_document_id` when every assertion of that source carries one (a
  *  source can hold two documents, #2537). A source with any assertion that
  *  names no document keys as `capSource`, as before the field existed. */
-function capDocumentKeyer(assertions: Iterable<any>): (a: any) => unknown {
+export function capDocumentKeyer(assertions: Iterable<any>): (a: any) => unknown {
   const unsplit = new Set<unknown>();
   for (const a of assertions) {
     const doc = a?.record_document_id;
@@ -4157,12 +4241,14 @@ export function factEvidenceParties(
   return [...refsReach(sourceRefsOf(fact), research).sourceIds].map((source) => ({ source, party: null }));
 }
 
+const isPersonaId = (v: unknown): v is string => typeof v === "string" && v !== "";
+
 /** Item 10 of #3363 (chesworthrm, 2026-10-24): stamps `record_persona_ids` on
  *  each row the call appended, or updated through `record_ids` or
- *  `log_entry_ids`, from the row's own search sidecars, so the first runs can
- *  count what a persona-keyed refusal would catch. Overwrites whatever the
- *  caller supplied; an update cannot set the field (`updatableFields`). A found
- *  record id is stored in the sidecar's form, as an assertion's is. */
+ *  `log_entry_ids`, from the row's own search and read sidecars, so the first
+ *  runs can count what a persona-keyed refusal would catch. Overwrites whatever
+ *  the caller supplied; an update cannot set the field (`updatableFields`). A
+ *  found record id is stored in the sidecar's form, as an assertion's is. */
 export async function stampNamesakePersonas(
   research: any,
   ops: ReadonlyArray<ResearchAppendOp>,
@@ -4184,18 +4270,36 @@ export async function stampNamesakePersonas(
     const stamp: Record<string, string> = {};
     const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
       if (typeof id !== "string") return id;
+      const bare = arkToBareId(id);
+      // A bare id is a record persona's.
+      const ark = toArk(id).startsWith("ark:/") ? toArk(id) : `ark:/61903/1:1:${bare}`;
+      // The form of a log that finds the record but names no persona for it; a
+      // later cited log may still name one.
+      let found: string | undefined;
       for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
         const entry = logById.get(logId);
         if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
-        const hit = (await readResults(entry.results_ref))?.find(
-          (r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === arkToBareId(id),
-        );
-        if (!hit) continue;
-        if (typeof hit.primaryId === "string" && hit.primaryId !== "") stamp[hit.recordId] = hit.primaryId;
-        return hit.recordId;
+        const results = (await readResults(entry.results_ref)) ?? [];
+        const hit = results.find((r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === bare);
+        let persona: unknown = hit?.primaryId;
+        let form: unknown = hit?.recordId;
+        if (!isPersonaId(persona)) {
+          // A record_read names its persona only among the record's persons, and a
+          // row may list another member of a hit's or a read's household.
+          const persons = results.flatMap((r) => (Array.isArray(r?.gedcomx?.persons) ? r.gedcomx.persons : []));
+          const person = personaFor({ persons }, ark);
+          persona = person?.id;
+          form ??= person?.ark;
+        }
+        if (typeof form !== "string") continue;
+        if (isPersonaId(persona)) {
+          stamp[form] = persona;
+          return form;
+        }
+        found ??= form;
       }
       // Accepted unstamped, unlike #699's assertions: the cap reads only that a row exists, so this loses a count, not identity.
-      return id;
+      return found ?? id;
     });
     row.record_ids = await Promise.all(recordIds);
     if (Object.keys(stamp).length > 0) row.record_persona_ids = stamp;
@@ -5961,6 +6065,25 @@ function declarationStatusInvariants(entry: any): string[] {
   ];
 }
 
+/** Each stop criterion is 1–2 sentences (the agent's Step 2). 800 chars sits above
+ *  the corpus p90 (708); over 188 committed `stop_criteria` objects it refuses 38
+ *  (#3546, measured 2026-11-02). Runs only when the op writes `search_stop`, so a later edit to a
+ *  question that already stores a longer criterion is not refused. */
+export const STOP_CRITERION_MAX_CHARS = 800;
+
+function stopCriteriaLengthInvariants(entry: any): string[] {
+  const sc = entry?.search_stop?.stop_criteria;
+  if (!sc || typeof sc !== "object") return [];
+  return Object.entries(sc)
+    .filter(([, v]) => typeof v === "string" && v.length > STOP_CRITERION_MAX_CHARS)
+    .map(
+      ([k, v]) =>
+        `question ${entry?.id ?? "(new entry)"}: search_stop.stop_criteria.${k} is ${(v as string).length} ` +
+        `characters; the cap is ${STOP_CRITERION_MAX_CHARS}. Write 1–2 sentences per criterion and put ` +
+        `the reasoning in one place, then send this write again.`,
+    );
+}
+
 /** Exhaustiveness may not be declared while the question's own plan says a
  *  search is still running.
  *
@@ -5991,11 +6114,9 @@ function declarationStatusInvariants(entry: any): string[] {
  *  write boundary. The decision, the case against it and the conditions it
  *  ships under are on issue #1830.
  *
- *  The orchestrator still consults this gate BEFORE the plan is drained
- *  (`research/SKILL.md:146`, unchanged): the judgement stays here, and only the
- *  route taken on a refusal changed, to dispose of the named items rather than
- *  extend the plan. Were disposal to happen first, the planner would be making
- *  this gate's call for it.
+ *  The orchestrator disposes of every item first and consults this gate after
+ *  (lead, #3546, restating the 2026-09-02 ruling): "answered early" is a valid
+ *  skip reason. `project_context` names the disposal while items are `planned`.
  *
  *  **Reads the PRE-CALL snapshot, unlike the sibling above, and the asymmetry is
  *  the whole gate.** Plan-item completion is the search work's step, not this
@@ -8314,7 +8435,9 @@ function applyOne(
   let priorNarrative: unknown;
   // An update's link pair and retired state as they stood BEFORE its fields merge,
   // so the rejected-link gate below can tell an edit from a re-link.
-  let priorPair: { assertion_id: unknown; person_id: unknown; superseded_by: unknown } | undefined;
+  let priorPair:
+    | { assertion_id: unknown; person_id: unknown; superseded_by: unknown; confidence: unknown }
+    | undefined;
   let keptCompletedWarning: string | undefined;
 
   if (op.op === "append") {
@@ -8400,6 +8523,7 @@ function applyOne(
       assertion_id: existing?.assertion_id,
       person_id: existing?.person_id,
       superseded_by: existing?.superseded_by,
+      confidence: existing?.confidence,
     };
 
     // Questions: re-declaring exhaustiveness on an already-declared question is
@@ -8585,6 +8709,7 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(fields, "search_stop");
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
+      invariantErrors.push(...stopCriteriaLengthInvariants(resultEntry));
     }
     if (op.op === "append") {
       invariantErrors.push(...newQuestionWhileAnotherIsOpenInvariants(resultEntry, preCallResearch));
@@ -8906,6 +9031,12 @@ function applyOne(
       (op.op === "update" && !resultEntry.superseded_by && (pairChanged || wasRetired));
     if (reRaising) {
       invariantErrors.push(...rejectedLinkInvariants(resultEntry, research));
+    }
+    const raisedFromSpeculative = op.op === "update" && priorPair?.confidence === "speculative";
+    if ((reRaising || raisedFromSpeculative) && !resultEntry.superseded_by) {
+      invariantErrors.push(
+        ...refLessAddedPersonInvariants(resultEntry, research, tree, startingPersonIds, batchAssertions, attachmentLink),
+      );
     }
     // An attachment link is only ever superseded. Raising it in place would skip
     // same_person: the score gate checks an update only when it writes

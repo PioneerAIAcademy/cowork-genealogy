@@ -1,0 +1,22 @@
+{
+  "tool": "same_person",
+  "description": "same_person: George Ackerman head-name assertion a_001 scored against I1, called by assertionId without recordRole. The head is already linked (pe_001), so this call is redundant but in-lane. Returns the same 0.84 as the recordRole variant. For ut_person_evidence_026: prevents fixture_not_found when the agent checks the head assertion directly.",
+  "args": {
+    "assertionId": "a_001",
+    "treePersonId": "I1"
+  },
+  "response": {
+    "score": 0.84,
+    "recordSource": "projection",
+    "recorded": true,
+    "recordPersona": {
+      "id": null,
+      "name": "George Ackerman",
+      "role": "head_of_household"
+    },
+    "treePerson": {
+      "id": "I1",
+      "name": "George Ackerman"
+    }
+  }
+}
