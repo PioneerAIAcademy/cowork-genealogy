@@ -1136,7 +1136,7 @@ are unsure, it neither links nor rejects. In an autonomous or "Keep going" turn 
 weak match is simply left unlinked. The engine cannot see who spoke, so each row
 carries the researcher's exact words in `researcher_words`: a hedge read as a no,
 or a rejection written in a turn the researcher never spoke in, is then visible in
-feedback triage. That makes a slip visible, not impossible.
+the viewer and in feedback triage. That makes a slip visible, not impossible.
 
 `researcher_words` is its own field, not `reason` made required and verbatim:
 `reason` is optional on purpose (below) and mutable, so it cannot hold a record.

@@ -38,6 +38,10 @@ describe('buildIndex', () => {
     expect(index.get('pe_001')).toBeDefined()
     expect(index.get('pe_001')!.section).toBe('person_evidence')
 
+    // Rejected links
+    expect(index.get('rj_001')).toBeDefined()
+    expect(index.get('rj_001')!.section).toBe('rejected_links')
+
     // Conflicts
     expect(index.get('c_001')).toBeDefined()
     expect(index.get('c_001')!.section).toBe('conflicts')
