@@ -817,6 +817,11 @@ SMOKE_STACK_DEP ?= proto-up-store
 SMOKE_PG_CONTAINER ?= proto-postgres
 SMOKE_OFFLINE_ONLY ?=
 smoke_offline_flag = $(if $(filter 1 true yes on,$(SMOKE_OFFLINE_ONLY)),--offline-only,)
+# The connector arm (self-hosted beta E1). On by default for a developer run --
+# it is what the card's done-when exercises -- and SMOKE_CONNECTOR=0 turns it
+# off for a tools tier with no encryption key. Same truthiness idiom.
+SMOKE_CONNECTOR ?= 1
+smoke_connector_flag = $(if $(filter 1 true yes on,$(SMOKE_CONNECTOR)),--connector,)
 # One fresh id per run unless SMOKE_PROJECT_ID names one. Shell, not $(shell): a make-time
 # uuid would be fixed for the whole invocation, including `make -n`.
 smoke_http_id = id="$(SMOKE_PROJECT_ID)"; [ -n "$$id" ] || id="smoke-$$(node -e 'console.log(crypto.randomUUID())')"; echo "SMOKE_PROJECT_ID=$$id"
@@ -838,7 +843,7 @@ smoke_http_pg_counts = { [ -n "$(SMOKE_PG_CONTAINER)" ] || { echo "engine-smoke-
 engine-smoke-http: $(ENGINE_BUILD) $(SMOKE_STACK_DEP) ## Drive the built engine over Streamable HTTP against the compose postgres + minio and call every tool but the three auth exclusions (BASE=http://127.0.0.1:8787 runs against the compose tools service; SMOKE_PROJECT_ID overrides the fresh id; SMOKE_OFFLINE_ONLY=1 runs only the rows needing no network or credentials, as CI does; SMOKE_STACK_DEP= skips proto-up-store for a caller bringing its own stack; SMOKE_PG_CONTAINER=<name> names that stack's postgres)
 ifdef BASE
 	@$(smoke_http_id); status=0; \
-	  ( cd $(ENGINE_DIR) && npx tsx dev/smoke-http.ts --base '$(BASE)' --project-id "$$id" --project-path /project $(smoke_offline_flag) --pg-dsn '$(or $(NODE_PG_DSN),$(PROTO_PG_DSN))' ) || status=$$?; \
+	  ( cd $(ENGINE_DIR) && npx tsx dev/smoke-http.ts --base '$(BASE)' --project-id "$$id" --project-path /project $(smoke_offline_flag) $(smoke_connector_flag) --pg-dsn '$(or $(NODE_PG_DSN),$(PROTO_PG_DSN))' ) || status=$$?; \
 	  $(smoke_http_pg_counts); \
 	  exit $$status
 else
@@ -846,13 +851,14 @@ else
 	  cd $(ENGINE_DIR) || exit 1; \
 	  port=$$(node -e 'const s=require("net").createServer().listen(0,"127.0.0.1",()=>{console.log(s.address().port);s.close()})'); \
 	  GENEALOGY_PG_DSN=$(PROTO_PG_DSN) GENEALOGY_S3_ENDPOINT=http://localhost:9000 \
+	    FS_TOKEN_ENC_KEY="$$FS_TOKEN_ENC_KEY" OAUTH_ISSUER="$$OAUTH_ISSUER" \
 	    GENEALOGY_S3_BUCKET=projects GENEALOGY_S3_ACCESS_KEY=proto GENEALOGY_S3_SECRET_KEY=protoproto \
 	    GENEALOGY_ANCHOR_PATH=/project \
 	    node build/http.js --host 127.0.0.1 --port $$port & pid=$$!; \
 	  trap 'kill $$pid 2>/dev/null; wait $$pid 2>/dev/null' EXIT; \
 	  for i in $$(seq 1 30); do kill -0 $$pid 2>/dev/null || break; curl -sf --max-time 0.5 "http://127.0.0.1:$$port/healthz" >/dev/null && break; sleep 0.5; done; \
 	  curl -sf --max-time 2 "http://127.0.0.1:$$port/healthz" >/dev/null || { echo "engine-smoke-http: build/http.js did not answer /healthz on :$$port within 30 s" >&2; exit 1; }; \
-	  npx tsx dev/smoke-http.ts --base "http://127.0.0.1:$$port" --project-id "$$id" --project-path /project --host-config $(smoke_offline_flag) --pg-dsn '$(PROTO_PG_DSN)' || status=$$?; \
+	  npx tsx dev/smoke-http.ts --base "http://127.0.0.1:$$port" --project-id "$$id" --project-path /project --host-config $(smoke_offline_flag) $(smoke_connector_flag) --pg-dsn '$(PROTO_PG_DSN)' || status=$$?; \
 	  $(smoke_http_pg_counts); \
 	  exit $$status
 endif
