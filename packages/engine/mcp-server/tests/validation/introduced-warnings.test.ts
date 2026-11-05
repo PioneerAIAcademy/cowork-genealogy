@@ -352,6 +352,67 @@ describe("introducedWarnings", () => {
     });
   });
 
+  // Issue #4224: the death-before-child-birth tags were keyed on the EARLIEST
+  // child, so a second posthumous child behind an in-time one raised nothing.
+  describe("(i) death-before-child-birth gate: each posthumous child is judged on its own", () => {
+    const kid = (id: string, date: string) => ({
+      id,
+      gender: "Male",
+      names: [{ id: `${id}-n`, given: id, surname: "X" }],
+      facts: [{ id: `${id}b`, type: "Birth", date, standard_date: date }],
+    });
+    const parent = (id: string, gender: string, death: string) => ({
+      id,
+      gender,
+      names: [{ id: `${id}-n`, given: id, surname: "X" }],
+      facts: [{ id: `${id}d`, type: "Death", date: death, standard_date: death }],
+    });
+    const addEdge = (
+      par: ReturnType<typeof parent>,
+      kids: Array<[string, string]>,
+      existing: string[],
+      add: string,
+    ) => {
+      const build = (linked: string[]) =>
+        tree(
+          [par, ...kids.map(([id, d]) => kid(id, d))],
+          linked.map((id, i) => ({
+            id: `R${i}`,
+            type: "ParentChild",
+            parent: par.id,
+            child: id,
+          })),
+        );
+      const before = build(existing);
+      const after = build([...existing, add]);
+      return introducedWarnings(
+        before, after, computeTouchedPersonIds(before, after),
+      );
+    };
+
+    it("refuses a second posthumous child behind one born in time", () => {
+      const r = addEdge(
+        parent("F", "Male", "12 Jan 1859"),
+        [["A", "1 Jan 1820"], ["B", "9 Aug 1935"], ["C", "1 Mar 1940"]],
+        ["A", "B"],
+        "C",
+      );
+      expect(
+        r.unjustified.map((w) => `${w.issueType}|${w.relatedPersonId}`),
+      ).toContain("hasDeathBeforeChildBirth30_10|C");
+    });
+
+    it("lands an in-time child added to a mother who already has a posthumous one", () => {
+      const r = addEdge(
+        parent("M", "Female", "1 Jan 1850"),
+        [["A", "1 Jan 1840"], ["B", "1 Jun 1855"], ["D", "1 Jan 1845"]],
+        ["A", "B"],
+        "D",
+      );
+      expect(r.unjustified).toHaveLength(0);
+    });
+  });
+
   it("(f) justification with stale id is detected", () => {
     const before = tree([plausiblePerson("I1", "John", "Smith")]);
     const after = tree([implausiblePerson("I1", "John", "Smith")]);
