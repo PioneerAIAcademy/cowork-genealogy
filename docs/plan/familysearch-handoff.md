@@ -272,7 +272,7 @@ F6, F7, F8, F11 (concurrency), F16, U24, U25 ─► go-live
    - Either one set to anything but a whole number above 0 — `0`, `-1`, `2.5`, `1e3`, `abc` — is one stderr line and exit 2 before `listen`. Unset, one start-up line reads `fs budget: off` / `transcription cap: off`.
    - `WIKI_API_URL`, `POP_STATS_URL`: F16's hosts; the default is outside step 2's egress.
    - `OPENROUTER_API_KEY`, `OPENROUTER_MODEL`: only if F9 allows. Model default `google/gemini-3.7-flash`.
-   - `WEB_PUBLIC_URL`, `UPLOADS_ENABLED`, `TRANSCRIPTION_ENABLED`: leave unset (the self-hosted beta's settings; unset means no viewer or upload link and transcription as today). A switch other than `true`/`false`, or a `WEB_PUBLIC_URL` that is not a plain http(s) URL with no `#`, `?`, credentials, backslash, space or control character, exits 2 before listening.
+   - `WEB_PUBLIC_URL`, `UPLOADS_ENABLED`, `TRANSCRIPTION_ENABLED`: leave unset (the self-hosted beta's settings; unset means no upload link and transcription as today). A switch other than `true`/`false`, or a `WEB_PUBLIC_URL` that is not a plain http(s) URL with no `#`, `?`, credentials, backslash, space or control character, exits 2 before listening.
    - `MATCHER_URL`, `MATCHER_API_KEY`: the matcher service's address and this tier's key; set both to score with the service, and leave unset to score with FamilySearch's matcher.
 
    **Never set in production:** `GENEALOGY_DEBUG_HOLD_BEFORE_COMMIT_MS`, `GENEALOGY_DEBUG_HOLD_AFTER_COMMIT_MS`. The packaging guard refuses any `GENEALOGY_DEBUG_*` in a template (U11); one set at API level prints `debug holds set (never in production): NAME="value"` on stderr before listen, so it shows in step 14's logs.
@@ -432,7 +432,7 @@ The [self-hosted beta](self-hosted-mcp-beta.md) runs this plan's web and tools t
   - G4's writer-tool checks and a `record_search` schema trim, if the beta needs them;
   - one door that also takes connector tokens, keeps taking the worker's stamped bearer, and answers the worker's refusals 403 as today; a request without the worker's project header needs a connector token;
   - the HTTP smoke runs every row through its stamped-turn client, which seeds a user, a project that user owns and the turn, and runs a connector client only with `--connector`. Acceptance step 2's bearer becomes the one the seeded turn is stamped with, its no-bearer run passes on the tools' FamilySearch 401s, and its role also needs INSERT and DELETE on users and projects. Every door test that sends no project header (`http-server.test.ts` 1, 2b, 3, 4 and 2e's no-header case, and `http-server-pg.test.ts`'s "no project header") moves to the stamped or connector path;
-  - `projectUrl` and `uploadUrl` only when the tools tier's public-URL and uploads settings are set;
+  - `uploadUrl` only when the tools tier's public-URL and uploads settings are set;
   - the session-end hook, `auth_status`'s session check, the per-user cap and the 429 pause for connector callers only;
   - the FamilySearch budget, the transcription cap, the transcription switch and the shared collections cache, each keeping today's behavior when unset.
 
