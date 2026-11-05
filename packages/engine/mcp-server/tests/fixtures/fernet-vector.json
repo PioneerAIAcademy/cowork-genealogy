@@ -1,0 +1,6 @@
+{
+  "_comment": "Generated ONCE by Python (cryptography 48.0.1, the reference implementation) via apps/server/proto/grants.py encrypt(). Read by BOTH tests/auth/fernet.test.ts and apps/server/tests/test_proto_grants.py. NEITHER SIDE MAY REGENERATE IT: a vector that is rewritten whenever the two disagree is a loopback, not a cross-language check, and the implementations could drift together with both suites green. If a suite fails here, the implementation is wrong. The plaintext is deliberately non-ASCII so a latin-1 or ascii decode on either side fails instead of passing every ASCII token and corrupting real ones only in production.",
+  "key": "fernet-vector-key-do-not-reuse-in-any-deployment",
+  "plaintext": "fs-access-token-é—例",
+  "token": "gAAAAABq6b68ui7tFQVOW4MQjXhSpaqX8N0mYJ2Xyt1Wvjlm4NO9gJq5I1kRaMsiY6JRMImW41YzE4cfe0t2EhBBFf_ET-Tqbb6isL19qrYVoXSYDSq51PY="
+}

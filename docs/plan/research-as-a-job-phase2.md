@@ -7,8 +7,9 @@ Already absent from the branch." This file's own Status line went on saying "R1 
 complete end to end" for a day after that landed; it did not. #2793 and #2927, named below
 as the acceptance measurement's blocker, are both since closed, but the measurement itself
 was redesigned rather than unblocked: R2 is now a unit test (`ut_research_r2`, added by the
-same commit) rather than a live measurement, and that test has not yet been run. R4 is
-still built, now on `main` through PRs #3147/#3187 rather than through this plan. R1's own
+same commit) rather than a live measurement, and that test has not yet been run. R4 was
+built on `main` through PRs #3147/#3187 rather than through this plan, and deleted in step
+mode phase 2 (PR #4148). R1's own
 section below is kept as the record of what was tried and the measurement behind it
 (reach: a derived 31.6% of e2e runs never yield, so a Stop-hook-only contract is
 undelivered on the rest) — read it as history, not as a description of the current system.

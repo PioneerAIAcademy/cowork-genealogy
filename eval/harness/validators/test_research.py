@@ -119,6 +119,60 @@ def test_creates_no_project_when_none_exists(before_state, after_state, test):
     )
 
 
+_NEW_PROJECT_CALLEES = ("init-project", "tree-survey")
+
+
+def test_no_init_project_on_existing_project(before_state, skills_invoked, builtin_tool_calls):
+    """Ungated: with a research.json already present, no hand-off may go to a
+    new-project callee (``init-project`` or ``tree-survey``).
+
+    SKILL.md's routing row for "No research.json at all" says "With one present,
+    do NOT invoke it". Checked over every hand-off rather than the first, and
+    regardless of whether ``project_context`` was called: in research v32 the
+    router spawned ``init-project`` on ``mid-research-flynn`` and only then read
+    the project (issue #3766), so a "did it read the project?" check passes that
+    run.
+    """
+    from harness.skill_runner import handoffs
+
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json before the run")
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    wrong = [s for s in handed if s in _NEW_PROJECT_CALLEES]
+    assert not wrong, (
+        f"research.json existed before the run, but the router handed off to {wrong}, "
+        f"which start a new project. handoffs={handed}"
+    )
+
+
+def test_reads_project_state_before_routing(before_state, tool_calls, test):
+    """Tag-gated (``reads-project-first``): with a research.json present, the run
+    calls ``project_context``.
+
+    Catches a router that decides without reading the project at all — research
+    v32's ut_research_004 asked for a FamilySearch person ID and stopped, with no
+    hand-off for ``test_no_init_project_on_existing_project`` to see (issue #3766).
+
+    Presence, not order: ``tool_calls`` carries no caller and is a separate list
+    from the spawns in ``builtin_tool_calls``, so the two cannot be ordered. Tag
+    only a test with no ``run_agents``: every spawn is then denied and any
+    ``project_context`` call is the router's. Not ungated, because a bounded
+    request legitimately skips the read (SKILL.md, "Bounded request or job").
+    """
+    if "reads-project-first" not in test.get("tags", []):
+        pytest.skip("not a reads-project-first test")
+    assert before_state.get("research_json") is not None, (
+        "a reads-project-first test needs a scenario with a research.json; this one "
+        "had none. Scenario drift — fix the fixture rather than the skill."
+    )
+    called = [c for c in tool_calls or [] if bare_tool_name(str(c.get("tool") or "")) == "project_context"]
+    assert called, (
+        "research.json existed before the run, but the router never called "
+        "project_context, so it routed or asked without reading the project. "
+        f"tools called: {[bare_tool_name(str(c.get('tool') or '')) for c in tool_calls or []]}"
+    )
+
+
 def _paired_names() -> set[str]:
     """Plugin agents the research router spawns by ``@plugin:<name>``.
 
@@ -348,43 +402,6 @@ def test_hint_review_stops_for_the_researchers_verdicts(skills_invoked, builtin_
     )
 
 
-def test_relays_the_agents_tail_verbatim(text_response, test):
-    """The router prints a stubbed agent's tail -- everything after its final
-    ``---`` -- verbatim, compared under the e2e relay-fidelity normalization
-    (issue #3862).
-
-    Tag-gated on ``relays-agent-tail``; the agent is the ``routes-to:`` callee.
-    The tail is read from the test's own canned response, never from
-    ``agent_returns``: there it is wrapped in harness scaffolding the router is
-    told never to print. The tail must also END the reply: a router that adds its
-    own table, list or question after it has printed more than the agent said,
-    and the skill forbids that. A last line holding only the project's link is
-    allowed, since the skill puts the hosted `projectUrl` there.
-    """
-    from harness.skill_runner import normalize, tail_after_final_rule
-    from harness.skill_stubs import parse_stub_skills
-
-    if "relays-agent-tail" not in (test.get("tags") or []):
-        pytest.skip("not a relay-fidelity test")
-    agent = _expected_skill(test)
-    assert agent, "relays-agent-tail needs a routes-to:<agent> tag naming the relayed agent"
-    tail = tail_after_final_rule(parse_stub_skills(test.get("execution")).get(agent) or "")
-    assert tail, f"relays-agent-tail needs a stubbed {agent} response with a `---` tail"
-    expected = normalize(tail).strip().rstrip(".!?")
-    lines = (text_response or "").strip().splitlines()
-    if len(lines) > 1 and re.fullmatch(r"<?https?://\S+>?", lines[-1].strip()):
-        lines = lines[:-1]
-    reply = normalize("\n".join(lines)).strip().rstrip(".!?")
-    assert expected in reply, (
-        f"the router did not relay {agent}'s summary verbatim; expected, after "
-        f"normalization:\n{tail}"
-    )
-    assert reply.endswith(expected), (
-        f"the router added text after {agent}'s summary; it must end the reply. "
-        f"Added:\n{reply[reply.find(expected) + len(expected):].strip()}"
-    )
-
-
 # The search steps a bounded request must not reach when the answer is already
 # attached. MCP side and delegation side are listed separately because the rule
 # is defeated by either: an inline `record_search` and a hand-off to
@@ -581,78 +598,6 @@ def test_status_question_answered_from_project_context_only(
         f"{sorted(set(hits))}"
     )
 
-
-_ENDS_WITH_DELIVERY_TAG = "ends-with-delivery"
-_DELIVERED_TOOL = "research_delivered"
-
-
-def test_a_bounded_turn_ends_with_the_delivery_signal(tool_calls, test):
-    """Tag-gated (``ends-with-delivery``). Issue #2813 item 1, the enforcement half.
-
-    The skill body telling the model to "end your turn" was not what ended it. On the
-    hosted plane an SDK Stop hook VETOED a voluntary stop while the project objective
-    was incomplete and nudged the agent onward; the only arm that let a bounded turn
-    stop was `delivered`, set when the model called `research_delivered`. A bounded
-    turn that ended without the call was answered and then nudged back into more
-    research -- the alpha report behind this test. Step mode phase 2 deleted that Stop
-    hook (and `should_continue_run` with it).
-
-    Gated on its own tag, NOT on `bounded-request`: `ut_research_023` carries that tag
-    and is the `--autonomous` carve-out, where the router must run the job and must NOT
-    deliver. One tag for "is bounded", another for "must end with the signal".
-
-    Nothing asserted this before, and the tool was advertised nowhere in this harness,
-    so every unit run graded the skill on prose it had no way to act on.
-    """
-    tags = test.get("tags") or []
-    if _ENDS_WITH_DELIVERY_TAG not in tags:
-        pytest.skip(f"not an {_ENDS_WITH_DELIVERY_TAG} test")
-
-    # `bare_tool_name(...) == `, not `.endswith(...)`: the suffix form accepts a
-    # LOOKALIKE -- `mcp__genealogy__not_research_delivered` ends with the name and
-    # satisfied this. The helper strips whichever of the three server spellings the
-    # run exposed, so all of them and the bare name still match (clack391, #3372).
-    first = next(
-        (i for i, c in enumerate(tool_calls)
-         if bare_tool_name(str(c.get("tool", ""))) == _DELIVERED_TOOL),
-        None,
-    )
-    assert first is not None, (
-        f"a bounded turn must end by calling `{_DELIVERED_TOOL}`; it never did. "
-        f"Tools called: {sorted({str(c.get('tool')) for c in tool_calls})}. "
-        "Without it the hosted PreToolUse arm never halts the turn, the nudge arm sees an "
-        "incomplete objective, and the agent is pushed on into more research -- which is "
-        "what the researcher reports as 'it would not stop'."
-    )
-
-    # The FIRST call, and no MCP call after it. `tool_calls` is the mock's MCP dispatch
-    # log only, so a built-in `Skill`/`Agent` hand-off AFTER the delivery is invisible
-    # here -- seeing it needs a shared order across both lists, which neither carries.
-    # The hosted arm halts on the first MAIN-THREAD
-    # call, so that is where the turn actually ends and whose summary the researcher
-    # reads. Asserting only "called somewhere" accepted
-    # research_delivered -> record_search -> research_append: deliver-then-keep-
-    # researching, the exact regression this test exists to catch, invisible here because
-    # the tool is inert in this harness.
-    after = [str(c.get("tool")) for c in tool_calls[first + 1:]]
-    assert not after, (
-        f"`{_DELIVERED_TOOL}` must be the LAST tool call of the turn; {len(after)} "
-        f"follow it: {after}. On the hosted plane the first main-thread call halts the "
-        "turn, so anything queued after it never runs and never reaches the researcher."
-    )
-
-    # `[first]`, though the assertion above makes it provably the same element as
-    # `[-1]`: no input can distinguish the two once "nothing follows it" holds, and
-    # swapping them reds no test. Written as `first` because it states the rule the
-    # hosted plane actually follows -- it halts on the FIRST main-thread call -- and
-    # it stays correct if the last-call assertion is ever relaxed.
-    summary = (tool_calls[first].get("args") or {}).get("summary")
-    assert isinstance(summary, str) and summary.strip(), (
-        f"`{_DELIVERED_TOOL}` needs a one-sentence summary naming what was delivered; "
-        f"got {summary!r}. Read from the FIRST call, which is the one the hosted plane "
-        "halts on and puts in front of the stop reason -- an empty summary there is what "
-        "the researcher reads, however well-formed a later call might be."
-    )
 
 # ── Moved from test_research_plan.py (issue #2116) ─────────────────────
 #

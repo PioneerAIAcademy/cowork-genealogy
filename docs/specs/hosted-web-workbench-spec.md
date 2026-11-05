@@ -1084,7 +1084,7 @@ Action: host `wiki-query-api` and the Pop-Stats API on production infra and poin
 >   mitigation is architectural rather than the one described: the tool runs
 >   inside the tenant's own microVM, where there is nothing to traverse *to*. The
 >   control plane does validate every path it accepts (`_LOG_ID_RE`,
->   `_IMAGE_REF_RE`, `_UPLOAD_NAME_RE` in `sessions.py`, which cite this bullet).
+>   `_IMAGE_REF_RE`, `_clean_upload_name` in `sessions.py`, which cite this bullet).
 >   Revisit before anything multi-tenant shares a filesystem.
 > - **Residency / retention — NOT built.** No privacy policy, no retention
 >   window, no purge routine. `DELETE /api/sessions/{id}` kills the sandbox and

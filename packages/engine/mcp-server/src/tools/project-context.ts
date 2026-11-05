@@ -24,6 +24,7 @@ import { getStandardDate } from "../utils/fact-helpers.js";
 import { latestYear, latestIsUnbounded } from "../utils/date-helpers.js";
 import { collectSourceRefs } from "../utils/tree-person.js";
 import { awaitingUserHandOffs, type AwaitingHandOff } from "../utils/awaiting-hand-offs.js";
+import { CLAIM_KINDS } from "../validation/validator.js";
 import { exhaustedImageGroups } from "../utils/browse-budget.js";
 import { projectLinks } from "../utils/project-links.js";
 import { getProjectStore } from "../store/project-store.js";
@@ -192,8 +193,9 @@ export type ProjectContextResult =
       /** research.researcher_profile.subscriptions, strings only; [] when absent. */
       subscriptions: string[];
       openQuestions: ProjectContextQuestion[];
-      /** Advisory per-question state and next step. Nothing gates on it. */
-      questionStatuses: QuestionStatus[];
+      /** Advisory per-question state and next step, resolved questions included,
+       *  each with its text truncated as in openQuestions. Nothing gates on it. */
+      questionStatuses: (QuestionStatus & { question: string })[];
       persons: ProjectContextPerson[];
       sources: ProjectContextSource[];
       localities: ProjectContextLocality[];
@@ -201,6 +203,10 @@ export type ProjectContextResult =
       awaitingUser: ProjectContextAwaitingUser[];
       /** Films whose browse cap is spent in this project; nothing resets it. */
       exhaustedImageGroups: ProjectContextExhaustedImageGroup[];
+      /** The proof_summaries claim kinds this engine accepts. A body that writes a
+       *  kind checks it is listed, so a newer body on an older engine keeps
+       *  today's behaviour instead of having its write refused. */
+      claimKinds: string[];
       /** Per place stored in external-collections.json: how many curated collections,
        *  and how many per FamilySearch record type. Counts only, never rows — read the
        *  rows with research_query({section: "external_collections"}). Absent when no
@@ -363,7 +369,17 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   // question is waiting on, computed from the document rather than from
   // session history (the only durable state this system has). The gates in
   // research_append compute their own preconditions independently.
-  const questionStatuses = questionStates(research, tree);
+  const questionText = new Map<string, string>();
+  for (const q of Array.isArray(research?.questions) ? research.questions : []) {
+    if (q && typeof q === "object" && typeof q.id === "string" && !questionText.has(q.id)) {
+      questionText.set(q.id, truncateQuestion(typeof q.question === "string" ? q.question : ""));
+    }
+  }
+  const questionStatuses = questionStates(research, tree).map(({ id, ...rest }) => ({
+    id,
+    question: questionText.get(id) ?? "",
+    ...rest,
+  }));
 
   const awaitingUser = awaitingUserHandOffs(research?.log);
 
@@ -410,6 +426,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     localities,
     awaitingUser,
     exhaustedImageGroups: exhausted,
+    claimKinds: [...CLAIM_KINDS],
     ...(externalCollections ? { externalCollections } : {}),
     sectionCounts,
     unregisteredDisagreementCount,
@@ -496,8 +513,8 @@ export const projectContextSchema = {
     "forPlace, timePeriod, jurisdictions, collections, quirks, pagesRead}] — the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
     "to stage searches (guide_markdown prose is omitted here); and questionStatuses " +
-    "[{id, state, nextStep, openConflictIds, storedStatus, unregisteredDisagreements, " +
-    "competingParentSets}] — per question, how far it " +
+    "[{id, question, state, nextStep, openConflictIds, storedStatus, unregisteredDisagreements, " +
+    "competingParentSets}] — per question, resolved ones included, its text (truncated) and how far it " +
     "has got (framed / planned / searching / evidence-gathered / concluded / critiqued — " +
     "critiqued means an on-demand gps-mentor review exists and is never a step to take), " +
     "what it is waiting on, and storedStatus, the question's own questions[].status " +
@@ -525,6 +542,7 @@ export const projectContextSchema = {
     "exhaustedImageGroups [{imageGroup, imagesRead, planItemIds}] lists films whose 20-image " +
     "browse cap is spent in this project; nothing resets it, not a new agent or session. Never " +
     "delegate a browse of one: send its planItemIds to research-plan to dispose of. " +
+    "claimKinds lists the proof_summaries claim kinds this engine accepts. " +
     "One call gives the context " +
     "for extraction judgment calls (which questions an assertion bears on, " +
     "whether a record persona is already in the tree, which sources cover a " +
