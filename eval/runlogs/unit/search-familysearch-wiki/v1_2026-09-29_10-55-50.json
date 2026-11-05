@@ -5178,94 +5178,94 @@
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
-          "pass"
+          "partial"
         ],
         "aggregated_dimensions": [
           {
             "source": "base",
             "name": "Correctness",
-            "score": 3,
-            "rationale": "All claims in the response are traceable to the wiki results. The summary accurately reflects that probate records contain names, dates, property descriptions, and heir information; that they are held at the county level in the U.S.; and that FamilySearch Catalog and Records are the primary search tools. No fabricated details or unsupported claims were added."
+            "score": 2,
+            "rationale": "The summary contains mostly accurate information drawn from the wiki results, but includes one unsupported claim: Claude states that 'Courts of probate, surrogate courts, or orphan's courts depending on the state/era held these records,' but the tool response only mentions 'county probate courts or surrogate courts' \u2014 the reference to orphan's courts is not in the returned chunks. Additionally, Claude's statement about the Allen County Public Library is not present in the tool response and appears to be added knowledge not from the wiki."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed the user's request to find probate or will records. It explained what these records contain, where they are held, and how to find them on FamilySearch\u2014all core elements required by the delegation. The file was saved and the response indicates a Sources section is included."
+            "rationale": "The skill addressed the user's request to search for how to find probate or will records. It provided information on what these records contain, where they are held, and how to find them on FamilySearch, covering the essential aspects requested in the delegation."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wiki_search call used the query 'How do I find probate or will records for a deceased ancestor?' which matches the expected_args pattern '~probate' and directly addresses the user's request. The query is semantically appropriate and the tool call succeeded with matched.kind == 'predicate'."
+            "rationale": "The tool call passed a query 'How do I find probate or will records for a deceased ancestor?' which matches the expected_args requirement of containing '~probate'. The query is semantically appropriate and directly addresses the user's request."
           },
           {
             "source": "rubric",
             "name": "File saved correctly",
             "score": 3,
-            "rationale": "The skill saved the output to 'probate-will-records.md', which is a correctly formatted slug derived from the topic 'probate or will records'\u2014lowercased, non-alphanumeric runs replaced with hyphens, no leading or trailing hyphens."
+            "rationale": "The skill saved the output to 'probate-will-records.md', which is a correctly formatted slug derived from the topic 'probate or will records' \u2014 lowercased, with non-alphanumeric characters replaced by hyphens, and no leading or trailing hyphens."
           },
           {
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The response states that the saved file includes 'source citations' and the MCP tool response contains two results with proper source_url values. The deterministic validator test_sources_section_matches_wiki_results passed, confirming the Sources section was correctly formatted with the required bullet format and actual URLs from the tool response."
+            "rationale": "Claude's text response states 'You can open the saved `probate-will-records.md` file for the full detailed guidance and source citations,' indicating that a Sources section was included in the saved file. The deterministic validator `test_sources_section_matches_wiki_results` did not fail, confirming that sources were properly formatted with URLs from the tool response."
           },
           {
             "source": "rubric",
             "name": "Summary faithful to wiki content",
-            "score": 3,
-            "rationale": "Every claim in the summary is directly traceable to the chunk_text from the tool response. The summary states probate records contain names, dates, property, and heir information (from rank 1 result); that they are handled at county level in the U.S. (from rank 1); and that FamilySearch Catalog and Records are search tools (from rank 2). No outside facts or fabricated guidance were added."
+            "score": 2,
+            "rationale": "The summary is mostly faithful to the wiki content but contains at least one claim not present in the tool response: the reference to 'orphan's courts' is not mentioned in the returned chunks, which only reference 'county probate courts or surrogate courts.' The Allen County Public Library reference also appears to be added knowledge not from the wiki results."
           },
           {
             "source": "rubric",
             "name": "No-result handling (negative path)",
             "score": null,
-            "rationale": "The test did not exercise the empty-results path. The wiki search returned two relevant results, so this dimension is N/A."
+            "rationale": "The test did not exercise the empty-results path \u2014 the wiki search returned two relevant results with high relevance scores, so this dimension is N/A."
           }
         ],
         "review_dimensions": [
           {
             "source": "base",
             "name": "Correctness",
-            "score": 3,
-            "rationale": "All claims in the response are traceable to the wiki results. The summary accurately reflects that probate records contain names, dates, property descriptions, and heir information; that they are held at the county level in the U.S.; and that FamilySearch Catalog and Records are the primary search tools. No fabricated details or unsupported claims were added."
+            "score": 2,
+            "rationale": "The summary contains mostly accurate information drawn from the wiki results, but includes one unsupported claim: Claude states that 'Courts of probate, surrogate courts, or orphan's courts depending on the state/era held these records,' but the tool response only mentions 'county probate courts or surrogate courts' \u2014 the reference to orphan's courts is not in the returned chunks. Additionally, Claude's statement about the Allen County Public Library is not present in the tool response and appears to be added knowledge not from the wiki."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed the user's request to find probate or will records. It explained what these records contain, where they are held, and how to find them on FamilySearch\u2014all core elements required by the delegation. The file was saved and the response indicates a Sources section is included."
+            "rationale": "The skill addressed the user's request to search for how to find probate or will records. It provided information on what these records contain, where they are held, and how to find them on FamilySearch, covering the essential aspects requested in the delegation."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The wiki_search call used the query 'How do I find probate or will records for a deceased ancestor?' which matches the expected_args pattern '~probate' and directly addresses the user's request. The query is semantically appropriate and the tool call succeeded with matched.kind == 'predicate'."
+            "rationale": "The tool call passed a query 'How do I find probate or will records for a deceased ancestor?' which matches the expected_args requirement of containing '~probate'. The query is semantically appropriate and directly addresses the user's request."
           },
           {
             "source": "rubric",
             "name": "File saved correctly",
             "score": 3,
-            "rationale": "The skill saved the output to 'probate-will-records.md', which is a correctly formatted slug derived from the topic 'probate or will records'\u2014lowercased, non-alphanumeric runs replaced with hyphens, no leading or trailing hyphens."
+            "rationale": "The skill saved the output to 'probate-will-records.md', which is a correctly formatted slug derived from the topic 'probate or will records' \u2014 lowercased, with non-alphanumeric characters replaced by hyphens, and no leading or trailing hyphens."
           },
           {
             "source": "rubric",
             "name": "Sources cited correctly",
             "score": 3,
-            "rationale": "The response states that the saved file includes 'source citations' and the MCP tool response contains two results with proper source_url values. The deterministic validator test_sources_section_matches_wiki_results passed, confirming the Sources section was correctly formatted with the required bullet format and actual URLs from the tool response."
+            "rationale": "Claude's text response states 'You can open the saved `probate-will-records.md` file for the full detailed guidance and source citations,' indicating that a Sources section was included in the saved file. The deterministic validator `test_sources_section_matches_wiki_results` did not fail, confirming that sources were properly formatted with URLs from the tool response."
           },
           {
             "source": "rubric",
             "name": "Summary faithful to wiki content",
-            "score": 3,
-            "rationale": "Every claim in the summary is directly traceable to the chunk_text from the tool response. The summary states probate records contain names, dates, property, and heir information (from rank 1 result); that they are handled at county level in the U.S. (from rank 1); and that FamilySearch Catalog and Records are search tools (from rank 2). No outside facts or fabricated guidance were added."
+            "score": 2,
+            "rationale": "The summary is mostly faithful to the wiki content but contains at least one claim not present in the tool response: the reference to 'orphan's courts' is not mentioned in the returned chunks, which only reference 'county probate courts or surrogate courts.' The Allen County Public Library reference also appears to be added knowledge not from the wiki results."
           },
           {
             "source": "rubric",
             "name": "No-result handling (negative path)",
             "score": null,
-            "rationale": "The test did not exercise the empty-results path. The wiki search returned two relevant results, so this dimension is N/A."
+            "rationale": "The test did not exercise the empty-results path \u2014 the wiki search returned two relevant results with high relevance scores, so this dimension is N/A."
           }
         ]
       },

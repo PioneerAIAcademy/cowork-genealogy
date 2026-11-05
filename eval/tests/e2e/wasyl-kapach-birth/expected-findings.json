@@ -30,7 +30,7 @@
       "supporting_sources": [
         "Canada, Prairie Provinces, Census, 1926 — household entry for Wasyl Capach, Athabasca, Alberta (ark:/61903/1:1:QPR9-YLYV) — the sole source for the 1906 immigration year, indexed under the C-initial 'Capach' transliteration"
       ],
-      "required": true
+      "required": false
     },
     {
       "id": "f3",

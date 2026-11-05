@@ -263,18 +263,6 @@ def main(argv: list[str] | None = None) -> int:
         help="Skip the judge step (writes result with verdict=skipped)",
     )
     parser.add_argument(
-        "--resume-on-stall",
-        action=argparse.BooleanOptionalAction,
-        default=True,
-        help=(
-            "On a no-progress stall (see progress_stall_seconds), tear down the "
-            "hung query and resume the session — but only in a provably-safe "
-            "state (no in-flight tool call), else fail fast. ON by default "
-            "(the safe-state gate means the worst case is a clean fail-fast, "
-            "not a double-applied write); pass --no-resume-on-stall to disable."
-        ),
-    )
-    parser.add_argument(
         "--effort-level",
         choices=["low", "medium", "high", "xhigh", "max"],
         default=None,
@@ -341,13 +329,13 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--step-mode",
         choices=("step", "job"),
-        default=None,
+        default="job",
         help=(
-            "Run under step mode (docs/plan/research-step-mode.md section F): one "
-            "persistent session, one step per turn, each boundary answered by the "
-            "host's own next_auto_reply. `job` opens as a \"Keep going\" run, which "
-            "is what a fixture that should reach a proof wants; `step` runs one step "
-            "and stops. Default off: the one long turn every committed run used. "
+            "Step mode (docs/plan/research-step-mode.md section F): one persistent "
+            "session, one step per turn, each boundary answered by the host's own "
+            "next_auto_reply. `job` (the default) opens as a \"Keep going\" run, "
+            "which is what a fixture that should reach a proof wants; `step` runs "
+            "one step and stops. A stall ends the run rather than resuming it. "
             "Recorded in the runlog's usage block as `step_mode`."
         ),
     )
@@ -389,8 +377,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     # Three shapes used to exit 0 having done nothing, and record
-    # `usage.wrap_up_after` as if the arm had run: no --step-mode, --step-mode
-    # step (where `next_auto_reply` never replies, so there is nothing to swap),
+    # `usage.wrap_up_after` as if the arm had run: no --step-mode (before `job`
+    # became the default), --step-mode step (where `next_auto_reply` never replies, so there is nothing to swap),
     # and a step name the gate never records -- a misspelling, or a GROUP key
     # like `search` rather than the member `search-records`. A bought run that
     # measures nothing is the failure worth refusing loudly.
@@ -492,7 +480,6 @@ def main(argv: list[str] | None = None) -> int:
         "mcp_server_entry": args.mcp_server_entry,
         "skills_dir": args.skills_dir,
         "skip_judge": args.skip_judge,
-        "resume_on_stall": args.resume_on_stall,
         "effort_level": args.effort_level,
         "max_output_tokens": args.max_output_tokens,
         "agent_model": args.agent_model,

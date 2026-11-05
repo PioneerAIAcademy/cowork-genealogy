@@ -1619,9 +1619,9 @@ describe("extraction_append: personId extracts and links a person's attachments"
   const CENSUS = () => element("census-1870-no-relationship-column");
   let dir: string;
   const url = (bare: string) => `https://familysearch.org/ark:/61903/1:1:${bare}`;
-  const person = (id: string, refs: { person?: string[]; names?: string[]; facts?: string[] }, ark?: string) => ({
+  const person = (id: string, refs: { person?: string[]; names?: string[]; facts?: string[] }, ark?: string, gender = "Male") => ({
     id,
-    gender: "Male",
+    gender,
     ...(ark ? { ark } : {}),
     names: [{ id: `${id}-N1`, given: "John", surname: "Boyer", ...(refs.names ? { sources: refs.names.map((ref) => ({ ref })) } : {}) }],
     facts: refs.facts ? [{ id: `${id}-F1`, type: "Birth", date: "1845", sources: refs.facts.map((ref) => ({ ref })) }] : [],
@@ -1754,12 +1754,271 @@ describe("extraction_append: personId extracts and links a person's attachments"
     expect(r.extracted).toBe(1);
   });
 
-  it("takes no relationship-level ref and no relative's source", async () => {
+  it("reads a record attached only on the person's relationship, and links its persona to the tree person who attaches it", async () => {
     await writeTree(
       [person("I1", {}), person("I2", { person: ["S1"] })],
       [S1],
       [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S1" }] }],
     );
+    const reads: string[] = [];
+    const r = await run("I1", reader([CENSUS()], reads));
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(reads.map(arkToBareId)).toEqual(["MZGS-1B7"]);
+    expect(r.relationshipRecords).toBe(1);
+    const links = (await research()).person_evidence;
+    expect(links.length).toBeGreaterThan(0);
+    expect(links.every((pe: any) => pe.person_id === "I2")).toBe(true);
+    expect(r.linkedPersons).toEqual({ I2: links.length });
+    // The 1870 census states no relationships, so I1's persona cannot be chosen by role;
+    // I2 already claims its own persona, so it gets no role pick.
+    expect(r.unselected).toBe(1);
+  });
+
+  // ─── Household linking and relationship-level attachments (lead, 2026-10-30) ───
+  const src = (id: string, bare: string) => ({ id, title: id, url: url(bare) });
+  const personaOf = async (personaId: string) =>
+    new Set((await research()).assertions.filter((a: any) => a.record_persona_id === personaId).map((a: any) => a.id));
+  const linksTo = async (personaId: string) => {
+    const ids = await personaOf(personaId);
+    return (await research()).person_evidence.filter((pe: any) => ids.has(pe.assertion_id) && pe.superseded_by == null);
+  };
+
+  it("(a) links another household persona to the tree person who attaches its id", async () => {
+    await writeTree([person("I1", { person: ["S1"] }), person("I2", { person: ["S2"] }, undefined, "Female")], [S1, src("S2", "MZGS-1BW")]);
+    const r = await run("I1");
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const anna = await linksTo("p_260900946");
+    expect(anna.length).toBeGreaterThan(0);
+    expect(anna.every((pe: any) => pe.person_id === "I2" && isAttachmentLink(pe))).toBe(true);
+    expect(r.linkedPersons).toEqual({ I2: anna.length });
+    expect(r.summary).toMatch(/to I2/);
+  });
+
+  it("(b) links neither when two tree persons attach the same persona's id", async () => {
+    await writeTree([person("I1", { person: ["S1"] }), person("I2", { person: ["S2"] }), person("I3", { person: ["S2"] })], [S1, src("S2", "MZGS-1BW")]);
+    const r = await run("I1");
+    expect(await linksTo("p_260900946")).toEqual([]);
+    expect(r.ambiguous).toBe(1);
+  });
+
+  it("(c) leaves a household persona alone when one of its assertions is already linked", async () => {
+    await writeTree([person("I1", { person: ["S1"] }), person("I2", { person: ["S2"] }), person("I3", {})], [S1, src("S2", "MZGS-1BW")]);
+    await runExtractionAppend({ projectPath: dir, recordIds: [url("MZGS-1B7")] } as any, reader([CENSUS()]) as any, LOCAL);
+    const [first] = [...(await personaOf("p_260900946"))];
+    const pre = await researchAppend(
+      { projectPath: dir, ops: [{ section: "person_evidence", op: "append", entry: { assertion_id: first, person_id: "I3", confidence: "speculative", match_score: null, rationale: ATTACHMENT_LINK_RATIONALE } }] } as any,
+      { allowedSections: new Set(["person_evidence"]), toolName: "extraction_append", attachmentLink: true },
+    );
+    expect(pre.ok, JSON.stringify(pre)).toBe(true);
+    const r = await run("I1");
+    expect((await linksTo("p_260900946")).map((pe: any) => pe.person_id)).toEqual(["I3"]);
+    expect(r.alreadyLinked).toBeGreaterThanOrEqual(1);
+  });
+
+  it("(d) never re-links a rejected household pair", async () => {
+    await writeTree([person("I1", { person: ["S1"] }), person("I2", { person: ["S2"] })], [S1, src("S2", "MZGS-1BW")]);
+    await runExtractionAppend({ projectPath: dir, recordIds: [url("MZGS-1B7")] } as any, reader([CENSUS()]) as any, LOCAL);
+    const anna = [...(await personaOf("p_260900946"))];
+    const doc = await research();
+    doc.rejected_links = anna.map((id, i) => ({ id: `rl_00${i + 1}`, assertion_id: id, person_id: "I2", reason: "not her", created: "2026-11-02" }));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(doc));
+    const r = await run("I1");
+    expect(await linksTo("p_260900946")).toEqual([]);
+    expect(r.rejectedSkipped).toBe(anna.length);
+  });
+
+  it("(e) does not household-link through another person's relationship ref", async () => {
+    await writeTree(
+      [person("I1", { person: ["S1"] }), person("I3", {}), person("I4", {})],
+      [S1, src("S2", "MZGS-1BW")],
+      [{ id: "R5", type: "Couple", person1: "I3", person2: "I4", sources: [{ ref: "S2" }] }],
+    );
+    const r = await run("I1");
+    expect(await linksTo("p_260900946")).toEqual([]);
+    expect(r.relationshipRecords).toBeUndefined();
+    expect(r.unselected).toBeUndefined();
+  });
+
+  it("(f) writes each household pair once when the person attaches two entries of one record", async () => {
+    await writeTree([person("I1", { person: ["S1", "S3"] }), person("I2", { person: ["S2"] })], [S1, src("S2", "MZGS-1BW"), src("S3", "MZGS-1B4")]);
+    const r = await run("I1");
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    const anna = await linksTo("p_260900946");
+    const pairs = anna.map((pe: any) => `${pe.assertion_id}|${pe.person_id}`);
+    expect(pairs.length).toBeGreaterThan(0);
+    expect(new Set(pairs).size).toBe(pairs.length);
+  });
+
+  it("(g) links the run person's own entry to nobody when another tree person attaches it too", async () => {
+    await writeTree([person("I1", { person: ["S1"] }), person("I5", { person: ["S1"] })], [S1]);
+    const r = await run("I1");
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await linksTo("p_260900945")).toEqual([]);
+    expect(r.ambiguous).toBe(1);
+    expect(r.summary).toMatch(/1 persona not linked, because their claims conflict/);
+    expect(r.summary).not.toMatch(/no persona to link/);
+  });
+
+  it("(g2) still links a single-persona record, which is no persona group", async () => {
+    const DEATH = element("death");
+    await writeTree([person("I1", { person: ["S9"] })], [src("S9", "F6X7-CHH")]);
+    const r = await run("I1", reader([DEATH]));
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect((await linksTo("p_11262383348")).map((pe: any) => pe.person_id).every((p: string) => p === "I1")).toBe(true);
+    expect(r.linked).toBeGreaterThan(0);
+  });
+
+  it("(h) links each party of a record attached only on the person's Couple relationship", async () => {
+    const MARRIAGE = element("marriage");
+    await writeTree(
+      [person("I1", {}), person("I2", {}, undefined, "Female")],
+      [src("S7", "Z838-9RN2")],
+      [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S7" }] }],
+    );
+    const r = await run("I1", reader([MARRIAGE]));
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.unselected ?? 0).toBe(0);
+    const groom = await linksTo("p_226800860000");
+    const bride = await linksTo("p_226800860100");
+    expect(groom.length).toBeGreaterThan(0);
+    expect(bride.length).toBeGreaterThan(0);
+    expect(groom.every((pe: any) => pe.person_id === "I1")).toBe(true);
+    expect(bride.every((pe: any) => pe.person_id === "I2")).toBe(true);
+  });
+
+  it("(m) links neither persona when one tree person attaches two personas of a record", async () => {
+    await writeTree([person("I1", { person: ["S1"] }), person("I2", { person: ["S2", "S3"] }, undefined, "Female")], [S1, src("S2", "MZGS-1BW"), src("S3", "MZGS-1B4")]);
+    const r = await run("I1");
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await linksTo("p_260900946")).toEqual([]);
+    expect(await linksTo("p_260900947")).toEqual([]);
+    expect((await linksTo("p_260900945")).length).toBeGreaterThan(0);
+    expect(r.ambiguous).toBe(2);
+  });
+
+  it("(n) counts a contested own persona once, however many routes contest it", async () => {
+    const MARRIAGE = element("marriage");
+    await writeTree(
+      [person("I1", { person: ["S7"] }), person("I5", { person: ["S7"] }), person("I6", {})],
+      [src("S7", "Z838-9RN2")],
+      [{ id: "R1", type: "Couple", person1: "I1", person2: "I6", sources: [{ ref: "S7" }] }],
+    );
+    const r = await run("I1", reader([MARRIAGE]));
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await linksTo("p_226800860000")).toEqual([]);
+    expect(r.ambiguous).toBe(1);
+  });
+
+  it("(q) links neither persona when the run person attaches two personas of a record", async () => {
+    await writeTree([person("I1", { person: ["S1", "S3"] })], [S1, src("S3", "MZGS-1B4")]);
+    const r = await run("I1");
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await linksTo("p_260900945")).toEqual([]);
+    expect(await linksTo("p_260900947")).toEqual([]);
+    expect(r.ambiguous).toBe(2);
+    expect(r.linked).toBe(0);
+  });
+
+  it("(o) reports a record whose own persona has no assertion to link", async () => {
+    const MARRIAGE = structuredClone(element("marriage"));
+    MARRIAGE.gedcomx.persons.find((p: any) => p.id === "p_226800860000").ark = "ark:/61903/1:1:ZZZZ-NONE";
+    MARRIAGE.gedcomx.persons.push({ id: "p_226800869999", ark: "ark:/61903/1:1:Z838-9RN2", names: [], facts: [] });
+    await writeTree([person("I1", { person: ["S7"] })], [src("S7", "Z838-9RN2")]);
+    const r = await run("I1", reader([MARRIAGE]));
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.summary).toMatch(/extracted but not linked \(no persona to link\)/);
+  });
+
+  it("(p) gives no role pick to a party who already claims a persona of the record", async () => {
+    await writeTree(
+      [person("I1", { person: ["S8"] }, undefined, "Female"), person("I2", {}, undefined, "Female")],
+      [src("S8", "XXDD-BX8")],
+      [{ id: "R2", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S8" }] }],
+    );
+    const r = await run("I2", reader([element("baptism")]));
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await linksTo("p_10556269631")).toEqual([]);
+    expect(await linksTo("p_10556269633")).toEqual([]);
+  });
+
+  it("(r) links neither when a party pick lands on the run person's own persona", async () => {
+    await writeTree(
+      [person("I1", { person: ["S8"] }, undefined, "Female"), person("I3", {}, undefined, "Female")],
+      [src("S8", "XXDD-BX8")],
+      [{ id: "R2", type: "ParentChild", parent: "I1", child: "I3", sources: [{ ref: "S8" }] }],
+    );
+    const r = await run("I1", reader([element("baptism")]));
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await linksTo("p_10556269631")).toEqual([]);
+    expect(r.ambiguous).toBe(1);
+  });
+
+  it("(s) gives no role pick to a party whose attachment went to nobody", async () => {
+    await writeTree(
+      [person("I1", { person: ["S8"] }, undefined, "Female"), person("I2", { person: ["S8"] }, undefined, "Female")],
+      [src("S8", "XXDD-BX8")],
+      [{ id: "R2", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "S8" }] }],
+    );
+    const r = await run("I2", reader([element("baptism")]));
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await linksTo("p_10556269631")).toEqual([]);
+    expect(await linksTo("p_10556269633")).toEqual([]);
+    expect(r.ambiguous).toBe(1);
+  });
+
+  it("(i) links nothing for a party whose persona cannot be chosen", async () => {
+    const BAPTISM = structuredClone(element("baptism"));
+    BAPTISM.gedcomx.persons.push({ id: "p_10556269639", ark: "ark:/61903/1:1:XXDD-BX9", gender: "Male", names: [], facts: [] });
+    BAPTISM.gedcomx.relationships.push({ type: "ParentChild", parent: "p_10556269639", child: "p_10556269631" });
+    await writeTree(
+      [person("I1", {}), person("I3", {}, undefined, "Female")],
+      [src("S8", "XXDD-BX8")],
+      [{ id: "R2", type: "ParentChild", parent: "I1", child: "I3", sources: [{ ref: "S8" }] }],
+    );
+    const r = await run("I1", reader([BAPTISM]));
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(r.unselected).toBe(1);
+    expect((await linksTo("p_10556269632")).length).toBe(0);
+    const child = await linksTo("p_10556269631");
+    expect(child.length).toBeGreaterThan(0);
+    expect(child.every((pe: any) => pe.person_id === "I3")).toBe(true);
+  });
+
+  it("(j) extracts once when a relationship ref names another persona of a record the person attaches", async () => {
+    await writeTree(
+      [person("I1", { person: ["S1"] }), person("I2", {}, undefined, "Female")],
+      [S1, src("S2", "MZGS-1BW")],
+      [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S2" }] }],
+    );
+    const r = await run("I1");
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect((await research()).sources.filter((s: any) => s.gedcomx_source_description_id)).toHaveLength(1);
+    expect(r.extracted).toBe(1);
+  });
+
+  it("(l) links neither when a party pick and another person's attachment claim one persona", async () => {
+    const MARRIAGE = element("marriage");
+    await writeTree(
+      [person("I1", {}), person("I2", {}, undefined, "Female"), person("I7", { person: ["S6"] }, undefined, "Female")],
+      [src("S7", "Z838-9RN2"), src("S6", "Z838-9R2M")],
+      [{ id: "R1", type: "Couple", person1: "I1", person2: "I2", sources: [{ ref: "S7" }] }],
+    );
+    const r = await run("I1", reader([MARRIAGE]));
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+    expect(await linksTo("p_226800860100")).toEqual([]);
+    expect(r.ambiguous).toBeGreaterThanOrEqual(1);
+    const persons = new Map<string, Set<string>>();
+    for (const pe of (await research()).person_evidence.filter((x: any) => x.superseded_by == null)) {
+      const a = (await research()).assertions.find((x: any) => x.id === pe.assertion_id);
+      const s = persons.get(a.record_persona_id) ?? new Set<string>();
+      s.add(pe.person_id);
+      persons.set(a.record_persona_id, s);
+    }
+    for (const s of persons.values()) expect(s.size).toBe(1);
+  });
+
+  it("reads no relative's own source", async () => {
+    await writeTree([person("I1", {}), person("I2", { person: ["S1"] })], [S1]);
     const reads: string[] = [];
     const r = await run("I1", reader([CENSUS()], reads));
     expect(r.ok).toBe(true);
@@ -1909,5 +2168,92 @@ describe("research_append: the attachment-link score exemption is code-only", ()
     const revive = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: pe.id, fields: { superseded_by: null, confidence: "probable" } } as any);
     expect(revive.ok).toBe(false);
     expect(errorsOf(revive)?.join(" ")).toMatch(/only ever superseded/);
+  });
+});
+
+// ─── The lead's acceptance case (issue #3516, 2026-10-29) ───────────────────────
+// thomas-hanrahan-marriage's starting tree attaches the 1880 Saratoga census to
+// every household member (the children New York-born) and two Irish baptisms to
+// Mary and John. Once the job re-finds an Irish baptism for its question, the
+// children's birth places must disagree in `project_context`.
+
+import { projectContext } from "../../src/tools/project-context.js";
+
+describe("person mode on thomas-hanrahan-marriage surfaces the children's birth disagreement", () => {
+  const FIX = join(dirname(fileURLToPath(import.meta.url)), "..", "fixtures", "record-extract");
+  const E2E = join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "..", "eval", "tests", "e2e", "thomas-hanrahan-marriage");
+  const els = ["hanrahan-census-1880", "hanrahan-baptism-mary", "hanrahan-baptism-john"].map(
+    (n) => JSON.parse(readFileSync(join(FIX, `${n}.json`), "utf8")).element,
+  );
+  const reader = {
+    readRecord: async ({ recordId, projectPath }: { recordId: string; projectPath?: string }) => {
+      const want = arkToBareId(recordId);
+      const el = els.find(
+        (e) => arkToBareId(e.recordId) === want || (e.gedcomx.persons ?? []).some((p: any) => p.ark && arkToBareId(p.ark) === want),
+      );
+      if (!el) throw new Error(`404 for ${recordId}`);
+      const row = { ...el, recordId: `ark:/61903/1:1:${want}` };
+      const staged = await stageSearchResults({ projectPath: projectPath!, tool: "record_read", response: { query: { recordId }, results: [row] } });
+      return { ...el.gedcomx, staged };
+    },
+  };
+  const QUESTION = {
+    id: "q_001",
+    question: "When and where did Thomas Hanrahan, born about 1840 in Ireland and living in Saratoga, New York, in 1880, marry Johanna Ryan?",
+    rationale: "The objective restated as one question.",
+    selection_basis: "objective_decomposition",
+    priority: "high",
+    created: "2026-11-02",
+    depends_on: [],
+    unblocks: [],
+    status: "open",
+    resolved: null,
+    resolution_assertion_ids: [],
+    search_stop: { stopped_because: null, log_entry_ids: [], stop_criteria: null, not_reached: [] },
+  };
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "hanrahan-replay-"));
+    const tree = readFileSync(join(E2E, "starting-tree.gedcomx.json"), "utf8");
+    await writeFile(join(dir, "tree.gedcomx.json"), tree, "utf8");
+    await writeFile(join(dir, "starting-tree.gedcomx.json"), tree, "utf8");
+    const research = JSON.parse(readFileSync(join(E2E, "starting-research.json"), "utf8"));
+    await writeFile(join(dir, "research.json"), JSON.stringify({ ...research, questions: [QUESTION] }), "utf8");
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const disagreementsOnQ1 = async () => {
+    const ctx: any = await projectContext({ projectPath: dir }, LOCAL);
+    return ctx.questionStatuses.find((q: any) => q.id === "q_001").unregisteredDisagreements as any[];
+  };
+
+  it("links the census and Irish births to Mary, John and Elizabeth, and reports Mary's birth place once the job re-finds her baptism", async () => {
+    const setup = await runExtractionAppend({ projectPath: dir, personId: "KHGX-XWG" } as any, reader as any, LOCAL);
+    expect(setup.ok, JSON.stringify(setup)).toBe(true);
+    const research = JSON.parse(await readFile(join(dir, "research.json"), "utf8"));
+    const live = research.person_evidence.filter((pe: any) => pe.superseded_by == null);
+    const personaOf = (pe: any) => research.assertions.find((a: any) => a.id === pe.assertion_id).record_persona_id;
+    const linkedPersons = (personaId: string) => new Set(live.filter((pe: any) => personaOf(pe) === personaId).map((pe: any) => pe.person_id));
+    // The census household: Mary (Y5T) and John (Y51) to their tree persons, Elizabeth (Y5Y) once.
+    const census = els[0].gedcomx.persons;
+    const ofArk = (bare: string) => census.find((p: any) => arkToBareId(p.ark) === bare).id;
+    expect([...linkedPersons(ofArk("MZF2-Y5T"))]).toEqual(["93RB-RTD"]);
+    expect([...linkedPersons(ofArk("MZF2-Y51"))]).toEqual(["M8R7-2TR"]);
+    expect([...linkedPersons(ofArk("MZF2-Y5Y"))]).toEqual(["GKS5-2GC"]);
+    const elizabeth = live.filter((pe: any) => personaOf(pe) === ofArk("MZF2-Y5Y")).map((pe: any) => pe.assertion_id);
+    expect(new Set(elizabeth).size).toBe(elizabeth.length);
+    // Both routes fired for Elizabeth: her persona is also a party of the census's ParentChild edges.
+    expect(els[0].gedcomx.relationships.some((r: any) => r.type === "ParentChild")).toBe(true);
+    expect(setup.unselected ?? 0, JSON.stringify(setup)).toBe(0);
+    expect(setup.ambiguous ?? 0, JSON.stringify(setup)).toBe(0);
+    // No persona is linked to two tree persons.
+    for (const p of new Set(live.map(personaOf))) expect(linkedPersons(p as string).size).toBe(1);
+
+    const refound = await runExtractionAppend({ projectPath: dir, recordIds: ["F5GR-QBN"], questionIds: ["q_001"] } as any, reader as any, LOCAL);
+    expect(refound.ok, JSON.stringify(refound)).toBe(true);
+    const found = await disagreementsOnQ1();
+    expect(found).toEqual(expect.arrayContaining([expect.objectContaining({ personId: "93RB-RTD", fact: "birth place" })]));
   });
 });

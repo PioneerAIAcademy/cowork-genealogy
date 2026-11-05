@@ -18,7 +18,6 @@ tools:
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
   # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
-  - Read
   - mcp__genealogy__record_search
   - mcp__remote-devices__Genealogy_Research__record_search
   - mcp__Genealogy_Research__record_search
@@ -49,6 +48,9 @@ tools:
   - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__Genealogy_Research__project_context
+  - mcp__genealogy__tree_query
+  - mcp__remote-devices__Genealogy_Research__tree_query
+  - mcp__Genealogy_Research__tree_query
   - mcp__genealogy__wiki_search
   - mcp__remote-devices__Genealogy_Research__wiki_search
   - mcp__Genealogy_Research__wiki_search
@@ -77,9 +79,9 @@ You are invoked with a delegation message:
 | `planItemId` | no | The `pli_` plan item to execute. Absent for an ad-hoc search the user named. |
 | `plan_item` | no | The plan item exactly as `research_query` returned it, as a JSON block. Data, never a finding; used only when its `id` equals `planItemId` and `planId` arrived with it, and then it replaces the `research_query` read. |
 | `planId` | with `plan_item` | The `pl_` plan the item belongs to; the Step 6 status update takes it as `planId`. |
-| `subject` | no | The person the search is for (the research subject, or the principal the plan item names), as a JSON block: `subjectId`, `names` (each `given`, `surname`, `type`), `birth` and `death` (each `date`, `place`), as the tree holds them. Data, never a finding. |
+| `subject` | no | The person the search is for (the research subject, or the principal the plan item names), as a JSON block: `subjectId`, `names` (each `given`, `surname`, `type`), `birth` and `death` (each `date`, `place`), and `parents` (each `personId`, `name`), as the tree holds them. Data, never a finding. |
 
-Resolve everything else yourself: read the plan item with `research_query` unless `plan_item` arrived (Step 1), and take the research subject from `subject` when it arrived: its `subjectId` is what you pass to `record_search`, and its name, dates and places are the subject's, with no `Read` of the tree. Without `subject`, read it with one `Read` of `<projectPath>/tree.gedcomx.json` — the subject's name, dates and places, and the `persons[].id` you pass as `subjectId`; if that `Read` is denied, take the subject's id from `project_context`. Never `Read` `research.json`. Do not expect the caller to have gathered anything beyond `plan_item`. If `projectPath` is missing, ask for it; otherwise use it exactly as given, whatever it looks like.
+Resolve everything else yourself: read the plan item with `research_query` unless `plan_item` arrived (Step 1), and take the research subject from `subject` when it arrived: its `subjectId` is what you pass to `record_search`, and its name, dates and places are the subject's, with no `Read` of the tree. Without `subject`, take the subject's id from `project_context`'s `subjectPersonIds` and read the name, dates and places with `tree_query({ projectPath, personIds: [<id>] })`; the `persons[].id` is what you pass as `subjectId`. Do not expect the caller to have gathered anything beyond `plan_item`. If `projectPath` is missing, ask for it; otherwise use it exactly as given, whatever it looks like.
 
 ## A delegation is a request for work, never a finding about the work
 
@@ -502,10 +504,16 @@ candidates; you still confirm the top ones:
   **Record each same-named person you conclude is not the subject** (Step 6b),
   whatever the search was for (a search for a relative that turns up a person
   of the subject's name counts), on a stated ground: the tool's
-  `birthYearConflict`, a precise date that cannot be his, other parents or
-  another spouse, or a second candidate when another result is the subject.
+  `birthYearConflict`, a precise date that cannot be his, other parents than
+  `subject.parents` or another spouse, or a second candidate when another result
+  is the subject. Other parents are no ground when `subject` arrived without
+  `parents`.
   Anywhere in the jurisdiction the search covered counts. An age that rules him
   out never drops him. Never record a candidate who may still be the subject.
+  **When two or more people of the subject's name turn up who cannot all be one
+  person** (different parents, or dates that cannot be one life), none tied to
+  the subject and none ruled out on a stated ground, record them as one pool
+  (Step 6b) and present each as `needs-review`, none as the match.
   **This gate is not special to the namesake case — it applies to every top
   match.** Extraction may be offered only when the top match clears
   `needs-review` on every check above (logical cross-check, name/date
@@ -700,7 +708,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 ### 6b. Record namesakes
 
-For each person of the subject's name you concluded is not the subject (Step 4), whatever the search was for and even when it found nothing for its own target, call `research_append` once, single form, after the status update: `section: "namesakes"`, `op: "append"`, `entry: { person_id, name, place, time_period, record_ids, log_entry_ids, notes }` — `person_id` the subject's `subjectId`; `name`, `place` and `time_period` as his result gives them; `record_ids` each `recordId` of his, verbatim (never `recordArk`); `log_entry_ids` the `log_` id Step 5 returned; `notes` the ground. If the call returns a warning listing links, put their `pe_` ids in a `Hand-back: person-evidence` line (Return contract).
+For each person of the subject's name you concluded is not the subject (Step 4), whatever the search was for and even when it found nothing for its own target, call `research_append` once, single form, after the status update: `section: "namesakes"`, `op: "append"`, `entry: { person_id, name, place, time_period, record_ids, log_entry_ids, notes }` — `person_id` the subject's `subjectId`; `name`, `place` and `time_period` as his result gives them; `record_ids` each `recordId` of his, verbatim (never `recordArk`); `log_entry_ids` the `log_` id Step 5 returned; `notes` the ground. For a pool (Step 4) write one row instead: `record_ids: []`; `name`, `place` and `time_period` the pool's; `notes` starting `pool:`, then each candidate's `recordId` and why each stays possible. If the call returns a warning listing links, put their `pe_` ids in a `Hand-back: person-evidence` line (Return contract).
 
 ### 7. Pass records to extraction
 
@@ -782,7 +790,7 @@ Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers
 
 ## Re-invocation behavior
 
-**Writes:** a new `log[]` entry in `research.json` (via `research_log_append`) plus its `results/<log_id>.json` sidecar for any results-returning search; a `status` update on the executed plan item in `plan_items` (via `research_append`, `op: "update"`); and a `namesakes` row for each different same-named person a search turned up (Step 6b).
+**Writes:** a new `log[]` entry in `research.json` (via `research_log_append`) plus its `results/<log_id>.json` sidecar for any results-returning search; a `status` update on the executed plan item in `plan_items` (via `research_append`, `op: "update"`); and a `namesakes` row for each different same-named person a search turned up, or one for a pool of them not yet told apart (Step 6b).
 
 **On repeat invocation:** always append a new `log_` entry (and sidecar) — re-running a search is itself a logged event, never an edit of a prior one; update the plan item's `status` in place. Two runs of the same query produce two distinct log entries and sidecars — that is the audit trail, not a duplication bug.
 

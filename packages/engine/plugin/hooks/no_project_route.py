@@ -10,9 +10,14 @@ fires on every Cowork message with its text (ADR-0005, item 2), so it carries th
 That probe measured the hook firing, not its `additionalContext` reaching the model in
 Cowork, which is unmeasured.
 
+It carries a second sentence, unconditional: name a source, collection, book or citation
+only if a tool result returned it (issue #4011, widened by the lead from issue #4125). The
+hosted planes append the same text; both harnesses add it from here.
+
 **Cowork only.** Both hosted planes set `GENEALOGY_HOSTED_PLANE` in the SDK env, and the
 hook is silent there: the hosted fix ruled for them is text only (a truthful `project_note`
-and a `DELIVERY_GUIDANCE` exclusion), with nothing routing the main thread.
+carrying `NO_PROJECT_NOTE`, which held the routing sentence once `research_delivered`'s
+guidance was deleted), with nothing routing the main thread.
 
 **The sentence is conditional because the hook cannot see the project.** Its cwd in the VM
 is not the project folder (ADR-0005, item 7), so it cannot tell whether `research.json`
@@ -42,17 +47,30 @@ CONTEXT = (
     "one goal, you may summarise what the tree says and ask which to pursue first."
 )
 
+# Issue #4011: unconditional, so it holds with or without a project. The hosted planes
+# append the same text as `continue_policy.SOURCES_GUIDANCE`; change both together.
+SOURCES_NOTE = (
+    "Name a source, collection, book or citation only if a tool result in this session "
+    "returned it; otherwise say it is unconfirmed. FamilySearch collections come from "
+    "collections_search, which locality-guide and research-plan run. This rule is about "
+    "what you name, not about which agent a question goes to."
+)
+
+
+def is_researcher_prompt(payload: dict) -> bool:
+    """False for a subagent's hand-back; both harnesses' hook calls this too."""
+    prompt = payload.get("prompt")
+    return isinstance(prompt, str) and not prompt.lstrip().startswith("<agent-message")
+
 
 def decision(payload: dict, env: dict) -> dict:
-    if env.get(HOSTED_PLANE_ENV):
+    if env.get(HOSTED_PLANE_ENV) or not is_researcher_prompt(payload):
         return {}
-    prompt = payload.get("prompt")
-    if not isinstance(prompt, str) or prompt.lstrip().startswith("<agent-message"):
-        return {}
+    # Its own paragraph, so it does not read as part of CONTEXT's no-project condition.
     return {
         "hookSpecificOutput": {
             "hookEventName": "UserPromptSubmit",
-            "additionalContext": CONTEXT,
+            "additionalContext": f"{CONTEXT}\n\n{SOURCES_NOTE}",
         }
     }
 
