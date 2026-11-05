@@ -411,7 +411,7 @@ Nothing scripts it against a deployed stack yet (`make proto-demo` and `make pro
 
 ## Alignment with the self-hosted beta
 
-The [self-hosted beta](self-hosted-mcp-beta.md) runs this plan's web and tools tiers for invited Cowork users, with chat off and no worker or queue. Its changes to the shared code come from that plan's issues, and Richard reviews each. Each change is additive and keeps this plan's behavior as the default:
+The [self-hosted beta](self-hosted-mcp-beta.md) runs this plan's web and tools tiers for invited users, with the web tier's chat off and no worker or queue. Its changes to the shared code come from that plan's issues, and Richard reviews each. Each change is additive and keeps this plan's behavior as the default:
 - **Web tier:**
   - a chat switch, on by default;
   - project-keyed routes beside the session routes;
