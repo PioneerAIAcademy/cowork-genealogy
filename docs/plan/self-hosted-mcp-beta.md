@@ -121,7 +121,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 | 8. Updates | Not measured: installing a newer zip over the old one, on a second Claude account. |
 | 9. PDF text | Not measured: three real browser-saved Ancestry captures through pdf.js. |
 | 10. Reconnect | Not measured: with a live connector token and an expired FamilySearch session, whether the tools stay, whether the link reaches the user from the main thread and from an agent, and whether "continue" works in the same task. |
-| 11. Long token | Not measured: whether a long `expires_in` with no refresh token still works, in a new task and in the open one. |
+| 11. Long token | Not measured: whether a long `expires_in` with no refresh token still works, in a new task and in the open one, and, when that token dies, what reconnecting takes. |
 | 12. Chat surfaces | Not measured: whether the card and the sign-in link behave in claude.ai chat and Desktop Chat as they do in a Cowork task, and whether the plugin's skills, agents and hook load there at all. |
 | 13. Door refusals | Not measured: what the researcher, the model and the card see when the door answers 400, 403 or 503, and whether the connector then works with no new sign-in. A bad result could move these to `isError`, on the connector path only. 401 stays HTTP. |
 
@@ -177,9 +177,9 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 - **Time:** `image_transcribe`'s worst case stays under the per-call limit P0.2 item 4 measures: one download attempt, and an OCR budget set from that limit. Use 240 s until it is recorded.
 - **`image_read`** is refused for connector callers, and `docs/specs/image-read-spec.md` says so.
 - **The image cap** is keyed per user, so a connector call that names no project cannot spend a film's cap for everyone.
-- **`TRANSCRIPTION_ENABLED` goes,** with its plumbing.
+- **`TRANSCRIPTION_ENABLED` goes,** with its plumbing and its line in the handoff's step 9.
 - **Direct reads.** `search-full-text` uses `Read` on a staged result and `translation` on an image path, and neither file exists for a connector. Both move to tools, and each agent's edit owes its eval.
-- **Done when:** tests pin the time budget, the refusal and the per-user cap, and `git grep -E 'TRANSCRIPTION_ENABLED|transcriptionEnabled' -- ':!docs/plan'` returns nothing.
+- **Done when:** tests pin the time budget, the refusal and the per-user cap, and `git grep -E 'TRANSCRIPTION_ENABLED|transcriptionEnabled' -- ':!docs/plan/self-hosted-mcp-beta.md'` returns nothing.
 
 ### The web tier (`apps/server/proto/web`)
 
@@ -252,7 +252,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 - **Roles:** `dml_role.py`, in the `migrate` one-shot, creates the DML-only role.
 - **DNS:** `tools` names public resolvers. The host's resolver gives the tailnet address, whose listener refuses a container, and public DNS gives the Funnel relay.
 - **Off by default:** `OPENROUTER_LINKING_ENABLED` always, and `UPLOADS_ENABLED` until issue #4001 lands.
-- **Settings still to set:** `WEB_PUBLIC_URL` to `PUBLIC_URL` once E2 is deployed. Compose passes a service only what it names, so W2's redirect and budget settings join the web service when issue #3992 lands. Before invited users, set the FamilySearch budget and the transcription cap, at 5 or more.
+- **Settings still to set:** `WEB_PUBLIC_URL` to `PUBLIC_URL` once E2 is deployed. Compose passes a service only what it names, so W2's redirect and budget settings join the web service when issue #3992 lands. Before invited users, set the FamilySearch budget, and the transcription cap at 5 or more.
 - **Make targets:** `malachi-up`, `-check`, `-logs`, `-deploy REF=<sha>`, `-backup`, `-restore-check`, `-restore`, `-export`, `-openrouter EMAIL=`, `-prune`, `-down`, `-wipe` and `-rehearsal`.
 - **Never** run `tailscale serve reset`, `tailscale funnel --https=443 off` or `make proto-up` with defaults on `malachi`, and do not reboot it for a test: `/wiki` and `/pop-stats` are production ingress for every installed `.mcpb`.
 
@@ -270,7 +270,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 The page also says:
 - **Where research runs,** from the Surface decision.
 - **No desktop extension** on that Claude account: turn it off under Settings → Extensions on each computer, or use a second Claude account.
-- **Signing in again:** what to expect when FamilySearch ends a session, written from the sittings.
+- **Signing in again:** what to expect when FamilySearch ends a session, and when the connector token itself expires (reconnect under Settings → Connectors), written from the sittings.
 - **Feedback:** where to email it, with the conversation pasted in.
 - **Team and Enterprise plans:** an Owner adds the connector and makes the plugin available.
 
@@ -368,11 +368,9 @@ Issue #4003, in the icebox, holds the worker's half of the one door and the remo
 | Before launch | The MCP App work and G6 merged |
 | When Phase 4 passes | Launch: the first invited users |
 
-**Cut list, in order:**
-1. The upload page becomes a bare file form that still runs pdf.js.
-2. Uploads move after launch, and pasting the text is the capture path.
+**Cut list:** the upload page becomes a bare file form that still runs pdf.js.
 
-**Not cuttable:** sign-in, isolation between users, the policies, FamilySearch's approval and the connector's name.
+**Not cuttable:** sign-in, isolation between users, uploads, the policies, FamilySearch's approval and the connector's name.
 
 ## Risks
 
