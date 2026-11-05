@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a public beta, February to July 2027
 
-**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26). W3's viewer data, uploads and download are implemented in the web tier. E2's settings, links and uploads list are implemented in the tool server; its connector `project_list` is not. The rest is filed as issues ("Who builds what"), not started: what is likely to go wrong only live is due by 14 December, for a dress rehearsal before the holidays, and the rest by 31 December. Launch is the week of 1 February. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
+**Status:** Draft (2026-10-26). Wave 1 and `project_list`'s desktop and worker halves shipped in PR #3852 (2026-10-26). E1's one front door shipped in PR #4225 (2026-11-05); nothing reaches its connector path until W2 mints a token. W3's viewer data, uploads, download and OpenRouter linking are implemented in the web tier. E2's settings, links and uploads list are implemented in the tool server; its connector `project_list` is not. The rest is filed as issues ("Who builds what"), not started: what is likely to go wrong only live is due by 14 December, for a dress rehearsal before the holidays, and the rest by 31 December. Launch is the week of 1 February. Waiting on FamilySearch's approval, as any app on its API must, and on issue #3529's probe.
 
 ## What this is
 
@@ -185,11 +185,11 @@ The bounce is not an access control. Until launch day, admission reads an allowl
   - **Logging:** one line per call with the user id, the tool and any FamilySearch status.
 - **Done when:**
   - tests show two users isolated, both by id and by guessing;
-  - an ended grant and a blocked user each get 401;
+  - an ended grant, a blocked user and a user with no FamilySearch token each get 401;
   - a two-call batch is refused, and a call naming another user's project writes nothing;
   - a connector token sent with the worker's headers is refused 403 and reads nothing;
   - a worker's stamped call still works;
-  - `make engine-smoke-http` passes against compose's web and tools services. The smoke keeps today's stamped-turn client and runs every row through it: it seeds a user, a project that user owns, and an open turn stamped with the sha256 of the bearer it presents, the host's FamilySearch token when there is one. With none, the turn is stamped with a random bearer, and a FamilySearch row passes when it answers `isError` with text matching `401` or `login tool`, the ways the tools word FamilySearch's refusal; `reauth()` in `dev/smoke-calls.ts` changes with it, and the connector client runs no FamilySearch row. A connector client runs only with `--connector`, which the make target passes. It seeds a Fernet-encrypted FamilySearch token and a connector token for the same user, so it needs `FS_TOKEN_ENC_KEY` on the tools tier; without the flag, the smoke runs against a tools tier with no key.
+  - `make engine-smoke-http` passes against compose's tools service. The smoke keeps today's stamped-turn client and runs every row through it: it seeds a user, a project that user owns, and an open turn stamped with the sha256 of the bearer it presents, the host's FamilySearch token when there is one. With none, the turn is stamped with a random bearer, and a FamilySearch row passes when it answers `isError` with text matching `401` or `login tool`, the ways the tools word FamilySearch's refusal; `reauth()` in `dev/smoke-calls.ts` changes with it, and the connector client runs no FamilySearch row. A connector client runs only with `--connector`, which the make target passes. It seeds a Fernet-encrypted FamilySearch token and a connector token for the same user, so it needs `FS_TOKEN_ENC_KEY` on the tools tier; without the flag, the smoke runs against a tools tier with no key.
 
 **E2 Project tools.**
 - **`project_list`** shipped in PR #3852 for the desktop extension and the worker ([its spec](../specs/project-list-tool-spec.md)). Left for the connector:
@@ -243,7 +243,7 @@ The bounce is not an access control. Until launch day, admission reads an allowl
 
 **W2 Sign-in.**
 - **Users** are keyed by FamilySearch id, with a unique index. Email stays required and unique: an identity with no email, or with one another user has, is refused with a message.
-- **The browser session** stays the `wb_session` cookie. With chat off it lasts 24 hours; with chat on, 30 days, as today. `/logout` ends it on the server.
+- **The browser session** stays the `wb_session` cookie. With chat off it lasts 24 hours; with chat on, 30 days, as today. `/logout` ends it on the server, with every other session the user holds and their connector tokens, so signing out of the viewer also disconnects Claude until the user signs in again.
 - **Requests:**
   - the consent POST needs a same-origin `Origin`, and a missing or null `Origin` is refused there;
   - `/token` takes no `Origin` check, because it carries no cookie and the code and the PKCE verifier authenticate it;
@@ -267,7 +267,8 @@ The bounce is not an access control. Until launch day, admission reads an allowl
   - with the budget set, a callback whose state is missing, mismatched or used leaves the budget untouched;
   - with the cap set and the allowlist empty, a new user signs in through the connector flow and its cookie reaches `/api/projects`; at the cap, a new user is refused with no row written, and an existing user still signs in;
   - the metadata carries the client-document flag and no registration endpoint, and a client off the allowlist is refused;
-  - the web tier's issuer equals the tools tier's `authorization_servers[0]`, byte for byte.
+  - the web tier's issuer equals the tools tier's `authorization_servers[0]`, byte for byte;
+  - after `/logout`, a tool call with that user's connector token gets 401 from the tools tier.
 
 **W3 Project routes.** Every route is keyed by project and owner-checked, and a missing project and someone else's get the same 404. A blocked user's session is refused on every route.
 - **Viewer data:** `GET /api/projects`, `/api/projects/{id}/state` with an ETag from `documents.version`, sidecars and images.
@@ -379,7 +380,7 @@ Either way, the research skill's first line says that without an `Agent` tool, r
   - the FamilySearch redirect setting, at the loopback (P0.4), and the sign-in budget;
   - `PGSSLROOTCERT=/etc/pki/tls/certs/ca-bundle.crt` on the web tier: AL2023's system bundle as a file, not libpq's `system` keyword, overriding the RDS bundle its `01-web.config` pins;
   - the transcription switch, off, on the tools tier.
-- **Before the dress rehearsal:** the uploads setting. **In January:** `FEEDBACK_URL` and the limits.
+- **Before the dress rehearsal:** the uploads setting and `OPENROUTER_LINKING_ENABLED`, on the web tier (#3988). **In January:** `FEEDBACK_URL` and the limits.
 - **Before gate 4's sign-in:** the redirect setting moves from the loopback to the beta's https redirect (P0.4).
 - **Once FamilySearch's approval is in writing:** the transcription switch goes on (gate 4).
 - **When the matcher service is turned on:** `MATCHER_URL` and `MATCHER_API_KEY`, on the tools tier.

@@ -364,7 +364,7 @@ def plugin_copy_missing(plugin_dir: str, dest: str) -> list[str]:
 # U4: the door is owner-checked. A request naming a project must also carry the fence, and
 # the server answers 403 before any transport unless the bearer's sha256 is the one this
 # attempt stamped on that open turn of that project (worker.STAMP_BEARER_SQL); a request
-# with no project header is not checked.
+# with no project header takes the connector door instead (E1).
 # TOOL_SERVER_URL has no default (U11): a guessed host would be handed the patron's bearer.
 PROJECT_ID_HEADER = "X-Genealogy-Project-Id"
 TURN_ID_HEADER = "X-Genealogy-Turn-Id"
