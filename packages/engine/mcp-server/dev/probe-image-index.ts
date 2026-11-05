@@ -112,6 +112,18 @@
  *       credential type: this route appears to want the web session's cookies.
  *     - imageData.records and imageData.recordList are both REQUIRED by step 2
  *       (dropping either gives 500), so the chain cannot be entered at step 2.
+ *     - FOLLOW-UP (2026-11-04): step 1 answers the SAME 403 with and without
+ *       the bearer, on four different image arks. Identical, not merely both
+ *       refused -- so the bearer is IGNORED, not rejected, and the refusal is
+ *       not about this one image. The route authenticates by web-session
+ *       cookie only. (A fourth ark, an old numeric one, 404s instead with
+ *       "Unable to get GedcomX image information", a different failure and not
+ *       evidence either way.)
+ *     - The capture's two other leads are dead: hermes/project/<apid> returns
+ *       terms-of-use flags (226 B), fulltext/search/groupNumber?ids=<film>
+ *       returns {"ids": []}, and waypoint-data is catalog notes. None yields a
+ *       recordList, so step 2's bearer-less call cannot be fed from anything
+ *       reachable with the credential the engine holds.
  *     - BROWSER_USER_AGENT is required throughout.
  *
  *   So the capability exists and returns exactly what the researcher asked for,
