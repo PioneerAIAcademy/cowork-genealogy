@@ -38,7 +38,7 @@ def _load(fixture_dir: Path, name: str) -> dict:
 def test_committed_fixture_passes_the_hard_gates(fixture_dir: Path):
     # Suspects are advisory — the author reviews them at authoring time.
     # Hard errors (schema, reference integrity, duplicate ids, living
-    # persons) fail the corpus.
+    # persons, ancestry cycles) fail the corpus.
     _, errors = lint_fixture(fixture_dir)
     assert errors == []
 
