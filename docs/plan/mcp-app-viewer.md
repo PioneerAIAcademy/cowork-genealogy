@@ -1,6 +1,8 @@
 # MCP App viewer: research cards and a case file inside Cowork
 
-**Status:** M0 in progress; the build is on branch `mcp-app-viewer-m0` (2026-11-05).
+**Status:** M0 in progress; the build is on branch `mcp-app-viewer-m0`. A card rendered
+in a Cowork task on 2026-11-05, so Decision 8 passes; `docs/mcp-app-host-probe.md` holds
+the answers still open.
 **Owner:** the lead, building it himself, independent of the beta's timeline.
 
 ## Goal
@@ -12,11 +14,11 @@
    remote connector and replaces Electron and the web viewer, leaving one viewer to
    maintain (see "If adopted"). Until then it touches nobody else's work.
 
-## Decisions (lead, 2026-11-03 and 2026-11-04)
+## Decisions (lead, 2026-11-03 to 2026-11-05)
 
-1. **Cowork only.** Research runs in a Cowork task, so that is the surface.
-   Desktop chat and claude.ai chat get no work; Desktop chat is only a backup
-   for the demo recording.
+1. **Cowork first, and chat too.** Research runs in a Cowork task, so that is the main
+   surface. Cards must also work in claude.ai chat and Desktop Chat: the same page and
+   server, checked on each.
 2. **A card is a picture, never a reply.** Nothing on a card posts a message or
    runs a step. The reply stays with the platform's own carrier (in Cowork today,
    the "Continue with …?" line). At a stopping point the order is: the step report,

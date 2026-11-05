@@ -503,12 +503,12 @@ the step needed a card and none rendered, which is an answer.
 
 | Run | |
 |---|---|
-| Date | |
-| Claude Desktop version | |
-| Where the task ran (cloud or local), and whether it had a folder | |
-| Account the connector is on (organization or personal) | |
-| macOS version | |
-| Commit of `mcp-app-viewer-m0` | |
+| Date | 2026-11-05 |
+| Claude Desktop version | 4.16336.0 |
+| Where the task ran (cloud or local), and whether it had a folder | Cloud (`cse_` session), with a folder on this Mac |
+| Account the connector is on (organization or personal) | Personal |
+| macOS version | 15.8.2 |
+| Commit of `mcp-app-viewer-m0` | `5e61d3b5c` |
 
 ### Approvals
 
@@ -540,9 +540,9 @@ browser tab.
 
 | Route | Renders? | Tool's full name |
 |---|---|---|
-| Control: claude.ai chat | | |
-| Control: Desktop Chat | | |
-| Connector, task with a folder on this Mac | | |
+| Control: claude.ai chat | Yes | Shown as `Genealogy Viewer show_project` |
+| Control: Desktop Chat | Yes, only after restarting Desktop | `mcp__Genealogy_Viewer__show_project` |
+| Connector, task with a folder on this Mac | Yes, after a ToolSearch load, on a project with one small document | `mcp__Genealogy_Viewer__show_project` |
 | Connector, task with no folder | | |
 | Connector, after a ToolSearch load | | |
 | Connector, with the variant plugin | | |
@@ -566,7 +566,7 @@ resource itself.
 
 | Route | `clientInfo` | Declared extensions |
 |---|---|---|
-| Connector | | |
+| Connector | `Anthropic/ClaudeAI` 1.0.0 at connect; `claude-code` 2.1.318 when the Cowork task started | `io.modelcontextprotocol/ui` from the first; none from the second, and the card still rendered |
 | Local | | |
 | Artifact | | |
 
@@ -577,7 +577,7 @@ card that reports `window.claude.use` as a function would boot on the wrong host
 
 | Route | `typeof window.claude` | `typeof window.claude?.use` | `window.parent === window` |
 |---|---|---|---|
-| Connector | | | |
+| Connector | `undefined` | `undefined` | `false` |
 | Local | | | |
 | Artifact | | | |
 
@@ -588,7 +588,7 @@ artifact.
 
 | | Connector | Local |
 |---|---|---|
-| `availableDisplayModes` | | |
+| `availableDisplayModes` | `inline, fullscreen` | |
 | `host-context-changed` on entering fullscreen | | |
 | `host-context-changed` on the host's own close | | |
 | A card opened by a typed request goes straight to fullscreen | | |
@@ -622,8 +622,8 @@ project as it is now rather than at that step.
 
 | | Connector | Local |
 |---|---|---|
-| `result _meta arrived` | | |
-| `data came from` | | |
+| `result _meta arrived` | Yes, on a result of 361 bytes | |
+| `data came from` | `result _meta` | |
 
 ### Size
 
@@ -655,7 +655,7 @@ researcher is looking at. It posts nothing either way.
 
 | | Connector | Local |
 |---|---|---|
-| `updateModelContext offered` | | |
+| `updateModelContext offered` | Yes | |
 
 ### Connector off for one task
 
