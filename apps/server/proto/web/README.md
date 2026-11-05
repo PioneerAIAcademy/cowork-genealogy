@@ -27,7 +27,6 @@ bundle both set it.
 | `GET /api/sessions/{id}/sidecar/{log_id}`, `GET …/image`, `GET …/logs`, `POST …/files` | Sidecars return `{raw, mtime}` and images return the persisted scan (404 when absent); logs answer 501; file uploads are stored and return `{path, sizeBytes}`. |
 | `GET /`, each top-level file of the dist, `GET /assets/…` | The SPA, when `WEB_DIST_DIR` is set (below). `/docs`, `/redoc` and `/openapi.json` are off. |
 | `GET /api/feedback/context?sessionId=`, `POST /api/feedback` | The SPA's feedback dialog (U20, below): the files and transcript size a report would carry; then the zip, stored in S3 under `feedback/` and sent nowhere. 200 `{ok, filename}`. |
-| `POST /api/projects/{id}/feedback` | The beta's feedback route (#3986, below): owner-checked before the body is read, the same body minus `sessionId`, the project's files and no transcript. Posted to `FEEDBACK_URL` when it is set, else stored like the session route's. Five a day per patron (UTC), 429 past that. 200 `{ok, filename}`; 404 / 422 / 400 / 503 / 429 / 502. |
 | `POST …/interrupt` → 202 | Stop (PR #2870 item 1c). The worker owns the turn and no control channel reaches it, so this raises a flag on a control-plane row that the worker's `PreToolUse` hook reads before every tool call. |
 
 The project routes give missing, foreign and NULL-owner projects the identical 404
@@ -97,10 +96,9 @@ tier's stores; `web/blobstore.py` is the S3 client, with the engine's `GENEALOGY
 semantics. Handoff: U20 in `docs/plan/familysearch-handoff.md`; bundle contract:
 `docs/specs/feedback-case-spec.md`.
 
-- **Owner first.** Both session routes answer 404 for a session the caller does not own, a
+- **Owner first.** Both routes answer 404 for a session the caller does not own, a
   missing `sessionId` included, before the body is validated: a foreign session is never
-  a 422; the project route answers `"Project not found"` the same way for a project. An
-  owned session or project with a bad body is 422; a field over 10,000 characters, 400.
+  a 422. An owned session with a bad body is 422; a field over 10,000 characters, 400.
 - **What it bundles.** `documents` rows (as the engine's `readText` renders them) and
   `blobs` bytes from S3, skipping dot segments (`results/.staging/`), stale copies (named)
   and blobs over 25 MiB. The alpha's 35 MiB selection runs on `blobs.bytes` before any
@@ -108,25 +106,13 @@ semantics. Handoff: U20 in `docs/plan/familysearch-handoff.md`; bundle contract:
   transcript comes from `session_entries`, streamed 500 rows at a time under one 20 MiB
   budget. Living people, API keys, bearer tokens and the owner's current FamilySearch
   tokens are redacted.
-- **Where it goes.** The session route: `feedback/<owner_id>/<project_id>/feedback-<ts>-<8 hex>.zip`
-  in `GENEALOGY_S3_BUCKET`, `ContentType: application/zip`, and nowhere else, whatever
-  `FEEDBACK_URL` says, because its bundle carries the transcript. The project route
-  (`POST /api/projects/{id}/feedback`, #3986): the same key with `FEEDBACK_URL` unset; with it
-  set, nothing is stored and `forward_stored_feedback` posts the zip, named
-  `feedback-<owner_id>-<ts>.zip`, in the alpha's envelope `{timestamp, email, filename,
-  zipBase64}` (following the Apps Script's redirect). A post that fails, or whose reply is
-  not `{"ok": true}`, is 502 `"Feedback upload failed"`, and the log line names the
-  exception's type only. The U19 orphan sweep leaves the prefix alone; on the rehearsal a
-  lifecycle rule expires it at 90 days. No bucket: both `POST`s answer 503 (the project's
-  blobs are read from it, URL or not) and `/context` still works. A failed `PutObject` is
-  502. One build at a time per process.
-- **Five a day.** The project route admits five 200s per patron per UTC day
-  (`FEEDBACK_DAILY_LIMIT`), counted in memory per process, so N instances admit 5×N; the
-  sixth is 429 before any build, and a 502 does not count. The session route has no limit.
-  `/auth/config` carries `feedback`: whether a bucket is configured.
-- **Environment.** `FEEDBACK_URL` (unset: the project route stores to the bucket; empty is
-  unset). It is the endpoint's only credential, so it is read once, never logged and
-  never echoed. `GENEALOGY_S3_BUCKET` (required for `POST`), `GENEALOGY_S3_REGION`
+- **Where it goes.** `feedback/<owner_id>/<project_id>/feedback-<ts>-<8 hex>.zip` in
+  `GENEALOGY_S3_BUCKET`, `ContentType: application/zip`, and nowhere else:
+  `forward_stored_feedback` is the seam for whatever the lead decides. The U19 orphan
+  sweep leaves the prefix alone; on the rehearsal a lifecycle rule expires it at 90 days.
+  No bucket: `POST` answers 503 and `/context` still works. A failed `PutObject` is 502.
+  One build at a time per process.
+- **Environment.** `GENEALOGY_S3_BUCKET` (required for `POST`), `GENEALOGY_S3_REGION`
   (`us-east-1`), `GENEALOGY_S3_ENDPOINT` (unset on AWS; path style when set),
   `GENEALOGY_S3_ACCESS_KEY` + `GENEALOGY_S3_SECRET_KEY` (both, or neither for the instance
   role; one alone refuses to start). Compose and `make proto-web` point it at MinIO's
