@@ -957,9 +957,9 @@ def test_namesake_row_recorded(before_state, after_state, test):
 
     A row names a subject of the project and cites a `record_search` log entry
     this run wrote. `research_append` stamps `record_persona_ids` only for a
-    record found in the cited search's own results, so a row with no stamp listed
-    an id the search never returned (a `recordArk`, a retyped id) or cited the
-    wrong log.
+    record found in the results of a search or read the row cites, as a result or
+    as a member of a result's record, so a row with no stamp listed an id no cited
+    log returned (a `recordArk`, a retyped id) or cited the wrong log.
     """
     if "namesake-row" not in test.get("tags", []):
         pytest.skip("not a namesake-row scenario")
@@ -982,7 +982,7 @@ def test_namesake_row_recorded(before_state, after_state, test):
         )
         assert row.get("record_persona_ids"), (
             f"row {row.get('id')} lists {row.get('record_ids')}, which research_append found in none of the "
-            "cited search's results: copy each recordId verbatim, never recordArk"
+            "cited logs' results or their records' persons: copy each recordId verbatim, never recordArk"
         )
 
 

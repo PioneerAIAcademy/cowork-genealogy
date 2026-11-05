@@ -22,6 +22,11 @@ with the chat on (#3985, ``GENEALOGY_CHAT``):
   GET  /api/projects/{id}/download             the project as a zip, streamed from /var/tmp (#3987)
   GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout, GET /auth/familysearch/login,
   GET  /callback   (patron sign-in, web/auth.py; every /api/sessions and /api/projects route needs the cookie)
+  GET  /privacy, /terms (no sign-in), GET /api/account (the id and deletion code)
+                                                only with the chat off (#3993); 404 with it on
+  GET  /openrouter, /openrouter/link, /openrouter/callback, POST /openrouter/unlink
+                                                the patron's own OpenRouter key (#3988; served only
+                                                with OPENROUTER_LINKING_ENABLED=true; cookie needed)
   GET  /api/sessions/{id}/sidecar/{log_id}     search-result body, or 404 when absent
   GET  /api/sessions/{id}/image?filename=      persisted source page scan, or 404 when absent
   GET  /api/sessions/{id}/logs -> 501; POST .../files stores a researcher upload
@@ -58,6 +63,7 @@ GENEALOGY_CHAT (unset or true; false serves no /api/sessions route and needs no 
 GENEALOGY_MAX_USERS (unset: the allowlist admits; a positive integer: the user cap does),
 PG_POOL_MAX_SIZE (unset: one connection per query; a positive integer: a checked pool of that size),
 UPLOADS_ENABLED (unset or false: the project upload route answers 404; true or false only),
+OPENROUTER_LINKING_ENABLED (unset or false: no /openrouter route; true or false only),
 POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
@@ -139,6 +145,7 @@ from pg_credentials import PgCredentials  # noqa: E402
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 from web import blobstore  # noqa: E402  (U20: the S3 client, the engine's GENEALOGY_S3_* semantics)
 from web import feedback  # noqa: E402  (U20: the feedback bundle)
+from web import policies  # noqa: E402  (#3993: the privacy and terms text)
 from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
 from web.job_state import job_state  # noqa: E402  (the four states the list shows)
 from web.project_blobs import (  # noqa: E402  (source scans in, researcher uploads out)
@@ -431,6 +438,10 @@ class Store(Protocol):
         self, project_id: str, session_id: str, subpath: str, after: int, limit: int
     ) -> list[tuple[int, Any]]: ...
     async def grant_ciphertexts(self, user_id: str) -> tuple[str | None, str | None]: ...
+    # #3988: the patron's OpenRouter key, CIPHERTEXT only (auth.encrypt), in users.openrouter_key_enc.
+    async def openrouter_key_enc(self, user_id: str) -> str | None: ...
+    async def set_openrouter_key(self, user_id: str, key_enc: str) -> None: ...
+    async def clear_openrouter_key(self, user_id: str) -> None: ...
 
 
 class Queue(Protocol):
@@ -1495,6 +1506,24 @@ class PgStore:
         async with await self._connect() as conn:
             await conn.execute("UPDATE users SET sessions_revoked_at = now() WHERE id = %s", (user_id,))
 
+    # -- OpenRouter key (#3988, 016) ---------------------------------------------------
+
+    async def openrouter_key_enc(self, user_id: str) -> str | None:
+        async with await self._connect() as conn:
+            cur = await conn.execute("SELECT openrouter_key_enc FROM users WHERE id = %s", (user_id,))
+            row = await cur.fetchone()
+        return row["openrouter_key_enc"] if row else None
+
+    async def set_openrouter_key(self, user_id: str, key_enc: str) -> None:
+        """Ciphertext only: the route encrypts with ``auth.encrypt`` before the call. A new
+        link replaces the old key."""
+        async with await self._connect() as conn:
+            await conn.execute("UPDATE users SET openrouter_key_enc = %s WHERE id = %s", (key_enc, user_id))
+
+    async def clear_openrouter_key(self, user_id: str) -> None:
+        async with await self._connect() as conn:
+            await conn.execute("UPDATE users SET openrouter_key_enc = NULL WHERE id = %s", (user_id,))
+
     async def store_grant(
         self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
     ) -> None:
@@ -1681,8 +1710,9 @@ def _relative_self_location(location: str, host: str | None, base_path: str = ""
     Behind the edge this tier sees http from its load balancer and a path with the prefix
     stripped, so an absolute URL Starlette builds from the request (its trailing-slash 307)
     leaves the prefix and drops https. A path already under the prefix (the callback's
-    PUBLIC_URL target) keeps it once. Any other host, or a host:port that differs from the
-    request's, is left alone."""
+    PUBLIC_URL target) keeps it once. The fragment is kept: a callback's ``#/...`` SPA route
+    (``auth.redirect_target``) is where the patron lands (#3988). Any other host, or a
+    host:port that differs from the request's, is left alone."""
     if not host:
         return location
     parts = urlparse(location)
@@ -1691,7 +1721,7 @@ def _relative_self_location(location: str, host: str | None, base_path: str = ""
     path = parts.path or "/"
     if base_path and path != base_path and not path.startswith(f"{base_path}/"):
         path = f"{base_path}{path}"
-    return path + (f"?{parts.query}" if parts.query else "")
+    return path + (f"?{parts.query}" if parts.query else "") + (f"#{parts.fragment}" if parts.fragment else "")
 
 
 def _env_float(name: str, default: float) -> float:
@@ -1913,6 +1943,8 @@ def create_app(
     app.state.chat = auth.chat_enabled()
     # #3987: None (unset), True or False; a bad value refuses here, as GENEALOGY_CHAT does.
     app.state.uploads = auth.uploads_setting()
+    # #3988: off unless true; a bad value refuses here. Off registers no /openrouter route.
+    app.state.openrouter = auth.openrouter_linking_enabled()
     app.state.store = store
     # #3985: a chat-off tier has no queue, even when a caller passes one.
     app.state.queue = queue if app.state.chat else None
@@ -1933,6 +1965,10 @@ def create_app(
     prefix_mismatch_logged = False
     app.state.stream_max_polls = stream_max_polls
 
+    # Every route that returns one user's data goes here: it gets `private, no-store` and
+    # `Vary: Cookie`, refusals included. A new per-user route outside these prefixes gets neither.
+    PER_USER_CACHE_PATHS = ("/api/account", "/api/projects")
+
     class ProjectCacheHeaders:
         def __init__(self, app: ASGIApp) -> None:
             self.app = app
@@ -1942,7 +1978,7 @@ def create_app(
                 await self.app(scope, receive, send)
                 return
             path = get_route_path(scope)
-            if not (path == "/api/projects" or path.startswith("/api/projects/")):
+            if not any(path == p or path.startswith(p + "/") for p in PER_USER_CACHE_PATHS):
                 await self.app(scope, receive, send)
                 return
 
@@ -2123,6 +2159,8 @@ def create_app(
         # #3987: only when UPLOADS_ENABLED is set, so an unset tier answers as it always did.
         if app.state.uploads is not None:
             config["uploads"] = app.state.uploads
+        # #3988: always sent, so the browser app (#4001) shows the OpenRouter page only on true.
+        config["openrouter"] = app.state.openrouter
         return config
 
     @app.get("/auth/me")
@@ -2236,6 +2274,92 @@ def create_app(
         )
         resp.delete_cookie(auth.FS_OAUTH_COOKIE, path=auth.cookie_path())
         return resp
+
+    # -- OpenRouter linking (#3988) ---------------------------------------------------
+    # Registered only with OPENROUTER_LINKING_ENABLED=true, so with it off every /openrouter
+    # route is a 404 before any cookie is read, as /api/sessions is with the chat off. Each
+    # route runs current_user, so a blocked or revoked session is refused on all of them.
+
+    linking = app if app.state.openrouter else APIRouter()
+
+    def _drop_or_state(resp: Response) -> Response:
+        """Delete the state cookie with the attributes it was set with."""
+        resp.delete_cookie(auth.OR_OAUTH_COOKIE, **auth.cookie_kwargs())
+        return resp
+
+    @linking.get("/openrouter")
+    async def openrouter_status(request: Request, response: Response, user: User = Depends(current_user)) -> dict:
+        """``{linked: bool}`` for the browser app's OpenRouter page (#4001). Never the key.
+        Linked means a key that decrypts under the current FS_TOKEN_ENC_KEY: one written under
+        another key is no key to the tool server either (#3984), so the page offers a relink."""
+        response.headers["Cache-Control"] = "private, no-store"
+        return {"linked": auth.decrypt(await _store(request).openrouter_key_enc(user.id)) is not None}
+
+    @linking.get("/openrouter/link")
+    async def openrouter_link(next: str | None = None, user: User = Depends(current_user)) -> Response:
+        """Start OpenRouter's PKCE flow: the state cookie (uid, verifier, state), then a
+        redirect to openrouter.ai, whose callback URL carries the state back."""
+        verifier, challenge = auth.pkce()
+        state = secrets.token_urlsafe(16)
+        resp = RedirectResponse(auth.openrouter_authorize_url(challenge, state))
+        resp.set_cookie(
+            auth.OR_OAUTH_COOKIE, auth.openrouter_state_cookie(user.id, verifier, state, next),
+            max_age=auth.OR_OAUTH_MAX_AGE, **auth.cookie_kwargs(),
+        )
+        return resp
+
+    @linking.get("/openrouter/callback")
+    async def openrouter_callback(request: Request, code: str | None = None, state: str | None = None) -> Response:
+        """Where openrouter.ai sends the browser back: a top-level navigation, so every answer
+        is a page, and every answer drops the state cookie.
+
+        Refused, writing nothing and exchanging nothing: no session (or a refused one, with
+        current_user's status), a missing or invalid state cookie, a cookie another user's
+        session started, a state that does not match, and a return with no code (the patron
+        cancelled). Then the exchange; only on a key is it encrypted (``auth.encrypt``, the
+        FamilySearch grant's Fernet key) and stored. Once the code is spent, a lost response
+        or a failed write may leave a key on the patron's OpenRouter account that we never
+        stored, and the page says so. The key and the exchange's body are never logged."""
+        fail = "Return to the app and try again."
+        orphan = ("OpenRouter may have created a key named “" + auth.OPENROUTER_KEY_LABEL
+                  + "” that was not saved here; delete it in your OpenRouter account settings.")
+
+        def page(text: str, status: int) -> Response:
+            return _drop_or_state(HTMLResponse(f"Linking OpenRouter failed: {text} {fail}", status_code=status))
+
+        try:
+            user = await current_user(request)
+        except HTTPException as exc:
+            return page(f"{exc.detail}.", exc.status_code)
+        data = auth.read_openrouter_state_cookie(request.cookies.get(auth.OR_OAUTH_COOKIE))
+        if data is None:
+            return page("the link state is missing or has expired.", 400)
+        if data["uid"] != user.id:
+            return page("this link was started from another account.", 400)
+        if not state or state != data["state"]:
+            return page("the link state does not match.", 400)
+        if not code:
+            return page("OpenRouter returned no authorization (the request was cancelled or denied).", 400)
+        result = await auth.exchange_openrouter_code(code, data["verifier"])
+        if result.outcome != "ok":
+            log.warning("ev=openrouter_exchange_failed outcome=%s reason=%s", result.outcome, result.reason)
+            if result.outcome == "ambiguous":
+                return page(f"no answer came back from OpenRouter. {orphan}", 502)
+            return page("OpenRouter did not issue a key.", 502)
+        try:
+            await _store(request).set_openrouter_key(user.id, auth.encrypt(result.key))
+        except Exception as exc:  # noqa: BLE001 - the patron is told; the key never reaches the log
+            log.warning("ev=openrouter_store_failed error=%s", type(exc).__name__)
+            return page(f"the key could not be saved. {orphan}", 503)
+        return _drop_or_state(RedirectResponse(auth.redirect_target(data.get("next"))))
+
+    @linking.post("/openrouter/unlink")
+    async def openrouter_unlink(request: Request, user: User = Depends(current_user)) -> dict:
+        """Forget the key: the column goes NULL and nothing is sent to OpenRouter (the page
+        tells the patron to delete the key there, plan W4). POST only: the session cookie is
+        SameSite=Lax, so a GET could be fired from another site."""
+        await _store(request).clear_openrouter_key(user.id)
+        return {"linked": False}
 
     # -- projects -----------------------------------------------------------------
 
@@ -2487,7 +2611,7 @@ def create_app(
             if name is None:
                 raise HTTPException(
                     status_code=400,
-                    detail="filename must be a plain basename of letters, digits, dot, dash, space or underscore",
+                    detail="filename is empty, starts with a dot, contains '..', or has no letters or digits",
                 )
             # The spooled size before the read: a chunked body has no Content-Length to
             # refuse above, and `max_part_size` does not bound a file part.
@@ -2582,7 +2706,7 @@ def create_app(
             if name is None:
                 raise HTTPException(
                     status_code=400,
-                    detail="filename must be a plain basename of letters, digits, dot, dash, space or underscore",
+                    detail="filename is empty, starts with a dot, contains '..', or has no letters or digits",
                 )
             if file.size is not None and file.size + len(text) > UPLOAD_MAX_BYTES:
                 raise HTTPException(status_code=413, detail=too_big)
@@ -2878,6 +3002,28 @@ def create_app(
         log.info("ev=feedback result=stored session=%s project=%s key=%s bytes=%d files=%d transcripts=%d dropped=%d",
                  row.session_id, row.project_id, key, meta["bytes"], n_files, n_transcripts, meta["dropped"])
         return {"ok": True, "filename": key.rsplit("/", 1)[-1]}
+
+    # -- chat-off pages and account (#3993) -----------------------------------------
+    # The inverse of `sessions` above: registered on the app only with the chat off, so a
+    # chat-on tier answers 404 for all three, as before. With the chat on the router is
+    # deliberately never included: it is a sink so the decorators below have somewhere to
+    # register. Do not "fix" it by including it.
+    beta = APIRouter() if app.state.chat else app
+
+    @beta.get("/privacy")
+    async def privacy_page() -> HTMLResponse:
+        return HTMLResponse(policies.PRIVACY_HTML)
+
+    @beta.get("/terms")
+    async def terms_page() -> HTMLResponse:
+        return HTMLResponse(policies.TERMS_HTML)
+
+    @beta.get("/api/account")
+    async def account(user: User = Depends(current_user)) -> dict:
+        """The account menu's data. Its own route, not /auth/me, so the code does not ride on
+        every page load. ProjectCacheHeaders adds ``private, no-store`` and ``Vary: Cookie``
+        to every response here, refusals included."""
+        return {"accountId": user.id, "deletionCode": auth.deletion_code(user.id)}
 
     # Last, so it sees every API route it must not shadow (web/spa.py).
     spa.mount_spa(app, tier_root=PROTO_DIR, base_path=app.state.base_path)
