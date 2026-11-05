@@ -547,6 +547,9 @@ if [ "$1" = info ]; then
   printf '%s\\n' "${FAKE_DOCKER_ROOT-}"
   exit 0
 fi
+if [ "$1" = image ] && [ -n "${FAKE_IMAGE_PRUNE_FAILS-}" ]; then
+  exit 1
+fi
 [ -z "${FAKE_DOCKER_STDIN-}" ] || cat >"$FAKE_DOCKER_STDIN"
 printf '%s|%s|%s\\n' "${FS_TOKEN_ENC_KEY-unset}" "${EDGE_PORT-unset}" "$*"
 """
@@ -766,6 +769,15 @@ def test_up_prunes_this_stacks_images_and_no_one_elses(first_run, edge):
     assert result.returncode == 0, result.stderr
     rows = [row.split("|")[2] for row in result.stdout.splitlines() if "prune -f" in row]
     assert rows == ["image prune -f --filter label=com.docker.compose.project=own-stack"]
+
+
+@needs_bash
+def test_up_survives_a_prune_the_daemon_refuses(first_run):
+    """The stack is up by then, so a failure here must not stop malachi-deploy's check."""
+    path, env = first_run
+    result = _run(["up"], {**_with_fake_docker(path.parent, env), "FAKE_IMAGE_PRUNE_FAILS": "1"})
+    assert result.returncode == 0, result.stderr
+    assert "could not remove the replaced images" in result.stderr
 
 
 @needs_bash

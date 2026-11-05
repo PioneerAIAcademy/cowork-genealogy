@@ -235,7 +235,8 @@ cmd_up() {
   else
     compose up -d --wait edge
   fi
-  prune_images
+  # The stack is up by now, and the daemon refuses a second prune while anyone else runs one.
+  prune_images || printf 'malachi: could not remove the replaced images; make malachi-prune later\n' >&2
 }
 
 # What a rebuild left behind, this stack's alone: the daemon is shared.
