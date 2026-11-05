@@ -594,7 +594,7 @@ Array of question objects.
 | `stop_criteria` | object or null | yes | Null when `stopped_because` is null or a non-gate value; required object when `stopped_because` is a gate value. Always present as a key (null, not omitted) for consistency. See below |
 | `not_reached` | object[] | yes | Sources that could not be reached, each with `kind`, `description`, `log_entry_id` and `wiki_title` (both nullable). May be empty. See below |
 
-**`stop_criteria`** — Structured assessment against the GPS 7-Point Stop Criteria. Each field is a brief assessment (1-2 sentences).
+**`stop_criteria`** — Structured assessment against the GPS 7-Point Stop Criteria. Each field is a brief assessment (1-2 sentences), at most 800 characters: `research_append` refuses a longer one on any op that writes `search_stop` (over 188 committed `stop_criteria` objects, measured 2026-11-02, it refuses 38, p90 708 — `research-append-tool-spec.md`).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|

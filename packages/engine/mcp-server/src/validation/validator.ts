@@ -1104,6 +1104,13 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       }
       if (typeof ss.stop_criteria === "object" && ss.stop_criteria !== null) {
         checkAllowedKeys(ss.stop_criteria, RESEARCH_SHAPES.stop_criteria, "stop_criteria objects", `${qp}/search_stop/stop_criteria`, report);
+        // research.schema.json types each criterion `string`; the key check above
+        // admits any value, so the type is checked here.
+        for (const [field, v] of Object.entries(ss.stop_criteria)) {
+          if (typeof v !== "string") {
+            addError(report, `${qp}/search_stop/stop_criteria/${field}`, `must be a string, got ${v === null ? "null" : typeof v}`);
+          }
+        }
       }
 
       // not_reached: required array, may be empty; each entry validated
