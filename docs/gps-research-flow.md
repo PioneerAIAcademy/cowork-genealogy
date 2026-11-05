@@ -45,9 +45,9 @@ novel; where the system takes an opinionated position, it says so.
       Critique the conclusion (only if you ask)
 ```
 
-The plan is not a checklist to be drained. As soon as the evidence in hand
-*plausibly* answers the question, the system moves to the exhaustiveness
-test. If that test finds a gap, it returns to planning — the same question,
+When the evidence in hand answers the question before the plan is done, the
+remaining items are disposed of — searched, or skipped with a reason — and then
+the system moves to the exhaustiveness test. If that test finds a gap, it returns to planning — the same question,
 with the plan extended to cover what is missing. It goes back to choosing a
 It does not go back to choosing a question for a FAN pivot: when direct
 evidence on the current question is spent, the pivot to an associate is more
@@ -321,9 +321,8 @@ requires a stated reason.
 
 ### Testing whether the research is reasonably exhaustive
 
-Plausibility *triggers* this check — as soon as the evidence in hand
-plausibly answers the question, the stop criteria are applied. But
-plausibility does not define exhaustiveness. One of the seven stop criteria,
+The check runs once no plan item is left `planned`. An answer in hand does
+not define exhaustiveness. One of the seven stop criteria,
 `overturn_risk`, asks the defining question: could an unsearched source
 plausibly overturn the conclusion? If yes, the gap is unsearched, not
 unobtainable, and the plan returns.

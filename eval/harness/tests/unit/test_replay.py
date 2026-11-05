@@ -411,6 +411,15 @@ def test_a_person_id_extraction_is_reported_and_adds_no_log_entry():
     assert r.unmodelled == {"extraction_append:person-links": 1}
 
 
+def test_keeping_waiting_pages_is_reported_and_adds_no_log_entry():
+    """extraction_append({ attachWaitingPages }) copies staged pages its arguments
+    do not carry; the generic path would have read it as a log entry."""
+    resp = '[{"ok": true, "records": [], "attached": 1, "summary": "s"}]'
+    r = replay([_call("extraction_append", {"projectPath": "/p", "attachWaitingPages": True}, resp)])
+    assert r.research.get("log", []) == []
+    assert r.unmodelled == {"extraction_append:attach-pages": 1}
+
+
 def test_a_plan_item_completion_is_reported():
     args = {k: v for k, v in STAGED_ARGS.items() if k != "questionIds"}
     resp = STAGED_RESP.replace('"warnings": []}]}]', '"warnings": []}], "planItems": {"completed": ["pli_001"]}}]')

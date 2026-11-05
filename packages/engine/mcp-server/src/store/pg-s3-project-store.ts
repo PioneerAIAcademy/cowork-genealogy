@@ -105,7 +105,18 @@ export const S3_REQUEST_TIMEOUT_MS = 90_000;
 export const READY_TIMEOUT_MS = 1_500;
 /** The tables every store method queries; a missing one fails readiness.
  *  `turns` is the claim fence's (U6): a fenced store cannot commit without it. */
-export const STORE_TABLES = ["documents", "blobs", "staging", "projects", "turns"] as const;
+// `connector_tokens` is here for the same reason `turns` is: the door READS it
+// on every connector request (migration 017). Without it a tier deployed one
+// migration behind answers /healthz 200, passes the load balancer's check, and
+// then 503s every connector call with `error=42P01`.
+export const STORE_TABLES = [
+  "documents",
+  "blobs",
+  "staging",
+  "projects",
+  "turns",
+  "connector_tokens",
+] as const;
 /** The `turns` column the tool server's door reads (U4, migration 012); a
  *  database without it fails readiness. */
 const STAMP_COLUMN = "bearer_sha256";
@@ -168,6 +179,73 @@ export async function authorizeAttempt(
   const hash = createHash("sha256").update(req.bearer, "utf8").digest("hex");
   const rows = await backend.pool.query(ATTEMPT_DOOR_SQL, [req.fence.turnId, req.projectId, hash]);
   return rows.rows.length > 0 ? { ok: true } : { ok: false, reason: "no_match" };
+}
+
+/**
+ * Admit a connector token, or `null` (self-hosted beta E1).
+ *
+ * Times are compared in SQL with Postgres's `now()`, never a host clock —
+ * `017_connector_auth.sql`'s header says so, and the worker's fence does the
+ * same.
+ *
+ * `familysearch_tokens.expires_at` is DELIBERATELY not checked: the beta has no
+ * refresh, so FamilySearch's own 401 is what ends a session (E3's hook), and an
+ * expired token is a sign-in prompt either way. Checking it here would refuse at
+ * the door with a different message for the same user-visible state.
+ *
+ * A user with no FamilySearch token is refused: the join finds no row. So is a
+ * token that will not decrypt: it was written under another key, so it is not a
+ * token, and sending it would put gibberish on the wire.
+ */
+export async function lookupConnectorToken(
+  backend: PgS3Backend,
+  tokenSha256: string,
+  decryptWithKey: (ciphertext: string | null) => string | null,
+): Promise<{ userId: string; familySearchToken: string; openRouterApiKey: string | null } | null> {
+  const rows = await backend.pool.query<{
+    user_id: string;
+    blocked_at: Date | null;
+    access_token_enc: string;
+    openrouter_key_enc: string | null;
+  }>(CONNECTOR_DOOR_SQL, [tokenSha256]);
+  const row = rows.rows[0];
+  if (!row) return null;
+  if (row.blocked_at !== null) return null;
+  const familySearchToken = decryptWithKey(row.access_token_enc);
+  if (!familySearchToken) return null;
+  return {
+    userId: row.user_id,
+    familySearchToken,
+    // Null for a user who linked no account; the door treats it as "no key".
+    openRouterApiKey: decryptWithKey(row.openrouter_key_enc),
+  };
+}
+
+const CONNECTOR_DOOR_SQL = `
+  SELECT ct.user_id, u.blocked_at, ft.access_token_enc, u.openrouter_key_enc
+    FROM connector_tokens ct
+    JOIN users u ON u.id = ct.user_id
+    JOIN familysearch_tokens ft ON ft.user_id = ct.user_id
+   WHERE ct.token_sha256 = $1 AND ct.expires_at > now() AND ct.ended_at IS NULL
+`;
+
+/**
+ * Who owns a project id. An absent row is free — the first write decides
+ * (`touchProject`) — and a row whose `owner_id` is NULL is NOT: a connector
+ * never claims an ownerless project, unlike the web tier's
+ * `may_create_or_claim`. `projects.owner_id` is nullable on purpose
+ * (`008_auth_owner.sql`), so that state is live, not hypothetical.
+ */
+export async function projectOwnerOf(
+  backend: PgS3Backend,
+  projectId: string,
+): Promise<{ exists: boolean; ownerId: string | null }> {
+  const rows = await backend.pool.query<{ owner_id: string | null }>(
+    "SELECT owner_id FROM projects WHERE project_id = $1",
+    [projectId],
+  );
+  const row = rows.rows[0];
+  return row ? { exists: true, ownerId: row.owner_id ?? null } : { exists: false, ownerId: null };
 }
 
 /** One store check's outcome. `error` is a short label (an error code or name),
@@ -557,6 +635,13 @@ export interface PgS3ProjectStoreOptions {
   /** The one `projectPath` string the tools pass for this project; every
    *  other value is "missing_dir". */
   anchorPath: string;
+  /**
+   * The connector caller who owns this project (self-hosted beta E1). Set,
+   * `touchProject` records it on a FRESH id and refuses a project owned by
+   * anyone else. Absent on the worker path, which keeps today's ownerless
+   * upsert.
+   */
+  ownerId?: string;
   /** Aborted when the caller that bound this store is gone (the HTTP server's
    *  client disconnected). A transaction still open then ROLLS BACK instead of
    *  committing, so a write whose result nobody can receive never lands. */
@@ -574,6 +659,8 @@ export class PgS3ProjectStore implements ProjectStore {
   readonly anchorPath: string;
   private readonly signal: AbortSignal | undefined;
   private readonly fence: ClaimFence | undefined;
+  /** The connector owner (E1); undefined on the worker path. */
+  private readonly ownerId: string | undefined;
 
   constructor(
     private readonly backend: PgS3Backend,
@@ -587,6 +674,7 @@ export class PgS3ProjectStore implements ProjectStore {
     }
     this.projectId = options.projectId;
     this.anchorPath = options.anchorPath;
+    this.ownerId = options.ownerId;
     this.signal = options.signal;
     this.fence = options.fence;
   }
@@ -935,10 +1023,34 @@ export class PgS3ProjectStore implements ProjectStore {
 
   /** Every write upserts the projects row, so a project exists from its first write. */
   private async touchProject(): Promise<void> {
-    await this.db().query(
-      "INSERT INTO projects (project_id) VALUES ($1) ON CONFLICT (project_id) DO NOTHING",
-      [this.projectId],
+    if (this.ownerId === undefined) {
+      // The worker path: ownerless, exactly as before.
+      await this.db().query(
+        "INSERT INTO projects (project_id) VALUES ($1) ON CONFLICT (project_id) DO NOTHING",
+        [this.projectId],
+      );
+      return;
+    }
+    // A connector write (E1). The DOOR's ownership check admits two users
+    // racing on the same fresh id -- it sees no row for either -- so the FIRST
+    // WRITE has to decide. `DO NOTHING` alone silently lets the loser write
+    // into the winner's project.
+    //
+    // ONE statement, not an INSERT followed by a SELECT. Outside a transaction
+    // `this.db()` is the POOL, so a second query can be served by a different
+    // backend; the no-op `DO UPDATE` makes the conflicting row visible to
+    // `RETURNING` on the same statement, which is the only form that is
+    // correct whether or not a transaction is open.
+    const claimed = await this.db().query<{ owner_id: string | null }>(
+      `INSERT INTO projects (project_id, owner_id) VALUES ($1, $2)
+         ON CONFLICT (project_id) DO UPDATE SET owner_id = projects.owner_id
+       RETURNING owner_id`,
+      [this.projectId, this.ownerId],
     );
+    const actual = claimed.rows[0]?.owner_id ?? null;
+    if (actual !== this.ownerId) {
+      throw new Error(`project '${this.projectId}' belongs to another account`);
+    }
   }
 
   /** Objects the index no longer points at: gone now outside a transaction,

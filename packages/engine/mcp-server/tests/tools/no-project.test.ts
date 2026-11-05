@@ -169,9 +169,10 @@ const CALLS: Array<{ tool: string; call: (projectPath: any) => Promise<any> }> =
   },
   {
     tool: "image_transcribe",
-    // An imageId, not a `file`: the MCP entry classifies the project before any
-    // fetch for every input form (#2490), not only for an upload.
-    call: (projectPath) => imageTranscribeMcpTool({ projectPath, imageId: "004884748_02613" } as any, LOCAL),
+    // A `file`, not an imageId: a FamilySearch scan with no project is read and
+    // returned inline (#4136), but an upload's path is project-relative, so it
+    // still answers no-project.
+    call: (projectPath) => imageTranscribeMcpTool({ projectPath, file: "uploads/scan.jpg" } as any, LOCAL),
   },
   {
     tool: "merge_tree_persons",

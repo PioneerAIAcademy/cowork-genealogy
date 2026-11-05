@@ -292,6 +292,11 @@ updates:
       - dependency-name: mcp
         update-types:
           - version-update:semver-major
+      # Private FamilySearch packages (proto/requirements-fs.txt), never on public
+      # PyPI under our control. PyPI holds an unrelated sas-client, and Dependabot
+      # proposed it as an upgrade in PR #4283. No update-types: never bump these.
+      - dependency-name: sas-client
+      - dependency-name: binding-register-client
     groups:
       uv-minor-and-patch:
         patterns:
