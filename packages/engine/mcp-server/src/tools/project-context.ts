@@ -26,6 +26,7 @@ import { collectSourceRefs } from "../utils/tree-person.js";
 import { awaitingUserHandOffs, type AwaitingHandOff } from "../utils/awaiting-hand-offs.js";
 import { CLAIM_KINDS } from "../validation/validator.js";
 import { exhaustedImageGroups } from "../utils/browse-budget.js";
+import { waitingPages, type WaitingPage } from "../utils/waiting-pages.js";
 import { projectLinks } from "../utils/project-links.js";
 import { getProjectStore } from "../store/project-store.js";
 import type { Principal } from "../auth/principal.js";
@@ -203,6 +204,8 @@ export type ProjectContextResult =
       awaitingUser: ProjectContextAwaitingUser[];
       /** Films whose browse cap is spent in this project; nothing resets it. */
       exhaustedImageGroups: ProjectContextExhaustedImageGroup[];
+      /** Read pages of held records not yet on their source. Absent when none. */
+      waitingPages?: WaitingPage[];
       /** The proof_summaries claim kinds this engine accepts. A body that writes a
        *  kind checks it is listed, so a newer body on an older engine keeps
        *  today's behaviour instead of having its write refused. */
@@ -382,6 +385,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
   }));
 
   const awaitingUser = awaitingUserHandOffs(research?.log);
+  const waiting = await waitingPages(input.projectPath, research);
 
   const sectionCounts: Record<string, number | null> = {};
   for (const section of RESEARCH_QUERY_SECTIONS) {
@@ -426,6 +430,7 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     localities,
     awaitingUser,
     exhaustedImageGroups: exhausted,
+    ...(waiting.length > 0 ? { waitingPages: waiting } : {}),
     claimKinds: [...CLAIM_KINDS],
     ...(externalCollections ? { externalCollections } : {}),
     sectionCounts,
@@ -528,7 +533,10 @@ export const projectContextSchema = {
     "planItemId, performed}] lists external-site URLs already handed to the user that " +
     "nothing has answered yet — do not raise them again; when the user brings back a " +
     "capture, or says they cannot access the site, log that as the row's closing " +
-    "entry with the same urlGenerated. subjectPersonIds are the project's subject " +
+    "entry with the same urlGenerated. waitingPages [{sourceId, ref}], absent when " +
+    "none, lists read pages of held records; keep them with one " +
+    "extraction_append({ projectPath, attachWaitingPages: true }). " +
+    "subjectPersonIds are the project's subject " +
     "persons (research.project.subject_person_ids). narrationGuidance is " +
     "researcher_profile.narration_guidance verbatim (null when absent): the narration " +
     "style every skill applies; subscriptions is researcher_profile.subscriptions ([] " +
