@@ -358,6 +358,39 @@ def test_no_sole_repository_claim(agent_returns, text_response, test):
     )
 
 
+# A named outside site said to hold or index the set: "indexed on Ancestry.com",
+# "held at MyHeritage", or the site first, "Ancestry indexes the ... schedules".
+# Markdown emphasis may sit before the name ("indexed on **Ancestry.com**").
+# Offering a search URL for a site ("generate an Ancestry search URL") is not a
+# holding claim and does not match.
+_OUTSIDE_HOLDING = re.compile(
+    r"\b(?:indexed|held|available|digiti[sz]ed|hosted|kept|online)\b[^.\n]{0,40}?"
+    r"\b(?:on|at|by|in|through)\s+[*_\"']*(?:ancestry(?:\.com)?|myheritage|find ?my ?past)\b"
+    r"|\b(?:ancestry(?:\.com)?|myheritage|find ?my ?past)\s+(?:indexes|holds|hosts|has indexed)\b",
+    re.I,
+)
+
+
+def test_names_no_outside_holding(agent_returns, text_response, test):
+    """Issue #4139 (PR #4229 review) -- the agent must not say an outside site
+    holds or indexes the record set. No tool it has checks outside holdings; the
+    v12_2026-11-05_08-38-01 run said the 1825-1845 schedules "are indexed on
+    Ancestry.com" with nothing returned to support it.
+
+    Reads the agent's own return (`subject_reply_text`). Tag-gated like
+    `test_no_sole_repository_claim`.
+    """
+    from harness.skill_runner import subject_reply_text
+
+    if "no-sole-repository-claim" not in test.get("tags", []):
+        pytest.skip("only the no-FamilySearch-collection test")
+    reply = subject_reply_text(agent_returns, text_response, "search-records", test)
+    found = _OUTSIDE_HOLDING.search(reply)
+    assert found is None, (
+        f"named an outside holding no tool returned: {found.group(0)!r} in {reply[:600]!r}"
+    )
+
+
 def test_searched_before_no_collection_hand_back(tool_calls, test):
     """Issue #4139 -- Step 8 item 7 hands back a record set FamilySearch holds no
     collection for only after one logged `record_search`. A run that hands back on

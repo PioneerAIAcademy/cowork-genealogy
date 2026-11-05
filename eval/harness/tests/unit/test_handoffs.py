@@ -181,6 +181,38 @@ def test_sole_repository_claim_is_tag_gated():
         )
 
 
+@pytest.mark.parametrize("text", [
+    "The surviving schedules for 1825, 1835, and 1845 (not all counties made it through, but Clinton and Essex are among those that did survive in part) are indexed on Ancestry.com, and the original microfilm is held at the New York State Library",
+    "Handing back to search-external-sites: Ancestry indexes the surviving 1825/1835/1845 NY state census schedules.",
+    "The 1835 returns are available on MyHeritage.",
+    "These years are digitized and hosted at Find My Past.",
+    "The originals are held by Ancestry.",
+    "Ancestry.com holds the 1845 census.",
+    "The surviving schedules are indexed on **Ancestry.com**, with originals held at the New York State Library.",
+])
+def test_outside_holding_claim_fails(text):
+    with pytest.raises(AssertionError):
+        _validators("test_search_records").test_names_no_outside_holding(_return(text), "", NO_SOLE)
+
+
+@pytest.mark.parametrize("text", [
+    "1825, 1835, 1845: not on FamilySearch.\nHand-back: search-external-sites — NY state census, Clinton and Essex Counties, 1825/1835/1845; FamilySearch holds no collection for these years",
+    "search-external-sites can generate an Ancestry search URL for those years and counties.",
+    "Shall I generate Ancestry/MyHeritage URLs for it (search-external-sites)?",
+    "Only 1855-1875 are indexed on FamilySearch.",
+    "Hiram Tallman was found in the 1849 directory, held on FamilySearch.",
+])
+def test_outside_holding_claim_passes_a_legitimate_return(text):
+    _validators("test_search_records").test_names_no_outside_holding(_return(text), "", NO_SOLE)
+
+
+def test_outside_holding_claim_grades_the_agent_and_is_tag_gated():
+    mod = _validators("test_search_records")
+    mod.test_names_no_outside_holding(_return("Not on FamilySearch."), "indexed on Ancestry.com", NO_SOLE)
+    with pytest.raises(pytest.skip.Exception):
+        mod.test_names_no_outside_holding(_return("indexed on Ancestry.com"), "", {"tags": []})
+
+
 def test_no_collection_hand_back_needs_a_search_first():
     mod = _validators("test_search_records")
     mod.test_searched_before_no_collection_hand_back(

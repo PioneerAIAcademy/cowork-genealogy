@@ -168,7 +168,7 @@ search back to it rather than running it yourself.
 - **If that page does not settle which fields the schedule collected for the year you are searching**, follow its own per-year link (`United_States_Census_{year}`) before asserting or denying a field.
 - A constructed URL that 404s, or a page that comes back generic, is a gap to record and report — not a prompt to fill from memory.
 - **A state census** (in the US, a year not ending in 0) uses the state's page: `wiki_read({ url: "https://www.familysearch.org/en/wiki/{State}_Census" })`.
-- Never state that a record set is held only at one repository or is not available elsewhere; which sites hold it is `search-external-sites`' answer.
+- Never state which repository or site outside FamilySearch holds a record set, which counties survive, or that it is available nowhere else, unless a tool result in this run says so; which sites hold it is `search-external-sites`' answer.
 
 **Choose a search strategy:**
 
@@ -743,7 +743,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
    ❌ WRONG: "Log_001 found Patrick Flynn, so the current nil with the Flinn variant is not meaningful."
    ✅ CORRECT: "Log_001 found Patrick under 'Flynn'. The nil under 'Flinn' documents that FamilySearch does not alias Flynn→Flinn for this record — both findings stand as independent evidence."
 6. Check for fallback plan items (`fallback_for`). If none and the question remains open, suggest research-plan for re-planning.
-7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass"), no FamilySearch variant will ever surface that record, while other sites *do* fuzzy-match (Ancestry's partial/phonetic `name_x=ps_ps`). When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, log every nil search (Step 5), then **hand back to `search-external-sites`**: name it in the caller-facing lines of your return with the same person attributes, the plan item, and `userPresent` (`no` only when the delegation says research delegated this search as part of an autonomous run, otherwise `yes`) — never a value you expect it to find. You do not spawn it and you do not ask the user first; naming it in your return IS the escalation. **Do not wait until step 9.**
+7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass"), no FamilySearch variant will ever surface that record, while other sites *do* fuzzy-match. When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, log every nil search (Step 5), then **hand back to `search-external-sites`**: name it in the caller-facing lines of your return with the same person attributes, the plan item, and `userPresent` (`no` only when the delegation says research delegated this search as part of an autonomous run, otherwise `yes`) — never a value you expect it to find. You do not spawn it and you do not ask the user first; naming it in your return IS the escalation. **Do not wait until step 9.**
 
    **No plan item → no escalation**, however many variants came back nil; an ad-hoc search ends when you log it (Step 1).
 
