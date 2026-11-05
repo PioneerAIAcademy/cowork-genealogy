@@ -22,6 +22,7 @@ function state(patch: Partial<SessionState> = {}): SessionState {
     modeRequests: [],
     sizeProbes: [],
     imageProbe: null,
+    linkProbe: null,
     ...patch
   }
 }

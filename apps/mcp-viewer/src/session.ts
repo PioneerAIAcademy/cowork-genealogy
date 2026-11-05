@@ -11,7 +11,7 @@ import {
   type HostKind
 } from './hosts/host'
 import { createCardLoader, INITIAL_LOAD, type LoadState } from './load'
-import { imageProbeRef, isImageLink, type ImageProbe, type SizeProbe } from './probes'
+import { imageProbeRef, isImageLink, LINK_PROBE_URL, type ImageProbe, type LinkProbe, type SizeProbe } from './probes'
 
 export const HOST_CONNECT_TIMEOUT_MS = 10_000
 
@@ -44,6 +44,7 @@ export interface SessionState {
   modeRequests: ModeRequest[]
   sizeProbes: SizeProbe[]
   imageProbe: ImageProbe | null
+  linkProbe: LinkProbe | null
 }
 
 export interface SessionDeps {
@@ -60,6 +61,7 @@ export interface Session {
   requestMode(mode: DisplayMode): Promise<void>
   runSizeProbe(chars: number): Promise<void>
   runImageProbe(): Promise<void>
+  runLinkProbe(): Promise<void>
   imageSettled(outcome: { ok: boolean; width?: number; height?: number }): void
 }
 
@@ -81,7 +83,8 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     contextChanges: [],
     modeRequests: [],
     sizeProbes: [],
-    imageProbe: null
+    imageProbe: null,
+    linkProbe: null
   }
   let nextProbeId = 1
   let fileOpenTried = false
@@ -91,8 +94,9 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
     listeners.forEach((listener) => listener())
   }
 
+  // A remounted card may get no tool input, so the snapshot's echo backs it up.
   function projectArgs(): ToolInput {
-    const projectPath = state.load.input?.projectPath
+    const projectPath = state.load.input?.projectPath ?? state.load.snapshot?.echo?.projectPath
     return typeof projectPath === 'string' ? { projectPath } : {}
   }
 
@@ -226,6 +230,17 @@ export function createSession({ host, boot, applyTheme = () => {}, now = Date.no
         update({ imageProbe: { ref, status: 'showing', url: link.url, expiresAt: link.expiresAt } })
       } catch (err) {
         update({ imageProbe: { ref, status: 'refused', message: toToolCallError(err).message } })
+      }
+    },
+
+    async runLinkProbe() {
+      update({ linkProbe: { status: 'asking' } })
+      const startedAt = now()
+      try {
+        await host.openLink(LINK_PROBE_URL)
+        update({ linkProbe: { status: 'answered', ms: now() - startedAt } })
+      } catch (err) {
+        update({ linkProbe: { status: 'refused', ms: now() - startedAt, message: toToolCallError(err).message } })
       }
     },
 

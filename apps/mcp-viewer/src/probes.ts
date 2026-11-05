@@ -26,6 +26,14 @@ export interface ImageProbe {
   height?: number
 }
 
+export const LINK_PROBE_URL = 'https://www.familysearch.org/'
+
+export interface LinkProbe {
+  status: 'asking' | 'answered' | 'refused'
+  ms?: number
+  message?: string
+}
+
 export function imageProbeRef(snapshot: ProjectDocument | null): string {
   const sources = snapshot?.research?.sources
   const found = Array.isArray(sources) ? sources.find((source) => typeof source?.image_filename === 'string') : undefined

@@ -1,18 +1,18 @@
-# MCP App viewer: research cards and a case file inside Cowork
+# MCP App viewer: research cards and a case file inside Claude
 
-**Status:** M0 in progress; the build is on branch `mcp-app-viewer-m0`. A card rendered
-in a Cowork task on 2026-11-05, so Decision 8 passes; `docs/mcp-app-host-probe.md` holds
-the answers still open.
-**Owner:** the lead, building it himself, independent of the beta's timeline.
+**Status:** Adopted. M0 is built, and `docs/mcp-app-host-probe.md` holds the answers still
+to fill. The fold and the demo scope are not built.
+**Owner:** the MCP App session, full-time. A second session, remote-server, owns the
+door, sign-in, `project_list` and the self-hosted stack. The lead merges.
 
 ## Goal
 
-1. **A demo that convinces our UI designer** that a dedicated MCP App is the
-   right way to show research: real project data in the Cowork conversation,
-   with a case file a senior researcher would choose over today's viewer.
-2. **A build that can be adopted later.** If accepted, it folds into the beta's
-   remote connector and replaces Electron and the web viewer, leaving one viewer to
-   maintain (see "If adopted"). Until then it touches nobody else's work.
+1. **The demo:** real project data in the conversation, on cards with a case file
+   behind them, served from the self-hosted server behind FamilySearch sign-in.
+2. **The beta's UI.** The cards fold into the remote connector and replace the
+   browser viewer for a very limited beta on the same server (see "The fold").
+3. **One viewer to maintain,** with a case file a senior researcher would choose over
+   today's viewer. That file follows the demo (M3).
 
 ## Decisions (lead, 2026-11-03 to 2026-11-05)
 
@@ -33,27 +33,50 @@ the answers still open.
    log, the family, a person, a timeline, the proof) is a page of the case file,
    opened from a card or by asking.
 5. **The case file replaces today's section browser.** It is designed for senior
-   researchers and open to everyone. It does not copy the 15 sections.
+   researchers and open to everyone. It does not copy the 15 sections. For the demo,
+   the case file is viewer-ui's `ViewerBody` in fullscreen. The new file follows in M3.
 6. **The conclusion card shows recorded doubt only:** the rating in words, the
    shortfall, what was not searched, any unsettled conflict, the engine's
    unregistered-disagreement check, and the reviewer's verdict when there is one.
    No heuristics of the card's own.
 7. **No live watching.** Steps will run under five minutes.
-8. **M0 is the go/no-go.** If neither a card nor an artifact can show a project's
-   data in a Cowork task, the build stops.
+8. **M0 gates the fold.** M0 stays open until every row in
+   `docs/mcp-app-host-probe.md`'s record has an answer, the Artifact and local rows
+   included. Five answers gate the fold: does `_meta` reach the model (the canary), the
+   fullscreen events and remount, the mount size past 300 KB, `openLink`, and
+   `projectPath`.
 9. **The demo shows page images.** The demo project is run so that the pages
    that matter are transcribed and attached (see "Data").
 10. **FamilySearch links replace identifiers.** Wherever the project holds an
     ARK, a tree person id or a familysearch.org URL, the reader sees a named
     link, never the identifier.
-11. **If accepted, this folds into the remote connector and Electron goes.**
+11. **This folds into the remote connector.** There is one connector, named exactly
+    `Genealogy Research`, with real FamilySearch sign-in. `Genealogy Viewer` retires
+    once the fold works.
+12. **Cards replace the browser viewer for the beta.** Nothing is deleted: the Fly
+    alpha, the handoff's chat and Electron stay through the demo, with fixes only.
+13. **The server is self-hosted,** with Postgres and MinIO and no AWS. It carries the
+    demo, then a very limited beta.
+14. **No feedback tool.** Users email the lead with the conversation pasted in.
+15. **Uploads are a plain web page** (issue #4001), not a card.
 
 ## Not in scope
 
 Feedback; print and GEDCOM export; any button that posts; progress polling;
-fetching unsaved page images from FamilySearch; the main MCP server's tool list;
-main's research router; the beta plan; `apps/web`. Electron stays as it is until
-adoption.
+fetching unsaved page images from FamilySearch; uploads; `allToolSchemas` and
+`manifest.json`; sign-in and `project_list`; `apps/web`. Main's research
+router waits until after the demo. Electron and the web viewer stay as they are
+through the demo, with fixes only.
+
+## Scope for the demo
+
+- **In:** the conclusion, `latest`, setup and search cards; the case file by reusing
+  `ViewerBody` in fullscreen; and the display rules those need, on Postgres and MinIO
+  behind sign-in.
+- **Only if the first runs go well:** the evidence grid and Compare with FamilySearch.
+- **Out:** M2, M3, a feedback flag, and removing Electron or the web viewer.
+- **`ViewerBody` keeps** its ids, its retired rows and its section order until M3. The
+  display rules apply to the cards.
 
 ## Surfaces
 
@@ -71,14 +94,14 @@ adoption.
   and can use custom connectors, and its page can read a connector's read-only
   tools as the viewer. Its limits: it does not arrive with the connector, a
   connected artifact can be shared inside the organization but not by link, and
-  nothing documents how one opens in a Cowork task. If cards do not render, or Cowork
-  offers no fullscreen, the case file runs as an artifact, the same page on a second
-  host. Otherwise, using one as well is a separate decision after M0.
+  nothing documents how one opens in a Cowork task. If Cowork's fullscreen does not
+  work, the case file runs as an artifact, the same page on a second host. Otherwise,
+  using one as well is a separate decision after M0.
 
 ## The case file
 
-Five pages, each shown only if it has content, with a search box over the whole
-file. Clicking a person, record or source opens it in a right-hand pane without
+This is the file that replaces `ViewerBody` after the demo. Five pages, each shown
+only if it has content, with a search box over the whole file. Clicking a person, record or source opens it in a right-hand pane without
 leaving the page, so a researcher can compare without losing their place.
 
 - **The case** (the default): one question read top to bottom as a proof, with a
@@ -135,9 +158,10 @@ no explaining. It posts nothing.
 
 ### A thin server, outside `src/`
 
-The server supplies documents and the few facts only the engine can compute. All
-display logic lives in the page, in one place, so cards and the case file cannot
-disagree.
+This section describes M0's probe server and the `make viewer` loop. "The fold" says
+what changes on the tool server. The server supplies documents and the few facts only
+the engine can compute. All display logic lives in the page, in one place, so cards
+and the case file cannot disagree.
 
 - **Where:** `packages/engine/mcp-server/viewer/`, run with `tsx`, as
   `dev/probe-connector-server.ts` is. Outside `src/`, so `tsc` never compiles it
@@ -150,10 +174,9 @@ disagree.
   `src/utils/question-state.ts`, `src/utils/awaiting-hand-offs.ts`,
   `src/utils/starting-tree.ts`, `src/tools/tree-diff.ts` and
   `src/store/paths.ts`, and every read goes through `ProjectStore`, so the same
-  code reads Postgres/S3 once folded in.
-- **What it never touches:** `allToolSchemas`, `manifest.json`,
-  `dev/smoke-calls.ts`, the plugin hook's tool maps, any eval. Its tools live in
-  `viewer/`, not `src/tools/`.
+  code reads Postgres and MinIO once folded in.
+- **What it never touches:** `allToolSchemas`, `manifest.json`, the plugin hook's tool
+  maps, any eval. Until the fold, its tools live in `viewer/`, not `src/tools/`.
 - **Transport:** Streamable HTTP, stateless, plain JSON, one `Server` per
   request, as `src/http-server.ts` and the MCP Apps examples do. Binds
   `127.0.0.1`; reached through a public HTTPS tunnel. A stdio entry exists only
@@ -172,7 +195,8 @@ disagree.
   - The server factory takes the page's HTML as a parameter. Only the CLI entry
     reads `viewer/page/viewer.html`, and it refuses to start, naming
     `make mcp-viewer-build`, when the file is missing.
-- **Access:** no sign-in (a custom connector can be added with none).
+- **Access:** no sign-in on the thin server (a custom connector can be added with
+  none). The `Genealogy Research` connector has real sign-in.
   - The lead adds the connector to the organization. Every member who connects
     it reaches this server, so `--root` holds only what the team may see.
   - The MCP route lives under the secret (`/<secret>/mcp`); every other path is
@@ -186,9 +210,8 @@ disagree.
   absolute path is used as given (then contained). A bare folder name is a folder
   under `--root`. Omitted: `--root` itself if it holds `research.json`; otherwise
   the call is refused with the list of project folders under `--root`. The tool
-  description says all of this. For the demo, start the server with `--root` set to
-  the demo project; a live run that creates a project needs `--root` at its parent,
-  because a project cannot nest inside another.
+  description says all of this. A live run that creates a project needs `--root` at
+  its parent, because a project cannot nest inside another.
 - **Logging:** one JSON line per request to stdout: method, tool, result size, and
   `clientInfo` and the declared extensions from the `initialize` request body. Never
   the raw path or a token.
@@ -299,7 +322,7 @@ from it, and an unannotated tool defaults to "not read-only".
   - `submitFeedback` rejects with "not available here"; `selectFolder` and
     `getFeedbackContext` are absent; `subscribe` keeps its handlers for the refresh
     above and delivers nothing else.
-- **Display rules,** applied to cards and the file alike:
+- **Display rules,** applied to the cards and, from M3, to the file:
   - **The current question** is `questionId` if passed, else the last unresolved
     question, else the last with a proof. `latest` picks the card from that
     question's state in `derived`: framed → setup, planned → plan, searching →
@@ -398,13 +421,14 @@ from it, and an unannotated tool defaults to "not read-only".
   the card, and Linkify's own handler never fires a second open.
 - **Theme:** the host's CSS variables, so light and dark follow Claude. Fonts
   inlined or the host's own.
-- **viewer-ui edits, all additive:** exports only, such as `statusLabel(value)`
-  from `StatusBadge.tsx` and any leaf the case file reuses. Electron and the web
-  app are unchanged.
+- **viewer-ui edits, all additive:** exports, such as `statusLabel(value)` from
+  `StatusBadge.tsx` and any leaf the case file reuses, and an optional `ViewerBody`
+  prop that hides the header's Export GEDCOM, Print and Send Feedback buttons. Electron
+  and the web app are unchanged.
 - **Build:** `make mcp-viewer-build` builds the page and copies it to
   `packages/engine/mcp-server/viewer/page/viewer.html` (gitignored).
 
-### Router lines (a variant plugin build, never a PR)
+### Router lines (a variant plugin build for the demo)
 
 One line per stopping point in `skills/research/SKILL.md`: after the step report,
 call `show_project` with the step and the `questionId` it worked on, then the reply.
@@ -413,9 +437,10 @@ The tool is found by bare name
 the same call with `show: latest`, after its paragraph.
 
 - **Where they live:** a local branch, `mcp-app-router-variant`, holding only the
-  router-line commit, rebased onto the viewer branch whenever the variant zip is
-  rebuilt. The zip is built from that checkout with `scripts/package-plugin.mjs`
-  and installed on the lead's account. No PR is ever opened from it.
+  router-line commit. For the demo the zip is built at one pinned commit of that
+  branch with `scripts/package-plugin.mjs` and installed on the lead's account. No PR
+  is opened from that branch. The PR to main and its paid `research` eval run come
+  after the demo, under issue #4297.
 - **Under Decision 3's fallback:** lines only for setup, search, conflict,
   hypothesis and conclusion, plus a link line only when the link step ends on a
   question for the researcher (no "Continue with …?" line).
@@ -441,17 +466,17 @@ before pushing, with no tunnel and no connector.
 - **The research:** `make cowork-install` builds the `.mcpb` and the plugin zip
   from the branch, and they install as they do today. Turn the organization's
   connector off for that task, so Cowork does not hold two copies of every tool.
-  Once folded in, the `.mcpb` carries the tools and the page; a card renders in that
-  task only if M0's local leg does.
+  The `.mcpb` lists neither tool and carries no page, because both are for the
+  connector only.
 - **The cards and the case file:** `make viewer PROJECT=<folder>` builds the page,
   runs the branch's server on `127.0.0.1` with `--local`, and opens a browser tab,
   reading the same folder the Cowork task writes. The tab shows every step card and
   the whole case file; reloading picks up the latest.
-- **A card inline in a Cowork task.** Members cannot add connectors, so a tester's
-  only route is the local install. If M0's local leg does not render, testers see
-  cards in the browser tab, which runs the same page, and anything that depends on
-  Claude as the host (fullscreen, theme, link confirmation) is checked on the lead's
-  connector.
+- **A card inline in a Cowork task.** Members cannot add connectors, and the `.mcpb`
+  draws no cards, so a tester's only route is `viewer/stdio.ts` as a local server. If
+  M0's local leg does not render, testers see cards in the browser tab, which runs the
+  same page, and anything that depends on Claude as the host (fullscreen, theme, link
+  confirmation) is checked on the `Genealogy Research` connector.
 
 ## Data
 
@@ -475,8 +500,9 @@ before pushing, with no tunnel and no connector.
   shows no notes or Flynn shows a verdict.
   Page tests in CI use a small committed fixture; `derived` is tested in
   `tests/viewer/` on a few named states.
-- **The demo:** a fresh project the lead runs in Cowork with the alpha `.mcpb`.
-  A page is saved and attached to its record only when the research reads a browsed
+- **The demo:** a fresh project the lead runs in Cowork through the
+  `Genealogy Research` connector, so its documents and images sit in Postgres and
+  MinIO. A page is saved and attached to its record only when the research reads a browsed
   page: search-images, then `image_transcribe` with `projectPath`, then
   record-structurer, whose `extraction_append` writes the source's `image_filename`
   and `transcription`. An indexed record never gets a page, and asking for a
@@ -488,10 +514,22 @@ before pushing, with no tunnel and no connector.
 
 ## Milestones
 
-Each is one or more small PRs merged to main. Nothing calls the second server, so
-merging changes nothing for anyone else.
+Each is one or more small PRs, and the lead merges them. Until the fold, nothing calls
+the thin server, so merging changes nothing for anyone else. After it, the two tools
+show only on the connector surface.
 
-### M0 — Skeleton, which is also the go/no-go (5 days)
+### Order
+
+1. Sit with the lead and remote-server, and fill the five answers that gate the fold
+   (Decision 8).
+2. Put a card on an OAuth connector, with `dev/probe-connector-server.ts`.
+   remote-server owns that file, so it gets the stub page first.
+3. Fold a skeleton into the tool server once issue #3991 lands.
+4. Build the demo scope (M1).
+5. For the demo, the router lines stay on the variant plugin at a pinned commit. The
+   PR to main and its paid `research` eval run come after, under issue #4297.
+
+### M0: Skeleton and host probe
 
 The server with the page resource, `show_project` returning a hello card that
 echoes its input and takes a `pad` size, `read_project_view` returning a payload
@@ -527,6 +565,7 @@ public):
   characters), and what happens past it. If the largest project's research.json
   (1.55 MB) does not fit, `document` gains paging;
 - does the image load from the declared host;
+- does `openLink` open an https link from a card, and does the host ask first;
 - is `ui/update-model-context` available;
 - can a connector be turned off for one Cowork task (the help centre documents a
   per-conversation toggle);
@@ -562,25 +601,27 @@ cancelled call paints no card, and a host that answers `requestDisplayMode` and 
 notifies keeps the file open through a later resize notification. In a tab, `make viewer` paints a card from a real
 project.
 
-### M1 — The designer demo (15–17 days)
+### M1: The demo
+
+Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
 
 - The **setup, search and conclusion cards**, plus `latest`; until M2, planned
-  shows setup and evidence-gathered shows search. The conclusion card's two actions are "Open the case file" and "Compare with FamilySearch".
-- The case file's shell, right-hand pane and search box; **The case** with So far,
-  the evidence grid and Leads; **Compare with FamilySearch**; a record's search
-  results, and its page image with transcription and findings, in the pane.
-- The display rules, including FamilySearch links.
-- **The demo script,** in a Cowork task, with the server's `--root` at the demo
-  project: "Where does the research stand?" → the conclusion card with its recorded
-  doubt → open the case file → the evidence grid → click an indexed record's column
-  → the search that returned it, in the pane → click the browsed record's column →
-  its page image beside the transcription → Compare with FamilySearch. Light and
+  shows setup and evidence-gathered shows search. The conclusion card's action is
+  "Open the case file". It gains "Compare with FamilySearch" if Compare is built.
+- **The case file:** `ViewerBody` in fullscreen, fed by `McpAppResearchTransport`. A
+  search's results open in its side panel, and Sources shows a record's page image
+  and transcription.
+- The display rules those need, including FamilySearch links.
+- **Only if the first runs go well:** the evidence grid and Compare with FamilySearch,
+  each a page in the same fullscreen frame.
+- **The demo script,** in a Cowork task, signed in through the `Genealogy Research`
+  connector, on the demo project: "Where does the research stand?" → the conclusion
+  card with its recorded doubt → open the case file → the research log → an indexed
+  record's search, in the side panel → Sources → the browsed record's page image and
+  transcription. If they are built, the grid and Compare close the script. Light and
   dark. Then a live run with the variant plugin calling the three cards and offering
-  named next steps at the forks, with the server's `--root` at the project's parent.
-  If M0 shows cards do not render in Cowork but an
-  artifact does, the case file runs as an artifact and the cards are shown in
-  Desktop chat.
-- A short screen recording for the designer.
+  named next steps at the forks.
+- A short screen recording of the demo script.
 
 **Done when:**
 - before recording, in the demo project, at least one supporting assertion's
@@ -588,12 +629,13 @@ project.
   `transcription`, and at least one supporting assertion's `record_id` appears in
   the results file of a `record_search` log entry under `results/`, and a live,
   non-refused evaluation that is not a craft read targets the proof;
-- the demo script runs end to end on the demo project;
-- `make mcp-viewer-sweep` renders the three cards, The case and Compare over the
-  McAndrew capture and every committed e2e end state without error;
-- The case shows So far on a project with no proof summary, and a planted retired
-  assertion and retired link appear nowhere;
-- the id check passes on all of that rendered text, and is shown failing on planted
+- the demo script runs end to end on the demo project, signed in through the
+  `Genealogy Research` connector;
+- `make mcp-viewer-sweep` renders the three cards and the case file over the McAndrew
+  capture and every committed e2e end state without error;
+- the case file shows no Export GEDCOM, Print or Send Feedback button;
+- a planted retired assertion and retired link appear on no card;
+- the id check passes on all rendered card text, and is shown failing on planted
   shapes (`S28` in a citation, `I19` in a name, an internal id inside a sentence, a
   raw `ark:/61903/…`, a bare `3:1:3QSQ-G9NW-8ZZC`, an unknown id-shaped token) and
   passing names and dates that contain digits; `1885-1910`, `Mary-Ann` and
@@ -624,7 +666,7 @@ project.
   rejects when the call fails, it returns a non-null `label` for a project with no
   title, and a card from snapshot A opens a file showing document B.
 
-### M2 — The other step cards (6–8 days)
+### M2: The other step cards (after the demo)
 
 Plan, link (with the identity question side by side when it asks one), conflict,
 hypothesis, assess. The variant plugin gains the remaining router lines, or under
@@ -636,44 +678,99 @@ step, the live run shows the cards its project reaches and a typed `show_project
 shows the others on a project that holds them, and "write this up" on the demo
 project produces a file that carries the rating and the reviewer's verdict.
 
-### M3 — The rest of the case file (8–10 days)
+### M3: The new case file (after the demo)
 
-People, Sources and Log, and `show_project` opening each page by id.
+The new file replaces `ViewerBody`: its shell, right-hand pane and search box; The
+case with So far and Leads; the evidence grid and Compare if the demo did not build
+them; People, Sources and Log; and `show_project` opening each page by id. A record's
+search results, and its page image with transcription and findings, open in the pane.
 
 **Done when:** the sweep renders each page without error, each renders on the demo
-project, every one of today's 15 sections has its content reachable,
+project, The case shows So far on a project with no proof summary, a planted retired
+assertion and retired link appear nowhere, the id check passes on every page, every
+one of today's 15 sections has its content reachable,
 the reviewer's notes show on the two compound fixtures, the verdict alone shows
 where the file is absent, and Flynn (`flynn-prior-craft-verdict`) shows no reviewer
 verdict.
-
-**Total:** roughly 7–8 weeks of the lead's time, M0 through M3.
 
 ## Later
 
 Fetching unsaved page images from FamilySearch; people labelled by relationship to
 the signed-in user ("your great-grandfather"); a "Looks odd" check (better as an
-engine check the agents also see); posting buttons of any kind.
+engine check the agents also see); posting buttons of any kind; a ChatGPT plugin on
+this same server.
 
-## If adopted
+## The fold
 
-- **Fold into the remote connector:** the tools move into `src/tools/` and
-  `createServer`, and every new-tool site applies (`allToolSchemas`,
-  `manifest.json`, the smoke rows, a spec, the catalog, the hook's classification).
-  The `.mcpb` then carries them too.
-- **The beta's door (E1):** let `resources/list`, `resources/read` and `ping`
-  through without a project on a valid token; bind `read_project_view` by
-  `projectPath` like any call; serve the image route.
-- **The router lines on main,** with one paid `research` eval run.
-- **Packaging:** build the page into `eb-tools.zip` and the `.mcpb`; the release
-  smoke and `scripts/verify-mcpb.sh` check `resources/read`.
+The two tools and the page move onto the tool server, behind the door.
+
+- **Where:** the tools move into `src/tools/`. `src/` cannot import `viewer/`, so
+  `viewer/` keeps its entries and imports from `src/` for `make viewer`.
+- **Listing:** `createServer` lists `show_project` and `read_project_view` only when
+  `principal.surface` is `"connector"`, so the `.mcpb`, the worker, Fly and the harness
+  packaging stay untouched. The test is `principal.kind === "bearer"` and that surface,
+  on dispatch as well as listing. `allToolSchemas`, `manifest.json` and the plugin
+  hook's tool maps do not change. Every other surface gets the dispatcher's unknown-tool
+  error.
+- **Arguments:** `rejectUnknownArgs` skips a tool outside `allToolSchemas`, so the two
+  tools keep their own unknown-argument check, which answers in plain text.
+- **Capabilities:** `createServer` gains the resources capability and handlers, and
+  the extensions capability from `viewer/mcp.ts`. The door already passes any method
+  on a valid token.
+- **Reading:** `viewer/project.ts` stays out of `src/`: it imports `node:fs`, which
+  the no-fs lint forbids. The tools read through `ProjectStore` by `/proj_` id. A call
+  that names no project gets the door's refusal, and the tool descriptions say so in
+  place of the `--root` rule.
+- **The page:** the tools Dockerfile gains a pnpm stage that builds it. It sits beside
+  `build/` in the image, not in `config/`, so the `.mcpb` does not carry it. The tool
+  server reads it through `src/utils/bundled-data.ts`, when a host asks for it.
+- **Images:** `/img/<token>` becomes a branch in the door's `route()`. The token is an
+  HMAC over the project id, the ref and the expiry, with no bearer. `createServer` signs
+  and the door verifies, so they share one key. The door reads the image through a
+  store it binds from the token's project id.
+- **Smoke and tests:** `make engine-smoke-http` lists tools through the connector door
+  by default, so `dev/smoke-calls.ts` gains rows for the two tools, and `assertCoverage`
+  learns they are connector-only. `tests/http/http-server.test.ts` and the manifest's
+  dispatch test change with them. The moved code runs on both store backends.
+- **A spec and the catalog:** both tools get a spec and a `docs/catalog.md` entry.
 - **The beta plan's viewer items** (W3's viewer routes, W4's viewer, polling and
   print view, D4 step 5, acceptance 2.2 and 2.6) change to the card.
-- **Feedback becomes a flag.** On the remote server the whole project is already
-  in the database, so one small tool flags the project and stores the tester's
-  words. That replaces Electron's bundle and the beta's bundler and Apps Script copy
-  (W3's feedback route, D5); `/triage-feedback` reads a flagged project from the
-  database.
-- **Drop Electron and the web viewer:**
+- **Test projects:** seed them with `dev/seed-project.ts` and set `owner_id`, because
+  the door refuses a NULL owner. The script takes no owner yet.
+- **Never touch Tailscale or Funnel on the self-hosted server.**
+
+**Done when:** a card draws in a Cowork task, signed in through `Genealogy Research`,
+on a seeded project; the worker's and the `.mcpb`'s tool lists hold neither tool; and
+a signed image link serves a page from MinIO. Sign-in itself needs issues #3992 and
+#3997 as well as #3991. `Genealogy Viewer` then retires.
+
+### Interface with remote-server
+
+- Tool names, args and `_meta` stay as in M0, except M0's probe inputs, `pad` and
+  `structuredCanary`, which do not reach the tool server.
+- `projectPath` is the `/proj_<16 hex>` value from `project_list`, and the card passes
+  it to `read_project_view`.
+- There is one public origin, `WEB_PUBLIC_URL`. The page's `resourceDomains` and every
+  image link use it. `projectUrl` goes away.
+- A tool error reaches the card as text.
+- Later, `show_project`'s `_meta` carries `session: {signedIn, url}` for a sign-in
+  banner.
+
+### Who edits which file first
+
+- `src/http-server.ts`: remote-server first (issue #3991), then this work adds `/img`.
+- `src/server.ts` and the tools Dockerfile: this work.
+- Compose, nginx, `src/auth/config.ts` and `src/hosted-config-env.ts`: remote-server.
+  This work asks it to add `/img` to the edge.
+- The plugin's research `SKILL.md`: last, after the demo.
+
+## After the demo
+
+- **The router lines on main,** with one paid `research` eval run, under issue #4297.
+- **Packaging:** build the page into `eb-tools.zip`, and the release smoke checks
+  `resources/read`.
+- **Electron and the web viewer:** removing them is the lead's call after the demo. It
+  needs:
   - **Local folders:** `make viewer` covers anyone testing a branch, and everyone
     else is on the remote connector.
   - **`make e2e-view`** becomes `make viewer PROJECT=eval/e2e-view`.

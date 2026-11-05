@@ -1,5 +1,5 @@
 import type { ProjectDocument } from './contract'
-import type { ImageProbe, SizeProbe } from './probes'
+import type { ImageProbe, LinkProbe, SizeProbe } from './probes'
 import type { SessionState } from './session'
 
 /** Values from this block go into a public doc, which never holds the tunnel's address. */
@@ -110,6 +110,13 @@ function imageProbeLines(probe: ImageProbe): string[] {
   return lines
 }
 
+function linkProbeLine(probe: LinkProbe | null): string {
+  if (!probe) return 'not run'
+  if (probe.status === 'asking') return 'result: waiting for the host'
+  if (probe.status === 'answered') return `result: the host answered in ${probe.ms} ms`
+  return `result: refused after ${probe.ms} ms: ${probe.message}`
+}
+
 function section(title: string, lines: string[]): string {
   return [title, ...lines.map((line) => `  ${line}`)].join('\n')
 }
@@ -132,7 +139,8 @@ export function reportText(state: SessionState): string {
       state.modeRequests.map((request) => `${time(request.at)} ${request.mode} from ${request.trigger}: ${request.outcome}`)
     ),
     section(`Size ladder: ${state.sizeProbes.length}`, state.sizeProbes.map(sizeProbeLine)),
-    section('Image probe', state.imageProbe ? imageProbeLines(state.imageProbe) : ['not run'])
+    section('Image probe', state.imageProbe ? imageProbeLines(state.imageProbe) : ['not run']),
+    section('Link probe', [linkProbeLine(state.linkProbe)])
   ]
   return sections.join('\n\n').replace(URL_PATTERN, '<url>')
 }

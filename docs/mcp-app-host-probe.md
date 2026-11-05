@@ -248,7 +248,12 @@ Open every task on `~/mcp-probe/mcandrew`, with the connector on.
     for this request to access the local address space`, and no `/img` line reaches the
     log. The hostname resolves to a private Tailscale address there, and Chrome will not
     let a public page load from one. Test from Claude Desktop, or from a browser off the
-    tailnet. A server on a public address is not affected.
+    tailnet. A server on a public address is not affected. The self-hosted server is also
+    behind Funnel, so expect the same block there.
+
+    Then tap `Open a link`. The **Link probe** line says how long the host took to answer,
+    or that it refused. Note whether Claude asks before opening the page, and whether the
+    page opens. Fills **`openLink`**.
 
 17. **Fullscreen.** New task, call `show_project`.
 
@@ -508,8 +513,10 @@ as long as this runs. Go straight to **Stop** afterwards.
 ## Record
 
 Read **Approvals** first: it sets how many cards the demo can have. Then **Card
-renders**: it is the go/no-go. A `—` cell does not apply on that route. `no card` means
-the step needed a card and none rendered, which is an answer.
+renders**: it says which surfaces draw a card. **What the model receives**, **Fullscreen**,
+**Size**, **`openLink`** and **`projectPath`** gate the fold (Decision 8). A `—` cell does
+not apply on that route. `no card` means the step needed a card and none rendered, which
+is an answer.
 
 | Run | |
 |---|---|
@@ -541,12 +548,9 @@ hypothesis and conclusion get a card, and the router lines shrink to match.
 
 ### Card renders
 
-**Decides:** the go/no-go in Decision 8. If neither a card nor an artifact can show a
-project's data in a Cowork task, the build stops. Before calling a missing card final,
-check that Claude Desktop was restarted after the connector was added, and read the
-table below. If only the artifact can, the case
-file runs as an artifact. If the local route does not render, testers see cards in the
-browser tab.
+**Decides:** which surfaces draw a card. Before calling a missing card final, check that
+Claude Desktop was restarted after the connector was added, and read the table below. If
+the local route does not render, testers see cards in the browser tab.
 
 | Route | Renders? | Tool's full name |
 |---|---|---|
@@ -657,6 +661,17 @@ needs. An artifact's answer is in **Artifact**.
 | | Connector | Local |
 |---|---|---|
 | The image loads from the declared host | Yes, 1200 x 675, in a Cowork task, Desktop Chat and claude.ai off the tailnet. Blocked in Chrome on a tailnet device | — |
+
+### `openLink`
+
+**Decides:** whether a card can open a link to a FamilySearch page, which the display
+rules' links need.
+
+| | Connector | Local |
+|---|---|---|
+| The page opens | | |
+| Claude asks first | | |
+| `Link probe` line | | |
 
 ### `ui/update-model-context`
 

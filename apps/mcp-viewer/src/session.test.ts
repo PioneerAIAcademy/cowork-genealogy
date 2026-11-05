@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import type { ToolInput } from './contract'
+import { PROJECT_META_KEY, type ToolInput } from './contract'
 import type { ToolResultEvent } from './hosts/host'
 import { createCardLoader, RESULT_WAIT_MS } from './load'
+import { LINK_PROBE_URL } from './probes'
 import { headline, reportText } from './report'
 import {
   FakeApp,
@@ -501,6 +502,41 @@ describe('the probes', () => {
 
     expect(app.reads()).toEqual([{ part: 'image', id: 'images/page-1.jpg', projectPath: 'mogan' }])
     expect(session.getState().imageProbe).toMatchObject({ status: 'showing', url: 'https://example.test/img/token' })
+  })
+
+  it('a card with no tool input takes projectPath from the snapshot echo', async () => {
+    const app = new FakeApp()
+    const { session } = await connected(app)
+    const echo = { show: 'latest', projectPath: '/proj_0123456789abcdef' }
+    app.sendResult({ content: [], _meta: { [PROJECT_META_KEY]: { ...META_DOCUMENT, echo } } })
+    app.callServerTool.mockResolvedValue({ content: [], structuredContent: { url: 'https://example.test/img/token' } })
+    await session.runImageProbe()
+
+    expect(app.reads()).toEqual([{ part: 'image', id: 'images/page-1.jpg', projectPath: '/proj_0123456789abcdef' }])
+  })
+
+  it('the link probe reports how long the host took to answer', async () => {
+    const app = new FakeApp()
+    app.openLink.mockImplementation(async () => {
+      await vi.advanceTimersByTimeAsync(1_500)
+      return {}
+    })
+    const { session } = await connected(app)
+    await session.runLinkProbe()
+
+    expect(app.openLink).toHaveBeenCalledWith({ url: LINK_PROBE_URL })
+    expect(session.getState().linkProbe).toEqual({ status: 'answered', ms: 1_500 })
+    expect(reportText(session.getState())).toContain('result: the host answered in 1500 ms')
+  })
+
+  it('the link probe reports a refusal', async () => {
+    const app = new FakeApp()
+    app.openLink.mockResolvedValue({ isError: true })
+    const { session } = await connected(app)
+    await session.runLinkProbe()
+
+    expect(session.getState().linkProbe).toMatchObject({ status: 'refused', message: expect.any(String) })
+    expect(reportText(session.getState())).toContain('result: refused after')
   })
 
   it('the image probe falls back to images/probe.jpg and reports a refusal', async () => {

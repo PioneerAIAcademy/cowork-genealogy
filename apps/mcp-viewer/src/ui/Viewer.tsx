@@ -37,6 +37,11 @@ export function Viewer({ session }: { session: Session }) {
             Load an image
           </button>
         )}
+        {probesShown && (
+          <button type="button" onClick={() => void session.runLinkProbe()}>
+            Open a link
+          </button>
+        )}
       </div>
 
       {image?.url && (
