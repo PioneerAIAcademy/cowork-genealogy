@@ -105,6 +105,11 @@ function LoadedBody({
 
   return (
     <div ref={bodyRef} className={styles.body}>
+      {isFulltext && hitVerdictsByHitId && hitVerdictsByHitId.size > 0 && (
+        <p className={styles.evaluateProgress}>
+          {hitVerdictsByHitId.size} of {results.length} hits evaluated
+        </p>
+      )}
       {isFulltext && sendPrompt && (
         <div className={styles.evaluateStrip}>
           <button

@@ -227,3 +227,10 @@
   outline: 2px solid var(--accent-gold-strong);
   outline-offset: 1px;
 }
+
+.evaluateProgress {
+  padding: 0 var(--spacing-lg);
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: var(--spacing-sm) 0 0;
+}
