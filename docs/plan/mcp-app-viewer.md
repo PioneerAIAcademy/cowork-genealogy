@@ -714,7 +714,9 @@ The two tools and the page move onto the tool server, behind the door.
   packaging stay untouched. The test is `principal.kind === "bearer"` and that surface,
   on dispatch as well as listing. `allToolSchemas`, `manifest.json` and the plugin
   hook's tool maps do not change. Every other surface gets the dispatcher's unknown-tool
-  error.
+  error. Every connector client gets the same list, whatever it declares: a Cowork task
+  declares no UI extension and still draws a card, and a host may share one `tools/list`
+  per connector login.
 - **Arguments:** `rejectUnknownArgs` skips a tool outside `allToolSchemas`, so the two
   tools keep their own unknown-argument check, which answers in plain text.
 - **Capabilities:** `createServer` gains the resources capability and handlers, and

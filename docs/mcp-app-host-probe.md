@@ -327,7 +327,7 @@ Open every task on `~/mcp-probe/mcandrew`, with the connector on.
        ```
 
     4. Install it by the click-path `make cowork-install` prints, without running the
-       target: Claude Desktop → Cowork tab → Customize, remove any Genealogy Research
+       target: Claude Desktop → Cowork tab → Customize or Plugins, remove any Genealogy Research
        plugin, then Add → Upload Plugin → that zip. Fully quit and reopen Claude
        Desktop.
 
@@ -559,6 +559,9 @@ the local route does not render, testers see cards in the browser tab.
 | Control: Desktop Chat | Yes, only after restarting Desktop | `mcp__Genealogy_Viewer__show_project` |
 | Connector, task with a folder on this Mac | Yes, after a ToolSearch load, on a project with one small document | `mcp__Genealogy_Viewer__show_project` |
 | Connector, task with no folder | | |
+| Connector, a chat opened after a Cowork task, with no reconnect (`anthropics/claude-code` #103924) | | |
+| Connector, a chat that moved to a cloud session | | |
+| Connector, Claude mobile app (`anthropics/claude-ai-mcp` #1085) | | |
 | Connector, after a ToolSearch load | | |
 | Connector, with the variant plugin | | |
 | Local | | |
