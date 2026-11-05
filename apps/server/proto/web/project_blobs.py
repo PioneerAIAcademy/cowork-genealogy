@@ -22,17 +22,17 @@ from __future__ import annotations
 
 import bisect
 import hashlib
+import os
 import re
 import uuid
 from dataclasses import dataclass
 from typing import Any
 
-#: Copied from `app/sessions.py`, not imported. The web bundle ships `proto/web/*.py`
-#: at `web/` with no `app` package (`scripts/eb_bundles/build.py`), so an import would
-#: be a ModuleNotFoundError in the image and nowhere else — this branch has already
-#: shipped that mistake once.
+#: The image rule, upload limit and filename cleaner are copied from `app/sessions.py`,
+#: not imported. The web bundle ships `proto/web/*.py` at `web/` with no `app` package
+#: (`scripts/eb_bundles/build.py`), so an import would be a ModuleNotFoundError in the
+#: image and nowhere else — this branch has already shipped that mistake once.
 IMAGE_REF_RE = re.compile(r"^images/[A-Za-z0-9._-]+\.jpg$")
-UPLOAD_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._ -]{0,120}$")
 UPLOAD_MAX_BYTES = 25 * 1024 * 1024
 
 
@@ -106,14 +106,26 @@ def pdf_page_count(body: bytes) -> int:
     return len(pages)
 
 
+# Copied from app/sessions.py's _clean_upload_name (see the note at the top of this file).
+# Keep the two in step.
 def safe_upload_name(raw: str | None) -> str | None:
-    """A client filename reduced to a basename, or None if it is not acceptable.
+    """Clean a client basename to ASCII, replacing unsupported characters with underscores.
 
-    Basename only: some browsers send a path for directory uploads, and a
-    client-supplied name must never steer where the write lands.
+    Refuse empty names, dotfiles, double dots and names without letters or digits.
+    Cap at 120 characters, preserving extensions up to 20 characters. Basename first
+    keeps a client-supplied path from steering where the write lands.
     """
     name = (raw or "").replace("\\", "/").split("/")[-1].strip()
-    if not name or ".." in name or not UPLOAD_NAME_RE.match(name):
+    if not name or name.startswith(".") or ".." in name:
+        return None
+    name = re.sub(r"[^A-Za-z0-9._ -]", "_", name)
+    if len(name) > 120:
+        stem, ext = os.path.splitext(name)
+        if len(ext) <= 20:
+            name = stem[:120 - len(ext)].rstrip(" .") + ext
+        else:
+            name = name[:120].rstrip(" .")
+    if re.search(r"[A-Za-z0-9]", name) is None:
         return None
     return name
 
