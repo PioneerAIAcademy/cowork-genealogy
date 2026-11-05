@@ -5,8 +5,9 @@
 // read live and extracted from the index), `documents` (any other source,
 // structured by the record-structurer agent), `absences` (negative evidence
 // from a nil search), and `personId` (every indexed record attached to one tree
-// person, extracted and linked to that person as an unchecked candidate, the
-// one `person_evidence` write this tool makes). In every shape the roles and the three classification
+// person or to a relationship they are in, extracted and linked as unchecked
+// candidates to the tree persons who attach them, the one `person_evidence`
+// write this tool makes). In every shape the roles and the three classification
 // layers are decided HERE, from the extraction table; no caller supplies them,
 // and the input has nowhere to put them.
 //
@@ -43,15 +44,20 @@ import {
 } from "../utils/record-extract.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import {
+  checkStagedResults,
   findFulltextHit,
+  locateStagedRef,
   readResultsEnvelope,
   readStagedResults,
+  resolveStagedRef,
   splitHitRef,
   STAGING_SUBDIR,
   type FulltextHitRow,
+  type StagedRefLocation,
 } from "../utils/results-staging.js";
 import { deedFormulaErrors } from "../utils/deed-formula.js";
 import { arkToBareId } from "../utils/ark.js";
+import { selectSubjectPersona } from "../utils/record-persona-select.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import type { Principal } from "../auth/principal.js";
@@ -208,7 +214,7 @@ export interface ExtractionBatchInput {
   questionIds?: string[];
   /** A tree person (tree id or FamilySearch id) whose attached records to extract and link. */
   personId?: string;
-  /** Expected-but-absent persons for a record in `recordIds`, keyed by its id. */
+  /** Expected-but-absent persons for a record in `recordIds` or `documents`, keyed by its id. */
   absentPersons?: { recordId?: string; name: string; factType?: string; note?: string }[];
   /** Extract an already-extracted record again and retire its old assertions (#3678). */
   reextract?: boolean;
@@ -243,6 +249,17 @@ export interface ExtractionBatchResult {
   skipped?: number;
   alreadyLinked?: number;
   rejectedSkipped?: number;
+  /** Records read through the person's Couple and ParentChild refs. */
+  relationshipRecords?: number;
+  /** Personas left unlinked because their claims conflict: two tree persons
+   *  claim one, or one tree person claims two of a record. */
+  ambiguous?: number;
+  /** Relationship parties whose persona `selectSubjectPersona` could not choose. */
+  unselected?: number;
+  /** Links the writer refused. */
+  refused?: number;
+  /** Assertions linked to tree persons other than the run's own, by person. */
+  linkedPersons?: Record<string, number>;
   summary?: string;
 }
 
@@ -537,23 +554,31 @@ const RECORD_TOKEN = /1:1:([A-Z0-9]+(?:-[A-Z0-9]+)+)/i;
 
 /**
  * `personId`: the baseline step (lead, 2026-10-19 and 2026-10-20). Extract
- * every indexed record FamilySearch has attached to one tree person, and link
- * each one to that person as an unchecked candidate. It assumes every
+ * every indexed record FamilySearch has attached to one tree person or to a
+ * relationship they are an endpoint of, and link each persona to the tree
+ * person who attaches it as an unchecked candidate. It assumes every
  * attachment is correct, with no agent and no same_person gate; checking them
  * is a separate request.
  *
- * Only the person's own person-, name- and fact-level refs count, never a
- * relationship's, because most of those name the other party. A ref whose tree
- * source is not a `1:1:` record is counted as skipped. Each record is extracted
- * through `recordIdsMode` under the tree S the import made for it.
+ * The person's own person-, name- and fact-level refs count, and so do the
+ * `sources` of every relationship they are person1, person2, parent or child
+ * of (lead, 2026-10-30). A ref whose tree source is not a `1:1:` record is
+ * counted as skipped. Each record is extracted through `recordIdsMode` under
+ * the tree S the import made for it, once per record group.
  *
- * Links go to the assertions of the attached persona, found through the
- * record's sidecar `persons[].ark`, with `confidence: "speculative"`, no score
- * and `ATTACHMENT_LINK_RATIONALE`. A record is linked only when none of that
- * persona's assertions has a live link yet, so a persona someone already
- * decided about is never split across two tree persons. A rejected pair is
- * never re-linked. Each record's links are one write, retried one link at a
- * time on a refusal, so one refused pair never sinks the rest.
+ * Each record group gets one claim map from persona to tree person, from the
+ * record's sidecar `persons[].ark`: a persona goes to the one tree person whose
+ * own refs attach its ark, the run person included (lead, 2026-10-30), and to
+ * nobody when two do; a relationship party's persona is chosen by
+ * `selectSubjectPersona`, and one that conflicts with another claim goes to
+ * nobody. A tree person left claiming two personas of one record gets neither.
+ * Links carry `confidence: "speculative"`, no score and
+ * `ATTACHMENT_LINK_RATIONALE`.
+ * A persona whose assertions already have a live
+ * link is left alone, so one someone already decided about is never split
+ * across two tree persons, and a rejected pair is never re-linked. Each
+ * group's links are one write, retried one link at a time on a refusal, so one
+ * refused pair never sinks the rest.
  */
 async function personIdMode(
   input: ExtractionBatchInput,
@@ -577,40 +602,65 @@ async function personIdMode(
     return { ok: false, records: [], errors: [e instanceof Error ? e.message : String(e)] };
   }
 
-  // The person's own attachments, mapped to their bare 1:1: record ids.
   const sourceById = new Map<string, any>(
     (Array.isArray(tree?.sources) ? tree.sources : []).filter((s: any) => typeof s?.id === "string").map((s: any) => [s.id, s]),
   );
+  const refOf = (raw: string) => (raw.startsWith("#") ? raw.slice(1) : raw);
+  const bareOf = (raw: string): string | undefined => {
+    const match = RECORD_TOKEN.exec(String(sourceById.get(refOf(raw))?.url ?? ""));
+    return match ? match[1].toUpperCase() : undefined;
+  };
+
+  // The person's own attachments, mapped to their bare 1:1: record ids.
   const sourceIdByBare = new Map<string, string>();
   let skipped = 0;
   for (const raw of collectSourceRefs(person)) {
-    const ref = raw.startsWith("#") ? raw.slice(1) : raw;
-    const match = RECORD_TOKEN.exec(String(sourceById.get(ref)?.url ?? ""));
-    if (!match) {
+    const bare = bareOf(raw);
+    if (!bare) {
       skipped++;
       continue;
     }
-    const bare = match[1].toUpperCase();
-    if (!sourceIdByBare.has(bare)) sourceIdByBare.set(bare, ref);
+    if (!sourceIdByBare.has(bare)) sourceIdByBare.set(bare, refOf(raw));
   }
+  // The refs on the person's Couple and ParentChild relationships: bare id ->
+  // the tree S ids carrying it and the relationships citing it.
+  const viaRelationship = new Map<string, { sourceIds: Set<string>; rels: any[] }>();
+  for (const r of Array.isArray(tree?.relationships) ? tree.relationships : []) {
+    if (typeof person?.id !== "string" || ![r?.person1, r?.person2, r?.parent, r?.child].includes(person.id)) continue;
+    for (const s of Array.isArray(r?.sources) ? r.sources : []) {
+      if (typeof s?.ref !== "string") continue;
+      const bare = bareOf(s.ref);
+      if (!bare) {
+        skipped++;
+        continue;
+      }
+      const seen = viaRelationship.get(bare) ?? { sourceIds: new Set<string>(), rels: [] };
+      seen.sourceIds.add(refOf(s.ref));
+      if (!seen.rels.includes(r)) seen.rels.push(r);
+      viaRelationship.set(bare, seen);
+    }
+  }
+  const relationshipOnly = [...viaRelationship.keys()].filter((b) => !sourceIdByBare.has(b));
   const skippedNote =
     skipped > 0 ? ` ${skipped} attached source${skipped === 1 ? " is" : "s are"} not indexed records; not extracted.` : "";
-  if (sourceIdByBare.size === 0) {
+  if (sourceIdByBare.size === 0 && relationshipOnly.length === 0) {
     return {
       ok: true,
       records: [],
       extracted: 0,
       linked: 0,
       skipped,
-      summary: `${person.id}: no attached indexed record exists, so nothing was extracted or linked.${skippedNote}`,
+      summary: `${person.id}: no attached indexed record exists on the person or the person's relationships, so nothing was extracted or linked.${skippedNote}`,
     };
   }
 
+  const importedS = new Map(sourceIdByBare);
+  for (const b of relationshipOnly) importedS.set(b, [...viaRelationship.get(b)!.sourceIds][0]);
   const extraction = await recordIdsMode(
-    { projectPath: input.projectPath, recordIds: [...sourceIdByBare.keys()].map((b) => `ark:/61903/1:1:${b}`) },
+    { projectPath: input.projectPath, recordIds: [...importedS.keys()].map((b) => `ark:/61903/1:1:${b}`) },
     deps,
     principal,
-    { sourceDescriptionIdByBare: sourceIdByBare },
+    { sourceDescriptionIdByBare: importedS },
   );
 
   // Link, against the project as it now stands.
@@ -628,55 +678,152 @@ async function personIdMode(
       .map((pe: any) => pe.assertion_id),
   );
   const logById = new Map<string, any>((Array.isArray(after.log) ? after.log : []).filter((e: any) => typeof e?.id === "string").map((e: any) => [e.id, e]));
+  // Every tree person's own attachments: bare id -> the tree persons attaching it.
+  const attachers = new Map<string, Set<string>>();
+  for (const p of Array.isArray(tree?.persons) ? tree.persons : []) {
+    if (typeof p?.id !== "string") continue;
+    for (const raw of collectSourceRefs(p)) {
+      const bare = bareOf(raw);
+      if (!bare) continue;
+      const who = attachers.get(bare) ?? new Set<string>();
+      who.add(p.id);
+      attachers.set(bare, who);
+    }
+  }
+  const arkBare = (p: any): string | undefined => (typeof p?.ark === "string" ? arkToBareId(p.ark) : undefined);
   let linked = 0;
   let alreadyLinked = 0;
   let rejectedSkipped = 0;
   let unlinkable = 0;
+  let ambiguous = 0;
+  let unselected = 0;
+  let refused = 0;
+  const linkedPersons: Record<string, number> = {};
   const linkErrors: string[] = [];
+  const doneBare = new Set<string>();
+  // One read per sidecar: an extraction batch logs many records under one entry.
+  const sidecars = new Map<string, Promise<unknown>>();
+  const readSidecar = (ref: string) => {
+    if (!sidecars.has(ref)) sidecars.set(ref, readStagedResults(input.projectPath, ref));
+    return sidecars.get(ref)!;
+  };
   for (const o of extraction.records) {
     if (o.status !== "extracted" && o.status !== "already_extracted") continue;
     const bare = arkToBareId(o.recordId);
+    if (doneBare.has(bare)) continue;
     const recordIds = groups.get(bare) ?? new Set([bare]);
+    for (const id of recordIds) doneBare.add(id);
     const ofRecord = assertions.filter((a) => typeof a?.record_id === "string" && recordIds.has(arkToBareId(a.record_id)));
-    // The attached persona's id, read off the sidecar the record's assertions cite.
-    let personaId: string | undefined;
+    // The record's personas, read off the sidecars its assertions cite.
+    const personas = new Map<string, any>();
+    const records: any[] = [];
     for (const logId of new Set(ofRecord.map((a) => a.log_entry_id))) {
       const ref = logById.get(logId)?.results_ref;
       if (typeof ref !== "string") continue;
       try {
-        for (const row of (await readStagedResults(input.projectPath, ref)) as any[]) {
-          const persona = (Array.isArray(row?.gedcomx?.persons) ? row.gedcomx.persons : []).find(
-            (p: any) => typeof p?.ark === "string" && arkToBareId(p.ark) === bare,
-          );
-          if (typeof persona?.id === "string") personaId = persona.id;
+        for (const row of (await readSidecar(ref)) as any[]) {
+          const persons: any[] = Array.isArray(row?.gedcomx?.persons) ? row.gedcomx.persons : [];
+          const ofThis =
+            (typeof row?.recordId === "string" && recordIds.has(arkToBareId(row.recordId))) ||
+            persons.some((p) => recordIds.has(arkBare(p) ?? ""));
+          if (!ofThis) continue;
+          records.push(row.gedcomx);
+          for (const p of persons) if (typeof p?.id === "string" && !personas.has(p.id)) personas.set(p.id, p);
         }
       } catch {
         // An unreadable sidecar names no persona; the record is reported unlinked.
       }
-      if (personaId) break;
     }
-    const ofPersona = personaId ? ofRecord.filter((a) => a.record_persona_id === personaId) : [];
-    if (ofPersona.length === 0) {
-      unlinkable++;
-      continue;
-    }
-    if (ofPersona.some((a) => liveLinked.has(a.id))) {
-      alreadyLinked++;
-      continue;
-    }
-    const ops: ResearchAppendOp[] = [];
-    for (const a of ofPersona) {
-      if (isRejectedPair(a.id, person.id, after.rejected_links)) {
-        rejectedSkipped++;
+
+    // One claim per persona: each tree person's own attachment, the run
+    // person's included, then each relationship party's pick. A party whose
+    // own refs attach any persona of the record gets no pick, even one that
+    // went to nobody; the set is taken before any party is asked, so party
+    // order cannot change it. A persona two tree persons claim links neither,
+    // and a tree person claiming two personas of one record links neither.
+    const claims = new Map<string, { to: string; route: "own" | "ark" | "party" }>();
+    const blocked = new Set<string>();
+    for (const [pid, p] of personas) {
+      const b = arkBare(p);
+      const who = b ? attachers.get(b) : undefined;
+      if (!who || who.size === 0) continue;
+      if (who.size > 1) {
+        blocked.add(pid);
         continue;
       }
-      ops.push({
-        section: "person_evidence",
-        op: "append",
-        entry: { assertion_id: a.id, person_id: person.id, confidence: "speculative", match_score: null, rationale: ATTACHMENT_LINK_RATIONALE },
-      });
+      const to = [...who][0];
+      claims.set(pid, { to, route: to === person.id ? "own" : "ark" });
+    }
+    const asked = new Set<string>();
+    const anchored = new Set([...personas.values()].flatMap((p) => [...(attachers.get(arkBare(p) ?? "") ?? [])]));
+    for (const b of recordIds) {
+      const via = viaRelationship.get(b);
+      if (!via) continue;
+      const record = records.find((g) => (Array.isArray(g?.persons) ? g.persons : []).some((p: any) => arkBare(p) === b));
+      for (const r of via.rels) {
+        for (const party of [r.person1, r.person2, r.parent, r.child].filter((x): x is string => typeof x === "string")) {
+          if (asked.has(`${party}\u0000${b}`)) continue;
+          asked.add(`${party}\u0000${b}`);
+          if (anchored.has(party)) continue;
+          const sel = selectSubjectPersona(tree, party, { ark: `ark:/61903/1:1:${b}`, source_ids: [...via.sourceIds], level: "relationship" }, record);
+          if ("unscored" in sel) {
+            unselected++;
+            continue;
+          }
+          const pid = sel.persona_id;
+          if (blocked.has(pid)) continue;
+          const held = claims.get(pid);
+          if (!held) {
+            claims.set(pid, { to: party, route: "party" });
+            continue;
+          }
+          if (held.to === party) continue;
+          claims.delete(pid);
+          blocked.add(pid);
+        }
+      }
+    }
+    const byClaimant = new Map<string, string[]>();
+    for (const [pid, { to }] of claims) byClaimant.set(to, [...(byClaimant.get(to) ?? []), pid]);
+    for (const pids of byClaimant.values()) {
+      if (pids.length < 2) continue;
+      for (const pid of pids) {
+        claims.delete(pid);
+        blocked.add(pid);
+      }
+    }
+    ambiguous += blocked.size;
+    const isOwn = (pid: string) => sourceIdByBare.has(arkBare(personas.get(pid)) ?? "");
+    const ownWithAssertions = [...claims].some(([pid, c]) => c.route === "own" && ofRecord.some((a) => a.record_persona_id === pid));
+    if ([...recordIds].some((b) => sourceIdByBare.has(b)) && !ownWithAssertions && ![...blocked].some(isOwn)) unlinkable++;
+
+    const ops: ResearchAppendOp[] = [];
+    for (const [pid, { to }] of claims) {
+      const ofPersona = ofRecord.filter((a) => a.record_persona_id === pid);
+      if (ofPersona.length === 0) continue;
+      if (ofPersona.some((a) => liveLinked.has(a.id))) {
+        alreadyLinked++;
+        continue;
+      }
+      for (const a of ofPersona) {
+        if (isRejectedPair(a.id, to, after.rejected_links)) {
+          rejectedSkipped++;
+          continue;
+        }
+        ops.push({
+          section: "person_evidence",
+          op: "append",
+          entry: { assertion_id: a.id, person_id: to, confidence: "speculative", match_score: null, rationale: ATTACHMENT_LINK_RATIONALE },
+        });
+      }
     }
     if (ops.length === 0) continue;
+    const credit = (op: ResearchAppendOp) => {
+      const { assertion_id, person_id } = (op as any).entry;
+      linked++;
+      liveLinked.add(assertion_id);
+      if (person_id !== person.id) linkedPersons[person_id] = (linkedPersons[person_id] ?? 0) + 1;
+    };
     const linkOpts = { allowedSections: ATTACHMENT_LINK_SECTIONS, toolName: "extraction_append", attachmentLink: true };
     // Only `ok` is read; a refusal is retried op by op below (see `tieRecordToQuestions`).
     const whole = await researchAppend(
@@ -684,25 +831,35 @@ async function personIdMode(
       { ...linkOpts, firstFailureOnly: true },
     );
     if (whole.ok) {
-      linked += ops.length;
+      ops.forEach(credit);
       continue;
     }
     for (const op of ops) {
       const one = await researchAppend({ projectPath: input.projectPath, ops: [op] } as ResearchAppendInput, linkOpts);
-      if (one.ok) linked++;
-      else linkErrors.push(`${(op as any).entry.assertion_id} was not linked to ${person.id}: ${one.errors.join("; ")}`);
+      if (one.ok) credit(op);
+      else {
+        refused++;
+        linkErrors.push(`${(op as any).entry.assertion_id} was not linked to ${(op as any).entry.person_id}: ${one.errors.join("; ")}`);
+      }
     }
   }
 
   const extracted = extraction.records.filter((o) => o.status === "extracted").length;
+  const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
   const parts = [
-    `${person.id}: ${sourceIdByBare.size} attached indexed record${sourceIdByBare.size === 1 ? "" : "s"}`,
+    `${person.id}: ${plural(sourceIdByBare.size, "attached indexed record", "attached indexed records")}` +
+      (relationshipOnly.length > 0 ? ` and ${relationshipOnly.length} more on the person's relationships` : ""),
     `${extracted} extracted`,
-    `${linked} assertion${linked === 1 ? "" : "s"} linked as unverified attachments`,
+    `${plural(linked, "assertion", "assertions")} linked as unverified attachments`,
   ];
-  if (alreadyLinked > 0) parts.push(`${alreadyLinked} record${alreadyLinked === 1 ? "" : "s"} left as linked already`);
-  if (unlinkable > 0) parts.push(`${unlinkable} record${unlinkable === 1 ? "" : "s"} extracted but not linked (no persona to link)`);
-  if (rejectedSkipped > 0) parts.push(`${rejectedSkipped} rejected pair${rejectedSkipped === 1 ? "" : "s"} not re-linked`);
+  const others = Object.entries(linkedPersons);
+  if (others.length > 0) parts.push(`of them ${others.map(([id, n]) => `${n} to ${id}`).join(", ")}`);
+  if (alreadyLinked > 0) parts.push(`${plural(alreadyLinked, "persona", "personas")} left as linked already`);
+  if (unlinkable > 0) parts.push(`${plural(unlinkable, "record", "records")} extracted but not linked (no persona to link)`);
+  if (ambiguous > 0) parts.push(`${plural(ambiguous, "persona", "personas")} not linked, because their claims conflict`);
+  if (unselected > 0) parts.push(`${plural(unselected, "relationship party", "relationship parties")} whose persona in the record could not be chosen`);
+  if (rejectedSkipped > 0) parts.push(`${plural(rejectedSkipped, "rejected pair", "rejected pairs")} not re-linked`);
+  if (refused > 0) parts.push(`${plural(refused, "link", "links")} refused`);
   return {
     ...extraction,
     ok: extraction.ok,
@@ -711,6 +868,11 @@ async function personIdMode(
     skipped,
     ...(alreadyLinked > 0 ? { alreadyLinked } : {}),
     ...(rejectedSkipped > 0 ? { rejectedSkipped } : {}),
+    ...(relationshipOnly.length > 0 ? { relationshipRecords: relationshipOnly.length } : {}),
+    ...(ambiguous > 0 ? { ambiguous } : {}),
+    ...(unselected > 0 ? { unselected } : {}),
+    ...(refused > 0 ? { refused } : {}),
+    ...(others.length > 0 ? { linkedPersons } : {}),
     ...(linkErrors.length > 0 ? { errors: [...(extraction.errors ?? []), ...linkErrors] } : {}),
     summary: `${parts.join("; ")}.${skippedNote} Checking these attachments is a separate request.`,
   };
@@ -946,9 +1108,7 @@ async function recordIdsMode(
         o.summary = `${o.recordId}: logged as ${o.logId}, but its sidecar does not hold that record.`;
         continue;
       }
-      const absent = (input.absentPersons ?? []).filter(
-        (p) => p.recordId !== undefined && arkToBareId(p.recordId) === arkToBareId(o.recordId),
-      );
+      const absent = absentPersonsFor(input, o.recordId);
       const { ops, sourceDescription, extraction } = buildExtractionOps(
         { recordId: doc.recordId ?? o.recordId, gedcomx: doc.gedcomx ?? {}, indexFields: doc.indexFields },
         { logEntryId: o.logId!, questionIds: input.questionIds, absentPersons: absent },
@@ -1265,6 +1425,44 @@ function coerceComputed(f: unknown): void {
   fact.computed = [...new Set(out)];
 }
 
+/** The call's top-level `absentPersons` keyed to one record. */
+function absentPersonsFor(input: ExtractionBatchInput, recordId: string) {
+  return (input.absentPersons ?? []).filter(
+    (p) => p.recordId !== undefined && arkToBareId(p.recordId) === arkToBareId(recordId),
+  );
+}
+
+type StagedPage = { live: string } | { logId: string; resultsRef: string } | { refusal: string };
+
+function loggedPage(at: Extract<StagedRefLocation, { state: "logged" }>): StagedPage {
+  if (at.tool === "image_transcribe") return { logId: at.logId, resultsRef: at.resultsRef };
+  return {
+    refusal:
+      `transcriptionRef '${at.ref}' was logged as ${at.logId} by ${at.tool ?? "an unknown tool"}, ` +
+      `not as an image_transcribe read, so it holds no page to extract.`,
+  };
+}
+
+/**
+ * Sort one document's staged ref before anything is logged. `research_log_append`
+ * is all-or-nothing, so left to it one bad ref refuses every document beside it.
+ * A logged page is cited, never re-logged: the log's re-send check compares
+ * outcomes, so a page logged `negative` would refuse the batch from there too.
+ * It is located after the check fails, not before, so a concurrent call consuming
+ * the file between the two reads lands on the same path.
+ */
+async function stagedPage(projectPath: string, rawRef: string): Promise<StagedPage> {
+  const { ref } = await resolveStagedRef(projectPath, rawRef);
+  try {
+    await checkStagedResults({ projectPath, stagedResultsRef: ref, expectedTool: "image_transcribe" });
+    return { live: ref };
+  } catch (e) {
+    const at = await locateStagedRef(projectPath, ref);
+    if (at.state === "logged") return loggedPage(at);
+    return { refusal: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 /**
  * Cite one full-text hit (`<base>#<hit>`) for a document, or say why not. The
  * hit must belong to a LOGGED `fulltext_search` (a staged search has no entry to
@@ -1281,11 +1479,15 @@ async function citeFulltextHit(
   hit: string,
 ): Promise<{ logId: string; resultsRef: string; hit: FulltextHitRow } | string> {
   if (base.startsWith(`${STAGING_SUBDIR}/`)) {
-    return (
-      `transcriptionRef '${ref}' names a hit of a full-text search that is not logged yet: log the ` +
-      `search first (research_log_append with stagedResultsRef '${base}'), then cite the hit as ` +
-      `'<its results_ref>#<hit id>'.`
-    );
+    const at = await locateStagedRef(projectPath, base);
+    if (at.state !== "logged") {
+      return (
+        `transcriptionRef '${ref}' names a hit of a full-text search that is not logged yet: log the ` +
+        `search first (research_log_append with stagedResultsRef '${base}'), then cite the hit as ` +
+        `'<its results_ref>#<hit id>'.`
+      );
+    }
+    base = at.resultsRef;
   }
   const entry = log.find((e) => e?.results_ref === base && typeof e?.id === "string");
   if (!entry || entry.tool !== "fulltext_search") {
@@ -1351,7 +1553,12 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     if (!d.transcriptionRef || (d.document.recordType !== "land" && d.document.recordType !== "probate")) continue;
     let text: string | undefined;
     try {
-      const rows = await readStagedResults(input.projectPath, d.transcriptionRef);
+      // A consumed staged ref still names the page, and a held ref is what
+      // `reextract` sends, so this must not read as a page it cannot check.
+      const at = d.transcriptionRef.startsWith(`${STAGING_SUBDIR}/`)
+        ? await locateStagedRef(input.projectPath, d.transcriptionRef)
+        : null;
+      const rows = await readStagedResults(input.projectPath, at?.state === "logged" ? at.resultsRef : d.transcriptionRef);
       text = (rows as any[]).find((r) => typeof r?.transcription === "string")?.transcription;
     } catch {
       continue;
@@ -1443,7 +1650,20 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
       }
       continue;
     }
-    if (ref.startsWith(`${STAGING_SUBDIR}/`)) continue;
+    if (ref.startsWith(`${STAGING_SUBDIR}/`)) {
+      const page = await stagedPage(input.projectPath, ref);
+      if ("live" in page) {
+        // One spelling per page, or an exact ref and a near-copy of it become two ops.
+        o.d.transcriptionRef = page.live;
+      } else if ("logId" in page) {
+        cited.set(o, page);
+      } else {
+        o.status = "refused";
+        o.errors = [page.refusal];
+        o.summary = `${o.recordId}: not extracted: ${page.refusal}`;
+      }
+      continue;
+    }
     // Only a page logged as image_transcribe: a search sidecar cited here would
     // be written as a source with no text, and its search would read as extracted.
     const entry = log.find((e) => e?.results_ref === ref && e?.tool === "image_transcribe" && typeof e?.id === "string");
@@ -1517,7 +1737,7 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
             op: "append" as const,
             entry: a as unknown as Record<string, unknown>,
           })),
-          ...(o.d.document.absentPersons ?? []).map((p) => ({
+          ...[...(o.d.document.absentPersons ?? []), ...absentPersonsFor(input, o.recordId)].map((p) => ({
             section: "assertions" as const,
             op: "append" as const,
             entry: {
@@ -1755,9 +1975,10 @@ export const extractionAppendSchema = {
     "- `absences` — people a search expected and did not find, when there is no " +
     "record to extract. Log the nil search with `research_log_append` first.\n" +
     "- `personId` — a tree person (tree id or FamilySearch id). Every indexed " +
-    "record FamilySearch has attached to them is extracted and linked to them " +
-    "as an UNVERIFIED candidate (`speculative`, no score). Checking those links " +
-    "is a separate request.\n" +
+    "record FamilySearch has attached to them, or to a relationship they are " +
+    "in, is extracted, and each persona is linked to the tree person who " +
+    "attaches it as an UNVERIFIED candidate (`speculative`, no score). Checking " +
+    "those links is a separate request.\n" +
     "\n" +
     "Returns one outcome per record, each with a code-written `summary`: relay " +
     "it verbatim, since you do not see the record yourself; `personId` also " +
@@ -1805,7 +2026,7 @@ export const extractionAppendSchema = {
           properties: {
             recordId: {
               type: "string",
-              description: "Which of the `recordIds` this person was expected on.",
+              description: "Which record in `recordIds` or `documents` this person was expected on.",
             },
             name: { type: "string", description: "Who was expected." },
             factType: { type: "string", description: "Defaults to `name`." },

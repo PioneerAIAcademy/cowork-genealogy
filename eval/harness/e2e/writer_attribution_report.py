@@ -131,8 +131,9 @@ def _reaches(row: dict, ident: str, tool: str) -> bool | None | str:
     A writer tool that is not hook-routed writes the rows its `writerTools`
     entries name. An agent's hook-routed tool (`research_append`, or
     `evaluation_append` scoped to `evaluations`) reaches what the shipped hook
-    leaves it: its lane, minus sections routed to another agent. A skill's is
-    confined by nothing static -- the unit plane checks its rows at run time.
+    leaves it: its lane, minus sections routed to another agent that do not
+    also name it in `SECTION_CO_WRITERS`. A skill's is confined by nothing
+    static -- the unit plane checks its rows at run time.
     """
     if tool not in (row.get("writerTools") or []):
         return False
@@ -148,7 +149,7 @@ def _reaches(row: dict, ident: str, tool: str) -> bool | None | str:
     if via is None:
         return False
     owner = _guard.OWNED_SECTIONS.get(via)
-    if owner is not None and owner != agent:
+    if owner is not None and owner != agent and agent not in _guard.SECTION_CO_WRITERS.get(via, ()):
         return False
     return via in _guard.AGENT_WRITABLE_SECTIONS.get(agent, frozenset())
 

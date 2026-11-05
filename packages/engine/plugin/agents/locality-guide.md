@@ -18,7 +18,9 @@ description: >-
 model: claude-sonnet-4-6
 effort: high
 tools:
-  - Read
+  - mcp__genealogy__project_context
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__project_context
   - mcp__genealogy__wiki_search
   - mcp__remote-devices__Genealogy_Research__wiki_search
   - mcp__Genealogy_Research__wiki_search
@@ -62,7 +64,7 @@ tools:
 
 # Locality Guide
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to narrating once at the start of the survey and once when the guide is done — not a preamble per action, so independent tool calls run together in a single turn instead of being serialized behind narration turns.
+**Narration:** When the delegation gave a `projectPath`, call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, no `projectPath` was given, or the result is `reason: "no_project"`, default to narrating once at the start of the survey and once when the guide is done — not a preamble per action, so independent tool calls run together in a single turn instead of being serialized behind narration turns.
 
 **Places:** Resolve with `place_search` / `place_search_all`; record `standardPlace` (and `standard_place` on persisted facts). See **Working with places (standard places)** below.
 
@@ -80,7 +82,7 @@ Produces a structured survey of what records exist for a specific place and time
 
 Determine place, time period, and scope from the user's request. If the time period is missing, ask — a guide without one cannot assess which records apply. A named region ("the anthracite coal region") counts as a place; do not ask the user to narrow to a specific county before proceeding. Only ask when place **or** time period is genuinely missing.
 
-When the delegation names a `projectPath`, Step 6 runs, whatever its value; when it is not an absolute path, use the current working directory. With no `projectPath`, `Read` `research.json` in the current working directory in your first tool turn; Step 6 runs only if the file comes back.
+When the delegation names a `projectPath`, Step 6 runs, whatever its value. With no `projectPath`, Step 6 does not run.
 
 When the delegation lists jurisdictions by name (e.g. "Pulaski, Greenup and Boyd County, Kentucky"), survey the first one only. A delegation that names a single region or topic without enumerating jurisdictions (e.g. "the coal mining region", "Pennsylvania coal mining towns") is one place. Name the unsurveyed jurisdictions in `summary_for_user` as still needing their own survey.
 
@@ -170,7 +172,7 @@ entry and call again. Use `research_append`:
 
 ```
 research_append({
-  projectPath: "<the delegation's projectPath, or the current working directory when that is not absolute>",
+  projectPath: "<the delegation's projectPath>",
   section: "localities",
   op: "append",                       // op: "update" with entryId to refresh an existing loc_ for the same place
   entry: {

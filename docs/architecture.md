@@ -904,9 +904,9 @@ There **is** an orchestrator, and it is a skill:
    `docs/plan/research-step-mode.md`): it reports the step and ends with
    "Continue with &lt;label&gt;?", so finishing a sub-skill is where the turn
    stops. `packages/engine/plugin/hooks/step_boundary.py`, loaded as a library,
-   enforces that boundary on the FS prototype always, and in the eval harnesses
-   only where a test opts in through `execution.step_mode`, which no test sets
-   today. Cowork and the hosted alpha follow the router's own text with no
+   enforces that boundary on the FS prototype always, on every e2e run (the e2e
+   harness runs `--step-mode job` by default since step mode phase 2), and in the
+   unit harness only where a test opts in through `execution.step_mode`. Cowork and the hosted alpha follow the router's own text with no
    such hook, and in Cowork a "keep going" runs the remaining steps in one turn,
    since no host is there to reply.
 
@@ -1245,9 +1245,11 @@ that a tool caller structurally cannot reach, because dispatch builds only the
 first argument from tool input. Since 2026-10-20 the lane is chosen per call,
 not per tool. A separate `plan_items`-only call completes the plan item behind
 an extracted record, and in `personId` mode a `person_evidence`-only call links
-a person's attached records as unchecked candidates. Code composes each op whole,
-as it does the `extracted_for_question_ids` growth a re-found record gets, so no
-input field reaches any of them (ADR-0006, amended 2026-10-20).
+the personas of a person's attached records, and of their relationships'
+records, to the tree persons who attach them as unchecked candidates. Code
+composes each op whole, as it does the `extracted_for_question_ids` growth a
+re-found record gets, so no input field reaches any of them (ADR-0006, amended
+2026-10-20 and 2026-10-30).
 
 `evaluation_append` is the second variant: `research_append` restricted to the
 single `evaluations` section, held only by the `gps-mentor` agent — the most
@@ -1296,7 +1298,8 @@ on the delegation tools, and one on the tools only agents hold, which the final
 2. **Section ownership by caller.** `owner_denied()` refuses a `research_append`
    op writing a section another unit owns — `OWNED_SECTIONS` reserves
    `proof_summaries` to `proof-conclusion`, `person_evidence` and
-   `rejected_links` to `person-evidence`, `namesakes` to `search-records`,
+   `rejected_links` to `person-evidence`, `namesakes` to `search-records` (with
+   `search-images` and `search-full-text` as its co-writers, `SECTION_CO_WRITERS`),
    `evaluations` to `gps-mentor`, and `hit_verdicts` to
    `evaluate-search-results`, `OWNED_DECLARATIONS` reserves
    `questions.search_stop` (any non-null `stopped_because`) to `research-exhaustiveness`, and
@@ -2108,7 +2111,7 @@ outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a 
 | `make judge-report` | the **unit judge itself**: which rubric dimensions never vary across a suite (a flat dimension grades nothing, whatever it nominally measures), plus the judge-vs-human agreement recorded in the `.ann.json` corrections. Reads committed run logs only — **no model call, no cost**. Pairs with `/audit-rubric`, which asks the same questions one skill at a time by LLM judgment | whether a flat dimension is *wrong* — it reports the flatness, not the fix. Reads one run log per skill (the newest), so it cannot see variance across versions. It reports no flakiness either: per-test pass rates are `make eval-health`'s job. Read a silent flakiness column as this instrument being blind to it — never as evidence that the suite is stable, and never as licence to leave a flapping test alone |
 | `make e2e-run TEST=<fixture>` | one fixture against **live FamilySearch**. Order of magnitude: single-digit dollars and about an hour, with a long tail either way | everything outside that fixture. A capped or timed-out run is the expensive tail, not an exception — and runs that abort before a `ResultMessage` record **no cost at all**, so any total is a floor. **Re-derive rather than quote:** `make e2e-latency` reads per-fixture cost and wall-clock off the committed logs. Nothing recomputes a corpus-wide median — `make e2e-corpus`'s spend line reports recorded / estimated / unrecoverable **totals**, not a per-run central tendency — so a figure written into prose here is a hand-maintained copy, which is why this cell no longer carries one. |
 | `make matcher-accuracy` | the **matcher's ranking** over the record-hint fixtures whose `fixture.json` `hint.identity` is `same` or `different`, each pair scored through `matchPairs` (`packages/engine/mcp-server/src/utils/matcher.ts`, the call `same_person` and ranking make, so it measures whichever matcher config.json names): the AUC, the confusion table at the person-evidence bands (score > 0.7 and > 0.4), and the pairs those bands misrank. Needs a FamilySearch login (`make e2e-login`), so no CI job runs it. Exits non-zero when the AUC falls below `MIN_AUC` (default 0.65), and when nothing was scored, a class is empty or a labelled fixture could not be scored (e2e spec §3.6.2) | `unresolved`, `null` and draft hints — listed as skipped, never scored; the inputs `rank_search_matches` hands the matcher (a staged search hit, not a `record_read` of the hinted persona); FamilySearch's own hint ranking; whether an agent acts on the score. A floor, not a pinned value: a matcher change that lowers the AUC but stays above `MIN_AUC` passes |
-| `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first (or that none did), that no research job started, that the expected source or log entry was saved (or, for an "answer already attached" ask, that none was), and that named tools were or were not called — deterministic, no judge. Live and billed | the hosted alpha, which appends DELIVERY_GUIDANCE (it no longer nudges a stop: step mode's phase 2 deleted the Stop veto); Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
+| `make e2e-single-ask [TEST=<slug>]` | one **ordinary turn** per fixture (`eval/tests/e2e-single-ask/`) against live FamilySearch: which unit the main thread ran first (or that none did), that no research job started, that the expected source or log entry was saved (or, for an "answer already attached" ask, that none was), and that named tools were or were not called — deterministic, no judge. Live and billed | the hosted alpha's own system prompt, which differs from the harness's; Cowork's plugin-namespaced loader; anything past the first turn. Spec §16 |
 
 ### 9.2 The lint layer
 
@@ -2285,10 +2288,10 @@ changes how a correct change is made:
      stops a model starting the next step without asking differs by plane: the FS
      prototype gets a `PreToolUse` deny and then a halt; **Cowork and the alpha get
      router prose and no hook at all**. There is no plugin step hook anywhere.
-     **None of it is built yet.** When it is, the gap will be that PR 1 gives the e2e
-     orchestrator the step check (rider 3) while the plane it tracks, `real_agent`
+     It is built (PR 1), and since step mode phase 2 every e2e run applies the step
+     check (rider 3), while the plane it tracks, `real_agent`
      (`eval/harness/e2e/orchestrator.py`), is the alpha — which enforces nothing. So the
-     suite will enforce a boundary that neither Cowork nor the alpha has, and the one
+     suite enforces a boundary that neither Cowork nor the alpha has, and the one
      plane that DOES enforce it, the prototype worker, goes ungraded. **A green eval
      suite will therefore say nothing about whether the boundary holds where researchers
      actually are.**

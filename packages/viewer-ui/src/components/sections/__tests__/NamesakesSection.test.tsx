@@ -16,6 +16,7 @@ vi.mock('../../../contexts/ResearchDataContext', async () => {
 
 import { useResearchData } from '../../../contexts/ResearchDataContext'
 import { buildMockContext } from '../../../contexts/__tests__/mockContext'
+import { expandFirstCard } from './expandCard'
 
 function mockResearch(overrides: Partial<ResearchData> = {}): void {
   vi.mocked(useResearchData).mockReturnValue(
@@ -59,5 +60,30 @@ describe('NamesakesSection', () => {
     expect(screen.getByText('Patrick Flynn')).toBeInTheDocument()
     expect(screen.getByText('Schuylkill County, Pennsylvania, United States, died 1882')).toBeInTheDocument()
     expect(screen.queryByText(/No namesakes recorded/)).not.toBeInTheDocument()
+  })
+
+  it('labels a ruled-out row as not the same person, with its records', async () => {
+    mockResearch({ namesakes: [makeNamesake()] })
+    render(<NamesakesSection />)
+    await expandFirstCard()
+    expect(screen.getByText('Not the same person as:')).toBeInTheDocument()
+    expect(screen.getByText('Records')).toBeInTheDocument()
+    expect(screen.queryByText('Same name, not yet told apart from:')).not.toBeInTheDocument()
+  })
+
+  it('labels a pool row as not yet told apart, and lists no records', async () => {
+    mockResearch({
+      namesakes: [
+        makeNamesake({
+          record_ids: [],
+          notes: 'pool: 4G7B-5YMM (father Willem Schultsz) and 4G7B-5YNQ (father Willem Jans); neither ruled out.'
+        })
+      ]
+    })
+    render(<NamesakesSection />)
+    await expandFirstCard()
+    expect(screen.getByText('Same name, not yet told apart from:')).toBeInTheDocument()
+    expect(screen.queryByText('Not the same person as:')).not.toBeInTheDocument()
+    expect(screen.queryByText('Records')).not.toBeInTheDocument()
   })
 })

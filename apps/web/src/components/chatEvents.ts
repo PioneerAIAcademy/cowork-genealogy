@@ -104,8 +104,9 @@ export const TURN_OUTCOME_LABELS: Record<string, string> = {
   budget: 'Paused: this run reached its step budget. Send a message to carry on.',
   no_progress: 'Paused: the agent stopped making progress. Send a message to carry on.',
   decision: 'Waiting on you — see the question above.',
-  // R4: the ask was met and the JOB is still open. It must not read like
-  // `completed` above, or a plan-only request looks like a finished project.
+  // R4, legacy: nothing writes `delivered` since step mode phase 2 deleted
+  // `research_delivered`; kept so rows written before still render. The ask was
+  // met and the JOB was still open, so it must not read like `completed` above.
   delivered: "Done — that's what you asked for. Send a message to carry on.",
   mcp_unavailable: 'Paused: the genealogy tools became unavailable.',
   // Added on main while this branch was open (U13/U23 outcomes).

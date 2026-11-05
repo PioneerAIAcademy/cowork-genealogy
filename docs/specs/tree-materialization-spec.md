@@ -420,8 +420,18 @@ when `same_person` is called without `recordRole`:
   from the same record: the stub's name equals the father's, so it traces to
   the father's party, and nothing else on it tells them apart.
 
-Minting needs no link (the link to a new person is written after it exists),
-and neither does re-running a record onto the stub it minted
+Minting needs no link (the link to a new person is written after it exists).
+Writing onto a person the run added that carries no provenance at all
+(`blankAddedPerson`: not imported, no source ref on its node, names, facts
+or any relationship it is in, and no namesake, whose links the namesake cap
+decides as before) needs a live link of any confidence, a
+`speculative` one included: `research_append` refuses a `probable` or
+`confident` link to such a person until it has been written onto, and the
+`speculative` link has already passed `same_person`'s score gate. Requiring no
+link at all would skip that score: once the persona is written, every ref on
+the person reaches this one record, so it reads as minted from it and the link
+written after needs no score. The order is a scored `speculative` link, then
+`materialize_facts`, then raising the link. Nor does re-running a record onto the stub it minted
 (`mintedFromThisRecord`: a person the run added, not shaped like a FamilySearch
 id, whose refs reach only this record), judged against the write-once starting
 tree so that a person the project began with is never taken for a stub, even
