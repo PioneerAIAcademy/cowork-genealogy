@@ -20,7 +20,7 @@ import json
 import re
 
 import pytest
-from harness.skill_runner import agent_return_text
+from harness.skill_runner import subject_reply_text, tail_after_final_rule
 
 from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import (
@@ -581,6 +581,86 @@ def test_archion_browse_handoff(tool_calls, test):
     assert args.get("projectPath"), "the archion call omitted projectPath, so the hand-off was not logged by the tool"
 
 
+def test_fs_holdings_note_reaches_the_researcher(text_response, test, agent_returns=None):
+    """Tag-gated (fs-holdings): when `collections_search` shows FamilySearch
+    holds the same collection an external result duplicates, that note must
+    appear in the text the researcher actually sees, not only in the
+    caller-facing report above the final `---` (issue #4179).
+
+    `test_the_url_logged_is_the_url_presented` already scopes its own check to
+    the post-`---` tail; this is the companion check for the FamilySearch note,
+    which carries no URL and so that check cannot see it.
+    """
+    if "fs-holdings" not in test.get("tags", []):
+        pytest.skip("not an fs-holdings scenario")
+    tail = _researcher_tail(agent_returns, text_response, test)
+    assert "familysearch" in tail.lower(), (
+        "the FamilySearch-holds-this-too note never reached the text after the "
+        f"final '---' (what the researcher sees): {tail!r}"
+    )
+
+
+# A site's bare enum value doesn't always appear as a substring of its
+# repository's recommended spelling (`repository_recommended` is an open
+# enum; `external_site` is closed) — these are the known mismatches a
+# correct link would otherwise fail on (review, 2026-11-05).
+_REPOSITORY_ALIASES = {
+    "archivesgov": ("nara",),
+    "archiveorg": ("internetarchive",),
+    "libraryarchivescanada": ("libraryandarchivescanada",),
+}
+
+
+def test_plan_item_links_match_the_searched_repository(before_state, tool_calls, test):
+    """A `build_external_search_url` call's `planItemId` must name a plan
+    item that exists, on the same repository as the site actually searched
+    (issue #4179, review-ready 2026-11-03 decision).
+
+    A similar-looking plan item on a DIFFERENT repository is not "this
+    search": `pli_006`'s `repository` is FamilySearch, so an Ancestry search
+    does not execute it, and stamping its id marks that item's search as done
+    when it was not (`search-external-sites.md:70`, `planItemId` absent for
+    an ad-hoc search). This also catches a nonexistent id (`ut_search_external_sites_015`
+    once passed `pli_000`, which does not exist) and a reference to a plan
+    item on the matching repository is correctly left alone — the point is
+    repository agreement, not whether the delegation's text happens to name a
+    `pli_` id. Not tag-gated: every call to the tool is in scope.
+
+    `repository` is an open, free-text enum (`repository_recommended`), so a
+    plan item whose repository is the recommended `"other"` (or blank) names
+    nothing to compare against and is skipped — "other" is not a site this
+    tool could ever match. `_REPOSITORY_ALIASES` covers the sites whose
+    `external_site` enum value isn't a substring of the recommended
+    repository spelling that names them (review, 2026-11-05).
+    """
+    calls = [
+        c for c in (tool_calls or [])
+        if _bare_tool_name(c.get("tool")) == "build_external_search_url"
+    ]
+    if not calls:
+        pytest.skip("no build_external_search_url call this run")
+    linked = [c for c in calls if _as_mapping(c.get("args")).get("planItemId")]
+    plan_items = _plan_items(before_state)
+    errors = []
+    for c in linked:
+        args = _as_mapping(c.get("args"))
+        item_id = args.get("planItemId")
+        item = plan_items.get(item_id)
+        if item is None:
+            errors.append(f"planItemId {item_id!r} names no plan item in this project")
+            continue
+        site = re.sub(r"[^a-z0-9]", "", str(args.get("site") or "").lower())
+        repository = re.sub(r"[^a-z0-9]", "", str(item.get("repository") or "").lower())
+        if repository in ("", "other"):
+            continue
+        if site and site not in repository and repository not in _REPOSITORY_ALIASES.get(site, ()):
+            errors.append(
+                f"{item_id} (repository: {item.get('repository')!r}) was linked to a "
+                f"{args.get('site')!r} search — different repositories, not this search"
+            )
+    assert not errors, "a plan item was linked to the wrong search:\n  - " + "\n  - ".join(errors)
+
+
 # --- Tag-gated site-specific checks ----------------------------------
 
 def test_log_site_ancestry(before_state, after_state, test):
@@ -728,6 +808,19 @@ def _plan_items(state):
     }
 
 
+def _researcher_tail(agent_returns, text_response, test):
+    """The text after the agent's final `---` — what the researcher actually
+    sees, per `research/SKILL.md`'s relay rule.
+
+    `subject_reply_text`, not a bare `agent_return_text(...) or text_response`
+    fallback: on a direct test an empty agent return must grade as nothing, or
+    a silent agent passes whenever the dispatcher's own relay happens to carry
+    the expected text (review of issue #2805).
+    """
+    reply = subject_reply_text(agent_returns, text_response, "search-external-sites", test)
+    return tail_after_final_rule(reply)
+
+
 def test_log_entries_do_not_carry_each_others_fields(before_state, after_state, test):
     """V2. An `external_site` entry carries the site detail and never a staged
     `results_ref`: an external search stages nothing, so a handle there is one
@@ -760,7 +853,8 @@ def test_log_entries_do_not_carry_each_others_fields(before_state, after_state, 
 def test_the_url_logged_is_the_url_presented(
     before_state, after_state, text_response, test, agent_returns=None
 ):
-    """V4. external_site.url_generated must appear verbatim in the reply.
+    """V4. external_site.url_generated must appear verbatim in the text the
+    researcher actually sees — the part of the reply after the final `---`.
 
     The log entry is the audit trail; the link is what the user clicks. If they
     differ, research.json records a search nobody ran and the user runs a search
@@ -768,7 +862,17 @@ def test_the_url_logged_is_the_url_presented(
     is individually well-formed. This is the guard that makes the other seven
     mean something.
 
-    On the direct arm the reply is the agent's own return (`agent_return_text`,
+    Scoped to `tail_after_final_rule(reply)`, not the whole reply (issue #4179):
+    the caller (`research/SKILL.md`) relays only what follows the agent's final
+    `---` to the researcher, so a URL present only in the pre-`---` caller
+    report is a URL the researcher never sees, however well-formed the reply
+    reads as a whole. Reading the whole reply let a URL quoted only in the
+    caller-facing report above the line pass this check while the researcher's
+    own paragraphs said nothing more specific than "open the link" — 0 of 16
+    `build_external_search_url` calls in `v7.json` had their URL below the
+    line.
+
+    On the direct arm the reply is the agent's own return (`subject_reply_text`,
     the text the judge grades), not the bare main thread's relay of it; a routed
     or legacy run with no agent return falls back to `text_response`.
     """
@@ -777,7 +881,7 @@ def test_the_url_logged_is_the_url_presented(
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
 
-    reply = agent_return_text(agent_returns, "search-external-sites") or (text_response or "")
+    tail = _researcher_tail(agent_returns, text_response, test)
     errors = []
     for entry in _new_external_entries(before_state, after_state, "external_site"):
         detail = entry.get("external_site") or {}
@@ -794,12 +898,12 @@ def test_the_url_logged_is_the_url_presented(
         url = detail.get("url_generated")
         if not isinstance(url, str) or not url.strip():
             continue  # shape is test_url_generation_log_entry_shape's job
-        if url not in reply:
+        if url not in tail:
             errors.append(
                 f"log[{entry.get('id')}].external_site.url_generated is not in "
-                f"the reply the user sees: {url}"
+                f"the text after the final '---' (what the researcher sees): {url}"
             )
-    assert not errors, "URL logged but never presented:\n  - " + "\n  - ".join(errors)
+    assert not errors, "URL logged but never presented to the researcher:\n  - " + "\n  - ".join(errors)
 
 
 def test_no_plan_item_status_written_when_no_entry_names_one(

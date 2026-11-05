@@ -31,10 +31,11 @@ def job_state(
     Order matters. Work happening NOW outranks whatever the last turn concluded --
     a new turn on a finished project is running, not done.
 
-    ``delivered`` maps to ``stopped`` while the project is open. The turn ended on
-    purpose because a bounded request was met, but the RESEARCH is unfinished, and
+    ``delivered`` (legacy: nothing writes it since `research_delivered` was deleted in
+    step mode phase 2) maps to ``stopped`` while the project is open. Such a turn ended
+    on purpose because a bounded request was met, but the RESEARCH is unfinished, and
     telling a returning reader "done" would claim their project is complete when it
-    is not -- exactly the confusion the delivered outcome exists to prevent.
+    is not.
     """
     if turn_in_flight:
         return "running"

@@ -49,6 +49,25 @@ async function handle401(
 }
 
 /**
+ * Hand the FamilySearch status to the door's per-request recorder, if this
+ * principal carries one (E1 logs one line per call with it). Records the FINAL
+ * status, after any 401 re-read, because that is what the call actually got.
+ *
+ * Never throws: a recorder is a logging detail, and a tool call the caller was
+ * entitled to make must not fail because the door's logger did.
+ */
+function recordFamilySearchStatus(principal: Principal, response: Response): Response {
+  if (principal.kind === "bearer" && principal.recordFamilySearchStatus) {
+    try {
+      principal.recordFamilySearchStatus(response.status);
+    } catch {
+      // Deliberately swallowed; see above.
+    }
+  }
+  return response;
+}
+
+/**
  * Authenticated FamilySearch fetch with retry and 401 re-read.
  * Use for most FS endpoints. Delegates to `fetchWithRetry`.
  */
@@ -69,8 +88,11 @@ export async function fsFetch(
     retryOpts,
   );
 
-  return handle401(principal, token, response, url, init, (u, i) =>
-    fetchWithRetry(u, i, timeoutMs, retryOpts),
+  return recordFamilySearchStatus(
+    principal,
+    await handle401(principal, token, response, url, init, (u, i) =>
+      fetchWithRetry(u, i, timeoutMs, retryOpts),
+    ),
   );
 }
 
@@ -90,7 +112,10 @@ export async function fsFetchWithTimeout(
 
   const response = await fetchWithTimeout(url, authedInit, timeoutMs);
 
-  return handle401(principal, token, response, url, init, (u, i) =>
-    fetchWithTimeout(u, i, timeoutMs),
+  return recordFamilySearchStatus(
+    principal,
+    await handle401(principal, token, response, url, init, (u, i) =>
+      fetchWithTimeout(u, i, timeoutMs),
+    ),
   );
 }

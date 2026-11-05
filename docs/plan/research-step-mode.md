@@ -1,6 +1,6 @@
 # Research one step at a time
 
-**Status:** **Phase 0 complete (2026-10-19). Phase 1's PRs are all merged (2026-10-30):** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914, #3915 and #3916, PR 2 (#3917) and the conflict PR (#3937). Step mode is live on the alpha (build `365f4d903`), and the manual alpha check passed on 2026-11-02. Still open from Phase 1: the re-scoping of the two-question e2e fixtures. **Phase 2 in flight:** the hosted half of deleting the Stop veto merged in PR #4146, `research_delivered`'s deletion is PR #4148, and the e2e half is PR #4206. Phase 0's answers are in
+**Status:** **Phase 0 complete (2026-10-19). Phase 1's PRs are all merged (2026-10-30):** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914, #3915 and #3916, PR 2 (#3917) and the conflict PR (#3937). Step mode is live on the alpha (build `365f4d903`), and the manual alpha check passed on 2026-11-02. Still open from Phase 1: the re-scoping of the two-question e2e fixtures. **Phase 2 in flight:** the hosted half of deleting the Stop veto merged in PR #4146, `research_delivered` is deleted (PR #4148), and the e2e half merged in PR #4206. Phase 0's answers are in
 ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
 research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
@@ -1032,7 +1032,7 @@ file's own sections, top to bottom.
 | Ruling: the spend bound continues in a new session | **Unaffected;** it matters most under "Keep going" |
 | Ruling: an errand pauses the job and waits (2026-09-27) | **Kept, loosened** (decision 16): an errand is a step that ends naming what to fetch, and the researcher may carry on without waiting (section I) |
 | "The Stop hook binds on every browser turn"; nudge cap 60; the alpha's `auto_continue` | **Superseded:** no turn arms the veto, and phase 2 deletes it. "Keep going" is the host's replies (section A2). The alpha's `auto_continue` chain does not carry them: it matches only the retired `Next: <step>. Continue?` line (`hand_back.py`), so it never starts, and the alpha has no "Keep going" (checked 2026-11-02) |
-| `turns.outcome` values | **Mostly unchanged.** A step turn ends `ok` (no label); the worker sets `completed` at turn close when the step finished the project; `delivered` goes in phase 2 (pending the "Open, for Praise" question there) |
+| `turns.outcome` values | **Mostly unchanged.** A step turn ends `ok` (no label); the worker sets `completed` at turn close when the step finished the project; `delivered` went in phase 2 (PR #4148); old rows keep their label |
 | "`decision` and `mcp_unavailable` cannot fire" | **Unaffected;** step mode needs no `decision` exit |
 | person-evidence's weak-match pause and its autonomous-only resolve-downward rule | **The pause becomes the link step's closing question,** asked with the researcher present. Resolve-downward applies in "Keep going." and "Wrap it up." turns, from the router's `userPresent: no` (section B2) |
 
@@ -1042,7 +1042,7 @@ file's own sections, top to bottom.
 |---|---|
 | "The default web path never enters the router"; re-entry through the nudge text (PR #3262) | **Router entry comes from the front door below** on every message, the host's replies included. No nudge text remains |
 | `research` as the only front door (PR #3262's frontmatter) | **Keep:** section H depends on it |
-| "Not every turn is a job"; the `research_delivered` finish line (PR #3187, PR #3286, PR #3235) | **Superseded:** every turn is one step. Keep the bounded routing list and "name what was saved"; delete `research_delivered` in phase 2 (pending the "Open, for Praise" question there) |  **SUPERSEDED by decision 25**: rider 1 keeps one step per boundary, not one per turn.
+| "Not every turn is a job"; the `research_delivered` finish line (PR #3187, PR #3286, PR #3235) | **Superseded:** every turn is one step. Keep the bounded routing list and "name what was saved"; `research_delivered` was deleted in phase 2 (PR #4148) |  **SUPERSEDED by decision 25**: rider 1 keeps one step per boundary, not one per turn.
 | "Never ask a question you will not wait for" | **Keep, applied to every step.** Offers at the **end** of a step become its "Continue with X?". Offers **mid-step** become statements, because nothing stops mid-step: for example search-records' "Let the user confirm before extraction", now that extraction is inside the search step |
 | "Give 'I need you' an exit" (`AskUserQuestion` carrier, `pending_decision`, `DecisionCard`) | **Keep** (decision 24, reversing 23). The carrier IS the boundary. The premise this row carried -- "the step boundary already ends every turn" -- was measured false in phase 0: a deny does not end a turn, and `AskUserQuestion` waits without ending one either. `DecisionCard` still becomes the home for the reply buttons |
 | The fourth stop's clauses: unreachable records end `completed`; a blocking conflict "is a decision" | **Unreachable records:** unchanged (the proof at the tier reached, `completed`). **A blocking conflict:** the conflict step names the record that could settle it and offers the planning step (section E), no `decision` exit needed |
@@ -1305,16 +1305,16 @@ in parallel with PR 2.
     PR 2's paid research run.
 
 **Phase 2 — cleanup, once step mode is live.**
-- **Delete `research_delivered` everywhere.** About 24 files, including:
+- **Delete `research_delivered` everywhere.** **Done** (Praise, 2026-11-02, on a Fable review). The open question below resolves: `_halt` (`proto/worker/options.py`) is a stateless helper with three callers (the Stop/spend/handover halt, the delivered arm, the step boundary); deleting the delivered arm leaves the other two, and a bounded ask now ends on the model's own end of turn, and on the prototype the step gate stops a second step (the alpha has no step gate; there the router's "end your turn" is all that stops it, unmeasured until a hosted replay). The no-project routing sentence (#3768) moved from `DELIVERY_GUIDANCE` into both planes' `project_note` (`continue_policy.NO_PROJECT_NOTE`). The completion-halt contract moved to `docs/specs/completion-halt-spec.md`. Deviation: the web `delivered` label stays, for rows written before. Original scope: About 24 files, including:
   - `manifest.json`, `tool-schemas.ts`, `server.ts` and `dev/smoke-calls.ts`;
   - the delivered arms in `options.py`, `worker.py` and `real_agent.py`;
   - the web `delivered` label;
   - `mock_mcp.py`, `instrument.py` and the tests;
   - `DELIVERY_GUIDANCE`;
   - the bounded-ask section's `research_delivered` close. Keep its routing list.
-  - **Open, for Praise:** decision 25's prototype halt reuses `_halt`, which a main-thread
-    `research_delivered` triggers today (`apps/server/proto/worker/options.py`). Say whether
-    this bullet still stands under decision 25, and if it does, what ends a bounded ask.
+  - **Answered (was "Open, for Praise"):** decision 25's prototype halt reuses `_halt`, which a
+    main-thread `research_delivered` used to trigger. The bullet stood; see the resolution
+    above.
 - **Delete the Stop veto:** **Hosted half done** (the alpha and the prototype: no `Stop` hook binds, the cap and its settings are gone, `proto-demo-auto` retired, `turns.nudges` and `turn_costs.continuations` kept and now always 0). **e2e half done** (PR #4206): `--step-mode job` is the e2e default; `stop_checker.py`'s veto, the orchestrator's Stop hook, `max_continue_nudges` and the `--resume-on-stall` flag are deleted; runs no longer write `usage.continue_nudges` or `usage.hand_back_classes`, and `make e2e-nudges` leaves such runs out. The alpha's runner chain and `auto_continue_max_steps` were left in place (Praise, 2026-11-02): the chain matches only the retired `Next: <step>. Continue?` line, so it never starts, and the alpha is being retired. Original scope: `should_continue_run`'s nudge path, `CONTINUE_REASON`, the nudge
   counters, `stop_checker.py`'s veto, and `AUTONOMOUS_MAX_NUDGES` with its compose, Beanstalk
   and bundle settings, and the alpha's `autonomous_max_nudges` and `auto_continue_max_steps`.
@@ -1488,8 +1488,7 @@ in parallel with PR 2.
 ## Coordinates with
 - **PR #3262 and `research-as-a-job-later.md` (Praise):** see "Integrating with
   research-as-a-job".
-- **Issue #2813 (Praise):** phase 2 replaces its `research_delivered` exit (pending the "Open, for
-  Praise" question in phase 2); H keeps its routing.
+- **Issue #2813 (Praise):** phase 2 replaced its `research_delivered` exit (deleted in PR #4148); H keeps its routing.
 - **PR #3479 (clack391):** it rewrites the router rows this plan edits. research-plan's prose
   changes land in this plan's research-plan prep PR after it merges.
 - **PR #3494** (`question-state.ts`, the router) and **PR #3476** (`proof-conclusion.md`).

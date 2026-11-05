@@ -57,10 +57,17 @@ export default function SessionView({
     }))
   }, [])
 
-  const transport = useMemo(
-    () => (conn ? new WsResearchTransport(sessionId, conn) : null),
-    [conn, sessionId]
-  )
+  // Holds the stable send delegate that ChatPane registers via onSendReady.
+  // The ref is captured by the transport's sendPrompt closure, so the closure
+  // is wired to whichever send is current when the button fires.
+  const chatSendRef = useRef<((text: string) => void) | null>(null)
+
+  const transport = useMemo(() => {
+    if (!conn) return null
+    const t = new WsResearchTransport(sessionId, conn)
+    t.sendPrompt = (text: string) => { chatSendRef.current?.(text) }
+    return t
+  }, [conn, sessionId])
 
   // Live session naming: the viewer reports the agent-written project.title;
   // relay it to the control plane ONCE, the moment the agent names a session
@@ -215,6 +222,7 @@ export default function SessionView({
             onUsage={onUsage}
             projectId={session?.project_id}
             onContinueOnProject={(id) => onOpenSession?.(id)}
+            onSendReady={(fn) => { chatSendRef.current = fn }}
           />
         ) : (
           <div className="chatBody">
