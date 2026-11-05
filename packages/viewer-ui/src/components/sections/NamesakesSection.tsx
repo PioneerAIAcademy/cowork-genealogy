@@ -14,8 +14,9 @@ export default function NamesakesSection(): React.JSX.Element {
         <h2 className={styles.sectionTitle}>Namesakes</h2>
         <p className={styles.empty}>
           No namesakes recorded. A same-named person a search rules out is recorded
-          here during the search-records step, and a link to the person he is not
-          then needs something in its record tying it to that person.
+          here during the search-records step (or a search-images or search-full-text
+          step), as is a pool of same-named people not yet told apart, and a link to
+          the tree person then needs something in its record tying it to that person.
         </p>
       </div>
     )
@@ -33,7 +34,9 @@ export default function NamesakesSection(): React.JSX.Element {
           rawData={ns}
           footer={
             <div className={styles.footer}>
-              <span className={styles.footerLabel}>Not the same person as:</span>
+              <span className={styles.footerLabel}>
+                {ns.notes?.startsWith('pool:') ? 'Same name, not yet told apart from:' : 'Not the same person as:'}
+              </span>
               <CrossLink id={ns.person_id} />
             </div>
           }
@@ -41,7 +44,7 @@ export default function NamesakesSection(): React.JSX.Element {
           <div className={styles.body}>
             {ns.record_ids.length > 0 && (
               <div className={styles.subsection}>
-                <div className={styles.subLabel}>His Records</div>
+                <div className={styles.subLabel}>Records</div>
                 <div className={styles.linkList}>
                   {ns.record_ids.map((rid) => (
                     <span key={rid}>

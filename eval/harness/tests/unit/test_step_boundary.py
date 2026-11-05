@@ -135,6 +135,15 @@ def test_search_hints_follows_a_search_step_but_opens_a_turn_alone():
     assert sb.step_allowed(["search-hints"], "search-records") is False
 
 
+def test_a_search_hit_review_repeats_itself_but_follows_no_search():
+    """The per-hit verdicts fan out as repeats of one step, and a turn that ran the
+    search cannot also judge its hits: the review labels, then offers (#3522)."""
+    review = "evaluate-search-results"
+    assert sb.step_allowed([review], review) is True
+    assert sb.step_allowed(["search-full-text"], review) is False
+    assert sb.step_allowed([review], "record-structurer") is False
+
+
 def test_names_are_compared_after_the_last_colon():
     assert sb.step_allowed([], "genealogy-research:research-plan") is True
     assert sb.step_allowed(["genealogy-research:search-records"], "search-images") is True
@@ -561,8 +570,12 @@ def test_the_wrapup_offer_round_trips_too():
         "Continue with inventing a brand new step?",
         "Continue with writing the conclusion?\nActually, one question first.",
         "Continue with writing the conclusion",
+        "Continue with extracting the 0 Matches?",
+        "Continue with extracting the census?",
+        "Continue with running the 3 searches?",
     ],
-    ids=["empty", "blank", "a question", "unknown label", "not the last line", "no question mark"],
+    ids=["empty", "blank", "a question", "unknown label", "not the last line", "no question mark",
+         "zero Matches", "extracting no Match", "a count on another label"],
 )
 def test_a_line_naming_no_entry_is_no_offer(text):
     """No offer ends a "Keep going" run, so every one of these must read as None --
@@ -624,3 +637,51 @@ def test_a_wrap_up_that_has_concluded_names_the_next_step_not_wrapping_up():
     assert "wrapping up" in under_way
     done = sb.deny_reason("question-selection", "wrapup", ["research-plan", "proof-conclusion"])
     assert "wrapping up" not in done and sb.STEP_LABELS["setup"] in done
+
+
+# ---------------------------------------------------------------------------
+# Search-hit review: the verdicts, then "Continue with extracting the N Matches?"
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "line",
+    [
+        "Continue with extracting the 3 Matches?",
+        "Continue with extracting three Matches?",
+        "Continue with extracting the Match?",
+        "Continue with extracting the 1 Match?",
+        "Continue with extracting the 11 Matches?",
+        "Continue with extracting the Matches?",
+        "**Continue with extracting the 3 Matches?**",
+        "**Continue with extracting the Match?**",
+        "Continue with **extracting the 1 Match**?",
+        "CONTINUE WITH EXTRACTING THE TEN MATCHES?",
+    ],
+)
+def test_the_extraction_offer_parses_with_or_without_its_count(line):
+    """The router writes the count; the host reads the step. A count of 0 is no
+    offer, which `test_a_line_naming_no_entry_is_no_offer` pins."""
+    assert sb.offered_step(f"Hit 4 is a Match.\n\n{line}") == "extract-matches"
+
+
+def test_a_record_structurer_stopped_in_a_review_turn_offers_the_extraction():
+    """The ruled close is "Continue with extracting the N Matches?". Rendered from
+    record-structurer's home group, the deny would offer "running the searches"."""
+    reason = sb.deny_reason("record-structurer", "step", ["evaluate-search-results"])
+    assert sb.offered_step(reason) == "extract-matches"
+    namespaced = sb.deny_reason("genealogy-research:record-structurer", "step",
+                                [sb.ROUTER, "genealogy-research:evaluate-search-results"])
+    assert sb.offered_step(namespaced) == "extract-matches"
+    # Only there: stopped in any other turn, it is still the search step.
+    assert sb.offered_step(sb.deny_reason("record-structurer", "step", ["timeline"])) == "search"
+    assert sb.offered_step(sb.deny_reason("record-structurer")) == "search"
+
+
+def test_the_extraction_offer_gets_the_default_replies():
+    research = _with_question()
+    assert sb.reply_options("extract-matches", research) == [
+        sb.REPLY_CONTINUE, sb.REPLY_KEEP_GOING, sb.REPLY_WRAP_UP,
+    ]
+    out = _reply(prev="search-full-text", step="evaluate-search-results", offer="extract-matches")
+    assert out["reply"] == sb.REPLY_KEEP_GOING

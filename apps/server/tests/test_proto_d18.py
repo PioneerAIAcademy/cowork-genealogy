@@ -393,6 +393,15 @@ def test_harness_record_reads_the_committed_logs_usage_block(tmp_path):
     assert "tokens 124/275,964/5,404,059/86,777" in text
 
 
+def test_a_step_mode_run_prints_no_nudge_count(tmp_path):
+    """Step mode phase 2: an e2e run is never nudged and records no counter, so the
+    record says nothing about nudges rather than "? nudges"."""
+    data = json.loads(_runlog(tmp_path / "slug", "2026-07-31_18-06-28").read_text(encoding="utf-8"))
+    del data["usage"]["continue_nudges"]
+    text = compare.harness_record(data)
+    assert "nudges" not in text and "90 SDK turns" in text
+
+
 def test_harness_record_carries_the_tokens_too_under_the_run_logs_own_key_names(tmp_path):
     """Both records print tokens or the comparison has nothing honest in common: on a resumed
     turn the prototype's cost_usd is 0, and the tokens are the only spend figure both sides

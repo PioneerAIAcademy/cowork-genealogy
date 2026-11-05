@@ -563,10 +563,10 @@ re-graded) / `skipped` (the judge never ran).
 | | |
 |---|---|
 | `completed` | Happy path — proof-conclusion fired and set the project completed |
-| `natural_end` | The agent thought it was done; GPS may or may not agree |
+| `natural_end` | The run ended with the project not completed. On a step-mode run, usually the host sent no reply: the last turn made no "Continue with …?" offer, repeated a step, or hit the reply cap. The last entry of `usage.per_turn` shows which |
 | `inactivity` / `timeout` | It stalled — the last `narration` entry shows where |
 | `tool_cap` / `max_turns` | It may be looping — look for repeated tool calls near the end |
-| `cost_cap` | The final cost passed `caps.max_cost_usd`. A label, not a stop: the run had already ended |
+| `cost_cap` | The cost passed `caps.max_cost_usd`. On a step-mode run the host then stops replying, so the run ends unfinished at that step's boundary. On an older run it was a label only |
 | `error` | SDK or harness exception; check `result.error` |
 | `host_slept` | **The machine slept for at least the inactivity cap: an environment failure, not your fixture.** The judge was skipped and the run is left out of the rates. Commit its three files with no `.ann.json`, keep the machine awake (`eval/README.md`, "Keep the machine awake during a run") and re-run |
 | `mcp_unavailable` | **The genealogy tools were not in the session — an environment failure, not your fixture. Re-run; do not re-research the case.** You will not find a run log for it: this one writes no files. The abort message itself now prints the server's own captured stderr when the harness found it — if it didn't, run `make e2e-preflight`, which reads the same log and shows the directory it looked in |

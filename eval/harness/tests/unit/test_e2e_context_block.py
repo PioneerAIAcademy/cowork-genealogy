@@ -326,8 +326,8 @@ def test_credential_read_is_denied_on_a_default_run(tmp_path, monkeypatch):
 
 def test_a_delegation_is_forced_to_the_foreground(tmp_path, monkeypatch):
     """On CLI 2.1.294 an agent backgrounds when the flag is absent: the run ends at
-    the main thread's result and loses it, and the Stop hook's nudge spawns a
-    duplicate. Deleting the `foreground_rewrite` call in pretool_hook must red this."""
+    the main thread's result and loses it, and a nudge to continue (a Stop hook, deleted
+    in step mode phase 2) spawned a duplicate. Deleting the `foreground_rewrite` call in pretool_hook must red this."""
     from harness.auth import AuthConfig
 
     monkeypatch.setattr(

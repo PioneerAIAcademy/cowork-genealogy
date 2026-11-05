@@ -26,7 +26,7 @@ import type {
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
   StoppedBecause, Subscription, LocalityPageSection, LocalityPageOutcome, ResolutionKind,
-  SkipCategory, RegistrationEvent, RegistrationLevel,
+  SkipCategory, RegistrationEvent, RegistrationLevel, HitVerdict,
 } from './enums.generated.js'
 
 // ============================================================
@@ -426,8 +426,9 @@ export interface WarningJustification {
   recorded_at: string
 }
 
-/** A different person who shares a tree person's name, keyed by the tree
- *  person_id it shadows. */
+/** A different person who shares a tree person's name, or a pool of such
+ *  people one of whom may be that person (notes starting `pool:`, no
+ *  record_ids), keyed by the tree person_id it shadows. */
 export interface Namesake {
   id: string
   person_id: string
@@ -439,6 +440,24 @@ export interface Namesake {
   /** Stamped by research_append: listed record id to the persona its search result names. */
   record_persona_ids?: Record<string, string>
   notes?: string | null
+  created: string
+}
+
+/** One verdict on whether a full-text search hit is about a tree person.
+ *  `hit_verdicts` on research.json; written by the evaluate-search-results agent. */
+export interface HitVerdictEntry {
+  id: string
+  /** The fulltext_search log entry whose retained results hold the hit. */
+  log_id: string
+  /** The hit's id as that search's sidecar stores it. */
+  hit_id: string
+  person_id: string
+  verdict: HitVerdict
+  /** As of the evaluation; a later extraction does not clear it. Treat the hit
+   *  as not new once some assertion's `record_id` has the same bare id (the part
+   *  after the last `:`) as `hit_id`. */
+  new_vital_info: boolean
+  rationale: string
   created: string
 }
 
@@ -464,6 +483,7 @@ export interface ResearchData {
   localities?: Locality[]
   warning_justifications?: WarningJustification[]
   namesakes?: Namesake[]
+  hit_verdicts?: HitVerdictEntry[]
 }
 
 // ============================================================
