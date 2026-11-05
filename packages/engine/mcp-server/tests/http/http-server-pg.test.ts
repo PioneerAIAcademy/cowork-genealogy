@@ -361,6 +361,15 @@ if (!DSN || !ENDPOINT) {
         return p;
       };
 
+      /** Create a project at `projectPath` owned by `userId`, through the
+       *  store a connector call binds for that user. */
+      const seedAs = (userId: string, projectPath: string, given: string) =>
+        seedProject(
+          new PgS3ProjectStore(backend, { projectId: projectPath.slice(1), anchorPath: projectPath, ownerId: userId }),
+          projectPath,
+          given,
+        );
+
       /** One connector tools/call over raw fetch. */
       async function connCall(token: string | null, name: string, args: Record<string, unknown>) {
         const res = await fetch(`${base}/mcp`, {
@@ -426,12 +435,10 @@ if (!DSN || !ENDPOINT) {
         const b = await seedConnector();
         const projectPath = freshPath();
 
-        // A writes, which claims the project.
-        const created = await connCall(a.token, "project_create", { ...createArgs("Alpha"), projectPath });
-        expect(created.status, created.text).toBe(200);
-        // The HTTP status is the DOOR's verdict; the tool's own result is in
-        // the body, and a claim that never happened leaves the project free.
-        expect(created.text, "A's create must actually claim the project").not.toContain('"isError":true');
+        // A's first write claims the project: the store the door binds for A,
+        // carrying A's owner id. project_create reads FamilySearch, which no
+        // offline test reaches, so the create runs here with the read injected.
+        await seedAs(a.userId, projectPath, "Alpha");
 
         // The canary has to be a string A's project ACTUALLY contains, or the
         // "reads nothing" half cannot fail. Prove it is one by reading it back
@@ -454,7 +461,7 @@ if (!DSN || !ENDPOINT) {
         const b = await seedConnector();
         const projectPath = freshPath();
         const projectId = projectPath.slice(1);
-        await connCall(a.token, "project_create", { ...createArgs("Alpha"), projectPath });
+        await seedAs(a.userId, projectPath, "Alpha");
         const before = await rowCounts(projectId);
         await connCall(b.token, "research_append", {
           projectPath,
