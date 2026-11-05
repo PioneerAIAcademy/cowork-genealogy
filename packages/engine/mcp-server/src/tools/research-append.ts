@@ -803,7 +803,9 @@ function conflictInvariants(entry: any): string[] {
   // a genealogical judgment; it owes only the reason, because there is nothing
   // to weigh or to declare independent once the conflict has stopped bearing
   // on the question. Measured cost: 0 of the 1 moot conflict in the committed
-  // e2e corpus (`ogletree-children` c_006, which carries one).
+  // e2e corpus (`ogletree-children` c_006, which carries one). The analyses are
+  // optional here but not inert: a moot conflict that carries both lifts the
+  // core-identifier cap on its competitors (`resolvedAgainstIds`).
   if (entry.status === "moot") {
     const rationale = entry.resolution_rationale;
     // Trimmed, and type-checked: a whitespace-only string asserts exactly as
@@ -1396,8 +1398,9 @@ const WEAK_INFORMANT_PROXIMITY: ReadonlySet<string> = new Set([
  *  tree. Measured over every committed scenario fixture 2026-09-24: with these
  *  two gates the arm refuses **0 of 323** confident/probable person_evidence
  *  entries, against 38 without them and 274 comparing any place at all. An
- *  assertion a resolved conflict decided against, on the attribute that conflict
- *  disputed, is not credible either (`resolvedAgainstIds`). */
+ *  assertion a settled conflict set aside, on the attribute that conflict
+ *  disputed, is not credible either: one a resolved conflict decided against, or
+ *  any competitor in a moot one that carries both analyses (`resolvedAgainstIds`). */
 function contradictionIsCredible(assertion: any, resolvedAgainst: ReadonlySet<string>): boolean {
   if (resolvedAgainst.has(assertion?.id)) return false;
   if (assertion?.information_quality === "secondary") return false;
@@ -1423,27 +1426,55 @@ export interface ResolvedAgainst {
   date: ReadonlySet<string>;
 }
 
-/** Assertions a RESOLVED FACT conflict decided against, per arm: every
- *  competitor that is not its `preferred_assertion_id`, released only on the
- *  arm its `disputed_attribute` names. A contradiction the project has already
- *  weighed and set aside is not a live one, so it cannot cap the link; one it did
- *  not weigh (a birthplace dispute says nothing about the same record's
- *  christening date) still does. An identity conflict releases nothing: its
- *  loser was judged to be a different person, so a link through it to the
- *  rejected identity is exactly what must stay capped. Read from the document as
- *  this op sees it, so a conflict resolved LATER in the same batch still
- *  refuses, which fails safe. Figures: `dev/measure-core-identifier-gate.ts`. */
+/** Assertions a settled FACT conflict set aside, per arm, released only on the
+ *  arm its `disputed_attribute` names. A `resolved` conflict releases every
+ *  competitor that is not its `preferred_assertion_id`. A `moot` one prefers
+ *  none, so it releases every competitor, but only when it carries non-blank
+ *  `independence_analysis` and `weighing_analysis`, the bar `resolved` meets:
+ *  `moot` itself owes only a `resolution_rationale`, and one sentence must not
+ *  lift the cap. Issue #4255: a late group baptism, 12 years after the birth,
+ *  that conflict-resolution weighed and marked moot, left every link capped
+ *  with no way out. A contradiction the project has already weighed and set
+ *  aside is not a live one, so it cannot cap the link; one it did not weigh (a
+ *  birthplace dispute says nothing about the same record's christening date)
+ *  still does.
+ *
+ *  An identity conflict releases nothing: its loser was judged to be a
+ *  different person, so a link through it to the rejected identity is exactly
+ *  what must stay capped. For the same reason a moot conflict releases nothing
+ *  while an identity conflict, at any status, names one of its competing
+ *  assertions: `moot` is also how a fact conflict ends when its record turns out
+ *  to be someone else (#2475), and that must not lift the cap onto the wrong
+ *  person. A moot of that kind written with no identity conflict beside it
+ *  cannot be told apart from the documents, and releases.
+ *
+ *  Read from the document as this op sees it, so a conflict settled LATER in the
+ *  same batch still refuses, which fails safe. Figures:
+ *  `dev/measure-core-identifier-gate.ts`. */
 function resolvedAgainstIds(research: any): ResolvedAgainst {
   const place = new Set<string>();
   const date = new Set<string>();
-  for (const c of (research?.conflicts ?? []) as any[]) {
-    if (c?.status !== "resolved" || c.conflict_type !== "fact") continue;
-    if (typeof c.preferred_assertion_id !== "string") continue;
+  const conflicts: any[] = Array.isArray(research?.conflicts) ? research.conflicts : [];
+  const competingIds = (c: any): string[] =>
+    Array.isArray(c?.competing_assertion_ids)
+      ? c.competing_assertion_ids.filter((id: unknown): id is string => typeof id === "string")
+      : [];
+  const inIdentityConflict = new Set(
+    conflicts.filter((c) => c?.conflict_type === "identity").flatMap(competingIds),
+  );
+  for (const c of conflicts) {
+    if (c?.conflict_type !== "fact") continue;
     const attr = String(c.disputed_attribute ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
     const into = BIRTH_PLACE_DISPUTES.has(attr) ? place : BIRTH_DATE_DISPUTES.has(attr) ? date : null;
     if (!into) continue;
-    for (const id of (c.competing_assertion_ids ?? []) as unknown[]) {
-      if (typeof id === "string" && id !== c.preferred_assertion_id) into.add(id);
+    const ids = competingIds(c);
+    if (c.status === "resolved") {
+      if (typeof c.preferred_assertion_id !== "string") continue;
+      for (const id of ids) if (id !== c.preferred_assertion_id) into.add(id);
+    } else if (c.status === "moot") {
+      if (isBlank(c.independence_analysis) || isBlank(c.weighing_analysis)) continue;
+      if (ids.some((id) => inIdentityConflict.has(id))) continue;
+      for (const id of ids) into.add(id);
     }
   }
   return { place, date };
@@ -1902,8 +1933,11 @@ export function coreIdentifierContradictionInvariants(
     `confidence '${entry.confidence}' is not available on this link: ${findings.join("; ")}. ` +
       `A contradicted core identifier caps the link at 'speculative' regardless of the match ` +
       `score, and the user is asked before it stands. Use 'speculative' and name the ` +
-      `contradiction in the rationale, or resolve it first — a confident wrong identity is ` +
-      `worse than a flagged uncertain one.`,
+      `contradiction in the rationale, or have conflict-resolution settle it first in a fact ` +
+      `conflict whose disputed_attribute is 'birth_place' (or 'birth_date' for a date): ` +
+      `'resolved' preferring another assertion, or 'moot' carrying independence_analysis and ` +
+      `weighing_analysis (a moot with only a resolution_rationale still caps). A confident ` +
+      `wrong identity is worse than a flagged uncertain one.`,
   ];
 }
 
