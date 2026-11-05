@@ -65,6 +65,10 @@ SECRET_NAME = re.compile(r"KEY|SECRET|TOKEN|PASSWORD|DSN")
 API_LEVEL = frozenset({"MODEL_PROVIDER", "GATEWAY_BASE_URL", "PYTHONPATH", "HOME"})
 NGINX_UNIT_S = {"": 1, "s": 1, "m": 60, "h": 3600, "d": 86400}
 TOOLS_MIN_TIMEOUT_S = 1800
+# #3980: the project download is built before its first byte. A longer read timeout than the
+# shared ALB's hand-set idle timeout (beta plan, P0.3) would be cut by the ALB first.
+WEB_MIN_READ_TIMEOUT_S = 600
+SHARED_ALB_IDLE_TIMEOUT_S = 1800
 
 
 class _StrictLoader(yaml.SafeLoader):
@@ -301,6 +305,11 @@ def test_web_nginx_takes_a_full_upload_and_the_cookie_jar():
     assert body is not None and body >= UPLOAD_MAX_BYTES + 64 * 1024, body
     line = _nginx_bytes(WEB_NGINX / "01-web-headers.conf", "large_client_header_buffers")
     assert line is not None and line >= 16 * 1024, line
+
+
+def test_web_nginx_waits_for_a_slow_download():
+    seconds = _nginx_seconds(WEB_NGINX / "01-web-uploads.conf", "proxy_read_timeout")
+    assert seconds is not None and WEB_MIN_READ_TIMEOUT_S <= seconds <= SHARED_ALB_IDLE_TIMEOUT_S, seconds
 
 
 def test_tools_alb_idle_timeout_is_alone_in_its_file():

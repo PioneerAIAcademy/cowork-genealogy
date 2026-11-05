@@ -73,10 +73,13 @@
 # Five pins are load-bearing and have explicit `ignore` rules below. They are
 # correctness pins, not staleness:
 #
-#   mcp>=1.29,<2          mcp 2.0.0 removed/renamed Server.list_tools, which
+#   mcp <2                mcp 2.0.0 removed/renamed Server.list_tools, which
 #                         claude_agent_sdk.create_sdk_mcp_server calls. It broke
-#                         CI the day it shipped (PR #932). Delete the ignore only
-#                         when claude-agent-sdk itself supports mcp 2.x.
+#                         CI the day it shipped (PR #932). Both uv trees cap it
+#                         and both entries ignore its majors: eval/harness and
+#                         apps/server (Dependabot proposed 2.x there in PR #4105).
+#                         Delete the ignores only when claude-agent-sdk itself
+#                         supports mcp 2.x.
 #   claude-agent-sdk==    eval/harness pins the exact version apps/server's
 #                         `sandbox` group pins, so the harness runs the hosted
 #                         alpha's CLI (test_sdk_pin_matches_hosted.py). It moves
@@ -103,7 +106,7 @@
 #                         this together with the runtime line (see the docker
 #                         entry below for what a runtime move involves).
 #
-# Of these five ignores, four are scoped to `version-update:*` update-types, so
+# Of these six ignores, five are scoped to `version-update:*` update-types, so
 # they suppress only routine version bumps rather than security advisories. The
 # @types/node one is a `versions: [">=23"]` range instead — deliberately: it
 # must also suppress a security-labelled bump onto a types line for a Node we
@@ -284,6 +287,11 @@ updates:
       - developer
     commit-message:
       prefix: "deps(server)"
+    ignore:
+      # See "Pins that must NOT be floated" above. Security updates still fire.
+      - dependency-name: mcp
+        update-types:
+          - version-update:semver-major
     groups:
       uv-minor-and-patch:
         patterns:
