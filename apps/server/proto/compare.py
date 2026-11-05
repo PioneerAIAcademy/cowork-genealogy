@@ -324,10 +324,12 @@ def harness_record(data: dict[str, Any]) -> str:
     block; the tokens as ``harness_tokens`` reads them, tagged with what they cover."""
     usage = data.get("usage") or {}
     tokens, covers = harness_tokens(usage, data.get("subagents") or [])
+    # A step-mode run is never nudged and records no counter (step mode phase 2).
+    nudges = f"{usage['continue_nudges']} nudges  " if "continue_nudges" in usage else ""
     return (
         f"{_money(usage.get('total_cost_usd'))}  {_seconds(usage.get('duration_ms'))}  "
         f"{len(data.get('tool_calls') or [])} tool calls  "
-        f"{usage.get('num_turns', '?')} SDK turns  {usage.get('continue_nudges', '?')} nudges  "
+        f"{usage.get('num_turns', '?')} SDK turns  {nudges}"
         f"{_tokens(tokens)}{covers}"
         f"{HARNESS_LAST_QUERY if covers_last_query_only(usage) else ''}"
     )

@@ -1,0 +1,59 @@
+{
+  "tool": "fulltext_search",
+  "description": "Full-text search for Patrick Flynn in Pennsylvania deeds returns one hit: an 1834 Berks County deed in which Patrick Flynn of Reading, laborer, and Margaret his wife sell a lot to George Ritter. An adult grantor with a wife in 1834 cannot be the subject, Patrick Flynn (I1), born about 1845: the Umbelina shape of issue #3363 (a namesake ruled out in a transcript hit). Feeds ut_search_full_text_021. Name-field twin of fulltext-search-flynn-1834-deed-namesake.",
+  "args": {
+    "name": "~Flynn"
+  },
+  "response": {
+    "query": {
+      "name": "Flynn"
+    },
+    "totalResults": 1,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "id": "https://familysearch.org/ark:/61903/3:1:3Q9M-CSQ7-F1Z4",
+        "collectionId": "2220359",
+        "collectionTitle": "Pennsylvania Land Records",
+        "title": "Deed — Patrick Flynn and Margaret his wife to George Ritter",
+        "recordDate": "1834",
+        "recordType": "Land",
+        "recordPlace": "Berks, Pennsylvania",
+        "textDocument": "This Indenture made the fourth day of April in the year of our Lord one thousand eight hundred and thirty four Between Patrick Flynn of the Borough of Reading in the County of Berks and State of Pennsylvania laborer and Margaret his wife of the one part and George Ritter of the same place innkeeper of the other part Witnesseth that the said Patrick Flynn and Margaret his wife for and in consideration of the sum of one hundred and twenty dollars have granted bargained and sold unto the said George Ritter a certain lot of ground situate on Water Street in the said Borough. In witness whereof the said parties have hereunto set their hands and seals. Patrick Flynn his mark. Margaret Flynn her mark. Acknowledged before Jacob Hoff Justice of the Peace.",
+        "names": [
+          "Patrick Flynn",
+          "Margaret Flynn",
+          "George Ritter",
+          "Jacob Hoff"
+        ],
+        "places": [
+          "Borough of Reading",
+          "Berks County",
+          "Pennsylvania"
+        ],
+        "dates": [
+          "1834"
+        ],
+        "highlightTerms": [
+          "Flynn",
+          "Patrick Flynn"
+        ]
+      }
+    ],
+    "facets": [
+      {
+        "name": "collectionId",
+        "count": 1,
+        "items": [
+          {
+            "name": "Pennsylvania Land Records",
+            "count": 1,
+            "filterParam": "2220359"
+          }
+        ]
+      }
+    ]
+  }
+}

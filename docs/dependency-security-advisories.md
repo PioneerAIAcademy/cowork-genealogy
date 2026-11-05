@@ -5,7 +5,7 @@ dependency trees (root pnpm workspace — which since #1488 includes `eval/app` 
 and `packages/engine/mcp-server` npm). Re-run the audits after any dependency
 bump and update this file.
 
-Last reviewed: **2026-11-04**.
+Last reviewed: **2026-11-05**.
 
 > **This file is the mechanism, by decision.** @DallanQ ruled on 2026-09-09 (#2352)
 > that no CI job will audit any dependency tree: failing the build, warning without
@@ -16,7 +16,8 @@ Last reviewed: **2026-11-04**.
 
 **Reachability, once, up front — across the two JS trees.** The engine's production tree
 (`packages/engine/mcp-server`) audits clean — `found 0 vulnerabilities` on
-`npm audit --omit=dev`; `eval/app` is covered by the root `pnpm audit --prod`.
+`npm audit --omit=dev`, restored 2026-11-03 after it had regressed to 8 (see the
+engine-tree re-fix under Fixed); `eval/app` is covered by the root `pnpm audit --prod`.
 The production-reachable findings
 are `electron` and `extract-zip` in `apps/electron`, reached via
 `@electron-toolkit/utils` → `electron` (peer) → `extract-zip` (see the two
@@ -93,8 +94,42 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   4.1.12, outside the advisory range (`< 4.1.12`). The 2026-09-09 deferral
   below is withdrawn — its "3 → 4 major across three packages" premise went
   stale when the members moved to `^4.1.10`. The engine's own copy
-  (`packages/engine/mcp-server/package-lock.json`, a separate npm tree) still
-  carries vitest/mocker alerts; that tree is issue #4186.
+  (`packages/engine/mcp-server/package-lock.json`, a separate npm tree) carried
+  its own vitest/mocker alerts until issue #4186 cleared them on 2026-11-03 (the
+  entry below).
+
+- **The engine's production tree, a second time** — `packages/engine/mcp-server`.
+  **Fixed 2026-11-03.** It had regressed to **8 advisories on `npm audit --omit=dev`
+  (3 HIGH, 5 MODERATE)**, all transitive under `@modelcontextprotocol/sdk`: `zod`
+  (`<4.6.6`, HIGH), `body-parser`, `@hono/node-server`, `hono`, `fast-uri`,
+  `ip-address` and `qs`. Two moves cleared it:
+
+  - **`npx npm@11.12.1 update`** bumped the SDK `^1.30.0` → 1.32.2, which carried
+    `body-parser` → 2.4.0 (via `express` 5.3.0), `hono` → 4.13.16,
+    `@hono/node-server` → 2.1.6, `fast-uri` → 3.1.9, `ip-address` → 10.7.6 and
+    `qs` → 6.17.1 forward. It also cleared every dev-only finding except `tmp`:
+    `node-forge` → 1.4.2 (past alert 240 / `GHSA-86w9-cpqp-85rv`, whose range is
+    `<=1.4.0` — so despite a null `first_patched_version` in Dependabot, 1.4.2 is
+    out of range), plus `vite`, `source-map-js`, `vitest` and `@vitest/mocker`.
+  - **A nested `overrides` for `zod`.** `npm update` alone did **not** clear it:
+    the dev-only `@anthropic-ai/mcpb` chain anchors a zod 3.x (mcpb depends on
+    `zod@^3.25.67` directly) and every `zod-to-json-schema` peer tolerates 3.x, so
+    npm deduped the SDK's zod *down* to a shared `3.25.76` — still inside the
+    `<4.6.6` range, which has no 3.x patch. A nested override pins just the SDK's
+    zod to `^4.6.6` (→ 4.6.7), leaving mcpb's dev-only 3.25.76 untouched:
+
+        "overrides": { "@modelcontextprotocol/sdk": { "zod": "^4.6.6" } }
+
+  Verified: `npm audit --omit=dev` → `found 0 vulnerabilities`; `npm ls --omit=dev`
+  shows zod 4.6.7 / sdk 1.32.2 / body-parser 2.4.0; the lockfile is idempotent
+  under the pinned `npm@11.12.1` (`check-engine-lockfile`); `make engine-test`
+  (11123 tests) and `make typecheck` green. Two small majors rode along:
+  `@types/node` 20 → 22 (to match the Node 22 runtime) and `open` 10 → 11 — its
+  one caller, the `open(authUrl)` call in `performLogin` (`src/auth/login.ts`),
+  keeps the unchanged default import, open 11's `engines` is `node>=20`, and a
+  desktop `dev/try-login.ts` launched a browser tab (CI cannot catch an `open`
+  launch regression: the call is `.catch(() => {})` and nothing mocks it). What remains in the **full** `npm audit` is dev-only and
+  Deferred (`tmp`, and mcpb's zod 3 copy).
 
 - **The engine's entire production tree** — `packages/engine/mcp-server`.
   **Fixed 2026-09-08.** Went from **5 packages carrying 17 advisories** (npm's summary
@@ -352,6 +387,17 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   so **issue #4188's 39 → 42 move clears both alerts** by removing the package
   from the tree. These two ride #4188, not an upstream `extract-zip` release.
 
+- **zod** (HIGH GHSA-mrhx-c7xc-m3w5, memory exhaustion validating oversized
+  constrained collections) — `packages/engine/mcp-server` only, the dev-only
+  `zod@3.25.76` under `@anthropic-ai/mcpb`. **No clean fix available.** The
+  advisory range is `<4.6.6` with no 3.x patch, and `@anthropic-ai/mcpb@2.1.2`
+  depends on `zod@^3.25.67` directly, hard-pinning the 3.x line in its subtree.
+  **The production copy is clear** — a nested `overrides` pins the SDK's zod to
+  4.6.7 (see the first Fixed entry); this remaining copy is reached only through
+  `@anthropic-ai/mcpb`, a devDependency used solely to build the `.mcpb`, so
+  `npm ci --omit=dev` never ships it. **Revisit when** `@anthropic-ai/mcpb` drops
+  its direct `zod@^3.25.67` or bumps it past 4.6.6.
+
 - **tmp** (HIGH GHSA-ph9p-34f9-6g65 + LOW GHSA-52f5-9888-hmc6, symlink /
   path-traversal write) — `packages/engine/mcp-server` only, via
   `@anthropic-ai/mcpb` → `@inquirer/prompts` → `@inquirer/editor` →
@@ -447,30 +493,30 @@ through no fault of the bump — check the branch out, run `npm install` under
 
 **`npm audit --omit=dev` and the Dependabot alert count answer different
 questions, and this doc reconciles against the audits, with `.dependency.scope` as
-the bridge.** `npm audit --omit=dev` reports zero for the engine because all four
-of its Dependabot alerts are `scope: development`; the audit is correct and so is
-Dependabot — they measure different things. The command to reconcile:
+the bridge.** `npm audit --omit=dev` can report zero for a tree while Dependabot
+still lists `scope: development` alerts against it; both are correct — they measure
+different things. The command to reconcile:
 
     gh api "/repos/PioneerAIAcademy/cowork-genealogy/dependabot/alerts?state=open&per_page=100" \
       --paginate -q '.[] | [.security_advisory.severity, .dependency.scope, .dependency.manifest_path, .dependency.package.name] | @tsv'
 
-**Measured 2026-11-04 — 164 open alerts** (up from 14 on 2026-09-21).
-Dependabot's monthly PRs were closed unmerged from September, and the count now
-spans manifests that did not exist at the last measurement — the search-agent
-prototype's three `requirements.txt` bundles under `apps/server/proto/` and
-`apps/server/sandbox/`. Measured **before** the #4185 merge: alerts close only
-when Dependabot rescans the default branch, so the pnpm rows below still count
-what that PR fixes. Expected to survive its rescan: **17 of `pnpm-lock.yaml`'s
-54** (electron ×12, extract-zip ×2, glob, minimatch, zod — each under Deferred)
-and **1 of `eval/app/package.json`'s 5** (zod, issue #4190).
+**Measured 2026-11-05 — 126 open alerts** (down from 164 on 2026-11-03, after
+issue #4186 cleared 38 of the engine npm tree's 40; up from 14 on 2026-09-21,
+that jump mostly the search-agent prototype's new manifests —
+`apps/server/proto/{web,worker}` and `apps/server/sandbox/requirements.txt` — which
+had no Dependabot coverage in the earlier count). Measured **after** #4186 merged
+but **before** this PR (#4185) and #4187/#4188/#4190: alerts close only when
+Dependabot rescans the default branch, so the `pnpm-lock.yaml` row below still
+counts the 37 this PR fixes. Expected to survive this PR's rescan: **17 of
+`pnpm-lock.yaml`'s 54** (electron ×12, extract-zip ×2, glob, minimatch, zod —
+each under Deferred).
 
 | Manifest | Scope | Count | Packages |
 |---|---|---|---|
 | `pnpm-lock.yaml` | runtime† | 54 | electron ×12, undici ×8, brace-expansion ×9, fast-uri ×5, vite ×5, next ×4, ip-address ×3, @vitest/mocker ×2, extract-zip ×2, glob, minimatch, source-map-js, zod |
 | `eval/app/package.json` | runtime | 5 | next ×4, zod |
 | `apps/electron/package.json` | development | 12 | electron ×12 |
-| `packages/engine/mcp-server/package-lock.json` | runtime | 19 | @modelcontextprotocol/sdk ×6, fast-uri ×5, ip-address ×3, @hono/node-server, body-parser, hono, qs, zod |
-| `packages/engine/mcp-server/package-lock.json` | development | 21 | node-forge ×9, vite ×6, @vitest/mocker ×2, tmp ×2, vitest, source-map-js |
+| `packages/engine/mcp-server/package-lock.json` | development | 2 | tmp ×2 |
 | `apps/server/uv.lock` | runtime + development | 7 | mcp ×4, h2, hpack, opentelemetry-api |
 | `eval/harness/uv.lock` | runtime | 21 | PyJWT ×15, mcp ×4, certifi, cryptography |
 | `apps/server/proto/worker/requirements.txt` | runtime | 20 | PyJWT ×15, mcp ×4, certifi |
@@ -484,13 +530,13 @@ scope through a pnpm workspace lockfile — the same misclassification the
 genuinely-runtime rows are electron, extract-zip and zod (see the reachability
 note up top).
 
-Ownership of what #4185 leaves: the engine npm tree (40 alerts) is issue
-#4186; the Python locks and the prototype `requirements.txt` bundles (53) are
-issue #4187; electron and its 39 → 42 toolchain (24 across both manifests,
-plus the two extract-zip rows it clears in passing) is issue #4188; zod 3 → 4
-in eval/app (2) is issue #4190. Issues #4186, #4187, #4188 and #4190 each edit
-this section — whoever lands second recounts it with the `gh` command above
-rather than hand-merging.
+Ownership of what remains: the engine npm tree is down to `tmp ×2` (dev-only,
+Deferred) now #4186 has landed; the Python locks and the prototype
+`requirements.txt` bundles (53) are issue #4187; electron and its 39 → 42
+toolchain (24 across both manifests, plus the two extract-zip rows it clears in
+passing) is issue #4188; zod 3 → 4 in eval/app (1) is issue #4190. Issues #4187,
+#4188 and #4190 each still edit this section — whoever lands next recounts it with
+the `gh` command above rather than hand-merging.
 
-*Previous measurements: 14 on 2026-09-21; 75 on 2026-09-10; 53 on 2026-08-23
-(issue #1036); 24 before PR #1030.*
+*Previous measurements: 164 on 2026-11-03; 14 on 2026-09-21; 75 on 2026-09-10;
+53 on 2026-08-23 (issue #1036); 24 before PR #1030.*

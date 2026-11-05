@@ -1,0 +1,209 @@
+{
+  "tool": "record_search",
+  "description": "record_search for Patrick Flynn's marriage returns two Schuylkill County Catholic marriages of a Patrick Flynn: Q7FM-T70 (14 February 1870, Pottsville, aged 25, son of Thomas Flynn, to Honora Gallagher) and Q7FM-M70 (9 October 1871, Mahanoy City, aged 26, son of Michael Flynn, to Catherine Boyle). Both fit the subject's age; the subject's father in the tree is Thomas (I2) and this search is for his wife (pli_008, q_003), so the son of Michael is ruled out on other parents and the son of Thomas may still be the subject. Feeds ut_search_records_032 (issue #3363, PR 3). Matched on surname alone; record-search-flynn-any-variant-no-results follows it.",
+  "args": {
+    "surname": "~Flynn"
+  },
+  "response": {
+    "query": {
+      "surname": "Flynn"
+    },
+    "totalMatches": 2,
+    "paginationCappedAt": 100,
+    "returned": 2,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "Q7FM-T70",
+        "recordId": "Q7FM-T70",
+        "personName": "Patrick Flynn",
+        "score": 0.84,
+        "sex": "Male",
+        "birthDate": "1845",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "14 February 1870",
+            "place": "Pottsville, Schuylkill, Pennsylvania, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:Q7FM-T70",
+        "collectionId": "1951741",
+        "collectionTitle": "Pennsylvania, Catholic Church Records, 1765-1940",
+        "recordTitle": "Marriage of Patrick Flynn, son of Thomas Flynn, and Honora Gallagher",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Patrick",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Marriage",
+                  "date": "14 February 1870",
+                  "place": "Pottsville, Schuylkill, Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Honora",
+                  "surname": "Gallagher",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Marriage",
+                  "date": "14 February 1870",
+                  "place": "Pottsville, Schuylkill, Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P3",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Thomas",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "R1",
+              "type": "Couple",
+              "person1": "P1",
+              "person2": "P2"
+            },
+            {
+              "id": "R2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            }
+          ]
+        }
+      },
+      {
+        "personId": "Q7FM-M70",
+        "recordId": "Q7FM-M70",
+        "personName": "Patrick Flynn",
+        "score": 0.83,
+        "sex": "Male",
+        "birthDate": "1845",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "9 October 1871",
+            "place": "Mahanoy City, Schuylkill, Pennsylvania, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:Q7FM-M70",
+        "collectionId": "1951741",
+        "collectionTitle": "Pennsylvania, Catholic Church Records, 1765-1940",
+        "recordTitle": "Marriage of Patrick Flynn, son of Michael Flynn, and Catherine Boyle",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Patrick",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Marriage",
+                  "date": "9 October 1871",
+                  "place": "Mahanoy City, Schuylkill, Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Catherine",
+                  "surname": "Boyle",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Marriage",
+                  "date": "9 October 1871",
+                  "place": "Mahanoy City, Schuylkill, Pennsylvania, United States"
+                }
+              ]
+            },
+            {
+              "id": "P3",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Michael",
+                  "surname": "Flynn",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            }
+          ],
+          "relationships": [
+            {
+              "id": "R1",
+              "type": "Couple",
+              "person1": "P1",
+              "person2": "P2"
+            },
+            {
+              "id": "R2",
+              "type": "ParentChild",
+              "parent": "P3",
+              "child": "P1"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
