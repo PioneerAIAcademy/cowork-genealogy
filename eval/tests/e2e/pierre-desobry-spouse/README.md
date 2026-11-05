@@ -1,4 +1,4 @@
-# Pierre Henri DESOBRY — wife Clemence Sauselle and son Julien
+# Pierre Henri DESOBRY — wife Clemence Sauselle
 
 **Source PID:** `L6L3-BB8`
 **Pierre Henri DESOBRY is deceased.** (FamilySearch ToS requires
@@ -7,7 +7,7 @@ Pecquencourt, Nord, France (baptized 1753 and 1774 — two baptismal facts alrea
 
 ## Research question
 
-> Who was the wife of Pierre Henri Désobry of Pecquencourt, France, and did they have a son named Julien who died in infancy in 1809?
+> Who was the wife of Pierre Henri Désobry of Pecquencourt, France?
 
 ## What was removed from the starting tree
 
@@ -28,6 +28,15 @@ medium — a confirmed true match (spouse + son); see "Notes for reviewers"
 below for the corroboration that decided it.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4144).** The old question asked
+two independent facts (the wife, and son Julien): "Who was the wife of Pierre
+Henri Désobry of Pecquencourt, France, and did they have a son named Julien
+who died in infancy in 1809?" Reworded `researcher_question` to the wife
+only; demoted `f2` (son Julien) to `required: false`, so a run that recovers
+it anyway still gets credit. No finding wording changed. This fixture's one
+annotation carries no `findings_hash`, so it is grandfathered and needs no
+re-grading.
 
 **Resolved (issue #867): TRUE MATCH.** The hint — France, Nord, Parish and Civil Registration, 1524-1893: death registration, 8 September 1809, Pecquencourt, for the infant Julien Désobri, naming parents Pierre Henri Désobri and Clémence Sauselle — establishes **both** findings: Clémence was the wife of Pierre Henri Désobry (`L6L3-BB8`), and Julien was their son, who died in infancy in 1809 at Pecquencourt.
 

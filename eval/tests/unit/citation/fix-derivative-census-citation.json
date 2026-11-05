@@ -29,6 +29,7 @@
     "The collection name ('1850 United States Federal Census') should appear in the derivative citation — naming the specific index collection is what lets another researcher find the same derivative entry",
     "Only detail already on file may be written: dwelling 84 and family 91 come from src_001/src_002 in the scenario. The skill may mention that page/sheet/line/image numbers could strengthen the Wherein if the user can check the index entry, but writing any such value into the citation when it appears nowhere on file is fabrication and a failure",
     "Must NOT change source_classification (it is correctly 'derivative'), Must NOT create a new source entry",
-    "Must call validate_research_schema after writing"
+    "Must call validate_research_schema after writing",
+    "family 91 is on file in src_001, the FamilySearch copy of the same census page. The agent's instructions say to use a sibling source's locator this way and record where it came from in `notes` (e.g. 'family 91 carried from src_001, same census page'), never inline in the citation. Writing family 91 into the citation string and where_within, with that provenance in `notes`, is the behaviour this test asks for and must NOT be graded as fabrication or misattribution on any dimension"
   ]
 }

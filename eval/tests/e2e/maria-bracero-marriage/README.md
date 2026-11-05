@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.) Born about 1880 in Pue
 
 ## Research question
 
-> When and where did Maria Bracero, born about 1880 in Puerto Rico and living in Hormigueros in 1910 and 1920, marry Gregorio Morales, and who were her parents?
+> When and where did Maria Bracero, born about 1880 in Puerto Rico and living in Hormigueros in 1910 and 1920, marry Gregorio Morales?
 
 ## What was removed from the starting tree
 
@@ -41,5 +41,16 @@ match strength.
 **The register image was read but is NOT load-bearing (`image_basis: false`).** The marriage-act image (`ark:/61903/3:1:939Z-RKSD-9G`, act Núm. 665) was transcribed as a check, but **Step 1a calibration was not met**: the page holds only **one** other act — Núm. 664, **Horacio Ramirez × Angela Velez** — and the two-entry control check requires two, so the reading is **unlicensed** and is not relied upon. The act also **named no children and stated no residence** ("natural de Pto Rico" only), so the discriminators the draft anticipated do not exist. The unlicensed VLM OCR of the register image rendered the mother's given name as "Jesusa Irizarry", while the **index** gives "Juana Irizarri" and both the senior reviewer's direct reading of the image and the 1973 death registration support "Juana". The index value "Juana Irizarri" is retained because the image reading was not adequately calibrated, and the alternative reading is not adopted.
 
 **Retrieval** was read-only via the MCP `record_read` / `image_transcribe` tools against live FamilySearch; the identity judgement is the genealogist's (Isaac Boateng).
+
+**2026-11-04 — re-scoped for step mode (issue #4144).** The old question asked
+two independent facts (the marriage, and her parents): "When and where did
+Maria Bracero, born about 1880 in Puerto Rico and living in Hormigueros in
+1910 and 1920, marry Gregorio Morales, and who were her parents?" Reworded
+`researcher_question` to the marriage only. `f2` (her parents) was already
+`required: false` before this change — this fixture is explicitly not "already
+done" by that alone, since question-selection would still see two coordinate
+asks in the old wording and refuse to research either; the reword is the step
+that actually matters here. No finding wording changed, and this fixture has
+no committed runs to re-grade.
 
 **f2 is not required (lead, 2026-10-20).** Her 1973 death registration (`ark:/61903/1:1:QVJX-8L5R`) is attached to Maria in the starting tree and names both her parents, Juan Bracero and Juana Irizarry, so once a project extracts the subject's attached records it answers f2 without the hint. f1, the 1907 marriage itself, still needs the hint record. The death registration is listed as starting evidence in `eval/tests/e2e/attached-evidence-allowlist.json`.

@@ -266,10 +266,12 @@ OWNED_SECTIONS = {
     # rejected_links, 2026-09-30. Same lane as the links themselves: a rejection
     # cannot be written by something that could not have made the link.
     "rejected_links": "person-evidence",
-    # namesakes, 2026-10-25 (issue #3363). The leads ruled search-records the sole
-    # writer: a row caps the person's links for good, so only the agent that saw
-    # the namesake in its own search results records one. merge_tree_persons
-    # re-keys rows by tool identity and never reaches this hook.
+    # namesakes, 2026-10-25 (issue #3363). A row caps the person's links for
+    # good, so only an agent that met the namesake in its own results records
+    # one. search-records owns the section and is the agent a deny names; the
+    # two search agents listed in SECTION_CO_WRITERS below may write it too
+    # (2026-11-02). merge_tree_persons re-keys rows by tool identity and never
+    # reaches this hook.
     "namesakes": "search-records",
     # evaluations, 2026-10-26, lead ruling 2026-10-12 on issue 3191. One owner
     # for mentor verdicts, so a whole-section route fits. What this closes is
@@ -279,7 +281,20 @@ OWNED_SECTIONS = {
     # The agent writes it through the narrow `evaluation_append` (issue #1491);
     # `owner_denied` routes that tool here as well as `research_append`.
     "evaluations": "gps-mentor",
+    # hit_verdicts, 2026-10-29 (issue #3522, lead ruling 2026-10-18). One agent
+    # per full-text hit judges it against the target's tree facts, so the main
+    # thread that ran the search cannot label its own hits from the list.
+    # merge_tree_persons re-keys `person_id` by tool identity and never
+    # reaches this hook.
+    "hit_verdicts": "evaluate-search-results",
 }
+
+# Agents that may also write a section OWNED_SECTIONS routes. The owner stays the
+# one agent a deny names (OWNER_REASON), so a refused caller is still sent to one
+# place. namesakes: a page read with image_transcribe, or a full-text transcript
+# hit, can turn up a same-named person the search rules out (issue #3363,
+# 2026-11-02). Each co-writer also needs the section in its lane below.
+SECTION_CO_WRITERS = {"namesakes": ("search-images", "search-full-text")}
 
 # Field-scoped routing: (section, field) -> the BARE agent name that may set it
 # to a gate-claiming value. Same plane and same manifest as OWNED_SECTIONS,
@@ -415,9 +430,10 @@ AGENT_WRITABLE_SECTIONS = {
     # gps-mentor appends its verdict to `evaluations` and writes nothing else in
     # research.json; its description says so and every corpus write is there.
     "gps-mentor": frozenset({"evaluations"}),
-    # search-images updates the status of the plan item a browse executed. Its
-    # browse log goes through research_log_append, which carries no `section`.
-    "search-images": frozenset({"plan_items"}),
+    # search-images updates the status of the plan item a browse executed, and
+    # records the namesakes its pages turn up (a co-writer, SECTION_CO_WRITERS).
+    # Its browse log goes through research_log_append, which carries no `section`.
+    "search-images": frozenset({"plan_items", "namesakes"}),
     # search-external-sites updates the status of the plan item a search executed.
     # Its log entries go through research_log_append and build_external_search_url,
     # which carry no `section`.
@@ -431,11 +447,17 @@ AGENT_WRITABLE_SECTIONS = {
     # executes (issue #3153). Its no-hints log goes through research_log_append,
     # which carries no `section`. A repo CI requirement, not a hook route.
     "search-hints": frozenset({"plan_items"}),
-    # search-full-text updates the status of the plan item a search executed.
-    # Its search log goes through research_log_append, which carries no `section`.
+    # search-full-text updates the status of the plan item a search executed, and
+    # records the namesakes its transcript hits turn up (a co-writer,
+    # SECTION_CO_WRITERS). Its search log goes through research_log_append, which
+    # carries no `section`.
     # This is a repo CI requirement, not a runtime gate (the guard does not fire
     # for agents outside the listed sections).
-    "search-full-text": frozenset({"plan_items"}),
+    "search-full-text": frozenset({"plan_items", "namesakes"}),
+    # evaluate-search-results appends one verdict per hit to `hit_verdicts`, the
+    # section routed to it above, and writes nothing else in research.json. A
+    # Match is extracted by record-structurer on the next turn, never here.
+    "evaluate-search-results": frozenset({"hit_verdicts"}),
     # citation refines `citation` / `citation_detail` on source entries that
     # already exist, and writes nothing else in research.json.
     "citation": frozenset({"sources"}),
@@ -713,8 +735,8 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     """`(section, rule, caller)` for a denied write, or None to allow.
 
     Four rules, all keyed on the caller and all returning the offending
-    section: `routed` — a section reserved to an owning agent, reached by
-    someone else; `declaration` — a routed CLAIM (a field set to a particular
+    section: `routed` — a section reserved to an owning agent (and any
+    `SECTION_CO_WRITERS`), reached by someone else; `declaration` — a routed CLAIM (a field set to a particular
     value), reached by someone else; `owned_field` — a routed field, keyed on
     presence rather than value; `out_of_lane` — a known agent reaching outside
     the sections its own skill is a declared caller for. `declaration` and
@@ -793,8 +815,13 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
         section = op.get("section")
         if not isinstance(section, str):
             continue
-        # A routed section, reached by anyone but its owning agent.
-        if section in OWNED_SECTIONS and caller != OWNED_SECTIONS[section]:
+        # A routed section, reached by anyone but its owning agent and its
+        # co-writers.
+        if (
+            section in OWNED_SECTIONS
+            and caller != OWNED_SECTIONS[section]
+            and caller not in SECTION_CO_WRITERS.get(section, ())
+        ):
             return (section, "routed", caller)
         # A routed APPEND, made by anyone but its owning agent. Before the
         # declaration loop: a main-thread question append that also carries a

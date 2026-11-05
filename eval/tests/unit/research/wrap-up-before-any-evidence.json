@@ -47,6 +47,7 @@
     "A wrap-up is ONE turn that runs its steps in order, not one step per turn. Ending after dispose with \"Continue with …?\" is the failure this test exists for: the researcher asked to stop, and offering them the next piece of the wrap-up hands the same decision back.",
     "The order is dispose (research-plan), then person-evidence, then conflict-resolution, then research-exhaustiveness, then proof-conclusion. Steps with nothing to do are SKIPPED, and skipping them is correct here: there are no assertions to link and no conflict.",
     "The dispose delegation's `pli_` ids and the `wrapUp: yes` on research-exhaustiveness and proof-conclusion are asserted deterministically from the spawn prompts (test_spawn_carries_its_step_mode_fields). You cannot see them; do not grade them.",
+    "That same validator also asserts that the hand-offs happened: it fails unless research-plan, research-exhaustiveness and proof-conclusion were each spawned. An agent spawn is not an MCP tool call, so the hand-offs never appear in the MCP tool calls you see, and their absence there is NOT evidence that the router skipped them or claimed work it did not do. Do not score Correctness or Completeness on whether the hand-offs ran; grade only the router's reply.",
     "The turn ends with NO \"Continue with …?\" line: nothing is waiting. Do not charge the reply for saying what was concluded.",
     "Every callee is STUBBED and reports it changed no project state, so describing the wrap-up as done is expected and is not a fabricated claim about the files."
   ]

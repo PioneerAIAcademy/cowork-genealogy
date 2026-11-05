@@ -17,6 +17,9 @@ with the chat on (#3985, ``GENEALOGY_CHAT``):
   GET  /api/projects/{id}/state               viewer state; ETag revalidation
   GET  /api/projects/{id}/sidecar/{log_id}     search-result body
   GET  /api/projects/{id}/image?filename=      persisted source page scan
+  POST /api/projects/{id}/files                a researcher upload and its text layer (#3987;
+                                                404 unless UPLOADS_ENABLED=true)
+  GET  /api/projects/{id}/download             the project as a zip, streamed from /var/tmp (#3987)
   GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout, GET /auth/familysearch/login,
   GET  /callback   (patron sign-in, web/auth.py; every /api/sessions and /api/projects route needs the cookie)
   GET  /api/sessions/{id}/sidecar/{log_id}     search-result body, or 404 when absent
@@ -53,6 +56,8 @@ fchDatabase object to read instead, U29; both set refuses to start), QUEUE_URL (
 queue URL, the shim's shape; required with the chat on -- unset or empty refuses to start),
 GENEALOGY_CHAT (unset or true; false serves no /api/sessions route and needs no queue),
 GENEALOGY_MAX_USERS (unset: the allowlist admits; a positive integer: the user cap does),
+PG_POOL_MAX_SIZE (unset: one connection per query; a positive integer: a checked pool of that size),
+UPLOADS_ENABLED (unset or false: the project upload route answers 404; true or false only),
 POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
@@ -96,8 +101,10 @@ import os
 import re
 import secrets
 import sys
+import tempfile
 import time
 import uuid
+import zipfile
 from collections.abc import AsyncIterator, Awaitable, Callable
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, replace
@@ -137,9 +144,13 @@ from web.job_state import job_state  # noqa: E402  (the four states the list sho
 from web.project_blobs import (  # noqa: E402  (source scans in, researcher uploads out)
     IMAGE_REF_RE,
     UPLOAD_MAX_BYTES,
+    delete_blob,
     fetch_blob,
+    pdf_page_count,
     put_blob,
     safe_upload_name,
+    sniff,
+    text_key,
     upload_key,
 )
 from web.sidecar import (  # noqa: E402  (search-result chip bodies, from the blob store)
@@ -185,6 +196,18 @@ STARTUP_BACKOFF_MAX_S = 30.0
 # The edge's alias path cuts a stream silent for ~45 s (handoff F11), so the ping stays
 # well under it whatever SSE_PING_S says.
 SSE_PING_MAX_S = 15.0
+# #3987: the project upload and download routes. Each refuses (429) rather than queues when
+# its slots are full. The download's zip is built on the instance's disk, never in memory:
+# AL2023's /tmp is a tmpfs, so /var/tmp. A host without it (a Windows `make proto-web`)
+# falls back to the platform temp dir.
+UPLOAD_SLOTS = 3
+DOWNLOAD_SLOTS = 1
+SLOTS_RETRY_AFTER_S = 5
+DOWNLOAD_TMP_DIR = "/var/tmp"
+DOWNLOAD_CHUNK = 1024 * 1024
+# Stored rather than deflated: scans and PDFs do not compress, and this tier's CPU also
+# serves every patron's SSE.
+DOWNLOAD_DEFLATE_EXTS = frozenset({".json", ".md", ".txt", ".csv", ".tsv", ".yaml", ".yml", ".jsonl"})
 DEFAULT_TITLE = "New research session"
 DEFAULT_MODEL = "claude-sonnet-4-6"
 EVENTS_PAGE = 500
@@ -415,6 +438,98 @@ class Queue(Protocol):
 
 
 # ── pure helpers (tested without I/O) ────────────────────────────────────────────
+
+
+def _refuse_declared_oversize(request: Request, detail: str) -> None:
+    """413 on a declared Content-Length over the upload cap, before anything is read; 400 on
+    one that is not a number. An absent one passes: the routes check sizes again."""
+    declared = request.headers.get("content-length")
+    if declared is None:
+        return
+    try:
+        too_big = int(declared) > UPLOAD_MAX_BYTES
+    except ValueError:
+        raise HTTPException(status_code=400, detail="bad content-length") from None
+    if too_big:
+        raise HTTPException(status_code=413, detail=detail)
+
+
+def _once(fn: Callable[[], None]) -> Callable[[], None]:
+    """``fn`` callable any number of times, run at most once: a semaphore released twice
+    would admit one download too many for the life of the process."""
+    done = False
+
+    def run() -> None:
+        nonlocal done
+        if not done:
+            done = True
+            fn()
+
+    return run
+
+
+def _download_tmp_dir() -> str | None:
+    """``DOWNLOAD_TMP_DIR`` when it exists, else None (the platform temp dir)."""
+    return DOWNLOAD_TMP_DIR if os.path.isdir(DOWNLOAD_TMP_DIR) else None
+
+
+def _download_files(
+    docs: Any, index: list[tuple[str, str, int]]
+) -> tuple[list[feedback.ProjectFile], list[str]]:
+    """``feedback.project_files`` plus what it left out that a patron would miss: stale copies
+    and files over its 25 MiB cap. Paths with a dot segment (the engine's staging) are
+    internal and not named."""
+    files, _stale = feedback.project_files(docs, index)
+    kept = {f.rel for f in files}
+    left_out = sorted({rel for rel in [*docs, *(key for key, _s3, _n in index)]
+                       if rel not in kept and not any(p.startswith(".") or not p for p in rel.split("/"))})
+    return files, left_out
+
+
+def _build_project_zip(out: Any, files: list[feedback.ProjectFile], get: Callable[[str], bytes],
+                       left_out: list[str] = ()) -> int:
+    """Write ``files`` into a zip on ``out``, fetching one blob at a time and dropping it
+    once written; ``left_out`` and any blob that cannot be read are named in
+    ``MISSING.txt``. Returns the zip's size and leaves ``out`` at offset 0. Synchronous
+    (``get`` is a blocking S3 read): run it in a thread."""
+    missing: list[str] = list(left_out)
+    with zipfile.ZipFile(out, "w", allowZip64=True) as zf:
+        for f in files:
+            data = f.data
+            if data is None:
+                try:
+                    data = get(f.s3_key or "")
+                except Exception:  # noqa: BLE001 - one unreadable blob must not cost the download
+                    missing.append(f.rel)
+                    continue
+            dot = f.rel.rfind(".")
+            deflate = dot > 0 and f.rel[dot:].lower() in DOWNLOAD_DEFLATE_EXTS
+            zf.writestr(f.rel, data, compress_type=zipfile.ZIP_DEFLATED if deflate else zipfile.ZIP_STORED)
+            del data
+        if missing:
+            note = ("These files are not in this download (a stale copy, over 25 MiB, or "
+                    "could not be read):\n") + "".join(
+                f"{rel}\n" for rel in missing)
+            zf.writestr("MISSING.txt", note, compress_type=zipfile.ZIP_DEFLATED)
+    size = out.tell()
+    out.seek(0)
+    return size
+
+
+class _CleanupStreamingResponse(StreamingResponse):
+    """A ``StreamingResponse`` that runs ``cleanup`` however the response ends. Neither the
+    body generator's ``finally`` (never run when the client goes before the first chunk)
+    nor ``background`` (skipped on ASGI 2.4's ``ClientDisconnect``) covers every case."""
+
+    def __init__(self, content: Any, cleanup: Callable[[], None], **kw: Any) -> None:
+        super().__init__(content, **kw)
+        self._cleanup = cleanup
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        try:
+            await super().__call__(scope, receive, send)
+        finally:
+            self._cleanup()
 
 
 
@@ -662,15 +777,51 @@ def check_out(state: str) -> dict[str, Any]:
 # ── Postgres store ───────────────────────────────────────────────────────────────
 
 
+# #3980: the optional pool's bounds. A borrow waits at most POOL_TIMEOUT_S, as a direct
+# connect does (U23's connect_timeout); a failing background connect keeps retrying on its
+# backoff for at most POOL_RECONNECT_TIMEOUT_S (psycopg_pool's default is 300 s), so a borrow
+# after Postgres returns starts a fresh attempt instead of waiting out a long backoff.
+POOL_TIMEOUT_S = 10.0
+POOL_RECONNECT_TIMEOUT_S = 10.0
+# Each hand-out check's own cap, inside POOL_TIMEOUT_S: a connection whose peer went silent
+# (no RST) would otherwise hold the check until the kernel gives up, about 15 minutes.
+POOL_CHECK_TIMEOUT_S = 2.0
+
+
+def _abandon_check(conn: Any, check: asyncio.Future) -> None:
+    """Give up on a hand-out check still running: close the socket, which psycopg would
+    otherwise keep waiting on even to cancel, so the check ends and the pool discards it."""
+    if not check.done():
+        conn.pgconn.finish()
+        check.cancel()
+    check.add_done_callback(lambda f: f.cancelled() or f.exception())
+
+
+def pool_max_size() -> int | None:
+    """``PG_POOL_MAX_SIZE`` (#3980): the query pool's size, or None (unset) for one
+    connection per call, the handoff's behaviour. Anything but a positive integer refuses."""
+    return auth.positive_int_env("PG_POOL_MAX_SIZE")
+
+
 class PgStore:
-    """One AsyncConnection per call -- streams included, so an open stream costs three or
-    four short connects per poll. n=1 in the prototype; a pool is a production concern.
+    """Queries run on ``_connect``: one AsyncConnection per call by default -- streams
+    included, so an open stream costs three or four short connects per poll -- or, with
+    ``pool_max_size`` (``PG_POOL_MAX_SIZE``, #3980), a connection borrowed from a
+    ``psycopg_pool`` pool that checks each one as it hands it out, so one the server closed
+    while idle (Neon does) is replaced rather than handed to a query. The lifespan opens and
+    closes the pool. Readiness, the schema check and each grant refresh (``refresh_grant``)
+    always connect on their own (``_aconn``); the refresher loop's ``due_grant_users`` borrows.
 
     Connections are ``autocommit=True``: a read is one round trip, and the writers that
-    need several statements to land together say so with ``conn.transaction()``."""
+    need several statements to land together say so with ``conn.transaction()``. Nothing on
+    ``_connect`` sets session state: lock timeouts are transaction-local, and the session
+    advisory locks live on ``_grant_connect``. So a pooled connection carries nothing to its
+    next borrower."""
 
-    def __init__(self, creds: PgCredentials | str) -> None:
+    def __init__(self, creds: PgCredentials | str, *, pool_max_size: int | None = None) -> None:
         self.creds = PgCredentials.fixed(creds) if isinstance(creds, str) else creds
+        self.pool_max_size = pool_max_size
+        self._pool: Any = None
         # U10: the one readiness probe in flight, shared by concurrent /api/health calls,
         # and the postgres check's last outcome for the transition log.
         self._ready_task: asyncio.Task | None = None
@@ -734,10 +885,91 @@ class PgStore:
             raise ReadyCheckError(f"schema: missing {names}", f"web tables or functions missing: {names}")
 
     async def _connect(self):
+        """An async context manager over one query connection: a pooled one, returned to the
+        pool on exit, or a connection of its own, closed on exit. Used as
+        ``async with await self._connect() as conn``."""
+        if self._pool is not None:
+            return self._borrow()
         from psycopg.rows import dict_row
 
         # U23: a connect to a vanished host fails in 10 s rather than the OS's TCP timeout.
         return await self._aconn(row_factory=dict_row, autocommit=True, connect_timeout=10)
+
+    @contextlib.asynccontextmanager
+    async def _borrow(self):
+        """A pooled connection that has just answered a check, within one POOL_TIMEOUT_S.
+        A dead one is discarded (the pool replaces it in the background) and the next is
+        tried at once. The pool's own ``check=`` would sleep its reconnect backoff (1 s, 2 s,
+        4 s...) after each failure, and Neon suspending an idle compute kills every pooled
+        connection together. Each check is capped at POOL_CHECK_TIMEOUT_S, for a peer that
+        went silent rather than closing; a cancelled borrow gives its connection back."""
+        from psycopg_pool import AsyncConnectionPool, PoolTimeout
+
+        pool = self._pool
+        deadline = time.monotonic() + POOL_TIMEOUT_S
+        for _ in range(pool.max_size + 1):
+            conn = await pool.getconn(max(deadline - time.monotonic(), 0.001))
+            check = asyncio.ensure_future(AsyncConnectionPool.check_connection(conn))
+            try:
+                limit = min(POOL_CHECK_TIMEOUT_S, max(deadline - time.monotonic(), 0.001))
+                done, _ = await asyncio.wait({check}, timeout=limit)
+                if not done:
+                    raise TimeoutError(f"the connection check did not answer in {limit:.1f}s")
+                check.result()
+            except Exception:  # noqa: BLE001 - a dead or silent connection; putconn discards it
+                _abandon_check(conn, check)
+                await pool.putconn(conn)
+                continue
+            except BaseException:  # cancellation (a closed SSE tab, a timed-out step): give it back
+                _abandon_check(conn, check)
+                await pool.putconn(conn)
+                raise
+            try:
+                async with conn:
+                    yield conn
+            finally:
+                await pool.putconn(conn)
+            return
+        raise PoolTimeout(f"no live connection in {pool.max_size + 1} hand-outs")
+
+    async def open_pool(self) -> None:
+        """Open the query pool when ``pool_max_size`` is set; a no-op otherwise, so no
+        ``psycopg_pool`` object exists. Never waits for a connection: the tier listens and
+        reports 503 while Postgres is down (U10 D8). Every pooled connect goes through
+        ``pg_credentials.aconnect``, so it resolves the current DSN and re-reads SAS once on
+        an invalid password (U29), as ``_aconn`` does; the pool's own conninfo is unused.
+        ``kwargs`` names no ``sslmode``/``sslrootcert``: libpq reads ``PGSSL*`` from the
+        environment."""
+        if self.pool_max_size is None or self._pool is not None:
+            return
+        import psycopg
+        from psycopg.rows import dict_row
+        from psycopg_pool import AsyncConnectionPool
+
+        creds = self.creds
+
+        class CredentialsConnection(psycopg.AsyncConnection):
+            @classmethod
+            async def connect(cls, conninfo: str = "", **kwargs: Any):
+                return await pg_credentials.aconnect(
+                    creds, lambda d, **k: super(CredentialsConnection, cls).connect(d, **k), **kwargs)
+
+        self._pool = AsyncConnectionPool(
+            "", connection_class=CredentialsConnection, open=False, name="web",
+            min_size=0, max_size=self.pool_max_size,
+            timeout=POOL_TIMEOUT_S, reconnect_timeout=POOL_RECONNECT_TIMEOUT_S,
+            # prepare_threshold=None: psycopg prepares a query server-side after five runs on
+            # one connection, and a pooled one lives long enough; a migration that changes a
+            # result type would then fail that statement until the connection expired.
+            kwargs={"row_factory": dict_row, "autocommit": True, "connect_timeout": 10,
+                    "prepare_threshold": None},
+        )
+        await self._pool.open(wait=False)
+
+    async def close_pool(self) -> None:
+        pool, self._pool = self._pool, None
+        if pool is not None:
+            await pool.close()
 
     async def verify_schema(self, sql_dir: Path = SQL_DIR) -> list[str]:
         """The ledger ``migrate.py`` keeps against the files under ``sql_dir``: the shipped
@@ -1586,6 +1818,7 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         auth.preflight()  # before anything binds: a misconfigured tier must not come up
+        pool_size = pool_max_size()  # #3980: a bad PG_POOL_MAX_SIZE refuses here too
         # U7: a half SQS pair refuses here, before a startup step or its background retry
         # exists, so the refusal leaves nothing running. #3985: with the chat off there is no
         # queue to need, and app.state.queue stays None.
@@ -1624,7 +1857,7 @@ def create_app(
         log.info("postgres: pg_credentials=%s", app.state.pg_creds.description)
         steps: dict[str, Callable[[], Awaitable[Any]]] = {}
         if app.state.store is None:
-            app.state.store = PgStore(creds)
+            app.state.store = PgStore(creds, pool_max_size=pool_size)
             steps["schema"] = app.state.store.verify_schema
         store = app.state.store
         if hasattr(store, "sync_allowlist"):
@@ -1656,6 +1889,12 @@ def create_app(
                 refresh_age_s=grants.env_seconds(os.environ, "FS_GRANT_REFRESH_AGE_S", grants.DEFAULT_REFRESH_AGE_S),
             ))
         try:
+            # #3980: inside the try, so a startup cancelled from here on still closes it, and
+            # after the inline steps, which run on connections of their own exactly as with
+            # no pool: the tier listens at once with Postgres down, each check naming its
+            # cause. Opening never waits for a connection (U10 D8).
+            if hasattr(store, "open_pool"):
+                await store.open_pool()
             yield
         finally:
             for task in (retry, refresher):
@@ -1663,6 +1902,8 @@ def create_app(
                     task.cancel()
                     with contextlib.suppress(asyncio.CancelledError):
                         await task
+            if hasattr(store, "close_pool"):
+                await store.close_pool()
 
     # U12: no /docs, /redoc or /openapi.json -- FastAPI serves them unauthenticated on a
     # public host, and nothing in the repo reads them.
@@ -1670,6 +1911,8 @@ def create_app(
                   docs_url=None, redoc_url=None, openapi_url=None)
     # #3985: read once, so the routes and the lifespan cannot disagree; a bad value refuses here.
     app.state.chat = auth.chat_enabled()
+    # #3987: None (unset), True or False; a bad value refuses here, as GENEALOGY_CHAT does.
+    app.state.uploads = auth.uploads_setting()
     app.state.store = store
     # #3985: a chat-off tier has no queue, even when a caller passes one.
     app.state.queue = queue if app.state.chat else None
@@ -1876,7 +2119,11 @@ def create_app(
 
     @app.get("/auth/config")
     async def auth_config() -> dict:
-        return {"familysearch": auth.familysearch_configured(), "devLogin": auth.dev_login_enabled()}
+        config = {"familysearch": auth.familysearch_configured(), "devLogin": auth.dev_login_enabled()}
+        # #3987: only when UPLOADS_ENABLED is set, so an unset tier answers as it always did.
+        if app.state.uploads is not None:
+            config["uploads"] = app.state.uploads
+        return config
 
     @app.get("/auth/me")
     async def auth_me(user: User = Depends(current_user)) -> dict:
@@ -2226,17 +2473,7 @@ def create_app(
         # only then refused 401. The form is parsed below, after auth.
         row = await _session(request, session_id, user)
 
-        # Reject on the declared length before reading anything. `max_part_size` then
-        # caps what is actually read, so a lying or absent Content-Length cannot load
-        # more than the limit into memory.
-        declared = request.headers.get("content-length")
-        if declared is not None:
-            try:
-                if int(declared) > UPLOAD_MAX_BYTES:
-                    raise HTTPException(status_code=413, detail="the file is larger than 25 MB")
-            except ValueError:
-                raise HTTPException(status_code=400, detail="bad content-length") from None
-
+        _refuse_declared_oversize(request, "the file is larger than 25 MB")
         try:
             form = await request.form(max_part_size=UPLOAD_MAX_BYTES)
         except Exception:
@@ -2252,6 +2489,10 @@ def create_app(
                     status_code=400,
                     detail="filename must be a plain basename of letters, digits, dot, dash, space or underscore",
                 )
+            # The spooled size before the read: a chunked body has no Content-Length to
+            # refuse above, and `max_part_size` does not bound a file part.
+            if file.size is not None and file.size > UPLOAD_MAX_BYTES:
+                raise HTTPException(status_code=413, detail="the file is larger than 25 MB")
             body = await file.read()
             if not body:
                 raise HTTPException(status_code=400, detail="the file is empty")
@@ -2277,6 +2518,160 @@ def create_app(
 
         written = await asyncio.to_thread(_write)
         return {"path": key, "sizeBytes": written}
+
+    # -- project uploads and the download (#3987) ------------------------------------
+    # Refuse, never queue: a full semaphore answers 429. Checking `locked()` and then
+    # acquiring has no await between them on one loop, so it cannot race.
+    upload_gate = asyncio.Semaphore(UPLOAD_SLOTS)
+    download_gate = asyncio.Semaphore(DOWNLOAD_SLOTS)
+
+    def _busy(what: str) -> HTTPException:
+        return HTTPException(status_code=429, detail=f"too many {what} in progress; try again shortly",
+                             headers={"Retry-After": str(SLOTS_RETRY_AFTER_S)})
+
+    @app.post("/api/projects/{project_id}/files")
+    async def upload_project_file(project_id: str, request: Request, user: User = Depends(current_user)) -> dict:
+        """Store a researcher's file in ``<project>/uploads/``, with its text layer beside it.
+
+        Request: ``multipart/form-data`` with ``file`` (required) and ``text`` (optional, the
+        browser's text layer, a plain field). The file and its text together fit in 25 MB.
+        Response 200: ``{path: "uploads/<name>", sizeBytes, textPath: "uploads/<name>.txt" |
+        null, contentType}`` -- ``contentType`` is sniffed from the bytes, never the
+        client's. The text is stored at ``uploads/<name>.txt``, the name ``project_context``
+        reads; uploading a name again with no ``text`` drops the old one, so the agent
+        never reads the previous file's text.
+
+        Refusals: 404 for a missing or foreign project (before the body is read), and for
+        every project while ``UPLOADS_ENABLED`` is unset or false; 413 over 25 MB; 415 for
+        TIFF and HEIC/HEIF; 422 for a PDF of more than one page with no text; 429 with
+        ``Retry-After`` while ``UPLOAD_SLOTS`` uploads are in flight; 503 with no blob store.
+
+        The page count reads raw bytes with no PDF parser (``pdf_page_count``). A PDF that
+        keeps its pages in compressed object streams undercounts, so a multi-page scan saved
+        that way can be admitted; a single page is never refused. On a chunked body only
+        nginx's ``client_max_body_size`` bounds what Starlette spools before the size check.
+        """
+        await _project(request, project_id, user)
+        if request.app.state.uploads is not True:
+            raise HTTPException(status_code=404, detail="Not found")
+        _refuse_declared_oversize(request, "the file and its text together are larger than 25 MB")
+        if upload_gate.locked():
+            raise _busy("uploads")
+        async with upload_gate:
+            return await _store_project_upload(request, project_id)
+
+    async def _store_project_upload(request: Request, project_id: str) -> dict:
+        too_big = "the file and its text together are larger than 25 MB"
+        # Before the body is spooled: a tier with no store cannot keep it anyway.
+        blobs = request.app.state.blobs
+        if blobs is None:
+            raise HTTPException(status_code=503, detail="no blob store configured")
+        try:
+            form = await request.form(max_part_size=UPLOAD_MAX_BYTES)
+        except Exception:
+            raise HTTPException(status_code=413, detail=too_big) from None
+        try:
+            file = form.get("file")
+            if file is None or not hasattr(file, "read"):
+                raise HTTPException(status_code=400, detail="no file in the request")
+            text_field = form.get("text")
+            if text_field is not None and not isinstance(text_field, str):
+                raise HTTPException(status_code=400, detail="text must be a plain form field")
+            text = (text_field or "").encode("utf-8") if (text_field or "").strip() else b""
+            name = safe_upload_name(file.filename)
+            if name is None:
+                raise HTTPException(
+                    status_code=400,
+                    detail="filename must be a plain basename of letters, digits, dot, dash, space or underscore",
+                )
+            if file.size is not None and file.size + len(text) > UPLOAD_MAX_BYTES:
+                raise HTTPException(status_code=413, detail=too_big)
+            body = await file.read()
+        finally:
+            await form.close()
+        if not body:
+            raise HTTPException(status_code=400, detail="the file is empty")
+        if len(body) + len(text) > UPLOAD_MAX_BYTES:
+            raise HTTPException(status_code=413, detail=too_big)
+        kind = sniff(body[:16])
+        if kind.refused:
+            raise HTTPException(status_code=415,
+                                detail=f"{kind.refused} images are not accepted; save the page as JPEG or PNG")
+        if kind.content_type == "application/pdf" and not text and await asyncio.to_thread(pdf_page_count, body) > 1:
+            raise HTTPException(status_code=422, detail=(
+                "a PDF of more than one page needs its text layer; upload it from the browser app, "
+                "or one page at a time"))
+        key, tkey = upload_key(name), text_key(name)
+
+        def _write() -> int:
+            # One transaction for both rows, so the text layer never describes another file.
+            with _pg_connect_sync(request, connect_timeout=10) as conn:
+                n = put_blob(conn, blobs, project_id, key, body, content_type=kind.content_type)
+                if text:
+                    put_blob(conn, blobs, project_id, tkey, text, content_type="text/plain; charset=utf-8")
+                else:
+                    delete_blob(conn, project_id, tkey)
+                conn.commit()
+                return n
+
+        written = await asyncio.to_thread(_write)
+        return {"path": key, "sizeBytes": written, "textPath": tkey if text else None,
+                "contentType": kind.content_type}
+
+    @app.get("/api/projects/{project_id}/download")
+    async def download_project(project_id: str, request: Request, user: User = Depends(current_user)) -> Response:
+        """The whole project as ``application/zip``, ``Content-Disposition: attachment;
+        filename="<project_id>.zip"``, with ``Content-Length``.
+
+        Every file ``feedback.project_files`` returns -- the documents and every blob, minus
+        dot paths, stale copies and any file over 25 MiB (no upload is) -- with no redaction:
+        it is the owner's own project. A stale copy or oversize file left out by that walk,
+        and a blob that cannot be read, is named in ``MISSING.txt``; dot paths (the engine's
+        own staging) are not. 404 for a missing or foreign project and with no blob store; 429 with
+        ``Retry-After`` while a download is in progress.
+
+        Built one object at a time into a temporary file under ``DOWNLOAD_TMP_DIR``, then
+        streamed in 1 MiB chunks, so memory does not grow with the project. The slot is
+        held until the stream ends or the client goes, not until this handler returns. No
+        byte is sent while the zip builds; the web environment's ALB idle timeout is
+        unverified against a large one.
+        """
+        await _project(request, project_id, user)
+        blobs = request.app.state.blobs
+        if blobs is None:
+            raise HTTPException(status_code=404, detail="no blob store configured")
+        if download_gate.locked():
+            raise _busy("downloads")
+        await download_gate.acquire()
+        release = _once(download_gate.release)
+        tmp = None
+        try:
+            store = _store(request)
+            docs, index = await store.documents(project_id), await store.blob_index(project_id)
+            # Off the loop: project_files pretty-prints every document.
+            files, left_out = await asyncio.to_thread(_download_files, docs, index)
+            tmp = tempfile.TemporaryFile(dir=_download_tmp_dir())
+            size = await asyncio.to_thread(_build_project_zip, tmp, files, blobs.get, left_out)
+        except BaseException:
+            if tmp is not None:
+                tmp.close()
+            release()
+            raise
+
+        def cleanup() -> None:
+            tmp.close()
+            release()
+
+        async def chunks() -> AsyncIterator[bytes]:
+            while chunk := await asyncio.to_thread(tmp.read, DOWNLOAD_CHUNK):
+                yield chunk
+
+        filename = re.sub(r"[^A-Za-z0-9._-]", "_", project_id)
+        return _CleanupStreamingResponse(
+            chunks(), cleanup, media_type="application/zip",
+            headers={"Content-Disposition": f'attachment; filename="{filename}.zip"',
+                     "Content-Length": str(size)},
+        )
 
     @sessions.post("/api/sessions/{session_id}/interrupt", status_code=202)
     async def interrupt(session_id: str, request: Request, user: User = Depends(current_user)) -> dict:
