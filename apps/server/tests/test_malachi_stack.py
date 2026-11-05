@@ -198,6 +198,8 @@ def shape_violations(doc: dict) -> list[str]:
     for name in ("postgres", "minio", "web", "tools"):
         if not services[name].get("mem_limit"):
             out.append(f"memory: {name} has no mem_limit")
+    if "-h 127.0.0.1" not in " ".join(services["postgres"]["healthcheck"]["test"]):
+        out.append("postgres: the health check must use TCP; the first-run init server answers the socket")
     wait = services["edge"].get("depends_on") or {}
     for name in ("web", "tools"):
         if (wait.get(name) or {}).get("condition") != "service_healthy":
@@ -325,6 +327,7 @@ DEFECTS: list[tuple[str, str, Callable[[dict], None]]] = [
     ("shape", "owner on tools", _set_env("tools", "GENEALOGY_PG_DSN",
                                          "postgresql://postgres:${POSTGRES_PASSWORD:?x}@postgres:5432/genealogy")),
     ("shape", "edge does not wait", _unset("edge", "depends_on")),
+    ("shape", "health check on the socket", _set("postgres", "healthcheck", {"test": ["CMD-SHELL", "pg_isready -U postgres"]})),
     ("shape", "no memory cap", _unset("tools", "mem_limit")),
     ("shape", "no rotation", _unset("minio", "logging")),
     ("shape", "one-shot restarts", _set("migrate", "restart", "unless-stopped")),
@@ -436,6 +439,8 @@ def nginx_violations(raw: str) -> list[str]:
         out.append("body-size: client_max_body_size must be 26m")
     if not re.search(r"proxy_buffering\s+off;", text):
         out.append("buffering: proxy_buffering must be off")
+    if not re.search(r"proxy_request_buffering\s+off;", text):
+        out.append("buffering: proxy_request_buffering must be off")
     if not re.search(r"proxy_http_version\s+1\.1;", text):
         out.append("http: proxy_http_version must be 1.1")
     for path in ("/mcp", "/.well-known/oauth-protected-resource/mcp"):
@@ -462,6 +467,7 @@ NGINX_DEFECTS = [
     ("body-size", "client_max_body_size 26m;", "client_max_body_size 100m;"),
     ("body-size", "client_max_body_size 26m;", "# client_max_body_size 26m;"),
     ("buffering", "proxy_buffering off;", "proxy_buffering on;"),
+    ("buffering", "proxy_request_buffering off;", ""),
     ("routing", "location = /mcp {", "location = /mcp-off {"),
     ("routing", "proxy_pass $tools_upstream;", "proxy_pass $web_upstream;"),
 ]
@@ -564,6 +570,33 @@ def test_env_init_adds_a_key_a_newer_template_named(first_run, tmp_path):
     assert re.fullmatch(r"[0-9a-f]{64}", values["DML_PASSWORD"])
     assert values["WIKI_API_URL"] == ""
     assert values["FS_TOKEN_ENC_KEY"] == kept
+
+
+@needs_bash
+@pytest.mark.parametrize("key", ["FS_TOKEN_ENC_KEY", "POSTGRES_PASSWORD"])
+def test_env_init_refuses_to_replace_a_deleted_secret_over_live_data(first_run, key):
+    path, env = first_run
+    data = Path(env["DATA_DIR"])
+    data.mkdir()
+    (data / ".genealogy-beta").touch()
+    kept = "".join(line + "\n" for line in path.read_text(encoding="utf-8").splitlines()
+                   if not line.startswith(f"{key}="))
+    path.write_text(kept, encoding="utf-8")
+    result = _run(["env-init"], env)
+    assert result.returncode == 1 and f"{key} is missing" in result.stderr
+    assert path.read_text(encoding="utf-8") == kept
+
+
+@needs_bash
+def test_env_init_adds_a_key_on_a_line_of_its_own(first_run):
+    path, env = first_run
+    last = _read_env(path)["FS_TOKEN_ENC_KEY"]
+    text = "".join(line + "\n" for line in path.read_text(encoding="utf-8").splitlines()
+                   if not line.startswith("WIKI_API_URL="))
+    path.write_text(text.rstrip("\n"), encoding="utf-8")
+    assert _run(["env-init"], env).returncode == 0
+    values = _read_env(path)
+    assert values["FS_TOKEN_ENC_KEY"] == last and values["WIKI_API_URL"] == ""
 
 
 @needs_bash
@@ -920,6 +953,37 @@ def test_export_refuses_an_unknown_project(export_module, tmp_path):
 def test_export_refuses_a_project_id_that_is_not_a_folder_name(export_module, tmp_path, project):
     with pytest.raises(ValueError):
         _export(export_module, _Store({"research.json": (1, {})}, []), _Blobs({}), tmp_path, project)
+
+
+def test_export_of_several_projects_survives_an_empty_one(export_module, tmp_path, monkeypatch, capsys):
+    stores = {"proj_a": _Store({}, []), "proj_b": _Store({"research.json": (1, {})}, [])}
+
+    class Store:
+        def __init__(self, _dsn: str) -> None:
+            pass
+
+        async def documents(self, project_id: str) -> dict:
+            return await stores[project_id].documents(project_id)
+
+        async def blob_index(self, project_id: str) -> list:
+            return await stores[project_id].blob_index(project_id)
+
+    monkeypatch.setenv("PG_DSN", "unused")
+    monkeypatch.setattr(export_module, "projects_of", lambda _dsn, _email: ["proj_a", "proj_b"])
+    monkeypatch.setattr(export_module.blobstore, "from_env", lambda _env: _Blobs({}))
+    monkeypatch.setattr(export_module.web_app, "PgStore", Store)
+    assert export_module.main(["--email", "a@example.test", "--out", str(tmp_path)]) == 1
+    assert (tmp_path / "proj_b" / "research.json").exists()
+    assert "proj_a has no documents" in capsys.readouterr().err
+
+
+def test_export_says_when_files_were_left_out(export_module, tmp_path, monkeypatch, capsys):
+    store = _Store({"research.json": (1, {})}, [("uploads/gone.pdf", "s3/gone", 4)])
+    monkeypatch.setenv("PG_DSN", "unused")
+    monkeypatch.setattr(export_module.blobstore, "from_env", lambda _env: _Blobs({}))
+    monkeypatch.setattr(export_module.web_app, "PgStore", lambda _dsn: store)
+    assert export_module.main(["--project", "proj_a", "--out", str(tmp_path)]) == 0
+    assert "MISSING.txt names files left out" in capsys.readouterr().out
 
 
 @needs_bash

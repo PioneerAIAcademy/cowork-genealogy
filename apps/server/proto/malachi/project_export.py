@@ -69,9 +69,17 @@ async def run(args: argparse.Namespace) -> int:
         return 1
     store = web_app.PgStore(dsn)
     out = Path(args.out)
+    status = 0
     for project_id in projects:
-        print(await export_project(store, blobs, project_id, out))
-    return 0
+        try:
+            dest = await export_project(store, blobs, project_id, out)
+        except LookupError as exc:
+            print(exc, file=sys.stderr)
+            status = 1
+            continue
+        partial = (dest / "MISSING.txt").exists()
+        print(f"{dest}{' (MISSING.txt names files left out)' if partial else ''}")
+    return status
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -80,11 +88,7 @@ def main(argv: list[str] | None = None) -> int:
     who.add_argument("--email")
     who.add_argument("--project")
     parser.add_argument("--out", required=True)
-    try:
-        return asyncio.run(run(parser.parse_args(argv)))
-    except LookupError as exc:
-        print(exc, file=sys.stderr)
-        return 1
+    return asyncio.run(run(parser.parse_args(argv)))
 
 
 if __name__ == "__main__":

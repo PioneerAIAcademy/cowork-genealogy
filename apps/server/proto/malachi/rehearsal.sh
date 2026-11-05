@@ -255,6 +255,13 @@ got=$(curl -s -o "$WORK/413.txt" -w '%{http_code}' --max-time 60 -H "Cookie: wb_
 if grep -q '"detail"' "$WORK/413.txt"; then fail "the 413 came from the web tier, not the edge"; fi
 grep -qi 'too large' "$WORK/413.txt" || fail "the 413 body is not nginx's: $(head -c 200 "$WORK/413.txt")"
 pass "a chunked 27 MiB upload stopped at the edge with nginx's 413"
+got=$(curl -s -o "$WORK/413b.txt" -w '%{http_code}' --max-time 60 -F "file=@$WORK/too-big.png" "$BASE/api/projects/$PROJECT/files" || true)
+[ "$got" = 413 ] || fail "a declared 27 MiB body with no session answered $got"
+grep -qi 'too large' "$WORK/413b.txt" || fail "that 413 is not nginx's: $(head -c 200 "$WORK/413b.txt")"
+pass "a declared 27 MiB body with no session stopped at the edge"
+got=$(code_of -H 'Transfer-Encoding: chunked' -F "file=@$WORK/rehearsal.png" "$BASE/api/projects/$PROJECT/files")
+[ "$got" = 401 ] || fail "a chunked upload with no session answered $got, want 401"
+pass "a chunked upload with no session is refused by the web tier, since bodies stream"
 
 say "10. no sign-in code reaches a log"
 got=$(code_of "$BASE/callback?code=SECRETCODE&state=SECRETSTATE")
@@ -332,6 +339,7 @@ pass "the edge did not restart"
 mcp '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | grep -q '"research_append"' || fail "the connector token stopped working"
 pass "secrets, documents and the connector token survived the redeploy"
 must_refuse "malachi-deploy with no REF" "REF=<sha> is required" malachi-deploy
+must_refuse "malachi-deploy with a branch name" "REF must be a sha" malachi-deploy REF=main
 printf 'dirt\n' >"$WORK/host/dirt.txt"
 must_refuse "malachi-deploy on a dirty tree" "the tree is not clean" malachi-deploy "REF=$REF"
 rm "$WORK/host/dirt.txt"

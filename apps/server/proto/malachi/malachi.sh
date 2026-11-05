@@ -100,10 +100,17 @@ create_env() {
   printf 'malachi: wrote %s\n' "$ENV_FILE"
 }
 
+# A secret missing from a stack that has data was deleted, not newly invented: a generated one
+# would lock the data out. Add a new secret by hand on a live stack.
 append_new_keys() {
-  local key
+  local key data_dir
+  data_dir=$(env_get DATA_DIR)
   for key in $(env_keys "$TEMPLATE"); do
     if ! grep -q "^$key=" "$ENV_FILE"; then
+      if is_secret "$key" && [ -e "$data_dir/$MARKER" ]; then
+        die "$key is missing from $ENV_FILE and $data_dir holds a stack. Put it back; a new one would lock out the data."
+      fi
+      [ -z "$(tail -c 1 "$ENV_FILE")" ] || printf '\n' >>"$ENV_FILE"
       printf '%s=%s\n' "$key" "$(new_value "$key" "$(env_get "$key" "$TEMPLATE")")" >>"$ENV_FILE"
       printf 'malachi: added %s to %s\n' "$key" "$ENV_FILE"
     fi
@@ -450,6 +457,11 @@ prune_backups() { # keep
   done
 }
 
+mirror_objects() { # backup dir
+  compose run --rm --no-deps -T --user "$(id -u):$(id -g)" -e MC_CONFIG_DIR=/tmp/mc \
+    -v "$1:/backup" --entrypoint mc minio-init mirror --quiet beta/projects /backup/objects
+}
+
 cmd_backup() {
   local keep floor stamp final partial ledger
   keep=$(whole_number KEEP "${KEEP:-14}")
@@ -465,10 +477,12 @@ cmd_backup() {
   (umask 077 && mkdir -p "$partial/objects")
   trap 'rm -rf "$partial"' EXIT
 
-  # The dump first, so no row points past the objects mirrored after it.
+  # The stack stays up, so the dump sits between two mirrors. The first takes the bulk, which
+  # a write replacing a blob could otherwise delete during a long copy after the dump. The
+  # second is short, and takes whatever rows in the dump were written during the first.
+  mirror_objects "$partial"
   compose exec -T postgres pg_dump -U postgres -d genealogy -Fc >"$partial/postgres.dump"
-  compose run --rm --no-deps -T --user "$(id -u):$(id -g)" -e MC_CONFIG_DIR=/tmp/mc \
-    -v "$partial:/backup" --entrypoint mc minio-init mirror --quiet beta/projects /backup/objects
+  mirror_objects "$partial"
   ledger=$(psql_exec genealogy "SELECT count(*) FROM schema_migrations")
   printf 'git_sha=%s\nledger_rows=%s\n' "$GIT_SHA" "$ledger" >"$partial/manifest.txt"
   mv "$partial" "$final"

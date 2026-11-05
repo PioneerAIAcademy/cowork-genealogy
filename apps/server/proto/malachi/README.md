@@ -67,8 +67,8 @@ links at all. Then run `make malachi-up`.
 |---|---|
 | `make malachi-check` | Health, routes, the deployed sha and disk. `BASE_URL=` points it elsewhere. |
 | `make malachi-logs SERVICE=web` | The last 200 lines. `TAIL=`, and `FOLLOW=1` to follow. |
-| `make malachi-deploy REF=<sha>` | Fetch, check out detached, `malachi-up`, `malachi-check`. Needs a clean tree. |
-| `make malachi-backup` | `pg_dump` and a mirror of MinIO to `DATA_DIR/backups/<UTC>/`. Keeps the newest `KEEP` (14). |
+| `make malachi-deploy REF=<sha>` | Fetch, check out detached, `malachi-up`, `malachi-check`. Needs a clean tree and a sha, not a branch name. |
+| `make malachi-backup` | `pg_dump` and a mirror of MinIO to `DATA_DIR/backups/<UTC>/`, with the stack up. Keeps the newest `KEEP` (14), each a full copy. |
 | `make malachi-restore-check` | Restores the newest backup into a scratch database, then checks the ledger and every blob against the mirror. |
 | `make malachi-export EMAIL=` or `PROJECT=` | A project's files in `DATA_DIR/exports/<id>/`, what the web tier's download would give, with its `MISSING.txt`. |
 | `make malachi-down` | Stops the stack and keeps the data. |

@@ -1089,6 +1089,7 @@ malachi-logs: ## One service's recent log: SERVICE= [TAIL=200] [FOLLOW=1]
 .PHONY: malachi-deploy
 malachi-deploy: ## Deploy a commit: REF=<sha>, a clean tree, then up and check
 	@test -n "$(REF)" || { echo "malachi-deploy: REF=<sha> is required" >&2; exit 2; }
+	@printf '%s' "$(REF)" | grep -Eq '^[0-9a-f]{7,40}$$' || { echo "malachi-deploy: REF must be a sha; a branch name reads this clone's stale copy" >&2; exit 2; }
 	@test -z "$$(git status --porcelain)" || { echo "malachi-deploy: the tree is not clean" >&2; exit 1; }
 	git fetch origin
 	git checkout --detach "$(REF)"
