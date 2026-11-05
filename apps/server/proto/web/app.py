@@ -22,6 +22,9 @@ with the chat on (#3985, ``GENEALOGY_CHAT``):
   GET  /api/projects/{id}/download             the project as a zip, streamed from /var/tmp (#3987)
   GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout, GET /auth/familysearch/login,
   GET  /callback   (patron sign-in, web/auth.py; every /api/sessions and /api/projects route needs the cookie)
+  GET  /openrouter, /openrouter/link, /openrouter/callback, POST /openrouter/unlink
+                                                the patron's own OpenRouter key (#3988; served only
+                                                with OPENROUTER_LINKING_ENABLED=true; cookie needed)
   GET  /api/sessions/{id}/sidecar/{log_id}     search-result body, or 404 when absent
   GET  /api/sessions/{id}/image?filename=      persisted source page scan, or 404 when absent
   GET  /api/sessions/{id}/logs -> 501; POST .../files stores a researcher upload
@@ -56,7 +59,9 @@ fchDatabase object to read instead, U29; both set refuses to start), QUEUE_URL (
 queue URL, the shim's shape; required with the chat on -- unset or empty refuses to start),
 GENEALOGY_CHAT (unset or true; false serves no /api/sessions route and needs no queue),
 GENEALOGY_MAX_USERS (unset: the allowlist admits; a positive integer: the user cap does),
+PG_POOL_MAX_SIZE (unset: one connection per query; a positive integer: a checked pool of that size),
 UPLOADS_ENABLED (unset or false: the project upload route answers 404; true or false only),
+OPENROUTER_LINKING_ENABLED (unset or false: no /openrouter route; true or false only),
 POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
@@ -430,6 +435,10 @@ class Store(Protocol):
         self, project_id: str, session_id: str, subpath: str, after: int, limit: int
     ) -> list[tuple[int, Any]]: ...
     async def grant_ciphertexts(self, user_id: str) -> tuple[str | None, str | None]: ...
+    # #3988: the patron's OpenRouter key, CIPHERTEXT only (auth.encrypt), in users.openrouter_key_enc.
+    async def openrouter_key_enc(self, user_id: str) -> str | None: ...
+    async def set_openrouter_key(self, user_id: str, key_enc: str) -> None: ...
+    async def clear_openrouter_key(self, user_id: str) -> None: ...
 
 
 class Queue(Protocol):
@@ -776,15 +785,51 @@ def check_out(state: str) -> dict[str, Any]:
 # ── Postgres store ───────────────────────────────────────────────────────────────
 
 
+# #3980: the optional pool's bounds. A borrow waits at most POOL_TIMEOUT_S, as a direct
+# connect does (U23's connect_timeout); a failing background connect keeps retrying on its
+# backoff for at most POOL_RECONNECT_TIMEOUT_S (psycopg_pool's default is 300 s), so a borrow
+# after Postgres returns starts a fresh attempt instead of waiting out a long backoff.
+POOL_TIMEOUT_S = 10.0
+POOL_RECONNECT_TIMEOUT_S = 10.0
+# Each hand-out check's own cap, inside POOL_TIMEOUT_S: a connection whose peer went silent
+# (no RST) would otherwise hold the check until the kernel gives up, about 15 minutes.
+POOL_CHECK_TIMEOUT_S = 2.0
+
+
+def _abandon_check(conn: Any, check: asyncio.Future) -> None:
+    """Give up on a hand-out check still running: close the socket, which psycopg would
+    otherwise keep waiting on even to cancel, so the check ends and the pool discards it."""
+    if not check.done():
+        conn.pgconn.finish()
+        check.cancel()
+    check.add_done_callback(lambda f: f.cancelled() or f.exception())
+
+
+def pool_max_size() -> int | None:
+    """``PG_POOL_MAX_SIZE`` (#3980): the query pool's size, or None (unset) for one
+    connection per call, the handoff's behaviour. Anything but a positive integer refuses."""
+    return auth.positive_int_env("PG_POOL_MAX_SIZE")
+
+
 class PgStore:
-    """One AsyncConnection per call -- streams included, so an open stream costs three or
-    four short connects per poll. n=1 in the prototype; a pool is a production concern.
+    """Queries run on ``_connect``: one AsyncConnection per call by default -- streams
+    included, so an open stream costs three or four short connects per poll -- or, with
+    ``pool_max_size`` (``PG_POOL_MAX_SIZE``, #3980), a connection borrowed from a
+    ``psycopg_pool`` pool that checks each one as it hands it out, so one the server closed
+    while idle (Neon does) is replaced rather than handed to a query. The lifespan opens and
+    closes the pool. Readiness, the schema check and each grant refresh (``refresh_grant``)
+    always connect on their own (``_aconn``); the refresher loop's ``due_grant_users`` borrows.
 
     Connections are ``autocommit=True``: a read is one round trip, and the writers that
-    need several statements to land together say so with ``conn.transaction()``."""
+    need several statements to land together say so with ``conn.transaction()``. Nothing on
+    ``_connect`` sets session state: lock timeouts are transaction-local, and the session
+    advisory locks live on ``_grant_connect``. So a pooled connection carries nothing to its
+    next borrower."""
 
-    def __init__(self, creds: PgCredentials | str) -> None:
+    def __init__(self, creds: PgCredentials | str, *, pool_max_size: int | None = None) -> None:
         self.creds = PgCredentials.fixed(creds) if isinstance(creds, str) else creds
+        self.pool_max_size = pool_max_size
+        self._pool: Any = None
         # U10: the one readiness probe in flight, shared by concurrent /api/health calls,
         # and the postgres check's last outcome for the transition log.
         self._ready_task: asyncio.Task | None = None
@@ -848,10 +893,91 @@ class PgStore:
             raise ReadyCheckError(f"schema: missing {names}", f"web tables or functions missing: {names}")
 
     async def _connect(self):
+        """An async context manager over one query connection: a pooled one, returned to the
+        pool on exit, or a connection of its own, closed on exit. Used as
+        ``async with await self._connect() as conn``."""
+        if self._pool is not None:
+            return self._borrow()
         from psycopg.rows import dict_row
 
         # U23: a connect to a vanished host fails in 10 s rather than the OS's TCP timeout.
         return await self._aconn(row_factory=dict_row, autocommit=True, connect_timeout=10)
+
+    @contextlib.asynccontextmanager
+    async def _borrow(self):
+        """A pooled connection that has just answered a check, within one POOL_TIMEOUT_S.
+        A dead one is discarded (the pool replaces it in the background) and the next is
+        tried at once. The pool's own ``check=`` would sleep its reconnect backoff (1 s, 2 s,
+        4 s...) after each failure, and Neon suspending an idle compute kills every pooled
+        connection together. Each check is capped at POOL_CHECK_TIMEOUT_S, for a peer that
+        went silent rather than closing; a cancelled borrow gives its connection back."""
+        from psycopg_pool import AsyncConnectionPool, PoolTimeout
+
+        pool = self._pool
+        deadline = time.monotonic() + POOL_TIMEOUT_S
+        for _ in range(pool.max_size + 1):
+            conn = await pool.getconn(max(deadline - time.monotonic(), 0.001))
+            check = asyncio.ensure_future(AsyncConnectionPool.check_connection(conn))
+            try:
+                limit = min(POOL_CHECK_TIMEOUT_S, max(deadline - time.monotonic(), 0.001))
+                done, _ = await asyncio.wait({check}, timeout=limit)
+                if not done:
+                    raise TimeoutError(f"the connection check did not answer in {limit:.1f}s")
+                check.result()
+            except Exception:  # noqa: BLE001 - a dead or silent connection; putconn discards it
+                _abandon_check(conn, check)
+                await pool.putconn(conn)
+                continue
+            except BaseException:  # cancellation (a closed SSE tab, a timed-out step): give it back
+                _abandon_check(conn, check)
+                await pool.putconn(conn)
+                raise
+            try:
+                async with conn:
+                    yield conn
+            finally:
+                await pool.putconn(conn)
+            return
+        raise PoolTimeout(f"no live connection in {pool.max_size + 1} hand-outs")
+
+    async def open_pool(self) -> None:
+        """Open the query pool when ``pool_max_size`` is set; a no-op otherwise, so no
+        ``psycopg_pool`` object exists. Never waits for a connection: the tier listens and
+        reports 503 while Postgres is down (U10 D8). Every pooled connect goes through
+        ``pg_credentials.aconnect``, so it resolves the current DSN and re-reads SAS once on
+        an invalid password (U29), as ``_aconn`` does; the pool's own conninfo is unused.
+        ``kwargs`` names no ``sslmode``/``sslrootcert``: libpq reads ``PGSSL*`` from the
+        environment."""
+        if self.pool_max_size is None or self._pool is not None:
+            return
+        import psycopg
+        from psycopg.rows import dict_row
+        from psycopg_pool import AsyncConnectionPool
+
+        creds = self.creds
+
+        class CredentialsConnection(psycopg.AsyncConnection):
+            @classmethod
+            async def connect(cls, conninfo: str = "", **kwargs: Any):
+                return await pg_credentials.aconnect(
+                    creds, lambda d, **k: super(CredentialsConnection, cls).connect(d, **k), **kwargs)
+
+        self._pool = AsyncConnectionPool(
+            "", connection_class=CredentialsConnection, open=False, name="web",
+            min_size=0, max_size=self.pool_max_size,
+            timeout=POOL_TIMEOUT_S, reconnect_timeout=POOL_RECONNECT_TIMEOUT_S,
+            # prepare_threshold=None: psycopg prepares a query server-side after five runs on
+            # one connection, and a pooled one lives long enough; a migration that changes a
+            # result type would then fail that statement until the connection expired.
+            kwargs={"row_factory": dict_row, "autocommit": True, "connect_timeout": 10,
+                    "prepare_threshold": None},
+        )
+        await self._pool.open(wait=False)
+
+    async def close_pool(self) -> None:
+        pool, self._pool = self._pool, None
+        if pool is not None:
+            await pool.close()
 
     async def verify_schema(self, sql_dir: Path = SQL_DIR) -> list[str]:
         """The ledger ``migrate.py`` keeps against the files under ``sql_dir``: the shipped
@@ -1377,6 +1503,24 @@ class PgStore:
         async with await self._connect() as conn:
             await conn.execute("UPDATE users SET sessions_revoked_at = now() WHERE id = %s", (user_id,))
 
+    # -- OpenRouter key (#3988, 016) ---------------------------------------------------
+
+    async def openrouter_key_enc(self, user_id: str) -> str | None:
+        async with await self._connect() as conn:
+            cur = await conn.execute("SELECT openrouter_key_enc FROM users WHERE id = %s", (user_id,))
+            row = await cur.fetchone()
+        return row["openrouter_key_enc"] if row else None
+
+    async def set_openrouter_key(self, user_id: str, key_enc: str) -> None:
+        """Ciphertext only: the route encrypts with ``auth.encrypt`` before the call. A new
+        link replaces the old key."""
+        async with await self._connect() as conn:
+            await conn.execute("UPDATE users SET openrouter_key_enc = %s WHERE id = %s", (key_enc, user_id))
+
+    async def clear_openrouter_key(self, user_id: str) -> None:
+        async with await self._connect() as conn:
+            await conn.execute("UPDATE users SET openrouter_key_enc = NULL WHERE id = %s", (user_id,))
+
     async def store_grant(
         self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
     ) -> None:
@@ -1563,8 +1707,9 @@ def _relative_self_location(location: str, host: str | None, base_path: str = ""
     Behind the edge this tier sees http from its load balancer and a path with the prefix
     stripped, so an absolute URL Starlette builds from the request (its trailing-slash 307)
     leaves the prefix and drops https. A path already under the prefix (the callback's
-    PUBLIC_URL target) keeps it once. Any other host, or a host:port that differs from the
-    request's, is left alone."""
+    PUBLIC_URL target) keeps it once. The fragment is kept: a callback's ``#/...`` SPA route
+    (``auth.redirect_target``) is where the patron lands (#3988). Any other host, or a
+    host:port that differs from the request's, is left alone."""
     if not host:
         return location
     parts = urlparse(location)
@@ -1573,7 +1718,7 @@ def _relative_self_location(location: str, host: str | None, base_path: str = ""
     path = parts.path or "/"
     if base_path and path != base_path and not path.startswith(f"{base_path}/"):
         path = f"{base_path}{path}"
-    return path + (f"?{parts.query}" if parts.query else "")
+    return path + (f"?{parts.query}" if parts.query else "") + (f"#{parts.fragment}" if parts.fragment else "")
 
 
 def _env_float(name: str, default: float) -> float:
@@ -1700,6 +1845,7 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         auth.preflight()  # before anything binds: a misconfigured tier must not come up
+        pool_size = pool_max_size()  # #3980: a bad PG_POOL_MAX_SIZE refuses here too
         # U7: a half SQS pair refuses here, before a startup step or its background retry
         # exists, so the refusal leaves nothing running. #3985: with the chat off there is no
         # queue to need, and app.state.queue stays None.
@@ -1738,7 +1884,7 @@ def create_app(
         log.info("postgres: pg_credentials=%s", app.state.pg_creds.description)
         steps: dict[str, Callable[[], Awaitable[Any]]] = {}
         if app.state.store is None:
-            app.state.store = PgStore(creds)
+            app.state.store = PgStore(creds, pool_max_size=pool_size)
             steps["schema"] = app.state.store.verify_schema
         store = app.state.store
         if hasattr(store, "sync_allowlist"):
@@ -1770,6 +1916,12 @@ def create_app(
                 refresh_age_s=grants.env_seconds(os.environ, "FS_GRANT_REFRESH_AGE_S", grants.DEFAULT_REFRESH_AGE_S),
             ))
         try:
+            # #3980: inside the try, so a startup cancelled from here on still closes it, and
+            # after the inline steps, which run on connections of their own exactly as with
+            # no pool: the tier listens at once with Postgres down, each check naming its
+            # cause. Opening never waits for a connection (U10 D8).
+            if hasattr(store, "open_pool"):
+                await store.open_pool()
             yield
         finally:
             for task in (retry, refresher):
@@ -1777,6 +1929,8 @@ def create_app(
                     task.cancel()
                     with contextlib.suppress(asyncio.CancelledError):
                         await task
+            if hasattr(store, "close_pool"):
+                await store.close_pool()
 
     # U12: no /docs, /redoc or /openapi.json -- FastAPI serves them unauthenticated on a
     # public host, and nothing in the repo reads them.
@@ -1786,6 +1940,8 @@ def create_app(
     app.state.chat = auth.chat_enabled()
     # #3987: None (unset), True or False; a bad value refuses here, as GENEALOGY_CHAT does.
     app.state.uploads = auth.uploads_setting()
+    # #3988: off unless true; a bad value refuses here. Off registers no /openrouter route.
+    app.state.openrouter = auth.openrouter_linking_enabled()
     app.state.store = store
     # #3985: a chat-off tier has no queue, even when a caller passes one.
     app.state.queue = queue if app.state.chat else None
@@ -1996,6 +2152,8 @@ def create_app(
         # #3987: only when UPLOADS_ENABLED is set, so an unset tier answers as it always did.
         if app.state.uploads is not None:
             config["uploads"] = app.state.uploads
+        # #3988: always sent, so the browser app (#4001) shows the OpenRouter page only on true.
+        config["openrouter"] = app.state.openrouter
         return config
 
     @app.get("/auth/me")
@@ -2109,6 +2267,92 @@ def create_app(
         )
         resp.delete_cookie(auth.FS_OAUTH_COOKIE, path=auth.cookie_path())
         return resp
+
+    # -- OpenRouter linking (#3988) ---------------------------------------------------
+    # Registered only with OPENROUTER_LINKING_ENABLED=true, so with it off every /openrouter
+    # route is a 404 before any cookie is read, as /api/sessions is with the chat off. Each
+    # route runs current_user, so a blocked or revoked session is refused on all of them.
+
+    linking = app if app.state.openrouter else APIRouter()
+
+    def _drop_or_state(resp: Response) -> Response:
+        """Delete the state cookie with the attributes it was set with."""
+        resp.delete_cookie(auth.OR_OAUTH_COOKIE, **auth.cookie_kwargs())
+        return resp
+
+    @linking.get("/openrouter")
+    async def openrouter_status(request: Request, response: Response, user: User = Depends(current_user)) -> dict:
+        """``{linked: bool}`` for the browser app's OpenRouter page (#4001). Never the key.
+        Linked means a key that decrypts under the current FS_TOKEN_ENC_KEY: one written under
+        another key is no key to the tool server either (#3984), so the page offers a relink."""
+        response.headers["Cache-Control"] = "private, no-store"
+        return {"linked": auth.decrypt(await _store(request).openrouter_key_enc(user.id)) is not None}
+
+    @linking.get("/openrouter/link")
+    async def openrouter_link(next: str | None = None, user: User = Depends(current_user)) -> Response:
+        """Start OpenRouter's PKCE flow: the state cookie (uid, verifier, state), then a
+        redirect to openrouter.ai, whose callback URL carries the state back."""
+        verifier, challenge = auth.pkce()
+        state = secrets.token_urlsafe(16)
+        resp = RedirectResponse(auth.openrouter_authorize_url(challenge, state))
+        resp.set_cookie(
+            auth.OR_OAUTH_COOKIE, auth.openrouter_state_cookie(user.id, verifier, state, next),
+            max_age=auth.OR_OAUTH_MAX_AGE, **auth.cookie_kwargs(),
+        )
+        return resp
+
+    @linking.get("/openrouter/callback")
+    async def openrouter_callback(request: Request, code: str | None = None, state: str | None = None) -> Response:
+        """Where openrouter.ai sends the browser back: a top-level navigation, so every answer
+        is a page, and every answer drops the state cookie.
+
+        Refused, writing nothing and exchanging nothing: no session (or a refused one, with
+        current_user's status), a missing or invalid state cookie, a cookie another user's
+        session started, a state that does not match, and a return with no code (the patron
+        cancelled). Then the exchange; only on a key is it encrypted (``auth.encrypt``, the
+        FamilySearch grant's Fernet key) and stored. Once the code is spent, a lost response
+        or a failed write may leave a key on the patron's OpenRouter account that we never
+        stored, and the page says so. The key and the exchange's body are never logged."""
+        fail = "Return to the app and try again."
+        orphan = ("OpenRouter may have created a key named “" + auth.OPENROUTER_KEY_LABEL
+                  + "” that was not saved here; delete it in your OpenRouter account settings.")
+
+        def page(text: str, status: int) -> Response:
+            return _drop_or_state(HTMLResponse(f"Linking OpenRouter failed: {text} {fail}", status_code=status))
+
+        try:
+            user = await current_user(request)
+        except HTTPException as exc:
+            return page(f"{exc.detail}.", exc.status_code)
+        data = auth.read_openrouter_state_cookie(request.cookies.get(auth.OR_OAUTH_COOKIE))
+        if data is None:
+            return page("the link state is missing or has expired.", 400)
+        if data["uid"] != user.id:
+            return page("this link was started from another account.", 400)
+        if not state or state != data["state"]:
+            return page("the link state does not match.", 400)
+        if not code:
+            return page("OpenRouter returned no authorization (the request was cancelled or denied).", 400)
+        result = await auth.exchange_openrouter_code(code, data["verifier"])
+        if result.outcome != "ok":
+            log.warning("ev=openrouter_exchange_failed outcome=%s reason=%s", result.outcome, result.reason)
+            if result.outcome == "ambiguous":
+                return page(f"no answer came back from OpenRouter. {orphan}", 502)
+            return page("OpenRouter did not issue a key.", 502)
+        try:
+            await _store(request).set_openrouter_key(user.id, auth.encrypt(result.key))
+        except Exception as exc:  # noqa: BLE001 - the patron is told; the key never reaches the log
+            log.warning("ev=openrouter_store_failed error=%s", type(exc).__name__)
+            return page(f"the key could not be saved. {orphan}", 503)
+        return _drop_or_state(RedirectResponse(auth.redirect_target(data.get("next"))))
+
+    @linking.post("/openrouter/unlink")
+    async def openrouter_unlink(request: Request, user: User = Depends(current_user)) -> dict:
+        """Forget the key: the column goes NULL and nothing is sent to OpenRouter (the page
+        tells the patron to delete the key there, plan W4). POST only: the session cookie is
+        SameSite=Lax, so a GET could be fired from another site."""
+        await _store(request).clear_openrouter_key(user.id)
+        return {"linked": False}
 
     # -- projects -----------------------------------------------------------------
 

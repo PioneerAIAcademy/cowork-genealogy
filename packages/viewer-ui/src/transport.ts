@@ -140,4 +140,11 @@ export interface ResearchTransport {
    * it as optional (no scan shown when absent).
    */
   getSourceImage?(filename: string): Promise<string | null>
+
+  /**
+   * Send a prompt to the chat as if the user typed it. Optional — the Electron
+   * transport does not implement it. Callers must check for its presence before
+   * showing UI that depends on it (e.g. the Evaluate button in the sidecar).
+   */
+  sendPrompt?(prompt: string): void
 }

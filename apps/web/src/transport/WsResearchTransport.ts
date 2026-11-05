@@ -18,6 +18,10 @@ import type { SessionConnection } from './SessionConnection'
 // selectFolder — the project is chosen server-side (the session list), so the
 // viewer never shows the Electron "open folder" welcome.
 export class WsResearchTransport implements ResearchTransport {
+  /** Injected by SessionView after construction (the chat pane wires it once it
+   *  mounts). Present only on the web client — Electron leaves it undefined. */
+  sendPrompt?: (prompt: string) => void
+
   constructor(
     private sessionId: string,
     private conn: SessionConnection

@@ -625,9 +625,9 @@ def _guard_unknown_args(tool_name: str, handler, call_log: list[dict[str, Any]])
 
     WHY THE MODEL'S OWN `args`, NEVER THE POST-INJECTION COPY. The compiled-tool
     handlers add `projectPath` themselves (`_make_compiled_tool_handler` does
-    `input_obj = dict(args)` and injects into the copy). `research_delivered`,
-    `project_list` and `convert_calendar` do not declare `projectPath`, so a
-    check run after that injection would refuse every call to those three.
+    `input_obj = dict(args)` and injects into the copy). `project_list` and
+    `convert_calendar` do not declare `projectPath`, so a check run after that
+    injection would refuse every call to those two.
 
     On a refusal the handler does NOT run, and the envelope is the one
     `server.ts` returns for the same refusal.
@@ -1880,9 +1880,6 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
     "get_name_variants": ("name-variants.js", "getNameVariants"),
-    # Takes only `{summary}`; the handler's injected `projectPath` is the inert
-    # extra key convert_calendar already tolerates.
-    "research_delivered": ("research-delivered.js", "researchDelivered"),
     # Takes no input: called as `projectList(LOCAL)` (`_COMPILED_TOOLS_WITHOUT_INPUT`).
     "project_list": ("project-list.js", "projectList"),
 }

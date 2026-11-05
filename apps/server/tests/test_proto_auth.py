@@ -517,7 +517,7 @@ async def test_the_allowlist_gate_lifts_when_the_background_sync_succeeds(fs_on)
     fs_on.setenv("ALLOWED_EMAILS", "a@example.org")
     fs_on.setattr(app, "STARTUP_BACKOFF_FIRST_S", 0.0)
     store = FlakyStore()
-    fs_on.setattr(app, "PgStore", lambda dsn: store)
+    fs_on.setattr(app, "PgStore", lambda dsn, **kw: store)
     application = create_app(queue=FakeQueue())
     cookies = {auth.COOKIE_NAME: auth.session_cookie_value(USER_A.id)}
     async with application.router.lifespan_context(application):
