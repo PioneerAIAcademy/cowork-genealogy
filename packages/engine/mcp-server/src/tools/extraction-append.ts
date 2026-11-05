@@ -1201,13 +1201,6 @@ async function tieOutcome(
 }
 
 /**
- * `absences`: negative evidence from a search that returned no record (the
- * genealogist's ruling A, 2026-09-30). Code writes the collection as a source
- * and one negative assertion per person, with the fixed classification a
- * negative always takes. The log entry is the nil search's own and is not
- * written again.
- */
-/**
  * Copy each waiting page's text and scan onto its record's source. It takes no
  * refs, so a caller cannot name the wrong page, and it writes no assertion and no
  * log entry. The staged file is left alone: a second held record extracted later
@@ -1270,12 +1263,23 @@ async function attachWaitingPagesMode(input: ExtractionBatchInput): Promise<Extr
     records: [],
     attached: kept.length,
     summary:
-      (kept.length > 0 ? `Kept the page for ${titles.join("; ")}.` : "No read pages were waiting to be kept.") +
+      (kept.length > 0
+        ? `Kept the page for ${titles.join("; ")}.`
+        : errors.length > 0
+          ? "No page was kept."
+          : "No read pages were waiting to be kept.") +
       (errors.length > 0 ? ` ${errors.join(" ")}` : ""),
     ...(errors.length > 0 ? { errors } : {}),
   };
 }
 
+/**
+ * `absences`: negative evidence from a search that returned no record (the
+ * genealogist's ruling A, 2026-09-30). Code writes the collection as a source
+ * and one negative assertion per person, with the fixed classification a
+ * negative always takes. The log entry is the nil search's own and is not
+ * written again.
+ */
 async function absencesMode(input: ExtractionBatchInput): Promise<ExtractionBatchResult> {
   const absences = input.absences ?? [];
   const CLASSES = new Set<string>(VALIDATOR_ENUMS.source_classification);
@@ -2060,6 +2064,9 @@ export const extractionAppendSchema = {
     "in, is extracted, and each persona is linked to the tree person who " +
     "attaches it as an UNVERIFIED candidate (`speculative`, no score). Checking " +
     "those links is a separate request.\n" +
+    "- `attachWaitingPages: true` — keep the read pages `project_context` lists " +
+    "under `waitingPages`, each on the source that waited. It takes no refs, and " +
+    "writes no assertion and no log entry.\n" +
     "\n" +
     "Returns one outcome per record, each with a code-written `summary`: relay " +
     "it verbatim, since you do not see the record yourself; `personId` also " +

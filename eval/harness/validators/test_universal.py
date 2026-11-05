@@ -620,13 +620,27 @@ def _explained_by_appends(before_section, after_section) -> bool:
 _PAGE_FIELDS = {"transcription", "transcription_truncated", "image_filename"}
 
 
-def _explained_by_appends_or_page_attach(before_section, after_section) -> bool:
-    """`sources` changed only by `extraction_append`: new entries, and existing
-    ones gaining a read page and nothing else (attachWaitingPages). Code writes
-    both whole, so a caller reaches neither."""
+def _attached_pages(tool_calls) -> bool:
+    """True when the run called `extraction_append({ attachWaitingPages: true })`."""
+    return any(
+        isinstance(c, dict)
+        and (c.get("tool") or "").rsplit("__", 1)[-1] == "extraction_append"
+        and (c.get("args") or {}).get("attachWaitingPages") is True
+        for c in (tool_calls or [])
+    )
+
+
+def _explained_by_page_attach(before_section, after_section) -> bool:
+    """True when existing sources gained a read page they did not hold and changed
+    in nothing else. New entries may sit beside them. An entry with no `id`, a
+    removed entry, or a section that is not a list fails closed."""
     if not isinstance(before_section, list) or not isinstance(after_section, list):
         return False
-    after_by_id = {e.get("id"): e for e in after_section if isinstance(e, dict)}
+    after_by_id: dict[str, dict] = {}
+    for e in after_section:
+        if not isinstance(e, dict) or not isinstance(e.get("id"), str):
+            return False
+        after_by_id[e["id"]] = e
     changed = False
     for e in before_section:
         if not isinstance(e, dict) or e.get("id") not in after_by_id:
@@ -636,7 +650,7 @@ def _explained_by_appends_or_page_attach(before_section, after_section) -> bool:
         if not keys <= _PAGE_FIELDS or any(e.get(k) for k in keys):
             return False
         changed = changed or bool(keys)
-    return changed or len(after_section) > len(before_section)
+    return changed
 
 
 def _ids_unique(section) -> list[str] | None:
@@ -970,8 +984,9 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
                 if section == "assertions"
                 else _explained_by_attachment_links(before.get(section), after.get(section))
                 if section == "person_evidence"
-                else _explained_by_appends_or_page_attach(before.get(section), after.get(section))
-                if section == "sources"
+                else _explained_by_page_attach(before.get(section), after.get(section))
+                or _explained_by_appends(before.get(section), after.get(section))
+                if section == "sources" and _attached_pages(tool_calls)
                 else _explained_by_appends(before.get(section), after.get(section))
             ):
                 continue

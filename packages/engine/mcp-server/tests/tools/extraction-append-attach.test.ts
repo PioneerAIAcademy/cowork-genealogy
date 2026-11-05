@@ -4,7 +4,7 @@
  * the page onto that source (research-append-tool-spec.md §11.9).
  */
 
-import { describe, it, expect, beforeEach, afterEach } from "vitest";
+import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
 import { mkdtemp, writeFile, readFile, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
@@ -16,6 +16,18 @@ import { stageSearchResults } from "../../src/utils/results-staging.js";
 import { pageKey, waitingPages } from "../../src/utils/waiting-pages.js";
 import { validateProject } from "../../src/validation/validator.js";
 import { LOCAL } from "../../src/auth/principal.js";
+
+const refused = vi.hoisted(() => new Set<string>());
+vi.mock("../../src/tools/research-append.js", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../src/tools/research-append.js")>();
+  return {
+    ...actual,
+    researchAppend: async (input: any, options: any) =>
+      input.ops?.some((op: any) => refused.has(op.entryId))
+        ? { ok: false, errors: ["refused"] }
+        : actual.researchAppend(input, options),
+  };
+});
 
 const noReader = { readRecord: async () => { throw new Error("no reads when attaching"); } } as any;
 
@@ -68,6 +80,7 @@ describe("waiting pages", () => {
     }))!.resultsRef;
 
   beforeEach(async () => {
+    refused.clear();
     dir = await mkdtemp(join(tmpdir(), "attach-test-"));
     await seed([]);
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify({ persons: [], relationships: [], sources: [{ id: "S1", title: "Census" }] }), "utf8");
@@ -80,10 +93,9 @@ describe("waiting pages", () => {
     it("ignores cc, which selects no image", () => {
       expect(pageKey(`${ARK}?cc=1923888`)).toBe(pageKey(ARK));
     });
-    it("keeps i and groupId, which do", () => {
-      expect(pageKey(`${ARK}?i=15&cc=1923888`)).not.toBe(pageKey(ARK));
-      expect(pageKey(`${ARK}?groupId=4`)).not.toBe(pageKey(ARK));
-      expect(pageKey(`${ARK}?i=15`)).toBe(pageKey(`${ARK}?cc=1&i=15`));
+    it("names no page when i or groupId picks one of several", () => {
+      expect(pageKey(`${ARK}?i=15&cc=1923888`)).toBeNull();
+      expect(pageKey(`${ARK}?groupId=4`)).toBeNull();
     });
   });
 
@@ -98,7 +110,7 @@ describe("waiting pages", () => {
       } as any,
       { logEntryId: "log_001" },
     );
-    expect((ops[0] as any).entry.image_ark).toMatch(/3:1:33SQ-GRZ6-P95/);
+    expect((ops[0] as any).entry.image_ark).toBe(`${ARK}?cc=1`);
   });
 
   it("a record with no image gets no image_ark", () => {
@@ -167,6 +179,18 @@ describe("waiting pages", () => {
     expect((await attach()).attached).toBe(0);
   });
 
+  it("a read and a source with the same i= do not attach, since the read may have fallen back to the bare URL", async () => {
+    await seed([source("src_001", { image_ark: `${ARK}?i=15` })]);
+    await stagePage({ ark: `${ARK}?i=15` });
+    expect(await listed()).toEqual([]);
+  });
+
+  it("a source with i= takes no bare read", async () => {
+    await seed([source("src_001", { image_ark: `${ARK}?i=15` })]);
+    await stagePage({ ark: ARK });
+    expect(await listed()).toEqual([]);
+  });
+
   it("the oldest read wins, so a repeat read cannot displace the first", async () => {
     await seed([source("src_001", { image_ark: ARK })]);
     const first = await stagePage({ ark: ARK }, { transcription: "first reading" });
@@ -229,19 +253,33 @@ describe("waiting pages", () => {
     expect((await read()).sources.map((s: any) => s.transcription ?? null)).toEqual([null, "Paul Raymond 1 1 0 3 1"]);
   });
 
-  it("is ok: false when something waited and nothing was kept", async () => {
+  it("a refused write on one page leaves the others attached, and a later call retries it", async () => {
+    await seed([source("src_001", { image_ark: ARK }), source("src_002", { image_ark: OTHER })]);
+    await stagePage({ ark: ARK });
+    await stagePage({ ark: OTHER });
+    refused.add("src_001");
+    const r = await attach();
+    expect(r).toMatchObject({ ok: true, attached: 1 });
+    expect(r.errors?.join(" ")).toMatch(/src_001 was not kept: refused/);
+    expect((await read()).sources.map((s: any) => s.transcription ?? null)).toEqual([null, "Paul Raymond 1 1 0 3 1"]);
+    refused.clear();
+    expect((await attach()).attached).toBe(1);
+  });
+
+  it("is ok: false when something waited and nothing was kept, and says so", async () => {
     await seed([source("src_001", { image_ark: ARK })]);
     await stagePage({ ark: ARK }, { transcription: "" });
     const r = await attach();
     expect(r.ok).toBe(false);
     expect(r.attached).toBe(0);
+    expect(r.summary).toMatch(/^No page was kept\./);
   });
 
   it("an ARK with no held record lists nothing, and nothing to attach is ok", async () => {
     await seed([source("src_001", { image_ark: OTHER })]);
     await stagePage({ ark: ARK });
     expect(await listed()).toEqual([]);
-    expect(await attach()).toMatchObject({ ok: true, attached: 0 });
+    expect(await attach()).toMatchObject({ ok: true, attached: 0, summary: "No read pages were waiting to be kept." });
   });
 
   it("an imageId read lists nothing", async () => {

@@ -111,6 +111,25 @@ def test_ownership_accepts_a_new_source_beside_a_kept_page():
     check_ownership(state(), after, RESEARCH_SKILL, TEST, [CALL])
 
 
+def test_ownership_accepts_a_new_source_alone_on_an_attach_run():
+    after = state()
+    after["research_json"]["sources"].append({"id": "src_002", "citation": "another"})
+    check_ownership(state(), after, RESEARCH_SKILL, TEST, [CALL])
+
+
+def test_ownership_refuses_a_hand_written_page_beside_a_record_extraction():
+    call = {"tool": "mcp__genealogy__extraction_append", "args": {"projectPath": "/p", "recordIds": ["X"]}}
+    with pytest.raises(AssertionError):
+        check_ownership(state(), kept(), RESEARCH_SKILL, TEST, [call])
+
+
+def test_ownership_refuses_an_entry_with_no_id():
+    after = kept()
+    after["research_json"]["sources"].append({"citation": "no id"})
+    with pytest.raises(AssertionError):
+        check_ownership(state(), after, RESEARCH_SKILL, TEST, [CALL])
+
+
 def test_ownership_refuses_a_page_with_no_call():
     with pytest.raises(AssertionError):
         check_ownership(state(), kept(), RESEARCH_SKILL, TEST, [])

@@ -365,8 +365,8 @@ context. Triage from the stubs first:
 - **Right context, or a false positive?** Whether the name is a genuine mention
   (witness, will clause, deed party) versus a false positive (cross-column
   alignment, a place name matching a surname) cannot be judged from the stubs —
-  the terms are bare. Verify against the original image (see the verification
-  note above), or `Read` the single result you are chasing out of
+  the terms are bare. Report it as doubtful and link the page (see the
+  verification note above), or `Read` the single result you are chasing out of
   `staged.resultsRef`.
 
 **Attachment check:** After narrowing to promising results, call

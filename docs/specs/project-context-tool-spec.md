@@ -584,8 +584,10 @@ this side reads. Each side is tested against its own fixture.
 ### 2.8 `waitingPages` — read pages of held records
 
 A source whose record has a known page (`image_ark`) and no `transcription`, joined
-to a staged `image_transcribe` read of that page: bare ARK plus any `i=` and
-`groupId=`, because those select a different image. The oldest read wins. Read-only.
+to a staged `image_transcribe` read of that page, on the bare ARK. `cc=` selects
+nothing and is ignored. An ARK with `i=` or `groupId=` never joins: those pick one
+image of several, and a read that fails on them falls back to the bare URL, which can
+land on any image. The oldest read wins. Read-only.
 Absent when nothing waits. The router answers with one
 `extraction_append({ attachWaitingPages: true })`. A page that expires from staging
 drops out. It reads every fresh staged file while any source waits, as

@@ -18,14 +18,14 @@ export interface WaitingPage {
 const IMAGE_SELECTORS = ["i", "groupId"] as const;
 
 /**
- * One image's identity. The bare id alone is not enough: a waypoint ARK with
- * `i=15` is a different image from the same ARK with no `i=`, and attaching it
- * would put the wrong page on a source with nothing to flag it.
+ * The image an ARK names, or null when `i=` or `groupId=` picks one of several. A
+ * read that fails on those falls back to the bare URL, which can land on any image,
+ * so what it read cannot be trusted as that page. `cc` selects nothing.
  */
-export function pageKey(ark: string): string {
+export function pageKey(ark: string): string | null {
   const q = ark.indexOf("?");
   const params = new URLSearchParams(q === -1 ? "" : ark.slice(q + 1));
-  return [arkToBareId(ark), ...IMAGE_SELECTORS.map((k) => params.get(k) ?? "")].join("|");
+  return IMAGE_SELECTORS.some((k) => params.has(k)) ? null : arkToBareId(ark);
 }
 
 /**
@@ -45,12 +45,13 @@ export async function waitingPages(projectPath: string, research: any): Promise<
     const ark = (entry.envelope.payload as { query?: { ark?: unknown } } | undefined)?.query?.ark;
     if (typeof ark !== "string" || ark === "") continue;
     const key = pageKey(ark);
-    if (!oldestRead.has(key)) oldestRead.set(key, entry.ref);
+    if (key !== null && !oldestRead.has(key)) oldestRead.set(key, entry.ref);
   }
 
   const out: WaitingPage[] = [];
   for (const s of sources) {
-    const ref = oldestRead.get(pageKey(s.image_ark));
+    const key = pageKey(s.image_ark);
+    const ref = key === null ? undefined : oldestRead.get(key);
     if (ref) out.push({ sourceId: s.id, ref });
   }
   return out;

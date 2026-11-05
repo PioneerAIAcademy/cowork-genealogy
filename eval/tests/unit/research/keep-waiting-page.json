@@ -16,7 +16,45 @@
   },
   "execution": {
     "max_turns": 14,
-    "max_wall_clock_seconds": 600
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      }
+    ]
   },
   "judge_reads_files": true,
   "judge_context": [

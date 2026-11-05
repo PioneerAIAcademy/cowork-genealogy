@@ -3064,7 +3064,7 @@ page image has examined the original and may upgrade it — a later, evidenced
 edit, not this tool's guess.
 
 **`image_ark`.** A record that names its page gets that page's ARK on its source,
-with the context query removed. It is what joins the source to a read of the page
+as `record_read` gives it. It is what joins the source to a read of the page
 (§11.9). A record with no page gets no `image_ark`.
 
 #### Return
