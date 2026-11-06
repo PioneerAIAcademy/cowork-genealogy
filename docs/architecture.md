@@ -1010,7 +1010,12 @@ they have different fixes, and only one of them is a description problem.
    **The instrument for an agent is a routing negative**, not the optimizer: a
    test with a `user_message`, no `grade_on_invariant`, and a
    `negative.correct_skill` naming the agent asserts that the utterance routes
-   there, and the harness resolves an agent file as a valid target.
+   there, and the harness resolves an agent file as a valid target. Its message
+   must be one the agent can act on (for an agent that acts on a person, the
+   message names one): the harness stubs the spawn, so a hand-back the agent
+   would return is never seen. A message naming no person and no edit is
+   correctly answered with a clarifying question, not a hand-off, so it is not a
+   routing negative.
    `research`'s suite hosts them (`eval/tests/unit/research/route-agent-*.json`),
    because a message the main thread should hand straight to an agent must not
    enter `research` first. A negative that sets `grade_on_invariant` is not one:
