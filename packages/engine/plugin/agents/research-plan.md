@@ -346,13 +346,13 @@ for the record-type pages named in Step 3's pre-work, fetch by
 constructed URL.
 
 **(b) Then discover which records exist**, with your own tools, applying
-that know-how. When the place's `localities` entry has a collection with a
-`person_count`, plan from that entry's `collections[]` and make no
-`collections_search` call for the place or its state; the national call
-below still applies.
+that know-how. When a `localities` entry whose `place` or `forPlace` names
+the place or its state has a collection with a `personCount`, plan from that
+entry's `collections[]` and make no `collections_search` call for the place
+or its state; the national call below still applies.
 
 ```
-collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
+collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })   // only when no localities entry with a personCount covers it
 volume_search({ standardPlace: "Schuylkill, Pennsylvania, United States", startYear: 1875, endYear: 1890 })
 project_context({ projectPath })
 research_query({ projectPath, section: "external_collections", place: "Schuylkill, Pennsylvania, United States", recordType: "Census" })
@@ -370,7 +370,7 @@ says the parish is indexed only at county level, weight the county
 collection, not the exact-parish one.
 
 **Availability comes from the response, not from memory.** A collection's
-returned `personCount`, or its `person_count` in the `localities` entry,
+returned `personCount`, or its `personCount` in the `localities` entry,
 decides how you plan and describe it:
 - **Above 0:** name-searchable. Plan a name search.
 - **0:** browse-only images. Plan an image browse, not a name search.
@@ -689,7 +689,7 @@ research_append({
         jurisdiction: "Schuylkill County, Pennsylvania",
         date_range: "1875-1890",
         repository: "FamilySearch",
-        rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). loc_001 lists the Pennsylvania probate collection with person_count 0, so this is an image browse of the county's probate dockets, not a name search. A will naming Patrick as a son would be direct evidence of parentage.",
+        rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). loc_001 lists the Pennsylvania probate collection with personCount 0, so this is an image browse of the county's probate dockets, not a name search. A will naming Patrick as a son would be direct evidence of parentage.",
         fallback_for: null,
         status: "planned"
       }
@@ -833,7 +833,7 @@ County naming Patrick as a son?"
 know-how + facts are already there (county formed 1811; probate = county
 Register of Wills; naming/indexing quirks). Its `collections[]` give the
 records to plan (FamilySearch "Pennsylvania Probate Records, 1683-1994",
-person_count 0, so browse-only); no `collections_search` for Schuylkill.
+personCount 0, so browse-only); no `collections_search` for Schuylkill.
 
 **Plan:** pl_003 — three items: probate on FamilySearch, probate on
 Ancestry (fallback), land records (fallback).
