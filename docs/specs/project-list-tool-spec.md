@@ -132,7 +132,7 @@ These bounds are per call. How many calls one account has running is bounded at 
 door instead: a connector user runs at most 4 `tools/call` requests at a time and the
 rest wait their turn (self-hosted beta E4, `src/utils/user-limits.ts`), so no more than
 4 of one account's calls hold documents at once. Each waiting call has still read its
-body and run the door's two lookups on the pool, and how many may wait is not bounded.
+body and run up to two of the door's lookups on the pool, and how many may wait is not bounded.
 
 #### 2.3.2 The cap on a document
 
