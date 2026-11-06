@@ -240,8 +240,9 @@ Review, however firmly the delegation insists.
 items, and the user wants a recap. Narrate which item is next, why,
 and what follows — **do not create a new plan or modify items.** The
 active plan is the audit trail; review is explanatory only. If the
-item you confirm as the next step names no specific collection, run a
-quick `collections_search` at its jurisdiction to confirm the source
+item you confirm as the next step names no specific collection, take it
+from its jurisdiction's `localities` entry, else run a quick
+`collections_search` at that jurisdiction, to confirm the source
 is actually available and cite the collection/repository — a read-only
 catalog check that makes the recommendation actionable, never a new
 plan item.
@@ -345,7 +346,10 @@ for the record-type pages named in Step 3's pre-work, fetch by
 constructed URL.
 
 **(b) Then discover which records exist**, with your own tools, applying
-that know-how:
+that know-how. When the place's `localities` entry has a collection with a
+`person_count`, plan from that entry's `collections[]` and make no
+`collections_search` call for the place or its state; the national call
+below still applies.
 
 ```
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })
@@ -366,7 +370,8 @@ says the parish is indexed only at county level, weight the county
 collection, not the exact-parish one.
 
 **Availability comes from the response, not from memory.** A collection's
-returned `personCount` decides how you plan and describe it:
+returned `personCount`, or its `person_count` in the `localities` entry,
+decides how you plan and describe it:
 - **Above 0:** name-searchable. Plan a name search.
 - **0:** browse-only images. Plan an image browse, not a name search.
 
@@ -423,8 +428,8 @@ subject's birth country. Read the subject's recorded sex before you issue
 the block: a female subject's block has no military page. Issue them as
 PARALLEL calls in one turn. They are members of this block, not options: a
 page you did not fetch is a record type you will plan from memory. Fetch no
-other wiki page: what records a place holds comes from its `localities` entry
-and `collections_search`.
+other wiki page: what records a place holds comes from its `localities` entry,
+and from `collections_search` only as Step 2(b) allows.
 
 - **A male subject of a parentage question, born in continental Europe
   or Scandinavia** → `{Country}_Military_Records`. REQUIRED. Not for a
@@ -684,7 +689,7 @@ research_append({
         jurisdiction: "Schuylkill County, Pennsylvania",
         date_range: "1875-1890",
         repository: "FamilySearch",
-        rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). collections_search returned the Pennsylvania probate collection with personCount 0, so this is an image browse of the county's probate dockets, not a name search. A will naming Patrick as a son would be direct evidence of parentage.",
+        rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). loc_001 lists the Pennsylvania probate collection with person_count 0, so this is an image browse of the county's probate dockets, not a name search. A will naming Patrick as a son would be direct evidence of parentage.",
         fallback_for: null,
         status: "planned"
       }
@@ -826,9 +831,9 @@ County naming Patrick as a son?"
 **Survey:** read the `localities` entry `loc_001` — the orchestrator ran
 `locality-guide` for Schuylkill County before handing off, so the
 know-how + facts are already there (county formed 1811; probate = county
-Register of Wills; naming/indexing quirks). Then `collections_search`
-finds the records to plan (FamilySearch "Pennsylvania Probate Records,
-1683-1994", indexed).
+Register of Wills; naming/indexing quirks). Its `collections[]` give the
+records to plan (FamilySearch "Pennsylvania Probate Records, 1683-1994",
+person_count 0, so browse-only); no `collections_search` for Schuylkill.
 
 **Plan:** pl_003 — three items: probate on FamilySearch, probate on
 Ancestry (fallback), land records (fallback).

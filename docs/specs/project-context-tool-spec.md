@@ -101,7 +101,11 @@ repo's identifier-casing rule):
     recordIds: string[],                 // distinct record_id values across its assertions
     assertionCount: number,              // assertions with source_id = this id
   }],
-  localities: [...],                     // place/locale projection for research-plan
+  localities: [...],                     // place/locale projection for research-plan; each
+                                         //   collection carries {id, title, dateRange, personCount,
+                                         //   recordCount}, counts null when the entry has none —
+                                         //   research-plan plans from them without re-running
+                                         //   collections_search (#3545)
   awaitingUser: [{                       // open external-site hand-offs — §2.3
     logId: string,                       // log_* of the in-flight entry
     site: string,                        // external_site.site

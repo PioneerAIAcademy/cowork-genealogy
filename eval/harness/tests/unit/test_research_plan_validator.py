@@ -30,6 +30,8 @@ sys.path.insert(0, str(_HARNESS / "validators"))  # validators_lib, the module
 
 from test_research_plan import (  # noqa: E402
     test_research_plan_availability_claim_matches_counts as check_v5,
+    test_research_plan_reuses_counted_locality_collections as check_reuse,
+    _collections_scope,
     test_research_plan_fallback_for_in_same_plan as check_v3,
     test_research_plan_no_out_of_lane_tools as check_v2,
     test_research_plan_rationale_identifiers_traceable as check_v1,
@@ -318,6 +320,145 @@ def test_v5_passes_when_claims_match_counts():
         _item("pli_011", rationale="Collection 1921317 is fully indexed."),
     ])
     check_v5(before, after, _SERVED)
+
+
+def _with_locality(state, counts=(0, 1048378)):
+    """`state` with a Schuylkill/Pennsylvania localities entry carrying the
+    two _SERVED collections at `counts` (None = uncounted)."""
+    research = dict(state["research_json"])
+    research["localities"] = [{
+        "id": "loc_001",
+        "place": "Pennsylvania, United States",
+        "for_place": "Schuylkill County, Pennsylvania",
+        "collections": [
+            {"id": "1999196", "title": "Pennsylvania, Probate Records", "person_count": counts[0]},
+            {"id": "1921317", "title": "Pennsylvania, County Marriages", "person_count": counts[1]},
+        ],
+    }]
+    return {"research_json": research}
+
+
+def _no_skip(check, *args):
+    """Run `check`, failing (not skipping) if it skips: these cases exist to
+    prove the entry's counts are graded."""
+    try:
+        check(*args)
+    except pytest.skip.Exception as exc:
+        pytest.fail(f"skipped instead of grading: {exc}")
+
+
+def test_v5_grades_an_entry_count_with_no_collections_search():
+    # #3545: a plan written from the localities entry, with no call, is graded
+    # against the entry's person_count instead of skipping.
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is fully indexed.")])
+    with pytest.raises(AssertionError, match="1999196"):
+        _no_skip(check_v5, _with_locality(before), after, [])
+
+
+def test_v5_passes_an_entry_count_claim_that_matches():
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is browse-only (personCount 0).")])
+    _no_skip(check_v5, _with_locality(before), after, [])
+
+
+def test_v5_still_skips_with_no_entry_and_no_call():
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is fully indexed.")])
+    with pytest.raises(pytest.skip.Exception):
+        check_v5(before, after, [])
+
+
+def test_v5_ignores_uncounted_entry_collections():
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is fully indexed.")])
+    with pytest.raises(pytest.skip.Exception):
+        check_v5(_with_locality(before, counts=(None, None)), after, [])
+
+
+# --- reuses-counted-locality (#3545 lead 3) ------------------------------
+
+_REUSE_TEST = {"tags": ["reuses-counted-locality"]}
+_REUSE_BEFORE = _with_locality({"research_json": {}})
+_PA_RESPONSE = {"query": {}, "scope": "Pennsylvania", "totalForPlace": 0, "results": []}
+
+
+@pytest.mark.parametrize("place", [
+    "Schuylkill, Pennsylvania, United States",
+    "Pennsylvania, United States",
+    "Schuylkill County, Pennsylvania, United States",
+    "Pottsville, Schuylkill, Pennsylvania, United States",
+])
+def test_reuse_fires_on_a_repeat_at_the_entry_scope(place):
+    with pytest.raises(AssertionError, match=r"loc_001") as exc:
+        check_reuse(_REUSE_BEFORE, [_call("collections_search", _PA_RESPONSE, {"standardPlace": place})], _REUSE_TEST)
+    assert place in str(exc.value)
+
+
+def test_reuse_fires_with_years_on_the_call():
+    call = _call("collections_search", _PA_RESPONSE,
+                 {"standardPlace": "Pennsylvania, United States", "startYear": 1820, "endYear": 1845})
+    with pytest.raises(AssertionError, match="loc_001"):
+        check_reuse(_REUSE_BEFORE, [call], _REUSE_TEST)
+
+
+@pytest.mark.parametrize("response", [
+    None, "{\"scope\": \"Pennsylvania\"}", {"error": "upstream 503"},
+    {"query": {}, "scope": "", "results": []},
+])
+def test_reuse_verdict_ignores_the_response_shape(response):
+    call = _call("collections_search", response, {"standardPlace": "Schuylkill, Pennsylvania, United States"})
+    with pytest.raises(AssertionError, match="loc_001"):
+        check_reuse(_REUSE_BEFORE, [call], _REUSE_TEST)
+
+
+@pytest.mark.parametrize("place", [
+    "United States",
+    "Ohio, United States",
+    "Schuylkill County Pennsylvania",  # comma-less: the tool passes it through as-is
+    "Ireland",
+])
+def test_reuse_passes_other_scopes(place):
+    check_reuse(_REUSE_BEFORE, [_call("collections_search", None, {"standardPlace": place})], _REUSE_TEST)
+
+
+def test_reuse_exempts_the_national_call_even_for_a_national_entry():
+    # hale-* scenarios carry a localities entry placed at "United States".
+    before = _with_locality({"research_json": {}})
+    before["research_json"]["localities"].append({
+        "id": "loc_002", "place": "United States",
+        "collections": [{"id": "1325221", "title": "United States Census, 1880", "person_count": 50000000}],
+    })
+    _no_skip(check_reuse, before, [_call("collections_search", None, {"standardPlace": "United States"})], _REUSE_TEST)
+
+
+def test_reuse_passes_other_tools_and_bad_args():
+    calls = [
+        _call("volume_search", None, {"standardPlace": "Schuylkill, Pennsylvania, United States"}),
+        _call("collections_search", None, {"standardPlace": None}),
+        _call("collections_search", None, {}),
+    ]
+    check_reuse(_REUSE_BEFORE, calls, _REUSE_TEST)
+
+
+def test_reuse_fails_loudly_when_the_entry_is_uncounted():
+    # A fixture whose entry has no counted collection cannot exercise the check.
+    with pytest.raises(AssertionError, match="cannot exercise"):
+        check_reuse(_with_locality({"research_json": {}}, counts=(None, None)), [], _REUSE_TEST)
+
+
+def test_reuse_skips_an_untagged_test():
+    call = _call("collections_search", None, {"standardPlace": "Pennsylvania, United States"})
+    with pytest.raises(pytest.skip.Exception):
+        check_reuse(_REUSE_BEFORE, [call], {"tags": ["planning"]})
+
+
+@pytest.mark.parametrize("place,scope", [
+    ("Schuylkill, Pennsylvania, United States", "Pennsylvania"),
+    ("Schuylkill County, Pennsylvania", "Pennsylvania"),  # no country tail: last part
+    ("United States", "United States"),
+    ("Toronto, Ontario, Canada", "Canada, Ontario"),
+    ("Cork, Cork, Ireland", "Ireland"),
+    (" ", ""),
+])
+def test_collections_scope_matches_the_engine(place, scope):
+    assert _collections_scope(place) == scope
 
 
 def test_v5_skips_multi_collection_sentence():
