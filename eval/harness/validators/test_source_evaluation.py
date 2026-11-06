@@ -1262,3 +1262,269 @@ def test_findings_carry_record_link(tool_calls, text_response, test, agent_retur
         f"a finding carries no record link person_read returned: {unlinked[0][:160]!r}. "
         "Give the source's url; an ARK built from a source id names another record"
     )
+
+
+# ── an age's birth range is not a conflict (issue #4127) ─────────────────────
+#
+# A record's age gives a two-year birth window (event year - age - 1 to event
+# year - age). The live bug: an age-consistent cluster of census and death-index
+# entries, each carrying FamilySearch's bare "1839" with no age, was counted
+# against a profile birth of 30 Nov 1838 and reported as conflicting, while the
+# tombstone's exact "31 Jan 1839" (a genuine conflict) was the one finding that
+# should have been there. `test_census_drift_is_not_a_finding` cannot see this:
+# it grades a census a couple of years off, and these were not off at all.
+#
+# Tag-gated (`age-derived-birth`). Which sources are age-derived, and which exact
+# date must stay a finding, are constants here rather than test fields: a new
+# unit-test field is a schema, orchestrator and spec change (unit-test-spec.md),
+# and this guard is for one corpus case. Both are literal properties of the reply
+# text; whether the reasoning is sound stays with the rubric.
+
+_AGE_DERIVED_SOURCES = [
+    {"name": "1850 census", "match": ["1850", "MCTB-KBM"]},
+    {"name": "1865 census", "match": ["1865", "QVNJ-JDJD"]},
+    {"name": "1910 census", "match": ["1910", "M5W8-LDP"]},
+    {
+        "name": "Vermont, Vital Records 1760-1954 death index",
+        "match": ["2V7M-JMY", "SMQJ-41H", "Vital Records, 1760-1954", "Vital Records 1760-1954", "VT VR 1760-1954", "Vermont death record"],
+    },
+    {
+        "name": "Vermont, Deaths and Burials 1871-1965 death index",
+        "match": ["F8R4-RYM", "SMQJ-46L", "Deaths and Burials", "Deaths & Burials"],
+    },
+]
+_AGE_REQUIRED_CONFLICT = {"date": ["31 Jan", "31 January"], "also": ["30 Nov", "30 November"]}
+
+_AGE_BIRTH_ROW_LABEL_RE = re.compile(r"birth(?!\s*place)", re.IGNORECASE)
+_AGE_CONFLICT_WORD_RE = re.compile(
+    r"\[\s*conf\w*[^\]]*\]|conflict|disagree|discrepan|does not match|mismatch|\bdiffers?\b",
+    re.IGNORECASE,
+)
+# A conflict word that is being denied is not a flag: "not a conflict", "no
+# disagreement", "consistent with the profile", "within the 1838-1839 window".
+_AGE_DENIED_RE = re.compile(
+    r"\b(?:not|no|never|neither|nor|without)\s+(?:a\s+|an\s+|any\s+)?(?:\w+\s+)?"
+    r"(?:conflicts?|findings?|disagreements?|discrepanc\w+|mismatch\w*)"
+    r"|does not (?:conflict|disagree|differ)"
+    r"|\bconsistent with\b|\bagrees? with\b|\bagreeing\b"
+    r"|\bwithin\b[^.|]*\b(?:window|range|variance|tolerance|1838)"
+    r"|ordinary (?:census )?variance|\(cd\)|census drift",
+    re.IGNORECASE,
+)
+# A prose clause that merely reports the age-derived range is not a flag.
+_AGE_RANGE_RE = re.compile(r"birth ?ranges?|bet(?:ween)? 1838|1838\s*[-–—]\s*1839", re.IGNORECASE)
+_AGE_BLOCK_WORDS = r"conflict|discrepan|error|finding|disagree|mismatch|inconsisten"
+# Reports that fault the profile's year against "every source" without naming the
+# census or index: the claim is about all of them, the age-derived ones included.
+_AGE_UNNAMED_NAME = "unnamed: every source giving a birth year"
+# An every-source claim is a flag only when it is framed as a disagreement, or sits in a
+# birth finding; a sentence that only reports where the sources cluster is not.
+_AGE_UNNAMED_CONTEXT_RE = re.compile(
+    r"inconsisten|contradict|conflict|disagree|discrepan|mismatch|\bdiffers?\b", re.IGNORECASE
+)
+_AGE_UNNAMED_RE = re.compile(
+    r"\b(?:every|all|each|multiple|most|several)\b[^.]{0,60}\bsources?\b[^.]{0,80}\b(?:say|says|give|gives|"
+    r"report|reports|show|shows|indicate|indicates|agree|agrees|record|records)\b[^.]{0,40}\b1839\b"
+    r"|\b(?:inconsistent|conflicts?|disagrees?|contradict\w*)\b[^.]{0,40}\b(?:every|all|each)\b[^.]{0,40}"
+    r"\bsources?\b[^.]{0,60}\bbirth\b",
+    re.IGNORECASE,
+)
+
+
+# A sentence about sources that give a full or specific date is about the tombstone and
+# Find a Grave, not about the age-derived ones.
+_AGE_FULL_DATE_RE = re.compile(r"\b(?:specific|full|exact)\b[^.]{0,20}\bdates?\b", re.IGNORECASE)
+
+
+def _age_is_heading(text: str) -> bool:
+    """A short line that is not a sentence or a list item: a section heading."""
+    return len(text) <= 140 and not re.match(r"^[-*>|]|^\d+[.)]\s", text) and not text.endswith((".", ","))
+
+
+_AGE_FINDING_HEAD_RE = re.compile(r"^\W*finding\s+\d+", re.IGNORECASE)
+# A table row with or without a leading pipe: the agent's own return pads columns
+# ("Birth year   | 1838 | 1839 [CONFLICT] | ..."); a leading-pipe-only match
+# read that whole table as prose.
+_AGE_ROW_RE = re.compile(r"^[^|\n]*\|[^|\n]*\||^[-:+ ]*[-:]+[+|][-:+| ]*$")
+
+
+def _age_flag_text(text: str) -> bool:
+    """The text carries a conflict flag that is not denied in the same breath."""
+    return bool(_AGE_CONFLICT_WORD_RE.search(text)) and not _AGE_DENIED_RE.search(text)
+
+
+_AGE_ARK_ID_RE = re.compile(r"\b(?=[A-Z0-9]*[A-Z])[A-Z0-9]{4}-(?=[A-Z0-9]*[A-Z])[A-Z0-9]{3,4}\b")
+
+
+def _age_source_hits(text: str, sources: list[dict]) -> list[str]:
+    """Sources the text names, by id or by title.
+
+    A title token (a collection name) is shared by every record in that collection, so
+    when the text names another record by its own id and none of this source's ids, the
+    collection name is about that other record. Bare-year tokens are exempt.
+    """
+    low = text.lower()
+    named_ids = set(_AGE_ARK_ID_RE.findall(text))
+    hits: list[str] = []
+    for s in sources:
+        tokens = s.get("match", [])
+        ids = [t for t in tokens if _AGE_ARK_ID_RE.fullmatch(t)]
+        titles = [t for t in tokens if t not in ids]
+        if any(i.lower() in low for i in ids):
+            hits.append(s["name"])
+            continue
+        foreign = bool(named_ids) and not named_ids & set(ids)
+        if any(_age_title_hit(t, low, text, foreign) for t in titles):
+            hits.append(s["name"])
+    return hits
+
+
+def _age_title_hit(token: str, low: str, text: str, foreign: bool) -> bool:
+    """A bare year names a source only on its own, not inside a range ("circa 1865-1875")."""
+    if re.fullmatch(r"\d{4}", token):
+        return bool(
+            re.search(r"(?<!\d)(?<!\d{4}[–-])(?<!\d{4} [–-] )" + token + r"(?!\d|\s*[–-]\s*\d{4})", text)
+        )
+    return token.lower() in low and not foreign
+
+
+def _age_table_cells(line: str) -> list[str]:
+    return [c.strip() for c in line.strip().strip("|").split("|")]
+
+
+def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
+    """Names of age-derived sources the reply flags on the BIRTH DATE.
+
+    Three places a flag lives: a table cell on a birth-date row (the column
+    header names the source when the cell does not); a sentence outside a table
+    naming the source with a conflict word; and a source named inside a
+    "Finding N" block about the birth, where counting it toward a year that
+    differs from the profile is the same flag in prose.
+    """
+    text = _unemphasised(reply)
+    lines = text.splitlines()
+    raw_lines = reply.splitlines()
+    flagged: list[str] = []
+
+    # The agent names its columns by its own short labels ("VT Death-A") and defines
+    # them in a key table (label | title | collection | url); resolve a label to the
+    # age-derived source its row describes.
+    aliases: dict[str, list[str]] = {}
+    for line in lines:
+        if not _AGE_ROW_RE.match(line):
+            continue
+        cells = _age_table_cells(line)
+        if len(cells) >= 3 and 0 < len(cells[0]) <= 24:
+            alias_hits = _age_source_hits(" ".join(cells[1:]), sources)
+            if alias_hits:
+                aliases.setdefault(cells[0].lower(), alias_hits)
+
+    header: list[str] = []
+    for i, line in enumerate(lines):
+        if not _AGE_ROW_RE.match(line):
+            header = []
+            continue
+        cells = _age_table_cells(line)
+        if re.fullmatch(r"[\s:|+-]+", line):
+            continue
+        if not header:
+            header = cells
+            continue
+        if not cells or not _AGE_BIRTH_ROW_LABEL_RE.search(cells[0]):
+            continue
+        for j, cell in enumerate(cells[1:], start=1):
+            if _age_flag_text(cell):
+                label = header[j] if j < len(header) else ""
+                flagged += _age_source_hits(f"{label} {cell}", sources)
+                flagged += aliases.get(label.lower(), [])
+
+    in_birth_block = False
+    prev_blank = True
+    for li, line in enumerate(lines):
+        if _AGE_ROW_RE.match(line):
+            continue
+        stripped = line.strip()
+        if not stripped:
+            prev_blank = True
+            continue
+        # A line that is entirely bold is a heading even when it ends in a full stop.
+        raw = raw_lines[li] if len(raw_lines) == len(lines) else ""
+        bold_heading = bool(re.fullmatch(r"\s*\*\*[^*]+\*\*\s*", raw))
+        if _AGE_FINDING_HEAD_RE.match(line) or (prev_blank and (_age_is_heading(stripped) or bold_heading)):
+            in_birth_block = bool(
+                re.search(r"\bbirth\b", stripped, re.IGNORECASE)
+                and re.search(_AGE_BLOCK_WORDS, stripped, re.IGNORECASE)
+            )
+        elif re.match(r"^\W*(?:#{1,6}\s|[-*_]{3,}\s*$)", line):
+            in_birth_block = False
+        prev_blank = False
+        # A semicolon or an "(a)" marker separates items in a list of weaknesses, so the
+        # birth topic and the conflict word of one item are not those of the next.
+        for sentence in (
+            seg
+            for part in _SENTENCE_RE.split(line)
+            for seg in re.split(r";|(?=\(\s*(?:[a-h]|\d)\s*\)\s)", part)
+        ):
+            # Denial is judged per parenthetical clause, so "... the 1850
+            # census (within ordinary census variance)" clears only the 1850.
+            clauses = re.split(r"[()]", sentence)
+            for ci, clause in enumerate(clauses):
+                hits = _age_source_hits(clause, sources)
+                # A parenthetical right after the source belongs to it.
+                scope = clause + " " + (clauses[ci + 1] if ci + 1 < len(clauses) else "")
+                if ci + 2 < len(clauses) and len(clauses[ci + 1]) <= 40:
+                    scope += " " + clauses[ci + 2]
+                if not hits or _AGE_DENIED_RE.search(scope):
+                    continue
+                if _AGE_RANGE_RE.search(clause) and not re.search(r'\[\s*conf', clause, re.IGNORECASE):
+                    continue
+                about_birth = re.search(r"\bbirth\b(?!\s+(?:mother|father|parents?|place|family))", sentence, re.IGNORECASE)
+                if (about_birth and _AGE_CONFLICT_WORD_RE.search(sentence)) or (
+                    in_birth_block and re.search(r"\b18(?!38\b)\d\d\b", clause)
+                ):
+                    flagged += hits
+            if (
+                _AGE_UNNAMED_RE.search(sentence)
+                and (in_birth_block or _AGE_UNNAMED_CONTEXT_RE.search(sentence))
+                and not _AGE_DENIED_RE.search(sentence)
+                and not _AGE_FULL_DATE_RE.search(sentence)
+            ):
+                flagged.append(_AGE_UNNAMED_NAME)
+    return list(dict.fromkeys(flagged))
+
+
+def _has_required_conflict(reply: str, required: dict) -> bool:
+    text = _unemphasised(reply)
+    for passage in re.split(r"\n\s*\n|\n", text):
+        low = passage.lower()
+        if any(d.lower() in low for d in required.get("date", [])) and (
+            _AGE_CONFLICT_WORD_RE.search(passage)
+            or any(p.lower() in low for p in required.get("also", []))
+        ):
+            return True
+    return False
+
+
+def test_age_derived_birth_is_not_a_conflict(text_response, test, agent_returns=None):
+    """Tag-gated (`age-derived-birth`), issue #4127.
+
+    Fails if the reply flags an age-derived source (`_AGE_DERIVED_SOURCES`) as
+    disagreeing with the profile's birth date, or if it drops the exact-date
+    conflict (`_AGE_REQUIRED_CONFLICT`) a birth range must not hide.
+    """
+    if "age-derived-birth" not in (test.get("tags") or []):
+        pytest.skip("test does not declare age-derived-birth")
+    sources, required = _AGE_DERIVED_SOURCES, _AGE_REQUIRED_CONFLICT
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "source-evaluation", test)
+    flagged = _age_derived_flags(reply, sources)
+    assert not flagged, (
+        "the reply flags an age-derived source as conflicting with the profile's "
+        f"birth date: {flagged}. A record's age is a two-year window, and the "
+        "window contains the profile's date."
+    )
+    assert _has_required_conflict(reply, required), (
+        "the reply does not report the exact-date conflict "
+        f"({required.get('date')}), which a birth range must not hide"
+    )
