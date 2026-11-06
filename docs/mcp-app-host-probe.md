@@ -653,10 +653,10 @@ of the largest project's research.json, `document` gains paging.
 | Rung | Mount, connector | Mount, local | Hidden call, connector | Hidden call, local | Hidden call, artifact |
 |---|---|---|---|---|---|
 | 400k characters | | | Whole, 699,798 bytes, 2.0 to 7.1 s | | |
-| 1M characters | | | Whole, 1,299,798 bytes, 19.5 s | | |
-| 1.3M characters | `_meta` dropped at 1,599,948 bytes, on all three surfaces | | Whole, 1,599,798 bytes, 14.5 s | | |
-| 2M characters | | | Whole, 2,299,798 bytes, 8.0 s | | |
-| Largest `resultBytes` accepted | 300,005 so far | | 2,299,798 so far | | |
+| 1M characters | | | Whole, 1,299,798 bytes, 19.5 s, in Cowork | | |
+| 1.3M characters | `_meta` dropped at 1,599,948 bytes, on all three surfaces | | Whole, 1,599,798 bytes, 14.5 s, in Cowork | | |
+| 2M characters | | | Whole, 2,299,798 bytes, 8.0 s, in Cowork | | |
+| Largest `resultBytes` accepted | 300,005 so far | | 2,299,798 in Cowork and 699,798 in chat, so far | | |
 | What happens past it | The host drops `_meta` with no error, and the result's keys are `content, isError`. The card's one fallback read fills it, 2.9 to 3.2 s later on claude.ai and in Cowork and 20.8 s later in Desktop Chat. The model is told nothing | | | | |
 
 ### Image
