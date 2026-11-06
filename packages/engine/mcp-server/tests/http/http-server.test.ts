@@ -1431,10 +1431,13 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
     const gate = new Promise<void>((resolve) => (open = resolve));
     const inFlight = new Map<string, number>();
     const entered = new Set<string>();
+    /** Each request's disconnect signal, by project id. */
+    const signals = new Map<string, AbortSignal>();
     let high = 0;
     const insideNow = () => [...inFlight.values()].filter((count) => count > 0).length;
     for (let i = 0; i < n; i++) {
-      bindStore.mockImplementationOnce((projectId, _signal, _fence, opts) => {
+      bindStore.mockImplementationOnce((projectId, signal, _fence, opts) => {
+        signals.set(projectId, signal);
         const inner = new ScopedFsStore(root, projectId, opts?.anchorPath);
         return new Proxy(inner, {
           get(target, key, receiver) {
@@ -1456,7 +1459,7 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
         });
       });
     }
-    return { open: () => open(), entered, high: () => high, insideNow };
+    return { open: () => open(), entered, signals, high: () => high, insideNow };
   }
 
   /** User A's 12 calls, held at the gate. Resolves once every one has reached
@@ -1718,7 +1721,8 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
       await vi.waitFor(() => expect(lookupStarted).toBe(true));
       client.abort();
       await dropped;
-      await new Promise((resolve) => setTimeout(resolve, 50));
+      // Answer the lookup only once the server has seen the client go.
+      await vi.waitFor(() => expect(gated.signals.get(goneId)?.aborted).toBe(true));
       answerLookup();
       await vi.waitFor(() =>
         expect(lines.join("")).toContain("ev=tool_abandoned surface=connector user_id=u_A tool=project_context"),

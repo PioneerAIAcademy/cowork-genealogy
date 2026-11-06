@@ -71,7 +71,8 @@ capped. A call that waited has its connector token looked up again before it run
 user blocked meanwhile is refused 401, and it runs with the FamilySearch token that
 lookup returns. A waiting call whose client hangs up never runs, and writes
 `ev=tool_abandoned surface=connector user_id=<id> tool=<name>` instead of an
-`ev=tool_call` line, as does one whose client hangs up during that second lookup; a
+`ev=tool_call` line, as does one whose client hangs up during a second lookup that still
+admits it; a
 running call keeps its slot until it ends, even after its client hangs up. The cap bounds
 tool work only: every waiting call has already had its token looked up, its project
 checked when it names one, and its body (up to 1 MiB) read, and how many may wait is not
