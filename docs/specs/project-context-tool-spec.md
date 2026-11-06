@@ -118,6 +118,11 @@ repo's identifier-casing rule):
     imagesRead: number,                  // distinct images counted, >= 20
     planItemIds: string[],               // open plan items with an image_search log entry on it
   }],
+  waitingPages?: [{                      // read pages of held records — §2.8; absent when none
+    sourceId: string,
+    ref: string,                         // the staged page
+  }],
+  claimKinds: string[],                  // proof_summaries claim kinds this engine accepts: relationship, fact, identity, name, finding
   externalCollections?: {                // stored curated collections, counts only — §2.4
     [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
   },
@@ -319,8 +324,17 @@ Any other repository reports `search-external-sites — <item id> (<repository>)
 the routing table's own split for that row. With no such item left, the question
 reports `research-exhaustiveness`.
 
-A question at `evidence-gathered` reports `research-exhaustiveness` whatever its
-log holds. An uncited entry does not move it back to extraction: agents log an
+A question at `evidence-gathered` reports `research-exhaustiveness` only when no
+item on its active plan is `planned`. With planned items it reports
+`<search lane> — next item <id>, or research-plan — dispose of <ids> if the
+evidence already answers the question` (the external lane keeps its own form,
+`search-external-sites — <id> (<repo>)`, and an `fs_hints` item reads
+`search-hints — <id>`): the search is offered first so a still-needed item is not
+skipped by default. `in_progress` items, and a planned item waiting only on the
+researcher's upload, do not change it. Over the
+corpus on 2026-11-02 (every scenario, unit-test state and e2e final state, 484
+question entries) this moves 13 entries off `research-exhaustiveness`: 3 scenarios
+and 10 e2e final states. An uncited entry does not move it back to extraction: agents log an
 inconclusive search as `partial` and a link list as `positive`, and those entries
 stay uncited. Over the corpus on 2026-10-16 (every scenario plus every e2e final
 state, 421 question entries), holding the question on extraction would have moved
@@ -580,6 +594,22 @@ links read the per-user config.
 
 What nothing checks: that the web tier writes the text layer under the name
 this side reads. Each side is tested against its own fixture.
+
+### 2.8 `waitingPages` — read pages of held records
+
+A source whose record has a known page (`image_ark`) and no `transcription`, joined
+to an `image_transcribe` read of that page, logged or staged, on the bare ARK. A
+logged read is an `image_transcribe` log entry with a `results_ref`, named by
+`query.ark` or `query.imageArk`. It is listed only if its sidecar holds text: a
+logged page never expires, so one that could not be attached would be listed for
+good. `cc=` selects
+nothing and is ignored. An ARK with `i=` or `groupId=` never joins: those pick one
+image of several, and a read that fails on them falls back to the bare URL, which can
+land on any image. The oldest logged read wins, then the oldest staged one. Read-only.
+Absent when nothing waits. The router answers with one
+`extraction_append({ attachWaitingPages: true })`. A page that expires from staging
+drops out. It reads every fresh staged file while any source waits, as
+`unloggedStagedSearches` does on a search.
 
 ## 3. Decisions recorded
 

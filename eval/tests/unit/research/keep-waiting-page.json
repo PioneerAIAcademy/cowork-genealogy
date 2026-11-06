@@ -1,0 +1,66 @@
+{
+  "test": {
+    "id": "ut_research_wp1",
+    "skill": "research",
+    "name": "A read page of a held record is kept with one call before the next step",
+    "type": "positive",
+    "description": "`flynn-read-page-waiting` has a read page of src_003 staged, which `project_context` lists under `waitingPages`. The router must keep it with extraction_append({ attachWaitingPages: true }) from the main thread, then route as usual.",
+    "tags": [
+      "keeps-waiting-page",
+      "step-mode"
+    ]
+  },
+  "input": {
+    "user_message": "/research Let's keep going.",
+    "scenario": "flynn-read-page-waiting"
+  },
+  "execution": {
+    "max_turns": 14,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so you do not need to re-read research.json to work out what happened or what to do next. Move on to the next step of the workflow if one remains, delegate it once, and when the workflow is done write your summary and stop."
+      }
+    ]
+  },
+  "judge_reads_files": true,
+  "judge_context": [
+    "`extraction_append({ projectPath, attachWaitingPages: true })` comes first, from the main thread. A deterministic validator (test_keeps_waiting_page) checks the call and the kept text; do not re-grade those.",
+    "The page names Michael Flynn, whom the project does not hold. Keeping a page writes no assertion, so leaving him out is correct. Do not mark it as a missed fact.",
+    "Agents are stubbed here: a step routed after the page is kept changes nothing, and that is not a failure.",
+    "The turn ends with one \"Continue with …?\" line for whatever comes next."
+  ]
+}
