@@ -80,7 +80,6 @@ import {
 import { treePidOfArk } from "../utils/ark.js";
 import type { SimplifiedFact } from "../types/gedcomx.js";
 import { PERSON_READ_REF_REMOVED } from "../utils/tool-hint-messages.js";
-import { projectLinks } from "../utils/project-links.js";
 
 /** The sections a new project starts with, all empty (`sources` aside, which
  *  holds the subject's transcribed memories when the person is read here). */
@@ -174,8 +173,6 @@ const NEVER_TRIMMED: ReadonlySet<SummaryPerson["relationship"]> = new Set([
 export interface ProjectCreateSummary {
   ok: true;
   projectId: string;
-  /** The project's viewer page, when the server knows its public URL. */
-  projectUrl?: string;
   filesWritten: string[];
   subject: { id: string; familySearchId: string; name: string; birth?: string; death?: string };
   /** The objective and title as stored, after `nameForId`. */
@@ -197,8 +194,6 @@ export type ProjectCreateResult =
   | {
       ok: true;
       projectId: string;
-      /** The project's viewer page, when the server knows its public URL. */
-      projectUrl?: string;
       filesWritten: string[];
       counts: { persons: number; relationships: number; sources: number };
       /** Which tree ids the create assigned: FamilySearch PIDs and source ids
@@ -563,11 +558,9 @@ export async function runProjectCreate(
     ]);
 
     const warnings = [...refWarnings, ...formatIssues(validation.warnings)];
-    const { projectUrl } = await projectLinks(principal);
     if (outcome) {
       return summarize({
         outcome,
-        ...(projectUrl ? { projectUrl } : {}),
         tree: tree as { persons: Record<string, any>[]; relationships: Record<string, any>[]; sources: unknown[] },
         subjectId: idMap.persons[outcome.resolvedId],
         objective: storedObjective,
@@ -580,7 +573,6 @@ export async function runProjectCreate(
     return {
       ok: true,
       projectId: "rp_001",
-      ...(projectUrl ? { projectUrl } : {}),
       filesWritten: ["tree.gedcomx.json", "research.json", "starting-tree.gedcomx.json"],
       counts: {
         persons: tree.persons.length,
@@ -751,7 +743,6 @@ function factLine(person: Record<string, any> | undefined, type: string): string
  */
 function summarize(args: {
   outcome: PersonReadOutcome;
-  projectUrl?: string;
   tree: { persons: Record<string, any>[]; relationships: Record<string, any>[]; sources: unknown[] };
   subjectId: string;
   objective: string;
@@ -777,7 +768,6 @@ function summarize(args: {
   const build = (): ProjectCreateSummary => ({
     ok: true,
     projectId: "rp_001",
-    ...(args.projectUrl ? { projectUrl: args.projectUrl } : {}),
     filesWritten: ["tree.gedcomx.json", "research.json", "starting-tree.gedcomx.json"],
     subject: {
       id: subjectId,
@@ -880,9 +870,7 @@ export const projectCreateSchema = {
     "fixed house `researcher_profile`; it does NOT write subscriptions — add those " +
     "afterwards with research_append, only from what the researcher actually told you.\n" +
     "\n" +
-    "Tell the user the project was created and where, naming the folder. A success also " +
-    "returns projectUrl, the project's page in the web app, when the server knows it; give " +
-    "it to the user.",
+    "Tell the user the project was created and where, naming the folder.",
   inputSchema: {
     type: "object",
     properties: {
