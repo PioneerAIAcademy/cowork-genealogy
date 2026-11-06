@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a limited beta
 
-**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings, E4's process-wide limits, the connector plugin build, and the probe's reconnect flags. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
+**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide limits, the connector plugin build, and the probe's reconnect flags. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
 
 ## What this is
 
@@ -11,7 +11,7 @@
 - It runs on the lead's server, `malachi`, in Docker, with Postgres and MinIO, reached through Tailscale Funnel.
 - A demo comes first, when it is ready. The beta starts when this launches and ends when FamilySearch hosts the open beta on its platform. There are no fixed dates. When it ends, everything is deleted and nothing migrates.
 - The beta's code is the handoff's code. Every remaining difference is listed under "Differences from the handoff", with its reason.
-- The lead's two agents build the remote server and the MCP App. The team builds the rest from issues. Richard reviews every change to the handoff's code. Each change is additive and keeps the handoff's behavior as the default.
+- The lead's two agents build the remote server and the MCP App. The team builds the rest from issues. Richard reviews every change to the handoff's code. Each change is additive and keeps the handoff's behavior as the default, except where the handoff's alignment section says.
 - The lead does what needs his accounts, his server or GeneFun: FamilySearch's approval (P0.1), the sign-in redirect (P0.4), the live sittings, the policies (L1), every decision and the final deletion.
 
 ## Decisions (lead, 2026-10-25 to 2026-11-05)
@@ -325,7 +325,7 @@ When FamilySearch hosts the open beta:
 
 ## Changes to the handoff's code
 
-Each of these is additive and keeps the handoff's behavior as the default. Before each one, check for open PRs on the same files, keep the PR small, and ask Richard to review it. Each change also lists its new settings in the handoff plan's step 9 or 15, unset there.
+Each of these is additive and keeps the handoff's behavior as the default, except where the handoff's alignment section says. Before each one, check for open PRs on the same files, keep the PR small, and ask Richard to review it. Each change also lists its new settings in the handoff plan's step 9 or 15, unset there.
 - **Done:** PR #3852's `project_list` and router step; W1; W3's routes; E1; E4's process-wide limits; S1's schema files.
 - **Web tier,** `apps/server/proto/web/`: W2 and W4. With chat off, sign-in asks for no `offline_access` and the callback stores no refresh token. Chat on stays the default.
 - **Dependencies,** `apps/server/pyproject.toml`, `apps/server/uv.lock` and `apps/server/proto/web/requirements.txt`: `mcp` joins `proto-web`. It brings nine packages `proto-web` lacks: `httpx-sse`, `jsonschema` with `attrs`, `jsonschema-specifications`, `referencing` and `rpds-py`, `pydantic-settings`, `pyjwt` and `sse-starlette`. Before W2 merges, Richard reviews the dependency change.
