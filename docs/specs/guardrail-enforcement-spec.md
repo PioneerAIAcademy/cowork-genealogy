@@ -787,6 +787,10 @@ message in a folder that is simply not a project.
 | a directory holding **exactly one** of the two | loud — a *broken* project |
 | a file present but unparseable | loud |
 
+A connector store has no directories: it reads the anchor path with no `projects`
+row as a directory holding neither file, so a fresh `/proj_` path answers
+`no_project`, and the first write claims the id.
+
 The half-a-project row runs in both directions, and it is the one that matters.
 A folder whose `research.json` was deleted still holds a real project, so a write
 against it must stay loud; softening it drops the write with a cheerful message.

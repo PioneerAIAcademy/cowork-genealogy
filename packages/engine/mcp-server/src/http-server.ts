@@ -23,7 +23,9 @@
 // `/proj_<16 hex>`; its id is that path minus the slash and the store's anchor
 // is the path itself. `projectOwner` refuses a project owned by anyone else —
 // an absent row is free, and a NULL owner is refused with the rest. A call
-// naming no project runs store-less under the user's principal.
+// naming no project runs under the user's principal on a store that refuses
+// every project tool and answers `project_list` with `ownedProjects` plus one
+// fresh path.
 //
 // The body is read ONCE for both paths, under `MAX_BODY_BYTES`, because a
 // JSON-RPC batch has to be refused before any tool runs; the parsed value is
@@ -37,7 +39,7 @@
 // touches no store, so a load balancer whose check gates a deploy (Blueprint's
 // `elb_options.health_check`) can pass before the database exists.
 import http, { type IncomingHttpHeaders, type RequestListener } from "node:http";
-import { createHash } from "node:crypto";
+import { createHash, randomBytes } from "node:crypto";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { bearerPrincipal, connectorPrincipal, type Principal } from "./auth/principal.js";
 import type { AppConfig } from "./types/auth.js";
@@ -45,9 +47,10 @@ import { allToolSchemas } from "./tool-schemas.js";
 import { createServer } from "./server.js";
 import { PROJECT_ID_RE } from "./store/project-id.js";
 import {
+  ownedProjectsStore,
   runWithProjectStore,
-  unboundProjectStore,
   type ClaimFence,
+  type OwnedProjectIds,
   type ProjectStore,
 } from "./store/project-store.js";
 
@@ -338,6 +341,13 @@ export interface ToolServerOptions {
    */
   projectOwner: (projectId: string) => Promise<ProjectOwnerReport>;
   /**
+   * The project ids a connector caller owns, bounded, and whether more exist.
+   * Called only when `project_list` reads the store; a rejection reaches the
+   * model as `isError`, never as an empty list, which would read as "No project
+   * yet".
+   */
+  ownedProjects: (userId: string) => Promise<OwnedProjectIds>;
+  /**
    * The web tier's OAuth issuer, byte for byte. The protected-resource metadata
    * and the `WWW-Authenticate: resource_metadata=` URL are built from it, NEVER
    * from the request's `Host`, which a caller controls. Absent, the metadata
@@ -537,8 +547,8 @@ async function handleMcpPost(
   options: ToolServerOptions,
 ): Promise<void> {
   // The store is decided before any transport exists: a malformed id never
-  // reaches a tool, and a missing one binds a store whose every call answers
-  // with the instruction rather than falling through to the process store.
+  // reaches a tool, and a missing one takes the connector path, which binds its
+  // own store rather than falling through to the process store.
   const projectId = projectIdFromHeaders(req.headers);
   if (projectId.kind === "malformed") {
     sendJson(res, 400, INVALID_PROJECT_ID);
@@ -646,12 +656,28 @@ async function handleMcpPost(
     const projectPath = named.kind === "named" ? named.projectPath : null;
     if (projectPath === null) {
       // `initialize`, `tools/list`, notifications, and any call that sent no
-      // projectPath: store-less, but still only for an admitted token.
+      // projectPath: store-less, but still only for an admitted token. The one
+      // exception is `project_list`, and the store is lazy, so nothing else
+      // queries or binds anything.
       // NOT the worker's message: it says to send X-Genealogy-Project-Id, a
       // header a connector cannot send — and if it did, the request would
       // route to the worker door and be refused 403. Name the remedy that
       // exists on THIS door.
-      store = unboundProjectStore(NO_CONNECTOR_PROJECT_MESSAGE);
+      const userId = caller.userId;
+      store = ownedProjectsStore(NO_CONNECTOR_PROJECT_MESSAGE, {
+        // The door refuses any other shape, so naming one would offer a dead path.
+        listOwned: async () => {
+          const owned = await options.ownedProjects(userId);
+          return {
+            projectPaths: owned.ids.map((id) => `/${id}`).filter((path) => CONNECTOR_PROJECT_RE.test(path)),
+            truncated: owned.truncated,
+          };
+        },
+        freshPath: `/proj_${randomBytes(8).toString("hex")}`,
+        storeFor: (path) =>
+          options.bindStore(path.slice(1), disconnected.signal, undefined, { anchorPath: path, ownerId: userId }),
+        signal: disconnected.signal,
+      });
     } else {
       if (!CONNECTOR_PROJECT_RE.test(projectPath)) {
         sendJson(res, 400, INVALID_CONNECTOR_PROJECT);
@@ -794,6 +820,7 @@ export function startHttpServer(options: StartHttpServerOptions): Promise<http.S
         authorize: options.authorize,
         lookupConnector: options.lookupConnector,
         projectOwner: options.projectOwner,
+        ownedProjects: options.ownedProjects,
         issuer: options.issuer,
         checkReady: options.checkReady,
       }),
