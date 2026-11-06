@@ -30,7 +30,35 @@ export type Principal =
    * request. The tool server never refreshes — the web tier owns the grant and
    * hands each turn a fresh access token — and never persists anything per user.
    */
-  | { readonly kind: "bearer"; readonly accessToken: string; readonly config: AppConfig };
+  | {
+      readonly kind: "bearer";
+      readonly accessToken: string;
+      readonly config: AppConfig;
+      /**
+       * Which door this request came through (self-hosted beta E1). REQUIRED,
+       * so every construction site chooses rather than inheriting a default
+       * that is wrong for half of them: E3's session-end and wording, E4b's
+       * per-user limits and E5's refusals all branch on it, and each would
+       * silently take the worker's branch for a connector caller.
+       */
+      readonly surface: BearerSurface;
+      /**
+       * The connector caller's `users.id`. Absent on the worker path, which
+       * knows only the bearer stamped on an open turn and never which user it
+       * belongs to.
+       */
+      readonly userId?: string;
+      /**
+       * Called by `fsFetch`/`fsFetchWithTimeout` with each FamilySearch
+       * response status, so the door can name it in its one-line-per-call log
+       * (E1). Optional and per request: nothing in a tool reads it, and a
+       * principal built without one records nothing.
+       */
+      readonly recordFamilySearchStatus?: (status: number) => void;
+    };
+
+/** Which front door a bearer came through. */
+export type BearerSurface = "connector" | "worker";
 
 /** The one-user-per-process principal. The stdio entrypoint passes it to every
  *  tool; tests and dev scripts pass it where a tool needs one. */
@@ -47,5 +75,27 @@ export function localPrincipal(overlay: AppConfig): Principal {
  *  per-user tunables the desktop reads from `config.json` (wiki API URL,
  *  OpenRouter key and model); `hosted` is implied. */
 export function bearerPrincipal(accessToken: string, config: AppConfig = {}): Principal {
-  return { kind: "bearer", accessToken, config: { ...config, hosted: true } };
+  return { kind: "bearer", accessToken, config: { ...config, hosted: true }, surface: "worker" };
+}
+
+/**
+ * A connector caller (self-hosted beta E1). `accessToken` is the user's
+ * FamilySearch access token, DECRYPTED from `familysearch_tokens` — never the
+ * connector token itself, which authenticates the caller to us and means
+ * nothing to FamilySearch.
+ */
+export function connectorPrincipal(opts: {
+  accessToken: string;
+  userId: string;
+  config?: AppConfig;
+  recordFamilySearchStatus?: (status: number) => void;
+}): Principal {
+  return {
+    kind: "bearer",
+    accessToken: opts.accessToken,
+    config: { ...(opts.config ?? {}), hosted: true },
+    surface: "connector",
+    userId: opts.userId,
+    recordFamilySearchStatus: opts.recordFamilySearchStatus,
+  };
 }

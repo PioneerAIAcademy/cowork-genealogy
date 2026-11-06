@@ -239,11 +239,11 @@ def derive_activated(
     pytest.skip(...)`, so a direct run stuck at False would silently lose that
     gate rather than fail it.
 
-    **`stop_at_stub` (#3119).** Such a run ends at the skill's first stubbed
-    hand-off, before it can write or summarize, so its narration can be a short
-    line naming the next row, which reads as routing away. The caller passes
-    `handed_off=True` only for a run that stop ended, and then the recorded
-    hand-off is the skill's work.
+    **A stubbed hand-off (#3119).** A stub does no work, so the skill has little
+    to report: its reply can be a short line naming the callee, which reads as
+    routing away, and a `stop_at_stub` run ends before it can summarize at all.
+    The caller passes `handed_off=True` only for a positive test's run that made
+    a hand-off the test stubbed, and then that hand-off is the skill's work.
     """
     attributed = skill in skills_invoked
     if agents_spawned is not None:

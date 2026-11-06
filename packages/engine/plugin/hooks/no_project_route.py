@@ -44,7 +44,11 @@ CONTEXT = (
     "If project_context reports no project in this folder, a request to research a person "
     "is a research job: hand it to the research skill, which starts the project, rather "
     "than answering it from a single lookup. In that case, if the message names more than "
-    "one goal, you may summarise what the tree says and ask which to pursue first."
+    "one goal, you may summarise what the tree says and ask which to pursue first. "
+    "With no project and no FamilySearch person ID, a request for the names and details "
+    "recorded in a record set (a roll, register, muster list or volume) goes to the "
+    "search-images agent with no projectPath, even when it names no images; relay "
+    "everything after its final --- verbatim."
 )
 
 # Issue #4011: unconditional, so it holds with or without a project. The hosted planes
