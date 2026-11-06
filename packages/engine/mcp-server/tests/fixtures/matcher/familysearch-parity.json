@@ -1110,6 +1110,7 @@
       "scoringErrors": 0,
       "scoreLogError": null,
       "subjectTooThin": true,
+      "subjectTooThinNote": "Nothing in the project separates this person from a namesake: no date narrower than a year and no named spouse, parent or child. Every row is `needs-review — possible namesake`, whatever its score and however well it agrees. Report no row's family as this person's. Name what would settle identity (a precise date, or a named spouse, parent or child) and the record most likely to state it.",
       "matches": [],
       "subjectResolvable": false,
       "diagnostic": "Subject 'I7' carries no fact with a date or place, so FamilySearch's matcher cannot discriminate it from any same-named person and every candidate scored at or below 0.01. The ranking would be search order wearing match scores, so it is withheld. Give the subject at least one dated or placed fact — record it on the tree person, or extract and link an assertion via person_evidence — then rank again. Meanwhile, narrow the search (collection, place, date range) rather than triaging this pool by hand."
