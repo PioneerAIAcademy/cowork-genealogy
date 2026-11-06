@@ -71,6 +71,7 @@ import {
   normalizeHandBuilt,
   retryUnresolvedPlaces,
   unresolvedPlacesOf,
+  type DroppedLoopEdge,
   type IdMap,
   type FilledPlace,
   type StagedPersonRead,
@@ -183,7 +184,8 @@ export interface ProjectCreateSummary {
   relatives: SummaryPerson[];
   counts: { persons: number; relationships: number; sources: number; memorySources: number };
   memories: { transcribed: string[]; notTranscribed: string[] };
-  /** The read's own notes (a relative FamilySearch names but does not describe). */
+  /** A sentence per ParentChild loop the build broke, first, then the read's
+   *  own notes (a relative FamilySearch names but does not describe). */
   notes?: string[];
   /** How many entries each list lost to the size cap; absent when none did. */
   omitted?: Partial<Record<"relatives" | "transcribed" | "notTranscribed" | "notes" | "warnings", number>>;
@@ -371,6 +373,7 @@ export async function runProjectCreate(
     ) => retryUnresolvedPlaces(extra, budgetMs);
     let handFacts: Record<string, unknown>[];
     const refWarnings: string[] = [];
+    let loopNotes: string[] = [];
     let treeCited = { facts: 0, relationships: 0 };
     // The staged person_reads, listed once and only when something needs them:
     // the PID fallback, or a hand-entered person carrying a FamilySearch ark,
@@ -401,6 +404,8 @@ export async function runProjectCreate(
         idMap = built.idMap;
         subjectPersonIds = built.subjectPersonIds;
         fillPlaces = built.fillPlaces;
+        loopNotes = built.droppedLoopEdges.map(loopNote);
+        refWarnings.push(...loopNotes);
         // A read's facts are FamilySearch's; nothing in it was entered by hand.
         handFacts = [];
       } else {
@@ -568,6 +573,7 @@ export async function runProjectCreate(
         objective: storedObjective,
         ...(storedTitle ? { title: storedTitle } : {}),
         memorySourceCount: memorySources.length,
+        loopNotes,
         warnings,
       });
     }
@@ -751,6 +757,7 @@ function summarize(args: {
   objective: string;
   title?: string;
   memorySourceCount: number;
+  loopNotes: string[];
   warnings: string[];
 }): ProjectCreateSummary {
   const { outcome, tree, subjectId, memorySourceCount } = args;
@@ -762,7 +769,8 @@ function summarize(args: {
       .map((p): SummaryPerson => ({ id: p.id, name: displayName(p), relationship: relationTo(subjectId, p, tree.relationships) })),
     transcribed: memories.filter((m) => typeof m.text === "string" && m.text.trim() !== "").map((m) => m.title),
     notTranscribed: memories.filter((m) => !(typeof m.text === "string" && m.text.trim() !== "")).map((m) => m.title),
-    notes: Array.isArray(outcome.result.notes) ? [...outcome.result.notes] : [],
+    // First: the trimmer drops a list's last entry first.
+    notes: [...args.loopNotes, ...(Array.isArray(outcome.result.notes) ? outcome.result.notes : [])],
     warnings: [...args.warnings],
   };
   const omitted: NonNullable<ProjectCreateSummary["omitted"]> = {};
@@ -814,6 +822,23 @@ function summarize(args: {
     summary = build();
   }
   return summary;
+}
+
+/** The researcher-facing sentence for an edge the build dropped to break a
+ *  loop, worded by the loop's size so it never claims a link FamilySearch does
+ *  not hold. */
+export function loopNote(edge: DroppedLoopEdge): string {
+  const name = (n: string, pid: string) => (n === "Unknown" ? `the person with FamilySearch ID ${pid}` : n);
+  const parent = name(edge.parentName, edge.parentPid);
+  const child = name(edge.childName, edge.childPid);
+  const tail = "since a person cannot be their own ancestor.";
+  if (edge.cycleLength === 1) {
+    return `FamilySearch records ${parent} as their own parent; that link was left out of the tree, ${tail}`;
+  }
+  if (edge.cycleLength === 2) {
+    return `FamilySearch records ${parent} as ${child}'s parent and ${child} as ${parent}'s; the first link was left out of the tree, ${tail}`;
+  }
+  return `FamilySearch records ${parent} as ${child}'s parent, but also records ${child} as ${parent}'s ancestor; that link was left out of the tree, ${tail}`;
 }
 
 /** A person whose `ark` names a FamilySearch tree person. */

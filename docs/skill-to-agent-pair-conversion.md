@@ -532,9 +532,8 @@ up while the body ran on the main thread, and each cost a run to find.
    is the worked form, and
    `packages/engine/mcp-server/tests/packaging/agent-return-contract.test.ts`
    refuses an agent body without the heading once its name leaves that test's
-   pending list. Three agents are EXCLUDED from the contract rather than
-   pending: `image-reader`, which by spec returns a transcription and nothing
-   else; under lead ruling "PS return: A" (2026-09-24, issue #2793),
+   pending list. Two agents are EXCLUDED from the contract rather than
+   pending: under lead ruling "PS return: A" (2026-09-24, issue #2793),
    `source-evaluation` (issue #2796), which logs its report verbatim and writes
    nothing else, so its id-bearing report IS its whole output — conforming would
    push it below the caller's print line, where a production relay drops it; and `record-structurer`,

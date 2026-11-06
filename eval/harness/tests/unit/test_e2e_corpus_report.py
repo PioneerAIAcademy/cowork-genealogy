@@ -566,6 +566,14 @@ def test_bash_hits_are_split_into_reads_and_write_shapes(tmp_path: Path):
     assert writes[0].runlog == "run-1.json"
 
 
+def test_a_case_variant_shell_write_is_counted():
+    from e2e.corpus_report import bash_protected_hits, write_shape
+
+    assert write_shape("cat > /w/Research.JSON") == "redirect"
+    hits = bash_protected_hits({"tool_calls": [{"tool": "Bash", "args": {"command": "cat > Research.JSON"}}]}, Path("fx/run.json"))
+    assert [h.shape for h in hits] == ["redirect"]
+
+
 def test_a_2_dev_null_redirect_is_not_read_as_a_write(tmp_path: Path):
     """The redirect shape must key on the protected path being the TARGET.
     Nearly every read in the corpus carries `2>/dev/null`, so a bare `>` probe

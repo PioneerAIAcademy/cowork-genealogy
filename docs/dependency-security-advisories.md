@@ -5,7 +5,7 @@ dependency trees (root pnpm workspace — which since #1488 includes `eval/app` 
 and `packages/engine/mcp-server` npm). Re-run the audits after any dependency
 bump and update this file.
 
-Last reviewed: **2026-11-03**.
+Last reviewed: **2026-11-05**.
 
 > **This file is the mechanism, by decision.** @DallanQ ruled on 2026-09-09 (#2352)
 > that no CI job will audit any dependency tree: failing the build, warning without
@@ -17,11 +17,13 @@ Last reviewed: **2026-11-03**.
 **Reachability, once, up front — across the two JS trees.** The engine's production tree
 (`packages/engine/mcp-server`) audits clean — `found 0 vulnerabilities` on
 `npm audit --omit=dev`, restored 2026-11-03 after it had regressed to 8 (see the
-first Fixed entry); `eval/app` is covered by the root `pnpm audit --prod`.
-The only production-reachable findings
+engine-tree re-fix under Fixed); `eval/app` is covered by the root `pnpm audit --prod`.
+The production-reachable findings
 are `electron` and `extract-zip` in `apps/electron`, reached via
 `@electron-toolkit/utils` → `electron` (peer) → `extract-zip` (see the two
-paragraphs below). Everything else lives in **devDependencies** — dev tooling
+paragraphs below), plus `zod` 3.x — a production dependency of the internal-only,
+loopback-bound Eval CRUD UI (`eval/app`), whose fix is the zod-4 move (issue
+#4190). Everything else lives in **devDependencies** — dev tooling
 (eslint, vite/vitest, electron-builder, `@anthropic-ai/mcpb`) or the internal-only
 Eval CRUD UI. Check reachability with `pnpm why --prod -r <pkg>` — **without `-r`
 the command inspects only the root package, which declares no dependencies, so it
@@ -32,8 +34,11 @@ Weigh fix churn against that before treating a dev-only HIGH as urgent.
 
 **Scope widened 2026-09-21.** The Dependabot backlog at the end counts the two Python
 `uv.lock` trees (`apps/server`, `eval/harness`) as well, and their runtime findings are
-recorded under Deferred. The audits above do not reach them — Dependabot alerts are
-their only signal.
+recorded under Deferred or Fixed. Since 2026-11-04 it also counts the three
+`requirements.txt` files exported from `apps/server/uv.lock` (`sandbox/`,
+`proto/worker/`, `proto/web/`). The audits above reach none of the five Python
+manifests: Dependabot alerts are their signal, and without alert access the public
+advisory database answers the same question (the backlog section has the command).
 
 **`electron` ships, and it is the exception to the paragraph above.** It reaches
 production two ways, and either alone is enough. It is in the production graph:
@@ -50,6 +55,75 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
 `extract-zip`. `pnpm why --prod -r extract-zip` prints that path.
 
 ## Fixed
+
+- **certifi** (CRITICAL, GHSA-6q48-6c7w-9gw2) and **PyJWT** (every advisory the database
+  lists for 2.13.0, up to CRITICAL: GHSA-ffc3-869f-jxw9) — both Python trees and the three
+  `requirements.txt` files exported from `apps/server/uv.lock`, runtime. **Fixed
+  2026-11-05.** certifi is patched at 2026.10.18. PyJWT needs 2.15.0: most of its
+  advisories are patched at 2.14.0, but GHSA-x33g-cr3x-6449 and GHSA-42vr-xj54-vc7v cover
+  2.14.0 as well. Both locks now resolve certifi 2026.10.23 and PyJWT 2.15.1 (`apps/server`
+  and its exports took both in #4207's pin bump, `eval/harness` in a full
+  `uv lock --upgrade`). Severities as the public advisory database gives them.
+
+- **cryptography** (HIGH, GHSA-g6cj-pr64-35w5) — **Fixed 2026-11-05.** Patched at 50.0.0.
+  `apps/server` was already on 50.0.2; `eval/harness` moved 49.0.0 → 50.0.2 in a full
+  `uv lock --upgrade`. Under Deferred from 2026-09-21 until then.
+
+- **h2** (MEDIUM, GHSA-6hr6-w5qg-qmwg) — `apps/server/uv.lock`. **Fixed 2026-11-05.** Patched at
+  4.4.1, which a full `uv lock --upgrade` took (from 4.3.0). Under Deferred from 2026-09-21 until then.
+
+- **mcp** (MEDIUM: GHSA-w4fh-qvv9-3v23, GHSA-5h93-6whr-6q8j, GHSA-rwrf-2pqf-9j8j and
+  GHSA-84m7-p3x7-pcfv) — both Python trees and the `sandbox/` and `proto/worker/` exports.
+  **Fixed 2026-11-05** by the same `uv lock --upgrade`: 1.28.1 / 1.29.0 → 1.30.0, the 1.x
+  patch for all four, so the `<2` cap that keeps `claude-agent-sdk` working stays.
+
+- **hpack** (MEDIUM, GHSA-8v8h-hg4w-mvq2) and **opentelemetry-api** (MEDIUM,
+  GHSA-xcq7-p3pf-p88h) — `apps/server/uv.lock` only. **Fixed 2026-11-05** by the same
+  `uv lock --upgrade`: hpack 4.1.0 → 4.2.0 (patched at 4.2.0) and opentelemetry-api
+  1.44.0 → 1.45.2 (patched at 1.45.1).
+
+- **Root pnpm workspace minor/patch sweep** — **Fixed 2026-11-04** (issue #4185,
+  the minor-and-patch half of the 54-alert `pnpm-lock.yaml` backlog; the majors
+  each have their own issue, listed under Deferred). Two moves, **no
+  `pnpm.overrides` needed** — every floor was reachable inside a declared range:
+
+  - **`pnpm update -r`** from the repo root. In-range only; no package crossed a
+    major. Cleared: `undici` 6.28.0 → 6.29.1 (8 alerts, 2 high),
+    `brace-expansion` 1.1.18/2.1.4/5.0.9 → 1.1.21/2.1.7/5.0.12 (9 alerts),
+    `vite` 7.3.6 → 7.3.7 (5 alerts, 1 high), `fast-uri` 3.1.7 → 3.1.9 (5
+    alerts), `ip-address` 10.7.0 → 10.7.6 (3 alerts), `@vitest/mocker` 4.1.11 →
+    4.1.12 (2 alerts), `source-map-js` 1.2.1 → 1.2.2 (1 high), and the tree's
+    zod-4 copy 4.4.3 → 4.6.7 (under `eslint-plugin-react-hooks`, whose
+    `^3.25.0 || ^4.0.0` admits it — the zod *alert* stays open while eval/app's
+    3.x copy remains; that is issue #4190).
+  - **`next` 15.5.25 → 15.5.29** in `eval/app/package.json` (exact pin kept).
+    15.5.28 fixes the critical `GHSA-2464-fhr4-w9xw` (unauthenticated RCE in
+    the Image Optimization API via SVG — same no-`images`-block reachability
+    argument as the 2026-09-09 Next.js entry below) and the high
+    `GHSA-p3m5-59mp-jv5r` (Server Actions DoS); 15.5.27 fixed the two cache
+    poisoning mediums. Clears all 4 `next` alerts, including the backlog's
+    only pnpm-tree critical. Nothing in CI runs `next build` for eval/app
+    (Playwright boots `next dev`), so the production build was run locally —
+    see the PR.
+
+  Post-upgrade audits (re-measured 2026-11-05): `pnpm audit` — **18 findings
+  (3 low / 7 moderate / 8 high)**; `pnpm audit --prod` — **15 (3 low /
+  4 moderate / 8 high)**. Every remaining row is one of the five packages this
+  sweep could not clear (electron ×12, extract-zip ×2, glob, minimatch,
+  zod 3.x), all recorded under Deferred with the issue that owns each. (An
+  earlier run on 2026-11-04 reported 20 / 9-moderate; two moderate advisories
+  left the GitHub advisory DB between the runs — same package set, so nothing in
+  this PR changed.)
+
+- **vitest / @vitest/mocker** (MODERATE ×2) — root pnpm workspace, dev-only.
+  **Fixed 2026-11-04** by the sweep above: all four workspace members now
+  declare `^4.1.12` and the lockfile resolves vitest and `@vitest/mocker` at
+  4.1.12, outside the advisory range (`< 4.1.12`). The 2026-09-09 deferral
+  below is withdrawn — its "3 → 4 major across three packages" premise went
+  stale when the members moved to `^4.1.10`. The engine's own copy
+  (`packages/engine/mcp-server/package-lock.json`, a separate npm tree) carried
+  its own vitest/mocker alerts until issue #4186 cleared them on 2026-11-03 (the
+  entry below).
 
 - **The engine's production tree, a second time** — `packages/engine/mcp-server`.
   **Fixed 2026-11-03.** It had regressed to **8 advisories on `npm audit --omit=dev`
@@ -274,18 +348,53 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
 
 ## Deferred / no clean fix
 
-- **vitest** and **@vitest/mocker** (MODERATE ×2) — root pnpm workspace, dev-only,
-  patched at `>=4.1.11`. **Deferred 2026-09-09.** `packages/viewer-ui`, `apps/web` and
-  `apps/electron` all declare `^3.2.4`, so the fix is a **3 → 4 major** across three
-  packages rather than a lockfile refresh — the shape the withdrawn `esbuild` entry
-  only appeared to have. `packages/engine/mcp-server` and `eval/app` already declare
-  `^4.1.10`, but **the engine is affected and its fix is a refresh, not a major**:
-  `packages/engine/mcp-server`'s lockfile pins **4.1.10**, inside the vulnerable range,
-  and `npm update --package-lock-only vitest` clears it there with no `package.json`
-  change. `eval/app` is clear because this PR moved it to 4.1.11, not because of what it
-  declares. Reading a declared range as though it were the resolved version is the
-  mistake that produced the original wording here.
-  **Revisit when** someone takes the vitest 4 migration, or a 3.x backport publishes.
+- **vitest / @vitest/mocker** — **withdrawn 2026-11-04, see the Fixed entry above.**
+  The 2026-09-09 deferral said the fix was a 3 → 4 major across
+  `packages/viewer-ui`, `apps/web` and `apps/electron`, which all declared
+  `^3.2.4` then. All four workspace members have since moved to `^4.1.10`, so
+  by 2026-11-04 the fix was an in-range refresh — the same staleness shape as
+  the withdrawn `esbuild` entry, caught by the same publish-date-vs-entry-date
+  check. The engine's separate npm tree still carries its own vitest/mocker
+  alerts (issue #4186).
+
+- **minimatch** (MODERATE GHSA-g3hv-75wg-m249, DoS via globparts
+  amplification; fix `>=11.0.1`) — root pnpm workspace,
+  dev-only. **Deferred 2026-11-04 — no in-major fix exists.** The tree resolves
+  3.1.5, 5.1.9, 9.0.9 and 10.2.6; the advisory range is `< 11.0.1`, and
+  `npm view minimatch versions` (checked 2026-11-04) shows each of those is
+  already the **newest release of its major line** — the only patched line is
+  11.x. eslint and its plugin ecosystem call the minimatch 3 API, so an
+  override across the major is not safe and is out of scope for a minor/patch
+  pass. No sibling issue owns this; it clears when the eslint toolchain moves.
+  **Revisit when** a patched 3.x/5.x/9.x/10.x publishes (as happened for
+  brace-expansion), or the parents move to minimatch 11.
+
+- **glob** (MODERATE GHSA-3g3m-2fjr-6pw4, AbortSignal cancellation bypass;
+  vulnerable `>= 9.0.0, <= 14.0.1`, fix `>=14.0.2`) — root
+  pnpm workspace, dev-only. **Deferred 2026-11-04 — no in-major fix exists.**
+  The tree resolves 7.2.3 and 10.5.0; only the 10.x copy is in the vulnerable
+  range (7.2.3 predates it). `npm view glob versions` (checked 2026-11-04):
+  10.5.0 is the newest 10.x — the only patched line is 14.x, a cross-major
+  move. **Revisit when** a patched 10.x publishes or the parents move to
+  glob 14.
+
+- **electron** (12 alerts: 5 HIGH / 4 MODERATE / 3 LOW) — `apps/electron`,
+  pinned exactly 39.8.10. **Deferred 2026-11-04 — every fix is cross-major:**
+  the patched versions are 41.10.4/41.10.6 and 42.11.1–42.11.16, nothing
+  inside 39.x (contrast the 2026-09-08 Fixed entry above, whose 15 advisories
+  were all patched inside 39.8.x). electron ships (see the reachability note
+  up top), so these are the highest-value open alerts in the tree. **Owned by
+  issue #4188** (Electron 39 → 42), which also owns the toolchain that moves
+  with it.
+
+- **zod 3.25.76** (HIGH, fix `>=4.6.6`) — `eval/app`, a production dependency
+  of the internal-only, loopback-bound Eval CRUD UI. **Deferred 2026-11-04 —
+  the fix is the zod 3 → 4 major**, coupled to `json-schema-to-zod` 2.6.1
+  (which emits the zod-3 API; see the pins header in `.github/dependabot.yml`)
+  and `mantine-form-zod-resolver` 1.3.0. **Owned by issue #4190.** The tree's
+  *other* zod copy (under `eslint-plugin-react-hooks`) moved to 4.6.7 in the
+  2026-11-04 sweep, but the alert keys on the vulnerable copy and stays open
+  while 3.x remains.
 
 - **extract-zip** (HIGH, unvalidated symlink path traversal) — root pnpm workspace,
   `2.0.1`, pulled by `electron` itself (both 39.8.5 and 39.8.10 declare
@@ -298,8 +407,12 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   uses to unpack the runtime archive it downloads from Electron's release server over
   HTTPS, at install time on a developer's machine. The shipped app never invokes it, and
   the traversal needs an attacker-controlled zip.
-  **Revisit when** a fixed `extract-zip` is published, or when `electron` drops the
-  dependency.
+  Re-checked 2026-11-04: still no patched version (`first_patched_version`
+  absent on both open alerts) — but the "electron drops the dependency" exit
+  has arrived: electron 42 replaces `extract-zip` with
+  `@electron-internal/extract-zip` (`npm view electron@42.11.16 dependencies`),
+  so **issue #4188's 39 → 42 move clears both alerts** by removing the package
+  from the tree. These two ride #4188, not an upstream `extract-zip` release.
 
 - **zod** (HIGH GHSA-mrhx-c7xc-m3w5, memory exhaustion validating oversized
   constrained collections) — `packages/engine/mcp-server` only, the dev-only
@@ -328,20 +441,6 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   or any deployed artifact.
   **Revisit when** `@anthropic-ai/mcpb` publishes a release that bumps the
   `@inquirer`/`tmp` chain.
-
-- **cryptography** (HIGH) — `apps/server/uv.lock` and `eval/harness/uv.lock`,
-  runtime. **Deferred 2026-09-21 — outside the three JS trees this doc was scoped
-  to, but recorded here because the Dependabot backlog below counts it.** The
-  hosted control plane (`apps/server`) and the eval harness both depend on
-  `cryptography` via `pyjwt[crypto]` → `mcp[crypto]` → `claude-agent-sdk`
-  (and as a direct dependency in `apps/server`). A patched version exists
-  upstream but requires a coordinated `uv lock --upgrade-package cryptography`
-  across both lockfiles.
-  **Revisit when** either lockfile is next refreshed for another reason.
-
-- **h2** (MEDIUM) — `apps/server/uv.lock` only, runtime. **Deferred 2026-09-21 —
-  same scope note as `cryptography` above.** Pulled transitively via `e2b`.
-  **Revisit when** the `apps/server` lockfile is next refreshed.
 
 - **esbuild** — **withdrawn 2026-09-09, see the Fixed entry above.** This entry said
   clearing it needed a vite 7→8 migration across three packages. `vite@7.3.6` already
@@ -386,13 +485,15 @@ not digests, so it catches tag moves (`python:3.12` → `3.13`) and nothing else
 patch-level base-image CVEs land when upstream rebuilds the same tag, which a
 rebuild picks up and Dependabot never sees. Pin by digest if that ever matters.
 
-Two `ignore` rules protect load-bearing pins in
-`eval/harness/pyproject.toml` — `mcp>=1.29,<2` (PR #932; mcp 2.0.0 removed
-`Server.list_tools`, which `claude_agent_sdk.create_sdk_mcp_server` calls) and
-the exact `claude-agent-sdk==` pin, which moves only with apps/server's
-`sandbox` group (`eval/harness/tests/unit/test_sdk_pin_matches_hosted.py`), so
-every version update to it is ignored. Both are scoped to `version-update:*`,
-so a genuine security advisory on either package still opens a PR.
+Three `ignore` rules protect load-bearing Python pins. Both uv trees cap mcp below 2
+(`mcp>=1.29,<2` in `eval/harness/pyproject.toml`, `mcp>=1.28.1,<2` in
+`apps/server/pyproject.toml`; PR #932: mcp 2.0.0 removed `Server.list_tools`, which
+`claude_agent_sdk.create_sdk_mcp_server` calls), and each tree's entry ignores mcp
+majors. The third is the exact `claude-agent-sdk==` pin in `eval/harness`, which moves
+only with apps/server's `sandbox` group
+(`eval/harness/tests/unit/test_sdk_pin_matches_hosted.py`), so every version update to
+it is ignored. All three are scoped to `version-update:*`, so a genuine security
+advisory on either package still opens a PR.
 
 One known rough edge: `packages/engine/mcp-server` pins `npm@11.12.1` and
 `check-engine-lockfile.yml` fails any PR whose lockfile that exact npm would
@@ -412,36 +513,63 @@ different things. The command to reconcile:
     gh api "/repos/PioneerAIAcademy/cowork-genealogy/dependabot/alerts?state=open&per_page=100" \
       --paginate -q '.[] | [.security_advisory.severity, .dependency.scope, .dependency.manifest_path, .dependency.package.name] | @tsv'
 
-**Measured 2026-11-03 — 164 open alerts** (a pre-merge snapshot; up from 14 on
-2026-09-21, the jump mostly the search-agent prototype's new manifests —
+**Measured 2026-11-05 — 126 open alerts** (down from 164 on 2026-11-03, after
+issue #4186 cleared 38 of the engine npm tree's 40; up from 14 on 2026-09-21,
+that jump mostly the search-agent prototype's new manifests —
 `apps/server/proto/{web,worker}` and `apps/server/sandbox/requirements.txt` — which
-had no Dependabot coverage in the earlier count):
+had no Dependabot coverage in the earlier count). Measured **after** #4186 merged
+but **before** this PR (#4185) and #4187/#4188/#4190: alerts close only when
+Dependabot rescans the default branch, so the `pnpm-lock.yaml` row below still
+counts the 37 this PR fixes. Expected to survive this PR's rescan: **17 of
+`pnpm-lock.yaml`'s 54** (electron ×12, extract-zip ×2, glob, minimatch, zod —
+each under Deferred).
 
-| Manifest | Scope | Count |
-|---|---|---|
-| `pnpm-lock.yaml` | runtime | 54 |
-| `packages/engine/mcp-server/package-lock.json` | runtime | 19 |
-| `packages/engine/mcp-server/package-lock.json` | development | 21 |
-| `eval/app/package.json` | runtime | 5 |
-| `apps/electron/package.json` | development | 12 |
-| `apps/server/proto/worker/requirements.txt` | runtime | 20 |
-| `apps/server/proto/web/requirements.txt` | runtime | 1 |
-| `apps/server/sandbox/requirements.txt` | runtime | 4 |
-| `apps/server/uv.lock` | runtime | 3 |
-| `apps/server/uv.lock` | development | 4 |
-| `eval/harness/uv.lock` | runtime | 21 |
+| Manifest | Scope | Count | Packages |
+|---|---|---|---|
+| `pnpm-lock.yaml` | runtime† | 54 | electron ×12, undici ×8, brace-expansion ×9, fast-uri ×5, vite ×5, next ×4, ip-address ×3, @vitest/mocker ×2, extract-zip ×2, glob, minimatch, source-map-js, zod |
+| `eval/app/package.json` | runtime | 5 | next ×4, zod |
+| `apps/electron/package.json` | development | 12 | electron ×12 |
+| `packages/engine/mcp-server/package-lock.json` | development | 2 | tmp ×2 |
+| `apps/server/uv.lock` | runtime + development | 7 | mcp ×4, h2, hpack, opentelemetry-api |
+| `eval/harness/uv.lock` | runtime | 21 | PyJWT ×15, mcp ×4, certifi, cryptography |
+| `apps/server/proto/worker/requirements.txt` | runtime | 20 | PyJWT ×15, mcp ×4, certifi |
+| `apps/server/proto/web/requirements.txt` | runtime | 1 | certifi (CRITICAL) |
+| `apps/server/sandbox/requirements.txt` | runtime | 4 | mcp ×4 |
 
-**This is the state before this PR (#4186) and its three siblings merge.** This PR
-clears the engine lockfile's **19 runtime** alerts (`@modelcontextprotocol/sdk`,
-`zod`, `body-parser`, `@hono/node-server`, `hono`, `fast-uri`, `ip-address`, `qs`)
-and most of its **21 development** alerts (`node-forge` ×9, `vite` ×6,
-`source-map-js`, `vitest`, `@vitest/mocker` ×2) once Dependabot rescans the merged
-lockfile; what survives on the engine lockfile is `tmp` and the dev-only `zod` 3
-copy, both under Deferred. The other trees are being cleared concurrently — #4185
-(root `pnpm-lock.yaml`), #4187 (the Python `uv.lock` / `requirements.txt` trees)
-and #4190 (`eval/app`). **All four PRs edit this section; whichever lands after
-another rebases it — recount with the gh command above, do not hand-merge the
-counts.**
+†The pnpm workspace's dev-tooling rows (vite, @vitest/mocker, the glob/minimatch
+eslint chain) are reported `runtime` by Dependabot, which cannot resolve dev
+scope through a pnpm workspace lockfile — the same misclassification the
+2026-09-21 measurement recorded. `pnpm why --prod -r` is the arbiter; the
+genuinely-runtime rows are electron, extract-zip and zod (see the reachability
+note up top).
 
-*Previous measurements: 14 on 2026-09-21, 75 on 2026-09-10, 53 on 2026-08-23
-(issue #1036).*
+Ownership of what remains: the engine npm tree is down to `tmp ×2` (dev-only,
+Deferred) now #4186 has landed; the Python locks and the prototype
+`requirements.txt` bundles (53) are covered by the #4187 note below; electron and
+its 39 → 42 toolchain (24 across both manifests, plus the two extract-zip rows it
+clears in passing) is issue #4188; zod 3 → 4 in eval/app (1) is issue #4190.
+Issues #4188 and #4190 each still edit this section — whoever lands next recounts
+it with the `gh` command above rather than hand-merging.
+
+**#4187 (the Python trees), 2026-11-05.** `uv lock --upgrade` in both trees, and the
+three exports regenerated from `apps/server/uv.lock`, leave no locked version inside any
+advisory range the public advisory database lists, and OSV's `querybatch` finds none
+either. The reliable query lists every advisory for each package and leaves the version
+test to you, against each `vulnerabilities[].vulnerable_version_range`:
+
+    gh api --paginate "/advisories?ecosystem=pip&affects=<package>,<package>&per_page=100"
+
+Do not add `@<version>` to `affects`: that form matches the advisory's recorded package
+name case-sensitively. On 2026-11-05, `pyjwt@2.13.0` returned 4 of the 15 advisories
+whose ranges cover 2.13.0, and missed every one recorded as `PyJWT` or `pyJWT`.
+
+Against the table above, this clears the `apps/server/uv.lock`, `eval/harness/uv.lock`
+and `sandbox/` rows, and `proto/worker/`'s mcp. The `proto/worker/` PyJWT and certifi
+alerts and `proto/web/`'s certifi alert are on versions those exports already left in
+#4207 (PyJWT 2.15.1, certifi 2026.10.23), so they close on the same rescan either way.
+Alerts close when Dependabot rescans `main`. This is a per-version check, not the
+recount the paragraph above asks for: the alert list needs repository security access,
+which the triage role lacks (HTTP 403), so the next recount needs someone who has it.
+
+*Previous measurements: 164 on 2026-11-03; 14 on 2026-09-21; 75 on 2026-09-10;
+53 on 2026-08-23 (issue #1036); 24 before PR #1030.*
