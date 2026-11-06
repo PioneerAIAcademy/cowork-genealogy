@@ -47,6 +47,8 @@ export interface SmokeCtx {
   hostProjectDir: string | null;
   /** A path under projectPath that holds no project. */
   missingProjectPath: string;
+  /** Running through the connector door, whose unwritten `/proj_` path is an empty project. */
+  connector?: boolean;
   /** Whether the server holds an OpenRouter key; null when this host cannot tell (a remote server). */
   openRouterKeyConfigured: boolean | null;
   /** Values read back from earlier steps (e.g. the evaluations sidecar `file_path`). */
@@ -132,16 +134,15 @@ function carries(res: CallResult, msg: string): boolean {
 
 const noError = (res: CallResult): Expectation => ({ ok: !res.isError, detail: brief(res) });
 
-/** No link when the server has no WEB_PUBLIC_URL (the default); when a developer's
- *  exported one reaches compose, a viewer link, and an upload link only beside it. It does
- *  not read `process.env.WEB_PUBLIC_URL`: compose can take it from a `.env` file this
- *  process never sees. */
+/** Never a viewer link, and no upload link unless the server has both WEB_PUBLIC_URL and
+ *  UPLOADS_ENABLED (not the default). It does not read `process.env.WEB_PUBLIC_URL`:
+ *  compose can take it from a `.env` file this process never sees. */
 const linksWellFormed = (body: any): boolean => {
   const { projectUrl, uploadUrl } = body;
-  if (projectUrl === undefined) return uploadUrl === undefined;
+  if (projectUrl !== undefined) return false;
   return (
-    /^https?:\/\/[^/#?\s@]+[^#?\s]*\/#\/p\/[A-Za-z0-9][A-Za-z0-9._-]*$/.test(projectUrl) &&
-    (uploadUrl === undefined || uploadUrl === `${projectUrl}/upload`)
+    uploadUrl === undefined ||
+    /^https?:\/\/[^/#?\s@]+[^#?\s]*\/#\/p\/[A-Za-z0-9][A-Za-z0-9._-]*\/upload$/.test(uploadUrl)
   );
 };
 
@@ -280,7 +281,7 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     args: (ctx) => ({ projectPath: ctx.projectPath }),
     expect: (res) => ({
       ok: !res.isError && linksWellFormed(res.body ?? {}),
-      detail: brief(res, 300),
+      detail: [res.body?.projectUrl, res.body?.uploadUrl].filter(Boolean).join(" ") || brief(res, 300),
     }),
   },
   {
@@ -290,16 +291,21 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: okTrue,
   },
   {
-    // The stdio smoke runs the file store, which lists nothing; over HTTP the
-    // bound store lists the project the create above wrote.
+    // The stdio smoke runs the file store, which lists nothing. Over HTTP the
+    // bound store lists the project the create above wrote; a connector's store
+    // lists it too, plus the fresh path a new project would go to.
     tool: "project_list",
     offline: true,
     args: () => ({}),
     expect: (res, ctx) => {
       const listed =
         Array.isArray(res.body?.projects) && res.body.projects.some((p: any) => p?.projectPath === ctx.projectPath);
+      const fresh = res.body?.newProjectPath;
+      const freshOk =
+        !ctx.connector ||
+        (typeof fresh === "string" && /^\/proj_[0-9a-f]{16}$/.test(fresh) && fresh !== ctx.projectPath);
       return {
-        ok: !res.isError && (res.body?.mode === "folder" || (res.body?.mode === "hosted" && listed)),
+        ok: !res.isError && (res.body?.mode === "folder" || (res.body?.mode === "hosted" && listed && freshOk)),
         detail: brief(res, 300),
       };
     },
@@ -565,7 +571,12 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     label: "project_context on a missing dir",
     offline: true,
     args: (ctx) => ({ projectPath: ctx.missingProjectPath }),
-    expect: (res) => ({ ok: res.isError || res.body?.ok === false, detail: brief(res) }),
+    expect: (res, ctx) => ({
+      ok: ctx.connector
+        ? !res.isError && res.body?.reason === "no_project"
+        : res.isError || res.body?.ok === false,
+      detail: brief(res),
+    }),
   },
 
   // Offline tools.

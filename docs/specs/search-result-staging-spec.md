@@ -319,6 +319,9 @@ same ground truth production does.
   "A staged ref that was already logged"). Any other missing ref, pruned or never
   staged, gets a message saying each staged ref can be logged once, and whether to
   re-run the search (`image_transcribe`, for a page) or leave it.
+- **A reader that does not consume.** `extraction_append`'s `attachWaitingPages` reads
+  a staged page and leaves the file, so a second record on that page can still find
+  it (`research-append-tool-spec.md` §11.9).
 - **Un-finalized staging files** (the LLM searched but never logged, or the turn
   died) are pruned opportunistically: on each `stageSearchResults` write, delete
   `results/.staging/*.json` older than a TTL (24h, by `mtime`). Safe unconditionally

@@ -3107,6 +3107,10 @@ would claim an examination that did not happen. A researcher who then reads the
 page image has examined the original and may upgrade it — a later, evidenced
 edit, not this tool's guess.
 
+**`image_ark`.** A record that names its page gets that page's ARK on its source,
+as `record_read` gives it. It is what joins the source to a read of the page
+(§11.9). A record with no page gets no `image_ark`.
+
 #### Return
 
 `extraction`: the record type, `censusStatesRelationships` for a census, the
@@ -3537,6 +3541,21 @@ there is no `same_person` gate. Checking the attachments is a separate request.
   No record group is read twice: LL4N-82C's 22 attached records are 15
   extractions. Its `ambiguous: 2` is one tree person claiming two personas of
   one record, so neither is linked. 46 of 186 e2e subjects have at least one attached indexed record.
+
+### 11.9 Attaching waiting pages — a read page onto its record's source
+
+`extraction_append({ projectPath, attachWaitingPages: true })`, sent alone, for what
+`project_context` lists in `waitingPages`. It takes no refs, so a caller cannot name
+the wrong page: code joins each source's `image_ark` to a logged or staged
+`image_transcribe` read and sets `transcription` and `image_filename` on the existing
+source. A page
+showing two held records fills both.
+
+It writes no assertion and no log entry, and does not consume the page's file, so a
+record extracted later still finds the page, the same day for a staged one. Facts on the page stay as
+text. One write per page, so a refusal leaves the others kept. `ok` is false only
+when something waited and nothing was kept. The result carries `attached`, a
+`summary` naming each record, and `records: []`.
 
 ## 12. `evaluation_append` — the second lane-scoped variant
 

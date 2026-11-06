@@ -1,0 +1,166 @@
+{
+  "run_log": "v7_2026-11-05_07-10-04.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_001`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that pli_006 (Thomas Flynn probate search) is still in_progress and that a new question cannot be created until this plan item is completed. The tool responses confirm q_001 is stored as 'in_progress' and pl_002 has pli_006 with status 'in_progress'. Claude's decision to defer new question creation is factually correct given the project state and the skill's rules. No new question was written, which is the correct outcome.\n\nJunior: (Pass - No new question was written, which is the correct outcome.)"
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_001`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the full scope of the task: recognized the blocking condition (pli_006 in_progress), named the specific plan item by ID, explained why it blocks new question creation, and provided clear guidance on what must happen next (complete pli_006, log results, re-evaluate proof summary). The response covered all required elements without omission.\n\nJunior: (Pass - The response covered all required elements without omission.)"
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_001`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All six MCP tool calls used correct arguments. project_context, tree_query, and research_query calls all passed the projectPath correctly. The research_query calls for plans, conflicts, and hypotheses all used appropriate section parameters and questionId where needed. No calls returned fixture_not_found errors; all matched.kind == 'live'. Arguments were semantically correct and well-formed.\n\nJunior: (Pass - Arguments were semantically correct and well-informed.)"
+    },
+    {
+      "test_id": "ut_question_selection_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_question_selection_001`** — `rubric` / `Question specificity`\nLLM: N/A → Junior: N/A\n\n> This dimension is N/A because Claude correctly deferred adding a new question. Per the per-test context override, when the skill correctly defers (no new question added), Question specificity is scored null. Claude did not write a new question, so there is no specificity to evaluate. The hypothetical follow-up work mentioned in the response is illustrative guidance, not an actual question selection.\n\nJunior: (This dimension is N/A because Claude correctly deffered adding a new question.)"
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_003`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that q_001 is 'finished with' (proof summary present, all plan items completed), correctly recognized that two unresolved conflicts (c_001 and c_002) block q_001, and correctly concluded that no new question should be written. The analysis accurately reflects the project state: q_001's wording covers the entire objective, so the finished-with exemption does not admit a new question. The routing decision to send conflicts to conflict-resolution is correct per the per-test context. All factual claims are supported by tool responses.\n\nJunior: (Pass - All factual claims are supported by tool responses.)"
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_003`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed all required elements: verified q_001 and q_002 status, checked all plan items (pli_004, pli_005, pli_006 all completed), identified both unresolved conflicts (c_001 and c_002), confirmed no person warnings, verified hypothesis status (h_001 supported), and applied the finished-with exemption logic correctly. The decision not to write a question was fully justified with reference to the objective scope. No required analysis was omitted.\n\nJunior: (Pass - No required analysis was omitted.)"
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_003`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All seven MCP tool calls used correct arguments matching expected_args semantically. Calls to project_context, tree_query, research_query (plans for q_001 and q_002), research_query (conflicts), research_query (hypotheses), research_query (questions), and person_warnings all passed with matched.kind='live'. No fixture_not_found errors occurred. Arguments were appropriate and complete for the question-selection task.\n\nJunior: (Pass - Arguments were appropriate and complete for the question-selection task.)"
+    },
+    {
+      "test_id": "ut_question_selection_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_question_selection_003`** — `rubric` / `Question specificity`\nLLM: N/A → Junior: N/A\n\n> N/A — no new question was proposed. This dimension grades the specificity of research questions when they are created. Since Claude correctly declined to write a question (per the per-test context requirement that no question be proposed when conflicts block the existing question), this dimension does not apply.\n\nJunior: (N/A - this dimension does not apply. No new question was proposed.)"
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_013`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that q_001 already covers the objective and is still in progress with a planned item (pli_001) awaiting execution. The response accurately reflects the project state: no new question is needed, the existing question is appropriate, and the next step is to execute the planned baptism search. No fabricated claims or unsupported assertions.\n\nJunior: (Pass - No fabricated claims or unsupported assertions.)"
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_013`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the full scope of the task: assessed the existing question against the objective, confirmed it is appropriate and not yet exhausted, identified the planned next step (pli_001), and explained why no new question should be written. The response covers all required elements without omission.\n\nJunior: (Pass - The response covers all required elements without omission.)"
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_013`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All four MCP tool calls used correct arguments: project_context and tree_query with projectPath only (no additional args needed), research_query with projectPath and section='plans' and questionId='q_001', and person_warnings with projectPath and personId='I1'. All calls matched expected patterns and returned live results without fixture_not_found errors.\n\nJunior: (Pass - All calls matched expected patterns and returned live results without fixture_not_found errors.)"
+    },
+    {
+      "test_id": "ut_question_selection_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_013`** — `rubric` / `Question specificity`\nLLM: 3 → Junior: 3\n\n> The existing question q_001 ('Who were the parents of Job Purnell (b. ~1826, Trowbridge, Wiltshire)?') is specific and answerable. It names the subject precisely (Job Purnell with birth date and place), identifies the exact fact sought (parents' identities), and is concrete enough to drive a targeted search. Claude correctly recognized this specificity and did not propose a vague alternative.\n\nJunior: (Pass - Claude correctly recognized this specifically and did not propose a vague alternative.)"
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_005`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude's analysis is factually accurate. The skill correctly identified that q_001 already covers the full objective (both parents), that all planned direct searches are complete (1850, 1860, 1870, 1880, 1900 censuses, death certificate, probate, church records—all confirmed in tool responses), and that no new question should be written. The tool responses confirm q_001 status is 'in_progress' with proof summary ps_001 at 'probable' tier, all 7 plan items on pl_002 are 'completed', and c_001 is 'resolved'. Claude's reasoning that the mother's identity falls within q_001's existing scope is sound. No fabricated claims or unsupported assertions.\n\nJunior: (Pass - No fabricated claims or unsupported assertions.)"
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_005`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed all required elements: recognized that direct searches are exhausted (confirmed by tool responses showing 1870/1880/1900 census negatives, probate negative, church records negative), identified FAN research as the next avenue (explicitly mentioned in hypothesis h_001 notes and proof summary narrative), and correctly determined no new question should be written. The skill made 9 tool calls to gather necessary context (project_context, tree_query, research_query for plans/conflicts/hypotheses/questions/proof_summaries, person_warnings). All aspects the input state required were addressed.\n\nJunior: (Pass - All aspects the input state required were addressed.)"
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_005`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All 9 MCP tool calls passed arguments matching expected_args semantically. Calls to project_context and tree_query used correct projectPath. Research_query calls used correct section parameters ('plans', 'conflicts', 'hypotheses', 'questions', 'proof_summaries') and appropriate questionId ('q_001', 'q_002'). Person_warnings call used correct personId 'I1'. No calls landed in fixture_not_found; all matched.kind == 'live'. Arguments were well-formed and appropriate to the task.\n\nJunior: (Pass - Arguments were well-formed and appropriate to the task.)"
+    },
+    {
+      "test_id": "ut_question_selection_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_question_selection_005`** — `rubric` / `Question specificity`\nLLM: N/A → Junior: N/A\n\n> N/A — the skill correctly determined that no new question should be written. This dimension grades whether a research question is specific and answerable, but since the skill's correct decision was to not create a new question, the situation this dimension grades never arose. The skill did not produce a new question to evaluate for specificity.\n\nJunior: (N/A The skill did not produce a new question to evaluate for specificity.)"
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_006`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that q_001 covers the full objective and is 'finished with' (has a proof summary at probable tier with completed plan). The analysis accurately reflects the project state: q_001 is in_progress (stored status), concluded (derived state), with no new question warranted because nothing falls outside q_001's scope. The claim that the birthplace conflict (c_001) is resolved is supported by the tool response showing status='resolved'. Claude correctly declined to write a new question and accurately identified the next step (proof-conclusion re-evaluation). No fabricated material or unsupported claims.\n\nJunior: (Pass - No fabricated material or unsupported claims.)"
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_006`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the full scope of the question-selection task: assessed the objective, examined all open questions (q_001, q_002), checked for conflicts (c_001 resolved), verified person warnings (none), confirmed no unregistered disagreements, reviewed the completed plan (pl_002 with pli_004 and pli_005 done), and examined the proof summary (ps_001 at probable tier). The decision not to write a new question is justified by the analysis that q_001 covers the entire objective. Claude also correctly identified the next step for the caller (proof-conclusion).\n\nJunior: (Pass - Claude addressed the full scope of the question-selection task and also correctly identified the next step for the caller (proof-conclusion).)"
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_question_selection_006`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All six MCP tool calls used correct arguments matching expected_args semantically. project_context and tree_query calls required no specific args (expected_args: null). research_query calls for 'questions', 'conflicts', and 'plans' with questionId='q_001' all matched expected patterns. person_warnings call with personId='I1' was correct. proof_summaries query with questionId='q_001' was appropriate. No calls returned fixture_not_found errors; all matched.kind='live'. Arguments were well-formed and targeted the right data.\n\nJunior: (Pass - Arguments were well-formed and targeted the right data.)"
+    },
+    {
+      "test_id": "ut_question_selection_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Question specificity",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_question_selection_006`** — `rubric` / `Question specificity`\nLLM: N/A → Junior: N/A\n\n> N/A — no new question was written. This dimension grades whether a research question is specific and answerable. Since Claude correctly declined to write a new question (the existing q_001 covers the full objective), this dimension does not apply. The skill's task was to select/record the next research question, and the correct outcome was to recognize that no new question is warranted.\n\nJunior: (N/A - no new question was written.)"
+    }
+  ]
+}
