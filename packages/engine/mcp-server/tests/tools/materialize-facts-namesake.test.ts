@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, writeFile, readFile, rm } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
-import { materializeFacts, namedPartyTargetRefusal } from "../../src/tools/materialize-facts.js";
+import { materializeFacts, namedPartyTargetRefusal, namesakeCopyRefusal } from "../../src/tools/materialize-facts.js";
 import { writeProjectFile } from "../helpers/project-files.js";
 
 // The namesake copy gate and item 34 (issue #3363 PR 1d): a record's facts reach
@@ -158,18 +158,47 @@ describe("materialize_facts under a recorded namesake (#3363 PR 1d)", () => {
     });
 
     it("M1b names only the rows that still cap the link, and copies once the age exemption lifts them all", async () => {
-      // The census is dated 1852 by its latest dated fact, and the persona is its head.
+      // The census is dated 1852 by its census fact, and the persona is its head.
+      const base = research([link("pe_1", "a_001", P)]);
+      const dated = {
+        ...base,
+        assertions: [...base.assertions, assertion("a_005", "src_001", "REC-CEN", "head", "census", "", { date: "1852" })],
+      };
       const lifted = { ...ROW, time_period: "born 1845", birth_year: 1845 };
       const capping = { ...ROW, id: "ns_002", time_period: "born 1800", birth_year: 1800 };
       const t = tree([person(W, "Mary", "Smith", "Female")], [couple(W)]);
-      await setup({ ...research([link("pe_1", "a_001", P)]), namesakes: [lifted, capping] }, t);
+      await setup({ ...dated, namesakes: [lifted, capping] }, t);
       const r = await materializeFacts({ projectPath: dir, personId: P, recordId: "REC-CEN", recordRole: "head" });
       expect(r.ok).toBe(false);
       if (r.ok) return;
       expect(r.errors[0]).toMatch(/^'KWCB-111' has a recorded namesake \('ns_002'\), so a record's facts reach/);
-      await setup({ ...research([link("pe_1", "a_001", P)]), namesakes: [lifted] }, t);
+      await setup({ ...dated, namesakes: [lifted] }, t);
       const copied = await materializeFacts({ projectPath: dir, personId: P, recordId: "REC-CEN", recordRole: "head" });
       expect(copied.ok, JSON.stringify(copied)).toBe(true);
+    });
+
+    it("M1c names every row that caps one of the links, opening on a link a row caps", () => {
+      // The first link the age exemption lets go of, so only the namesake in the
+      // tree refuses it; a row still caps the second.
+      const strong = [
+        { id: "pe_1", assertion_id: "a_001", confidence: "probable" },
+        { id: "pe_2", assertion_id: "a_002", confidence: "probable" },
+      ];
+      const rowsOf = (e: any) => (e.id === "pe_2" ? [{ ...ROW, id: "ns_002" }] : []);
+      const verdicts = new Map([
+        ["pe_1", { reasons: ["Nothing rules out 'I7'."], source: "src_001" }],
+        ["pe_2", { reasons: ["Nothing in the record ties it."], source: "src_001" }],
+      ]);
+      const pairs = [{ personId: "I7", relation: "child" as const, sameBirthYear: false }];
+      const text = namesakeCopyRefusal(P, rowsOf, verdicts, strong, pairs);
+      expect(text).toMatch(/^'KWCB-111' has a recorded namesake \('ns_002'\), so a record's facts reach/);
+      expect(text).toContain("'pe_2' ties assertion 'a_002' to 'KWCB-111' at 'probable'");
+      expect(text).toContain("Nothing ties 'pe_1' either.");
+      expect(text).toContain("'KWCB-111' also has a namesake in the tree ('I7'");
+      // No row caps either: only the namesake in the tree refuses them.
+      expect(namesakeCopyRefusal(P, () => [], verdicts, strong, pairs)).toMatch(
+        /^'KWCB-111' has a namesake in the tree \('I7'/,
+      );
     });
 
     it("M5 copies through the same link when no namesake is recorded", async () => {

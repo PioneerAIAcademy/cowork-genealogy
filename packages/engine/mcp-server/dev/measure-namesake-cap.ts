@@ -1445,13 +1445,24 @@ async function section3b(): Promise<void> {
 
 const STAMPER = "packages/engine/mcp-server/src/tools/research-append.ts";
 
-/** Whether an engine's `stampNamesakePersonas` takes a persona from a record's
- *  own persons, which a read's sidecar needs (#4279): it calls `personaFor`. */
-function stampsReads(source: string): boolean {
-  const start = source.indexOf("export async function stampNamesakePersonas(");
-  if (start < 0) return false;
+/** A function's text in `source`, from `head` to the first line that closes a
+ *  top-level block, or null when the source has no such function. */
+function bodyOf(source: string, head: string): string | null {
+  const start = source.indexOf(head);
+  if (start < 0) return null;
   const end = source.indexOf("\n}\n", start);
-  return source.slice(start, end < 0 ? undefined : end).includes("personaFor(");
+  return source.slice(start, end < 0 ? undefined : end);
+}
+
+/** Whether an engine's `stampNamesakePersonas` takes a persona from a record's
+ *  own persons, which a read's sidecar needs (#4279): it calls `personaFor`,
+ *  itself or, since the age exemption (#3363), through `lookUpNamesakePersonas`. */
+function stampsReads(source: string): boolean {
+  const stamp = bodyOf(source, "export async function stampNamesakePersonas(");
+  if (stamp === null) return false;
+  if (stamp.includes("personaFor(")) return true;
+  const lookUp = bodyOf(source, "async function lookUpNamesakePersonas(");
+  return stamp.includes("lookUpNamesakePersonas(") && lookUp !== null && lookUp.includes("personaFor(");
 }
 
 /** The engine a final state's run used, from its run log's `git_sha`: "reads"

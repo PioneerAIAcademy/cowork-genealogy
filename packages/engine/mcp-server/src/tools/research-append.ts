@@ -3379,15 +3379,17 @@ export interface PairRecordFacts {
   /** The persona holds an office on the record, which only an adult does
    *  (chesworthrm, 2026-11-06). */
   office: boolean;
-  /** The year of the record's latest dated fact, any party and type: the year
-   *  the namesake age exemption reads. Never the source's date, never a year
-   *  read from a value (chesworthrm, 2026-11-06). */
+  /** The year of the record's latest dated event, any party, an office among
+   *  them: the year the namesake age exemption reads. Never a birth or
+   *  christening, which a household lists for its members, so a younger
+   *  brother's would date a census his elder brother heads; never the source's
+   *  date, never a year read from a value (chesworthrm, 2026-11-06). */
   dated: number | null;
 }
 
-/** An adult role, or an office: what the record says needs an adult. */
+/** An office, or an adult role: what the record says needs an adult. */
 function actsAsAdult(rf: PairRecordFacts): boolean {
-  return rf.role !== null && (PAIR_ADULT_ROLE.test(rf.role) || rf.office);
+  return rf.office || (rf.role !== null && PAIR_ADULT_ROLE.test(rf.role));
 }
 
 /** The assertions of `assertion`'s record, matched on the bare record id, and the
@@ -3405,7 +3407,7 @@ function pairRecordParties(research: any, assertion: any) {
  *  role, whether it holds an office, its birth year (stated, or the record's
  *  year less a stated age), its death or burial year, the record's own year (its
  *  latest event or office, else its latest birth, else the source's date), and
- *  the year of its latest dated fact. The persona is the linked assertion's
+ *  the year of its latest dated event that is no birth. The persona is the linked assertion's
  *  own; a two-party assertion speaks for two people, so for one the persona is
  *  the one `personId`'s one-party links on the record name most, else none. */
 export function pairRecordFacts(research: any, assertion: any, personId: string): PairRecordFacts {
@@ -3463,6 +3465,7 @@ export function pairRecordFacts(research: any, assertion: any, personId: string)
   const office = mine.some((a) => type(a) === "office");
   let dated: number | null = null;
   for (const a of same) {
+    if (!PAIR_EVENT_TYPES.has(type(a)) || PAIR_BIRTH_TYPES.has(type(a))) continue;
     const y = yearOf(a?.date);
     if (y !== null && (dated === null || y > dated)) dated = y;
   }
@@ -3695,7 +3698,7 @@ export interface NamesakeVerdicts {
  *
  *  A row does not cap a link whose record is dated less than
  *  `NAMESAKE_MINOR_AGE` years after the row's `birth_year`, by the record's
- *  latest dated fact, when the record makes the persona an adult
+ *  latest dated event that is no birth, when the record makes the persona an adult
  *  (`adultMarker`); except under `tiesOnly`. A link no row caps is judged as a
  *  person with no row is: by the pair tests when the person has a namesake in
  *  the tree, and otherwise it stands on the age ties. A link a row still caps
@@ -3994,12 +3997,14 @@ export function namesakeVerdicts(
       fields.push({ field: k.field, value: k.value, vouchers, excluded, sameCall, sameNamed: shown });
     }
     // The age exemption: a row whose namesake was under NAMESAKE_MINOR_AGE at the
-    // record's latest dated fact, on a persona the record makes an adult, does not
+    // record's latest dated event, on a persona the record makes an adult, does not
     // cap the link. Not under `tiesOnly`, where only ties (a) and (b) say whether
-    // the record ties a partner.
+    // the record ties a partner. A link outside `only` is here only to vouch, and
+    // with rows nothing reads its capping rows or its pair tests, so it skips both.
     const capping: any[] = [];
     const exempt: Pending["exempt"] = [];
-    const rf = rows.length > 0 && !opts.tiesOnly ? pairRecordFacts(research, a, personId) : null;
+    const judgedHere = !opts.only || opts.only.has(e.id);
+    const rf = rows.length > 0 && !opts.tiesOnly && judgedHere ? pairRecordFacts(research, a, personId) : null;
     const marker = rf === null ? null : adultMarker(rf);
     for (const r of rows) {
       const age = rf?.dated != null && Number.isInteger(r.birth_year) ? rf.dated - r.birth_year : null;

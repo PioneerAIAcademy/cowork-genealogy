@@ -332,10 +332,11 @@ qualify.
   or lowers it to 'speculative' naming the namesake. When the project holds no
   such tie yet, person-evidence lowers it now: a party still to extract or a
   record still to find is not a tie, and the link can be raised once the tie
-  is made.", followed by the arm's own suffix. It names the rows that still cap
-  its first link: a row the age exemption (research-append-tool-spec §5) lifts
-  for that record is not named, and a link no row caps, which only a namesake in
-  the tree can still refuse, gets the next item's refusal. When `personId` is omitted, a person the lookup would
+  is made.", followed by the arm's own suffix. It names every row that still
+  caps one of the links and opens on a link one caps: a row the age exemption
+  (research-append-tool-spec §5) lifts for every link is not named, and links no
+  row caps, which only a namesake in the tree can still refuse, get the next
+  item's refusal. When `personId` is omitted, a person the lookup would
   otherwise reuse is skipped, and the op takes the next eligible person or
   mints one, with a warning: "persona '<role>' of record '<record>' would
   have reused '<id>', but '<id>' has a recorded namesake and its link '<pe>'

@@ -2460,6 +2460,12 @@ describe("namesake age exemption (#3363)", () => {
       "The occupation 'farmer' on this source matches no record linked to 'I1' at 'probable' or better before this " +
         "call that is itself tied (its voucher 'pe_002' is not tied).",
     );
+    // Every link judged, as the copy gate and the row warning judge them: the
+    // exempt link's own exemption is read, and it still grounds nothing.
+    const all = { ...r, person_evidence: [...r.person_evidence, standing("pe_003", "a_111", I1)] };
+    const verdicts = namesakeVerdicts(I1, all, ageTree())?.verdicts;
+    expect(verdicts?.get("pe_002")?.ties).toEqual([{ kind: "age", row: "ns_001", age: 4, marker: "head_of_household" }]);
+    expect(verdicts?.get("pe_003")?.allowed).toBe(false);
   });
 
   it("T10 judges a partner by ties alone: a row of his the record would lift does not take the person's tie", async () => {
@@ -2508,5 +2514,33 @@ describe("namesake age exemption (#3363)", () => {
     const lifted = await raise(young, "a_141");
     expect(lifted.ok, errs(lifted)).toBe(true);
     expect((await verdictOn("a_141", ageTree()))?.ties).toEqual([{ kind: "age", row: "ns_001", age: 9, marker: "office" }]);
+  });
+
+  it("T12 dates the record by its events, never by a birth or christening the household lists", async () => {
+    // A census a Paul Raymond heads, with a younger brother born or christened in
+    // 1800. Undated, it could be any year he headed it in; the brother's date
+    // would make the namesake (born 1796) four.
+    const CEN = "ark:/61903/1:1:AGE4-800";
+    const household = (brother: string, censusDate?: string) => [
+      assertion("a_151", "src_004", CEN, "head_of_household", "name", "Paul Raymond"),
+      assertion("a_152", "src_004", CEN, "head_of_household", "census", "", censusDate ? { date: censusDate } : {}),
+      assertion("a_153", "src_004", CEN, "brother", "name", "John Raymond"),
+      assertion("a_154", "src_004", CEN, "brother", brother, "", { date: "1800" }),
+    ];
+    for (const brother of ["birth", "christening"]) {
+      const undated = ageResearch({ assertions: household(brother) });
+      await setup(undated, ageTree());
+      const refused = await raise(undated, "a_151");
+      expect(refused.ok, brother).toBe(false);
+      expect(errs(refused), brother).toContain(`namesake(s) of '${I1}' are recorded (ns_001`);
+    }
+    // The census fact dated 1800 dates it: the namesake was four.
+    const dated = ageResearch({ assertions: household("birth", "1800") });
+    await setup(dated, ageTree());
+    const lifted = await raise(dated, "a_151");
+    expect(lifted.ok, errs(lifted)).toBe(true);
+    expect((await verdictOn("a_151", ageTree()))?.ties).toEqual([
+      { kind: "age", row: "ns_001", age: 4, marker: "head_of_household" },
+    ]);
   });
 });
