@@ -545,17 +545,34 @@ function doorRefusal(body: unknown): { status: number; body: unknown } | null {
   return null;
 }
 
+// One fixed entry in project_list's hosted shape, so a /proj_ value reaches the model from
+// a tool and a sitting can follow it through show_project to the hidden call.
+const LISTED_PROJECT_PATH = "/proj_0123456789abcdef";
+const PROJECT_LIST_ANSWER = {
+  mode: "hosted",
+  projects: [{
+    projectPath: LISTED_PROJECT_PATH,
+    objective: "Connector probe stub",
+    subjects: [{ id: "PROB-000", name: "Probe Stub" }],
+    status: "active",
+    updated: "2026-11-06",
+  }],
+  newProjectPath: "/proj_fedcba9876543210",
+  message: "Pass a listed project's projectPath to continue it. To start a project for a person none of them is about, pass newProjectPath as projectPath.",
+};
+
 let hiddenCalls = 0;
 
 function cardResult(name: string, args: Record<string, unknown>, tokenSeq: number) {
   if (name === SHOW_PROJECT) {
+    log("show_project", { token_seq: tokenSeq, project_path: args.projectPath, show: args.show });
     return {
       ...text(`The researcher sees the ${String(args.show)} card; do not restate it. CANARY-CONTENT-K7Q2`),
       _meta: { [CARD_META_KEY]: { ...CARD_PROJECT, echo: args, canary: "CANARY-META-M4X9", token_seq: tokenSeq } },
     };
   }
   const n = ++hiddenCalls;
-  log("hidden_call", { n, token_seq: tokenSeq, seen: typeof args.seen === "string" ? args.seen.slice(0, MAX_SEEN_CHARS) : undefined });
+  log("hidden_call", { n, token_seq: tokenSeq, project_path: args.projectPath, seen: typeof args.seen === "string" ? args.seen.slice(0, MAX_SEEN_CHARS) : undefined });
   return { ...text("ok"), structuredContent: { ...CARD_PROJECT, served: { n, token_seq: tokenSeq } } };
 }
 
@@ -621,6 +638,7 @@ function stubServer(signal: AbortSignal, tokenSeq: number): Server {
       };
     }
     if (cardTools.some((s) => s.name === name)) return cardResult(name, args, tokenSeq);
+    if (name === "project_list") return text(JSON.stringify(PROJECT_LIST_ANSWER));
     return text(`Connector probe stub: ${name} was called and did nothing. This server holds no data.`);
   });
   server.setRequestHandler(ListResourcesRequestSchema, async () => ({
