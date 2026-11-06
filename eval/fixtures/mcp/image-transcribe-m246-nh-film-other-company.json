@@ -1,0 +1,14 @@
+{
+  "tool": "image_transcribe",
+  "description": "SYNTHETIC (issue #4136): written by hand, not captured live — the FamilySearch session had expired. The NARA M246 title is real; the film note, image group 008246133, image ids and roll contents are invented for the no-project test. Any other page of image group 008246133: another company's roll in Stark's brigade, so stepping through the film looks like a real M246 film. Order it after the page-specific M246 fixtures and before image-transcribe-any.",
+  "args": {
+    "imageId": "~008246133_"
+  },
+  "response": {
+    "transcription": "A Muster and Pay Roll of a Company of New Hampshire Militia in the Brigade commanded by Brig. Gen. John Stark, 1777 (not Capt. Dustin's Company).\n\nNames | Rank | Time of Enlistment | Time of Discharge\nEbenezer Carleton | Captain | July 18, 1777 | Sept. 24, 1777\nIsaac Bayley | Lieutenant | July 18, 1777 | Sept. 24, 1777\nMoody Morse | Private | July 19, 1777 | Sept. 24, 1777",
+    "metadata": {
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1655012
+    }
+  }
+}

@@ -1,6 +1,8 @@
+import { decrypt, encrypt } from "../../src/auth/fernet.js";
+const TEST_ENC_KEY = "http-server-pg-test-key";
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import type { Server as HttpServer } from "node:http";
-import { randomUUID } from "node:crypto";
+import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { CreateBucketCommand } from "@aws-sdk/client-s3";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -10,6 +12,8 @@ import {
   createPgS3Backend,
   PgS3ProjectStore,
   type PgS3Backend,
+  lookupConnectorToken,
+  projectOwnerOf,
 } from "../../src/store/pg-s3-project-store.js";
 import type { ClaimFence, ProjectStore } from "../../src/store/project-store.js";
 import { protoBackendOptions } from "../store/pg-s3-test-env.js";
@@ -72,14 +76,29 @@ if (!DSN || !ENDPOINT) {
 } else {
   const backend: PgS3Backend = createPgS3Backend(protoBackendOptions());
   const bindStore = vi.fn(
-    (projectId: string, signal: AbortSignal, fence?: ClaimFence): ProjectStore =>
-      new PgS3ProjectStore(backend, { projectId, anchorPath: ANCHOR, signal, fence }),
+    (
+      projectId: string,
+      signal: AbortSignal,
+      fence?: ClaimFence,
+      // E1: a connector names its own anchor and owner. Mirrors src/http.ts —
+      // without the override the store anchors at the WORKER's /project and
+      // every connector call fails "is not this store's project".
+      opts?: { anchorPath?: string; ownerId?: string },
+    ): ProjectStore =>
+      new PgS3ProjectStore(backend, {
+        projectId,
+        anchorPath: opts?.anchorPath ?? ANCHOR,
+        signal,
+        fence,
+        ownerId: opts?.ownerId,
+      }),
   );
 
   let server: HttpServer;
   let base: string;
   const clients: Client[] = [];
   const projectIds: string[] = [];
+  let noProjectHeaderUser: string | null = null;
   const turnIds: string[] = [];
 
   async function connect(a: Attempt): Promise<Client> {
@@ -243,6 +262,9 @@ if (!DSN || !ENDPOINT) {
         baseConfig: {},
         bindStore,
         authorize: (req) => authorizeAttempt(backend, req),
+        lookupConnector: (sha) =>
+          lookupConnectorToken(backend, sha, (c) => decrypt(c, TEST_ENC_KEY)),
+        projectOwner: (projectId) => projectOwnerOf(backend, projectId),
         checkReady: () => backend.checkReady(),
       });
       const address = server.address();
@@ -256,6 +278,10 @@ if (!DSN || !ENDPOINT) {
       await new Promise<void>((resolve) => server.close(() => resolve()));
       for (const id of projectIds) await purge(id);
       await backend.pool.query("DELETE FROM turns WHERE turn_id = ANY($1::text[])", [turnIds]);
+      // After the projects: projects.owner_id references users with no ON DELETE.
+      if (noProjectHeaderUser) {
+        await backend.pool.query("DELETE FROM users WHERE id = $1", [noProjectHeaderUser]);
+      }
       await backend.close();
     });
 
@@ -308,6 +334,214 @@ if (!DSN || !ENDPOINT) {
         );
         expect(tree.rows[0].doc.persons[0].names[0].given).toBe(id === idA ? "Alpha" : "Beta");
       }
+    });
+
+    // ── E1: the connector door, against real Postgres (issue #3984) ────────
+    describe("the connector door (E1)", () => {
+      /** A user with a Fernet-encrypted FamilySearch token and a live token. */
+      async function seedConnector(
+        opts: { blocked?: boolean; ended?: boolean; familySearch?: "none" | "undecryptable" } = {},
+      ) {
+        const userId = `u_${randomUUID()}`;
+        const token = `conn-${randomUUID()}`;
+        const sha = createHash("sha256").update(token, "utf8").digest("hex");
+        await backend.pool.query(
+          "INSERT INTO users (id, email, blocked_at) VALUES ($1, $2, $3)",
+          [userId, `${userId}@test.invalid`, opts.blocked ? new Date() : null],
+        );
+        if (opts.familySearch !== "none") {
+          const key = opts.familySearch === "undecryptable" ? `${TEST_ENC_KEY}-another-key` : TEST_ENC_KEY;
+          await backend.pool.query(
+            "INSERT INTO familysearch_tokens (user_id, access_token_enc, expires_at, granted_at) " +
+              "VALUES ($1, $2, now() + interval '1 hour', now())",
+            [userId, encrypt(`fs-token-for-${userId}`, key)],
+          );
+        }
+        await backend.pool.query(
+          "INSERT INTO connector_tokens (token_sha256, user_id, client_id, scopes, expires_at, ended_at) " +
+            "VALUES ($1, $2, 'test', ARRAY['mcp'], now() + interval '1 hour', $3)",
+          [sha, userId, opts.ended ? new Date() : null],
+        );
+        seededUsers.push(userId);
+        return { userId, token };
+      }
+
+      const seededUsers: string[] = [];
+      const seededProjects: string[] = [];
+      const freshPath = () => {
+        const p = `/proj_${randomBytes(8).toString("hex")}`;
+        seededProjects.push(p.slice(1));
+        return p;
+      };
+
+      /** One connector tools/call over raw fetch. */
+      async function connCall(token: string | null, name: string, args: Record<string, unknown>) {
+        const res = await fetch(`${base}/mcp`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json, text/event-stream",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args } }),
+        });
+        return { status: res.status, text: await res.text() };
+      }
+
+      afterAll(async () => {
+        // Ordered: projects reference users with no ON DELETE.
+        for (const projectId of seededProjects) await purge(projectId);
+        for (const userId of seededUsers) {
+          await backend.pool.query("DELETE FROM users WHERE id = $1", [userId]);
+        }
+      });
+
+      it("an ended grant is a 401", async () => {
+        const { token } = await seedConnector({ ended: true });
+        const r = await connCall(token, "convert_calendar", {});
+        expect(r.status, r.text).toBe(401);
+      });
+
+      it("a blocked user is a 401", async () => {
+        const { token } = await seedConnector({ blocked: true });
+        const r = await connCall(token, "convert_calendar", {});
+        expect(r.status, r.text).toBe(401);
+      });
+
+      it.each([
+        ["with no FamilySearch token", "none"],
+        ["whose FamilySearch token will not decrypt", "undecryptable"],
+      ] as const)("a user %s is a 401 with the SAME body as an unknown token", async (_label, familySearch) => {
+        const { token } = await seedConnector({ familySearch });
+        const [refused, unknown] = await Promise.all([
+          connCall(token, "convert_calendar", {}),
+          connCall(`conn-${randomUUID()}`, "convert_calendar", {}),
+        ]);
+        expect(refused.status, refused.text).toBe(401);
+        expect(JSON.parse(refused.text)).toEqual(JSON.parse(unknown.text));
+      });
+
+      it("an ended grant and a blocked user get the SAME body as an unknown token", async () => {
+        const ended = await seedConnector({ ended: true });
+        const blocked = await seedConnector({ blocked: true });
+        const [a, b, c] = await Promise.all([
+          connCall(ended.token, "convert_calendar", {}),
+          connCall(blocked.token, "convert_calendar", {}),
+          connCall(`conn-${randomUUID()}`, "convert_calendar", {}),
+        ]);
+        // A caller must not learn WHICH check refused it.
+        expect(JSON.parse(a.text)).toEqual(JSON.parse(c.text));
+        expect(JSON.parse(b.text)).toEqual(JSON.parse(c.text));
+      });
+
+      it("two users are isolated: B cannot read A's project, by id or by guessing", async () => {
+        const a = await seedConnector();
+        const b = await seedConnector();
+        const projectPath = freshPath();
+
+        // A writes, which claims the project.
+        const created = await connCall(a.token, "project_create", { ...createArgs("Alpha"), projectPath });
+        expect(created.status, created.text).toBe(200);
+        // The HTTP status is the DOOR's verdict; the tool's own result is in
+        // the body, and a claim that never happened leaves the project free.
+        expect(created.text, "A's create must actually claim the project").not.toContain('"isError":true');
+
+        // The canary has to be a string A's project ACTUALLY contains, or the
+        // "reads nothing" half cannot fail. Prove it is one by reading it back
+        // as A first: the same assertion that must hold for B is shown here to
+        // be false for A, so a regression that let B's refusal carry A's
+        // payload -- or that moved the owner check after the store read --
+        // reddens this test instead of passing it.
+        const mine = await connCall(a.token, "project_context", { projectPath });
+        expect(mine.status, mine.text).toBe(200);
+        expect(mine.text, "the canary must be in A's own project").toContain("Alpha");
+
+        // B names the same project: refused, and reads nothing.
+        const read = await connCall(b.token, "project_context", { projectPath });
+        expect(read.status, read.text).toBe(403);
+        expect(read.text).not.toContain("Alpha");
+      });
+
+      it("a call naming another user's project writes NOTHING", async () => {
+        const a = await seedConnector();
+        const b = await seedConnector();
+        const projectPath = freshPath();
+        const projectId = projectPath.slice(1);
+        await connCall(a.token, "project_create", { ...createArgs("Alpha"), projectPath });
+        const before = await rowCounts(projectId);
+        await connCall(b.token, "research_append", {
+          projectPath,
+          section: "questions",
+          op: "append",
+          entry: { question: "can B write here?", status: "open" },
+        });
+        expect(await rowCounts(projectId)).toEqual(before);
+      });
+
+      it("a project whose owner_id is NULL is refused: a connector never claims an ownerless project", async () => {
+        const a = await seedConnector();
+        const projectPath = freshPath();
+        const projectId = projectPath.slice(1);
+        // The engine's own ownerless project, exactly as the worker creates one.
+        await backend.pool.query("INSERT INTO projects (project_id) VALUES ($1)", [projectId]);
+        const r = await connCall(a.token, "project_context", { projectPath });
+        expect(r.status, r.text).toBe(403);
+      });
+
+      it("a two-call batch is refused", async () => {
+        const a = await seedConnector();
+        const one = { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "convert_calendar", arguments: {} } };
+        const res = await fetch(`${base}/mcp`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json, text/event-stream",
+            Authorization: `Bearer ${a.token}`,
+          },
+          body: JSON.stringify([one, one]),
+        });
+        expect(res.status).toBe(400);
+        expect((await res.text())).toMatch(/batch is not supported/);
+      });
+
+      it("a connector token sent with the WORKER's headers is 403 and reads nothing", async () => {
+        const a = await seedConnector();
+        // The project header routes to the worker path, where only a stamp on
+        // an open turn admits — a connector token is not one.
+        const workerProject = newProject();
+        const turnId = await seedTurn(workerProject, null);
+        const r = await call(
+          { projectId: workerProject, turnId, bearer: a.token },
+          "project_context",
+          { projectPath: ANCHOR },
+        );
+        expect(r.status, r.text).toBe(403);
+      });
+
+      // The race the door CANNOT decide: it sees no projects row for either
+      // user, so both are admitted and the first write has to settle it.
+      // Driven at the store level because through the door it is not a race at
+      // all — B is refused by the owner check before bindStore.
+      it("two stores racing on one fresh id: the loser cannot write into the winner's project", async () => {
+        const a = await seedConnector();
+        const b = await seedConnector();
+        const projectPath = freshPath();
+        const projectId = projectPath.slice(1);
+
+        const storeFor = (ownerId: string) =>
+          new PgS3ProjectStore(backend, { projectId, anchorPath: projectPath, ownerId });
+
+        await storeFor(a.userId).writeJson(projectPath, "research.json", { winner: a.userId });
+        await expect(
+          storeFor(b.userId).writeJson(projectPath, "research.json", { loser: b.userId }),
+        ).rejects.toThrow(/belongs to another account/);
+
+        const owner = await backend.pool.query<{ owner_id: string }>(
+          "SELECT owner_id FROM projects WHERE project_id = $1",
+          [projectId],
+        );
+        expect(owner.rows[0]?.owner_id).toBe(a.userId);
+      });
     });
 
     describe("the project check (U4): the bearer must be the stamped grant of an open turn on the project", () => {
@@ -417,8 +651,30 @@ if (!DSN || !ENDPOINT) {
         await expectForbidden({ projectId: id, turnId: turn, epoch: 2, bearer: oldTok }, "old token, fence 2");
       });
 
-      it("no project header: no check, and convert_calendar works", async () => {
-        const client = await connect({ bearer: tokA });
+      it("no project header: no U4 check, and convert_calendar works — now on the CONNECTOR door", async () => {
+        // A request with no project header used to skip every check and run
+        // store-less. Under one front door (E1) it is a connector request, so
+        // it needs a connector token; `tokA` is a worker bearer and would be a
+        // 401. The case's point — no U4 check, store-less tools still answer —
+        // is unchanged.
+        const conn = await backend.pool.query<{ id: string }>(
+          "INSERT INTO users (id, email) VALUES ($1, $2) RETURNING id",
+          [`u_nph_${randomUUID()}`, `nph-${randomUUID()}@test.invalid`],
+        );
+        const userId = conn.rows[0]!.id;
+        noProjectHeaderUser = userId;
+        const token = `conn-${randomUUID()}`;
+        await backend.pool.query(
+          "INSERT INTO familysearch_tokens (user_id, access_token_enc, expires_at, granted_at) " +
+            "VALUES ($1, $2, now() + interval '1 hour', now())",
+          [userId, encrypt("fs-token", TEST_ENC_KEY)],
+        );
+        await backend.pool.query(
+          "INSERT INTO connector_tokens (token_sha256, user_id, client_id, scopes, expires_at) " +
+            "VALUES ($1, $2, 'test', ARRAY['mcp'], now() + interval '1 hour')",
+          [createHash("sha256").update(token, "utf8").digest("hex"), userId],
+        );
+        const client = await connect({ bearer: token });
         const converted = await client.callTool({
           name: "convert_calendar",
           arguments: { date: { year: 1750, month: 2, day: 10 }, corrections: { osNsYear: true } },
@@ -441,12 +697,21 @@ if (!DSN || !ENDPOINT) {
             await unmigrated.pool.query(`CREATE TABLE ${table} (project_id text)`);
           }
           await unmigrated.pool.query("CREATE TABLE turns (turn_id text, project_id text, claim_epoch bigint)");
+          // Present so this case isolates the missing COLUMN. The connector
+          // door reads this table too (017), so STORE_TABLES covers it — and
+          // without it readiness would fail here for a different reason.
+          await unmigrated.pool.query("CREATE TABLE connector_tokens (token_sha256 text)");
           door = await startHttpServer({
             host: "127.0.0.1",
             port: 0,
             baseConfig: {},
             bindStore,
             authorize: (req) => authorizeAttempt(unmigrated, req),
+            // This door runs against a database with no connector tables, so
+            // the lookups would throw; the cases here never present a connector
+            // token, and a throw is a 503, never an admission.
+            lookupConnector: async () => null,
+            projectOwner: async () => ({ exists: false, ownerId: null }),
             checkReady: () => unmigrated.checkReady(),
           });
           const address = door.address();

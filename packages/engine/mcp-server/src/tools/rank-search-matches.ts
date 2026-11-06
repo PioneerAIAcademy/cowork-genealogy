@@ -632,9 +632,15 @@ function wellFormedTree(tree: SimplifiedGedcomX): SimplifiedGedcomX {
   };
 }
 
-/** The response's `subjectTooThin` field: present only when true. */
-function tooThinField(subject: SubjectDoc): { subjectTooThin?: true } {
-  return subject.subjectTooThin ? { subjectTooThin: true } : {};
+const SUBJECT_TOO_THIN_NOTE =
+  "Nothing in the project separates this person from a namesake: no date narrower than a year and " +
+  "no named spouse, parent or child. Every row is `needs-review — possible namesake`, whatever its " +
+  "score and however well it agrees. Report no row's family as this person's. Name what would settle " +
+  "identity (a precise date, or a named spouse, parent or child) and the record most likely to state it.";
+
+/** The response's `subjectTooThin` fields: present only when true. */
+function tooThinField(subject: SubjectDoc): { subjectTooThin?: true; subjectTooThinNote?: string } {
+  return subject.subjectTooThin ? { subjectTooThin: true, subjectTooThinNote: SUBJECT_TOO_THIN_NOTE } : {};
 }
 
 interface SubjectDoc {
@@ -664,20 +670,6 @@ interface SubjectDoc {
    *  same-named individual. Independent of `discriminatingFacts` (a city-only
    *  residence has a place but no narrow date and no relative). */
   subjectTooThin: boolean;
-}
-
-/**
- * The subject's `subjectTooThin` as the project stands now, or undefined when it
- * cannot be computed (no tree, unknown person). `record_search` saves it into
- * the staged search, so `extraction_append`'s gate judges a record by the subject
- * as it was when the search found the record, not after a later tree edit.
- */
-export async function subjectTooThinNow(projectPath: string, subjectId: string): Promise<boolean | undefined> {
-  try {
-    return (await buildSubjectDoc(projectPath, subjectId)).subjectTooThin;
-  } catch {
-    return undefined;
-  }
 }
 
 // Exported for dev/probe-rank-enrichment.ts, which A/Bs the enriched subject

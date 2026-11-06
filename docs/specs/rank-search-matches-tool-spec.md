@@ -371,7 +371,7 @@ routinely returns hits both with and without one. See
 `record-search-tool-spec-v2.md` § `batchNumber` for where it is read from and why
 it is matched on `labelId`.
 
-### `subjectTooThin` — namesake gate flag
+### `subjectTooThin` — namesake flag
 
 Present and `true` when the subject has **no date narrower than a year** **AND**
 no named spouse, parent or child — in the tree or in the `research.json`
@@ -459,13 +459,10 @@ Independent of the withholding branch (`matches: []`, with
 dated/placed facts. A subject with a
 city-only residence has a placed fact (withholding does not fire) but may still
 be `subjectTooThin` (no narrow date, no relative). Both can be true
-simultaneously.
-
-The flag is advisory to the caller. The namesake gate is `extraction_append`'s
-thin-subject refusal (`research-append-tool-spec.md` §11.6, "The thin-subject
-gate"). It does not read `ranked`: `record_search` runs the same test
-(`subjectTooThinNow`) when it stages a search and saves the result as
-`subjectTooThin` in the staged payload, and the gate reads that saved value.
+simultaneously. When the flag is set the response also carries
+`subjectTooThinNote`, which tells the agent reading the rows to report every row
+as `needs-review — possible namesake`. Both are advisory: nothing refuses a thin
+subject's records.
 
 The **stricter form** — ignore facts the query already filtered on, since every
 result shares those by construction — is not built: the base rule shipped alone

@@ -20,7 +20,6 @@ import re
 import pytest
 
 from validators_lib import as_mapping as _as_mapping
-from validators_lib import assert_nothing_extracted as _assert_nothing_extracted
 from validators_lib import bare_tool_name as _bare_tool_name
 from validators_lib import filter_claim_findings as _filter_claim_findings
 from validators_lib import hashable_key as _hashable_key
@@ -949,19 +948,6 @@ def test_mismatched_handed_plan_item_is_queried(tool_calls, test):
     )
 
 
-def test_thin_subject_hit_not_extracted(before_state, after_state, builtin_tool_calls, test):
-    """Tag-gated (subject-too-thin): issue #2213 d29. A record found only by a
-    search for a subject too thin to tell from a namesake is not extracted,
-    although the delegation pre-authorizes extraction. `extraction_append`
-    refuses it in code, so calling it is allowed.
-    """
-    if "subject-too-thin" not in test.get("tags", []):
-        pytest.skip("not a subject-too-thin scenario")
-    _assert_nothing_extracted(
-        before_state, after_state, builtin_tool_calls, "the subject is too thin to tell from a namesake",
-    )
-
-
 # --- Namesake rows (issue #3363, PR 2) --------------------------------
 
 
@@ -971,9 +957,9 @@ def test_namesake_row_recorded(before_state, after_state, test):
 
     A row names a subject of the project and cites a `record_search` log entry
     this run wrote. `research_append` stamps `record_persona_ids` only for a
-    record found in the cited search's own results, so a row with no stamp listed
-    an id the search never returned (a `recordArk`, a retyped id) or cited the
-    wrong log.
+    record found in the results of a search or read the row cites, as a result or
+    as a member of a result's record, so a row with no stamp listed an id no cited
+    log returned (a `recordArk`, a retyped id) or cited the wrong log.
     """
     if "namesake-row" not in test.get("tags", []):
         pytest.skip("not a namesake-row scenario")
@@ -996,7 +982,7 @@ def test_namesake_row_recorded(before_state, after_state, test):
         )
         assert row.get("record_persona_ids"), (
             f"row {row.get('id')} lists {row.get('record_ids')}, which research_append found in none of the "
-            "cited search's results: copy each recordId verbatim, never recordArk"
+            "cited logs' results or their records' persons: copy each recordId verbatim, never recordArk"
         )
 
 

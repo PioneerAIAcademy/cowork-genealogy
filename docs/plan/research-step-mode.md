@@ -826,7 +826,7 @@ that apply:
     attached-records plan's PR D has landed, keep its test passing: on a project with no
     questions and a `high` gap, the first question still restates the objective.
 - **The router:** delete "New evidence may reveal new questions — return to question-selection"
-  (`skills/research/SKILL.md:364-365`). The objective rows (the two rows beginning *"All questions are `resolved`, `project.status` still `active`"*: one for a fact the objective asks for that no question covers, one for full coverage), after the tree-encoding gate,
+  (`skills/research/SKILL.md:364-365`). The objective row (the row beginning *"All questions are `resolved` and `project.status` still `active`"*; `:263` on `main`), after the tree-encoding gate,
   names any uncovered part of the objective as a suggested next question, as a statement. The
   `compound-objective-*` router tests point at that statement.
 - **research-plan's FAN-pivot hand-off** (`agents/research-plan.md:751`) becomes a plan

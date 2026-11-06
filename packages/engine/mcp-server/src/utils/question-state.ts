@@ -86,7 +86,7 @@ const arr = (v: unknown): any[] => (Array.isArray(v) ? v : []);
  * external-site entry whose capture has not come back is an open hand-off, not
  * something to extract.
  */
-export function pendingExtraction(research: any, logs: any[]): any[] {
+function pendingExtraction(research: any, logs: any[]): any[] {
   const cited = new Set(arr(research?.assertions).map((a) => a?.log_entry_id));
   return logs.filter(
     (e) =>
@@ -795,7 +795,23 @@ export function questionStatus(research: any, question: any, tree: any = null): 
     // Not preempted by an uncited positive/partial entry: agents log
     // inconclusive searches as `partial` and link lists as `positive`, and those
     // stay uncited for good, so the check would hold the question on extraction.
-    nextStep = "research-exhaustiveness, then proof-conclusion";
+    // Planned items are searched or disposed of before the gate (lead, #3546);
+    // the search is offered first so a still-needed item is not skipped by default.
+    // `in_progress` items are not disposable here (#3516 owns their closure), and
+    // an item waiting only on the researcher's upload is left alone.
+    const waitingOnUpload = awaitingUploadItemIds(research?.log);
+    const planned = openItems(plans)
+      .filter((i) => i?.status === "planned" && !waitingOnUpload.has(i?.id))
+      .sort((x, y) => (Number(x?.sequence) || 0) - (Number(y?.sequence) || 0));
+    if (planned.length === 0) {
+      nextStep = "research-exhaustiveness, then proof-conclusion";
+    } else {
+      const lane = searchStepFor(planned[0]);
+      const search = lane === "search-records" ? `${lane} — next item ${planned[0].id}` : lane;
+      nextStep =
+        `${search}, or research-plan — dispose of ${planned.map((i) => i.id).join(", ")} ` +
+        "if the evidence already answers the question";
+    }
   } else if (state === "concluded" || state === "critiqued") {
     // Resolved with a proof summary: nothing outstanding.
   } else if (pendingExtraction(research, logs).length > 0) {

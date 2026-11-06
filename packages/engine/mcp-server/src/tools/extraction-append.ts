@@ -55,7 +55,6 @@ import {
   type FulltextHitRow,
   type StagedRefLocation,
 } from "../utils/results-staging.js";
-import { thinSubjectScan } from "./thin-subject-scan.js";
 import { deedFormulaErrors } from "../utils/deed-formula.js";
 import { arkToBareId } from "../utils/ark.js";
 import { selectSubjectPersona } from "../utils/record-persona-select.js";
@@ -545,9 +544,6 @@ async function noteRetired(projectPath: string, outcomes: (RecordOutcome & { ret
 interface RecordIdsOptions {
   /** Bare record id -> the tree S the import already made for it. */
   sourceDescriptionIdByBare?: ReadonlyMap<string, string>;
-  /** `personId` mode: a record attached to the person on FamilySearch is not a
-   *  namesake candidate, whatever the searched subject holds. */
-  skipThinSubjectGate?: boolean;
 }
 
 /** The sections a link write reaches: `personId` mode's attachment links only,
@@ -664,7 +660,7 @@ async function personIdMode(
     { projectPath: input.projectPath, recordIds: [...importedS.keys()].map((b) => `ark:/61903/1:1:${b}`) },
     deps,
     principal,
-    { sourceDescriptionIdByBare: importedS, skipThinSubjectGate: true },
+    { sourceDescriptionIdByBare: importedS },
   );
 
   // Link, against the project as it now stands.
@@ -986,21 +982,6 @@ async function recordIdsMode(
     }
   }
 
-  // 2b. Thin-subject gate on the requested ids, so a refused record is not read.
-  const thinScan = thinSubjectScan(input.projectPath, research);
-  const refuseThin = async (todo: typeof outcomes, more: (o: (typeof outcomes)[number]) => Iterable<string> | undefined) => {
-    if (opts.skipThinSubjectGate || todo.length === 0) return;
-    const ids = new Map(todo.map((o) => [o.recordId, new Set([...widen(arkToBareId(o.recordId)), ...(more(o) ?? [])])]));
-    const refusals = await thinScan(ids);
-    for (const o of todo) {
-      const why = refusals.get(o.recordId);
-      if (!why) continue;
-      o.status = "refused";
-      o.summary = why;
-    }
-  };
-  await refuseThin(outcomes.filter((o) => o.status === "extracted"), () => undefined);
-
   // 3. Reads, in parallel. An error or an unstaged read is reported and skipped.
   const toRead = outcomes.filter((o) => o.status === "extracted" && !o.logId);
   await mapWithConcurrency(toRead, READ_CONCURRENCY, async (o) => {
@@ -1070,10 +1051,6 @@ async function recordIdsMode(
     }
     leads.push(o);
   }
-
-  // 3c. Thin-subject gate, again with every persona the reads named, before
-  //     anything is logged or written.
-  await refuseThin(outcomes.filter((o) => o.status === "extracted"), (o) => households.get(o.recordId));
 
   const staged = outcomes.filter((o) => o.status === "extracted" && o.stagedRef);
   if (staged.length > 0) {
@@ -1637,19 +1614,6 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     }
   }
 
-  // A FamilySearch record sent as a document passes the same thin-subject gate
-  // as `recordIds`; any other id is listed by no record_search, so never gated.
-  const thinTodo = outcomes.filter((o) => o.status === "extracted");
-  const thin = await thinSubjectScan(input.projectPath, research)(
-    new Map(thinTodo.map((o) => [o.recordId, new Set([arkToBareId(o.recordId)])])),
-  );
-  for (const o of thinTodo) {
-    const why = thin.get(o.recordId);
-    if (!why) continue;
-    o.status = "refused";
-    o.summary = why;
-  }
-
   // A transcription already finalized under its own log entry (a
   // `results/<log_id>.json`) is cited, not logged a second time as a
   // `user_provided` entry, which would drop the scan's text from the source.
@@ -2046,9 +2010,7 @@ export const extractionAppendSchema = {
         description:
           "FAMILYSEARCH RECORDS. The records to extract, any ARK form. Send with " +
           "`questionIds` and, for a person expected on one of these records and not " +
-          "found, `absentPersons` with that record's `recordId`. A record found only " +
-          "by searches for a person with no precise date and no named spouse, parent " +
-          "or child is refused until the project records one.",
+          "found, `absentPersons` with that record's `recordId`.",
       },
       questionIds: QUESTION_IDS,
       reextract: {

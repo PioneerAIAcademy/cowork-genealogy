@@ -3519,7 +3519,7 @@ describe("Research closed shapes", () => {
           (e) =>
             e.path === "research.json/proof_summaries[0]" &&
             e.message.includes(
-              "tier 'proved' does not match the stronger of claims[].proof_tier ('probable')"
+              "tier 'proved' exceeds the strongest of claims[].proof_tier ('probable')"
             )
         )
       ).toBe(true);
@@ -3531,7 +3531,7 @@ describe("Research closed shapes", () => {
       // silently stopped running for the whole summary.
       expect(PROOF_TIER_RANK.get("constructor")).toBeUndefined();
       const research = maximalResearch();
-      research.proof_summaries[0].tier = "possible";
+      research.proof_summaries[0].tier = "proved";
       research.proof_summaries[0].claims = [
         {
           claim: "poison",
@@ -3550,7 +3550,7 @@ describe("Research closed shapes", () => {
       const result = await validateParsed(research, maximalTree);
       expect(
         result.errors.some((e) =>
-          e.message.includes("does not match the stronger of claims[].proof_tier")
+          e.message.includes("exceeds the strongest of claims[].proof_tier")
         )
       ).toBe(true);
     });
@@ -3575,16 +3575,16 @@ describe("Research closed shapes", () => {
       ).toBe(true);
     });
 
-    it("rejects a claims[].relationship.type other than 'ParentChild'", async () => {
+    it("rejects a claims[].relationship.type other than 'ParentChild' and 'Couple'", async () => {
       const research = maximalResearch();
-      research.proof_summaries[0].claims[0].relationship.type = "Couple";
+      research.proof_summaries[0].claims[0].relationship.type = "Sibling";
       const result = await validateParsed(research, maximalTree);
       expect(result.valid).toBe(false);
       expect(
         result.errors.some(
           (e) =>
             e.path === "research.json/proof_summaries[0]/claims[0]/relationship" &&
-            e.message.includes("relationship.type must be 'ParentChild'")
+            e.message.includes("relationship.type must be 'ParentChild' or 'Couple'")
         )
       ).toBe(true);
     });
@@ -3636,22 +3636,114 @@ describe("Research closed shapes", () => {
       ).toBe(true);
     });
 
-    // The scalar must carry the STRONGER per-claim tier (research-schema-spec
-    // §7) — this is the exact invariant the _018 review episode showed only
-    // living in agent prose, with nothing catching a scalar that disagrees
-    // with its own claims.
-    it("rejects a scalar tier that doesn't match the stronger per-claim tier", async () => {
+    // The scalar answers the question as a whole and may not EXCEED the
+    // strongest claim (Decision 29); a weaker scalar is the honest headline
+    // when one claim is stronger than the answer it serves.
+    it("accepts a scalar tier weaker than the strongest per-claim tier", async () => {
       const research = maximalResearch();
       research.proof_summaries[0].tier = "possible"; // claims[0] is "probable"
       const result = await validateParsed(research, maximalTree);
-      expect(result.valid).toBe(false);
-      expect(
-        result.errors.some(
-          (e) =>
-            e.path === "research.json/proof_summaries[0]" &&
-            e.message.includes("tier 'possible' does not match the stronger of claims[].proof_tier ('probable')")
-        )
-      ).toBe(true);
+      expect(result.errors).toEqual([]);
+    });
+
+    it("accepts scalar probable over claims proved and probable", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].tier = "probable";
+      research.proof_summaries[0].claims = [
+        { claim: "paternity", proof_tier: "proved", shortfall: "none", supporting_assertion_ids: ["a_001"], relationship: { type: "ParentChild", parent: "I2", child: "I1" } },
+        { claim: "maternity", proof_tier: "probable", shortfall: "gap", supporting_assertion_ids: ["a_001"], relationship: { type: "ParentChild", parent: "I3", child: "I1" } },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors).toEqual([]);
+    });
+
+    const claimOf = (label: string, object: Record<string, unknown>, extra: Record<string, unknown> = {}) => ({
+      claim: label, proof_tier: "possible", shortfall: "gap", supporting_assertion_ids: ["a_001"], ...object, ...extra,
+    });
+    const errorsFor = async (claims: any[]) => {
+      const research = maximalResearch();
+      research.proof_summaries[0].tier = "possible";
+      research.proof_summaries[0].claims = claims;
+      return (await validateParsed(research, maximalTree)).errors;
+    };
+
+    it("accepts Couple, person-fact, couple-fact, record-identity, same_as, name and finding claims, and a finding citing a log entry", async () => {
+      const errors = await errorsFor([
+        claimOf("marriage", { relationship: { type: "Couple", person1: "I2", person2: "I3" } }),
+        claimOf("step-father", { relationship: { type: "ParentChild", parent: "I2", child: "I1", subtype: "Step" } }),
+        claimOf("birth", { fact: { subject: "I1", fact_type: "Birth", date: "1850", place: "Boston" } }),
+        claimOf("marriage date", { fact: { subject: { person1: "I2", person2: "I3" }, fact_type: "Marriage", date: "1845" } }),
+        claimOf("census entry", { identity: { record_id: "rec1", party: "p_1", person: "I1" } }),
+        claimOf("one man", { identity: { person: "I2", same_as: "I3" }, polarity: "denied" }),
+        claimOf("name", { name: { person: "I1", given: "John", surname: "Smith" } }),
+        claimOf("no baptism", { finding: { finding_type: "absence", statement: "No baptism found 1845-1855.", log_entry_ids: ["log_001"] } }),
+      ]);
+      expect(errors).toEqual([]);
+    });
+
+    it("accepts a same_as claim naming one person twice, as a merge of the pair leaves it", async () => {
+      const errors = await errorsFor([
+        claimOf("one man", { identity: { person: "I2", same_as: "I2" } }),
+      ]);
+      expect(errors).toEqual([]);
+    });
+
+    it("rejects a finding citing a log entry that does not exist", async () => {
+      const errors = await errorsFor([
+        claimOf("no baptism", { finding: { finding_type: "absence", statement: "None found.", log_entry_ids: ["log_999"] } }),
+      ]);
+      expect(errors.some((e) => e.message.includes("references log entry 'log_999' which does not exist"))).toBe(true);
+    });
+
+    it("rejects a claim that names no object", async () => {
+      const errors = await errorsFor([{ claim: "loose", proof_tier: "possible", shortfall: "gap", supporting_assertion_ids: [] }]);
+      expect(errors.some((e) => e.message.includes("a claim names exactly one object") && e.message.includes("names none"))).toBe(true);
+    });
+
+    it("rejects a claim naming two objects", async () => {
+      const errors = await errorsFor([
+        claimOf("both", { name: { person: "I1" }, fact: { subject: "I1", fact_type: "Birth" } }),
+      ]);
+      expect(errors.some((e) => e.message.includes("this one names 2: fact, name"))).toBe(true);
+    });
+
+    it("rejects a claim citing an assertion that does not exist", async () => {
+      const errors = await errorsFor([
+        claimOf("name", { name: { person: "I1" } }, { supporting_assertion_ids: ["a_999"] }),
+      ]);
+      expect(errors.some((e) => e.message.includes("references assertion 'a_999' which does not exist"))).toBe(true);
+    });
+
+    it("rejects a denied claim at proved, and polarity on a disproved claim", async () => {
+      const denied = await errorsFor([
+        claimOf("not him", { name: { person: "I1" } }, { proof_tier: "proved", shortfall: "none", polarity: "denied" }),
+      ]);
+      expect(denied.some((e) => e.message.includes("a denied claim stands only at probable or possible, got 'proved'"))).toBe(true);
+      const disproved = await errorsFor([
+        claimOf("ruled out", { name: { person: "I1" } }, { proof_tier: "disproved", shortfall: "none", polarity: "affirmed" }),
+      ]);
+      expect(disproved.some((e) => e.message.includes("a disproved claim carries no polarity"))).toBe(true);
+    });
+
+    it("rejects supporting_assertion_ids that is not an array of ids", async () => {
+      const notArray = await errorsFor([claimOf("name", { name: { person: "I1" } }, { supporting_assertion_ids: "a_001" })]);
+      expect(notArray.some((e) => e.message.includes("'supporting_assertion_ids' must be an array"))).toBe(true);
+      const notString = await errorsFor([claimOf("name", { name: { person: "I1" } }, { supporting_assertion_ids: [42] })]);
+      expect(notString.some((e) => e.message.includes("supporting_assertion_ids contains a non-string entry"))).toBe(true);
+    });
+
+    it("counts a null object key and a null polarity, as the schema does", async () => {
+      const both = await errorsFor([claimOf("birth", { relationship: null, fact: { subject: "I1", fact_type: "Birth" } })]);
+      expect(both.some((e) => e.message.includes("this one names 2"))).toBe(true);
+      const polarity = await errorsFor([claimOf("name", { name: { person: "I1" } }, { polarity: null })]);
+      expect(polarity.some((e) => e.message.includes("claim_polarity"))).toBe(true);
+    });
+
+    it("rejects an identity claim that mixes a record party with same_as", async () => {
+      const errors = await errorsFor([
+        claimOf("mixed", { identity: { record_id: "rec1", party: "p_1", person: "I1", same_as: "I2" } }),
+      ]);
+      expect(errors.some((e) => e.message.includes("not both"))).toBe(true);
     });
 
     it("accepts a scalar tier that correctly matches the stronger of two differing claims", async () => {
@@ -3713,6 +3805,11 @@ describe("Research closed shapes", () => {
       proof_summary: schema.$defs.proof_summary,
       proof_claim: schema.$defs.proof_claim,
       proof_claim_relationship: schema.$defs.proof_claim_relationship,
+      proof_claim_fact: schema.$defs.proof_claim_fact,
+      proof_claim_pair: schema.$defs.proof_claim_pair,
+      proof_claim_identity: schema.$defs.proof_claim_identity,
+      proof_claim_name: schema.$defs.proof_claim_name,
+      proof_claim_finding: schema.$defs.proof_claim_finding,
       evaluation_entry: schema.$defs.evaluation_entry,
       locality: schema.$defs.locality,
       warning_justification: schema.$defs.warning_justification,

@@ -24,7 +24,7 @@ import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertio
 import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../utils/plan-item-plausibility.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
 import { removeUnanchoredPersons, unanchoredMintedPersonIds, type UnanchoredRemoval } from "../utils/unanchored-persons.js";
-import { isSettledConflict, VALIDATOR_ENUMS } from "../validation/validator.js";
+import { isSettledConflict, PROOF_TIER_RANK, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { sanitizeTree } from "../validation/tree-sanitize.js";
 import {
@@ -82,6 +82,7 @@ import { exampleHints } from "./research-append-examples.js";
 import { gcUnreferencedImages, sourceImageCapState } from "../utils/image-store.js";
 import { nextId } from "../utils/gedcomx-ids.js";
 import { arkToBareId, toArk } from "../utils/ark.js";
+import { personaFor } from "../utils/record-persona-select.js";
 import { PERSONA_BEARING_PRODUCERS, findFulltextHit, isAcceptedHint, sidecarReader } from "../utils/results-staging.js";
 import { isStopGateSatisfied, getStoppedBecause } from "../utils/question-stop.js";
 
@@ -2988,7 +2989,7 @@ function capSource(a: any): unknown {
  *  `record_document_id` when every assertion of that source carries one (a
  *  source can hold two documents, #2537). A source with any assertion that
  *  names no document keys as `capSource`, as before the field existed. */
-function capDocumentKeyer(assertions: Iterable<any>): (a: any) => unknown {
+export function capDocumentKeyer(assertions: Iterable<any>): (a: any) => unknown {
   const unsplit = new Set<unknown>();
   for (const a of assertions) {
     const doc = a?.record_document_id;
@@ -4240,12 +4241,14 @@ export function factEvidenceParties(
   return [...refsReach(sourceRefsOf(fact), research).sourceIds].map((source) => ({ source, party: null }));
 }
 
+const isPersonaId = (v: unknown): v is string => typeof v === "string" && v !== "";
+
 /** Item 10 of #3363 (chesworthrm, 2026-10-24): stamps `record_persona_ids` on
  *  each row the call appended, or updated through `record_ids` or
- *  `log_entry_ids`, from the row's own search sidecars, so the first runs can
- *  count what a persona-keyed refusal would catch. Overwrites whatever the
- *  caller supplied; an update cannot set the field (`updatableFields`). A found
- *  record id is stored in the sidecar's form, as an assertion's is. */
+ *  `log_entry_ids`, from the row's own search and read sidecars, so the first
+ *  runs can count what a persona-keyed refusal would catch. Overwrites whatever
+ *  the caller supplied; an update cannot set the field (`updatableFields`). A
+ *  found record id is stored in the sidecar's form, as an assertion's is. */
 export async function stampNamesakePersonas(
   research: any,
   ops: ReadonlyArray<ResearchAppendOp>,
@@ -4267,18 +4270,36 @@ export async function stampNamesakePersonas(
     const stamp: Record<string, string> = {};
     const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
       if (typeof id !== "string") return id;
+      const bare = arkToBareId(id);
+      // A bare id is a record persona's.
+      const ark = toArk(id).startsWith("ark:/") ? toArk(id) : `ark:/61903/1:1:${bare}`;
+      // The form of a log that finds the record but names no persona for it; a
+      // later cited log may still name one.
+      let found: string | undefined;
       for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
         const entry = logById.get(logId);
         if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
-        const hit = (await readResults(entry.results_ref))?.find(
-          (r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === arkToBareId(id),
-        );
-        if (!hit) continue;
-        if (typeof hit.primaryId === "string" && hit.primaryId !== "") stamp[hit.recordId] = hit.primaryId;
-        return hit.recordId;
+        const results = (await readResults(entry.results_ref)) ?? [];
+        const hit = results.find((r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === bare);
+        let persona: unknown = hit?.primaryId;
+        let form: unknown = hit?.recordId;
+        if (!isPersonaId(persona)) {
+          // A record_read names its persona only among the record's persons, and a
+          // row may list another member of a hit's or a read's household.
+          const persons = results.flatMap((r) => (Array.isArray(r?.gedcomx?.persons) ? r.gedcomx.persons : []));
+          const person = personaFor({ persons }, ark);
+          persona = person?.id;
+          form ??= person?.ark;
+        }
+        if (typeof form !== "string") continue;
+        if (isPersonaId(persona)) {
+          stamp[form] = persona;
+          return form;
+        }
+        found ??= form;
       }
       // Accepted unstamped, unlike #699's assertions: the cap reads only that a row exists, so this loses a count, not identity.
-      return id;
+      return found ?? id;
     });
     row.record_ids = await Promise.all(recordIds);
     if (Object.keys(stamp).length > 0) row.record_persona_ids = stamp;
@@ -5482,6 +5503,55 @@ export function unpersistedConflictResolutionInvariants(entry: any, research: an
  *  a tier in the same call. `not_proved` is always available — recording the
  *  blocked attempt is the sanctioned move, not silence. */
 function conflictedSourceInvariants(entry: any, beforeResearch: any): string[] {
+  return [
+    ...conflictedSourceTierInvariants(entry, beforeResearch),
+    ...claimsOf(entry).flatMap(({ label, asEntry }) =>
+      conflictedSourceTierInvariants(asEntry, beforeResearch).map(
+        (m) => `claim '${label}': ${m} For this claim, lower its own proof_tier to not_proved; the summary's tier alone does not settle it.`,
+      ),
+    ),
+  ];
+}
+
+/** Each claim of a summary as a scalar-shaped entry the summary gates read:
+ *  its own tier, shortfall and cited assertions, under the summary's question. */
+function claimsOf(entry: any): { label: string; asEntry: any }[] {
+  return (Array.isArray(entry?.claims) ? entry.claims : [])
+    .filter((c: any) => c && typeof c === "object")
+    .map((c: any, i: number) => ({
+      label: typeof c.claim === "string" ? c.claim : `claims[${i}]`,
+      asEntry: {
+        id: entry?.id,
+        question_id: entry?.question_id,
+        tier: c.proof_tier,
+        shortfall: c.shortfall,
+        supporting_assertion_ids: c.supporting_assertion_ids,
+      },
+    }));
+}
+
+/** The claims that assert their object: a `denied` claim is a grounded "probably
+ *  not", which no identity or parentage gate should read as a conclusion. */
+function affirmedClaimsOf(entry: any): { label: string; asEntry: any }[] {
+  const claims = Array.isArray(entry?.claims) ? entry.claims : [];
+  return claimsOf(entry).filter((_c, i) => claims[i]?.polarity !== "denied");
+}
+
+/** What the identity and parentage gates read: `entry` with its `denied`
+ *  claims dropped and `tier` raised to its strongest affirmed claim when one
+ *  stands above the scalar, so a gate keyed on the tier sees what the summary
+ *  concludes anywhere in it and nothing it denies. */
+export function gatedSummary(entry: any): any {
+  if (!Array.isArray(entry?.claims)) return entry;
+  let best = entry.tier;
+  for (const { asEntry } of affirmedClaimsOf(entry)) {
+    const rank = PROOF_TIER_RANK.get(asEntry.tier);
+    if (rank !== undefined && rank > (PROOF_TIER_RANK.get(best) ?? -1)) best = asEntry.tier;
+  }
+  return { ...entry, tier: best, claims: entry.claims.filter((c: any) => c?.polarity !== "denied") };
+}
+
+function conflictedSourceTierInvariants(entry: any, beforeResearch: any): string[] {
   const tier = entry?.tier;
   if (typeof tier !== "string" || tier === "not_proved" || tier === "disproved") return [];
   const disputed = disputedSourceIds(beforeResearch);
@@ -6044,6 +6114,25 @@ function declarationStatusInvariants(entry: any): string[] {
   ];
 }
 
+/** Each stop criterion is 1–2 sentences (the agent's Step 2). 800 chars sits above
+ *  the corpus p90 (708); over 188 committed `stop_criteria` objects it refuses 38
+ *  (#3546, measured 2026-11-02). Runs only when the op writes `search_stop`, so a later edit to a
+ *  question that already stores a longer criterion is not refused. */
+export const STOP_CRITERION_MAX_CHARS = 800;
+
+function stopCriteriaLengthInvariants(entry: any): string[] {
+  const sc = entry?.search_stop?.stop_criteria;
+  if (!sc || typeof sc !== "object") return [];
+  return Object.entries(sc)
+    .filter(([, v]) => typeof v === "string" && v.length > STOP_CRITERION_MAX_CHARS)
+    .map(
+      ([k, v]) =>
+        `question ${entry?.id ?? "(new entry)"}: search_stop.stop_criteria.${k} is ${(v as string).length} ` +
+        `characters; the cap is ${STOP_CRITERION_MAX_CHARS}. Write 1–2 sentences per criterion and put ` +
+        `the reasoning in one place, then send this write again.`,
+    );
+}
+
 /** Exhaustiveness may not be declared while the question's own plan says a
  *  search is still running.
  *
@@ -6074,11 +6163,9 @@ function declarationStatusInvariants(entry: any): string[] {
  *  write boundary. The decision, the case against it and the conditions it
  *  ships under are on issue #1830.
  *
- *  The orchestrator still consults this gate BEFORE the plan is drained
- *  (`research/SKILL.md:146`, unchanged): the judgement stays here, and only the
- *  route taken on a refusal changed, to dispose of the named items rather than
- *  extend the plan. Were disposal to happen first, the planner would be making
- *  this gate's call for it.
+ *  The orchestrator disposes of every item first and consults this gate after
+ *  (lead, #3546, restating the 2026-09-02 ruling): "answered early" is a valid
+ *  skip reason. `project_context` names the disposal while items are `planned`.
  *
  *  **Reads the PRE-CALL snapshot, unlike the sibling above, and the asymmetry is
  *  the whole gate.** Plan-item completion is the search work's step, not this
@@ -6869,6 +6956,51 @@ function proofSummaryInvariants(
     );
   }
   return errors;
+}
+
+/** Each `proved` or `disproved` claim meets the conclusive floor on its own:
+ *  the question's stop gate satisfied before this call. Without it the bound
+ *  (the scalar may not exceed its strongest claim) would accept a lone
+ *  disproved claim under a not_proved scalar, which the scalar floor refuses.
+ *  Skipped when the scalar's own floor runs in this op and refuses for the same
+ *  reason. */
+function claimFloorInvariants(
+  entry: any,
+  preCallExhaustiveDeclared: Map<string, boolean> | undefined,
+  scalarFloorRuns: boolean,
+): string[] {
+  if (preCallExhaustiveDeclared?.get(entry?.question_id) === true) return [];
+  if (scalarFloorRuns && CONCLUSIVE_TIERS.has(entry?.tier)) return [];
+  return claimsOf(entry)
+    .filter(({ asEntry }) => CONCLUSIVE_TIERS.has(asEntry.tier))
+    .map(
+      ({ label, asEntry }) =>
+        `claim '${label}' at '${asEntry.tier}' is a conclusive answer, so question ` +
+        `'${entry?.question_id}' must already have its stop gate satisfied (search_stop.stopped_because ` +
+        `is 'question_answered', 'record_exhausted', or 'nothing_further_reachable') from BEFORE this ` +
+        `call, as a summary at that tier must. Invoke research-exhaustiveness first, in its own call, ` +
+        `or hold the claim at probable or below.`,
+    );
+}
+
+/** A tier change on a summary that holds claims re-states the claims in the
+ *  same op. A tier-only downgrade otherwise leaves a claim standing above the
+ *  answer it serves, on evidence the summary no longer vouches for. */
+function tierWithoutClaimsInvariants(op: any, entry: any, preCallResearch: any): string[] {
+  if (op?.op !== "update") return [];
+  const fields = op.fields ?? {};
+  if (!Object.prototype.hasOwnProperty.call(fields, "tier")) return [];
+  if (Object.prototype.hasOwnProperty.call(fields, "claims")) return [];
+  if (!Array.isArray(entry?.claims) || entry.claims.length === 0) return [];
+  const prior = (Array.isArray(preCallResearch?.proof_summaries) ? preCallResearch.proof_summaries : []).find(
+    (e: any) => e?.id === entry?.id,
+  );
+  if (prior?.tier === fields.tier) return [];
+  return [
+    `proof_summaries ${entry?.id ?? "(entry)"}: tier changes from '${prior?.tier}' to '${fields.tier}' ` +
+      `but claims[] is not in this op. A summary holding claims re-states them with its tier: send ` +
+      `claims in the same update, each at the tier its own evidence supports now.`,
+  ];
 }
 
 /** The most words a narrative should run, by proof vehicle: the budgets in
@@ -8671,6 +8803,7 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(fields, "search_stop");
     if (declarationTouchedThisOp) {
       invariantErrors.push(...planCompleteInvariants(resultEntry, preCallResearch));
+      invariantErrors.push(...stopCriteriaLengthInvariants(resultEntry));
     }
     if (op.op === "append") {
       invariantErrors.push(...newQuestionWhileAnotherIsOpenInvariants(resultEntry, preCallResearch));
@@ -9125,12 +9258,25 @@ function applyOne(
   if (section === "proof_summaries") {
     const tierTouchedThisOp =
       op.op === "append" || Object.prototype.hasOwnProperty.call(op.fields ?? {}, "tier");
+    const claimsTouchedThisOp = Object.prototype.hasOwnProperty.call(op.fields ?? {}, "claims");
+    if (tierTouchedThisOp || claimsTouchedThisOp) {
+      invariantErrors.push(...claimFloorInvariants(resultEntry, preCallExhaustiveDeclared, tierTouchedThisOp));
+    }
+    invariantErrors.push(...tierWithoutClaimsInvariants(op, resultEntry, preCallResearch));
+    // A claim may stand above the scalar, so the identity and parentage gates
+    // read the strongest affirmed tier among the scalar and its claims.
+    const gated = gatedSummary(resultEntry);
     if (tierTouchedThisOp) {
       invariantErrors.push(...proofSummaryInvariants(resultEntry, preCallExhaustiveDeclared));
+    }
+    if (tierTouchedThisOp || claimsTouchedThisOp) {
       // Tier-gated like the line above, so a narrative edit to a summary that
       // predates the rule is not refused.
       invariantErrors.push(...unlinkedProofInvariants(resultEntry, preCallResearch));
-      invariantErrors.push(...unlinkedParentProofInvariants(resultEntry, preCallResearch));
+      for (const { label, asEntry } of affirmedClaimsOf(resultEntry)) {
+        invariantErrors.push(...unlinkedProofInvariants(asEntry, preCallResearch).map((m) => `claim '${label}': ${m}`));
+      }
+      invariantErrors.push(...unlinkedParentProofInvariants(gated, preCallResearch));
     }
     // Also on a narrative or claims edit: a parentage can be stated in prose
     // after the tier is already set, by an update that leaves `tier` alone.
@@ -9139,7 +9285,7 @@ function applyOne(
       Object.prototype.hasOwnProperty.call(op.fields ?? {}, "narrative_markdown") ||
       Object.prototype.hasOwnProperty.call(op.fields ?? {}, "claims")
     ) {
-      invariantErrors.push(...unlinkedParentNarrativeInvariants(resultEntry, preCallResearch));
+      invariantErrors.push(...unlinkedParentNarrativeInvariants(gated, preCallResearch));
     }
     // NOT gated on `tierTouchedThisOp`, unlike the exhaustiveness check above.
     // That gate asks "is this op setting the tier"; this rule asks "does the
@@ -9173,7 +9319,7 @@ function applyOne(
     // Reads PRE-CALL tree and PRE-CALL research: a same-batch hypothesis write
     // does not satisfy this precondition. Gated only on the entry's standing
     // tier (not_proved/disproved pass), not on which fields this op touches.
-    invariantErrors.push(...competingParentSetsInvariants(resultEntry, preCallResearch, tree));
+    invariantErrors.push(...competingParentSetsInvariants(gated, preCallResearch, tree));
     // Judged only when THIS op sets what the budget reads: an append always does,
     // an update when it names the narrative or the vehicle. An unrelated edit to
     // a summary already over budget is not told again, and neither is a narrative

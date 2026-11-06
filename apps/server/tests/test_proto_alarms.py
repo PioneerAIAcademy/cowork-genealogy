@@ -184,10 +184,7 @@ def test_the_worker_reauth_pattern_is_the_drivers():
 
 # Tools whose code reaches the token but whose result is no FamilySearch answer: login
 # prints the sign-in instruction itself, research_log_append echoes text it was given.
-# project_context (and project_list, declared in the same file) reach it only through
-# the thin-subject scan's imports (buildSubjectDoc, mapWithConcurrency), which read the
-# project's own files and call no FamilySearch endpoint.
-FS_TOOLS_EXEMPT = {"login", "research_log_append", "project_context", "project_list"}
+FS_TOOLS_EXEMPT = {"login", "research_log_append"}
 _IMPORT = re.compile(r"""(?:from|import)\s*\(?\s*['"](\.{1,2}/[^'"]+)['"]""")
 _NAME = re.compile(r"""^\s*name:\s*['"]([a-z_]+)['"]""", re.M)
 

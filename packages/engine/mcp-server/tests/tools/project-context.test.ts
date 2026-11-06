@@ -1,5 +1,6 @@
+import { CLAIM_KINDS } from "../../src/validation/validator.js";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { mkdtemp, mkdir, writeFile, readFile, rm, utimes } from "fs/promises";
+import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
 import { join } from "path";
 import { tmpdir } from "os";
 
@@ -90,8 +91,6 @@ describe("project_context", () => {
       { id: "q_003", question: "Where was he in 1880?" },
       { id: "q_004", question: "Declared exhaustive" },
     ]);
-    // The text an objective's facts are checked against before completing.
-    expect(r.resolvedQuestions).toEqual([{ id: "q_002", question: "Resolved already" }]);
     const noFamily = { spouseIds: [], parentIds: [], childIds: [] };
     expect(r.persons).toEqual([
       { id: "I1", name: "William Bottermiller", gender: "Male", sourceRefs: ["S1", "S2"], ...noFamily, diedByYear: 1929 },
@@ -218,6 +217,15 @@ describe("project_context", () => {
     expect(bare.ok && bare.subjectPersonIds).toEqual([]);
   });
 
+  it("claimKinds lists every kind the engine accepts", async () => {
+    await writeProject(
+      { project: { id: "rp_001", objective: "Fresh", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      { persons: [], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok && r.claimKinds).toEqual([...CLAIM_KINDS]);
+  });
+
   it("returns empty arrays for an empty project", async () => {
     await writeProject(
       { project: { id: "rp_001", objective: "Fresh", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
@@ -233,7 +241,6 @@ describe("project_context", () => {
       narrationGuidance: null,
       subscriptions: [],
       openQuestions: [],
-      resolvedQuestions: [],
       questionStatuses: [],
       persons: [],
       sources: [],
@@ -249,6 +256,7 @@ describe("project_context", () => {
       ),
       unregisteredDisagreementCount: 0,
       exhaustedImageGroups: [],
+      claimKinds: ["relationship", "fact", "identity", "name", "finding"],
     });
   });
 
@@ -623,6 +631,34 @@ describe("project_context", () => {
     const q2 = r.questionStatuses.find((q) => q.id === "q_002");
     expect(q2?.storedStatus).toBeNull();
   });
+
+  // A resolved question is absent from openQuestions, so this is the only place its
+  // text reaches the router reading the objective against every question.
+  it("questionStatuses carries each question's text, resolved ones included, truncated", async () => {
+    const long = "W".repeat(200);
+    await writeProject(
+      {
+        project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+        questions: [
+          { id: "q_001", question: "Where was Elizabeth born?", status: "resolved" },
+          { id: "q_002", question: long, status: "in_progress" },
+          { id: "q_003", status: "framed" },
+        ],
+      },
+      { persons: [], relationships: [], sources: [] },
+    );
+
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    expect(r.openQuestions.map((q) => q.id)).not.toContain("q_001");
+    const byId = new Map(r.questionStatuses.map((q) => [q.id, q.question]));
+    expect(byId.get("q_001")).toBe("Where was Elizabeth born?");
+    expect(byId.get("q_002")).toBe(`${"W".repeat(139)}…`);
+    expect(byId.get("q_002")).toBe(r.openQuestions.find((q) => q.id === "q_002")?.question);
+    expect(byId.get("q_003")).toBe("");
+  });
 });
 
 const EMPTY_RESEARCH = {
@@ -752,159 +788,5 @@ describe("project_context and project_create links", () => {
     const r = await contextUnder(null, { webPublicUrl: "https://beta.example", uploadsEnabled: true });
     expect("projectUrl" in r).toBe(false);
     expect("uploadUrl" in r).toBe(false);
-  });
-});
-
-describe("project_context: an extraction step the thin-subject gate would refuse (issue #2213 d29)", () => {
-  let dir: string;
-  beforeEach(async () => {
-    dir = await mkdtemp(join(tmpdir(), "project-context-thin-"));
-  });
-  afterEach(async () => {
-    await rm(dir, { recursive: true, force: true });
-  });
-
-  const EXTRACTION = "extraction (extraction_append for FamilySearch records, record-structurer for any other source)";
-
-  /** One question with one in-progress census item whose positive record_search
-   *  listed M9TB-7QX for I1, born `birth`; `payload` adds fields to the sidecar's
-   *  payload and `query` to its echoed query. */
-  async function seed(birth: string, payload: Record<string, unknown>, query: Record<string, unknown> = { subjectId: "I1" }) {
-    await mkdir(join(dir, "results"), { recursive: true });
-    await writeFile(
-      join(dir, "results", "log_001.json"),
-      JSON.stringify({
-        log_id: "log_001",
-        tool: "record_search",
-        retrieved: "2026-10-19T10:00:00Z",
-        returned_count: 1,
-        payload: { query: { surname: "Brown", ...query }, ...payload, results: [{ recordId: "ark:/61903/1:1:M9TB-7QX" }] },
-      }),
-    );
-    await writeFile(
-      join(dir, "research.json"),
-      JSON.stringify({
-        project: { id: "rp_001", objective: "Test", status: "active", created: "2026-10-19", updated: "2026-10-19" },
-        questions: [{ id: "q_001", question: "Where was William Brown in 1900?", status: "in_progress" }],
-        plans: [
-          {
-            id: "pl_001",
-            question_id: "q_001",
-            status: "active",
-            created: "2026-10-19",
-            items: [{ id: "pli_001", sequence: 1, record_type: "census", repository: "FamilySearch", status: "in_progress" }],
-          },
-        ],
-        log: [
-          {
-            id: "log_001",
-            plan_item_id: "pli_001",
-            performed: "2026-10-19T10:00:00Z",
-            tool: "record_search",
-            query: { surname: "Brown" },
-            outcome: "positive",
-            results_examined: 1,
-            results_ref: "results/log_001.json",
-            external_site: null,
-          },
-        ],
-        sources: [],
-        assertions: [],
-      }),
-    );
-    await writeFile(
-      join(dir, "tree.gedcomx.json"),
-      JSON.stringify({
-        persons: [
-          {
-            id: "I1",
-            gender: "Male",
-            names: [{ id: "I1-N1", given: "William", surname: "Brown" }],
-            facts: [{ id: "I1-F1", type: "Birth", date: birth, place: "Virginia" }],
-          },
-        ],
-        relationships: [],
-        sources: [],
-      }),
-    );
-  }
-  const nextStep = async () => {
-    const r: any = await projectContext({ projectPath: dir }, LOCAL);
-    return r.questionStatuses[0].nextStep as string;
-  };
-
-  it("names the researcher's anchor, not extraction, while the searched person is still thin", async () => {
-    await seed("1872", { subjectTooThin: true });
-    const step = await nextStep();
-    expect(step.startsWith("researcher's anchor — I1: log_001")).toBe(true);
-    expect(step).toContain("Do not extract");
-  });
-
-  it("names a new search once the person is anchored, since the saved search still gates its records", async () => {
-    await seed("Mar 1872", { subjectTooThin: true });
-    expect((await nextStep()).startsWith("search-records — I1 is anchored now")).toBe(true);
-  });
-
-  it("judges a search saved before the flag existed on the tree as it stands", async () => {
-    await seed("1872", {});
-    expect((await nextStep()).startsWith("researcher's anchor — I1")).toBe(true);
-    await seed("Mar 1872", {});
-    expect(await nextStep()).toBe(EXTRACTION);
-  });
-
-  it("keeps extraction for a search that saved the person as not thin", async () => {
-    await seed("1872", { subjectTooThin: false });
-    expect(await nextStep()).toBe(EXTRACTION);
-  });
-
-  it("keeps extraction for a search with no subject", async () => {
-    await seed("1872", { subjectTooThin: true }, {});
-    expect(await nextStep()).toBe(EXTRACTION);
-  });
-
-  /** After `seed`: a later nil record_search (log_002) whose sidecar saved
-   *  `later`, with every plan item completed. */
-  async function searchedAgain(later: Record<string, unknown>, dropLog001 = false) {
-    await writeFile(
-      join(dir, "results", "log_002.json"),
-      JSON.stringify({
-        log_id: "log_002",
-        tool: "record_search",
-        retrieved: "2026-10-20T10:00:00Z",
-        returned_count: 0,
-        payload: { query: { surname: "Brown", subjectId: "I1", ...later.query as object }, ...later, results: [] },
-      }),
-    );
-    const r = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
-    r.plans[0].items[0].status = "completed";
-    r.log.push({
-      ...r.log[0],
-      id: "log_002",
-      performed: "2026-10-20T10:00:00Z",
-      outcome: "negative",
-      results_examined: 0,
-      results_ref: "results/log_002.json",
-    });
-    if (dropLog001) r.log = r.log.filter((e: any) => e.id !== "log_001");
-    await writeFile(join(dir, "research.json"), JSON.stringify(r));
-  }
-
-  it("lets the question move on once a later search has saved the person as not thin", async () => {
-    await seed("Mar 1872", { subjectTooThin: true });
-    await searchedAgain({ subjectTooThin: false });
-    const step = await nextStep();
-    expect(step.startsWith("search-records — I1 is anchored now")).toBe(false);
-    await seed("Mar 1872", { subjectTooThin: true });
-    await searchedAgain({ subjectTooThin: false }, true);
-    expect(step).toBe(await nextStep());
-  });
-
-  it.each([
-    ["the later search still saved the person as thin", { subjectTooThin: true }],
-    ["the later search was for another person", { subjectTooThin: false, query: { subjectId: "I2" } }],
-  ])("still names a new search when %s", async (_label, later) => {
-    await seed("Mar 1872", { subjectTooThin: true });
-    await searchedAgain(later);
-    expect((await nextStep()).startsWith("search-records — I1 is anchored now")).toBe(true);
   });
 });

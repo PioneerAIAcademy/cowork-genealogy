@@ -1,0 +1,37 @@
+{
+  "test": {
+    "id": "ut_search_records_ugo",
+    "skill": "search-records",
+    "name": "Thin subject: a near-zero 1942 marriage hit is a candidate, and its family is not reported as Ugo Stella's",
+    "type": "positive",
+    "description": "The Ugo Stella alpha-feedback case (issue #2213 d29). I1 is a name and nothing else, so record_search's ranked carries subjectTooThin: true and subjectTooThinNote, and every matchScore is near zero (top 0.023). The top hit is a 1942 Milan marriage naming an Ugo Stella as the bride's father. In the session, the agent reported the bride's mother as his wife and the bride as his daughter. The reply must present the record as a candidate, report no wife or child as his, and name what would settle identity and the record likely to state it.",
+    "tags": [
+      "search",
+      "civil-registration",
+      "namesake",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Run the Milan civil-records search for Ugo Stella for plan item pli_001.\n\nplanItemId: pli_001\nprojectPath: <workspace>",
+    "scenario": "search-records-ugo-stella-thin-subject"
+  },
+  "mcp_fixtures": [
+    "record-search-ugo-stella-milan-thin-subject",
+    "rank-search-matches-ugo-stella-milan-thin-subject",
+    "record-read-ugo-stella-1942-6x2k-ugo1",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "CORE: `ranked.subjectTooThin` is true on the search response and `ranked.subjectTooThinNote` says what to do: I1 is a name and nothing else, so nothing separates this Ugo Stella from any other. Every matchScore is near zero. The 1942 marriage must be presented as a candidate (needs-review, a possible namesake), not as the subject's record. Extraction is not graded: it records what the record says and claims no identity.",
+    "Score Result triage 1 if the reply presents the record as the subject's, or reports Giuseppa Bilancioni as his wife, Mafalda as his daughter, or any other person in the record as his relative, or states where he was or was not born from it. Naming those people as what the record says about its own Ugo Stella is correct.",
+    "Score Completeness 3 when the record is reported as a candidate, the search is logged, and the reply names what would settle identity (a precise date, or a named spouse, parent or child) and the record most likely to state it, such as the 1910 A.L.F.A. founding deed or the notice of his Cavaliere appointment. Wording is free.",
+    "Do NOT grade whether the search was the right first search, or the query's place and name variants beyond Tool Arguments."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600,
+    "max_turns": 35
+  }
+}

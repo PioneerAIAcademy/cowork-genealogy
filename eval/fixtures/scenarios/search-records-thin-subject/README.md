@@ -22,7 +22,7 @@ tree rather than contradicting it.
 
 The 1900 search returns one William Brown who agrees with everything the tree holds and
 ranks high. Because the subject is too thin, that agreement cannot separate him from a
-namesake: the hit is presented as needs-review and is not handed to extraction, even
-though the user's message pre-authorizes extraction.
+namesake: the hit is presented as needs-review and its family is not reported as the
+subject's. Extraction is not graded.
 
 Hand-authored; no real person.

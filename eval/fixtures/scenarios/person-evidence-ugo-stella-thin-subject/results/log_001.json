@@ -1,0 +1,149 @@
+{
+  "log_id": "log_001",
+  "tool": "record_search",
+  "retrieved": "2026-09-22T15:00:00Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "surname": "Stella",
+      "givenName": "Ugo",
+      "residencePlace": "Milano, Lombardia, Italy"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "subjectTooThin": true,
+    "results": [
+      {
+        "personId": "6X2K-UGO1",
+        "recordId": "6X2K-UGO1",
+        "personName": "Ugo Stella",
+        "score": 0.41,
+        "sex": "Male",
+        "birthDate": null,
+        "birthPlace": null,
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "1942",
+            "place": "Milano, Milano, Lombardia, Italy"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:6X2K-UGO1",
+        "collectionId": "9990001",
+        "collectionTitle": "Italy, Milano, Milano, Civil Registration (State Archive), 1866-1942",
+        "recordTitle": "Ugo Stella in entry for Carlo Ferrari and Mafalda Stella, 1942",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Ugo",
+                  "surname": "Stella",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Giuseppa",
+                  "surname": "Bilancioni",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": []
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Mafalda",
+                  "surname": "Stella",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F31",
+                  "type": "Birth",
+                  "date": "1908",
+                  "place": "Sassoferrato, Ancona, Marche, Italy"
+                },
+                {
+                  "id": "F32",
+                  "type": "Marriage",
+                  "date": "1942",
+                  "place": "Milano, Milano, Lombardia, Italy"
+                }
+              ]
+            },
+            {
+              "id": "P4",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N4",
+                  "preferred": true,
+                  "given": "Carlo",
+                  "surname": "Ferrari",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F41",
+                  "type": "Marriage",
+                  "date": "1942",
+                  "place": "Milano, Milano, Lombardia, Italy"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "Couple",
+              "person1": "P1",
+              "person2": "P2"
+            },
+            {
+              "id": "PC1",
+              "type": "ParentChild",
+              "parent": "P1",
+              "child": "P3"
+            },
+            {
+              "id": "PC2",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P3"
+            },
+            {
+              "id": "CR2",
+              "type": "Couple",
+              "person1": "P3",
+              "person2": "P4"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

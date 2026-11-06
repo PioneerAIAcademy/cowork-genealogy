@@ -32,7 +32,8 @@ import {
   DEFAULT_WIKI_API_URL,
   OPENROUTER_API_KEY_MISSING_MESSAGE,
 } from "../../src/auth/config.js";
-import { bearerPrincipal, LOCAL } from "../../src/auth/principal.js";
+import { bearerPrincipal, LOCAL, connectorPrincipal
+} from "../../src/auth/principal.js";
 import { logoutTool } from "../../src/tools/logout.js";
 import { authStatusTool } from "../../src/tools/auth-status.js";
 import { loginTool } from "../../src/tools/login.js";
@@ -108,5 +109,48 @@ describe("local principal", () => {
     // that the local principal DID go to disk where the bearer never does.
     await expect(getValidToken(LOCAL)).rejects.toThrow(/not logged in/);
     expect(await loadConfig(LOCAL)).toEqual({});
+  });
+});
+
+
+// ── surface: which front door (self-hosted beta E1, issue #3984) ────────────
+
+describe("surface", () => {
+  it("bearerPrincipal is the WORKER door", () => {
+    const p = bearerPrincipal("tok");
+    expect(p.kind).toBe("bearer");
+    if (p.kind !== "bearer") return;
+    expect(p.surface).toBe("worker");
+    // The worker path knows a stamped bearer, never which user it belongs to.
+    expect(p.userId).toBeUndefined();
+  });
+
+  it("connectorPrincipal carries the user id and the DECRYPTED FamilySearch token", () => {
+    const p = connectorPrincipal({ accessToken: "fs-access-token", userId: "u_1" });
+    expect(p.kind).toBe("bearer");
+    if (p.kind !== "bearer") return;
+    expect(p.surface).toBe("connector");
+    expect(p.userId).toBe("u_1");
+    // NOT the connector token: that authenticates the caller to us and means
+    // nothing to FamilySearch. getValidToken reads this field for the bearer
+    // kind, so putting the wrong one here sends it upstream.
+    expect(p.accessToken).toBe("fs-access-token");
+    expect(p.config.hosted).toBe(true);
+  });
+
+  it("a connector principal is the BEARER kind, so the no-refresh rule binds it", async () => {
+    // Was an assertion that could not fail for its stated reason: it checked
+    // only `kind === "bearer"` under a name about ~/.familysearch-mcp.
+    // What actually binds is the kind, because every file-touching path in
+    // this module branches on `kind === "local"` — so pin the whole shape.
+    const p = connectorPrincipal({ accessToken: "t", userId: "u_1" });
+    expect(p.kind).toBe("bearer");
+    if (p.kind !== "bearer") return;
+    expect(p.surface).toBe("connector");
+    // `hosted` is what makes the auth errors point at the web app rather than
+    // the desktop `login` tool.
+    expect(p.config.hosted).toBe(true);
+    // No overlay field exists on a bearer: that is the local kind's.
+    expect("overlay" in p).toBe(false);
   });
 });

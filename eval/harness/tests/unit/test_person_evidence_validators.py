@@ -46,6 +46,7 @@ from test_person_evidence import (  # noqa: E402
     test_unexplained_move_not_confident as check_unexplained,
     test_corridor_move_links_confident as check_corridor_link,
     test_identity_links_follow_their_persona as check_identity,
+    test_thin_subject_namesake_not_linked as check_thin,
 )
 
 
@@ -1661,3 +1662,49 @@ def test_identity_matches_a_record_id_across_its_spellings():
 def test_identity_stands_down_without_research_json():
     with pytest.raises(pytest.skip.Exception):
         check_identity(_state(None), _state(None), [])
+
+
+# --- test_thin_subject_namesake_not_linked ------------------------------
+
+_THIN_TAG = {"tags": ["thin-subject-namesake"]}
+_UGO_TREE = {"persons": [{"id": "I1", "names": [{"given": "Ugo", "surname": "Stella"}], "facts": []}]}
+_UGO_BEFORE = {"person_evidence": []}
+
+
+def _ugo_pe(confidence):
+    return {"person_evidence": [
+        {"id": "pe_001", "assertion_id": "a_001", "person_id": "I1", "confidence": confidence, "match_score": 0.02},
+    ]}
+
+
+@pytest.mark.parametrize("confidence", ["probable", "confident"])
+def test_thin_fires_on_a_strong_link(confidence):
+    with pytest.raises(AssertionError, match="probable or confident"):
+        check_thin(_state(_UGO_BEFORE, _UGO_TREE), _state(_ugo_pe(confidence), _UGO_TREE), _THIN_TAG)
+
+
+def test_thin_fires_on_a_fact_added_to_the_tree():
+    grown = {"persons": [{"id": "I1", "facts": [{"id": "F1", "type": "Birth", "date": "1908"}]}]}
+    with pytest.raises(AssertionError, match="no fact may be added"):
+        check_thin(_state(_UGO_BEFORE, _UGO_TREE), _state(_UGO_BEFORE, grown), _THIN_TAG)
+
+
+def test_thin_fires_on_an_id_less_fact():
+    grown = {"persons": [{"id": "I1", "facts": [{"type": "Marriage", "date": "1942"}]}]}
+    with pytest.raises(AssertionError, match="no fact may be added"):
+        check_thin(_state(_UGO_BEFORE, _UGO_TREE), _state(_UGO_BEFORE, grown), _THIN_TAG)
+
+
+@pytest.mark.parametrize("after", [_UGO_BEFORE, _ugo_pe("speculative")])
+def test_thin_passes_with_no_link_or_a_weak_one(after):
+    check_thin(_state(_UGO_BEFORE, _UGO_TREE), _state(after, _UGO_TREE), _THIN_TAG)
+
+
+def test_thin_passes_a_strong_link_that_was_already_there():
+    seeded = _ugo_pe("confident")
+    check_thin(_state(seeded, _UGO_TREE), _state(seeded, _UGO_TREE), _THIN_TAG)
+
+
+def test_thin_stands_down_without_its_tag():
+    with pytest.raises(pytest.skip.Exception):
+        check_thin(_state(_UGO_BEFORE, _UGO_TREE), _state(_ugo_pe("confident"), _UGO_TREE), {"tags": []})

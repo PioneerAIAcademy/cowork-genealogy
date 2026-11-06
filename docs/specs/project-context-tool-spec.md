@@ -65,12 +65,12 @@ repo's identifier-casing rule):
     id: string,                          // q_*
     question: string,                    // truncated to ≤140 chars (139 + "…")
   }],
-  resolvedQuestions: [{                  // same shape, resolved questions only
-    id: string,
-    question: string,
-  }],
   questionStatuses: [{                   // ADVISORY — see below. One per question,
     id: string,                          //   including resolved ones.
+    question: string,                    // truncated as in openQuestions; "" when absent.
+                                         //   The one place a resolved question's
+                                         //   text appears, so the objective can be
+                                         //   read against every question.
     state: "framed" | "planned" | "searching"
          | "evidence-gathered" | "concluded" | "critiqued",
     nextStep: string | null,             // null = nothing outstanding
@@ -118,6 +118,7 @@ repo's identifier-casing rule):
     imagesRead: number,                  // distinct images counted, >= 20
     planItemIds: string[],               // open plan items with an image_search log entry on it
   }],
+  claimKinds: string[],                  // proof_summaries claim kinds this engine accepts: relationship, fact, identity, name, finding
   externalCollections?: {                // stored curated collections, counts only — §2.4
     [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
   },
@@ -147,12 +148,6 @@ Projection rules:
   not `resolved` (i.e. `open`, `in_progress`, `exhaustive_declared`), in
   array order. `question` text over 140 characters is truncated to 139 + a
   `…` (the id is the handle; the text is a reminder, not the record).
-- **`resolvedQuestions`** — the `resolved` entries, the same shape and
-  truncation. Before the project completes, the router checks each fact the
-  objective asks for against these: a fact no resolved question's own text
-  asks is uncovered, whatever the tree holds. `questionStatuses` carries no
-  question text, so without this list that check needed a second read, and a
-  router that skipped it took facts already in the tree as covered.
 - **`persons`** — every `tree.persons[]` entry, in array order. `name` is
   the `preferred: true` names entry (first names entry when none is
   flagged), rendered `given surname` (whichever parts exist; `null` when the
@@ -275,17 +270,6 @@ would find it again. An uncited entry on a closed item does not: inconclusive
 the read, not the search that found the record. An item waiting only on the
 researcher's upload is skipped, as it is everywhere else in this ladder.
 
-**An extraction the thin-subject gate would refuse names the way through instead.**
-When `nextStep` would be `extraction (…)` and every pending entry the
-question owns is a `record_search` whose sidecar names a `subjectId` and lists only records
-`extraction_append`'s thin-subject scan refuses (the same function, so the two cannot
-disagree), `nextStep` reads `researcher's anchor — <subject>: <log ids> …` while the searched
-person is still thin, and `search-records — <subject> is anchored now …` once they are not:
-the saved search keeps gating what it listed, so only a new search gets a record through. Once a later search for the same person has saved them as not thin, the earlier search no longer holds the step. One
-pending entry of any other kind, a record the scan would let through, or a sidecar with no
-subject keeps the extraction step. Without this rung the router is sent, on every pass, to
-extract records `extraction_append` refuses.
-
 **The researcher's choice is the one rung that names no step** (step mode,
 section B). When a question's search stopped on `resources_spent`, it has no
 proof summary, no `planned` or `in_progress` item is left on its active plan,
@@ -336,8 +320,17 @@ Any other repository reports `search-external-sites — <item id> (<repository>)
 the routing table's own split for that row. With no such item left, the question
 reports `research-exhaustiveness`.
 
-A question at `evidence-gathered` reports `research-exhaustiveness` whatever its
-log holds. An uncited entry does not move it back to extraction: agents log an
+A question at `evidence-gathered` reports `research-exhaustiveness` only when no
+item on its active plan is `planned`. With planned items it reports
+`<search lane> — next item <id>, or research-plan — dispose of <ids> if the
+evidence already answers the question` (the external lane keeps its own form,
+`search-external-sites — <id> (<repo>)`, and an `fs_hints` item reads
+`search-hints — <id>`): the search is offered first so a still-needed item is not
+skipped by default. `in_progress` items, and a planned item waiting only on the
+researcher's upload, do not change it. Over the
+corpus on 2026-11-02 (every scenario, unit-test state and e2e final state, 484
+question entries) this moves 13 entries off `research-exhaustiveness`: 3 scenarios
+and 10 e2e final states. An uncited entry does not move it back to extraction: agents log an
 inconclusive search as `partial` and a link list as `positive`, and those entries
 stay uncited. Over the corpus on 2026-10-16 (every scenario plus every e2e final
 state, 421 question entries), holding the question on extraction would have moved
