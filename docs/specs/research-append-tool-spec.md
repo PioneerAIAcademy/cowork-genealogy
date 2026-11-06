@@ -2133,7 +2133,12 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
 | An edit to a field the same op also sets in `fields` (§3.9) | op-indexed hard error ``` edits[<j>]: `<field>` is also set in `fields`; pass it one way, not both. ```; write nothing |
 | An edit to a field the summary holds no text for (§3.9) | op-indexed hard error ``` edits[<j>]: <entryId> has no `<field>` text to edit. ```; write nothing |
 | An edit whose `old` occurs other than once in the field's text (§3.9) | op-indexed hard error ``` edits[<j>]: `old` occurs <N> times in <entryId>'s `<field>`; it must occur exactly once. ``` followed by `Copy it character for character from the field's current text.` when N is 0, or `Include more of the surrounding text so it matches one place.` when N is more than one; write nothing |
-| A `proof_summaries` `claims[]` entry that is not a ParentChild relationship: `relationship` absent, null, of another type, or not an object | document-level error naming the claim. An absent, null or other-typed `relationship` keeps its opening words and adds why: `claims[]` holds ParentChild relationship claims only, fact claims are not supported yet, keep the ParentChild claims in `claims[]`, and `tier` must equal the strongest `proof_tier` among the claims that remain (the existing rule, never the weakest). A `relationship` that is not an object, `""`, `false` and `0` included, is refused as `must be an object — got <type>`; write nothing |
+| A `proof_summaries` `claims[]` entry that names no object or two (of `relationship`, `fact`, `identity`, `name`, `finding`), a relationship of a type other than `ParentChild` or `Couple` or with the other type's ends, a cited assertion or finding log entry that does not exist, a `denied` claim at a tier other than `probable` or `possible`, or a `polarity` on a `disproved` claim | document-level error naming the claim. A claim with no object is told the five kinds; one whose label names a parent relationship is told to add `relationship: { type: "ParentChild", … }` and not to drop it. A claim object that is not an object, `""`, `false` and `0` included, is refused as `must be an object — got <type>`; write nothing |
+| A `proof_summaries` scalar `tier` at `possible` or better that exceeds the strongest `claims[].proof_tier` | document-level error `tier '<tier>' exceeds the strongest of claims[].proof_tier ('<strongest>')`; write nothing |
+| A `proof_summaries` claim at `proved` or `disproved` whose question was not declared exhaustive before the call, written by an append or an update that sets `tier` or `claims`; skipped when the scalar's own conclusive floor already refuses | op-indexed hard error `claim '<label>' at '<tier>' is a conclusive answer, so question '<q>' must already have its stop gate satisfied …`; write nothing |
+| A `proof_summaries` update that changes `tier` on a summary holding claims without passing `claims` in the same op | op-indexed hard error `proof_summaries <id>: tier changes from '<old>' to '<new>' but claims[] is not in this op …`; write nothing |
+| A `proof_summaries` claim above `not_proved` (not `disproved`) citing an assertion whose source an unresolved conflict disputes | op-indexed hard error, the scalar conflict gate's message prefixed `claim '<label>': ` and ending `For this claim, lower its own proof_tier to not_proved; the summary's tier alone does not settle it.`; write nothing |
+| A `proof_summaries` append, or an update setting `tier` or `claims`, where an affirmed claim above `not_proved` cites no assertion linked to a person, or the strongest affirmed tier among the scalar and its claims meets the unlinked-parent or competing-parent-sets refusal | op-indexed hard error, that gate's message (prefixed `claim '<label>': ` for a claim's own unlinked proof); write nothing. A `denied` claim raises none of these |
 | A `proof_summaries` entry whose `narrative_markdown` is present but not a string (a number, a boolean, a list or an object) | document-level error `'narrative_markdown' must be a string, got <type> <the value as JSON, cut to 60 characters>`. The value is in the message because the call-introduced diff keys an error on its path plus its message: an update that replaces a legacy non-string with a different one of the same type is a new error and is refused, while one that leaves it alone rides as a pre-existing warning, so a legacy document is not frozen. `null` keeps its own required-field refusal and the empty string is a string; the length advisory of §5.7 stays silent on a narrative that is not text; write nothing |
 | `section: questions`, `op: append` while another question is `open`, `in_progress` or `exhaustive_declared` without both halves of the exemption (§5) | op-indexed hard error on that `questions` op; write nothing. Opens `a new question cannot be opened while another is still open: <q_id> (<status>, <pli_ids> still to do)` — or `(<status>, no proof summary)` when nothing is outstanding — and then prescribes reporting the open question and offering to wrap it up, naming the proof-summary-plus-nothing-outstanding exemption and saying a `resources_spent` stop is not one |
 | `section: questions`, `op: append` with `selection_basis: "fan_pivot"` whose `unblocks` names no question that is `open`, `in_progress` or `exhaustive_declared` in the pre-call snapshot | op-indexed hard error on that op; write nothing. Says a `fan_pivot` question must name in `unblocks` the open question whose direct evidence ran out, and lists the open ids (or says none is open). Every committed e2e `fan_pivot` append with empty `unblocks` (3 of 4, measured 2026-10-28) depended on an open `q_001` it would have advanced |
@@ -3070,6 +3075,10 @@ would claim an examination that did not happen. A researcher who then reads the
 page image has examined the original and may upgrade it — a later, evidenced
 edit, not this tool's guess.
 
+**`image_ark`.** A record that names its page gets that page's ARK on its source,
+as `record_read` gives it. It is what joins the source to a read of the page
+(§11.9). A record with no page gets no `image_ark`.
+
 #### Return
 
 `extraction`: the record type, `censusStatesRelationships` for a census, the
@@ -3500,6 +3509,21 @@ there is no `same_person` gate. Checking the attachments is a separate request.
   No record group is read twice: LL4N-82C's 22 attached records are 15
   extractions. Its `ambiguous: 2` is one tree person claiming two personas of
   one record, so neither is linked. 46 of 186 e2e subjects have at least one attached indexed record.
+
+### 11.9 Attaching waiting pages — a read page onto its record's source
+
+`extraction_append({ projectPath, attachWaitingPages: true })`, sent alone, for what
+`project_context` lists in `waitingPages`. It takes no refs, so a caller cannot name
+the wrong page: code joins each source's `image_ark` to a logged or staged
+`image_transcribe` read and sets `transcription` and `image_filename` on the existing
+source. A page
+showing two held records fills both.
+
+It writes no assertion and no log entry, and does not consume the page's file, so a
+record extracted later still finds the page, the same day for a staged one. Facts on the page stay as
+text. One write per page, so a refusal leaves the others kept. `ok` is false only
+when something waited and nothing was kept. The result carries `attached`, a
+`summary` naming each record, and `records: []`.
 
 ## 12. `evaluation_append` — the second lane-scoped variant
 
