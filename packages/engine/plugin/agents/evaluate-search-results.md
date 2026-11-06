@@ -14,8 +14,8 @@ description: >-
   search-full-text), to judge indexed record_search results (use
   search-records), or to decide which tree person an extracted record names
   (use person-evidence).
-model: claude-sonnet-4-6
-effort: high
+model: claude-haiku-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
