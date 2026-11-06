@@ -309,7 +309,11 @@ which GedcomX person(s) it might be:
 - Name match (exact, phonetic variant, abbreviation)
 - Age/birth year compatibility (±5 years)
 - Location compatibility: the record's place against the tree person's own
-  Residence facts, never against the other records being linked
+  Residence facts, never against the other records being linked. An
+  arrival (immigration) dated after a residence the tree already attests in
+  that country is compatible: it is a return trip. A passenger or
+  immigration record never says the arrival was the first. Never rule a candidate
+  out, or score it down, because they arrive after they already lived there.
 - Gender match
 - Relationship fit (is this persona in the right position relative
   to known family members?)
@@ -360,8 +364,8 @@ A page that does not exist, or a fetch that fails, is recorded in the
 rationale as not retrieved. Never substitute a remembered rule or another
 place's page for it.
 
-Every `pe_` rationale opens with two check lines, and an arrival's or a
-naturalization's with three, written before you choose the tier:
+Every `pe_` rationale opens with two check lines, and the link of an arrival
+or naturalization assertion with three, written before you choose the tier:
 
 - "Date check: [the record's birth, christening or age-derived year] vs
   [the tree person's birth year]: gap [N] years." Compare only the party this
@@ -382,10 +386,17 @@ naturalization's with three, written before you choose the tier:
   caps the link at `probable`.
 - "Naturalization check: arrival [date] to naturalization [date]: [interval]
   vs [required] years: met / short, [the project record that explains it, or
-  nothing]." Written on the arrival's and the naturalization's links, a stub's
-  included, when the records being linked or already on the person give both,
-  whatever the tier. A line ending "short, nothing" caps both links at
-  `probable`.
+  nothing]." Written on exactly two links: the immigration/arrival
+  assertion's and the naturalization assertion's (never on a name, age,
+  sex, birth or residence assertion of those records), a stub's included,
+  whenever the records in this run or already on the person give both
+  dates, whatever the tier. A line ending "short, nothing" caps both links
+  at `probable`. When a project record shows U.S. residence before the
+  arrival (check the Residence check line you just wrote: a U.S. residence
+  dated before the arrival is that record), the arrival is a return trip:
+  write "met, [that record]" and
+  link the arrival as you would any other fact. An earlier residence never
+  contradicts a later arrival and is never a reason to stub or withhold it.
 
 **Assess match strength.** Weigh the data points above by reasoning
 directly — correlation analysis is the spine of every identity
@@ -517,7 +528,8 @@ naturalization (U.S. from 1802: five years; arriving as a minor does not
 shorten it). A record in the project explains a shortfall when it shows
 earlier U.S. residence (the arrival was a return trip), an honorable U.S. Army
 discharge (one year, from 1862), or a father naturalized while the person was
-a minor. A shortfall is never "consistent"; other facts of those records keep
+a minor. An arrival after U.S. residence a project record attests is a return
+trip, never a contradiction. A shortfall is never "consistent"; other facts of those records keep
 their ordinary tiers, and it is not a `core_identifier_conflict`.
 
 **Occupation and age norms weigh; they never cap.** Where trades were
@@ -737,7 +749,10 @@ not silently ignore this field.
 ### 5. Handle new persons (stub creation)
 
 A persona's own facts go to one person: link them to a tree person or mint a
-person for them, never both.
+person for them, never both. A `speculative` link is still the link: never
+also mint a person for that persona. Never mint a person for an arrival because the
+tree person already lived in that country before it: that arrival is a
+return trip, and it is linked like any other fact on its score.
 
 When an assertion's persona doesn't match any existing GedcomX person,
 **materialize the persona onto a new person** via `materialize_facts`'s
@@ -1046,6 +1061,13 @@ When multiple candidates share the same name in the same area:
    or **hypothesis-tracking**
 
 ## Edge cases and decision rules
+
+- **Arrival after attested residence:** The tree has a Boston residence for
+  a man in 1880 and a passenger list shows him landing at New York in 1883.
+  He had gone back to visit, and the 1883 landing is a return. Link it on its
+  score like any other record, and count naturalization residence from 1880,
+  not 1883. Do not call it a "first arrival", an impossibility or a
+  contradiction, and do not mint a person for it on that ground.
 
 - **Uncertain dates (no birth year):** Widen the age-compatibility
   window. Use occupational and life-stage cues instead (e.g., "listed

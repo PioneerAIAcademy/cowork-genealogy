@@ -1993,3 +1993,162 @@ def test_exception_does_not_read_a_tool_score_as_a_return_trip():
             "a_014",
             "Arrived 2 Jun 1871, naturalized 13 Aug 1875, short of five years; same_person returned 0.006.",
         )), _EXCEPTION_TAGS)
+
+
+# --- The check line's verdict, and the return-trip counterpart (review of PR #4289) ---
+
+# r8t run of record (v9_2026-11-05_13-10-08): the stubbed arrival's rationale
+# sets the 1869 directory against the 1871 arrival as an impossibility.
+_R8T_INVERTED = (
+    "This persona was not linked to tree person I1 because: (1) the same_person score for this "
+    "record against I1 was 0.006 (near-zero, extremely weak); and (2) the 1869 San Francisco "
+    "directory is already linked to I1 at probable (pe_001), placing I1 in San Francisco two "
+    "years before this passenger's June 1871 arrival in New York \u2014 a biographical "
+    "impossibility for the same individual. The connection between this passenger (born "
+    "Prussia ~1854, arrived NY 1871) and the 1875 SF Great Register registrant (born Germany "
+    "~1854) cannot be concluded without resolving that timeline conflict."
+)
+# Every I1 rationale in the return-trip scenario carries this Residence check line.
+_RES_1869 = (
+    "Residence check: 5 Cook Street, San Francisco, 1875 vs 5 Cook Street, San Francisco, "
+    "1869 (pe_001): same address. "
+)
+_NAT = "Naturalization check: arrival 2 Jun 1871 to naturalization 13 Aug 1875: 4 years 2 months vs required 5 years: "
+
+
+@pytest.mark.parametrize("verdict", [
+    "met.",
+    "met, counting residence from 1869 (src_003).",
+])
+def test_shortfall_fails_a_check_line_that_reports_met(verdict):
+    with pytest.raises(AssertionError, match="states the residence shortfall"):
+        check_shortfall(_interval_state(_interval_pe("a_007", _NAT + verdict)), _SHORTFALL_TAGS)
+
+
+@pytest.mark.parametrize("line", [
+    "Naturalization check: arrival 2 Jun 1871 to naturalization 13 Aug 1875: about 4 years 2 months vs 5 years: met.",
+    "Naturalization check: arrival 2 Jun 1871 to naturalization 13 Aug 1875: met / short, nothing.",
+])
+def test_shortfall_fails_other_met_shapes(line):
+    with pytest.raises(AssertionError):
+        check_shortfall(_interval_state(_interval_pe("a_007", line)), _SHORTFALL_TAGS)
+
+
+def test_shortfall_passes_a_check_line_that_reports_short():
+    check_shortfall(_interval_state(_interval_pe(
+        "a_007", _NAT + "short ~10 months, nothing in the project explains it.",
+    )), _SHORTFALL_TAGS)
+
+
+def test_exception_fails_the_r8t_inversion_on_the_stub():
+    with pytest.raises(AssertionError, match="not a contradiction"):
+        check_exception(_interval_state(
+            _interval_pe("a_010", _R8T_INVERTED, person_id="I5"),
+        ), _EXCEPTION_TAGS)
+
+
+# An unexplained shortfall, the check line leaving the slot empty while the
+# Residence check line beside it names the 1869 directory.
+@pytest.mark.parametrize("slot", [
+    "short, nothing.",
+    "short ~10 months, nothing in the project explains it.",
+    "short, nothing, so capped at probable.",
+    "short, unexplained.",
+    "short by 10 months; the arrival is too late.",
+    "short ~10 months, not explained by the 1869 directory (src_003).",
+    "short ~10 months, nothing in the project explains it. The 10-month shortfall caps this link "
+    "at probable; the 1869 directory (pe_001) gives residence but no arrival.",
+    "short, nothing; no return trip is recorded.",
+])
+def test_exception_fails_an_unexplained_check_line(slot):
+    with pytest.raises(AssertionError, match="leave it unexplained"):
+        check_exception(_interval_state(_interval_pe("a_007", _RES_1869 + _NAT + slot)), _EXCEPTION_TAGS)
+
+
+# The 1869 residence and the 1871 arrival treated as mutually exclusive.
+@pytest.mark.parametrize("assertion_id, rationale, conflict", [
+    ("a_014", "Score 0.006.", "1869 San Francisco residence contradicts a first arrival at New York in June 1871"),
+    ("a_010", "The 1869 directory puts him in San Francisco before the 2 Jun 1871 New York arrival; "
+              "one man cannot be in both places.", None),
+    ("a_010", "Because the 1869 directory places I1 in San Francisco before the June 1871 arrival, "
+              "these are different men.", None),
+    ("a_010", "Already resident in San Francisco by 1869, so the June 1871 arrival is a "
+              "biographical impossibility for I1.", None),
+    ("a_010", "Not linked: the 1869 directory (pe_001) already places I1 in San Francisco. A first "
+              "arrival at New York in June 1871 is therefore impossible for him.", None),
+    ("a_010", "The San Francisco directory (src_003) places I1 there two years before this June "
+              "1871 arrival, which cannot be reconciled.", None),
+    ("a_010", "The 1869 directory places him in San Francisco before the June 1871 New York arrival, "
+              "which is inconsistent with this passenger being I1.", None),
+    ("a_010", "The 1869 directory and the June 1871 arrival are a timeline conflict; there is no "
+              "record of a return trip.", None),
+    ("a_010", "The 1871 arrival is not a return trip; the 1869 directory man cannot be the same man "
+              "as the June 1871 passenger.", None),
+    ("a_007", "Naturalization check: no arrival on I1; the 2 Jun 1871 arrival (src_002) is on stub "
+              "I5 because the 1869 directory makes a first arrival in 1871 impossible for I1.", None),
+])
+def test_exception_fails_an_inversion(assertion_id, rationale, conflict):
+    with pytest.raises(AssertionError, match="not a contradiction"):
+        check_exception(_interval_state(_interval_pe(
+            assertion_id, rationale, person_id="I5" if assertion_id == "a_010" else "I1",
+            confidence="speculative" if conflict else "probable", conflict=conflict,
+        )), _EXCEPTION_TAGS)
+
+
+# Correct reasoning: an explained shortfall, the five years met from 1869, a
+# stated return trip, or a stub on the weak score alone.
+@pytest.mark.parametrize("assertion_id, rationale", [
+    ("a_007", _RES_1869 + _NAT + "short, src_003."),
+    ("a_007", _RES_1869 + _NAT + "short ~10 months, src_003 (1869 directory) explains it."),
+    ("a_007", _RES_1869 + _NAT + "short by ~10 months (4.2 vs 5.0), explained by src_003."),
+    ("a_007", _RES_1869 + _NAT + "short (src_003 explains it)."),
+    ("a_007", _RES_1869 + _NAT + "short; already resident from 1869 (src_003)."),
+    ("a_007", _RES_1869 + _NAT + "short ~10 months, explained by earlier U.S. residence (pe_001)."),
+    ("a_014", _RES_1869 + _NAT + "short ~10 months. Earlier U.S. residence from 1869 (src_003) explains it."),
+    ("a_014", _RES_1869 + _NAT + "short. The 1869 directory shows he was already resident, so the "
+              "1871 arrival is a return trip."),
+    ("a_007", _RES_1869 + _NAT + "met, counting residence from 1869 (src_003)."),
+    ("a_010", "The 1869 directory shows residence before the June 1871 arrival, so the arrival is a "
+              "return trip, not a contradiction."),
+    ("a_010", "The apparent timeline conflict between the 1869 directory and the June 1871 arrival "
+              "is resolved: the arrival was a return voyage."),
+    ("a_010", "There is no contradiction between the 1869 directory and the 1871 arrival."),
+    ("a_010", "Nothing in the project contradicts the 1869 residence or the June 1871 arrival."),
+    ("a_010", "The 1869 directory and the June 1871 arrival are not, on their face, a contradiction."),
+    ("a_010", "The 1869 directory and the June 1871 arrival seem to contradict each other, but he "
+              "came back in 1871."),
+    ("a_010", "Score 0.006: the June 1871 passenger and the 1869 directory man may be different men "
+              "or one; the index alone cannot say."),
+    ("a_010", "Score 0.006 against I1, too weak to link; the 1871 arrival goes on stub I5."),
+])
+def test_exception_passes_correct_reasoning(assertion_id, rationale):
+    check_exception(_interval_state(_interval_pe(assertion_id, rationale)), _EXCEPTION_TAGS)
+
+
+def test_exception_passes_a_return_trip_after_but():
+    check_exception(_interval_state(_interval_pe(
+        "a_010", "The 1869 directory and the 1871 arrival are not a contradiction but a return trip.",
+    )), _EXCEPTION_TAGS)
+
+
+def test_shortfall_fails_free_text_that_reports_the_requirement_met():
+    with pytest.raises(AssertionError, match="states the residence shortfall"):
+        check_shortfall(_interval_state(_interval_pe(
+            "a_007", "Arrived 2 Jun 1871, naturalized 13 Aug 1875: 4 years 2 months vs required 5 years, "
+                     "requirement met.",
+        )), _SHORTFALL_TAGS)
+
+
+# Scratch run 2026-11-05_19-05-41: two r8t runs stubbed the arrival on the 1869
+# residence in phrasings the first tripwire missed.
+@pytest.mark.parametrize("rationale", [
+    "Arrival New York 2 Jun 1871. A person in San Francisco in 1869 cannot have first arrived in "
+    "New York as a new immigrant in June 1871, so this persona goes on stub I5.",
+    "Arrival New York 2 Jun 1871 is the core immigration event for I5. This arrival cannot be "
+    "I1's because I1 has an attested San Francisco residence in 1869, two years earlier.",
+])
+def test_exception_fails_the_scratch_run_inversions(rationale):
+    with pytest.raises(AssertionError, match="not a contradiction"):
+        check_exception(_interval_state(
+            _interval_pe("a_014", rationale, person_id="I5"),
+        ), _EXCEPTION_TAGS)

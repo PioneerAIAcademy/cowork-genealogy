@@ -1516,25 +1516,149 @@ _SHORTFALL = re.compile(
 # shortfall", "no residence shortfall", "does not fall short".
 _NEGATED = re.compile(r"\b(?:no|not|without|never|nor)\b(?:\s+\S+){0,2}\s*$", re.IGNORECASE)
 _CLAUSE_BREAK = re.compile(r"[,.;:!?\n]")
-_RETURN_TRIP = re.compile(
-    r"\breturn (?:trip|voyage|journey|visit)\b|\b(?:is|was) a return\b|\breturned (?:to|from)\b"
-    r"|\bre-?entry\b|\b1869\b|directory|earlier (?:U\.?S\.? )?residence"
-    r"|already (?:resident|living)\b|resident (?:since|before)\b",
+# A negator anywhere earlier in the clause: "there is no evidence that this was
+# a return trip", "nothing here is impossible".
+_CLAUSE_NEGATOR = re.compile(
+    r"\b(?:no|not|nothing|none|without|never|nor|cannot|can't)\b", re.IGNORECASE
+)
+_MET = re.compile(r"(?<!not )\b(?:met|meets?|satisf(?:y|ies|ied))\b", re.IGNORECASE)
+_SENTENCE_END = re.compile(r"\.(?:\s|$)|\n")
+_INTERVAL_CONFLICT = re.compile(r"interval|residence (?:requirement|required)", re.IGNORECASE)
+
+# The body's check line: "Naturalization check: arrival [date] to naturalization
+# [date]: [interval] vs [required] years: met / short, [the project record that
+# explains it, or nothing]." Its verdict is read from that line, so the Residence
+# check line beside it (which names the 1869 directory in every I1 rationale of
+# the return-trip scenario) never decides it.
+_NAT_CHECK = re.compile(
+    r"Naturalization check:(.*?)(?=\b(?:Date|Residence|Naturalization) check:|\Z)",
+    re.IGNORECASE | re.DOTALL,
+)
+_VERDICT = re.compile(r":\s*(met|short)\b(?!\s*/)", re.IGNORECASE)
+_TEMPLATE_COPY = re.compile(r"\bmet\s*/\s*short\b", re.IGNORECASE)
+# A project record that explains the shortfall, named in the verdict's slot.
+_EXPLAINER = re.compile(
+    r"\bsrc_003\b|\ba_01[56]\b|\bpe_00[12]\b|\b1869\b|director|discharge|\bfather\b|\breturn",
     re.IGNORECASE,
 )
-_INTERVAL_CONFLICT = re.compile(r"interval|residence (?:requirement|required)", re.IGNORECASE)
+_RETURN_TRIP = re.compile(
+    r"\breturn (?:trip|voyage|journey|visit)\b|\b(?:is|was) a return\b"
+    r"|\breturned (?:to|from)\b|\bcame back\b|\bre-?entry\b",
+    re.IGNORECASE,
+)
+# The arrival set against the earlier residence as if one excluded the other.
+_INVERTS = re.compile(
+    r"impossib|inconsistent|incompatible|(?:cannot|could not|can't) be reconciled|irreconcil"
+    r"|\bcontradicts\b|(?<!may be )(?<!might be )(?<!could be )\bdifferent (?:men|persons|people|individuals)\b"
+    r"|(?:cannot|could not|can't) (?:both )?be (?:in both|the same (?:man|person|individual))"
+    r"|(?:cannot|could not|can't) have (?:first )?arrived"
+    r"|(?:cannot|could not|can't) be (?:I\d+\b|him\b|his\b)"
+    r"|two places at once|in both places",
+    re.IGNORECASE,
+)
+_RESIDENCE_SIDE = re.compile(
+    r"\b1869\b|director|\bsrc_003\b|\bpe_00[12]\b|\ba_01[56]\b", re.IGNORECASE
+)
+_ARRIVAL_SIDE = re.compile(r"\b1871\b|arriv|passenger", re.IGNORECASE)
+# The arrival persona's assertions in the Gaetjen scenarios (src_002).
+_ARRIVAL_PERSONA = ("a_010", "a_011", "a_012", "a_013", "a_014")
+
+
+def _norm(text):
+    """Collapse "U.S." so its full stops do not end a sentence."""
+    return re.sub(r"\bU\.\s?S\.", "US", text or "")
+
+
+def _clause_negated(text, start):
+    """A negator earlier in the clause, and not before a "but": "not a
+    contradiction but a return trip" states the return trip."""
+    clause = _CLAUSE_BREAK.split(text[:start])[-1]
+    return bool(_CLAUSE_NEGATOR.search(re.split(r"\bbut\b", clause)[-1]))
+
+
+def _check_verdicts(text):
+    """(verdict, slot) for each Naturalization check line: its first `: met` or
+    `: short` (a copied `met / short` gives none), and as the slot the rest of
+    that sentence and the one after it ("short ~10 months. src_003 explains it")."""
+    out = []
+    for line in _NAT_CHECK.finditer(_norm(text)):
+        verdict = _VERDICT.search(line.group(1))
+        if verdict:
+            rest = line.group(1)[verdict.end():]
+            out.append((verdict.group(1).lower(), " ".join(_SENTENCE_END.split(rest, 2)[:2])))
+    return out
+
+
+def _slot_explains(slot):
+    """The slot names an explaining record before any negator: "short, src_003"
+    does; "short, nothing" and "short, not explained by the directory" do not."""
+    m = _EXPLAINER.search(slot)
+    return bool(m) and not _CLAUSE_NEGATOR.search(slot[: m.start()])
 
 
 def _states_naturalization_shortfall(text):
-    """Names the 1871 arrival and a shortfall against the residence the law
-    required. A shortfall negated in its own clause ("no shortfall", "does not
-    fall short of the five years") does not count."""
-    if not text or "1871" not in text:
+    """Names a shortfall against the residence the law required. A check line's
+    verdict decides when there is one (`short` yes, `met` no). Otherwise a
+    free-text shortfall beside the 1871 arrival counts, unless negated in its
+    own clause ("no shortfall") or its sentence reports the requirement met."""
+    verdicts = [v for v, _ in _check_verdicts(text)]
+    if verdicts:
+        return "short" in verdicts
+    text = _TEMPLATE_COPY.sub("", _norm(text))
+    if "1871" not in text:
         return False
-    return any(
-        not _NEGATED.search(_CLAUSE_BREAK.split(text[: m.start()])[-1])
-        for m in _SHORTFALL.finditer(text)
-    )
+    for m in _SHORTFALL.finditer(text):
+        if _NEGATED.search(_CLAUSE_BREAK.split(text[: m.start()])[-1]):
+            continue
+        if _MET.search(_SENTENCE_END.split(text[m.end():], 1)[0]):
+            continue
+        return True
+    return False
+
+
+def _states_return_trip(text):
+    """An explicit return trip, not negated in its clause ("no record of a
+    return trip", "this cannot have been a return trip")."""
+    text = _norm(text)
+    return any(not _clause_negated(text, m.start()) for m in _RETURN_TRIP.finditer(text))
+
+
+def _unexplained_shortfall(text):
+    """A check line that says short with no explaining record in its slot, or,
+    with no check line, a free-text shortfall and no return trip stated."""
+    verdicts = _check_verdicts(text)
+    if verdicts:
+        return any(v == "short" and not _slot_explains(slot) for v, slot in verdicts)
+    return _states_naturalization_shortfall(text) and not _states_return_trip(text)
+
+
+def _sets_residence_against_arrival(text):
+    """A sentence calling the earlier residence and the arrival mutually
+    exclusive ("a biographical impossibility", "cannot be in both places"), or
+    denying the return trip ("there is no record of a return trip"), with both
+    named in it or the sentence before. A stated return trip clears it. A
+    tripwire for that phrasing; the judge is the primary guard."""
+    text = _norm(text)
+    if _states_return_trip(text):
+        return False
+    previous = ""
+    for sentence in re.split(r"(?<=[.!?])\s+|\n", text):
+        window = previous + " " + sentence
+        previous = sentence
+        if not (_RESIDENCE_SIDE.search(window) and _ARRIVAL_SIDE.search(window)):
+            continue
+        if any(not _clause_negated(sentence, m.start()) for m in _INVERTS.finditer(sentence)):
+            return True
+        if any(_clause_negated(sentence, m.start()) for m in _RETURN_TRIP.finditer(sentence)):
+            return True
+    return False
+
+
+def _residence_conflict(text):
+    """A core_identifier_conflict naming both the earlier residence and the
+    arrival: the field is a contradiction claim by definition."""
+    text = _norm(text)
+    return bool(_RESIDENCE_SIDE.search(text) and _ARRIVAL_SIDE.search(text))
 
 
 def _is_interval_conflict(text):
@@ -1602,14 +1726,22 @@ def test_naturalization_exception_not_flagged(after_state, test):
     if "naturalization-exception" not in (test.get("tags") or []):
         pytest.skip("not a naturalization-exception test")
     entries = _live_interval_entries(after_state)
-    unexplained = [
-        e.get("id") for e in entries
-        if _states_naturalization_shortfall(e.get("rationale"))
-        and not _RETURN_TRIP.search(e.get("rationale") or "")
-    ]
+    unexplained = [e.get("id") for e in entries if _unexplained_shortfall(e.get("rationale"))]
     assert not unexplained, (
         "the project's 1869 directory makes the 1871 arrival a return trip, but "
         f"these rationales state a shortfall and leave it unexplained: {unexplained}"
+    )
+    research = after_state.get("research_json") or {}
+    inverted = [
+        e.get("id") for e in (research.get("person_evidence") or [])
+        if not e.get("superseded_by")
+        and e.get("assertion_id") in _INTERVAL_ASSERTIONS + _ARRIVAL_PERSONA
+        and (_sets_residence_against_arrival(e.get("rationale"))
+             or _residence_conflict(e.get("core_identifier_conflict")))
+    ]
+    assert not inverted, (
+        "residence attested before the 1871 arrival makes it a return trip, not a "
+        f"contradiction; these entries treat it as one: {inverted}"
     )
     conflicts = [
         (e.get("id"), e.get("core_identifier_conflict")) for e in entries
