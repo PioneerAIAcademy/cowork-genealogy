@@ -15,7 +15,7 @@ description: >-
   needed), date schema validation (use validate-schema), source conflicts
   where both records used the same calendar (use conflict-resolution), or
   explanations of why a calendar convention existed (use historical-context).
-model: claude-haiku-5-5
+model: claude-sonnet-5-5
 effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
