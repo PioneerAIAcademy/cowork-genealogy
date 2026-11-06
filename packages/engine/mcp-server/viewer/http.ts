@@ -6,10 +6,10 @@ import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import type { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
 import { getProjectStore } from "../src/store/project-store.js";
+import { imageTokens } from "../src/utils/image-tokens.js";
 import { createMcpServer } from "./mcp.js";
 import { reopenProject } from "./project.js";
 import { describeRpc, headerFields, logLine, observeSends, type LogFields } from "./request-log.js";
-import { imageTokens } from "./tokens.js";
 
 export const MAX_BODY_BYTES = 1024 * 1024;
 
@@ -133,7 +133,7 @@ export function createViewer(options: ViewerOptions): RequestListener {
     if (req.method !== "GET") return notFound(res);
     const claim = tokens.verify(token);
     if (!claim) return notFound(res);
-    const project = await reopenProject(rootReal, claim.rel);
+    const project = await reopenProject(rootReal, claim.project);
     if (!project) return notFound(res);
     let bytes: Uint8Array;
     try {

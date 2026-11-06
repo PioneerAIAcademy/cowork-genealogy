@@ -27,6 +27,12 @@
 // every project tool and answers `project_list` with `ownedProjects` plus one
 // fresh path.
 //
+// IMAGE route: `GET /img?t=<token>` serves one page image on the token alone,
+// with no bearer. The connector's `read_project_view` signs it and this door
+// verifies it with the same process key (utils/image-tokens.ts), then reads
+// through a store bound from the token's project id. A token that fails answers
+// the door's ordinary 404, and the door never logs a token.
+//
 // The body is read ONCE for both paths, under `MAX_BODY_BYTES`, because a
 // JSON-RPC batch has to be refused before any tool runs; the parsed value is
 // handed to the transport, since a consumed stream cannot be read again.
@@ -45,6 +51,7 @@ import { bearerPrincipal, connectorPrincipal, type Principal } from "./auth/prin
 import type { AppConfig } from "./types/auth.js";
 import { allToolSchemas } from "./tool-schemas.js";
 import { createServer } from "./server.js";
+import { processImageTokens } from "./utils/image-tokens.js";
 import { PROJECT_ID_RE } from "./store/project-id.js";
 import {
   ownedProjectsStore,
@@ -57,6 +64,7 @@ import {
 export const MCP_PATH = "/mcp";
 export const HEALTHZ_PATH = "/healthz";
 export const LIVEZ_PATH = "/livez";
+export const IMG_PATH = "/img";
 /** RFC 9728's protected-resource metadata for `/mcp`. Answered BEFORE the token
  *  check — it is what an unauthenticated client reads to learn where to go. */
 export const PRM_PATH = `/.well-known/oauth-protected-resource${MCP_PATH}`;
@@ -192,9 +200,25 @@ const AUTHORIZATION_UNAVAILABLE = {
   id: null,
 };
 
+/** An unknown path, and every image link that does not serve an image. */
+const NOT_FOUND = { error: "Not found" };
+
+/** The store failed, so an outage does not read as a missing image. */
+const IMAGE_UNAVAILABLE = {
+  jsonrpc: "2.0",
+  error: { code: -32603, message: "The page image is unavailable." },
+  id: null,
+};
+
 function sendJson(res: http.ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, { "Content-Type": "application/json" });
   res.end(JSON.stringify(body));
+}
+
+/** A failure's code or name for a log line, never its message, which can hold a DSN. */
+function errorLabel(error: unknown): string {
+  const err = error as { code?: unknown; name?: unknown };
+  return typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
 }
 
 /** What a project request presents to `authorize`: the project it names, its
@@ -589,9 +613,7 @@ async function handleMcpPost(
     try {
       verdict = await options.authorize({ projectId: projectId.id, fence, bearer: bearerFromHeaders(req.headers) });
     } catch (error) {
-      const err = error as { code?: unknown; name?: unknown };
-      const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
-      process.stderr.write(`ev=tool_authorize_failed error=${label} project_id=${projectId.id}\n`);
+      process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} project_id=${projectId.id}\n`);
       sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
       return;
     }
@@ -631,10 +653,8 @@ async function handleMcpPost(
       try {
         caller = await options.lookupConnector(sha256Hex(bearer));
       } catch (error) {
-        const err = error as { code?: unknown; name?: unknown };
-        const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
         // Never an admission, exactly as an `authorize` that throws is not.
-        process.stderr.write(`ev=tool_authorize_failed error=${label} surface=connector\n`);
+        process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
         sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
         return;
       }
@@ -690,9 +710,7 @@ async function handleMcpPost(
       try {
         owner = await options.projectOwner(connectorProjectId);
       } catch (error) {
-        const err = error as { code?: unknown; name?: unknown };
-        const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
-        process.stderr.write(`ev=tool_authorize_failed error=${label} surface=connector\n`);
+        process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
         sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
         return;
       }
@@ -749,12 +767,55 @@ async function handleMcpPost(
   }
 }
 
+/**
+ * One page image, on the token alone. The store gets no `ownerId`: this route
+ * writes nothing, and `readBytes` never consults one.
+ */
+async function handleImage(
+  res: http.ServerResponse,
+  token: string | null,
+  options: ToolServerOptions,
+): Promise<void> {
+  const claim = token === null ? null : processImageTokens.verify(token);
+  if (!claim) {
+    sendJson(res, 404, NOT_FOUND);
+    return;
+  }
+  const disconnected = new AbortController();
+  res.on("close", () => {
+    if (!res.writableEnded) disconnected.abort();
+  });
+  const anchorPath = `/${claim.project}`;
+  const store = options.bindStore(claim.project, disconnected.signal, undefined, { anchorPath });
+  let bytes: Uint8Array;
+  try {
+    bytes = await store.readBytes(anchorPath, claim.ref);
+  } catch (error) {
+    const { code } = error as { code?: unknown };
+    if (code === "ENOENT" || code === "ENOTDIR") {
+      sendJson(res, 404, NOT_FOUND);
+      return;
+    }
+    process.stderr.write(`ev=image_failed error=${errorLabel(error)}\n`);
+    sendJson(res, 503, IMAGE_UNAVAILABLE);
+    return;
+  }
+  res.writeHead(200, {
+    "Content-Type": "image/jpeg",
+    "X-Content-Type-Options": "nosniff",
+    // The card's frame is another origin.
+    "Cross-Origin-Resource-Policy": "cross-origin",
+    "Cache-Control": `private, max-age=${Math.floor((claim.expiresAt - Date.now()) / 1000)}`,
+  });
+  res.end(bytes);
+}
+
 async function route(
   req: http.IncomingMessage,
   res: http.ServerResponse,
   options: ToolServerOptions,
 ): Promise<void> {
-  const { pathname } = new URL(req.url ?? "/", "http://localhost");
+  const { pathname, searchParams } = new URL(req.url ?? "/", "http://localhost");
   if (pathname === HEALTHZ_PATH && req.method === "GET") {
     await handleHealthz(res, options);
     return;
@@ -765,7 +826,7 @@ async function route(
     // attacker's authorization server. Unset, there is no document to serve
     // and the 401 carries a bare `Bearer` to match.
     if (!options.issuer) {
-      sendJson(res, 404, { error: "Not found" });
+      sendJson(res, 404, NOT_FOUND);
       return;
     }
     const issuer = options.issuer.replace(/\/$/, "");
@@ -776,8 +837,12 @@ async function route(
     sendJson(res, 200, { ok: true, tools: allToolSchemas.length });
     return;
   }
+  if (pathname === IMG_PATH && req.method === "GET") {
+    await handleImage(res, searchParams.get("t"), options);
+    return;
+  }
   if (pathname !== MCP_PATH) {
-    sendJson(res, 404, { error: "Not found" });
+    sendJson(res, 404, NOT_FOUND);
     return;
   }
   if (req.method !== "POST") {
@@ -791,7 +856,7 @@ async function route(
   await handleMcpPost(req, res, options);
 }
 
-/** The node:http request listener: `/healthz`, `/livez`, `/mcp` (POST only), 404 elsewhere. */
+/** The node:http request listener: `/healthz`, `/livez`, `/img` (GET only), `/mcp` (POST only), 404 elsewhere. */
 export function createToolServer(options: ToolServerOptions): RequestListener {
   return (req, res) => {
     route(req, res, options).catch((error: unknown) => {

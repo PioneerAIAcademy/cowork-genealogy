@@ -4,7 +4,7 @@
 // they are what M0 is here to record. Only a caller holding the secret reaches them.
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { JSONRPCMessage } from "@modelcontextprotocol/sdk/types.js";
-import { READ_PROJECT_VIEW, SHOW_PROJECT } from "./tools.js";
+import { READ_PROJECT_VIEW, SHOW_PROJECT } from "../src/tools/project-view.js";
 
 export type LogFields = Record<string, unknown>;
 

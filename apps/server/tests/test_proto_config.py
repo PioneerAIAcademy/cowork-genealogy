@@ -39,6 +39,7 @@ import contextlib
 import importlib.util
 import json
 import os
+import posixpath
 import re
 import shutil
 import subprocess
@@ -1328,13 +1329,18 @@ def _proto_imports(source: str, *, packaged: bool) -> set[str]:
     return {n for n in names if (PROTO / f"{n}.py").is_file()}
 
 
+def _instructions(dockerfile: Path) -> list[list[str]]:
+    """A Dockerfile's instructions as word lists (continuation lines joined, comments dropped)."""
+    text = dockerfile.read_text(encoding="utf-8").replace("\\\n", " ")
+    lines = (line.split("#", 1)[0].split() for line in text.splitlines())
+    return [words for words in lines if words]
+
+
 def _copied(dockerfile: Path) -> set[str]:
     """The repo paths a Dockerfile COPYs (continuation lines joined, flags skipped)."""
-    text = dockerfile.read_text(encoding="utf-8").replace("\\\n", " ")
     sources: set[str] = set()
-    for line in text.splitlines():
-        parts = line.split("#", 1)[0].split()
-        if parts and parts[0] == "COPY":
+    for parts in _instructions(dockerfile):
+        if parts[0] == "COPY":
             args = [a for a in parts[1:] if not a.startswith("--")]
             sources.update(a.rstrip("/") for a in args[:-1])
     return sources
@@ -1393,6 +1399,79 @@ def test_the_copy_reader_joins_a_reflowed_copy(tmp_path):
     dockerfile.write_text("FROM x\nCOPY --chown=1:1 \\\n    apps/server/proto/grants.py \\\n    /opt/x/\n"
                           "# COPY apps/server/proto/enqueue.py /opt/\n", encoding="utf-8")
     assert _copied(dockerfile) == {"apps/server/proto/grants.py"}
+
+
+TOOLS_DOCKERFILE = PROTO / "tools" / "Dockerfile"
+BUNDLED_DATA = ROOT / "packages" / "engine" / "mcp-server" / "src" / "utils" / "bundled-data.ts"
+BUILT_PAGE = "/repo/apps/mcp-viewer/dist/index.html"
+
+
+def _final_stage_paths(dockerfile: Path) -> dict[str, str]:
+    """Where the last stage puts each COPY source: the destination, against the WORKDIR in
+    force at that line."""
+    instructions = _instructions(dockerfile)
+    final = max(i for i, words in enumerate(instructions) if words[0] == "FROM")
+    workdir, paths = "/", {}
+    for name, *args in instructions[final + 1:]:
+        if name == "WORKDIR":
+            workdir = posixpath.join(workdir, args[0])
+        elif name == "COPY":
+            *sources, destination = [a for a in args if not a.startswith("--")]
+            paths.update(dict.fromkeys(sources, posixpath.normpath(posixpath.join(workdir, destination))))
+    return paths
+
+
+def _viewer_page_path(build: str, text: str | None = None) -> str:
+    """Where viewerPagePath() looks with the compiled engine at ``build``. Its literal is
+    relative to bundled-data's own directory, build/utils/."""
+    if text is None:
+        text = BUNDLED_DATA.read_text(encoding="utf-8")
+    literals = re.findall(r'"([^"\n]*viewer\.html)"', _strip_line_comments(text, ("//",)))
+    assert len(literals) == 1, f"bundled-data.ts should name the page once, got {literals}"
+    return posixpath.normpath(posixpath.join(build, "utils", literals[0]))
+
+
+def test_the_tools_image_puts_the_page_where_the_engine_reads_it():
+    """viewerPagePath() resolves from build/utils/, so the page has to land at that path
+    beside build/. Only resources/read opens it and no CI job builds this image, so one
+    side moving alone leaves every check green and a connector with no card."""
+    paths = _final_stage_paths(TOOLS_DOCKERFILE)
+    assert paths.get("/app/build") == "/app/build", "the final stage needs WORKDIR /app and build/ under it"
+    assert paths.get(BUILT_PAGE) == _viewer_page_path("/app/build"), "the page is not where viewerPagePath() reads it"
+
+
+@pytest.mark.parametrize("final_stage, lands", [
+    ("WORKDIR /app\nCOPY --from=page /p.html ./viewer/page/viewer.html\n", "/app/viewer/page/viewer.html"),
+    ("WORKDIR /app\nCOPY --from=page \\\n    /p.html \\\n    ./viewer/page/viewer.html\n", "/app/viewer/page/viewer.html"),
+    ("WORKDIR /srv\nCOPY --from=page /p.html /app/viewer/page/viewer.html\n", "/app/viewer/page/viewer.html"),
+    ("WORKDIR /\nWORKDIR app\nCOPY --link --from=page /p.html viewer/page/viewer.html\n", "/app/viewer/page/viewer.html"),
+    ("WORKDIR /app\nCOPY --from=page /p.html ./viewer/page/viewer.html\nWORKDIR /srv\n", "/app/viewer/page/viewer.html"),
+    ("WORKDIR /app\nCOPY --from=page /p.html ./viewer/page/index.html\n", "/app/viewer/page/index.html"),
+    ("WORKDIR /srv\nCOPY --from=page /p.html ./viewer/page/viewer.html\n", "/srv/viewer/page/viewer.html"),
+    ("WORKDIR /app\n# COPY --from=page /p.html ./viewer/page/viewer.html\n", None),
+    ("WORKDIR /app\n", None),
+])
+def test_the_final_stage_reader_sees_each_shape(tmp_path, final_stage, lands):
+    dockerfile = tmp_path / "Dockerfile"
+    # The same COPY in an earlier stage: the page there never reaches the image.
+    dockerfile.write_text(f"FROM x AS page\nWORKDIR /app\nCOPY /p.html ./viewer/page/viewer.html\nFROM y\n{final_stage}",
+                          encoding="utf-8")
+    assert _final_stage_paths(dockerfile).get("/p.html") == lands
+
+
+@pytest.mark.parametrize("source, expected", [
+    ('return resolve(here, "../../viewer/page/viewer.html");', "/app/viewer/page/viewer.html"),
+    ('return resolve(\n  here,\n  "../../viewer/page/viewer.html",\n);', "/app/viewer/page/viewer.html"),
+    ('// was "../viewer.html"\nreturn resolve(here, "../../viewer/page/viewer.html");', "/app/viewer/page/viewer.html"),
+    ('return resolve(here, "../../page/viewer.html");', "/app/page/viewer.html"),
+])
+def test_the_page_path_reader_resolves_from_build_utils(source, expected):
+    assert _viewer_page_path("/app/build", source) == expected
+
+
+def test_the_page_path_reader_refuses_a_file_that_names_no_page():
+    with pytest.raises(AssertionError, match="name the page once"):
+        _viewer_page_path("/app/build", 'return resolve(here, "../../config");')
 
 
 def _shim_kill_default() -> bool:

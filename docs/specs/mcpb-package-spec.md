@@ -89,8 +89,11 @@ falsely blocking installs.
 
 ### Tool list (`tools`)
 
-Every tool registered in `src/server.ts`'s `ListTools` handler MUST appear
-in `manifest.tools`, and no extras.
+Every tool in `allToolSchemas` (`src/tool-schemas.ts`) MUST appear in
+`manifest.tools`, and no extras. This binds `allToolSchemas`, not the `ListTools`
+handler in `src/server.ts`, which also lists the connector-only tools to a
+connector caller. A connector-only tool is never in the `.mcpb`
+(`docs/specs/project-view-tools-spec.md`).
 
 **This spec deliberately does not enumerate the set.** It used to, and the
 enumeration went stale twice over — the prose said 19 in one place and 21 in

@@ -25,7 +25,9 @@
  *     fence (`X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch`) of a `turns` row
  *     this smoke seeds in Postgres, open at epoch 1 and stamped with the bearer's
  *     sha256 the way the worker stamps a real attempt. It runs every row that
- *     passes a `projectPath`. The row is deleted on every exit path.
+ *     passes a `projectPath`, and under `--connector` it lists the tools too, because
+ *     that list is the only sight of the worker door. The row is deleted on every
+ *     exit path.
  * Seeding needs the database the server reads: `--pg-dsn`, else GENEALOGY_PG_DSN.
  *
  * `--project-id` (default: a fresh `smoke-<uuid>`) is client two's project
@@ -271,6 +273,15 @@ for (const [signal, code] of [["SIGINT", 130], ["SIGTERM", 143]] as const) {
 let failures: string[] = [];
 let calls = 0;
 let stage = "seed turns row";
+
+/** One door's tool list against the plan. */
+async function checkCoverage(client: Client, label: string, connector: boolean): Promise<void> {
+  const { tools } = await client.listTools();
+  const problems = assertCoverage(tools.map((t) => t.name), { connector });
+  report(label, problems.length === 0, problems.length === 0 ? `${tools.length} tools advertised, all planned or excluded` : problems.join("; "));
+  if (problems.length > 0) failures.push(label);
+}
+
 try {
   await db.connect();
   connected = true;
@@ -298,10 +309,7 @@ try {
 
   stage = "client one connect";
   await plainClient.connect(transportFor(plainHeaders));
-  const { tools } = await plainClient.listTools();
-  const problems = assertCoverage(tools.map((t) => t.name));
-  report("tools/list coverage", problems.length === 0, problems.length === 0 ? `${tools.length} tools advertised, all planned or excluded` : problems.join("; "));
-  if (problems.length > 0) failures.push("tools/list coverage");
+  await checkCoverage(plainClient, "tools/list coverage", connectorEnabled);
 
   stage = "client two connect (stamped turn)";
   await projectClient.connect(
@@ -312,6 +320,7 @@ try {
       Authorization: `Bearer ${projectBearer}`,
     }),
   );
+  if (connectorEnabled) await checkCoverage(projectClient, "tools/list coverage (worker)", false);
 
   // EVERY row goes through the stamped-turn client now (E1). It used to split:
   // rows passing a projectPath went to the project client, everything else to a

@@ -20,7 +20,8 @@ timelines, proof summaries), and **`tree.gedcomx.json`**, the deliverable
 
 ## MCP tools
 
-The MCP server exposes 57 tools.
+The MCP server exposes 57 tools. A caller on the remote connector also gets the two
+under [Connector only](#connector-only).
 
 ### FamilySearch records and places
 
@@ -101,6 +102,18 @@ way project state changes.
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
 | `project_list` | Which projects this server keeps. On the desktop extension the task's working folder is the project; on a hosted server it lists the caller's newest 100 projects (objective, subjects, status), saying when there are more, and, when one can be started, the `newProjectPath` for it. The research router's first call when a conversation names no project | None |
 | `get_name_variants` | Look up a given name's alternate forms (nicknames, diminutives, formal forms) from a bundled bidirectional table. Given names only, no caller yet | None |
+
+### Connector only
+
+These two connector-only tools draw a project as cards inside Claude. A caller on the
+remote connector gets them and no other surface does, so they are not in the count
+above, the `.mcpb` or `manifest.json`. Spec:
+[specs/project-view-tools-spec.md](specs/project-view-tools-spec.md).
+
+| Tool | Purpose | Auth |
+|------|---------|------|
+| `show_project` | Shows the researcher a card of the project in the conversation: a research step, where the research stands, or the case file. The model gets one line and the card gets the project's documents | Connector sign-in |
+| `read_project_view` | What a card reads, hidden from the model: the project's documents, one search's results file, or a signed link to one page image | Connector sign-in |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)
 

@@ -101,12 +101,12 @@ describe("the stdio server", () => {
     }
   }, 30_000);
 
-  it("refuses a page image, saying images need the HTTP server", async () => {
+  it("refuses a page image, saying no route can serve it", async () => {
     writeProject(root());
     const { client, stdoutErrors } = await connect();
     try {
       const result = await client.callTool({ name: "read_project_view", arguments: { part: "image", id: "images/a.jpg" } });
-      expect(refusal(result)).toMatch(/images need the HTTP server/i);
+      expect(refusal(result)).toMatch(/no route to page images/i);
       expect(stdoutErrors).toEqual([]);
     } finally {
       await client.close();

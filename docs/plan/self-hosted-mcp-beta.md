@@ -60,7 +60,7 @@ Funnel sends `https://malachi.taild68f1b.ts.net/` to 127.0.0.1:8006, where an ng
 | Paths on the edge | Goes to |
 |---|---|
 | `/healthz` and `/api/health` (the deep checks) | A fixed 404 |
-| `/mcp`, `/.well-known/oauth-protected-resource/mcp`, and `/img/*` with the MCP App's fold | Tool server |
+| `/mcp`, `/.well-known/oauth-protected-resource/mcp`, and `/img` (token in the query) with the MCP App's fold | Tool server |
 | Everything else: `/`, `/api/*`, `/auth/*`, `/.well-known/oauth-authorization-server`, `/authorize`, `/token`, the consent page, `/callback`, `/privacy`, `/terms`, `/upload/*`, `/livez` | Web tier |
 
 **A connector tool call:**

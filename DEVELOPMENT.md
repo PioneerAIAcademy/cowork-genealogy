@@ -129,6 +129,11 @@ Example: adding a "list providers" feature.
    - Add its name to `tools` in `packages/engine/mcp-server/manifest.json` — the packaging
      test (`tests/packaging/manifest.test.ts`) fails if the manifest and
      the registry drift apart
+   - A tool only a connector caller sees stays out of `allToolSchemas` and the manifest:
+     its schema stays in its own file (`packages/engine/mcp-server/src/tools/project-view.ts`
+     is the example), `createServer` adds it for a connector principal, its
+     `dev/smoke-calls.ts` row carries `connectorOnly: true`, and the dispatch chain holds no
+     string literal of its name
    - Run `npm run build` in `packages/engine/mcp-server/`
    - Create `packages/engine/mcp-server/dev/try-list-providers.ts` — a one-shot smoke
      script that invokes the tool directly against live APIs. Follows

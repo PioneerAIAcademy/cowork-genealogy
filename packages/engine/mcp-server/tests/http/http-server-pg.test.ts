@@ -81,6 +81,8 @@ const ENDPOINT = process.env.PROTO_S3_ENDPOINT;
 const BUCKET = process.env.PROTO_S3_BUCKET ?? "projects";
 
 const ANCHOR = "/project";
+/** The origin image links are signed for; the tests fetch them from their own port. */
+const PUBLIC_ORIGIN = "https://beta.example";
 const PROJECT_HEADER = "X-Genealogy-Project-Id";
 const TURN_HEADER = "X-Genealogy-Turn-Id";
 const EPOCH_HEADER = "X-Genealogy-Claim-Epoch";
@@ -303,7 +305,7 @@ if (!DSN || !ENDPOINT) {
       server = await startHttpServer({
         host: "127.0.0.1",
         port: 0,
-        baseConfig: {},
+        baseConfig: { webPublicUrl: PUBLIC_ORIGIN },
         bindStore,
         authorize: (req) => authorizeAttempt(backend, req),
         lookupConnector: (sha) =>
@@ -791,6 +793,104 @@ if (!DSN || !ENDPOINT) {
           { projectPath: ANCHOR },
         );
         expect(r.status, r.text).toBe(403);
+      });
+
+      /** `userId`'s store on a path they own, for seeding what a tool would have written. */
+      const ownedStore = (projectPath: string, userId: string) =>
+        new PgS3ProjectStore(backend, { projectId: projectPath.slice(1), anchorPath: projectPath, ownerId: userId });
+
+      /** The link `read_project_view` signs, as a path on the test's own port. */
+      async function imagePath(token: string, projectPath: string, id: string): Promise<string> {
+        const r = await connCall(token, "read_project_view", { part: "image", id, projectPath });
+        expect(r.status, r.text).toBe(200);
+        const { result } = JSON.parse(r.text);
+        expect(result.isError, r.text).not.toBe(true);
+        const { url } = result.structuredContent as { url: string };
+        expect(url.startsWith(`${PUBLIC_ORIGIN}/img?t=`), url).toBe(true);
+        return url.slice(PUBLIC_ORIGIN.length);
+      }
+
+      const imageBytes = async (path: string): Promise<Buffer> => {
+        const res = await fetch(`${base}${path}`);
+        expect(res.status).toBe(200);
+        return Buffer.from(await res.arrayBuffer());
+      };
+
+      it("show_project and read_project_view read A's documents from Postgres", async () => {
+        const a = await seedConnector();
+        const projectPath = await seedOwned(a.userId, "shown");
+        const args = { show: "latest", projectPath };
+        const shown = await connCall(a.token, "show_project", args);
+        expect(shown.status, shown.text).toBe(200);
+        const { result } = JSON.parse(shown.text);
+        expect(result.isError, shown.text).not.toBe(true);
+        expect(result._meta["genealogy/project"]).toEqual({
+          research: { project: { objective: "shown" } },
+          tree: null,
+          startingTree: null,
+          collections: null,
+          derived: { folderName: projectPath.slice(1) },
+          echo: args,
+        });
+        const read = await connCall(a.token, "read_project_view", { part: "document", projectPath });
+        expect(JSON.parse(read.text).result.structuredContent.research).toEqual({ project: { objective: "shown" } });
+      });
+
+      it("a scan written to A's project is served by /img with the same bytes", async () => {
+        const a = await seedConnector();
+        const projectPath = await seedOwned(a.userId, "scanned");
+        const scan = randomBytes(4096);
+        await ownedStore(projectPath, a.userId).writeBytes(projectPath, "images/scan.jpg", scan);
+        const res = await fetch(`${base}${await imagePath(a.token, projectPath, "images/scan.jpg")}`);
+        expect(res.status).toBe(200);
+        expect(res.headers.get("content-type")).toBe("image/jpeg");
+        expect(Buffer.from(await res.arrayBuffer()).equals(scan)).toBe(true);
+      });
+
+      it("A's token never returns B's same-named image", async () => {
+        const a = await seedConnector();
+        const b = await seedConnector();
+        const pathA = await seedOwned(a.userId, "A's");
+        const pathB = await seedOwned(b.userId, "B's");
+        const scanA = randomBytes(1024);
+        const scanB = randomBytes(1024);
+        await ownedStore(pathA, a.userId).writeBytes(pathA, "images/scan.jpg", scanA);
+        await ownedStore(pathB, b.userId).writeBytes(pathB, "images/scan.jpg", scanB);
+        const fromA = await imageBytes(await imagePath(a.token, pathA, "images/scan.jpg"));
+        const fromB = await imageBytes(await imagePath(b.token, pathB, "images/scan.jpg"));
+        expect(fromA.equals(scanA)).toBe(true);
+        expect(fromB.equals(scanB)).toBe(true);
+        expect(fromA.equals(scanB)).toBe(false);
+      });
+
+      it("a good token with no blob row is 404", async () => {
+        const a = await seedConnector();
+        const projectPath = await seedOwned(a.userId, "no scan");
+        const res = await fetch(`${base}${await imagePath(a.token, projectPath, "images/absent.jpg")}`);
+        expect(res.status).toBe(404);
+        expect(await res.json()).toEqual({ error: "Not found" });
+      });
+
+      it("B's read_project_view on A's project is 403 and signs nothing", async () => {
+        const a = await seedConnector();
+        const b = await seedConnector();
+        const projectPath = await seedOwned(a.userId, "A's alone");
+        await ownedStore(projectPath, a.userId).writeBytes(projectPath, "images/scan.jpg", randomBytes(16));
+        const r = await connCall(b.token, "read_project_view", { part: "image", id: "images/scan.jpg", projectPath });
+        expect(r.status, r.text).toBe(403);
+        expect(r.text).not.toContain("/img");
+        expect(r.text).not.toContain("expiresAt");
+      });
+
+      it("show_project on a fresh path is refused, names project_list and leaves no projects row", async () => {
+        const a = await seedConnector();
+        const projectPath = freshPath();
+        const r = await connCall(a.token, "show_project", { show: "setup", projectPath });
+        expect(r.status, r.text).toBe(200);
+        const { result } = JSON.parse(r.text);
+        expect(result.isError, r.text).toBe(true);
+        expect(result.content[0].text).toContain("project_list");
+        expect(await ownerOf(projectPath)).toEqual([]);
       });
 
       // The race the door CANNOT decide: it sees no projects row for either

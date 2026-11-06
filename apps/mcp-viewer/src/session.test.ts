@@ -17,6 +17,12 @@ import {
 
 const INPUT: ToolInput = { show: 'latest', projectPath: 'mogan' }
 
+/** show_project past the size limit: the call's echo and no documents. */
+const RESULT_CUT: ToolResultEvent = {
+  content: [{ type: 'text', text: 'shown' }],
+  _meta: { [PROJECT_META_KEY]: { derived: { folderName: 'mogan' }, echo: INPUT } }
+}
+
 function permutations<T>(items: readonly T[]): T[][] {
   if (items.length <= 1) return [[...items]]
   return items.flatMap((item, index) =>
@@ -47,6 +53,7 @@ describe('card loading, once per mount', () => {
     const firstResults: Array<[string, ToolResultEvent, ToolResultEvent]> = [
       ['meta', RESULT_WITH_META, RESULT_WITHOUT_META],
       ['no meta', RESULT_WITHOUT_META, RESULT_WITH_META],
+      ['cut', RESULT_CUT, RESULT_WITH_META],
       ['isError', RESULT_FAILED, RESULT_WITH_META]
     ]
 
@@ -67,10 +74,13 @@ describe('card loading, once per mount', () => {
         const timerFired = inputAt < order.indexOf('timer') && order.indexOf('timer') < resultAt
         const label = `${kind}: ${order.join(' > ')}`
 
-        expect(app.reads().length, label).toBe(kind === 'no meta' || timerFired ? 1 : 0)
+        const readsAnyway = kind === 'no meta' || kind === 'cut'
+        expect(app.reads().length, label).toBe(readsAnyway || timerFired ? 1 : 0)
         const { load } = session.getState()
+        expect(load.inputAt, label).not.toBeNull()
         if (kind === 'meta') expect(load.source, label).toBe('result _meta')
-        if (kind === 'no meta') expect(load.source, label).toBe('read_project_view call')
+        if (readsAnyway) expect(load.source, label).toBe('read_project_view call')
+        if (kind === 'cut') expect(app.reads(), label).toEqual([{ part: 'document', projectPath: 'mogan' }])
         if (kind === 'isError') expect(load.phase, label).toBe('failed')
       }
     }
@@ -187,6 +197,108 @@ describe('card loading, once per mount', () => {
     await settle()
 
     expect(headline(session.getState())).toBe('Refused: pick a project.')
+    expect(app.reads()).toHaveLength(1)
+  })
+})
+
+describe('a result too large for its documents', () => {
+  const IMAGE_LINK = { content: [], structuredContent: { url: 'https://example.test/img?t=token', expiresAt: 1_000 } }
+  const IMAGE_READ = { part: 'image', id: 'images/probe.jpg', projectPath: 'mogan' }
+
+  it('reads with the echoed projectPath on a card with no tool input', async () => {
+    const { app, session } = await connected()
+    app.sendResult(RESULT_CUT)
+    await settle()
+
+    expect(app.reads()).toEqual([{ part: 'document', projectPath: 'mogan' }])
+    const { load } = session.getState()
+    expect(load.input).toEqual(INPUT)
+    expect(load.inputAt).toBeNull()
+    expect(load.resultCarriedMeta).toBe(true)
+    expect(load.snapshot).toEqual(READ_DOCUMENT)
+    expect(load.source).toBe('read_project_view call')
+    expect(reportText(session.getState())).toContain('tool input received: none\n')
+  })
+
+  it('a failed read on a card with no tool input leaves the probes the id', async () => {
+    const app = new FakeApp()
+    app.callServerTool.mockRejectedValueOnce(new Error('Refused: pick a project.'))
+    const { session } = await connected(app)
+    app.sendResult(RESULT_CUT)
+    await settle()
+    expect(headline(session.getState())).toBe('Refused: pick a project.')
+
+    app.callServerTool.mockResolvedValue(IMAGE_LINK)
+    await session.runImageProbe()
+
+    expect(app.reads().at(-1)).toEqual(IMAGE_READ)
+    expect(session.getState().imageProbe).toMatchObject({ status: 'showing' })
+  })
+
+  it('the probes have the id while the read is still out', async () => {
+    const app = new FakeApp()
+    app.callServerTool.mockImplementationOnce(() => new Promise(() => {}))
+    const { session } = await connected(app)
+    app.sendResult(RESULT_CUT)
+    await settle()
+    expect(session.getState().load.phase).toBe('fetching')
+
+    app.callServerTool.mockResolvedValue(IMAGE_LINK)
+    await session.runImageProbe()
+
+    expect(app.reads()).toEqual([{ part: 'document', projectPath: 'mogan' }, IMAGE_READ])
+  })
+
+  it('a read in flight when it arrives still lands, and the id stays', async () => {
+    const app = new FakeApp()
+    let answerRead = (_value: { content: []; structuredContent: Record<string, unknown> }): void => {}
+    app.callServerTool.mockImplementationOnce(() => new Promise((resolve) => (answerRead = resolve)))
+    const { session } = await connected(app)
+
+    app.sendInput(INPUT)
+    await vi.advanceTimersByTimeAsync(RESULT_WAIT_MS)
+    app.sendResult(RESULT_CUT)
+    answerRead({ content: [], structuredContent: READ_DOCUMENT as Record<string, unknown> })
+    await settle()
+
+    expect(app.reads()).toHaveLength(1)
+    const { load } = session.getState()
+    expect(load.phase).toBe('ready')
+    expect(load.snapshot).toEqual(READ_DOCUMENT)
+    expect(load.source).toBe('read_project_view call')
+    expect(load.resultCarriedMeta).toBe(true)
+
+    app.callServerTool.mockResolvedValue(IMAGE_LINK)
+    await session.runImageProbe()
+    expect(app.reads().at(-1)).toEqual(IMAGE_READ)
+  })
+
+  it('a read in flight that then fails shows its text', async () => {
+    const app = new FakeApp()
+    let failRead = (_err: Error): void => {}
+    app.callServerTool.mockImplementationOnce(() => new Promise((_resolve, reject) => (failRead = reject)))
+    const { session } = await connected(app)
+
+    app.sendInput(INPUT)
+    await vi.advanceTimersByTimeAsync(RESULT_WAIT_MS)
+    app.sendResult(RESULT_CUT)
+    failRead(new Error('Refused: pick a project.'))
+    await settle()
+
+    expect(headline(session.getState())).toBe('Refused: pick a project.')
+    expect(session.getState().load.input).toEqual(INPUT)
+  })
+
+  it('a tool input arriving after it records its time and reads nothing more', async () => {
+    const { app, session } = await connected()
+    app.sendResult(RESULT_CUT)
+    await settle()
+    expect(session.getState().load.inputAt).toBeNull()
+
+    app.sendInput(INPUT)
+    await vi.advanceTimersByTimeAsync(RESULT_WAIT_MS)
+
+    expect(session.getState().load.inputAt).toEqual(expect.any(Number))
     expect(app.reads()).toHaveLength(1)
   })
 })
