@@ -483,15 +483,27 @@ consistent across schema, manifest, and skill.)*
   on a page whose transcription cannot verify the hinted household, where the
   primed OCR prompt had returned FOUND 5/5 resting on rows it had itself
   invented).
-- `projectPath` is **required on the MCP schema**. The project is
-  classified before anything else for every input form, so a folder that is not
-  a project gets the no-project answer before any fetch or OCR. The tool
-  **stages** the transcription (§5.5, `staged` / `digest`) and, for a
-  FamilySearch input, **saves** the fetched JPEG host-side to
-  `<projectPath>/images/<key>.jpg` and returns an `imageRef` (§8.5). Both
+- **In a project**, the tool **stages** the transcription (§5.5, `staged` /
+  `digest`) and, for a FamilySearch input, **saves** the fetched JPEG host-side
+  to `<projectPath>/images/<key>.jpg` and returns an `imageRef` (§8.5). Both
   best-effort: a save failure omits `imageRef` and a staging failure yields
-  `staged: null` + `stagingError`, and then the text comes back inline. Only
-  person_read's in-process call (`imageTranscribeTool`) may omit it.
+  `staged: null` + `stagingError`, and then the text comes back inline.
+- **With no project** — no `projectPath`, or a folder holding neither project
+  file — an `imageId`, `ark` or `memoryArtifactUrl` is read with `projectPath`
+  removed, and the MCP entry point returns the full `transcription` inline with
+  no `staged`, `digest`, `imageRef` or `stagingError`. Nothing is written
+  anywhere: no `images/`, no `results/`, and no cap log (§5.8 "Calls with no
+  `projectPath`"). A `file` still needs a project, because its path is
+  project-relative. **Decided (lead, 2026-11-02):** transcribing an
+  image must not require a project. Option A (inline text, no staging) beat B
+  (stage into the session folder without a `research.json`). A no-project read
+  is a bounded single ask, and staging exists only to feed `record-structurer`
+  into a project. B would also have added a "scratch" state that every reader
+  of `results/` must tolerate. This narrows the 2026-10-16 ruling
+  (`projectPath` required, a ref and not the text) to the case where a
+  project exists. Accepted side effect: an in-project caller that omits
+  `projectPath` gets the text inline and nothing staged, where it used to get
+  an error.
 - All input is camelCase (MCP wire convention).
 
 ### 5.3.1 Given-name expansion in `lookingFor`
@@ -686,7 +698,6 @@ refused (403) and 4 answered 400.
 | More than one provided | `Provide exactly one of imageId, ark, memoryArtifactUrl, or file — not X and Y.` (`imageArk` counts as `ark`) |
 | `ark` and `imageArk` both given, and they do not name the same image (`image-read-spec.md`, Input) | `image_transcribe was given both ark ('…') and imageArk ('…'), which do not name the same image. imageArk is another name for ark: pass only one.` Refused before the key lookup and any fetch |
 | `ark` is not a string | `image_transcribe was given an ark that is not a string (…). Pass ark as a string: the ARK (ark:/61903/3:1:...) or page URL exactly as it was given.` Refused before the key lookup and any fetch |
-| No `projectPath` (any input form, at the MCP boundary) | `projectPath is required: image_transcribe stages the page under the project's results/ and returns its ref, not the text.` Refused before the key lookup, any fetch and any OCR; a folder holding neither project file RETURNS `{ ok: false, reason: "no_project" }` |
 | `file` with no `projectPath` / a missing directory | the shared loud messages (`projectPath is required …`, `projectPath does not exist: …`); a folder holding neither project file RETURNS `{ ok: false, reason: "no_project" }` (not thrown) |
 | `file` ref shape | absolute / drive letter / backslash / NUL / empty, `.`, `..` segment — named before any I/O; a symlink out of the project is the store's "escapes the project directory" |
 | `file` missing / a directory / not an image or PDF | `'<ref>' was not found under the project folder …` / `is a directory` / `is not an image or a PDF (by its content, not its name) …` |
@@ -815,6 +826,12 @@ flight; accepted, because recording at check time would charge failed fetches.
 `anchorPath` (`ProjectStore.anchorPath`), so the call is counted against that
 project's log. On the file backend (desktop `.mcpb`, both harnesses, hosted E2B)
 it is counted in memory under `<no-project>`, so **it does not survive a restart**.
+A transcription with no project (§5.2) reads under this cap: 20
+distinct images per group per server process on the file backend, and per bound
+project on `http.ts`. **Decided (review-ready, 2026-11-02):** this existing count
+is the no-project browse cap. Option B (a persisted count) needs the scratch folder
+the lead rejected. Option C (a new per-call or per-session limit) would be a second
+mechanism beside this one, for one caller.
 That is 236 of the 501 `imageId` calls in the committed e2e corpus (2026-10-01),
 including the largest over-cap group (`elena-asmundsdotter-origin`
 `run-2026-09-18_21-35-53`, group `004514823`, 43 distinct images, none with a
@@ -1201,6 +1218,10 @@ built now.)
 - `docs/specs/image-read-spec.md` cross-references this tool as the **sole** OCR
   path; `image_read`'s inline-base64 return stays only for the Issue #28 pixel
   consumer.
+
+A read of a page an indexed record sits on is not kept until
+`extraction_append({ attachWaitingPages: true })` copies it onto that record's source
+(`research-append-tool-spec.md` §11.9). This tool writes nothing to `research.json`.
 
 ## 8.5 Image persistence + viewing (retained sources only)
 

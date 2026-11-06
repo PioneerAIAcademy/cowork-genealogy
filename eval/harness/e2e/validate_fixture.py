@@ -258,7 +258,7 @@ def tree_integrity_errors(tree: dict[str, Any], filename: str) -> list[str]:
     Mirrors the engine's runtime `validateGedcomx` where the right answer is
     unambiguous: a fixture that lints clean here but hard-fails `tree_edit`
     mid-run burns the tokens the fixture pipeline exists to save (the exact
-    bug class of the repaired ParentChild-keys corpus). Three groups:
+    bug class of the repaired ParentChild-keys corpus). Four groups:
 
     * **Reference integrity** — relationship endpoints and source `ref`s
       must name objects in the document.
@@ -268,6 +268,9 @@ def tree_integrity_errors(tree: dict[str, Any], filename: str) -> list[str]:
       about living persons, and absent is not deceased (mirrors
       `living_gate` rules 1-2 in `e2e.author`; kept local to avoid an
       import cycle).
+    * **Ancestry cycles** — no person may be their own ancestor through the
+      ParentChild edges (mirrors the engine's `detectAncestryCycles`, which
+      refuses every write that holds one).
 
     The runtime's two remaining name/fact checks live in the JSON Schema
     itself, not here: `given` is required by the schema (spell an unknown
@@ -354,6 +357,63 @@ def tree_integrity_errors(tree: dict[str, Any], filename: str) -> list[str]:
                 f"terms forbid committing data about living persons"
             )
 
+    errors += _ancestry_cycle_errors(relationships, known_persons, filename)
+    return errors
+
+
+def _ancestry_cycle_errors(
+    relationships: list[dict[str, Any]], known_persons: set[str], filename: str
+) -> list[str]:
+    """A person recorded as their own ancestor, directly or through a chain.
+
+    Ports the engine's `detectAncestryCycles` (validator.ts): a three-colour
+    DFS over child -> parents from the ParentChild edges, one error per
+    distinct cycle (deduped by its person set), in the engine's message shape.
+    Iterative, so a deep pedigree cannot hit Python's recursion limit. Edges
+    with a dangling endpoint are skipped; the reference check reports those.
+    """
+    parents: dict[str, list[str]] = {}
+    for rel in relationships:
+        if rel.get("type") != "ParentChild":
+            continue
+        parent, child = rel.get("parent"), rel.get("child")
+        if parent is None or child is None:
+            continue
+        parent, child = str(parent), str(child)
+        if parent not in known_persons or child not in known_persons:
+            continue
+        parents.setdefault(child, []).append(parent)
+
+    errors: list[str] = []
+    seen: set[str] = set()
+    reported: set[frozenset[str]] = set()
+    for root in parents:
+        if root in seen:
+            continue
+        chain: list[str] = [root]
+        on_path: set[str] = {root}
+        seen.add(root)
+        stack = [iter(parents.get(root, []))]
+        while stack:
+            nxt = next(stack[-1], None)
+            if nxt is None:
+                stack.pop()
+                on_path.discard(chain.pop())
+                continue
+            if nxt in on_path:
+                cycle = chain[chain.index(nxt):] + [nxt]
+                key = frozenset(cycle)
+                if key not in reported:
+                    reported.add(key)
+                    errors.append(
+                        f"{filename}: ParentChild ancestry cycle: {' -> '.join(cycle)} "
+                        f"(a person cannot be their own ancestor)"
+                    )
+            elif nxt not in seen:
+                seen.add(nxt)
+                on_path.add(nxt)
+                chain.append(nxt)
+                stack.append(iter(parents.get(nxt, [])))
     return errors
 
 
@@ -932,7 +992,7 @@ def lint_fixture(fixture_dir: Path) -> tuple[list[Suspect], list[str]]:
 
     hard_errors are structural problems — a missing or unparseable file, a
     JSON-Schema violation, a `tree_integrity_errors` failure (dangling refs,
-    duplicate ids, living persons), or a `finding_shape_errors` failure (an
+    duplicate ids, living persons, ancestry cycles), or a `finding_shape_errors` failure (an
     unrecognized finding field, an out-of-enum `type`/`polarity`, a duplicate
     finding id), or a record-hint fixture whose two trees differ or whose
     unstripped tree is missing (`record_hint_tree_errors`) — that should fail

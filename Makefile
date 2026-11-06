@@ -415,10 +415,14 @@ hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook act
 	# which reaches the script only through the matcher's AGENT_ONLY_TOOLS
 	# alternative, and requires agent_only_reason's text. First run 2026-10-29
 	# (Claude Code 2.1.308, SDK 0.2.172): BOUND on all three cases.
+	# The read case (issue #3836) provokes a built-in Read of research.json and requires
+	# READ_REASON's text. First run 2026-11-05 (Claude Code 2.1.308, SDK 0.2.172, macOS): BOUND.
 	#
 	# A pass proves the HOSTED loader binds. Cowork is a different loader,
-	# reachable only by a human in a live session, so issue #1160 stays on the
-	# nothing-checks register either way. Hard-errors without a key rather than
+	# reachable only by a human in a live session, so the Cowork gap (docs/architecture.md
+	# §9.4 gap 1) stays on the nothing-checks register either way. A person saw the
+	# read case bind in Cowork on 2026-11-05 (one session, Windows); nothing re-runs it.
+	# Hard-errors without a key rather than
 	# skipping -- agent-smoke's exit-0 skip is how an unrunnable check reads as
 	# a passing one.
 	cd apps/server && \
