@@ -4225,6 +4225,134 @@ describe("research_append (Phase 3)", () => {
     });
   });
 
+  // Claims carry their own tier, so the summary gates run per claim (Stage 1a of
+  // docs/plan/conclusion-tree.md): a conclusive claim meets the stop-gate floor on
+  // its own, and a tier change re-states the claims.
+  describe("the conclusive floor and the tier change, per claim", () => {
+    const nameClaim = (label: string, tier: string, shortfall: string) => ({
+      claim: label, proof_tier: tier, shortfall, supporting_assertion_ids: ["a_001"], name: { person: "I1", given: "John" },
+    });
+    const summaryWith = (tier: string, claims: unknown[], shortfall = "gap") => ({
+      question_id: "q_001", tier, vehicle: "summary", shortfall,
+      supporting_assertion_ids: ["a_001"], resolved_conflict_ids: [],
+      exhaustive_search_summary: "Searched census + vitals", narrative_markdown: "## Conclusion\n...",
+      claims,
+    });
+    const appendSummary = (entry: unknown) =>
+      researchAppend({ projectPath: dir, section: "proof_summaries", op: "append", entry } as never);
+    const floor = /claim '(\w+)' at '(proved|disproved)' is a conclusive answer/;
+    const declared = () => {
+      const research = baseResearch();
+      research.person_evidence = liveLinks("a_001");
+      const sc = {
+        goal_alignment: "Yes.", repository_breadth: "All searched.", original_substitution: "Originals.",
+        independent_verification: "Three sources.", evidence_class: "Census.", conflict_resolution: "None.", overturn_risk: "Low.",
+      };
+      research.questions = [{
+        ...validQuestion("q_001"), status: "exhaustive_declared",
+        search_stop: { stopped_because: "question_answered", justification: "Done.", log_entry_ids: ["log_001"], stop_criteria: sc, not_reached: [] },
+      }];
+      research.log = [{
+        id: "log_001", plan_item_id: null, performed: "2026-01-01T00:00:00Z",
+        tool: "record_search", query: {}, outcome: "negative", results_examined: 0, external_site: null, results_ref: null,
+      }];
+      return research;
+    };
+
+    it("a proved claim under a probable scalar without an exhaustive declaration is refused", async () => {
+      await writeProject();
+      const r = await appendSummary(summaryWith("probable", [nameClaim("name", "proved", "none"), nameClaim("other", "probable", "gap")]));
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toMatch(floor);
+    });
+
+    it("a disproved claim under a not_proved scalar without an exhaustive declaration is refused", async () => {
+      await writeProject();
+      const r = await appendSummary(summaryWith("not_proved", [nameClaim("name", "disproved", "none")]));
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toMatch(floor);
+    });
+
+    it("a claims-only update adding a disproved claim below the proof bar is refused", async () => {
+      const research = baseResearch();
+      research.proof_summaries.push({ id: "ps_001", ...summaryWith("not_proved", [nameClaim("name", "not_proved", "gap")]) });
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001",
+        fields: { claims: [nameClaim("name", "disproved", "none")] },
+      } as never);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toMatch(floor);
+    });
+
+    it("a disproved claim on a question declared exhaustive before the call passes", async () => {
+      await writeProject(declared());
+      const r = await appendSummary(summaryWith("not_proved", [nameClaim("name", "disproved", "none")]));
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+    });
+
+    it("a claim above a not_proved scalar meets the unlinked-proof gate on its own", async () => {
+      const research = phase3Research();
+      research.person_evidence = []; // a_001 is linked to no person
+      await writeProject(research);
+      const r = await appendSummary(summaryWith("not_proved", [nameClaim("name", "probable", "gap")]));
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toMatch(/claim 'name': proof_summaries .*none is linked to a person/);
+    });
+
+    it("a claims-only update raising a claim meets the unlinked-proof gate", async () => {
+      const research = phase3Research();
+      research.person_evidence = [];
+      research.proof_summaries.push({ id: "ps_001", ...summaryWith("not_proved", [nameClaim("name", "not_proved", "gap")]) });
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001",
+        fields: { claims: [nameClaim("name", "probable", "gap")] },
+      } as never);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toMatch(/claim 'name': .*none is linked to a person/);
+    });
+
+    it("a denied claim raises no identity gate", async () => {
+      const research = phase3Research();
+      research.person_evidence = [];
+      await writeProject(research);
+      const r = await appendSummary(summaryWith("not_proved", [{ ...nameClaim("name", "probable", "gap"), polarity: "denied" }]));
+      expect(errorsOf(r) ?? []).toEqual([]);
+    });
+
+    it("a claims-only update adding a proved claim under a proved scalar still meets the floor", async () => {
+      const research = baseResearch();
+      research.person_evidence = liveLinks("a_001");
+      research.proof_summaries.push({ id: "ps_001", ...summaryWith("proved", [nameClaim("name", "probable", "gap")], "none") });
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001",
+        fields: { claims: [nameClaim("name", "proved", "none")] },
+      } as never);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toMatch(floor);
+    });
+
+    it("a tier-only downgrade of a summary holding a probable claim is refused", async () => {
+      const research = baseResearch();
+      research.person_evidence = liveLinks("a_001");
+      research.proof_summaries.push({ id: "ps_001", ...summaryWith("probable", [nameClaim("name", "probable", "gap")]) });
+      await writeProject(research);
+      const tierOnly = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001", fields: { tier: "possible" },
+      } as never);
+      expect(tierOnly.ok).toBe(false);
+      expect((errorsOf(tierOnly) ?? []).join("\n")).toContain("but claims[] is not in this op");
+      const withClaims = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001",
+        fields: { tier: "possible", claims: [nameClaim("name", "possible", "gap")] },
+      } as never);
+      expect(errorsOf(withClaims) ?? []).toEqual([]);
+    });
+  });
+
   // `shortfall` vs the tier is a single-object rule, so ADR-0011's first
   // question puts it at the write boundary rather than in prose. Until
   // 2026-09-21 it lived only in the agent body and the eval validator, and
@@ -4433,12 +4561,11 @@ describe("research_append (Phase 3)", () => {
     });
   });
 
-  // A claim is a ParentChild relationship; a fact claim has nowhere to put one.
-  // The reported failure: the refusal said only "missing required field
-  // 'relationship'", and the agent answered by dropping `claims` altogether, which
-  // left `tier` with nothing to be checked against. The refusal now says why and
-  // what to keep. What it refuses has not changed; only what it says.
-  describe("a claim that is not a ParentChild relationship says why", () => {
+  // A claim names exactly one object (Decision 5 of docs/plan/conclusion-tree.md).
+  // The reported failure behind the wording: told only "missing required field
+  // 'relationship'", the agent dropped `claims` altogether, which left `tier` with
+  // nothing to be checked against. The refusal names the objects a claim can hold.
+  describe("a claim names exactly one object, and the refusal says which", () => {
     const treeWithParent = {
       ...baseTree,
       persons: [...baseTree.persons, { id: "I2", gender: "Male", names: [{ id: "N2", given: "Jim", surname: "Smith" }] }],
@@ -4480,28 +4607,21 @@ describe("research_append (Phase 3)", () => {
       expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
       return errorsOf(r) ?? [];
     };
-    /** What every one of these refusals must carry. */
-    const carriesTheReason = (text: string) => {
-      expect(text).toContain("claims[] holds ParentChild relationship claims only");
-      expect(text).toContain("Fact claims are not supported yet");
-      expect(text).toContain("#3213");
-      expect(text).toContain("#3032");
-      expect(text).toContain("keep the ParentChild claims in claims[]");
-      expect(text).toContain("tier must equal the strongest proof_tier among the claims that remain");
-      // The rule is max, which the spec rejects "weakest" for by name, and the text
-      // must not teach that dropping `claims` gets past the check.
-      expect(text).not.toMatch(/weakest/);
-      expect(text).not.toMatch(/escap|bypass|skips? the (tier )?check/i);
-    };
-
-    it("a fact claim with no relationship: keeps the old opening words and adds the reason", async () => {
+    it("a claim with no object is refused, naming the objects a claim can hold", async () => {
       const errors = await refusal([relationshipClaim(), factClaim()]);
       const line = errors.find((e) => e.includes("claims[1]"));
       expect(line, errors.join("\n")).toBeDefined();
-      expect(line).toContain("missing required field 'relationship'");
-      carriesTheReason(line!);
+      expect(line).toContain("a claim names exactly one object: one of relationship, fact, identity, name, finding");
       // The valid claim beside it is not blamed.
       expect(errors.some((e) => e.includes("claims[0]"))).toBe(false);
+    });
+
+    it("a fact claim is accepted, and is persisted with its claims", async () => {
+      await writeProject(undefined, treeWithParent);
+      const claims = [relationshipClaim(), factClaim({ fact: { subject: "I1", fact_type: "Birth", place: "Boston" } })];
+      const r = await appendWith(claims, "probable");
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect((await readResearch()).proof_summaries[0].claims).toEqual(claims);
     });
 
     // ut_proof_conclusion_022: a not_proved maternity claim sent without its
@@ -4523,26 +4643,21 @@ describe("research_append (Phase 3)", () => {
       }
     });
 
-    it("a fact claim whose relationship is null", async () => {
+    it("a claim whose only object is null names none", async () => {
       const errors = await refusal([factClaim({ relationship: null })]);
       const line = errors.find((e) => e.includes("claims[0]"));
       expect(line, errors.join("\n")).toBeDefined();
-      expect(line).toContain("required field 'relationship' is null");
-      carriesTheReason(line!);
+      expect(line).toContain("This one names none");
     });
 
-    it("a relationship of another type: keeps the old opening words and adds the reason", async () => {
+    it("a relationship of another type, or a Couple given parent and child, is refused", async () => {
       const errors = await refusal([
         factClaim({ relationship: { type: "Fact", parent: "I2", child: "I1" } }),
         factClaim({ claim: "marriage", relationship: { type: "Couple", parent: "I2", child: "I1" } }),
       ]);
-      const fact = errors.find((e) => e.includes("got 'Fact'"));
-      const couple = errors.find((e) => e.includes("got 'Couple'"));
-      expect(fact, errors.join("\n")).toBeDefined();
-      expect(couple, errors.join("\n")).toBeDefined();
-      expect(fact).toContain("relationship.type must be 'ParentChild'");
-      carriesTheReason(fact!);
-      carriesTheReason(couple!);
+      const text = errors.join("\n");
+      expect(text).toContain("relationship.type must be 'ParentChild' or 'Couple', got 'Fact'");
+      expect(text).toContain("a Couple relationship names person1 and person2, not 'parent'");
     });
 
     it.each([["an empty string", ""], ["false", false], ["zero", 0]])(
@@ -4563,13 +4678,9 @@ describe("research_append (Phase 3)", () => {
       expect((await readResearch()).proof_summaries[0].claims).toEqual([relationshipClaim("probable")]);
     });
 
-    it("keeping the relationship claims keeps tier checked against them, in the message the rule already had", async () => {
-      // The scalar is `probable`, the claim kept is `possible`: refused by the
-      // existing tier rule, whose wording is unchanged and carries no claim note.
+    it("a scalar above every claim is refused by the bound", async () => {
       const errors = await refusal([relationshipClaim("possible")], "probable");
-      const text = errors.join("\n");
-      expect(text).toContain("tier 'probable' does not match the stronger of claims[].proof_tier ('possible')");
-      expect(text).not.toContain("not supported yet");
+      expect(errors.join("\n")).toContain("tier 'probable' exceeds the strongest of claims[].proof_tier ('possible')");
     });
   });
 
@@ -5837,6 +5948,28 @@ describe("research_append (Phase 3)", () => {
         entry: summary("probable", ["a_013"]), // src_004 only; c_002 disputes src_001
       });
       expect(r.ok, `refused: ${JSON.stringify((r as any).errors)}`).toBe(true);
+    });
+
+    it("a probable claim citing a source an open conflict disputes is refused, while a sibling claim on undisputed sources passes", async () => {
+      const state = conflicted();
+      state.conflicts = [{ id: "c_002", status: "unresolved", competing_assertion_ids: ["a_002"] }]; // disputes src_001 only
+      await writeProject(state);
+      const factClaim = (label: string, supporting: string[]) => ({
+        claim: label, proof_tier: "probable", shortfall: "gap", supporting_assertion_ids: supporting,
+        fact: { subject: "I1", fact_type: "Residence" },
+      });
+      const r = await researchAppend({
+        projectPath: dir,
+        section: "proof_summaries",
+        op: "append",
+        entry: { ...summary("not_proved", []), claims: [factClaim("household", ["a_004"]), factClaim("father", ["a_013"])] },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      const msg = r.errors.join("\n");
+      expect(msg).toContain("claim 'household': tier 'probable' is not available while c_002");
+      expect(msg).toContain("lower its own proof_tier to not_proved");
+      expect(msg).not.toContain("claim 'father'");
     });
 
     it("does NOT fire once the conflict is resolved", async () => {

@@ -1,11 +1,38 @@
 import Markdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import { useResearchData } from '../../contexts/ResearchDataContext'
-import type { Question } from '../../lib/schema'
+import type { ProofClaim, Question } from '../../lib/schema'
 import Card from '../shared/Card'
 import StatusBadge from '../shared/StatusBadge'
 import CrossLink from '../shared/CrossLink'
 import styles from './ProofSummariesSection.module.css'
+
+/** One line naming what a claim concludes, whatever its kind. */
+function claimObject(c: ProofClaim): string {
+  if (c.relationship?.type === 'ParentChild') {
+    const subtype = c.relationship.subtype ? ` (${c.relationship.subtype})` : ''
+    return `ParentChild${subtype}: ${c.relationship.parent} → ${c.relationship.child}`
+  }
+  if (c.relationship?.type === 'Couple') {
+    return `Couple: ${c.relationship.person1} & ${c.relationship.person2}`
+  }
+  if (c.fact) {
+    const s = c.fact.subject
+    const who = typeof s === 'string' ? s : `${s.person1} & ${s.person2}`
+    const detail = [c.fact.date, c.fact.place, c.fact.value].filter(Boolean).join(', ')
+    return `${c.fact.fact_type} of ${who}${detail ? `: ${detail}` : ''}`
+  }
+  if (c.identity) {
+    return c.identity.same_as
+      ? `${c.identity.person} is ${c.identity.same_as}`
+      : `${c.identity.record_id} ${c.identity.party} is ${c.identity.person}`
+  }
+  if (c.name) {
+    return `Name of ${c.name.person}: ${[c.name.given, c.name.surname].filter(Boolean).join(' ')}`
+  }
+  if (c.finding) return `${c.finding.finding_type}: ${c.finding.statement}`
+  return ''
+}
 
 export default function ProofSummariesSection(): React.JSX.Element {
   const { research, getById } = useResearchData()
@@ -76,9 +103,8 @@ export default function ProofSummariesSection(): React.JSX.Element {
                       <span className={styles.claimLabel}>{c.claim}</span>
                       <StatusBadge value={c.proof_tier} />
                       {c.shortfall && c.shortfall !== 'none' && <StatusBadge value={c.shortfall} />}
-                      <span className={styles.claimEndpoint}>
-                        {c.relationship.type}: {c.relationship.parent} → {c.relationship.child}
-                      </span>
+                      {c.polarity === 'denied' && <StatusBadge value="denied" />}
+                      <span className={styles.claimEndpoint}>{claimObject(c)}</span>
                     </div>
                   ))}
                 </div>

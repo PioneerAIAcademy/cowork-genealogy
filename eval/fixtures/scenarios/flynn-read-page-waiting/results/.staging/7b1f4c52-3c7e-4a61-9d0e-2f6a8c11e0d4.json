@@ -1,0 +1,21 @@
+{
+  "tool": "image_transcribe",
+  "retrieved": "2026-05-02T12:00:00.000Z",
+  "payload": {
+    "query": {
+      "ark": "ark:/61903/3:1:33S7-9YBC-V6L"
+    },
+    "results": [
+      {
+        "id": "33S7-9YBC-V6L",
+        "source": {
+          "ark": "ark:/61903/3:1:33S7-9YBC-V6L"
+        },
+        "content_type": "image/jpeg",
+        "size_bytes": 1702114,
+        "model": "google/gemini-3.7-flash",
+        "transcription": "Schedule 1. Free Inhabitants in the Borough of Pottsville, County of Schuylkill, State of Pennsylvania, enumerated June 1860.\n\nDwelling 112, family 119:\nThomas Flynn, 46, M, Laborer, Ireland\nBridget Flynn, 42, F, Ireland\nPatrick Flynn, 15, M, Pennsylvania, attended school\nMichael Flynn, 9, M, Pennsylvania, attended school\n"
+      }
+    ]
+  }
+}
