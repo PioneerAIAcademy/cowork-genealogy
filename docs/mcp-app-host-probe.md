@@ -303,7 +303,8 @@ Open every conversation with the connector on.
     folder and the thin server has no `project_context`, while the probe lists every tool
     under one connector. The plugin is the local branch `mcp-app-router-variant`, one
     commit on `main`, never a PR. In `packages/engine/plugin/skills/research/SKILL.md`,
-    under "Bounded request or job", its "where the project stands" entry reads:
+    its description no longer sends a status question away from the skill, and under
+    "Bounded request or job", its "where the project stands" entry reads:
 
     ```text
     where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers; then call `show_project` with `show: latest` and the same `projectPath`, loaded by bare name with `+show_project` in ToolSearch).
@@ -332,9 +333,10 @@ Open every conversation with the connector on.
 
        Read a call from the probe's `show_project` log line. On the probe `project_context`
        is a stub that says it did nothing, so the paragraph will be empty of facts: only
-       whether `show_project` is called counts. It may stop at the paragraph: a status
-       question need not load the research skill, so the line may go unread. If it does
-       not call the tool, try the line below in a new conversation.
+       whether `show_project` is called counts. It may stop at the paragraph:
+       `project_context`'s own description says to answer in one paragraph and nothing
+       else, so a no may come from that tool and not from the line. Run the line below
+       in a new conversation whatever this one did.
 
        ```text
        show me the project
