@@ -28,7 +28,15 @@ import {
   RESIDENCELIKE_FACT_TYPES,
   Mob,
   getRelativeMobs,
+  normalizeGender,
 } from "../utils/mob.js";
+import {
+  CHRISTENING_LIKE_TYPES,
+  DAYS_IN_YEARS,
+  birthReading,
+  datedFacts,
+  deathReading,
+} from "../utils/impossible-date-range.js";
 import {
   earliestDayOfPersonFacts,
   earliestDayOfSelfFacts,
@@ -61,7 +69,7 @@ import {
   type PlaceCoords,
 } from "../utils/place-resolver.js";
 import { birthThresholdMiles, lookupWithin, type PlaceCoordsResolver } from "../utils/place-coords.js";
-import { earliestIsUnbounded, earliestYear, latestIsUnbounded, latestYear } from "../utils/date-helpers.js";
+import { earliestIsUnbounded, earliestYear, getDayRange, latestIsUnbounded, latestYear } from "../utils/date-helpers.js";
 import { haversineDistance } from "./distance.js";
 import { preferredName } from "../utils/name-helpers.js";
 import { getSimilarNamePairs } from "../utils/name-pairs.js";
@@ -285,6 +293,32 @@ const HAS_NO_COUPLE_RELATIONSHIPS_CONFLICT = "hasNoCoupleRelationshipsConflict";
 const HAS_STILLBIRTH_CONFLICT = "hasStillbirthConflict";
 const DELAYED_BURIAL_DAYS = 365;
 
+// Issue #4287: impossibilities and family-shape checks with no FamilySearch
+// counterpart. Each reads dates through `utils/impossible-date-range.ts`. An
+// `…Estimated` tag is its sibling's check with the birth read through the
+// christening proxy: one severity per tag, so the proxy reading has its own.
+const HAS_DEATH_BEFORE_BIRTH = "hasDeathBeforeBirth";
+const HAS_DEATH_BEFORE_BIRTH_ESTIMATED = "hasDeathBeforeBirthEstimated";
+const HAS_CHILD_BORN_BEFORE_PARENT = "hasChildBornBeforeParent";
+const HAS_CHILD_BORN_BEFORE_PARENT_ESTIMATED = "hasChildBornBeforeParentEstimated";
+const HAS_MARRIAGE_BEFORE_BIRTH = "hasMarriageBeforeBirth";
+const HAS_MARRIAGE_BEFORE_BIRTH_ESTIMATED = "hasMarriageBeforeBirthEstimated";
+const HAS_MARRIAGE_AFTER_DEATH = "hasMarriageAfterDeath";
+const HAS_SPOUSE_NOT_ALIVE_TOGETHER = "hasSpouseNotAliveTogether";
+const HAS_SPOUSE_NOT_ALIVE_TOGETHER_ESTIMATED = "hasSpouseNotAliveTogetherEstimated";
+const HAS_COUPLE_WITH_SELF = "hasCoupleWithSelf";
+const EARLIEST_CHILD_EVENT_TO_BIRTH_12 = "earliestChildEventToBirth12";
+const EARLIEST_CHILD_EVENT_TO_BIRTH_12_ESTIMATED = "earliestChildEventToBirth12Estimated";
+const LATEST_CHILD_BIRTH_TO_BIRTH_75 = "latestChildBirthToBirth75";
+const TOO_MANY_PARENTS_3 = "tooManyParents3";
+const HAS_SPOUSE_WHO_IS_ANCESTOR = "hasSpouseWhoIsAncestor";
+const HAS_SPOUSE_WHO_IS_SIBLING = "hasSpouseWhoIsSibling";
+const HAS_LATE_CHRISTENING_18 = "hasLateChristening18";
+// Data-quality tags (lead, 2026-11-05): listed, never blocking, reported last.
+const NO_GENDER_FOUND = "noGenderFound";
+const NON_STANDARD_DATE = "nonStandardDate";
+const NON_STANDARD_PLACE = "nonStandardPlace";
+
 // Project rule — NOT a FamilySearch Java MobWarnings port.
 const HAS_EVENT_IN_OTHER_COUNTRY = "hasEventInOtherCountry";
 const HAS_PLACE_STANDARD_OTHER_COUNTRY = "hasPlaceStandardOtherCountry";
@@ -335,7 +369,13 @@ const EVENT_IN_OTHER_COUNTRY_SKIP: ReadonlySet<string> = new Set([
  * `calculateWarnings` runs in merge mode (a Block in `merge_warnings`).
  */
 export function hasEventBeforeBirth(mob: Mob, days: number): boolean {
-  const latestBirthRead = latestDayOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES, null, 0, "min");
+  // A christening that follows a dated Birth is not where the birth is read
+  // from (issue #4287): 13.7% of one 1,187-person sample were christened more
+  // than 2 years after the birth, so a late christening is ordinary, and one
+  // 18+ years late raises `hasLateChristening18` instead. With no dated Birth
+  // the christening stays in, as the birth's proxy.
+  const ignore = hasDatedBirth(mob) ? CHRISTENING_LIKE_TYPES : null;
+  const latestBirthRead = latestDayOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES, ignore, 0, "min");
   const earliestEventRead = earliestDayOfSelfFacts(mob, null, null, 0, "max");
   if (latestBirthRead === null || earliestEventRead === null) return false;
   return latestBirthRead - earliestEventRead > days;
@@ -363,7 +403,9 @@ export function hasEventBeforeBirth(mob: Mob, days: number): boolean {
  * bound. That call was made when `person_warnings` only REPORTED, where
  * over-firing costs a glance; #2840 made the same predicate refuse writes,
  * where over-firing blocks legitimate work, and `earliestChildBirthToBirth12`
- * is the tag standing between the gate and a child born before their parent.
+ * stands between the gate and a child born before their parent wherever the
+ * birth is read from the birth-like family (`hasChildBornBeforeParent` reads
+ * Birth facts only).
  * No test pinned the earliest-to-earliest reading — all five used exact years,
  * where the bounds coincide. Flagged for the lead on the PR rather than
  * decided silently.
@@ -777,6 +819,11 @@ export function hasChristeningBeforeBirth(mob: Mob): boolean {
  * Exact dates take no fudge and give Java's answer.
  */
 export function hasEventBeforeChristening(mob: Mob, days: number): boolean {
+  // With a dated Birth on or before every christening, an event before the
+  // christening is a question about the birth, which `hasEventBeforeBirth`
+  // asks; a late christening alone is not a contradiction (issue #4287). A
+  // christening before the birth is `hasChristeningBeforeBirth`'s.
+  if (christeningsFollowBirth(mob)) return false;
   const fudge = 365;
   const latestChristeningRead = latestDayOfSelfFacts(mob, CHRISTENING_AND_BAPTISM, null, fudge, "min");
   const earliestEventRead = earliestDayOfSelfFacts(mob, null, BIRTH_AND_EVENT_REGISTRATION, fudge, "max");
@@ -3545,6 +3592,600 @@ function checkHasPlaceStandardOtherCountry(mob: Mob): PersonWarning | null {
 // self-suppress (a mob trivially shares its own census + marriage dates).
 // See docs/specs/match-merge-workflow-spec.md §7.
 
+// ─── Issue #4287: impossible dates and family shapes ────────────────────────
+// Each check fires only when the dates cannot be right on any reading of them
+// (`utils/impossible-date-range.ts`). Biological links only: step, adoptive,
+// foster and guardian edges skip the parent checks (`isNonBiologicalSubtype`).
+
+/** True when the anchor has a Birth fact whose date can be read. */
+function hasDatedBirth(mob: Mob): boolean {
+  return mob.getFacts().some((f) => {
+    if (f.type !== "Birth") return false;
+    const std = getStandardDate(f);
+    return std !== null && getDayRange(std) !== null;
+  });
+}
+
+/** True when there is a dated Birth and every dated christening-like fact
+ *  can fall on or after it. False when there is no christening to compare. */
+function christeningsFollowBirth(mob: Mob): boolean {
+  const births = datedFacts(mob.getFacts(), new Set(["Birth"]));
+  const chrs = datedFacts(mob.getFacts(), CHRISTENING_LIKE_TYPES);
+  if (births.length === 0 || chrs.length === 0) return false;
+  const birthMin = Math.min(...births.map((b) => b.range.min));
+  return chrs.every((c) => c.range.max >= birthMin);
+}
+
+/** Facts as `PersonWarning.facts` entries; facts with no id are skipped. */
+function toWarningFacts(facts: readonly SimplifiedFact[]): WarningFact[] {
+  const out: WarningFact[] = [];
+  const seen = new Set<string>();
+  for (const f of facts) {
+    if (f.id === undefined || seen.has(f.id)) continue;
+    seen.add(f.id);
+    out.push({ id: f.id, type: f.type ?? "", date: f.date ?? f.standard_date ?? null });
+  }
+  return out;
+}
+
+/** Biological parents of any person, by id, through a child→parents index
+ *  built once per tree. */
+function parentIndex(mob: Mob): Map<string, string[]> {
+  const index = new Map<string, string[]>();
+  for (const r of mob.tree.relationships ?? []) {
+    if (r.type !== "ParentChild" || !r.parent || !r.child) continue;
+    if (isNonBiologicalSubtype(r.subtype)) continue;
+    const list = index.get(r.child) ?? [];
+    if (!list.includes(r.parent)) list.push(r.parent);
+    index.set(r.child, list);
+  }
+  return index;
+}
+
+/** Biological children of the anchor. */
+function biologicalChildren(mob: Mob): SimplifiedPerson[] {
+  const ids = new Set<string>();
+  for (const r of mob.tree.relationships ?? []) {
+    if (r.type !== "ParentChild" || r.parent !== mob.anchorId || !r.child) continue;
+    if (isNonBiologicalSubtype(r.subtype)) continue;
+    ids.add(r.child);
+  }
+  return mob.getChildren().filter((c) => c.id !== undefined && ids.has(c.id));
+}
+
+/** The anchor's spouses, less the anchor itself: `getSpouses()` returns the
+ *  anchor for a Couple with the same person at both ends. Not a subtype
+ *  filter — a Couple has no biological meaning. */
+function otherSpouses(mob: Mob): SimplifiedPerson[] {
+  return mob.getSpouses().filter((s) => s.id !== undefined && s.id !== mob.anchorId);
+}
+
+const ANCESTOR_WALK_GENERATIONS = 10;
+
+/** Biological ancestors of `id`, up to 10 generations, loop-safe. */
+function ancestorsOf(id: string, index: Map<string, string[]>): Set<string> {
+  const out = new Set<string>();
+  let frontier = [id];
+  for (let g = 0; g < ANCESTOR_WALK_GENERATIONS && frontier.length > 0; g++) {
+    const next: string[] = [];
+    for (const child of frontier) {
+      for (const p of index.get(child) ?? []) {
+        if (out.has(p) || p === id) continue;
+        out.add(p);
+        next.push(p);
+      }
+    }
+    frontier = next;
+  }
+  return out;
+}
+
+const ESTIMATED_NOTE =
+  " The birth is estimated as up to 2 years before the christening, because no Birth is recorded.";
+
+/** A death that ends before the birth begins. */
+export function deathBeforeBirth(mob: Mob): { estimated: boolean; facts: WarningFact[] } | null {
+  const person = mob.getPerson();
+  const birth = birthReading(person);
+  const death = deathReading(person);
+  if (birth === null || death === null) return null;
+  if (!(death.upper < birth.range.min)) return null;
+  return { estimated: birth.estimated, facts: toWarningFacts([...birth.facts, ...death.facts]) };
+}
+
+function checkHasDeathBeforeBirth(mob: Mob): PersonWarning | null {
+  const hit = deathBeforeBirth(mob);
+  if (!hit || hit.estimated) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_DEATH_BEFORE_BIRTH,
+    severity: "contradiction",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts: hit.facts,
+    message: "This person's death is dated before their birth on every reading of the dates.",
+  };
+}
+
+function checkHasDeathBeforeBirthEstimated(mob: Mob): PersonWarning | null {
+  const hit = deathBeforeBirth(mob);
+  if (!hit || !hit.estimated) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_DEATH_BEFORE_BIRTH_ESTIMATED,
+    severity: "implausible",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts: hit.facts,
+    message:
+      "This person's death is dated before their estimated birth." +
+      ESTIMATED_NOTE,
+  };
+}
+
+interface ChildBeforeParentHit {
+  child: SimplifiedPerson;
+  estimated: boolean;
+  facts: WarningFact[];
+}
+
+/** Biological children whose birth ends before the parent's begins. */
+export function childrenBornBeforeParent(mob: Mob): ChildBeforeParentHit[] {
+  const parentBirth = birthReading(mob.getPerson());
+  if (parentBirth === null) return [];
+  const out: ChildBeforeParentHit[] = [];
+  for (const child of biologicalChildren(mob)) {
+    const childBirth = birthReading(child);
+    if (childBirth === null) continue;
+    if (!(childBirth.range.max < parentBirth.range.min)) continue;
+    out.push({
+      child,
+      estimated: parentBirth.estimated || childBirth.estimated,
+      facts: toWarningFacts([...parentBirth.facts, ...childBirth.facts]),
+    });
+  }
+  return out;
+}
+
+function checkHasChildBornBeforeParent(mob: Mob): PersonWarning[] {
+  return childrenBornBeforeParent(mob)
+    .filter((h) => !h.estimated)
+    .map((h) => ({
+      scoreType: COHERENCE,
+      issueType: HAS_CHILD_BORN_BEFORE_PARENT,
+      severity: "contradiction" as const,
+      personId: mob.anchorId,
+      personName: getPersonName(mob.getPerson()),
+      facts: h.facts,
+      relatedPersonId: h.child.id,
+      message: `${getPersonName(h.child)} is recorded as this person's child but was born before them.`,
+    }));
+}
+
+function checkHasChildBornBeforeParentEstimated(mob: Mob): PersonWarning[] {
+  return childrenBornBeforeParent(mob)
+    .filter((h) => h.estimated)
+    .map((h) => ({
+      scoreType: COHERENCE,
+      issueType: HAS_CHILD_BORN_BEFORE_PARENT_ESTIMATED,
+      severity: "implausible" as const,
+      personId: mob.anchorId,
+      personName: getPersonName(mob.getPerson()),
+      facts: h.facts,
+      relatedPersonId: h.child.id,
+      message:
+        `${getPersonName(h.child)} is recorded as this person's child but was born before them, ` +
+        "with at least one birth estimated as up to 2 years before a christening because no Birth is recorded.",
+    }));
+}
+
+/** Marriage-like facts on the anchor's Couple edges, dated before the birth. */
+export function marriageBeforeBirth(mob: Mob): { estimated: boolean; facts: WarningFact[] } | null {
+  const birth = birthReading(mob.getPerson());
+  if (birth === null) return null;
+  const early = datedFacts(mob.coupleFacts(), MARRIAGELIKE_FACT_TYPES)
+    .filter((m) => m.range.max < birth.range.min)
+    .map((m) => m.fact);
+  if (early.length === 0) return null;
+  return { estimated: birth.estimated, facts: toWarningFacts([...birth.facts, ...early]) };
+}
+
+function checkHasMarriageBeforeBirth(mob: Mob): PersonWarning | null {
+  const hit = marriageBeforeBirth(mob);
+  if (!hit || hit.estimated) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_MARRIAGE_BEFORE_BIRTH,
+    severity: "contradiction",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts: hit.facts,
+    message: "A marriage of this person's is dated before their birth on every reading of the dates.",
+  };
+}
+
+function checkHasMarriageBeforeBirthEstimated(mob: Mob): PersonWarning | null {
+  const hit = marriageBeforeBirth(mob);
+  if (!hit || !hit.estimated) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_MARRIAGE_BEFORE_BIRTH_ESTIMATED,
+    severity: "implausible",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts: hit.facts,
+    message:
+      "A marriage of this person's is dated before their estimated birth." +
+      ESTIMATED_NOTE,
+  };
+}
+
+/** Marriage types that cannot postdate a death. A registration, notice or
+ *  settlement can be dated after the event it records. */
+const MARRIAGE_EVENT_TYPES: ReadonlySet<string> = new Set(
+  [...MARRIAGELIKE_FACT_TYPES].filter(
+    (t) => t !== "MarriageRegistration" && t !== "MarriageNotice" && t !== "MarriageSettlement",
+  ),
+);
+
+/** Couple marriage facts that begin after the anchor's death has ended. */
+export function marriageAfterDeath(mob: Mob): WarningFact[] | null {
+  const death = deathReading(mob.getPerson());
+  if (death === null) return null;
+  const late = datedFacts(mob.coupleFacts(), MARRIAGE_EVENT_TYPES)
+    .filter((m) => m.range.min > death.upper)
+    .map((m) => m.fact);
+  if (late.length === 0) return null;
+  return toWarningFacts([...death.facts, ...late]);
+}
+
+function checkHasMarriageAfterDeath(mob: Mob): PersonWarning | null {
+  const facts = marriageAfterDeath(mob);
+  if (!facts) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_MARRIAGE_AFTER_DEATH,
+    severity: "contradiction",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts,
+    message: "A marriage of this person's is dated after their death on every reading of the dates.",
+  };
+}
+
+interface NotAliveTogetherHit {
+  spouse: SimplifiedPerson;
+  estimated: boolean;
+  facts: WarningFact[];
+}
+
+/** Spouses one of whom died before the other was born. Both directions are
+ *  read from either anchor, so the two anchors cite the same facts. */
+export function spousesNotAliveTogether(mob: Mob): NotAliveTogetherHit[] {
+  const self = mob.getPerson();
+  const out: NotAliveTogetherHit[] = [];
+  for (const spouse of otherSpouses(mob)) {
+    const pairs: Array<[SimplifiedPerson, SimplifiedPerson]> = [
+      [self, spouse],
+      [spouse, self],
+    ];
+    let estimated = false;
+    let fired = false;
+    const facts: SimplifiedFact[] = [];
+    for (const [dead, born] of pairs) {
+      const death = deathReading(dead);
+      const birth = birthReading(born);
+      if (death === null || birth === null) continue;
+      if (!(death.upper < birth.range.min)) continue;
+      fired = true;
+      estimated = estimated || birth.estimated;
+      facts.push(...death.facts, ...birth.facts);
+    }
+    if (fired) out.push({ spouse, estimated, facts: toWarningFacts(facts) });
+  }
+  return out;
+}
+
+function checkHasSpouseNotAliveTogether(mob: Mob): PersonWarning[] {
+  return spousesNotAliveTogether(mob)
+    .filter((h) => !h.estimated)
+    .map((h) => ({
+      scoreType: COHERENCE,
+      issueType: HAS_SPOUSE_NOT_ALIVE_TOGETHER,
+      severity: "contradiction" as const,
+      personId: mob.anchorId,
+      personName: getPersonName(mob.getPerson()),
+      facts: h.facts,
+      relatedPersonId: h.spouse.id,
+      message: `This person and their spouse ${getPersonName(h.spouse)} were never alive at the same time: one died before the other was born.`,
+    }));
+}
+
+function checkHasSpouseNotAliveTogetherEstimated(mob: Mob): PersonWarning[] {
+  return spousesNotAliveTogether(mob)
+    .filter((h) => h.estimated)
+    .map((h) => ({
+      scoreType: COHERENCE,
+      issueType: HAS_SPOUSE_NOT_ALIVE_TOGETHER_ESTIMATED,
+      severity: "implausible" as const,
+      personId: mob.anchorId,
+      personName: getPersonName(mob.getPerson()),
+      facts: h.facts,
+      relatedPersonId: h.spouse.id,
+      message:
+        `This person and their spouse ${getPersonName(h.spouse)} appear never to have been alive at the same time.` +
+        ESTIMATED_NOTE,
+    }));
+}
+
+/** A Couple with the anchor at both ends. `tree_edit` refuses one and a merge
+ *  drops one, so this fires only on a tree that already holds one. */
+function checkHasCoupleWithSelf(mob: Mob): PersonWarning | null {
+  const selfCouples = (mob.tree.relationships ?? []).filter(
+    (r) => r.type === "Couple" && r.person1 === mob.anchorId && r.person2 === mob.anchorId,
+  );
+  if (selfCouples.length === 0) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_COUPLE_WITH_SELF,
+    severity: "contradiction",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts: toWarningFacts(selfCouples.flatMap((r) => r.facts ?? [])),
+    message: "This person is recorded as married to themselves.",
+  };
+}
+
+interface ChildEventHit {
+  child: SimplifiedPerson;
+  estimated: boolean;
+  facts: WarningFact[];
+}
+
+/** Biological children with no dated birth-like fact whose earliest event
+ *  (read as late as it allows) falls before the parent turned 12. A child with
+ *  a birth-like fact is `earliestChildBirthToBirth12`'s. */
+export function childEventsBeforeParent12(mob: Mob): ChildEventHit[] {
+  const parentBirth = birthReading(mob.getPerson());
+  if (parentBirth === null) return [];
+  const cutoff = parentBirth.range.min + DAYS_IN_YEARS(12);
+  const out: ChildEventHit[] = [];
+  for (const child of biologicalChildren(mob)) {
+    const facts = child.facts ?? [];
+    if (datedFacts(facts, BIRTHLIKE_FACT_TYPES).length > 0) continue;
+    const events = datedFacts(facts, null);
+    if (events.length === 0) continue;
+    const earliest = events.reduce((a, b) => (b.range.max < a.range.max ? b : a));
+    if (!(earliest.range.max < cutoff)) continue;
+    out.push({
+      child,
+      estimated: parentBirth.estimated,
+      facts: toWarningFacts([...parentBirth.facts, earliest.fact]),
+    });
+  }
+  return out;
+}
+
+function checkEarliestChildEventToBirth12(mob: Mob): PersonWarning[] {
+  return childEventsBeforeParent12(mob)
+    .filter((h) => !h.estimated)
+    .map((h) => ({
+      scoreType: COHERENCE,
+      issueType: EARLIEST_CHILD_EVENT_TO_BIRTH_12,
+      severity: "implausible" as const,
+      personId: mob.anchorId,
+      personName: getPersonName(mob.getPerson()),
+      facts: h.facts,
+      relatedPersonId: h.child.id,
+      message: `An event of this person's child ${getPersonName(h.child)} is dated before this person turned 12.`,
+    }));
+}
+
+function checkEarliestChildEventToBirth12Estimated(mob: Mob): PersonWarning[] {
+  return childEventsBeforeParent12(mob)
+    .filter((h) => h.estimated)
+    .map((h) => ({
+      scoreType: COHERENCE,
+      issueType: EARLIEST_CHILD_EVENT_TO_BIRTH_12_ESTIMATED,
+      severity: "implausible" as const,
+      personId: mob.anchorId,
+      personName: getPersonName(mob.getPerson()),
+      facts: h.facts,
+      relatedPersonId: h.child.id,
+      message:
+        `An event of this person's child ${getPersonName(h.child)} is dated before this person turned 12.` +
+        ESTIMATED_NOTE,
+    }));
+}
+
+/** A biological child born when the parent was 75 to 79, at year level, the
+ *  way `latestChildBirthToBirth80` reads. From 80 that tag takes over. */
+export function latestBiologicalChildBirthToBirth(mob: Mob): { gap: number; child: SimplifiedPerson } | null {
+  const selfBirth = latestYearOfSelfFacts(mob, BIRTHLIKE_FACT_TYPES);
+  if (selfBirth === null) return null;
+  let best: { gap: number; child: SimplifiedPerson } | null = null;
+  for (const child of biologicalChildren(mob)) {
+    const y = latestYearOfPersonFacts(child, BIRTHLIKE_FACT_TYPES);
+    if (y === null) continue;
+    const gap = y - selfBirth;
+    if (best === null || gap > best.gap) best = { gap, child };
+  }
+  return best;
+}
+
+function checkLatestChildBirthToBirth75(mob: Mob): PersonWarning | null {
+  const hit = latestBiologicalChildBirthToBirth(mob);
+  if (!hit || hit.gap < 75 || hit.gap >= 80) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: LATEST_CHILD_BIRTH_TO_BIRTH_75,
+    severity: "implausible",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts: unionFactIds(
+      selfFactIds(mob, BIRTHLIKE_FACT_TYPES),
+      warningFactsOfPerson(hit.child, BIRTHLIKE_FACT_TYPES),
+    ),
+    relatedPersonId: hit.child.id,
+    message: `This person was about ${hit.gap} at the birth of their child ${getPersonName(hit.child)}.`,
+  };
+}
+
+/** Three or more biological parents, at least one with no sex recorded — the
+ *  case `tooManyFathers2` and `tooManyMothers2` cannot count. */
+function checkTooManyParents3(mob: Mob): PersonWarning | null {
+  const bio = biologicalParentIds(mob);
+  const parents = mob.getParents().filter((p) => p.id !== undefined && bio.has(p.id));
+  if (parents.length < 3) return null;
+  if (!parents.some((p) => normalizeGender(p.gender) === "Unknown")) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: TOO_MANY_PARENTS_3,
+    severity: "implausible",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts: [],
+    message: `This person has ${parents.length} biological parents recorded; a person has two.`,
+  };
+}
+
+function checkHasSpouseWhoIsAncestor(mob: Mob): PersonWarning[] {
+  const index = parentIndex(mob);
+  const mine = ancestorsOf(mob.anchorId, index);
+  const out: PersonWarning[] = [];
+  for (const spouse of otherSpouses(mob)) {
+    const id = spouse.id!;
+    const theirs = ancestorsOf(id, index);
+    if (!mine.has(id) && !theirs.has(mob.anchorId)) continue;
+    out.push({
+      scoreType: COHERENCE,
+      issueType: HAS_SPOUSE_WHO_IS_ANCESTOR,
+      severity: "contradiction",
+      personId: mob.anchorId,
+      personName: getPersonName(mob.getPerson()),
+      facts: [],
+      relatedPersonId: id,
+      message: mine.has(id)
+        ? `This person's spouse ${getPersonName(spouse)} is also recorded as their ancestor.`
+        : `This person's spouse ${getPersonName(spouse)} is also recorded as their descendant.`,
+    });
+  }
+  return out;
+}
+
+function checkHasSpouseWhoIsSibling(mob: Mob): PersonWarning[] {
+  const index = parentIndex(mob);
+  const mine = new Set(index.get(mob.anchorId) ?? []);
+  const out: PersonWarning[] = [];
+  for (const spouse of otherSpouses(mob)) {
+    const shared = (index.get(spouse.id!) ?? []).filter((p) => mine.has(p));
+    if (shared.length === 0) continue;
+    out.push({
+      scoreType: COHERENCE,
+      issueType: HAS_SPOUSE_WHO_IS_SIBLING,
+      severity: "contradiction",
+      personId: mob.anchorId,
+      personName: getPersonName(mob.getPerson()),
+      facts: [],
+      relatedPersonId: spouse.id,
+      message:
+        `This person and their spouse ${getPersonName(spouse)} are recorded as children of the same parent. ` +
+        "One cause is a step or adoptive link recorded as biological.",
+    });
+  }
+  return out;
+}
+
+/** Christening-like facts 18 or more years after the latest possible birth. */
+export function lateChristenings(mob: Mob): WarningFact[] | null {
+  const births = datedFacts(mob.getFacts(), new Set(["Birth"]));
+  if (births.length === 0) return null;
+  const birthMax = Math.max(...births.map((b) => b.range.max));
+  const late = datedFacts(mob.getFacts(), CHRISTENING_LIKE_TYPES).filter(
+    (c) => c.range.min - birthMax >= DAYS_IN_YEARS(18),
+  );
+  if (late.length === 0) return null;
+  return toWarningFacts([...births.map((b) => b.fact), ...late.map((c) => c.fact)]);
+}
+
+function checkHasLateChristening18(mob: Mob): PersonWarning | null {
+  const facts = lateChristenings(mob);
+  if (!facts) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: HAS_LATE_CHRISTENING_18,
+    severity: "implausible",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts,
+    message:
+      "A christening or baptism is dated 18 or more years after this person's birth: an adult baptism, or another date filed as a christening.",
+  };
+}
+
+function checkNoGenderFound(mob: Mob): PersonWarning | null {
+  if (normalizeGender(mob.getPerson().gender) !== "Unknown") return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: NO_GENDER_FOUND,
+    severity: "implausible",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts: [],
+    message: "No sex is recorded for this person.",
+  };
+}
+
+function checkNonStandardDate(mob: Mob): PersonWarning | null {
+  const bad = mob.getFacts().filter((f) => {
+    if (typeof f.date !== "string" || f.date.trim() === "") return false;
+    const std = getStandardDate(f);
+    return std === null || getDayRange(std) === null;
+  });
+  if (bad.length === 0) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: NON_STANDARD_DATE,
+    severity: "implausible",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts: toWarningFacts(bad),
+    message: "A date on this person has no standard form, so no date check can read it.",
+  };
+}
+
+function checkNonStandardPlace(mob: Mob): PersonWarning | null {
+  const bad = mob.getFacts().filter(
+    (f) => typeof f.place === "string" && f.place.trim() !== "" && !f.standard_place,
+  );
+  if (bad.length === 0) return null;
+  return {
+    scoreType: COHERENCE,
+    issueType: NON_STANDARD_PLACE,
+    severity: "implausible",
+    personId: mob.anchorId,
+    personName: getPersonName(mob.getPerson()),
+    facts: toWarningFacts(bad),
+    message: "A place on this person is not linked to a standard place.",
+  };
+}
+
+/** The three data-quality tags, which the check-warnings report and every
+ *  other caller read after the rest (lead, 2026-11-05). */
+const DATA_QUALITY_TAGS: ReadonlySet<string> = new Set([
+  NO_GENDER_FOUND,
+  NON_STANDARD_DATE,
+  NON_STANDARD_PLACE,
+]);
+
+/** Move the data-quality warnings to the end, keeping both groups' order. */
+export function dataQualityLast(warnings: PersonWarning[]): PersonWarning[] {
+  return [
+    ...warnings.filter((w) => !DATA_QUALITY_TAGS.has(w.issueType)),
+    ...warnings.filter((w) => DATA_QUALITY_TAGS.has(w.issueType)),
+  ];
+}
+
 // Merge-mode warning tags (match warnings.java string tags exactly).
 const HAS_SAME_CENSUS = "hasSameCensus";
 const HAS_EVENTS_OUTSIDE_LIFESPAN_FAR = "hasEventsOutsideLifespanFar";
@@ -3641,6 +4282,26 @@ export const ALL_WARNING_TAGS = [
   HAS_NO_CHILDREN_CONFLICT,
   HAS_NO_COUPLE_RELATIONSHIPS_CONFLICT,
   HAS_STILLBIRTH_CONFLICT,
+  HAS_DEATH_BEFORE_BIRTH,
+  HAS_DEATH_BEFORE_BIRTH_ESTIMATED,
+  HAS_CHILD_BORN_BEFORE_PARENT,
+  HAS_CHILD_BORN_BEFORE_PARENT_ESTIMATED,
+  HAS_MARRIAGE_BEFORE_BIRTH,
+  HAS_MARRIAGE_BEFORE_BIRTH_ESTIMATED,
+  HAS_MARRIAGE_AFTER_DEATH,
+  HAS_SPOUSE_NOT_ALIVE_TOGETHER,
+  HAS_SPOUSE_NOT_ALIVE_TOGETHER_ESTIMATED,
+  HAS_COUPLE_WITH_SELF,
+  EARLIEST_CHILD_EVENT_TO_BIRTH_12,
+  EARLIEST_CHILD_EVENT_TO_BIRTH_12_ESTIMATED,
+  LATEST_CHILD_BIRTH_TO_BIRTH_75,
+  TOO_MANY_PARENTS_3,
+  HAS_SPOUSE_WHO_IS_ANCESTOR,
+  HAS_SPOUSE_WHO_IS_SIBLING,
+  HAS_LATE_CHRISTENING_18,
+  NO_GENDER_FOUND,
+  NON_STANDARD_DATE,
+  NON_STANDARD_PLACE,
 ] as const;
 
 /**
@@ -4371,6 +5032,35 @@ export function calculateWarnings(
   const placeStandardOtherCountry = checkHasPlaceStandardOtherCountry(mergedMob);
   if (placeStandardOtherCountry) warnings.push(placeStandardOtherCountry);
 
+  // Issue #4287. The per-child and per-spouse checks return arrays.
+  for (const w of [
+    checkHasDeathBeforeBirth(mergedMob),
+    checkHasDeathBeforeBirthEstimated(mergedMob),
+    checkHasMarriageBeforeBirth(mergedMob),
+    checkHasMarriageBeforeBirthEstimated(mergedMob),
+    checkHasMarriageAfterDeath(mergedMob),
+    checkHasCoupleWithSelf(mergedMob),
+    checkLatestChildBirthToBirth75(mergedMob),
+    checkTooManyParents3(mergedMob),
+    checkHasLateChristening18(mergedMob),
+  ]) {
+    if (w) warnings.push(w);
+  }
+  warnings.push(...checkHasChildBornBeforeParent(mergedMob));
+  warnings.push(...checkHasChildBornBeforeParentEstimated(mergedMob));
+  warnings.push(...checkHasSpouseNotAliveTogether(mergedMob));
+  warnings.push(...checkHasSpouseNotAliveTogetherEstimated(mergedMob));
+  warnings.push(...checkEarliestChildEventToBirth12(mergedMob));
+  warnings.push(...checkEarliestChildEventToBirth12Estimated(mergedMob));
+  warnings.push(...checkHasSpouseWhoIsAncestor(mergedMob));
+  warnings.push(...checkHasSpouseWhoIsSibling(mergedMob));
+
+  // Data-quality tags last (lead, 2026-11-05); the tool re-sorts after it
+  // appends hasBirthFarFromParentsResidence.
+  for (const w of [checkNoGenderFound(mergedMob), checkNonStandardDate(mergedMob), checkNonStandardPlace(mergedMob)]) {
+    if (w) warnings.push(w);
+  }
+
   return warnings;
 }
 
@@ -4589,7 +5279,8 @@ export async function personWarningsTool(
     const far = checkBirthFarFromParentsResidence(mob, pairs, coords);
     if (far) warnings.push(far);
   }
-  return { warningCount: warnings.length, warnings };
+  const ordered = dataQualityLast(warnings);
+  return { warningCount: ordered.length, warnings: ordered };
 }
 
 
@@ -4641,7 +5332,7 @@ async function listWarnings(
       results.push({ personId: a.personId, error: a.error });
       continue;
     }
-    const all = [...a.warnings];
+    let all = [...a.warnings];
     let birthplaceCheck: BirthplaceCheck = "not_applicable";
     if (a.pairs && a.pairs.length > 0) {
       const far = checkBirthFarFromParentsResidence(a.mob, a.pairs, coords);
@@ -4649,6 +5340,7 @@ async function listWarnings(
       const unresolved = a.pairs.some((p) => !coords.get(p.birth.place) || !coords.get(p.residence.place));
       birthplaceCheck = far || !unresolved ? "checked" : "not_checked";
     }
+    all = dataQualityLast(all);
     const fresh = all.filter((w) => {
       const key = problemKey(w);
       if (seen.has(key)) return false;

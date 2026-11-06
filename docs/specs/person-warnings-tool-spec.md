@@ -46,10 +46,10 @@ mob."
   report on a relationship between the anchor and a one-hop relative.
 
 **Single-person warnings run on the anchor *and* its one-hop relatives,
-not the anchor alone.** 28 of the 55 self-checks have a relative-mob variant
+not the anchor alone.** 28 of the 75 self-checks have a relative-mob variant
 (`relatives*`, `maleRelatives*`, `femaleRelatives*`) that fires the same
 condition on a parent, spouse, or child; the flagged relative is named in
-the warning's `personId`/`personName`. The other 26 run on the anchor only.
+the warning's `personId`/`personName`. The other 47 run on the anchor only.
 The relative-variant tags in § Warning Definitions are the evidence.
 
 ---
@@ -304,10 +304,10 @@ All warnings are evaluated relative to the **anchor person** (the
 required `personId`) and its one-hop relatives. Single-person checks
 read the anchor's own facts; relationship checks consider relationships
 in which the anchor participates (as parent, spouse, or child); and 28 of
-the 55 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
+the 75 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
 variant that fires the same condition on a one-hop relative.
 
-The full catalogue of the **83 tags** the tool emits in `issueType` is
+The full catalogue of the **103 tags** the tool emits in `issueType` is
 the § Tag Catalogue below. It is the source of truth an implementation is
 checked against, and the drift lint
 (`tests/packaging/person-warnings-spec-drift.test.ts`) fails if it and
@@ -327,13 +327,10 @@ year-only value does not naively trip a day-level check.
 ### W1: `DEATH_BEFORE_BIRTH`
 
 > **SUPERSEDED — this section describes a design that was never shipped.**
-> The tool emits no `DEATH_BEFORE_BIRTH` tag. The shipped birth/death
-> ordering checks are the `hasEventBeforeBirth365_2` family (§ Tag
-> Catalogue): they compare day ranges rather than years and reason about
-> birth-like/death-like fact *families* rather than a single Birth and
-> Death fact, so a Death dated before the earliest birth-like fact trips
-> `hasEventBeforeBirth365_2` (a Death being an event more than a year
-> before birth). The placeholder note at the top of this file anticipated
+> The tool emits no `DEATH_BEFORE_BIRTH` tag. The shipped equivalent is
+> `hasDeathBeforeBirth` (§ Tag Catalogue), which fires on a death before the
+> birth on every reading of the dates; `hasEventBeforeBirth365_2` catches one
+> only when it is more than 2 years before the birth. The placeholder note at the top of this file anticipated
 > the move to FamilySearch tags; that migration happened and these
 > definitions were not updated with it. Kept here as the record of the
 > original design, not as a description of current behaviour — the old
@@ -541,7 +538,7 @@ tool.
 
 ### Tag Catalogue
 
-The full set of **83** tags the tool emits in `issueType`. Each row is
+The full set of **103** tags the tool emits in `issueType`. Each row is
 `Tag`, `Severity`, `Rule` (the condition that fires it), and `Cause`
 (what it usually indicates). `scoreType` is `COHERENCE` for every tag.
 The bidirectional drift lint
@@ -565,11 +562,11 @@ merged. Or the check sits in `calculateNonFinalWarnings`, which
 
 | Tag | Severity | Rule | Cause |
 |-----|----------|------|-------|
-| `hasEventBeforeBirth365_2` | contradiction | The person's earliest fact of any type is dated more than 2 years before their latest birth-like fact, with each date read as generously as it allows — see the divergence note below | Wrong birth date, wrong event attribution, or identity confusion |
+| `hasEventBeforeBirth365_2` | contradiction | The person's earliest fact of any type is dated more than 2 years before their latest birth-like fact, with each date read as generously as it allows. When a dated Birth exists, a Christening, Baptism or BaptismRegistration is not read as the birth (§ The late-christening fix) — see the divergence note below | Wrong birth date, wrong event attribution, or identity confusion |
 | `hasEventAfterDeath1` | contradiction | An event is dated more than 1 year after the person's latest death-like fact (the nine-type death-like family raises the anchor; see the `hasEventAfterDeath1` section above) | A same-name person's records merged in, a wrong death date, or a posthumous mention typed outside the death-like family |
 | `hasAgeRangeGreaterThan120` | contradiction | Earliest death-like year minus latest birth-like year is greater than 120 | Wrong birth or death date, or two people merged |
 | `hasChristeningBeforeBirth` | contradiction | The latest Christening day is strictly before the earliest Birth day (year-only dates get a year of slack each side) | Data-entry error or wrong attribution |
-| `hasEventBeforeChristening365_3` | contradiction | An event other than a Birth or event registration is dated more than 3 years before the latest Christening or Baptism, with each date read as generously as it allows (year-only and approximate dates get a year of slack each side) — see the divergence note below | Wrong event attribution or two persons merged |
+| `hasEventBeforeChristening365_3` | contradiction | An event other than a Birth or event registration is dated more than 3 years before the latest Christening or Baptism, with each date read as generously as it allows (year-only and approximate dates get a year of slack each side). Skipped when a dated Birth exists and every christening-like fact can fall on or after it (§ The late-christening fix) — see the divergence note below | Wrong event attribution or two persons merged |
 | `hasBurialBeforeDeath` | contradiction | Every recorded burial precedes every recorded death — compared on exact day-month-year dates when both sides have them, otherwise on years | Data error or transcription mistake |
 | `hasDeathBeforeChildBirth30_10` | contradiction | Male anchor: the father's latest Death day is more than 300 days before a child's earliest Birth day (exact Death and Birth fact types, not the death-like/birth-like families; day-level, not restricted to full day-month-year dates) | Wrong death date or wrong child attribution |
 | `hasDeathBeforeChildBirth365_2` | contradiction | Male anchor: the father's latest death-like fact is more than 2 years before a child's earliest birth-like fact (looser family-level variant) | Wrong death date or wrong parent-child link |
@@ -579,6 +576,14 @@ merged. Or the check sits in `calculateNonFinalWarnings`, which
 | `hasSameCensus` | contradiction | Merge-mode only: both records cite the same census collection (a census enumerates each person once) | The two records are distinct people captured in one enumeration |
 | `hasNoChildrenConflict` | contradiction | The anchor has a `NoChildren` fact and qualifying children of their own; OR a `CoupleNeverHadChildren` fact on a couple the anchor belongs to (or on the anchor's own parents) is contradicted by a qualifying child of both partners. A qualifying ParentChild edge is biological or unspecified; adoptive, step, foster, and guardian links don't count | FamilySearch's `NO_CHILDREN_CONFLICT`, `COUPLE_NEVER_HAD_CHILDREN_FACT_YET_HAS_CHILDREN`, and `CHILD_OF_CHILDLESS_COUPLE`, folded into one tag — later research added a child the fact predates, or the child is adopted/step/foster/guardian rather than biological |
 | `hasNoCoupleRelationshipsConflict` | contradiction | The anchor has a `NoCoupleRelationships` fact and also has a spouse | A relationship was added after the fact was recorded, or a wrong link |
+| `hasDeathBeforeBirth` | contradiction | The latest the person can have died is before the earliest they can have been born, reading Birth facts and the death-like family less Will, each date as generously as § How the impossibility checks read a date allows | A wrong birth or death date, or two people merged |
+| `hasChildBornBeforeParent` | contradiction | A biological child's latest possible Birth is before this person's earliest possible Birth; one warning per child | A wrong date on either, or a wrong parent-child link |
+| `hasMarriageBeforeBirth` | contradiction | A marriage-like fact on one of this person's Couple relationships is dated before their earliest possible Birth | A wrong date, or a marriage of a same-name person |
+| `hasMarriageAfterDeath` | contradiction | A Marriage, Engagement, MarriageBanns, MarriageContract, MarriageLicense or MarriageIntent on one of this person's Couple relationships begins after the latest they can have died (a registration, notice or settlement can be dated after the event, so those are not read) | A wrong death date, or a marriage of a same-name person |
+| `hasSpouseNotAliveTogether` | contradiction | One of this person and a spouse died before the other was born; one warning per spouse, emitted from both spouses citing the same facts, so the write gate keys two warnings and a writer justifies both | A wrong date, or a spouse who is a same-name person of another generation |
+| `hasCoupleWithSelf` | contradiction | A Couple relationship has this person at both ends. `tree_edit` refuses one and a merge drops one, so this fires only on a tree that already holds one | A bad import or a hand edit |
+| `hasSpouseWhoIsAncestor` | contradiction | A spouse is also this person's biological ancestor or descendant, walking up to 10 generations of biological parent links from each; emitted from both spouses | A wrong parent-child link, or two same-name people of different generations merged. Set as a contradiction by the lead (2026-11-05) |
+| `hasSpouseWhoIsSibling` | contradiction | This person and a spouse share a biological parent; emitted from both spouses | A step or adoptive link recorded as biological, or a wrong link. Set as a contradiction by the lead (2026-11-05), though a half-sibling marriage is possible: revisit the severity first if a true one turns up |
 | `hasStillbirthConflict` | contradiction | The anchor has a `Stillbirth` fact and also has a spouse, a marriage-like fact, a child, or lived to at least age 1 (most-generous bounds, fudge 0) | The stillbirth fact belongs to a different, similarly-named person, or is simply wrong |
 
 #### Parent / child age and timing (`implausible`)
@@ -588,6 +593,8 @@ merged. Or the check sits in `calculateNonFinalWarnings`, which
 | `earliestChildBirthToBirth12` | implausible | The person had a child at age 12 or younger | Wrong birth date on person or child, or wrong parent-child link |
 | `earliestChildBirthToBirthMale14` | implausible | Father had a child at age 14 or younger | As above, male-gated |
 | `earliestChildBirthToBirthFemale14` | implausible | Mother was age 14 or younger at a child's birth | As above, female-gated |
+| `earliestChildEventToBirth12` | implausible | A biological child with no dated birth-like fact has an event (read as late as its date allows) before this person turned 12; one warning per child. A child with a birth-like fact is `earliestChildBirthToBirth12`'s | A wrong date, or a wrong parent-child link |
+| `latestChildBirthToBirth75` | implausible | A biological child was born 75 to 79 years after this person's birth, at year level; from 80 `latestChildBirthToBirth80` fires instead | A wrong date or a generation skipped in the link |
 | `latestChildBirthToBirth80` | implausible | A child was born 80 or more years after this person's birth | Wrong date or a generation skipped in the link |
 | `latestChildBirthToBirthFemale45` | implausible | Mother was age 45 or older at a child's birth | Wrong date or wrong mother attribution |
 | `earliestChildMarriageToBirth30` | implausible | A child married before this person reached age 30 | Very young parenthood, or a wrong date/link |
@@ -623,6 +630,7 @@ merged. Or the check sits in `calculateNonFinalWarnings`, which
 | `similarSpouses` | implausible | Two spouses look like the same individual recorded twice | One spouse duplicated |
 | `similarSpousesConflictingDates` | implausible | Two spouses have similar names but conflicting dates | Same spouse recorded twice with a date discrepancy |
 | `hasDissimilarSpousesWithSameMarriageYear` | implausible | Two spouses share a marriage year but have dissimilar names | Two marriage records conflated, or a mis-transcribed name |
+| `hasLateChristening18` | implausible | A Christening, Baptism or BaptismRegistration begins 18 or more years after the latest possible Birth | An adult baptism, or another date filed as a christening |
 | `hasEventsOutsideLifespanNear` | implausible | Merge-mode only: merging places an event slightly outside the other record's lifespan | A borderline mismatch worth checking before the merge |
 
 **`hasBurialAfterDeath31` diverges from the Java port on purpose — do not
@@ -710,6 +718,62 @@ Residence `1940` against a Christening `31 May 1943` on a person born
 error, a Membership `1803` on a person born `16 Sep 1806`, and
 `hasEventBeforeBirth365_2` still flags it.
 
+**The late-christening fix.** A Christening, Baptism or
+BaptismRegistration after a dated Birth is ordinary: of 1,187 people with both
+dates in one sample, 13.7% were christened more than 2 years after the birth,
+often several siblings on one day and sometimes as adults. So:
+
+- `hasEventBeforeBirth365_2` (and its merge-mode mirror, which shares the
+  predicate) does not read those three types as the birth when a dated Birth
+  exists. Birth `1 Jan 1800` with Christening `1 Jan 1808` no longer fires;
+  Death `1 Jan 1790` with the same two still does, on the Birth. With no dated
+  Birth the christening is still read, as the birth's proxy.
+- `hasEventBeforeChristening365_3` (and its relative mirror) is skipped when a
+  dated Birth exists and every christening-like fact can fall on or after it,
+  whatever the gap. An event before such a christening is a question about the
+  birth, which `hasEventBeforeBirth365_2` asks. Birth `1800`, Census `1810`,
+  Christening `1820` no longer fires it. The case this gives up — an event 1 to
+  2 years before a recorded Birth with a christening 3 or more years after the
+  event — sits inside `hasEventBeforeBirth365_2`'s own 2-year tolerance.
+- A christening 18 or more years after the latest possible Birth raises
+  `hasLateChristening18` instead (`implausible`, gate-exempt). In that sample
+  these were real adult baptisms or other dates misfiled as christenings: a
+  reader should see one, but it is not a contradiction.
+- A christening BEFORE the birth is still `hasChristeningBeforeBirth`'s.
+
+Measured 2026-11-06 against `5f8e6ffcbe` over the 236 committed e2e final
+trees (2,442 persons), running `calculateWarnings` on every person before and
+after: `hasEventBeforeBirth365_2` fell from 53 fires to 25,
+`hasEventBeforeChristening365_3` from 24 to 1, and its relative mirror from 162
+to 6. None was added. Every removed self fire, 13 distinct people, is a
+christening or baptism after a dated Birth (born 1857, baptised 1868; born
+1894, christened 1938). One of them also carries a real error, a Residence
+`1935` on a person born `16 Jan 1940`, and `hasEventBeforeBirth365_2` still
+flags it. `hasLateChristening18` fires 4 times, each a christening 20 to 44
+years after the birth.
+
+**How the impossibility checks read a date.** The date-reading checks below
+(`hasDeathBeforeBirth`, `hasChildBornBeforeParent`, `hasMarriageBeforeBirth`,
+`hasMarriageAfterDeath`, `hasSpouseNotAliveTogether`,
+`earliestChildEventToBirth12`, `hasLateChristening18` and the `…Estimated`
+forms) read dates through `src/utils/impossible-date-range.ts`, not
+`getDayRange` directly, and fire only when the dates cannot be right on any
+reading of them. Every other tag reads as before.
+
+- `1850` is every day of 1850; `Bef 1850` has no earliest day and `Aft 1850`
+  no latest day.
+- Before 1752 a date from 1 January to 24 March can belong to the following
+  year as we count it, because the English year began on 25 March, so its
+  latest day moves a year later. A split year (`Feb 1700/01`) is already read
+  as the later year and is not moved again.
+- A death is read from the death-like family less `Will`, which the living
+  write; it falls on or before every one of those facts.
+- A birth is read from Birth facts. With none, it is taken to be 0 to 2 years
+  before the person's christening (lead, 2026-11-05), and the check emits its
+  `…Estimated` tag (§ Estimated-birth forms).
+- Step, adoptive, foster and guardian parent links are skipped
+  (`isNonBiologicalSubtype`).
+
 #### Family structure and names (`implausible`)
 
 | Tag | Severity | Rule | Cause |
@@ -717,17 +781,48 @@ error, a Membership `1803` on a person born `16 Sep 1806`, and
 | `tooManyChildren18` | implausible | 18 or more children | Children of more than one person merged, or duplicate child records |
 | `tooManyFathers2` | implausible | Two or more male parents (only one biological father is possible) | A step/adoptive father recorded as biological, or a wrong link |
 | `tooManyMothers2` | implausible | Two or more female parents | As above |
+| `tooManyParents3` | implausible | Three or more biological parents, at least one with no sex recorded (which `tooManyFathers2` and `tooManyMothers2` cannot count) | A duplicate parent, or a step link recorded as biological |
 | `missingFactsAndRelatives` | implausible | Empty stub: no facts other than `GenderChange`, and no relatives | An unfinished record |
 | `hasBlankName` | implausible | A name entry carries a blank (empty-string) given name or surname part — distinct from a name part that is simply absent (see `missingSurnames`/`missingGivenNamesWithoutExactBirthLikeDate`) | An incomplete record |
 | `hasDiffSurnameMale` | implausible | Male anchor has surnames that do not match each other (similarity ≤ 0.5) | Records from two same-given-name men merged |
 | `missingSurnames` | implausible | Merge-mode only: no recorded surname | Incomplete record; hard to distinguish from same-given-name persons |
 | `missingGivenNamesWithoutExactBirthLikeDate` | implausible | Merge-mode only: no recorded given name AND no exact birth-like date | Record too sparse to identify |
 
+#### Estimated-birth forms (`implausible`)
+
+With no Birth fact, the impossibility checks read the birth from a Christening,
+Baptism or BaptismRegistration, taken to be 0 to 2 years before it (lead,
+2026-11-05). A late christening can trip that estimate, so each check that
+reads it emits its own tag at `implausible`, gate-exempt, and the message says
+the birth is estimated. One severity per tag: the proxy reading never emits the
+contradiction tag.
+
+| Tag | Severity | Rule | Cause |
+|-----|----------|------|-------|
+| `hasDeathBeforeBirthEstimated` | implausible | `hasDeathBeforeBirth`, with the birth estimated from a christening | A late christening, a wrong date, or two people merged |
+| `hasChildBornBeforeParentEstimated` | implausible | `hasChildBornBeforeParent`, with either birth estimated from a christening | A late christening, or a wrong date or link |
+| `hasMarriageBeforeBirthEstimated` | implausible | `hasMarriageBeforeBirth`, with the birth estimated from a christening | An adult baptism, or a wrong date |
+| `hasSpouseNotAliveTogetherEstimated` | implausible | `hasSpouseNotAliveTogether`, with a birth estimated from a christening | A late christening, or a wrong date |
+| `earliestChildEventToBirth12Estimated` | implausible | `earliestChildEventToBirth12`, with the parent's birth estimated from a christening | An adult baptism, or a wrong date or link |
+
+#### Data quality (`implausible`, reported last)
+
+Listed, never blocking (lead, 2026-11-05): `implausible`, so `merge_warnings`
+does not block on them, and gate-exempt, so no write is refused. They can fire
+many times on one imported person, so `person_warnings` returns them after
+every other warning, in both the single and the list form.
+
+| Tag | Severity | Rule | Cause |
+|-----|----------|------|-------|
+| `noGenderFound` | implausible | No sex is recorded (gender absent or `Unknown`) | An incomplete record |
+| `nonStandardDate` | implausible | A fact has `date` text that neither its `standard_date` nor `stdDate` can read (`dead`, `Spring 1790`); every such fact is listed | A date typed as free text, which no date check can read |
+| `nonStandardPlace` | implausible | A fact has `place` text and no `standard_place`; every such fact is listed | A place not yet standardized, which no place check can read |
+
 #### Relative-mob mirrors (`implausible`)
 
-28 of the 55 self-checks above have a relative-mob variant that fires the
+28 of the 75 self-checks above have a relative-mob variant that fires the
 same condition on a one-hop relative (parent, spouse, or child) instead of
-the anchor; the other 26 run on the anchor only. They are **always
+the anchor; the other 47 run on the anchor only. They are **always
 `implausible`** regardless of the self-check's
 severity — the anchor's own data isn't necessarily wrong; the issue is in
 the relationship — and the flagged relative is named in the warning's
@@ -1018,7 +1113,7 @@ fixture trees; there are no `extractYear`/`extractEarliestYear`/
 `extractLatestYear` tests, because those helpers do not exist (date
 handling is tested where it lives, under `src/utils/`).
 
-**Per-tag coverage is partial.** Roughly half of the 83 tags are named
+**Per-tag coverage is partial.** Roughly half of the 103 tags are named
 in that test file; the rest are covered indirectly or not at all. The
 drift lint proves a tag is *documented and emitted*, never that its
 catalogue entry reads correctly — so a reviewer verifying a
@@ -1069,7 +1164,7 @@ and need not be added to that reference.
    `tests/tools/person-warnings-birth-residence.test.ts`).
 6. Add the tag's row to § Tag Catalogue in this spec.
 7. Bump the three hardcoded tag-count assertions in
-   `tests/packaging/person-warnings-spec-drift.test.ts` (the `toBe(83)` guards)
+   `tests/packaging/person-warnings-spec-drift.test.ts` (the `toBe(103)` guards)
    to the new total.
 8. **Run the drift lint** (`make engine-test`, or the
    `tests/packaging/person-warnings-spec-drift.test.ts` suite directly).
@@ -1120,8 +1215,9 @@ Grep for `calculateWarnings` when sizing the blast radius.
   **The one pair that gates: `earliestChildBirthToBirth12` and
   `relativesEarliestChildBirthToBirth12`.** At cutoff 14 the gendered forms are
   a child-bearing-age prior and stay exempt — 13 is young, not impossible. At
-  cutoff 12 the same check is also the ONLY one that fires when a child is born
-  BEFORE their parent, so exempting it let every gated writer accept one. The
+  cutoff 12 the same check also fires when a child is born BEFORE their parent,
+  reading the whole birth-like family (`hasChildBornBeforeParent` gates too, but
+  reads Birth facts only), so exempting it let every gated writer accept one. The
   pair still travels together; it travels on the gating side.
 
   What makes that safe is the predicate reading the child's LATEST date bound
@@ -1226,7 +1322,6 @@ renamed from the retired `error` / `warning`.
 
 | Candidate | Severity | Description |
 |-----------|----------|-------------|
-| `FATHER_TOO_OLD` | `implausible` | Father's age at child's birth > 75. No shipped tag; the closest, `latestChildBirthToBirth80`, fires at 80+ |
 | `BORN_TOO_EARLY` | `implausible` | Birth year < 1000 |
 
 > **Struck — shipped:** several rows this table once listed have shipped,
@@ -1243,12 +1338,13 @@ renamed from the retired `error` / `warning`.
 >   (loose) and `hasDeathBeforeChildBirthFemale2` (exact-day).
 > - `BIRTH_AFTER_FATHER_DEATH` → `hasDeathBeforeChildBirth365_2` (loose)
 >   and `hasDeathBeforeChildBirth30_10` (exact-day).
-> - `MARRIAGE_BEFORE_BIRTH` → covered by `hasEventBeforeBirth365_2`, which
->   fires on any event dated more than 2 years before birth under every
->   reading of the dates, marriage included.
-> - `CHILD_TOO_OLD` → covered by the `earliestChildBirthToBirth` family: a
->   child older than the parent yields a parent-age below the cutoff and
->   fires the check.
+> - `MARRIAGE_BEFORE_BIRTH` → `hasMarriageBeforeBirth`. `hasEventBeforeBirth365_2`
+>   reads only the person's own facts, and a marriage lives on the Couple
+>   relationship, so it never saw one.
+> - `CHILD_TOO_OLD` → `hasChildBornBeforeParent` (a contradiction). The
+>   `earliestChildBirthToBirth` family also fires on it, as an age prior.
+> - `FATHER_TOO_OLD` → `latestChildBirthToBirth75` for ages 75 to 79, beside
+>   `latestChildBirthToBirth80` from 80.
 >
 > **Removed in review:** `DUPLICATE_FACTS` (multiple facts of the same
 > type with identical dates) was dropped — the same birth date
