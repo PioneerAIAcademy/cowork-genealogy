@@ -359,6 +359,19 @@ describe("the per-user 429 pause", () => {
     expect(wire).not.toHaveBeenCalled();
   });
 
+  it("with retries left, a pause inside the budget is waited out even past the first attempt's timeout", async () => {
+    // 950 ms of a 1 s timeout, with 2 s of budget: the call may run to the
+    // deadline, so it waits and the request still gets its full second.
+    wire.mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return ok();
+    });
+    recordFsPause("u_A", 950);
+    const res = await fsFetch(userA, FS_URL, {}, 1000, { budgetMs: 2000 });
+    expect(res.status).toBe(200);
+    expect(wire).toHaveBeenCalledTimes(1);
+  });
+
   it("a connector caller's own retry hooks still run beside the pause's", async () => {
     const statuses: number[] = [];
     const waits: number[] = [];

@@ -584,8 +584,9 @@ describe("fetchWithRetry's onRetryableResponse and beforeAttempt hooks", () => {
     });
     expect(res.status).toBe(200);
     expect(maxWait).toHaveLength(2);
-    // The first attempt runs until its 1 s timeout and keeps half of it.
-    expect(maxWait[0]).toBe(500);
+    // With retries left, the first attempt's time runs to the 5 s deadline,
+    // which is later than its 1 s timeout; it keeps 2 s of that.
+    expect(maxWait[0]).toBe(3_000);
     // A later one runs until the deadline: about 4.9 s left, less the 2 s it keeps.
     expect(maxWait[1]).toBeLessThanOrEqual(2_900);
     expect(maxWait[1]).toBeGreaterThan(2_000);

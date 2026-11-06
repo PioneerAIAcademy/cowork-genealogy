@@ -313,20 +313,21 @@ export async function fetchWithRetry(
     let response: Response;
     try {
       // Inside the `try`, so a marked refusal takes the rethrow below. A wait
-      // comes out of this attempt's time: the first attempt's timeout shrinks by
-      // it, and a later attempt is clamped to the deadline anyway.
+      // comes out of the call's time, never on top of it. `span` is how long
+      // this attempt may run: the first until its own timeout, or until the
+      // deadline when that is later and retries remain; a later one until the
+      // deadline.
+      const before = Date.now();
+      const left = Math.max(0, deadline - before);
+      const span = attempt > 0 ? left : attempts > 1 ? Math.max(timeoutMs, left) : timeoutMs;
       let waited = 0;
       if (beforeAttempt) {
-        const before = Date.now();
-        const left = Math.max(0, deadline - before);
-        // The first attempt runs until its own timeout; a later one until the
-        // deadline.
-        await beforeAttempt(pauseWaitAllowance(attempt === 0 ? timeoutMs : left, left));
+        await beforeAttempt(pauseWaitAllowance(span, left));
         waited = Date.now() - before;
       }
       const attemptTimeout =
         attempt === 0
-          ? Math.max(0, timeoutMs - waited)
+          ? Math.max(0, Math.min(timeoutMs, span - waited))
           : Math.min(timeoutMs, Math.max(0, deadline - Date.now()));
       response = await fetchWithTimeout(url, init, attemptTimeout);
     } catch (err) {
