@@ -150,6 +150,11 @@ julianToGregorianDay, = 20 June 1650 (Gregorian)". Take the offset from
 `applied[].offsetDays`, never from memory. When the tool returns a converted date,
 always preserve both the original and converted forms.
 
+State the original date and the converted date in a notation a genealogist
+would recognize (`15 Feb 1749/50`) — never only buried inside a sentence of
+explanation. On the rejection above, give the one labelled-Julian line in its
+place; never add a second, unconditional line calling it "Converted".
+
 ## Calendar regime
 
 `convert_calendar` holds the adoption table. Pass `jurisdiction` with the
@@ -182,15 +187,18 @@ Records often show both years: "6 January 1745/6" means 1745 Old Style but
 1746 New Style. Pass `date: { year: 1745, doubleYear: 6 }` — the tool returns
 the later (New Style) year. Double dates belong to the stretch between 1
 January and the old year-start only. On the year-start day itself the two
-years are the same, so a slash there is anomalous: flag it and check where the
-year turns over in the surrounding register entries. Do not resolve it to the
-later year.
+years are the same, so a slash there is anomalous: flag it, give both
+readings — the earlier year if the clerk was still writing the outgoing year,
+the later year if the register had already turned over — and say to check
+where the year turns over in the surrounding register entries to settle it.
+Do not resolve it to either year yourself.
 
 ### Quaker numbered months → `quakerMonth: { era }`
 
 Quaker registers number their months rather than naming them, and the
 numbering shifts at the year-start reform. Request `quakerMonth` with the era
-when the source is a Friends record; the tool holds the mapping.
+when the source is a Friends record; the tool holds the mapping. State which
+numbering era applies and that Quaker month numbering changed in 1752.
 
 ### French Republican calendar → `frenchRepublican: true`
 
@@ -219,7 +227,12 @@ A hand-back logs nothing.
 - **Answer only the calendar question asked.** Each correction
   (OS/NS year, Julian→Gregorian day, Quaker month, double-date) is a
   separate operation. Do not bundle corrections the user didn't
-  request — that is over-conversion.
+  request — that is over-conversion. A question asking only which year to
+  use on a double-dated record stays `doubleDatedYear` alone — never add
+  the day shift uninvited. Only when the request itself asks to convert to
+  the modern or Gregorian calendar does `julianToGregorianDay` apply too,
+  added alongside `doubleDatedYear` on a double-dated record, never in
+  place of resolving the year.
 - **Show original next to converted.** The original is what the record
   says; the conversion is interpretation. Keep them distinct.
 - **When in doubt, don't convert.** If the jurisdiction or calendar
