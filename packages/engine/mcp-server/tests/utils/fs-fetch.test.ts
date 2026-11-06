@@ -346,6 +346,22 @@ describe("the per-user 429 pause", () => {
     expect(wire).toHaveBeenCalledTimes(1);
   });
 
+  it("a connector caller's own retry hooks still run beside the pause's", async () => {
+    const statuses: number[] = [];
+    const waits: number[] = [];
+    wire.mockResolvedValueOnce(new Response("down", { status: 503 })).mockResolvedValueOnce(ok());
+    const res = await fsFetch(userA, FS_URL, {}, undefined, {
+      baseMs: 1,
+      onRetryableResponse: (status) => statuses.push(status),
+      beforeAttempt: async (ms) => {
+        waits.push(ms);
+      },
+    });
+    expect(res.status).toBe(200);
+    expect(statuses).toEqual([503]);
+    expect(waits).toHaveLength(2);
+  });
+
   it("a 5xx pauses nobody", async () => {
     wire.mockResolvedValueOnce(new Response("down", { status: 503, headers: { "Retry-After": "60" } }));
     await expect(fsFetch(userA, FS_URL)).rejects.toThrow(/Server requested a 60s wait/);

@@ -1469,6 +1469,9 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
     const paths = Array.from({ length: 12 }, (_, i) => projPath("a", i));
     const answers = paths.map((projectPath) => rpc(call("project_context", { projectPath }), userA));
     await vi.waitFor(() => expect(bindStore).toHaveBeenCalledTimes(12));
+    // Wait for the calls the door admits to reach the tool, however slow the
+    // runner, then give any call it should NOT have admitted time to show up.
+    await vi.waitFor(() => expect(gated.entered.size).toBeGreaterThanOrEqual(4));
     await settle();
     return { gated, answers };
   }
@@ -1576,14 +1579,17 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
         expect(lines.join("")).toContain("ev=tool_abandoned surface=connector user_id=u_A tool=project_context"),
       );
     } finally {
-      spy.mockRestore();
+      // Still capturing while the held calls finish, so a wrongly-run abandoned
+      // call would log its own ev=tool_call line here.
       await release(gated, held);
+      await settle();
+      spy.mockRestore();
     }
     // The four held calls finished; the abandoned one never touched its store.
-    await settle();
     expect(gated.entered.has(goneId)).toBe(false);
     expect(gated.entered.size).toBe(4);
-    expect(lines.join("")).not.toMatch(/ev=tool_call [^\n]*user_id=u_A tool=project_context/);
+    const toolCalls = lines.join("").match(/ev=tool_call [^\n]*user_id=u_A tool=project_context/g) ?? [];
+    expect(toolCalls).toHaveLength(4);
     await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
   });
 
@@ -1598,8 +1604,7 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
     );
     try {
       await vi.waitFor(() => expect(bindStore).toHaveBeenCalledTimes(6));
-      await settle();
-      expect(gated.insideNow()).toBe(6);
+      await vi.waitFor(() => expect(gated.insideNow()).toBe(6));
       expect(__userLimitsStateForTests().users).toBe(0);
     } finally {
       const done = await release(gated, answers);

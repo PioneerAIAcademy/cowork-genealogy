@@ -147,6 +147,42 @@ describe("runWithUserCallSlot: at most USER_CALL_CAP calls per user", () => {
     expect(__userLimitsStateForTests().users).toBe(0);
   });
 
+  it("tells the call whether it had to wait for its slot", async () => {
+    const signal = new AbortController().signal;
+    const holders = Array.from({ length: 4 }, () => heldCall());
+    const told: boolean[] = [];
+    const holding = holders.map((h) =>
+      runWithUserCallSlot("u_1", signal, async (waited) => {
+        told.push(waited);
+        await h.fn();
+      }),
+    );
+    const late = runWithUserCallSlot("u_1", signal, async (waited) => {
+      told.push(waited);
+    });
+    await tick();
+    expect(told).toEqual([false, false, false, false]);
+    for (const h of holders) h.finish();
+    await Promise.all([...holding, late]);
+    expect(told).toEqual([false, false, false, false, true]);
+  });
+
+  it("a signal already aborted, with every slot taken, returns at once and is never queued", async () => {
+    const signal = new AbortController().signal;
+    const holders = Array.from({ length: 4 }, () => heldCall());
+    const holding = holders.map((h) => runWithUserCallSlot("u_1", signal, h.fn));
+    await tick();
+    const client = new AbortController();
+    client.abort();
+    const gone = heldCall();
+    // Settles before any holder finishes: it was never put in the queue.
+    expect(await runWithUserCallSlot("u_1", client.signal, gone.fn)).toBe(false);
+    expect(__userLimitsStateForTests("u_1")).toMatchObject({ running: 4, waiting: 0 });
+    for (const h of holders) h.finish();
+    await Promise.all(holding);
+    expect(gone.started()).toBe(false);
+  });
+
   it("a signal already aborted runs nothing and leaves no entry behind", async () => {
     const client = new AbortController();
     client.abort();
@@ -285,6 +321,17 @@ describe("the 429 pause", () => {
       now += ms;
     });
     expect(slept).toEqual([4_000]);
+  });
+
+  it("a pause that ends exactly at the deadline is waited out", async () => {
+    let now = 0;
+    const slept: number[] = [];
+    recordFsPause("u_1", 10_000, 0);
+    await awaitFsPause("u_1", 10_000, () => now, async (ms) => {
+      slept.push(ms);
+      now += ms;
+    });
+    expect(slept).toEqual([10_000]);
   });
 
   it("a pause another call extends past the deadline during the wait refuses, not a second full wait", async () => {
