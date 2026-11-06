@@ -66,14 +66,18 @@ async function handle401(
  * entitled to make must not fail because the door's logger did.
  */
 function recordFamilySearchStatus(principal: Principal, response: Response): Response {
+  recordStatus(principal, response.status);
+  return response;
+}
+
+function recordStatus(principal: Principal, status: number): void {
   if (principal.kind === "bearer" && principal.recordFamilySearchStatus) {
     try {
-      principal.recordFamilySearchStatus(response.status);
+      principal.recordFamilySearchStatus(status);
     } catch {
       // Deliberately swallowed; see above.
     }
   }
-  return response;
 }
 
 /**
@@ -83,12 +87,17 @@ function recordFamilySearchStatus(principal: Principal, response: Response): Res
  * FamilySearch call. Any hooks the caller passed still run. Unchanged for every
  * other principal.
  */
-function withUserPause(principal: Principal, retryOpts?: RetryBudgetOptions): RetryBudgetOptions | undefined {
+function withUserPause(
+  principal: Principal,
+  retryOpts: RetryBudgetOptions | undefined,
+  seen: (status: number) => void,
+): RetryBudgetOptions | undefined {
   const userId = connectorUserId(principal);
   if (userId === undefined) return retryOpts;
   return {
     ...retryOpts,
     onRetryableResponse: (status, retryAfter) => {
+      seen(status);
       if (status === 429) recordFsPause(userId, retryAfter);
       retryOpts?.onRetryableResponse?.(status, retryAfter);
     },
@@ -112,14 +121,21 @@ export async function fsFetch(
 ): Promise<Response> {
   const token = await getValidToken(principal);
   const authedInit = mergeAuth(token, init);
-  const opts = withUserPause(principal, retryOpts);
+  let lastRetryable: number | undefined;
+  const opts = withUserPause(principal, retryOpts, (status) => {
+    lastRetryable = status;
+  });
 
-  const response = await fetchWithRetry(
-    url,
-    authedInit,
-    timeoutMs,
-    opts,
-  );
+  let response: Response;
+  try {
+    response = await fetchWithRetry(url, authedInit, timeoutMs, opts);
+  } catch (err) {
+    // The loop saw a 429 or 5xx and then threw (a Retry-After past the budget,
+    // or this user's pause): FamilySearch still answered that status, and the
+    // door's log line is how an operator sees a user was throttled.
+    if (lastRetryable !== undefined) recordStatus(principal, lastRetryable);
+    throw err;
+  }
 
   return recordFamilySearchStatus(
     principal,

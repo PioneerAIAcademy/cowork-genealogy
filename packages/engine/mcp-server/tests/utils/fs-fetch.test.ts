@@ -309,6 +309,34 @@ describe("the per-user 429 pause", () => {
     expect(wire).toHaveBeenCalledTimes(1);
   });
 
+  it("a throttled call that ends in a throw still hands its 429 to the door's log line; a call refused before the wire hands nothing", async () => {
+    const seen: number[] = [];
+    const logged = connectorPrincipal({
+      accessToken: "fs-A",
+      userId: "u_A",
+      recordFamilySearchStatus: (status) => seen.push(status),
+    });
+    // A header-less 429: the retry is refused by the pause the 429 set.
+    wire.mockResolvedValue(tooMany());
+    await expect(fsFetch(logged, FS_URL)).rejects.toThrow("about 30 seconds");
+    expect(seen).toEqual([429]);
+    // Already paused: nothing reached FamilySearch, so no status.
+    await expect(fsFetch(logged, FS_URL)).rejects.toThrow("FamilySearch asked this account to wait");
+    expect(seen).toEqual([429]);
+
+    // A Retry-After past the budget makes the loop throw before any pause gate.
+    __resetUserLimitsForTests();
+    const seenB: number[] = [];
+    const loggedB = connectorPrincipal({
+      accessToken: "fs-B",
+      userId: "u_B",
+      recordFamilySearchStatus: (status) => seenB.push(status),
+    });
+    wire.mockResolvedValue(tooMany("60"));
+    await expect(fsFetch(loggedB, FS_URL)).rejects.toThrow(/Server requested a 60s wait/);
+    expect(seenB).toEqual([429]);
+  });
+
   it("a 5xx pauses nobody", async () => {
     wire.mockResolvedValueOnce(new Response("down", { status: 503, headers: { "Retry-After": "60" } }));
     await expect(fsFetch(userA, FS_URL)).rejects.toThrow(/Server requested a 60s wait/);
