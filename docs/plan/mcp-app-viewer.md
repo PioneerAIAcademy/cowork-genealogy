@@ -12,7 +12,7 @@ door, sign-in, `project_list` and the self-hosted stack. The lead merges.
 2. **The beta's UI.** The cards fold into the remote connector and replace the
    browser viewer for a very limited beta on the same server (see "The fold").
 3. **One viewer to maintain,** with a case file a senior researcher would choose over
-   today's viewer. That file follows the demo (M3).
+   today's viewer. That file is in the demo (M3).
 
 ## Decisions (lead, 2026-11-03 to 2026-11-05)
 
@@ -33,8 +33,9 @@ door, sign-in, `project_list` and the self-hosted stack. The lead merges.
    log, the family, a person, a timeline, the proof) is a page of the case file,
    opened from a card or by asking.
 5. **The case file replaces today's section browser.** It is designed for senior
-   researchers and open to everyone. It does not copy the 15 sections. For the demo,
-   the case file is viewer-ui's `ViewerBody` in fullscreen. The new file follows in M3.
+   researchers and open to everyone. It does not copy the 15 sections. The first
+   build uses viewer-ui's `ViewerBody` in fullscreen, and the new file replaces it before
+   the demo (M3).
 6. **The conclusion card shows recorded doubt only:** the rating in words, the
    shortfall, what was not searched, any unsettled conflict, the engine's
    unregistered-disagreement check, and the reviewer's verdict when there is one.
@@ -70,14 +71,12 @@ through the demo, with fixes only.
 
 ## Scope for the demo
 
-- **In:** the conclusion, `latest`, setup and search cards; the case file by reusing
-  `ViewerBody` in fullscreen; and the display rules those need, on Postgres and MinIO
-  behind sign-in.
-- **Only if the first runs go well:** the evidence grid and Compare with FamilySearch.
-- **Also in:** the other step cards (M2).
-- **Out:** M3, a feedback flag, and removing Electron or the web viewer.
-- **`ViewerBody` keeps** its ids, its retired rows and its section order until M3. The
-  display rules apply to the cards.
+- **In:** every step card (M1, M2); the new case file with the evidence grid and Compare
+  with FamilySearch (M3); and the display rules, on Postgres and MinIO behind sign-in.
+- **Out:** a feedback flag, and removing Electron or the web viewer.
+- **`ViewerBody`** is the case file for the first runs, so the cards and sign-in get real
+  use early. It keeps its ids, its retired rows and its section order until M3 replaces
+  it, and the display rules apply to the cards until then.
 
 ## Surfaces
 
@@ -103,7 +102,7 @@ through the demo, with fixes only.
 
 ## The case file
 
-This is the file that replaces `ViewerBody` after the demo. Five pages, each shown
+This is the file that replaces `ViewerBody` before the demo. Five pages, each shown
 only if it has content, with a search box over the whole file. Clicking a person, record or source opens it in a right-hand pane without
 leaving the page, so a researcher can compare without losing their place.
 
@@ -532,7 +531,7 @@ show only on the connector surface.
    the door's refusals do there. remote-server owns that file, so it gets the stub page
    first.
 3. Fold a skeleton into the tool server once issue #3991 lands.
-4. Build the demo scope (M1 and M2).
+4. Build the demo scope (M1, M2 and M3).
 5. Merge the router lines under issue #4297, with one paid `research` eval run, before
    launch. Until then the demo may run the variant plugin at a pinned commit.
 
@@ -608,36 +607,23 @@ cancelled call paints no card, and a host that answers `requestDisplayMode` and 
 notifies keeps the file open through a later resize notification. In a tab, `make viewer` paints a card from a real
 project.
 
-### M1: The demo
+### M1: The first cards and `ViewerBody`
 
 Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
 
 - The **setup, search and conclusion cards**, plus `latest`; until M2, planned
   shows setup and evidence-gathered shows search. The conclusion card's action is
-  "Open the case file". It gains "Compare with FamilySearch" if Compare is built.
+  "Open the case file". It gains "Compare with FamilySearch" in M3.
 - **The case file:** `ViewerBody` in fullscreen, fed by `McpAppResearchTransport`. A
   search's results open in its side panel, and Sources shows a record's page image
   and transcription.
 - The display rules those need, including FamilySearch links.
-- **Only if the first runs go well:** the evidence grid and Compare with FamilySearch,
-  each a page in the same fullscreen frame.
-- **The demo script,** in a Cowork task, signed in through the `Genealogy Research`
-  connector, on the demo project: "Where does the research stand?" → the conclusion
-  card with its recorded doubt → open the case file → the research log → an indexed
-  record's search, in the side panel → Sources → the browsed record's page image and
-  transcription. If they are built, the grid and Compare close the script. Light and
-  dark. Then a live run with the router lines calling the three cards and offering
-  named next steps at the forks.
-- A short screen recording of the demo script.
+- **A first live run,** signed in through the `Genealogy Research` connector, on a
+  seeded project: a card, then the case file.
 
 **Done when:**
-- before recording, in the demo project, at least one supporting assertion's
-  source has an `image_filename` that exists under `images/` and a non-empty
-  `transcription`, and at least one supporting assertion's `record_id` appears in
-  the results file of a `record_search` log entry under `results/`, and a live,
-  non-refused evaluation that is not a craft read targets the proof;
-- the demo script runs end to end on the demo project, signed in through the
-  `Genealogy Research` connector;
+- the first live run draws a card and opens the case file in a Cowork task, claude.ai
+  chat and Desktop Chat;
 - `make mcp-viewer-sweep` renders the three cards and the case file over the McAndrew
   capture and every committed e2e end state without error;
 - the case file shows no Export GEDCOM, Print or Send Feedback button;
@@ -685,14 +671,29 @@ step, the live run shows the cards its project reaches and a typed `show_project
 shows the others on a project that holds them, and "write this up" on the demo
 project produces a file that carries the rating and the reviewer's verdict.
 
-### M3: The new case file (after the demo)
+### M3: The new case file and the demo script (before the demo)
 
 The new file replaces `ViewerBody`: its shell, right-hand pane and search box; The
-case with So far and Leads; the evidence grid and Compare if the demo did not build
-them; People, Sources and Log; and `show_project` opening each page by id. A record's
-search results, and its page image with transcription and findings, open in the pane.
+case with So far, the evidence grid and Leads; Compare with FamilySearch; People,
+Sources and Log; and `show_project` opening each page by id. A record's search results,
+and its page image with transcription and findings, open in the pane.
 
-**Done when:** the sweep renders each page without error, each renders on the demo
+- **The demo script,** in a Cowork task, signed in through the `Genealogy Research`
+  connector, on the demo project: "Where does the research stand?" → the conclusion
+  card with its recorded doubt → open the case file → the evidence grid → click an
+  indexed record's column → the search that returned it, in the pane → click the
+  browsed record's column → its page image beside the transcription → Compare with
+  FamilySearch. Light and dark. Then a live run with the router lines calling the three
+  cards and offering named next steps at the forks.
+- A short screen recording of the demo script.
+
+**Done when:** before recording, in the demo project, at least one supporting
+assertion's source has an `image_filename` that exists under `images/` and a non-empty
+`transcription`, at least one supporting assertion's `record_id` appears in the results
+file of a `record_search` log entry under `results/`, and a live, non-refused evaluation
+that is not a craft read targets the proof; the demo script runs end to end on the demo
+project, signed in through the `Genealogy Research` connector; the sweep renders each
+page without error, each renders on the demo
 project, The case shows So far on a project with no proof summary, a planted retired
 assertion and retired link appear nowhere, the id check passes on every page, every
 one of today's 15 sections has its content reachable,
