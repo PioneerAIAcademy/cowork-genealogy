@@ -1446,11 +1446,11 @@ export interface ResolvedAgainst {
  *  out to be someone else (#2475), and that must not lift the cap onto the
  *  wrong person. The doubt is read by record person (`recordParties`), not by
  *  assertion id, because an identity conflict usually names the persona's name
- *  assertion rather than its christening. It is lifted for the one person a
- *  `resolved` identity conflict prefers, which is how conflict-resolution writes
- *  "these are the same person". A moot meaning "someone else" written with no
- *  identity conflict beside it cannot be told apart from the documents, and
- *  releases.
+ *  assertion rather than its christening. It holds at any status: a `resolved`
+ *  identity conflict does not say which way it settled (the corpus holds one
+ *  whose rationale rejects the person its preferred assertion names). A moot
+ *  meaning "someone else" written with no identity conflict beside it cannot be
+ *  told apart from the documents, and releases.
  *
  *  Read from the document as this op sees it, so a conflict settled LATER in the
  *  same batch still refuses, which fails safe. Figures:
@@ -1478,7 +1478,7 @@ function resolvedAgainstIds(research: any, assertionById: Map<string, any>): Res
   const doubted = new Set(
     conflicts
       .filter((c) => c?.conflict_type === "identity")
-      .flatMap((c) => competingIds(c).filter((id) => !(c.status === "resolved" && id === c.preferred_assertion_id)))
+      .flatMap(competingIds)
       .map(personOf),
   );
   for (const c of conflicts) {
@@ -1956,9 +1956,9 @@ export function coreIdentifierContradictionInvariants(
       `contradiction in the rationale, or have conflict-resolution settle it first in a fact ` +
       `conflict whose disputed_attribute is 'birth_place' (or 'birth_date' for a date): ` +
       `'resolved' preferring another assertion, or 'moot' carrying independence_analysis and ` +
-      `weighing_analysis (a moot still caps with only a resolution_rationale, or while an ` +
-      `identity conflict leaves that record's person in doubt). A confident wrong identity is ` +
-      `worse than a flagged uncertain one.`,
+      `weighing_analysis (a moot still caps with only a resolution_rationale, or while any ` +
+      `identity conflict names that record's person). A confident wrong identity is worse ` +
+      `than a flagged uncertain one.`,
   ];
 }
 

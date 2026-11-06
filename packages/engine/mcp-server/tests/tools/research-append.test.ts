@@ -13403,7 +13403,7 @@ describe("research_append — detected core-identifier contradiction", () => {
     await refusedOnTheGap();
     const errors = failure(await researchAppend(link("probable"))).errors?.join(" ");
     expect(errors).toMatch(/'moot' carrying independence_analysis and weighing_analysis/);
-    expect(errors).toMatch(/identity conflict leaves that record's person in doubt/);
+    expect(errors).toMatch(/while any identity conflict names that record's person/);
     expect(errors).toMatch(/conflict-resolution/);
   });
 
@@ -13462,12 +13462,21 @@ describe("research_append — detected core-identifier contradiction", () => {
     await refusedOnTheGap();
   });
 
-  // conflict-resolution writes "these are the same person" as resolved, with
-  // the questioned assertion preferred.
-  it("does NOT cap the late baptism once an identity conflict resolves the child as the same person", async () => {
+  // A resolved identity conflict does not say which way it settled: one in the
+  // corpus prefers an assertion of the person its rationale rejects. So it
+  // keeps the cap whether it reads "same person" or "not this person".
+  it("still caps the late baptism once an identity conflict resolves the child as the same person", async () => {
     await withConflict(mootBirthDate(), lateBaptism, bornIn1774, [identityConflict("resolved", ["a_049"], "a_049")]);
     await addAssertions(childsName);
-    await accepted();
+    await refusedOnTheGap();
+  });
+
+  it("still caps when a resolved identity conflict rejected the child", async () => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774, [
+      { ...identityConflict("resolved", ["a_049"], "a_049"), resolution_rationale: "The baptized Benjamin is NOT the tree's Benjamin." },
+    ]);
+    await addAssertions(childsName);
+    await refusedOnTheGap();
   });
 
   it("does NOT let an identity conflict over another person on the baptism keep the cap", async () => {
