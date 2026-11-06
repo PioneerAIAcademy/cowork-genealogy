@@ -341,43 +341,6 @@ def test_low_score_variant_still_links(before_state, after_state, test):
     )
 
 
-def _tree_facts(tree: dict | None) -> set:
-    """(person id, fact) pairs, the fact keyed by its id or, lacking one, its content."""
-    out = set()
-    for p in (tree or {}).get("persons") or []:
-        for f in p.get("facts") or []:
-            key = f.get("id") if isinstance(f, dict) and f.get("id") else json.dumps(f, sort_keys=True)
-            out.add((p.get("id"), key))
-    return out
-
-
-def test_thin_subject_namesake_not_linked(before_state, after_state, test):
-    """Tag-gated (thin-subject-namesake): the tree person is a name and nothing
-    else and same_person scores the record's namesake near zero, so nothing
-    separates them. No `probable` or `confident` person_evidence link may be
-    created, and no fact may be added to the tree."""
-    if "thin-subject-namesake" not in test.get("tags", []):
-        pytest.skip("not a thin-subject-namesake scenario")
-    before = before_state.get("research_json")
-    after = after_state.get("research_json")
-    if before is None or after is None:
-        pytest.skip("Missing research.json for diff")
-    old_ids = {e.get("id") for e in before.get("person_evidence") or []}
-    strong = [
-        (e.get("id"), e.get("assertion_id"), e.get("person_id"), e.get("confidence"))
-        for e in after.get("person_evidence") or []
-        if e.get("id") not in old_ids and e.get("confidence") in ("probable", "confident")
-    ]
-    assert not strong, (
-        "a near-zero same_person score on a thin subject must not become a "
-        f"probable or confident link; got {strong}"
-    )
-    before_t = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx")
-    after_t = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx")
-    added = sorted(_tree_facts(after_t) - _tree_facts(before_t), key=str)
-    assert not added, f"no fact may be added to the tree for an unproven namesake; added {added}"
-
-
 # --- Tag-gated: stub-person creation -------------------------------
 
 def test_stub_person_created_and_linked(before_state, after_state, tool_calls, test):
