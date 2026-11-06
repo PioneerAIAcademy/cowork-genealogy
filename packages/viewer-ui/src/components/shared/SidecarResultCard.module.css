@@ -56,6 +56,40 @@
   width: 10px;
 }
 
+.verdictBadge {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 2px 6px;
+  border-radius: 3px;
+  white-space: nowrap;
+}
+
+.verdictMatch {
+  background: var(--badge-green-bg);
+  color: var(--badge-green-text);
+}
+
+.verdictPossible {
+  background: var(--badge-amber-bg);
+  color: var(--badge-amber-text);
+}
+
+.verdictNo {
+  background: var(--badge-red-bg);
+  color: var(--badge-red-text);
+}
+
+.verdictExtracted {
+  background: var(--badge-blue-bg);
+  color: var(--badge-blue-text);
+}
+
+.verdictNew {
+  background: var(--badge-purple-bg);
+  color: var(--badge-purple-text);
+}
+
 .subMeta {
   padding: 0 var(--spacing-lg) var(--spacing-xs);
   font-size: 12px;

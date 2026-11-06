@@ -1,0 +1,310 @@
+{
+  "run_log": "v3_2026-11-03_18-55-27.json",
+  "annotator": "florencemashipei4@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Judge error. It says the 1860 census entry claims \"includes your 1861–1865\", but in the agent's return that entry reads only \"Undated collection.\" The \"includes your 1861–1865\" line belongs to the Muster Rolls entry above it (1860–1869, which does include the searched years). Every other coverage line is right (GAR overlaps in 1865, IRS Tax Lists overlap in 1862–1865), and all six links and access values match the tool output."
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Agree with the pass: Muster Rolls and GAR Membership Records (the two the test requires) are present, and the military rows lead. Genealogist's note: with two of eight slots unused, '1890 Veterans Schedules of the U.S. Federal Census' (a buildable Ancestry row that lists surviving Union veterans and their units) would have served this Civil War soldier better than the undated 1860 census. Not scored down, because the test calls it fitting rather than required, and the 1860 census does place a man in the county before the war."
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Same misread as Correctness. The 1860 census row has no startYear/endYear, and \"Undated collection.\" is a passing form for it, with no coverage claim attached. Every other reason is the row's linkText, the tool's years with a correct coverage clause, and the access value. GAR's 1865–1956 is the tool's own span and is not scored, per the grading note."
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Links",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_003",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

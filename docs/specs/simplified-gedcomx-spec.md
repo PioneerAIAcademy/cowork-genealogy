@@ -205,7 +205,9 @@ it (it is not a legacy shape to heal), reporting the offending id chain. Because
 a person stores no parent/child pointer of their own (Section 4.1) and the
 `relationships[]` entry is the single source of truth for both directions, the
 GEDCOM `FAMC`/`FAMS` bidirectional-desync bug class does not arise in this shape —
-only cycles need checking.
+only cycles need checking. `project_create` breaks a loop found in a FamilySearch
+read at import, by the rule in project-create-tool-spec §4 ("Loops"), and the
+validator still rejects any write that contains one.
 
 ### 4.3 `sources`
 

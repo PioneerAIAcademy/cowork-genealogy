@@ -1,0 +1,15 @@
+{
+  "tool": "image_transcribe",
+  "description": "SYNTHETIC (issue #4136): written by hand, not captured live — the FamilySearch session had expired. The NARA M246 title is real; the film note, image group 008246133, image ids and roll contents are invented for the no-project test. Image 008246133_00401, the film's jacket list: which images hold which regiment and company. Anchored to the full id.",
+  "args": {
+    "imageId": "~008246133_00401"
+  },
+  "response": {
+    "transcription": "Revolutionary War Rolls, 1775-1783. New Hampshire. Stark's Brigade, 1777.\nJacket list, this film:\nCol. Moses Nichols's Regiment ........ images 00402-00405\nCol. Thomas Stickney's Regiment ...... images 00406-00409\nCol. George Reid's Regiment:\n  Capt. Ebenezer Carleton's Company ... images 00410-00411\n  Capt. Moses Dustin's Company ........ images 00412-00413\n  Capt. Elisha Woodbury's Company ..... images 00414-00416\nField and staff, returns ............. images 00417-00420",
+    "metadata": {
+      "imageId": "008246133_00401",
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1210440
+    }
+  }
+}

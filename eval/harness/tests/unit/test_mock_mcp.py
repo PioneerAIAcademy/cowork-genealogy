@@ -2652,29 +2652,49 @@ def test_image_transcribe_staged_ref_reads_back_through_live_sidecar_read(tmp_pa
     assert "In the name of God, Amen" in json.dumps(read)
 
 
-def test_image_transcribe_without_project_path_is_refused_not_served(tmp_path):
-    """Production refuses a call with no projectPath before any OCR, so the
-    fixture's page must not reach the agent either."""
+def test_image_transcribe_without_project_path_returns_the_page_inline(tmp_path):
+    """Production reads with no projectPath and returns the page inline, staging
+    nothing (#4136), so the fixture's page reaches the agent with no `staged`."""
     _copy_scenario(tmp_path)
     _s, _c, tools_by_name = create_mock_server(
         ["image-transcribe-schuylkill-probate-flynn-will"], FIXTURES_DIR, workspace=tmp_path
     )
     result = _invoke(tools_by_name, "image_transcribe", dict(_WILL_ARGS))
     body = _extract_response_dict(result)
-    assert result.get("is_error") is True, body
-    assert body == {"error": mock_mcp.IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE}
-    assert "In the name of God" not in json.dumps(body)
+    assert not result.get("is_error"), body
+    assert body["transcription"].startswith("Will Book G, page 112.")
+    for key in ("staged", "digest", "imageRef", "stagingError"):
+        assert key not in body
 
 
-def test_image_transcribe_needs_project_message_has_not_drifted_from_the_typescript_source():
-    src = (
-        REPO_ROOT / "packages/engine/mcp-server/src/tools/image-transcribe.ts"
-    ).read_text(encoding="utf-8")
-    decl = re.search(r"const IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE =(.*?);\n", src, re.DOTALL)
-    assert decl, "IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE is gone from image-transcribe.ts"
-    ts_msg = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', decl.group(1)))
-    assert ts_msg, "parsed an empty message — the declaration's shape changed"
-    assert ts_msg == mock_mcp.IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE
+def test_image_transcribe_on_a_folder_that_is_not_a_project_stages_nothing(tmp_path):
+    """A projectPath naming an empty folder is no project: the page comes back
+    inline and no results/ is created there, as production writes nothing."""
+    _s, _c, tools_by_name = create_mock_server(
+        ["image-transcribe-schuylkill-probate-flynn-will"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(tools_by_name, "image_transcribe", {**_WILL_ARGS, "projectPath": str(tmp_path)})
+    body = _extract_response_dict(result)
+    assert not result.get("is_error"), body
+    assert body["transcription"].startswith("Will Book G, page 112.")
+    assert "staged" not in body
+    assert not (tmp_path / "results").exists()
+
+
+def test_image_transcribe_file_with_no_project_answers_no_project(tmp_path):
+    _s, _c, tools_by_name = create_mock_server(["image-transcribe-any"], FIXTURES_DIR, workspace=tmp_path)
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "image_transcribe", {"file": "uploads/scan.jpg", "projectPath": str(tmp_path)})
+    )
+    assert body == {"ok": False, "reason": "no_project", "errors": [mock_mcp.NO_PROJECT_MESSAGE_READ]}
+
+
+def test_no_project_read_message_has_not_drifted_from_the_typescript_source():
+    src = (REPO_ROOT / "packages/engine/mcp-server/src/utils/project-io.ts").read_text(encoding="utf-8")
+    base = src.split('const NO_PROJECT_BASE = "', 1)[1].split('";', 1)[0]
+    read = src.split("export const NO_PROJECT_MESSAGE_READ =", 1)[1].split("`;", 1)[0]
+    read = read.split("${NO_PROJECT_BASE} ", 1)[1]
+    assert f"{base} {read}" == mock_mcp.NO_PROJECT_MESSAGE_READ
 
 
 def test_image_transcribe_capture_id_for_a_file(tmp_path, monkeypatch):
@@ -2744,8 +2764,8 @@ def test_image_transcribe_stages_the_scan_ref_beside_the_text(tmp_path, monkeypa
 
 
 def test_principal_sets_match_each_compiled_tools_arity():
-    """The harness calls a compiled tool as `input`, `input, LOCAL` or `LOCAL`, then any
-    `_COMPILED_TOOL_EXTRA_ARGS`, from an f-string no typechecker sees. So each built
+    """The harness calls a compiled tool as `input`, `input, LOCAL`, `LOCAL` or with nothing,
+    then any `_COMPILED_TOOL_EXTRA_ARGS`, from an f-string no typechecker sees. So each built
     function's required-parameter count must equal what the harness passes before the
     extras: a tool that gains a `principal` without joining `_COMPILED_TOOLS_WITH_PRINCIPAL`
     runs with it undefined."""
@@ -2765,6 +2785,18 @@ def test_principal_sets_match_each_compiled_tools_arity():
         for tool in tools
     }
     assert json.loads(result.stdout) == passed
+
+
+@pytest.mark.requires_engine_build
+def test_project_list_runs_live_with_no_arguments(tmp_path):
+    """The arity test above pins the tables, not the call the f-string builds from them: a
+    call still naming `LOCAL` with no import breaks only here, at harness runtime."""
+    _server, _call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+
+    result = _invoke(tools_by_name, "project_list", {})
+
+    assert result.get("is_error") is not True
+    assert _extract_response_dict(result)["mode"] == "folder"
 
 
 # --- the unknown-argument guard (issue #3947) --------------------------------
@@ -2837,25 +2869,25 @@ def test_guard_checks_the_models_args_not_the_injected_projectPath(tmp_path):
     """The ordering trap, on a LIVE compiled tool.
 
     `_make_compiled_tool_handler` adds `projectPath` to its own copy of the
-    args. `research_delivered` does not declare `projectPath` (nor do
-    `project_list` or `convert_calendar`), so a guard run AFTER that injection
-    would refuse every call to those three. Checking the model's own args is
+    args. `convert_calendar` does not declare `projectPath` (nor does
+    `project_list`), so a guard run AFTER that injection would refuse every call
+    to those two. Checking the model's own args is
     what keeps this call legal.
     """
     _seed_project(tmp_path)
     _server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
 
-    _invoke(tools_by_name, "research_delivered", {"summary": "done"})
+    _invoke(tools_by_name, "convert_calendar", {"date": {"year": 1700}, "jurisdiction": "England"})
 
     assert call_log[-1]["matched"]["kind"] != "unknown_args_refused", (
-        "research_delivered was refused — the guard is reading the post-injection "
+        "convert_calendar was refused — the guard is reading the post-injection "
         "copy (input_obj) instead of the model's own args"
     )
     # And the guard itself agrees, driven directly: the bare call is legal, the
     # post-injection shape is not.
-    assert mock_mcp._reject_unknown_args("research_delivered", {"summary": "x"}) is None
+    assert mock_mcp._reject_unknown_args("convert_calendar", {"date": {"year": 1700}}) is None
     assert mock_mcp._reject_unknown_args(
-        "research_delivered", {"summary": "x", "projectPath": "/p"}
+        "convert_calendar", {"date": {"year": 1700}, "projectPath": "/p"}
     ) is not None
 
 
@@ -2866,7 +2898,7 @@ def test_guard_refuses_on_a_live_compiled_tool_too(tmp_path):
     _seed_project(tmp_path)
     _server, call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
 
-    result = _invoke(tools_by_name, "research_delivered", {"summary": "x", "bogusKey": 1})
+    result = _invoke(tools_by_name, "convert_calendar", {"date": {"year": 1700}, "bogusKey": 1})
 
     assert result["is_error"] is True
     assert "bogusKey" in _extract_response_dict(result)["error"]

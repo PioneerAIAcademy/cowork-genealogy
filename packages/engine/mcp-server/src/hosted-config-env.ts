@@ -69,7 +69,7 @@ export function configFromEnv(env: NodeJS.ProcessEnv, base: AppConfig = {}): App
 
 /** The links append `/#/p/<id>` to the raw value, so a `#`, a `?` or credentials in it break or
  *  leak every link; `new URL` alone accepts `https:user:pw@host` and treats `\` as `/`. */
-function isPlainHttpUrl(raw: string): boolean {
+export function isPlainHttpUrl(raw: string): boolean {
   return (
     /^https?:\/\/[^/]/i.test(raw) &&
     !/[\\\s#?\x00-\x1f\x7f]/.test(raw) &&
