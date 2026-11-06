@@ -64,6 +64,7 @@ import {
 import { nameSimilarity, normalizeString } from "../utils/string-similarity.js";
 import {
   countryConsistency,
+  divisionContradiction,
   placeSegments,
   standardPlaceToCoords,
   type PlaceCoords,
@@ -3539,33 +3540,41 @@ function checkHasEventInOtherCountry(mob: Mob): PersonWarning | null {
 /**
  * Project rule (not a FamilySearch Java port).
  *
- * Returns the first fact whose `place` text names a country its own
- * `standard_place` contradicts — a mis-standardisation on a single fact, as
- * distinct from `hasEventInOtherCountry`, which compares one fact against the
- * birth/death anchors. Scans person facts first, then the anchor's
- * Couple-relationship facts (the order findEventInOtherCountry steps 3-4 use).
- * Skips any fact missing either `place` or `standard_place`: both are optional,
- * and `countryConsistency` is a self-check that needs both halves present.
+ * Returns the first fact whose `place` text names a country, or a US state,
+ * Puerto Rico or Canadian province, that its own `standard_place` contradicts
+ * (`countryConsistency`, then `divisionContradiction`) — a mis-standardisation
+ * on a single fact, as distinct from `hasEventInOtherCountry`, which compares
+ * one fact against the birth/death anchors. Scans person facts first, then the
+ * anchor's Couple-relationship facts (the order findEventInOtherCountry steps
+ * 3-4 use). Skips any fact missing either `place` or `standard_place`: both are
+ * optional, and both checks are self-checks that need both halves present.
  */
-function findPlaceStandardOtherCountry(mob: Mob): SimplifiedFact | null {
+function placeStandardMismatch(f: SimplifiedFact): "country" | "state" | null {
+  if (!f.place || !f.standard_place) return null;
+  if (countryConsistency(f.place, f.standard_place) === "contradiction") return "country";
+  return divisionContradiction(f.place, f.standard_place) ? "state" : null;
+}
+
+function findPlaceStandardOtherCountry(mob: Mob): { fact: SimplifiedFact; kind: "country" | "state" } | null {
   for (const f of mob.getPerson().facts ?? []) {
-    if (!f.place || !f.standard_place) continue;
-    if (countryConsistency(f.place, f.standard_place) === "contradiction") return f;
+    const kind = placeStandardMismatch(f);
+    if (kind) return { fact: f, kind };
   }
   for (const rel of mob.tree.relationships ?? []) {
     if (rel.type !== "Couple") continue;
     if (rel.person1 !== mob.anchorId && rel.person2 !== mob.anchorId) continue;
     for (const f of rel.facts ?? []) {
-      if (!f.place || !f.standard_place) continue;
-      if (countryConsistency(f.place, f.standard_place) === "contradiction") return f;
+      const kind = placeStandardMismatch(f);
+      if (kind) return { fact: f, kind };
     }
   }
   return null;
 }
 
 function checkHasPlaceStandardOtherCountry(mob: Mob): PersonWarning | null {
-  const fact = findPlaceStandardOtherCountry(mob);
-  if (!fact) return null;
+  const found = findPlaceStandardOtherCountry(mob);
+  if (!found) return null;
+  const { fact, kind } = found;
 
   const facts: WarningFact[] = fact.id
     ? [{ id: fact.id, type: fact.type ?? "", date: fact.date ?? fact.standard_date ?? null }]
@@ -3579,7 +3588,7 @@ function checkHasPlaceStandardOtherCountry(mob: Mob): PersonWarning | null {
     personName: getPersonName(mob.getPerson()),
     facts,
     message:
-      `The place is written as "${fact.place}" but standardized to "${fact.standard_place}", a different country. One of them is wrong, usually the standardized place; check it on FamilySearch.`,
+      `The place is written as "${fact.place}" but standardized to "${fact.standard_place}", a different ${kind === "country" ? "country" : "state or province"}. One of them is wrong, usually the standardized place; check it on FamilySearch.`,
   };
 }
 

@@ -715,6 +715,45 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
     expect(ok.validation.warnings).toContain(`Places kept as written, with no standard place found: ${fact.place}.`);
   });
 
+  describe("a place text that names one state beside a standard place in another (#4299)", () => {
+    const WRONG = "Texas, Washington, Kentucky, United States";
+    const withDeath = (place: string, standard_place: string) => {
+      const result = structuredClone(FAMILY);
+      result.persons[0].facts.push({ id: "F99", type: "Death", place, standard_place });
+      return result;
+    };
+    const mismatches = (ok: any) => ok.validation.warnings.filter((w: string) => w.includes("lies in another"));
+
+    it("warns, and keeps FamilySearch's value as read", async () => {
+      const ok: any = await createWith({ projectPath: dir, objective: "x", personId: "LZNY-BRF" }, withDeath("Washington County, Texas", WRONG));
+      expect(ok.ok).toBe(true);
+      expect(mismatches(ok)).toHaveLength(1);
+      expect(mismatches(ok)[0]).toContain("'Washington County, Texas'");
+      expect(mismatches(ok)[0]).toContain(`'${WRONG}'`);
+      const written = (await readJson("tree.gedcomx.json")).persons.flatMap((p: any) => p.facts ?? []).find((f: any) => f.place === "Washington County, Texas");
+      expect(written.standard_place).toBe(WRONG);
+    });
+
+    it("warns once for a pair that Death and Burial share, and again for an abbreviated text", async () => {
+      const result = withDeath("Washington County, Texas", WRONG);
+      result.persons[0].facts.push({ id: "F98", type: "Burial", place: "Washington County, Texas", standard_place: WRONG });
+      result.persons[0].facts.push({ id: "F97", type: "Residence", place: "Washington Co., TX", standard_place: WRONG });
+      const ok: any = await createWith({ projectPath: dir, objective: "x", personId: "LZNY-BRF" }, result);
+      expect(mismatches(ok)).toHaveLength(2);
+    });
+
+    it.each([
+      ["the same state", "Washington County, Texas", "Washington, Texas, United States"],
+      ["the same state, abbreviated", "Washington Co., TX", "Washington, Texas, United States"],
+      ["a text naming no state", "Washington County", WRONG],
+      ["a place inside the named state", "Independence Cemetery, Independence, Washington, Texas", "Rock Hill Graves, Washington, Washington, Texas, United States"],
+    ])("does not warn for %s", async (_label, place, standard) => {
+      const ok: any = await createWith({ projectPath: dir, objective: "x", personId: "LZNY-BRF" }, withDeath(place, standard));
+      expect(ok.ok).toBe(true);
+      expect(mismatches(ok)).toEqual([]);
+    });
+  });
+
   it("matches the subject case-insensitively, and refuses a read that does not hold it", async () => {
     const result = structuredClone(FAMILY);
     const ok: any = await createWith({ projectPath: dir, objective: "x", personId: "lzny-brf" }, result);
@@ -830,28 +869,23 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
     expect(result.relatives.every((r: any) => r.id && r.name && r.relationship)).toBe(true);
   });
 
-  it("returns projectUrl from the store's project id inside the 2,000 characters, and none without the setting", async () => {
+  it("returns no viewer link with the public URL set, inside the 2,000 characters", async () => {
     const read = structuredClone(FAMILY);
     for (let i = 0; i < 63; i++) {
       const id = `KID${String(i).padStart(2, "0")}-AAA`;
       read.persons.push({ id, ark: `ark:/61903/4:1:${id}`, gender: "Male", living: false, names: [{ preferred: true, given: `Child Number ${i}`, surname: "Flynn" }] });
       read.relationships.push({ type: "ParentChild", parent: "LZNY-BRF", child: id, subtype: "Biological" });
     }
-    const createIn = (projectId: string, config: Record<string, unknown>) =>
-      runWithProjectStore(new ScopedFsStore(dir, projectId), () =>
-        runProjectCreate(
-          { projectPath: SCOPED_ANCHOR, objective: "x", personId: "LZNY-BRF" },
-          { readPerson: async () => ({ result: structuredClone(read), resolvedId: "LZNY-BRF", memoryKinds: {} }) },
-          bearerPrincipal("tok", config),
-        ),
-      ) as Promise<any>;
-    const linked = await createIn("p-linked", { webPublicUrl: "https://beta.example" });
-    expect(linked.ok).toBe(true);
-    expect(linked.projectUrl).toBe("https://beta.example/#/p/p-linked");
-    expect(JSON.stringify(linked).length).toBeLessThanOrEqual(2000);
-    const bare = await createIn("p-bare", {});
-    expect(bare.ok).toBe(true);
-    expect("projectUrl" in bare).toBe(false);
+    const created = (await runWithProjectStore(new ScopedFsStore(dir, "p-linked"), () =>
+      runProjectCreate(
+        { projectPath: SCOPED_ANCHOR, objective: "x", personId: "LZNY-BRF" },
+        { readPerson: async () => ({ result: structuredClone(read), resolvedId: "LZNY-BRF", memoryKinds: {} }) },
+        bearerPrincipal("tok", { webPublicUrl: "https://beta.example", uploadsEnabled: true }),
+      ),
+    )) as any;
+    expect(created.ok).toBe(true);
+    expect("projectUrl" in created).toBe(false);
+    expect(JSON.stringify(created).length).toBeLessThanOrEqual(2000);
   });
 
   it.each([

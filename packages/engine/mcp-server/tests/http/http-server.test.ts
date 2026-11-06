@@ -37,6 +37,7 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import {
   CLAIM_EPOCH_HEADER,
   claimFenceFromHeaders,
+  CONNECTOR_PROJECT_RE,
   HEALTHZ_TIMEOUT_MS,
   PROJECT_ID_HEADER,
   MAX_BODY_BYTES,
@@ -52,7 +53,7 @@ import {
 } from "../../src/http-server.js";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
-import type { ClaimFence, ProjectStore } from "../../src/store/project-store.js";
+import type { ClaimFence, OwnedProjectIds, ProjectStore } from "../../src/store/project-store.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
 
 // The wire spelling; node:http lower-cases it to PROJECT_ID_HEADER on arrival.
@@ -69,8 +70,8 @@ const bindStore = vi.fn(
     _signal: AbortSignal,
     _fence?: ClaimFence,
     // E1: a connector request names its own anchor and owner.
-    _opts?: { anchorPath?: string; ownerId?: string },
-  ): ProjectStore => new ScopedFsStore(root, projectId),
+    opts?: { anchorPath?: string; ownerId?: string },
+  ): ProjectStore => new ScopedFsStore(root, projectId, opts?.anchorPath),
 );
 // Allow-all unless a case says otherwise: the project check itself is U4's
 // section below and tests/http/http-server-pg.test.ts.
@@ -145,6 +146,9 @@ const projectOwner = vi.fn(
   }),
 );
 
+/** The caller owns nothing unless a case says otherwise. */
+const ownedProjects = vi.fn(async (_userId: string): Promise<OwnedProjectIds> => ({ ids: [], truncated: false }));
+
 /** The headers a connector request carries. */
 function connectorHeaders(extra: Record<string, string> = {}): Record<string, string> {
   return { Authorization: `Bearer ${TEST_CONNECTOR_TOKEN}`, ...extra };
@@ -160,6 +164,7 @@ beforeAll(async () => {
     authorize,
     lookupConnector,
     projectOwner,
+    ownedProjects,
   });
   const address = server.address();
   if (!address || typeof address !== "object") throw new Error("server did not bind a port");
@@ -308,7 +313,7 @@ describe("tool server over Streamable HTTP", () => {
     expect(dirs.every((d) => d.startsWith("alpha-") || d.startsWith("beta-"))).toBe(true);
   });
 
-  it("2d. baseConfig's public URL reaches project_create and project_context as links built from the header's project id", async () => {
+  it("2d. baseConfig's public URL reaches project_context as an upload link built from the header's project id, and no viewer link anywhere", async () => {
     const linked = await startHttpServer({
       host: "127.0.0.1",
       port: 0,
@@ -316,7 +321,8 @@ describe("tool server over Streamable HTTP", () => {
       bindStore,
       authorize,
       lookupConnector,
-      projectOwner
+      projectOwner,
+      ownedProjects,
     });
     const address = linked.address();
     if (!address || typeof address !== "object") throw new Error("server did not bind a port");
@@ -325,11 +331,11 @@ describe("tool server over Streamable HTTP", () => {
       const client = await connect({ [PROJECT_HEADER]: id }, `http://127.0.0.1:${address.port}`);
       const created = JSON.parse(textOf(await client.callTool({ name: "project_create", arguments: createArgs("Linked") })));
       expect(created.ok, JSON.stringify(created)).toBe(true);
-      expect(created.projectUrl).toBe(`https://beta.example/#/p/${id}`);
+      expect("projectUrl" in created).toBe(false);
       const ctx = JSON.parse(
         textOf(await client.callTool({ name: "project_context", arguments: { projectPath: SCOPED_ANCHOR } })),
       );
-      expect(ctx.projectUrl).toBe(`https://beta.example/#/p/${id}`);
+      expect("projectUrl" in ctx).toBe(false);
       expect(ctx.uploadUrl).toBe(`https://beta.example/#/p/${id}/upload`);
     } finally {
       linked.closeAllConnections();
@@ -852,6 +858,7 @@ describe("tool server over Streamable HTTP", () => {
         authorize,
         lookupConnector,
         projectOwner,
+        ownedProjects,
         issuer,
       });
       const addr = withIssuer.address();
@@ -1048,6 +1055,160 @@ describe("tool server over Streamable HTTP", () => {
       expect(res.status).toBe(503);
       await res.text();
     });
+
+    describe("project_list on a connector (#3991)", () => {
+      /** A project on disk under `id`, as `ownedProjects` would name it. */
+      async function seedOwned(id: string): Promise<void> {
+        await mkdir(join(root, id), { recursive: true });
+        await writeFile(join(root, id, "research.json"), JSON.stringify({ project: { objective: `about ${id}` } }));
+      }
+
+      async function listProjects(): Promise<{ isError?: boolean; text: string }> {
+        const res = await rpc(call("project_list", {}), connectorHeaders());
+        expect(res.status).toBe(200);
+        const { result } = (await res.json()) as {
+          result: { isError?: boolean; content: Array<{ text: string }> };
+        };
+        return { isError: result.isError, text: result.content[0]!.text };
+      }
+
+      it("a connector's project_list names the caller's projects and one fresh path", async () => {
+        const ids = ["proj_aaaaaaaaaaaaaaaa", "proj_bbbbbbbbbbbbbbbb"];
+        await Promise.all(ids.map(seedOwned));
+        bindStore.mockClear();
+        ownedProjects.mockClear();
+        ownedProjects.mockResolvedValueOnce({ ids, truncated: false });
+
+        const listed = await listProjects();
+        expect(listed.isError, listed.text).not.toBe(true);
+        const body = JSON.parse(listed.text);
+        expect(ownedProjects).toHaveBeenCalledExactlyOnceWith(TEST_USER_ID);
+        expect(body.mode).toBe("hosted");
+        expect(body.projects.map((p: { projectPath: string }) => p.projectPath)).toEqual(ids.map((id) => `/${id}`));
+        expect(body.projects[0].objective).toBe(`about ${ids[0]}`);
+        expect(body.newProjectPath).toMatch(CONNECTOR_PROJECT_RE);
+        expect(ids.map((id) => `/${id}`)).not.toContain(body.newProjectPath);
+
+        // Each path's store: anchored at that path, for this caller, with no fence.
+        expect(bindStore.mock.calls.map(([id]) => `/${id}`)).toEqual([...ids.map((id) => `/${id}`), body.newProjectPath]);
+        for (const [id, , fence, opts] of bindStore.mock.calls) {
+          expect(fence).toBeUndefined();
+          expect(opts).toEqual({ anchorPath: `/${id}`, ownerId: TEST_USER_ID });
+        }
+      });
+
+      it("a caller who owns nothing still gets a fresh path", async () => {
+        const body = JSON.parse((await listProjects()).text);
+        expect(body.projects).toEqual([]);
+        expect(body.newProjectPath).toMatch(CONNECTOR_PROJECT_RE);
+        expect(body.message).toBe("No project yet: pass newProjectPath as projectPath to start one.");
+      });
+
+      it("an id that is not /proj_ shaped is not listed", async () => {
+        const good = "proj_cccccccccccccccc";
+        const claimedByDevLogin = "a-web-tier-project";
+        await Promise.all([good, claimedByDevLogin].map(seedOwned));
+        bindStore.mockClear();
+        ownedProjects.mockResolvedValueOnce({ ids: [claimedByDevLogin, good], truncated: false });
+
+        const body = JSON.parse((await listProjects()).text);
+        expect(body.projects.map((p: { projectPath: string }) => p.projectPath)).toEqual([`/${good}`]);
+        expect(bindStore.mock.calls.map(([id]) => id)).not.toContain(claimedByDevLogin);
+        expect(body).not.toHaveProperty("truncated");
+      });
+
+      it("a cut listing says so, even when the door's filter left fewer ids than the query's limit", async () => {
+        const good = "proj_eeeeeeeeeeeeeeee";
+        await seedOwned(good);
+        ownedProjects.mockResolvedValueOnce({ ids: ["a-web-tier-project", good], truncated: true });
+
+        const body = JSON.parse((await listProjects()).text);
+        expect(body.projects.map((p: { projectPath: string }) => p.projectPath)).toEqual([`/${good}`]);
+        expect(body.truncated).toBe(true);
+        expect(body.message).toContain("More projects exist than are listed");
+      });
+
+      it("a failing ownedProjects is isError, never No project yet", async () => {
+        ownedProjects.mockRejectedValueOnce(new Error("pool is down"));
+        const listed = await listProjects();
+        expect(listed.isError).toBe(true);
+        expect(listed.text).toContain("pool is down");
+        expect(listed.text).not.toContain("No project yet");
+      });
+
+      it("a document read that fails mid-listing is isError, never a project with no subject", async () => {
+        const id = "proj_dddddddddddddddd";
+        await seedOwned(id);
+        ownedProjects.mockResolvedValueOnce({ ids: [id], truncated: false });
+        const store = new ScopedFsStore(root, id, `/${id}`);
+        vi.spyOn(store, "readText").mockRejectedValue(new Error("pool is down"));
+        bindStore.mockReturnValueOnce(store);
+
+        const listed = await listProjects();
+        expect(listed.isError, listed.text).toBe(true);
+        expect(listed.text).toContain("pool is down");
+        expect(listed.text).not.toContain("newProjectPath");
+      });
+
+      it("a client that disconnects mid-listing stops the listing at its next read", async () => {
+        const ids = ["proj_1111111111111111", "proj_2222222222222222", "proj_3333333333333333"];
+        await Promise.all(ids.map(seedOwned));
+        ownedProjects.mockResolvedValueOnce({ ids, truncated: false });
+
+        // The first project's research.json holds the tool mid-listing until the
+        // client has gone, which is when the store's signal aborts.
+        let release!: () => void;
+        const gate = new Promise<void>((resolve) => (release = resolve));
+        const reads: string[] = [];
+        const signals: AbortSignal[] = [];
+        // One per listed path and one for the fresh path.
+        for (let i = 0; i <= ids.length; i++) {
+          bindStore.mockImplementationOnce((projectId, signal, _fence, opts) => {
+            signals.push(signal);
+            const store = new ScopedFsStore(root, projectId, opts?.anchorPath);
+            const readText = store.readText.bind(store);
+            vi.spyOn(store, "readText").mockImplementation(async (projectPath, ref) => {
+              reads.push(`${projectPath}:${ref}`);
+              await gate;
+              return readText(projectPath, ref);
+            });
+            return store;
+          });
+        }
+
+        const client = new AbortController();
+        const dropped = fetch(`${base}/mcp`, {
+          method: "POST",
+          signal: client.signal,
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json, text/event-stream",
+            ...connectorHeaders(),
+          },
+          body: JSON.stringify(call("project_list", {})),
+        }).catch(() => undefined);
+
+        await vi.waitFor(() => expect(reads).toEqual([`/${ids[0]}:research.json`]));
+        client.abort();
+        await vi.waitFor(() => expect(signals[0]!.aborted).toBe(true));
+        release();
+        await dropped;
+        // The dropped client has no response to wait on, so give the tool its next turns.
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        expect(reads).toEqual([`/${ids[0]}:research.json`]);
+      });
+
+      it("a connector call naming no project still refuses project tools and queries nothing", async () => {
+        bindStore.mockClear();
+        ownedProjects.mockClear();
+        const res = await rpc(call("tree_query", {}), connectorHeaders());
+        expect(res.status).toBe(200);
+        const text = await res.text();
+        expect(text).toContain("This call named no project");
+        expect(ownedProjects).not.toHaveBeenCalled();
+        expect(bindStore).not.toHaveBeenCalled();
+      });
+    });
   });
 
   it("5. /healthz is 200 with the tool count; GET (SSE accept) and DELETE on /mcp are 405 with Allow: POST", async () => {
@@ -1090,7 +1251,8 @@ describe("tool server over Streamable HTTP", () => {
       authorize,
       checkReady: () => probe(),
       lookupConnector,
-      projectOwner
+      projectOwner,
+      ownedProjects,
     });
     const address = ready.address();
     if (!address || typeof address !== "object") throw new Error("server did not bind a port");
