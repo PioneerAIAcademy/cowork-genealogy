@@ -2373,7 +2373,8 @@ def create_app(
             return HTMLResponse(f"Sign-in is busy; try again. {fail}", status_code=503)
         if (reason := await _admission_refusal(request, email, user)) is not None:
             return refused(reason)
-        refresh = token_json.get("refresh_token")
+        # A chat-off tier runs no refresher, so a stored refresh token would sit unread.
+        refresh = token_json.get("refresh_token") if app.state.chat else None
         try:
             await store.store_grant(
                 user.id,

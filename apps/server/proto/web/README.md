@@ -213,8 +213,9 @@ and drops the one the 202's `seq` names; everything else relays.
 
 With the chat on (`GENEALOGY_CHAT` unset or `true`), `QUEUE_URL` unset or empty refuses to
 start (a `RuntimeError` from the lifespan, U11): a tier with no queue records a turn and
-nothing ever runs it. With `GENEALOGY_CHAT=false` there is no queue, no grant refresher and
-no `/api/sessions` route; `/api/health` reports `"queue": null`. The driver's embedded tier is
+nothing ever runs it. With `GENEALOGY_CHAT=false` there is no queue, no grant refresher, no
+stored refresh token and no `/api/sessions` route; `/api/health` reports `"queue": null`. The
+driver's embedded tier is
 the one queue-less mode, and it passes `drive.py`'s own `NullQueue` to `create_app`: the
 turn is recorded (a `turns` row, a `user_msg` event) and never enqueued, and stays
 `turn_active` until the seeder closes it through `worker.complete()` itself.

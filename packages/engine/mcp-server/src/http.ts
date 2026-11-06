@@ -59,6 +59,7 @@ import { loadConfig } from "./auth/config.js";
 import { startHttpServer, MCP_PATH } from "./http-server.js";
 import { authorizeAttempt, createPgS3Backend, PgS3ProjectStore, readyLabel,
   lookupConnectorToken,
+  ownedProjectIds,
   projectOwnerOf,
 } from "./store/pg-s3-project-store.js";
 import { readLimitsEnv } from "./store/limits-env.js";
@@ -287,6 +288,7 @@ const server = await startHttpServer({
   lookupConnector: (tokenSha256) =>
     lookupConnectorToken(backend, tokenSha256, (ciphertext) => decrypt(ciphertext, fsTokenEncKey)),
   projectOwner: (projectId) => projectOwnerOf(backend, projectId),
+  ownedProjects: (userId) => ownedProjectIds(backend, userId),
   issuer,
   checkReady: () => backend.checkReady(),
 });
