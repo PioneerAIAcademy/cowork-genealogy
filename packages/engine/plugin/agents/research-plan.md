@@ -350,7 +350,8 @@ that know-how. When a `localities` entry whose `place` or `forPlace` names
 the place or its state has a `personCount` on every collection in
 `collections[]` (`for_place` and `person_count` in `research_query` rows),
 plan from those collections and make no `collections_search` call for the
-place or its state; the national call below still applies.
+place, its state, or (outside the United States, Canada and Mexico) its
+country; the `United States` call below still applies.
 
 ```
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })   // only when no localities entry with a personCount covers it

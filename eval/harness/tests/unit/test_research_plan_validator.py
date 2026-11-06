@@ -438,6 +438,23 @@ def test_reuse_exempts_the_national_call_even_for_a_national_entry():
     _no_skip(check_reuse, before, [_call("collections_search", None, {"standardPlace": "United States"})], _REUSE_TEST)
 
 
+_NO_BEFORE = {"research_json": {"localities": [{
+    "id": "loc_001", "place": "Hordaland, Norway",
+    "collections": [{"id": "4237104", "title": "Norway, Church Books", "person_count": 0}],
+}]}}
+
+
+@pytest.mark.parametrize("place", ["Norway", "Kongsberg, Buskerud, Norway"])
+def test_reuse_fires_on_a_country_repeat_outside_north_america(place):
+    # anders-monsen-ancestry 2026-11-01: entry for Hordaland, then a call on "Norway".
+    with pytest.raises(AssertionError, match="loc_001"):
+        check_reuse(_NO_BEFORE, [_call("collections_search", None, {"standardPlace": place})], _REUSE_TEST)
+
+
+def test_reuse_passes_another_country_outside_north_america():
+    check_reuse(_NO_BEFORE, [_call("collections_search", None, {"standardPlace": "Sweden"})], _REUSE_TEST)
+
+
 def test_reuse_passes_other_tools_and_bad_args():
     calls = [
         _call("volume_search", None, {"standardPlace": "Schuylkill, Pennsylvania, United States"}),
