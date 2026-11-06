@@ -29,7 +29,7 @@
 | Front door | One door on the tool server. Every caller presents our own token, and the door loads that user's stored FamilySearch token and OpenRouter key. |
 | Projects | `projectPath` carries an id the server mints. The user who first writes to it owns it. |
 | UI | MCP App cards and a case file, in one connector named exactly "Genealogy Research". |
-| Surface | claude.ai and Desktop Chat are the primary surfaces, and Cowork works too, because project data lives on the server and nothing sits on the user's disk. Claude's plugin docs say a chat session ignores a plugin's agents and hooks and a Cowork task loads them, and that chat and Cowork now share one home. What research a chat session gets is undecided. |
+| Surface | claude.ai and Desktop Chat are the primary surfaces, because project data lives on the server and nothing sits on the user's disk. Cowork is no longer tested. Claude's plugin docs say a chat session ignores a plugin's agents and hooks. What research a chat session gets is undecided. |
 | Sign-up | An allowlist the lead keeps. Each user needs a FamilySearch account whose email no other user has. Removing an email does not end a connector token; one SQL update does, if it is ever needed. |
 | Web pages | Plain pages from the web tier. No SPA in the beta. |
 | Uploads | Plain files, on a plain upload page: the original, plus a PDF's own text when the browser finds a text layer. Claude reads or transcribes them with existing tools. |
@@ -123,7 +123,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 | 9. PDF text | Not measured: three real browser-saved Ancestry captures through pdf.js. |
 | 10. Reconnect | Not measured: with a live connector token and an expired FamilySearch session, whether the tools stay, whether the link reaches the user from the main thread and from an agent, and whether "continue" works in the same task. |
 | 11. Long token | Not measured: whether a long `expires_in` with no refresh token still works, in a new task and in the open one, and, when that token dies, what reconnecting takes. |
-| 12. Surfaces | Claude's plugin docs say chat ignores agents and hooks, and a Cowork task in the desktop app loads them. On an account with the unified home there is no selector: a conversation starts as chat and moves to a cloud session when it needs code or files. Others report plugin agents and hooks running in web sessions, unreliably. Not measured here: whether a Cowork session on claude.ai runs this plugin's agents and hook on the first message, whether research moves a unified conversation at all, what a chat session does with this plugin, and whether the card and the sign-in link behave alike on each. |
+| 12. Surfaces | Claude's plugin docs say chat ignores agents and hooks. On an account with the unified home there is no selector: a conversation starts as chat and moves to a cloud session when it needs code or files. On the lead's account the model lists an `Agent` tool in chat, and others report plugin agents and hooks running in web sessions, unreliably. Not measured here: whether claude.ai and Desktop Chat run this plugin's agents and hook on the first message, whether research moves a unified conversation at all, and whether the card and the sign-in link behave alike on each. |
 | 13. Door refusals | Not measured: what the researcher, the model and the card see when the door answers 400, 403 or 503, and whether the connector then works with no new sign-in. A bad result could move these to `isError`, on the connector path only. 401 stays HTTP. |
 | 14. One install | Not measured: a plugin whose `.mcp.json` names the server. Claude's docs say the entry appears on the plugin's Connectors tab, where the user connects and signs in, so skills, agents, hook and connector arrive together on the account. Still to learn: whether its tools keep the `mcp__Genealogy_Research__` prefix the agents list, because Claude Code's docs name a bundled server's tools `mcp__plugin_<plugin>_<server>__…`. |
 | 15. Server instructions | Not measured: whether an MCP server's `instructions` reach the model on each surface, and which tool a first message calls first there. A rule carried in a tool's answer only reaches a model that calls that tool. |
@@ -304,7 +304,7 @@ A public text or unit test drawn from a report names no account id or anyone who
 The first invited user waits for all of these.
 
 1. **Security reviews** as each item merges: E2, E3, W2 and W4, with `/security-review` and `/code-review ultra`.
-2. **The acceptance run,** with a new Claude account and a new FamilySearch account on the allowlist, on the zip users will install, built from the launch commit with the MCP App work and G6 merged. It runs in a Cowork task, and in chat as far as the Surface decision goes:
+2. **The acceptance run,** with a new Claude account and a new FamilySearch account on the allowlist, on the zip users will install, built from the launch commit with the MCP App work and G6 merged. It runs in claude.ai chat and Desktop Chat:
    1. add the connector, sign in and install the plugin;
    2. research a person, and see the cards and case file;
    3. upload a capture;
@@ -388,6 +388,7 @@ Issue #4003, in the icebox, holds the worker's half of the one door and server-s
 - **The wrong server.** A `.mcpb` left on shares the connector's prefix, so research can land on disk and look right. The first reply must say `hosted`.
 - **One host.** A single server, with `/wiki` and `/pop-stats` on the same machine and the same Funnel. A lost disk loses users' research, and D4 and the terms say so.
 - **Research in chat.** Claude's docs say a chat session runs no hooks or agents, and this plugin is 2 skills and 31 agents. So a chat user holds the raw tools with none of the hook's rules, and a rule that must hold there has to be a tool rule.
+- **A new account.** Research on the primary surfaces rests on plugin skills and agents reaching chat. If a new account gets neither, research does not run there at all, so acceptance step 2 is the main risk to the beta.
 - **A test on the lead's account.** It runs a variant plugin, so cards working there say nothing about the zip users install. Only acceptance step 2 does.
 - **One account's load.** Until E4's per-user cap lands, one account can exhaust the tool server with concurrent calls, so it lands before invited users.
 - **Code moving under a rehearsal.** One pinned commit for web, tools and the zip.
