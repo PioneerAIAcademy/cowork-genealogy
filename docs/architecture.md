@@ -679,8 +679,11 @@ Architecturally:
   is the one stamped on that open turn of that project (U4). Every other request
   is the connector path: the bearer is looked up by sha256 in
   `connector_tokens`, the project comes from the call's own `/proj_<16 hex>`
-  `projectPath` rather than a header, and a refusal is 401 with
-  `WWW-Authenticate`) are entrypoints that only connect
+  `projectPath` rather than a header, a refusal is 401 with
+  `WWW-Authenticate`, and a call naming no project binds a store that refuses
+  every project tool and answers `project_list` with the caller's projects plus
+  one fresh path, which `make engine-smoke-http` checks against a seeded second
+  user) are entrypoints that only connect
   a transport, so a new arm goes in `server.ts` and both get it. A
   commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
