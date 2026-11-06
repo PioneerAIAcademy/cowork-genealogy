@@ -406,6 +406,19 @@ describe("fetchWithRetry", () => {
     ).rejects.toThrow(/Server requested a 60s wait/);
   });
 
+  it("reads the body of the response it holds before throwing for a Retry-After past the budget", async () => {
+    // An unread undici body keeps its socket until GC, and nothing else will
+    // read this one once the loop throws.
+    // fetchWithTimeout wraps each body reader on the response, so keep the spy
+    // itself rather than reading it back off the response.
+    const text = vi.fn(async () => "slow down");
+    mockFetch.mockResolvedValueOnce({ ...mockResponse(429, { retryAfter: "60" }), text });
+    await expect(
+      fetchWithRetry("https://example.com", {}, 1000, { budgetMs: 5000, baseMs: 1 }),
+    ).rejects.toThrow(/Server requested a 60s wait/);
+    expect(text).toHaveBeenCalledTimes(1);
+  });
+
   it("honours Retry-After within budget", async () => {
     mockFetch
       .mockResolvedValueOnce(mockResponse(429, { retryAfter: "1" }))

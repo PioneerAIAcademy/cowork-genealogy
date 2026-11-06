@@ -357,6 +357,9 @@ export async function fetchWithRetry(
 
     const ra = retryAfterMs(response);
     if (ra !== null && ra > remaining) {
+      // Nothing reads this response once the loop throws, and an unread undici
+      // body holds its socket until GC (the same reason as the drain above).
+      await response.text().catch(() => "");
       throw new Error(
         `Server requested a ${Math.ceil(ra / 1000)}s wait (Retry-After: ${response.headers.get("retry-after")}), ` +
           `but only ${Math.ceil(remaining / 1000)}s of the ${Math.ceil(budgetMs / 1000)}s retry budget remains. ` +
