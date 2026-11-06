@@ -245,6 +245,7 @@ Sorted by `matchScore` descending; no gedcomx.
   "scoringErrors": 0,         // pairs whose FS call kept failing (kept, matchScore null)
   "scoreLogError": null,      // present only if the calibration append failed
   "subjectTooThin": true,     // only when the subject lacks a narrow date AND a named relative
+  "subjectTooThinNote": "…",  // present with subjectTooThin: how to report the rows
   "matches": [
     {
       "matchRank": 1,
