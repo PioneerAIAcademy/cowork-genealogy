@@ -1295,6 +1295,31 @@ async def test_a_bad_state_leaves_the_budget_untouched(chat_off, case):
             assert (await _sign_in(c, state, oauth)).status_code in (302, 307), "both units are still there"
 
 
+@pytest.mark.parametrize("case", ["no-record", "used"])
+async def test_with_the_budget_spent_a_bad_state_answers_400_not_503(chat_off, case):
+    """The unused check runs before the budget: once the budget is spent, a used or missing
+    state still answers 400, not a 503 "try again" that no reload can fix."""
+    chat_off.setenv("GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "2")
+    calls = _fake_fs(chat_off)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    application, c = _app_client(store)
+    application.state.signin_budget._clock = lambda: 1000.0
+    async with c:
+        first, first_oauth = await _login(c)
+        assert (await _sign_in(c, first, first_oauth)).status_code in (302, 307)
+        assert not application.state.signin_budget.try_take(1), "the budget is spent"
+        second, second_oauth = await _login(c)
+        if case == "no-record":
+            store.signin_states.clear()
+        else:
+            store.signin_states[auth.state_sha256(second)] = datetime.now(tz=timezone.utc)
+        calls.clear()
+        r = await _sign_in(c, second, second_oauth)
+        assert r.status_code == 400 and "already used or has expired" in r.text
+        assert calls == []
+
+
 async def test_past_the_budget_the_callback_answers_503_and_keeps_the_state(chat_off):
     chat_off.setenv("GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "2")
     calls = _fake_fs(chat_off)

@@ -275,6 +275,12 @@ services:
       # #3988: unset or false, every /openrouter route answers 404 and /auth/config says
       # `openrouter: false`; anything but true/false refuses to start.
       OPENROUTER_LINKING_ENABLED: ${OPENROUTER_LINKING_ENABLED:-}
+      # #3992: unset, sign-in sends FamilySearch PUBLIC_URL + /callback and the callback is
+      # served at /callback; set, it must be an absolute http(s) URL, or start-up refuses.
+      FS_REDIRECT_URI: ${FS_REDIRECT_URI:-}
+      # #3992: unset, no sign-in budget; a whole number of at least 2 caps the FamilySearch
+      # calls sign-in makes in any 60 seconds; 0, 1 or a non-number refuses to start.
+      GENEALOGY_SIGNIN_CALLS_PER_MINUTE: ${GENEALOGY_SIGNIN_CALLS_PER_MINUTE:-}
       PUBLIC_URL: ${PUBLIC_URL:-http://127.0.0.1:8085}
       WEB_ORIGIN: ${WEB_ORIGIN:-}
       SESSION_SECRET: ${SESSION_SECRET:-}
