@@ -30,8 +30,9 @@
 // A connector caller's `tools/call` runs holding one of that user's
 // `USER_CALL_CAP` slots (self-hosted beta E4, per user; `utils/user-limits.ts`).
 // A call over the cap waits in FIFO order and is never refused; one whose client
-// hangs up while waiting leaves the queue without running. `initialize`,
-// `tools/list` and notifications never wait, and the worker path is not capped.
+// hangs up while waiting leaves the queue without running, and one that waited
+// has its token looked up again before it runs. `initialize`, `tools/list` and
+// notifications never wait, and the worker path is not capped.
 //
 // The body is read ONCE for both paths, under `MAX_BODY_BYTES`, because a
 // JSON-RPC batch has to be refused before any tool runs; the parsed value is
@@ -202,6 +203,13 @@ const AUTHORIZATION_UNAVAILABLE = {
 function sendJson(res: http.ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, { "Content-Type": "application/json" });
   res.end(JSON.stringify(body));
+}
+
+/** A short label for a lookup that threw: its `code`, else its `name`, never
+ *  its message, which may carry a connection string or a token. */
+function errorLabel(error: unknown): string {
+  const err = error as { code?: unknown; name?: unknown };
+  return typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
 }
 
 /** What a project request presents to `authorize`: the project it names, its
@@ -601,9 +609,7 @@ async function handleMcpPost(
     try {
       verdict = await options.authorize({ projectId: projectId.id, fence, bearer: bearerFromHeaders(req.headers) });
     } catch (error) {
-      const err = error as { code?: unknown; name?: unknown };
-      const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
-      process.stderr.write(`ev=tool_authorize_failed error=${label} project_id=${projectId.id}\n`);
+      process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} project_id=${projectId.id}\n`);
       sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
       return;
     }
@@ -627,9 +633,14 @@ async function handleMcpPost(
   let principal: Principal;
   let store: ProjectStore;
   let logUserId = "-";
-  /** The connector caller whose slot a `tools/call` takes; unset on the worker path. */
+  /** The connector caller whose slot a `tools/call` takes, and the sha256 its
+   *  token is looked up by again if the call waits; unset on the worker path. */
   let capUserId: string | undefined;
+  let capTokenSha256 = "";
   let familySearchStatus: number | null = null;
+  const recordFamilySearchStatus = (status: number): void => {
+    familySearchStatus = keptFamilySearchStatus(familySearchStatus, status);
+  };
 
   if (isWorkerPath) {
     principal = principalFromHeaders(req.headers, options.baseConfig);
@@ -645,10 +656,8 @@ async function handleMcpPost(
       try {
         caller = await options.lookupConnector(sha256Hex(bearer));
       } catch (error) {
-        const err = error as { code?: unknown; name?: unknown };
-        const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
         // Never an admission, exactly as an `authorize` that throws is not.
-        process.stderr.write(`ev=tool_authorize_failed error=${label} surface=connector\n`);
+        process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
         sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
         return;
       }
@@ -662,6 +671,7 @@ async function handleMcpPost(
     }
     logUserId = caller.userId;
     capUserId = caller.userId;
+    capTokenSha256 = sha256Hex(bearer);
 
     const named = connectorProjectPath(body.value);
     if (named.kind === "not_a_string") {
@@ -705,9 +715,7 @@ async function handleMcpPost(
       try {
         owner = await options.projectOwner(connectorProjectId);
       } catch (error) {
-        const err = error as { code?: unknown; name?: unknown };
-        const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
-        process.stderr.write(`ev=tool_authorize_failed error=${label} surface=connector\n`);
+        process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
         sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
         return;
       }
@@ -731,9 +739,7 @@ async function handleMcpPost(
       accessToken: caller.familySearchToken,
       userId: caller.userId,
       config: connectorConfig(options.baseConfig, caller),
-      recordFamilySearchStatus: (status) => {
-        familySearchStatus = keptFamilySearchStatus(familySearchStatus, status);
-      },
+      recordFamilySearchStatus,
     });
   }
 
@@ -765,14 +771,49 @@ async function handleMcpPost(
     }
   };
 
+  /**
+   * A call that waited for its slot was admitted before it queued, so look its
+   * token up again before it runs. A user blocked, or a grant ended, while it
+   * waited is refused exactly as at the door: S2's delete script blocks first and
+   * relies on the next call being refused. The FamilySearch token and config
+   * come from the fresh lookup, since the web tier may have replaced the token
+   * meanwhile. False when the call was answered here.
+   */
+  const stillAdmitted = async (userId: string): Promise<boolean> => {
+    let again: ConnectorCaller | null;
+    try {
+      again = await options.lookupConnector(capTokenSha256);
+    } catch (error) {
+      process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
+      sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
+      return false;
+    }
+    if (!again || again.userId !== userId) {
+      process.stderr.write("ev=tool_refused reason=no_connector_token surface=connector\n");
+      sendUnauthorized(res, options);
+      return false;
+    }
+    principal = connectorPrincipal({
+      accessToken: again.familySearchToken,
+      userId: again.userId,
+      config: connectorConfig(options.baseConfig, again),
+      recordFamilySearchStatus,
+    });
+    return true;
+  };
+
   // E4, per user: the slot is released however `run` ends, a throw included.
   if (capUserId !== undefined && isToolsCall(body.value)) {
-    const ran = await runWithUserCallSlot(capUserId, disconnected.signal, run);
+    const userId = capUserId;
+    const ran = await runWithUserCallSlot(userId, disconnected.signal, async (waited) => {
+      if (waited && !(await stillAdmitted(userId))) return;
+      await run();
+    });
     if (!ran) {
       // The client hung up while the call waited, so there is no one to answer
       // and nothing ran. One line, so the call is not missing from the log.
       process.stderr.write(
-        `ev=tool_abandoned surface=connector user_id=${capUserId} tool=${toolNameOf(body.value)}\n`,
+        `ev=tool_abandoned surface=connector user_id=${userId} tool=${toolNameOf(body.value)}\n`,
       );
     }
     return;

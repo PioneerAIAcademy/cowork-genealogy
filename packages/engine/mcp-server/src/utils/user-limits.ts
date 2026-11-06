@@ -59,9 +59,13 @@ function releaseSlot(userId: string, entry: UserCalls): void {
   dropIfIdle(userId, entry);
 }
 
-/** Resolves to the entry the slot was taken from, or null when `signal`
- *  aborted first (the waiter has left the queue and holds nothing). */
-function acquireSlot(userId: string, signal: AbortSignal): Promise<UserCalls | null> {
+/** Resolves to the entry the slot was taken from and whether the call had to
+ *  wait for it, or null when `signal` aborted first (the waiter has left the
+ *  queue and holds nothing). */
+function acquireSlot(
+  userId: string,
+  signal: AbortSignal,
+): Promise<{ entry: UserCalls; waited: boolean } | null> {
   let entry = calls.get(userId);
   if (!entry) {
     entry = { running: 0, waiting: [] };
@@ -74,12 +78,12 @@ function acquireSlot(userId: string, signal: AbortSignal): Promise<UserCalls | n
   }
   if (mine.running < USER_CALL_CAP && mine.waiting.length === 0) {
     mine.running++;
-    return Promise.resolve(mine);
+    return Promise.resolve({ entry: mine, waited: false });
   }
-  return new Promise<UserCalls | null>((resolve) => {
+  return new Promise<{ entry: UserCalls; waited: boolean } | null>((resolve) => {
     const grant = () => {
       signal.removeEventListener("abort", leave);
-      resolve(mine);
+      resolve({ entry: mine, waited: true });
     };
     const leave = () => {
       const at = mine.waiting.indexOf(grant);
@@ -94,17 +98,19 @@ function acquireSlot(userId: string, signal: AbortSignal): Promise<UserCalls | n
 
 /**
  * Run `fn` holding one of `userId`'s USER_CALL_CAP slots, waiting FIFO for one
- * when they are all taken. Returns false, without running `fn`, when `signal`
- * aborts first (a client that hung up while its call waited). The slot is
- * released however `fn` ends, a throw included.
+ * when they are all taken. `fn` is told whether the call waited, so the door
+ * can check again what it checked before the wait. Returns false, without
+ * running `fn`, when `signal` aborts first (a client that hung up while its
+ * call waited). The slot is released however `fn` ends, a throw included.
  */
 export async function runWithUserCallSlot(
   userId: string,
   signal: AbortSignal,
-  fn: () => Promise<void>,
+  fn: (waited: boolean) => Promise<void>,
 ): Promise<boolean> {
-  const entry = await acquireSlot(userId, signal);
-  if (entry === null) return false;
+  const granted = await acquireSlot(userId, signal);
+  if (granted === null) return false;
+  const { entry, waited } = granted;
   // Released into the entry it was taken from, never one looked up again.
   const release = () => releaseSlot(userId, entry);
   // Granted in the same turn the client hung up: the call must still not run.
@@ -113,7 +119,7 @@ export async function runWithUserCallSlot(
     return false;
   }
   try {
-    await fn();
+    await fn(waited);
   } finally {
     release();
   }

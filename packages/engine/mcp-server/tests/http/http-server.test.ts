@@ -1464,6 +1464,7 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
    *  if the door let it. */
   async function holdTwelve() {
     bindStore.mockClear();
+    lookupConnector.mockClear();
     const gated = gatedStores(12);
     const paths = Array.from({ length: 12 }, (_, i) => projPath("a", i));
     const answers = paths.map((projectPath) => rpc(call("project_context", { projectPath }), userA));
@@ -1500,6 +1501,9 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
     }
     expect(gated.entered.size).toBe(12);
     expect(gated.high()).toBe(4);
+    // Each call's token was looked up at the door, and the 8 that waited were
+    // looked up again when their slot came.
+    expect(lookupConnector).toHaveBeenCalledTimes(12 + 8);
     // Nothing running or waiting, so the user's entry is gone.
     await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
   });
@@ -1590,5 +1594,57 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
       const done = await release(gated, answers);
       for (const { status } of done) expect(status).toBe(200);
     }
+  });
+
+  it("a call that waited is refused, and never runs, when its token stopped being admitted meanwhile", async () => {
+    bindStore.mockClear();
+    const gated = gatedStores(5);
+    const held = Array.from({ length: 4 }, (_, i) =>
+      rpc(call("project_context", { projectPath: projPath("e", i) }), userA),
+    );
+    const blockedId = projPath("e", 4).slice(1);
+    const waiting = rpc(call("project_context", { projectPath: `/${blockedId}` }), userA);
+    try {
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+      // The user is blocked while the call waits: the next lookup, the waiter's
+      // second one, admits nothing.
+      lookupConnector.mockImplementationOnce(async () => null);
+    } finally {
+      await release(gated, held);
+    }
+    const res = await waiting;
+    expect(res.status).toBe(401);
+    expect(res.headers.get("WWW-Authenticate")).toBe("Bearer");
+    expect((await res.json()).error.message).toBe("Not authenticated. Sign in again to reconnect.");
+    expect(gated.entered.has(blockedId)).toBe(false);
+    await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+  });
+
+  it("a call that waited runs with the FamilySearch token the second lookup returns", async () => {
+    bindStore.mockClear();
+    const gated = gatedStores(4);
+    const held = Array.from({ length: 4 }, (_, i) =>
+      rpc(call("project_context", { projectPath: projPath("f", i) }), userA),
+    );
+    let answer!: Promise<Response>;
+    try {
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 0 }));
+      // record_read reaches FamilySearch (the mocked upstream) with whatever
+      // token the call's principal carries.
+      answer = rpc(call("record_read", { recordId: "QVS9-WAIT" }), userA);
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+      // The web tier replaced the user's FamilySearch token while the call waited.
+      lookupConnector.mockImplementationOnce(async () => ({
+        userId: "u_A",
+        familySearchToken: "fs-tok-A-replaced",
+        openRouterApiKey: null,
+      }));
+      upstream.calls.length = 0;
+    } finally {
+      await release(gated, held);
+    }
+    await (await answer).text();
+    expect(upstream.calls.map((c) => c.authorization)).toContain("Bearer fs-tok-A-replaced");
+    expect(upstream.calls.map((c) => c.authorization)).not.toContain("Bearer fs-tok-A");
   });
 });
