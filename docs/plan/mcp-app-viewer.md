@@ -322,8 +322,8 @@ from it, and an unannotated tool defaults to "not read-only".
   already gives every page `buildIndex` and `getById`. It implements
   `ResearchTransport` without changing it and passes `assertTransportContract`:
   - `getProjectState` returns the documents; its `label` is the project's title,
-    else `derived`'s folder name, never null (a null label shows the welcome
-    screen);
+    else its objective, else `derived`'s folder name, never null (a null label shows
+    the welcome screen);
   - `readSidecar` resolves null, with no call, for an id outside `LOG_ID_PATTERN`;
     otherwise it calls `part: "results"`, with a constant `mtime`, and resolves null on
     `found: false`. Every other failure rejects, so the drawer offers Try again;
@@ -784,7 +784,7 @@ a signed image link serves a page from MinIO. Sign-in itself needs issues #3992 
 ### Interface with remote-server
 
 - Tool names, args and `_meta` stay as in M0, except M0's probe inputs, `pad` and
-  `structuredCanary`, which do not reach the tool server.
+  `structuredCanary`, which the tool server does not accept.
 - `projectPath` is the project's database id, the `/proj_<16 hex>` value from
   `project_list`, and the card passes it to `read_project_view`. Every `show_project`
   result carries it in `_meta`, so the card has it even with no tool input.

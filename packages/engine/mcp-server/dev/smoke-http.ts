@@ -322,7 +322,7 @@ try {
   );
   if (connectorEnabled) await checkCoverage(projectClient, "tools/list coverage (worker)", false);
 
-  // EVERY row goes through the stamped-turn client now (E1). It used to split:
+  // Every row but the connector-only ones goes through the stamped-turn client (E1). It used to split:
   // rows passing a projectPath went to the project client, everything else to a
   // client with no headers at all. Under one front door that second client is
   // an unauthenticated connector request, which is a 401 — correctly so, and

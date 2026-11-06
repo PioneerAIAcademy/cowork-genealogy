@@ -107,7 +107,7 @@ way project state changes.
 
 These two connector-only tools draw a project as cards inside Claude. A caller on the
 remote connector gets them and no other surface does, so they are not in the count
-above, the `.mcpb` or `manifest.json`. Spec:
+above or `manifest.json`, and the `.mcpb` does not list them. Spec:
 [specs/project-view-tools-spec.md](specs/project-view-tools-spec.md).
 
 | Tool | Purpose | Auth |

@@ -165,7 +165,7 @@ arrived at 999,947 bytes and did not at 1,299,948 (`docs/mcp-app-host-probe.md`)
 | `part` | `structuredContent` |
 |---|---|
 | `document` | `{ research, tree, startingTree, collections, derived }`, as `show_project` reads them. No `echo`, and no size rule. |
-| `results` | `{ found: true, results }`, the parsed `results/<id>.json`, or `{ found: false }` when that file is absent. `found: false` is an answer, not an error. |
+| `results` | `{ found: true, results }`, the parsed `results/<id>.json`, or `{ found: false }` when that file is absent. `found: false` is an answer, not an error. A results file the store holds but cannot read is a refusal, never `found: false`. |
 | `image` | `{ url, expiresAt }`: a signed link and its expiry in epoch milliseconds. See "Images". |
 
 ---
@@ -219,7 +219,7 @@ live link.
 A branch of the door's `route()`, ahead of its 404. It takes no bearer: the token is the
 grant, and the owner check happened when `read_project_view` passed the door to sign it.
 The route binds a store from the claim's project id, with anchor `/<id>`, no fence and no
-`ownerId`, because it writes nothing. The store aborts if the client disconnects.
+`ownerId`, because it writes nothing.
 
 | Request | Status | Body | Log |
 |---|---|---|---|
@@ -263,9 +263,10 @@ is plain, not the dispatcher's `{"error":...}` JSON, because a card shows it.
 | `part: "image"` with `webPublicUrl` unset | `This server has no route to page images.` |
 | The call names no project | `This call named no project. Call project_list and pass one of its projectPath values.` |
 | The path is not a project, a fresh id included | `No project is saved at this projectPath. Call project_list and pass one of its projectPath values.` |
-| A project with no `research.json` | `research.json not found in projectPath` |
+| `research.json` is absent, or the store fails reading `research.json`, `tree.gedcomx.json` or a results file | `<file> not found in projectPath` |
 | A document or results file that does not parse | `<file> is not valid JSON` |
-| Any other failure reading the store | The failure's message |
+| Any other store failure with a string `code`: classifying the project, or checking that a file exists | `The project could not be read just now. Try again.`, with one `ev=view_failed error=<code>` line and never the failure's message |
+| Anything else | The failure's message |
 
 ### The door
 
@@ -283,8 +284,8 @@ results. A card's call sees a failed request.
 
 | Condition | JSON-RPC error |
 |---|---|
-| `resources/read` on any other URI | `-32602`, `Unknown resource.` |
-| No page on this server | `-32603`, `The viewer page is not installed on this server.` The message holds no path. |
+| `resources/read` on any other URI | `-32602`, `MCP error -32602: Unknown resource.` |
+| No page on this server | `-32603`, `MCP error -32603: The viewer page is not installed on this server.` The message holds no path. |
 
 ---
 
@@ -321,7 +322,7 @@ ownership. The image route asks only for its token.
 
 `packages/engine/mcp-server/viewer/` runs the same core for `make viewer` and ships in
 no artifact. `callProjectView`, the schemas and the 1,000,000-byte rule are shared. These
-differ, and none of them reaches the tool server:
+differ, and the tool server accepts none of them:
 
 - `projectPath` follows the `--root` rule, and a call may omit it.
 - `pad`, `structuredCanary` and the canary strings are its probes. `pad` is added after
@@ -329,6 +330,7 @@ differ, and none of them reaches the tool server:
 - Its image route is `/img/<token>`, with its own key, and the claim's `project` is the
   path relative to `--root`. Over stdio it has no route, so `part: "image"` answers
   `This server has no route to page images.`
+- A failed call answers the failure's message, with the root's path taken out.
 - It reads `viewer/page/viewer.html` once at start-up and refuses to start without it.
   `resources/list` and `resources/read` are always on.
 
@@ -339,7 +341,9 @@ differ, and none of them reaches the tool server:
 - **The page**, `apps/mcp-viewer/`. Its loader takes the first tool result. An entry
   holding `research` is the snapshot. An entry with no `research` is the large-result
   case: the card takes `echo` as its input if it has none, then makes one
-  `read_project_view` call with `part: "document"`.
+  `read_project_view` call with `part: "document"`. It still draws the thin server's size
+  buttons, which send `pad`, so on the tool server each answers the unknown-argument
+  refusal.
 - **The research router.** No skill or agent calls `show_project` yet.
 
 ---

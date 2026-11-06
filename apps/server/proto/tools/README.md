@@ -174,9 +174,10 @@ smoke names all three.
   ```
 
   Two clients. The first presents the connector token under `--connector`, otherwise the
-  stamped turn's headers and bearer; it lists the tools. Every plan row runs through the
-  stamped-turn client, and with `--connector` a second pass runs the plan's store rows
-  through the connector door on its own `/proj_<16 hex>` project, then seeds the caller's
+  stamped turn's headers and bearer; it lists the tools. Every plan row but the
+  connector-only ones runs through the stamped-turn client, and with `--connector` a
+  second pass runs the plan's store rows and those two through the connector door on its
+  own `/proj_<16 hex>` project, then seeds the caller's
   second project and another user's and requires `project_list` to name both of the
   caller's, a fresh path, and not the other user's.
   The second runs every row that passes `--project-path` (the anchor,
@@ -189,7 +190,8 @@ smoke names all three.
   row is gone. `--host-config` says the server's `baseConfig` is
   this host's `~/.familysearch-mcp/config.json` (the default arm; not the `BASE=` arm,
   whose compose `config.json` is `{"hosted": true}`). The smoke fails if any advertised
-  tool is neither called nor a named exclusion, or if a named exclusion is not advertised.
+  tool is neither called nor a named exclusion, if a named exclusion is not advertised, or
+  if a connector-only tool is advertised anywhere but the connector.
 
 ## The D9–10 consumer
 

@@ -132,6 +132,7 @@ import {
   connectorPageRead,
   connectorProjectView,
   connectorProjectViewSchemas,
+  connectorViewFailure,
   isProjectViewTool,
   PAGE_MIME_TYPE,
   pageResourceList,
@@ -195,8 +196,7 @@ export function createServer(principal: Principal): Server {
         return await callProjectView(view, request.params.name, request.params.arguments ?? {});
       } catch (error) {
         // Plain text, not the `{"error":...}` JSON below: a card shows it.
-        const message = error instanceof Error ? error.message : "Unknown error";
-        return { content: [{ type: "text", text: message }], isError: true };
+        return connectorViewFailure(error);
       }
     }
 

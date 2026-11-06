@@ -220,6 +220,17 @@ describe('a result too large for its documents', () => {
     expect(reportText(session.getState())).toContain('tool input received: none\n')
   })
 
+  it('reads with the echoed projectPath when the tool input arrived empty', async () => {
+    const { app, session } = await connected()
+    app.sendInput({})
+    app.sendResult(RESULT_CUT)
+    await settle()
+
+    expect(app.reads()).toEqual([{ part: 'document', projectPath: 'mogan' }])
+    expect(session.getState().load.input).toEqual(INPUT)
+    expect(session.getState().load.inputAt).not.toBeNull()
+  })
+
   it('a failed read on a card with no tool input leaves the probes the id', async () => {
     const app = new FakeApp()
     app.callServerTool.mockRejectedValueOnce(new Error('Refused: pick a project.'))

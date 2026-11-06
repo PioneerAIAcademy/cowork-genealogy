@@ -206,6 +206,23 @@ export function pageResourceRead(html: string, publicOrigin?: string) {
   };
 }
 
+/** What a card says when the store fails. */
+export const VIEW_UNAVAILABLE = "The project could not be read just now. Try again.";
+
+/** A failed call as the connector answers it. A refusal is a plain Error, and its
+ *  text is written for the card. A store failure carries a string `code`, and its
+ *  message can name a host or a role, so the card gets a fixed sentence and the log
+ *  gets the label. */
+export function connectorViewFailure(error: unknown): CallToolResult {
+  const { code } = error as { code?: unknown };
+  if (typeof code === "string") {
+    process.stderr.write(`ev=view_failed error=${code}\n`);
+    return { content: [{ type: "text", text: VIEW_UNAVAILABLE }], isError: true };
+  }
+  const message = error instanceof Error ? error.message : "Unknown error";
+  return { content: [{ type: "text", text: message }], isError: true };
+}
+
 const CONNECTOR_PROJECT_RULE = "A project's /proj_<16 hex> projectPath, from project_list. A call that names none is refused.";
 const PICK_FROM_PROJECT_LIST = "Call project_list and pass one of its projectPath values.";
 

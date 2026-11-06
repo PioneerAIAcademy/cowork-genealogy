@@ -676,7 +676,7 @@ Architecturally:
   request carrying `X-Genealogy-Project-Id` is the worker path: a
   `PgS3ProjectStore` bound from that header, fenced on the attempt's claim
   (`X-Genealogy-Turn-Id` / `X-Genealogy-Claim-Epoch`), and 403 unless the bearer
-  is the one stamped on that open turn of that project (U4). Every other request
+  is the one stamped on that open turn of that project (U4). Every other `/mcp` request
   is the connector path: the bearer is looked up by sha256 in
   `connector_tokens`, the project comes from the call's own `/proj_<16 hex>`
   `projectPath` rather than a header, a refusal is 401 with

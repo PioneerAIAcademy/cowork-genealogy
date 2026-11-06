@@ -106,7 +106,9 @@ export function createCardLoader(deps: CardLoaderDeps) {
       } else {
         // A result too large for its documents still echoes the call's arguments.
         // inputAt stays null: the report says whether a tool input really came.
-        if (!state.input && entry?.echo) set({ input: entry.echo })
+        if (typeof state.input?.projectPath !== 'string' && entry?.echo) {
+          set({ input: { ...state.input, ...entry.echo } })
+        }
         // A host sends the input first; if one did not, and no echo stands in, the
         // read goes with no projectPath, which the server resolves or refuses.
         read()

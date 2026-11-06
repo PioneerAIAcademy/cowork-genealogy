@@ -16,7 +16,7 @@
 // message whatever the reason, and one `ev=tool_refused` stderr line that never
 // carries the bearer; an `authorize` that throws is a 503, never an admission.
 //
-// CONNECTOR path — every other request. The bearer is looked up by its sha256
+// CONNECTOR path — every other `/mcp` request. The bearer is looked up by its sha256
 // through `lookupConnector`, and a refusal is a 401 with `WWW-Authenticate`,
 // one body for every reason so a caller cannot learn which check failed. The
 // project comes from the call's OWN `arguments.projectPath`, which must be

@@ -92,7 +92,8 @@ falsely blocking installs.
 Every tool in `allToolSchemas` (`src/tool-schemas.ts`) MUST appear in
 `manifest.tools`, and no extras. This binds `allToolSchemas`, not the `ListTools`
 handler in `src/server.ts`, which also lists the connector-only tools to a
-connector caller. A connector-only tool is never in the `.mcpb`
+connector caller. A connector-only tool is never listed or callable on the `.mcpb`,
+though its code ships in `build/`
 (`docs/specs/project-view-tools-spec.md`).
 
 **This spec deliberately does not enumerate the set.** It used to, and the

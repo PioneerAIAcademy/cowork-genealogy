@@ -233,10 +233,12 @@ It is ONE front door with two paths (self-hosted beta E1). A request carrying
 that header, fenced by `X-Genealogy-Turn-Id` and `X-Genealogy-Claim-Epoch` so a
 superseded attempt's writes roll back, owner-checked against the bearer the
 worker stamped on that open turn, and 403 on refusal (U6/U4). Every other
-request is the **connector** path: the bearer is looked up by its sha256 in
+MCP request is the **connector** path: the bearer is looked up by its sha256 in
 `connector_tokens`, the principal carries the user's id, `surface` and their
 decrypted FamilySearch token, the project comes from the call's own
-`/proj_<16 hex>` `projectPath`, and a refusal is 401 with `WWW-Authenticate`. Per-tool
+`/proj_<16 hex>` `projectPath`, and a refusal is 401 with `WWW-Authenticate`.
+`GET /img?t=<token>` serves one page image on a signed token alone, with no bearer
+(`docs/specs/project-view-tools-spec.md`). Per-tool
 behavioral contracts are in
 `docs/specs/<tool>-tool-spec.md`, and a spec can land before the tool
 does. Implementation plans for unbuilt work are in `docs/plan/`.
@@ -697,7 +699,7 @@ and add the tool name to `manifest.json`'s `tools` array. Dispatch lives in
 entrypoint binding `LOCAL`, `src/http.ts` the prototype's Streamable HTTP one binding each
 request's `Authorization: Bearer` (never `LOCAL`) — the worker path from the
 `X-Genealogy-Project-Id` header (claim-fenced and owner-checked, U6/U4), every
-other request from a `connector_tokens` lookup against the caller's own
+other MCP request from a `connector_tokens` lookup against the caller's own
 `/proj_<16 hex>` path (E1), and a new tool's arm goes in
 `server.ts`, never in an entrypoint. A new tool also needs a row in
 `dev/smoke-calls.ts`: `make engine-smoke-http` fails on an advertised tool it

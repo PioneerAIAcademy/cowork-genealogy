@@ -1434,6 +1434,26 @@ describe("tool server over Streamable HTTP", () => {
         expect(result.content[0].text).toMatch(/^No project is saved at this projectPath\..*project_list/);
       });
 
+      it("a store failure reaches the card as a fixed sentence, and the log holds only its label", async () => {
+        bindStore.mockImplementationOnce((projectId, _signal, _fence, opts) => {
+          const store = new ScopedFsStore(root, projectId, opts?.anchorPath);
+          vi.spyOn(store, "classifyProject").mockRejectedValue(
+            Object.assign(new Error('password authentication failed for user "dml" at db.internal:5432'), {
+              code: "28P01",
+            }),
+          );
+          return store;
+        });
+        let result: any;
+        const logged = await logsOf(async () => {
+          result = await toolResult("show_project", { show: "latest", projectPath: PROJECT_PATH });
+        });
+        expect(result.isError).toBe(true);
+        expect(result.content).toEqual([{ type: "text", text: "The project could not be read just now. Try again." }]);
+        expect(logged).toContain("ev=view_failed error=28P01\n");
+        expect(logged).not.toContain("db.internal");
+      });
+
       it("an unknown argument is the tool's own refusal, in plain text", async () => {
         const result = await toolResult("show_project", { show: "setup", pad: 5, projectPath: PROJECT_PATH });
         expect(result.isError).toBe(true);
