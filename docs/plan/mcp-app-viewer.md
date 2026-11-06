@@ -678,8 +678,9 @@ case with So far, the evidence grid and Leads; Compare with FamilySearch; People
 Sources and Log; and `show_project` opening each page by id. A record's search results,
 and its page image with transcription and findings, open in the pane.
 
-- **The demo script,** in a Cowork task, signed in through the `Genealogy Research`
-  connector, on the demo project: "Where does the research stand?" → the conclusion
+- **The demo script,** in a Cowork task in Claude Desktop, because Chrome on a tailnet
+  device blocks page images, signed in through the `Genealogy Research` connector, on the
+  demo project: "Where does the research stand?" → the conclusion
   card with its recorded doubt → open the case file → the evidence grid → click an
   indexed record's column → the search that returned it, in the pane → click the
   browsed record's column → its page image beside the transcription → Compare with
