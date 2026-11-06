@@ -592,6 +592,46 @@ describe("fetchWithRetry's onRetryableResponse and beforeAttempt hooks", () => {
     expect(maxWait[1]).toBeGreaterThan(2_000);
   });
 
+  it("a first attempt with retries left still runs no longer than its own timeout, hook or no hook", async () => {
+    // The first request hangs until its timeout fires; the retry answers at once.
+    const hangThenOk = () => {
+      const starts: number[] = [];
+      const aborts: number[] = [];
+      mockFetch.mockImplementationOnce((_url: string, init?: RequestInit) => {
+        starts.push(Date.now());
+        return new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            aborts.push(Date.now());
+            const err = new Error("The operation timed out.");
+            err.name = "TimeoutError";
+            reject(err);
+          });
+        });
+      });
+      mockFetch.mockResolvedValueOnce(mockResponse(200));
+      return { firstRequestMs: () => aborts[0]! - starts[0]! };
+    };
+
+    // No hook: exactly the 1 s timeout, though the 5 s budget runs later.
+    const plain = hangThenOk();
+    expect((await fetchWithRetry("https://example.com", {}, 1000, { attempts: 2, budgetMs: 5000, baseMs: 1 })).status).toBe(200);
+    expect(plain.firstRequestMs()).toBeGreaterThanOrEqual(950);
+    expect(plain.firstRequestMs()).toBeLessThan(1_200);
+
+    // A 200 ms wait in the hook may come out of the budget here, but the
+    // request still gets no more than its own 1 s.
+    const hooked = hangThenOk();
+    const res = await fetchWithRetry("https://example.com", {}, 1000, {
+      attempts: 2,
+      budgetMs: 5000,
+      baseMs: 1,
+      beforeAttempt: (ms) => new Promise((resolve) => setTimeout(resolve, Math.min(ms, 200))),
+    });
+    expect(res.status).toBe(200);
+    expect(hooked.firstRequestMs()).toBeGreaterThanOrEqual(950);
+    expect(hooked.firstRequestMs()).toBeLessThan(1_200);
+  });
+
   it("pauseWaitAllowance leaves the request at least 2 s, or half its time, and stays inside the budget", () => {
     expect(MIN_REQUEST_AFTER_WAIT_MS).toBe(2_000);
     expect(pauseWaitAllowance(30_000, 10_000)).toBe(10_000);

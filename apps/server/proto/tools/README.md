@@ -78,12 +78,14 @@ not bounded.
 
 When FamilySearch answers a connector user 429, that user's authenticated FamilySearch
 calls pause for its `Retry-After`, at most 15 minutes, or 30 s without one. A pause that
-ends inside the call's own time (its retry budget, 10 s by default, while the request
-keeps at least 2 s to run, or half its time when that is shorter) is waited out, and a
-longer one refuses at once with `FamilySearch asked this account to wait; try again in
-about N seconds.` A FamilySearch call that ends in a throw after a 429 or 5xx answer
-records that status for the call's `fs_status`. Anonymous FamilySearch calls (place
-lookups, public memory artifacts and story text) are not paused.
+ends while the call still has time for it is waited out: the wait stays inside the call's
+retry budget (10 s by default) and leaves the request at least 2 s, or half the time it
+has when that is shorter, and a request never runs longer than its own timeout
+(`pauseWaitAllowance` in `src/utils/http.ts`). A longer pause refuses at once with
+`FamilySearch asked this account to wait; try again in about N seconds.` A FamilySearch
+call that ends in a throw after a 429 or 5xx answer records that status for the call's
+`fs_status`. Anonymous FamilySearch calls (place lookups, public memory artifacts and
+story text) are not paused.
 
 The door reads each request body once, capped at **1 MiB**, and answers 413 past
 it. The cap binds the worker's writes too, because the body must be read to
