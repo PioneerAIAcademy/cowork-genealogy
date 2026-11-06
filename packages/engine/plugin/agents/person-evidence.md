@@ -311,9 +311,10 @@ which GedcomX person(s) it might be:
 - Location compatibility: the record's place against the tree person's own
   Residence facts, never against the other records being linked. An
   arrival (immigration) dated after a residence the tree already attests in
-  that country is compatible: it is a return trip. A passenger or
-  immigration record never says the arrival was the first. Never rule a candidate
-  out, or score it down, because they arrive after they already lived there.
+  that country is compatible: it is a return trip, unless the arrival record
+  itself says the person was never in the country before. Never rule a
+  candidate out, or score it down, only because they arrive after they already
+  lived there.
 - Gender match
 - Relationship fit (is this persona in the right position relative
   to known family members?)
@@ -391,12 +392,13 @@ or naturalization assertion with three, written before you choose the tier:
   sex, birth or residence assertion of those records), a stub's included,
   whenever the records in this run or already on the person give both
   dates, whatever the tier. A line ending "short, nothing" caps both links
-  at `probable`. When a project record shows U.S. residence before the
-  arrival (check the Residence check line you just wrote: a U.S. residence
-  dated before the arrival is that record), the arrival is a return trip:
-  write "met, [that record]" and
-  link the arrival as you would any other fact. An earlier residence never
-  contradicts a later arrival and is never a reason to stub or withhold it.
+  at `probable`. When a U.S. residence the tree held before this run, or a
+  record already linked to this person, is dated before the arrival, and the
+  arrival record does not say the person was never in the country before, the
+  arrival is a return trip: count from that residence, and write "met, [that
+  record], [N] years from [its year]" when it reaches the requirement and
+  "short, nothing" when it does not. Link the arrival as you would any other
+  fact; that earlier residence is never a reason to stub or withhold it.
 
 **Assess match strength.** Weigh the data points above by reasoning
 directly — correlation analysis is the spine of every identity
@@ -526,10 +528,12 @@ explains it.
 **Arrival to naturalization.** The required residence is the law's at the
 naturalization (U.S. from 1802: five years; arriving as a minor does not
 shorten it). A record in the project explains a shortfall when it shows
-earlier U.S. residence (the arrival was a return trip), an honorable U.S. Army
-discharge (one year, from 1862), or a father naturalized while the person was
-a minor. An arrival after U.S. residence a project record attests is a return
-trip, never a contradiction. A shortfall is never "consistent"; other facts of those records keep
+earlier U.S. residence that, counted from, reaches the requirement (the arrival
+was a return trip), an honorable U.S. Army discharge (one year, from 1862), or
+a father naturalized while the person was a minor. An arrival after U.S.
+residence a project record attests is a return trip, not a contradiction,
+unless the arrival record says the person was never in the country before. A
+shortfall is never "consistent"; other facts of those records keep
 their ordinary tiers, and it is not a `core_identifier_conflict`.
 
 **Occupation and age norms weigh; they never cap.** Where trades were
@@ -1064,7 +1068,8 @@ When multiple candidates share the same name in the same area:
 
 - **Arrival after attested residence:** The tree has a Boston residence for
   a man in 1880 and a passenger list shows him landing at New York in 1883.
-  He had gone back to visit, and the 1883 landing is a return. Link it on its
+  The list does not say he was never in the country before, so the 1883
+  landing is a return. Link it on its
   score like any other record, and count naturalization residence from 1880,
   not 1883. Do not call it a "first arrival", an impossibility or a
   contradiction, and do not mint a person for it on that ground.

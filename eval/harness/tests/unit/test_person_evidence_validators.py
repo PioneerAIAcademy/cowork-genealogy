@@ -2152,3 +2152,51 @@ def test_exception_fails_the_scratch_run_inversions(rationale):
         check_exception(_interval_state(
             _interval_pe("a_014", rationale, person_id="I5"),
         ), _EXCEPTION_TAGS)
+
+
+# The same words on I1's own link state the return trip, and a stub taken on
+# the score alone is not the inversion: none of these may fail.
+@pytest.mark.parametrize("assertion_id, rationale, person_id", [
+    ("a_014", "Arrival New York 2 Jun 1871. He cannot have first arrived in June 1871, since the "
+              "1869 directory (src_003) already places him at 5 Cook; residence counts from 1869.", "I1"),
+    ("a_007", "Residence check: San Francisco, 1875 vs San Francisco, 1869 (pe_001): same address. "
+              "Naturalization check: arrival 2 Jun 1871 to naturalization 13 Aug 1875: 4 years 2 months "
+              "vs required 5 years: met, src_003, 6 years from 1869. The Herman Gotjen registered at "
+              "Hamilton, Butte, in 1869 (log_006) cannot be him: a voter in 1869 was at least 21.", "I1"),
+    ("a_007", "Naturalization check: arrival 2 Jun 1871 to naturalization 13 Aug 1875: met, src_003. "
+              "The start of his five years cannot be his June 1871 arrival; it is the 1869 directory "
+              "residence.", "I1"),
+    ("a_014", "The June 1871 New York landing cannot be I1's first arrival, because the 1869 directory "
+              "(pe_001) shows him already in San Francisco, so no stub is needed.", "I1"),
+    ("a_010", "Score 0.006 against I1. I1 has the 1869 directory residence (pe_001); this June 1871 "
+              "passenger cannot be I1 on a 0.006 score and name alone, so it goes on stub I5.", "I5"),
+    ("a_010", "This June 1871 passenger cannot be I1 on a score as weak as this, even though I1 has the "
+              "1869 directory residence; stub I5.", "I5"),
+])
+def test_exception_passes_return_trip_words_and_score_stubs(assertion_id, rationale, person_id):
+    check_exception(_interval_state(
+        _interval_pe(assertion_id, rationale, person_id=person_id),
+    ), _EXCEPTION_TAGS)
+
+
+# Stubbing the arrival because of the residence, on the stub itself or on
+# I1's naturalization link, whatever the punctuation.
+@pytest.mark.parametrize("assertion_id, rationale, person_id", [
+    ("a_014", "I1 is in the 1869 San Francisco directory (pe_001), so he couldn't have arrived as an "
+              "immigrant in June 1871; stub I5.", "I5"),
+    ("a_014", "This June 1871 arrival cannot be I1 because, beyond the 0.006 score, I1 is in the 1869 "
+              "directory.", "I5"),
+    ("a_014", "This June 1871 arrival cannot be I1's: I1 was already in the 1869 San Francisco "
+              "directory.", "I5"),
+    ("a_014", "Given the 1869 directory (pe_001), the June 1871 arrival could not have been his. "
+              "Stub I5.", "I5"),
+    ("a_007", "The June 1871 arrival (src_002) cannot be his, since the 1869 directory places him in "
+              "San Francisco; it is on stub I5.", "I1"),
+    ("a_007", "This June 1871 arrival cannot be I1's because I1 has an attested San Francisco residence "
+              "in 1869, so it is on stub I5.", "I1"),
+])
+def test_exception_fails_a_stub_taken_on_the_residence(assertion_id, rationale, person_id):
+    with pytest.raises(AssertionError, match="not a contradiction"):
+        check_exception(_interval_state(
+            _interval_pe(assertion_id, rationale, person_id=person_id),
+        ), _EXCEPTION_TAGS)

@@ -1551,11 +1551,23 @@ _INVERTS = re.compile(
     r"impossib|inconsistent|incompatible|(?:cannot|could not|can't) be reconciled|irreconcil"
     r"|\bcontradicts\b|(?<!may be )(?<!might be )(?<!could be )\bdifferent (?:men|persons|people|individuals)\b"
     r"|(?:cannot|could not|can't) (?:both )?be (?:in both|the same (?:man|person|individual))"
-    r"|(?:cannot|could not|can't) have (?:first )?arrived"
-    r"|(?:cannot|could not|can't) be (?:I\d+\b|him\b|his\b)"
     r"|two places at once|in both places",
     re.IGNORECASE,
 )
+# Only on a stub, or in a sentence that names one: the arrival taken off the
+# subject because of the residence. The same words on the subject's own link,
+# with no stub in them, are the return trip stated.
+_STUB_INVERTS = re.compile(
+    r"(?:cannot|could not|can't|couldn't) have (?:first )?arrived"
+    r"|(?:cannot|could not|can't|couldn't) (?:have been|be) (?:I\d+|him|his)\b(?!(?:'s)?\s+first\b)"
+    r"(?:[^.;:]|\.(?=\d))*?(?:\b(?:because|since|given)\b|:)(?:[^.;]|\.(?=\d))*?"
+    r"(?:\b1869\b|director|residen|\bsrc_003\b|\bpe_00[12]\b)"
+    r"|\b(?:because|since|given)\b(?:[^.;]|\.(?=\d))*?"
+    r"(?:\b1869\b|director|residen|\bsrc_003\b|\bpe_00[12]\b)(?:[^.;]|\.(?=\d))*?"
+    r"(?:cannot|could not|can't|couldn't) (?:have been|be) (?:I\d+|him|his)\b(?!(?:'s)?\s+first\b)",
+    re.IGNORECASE,
+)
+_STUB = re.compile(r"\bstub", re.IGNORECASE)
 _RESIDENCE_SIDE = re.compile(
     r"\b1869\b|director|\bsrc_003\b|\bpe_00[12]\b|\ba_01[56]\b", re.IGNORECASE
 )
@@ -1632,7 +1644,7 @@ def _unexplained_shortfall(text):
     return _states_naturalization_shortfall(text) and not _states_return_trip(text)
 
 
-def _sets_residence_against_arrival(text):
+def _sets_residence_against_arrival(text, on_stub=False):
     """A sentence calling the earlier residence and the arrival mutually
     exclusive ("a biographical impossibility", "cannot be in both places"), or
     denying the return trip ("there is no record of a return trip"), with both
@@ -1648,6 +1660,8 @@ def _sets_residence_against_arrival(text):
         if not (_RESIDENCE_SIDE.search(window) and _ARRIVAL_SIDE.search(window)):
             continue
         if any(not _clause_negated(sentence, m.start()) for m in _INVERTS.finditer(sentence)):
+            return True
+        if (on_stub or _STUB.search(sentence)) and _STUB_INVERTS.search(sentence):
             return True
         if any(_clause_negated(sentence, m.start()) for m in _RETURN_TRIP.finditer(sentence)):
             return True
@@ -1736,7 +1750,7 @@ def test_naturalization_exception_not_flagged(after_state, test):
         e.get("id") for e in (research.get("person_evidence") or [])
         if not e.get("superseded_by")
         and e.get("assertion_id") in _INTERVAL_ASSERTIONS + _ARRIVAL_PERSONA
-        and (_sets_residence_against_arrival(e.get("rationale"))
+        and (_sets_residence_against_arrival(e.get("rationale"), on_stub=e.get("person_id") != "I1")
              or _residence_conflict(e.get("core_identifier_conflict")))
     ]
     assert not inverted, (
