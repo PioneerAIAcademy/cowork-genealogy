@@ -41,6 +41,8 @@ Is the research question specific and answerable? "Learn more about Patrick" is 
 
 Specificity is about naming the **fact** precisely — the person, the period, the fact sought. It is *not* about narrowness, and naming a record set is not a way to earn it: scope is now enforced by `test_new_question_not_record_scoped` instead, and a question can pass here while failing that check.
 
+An `enumerative` question over an open set ("Who are the children of X and Y not yet in the tree?") is specific without naming each member: the set and its bounds are the fact sought.
+
 - **pass:** Question is concrete enough that a follow-up search could be designed to answer it; names specific persons, time periods, or facts being sought.
 - **partial:** Question is mostly specific but has a fuzzy edge ("What more can we learn about Patrick's early life?" — better than "learn more about Patrick" but still vague on what facts).
 - **fail:** Question is too broad to drive a search ("Who is Patrick Flynn?", "Learn about the Flynn family").
