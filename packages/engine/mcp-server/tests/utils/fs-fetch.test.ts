@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { Principal } from "../../src/auth/principal.js";
 import { LOCAL, bearerPrincipal, connectorPrincipal } from "../../src/auth/principal.js";
 
@@ -6,7 +6,11 @@ vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
 }));
 
-vi.mock("../../src/utils/http.js", () => ({
+// The real module with its two fetchers replaced: fs-fetch.ts also reads its
+// constants and `retryAfterMs`, and the 429-pause cases below put the real
+// fetchers back to run the retry loop against a stubbed `fetch`.
+vi.mock("../../src/utils/http.js", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("../../src/utils/http.js")>()),
   fetchWithRetry: vi.fn(),
   fetchWithTimeout: vi.fn(),
 }));
@@ -14,6 +18,12 @@ vi.mock("../../src/utils/http.js", () => ({
 import { getValidToken } from "../../src/auth/refresh.js";
 import { fetchWithRetry, fetchWithTimeout } from "../../src/utils/http.js";
 import { fsFetch, fsFetchWithTimeout } from "../../src/utils/fs-fetch.js";
+import { isFsBudgetExhausted } from "../../src/utils/fs-budget.js";
+import {
+  __resetUserLimitsForTests,
+  __userLimitsStateForTests,
+  recordFsPause,
+} from "../../src/utils/user-limits.js";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -201,5 +211,130 @@ describe("recordFamilySearchStatus", () => {
 
     const res = await fsFetch(p, "https://api.familysearch.org/x");
     expect(res.status).toBe(200);
+  });
+});
+
+// ── the per-user 429 pause (self-hosted beta E4, issue #3999) ───────────────
+//
+// These run the REAL fetchWithRetry / fetchWithTimeout over a stubbed global
+// `fetch`, because the point is where the 429 is seen: a Retry-After longer
+// than the 10 s retry budget makes fetchWithRetry THROW, so a check placed
+// after it returns never sees that 429.
+
+describe("the per-user 429 pause", () => {
+  const FS_URL = "https://www.familysearch.org/platform/tree/persons/KWQ7-ABC";
+  const userA = connectorPrincipal({ accessToken: "fs-A", userId: "u_A" });
+  const userB = connectorPrincipal({ accessToken: "fs-B", userId: "u_B" });
+  const wire = vi.fn<(url: string | URL, init?: RequestInit) => Promise<Response>>();
+  const tooMany = (retryAfter?: string) =>
+    new Response("slow down", {
+      status: 429,
+      headers: retryAfter === undefined ? {} : { "Retry-After": retryAfter },
+    });
+  const ok = () => new Response("{}", { status: 200 });
+
+  beforeEach(async () => {
+    const actual = await vi.importActual<typeof import("../../src/utils/http.js")>("../../src/utils/http.js");
+    vi.mocked(fetchWithRetry).mockImplementation(actual.fetchWithRetry);
+    vi.mocked(fetchWithTimeout).mockImplementation(actual.fetchWithTimeout);
+    vi.mocked(getValidToken).mockImplementation(async (p) => (p.kind === "bearer" ? p.accessToken : "local-tok"));
+    wire.mockReset();
+    // A call the case did not plan for answers 418, so a misrouted call fails
+    // on its status rather than on an undefined response.
+    wire.mockImplementation(async () => new Response("unplanned fetch", { status: 418 }));
+    vi.stubGlobal("fetch", wire);
+  });
+
+  afterEach(() => {
+    vi.mocked(fetchWithRetry).mockReset();
+    vi.mocked(fetchWithTimeout).mockReset();
+    vi.unstubAllGlobals();
+    __resetUserLimitsForTests();
+  });
+
+  it("a 429 with Retry-After: 60 (past the retry budget) pauses only that user", async () => {
+    wire.mockResolvedValueOnce(tooMany("60"));
+    await expect(fsFetch(userA, FS_URL)).rejects.toThrow(/Server requested a 60s wait/);
+    expect(wire).toHaveBeenCalledTimes(1);
+
+    // A's next call refuses before any network I/O, marked so retry loops rethrow it.
+    const refused = await fsFetch(userA, FS_URL).catch((e: unknown) => e);
+    expect((refused as Error).message).toBe(
+      "FamilySearch asked this account to wait; try again in about 60 seconds.",
+    );
+    expect(isFsBudgetExhausted(refused)).toBe(true);
+    await expect(fsFetchWithTimeout(userA, FS_URL)).rejects.toThrow("about 60 seconds");
+    expect(wire).toHaveBeenCalledTimes(1);
+
+    // B was never paused: its call reaches the stub.
+    wire.mockResolvedValueOnce(ok());
+    expect((await fsFetch(userB, FS_URL)).status).toBe(200);
+    expect(wire).toHaveBeenCalledTimes(2);
+  });
+
+  it("a worker bearer carrying the same user id, and LOCAL, are never paused and never pause anyone", async () => {
+    const worker = {
+      kind: "bearer" as const,
+      accessToken: "worker-tok",
+      config: {},
+      surface: "worker" as const,
+      userId: "u_A",
+    };
+    // A paused u_A does not hold the worker or LOCAL back.
+    recordFsPause("u_A", 60_000);
+    wire.mockResolvedValue(ok());
+    expect((await fsFetch(worker, FS_URL)).status).toBe(200);
+    expect((await fsFetchWithTimeout(worker, FS_URL)).status).toBe(200);
+    expect((await fsFetch(LOCAL, FS_URL)).status).toBe(200);
+    expect(wire).toHaveBeenCalledTimes(3);
+
+    // And their own 429s pause nobody.
+    __resetUserLimitsForTests();
+    wire.mockResolvedValue(tooMany("60"));
+    await expect(fsFetch(worker, FS_URL)).rejects.toThrow(/Server requested a 60s wait/);
+    expect((await fsFetchWithTimeout(worker, FS_URL)).status).toBe(429);
+    await expect(fsFetch(LOCAL, FS_URL)).rejects.toThrow(/Server requested a 60s wait/);
+    expect(__userLimitsStateForTests().pausedUsers).toBe(0);
+    wire.mockResolvedValue(ok());
+    expect((await fsFetch(userA, FS_URL)).status).toBe(200);
+  });
+
+  it("a 429 with no Retry-After pauses for 30 s, so the call's own retry refuses instead of calling FamilySearch again", async () => {
+    wire.mockResolvedValue(tooMany());
+    const refused = await fsFetch(userA, FS_URL).catch((e: unknown) => e);
+    expect((refused as Error).message).toBe(
+      "FamilySearch asked this account to wait; try again in about 30 seconds.",
+    );
+    expect(isFsBudgetExhausted(refused)).toBe(true);
+    expect(wire).toHaveBeenCalledTimes(1);
+  });
+
+  it("a 5xx pauses nobody", async () => {
+    wire.mockResolvedValueOnce(new Response("down", { status: 503, headers: { "Retry-After": "60" } }));
+    await expect(fsFetch(userA, FS_URL)).rejects.toThrow(/Server requested a 60s wait/);
+    expect(__userLimitsStateForTests().pausedUsers).toBe(0);
+    wire.mockResolvedValueOnce(ok());
+    expect((await fsFetch(userA, FS_URL)).status).toBe(200);
+  });
+
+  it("a pause that ends inside the retry budget is waited out, then the call goes", async () => {
+    recordFsPause("u_A", 300);
+    wire.mockResolvedValue(ok());
+    const started = performance.now();
+    expect((await fsFetch(userA, FS_URL)).status).toBe(200);
+    expect(performance.now() - started).toBeGreaterThanOrEqual(250);
+    expect(wire).toHaveBeenCalledTimes(1);
+    expect(__userLimitsStateForTests().pausedUsers).toBe(0);
+  });
+
+  it("fsFetchWithTimeout records a pause from its own 429 and then refuses without a fetch", async () => {
+    wire.mockResolvedValueOnce(tooMany("60"));
+    // No retry loop here, so the 429 comes back to the caller as before.
+    expect((await fsFetchWithTimeout(userA, FS_URL)).status).toBe(429);
+    await expect(fsFetchWithTimeout(userA, FS_URL)).rejects.toThrow(
+      "FamilySearch asked this account to wait; try again in about 60 seconds.",
+    );
+    await expect(fsFetch(userA, FS_URL)).rejects.toThrow("about 60 seconds");
+    expect(wire).toHaveBeenCalledTimes(1);
   });
 });

@@ -519,6 +519,96 @@ describe("raiseConnectAttemptTimeout", () => {
 });
 
 // ---------------------------------------------------------------------------
+// The two optional hooks `fsFetch` uses for a connector user's 429 pause
+// (self-hosted beta E4, issue #3999). No caller that passes neither sees any
+// change; the cases above all pass none.
+
+describe("fetchWithRetry's onRetryableResponse and beforeAttempt hooks", () => {
+  it("onRetryableResponse sees a 429 whose Retry-After is past the budget BEFORE the loop throws", async () => {
+    const seen: Array<[number, number | null]> = [];
+    mockFetch.mockResolvedValue(mockResponse(429, { retryAfter: "60" }));
+    await expect(
+      fetchWithRetry("https://example.com", {}, 1000, {
+        budgetMs: 5000,
+        baseMs: 1,
+        onRetryableResponse: (status, ra) => seen.push([status, ra]),
+      }),
+    ).rejects.toThrow(/Server requested a 60s wait/);
+    expect(seen).toEqual([[429, 60_000]]);
+  });
+
+  it("onRetryableResponse sees every retryable response, a 5xx and a header-less 429 included, and no 200", async () => {
+    const seen: Array<[number, number | null]> = [];
+    mockFetch
+      .mockResolvedValueOnce(mockResponse(503))
+      .mockResolvedValueOnce(mockResponse(429))
+      .mockResolvedValueOnce(mockResponse(200));
+    const res = await fetchWithRetry("https://example.com", {}, 1000, {
+      budgetMs: 5000,
+      baseMs: 1,
+      onRetryableResponse: (status, ra) => seen.push([status, ra]),
+    });
+    expect(res.status).toBe(200);
+    expect(seen).toEqual([
+      [503, null],
+      [429, null],
+    ]);
+  });
+
+  it("beforeAttempt runs before every attempt, the first included, with the budget left", async () => {
+    const remaining: number[] = [];
+    mockFetch
+      .mockResolvedValueOnce(mockResponse(503))
+      .mockResolvedValueOnce(mockResponse(200));
+    const res = await fetchWithRetry("https://example.com", {}, 1000, {
+      budgetMs: 5000,
+      baseMs: 1,
+      beforeAttempt: async (ms) => {
+        remaining.push(ms);
+      },
+    });
+    expect(res.status).toBe(200);
+    expect(remaining).toHaveLength(2);
+    expect(remaining[0]).toBeGreaterThan(4_900);
+    expect(remaining[0]).toBeLessThanOrEqual(5_000);
+    expect(remaining[1]).toBeLessThanOrEqual(remaining[0]!);
+  });
+
+  it("a marked refusal from beforeAttempt is rethrown at once: no fetch, no retry", async () => {
+    const refusal = fsBudget.markFsRefusal(new Error("FamilySearch asked this account to wait; try again in about 60 seconds."));
+    let calls = 0;
+    await expect(
+      fetchWithRetry("https://example.com", {}, 1000, {
+        budgetMs: 5000,
+        baseMs: 1,
+        beforeAttempt: async () => {
+          calls++;
+          throw refusal;
+        },
+      }),
+    ).rejects.toBe(refusal);
+    expect(calls).toBe(1);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("a marked refusal on a retry drops the 429 in hand and names the refusal, not the 429", async () => {
+    const refusal = fsBudget.markFsRefusal(new Error("paused"));
+    mockFetch.mockResolvedValueOnce(mockResponse(429));
+    let calls = 0;
+    await expect(
+      fetchWithRetry("https://example.com", {}, 1000, {
+        budgetMs: 5000,
+        baseMs: 1,
+        beforeAttempt: async () => {
+          if (calls++ > 0) throw refusal;
+        },
+      }),
+    ).rejects.toBe(refusal);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+  });
+});
+
+// ---------------------------------------------------------------------------
 // The process-wide FamilySearch budget (self-hosted beta E4), which lives in
 // fetchWithTimeout -- not fsFetch, because place-api.ts, memories.ts,
 // fs-image-fetch.ts and auth/refresh.ts all reach FamilySearch without it.

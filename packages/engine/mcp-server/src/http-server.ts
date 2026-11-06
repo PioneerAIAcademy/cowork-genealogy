@@ -27,6 +27,12 @@
 // every project tool and answers `project_list` with `ownedProjects` plus one
 // fresh path.
 //
+// A connector caller's `tools/call` runs holding one of that user's
+// `USER_CALL_CAP` slots (self-hosted beta E4, per user; `utils/user-limits.ts`).
+// A call over the cap waits in FIFO order and is never refused; one whose client
+// hangs up while waiting leaves the queue without running. `initialize`,
+// `tools/list` and notifications never wait, and the worker path is not capped.
+//
 // The body is read ONCE for both paths, under `MAX_BODY_BYTES`, because a
 // JSON-RPC batch has to be refused before any tool runs; the parsed value is
 // handed to the transport, since a consumed stream cannot be read again.
@@ -46,6 +52,7 @@ import type { AppConfig } from "./types/auth.js";
 import { allToolSchemas } from "./tool-schemas.js";
 import { createServer } from "./server.js";
 import { PROJECT_ID_RE } from "./store/project-id.js";
+import { runWithUserCallSlot } from "./utils/user-limits.js";
 import {
   ownedProjectsStore,
   runWithProjectStore,
@@ -482,6 +489,11 @@ export function connectorConfig(baseConfig: AppConfig, caller: ConnectorCaller):
   };
 }
 
+/** True for a `tools/call` body: the only requests that take a user's slot. */
+function isToolsCall(body: unknown): boolean {
+  return typeof body === "object" && body !== null && (body as { method?: unknown }).method === "tools/call";
+}
+
 /**
  * The tool a body names, for the log line only. `-` when it names none.
  *
@@ -615,6 +627,8 @@ async function handleMcpPost(
   let principal: Principal;
   let store: ProjectStore;
   let logUserId = "-";
+  /** The connector caller whose slot a `tools/call` takes; unset on the worker path. */
+  let capUserId: string | undefined;
   let familySearchStatus: number | null = null;
 
   if (isWorkerPath) {
@@ -647,6 +661,7 @@ async function handleMcpPost(
       return;
     }
     logUserId = caller.userId;
+    capUserId = caller.userId;
 
     const named = connectorProjectPath(body.value);
     if (named.kind === "not_a_string") {
@@ -722,31 +737,47 @@ async function handleMcpPost(
     });
   }
 
-  const server = createServer(principal);
-  // Stateless: the SDK refuses to reuse a transport across requests, and one
-  // Server per POST is what binds the principal to exactly this request.
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-    enableJsonResponse: true,
-  });
-  try {
-    // Every store call in the handler's async continuation — the SDK's
-    // onmessage → Promise.then(handler) chain included — resolves to `store`.
-    await runWithProjectStore(store, async () => {
-      await server.connect(transport);
-      // The pre-read body, since the stream is already consumed.
-      await transport.handleRequest(req, res, body.value);
+  const run = async (): Promise<void> => {
+    const server = createServer(principal);
+    // Stateless: the SDK refuses to reuse a transport across requests, and one
+    // Server per POST is what binds the principal to exactly this request.
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+      enableJsonResponse: true,
     });
-  } finally {
-    await server.close();
-    // One line per call (E1): the user, the tool, and any FamilySearch status.
-    // Never the token or its hash.
-    const toolName = toolNameOf(body.value);
-    process.stderr.write(
-      `ev=tool_call surface=${isWorkerPath ? "worker" : "connector"} user_id=${logUserId} ` +
-        `tool=${toolName} fs_status=${familySearchStatus ?? "-"}\n`,
-    );
+    try {
+      // Every store call in the handler's async continuation — the SDK's
+      // onmessage → Promise.then(handler) chain included — resolves to `store`.
+      await runWithProjectStore(store, async () => {
+        await server.connect(transport);
+        // The pre-read body, since the stream is already consumed.
+        await transport.handleRequest(req, res, body.value);
+      });
+    } finally {
+      await server.close();
+      // One line per call (E1): the user, the tool, and any FamilySearch status.
+      // Never the token or its hash.
+      const toolName = toolNameOf(body.value);
+      process.stderr.write(
+        `ev=tool_call surface=${isWorkerPath ? "worker" : "connector"} user_id=${logUserId} ` +
+          `tool=${toolName} fs_status=${familySearchStatus ?? "-"}\n`,
+      );
+    }
+  };
+
+  // E4, per user: the slot is released however `run` ends, a throw included.
+  if (capUserId !== undefined && isToolsCall(body.value)) {
+    const ran = await runWithUserCallSlot(capUserId, disconnected.signal, run);
+    if (!ran) {
+      // The client hung up while the call waited, so there is no one to answer
+      // and nothing ran. One line, so the call is not missing from the log.
+      process.stderr.write(
+        `ev=tool_abandoned surface=connector user_id=${capUserId} tool=${toolNameOf(body.value)}\n`,
+      );
+    }
+    return;
   }
+  await run();
 }
 
 async function route(

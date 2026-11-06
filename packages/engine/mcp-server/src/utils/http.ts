@@ -234,6 +234,21 @@ export interface RetryBudgetOptions {
   budgetMs?: number;
   /** Base delay for exponential backoff when no Retry-After. Default 200. */
   baseMs?: number;
+  /**
+   * Called with every retryable response (429, 5xx) as it arrives, BEFORE the
+   * loop decides to retry it, return it or throw. A `Retry-After` longer than
+   * the budget makes this loop throw rather than return, so a caller checking
+   * the response after `fetchWithRetry` never sees that 429. `fsFetch` records
+   * a connector user's 429 pause here (issue #3999).
+   */
+  onRetryableResponse?: (status: number, retryAfterMs: number | null) => void;
+  /**
+   * Awaited before every attempt, the first included, with the budget left in
+   * ms. It may wait inside that, or throw a refusal marked for
+   * `isFsBudgetExhausted`, which the loop rethrows without retrying. `fsFetch`
+   * holds a paused connector user here (issue #3999).
+   */
+  beforeAttempt?: (remainingMs: number) => Promise<void>;
 }
 
 const retrySleep = (ms: number): Promise<void> =>
@@ -263,6 +278,8 @@ export async function fetchWithRetry(
     attempts = 3,
     budgetMs = DEFAULT_RETRY_BUDGET_MS,
     baseMs = 200,
+    onRetryableResponse,
+    beforeAttempt,
   } = retryOpts;
   const deadline = Date.now() + budgetMs;
   let lastErr: unknown;
@@ -275,6 +292,8 @@ export async function fetchWithRetry(
 
     let response: Response;
     try {
+      // Inside the `try`, so a marked refusal takes the rethrow below.
+      if (beforeAttempt) await beforeAttempt(Math.max(0, deadline - Date.now()));
       const attemptTimeout =
         attempt === 0
           ? timeoutMs
@@ -314,6 +333,7 @@ export async function fetchWithRetry(
     }
 
     // Retryable HTTP status (429/5xx).
+    onRetryableResponse?.(response.status, retryAfterMs(response));
     lastResponse = response;
     lastErr = new Error(
       `HTTP ${response.status} ${response.statusText}`,

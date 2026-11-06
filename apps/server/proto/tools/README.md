@@ -63,6 +63,17 @@ A connector call naming no project binds a store that refuses every project tool
 answers `project_list` with the user's projects plus one fresh `/proj_` path, which reads
 as an empty project until its first write claims it.
 
+Each connector user runs at most **4** `tools/call` requests at a time (self-hosted beta
+E4, per user; a constant in `src/utils/user-limits.ts`, not a setting). A call over the
+cap waits its turn, oldest first, and is never refused; `initialize` and `tools/list`
+never wait, and the worker path is not capped. A waiting call whose client hangs up
+never runs, and writes `ev=tool_abandoned surface=connector user_id=<id> tool=<name>`
+instead of an `ev=tool_call` line. When FamilySearch answers a connector user 429, that
+user's authenticated FamilySearch calls pause for its `Retry-After`, or 30 s without
+one: a pause that ends inside the call's retry budget (10 s by default) is waited out,
+and a longer one refuses at once with `FamilySearch asked this account to wait; try
+again in about N seconds.` Anonymous FamilySearch calls (place lookups) are not paused.
+
 The door reads each request body once, capped at **1 MiB**, and answers 413 past
 it. The cap binds the worker's writes too, because the body must be read to
 refuse a JSON-RPC batch before any tool runs; it is sized from the largest

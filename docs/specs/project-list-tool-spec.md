@@ -128,9 +128,10 @@ cut down to the entry's fields and let go before that read starts. Holding it ac
 the wait is what crashed the server: 1,000 concurrent calls on one project with a 1 MB
 objective aborted V8 on a 1 GiB heap.
 
-These bounds are per call. Nothing here limits how many calls one account has running,
-so the pool queue grows with them and `project_context` holds whole documents across
-the same waits. Only a per-user limit on calls in flight, at the door, closes that.
+These bounds are per call. How many calls one account has running is bounded at the
+door instead: a connector user runs at most 4 `tools/call` requests at a time and the
+rest wait their turn (self-hosted beta E4, `src/utils/user-limits.ts`), so one account's
+burst queues behind itself rather than on the pool.
 
 #### 2.3.2 The cap on a document
 

@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import type { Server as HttpServer } from "node:http";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -34,6 +34,11 @@ vi.mock("../../src/utils/http.js", async (importOriginal) => {
 
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
+import {
+  __resetUserLimitsForTests,
+  __userLimitsStateForTests,
+  USER_CALL_CAP,
+} from "../../src/utils/user-limits.js";
 import {
   CLAIM_EPOCH_HEADER,
   claimFenceFromHeaders,
@@ -1386,5 +1391,204 @@ describe("tool server over Streamable HTTP", () => {
     await new Promise((resolve) => setImmediate(resolve));
     expect(signals).toHaveLength(2);
     expect(signals[1].aborted).toBe(false);
+  });
+});
+
+// Self-hosted beta E4, per-user half (issue #3999): at most 4 `tools/call`
+// requests in flight per connector user, at the door. A call over the cap WAITS
+// in FIFO order; it is never refused. Kept at the end of the file, apart from
+// the cases above, because the limiter is module state shared by every request.
+describe("E4. per-user limits on the connector door (#3999)", () => {
+  const rpc = (body: unknown, headers: Record<string, string>, init: RequestInit = {}) =>
+    fetch(`${base}/mcp`, {
+      ...init,
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", ...headers },
+      body: JSON.stringify(body),
+    });
+  const call = (name: string, args: Record<string, unknown>) => ({
+    jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args },
+  });
+  const userA = { Authorization: "Bearer connector-token-A" };
+  const userB = { Authorization: "Bearer connector-token-B" };
+  /** A connector project path of its own per call, so each call's store is told apart. */
+  const projPath = (prefix: string, n: number) => `/proj_${prefix}${n.toString(16).padStart(16 - prefix.length, "0")}`;
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 150));
+
+  beforeEach(() => {
+    __resetUserLimitsForTests();
+  });
+
+  /**
+   * The next `n` stores `bindStore` hands out hold every method until `open()`,
+   * then 20 ms more, so calls overlap after the gate too. A request counts as
+   * inside the tool while one of its store methods is in flight; `high()` is
+   * the most requests that were ever inside at once. Each request binds exactly
+   * one store, before the door's slot is taken.
+   */
+  function gatedStores(n: number) {
+    let open!: () => void;
+    const gate = new Promise<void>((resolve) => (open = resolve));
+    const inFlight = new Map<string, number>();
+    const entered = new Set<string>();
+    let high = 0;
+    const insideNow = () => [...inFlight.values()].filter((count) => count > 0).length;
+    for (let i = 0; i < n; i++) {
+      bindStore.mockImplementationOnce((projectId, _signal, _fence, opts) => {
+        const inner = new ScopedFsStore(root, projectId, opts?.anchorPath);
+        return new Proxy(inner, {
+          get(target, key, receiver) {
+            const v = Reflect.get(target, key, receiver);
+            if (typeof v !== "function") return v;
+            return async (...args: unknown[]) => {
+              entered.add(projectId);
+              inFlight.set(projectId, (inFlight.get(projectId) ?? 0) + 1);
+              high = Math.max(high, insideNow());
+              try {
+                await gate;
+                await new Promise((resolve) => setTimeout(resolve, 20));
+                return await v.apply(target, args);
+              } finally {
+                inFlight.set(projectId, inFlight.get(projectId)! - 1);
+              }
+            };
+          },
+        });
+      });
+    }
+    return { open: () => open(), entered, high: () => high, insideNow };
+  }
+
+  /** User A's 12 calls, held at the gate. Resolves once every one has reached
+   *  the door (bindStore runs before the slot) and had time to enter the tool
+   *  if the door let it. */
+  async function holdTwelve() {
+    bindStore.mockClear();
+    const gated = gatedStores(12);
+    const paths = Array.from({ length: 12 }, (_, i) => projPath("a", i));
+    const answers = paths.map((projectPath) => rpc(call("project_context", { projectPath }), userA));
+    await vi.waitFor(() => expect(bindStore).toHaveBeenCalledTimes(12));
+    await settle();
+    return { gated, answers };
+  }
+
+  /** Open the gate and read every answer, so a failed case leaves no request hanging. */
+  async function release(gated: { open: () => void }, answers: Array<Promise<Response>>) {
+    gated.open();
+    return Promise.all(
+      answers.map(async (answer) => {
+        const res = await answer;
+        return { status: res.status, body: await res.text() };
+      }),
+    );
+  }
+
+  it("12 parallel tools/call requests from one user all complete, never more than 4 running at once", async () => {
+    expect(USER_CALL_CAP).toBe(4);
+    const { gated, answers } = await holdTwelve();
+    let done: Array<{ status: number; body: string }>;
+    try {
+      expect(gated.entered.size).toBe(4);
+      expect(gated.insideNow()).toBe(4);
+      expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 8 });
+    } finally {
+      done = await release(gated, answers);
+    }
+    for (const { status, body } of done) {
+      expect(status).toBe(200);
+      expect(body).toContain('"result"');
+    }
+    expect(gated.entered.size).toBe(12);
+    expect(gated.high()).toBe(4);
+    // Nothing running or waiting, so the user's entry is gone.
+    await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+  });
+
+  it("a second user's calls start at once while the first has 4 running and 8 waiting, and the first's tools/list is not queued", async () => {
+    const { gated, answers } = await holdTwelve();
+    try {
+      expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 8 });
+      // B's stores are the default, ungated ones: these answer while A is held.
+      const fromB = await Promise.all(
+        Array.from({ length: 4 }, (_, i) =>
+          rpc(call("project_context", { projectPath: projPath("b", i) }), userB).then(async (res) => ({
+            status: res.status,
+            body: await res.text(),
+          })),
+        ),
+      );
+      for (const { status, body } of fromB) {
+        expect(status).toBe(200);
+        expect(body).toContain('"result"');
+      }
+      // A's own tools/list takes no slot, so it does not wait behind A's 8.
+      const list = await rpc({ jsonrpc: "2.0", id: 2, method: "tools/list" }, userA);
+      expect(list.status).toBe(200);
+      expect(await list.text()).toContain('"project_context"');
+      expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 8 });
+      expect(gated.entered.size).toBe(4);
+    } finally {
+      await release(gated, answers);
+    }
+    await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+  });
+
+  it("a waiting call whose client hangs up leaves the queue, never runs, and is logged as abandoned", async () => {
+    bindStore.mockClear();
+    const gated = gatedStores(5);
+    const held = Array.from({ length: 4 }, (_, i) =>
+      rpc(call("project_context", { projectPath: projPath("c", i) }), userA),
+    );
+    await vi.waitFor(() => expect(bindStore).toHaveBeenCalledTimes(4));
+    await settle();
+
+    const lines: string[] = [];
+    const spy = vi.spyOn(process.stderr, "write").mockImplementation(((chunk: unknown) => {
+      lines.push(String(chunk));
+      return true;
+    }) as typeof process.stderr.write);
+    const goneId = projPath("c", 4).slice(1);
+    const client = new AbortController();
+    try {
+      const dropped = rpc(call("project_context", { projectPath: `/${goneId}` }), userA, {
+        signal: client.signal,
+      }).catch(() => undefined);
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+      client.abort();
+      await dropped;
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 0 }));
+      await vi.waitFor(() =>
+        expect(lines.join("")).toContain("ev=tool_abandoned surface=connector user_id=u_A tool=project_context"),
+      );
+    } finally {
+      spy.mockRestore();
+      await release(gated, held);
+    }
+    // The four held calls finished; the abandoned one never touched its store.
+    await settle();
+    expect(gated.entered.has(goneId)).toBe(false);
+    expect(gated.entered.size).toBe(4);
+    expect(lines.join("")).not.toMatch(/ev=tool_call [^\n]*user_id=u_A tool=project_context/);
+    await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+  });
+
+  it("the worker path is not capped: 6 parallel worker calls are all inside the tool at once", async () => {
+    bindStore.mockClear();
+    const gated = gatedStores(6);
+    const answers = Array.from({ length: 6 }, () =>
+      rpc(call("project_context", { projectPath: SCOPED_ANCHOR }), {
+        Authorization: "Bearer worker-bearer",
+        [PROJECT_HEADER]: `worker-${randomUUID()}`,
+      }),
+    );
+    try {
+      await vi.waitFor(() => expect(bindStore).toHaveBeenCalledTimes(6));
+      await settle();
+      expect(gated.insideNow()).toBe(6);
+      expect(__userLimitsStateForTests().users).toBe(0);
+    } finally {
+      const done = await release(gated, answers);
+      for (const { status } of done) expect(status).toBe(200);
+    }
   });
 });

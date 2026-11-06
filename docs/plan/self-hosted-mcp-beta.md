@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a limited beta
 
-**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide limits, the connector plugin build, the probe's reconnect flags, and D1's stack. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
+**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, the connector plugin build, the probe's reconnect flags, and D1's stack. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
 
 ## What this is
 
@@ -172,7 +172,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 
 **E4 Limits.**
 - **Process-wide:** shipped, off unless set.
-- **Per user, for connector callers (issue #3999):** 4 calls at a time, and a pause for `Retry-After` when FamilySearch answers 429. A call over the cap waits; it is not refused.
+- **Per user, for connector callers:** shipped (issue #3999). 4 calls at a time, and a pause for `Retry-After` when FamilySearch answers 429. A call over the cap waits; it is not refused.
 - **Blocking:** shipped. `blocked_at` is checked at the door.
 - **Done when:** one user's limits leave another's untouched, a planted 429 pauses only its user, and 12 parallel calls from one user all complete, with no more than 4 running at once.
 
@@ -326,10 +326,10 @@ When FamilySearch hosts the open beta:
 ## Changes to the handoff's code
 
 Each of these is additive and keeps the handoff's behavior as the default, except where the handoff's alignment section says. Before each one, check for open PRs on the same files, keep the PR small, and ask Richard to review it. Each change also lists its new settings in the handoff plan's step 9 or 15, unset there.
-- **Done:** PR #3852's `project_list` and router step; W1; W3's routes; E1; E4's process-wide limits; S1's schema files.
+- **Done:** PR #3852's `project_list` and router step; W1; W3's routes; E1; E4's process-wide and per-user limits; S1's schema files.
 - **Web tier,** `apps/server/proto/web/`: W2 and W4. With chat off, sign-in asks for no `offline_access` and the callback stores no refresh token. Chat on stays the default.
 - **Dependencies,** `apps/server/pyproject.toml`, `apps/server/uv.lock` and `apps/server/proto/web/requirements.txt`: `mcp` joins `proto-web`. It brings nine packages `proto-web` lacks: `httpx-sse`, `jsonschema` with `attrs`, `jsonschema-specifications`, `referencing` and `rpds-py`, `pydantic-settings`, `pyjwt` and `sse-starlette`. Before W2 merges, Richard reviews the dependency change.
-- **The tool server,** `packages/engine/mcp-server/`: E2, E3, E4 and E5, and the MCP App's fold into `createServer`.
+- **The tool server,** `packages/engine/mcp-server/`: E2, E3 and E5, and the MCP App's fold into `createServer`.
 - **The plugin,** which `eb-worker.zip` carries: G5's wording, E3's and E5's agent lines, and G6.
 
 ## Who builds what
@@ -347,7 +347,6 @@ The lead's two agents hold the first group. The team builds the rest; an issue l
 | W4 Plain pages (D4) | issue #4001 | team | 30 Nov |
 | E5 Fit for a connector | issue #3996 | team | The pin |
 | E5 Direct reads | issue #4311 | team, senior | The pin |
-| E4 Limits: per user | issue #3999 | team, senior | Before invited users |
 | S2 Deleting and blocking one user | issue #4000 | team, senior | Before invited users |
 | G5 Capture wording | issue #3990 | team | Before invited users |
 
@@ -388,7 +387,7 @@ Issue #4003, in the icebox, holds the worker's half of the one door and server-s
 - **Research in chat.** Claude's docs say a chat session runs no hooks or agents, but the MCP App's host record shows the model listing `Agent` in chat on one account. This plugin is 2 skills and 31 agents. If the tool is there, the research skill's no-`Agent` line does not stop, and a run may fall to a general-purpose stand-in with no agent's tool list, which the hook would let through. Item 12 settles which. Either way, a rule that must hold in chat has to be a tool rule.
 - **A new account.** Research on the primary surfaces rests on plugin skills and agents reaching chat. If a new account gets neither, research does not run there at all, so acceptance step 2 is the main risk to the beta.
 - **A test on the lead's account.** It runs a variant plugin, so cards working there say nothing about the zip users install. Only acceptance step 2 does.
-- **One account's load.** Until E4's per-user cap lands, one account can exhaust the tool server with concurrent calls, so it lands before invited users.
+- **One account's load.** E4's per-user cap holds an account to 4 calls at a time, and its calls past that wait, so a burst slows that account rather than the tool server.
 - **Code moving under a rehearsal.** One pinned commit for web, tools and the zip.
 - **Richard's path.** E1 changed the door his worker uses. It keeps admitting today's worker.
 - **Two languages.** Node decrypts what Python encrypts. A shared test vector pins the format, and both tiers need the same key.
