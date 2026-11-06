@@ -1458,9 +1458,13 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
         elif re.match(r"^\W*(?:#{1,6}\s|[-*_]{3,}\s*$)", line):
             in_birth_block = False
         prev_blank = False
-        # A semicolon separates items in a list of weaknesses, so the birth topic and the
-        # conflict word of one item are not those of the next.
-        for sentence in (seg for part in _SENTENCE_RE.split(line) for seg in part.split(";")):
+        # A semicolon or an "(a)" marker separates items in a list of weaknesses, so the
+        # birth topic and the conflict word of one item are not those of the next.
+        for sentence in (
+            seg
+            for part in _SENTENCE_RE.split(line)
+            for seg in re.split(r";|(?=\(\s*(?:[a-h]|\d)\s*\)\s)", part)
+        ):
             # Denial is judged per parenthetical clause, so "... the 1850
             # census (within ordinary census variance)" clears only the 1850.
             clauses = re.split(r"[()]", sentence)

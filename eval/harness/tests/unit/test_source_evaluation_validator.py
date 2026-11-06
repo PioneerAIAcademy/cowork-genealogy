@@ -2175,3 +2175,24 @@ def test_a_lone_census_year_still_names_the_census():
         _age_check(
             "The 1865 census birth year of 1839 conflicts with the profile's birth date." + _TAIL_CONFLICT
         )
+
+
+def test_a_lettered_weakness_list_does_not_join_the_birth_item_to_the_mother_item():
+    """Replay of a live run: "(a) the specific birth date ..., (b) both marriages (only the 1865 census
+    as evidence), (c) the mother's name (a genuine conflict between the 1850 census ...)" is three items."""
+    _age_check(
+        "The weakest areas are: (a) the specific birth date (30 November 1838, no source here supports it), "
+        "(b) both marriages (year-only dates, and the first marriage has only the 1865 census as evidence), "
+        "(c) the mother's name (a genuine conflict between the 1850 census and the death records), and "
+        "(d) the two surname misreadings." + _TAIL_CONFLICT
+    )
+
+
+def test_a_census_flagged_inside_its_own_lettered_birth_item_is_still_a_flag():
+    """The other direction: the markers only separate items, so the census named inside the birth
+    item itself is still caught."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(
+            "The weakest areas are: (a) both marriages are unsourced, (b) the 1850 census birth year of 1839 "
+            "conflicts with the profile's birth date, (c) the residences are unsourced." + _TAIL_CONFLICT
+        )
