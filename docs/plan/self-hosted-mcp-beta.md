@@ -228,7 +228,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 **S1 Schema.** Shipped: numbered files from 016.
 
 **S2 Deleting and blocking one user (issue #4000).**
-- **Deleting.** `make beta-delete-user ACCOUNT=<id> CODE=<deletion code>` refuses a wrong code. Otherwise it deletes the user's rows and objects.
+- **Deleting.** `make beta-delete-user ACCOUNT=<id> CODE=<deletion code>` refuses a wrong code. Otherwise it deletes the user's rows and objects, and says that a backup already taken keeps them.
 - **Blocking.** `make beta-block-user ACCOUNT=<id>` sets `blocked_at` and `sessions_revoked_at`.
 - Both run on `malachi`, inside the compose network.
 - **Done when:** a test deletes a seeded user and finds none of their rows, connector tokens or objects, and a blocked user's cookie is refused and their token gets 401.
@@ -259,7 +259,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 - **Make targets:** `malachi-up`, `-check`, `-logs`, `-deploy REF=<sha>`, `-backup`, `-restore-check`, `-restore`, `-export`, `-openrouter EMAIL=`, `-prune`, `-down`, `-wipe` and `-rehearsal`.
 - **Never** run `tailscale serve reset`, `tailscale funnel --https=443 off` or `make proto-up` with defaults on `malachi`, and do not reboot it for a test: `/wiki` and `/pop-stats` are production ingress for every installed `.mcpb`.
 
-**D2 Monitoring.** Before invited users: a scheduled check that emails the lead, and logs that survive a redeploy. `make malachi-check` is the manual check, and the per-call log line ties a call to a user. `make malachi-backup` runs by hand, and nothing schedules it.
+**D2 Monitoring.** Before invited users: a scheduled `make malachi-check` that emails the lead, and logs that survive a redeploy. The per-call log line ties a call to a user. `make malachi-backup` runs by hand, and nothing schedules it.
 
 **Done when:** stopping `tools` emails the lead, and yesterday's `ev=tool_call` lines survive a redeploy.
 
@@ -287,7 +287,7 @@ The privacy policy covers:
 - where it is stored: on the lead's server, with no promise of durability or encryption at rest;
 - who receives it: Anthropic, OpenRouter and Google for transcription, FamilySearch, Wikipedia, and our wiki and population host;
 - that the lead may read a user's project when they write in, and may turn a case into a public test with living people removed;
-- that everything is deleted when the beta ends, and how to ask for deletion sooner.
+- that everything is deleted when the beta ends, how to ask for deletion sooner, and that a deletion does not reach a backup already taken.
 
 The terms say:
 - this is a beta, with no warranty and no promise that work survives;
@@ -364,7 +364,7 @@ Issue #4003, in the icebox, holds the worker's half of the one door and server-s
 | When | Work |
 |---|---|
 | Sun 8 Nov | Sitting 1 |
-| At least 25 hours later | Sitting 2. Then the token lifetime and E3 are settled here |
+| At least 25 hours later | Sitting 2. Then the token lifetime, E3 and the Surface decision are settled here |
 | By 13 Nov | E2 merged; the stack up on `malachi` with the edge off |
 | About 19 Nov | The first live sign-in |
 | About 23 Nov | A full run with cards, a planted dead token, and signing in again |
@@ -387,7 +387,7 @@ Issue #4003, in the icebox, holds the worker's half of the one door and server-s
 - **The per-call limit.** Unmeasured in Claude or Funnel. `project_create` needs about 55 s, and `image_transcribe` longer.
 - **The wrong server.** A `.mcpb` left on shares the connector's prefix, so research can land on disk and look right. The first reply must say `hosted`.
 - **One host.** A single server, with `/wiki` and `/pop-stats` on the same machine and the same Funnel. A lost disk loses users' research, and D4 and the terms say so.
-- **Research in chat.** Claude's docs say a chat session runs no hooks or agents, and this plugin is 2 skills and 31 agents. So a chat user holds the raw tools with none of the hook's rules, and a rule that must hold there has to be a tool rule.
+- **Research in chat.** Claude's docs say a chat session runs no hooks or agents, but the MCP App's host record shows the model listing `Agent` in chat on one account. This plugin is 2 skills and 31 agents. If the tool is there, the research skill's no-`Agent` line does not stop, and a run may fall to a general-purpose stand-in with no agent's tool list, which the hook would let through. Item 12 settles which. Either way, a rule that must hold in chat has to be a tool rule.
 - **A new account.** Research on the primary surfaces rests on plugin skills and agents reaching chat. If a new account gets neither, research does not run there at all, so acceptance step 2 is the main risk to the beta.
 - **A test on the lead's account.** It runs a variant plugin, so cards working there say nothing about the zip users install. Only acceptance step 2 does.
 - **One account's load.** Until E4's per-user cap lands, one account can exhaust the tool server with concurrent calls, so it lands before invited users.
