@@ -631,7 +631,7 @@ project as it is now rather than at that step.
 |---|---|---|
 | `result _meta arrived` | Yes, up to 999,947 bytes, on all three surfaces. No at 1,299,948 bytes | |
 | `data came from` | `result _meta`, or a `read_project_view` call when `_meta` did not arrive | |
-| A reopened conversation's card gets the result's `_meta` again | | |
+| A reopened conversation's card gets the result's `_meta` again | Yes, in Desktop Chat and claude.ai, at up to 799,947 bytes. It is a new mount, and the tool input comes again too | |
 
 ### Size
 
