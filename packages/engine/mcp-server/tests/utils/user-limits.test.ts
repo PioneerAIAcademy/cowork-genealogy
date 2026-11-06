@@ -5,6 +5,7 @@ import { scorePair } from "../../src/utils/match-engine.js";
 import { withRetry } from "../../src/utils/place-resolver.js";
 import {
   DEFAULT_FS_PAUSE_MS,
+  FS_PAUSE_MAX_MS,
   USER_CALL_CAP,
   __resetUserLimitsForTests,
   __userLimitsStateForTests,
@@ -230,6 +231,30 @@ describe("the 429 pause", () => {
     recordFsPause("u_1", 60_000, 0);
     recordFsPause("u_1", 5_000, 0);
     await expect(awaitFsPause("u_1", 10_000, () => 0)).rejects.toThrow("about 60 seconds");
+  });
+
+  it("a pause is capped at 15 minutes, whatever Retry-After asked for", async () => {
+    expect(FS_PAUSE_MAX_MS).toBe(15 * 60_000);
+    // "99999999999" parses to this; a 400-digit header parses to Infinity.
+    for (const asked of [99_999_999_999_000, Number.POSITIVE_INFINITY]) {
+      __resetUserLimitsForTests();
+      recordFsPause("u_1", asked, 0);
+      await expect(awaitFsPause("u_1", 10_000, () => 0)).rejects.toThrow("about 900 seconds");
+      // And it ends: at the cap the call goes again.
+      await awaitFsPause("u_1", 10_000, () => FS_PAUSE_MAX_MS);
+      expect(__userLimitsStateForTests().pausedUsers).toBe(0);
+    }
+  });
+
+  it("a Retry-After that is not a number falls back to 30 s instead of a pause that never ends", async () => {
+    recordFsPause("u_1", Number.NaN, 0);
+    await expect(awaitFsPause("u_1", 10_000, () => 0)).rejects.toThrow("about 30 seconds");
+    await awaitFsPause("u_1", 10_000, () => 30_000);
+  });
+
+  it("a negative Retry-After pauses nobody", () => {
+    recordFsPause("u_1", -5_000, 0);
+    expect(__userLimitsStateForTests().pausedUsers).toBe(0);
   });
 
   it("Retry-After: 0 pauses nobody", async () => {

@@ -24,6 +24,13 @@ export const USER_CALL_CAP = 4;
 /** The pause when a 429 carries no usable `Retry-After`. */
 export const DEFAULT_FS_PAUSE_MS = 30_000;
 
+/** The longest pause one 429 can set, as `FS_BUDGET_MAX_PER_MINUTE` bounds its
+ *  setting. `Retry-After` is any run of digits, so a header of years, or one a
+ *  proxy mangled, would otherwise shut a user out of FamilySearch until the
+ *  process restarts. Past the cap the user's next call reaches FamilySearch,
+ *  and a limit still in force answers 429 and pauses them again. */
+export const FS_PAUSE_MAX_MS = 15 * 60_000;
+
 /** The connector caller's user id, or undefined for every other principal
  *  (`LOCAL`, the worker's bearer). */
 export function connectorUserId(principal: Principal): string | undefined {
@@ -140,15 +147,18 @@ export async function runWithUserCallSlot(
 let pausedUntil = new Map<string, number>();
 
 /**
- * Record a 429 for `userId`: paused for `retryAfterMs`, or DEFAULT_FS_PAUSE_MS
- * when the header was absent or unparseable (`retryAfterMs` null). A shorter
- * pause never cuts a longer one short. Never throws.
+ * Record a 429 for `userId`: paused for `retryAfterMs`, at most
+ * FS_PAUSE_MAX_MS, or DEFAULT_FS_PAUSE_MS when the header was absent or
+ * unparseable (`retryAfterMs` null, or not a number). A shorter pause never
+ * cuts a longer one short. Never throws.
  */
 export function recordFsPause(userId: string, retryAfterMs: number | null, now: number = monotonicNow()): void {
   // Expired entries go here, the one place the map grows.
   for (const [user, until] of pausedUntil) if (until <= now) pausedUntil.delete(user);
-  const until = now + (retryAfterMs ?? DEFAULT_FS_PAUSE_MS);
-  if (until <= now) return;
+  // NaN would fail every comparison in `awaitFsPause` and loop it forever.
+  const pauseMs = retryAfterMs === null || Number.isNaN(retryAfterMs) ? DEFAULT_FS_PAUSE_MS : retryAfterMs;
+  const until = now + Math.min(pauseMs, FS_PAUSE_MAX_MS);
+  if (!(until > now)) return;
   const current = pausedUntil.get(userId);
   if (current === undefined || until > current) pausedUntil.set(userId, until);
 }

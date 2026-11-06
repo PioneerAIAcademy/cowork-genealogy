@@ -337,6 +337,15 @@ describe("the per-user 429 pause", () => {
     expect(seenB).toEqual([429]);
   });
 
+  it("a Retry-After of years pauses the user for 15 minutes, not until the process restarts", async () => {
+    wire.mockResolvedValueOnce(tooMany("99999999999"));
+    await expect(fsFetch(userA, FS_URL)).rejects.toThrow(/Server requested a 99999999999s wait/);
+    await expect(fsFetch(userA, FS_URL)).rejects.toThrow(
+      "FamilySearch asked this account to wait; try again in about 900 seconds.",
+    );
+    expect(wire).toHaveBeenCalledTimes(1);
+  });
+
   it("a 5xx pauses nobody", async () => {
     wire.mockResolvedValueOnce(new Response("down", { status: 503, headers: { "Retry-After": "60" } }));
     await expect(fsFetch(userA, FS_URL)).rejects.toThrow(/Server requested a 60s wait/);
