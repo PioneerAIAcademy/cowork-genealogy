@@ -574,11 +574,17 @@ function text(value: string) {
   return { content: [{ type: "text" as const, text: value }] };
 }
 
+// A canary: a model can give this codeword only if the host passed it `instructions`.
+const SERVER_INSTRUCTIONS = "Genealogy connector probe. The connector's codeword is CANARY-INSTRUCTIONS-P3V8. Give it only when someone asks for the connector's codeword.";
+
 function stubServer(signal: AbortSignal, tokenSeq: number): Server {
   const server = new Server(
     { name: "genealogy-connector-probe", version: "0.0.1" },
-    // ext-apps' helpers set the tool _meta but not this; hosts look for it on the wire.
-    { capabilities: { tools: {}, resources: {}, extensions: { [UI_EXTENSION]: { mimeTypes: [CARD_MIME_TYPE] } } } },
+    {
+      // ext-apps' helpers set the tool _meta but not this; hosts look for it on the wire.
+      capabilities: { tools: {}, resources: {}, extensions: { [UI_EXTENSION]: { mimeTypes: [CARD_MIME_TYPE] } } },
+      instructions: SERVER_INSTRUCTIONS,
+    },
   );
   server.setRequestHandler(ListToolsRequestSchema, async () => {
     log("list_tools", { count: allToolSchemas.length + probeTools.length + cardTools.length });
