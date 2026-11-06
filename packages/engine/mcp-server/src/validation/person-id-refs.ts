@@ -143,8 +143,8 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
     }
   }
 
-  // proof_summaries[].claims[].relationship.{parent,child} — a per-claim tier
-  // breakdown's tree endpoint (#1711). Without this, a dangling or merged-away
+  // proof_summaries[].claims[] — every person a claim names (#1711, and the
+  // claim kinds in research-schema-spec.md's `claims` table). Without this, a dangling or merged-away
   // person id here validates clean, and merge_tree_persons never remaps it —
   // the tree-encoding gate then looks for a relationship at an id that no
   // longer exists and re-invokes proof-conclusion for an already-answered
@@ -158,20 +158,39 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
       ? proofSummaries[i].claims
       : [];
     for (let j = 0; j < claims.length; j++) {
-      if (!isObject(claims[j])) continue;
-      const rel = claims[j].relationship;
-      if (!isObject(rel)) continue;
-      const clp = `research.json/proof_summaries[${i}]/claims[${j}]/relationship`;
-      for (const side of ["parent", "child"] as const) {
-        const pid = rel[side];
-        if (!pid) continue;
+      const claim = claims[j];
+      if (!isObject(claim)) continue;
+      const clp = `research.json/proof_summaries[${i}]/claims[${j}]`;
+      // Every person a claim names, by the object that holds it: both ends of
+      // a ParentChild or Couple edge, a fact's subject or subject pair, an
+      // identity's person and same_as, a name's person.
+      const holders: [Record<string, any>, string, string][] = [];
+      if (isObject(claim.relationship)) {
+        for (const side of ["parent", "child", "person1", "person2"]) {
+          holders.push([claim.relationship, side, `relationship.${side}`]);
+        }
+      }
+      if (isObject(claim.fact)) {
+        if (isObject(claim.fact.subject)) {
+          for (const side of ["person1", "person2"]) holders.push([claim.fact.subject, side, `fact.subject.${side}`]);
+        } else {
+          holders.push([claim.fact, "subject", "fact.subject"]);
+        }
+      }
+      if (isObject(claim.identity)) {
+        for (const side of ["person", "same_as"]) holders.push([claim.identity, side, `identity.${side}`]);
+      }
+      if (isObject(claim.name)) holders.push([claim.name, "person", "name.person"]);
+      for (const [holder, key, label] of holders) {
+        const pid = holder[key];
+        if (typeof pid !== "string" || !pid) continue;
         yield {
           pid,
           field: "proof_summaries",
-          path: clp,
-          message: `relationship.${side} '${pid}' not found in tree.gedcomx.json persons`,
+          path: `${clp}/${label.split(".")[0]}`,
+          message: `${label} '${pid}' not found in tree.gedcomx.json persons`,
           set: (newId) => {
-            rel[side] = newId;
+            holder[key] = newId;
           },
         };
       }
