@@ -109,7 +109,7 @@ repo's identifier-casing rule):
                                          //   collection carries {id, title, dateRange, personCount,
                                          //   recordCount}, counts null when the entry has none —
                                          //   research-plan plans from them without re-running
-                                         //   collections_search (#3545)
+                                         //   collections_search
   awaitingUser: [{                       // open external-site hand-offs — §2.3
     logId: string,                       // log_* of the in-flight entry
     site: string,                        // external_site.site
