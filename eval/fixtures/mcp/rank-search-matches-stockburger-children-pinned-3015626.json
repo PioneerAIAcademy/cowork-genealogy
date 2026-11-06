@@ -1,0 +1,142 @@
+{
+  "tool": "rank_search_matches",
+  "description": "Ranking folded into the 3015626-pinned children search: its own 9 rows in search order.",
+  "args": {
+    "collectionId": "3015626"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 9,
+    "returnedCount": 9,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "ark:/61903/1:1:QPD6-95WX",
+        "primaryId": "p_104549178794",
+        "personName": "Magdalena Meyer",
+        "sex": null,
+        "birthDate": "5 March 1817",
+        "birthPlace": null,
+        "collectionTitle": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+        "matchScore": 12.419999,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 2,
+        "searchRank": 2,
+        "recordId": "ark:/61903/1:1:QPD6-H75H",
+        "primaryId": "p_104549351228",
+        "personName": "Joh. Georg Meyer",
+        "sex": "Male",
+        "birthDate": "13 April 1826",
+        "birthPlace": null,
+        "collectionTitle": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+        "matchScore": 11.7,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 3,
+        "searchRank": 3,
+        "recordId": "ark:/61903/1:1:QPDD-1KKP",
+        "primaryId": "p_104549120693",
+        "personName": "Joseph Meyer",
+        "sex": "Male",
+        "birthDate": "13 August 1818",
+        "birthPlace": null,
+        "collectionTitle": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+        "matchScore": 11.7,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 4,
+        "searchRank": 4,
+        "recordId": "ark:/61903/1:1:QPD6-WLLB",
+        "primaryId": "p_104549311558",
+        "personName": "Anna Maria Meyer",
+        "sex": "Female",
+        "birthDate": "9 November 1821",
+        "birthPlace": "Oberkirnach, Villingen, Kreis Villingen, Baden, Germany",
+        "collectionTitle": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+        "matchScore": 11.7,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 5,
+        "searchRank": 5,
+        "recordId": "ark:/61903/1:1:QPD6-7ZX7",
+        "primaryId": "p_104549274425",
+        "personName": "Johann Georg Meyer",
+        "sex": null,
+        "birthDate": "1815",
+        "birthPlace": null,
+        "collectionTitle": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+        "matchScore": 11.59,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 6,
+        "searchRank": 6,
+        "recordId": "ark:/61903/1:1:QPD6-WZ5N",
+        "primaryId": "p_104549301736",
+        "personName": "Salome Mayer",
+        "sex": null,
+        "birthDate": "1825",
+        "birthPlace": null,
+        "collectionTitle": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+        "matchScore": 11.59,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 7,
+        "searchRank": 7,
+        "recordId": "ark:/61903/1:1:QPD6-7Z54",
+        "primaryId": "p_104549274727",
+        "personName": "Johann Georg Mayer",
+        "sex": null,
+        "birthDate": "27 April 1815",
+        "birthPlace": null,
+        "collectionTitle": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+        "matchScore": 10.98,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 8,
+        "searchRank": 8,
+        "recordId": "ark:/61903/1:1:QPD6-9864",
+        "primaryId": "p_104549167297",
+        "personName": "Jacob Mayer",
+        "sex": null,
+        "birthDate": "1810",
+        "birthPlace": null,
+        "collectionTitle": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+        "matchScore": 10.98,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 9,
+        "searchRank": 9,
+        "recordId": "ark:/61903/1:1:QPD6-95CK",
+        "primaryId": "p_104549178889",
+        "personName": "Salome Meyer",
+        "sex": "Female",
+        "birthDate": "25 October 1824",
+        "birthPlace": null,
+        "collectionTitle": "Germany, Lutheran Baptisms, Marriages, and Burials, 1500-1971",
+        "matchScore": 9.9,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}
