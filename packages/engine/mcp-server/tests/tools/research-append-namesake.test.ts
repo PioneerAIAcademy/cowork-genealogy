@@ -1444,6 +1444,17 @@ describe("namesake cap", () => {
           expect(m).not.toContain("namesake(s) of");
           expect((await row()).birth_year).toBeUndefined();
         });
+
+        it("S10 fills in only the rows of a person the call links", async () => {
+          const other = { ...OLD_ROW, id: "ns_002", person_id: N, name: "Peter Jones" };
+          await sidecars(search(hit(REC.voter, "p_555", "1873")), project([OLD_ROW, other]));
+          await attest(["a_001", P]);
+          const res = await call(link("a_001", P));
+          expect(res.ok, errs(res)).toBe(true);
+          const [mine, theirs] = (await readResearch()).namesakes;
+          expect(mine.birth_year).toBe(1873);
+          expect(theirs).toEqual(other);
+        });
       });
     });
   });
@@ -2355,6 +2366,22 @@ describe("namesake age exemption (#3363)", () => {
     expect(errs(res)).toContain(`namesake(s) of '${I1}' are recorded (ns_001: Paul Raymond`);
   });
 
+  it("T3b lifts the row at eleven and keeps the cap at twelve", async () => {
+    for (const [year, lifts] of [["1807", true], ["1808", false]] as const) {
+      const r = ageResearch({ assertions: census("a_10", "src_001", CEN1800, year) });
+      await setup(r, ageTree());
+      const res = await raise(r, "a_101");
+      expect(res.ok, `${year}: ${errs(res)}`).toBe(lifts);
+      if (lifts) {
+        expect((await verdictOn("a_101", ageTree()))?.ties, year).toEqual([
+          { kind: "age", row: "ns_001", age: 11, marker: "head_of_household" },
+        ]);
+      } else {
+        expect(errs(res), year).toContain(`namesake(s) of '${I1}' are recorded (ns_001: Paul Raymond`);
+      }
+    }
+  });
+
   it("T4 keeps the cap on a principal with no office, whose record says nothing of age", async () => {
     const r = ageResearch({
       assertions: [...ageResearch().assertions, ...town("a_13", "src_004", TOWN1800, { event: "1800" })],
@@ -2363,6 +2390,21 @@ describe("namesake age exemption (#3363)", () => {
     const res = await raise(r, "a_131");
     expect(res.ok).toBe(false);
     expect(errs(res)).toContain(`namesake(s) of '${I1}' are recorded (ns_001`);
+  });
+
+  it("T4b keeps the cap on a principal when the office on the record is another party's", async () => {
+    const r = ageResearch({
+      assertions: [
+        ...ageResearch().assertions,
+        ...town("a_14", "src_004", TOWN1800, { event: "1799" }),
+        assertion("a_145", "src_004", TOWN1800, "town_clerk", "name", "Elijah Hill"),
+        assertion("a_146", "src_004", TOWN1800, "town_clerk", "office", "Town Clerk", { date: "1799" }),
+      ],
+    });
+    await setup(r, ageTree());
+    const res = await raise(r, "a_141");
+    expect(res.ok).toBe(false);
+    expect(errs(res)).toContain(`namesake(s) of '${I1}' are recorded (ns_001: Paul Raymond`);
   });
 
   it("T5 keeps the cap when the row has no birth year", async () => {
