@@ -1684,6 +1684,23 @@ def test_direct_test_spawned_its_agent(test, builtin_tool_calls):
     )
 
 
+_PROJECT_PATH_LINE = re.compile(r"(projectPath:[ \t]*)([^\n]*)")
+
+
+def _unify_project_path_separators(text):
+    """`\\` -> `/` in the value of each `projectPath:` line, and nowhere else.
+
+    The harness writes the run folder with forward slashes, and a Windows
+    dispatcher has been seen relaying it as `C:/Users/x/AppData\\Local\\Temp\\...`
+    (locality-guide v7_2026-11-05_20-38-13: 3 of 38 runs). Both spellings name
+    the same folder, so that is not a reworded delegation. Every other character
+    of the delegation is still compared exactly.
+    """
+    return _PROJECT_PATH_LINE.sub(
+        lambda m: m.group(1) + m.group(2).replace("\\", "/"), text
+    )
+
+
 def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
     """The recorded spawn prompt must contain the test's delegation verbatim.
 
@@ -1702,7 +1719,8 @@ def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
     if not delegation:
         pytest.skip("not a direct-agent test")
     _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
-    if any(delegation in p for p in prompts):
+    wanted = _unify_project_path_separators(delegation)
+    if any(wanted in _unify_project_path_separators(p) for p in prompts):
         return
     from harness.skill_runner import BUILTIN_ARG_TRUNCATE, _UNTRUNCATED_ARGS
 
@@ -1735,11 +1753,13 @@ def report_direct_delegation_extra_text(test, builtin_tool_calls):
     if not delegation:
         pytest.skip("not a direct-agent test")
     _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
+    wanted = _unify_project_path_separators(delegation)
     extras = []
     for p in prompts:
-        if delegation not in p:
+        p = _unify_project_path_separators(p)
+        if wanted not in p:
             continue
-        before, _, after = p.partition(delegation)
+        before, _, after = p.partition(wanted)
         if before.strip() or after.strip():
             extras.append(
                 f"before={before.strip()[:300]!r} after={after.strip()[:300]!r}"

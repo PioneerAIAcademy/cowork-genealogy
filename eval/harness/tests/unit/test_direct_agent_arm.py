@@ -335,6 +335,38 @@ def test_spawn_validator_fails_three_ways(calls):
         _universal().test_direct_test_spawned_its_agent(DIRECT_TEST, calls)
 
 
+PATH_DELEGATION = "Build a guide.\n\nprojectPath: C:/Users/x/AppData/Local/Temp/eval-t-0-0-ab"
+PATH_TEST = {"skill": "locality-guide", "delegation": PATH_DELEGATION}
+
+
+def test_verbatim_validator_accepts_a_backslashed_project_path():
+    """Observed: a Windows dispatcher relayed the forward-slash run folder with
+    backslashes. Same folder, so not a reworded delegation."""
+    calls = [
+        _agent_call(
+            subagent_type="locality-guide",
+            prompt=PATH_DELEGATION.replace("AppData/Local/Temp", "AppData\\Local\\Temp"),
+        )
+    ]
+    _universal().test_direct_delegation_relayed_verbatim(PATH_TEST, calls)
+
+
+@pytest.mark.parametrize(
+    "prompt",
+    [
+        PATH_DELEGATION.replace("eval-t-0-0-ab", "eval-t-0-0-zz"),
+        PATH_DELEGATION.replace("Build a guide.", "Build a\\guide."),
+        PATH_DELEGATION.replace("projectPath: ", "projectPath: D:"),
+        PATH_DELEGATION.split("\n\nprojectPath")[0],
+    ],
+    ids=["other_folder", "backslash_outside_path", "other_drive", "path_dropped"],
+)
+def test_verbatim_validator_still_fails_beyond_the_separator(prompt):
+    calls = [_agent_call(subagent_type="locality-guide", prompt=prompt)]
+    with pytest.raises(AssertionError):
+        _universal().test_direct_delegation_relayed_verbatim(PATH_TEST, calls)
+
+
 def test_verbatim_validator_accepts_a_relay_that_adds_harmless_framing():
     """`in`, not `==`. The accept direction: a preamble must not red the test,
     or the arm flakes on phrasing the dispatcher never forbade materially."""
