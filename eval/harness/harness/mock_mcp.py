@@ -447,12 +447,24 @@ UNLOGGED_SEARCHES_NOTE = (
     "that did not happen, and the staged response is deleted 24h after it was made."
 )
 
-#: Verbatim copy of IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE in
-#: packages/engine/mcp-server/src/tools/image-transcribe.ts (#2490).
-IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE = (
-    "projectPath is required: image_transcribe stages the page under the project's "
-    "results/ and returns its ref, not the text."
+#: Verbatim copy of NO_PROJECT_MESSAGE_READ in
+#: packages/engine/mcp-server/src/utils/project-io.ts: what image_transcribe answers
+#: a `file` read with no project (#4136).
+NO_PROJECT_MESSAGE_READ = (
+    "This folder is not a research project — there is no research.json here. "
+    "There is no project state to read — anything you are working on is standalone."
 )
+
+#: What production's no-project image_transcribe omits: it reads with projectPath
+#: removed, so nothing is staged or saved (#4136).
+_IMAGE_TRANSCRIBE_PROJECT_ONLY_KEYS = ("staged", "digest", "imageRef", "stagingError")
+
+
+def _is_project(workspace: Path | None) -> bool:
+    """Production's `classifyProjectPath`: a folder holding either project file."""
+    return workspace is not None and (
+        (workspace / "research.json").exists() or (workspace / "tree.gedcomx.json").exists()
+    )
 
 #: Mirrors UNLOGGED_REFS_SHOWN / formatUnloggedRefs in results-staging.ts. A join is
 #: safe to restate here; the PAIRING rule is not, and is called out of the build.
@@ -1666,15 +1678,18 @@ def create_mock_server(
             # Production's image_transcribe stages the page and returns its ref,
             # not the text (#2490): `staged` + `digest`, `transcription` dropped.
             # The fixture keeps the full page; this is what production sends.
-            # A call with no projectPath is refused before any OCR in production,
-            # so it must not come back with the fixture's page.
-            _refused_no_project = (
-                _name == "image_transcribe"
-                and "error" not in response
-                and not args.get("projectPath")
+            # With no project (no projectPath, or a folder holding neither project
+            # file) production reads with projectPath removed and returns the
+            # page inline, staging nothing (#4136); a `file` still needs one.
+            _no_project_read = _name == "image_transcribe" and (
+                not args.get("projectPath") or (_workspace is not None and not _is_project(_workspace))
             )
-            if _refused_no_project:
-                response = {"error": IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE}
+            # Production answers a `file` with no project before reading anything,
+            # so no fixture has to match it.
+            if _no_project_read and args.get("file") is not None:
+                response = {"ok": False, "reason": "no_project", "errors": [NO_PROJECT_MESSAGE_READ]}
+            elif _no_project_read and "error" not in response:
+                response = {k: v for k, v in response.items() if k not in _IMAGE_TRANSCRIBE_PROJECT_ONLY_KEYS}
             elif (
                 _name == "image_transcribe"
                 and _workspace is not None
@@ -1788,8 +1803,6 @@ def create_mock_server(
             # production's catch arms return with `isError: true` beside `{error}`.
             if entry["matched"]["kind"] == "predicate" and _is_error[entry["matched"]["index"]]:
                 envelope["is_error"] = True
-            if _refused_no_project:
-                envelope["is_error"] = True
             return envelope
 
         # Prefer the production description; fall back to a generic stub
@@ -1880,7 +1893,7 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
     "get_name_variants": ("name-variants.js", "getNameVariants"),
-    # Takes no input: called as `projectList(LOCAL)` (`_COMPILED_TOOLS_WITHOUT_INPUT`).
+    # Takes no input: called as `projectList()` (`_COMPILED_TOOLS_WITHOUT_INPUT`).
     "project_list": ("project-list.js", "projectList"),
 }
 
@@ -1898,9 +1911,9 @@ _OPTIONAL_PROJECT_PATH_TOOLS: frozenset[str] = frozenset({"build_external_search
 #: handler script below is built from a Python f-string, no typechecker catches
 #: the mismatch. A tool missing from this set calls with one argument and its
 #: `principal` arrives `undefined`.
-_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset({"project_context", "project_list"})
+_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset({"project_context"})
 
-#: Compiled tools that take no input, so the principal is their only argument.
+#: Compiled tools that take no input, so a principal would be their only argument.
 _COMPILED_TOOLS_WITHOUT_INPUT: frozenset[str] = frozenset({"project_list"})
 
 #: Extra JS arguments appended after `input` (and LOCAL) for a compiled tool.
@@ -2457,7 +2470,7 @@ def _make_compiled_tool_handler(
             )
             call_args = "input, LOCAL" if takes_principal else "input"
             if tool_name in _COMPILED_TOOLS_WITHOUT_INPUT:
-                call_args = "LOCAL"
+                call_args = "LOCAL" if takes_principal else ""
             if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
                 call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
 

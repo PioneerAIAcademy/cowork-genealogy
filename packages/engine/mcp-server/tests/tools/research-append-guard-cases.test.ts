@@ -15,6 +15,7 @@ import { fileURLToPath } from "node:url";
 import {
   unpersistedConflictResolutionInvariants,
   competingParentSetsInvariants,
+  gatedSummary,
   namesakeTieInvariants,
   planItemCompletionRecordTypeInvariants,
 } from "../../src/tools/research-append.js";
@@ -89,4 +90,22 @@ describe("guard case files: writer-tool replay", () => {
       });
     });
   }
+});
+
+// research_append hands the parentage gates gatedSummary(entry): a denied claim
+// is a grounded "probably not", so its child is no person this proof concludes.
+describe("competing parent sets read the gated summary", () => {
+  const file = JSON.parse(readFileSync(join(casesDir, "competing-parent-sets.json"), "utf-8"));
+  const c = (file.cases as GuardCase[]).find((x) => x.id === "claims-child-three-parents")!;
+  const entry = findEntry(c.research, c.write);
+  const nameClaim = { claim: "name", proof_tier: "probable", name: { person: "prs-001", given: "John" } };
+
+  it("an affirmed paternity claim still fires", () => {
+    expect(competingParentSetsInvariants(gatedSummary(entry), c.research, c.tree)).toHaveLength(1);
+  });
+
+  it("a denied paternity claim beside an affirmed one does not", () => {
+    const denied = { ...entry, claims: [nameClaim, { ...entry.claims[0], polarity: "denied" }] };
+    expect(competingParentSetsInvariants(gatedSummary(denied), c.research, c.tree)).toEqual([]);
+  });
 });

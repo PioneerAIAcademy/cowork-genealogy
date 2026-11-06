@@ -88,7 +88,7 @@ def read_route(target: str, root: str) -> str:
         )
     if _under(target, root + "/evaluations") or _under(target, root + "/uploads"):
         return "sidecar_read({projectPath, ref})"
-    if _basename(target) == "research.json":
+    if _basename(target).casefold() == "research.json":
         return "research_query"
     return "project_context"
 

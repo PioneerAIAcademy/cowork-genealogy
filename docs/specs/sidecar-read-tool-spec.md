@@ -125,7 +125,7 @@ the hit list (§7.1).
 `ref` is accepted **positively**: a prefix, then one or more segments separated
 by `/`. Every segment is non-empty, is not `.` or `..`, and contains no `/`,
 `\` or NUL. Any other character is allowed — upload names carry spaces and run
-to 121 characters (`_UPLOAD_NAME_RE` in `apps/server/app/sessions.py`). The
+to 120 characters (`_clean_upload_name` in `apps/server/app/sessions.py`). The
 prefixes are `evaluations` and `uploads`, plus `results`, which passes §3 only
 to be decided by §7: a `results/` ref is one of the two texts §7 serves, or
 `invalid_ref` there, or `not_found` for a staged ref that is gone (§6).
@@ -466,7 +466,7 @@ fixture, not a defect.
 ## 12. Tests
 
 `tests/tools/sidecar-read.test.ts`: happy path on a verdict JSON; a text upload
-with a space in its name and one with a 121-character name; nested refs under
+with a space in its name and one with a 120-character name; nested refs under
 both prefixes; pagination (`offset` / `maxChars` / `truncated` / `nextOffset`,
 `offset ≥ totalChars`, the surrogate-pair boundary, `maxChars: 1` on a pair
 and an offset landing on one keep the pair whole, a lone high surrogate is

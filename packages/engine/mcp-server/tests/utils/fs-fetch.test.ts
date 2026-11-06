@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { Principal } from "../../src/auth/principal.js";
-import { LOCAL } from "../../src/auth/principal.js";
+import { LOCAL, bearerPrincipal, connectorPrincipal } from "../../src/auth/principal.js";
 
 vi.mock("../../src/auth/refresh.js", () => ({
   getValidToken: vi.fn(),
@@ -67,6 +67,7 @@ describe("fsFetch — 401 re-read", () => {
       kind: "bearer",
       accessToken: "bearer-tok",
       config: {} as never,
+      surface: "worker",
     };
     vi.mocked(getValidToken).mockResolvedValue("bearer-tok");
     vi.mocked(fetchWithRetry).mockResolvedValue(
@@ -134,5 +135,71 @@ describe("fs-fetch — structural guarantees", () => {
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/\/\/.*/g, "");
     expect(codeWithoutComments).not.toContain("refreshAccessToken");
+  });
+});
+
+
+// ── the door's FamilySearch-status recorder (E1, issue #3984) ───────────────
+//
+// The door logs one line per call carrying the FamilySearch status, and the
+// only place that status exists is where the response is read. A recorder that
+// is never wired and one that works produce the SAME door output -- an absent
+// field -- so these pin the wiring rather than the logging.
+
+describe("recordFamilySearchStatus", () => {
+  it("hands the final status to a connector principal's recorder", async () => {
+    const seen: number[] = [];
+    const p = connectorPrincipal({
+      accessToken: "fs-tok",
+      userId: "u_1",
+      recordFamilySearchStatus: (s) => seen.push(s),
+    });
+    vi.mocked(getValidToken).mockResolvedValue("fs-tok");
+    vi.mocked(fetchWithRetry).mockResolvedValue(new Response("{}", { status: 403 }));
+
+    await fsFetch(p, "https://api.familysearch.org/x");
+    expect(seen).toEqual([403]);
+  });
+
+  it("records the status AFTER a 401 re-read, not the first one", async () => {
+    // A bearer never re-reads (handle401 returns at once for a non-local
+    // principal), so the recorded status is that 401 -- which is the status the
+    // call actually got, and the one E3's session-end rule keys on.
+    const seen: number[] = [];
+    const p = connectorPrincipal({
+      accessToken: "fs-tok",
+      userId: "u_1",
+      recordFamilySearchStatus: (s) => seen.push(s),
+    });
+    vi.mocked(getValidToken).mockResolvedValue("fs-tok");
+    vi.mocked(fetchWithRetry).mockResolvedValue(new Response("nope", { status: 401 }));
+
+    const res = await fsFetch(p, "https://api.familysearch.org/x");
+    expect(res.status).toBe(401);
+    expect(seen).toEqual([401]);
+  });
+
+  it("a principal with no recorder is unaffected", async () => {
+    vi.mocked(getValidToken).mockResolvedValue("tok");
+    vi.mocked(fetchWithRetry).mockResolvedValue(new Response("{}", { status: 200 }));
+    const res = await fsFetch(bearerPrincipal("tok"), "https://api.familysearch.org/x");
+    expect(res.status).toBe(200);
+  });
+
+  it("a recorder that throws never fails the call", async () => {
+    // It is a logging detail. A tool call the caller was entitled to make must
+    // not fail because the door's logger did.
+    const p = connectorPrincipal({
+      accessToken: "fs-tok",
+      userId: "u_1",
+      recordFamilySearchStatus: () => {
+        throw new Error("logger exploded");
+      },
+    });
+    vi.mocked(getValidToken).mockResolvedValue("fs-tok");
+    vi.mocked(fetchWithRetry).mockResolvedValue(new Response("{}", { status: 200 }));
+
+    const res = await fsFetch(p, "https://api.familysearch.org/x");
+    expect(res.status).toBe(200);
   });
 });

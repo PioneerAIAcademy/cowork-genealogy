@@ -71,6 +71,7 @@ import {
   normalizeHandBuilt,
   retryUnresolvedPlaces,
   unresolvedPlacesOf,
+  type DroppedLoopEdge,
   type IdMap,
   type FilledPlace,
   type StagedPersonRead,
@@ -79,7 +80,6 @@ import {
 import { treePidOfArk } from "../utils/ark.js";
 import type { SimplifiedFact } from "../types/gedcomx.js";
 import { PERSON_READ_REF_REMOVED } from "../utils/tool-hint-messages.js";
-import { projectLinks } from "../utils/project-links.js";
 
 /** The sections a new project starts with, all empty (`sources` aside, which
  *  holds the subject's transcribed memories when the person is read here). */
@@ -173,8 +173,6 @@ const NEVER_TRIMMED: ReadonlySet<SummaryPerson["relationship"]> = new Set([
 export interface ProjectCreateSummary {
   ok: true;
   projectId: string;
-  /** The project's viewer page, when the server knows its public URL. */
-  projectUrl?: string;
   filesWritten: string[];
   subject: { id: string; familySearchId: string; name: string; birth?: string; death?: string };
   /** The objective and title as stored, after `nameForId`. */
@@ -183,7 +181,8 @@ export interface ProjectCreateSummary {
   relatives: SummaryPerson[];
   counts: { persons: number; relationships: number; sources: number; memorySources: number };
   memories: { transcribed: string[]; notTranscribed: string[] };
-  /** The read's own notes (a relative FamilySearch names but does not describe). */
+  /** A sentence per ParentChild loop the build broke, first, then the read's
+   *  own notes (a relative FamilySearch names but does not describe). */
   notes?: string[];
   /** How many entries each list lost to the size cap; absent when none did. */
   omitted?: Partial<Record<"relatives" | "transcribed" | "notTranscribed" | "notes" | "warnings", number>>;
@@ -195,8 +194,6 @@ export type ProjectCreateResult =
   | {
       ok: true;
       projectId: string;
-      /** The project's viewer page, when the server knows its public URL. */
-      projectUrl?: string;
       filesWritten: string[];
       counts: { persons: number; relationships: number; sources: number };
       /** Which tree ids the create assigned: FamilySearch PIDs and source ids
@@ -371,6 +368,7 @@ export async function runProjectCreate(
     ) => retryUnresolvedPlaces(extra, budgetMs);
     let handFacts: Record<string, unknown>[];
     const refWarnings: string[] = [];
+    let loopNotes: string[] = [];
     let treeCited = { facts: 0, relationships: 0 };
     // The staged person_reads, listed once and only when something needs them:
     // the PID fallback, or a hand-entered person carrying a FamilySearch ark,
@@ -401,6 +399,8 @@ export async function runProjectCreate(
         idMap = built.idMap;
         subjectPersonIds = built.subjectPersonIds;
         fillPlaces = built.fillPlaces;
+        loopNotes = built.droppedLoopEdges.map(loopNote);
+        refWarnings.push(...loopNotes);
         // A read's facts are FamilySearch's; nothing in it was entered by hand.
         handFacts = [];
       } else {
@@ -558,23 +558,21 @@ export async function runProjectCreate(
     ]);
 
     const warnings = [...refWarnings, ...formatIssues(validation.warnings)];
-    const { projectUrl } = await projectLinks(principal);
     if (outcome) {
       return summarize({
         outcome,
-        ...(projectUrl ? { projectUrl } : {}),
         tree: tree as { persons: Record<string, any>[]; relationships: Record<string, any>[]; sources: unknown[] },
         subjectId: idMap.persons[outcome.resolvedId],
         objective: storedObjective,
         ...(storedTitle ? { title: storedTitle } : {}),
         memorySourceCount: memorySources.length,
+        loopNotes,
         warnings,
       });
     }
     return {
       ok: true,
       projectId: "rp_001",
-      ...(projectUrl ? { projectUrl } : {}),
       filesWritten: ["tree.gedcomx.json", "research.json", "starting-tree.gedcomx.json"],
       counts: {
         persons: tree.persons.length,
@@ -745,12 +743,12 @@ function factLine(person: Record<string, any> | undefined, type: string): string
  */
 function summarize(args: {
   outcome: PersonReadOutcome;
-  projectUrl?: string;
   tree: { persons: Record<string, any>[]; relationships: Record<string, any>[]; sources: unknown[] };
   subjectId: string;
   objective: string;
   title?: string;
   memorySourceCount: number;
+  loopNotes: string[];
   warnings: string[];
 }): ProjectCreateSummary {
   const { outcome, tree, subjectId, memorySourceCount } = args;
@@ -762,14 +760,14 @@ function summarize(args: {
       .map((p): SummaryPerson => ({ id: p.id, name: displayName(p), relationship: relationTo(subjectId, p, tree.relationships) })),
     transcribed: memories.filter((m) => typeof m.text === "string" && m.text.trim() !== "").map((m) => m.title),
     notTranscribed: memories.filter((m) => !(typeof m.text === "string" && m.text.trim() !== "")).map((m) => m.title),
-    notes: Array.isArray(outcome.result.notes) ? [...outcome.result.notes] : [],
+    // First: the trimmer drops a list's last entry first.
+    notes: [...args.loopNotes, ...(Array.isArray(outcome.result.notes) ? outcome.result.notes : [])],
     warnings: [...args.warnings],
   };
   const omitted: NonNullable<ProjectCreateSummary["omitted"]> = {};
   const build = (): ProjectCreateSummary => ({
     ok: true,
     projectId: "rp_001",
-    ...(args.projectUrl ? { projectUrl: args.projectUrl } : {}),
     filesWritten: ["tree.gedcomx.json", "research.json", "starting-tree.gedcomx.json"],
     subject: {
       id: subjectId,
@@ -816,6 +814,23 @@ function summarize(args: {
   return summary;
 }
 
+/** The researcher-facing sentence for an edge the build dropped to break a
+ *  loop, worded by the loop's size so it never claims a link FamilySearch does
+ *  not hold. */
+export function loopNote(edge: DroppedLoopEdge): string {
+  const name = (n: string, pid: string) => (n === "Unknown" ? `the person with FamilySearch ID ${pid}` : n);
+  const parent = name(edge.parentName, edge.parentPid);
+  const child = name(edge.childName, edge.childPid);
+  const tail = "since a person cannot be their own ancestor.";
+  if (edge.cycleLength === 1) {
+    return `FamilySearch records ${parent} as their own parent; that link was left out of the tree, ${tail}`;
+  }
+  if (edge.cycleLength === 2) {
+    return `FamilySearch records ${parent} as ${child}'s parent and ${child} as ${parent}'s; the first link was left out of the tree, ${tail}`;
+  }
+  return `FamilySearch records ${parent} as ${child}'s parent, but also records ${child} as ${parent}'s ancestor; that link was left out of the tree, ${tail}`;
+}
+
 /** A person whose `ark` names a FamilySearch tree person. */
 function hasTreeArk(person: unknown): boolean {
   return !!person && typeof person === "object" && !!treePidOfArk((person as { ark?: unknown }).ark);
@@ -855,9 +870,7 @@ export const projectCreateSchema = {
     "fixed house `researcher_profile`; it does NOT write subscriptions — add those " +
     "afterwards with research_append, only from what the researcher actually told you.\n" +
     "\n" +
-    "Tell the user the project was created and where, naming the folder. A success also " +
-    "returns projectUrl, the project's page in the web app, when the server knows it; give " +
-    "it to the user.",
+    "Tell the user the project was created and where, naming the folder.",
   inputSchema: {
     type: "object",
     properties: {

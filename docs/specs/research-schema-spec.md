@@ -15,7 +15,7 @@ A genealogy research project consists of two files:
 
 `research.json` references `tree.gedcomx.json` at two points:
 
-1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`, `proof_summaries.claims[].relationship.parent` / `.child`, `namesakes.person_id`, and `hit_verdicts.person_id` reference person IDs in `tree.gedcomx.json`.
+1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`, every person a `proof_summaries.claims[]` entry names (a relationship's ends, a fact's subject or subject pair, an identity's `person` and `same_as`, a name's `person`), `namesakes.person_id`, and `hit_verdicts.person_id` reference person IDs in `tree.gedcomx.json`.
 2. **Source description IDs** — `sources.gedcomx_source_description_id` references source description IDs in `tree.gedcomx.json`.
 
 At upload time, resolved person identities flow into `tree.gedcomx.json` while the assertion-to-record-role linkages stay in `research.json` as the audit trail.
@@ -105,6 +105,8 @@ flagged. (One row below is the exception, and says so.)
 | `hypothesis_status` | `active`, `supported`, `ruled_out` | hypotheses |
 | `proof_tier` | `proved`, `probable`, `possible`, `not_proved`, `disproved` | proof_summaries |
 | `proof_shortfall` | `ceiling`, `gap`, `conflict`, `none` | proof_summaries |
+| `claim_polarity` | `affirmed`, `denied` | proof_summaries claims |
+| `finding_type` | `absence`, `completeness`, `record_content`, `rejected_candidate` | proof_summaries finding claims |
 | `proof_vehicle` | `statement`, `summary`, `argument` | proof_summaries |
 | `person_evidence_confidence` | `confident`, `probable`, `speculative` | person_evidence |
 | `project_status` | `active`, `paused`, `completed` | project |
@@ -592,7 +594,7 @@ Array of question objects.
 | `stop_criteria` | object or null | yes | Null when `stopped_because` is null or a non-gate value; required object when `stopped_because` is a gate value. Always present as a key (null, not omitted) for consistency. See below |
 | `not_reached` | object[] | yes | Sources that could not be reached, each with `kind`, `description`, `log_entry_id` and `wiki_title` (both nullable). May be empty. See below |
 
-**`stop_criteria`** — Structured assessment against the GPS 7-Point Stop Criteria. Each field is a brief assessment (1-2 sentences).
+**`stop_criteria`** — Structured assessment against the GPS 7-Point Stop Criteria. Each field is a brief assessment (1-2 sentences), at most 800 characters: `research_append` refuses a longer one on any op that writes `search_stop` (over 188 committed `stop_criteria` objects, measured 2026-11-02, it refuses 38, p90 708 — `research-append-tool-spec.md`).
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -719,6 +721,7 @@ Array of source objects. Sources in `research.json` carry analytical metadata (c
 | `notes` | string or null | no | Quality observations and provenance chain concerns. Use this field to flag risks introduced by the access path — e.g., microfilm quality issues, OCR errors in the digitization, known indexing problems for this collection, or the number of derivative steps between the agent's access and the true original (e.g., "accessed as digital image of microfilm of original census page — two derivative steps from the original"). GPS guardrail: every step from creation to digitization can introduce error. |
 | `transcription` | string or null | no | Verbatim transcription of a page-scan record, when it was read with `image_transcribe` (host-side OCR, staged and copied here by `extraction_append`). **Also the destination for a FamilySearch memory's text** — either a story's own words or OCR of a scan the `person_read` memories filter kept, both arriving as that source's `text`. The field is named `transcription` on both routes even though **a story told by a family member is not a transcription of anything**; it is the researcher's own words being recorded, so treat it as source text rather than as a verbatim reading of a document. The transcription is the model's product and is retained here rather than in a results sidecar. May be partial — see `transcription_truncated`: a capped read persists a *partial* transcription here, indistinguishable from a whole one without the marker, so a missing marker means the partiality was **not established**, not that the text is verified whole. Null for records that are not image-sourced. **Not for an untranscribed memory** — such a memory gets no `sources` entry at all: it stays in `tree.gedcomx.json` with its title and URL, which is the lead, and a `sources` entry would assert it was examined. `person_read` still returns it with a note saying the budget did not reach it, and it can be transcribed later with `image_transcribe`'s `memoryArtifactUrl`. |
 | `transcription_truncated` | `true` (or absent) | no | **`true` or absent — `false` is never persisted.** `true` = `transcription` is **partial** (`image_transcribe` capped the read at its output-token limit, §6.2, and the text below the cut was not read); **absent** = **not established** — a verified-whole read, a non-image source, or a capped read whose truncation state never reached the write boundary. A whole read is recorded nowhere — the in-process cap store (§8.6) is add-only, holding only capped reads — so the persisted marker never moves an image from "partial" to "whole", and an in-place refinement that replaces a partial transcription with fuller text keeps the `true`, which may then **over-report** (accepted as an unneeded badge, never a false "verified whole"). Absence therefore means *unknown*, **not** whole — a consumer must not read a missing marker as a complete transcription. **Derived, not asserted:** `research_append` sets this at the write boundary from the tool's own record of the read, joined on the cited `image_filename` — the agent that relays the transcription never sees the `truncated` flag, so it cannot be trusted to set it (`image-transcribe-tool-spec.md` §8.6). On a `true`, a consumer must treat the transcription as incomplete rather than authoritative-negative: a missing detail may be the cap, not the record. Re-reading the same image is not a reliable remedy — the cap bounds output tokens and the OCR prompt varies with `lookingFor`, so a second read may land capped or uncapped, and in practice does not clear a recorded `true` — for a record-backed source the remedy is to pivot to the indexed record (`record_read` / `record_search`) rather than re-read. A **FamilySearch memory** scan (the `transcription` row above notes memories also land in this field) has *no* indexed record, so a truncated memory transcription simply stays partial and the marker flags it correctly — there is nothing to pivot to. |
+| `image_ark` | string | no | The ARK of the page an indexed record sits on, as `record_read` gives it, with any `i=` or `groupId=` that selects the image. Written by `extraction_append` for a FamilySearch record that has one; never on a document source, and absent on sources written before the field existed. It joins a source to a read of its page (`research-append-tool-spec.md` §11.9). |
 | `image_filename` | string or null | no | Project-relative path (`images/<key>.jpg`) of the saved page scan, when `image_transcribe` persisted it (a `projectPath` was supplied) — or when `person_read` retained a memory scan, which needs its own `projectPath` for the same reason and returns the ref as that source's `image_ref`. Lets the viewer show the scan beside its `transcription`. Only retained-source images survive: a best-effort TTL sweep in `research_append` GCs `images/*.jpg` that no source's `image_filename` cites (§8.5). Null when the source is not image-backed or the image was not persisted. |
 | `log_entry_id` | string or null | no | `log_` reference to the search that found this source — the source→search half of the provenance chain (assertions carry the same field). Null for sources created outside the search workflow (e.g., manual record analysis). |
 
@@ -1011,13 +1014,29 @@ it always has. When present, each entry is a `proof_claim`:
 | `claim` | string | yes | Free-text label (e.g. `"paternity"`, `"maternity"`). Must be unique within one proof_summary's `claims[]` — the eval validator looks a claim up by this label and the viewer keys its rendered list by it, so a duplicate silently shadows the earlier entry in both. The validator rejects a repeat |
 | `proof_tier` | `proof_tier` | yes | This claim's own confidence tier — same enum and rules as the scalar `tier`, applied to only the evidence bearing on this claim |
 | `supporting_assertion_ids` | string[] | yes | `a_` references grounding this claim specifically |
-| `relationship` | `proof_claim_relationship` | yes | The tree endpoint this claim concludes — currently `{ type: "ParentChild", parent: "<tree person id>", child: "<tree person id>" }`. Named so the tree-encoding gate has a mechanical target rather than a prose label. `parent`/`child` are checked against `tree.gedcomx.json persons[].id` by the same walker (`person-id-refs.ts`) that drives `merge_tree_persons`'s remap, so a dangling id is caught and a merged-away id is repointed to its survivor rather than going stale |
+| `shortfall` | `proof_shortfall` | no | Why this claim is not at a higher tier, from the scalar's enum. The write boundary checks only the enum, not its agreement with the claim's tier |
+| `polarity` | `claim_polarity` | no | `affirmed` (the default when absent) or `denied`: a grounded "probably not", at `probable` or `possible` only. A `disproved` claim carries no polarity |
+| `relationship` | `proof_claim_relationship` | one of five | A tree edge: `{ type: "ParentChild", parent, child, subtype? }` or `{ type: "Couple", person1, person2 }` |
+| `fact` | `proof_claim_fact` | one of five | `{ subject, fact_type, date?, place?, value? }`; `subject` is a tree person id, or a `{ person1, person2 }` pair for a couple event. A range is one `date` value |
+| `identity` | `proof_claim_identity` | one of five | A record party is a tree person, `{ record_id, party, person }` (`party` is the record_persona_id, else the record_role), or two tree persons are one, `{ person, same_as }` |
+| `name` | `proof_claim_name` | one of five | `{ person, given?, surname? }` |
+| `finding` | `proof_claim_finding` | one of five | A conclusion that is no tree object: `{ finding_type, statement, log_entry_ids? }`, each log id an entry that exists |
 
-**The scalar `tier` carries the stronger of the per-claim tiers** when `claims`
-is present (see §7 for why). **The tree-encoding gate (proof-conclusion §6)
+A claim names **exactly one** of `relationship`, `fact`, `identity`, `name` and
+`finding`; the validator refuses none or two. Every person a claim names is
+checked against `tree.gedcomx.json persons[].id` by the walker
+(`person-id-refs.ts`) that drives `merge_tree_persons`'s remap, so a dangling id
+is caught and a merged-away id is repointed to its survivor. A `same_as` claim
+on the merged pair therefore names the survivor twice; that is the record of the
+identity decision the merge rested on, and the validator accepts it. Each cited
+assertion must exist. `project_context.claimKinds` lists the kinds the running
+engine accepts.
+
+**The scalar `tier` may not exceed the strongest claim**, when it stands at
+`possible` or better (see §7 for why). **The tree-encoding gate (proof-conclusion §6)
 reads per claim when `claims` is present, and falls back to the scalar when it
-is absent** — a claim at `possible` stays off the tree even though the scalar
-(the stronger claim) may already read `probable`. Splitting a question into
+is absent** — a claim at `possible` stays off the tree even though the scalar,
+backed by a stronger claim, may already read `probable`. Splitting a question into
 separate paternity/maternity questions remains available, but only when the
 two parents need genuinely different research plans (different jurisdictions,
 different record sets) — not merely different evidence strength, which
@@ -1212,7 +1231,7 @@ measured by `packages/engine/mcp-server/dev/measure-namesake-cap.ts` §0).
 | `time_period` | string or null | no | When, as free text (e.g. "born about 1873") |
 | `record_ids` | string[] | yes | The ids of the namesake's own records: a record id in the form assertions carry in `record_id`, a page's image id exactly as `image_transcribe` was given it (or its `ark`), or a full-text hit's `id`. Empty on a pool row |
 | `log_entry_ids` | string[] | no | `log_` references to the searches that found the namesake; each must name an existing log entry |
-| `record_persona_ids` | object | no | Tool-stamped, never the caller's: each listed record found in a sidecar of the row's `log_entry_ids`, mapped to the persona that search result names (`primaryId`). A record found in none has no key |
+| `record_persona_ids` | object | no | Tool-stamped, never the caller's: each listed record found in a sidecar of the row's `log_entry_ids`, mapped to the persona that search or read result names: its `primaryId`, or, where it has none, the person of its record whose ark is the listed id, a household member of a hit or read included. A record found in none has no key |
 | `notes` | string or null | no | Free text |
 | `created` | string | yes | Tool-stamped ISO 8601 date |
 
@@ -1229,14 +1248,24 @@ the record id alone, since a household record gives every member one id, so
 `research_append` stamps the namesake's own persona per listed record, the way it
 fills an assertion's `record_persona_id`: on an append, and on an update that
 sets `record_ids` or `log_entry_ids`, overwriting whatever the caller sent. Each
-listed id found in the sidecar of a persona-bearing search the row cites is stored
-in that sidecar's form, as an assertion's is. A record found in no sidecar is left
+listed id found in the sidecar of a persona-bearing search or read the row cites,
+as a result or as a person of a result's record, is stored in that sidecar's form,
+as an assertion's is. A record found in no sidecar is left
 unstamped and the row is still written: unlike an assertion, whose persona is
 lost for good when its search staged no sidecar, a missing stamp costs a count,
 not an identity, because the cap reads only that a row exists. The first runs that write rows count, with
 `dev/measure-namesake-cap.ts` §7, how many listed records were stamped, how many
 were not though their row cites such a search, and what a persona-keyed refusal
-would refuse and spare; item 10 is decided on those counts. Ids no persona
+would refuse and spare; item 10 is decided on those counts. A run whose engine
+cannot stamp a read, or whose engine commit is not in the clone, is left out and
+named rather than counted as zeros (chesworthrm, 2026-11-05). "Would refuse" counts
+a strong link whose assertion's persona is any persona the row stamped, from any
+record id, a household member's included; "spare" counts links to another persona
+of a record the row stamped, the record found as the cap finds a link's (its
+source, split by `record_document_id`), so a household member's record id reaches
+it as it reaches "would refuse". Together they are what a rule keyed on those
+records would refuse; a persona-keyed rule refuses the first and spares the
+second. Ids no persona
 search can stamp, a page's image id (which every entry on that page shares) and
 a full-text hit's id, are counted on a line of their own, outside the stamped
 share, so a refusal never keys on an image id alone.
@@ -1379,7 +1408,7 @@ proof_summaries
   ├─ supporting_assertion_ids ───────────────────► assertions[].id
   ├─ resolved_conflict_ids (status resolved|moot) ► conflicts[].id
   ├─ claims[].supporting_assertion_ids ─────────► assertions[].id
-  └─ claims[].relationship.parent / .child ─────► tree.gedcomx.json persons[].id
+  └─ every person a claim names ────────────────► tree.gedcomx.json persons[].id
 
 evaluations
   ├─ target_id (when target_type == "question") ─► questions[].id
@@ -1418,9 +1447,7 @@ hit_verdicts
 
 **Why `independence_analysis` is per-conflict, not per-source-pair.** Independence depends on context. Two sources may be independent for one fact but not another — e.g., two census records with different enumerators are independent as sources, but if the same household member answered both times, their assertions about birth facts may share a single informant and are not fully independent for those facts. The skill writer must assess independence in the context of the specific conflict, not globally.
 
-**Why the scalar `tier` carries the stronger claim once a `claims` breakdown exists.** Three things still read the scalar after a question splits into per-claim tiers: the orchestrator's routing table, its completion gate, and the tree-write invariant tests — all keyed on "tier ≥ probable." The scalar has to resolve to one of the per-claim tiers, and the chosen rule is the **stronger** one. The rejected alternative is scalar-follows-weakest-claim: it reads more conservative, but it would suppress a proved paternal link from the orchestrator's routing for as long as the maternal claim stayed weak, leaving a mechanically resolvable question permanently invisible to the routing table that is supposed to drive it to completion. Taking the stronger claim is safe specifically because the *scalar* no longer decides what gets written to the tree — the `claims` breakdown does that, per claim, at each claim's own tier (§5.11) — so a `probable` scalar next to a `possible` maternity claim can no longer license writing the weak claim.
-
-This rule is **mechanically enforced by the validator**, not left to agent prose alone: `tier` must equal the strongest of `claims[].proof_tier` whenever `claims` is present, checked against `PROOF_TIER_RANK` in `validator.ts`. It started as prose-only, and a PR review of the first cut of this feature caught exactly the failure that omission allows — an unrelated agent-body edit destabilized a *different* test's tier selection, and nothing would have caught a scalar silently drifting from its own claims had that edit gone the other way. `tier === max(claims[].proof_tier)` is decidable from the document alone, which is why it belongs in the validator rather than only in `proof-conclusion.md`.
+**Why the scalar `tier` may not exceed the strongest claim, and need not equal it.** The scalar answers the question as a whole, and three things read it: the orchestrator's routing table, its completion gate and the tree-write invariant tests, all keyed on "tier ≥ probable". A scalar above every claim would claim more than any one conclusion behind it supports, so the validator refuses one at `possible` or better that exceeds the strongest of `claims[].proof_tier` (`PROOF_TIER_RANK` in `validator.ts`). It used to have to *equal* the strongest claim, which forced "proved as bookkeeping" headlines: a question answered at `probable` overall had to read `proved` because one claim was. The scalar no longer decides what reaches the tree — each claim does, at its own tier — so a weaker headline is safe. Two `research_append` rules ship with the bound: a tier change on a summary holding claims re-states the claims in the same op, so a downgrade cannot leave a claim standing on evidence the summary no longer vouches for; and a `proved` or `disproved` claim meets the scalar's conclusive floor (the question declared exhaustive before the call) on its own, or the bound would accept a lone `disproved` claim under a `not_proved` scalar. The conflict gate runs per claim, over each claim's cited assertions, for the same reason, and the identity and parentage gates (an unlinked proof, an unlinked parent, competing parent sets) read the strongest affirmed tier among the scalar and its claims, also when an update sends only `claims`. A `denied` claim is a grounded "probably not" and raises no gate. All of it is decidable from the document alone, which is why it lives at the write boundary rather than only in `proof-conclusion.md`.
 
 ---
 

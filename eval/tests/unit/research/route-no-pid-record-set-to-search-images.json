@@ -1,0 +1,58 @@
+{
+  "test": {
+    "id": "ut_research_np1",
+    "skill": "research",
+    "name": "Routes a no-project, no-PID ask for the names on a militia company roll to search-images, not init-project",
+    "type": "positive",
+    "description": "Issue #4136. Empty folder; the user starts /research with a request for the names and details recorded in a record set (a militia company's soldiers). The message is the tester's from issue #4125 (as quoted in issue #4136, its two elided parts dropped): it names no images, no microfilm and no FamilySearch person ID. The routing table row 'No research.json at all, no FamilySearch person ID, and the message asks for the names and details recorded in a record set' must win over the init-project row: the router spawns @plugin:search-images with no projectPath and relays everything after its final `---`. It creates no project.",
+    "tags": [
+      "routing",
+      "routes-to:search-images",
+      "no-project"
+    ]
+  },
+  "input": {
+    "user_message": "/research Identify all soldiers who served in Captain Moses Dustin's Company (in Colonel George Reid's Regiment, in General John Stark's Brigade) of the New Hampshire Militia. Supply details such as rank and enlistment date when possible. Cite sources for each fact or conclusion presented.",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "image-transcribe-any"
+  ],
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "search-images",
+        "response": "Record set: Revolutionary War rolls (NARA M246), New Hampshire film, image group 008246133.\nRead: 008246133_00412, 008246133_00413. Nothing logged: no project.\n---\nCapt. Moses Dustin's company, Col. George Reid's regiment, Stark's brigade, 1777 (pages 008246133_00412 and 008246133_00413 read; no others):\n- Moses Dustin, Captain, enlisted July 19, 1777 (008246133_00412)\n- Joseph Kelley, Lieutenant, enlisted July 19, 1777 (008246133_00412)\n- Asa Page, Private, enlisted July 22, 1777 (008246133_00413)"
+      },
+      {
+        "skill": "init-project",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "tree-survey",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-familysearch-wiki",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. Whether @plugin:search-images is the first hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records — do not grade the routing decision yourself.",
+    "The folder is empty and the message names no FamilySearch person ID. It asks for the soldiers recorded in a company's roll, which is a record set, so no project is created: an init-project spawn or a project_create call is wrong here.",
+    "search-images is stubbed. Its return ends with a `---` line followed by a cited list of soldiers carrying image ids such as 008246133_00412. The router must relay that block verbatim to the researcher, image ids included; dropping the ids or rewriting the list into advice is a fault.",
+    "Grade only the router's own work: that it delegated rather than answering from memory or giving research advice, and that it relayed the block."
+  ],
+  "judge_reads_files": true
+}

@@ -1,0 +1,49 @@
+{
+  "tool": "catalog_search",
+  "description": "SYNTHETIC (issue #4136): written by hand, not captured live — the FamilySearch session had expired. The NARA M246 title is real; the film note, image group 008246133, image ids and roll contents are invented for the no-project test. catalog_search by keywords naming the Revolutionary War rolls: one hit, M246, whose film notes carry the New Hampshire image group. Order it before catalog-search-empty-keywords.",
+  "args": {
+    "keywords": "~revolutionary"
+  },
+  "response": {
+    "totalHits": 1,
+    "returned": 1,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 4,
+    "hits": [
+      {
+        "id": "koha:999246",
+        "title": "Revolutionary War rolls, 1775-1783",
+        "creator": "United States. War Department",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Online"
+        ],
+        "url": "https://www.familysearch.org/service/search/catalog/item/koha:999246",
+        "hydrated": true,
+        "notes": [
+          "Microfilm of original records in the National Archives, Washington, D.C. (NARA microcopy M246). Muster rolls, payrolls and other records of Continental and militia organizations, arranged by state and unit."
+        ],
+        "authors": [],
+        "subjects": [
+          "United States - Military records - Revolution, 1775-1783"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "830355",
+            "imageGroupNumber": "008246133",
+            "copyLocation": "Online",
+            "text": "New Hampshire: Stark's Brigade; Reid's, Stickney's and Nichols's regiments"
+          },
+          {
+            "filmNumber": "830356",
+            "imageGroupNumber": "008246134",
+            "copyLocation": "Online",
+            "text": "New Hampshire: Bedel's, Hale's and Scammell's regiments"
+          }
+        ],
+        "availableOnline": true
+      }
+    ]
+  }
+}
