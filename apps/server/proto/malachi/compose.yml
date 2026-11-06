@@ -112,6 +112,8 @@ services:
       FAMILYSEARCH_WEB_ENABLED: "true"
       UPLOADS_ENABLED: ${UPLOADS_ENABLED:-false}
       OPENROUTER_LINKING_ENABLED: "false"
+      FS_REDIRECT_URI: ${FS_REDIRECT_URI:-}
+      GENEALOGY_SIGNIN_CALLS_PER_MINUTE: ${GENEALOGY_SIGNIN_CALLS_PER_MINUTE:-}
       WEB_DIST_DIR: ""
       PUBLIC_URL: ${PUBLIC_URL:?set in the env file}
       SESSION_SECRET: ${SESSION_SECRET:?set in the env file}
@@ -153,7 +155,7 @@ services:
       genealogy.git-sha: ${GIT_SHA:-unknown}
     environment:
       OAUTH_ISSUER: ${PUBLIC_URL:?set in the env file}
-      WEB_PUBLIC_URL: ${WEB_PUBLIC_URL:-}
+      WEB_PUBLIC_URL: ${PUBLIC_URL:?set in the env file}
       UPLOADS_ENABLED: ${UPLOADS_ENABLED:-false}
       GENEALOGY_SHARED_COLLECTIONS_CACHE: "true"
       GENEALOGY_FS_CALLS_PER_MINUTE: ${GENEALOGY_FS_CALLS_PER_MINUTE:-}

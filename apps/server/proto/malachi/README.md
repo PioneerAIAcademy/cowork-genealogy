@@ -63,9 +63,8 @@ the edge and leaves everything else running. `malachi-check` fails while the edg
 unless it is given `EDGE=off`, and `scripts/tailscale-services.sh check` fails while the other
 process holds the port, because that process is public.
 
-Set `WEB_PUBLIC_URL` to `PUBLIC_URL` in the env file only on a ref that has dropped the viewer's
-`/#/p/<id>` links, because with the SPA off they lead nowhere. Blank, `project_context` offers no
-links at all. Then run `make malachi-up`.
+`compose.yml` sets the tool server's `WEB_PUBLIC_URL` from `PUBLIC_URL`, so the issuer and the
+links the tools offer cannot differ.
 
 Keep `UPLOADS_ENABLED=false` in the env file until a page serves the upload link
 `project_context` offers. It sets both tiers, and `make malachi-up` applies a change.

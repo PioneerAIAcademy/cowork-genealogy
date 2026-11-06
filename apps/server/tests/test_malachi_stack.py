@@ -186,8 +186,11 @@ def shape_violations(doc: dict) -> list[str]:
     for key in ("GENEALOGY_FS_CALLS_PER_MINUTE", "GENEALOGY_MAX_TRANSCRIPTIONS"):
         if tools.get(key) != f"${{{key}:-}}":
             out.append(f"limits: tools' {key} comes from the env file")
-    if tools.get("WEB_PUBLIC_URL") != "${WEB_PUBLIC_URL:-}":
-        out.append("links: tools' WEB_PUBLIC_URL comes from the env file alone")
+    if tools.get("WEB_PUBLIC_URL", "").split(":")[0] != "${PUBLIC_URL":
+        out.append("links: tools' WEB_PUBLIC_URL must be PUBLIC_URL, so it cannot differ from the issuer")
+    for key in ("FS_REDIRECT_URI", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE"):
+        if web.get(key) != f"${{{key}:-}}":
+            out.append(f"sign-in: web's {key} comes from the env file")
     if tools.get("OAUTH_ISSUER", "").split(":")[0] != "${PUBLIC_URL":
         out.append("issuer: tools' OAUTH_ISSUER must be PUBLIC_URL")
     if services["tools"].get("read_only") is not True or services["edge"].get("read_only") is not True:
@@ -355,7 +358,10 @@ DEFECTS: list[tuple[str, str, Callable[[dict], None]]] = [
     ("shape", "uploads off in tools alone", _drop_env("tools", "UPLOADS_ENABLED")),
     ("shape", "collections cache per token", _drop_env("tools", "GENEALOGY_SHARED_COLLECTIONS_CACHE")),
     ("shape", "a limit the env file cannot reach", _drop_env("tools", "GENEALOGY_MAX_TRANSCRIPTIONS")),
-    ("shape", "dead links", _set_env("tools", "WEB_PUBLIC_URL", "${PUBLIC_URL:?x}")),
+    ("shape", "links from a second setting", _set_env("tools", "WEB_PUBLIC_URL", "${WEB_PUBLIC_URL:-}")),
+    ("shape", "no links", _drop_env("tools", "WEB_PUBLIC_URL")),
+    ("shape", "a redirect the env file cannot reach", _drop_env("web", "FS_REDIRECT_URI")),
+    ("shape", "a sign-in budget the env file cannot reach", _drop_env("web", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE")),
     ("shape", "owner DSN on web", _set_env("web", "MIGRATE_PG_DSN", "x")),
     ("shape", "owner on tools", _set_env("tools", "GENEALOGY_PG_DSN",
                                          "postgresql://postgres:${POSTGRES_PASSWORD:?x}@postgres:5432/genealogy")),
@@ -433,7 +439,8 @@ def test_the_template_carries_no_secret_and_no_port():
     values = dict(line.split("=", 1) for line in TEMPLATE.read_text(encoding="utf-8").splitlines()
                   if line and not line.startswith("#"))
     for key in ("POSTGRES_PASSWORD", "DML_PASSWORD", "MINIO_ROOT_PASSWORD", "SESSION_SECRET", "FS_TOKEN_ENC_KEY",
-                "ALLOWED_EMAILS", "WIKI_API_URL", "POP_STATS_URL", "WEB_PUBLIC_URL", "OPENROUTER_SEED_KEY",
+                "ALLOWED_EMAILS", "WIKI_API_URL", "POP_STATS_URL", "FS_REDIRECT_URI",
+                "GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "OPENROUTER_SEED_KEY",
                 "GENEALOGY_FS_CALLS_PER_MINUTE", "GENEALOGY_MAX_TRANSCRIPTIONS"):
         assert values[key] == "", key
     assert values["UPLOADS_ENABLED"] == "false"

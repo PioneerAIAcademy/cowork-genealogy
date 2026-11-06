@@ -28,11 +28,12 @@
 #
 #   https://malachi.taild68f1b.ts.net/wiki        -> 127.0.0.1:8008  wiki-query-api
 #   https://malachi.taild68f1b.ts.net/pop-stats   -> 127.0.0.1:8005  pop-stats-api
-#   https://malachi.taild68f1b.ts.net/            -> 127.0.0.1:8006  (reserved)
+#   https://malachi.taild68f1b.ts.net/            -> 127.0.0.1:8006  malachi stack edge
 #
-# The first two are durable. The third is a reserved slot, held for a test MCP
-# server not yet deployed. The #3529 connector probe occupied it until
-# 2026-11-03 and is retired; its own `:8443` mapping is gone (see RETIRED).
+# The first two are durable. The third is the malachi stack's edge
+# (apps/server/proto/malachi/), and answers 502 while the edge is stopped.
+# The #3529 connector probe may hold it for a sitting; its `:8443` mapping
+# is gone (see RETIRED).
 #
 # THE RESERVED SLOT: WHY IT IS THE BARE ROOT
 #
@@ -93,12 +94,11 @@
 # Both are Type=simple, Restart=always, RestartSec=3, After/Wants
 # network-online.target, running as the host user.
 #
-# Nothing occupies the reserved slot today. When the test MCP server lands,
-# note that the #3529 probe deliberately had no unit: its OAuth tokens lived in
+# The stack's edge has no unit either: Docker restarts it. The #3529 probe
+# deliberately had none, because its OAuth tokens lived in
 # memory, so a restart invalidated every issued token in a way a client cannot
 # distinguish from expiry, and Restart=always would have silently broken the
-# measurements it existed to take. Whether that applies to the real server
-# depends on where it keeps its tokens.
+# measurements it existed to take.
 #
 # A NOTE ON PORTS
 #
