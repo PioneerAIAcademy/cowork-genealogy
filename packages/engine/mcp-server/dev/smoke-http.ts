@@ -51,6 +51,7 @@ import {
   printHeader,
   report,
   runPlan,
+  seedDocuments,
   type SmokeCtx,
 } from "./smoke-calls.js";
 
@@ -66,6 +67,14 @@ const SEED_TURN_SQL =
   "INSERT INTO turns (turn_id, session_id, project_id, message, claimed_at, claim_epoch, bearer_sha256) " +
   "VALUES ($1, $2, $3, '{}'::jsonb, now(), $4, $5)";
 const DELETE_TURN_SQL = "DELETE FROM turns WHERE turn_id = $1";
+/** The seeded project's rows, as `PgS3ProjectStore` writes them: the projects
+ *  row first, then one documents row per ref. */
+const SEED_PROJECT_SQL = "INSERT INTO projects (project_id) VALUES ($1) ON CONFLICT (project_id) DO NOTHING";
+const SEED_DOCUMENT_SQL = "INSERT INTO documents (project_id, name, doc) VALUES ($1, $2, $3::jsonb)";
+/** The connector's project is claimed by its first write, so its row carries
+ *  the connector user as owner; an ownerless row would be refused at the door. */
+const SEED_OWNED_PROJECT_SQL =
+  "INSERT INTO projects (project_id, owner_id) VALUES ($1, $2) ON CONFLICT (project_id) DO NOTHING";
 
 // ── the connector caller (self-hosted beta E1) ──────────────────────────────
 //
@@ -152,6 +161,14 @@ const ctx: SmokeCtx = {
   missingProjectPath: project.missingProjectPath,
   openRouterKeyConfigured: await hostOpenRouterKeyConfigured(hostConfig),
   values: {},
+  // The server has no file root here, so the project goes straight into the
+  // Postgres it reads.
+  seedProject: async () => {
+    await db.query(SEED_PROJECT_SQL, [projectId]);
+    for (const [name, doc] of Object.entries(seedDocuments())) {
+      await db.query(SEED_DOCUMENT_SQL, [projectId, name, JSON.stringify(doc)]);
+    }
+  },
 };
 
 const turnId = randomUUID();
@@ -351,6 +368,14 @@ try {
       // the "no project there" state this row is about.
       missingProjectPath: `/proj_${randomBytes(8).toString("hex")}`,
       values: {},
+      // The connector's own project, owned by the connector user. Inheriting
+      // ctx's would re-seed the worker's project, which already exists.
+      seedProject: async () => {
+        await db.query(SEED_OWNED_PROJECT_SQL, [connectorProjectId, connectorUserId]);
+        for (const [name, doc] of Object.entries(seedDocuments())) {
+          await db.query(SEED_DOCUMENT_SQL, [connectorProjectId, name, JSON.stringify(doc)]);
+        }
+      },
     };
     const connectorRun = await runPlan(
       (tool, args) => callViaClient(connectorClient, tool, args),
