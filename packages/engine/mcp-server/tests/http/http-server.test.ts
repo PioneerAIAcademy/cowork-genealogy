@@ -1529,6 +1529,17 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
       const list = await rpc({ jsonrpc: "2.0", id: 2, method: "tools/list" }, userA);
       expect(list.status).toBe(200);
       expect(await list.text()).toContain('"project_context"');
+      // Nor does a tools/call that can run no tool: a notification (no id),
+      // which is never answered, and a request with no tool name.
+      const notification = await rpc(
+        { jsonrpc: "2.0", method: "tools/call", params: { name: "project_context", arguments: {} } },
+        userA,
+      );
+      expect(notification.status).toBe(202);
+      await notification.text();
+      const nameless = await rpc({ jsonrpc: "2.0", id: 3, method: "tools/call" }, userA);
+      expect(nameless.status).toBe(200);
+      expect(await nameless.text()).toContain('"error"');
       expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 8 });
       expect(gated.entered.size).toBe(4);
     } finally {

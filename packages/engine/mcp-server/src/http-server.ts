@@ -497,9 +497,14 @@ export function connectorConfig(baseConfig: AppConfig, caller: ConnectorCaller):
   };
 }
 
-/** True for a `tools/call` body: the only requests that take a user's slot. */
+/** True for a `tools/call` REQUEST that names a tool: the only body that
+ *  takes a user's slot. A notification (no `id`) is never answered and a call
+ *  with no tool name runs no tool, so neither waits behind the user's calls. */
 function isToolsCall(body: unknown): boolean {
-  return typeof body === "object" && body !== null && (body as { method?: unknown }).method === "tools/call";
+  if (typeof body !== "object" || body === null) return false;
+  const msg = body as { method?: unknown; id?: unknown; params?: unknown };
+  if (msg.method !== "tools/call" || msg.id === undefined || msg.id === null) return false;
+  return typeof (msg.params as { name?: unknown } | null | undefined)?.name === "string";
 }
 
 /**
