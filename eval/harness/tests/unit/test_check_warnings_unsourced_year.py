@@ -43,6 +43,12 @@ def test_falls_back_to_text_response_when_there_is_no_return():
         check(CALLS, "He was born in 1777.", TEST, agent_returns=[])
 
 
+def test_a_silent_agent_on_a_direct_test_is_not_graded_on_the_dispatcher_reply():
+    direct = {**TEST, "delegation": "Check Ambrose Keane. personId: I1"}
+    with pytest.raises(pytest.skip.Exception):
+        check(CALLS, "Dispatcher says 1777.", direct, agent_returns=[])
+
+
 def test_a_return_with_no_rule_has_nothing_to_check():
     with pytest.raises(pytest.skip.Exception):
         check(CALLS, "Dispatcher says 1777.", TEST, agent_returns=[{"subagent_type": "check-warnings", "text": "No rule here, 1777."}])

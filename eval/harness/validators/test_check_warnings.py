@@ -19,7 +19,7 @@ import re
 
 import pytest
 
-from harness.skill_runner import agent_return_text, tail_after_final_rule
+from harness.skill_runner import agent_return_text, subject_reply_text, tail_after_final_rule
 from validators_lib import (
     assert_only_logs_report,
     assert_reply_carries_report,
@@ -84,7 +84,8 @@ def report_unsourced_year_in_response(tool_calls, text_response, test, agent_ret
 
     Reads the text after the final `---` of check-warnings' own return, the
     part printed for the researcher, and falls back to `text_response` only
-    when the agent made no return. A year above the `---`, inside a
+    when the agent made no return on a routed test; on a direct test a silent
+    agent is graded as silent (`subject_reply_text`). A year above the `---`, inside a
     hypothetical correction, is not checked (lead, 2026-11-05).
 
     Tier 2 — reports, never gates.
@@ -113,7 +114,11 @@ def report_unsourced_year_in_response(tool_calls, text_response, test, agent_ret
     if test.get("type") == "negative":
         pytest.skip("negative test — skill body does not run")
     returned = agent_return_text(agent_returns, "check-warnings")
-    response = tail_after_final_rule(returned) if returned else (text_response or "")
+    response = (
+        tail_after_final_rule(returned)
+        if returned
+        else subject_reply_text(agent_returns, text_response, "check-warnings", test)
+    )
     if not response.strip():
         pytest.skip("no response text to check")
 
