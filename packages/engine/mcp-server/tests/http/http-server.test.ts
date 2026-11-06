@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import type { Server as HttpServer } from "node:http";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
@@ -36,8 +37,14 @@ import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/
 import {
   CLAIM_EPOCH_HEADER,
   claimFenceFromHeaders,
+  CONNECTOR_PROJECT_RE,
   HEALTHZ_TIMEOUT_MS,
   PROJECT_ID_HEADER,
+  MAX_BODY_BYTES,
+  connectorConfig,
+  keptFamilySearchStatus,
+  toolNameOf,
+  PRM_PATH,
   startHttpServer,
   TURN_ID_HEADER,
   type AuthorizeRequest,
@@ -46,7 +53,7 @@ import {
 } from "../../src/http-server.js";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
-import type { ClaimFence, ProjectStore } from "../../src/store/project-store.js";
+import type { ClaimFence, OwnedProjectIds, ProjectStore } from "../../src/store/project-store.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
 
 // The wire spelling; node:http lower-cases it to PROJECT_ID_HEADER on arrival.
@@ -58,8 +65,13 @@ let base: string;
 let root: string;
 // Every id the server bound a store for, in order — the store half's oracle.
 const bindStore = vi.fn(
-  (projectId: string, _signal: AbortSignal, _fence?: ClaimFence): ProjectStore =>
-    new ScopedFsStore(root, projectId),
+  (
+    projectId: string,
+    _signal: AbortSignal,
+    _fence?: ClaimFence,
+    // E1: a connector request names its own anchor and owner.
+    opts?: { anchorPath?: string; ownerId?: string },
+  ): ProjectStore => new ScopedFsStore(root, projectId, opts?.anchorPath),
 );
 // Allow-all unless a case says otherwise: the project check itself is U4's
 // section below and tests/http/http-server-pg.test.ts.
@@ -68,10 +80,16 @@ const clients: Client[] = [];
 // Every HTTP exchange the SDK client made, so item 1 can show the 405 arrived.
 const exchanges: Array<{ method: string; path: string; status: number }> = [];
 
+/**
+ * A client. With no headers it presents the TEST CONNECTOR TOKEN, because a
+ * request with no project header now takes the connector door and one with
+ * neither a project header nor a connector token is a 401 (E1). Pass headers to
+ * override; pass {} for a genuinely anonymous client.
+ */
 async function connect(headers?: Record<string, string>, url: string = base): Promise<Client> {
   const client = new Client({ name: "http-server-test", version: "0" });
   const transport = new StreamableHTTPClientTransport(new URL(`${url}/mcp`), {
-    requestInit: headers ? { headers } : undefined,
+    requestInit: { headers: headers ?? connectorHeaders() },
     fetch: async (url, init) => {
       const res = await fetch(url, init);
       exchanges.push({
@@ -94,9 +112,60 @@ function textOf(result: Awaited<ReturnType<Client["callTool"]>>): string {
     .join("");
 }
 
+// Connector doubles (self-hosted beta E1). This module loads no backend, so
+// these stand in for the Postgres lookups the entrypoint wires -- the same
+// reason `authorize` and `bindStore` are injected.
+//
+// Every case that sends NO project header now takes the connector path, so it
+// must present this token; a request with neither a project header nor a
+// connector token is a 401, which is the point.
+export const TEST_CONNECTOR_TOKEN = "connector-token-for-tests";
+export const TEST_USER_ID = "u_test";
+
+/** Connector tokens this double admits, each mapping to its own user AND its
+ *  own decrypted FamilySearch token. Two of them, so item 4 can show the
+ *  per-request principal is built from the LOOKUP, not from the header. */
+const CONNECTOR_USERS: Record<string, { userId: string; familySearchToken: string }> = {
+  [TEST_CONNECTOR_TOKEN]: { userId: TEST_USER_ID, familySearchToken: "fs-access-token" },
+  "connector-token-A": { userId: "u_A", familySearchToken: "fs-tok-A" },
+  "connector-token-B": { userId: "u_B", familySearchToken: "fs-tok-B" },
+};
+const lookupConnector = vi.fn(async (tokenSha256: string) => {
+  for (const [token, who] of Object.entries(CONNECTOR_USERS)) {
+    if (createHash("sha256").update(token, "utf8").digest("hex") === tokenSha256) {
+      return { ...who, openRouterApiKey: null };
+    }
+  }
+  return null;
+});
+/** No row: a fresh id, free for the first write to claim. */
+const projectOwner = vi.fn(
+  async (_projectId: string): Promise<{ exists: boolean; ownerId: string | null }> => ({
+    exists: false,
+    ownerId: null,
+  }),
+);
+
+/** The caller owns nothing unless a case says otherwise. */
+const ownedProjects = vi.fn(async (_userId: string): Promise<OwnedProjectIds> => ({ ids: [], truncated: false }));
+
+/** The headers a connector request carries. */
+function connectorHeaders(extra: Record<string, string> = {}): Record<string, string> {
+  return { Authorization: `Bearer ${TEST_CONNECTOR_TOKEN}`, ...extra };
+}
+
 beforeAll(async () => {
   root = await mkdtemp(join(tmpdir(), "http-server-test-"));
-  server = await startHttpServer({ host: "127.0.0.1", port: 0, baseConfig: {}, bindStore, authorize });
+  server = await startHttpServer({
+    host: "127.0.0.1",
+    port: 0,
+    baseConfig: {},
+    bindStore,
+    authorize,
+    lookupConnector,
+    projectOwner,
+    ownedProjects,
+  });
   const address = server.address();
   if (!address || typeof address !== "object") throw new Error("server did not bind a port");
   base = `http://127.0.0.1:${address.port}`;
@@ -194,13 +263,42 @@ describe("tool server over Streamable HTTP", () => {
     }
   });
 
-  it("2b. a request with no project header gets an error naming the header from project_create, and convert_calendar still answers", async () => {
+  it("2b. a connector call whose projectPath is not a /proj_ path is refused at the door, before any tool", async () => {
+    // Was: "no project header -> the tool names the header". A request with no
+    // project header is now the CONNECTOR door (E1), and SCOPED_ANCHOR is the
+    // worker's anchor, not a connector path -- so this is refused before a
+    // store or a tool exists, which is a better refusal than the old one.
     bindStore.mockClear();
     authorize.mockClear();
+    const res = await fetch(`${base}/mcp`, {
+      method: "POST",
+      headers: {
+        ...connectorHeaders(),
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+      },
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id: 1,
+        method: "tools/call",
+        params: { name: "project_create", arguments: createArgs("Nobody") },
+      }),
+    });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error.message).toMatch(/proj_ followed by 16 lowercase hex/);
+    expect(bindStore).not.toHaveBeenCalled();
+    expect(authorize).not.toHaveBeenCalled();
+  });
+
+  it("2b2. a connector call to a store tool with NO projectPath runs store-less and says so, and convert_calendar still answers", async () => {
+    // The other half of the old 2b, and the half whose meaning survives: a
+    // connector that names no project at all gets the unbound store, while a
+    // store-less tool answers normally.
+    bindStore.mockClear();
     const client = await connect();
-    const created = await client.callTool({ name: "project_create", arguments: createArgs("Nobody") });
+    const { projectPath: _omit, ...noPath } = createArgs("Nobody");
+    const created = await client.callTool({ name: "project_create", arguments: noPath });
     expect(created.isError).toBe(true);
-    expect(textOf(created)).toContain(PROJECT_HEADER);
 
     const converted = await client.callTool({
       name: "convert_calendar",
@@ -210,20 +308,21 @@ describe("tool server over Streamable HTTP", () => {
     expect(JSON.parse(textOf(converted))).toMatchObject({ ok: true, converted: { year: 1751 } });
 
     expect(bindStore).not.toHaveBeenCalled();
-    expect(authorize).not.toHaveBeenCalled();
-    // Nothing reached the file backend either: the root holds only the
-    // directories item 2 wrote.
+    // Nothing reached the file backend either.
     const dirs = (await readdir(root)).filter((d) => d !== "__missing__");
     expect(dirs.every((d) => d.startsWith("alpha-") || d.startsWith("beta-"))).toBe(true);
   });
 
-  it("2d. baseConfig's public URL reaches project_create and project_context as links built from the header's project id", async () => {
+  it("2d. baseConfig's public URL reaches project_context as an upload link built from the header's project id, and no viewer link anywhere", async () => {
     const linked = await startHttpServer({
       host: "127.0.0.1",
       port: 0,
       baseConfig: { webPublicUrl: "https://beta.example/", uploadsEnabled: true },
       bindStore,
       authorize,
+      lookupConnector,
+      projectOwner,
+      ownedProjects,
     });
     const address = linked.address();
     if (!address || typeof address !== "object") throw new Error("server did not bind a port");
@@ -232,11 +331,11 @@ describe("tool server over Streamable HTTP", () => {
       const client = await connect({ [PROJECT_HEADER]: id }, `http://127.0.0.1:${address.port}`);
       const created = JSON.parse(textOf(await client.callTool({ name: "project_create", arguments: createArgs("Linked") })));
       expect(created.ok, JSON.stringify(created)).toBe(true);
-      expect(created.projectUrl).toBe(`https://beta.example/#/p/${id}`);
+      expect("projectUrl" in created).toBe(false);
       const ctx = JSON.parse(
         textOf(await client.callTool({ name: "project_context", arguments: { projectPath: SCOPED_ANCHOR } })),
       );
-      expect(ctx.projectUrl).toBe(`https://beta.example/#/p/${id}`);
+      expect("projectUrl" in ctx).toBe(false);
       expect(ctx.uploadUrl).toBe(`https://beta.example/#/p/${id}/upload`);
     } finally {
       linked.closeAllConnections();
@@ -501,7 +600,27 @@ describe("tool server over Streamable HTTP", () => {
 
     it("a request with no project header never calls authorize; a malformed one is a 400 first", async () => {
       authorize.mockClear();
-      const store = await post([["Authorization", `Bearer ${BEARER}`]]);
+      // No project header is now the CONNECTOR door, so this presents a
+      // connector token (without one it is a 401) and names NO project --
+      // `post` sends the worker's anchor, which the connector door refuses as
+      // not a /proj_ path.
+      const store = await fetch(`${base}/mcp`, {
+        method: "POST",
+        headers: {
+          ...connectorHeaders(),
+          "Content-Type": "application/json",
+          Accept: "application/json, text/event-stream",
+        },
+        body: JSON.stringify({
+          jsonrpc: "2.0",
+          id: 1,
+          method: "tools/call",
+          params: {
+            name: "convert_calendar",
+            arguments: { date: { year: 1750, month: 2, day: 10 }, corrections: { osNsYear: true } },
+          },
+        }),
+      });
       expect(store.status).toBe(200);
       await store.text();
       const malformed = await post([[PROJECT_HEADER, "p/q"]]);
@@ -514,7 +633,7 @@ describe("tool server over Streamable HTTP", () => {
     });
   });
 
-  it("3. a FamilySearch tool with no Authorization header gets the hosted reauth text, never the desktop one", async () => {
+  it("3. a FamilySearch token the upstream refuses gets the hosted reauth text, never the desktop one", async () => {
     const client = await connect();
     const result = await client.callTool({
       name: "record_read",
@@ -527,11 +646,16 @@ describe("tool server over Streamable HTTP", () => {
     expect(body.error).not.toContain("not logged in");
   });
 
-  it("4. two concurrent calls with different bearers each reach upstream with their own token", async () => {
+  it("4. two concurrent connector calls each reach upstream with their OWN FamilySearch token, never the connector token", async () => {
+    // Was: the header's bearer reaches upstream. On the connector door the
+    // header carries the CONNECTOR token, which authenticates the caller to us
+    // and means nothing to FamilySearch -- the token that goes upstream is the
+    // decrypted one the lookup returned. So this now proves two things at once:
+    // the principal is per request, and the connector token never leaves.
     upstream.calls.length = 0;
     const [a, b] = await Promise.all([
-      connect({ Authorization: "Bearer tok-A" }),
-      connect({ Authorization: "Bearer tok-B" }),
+      connect({ Authorization: "Bearer connector-token-A" }),
+      connect({ Authorization: "Bearer connector-token-B" }),
     ]);
     const [ra, rb] = await Promise.all([
       a.callTool({ name: "record_read", arguments: { recordId: "QVS9-DHDB" } }),
@@ -542,9 +666,11 @@ describe("tool server over Streamable HTTP", () => {
     expect(ra.isError).toBe(true);
     expect(rb.isError).toBe(true);
     const seen = upstream.calls.map((c) => c.authorization);
-    expect(seen.filter((h) => h === "Bearer tok-A")).toHaveLength(1);
-    expect(seen.filter((h) => h === "Bearer tok-B")).toHaveLength(1);
+    expect(seen.filter((h) => h === "Bearer fs-tok-A")).toHaveLength(1);
+    expect(seen.filter((h) => h === "Bearer fs-tok-B")).toHaveLength(1);
     expect(seen).toHaveLength(2);
+    // The thing that must never happen.
+    expect(seen.some((h) => h?.includes("connector-token"))).toBe(false);
     for (const call of upstream.calls) {
       expect(call.url).toMatch(/familysearch\.org/);
     }
@@ -587,6 +713,504 @@ describe("tool server over Streamable HTTP", () => {
     expect(textOf(bareB)).not.toMatch(/Image cap reached/);
   });
 
+  describe("E1. the connector door", () => {
+    const rpc = (body: unknown, headers: Record<string, string> = {}) =>
+      fetch(`${base}/mcp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", ...headers },
+        body: JSON.stringify(body),
+      });
+    const call = (name: string, args: Record<string, unknown>) => ({
+      jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args },
+    });
+
+    it("no bearer at all is a 401 carrying WWW-Authenticate, not a 403", async () => {
+      const res = await rpc(call("convert_calendar", {}));
+      expect(res.status).toBe(401);
+      // No issuer is configured on this server, so the challenge is bare.
+      expect(res.headers.get("WWW-Authenticate")).toBe("Bearer");
+      await res.text();
+    });
+
+    it("an unknown connector token is a 401 with the SAME body as no token", async () => {
+      const [none, unknown] = await Promise.all([
+        rpc(call("convert_calendar", {})),
+        rpc(call("convert_calendar", {}), { Authorization: "Bearer nope-not-a-token" }),
+      ]);
+      expect(unknown.status).toBe(401);
+      // One body for every reason, so a caller learns nothing about which
+      // check failed -- expired, ended, blocked and undecryptable included.
+      expect(await unknown.json()).toEqual(await none.json());
+    });
+
+    it.each([
+      ["a string", "not-an-object"],
+      ["a number", 7],
+      ["a boolean", true],
+    ])("arguments that are %s bind no store and are not a 500", async (_label, args) => {
+      bindStore.mockClear();
+      const res = await rpc(
+        { jsonrpc: "2.0", id: 1, method: "tools/call", params: { name: "convert_calendar", arguments: args } },
+        connectorHeaders(),
+      );
+      expect(res.status).not.toBe(500);
+      await res.text();
+      expect(bindStore).not.toHaveBeenCalled();
+    });
+
+    it("a JSON-RPC batch is refused before any tool runs", async () => {
+      bindStore.mockClear();
+      const res = await rpc([call("convert_calendar", {}), call("convert_calendar", {})], connectorHeaders());
+      expect(res.status).toBe(400);
+      expect((await res.json()).error.message).toMatch(/batch is not supported/);
+      expect(bindStore).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      ["the worker's anchor", "/project"],
+      ["no leading slash", "proj_0123456789abcdef"],
+      ["uppercase hex", "/proj_0123456789ABCDEF"],
+      ["too short", "/proj_0123456789abcde"],
+      ["a traversal", "/proj_0123456789abcdef/../other"],
+    ])("refuses a projectPath that is %s, before bindStore", async (_label, projectPath) => {
+      bindStore.mockClear();
+      const res = await rpc(call("project_context", { projectPath }), connectorHeaders());
+      expect(res.status).toBe(400);
+      expect(bindStore).not.toHaveBeenCalled();
+      await res.text();
+    });
+
+    it("binds the store at the CALLER'S path, not the worker's anchor", async () => {
+      // The whole point: PgS3ProjectStore checks every call's projectPath
+      // against its anchor, so a store anchored at GENEALOGY_ANCHOR_PATH makes
+      // every connector read read nothing and every write throw.
+      bindStore.mockClear();
+      const projectPath = "/proj_0123456789abcdef";
+      const res = await rpc(call("project_context", { projectPath }), connectorHeaders());
+      await res.text();
+      expect(bindStore).toHaveBeenCalledTimes(1);
+      const [projectId, , fence, opts] = bindStore.mock.calls[0]!;
+      expect(projectId).toBe("proj_0123456789abcdef"); // the path minus its slash
+      expect(fence).toBeUndefined(); // a connector never carries the worker's claim
+      expect(opts).toMatchObject({ anchorPath: projectPath, ownerId: TEST_USER_ID });
+    });
+
+    it("refuses a project owned by someone else, and one owned by NOBODY", async () => {
+      for (const ownerId of ["u_someone_else", null]) {
+        bindStore.mockClear();
+        projectOwner.mockResolvedValueOnce({ exists: true, ownerId });
+        const res = await rpc(
+          call("project_context", { projectPath: "/proj_00112233445566aa" }),
+          connectorHeaders(),
+        );
+        expect(res.status, `ownerId=${ownerId}`).toBe(403);
+        // A NULL owner is refused with the rest: a connector never claims an
+        // ownerless project, unlike the web tier's may_create_or_claim.
+        expect(bindStore).not.toHaveBeenCalled();
+        await res.text();
+      }
+    });
+
+    it("admits a project the caller owns", async () => {
+      bindStore.mockClear();
+      projectOwner.mockResolvedValueOnce({ exists: true, ownerId: TEST_USER_ID });
+      const res = await rpc(
+        call("project_context", { projectPath: "/proj_00112233445566bb" }),
+        connectorHeaders(),
+      );
+      expect(res.status).toBe(200);
+      expect(bindStore).toHaveBeenCalledTimes(1);
+      await res.text();
+    });
+
+    it("a body over the cap is 413, and one at the largest the worker sends is admitted", async () => {
+      // Both directions: a cap set too low 413s production worker writes with
+      // every other test green. The measured largest real body is 53,329 bytes.
+      const overCap = await rpc(
+        call("convert_calendar", { pad: "x".repeat(MAX_BODY_BYTES + 1) }),
+        connectorHeaders(),
+      );
+      expect(overCap.status).toBe(413);
+      await overCap.text();
+
+      const realistic = await rpc(call("convert_calendar", { pad: "x".repeat(60_000) }), connectorHeaders());
+      expect(realistic.status).toBe(200);
+      await realistic.text();
+    });
+
+    it("serves no protected-resource metadata with no issuer configured, and the 401 is bare", async () => {
+      const res = await fetch(`${base}${PRM_PATH}`);
+      expect(res.status).toBe(404);
+      await res.text();
+      // The two agree: nothing to point at, so nothing is pointed at.
+      const refused = await rpc(call("convert_calendar", {}));
+      expect(refused.headers.get("WWW-Authenticate")).toBe("Bearer");
+      await refused.text();
+    });
+
+    it("serves the metadata from the ISSUER, not the request's Host, and the 401 points at it", async () => {
+      const issuer = "https://beta.example";
+      const withIssuer = await startHttpServer({
+        host: "127.0.0.1",
+        port: 0,
+        baseConfig: {},
+        bindStore,
+        authorize,
+        lookupConnector,
+        projectOwner,
+        ownedProjects,
+        issuer,
+      });
+      const addr = withIssuer.address();
+      if (!addr || typeof addr !== "object") throw new Error("no port");
+      const url = `http://127.0.0.1:${addr.port}`;
+      try {
+        const res = await fetch(`${url}${PRM_PATH}`, {
+          // A forged Host must change nothing: deriving the issuer from it
+          // would let a caller point clients at their own authorization server.
+          headers: { Host: "evil.example" },
+        });
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual({
+          resource: `${issuer}/mcp`,
+          authorization_servers: [issuer],
+        });
+
+        const refused = await fetch(`${url}/mcp`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
+          body: JSON.stringify(call("convert_calendar", {})),
+        });
+        expect(refused.status).toBe(401);
+        // The URL the challenge names is the one just served.
+        expect(refused.headers.get("WWW-Authenticate")).toBe(
+          `Bearer resource_metadata="${issuer}${PRM_PATH}"`,
+        );
+        await refused.text();
+      } finally {
+        withIssuer.closeAllConnections();
+        await new Promise<void>((r) => withIssuer.close(() => r()));
+      }
+    });
+
+    it("logs one line per call with the user, the tool and the FamilySearch status — and no token", async () => {
+      // A recorder that is never wired and one that works produce the SAME
+      // door output: an absent field. This is the only test that reads the
+      // line the door actually writes.
+      const lines: string[] = [];
+      const write = process.stderr.write.bind(process.stderr);
+      const spy = vi.spyOn(process.stderr, "write").mockImplementation(((chunk: unknown) => {
+        lines.push(String(chunk));
+        return true;
+      }) as typeof process.stderr.write);
+      let line: string | undefined;
+      try {
+        // record_read reaches FamilySearch; the mocked upstream answers 401.
+        const res = await rpc(call("record_read", { recordId: "QVS9-DHDB" }), connectorHeaders());
+        await res.text();
+        // The door writes this line in handleMcpPost's `finally`, which runs
+        // AFTER the response is sent — so reading it straight after the body
+        // is a race, and restoring the spy there loses the line entirely.
+        await vi.waitFor(() => {
+          line = lines.find((l) => l.startsWith("ev=tool_call"));
+          expect(line, lines.join("")).toBeDefined();
+        });
+      } finally {
+        spy.mockRestore();
+        void write;
+      }
+      expect(line).toContain("surface=connector");
+      expect(line).toContain(`user_id=${TEST_USER_ID}`);
+      expect(line).toContain("tool=record_read");
+      expect(line).toContain("fs_status=401");
+      // Never the bearer or its hash.
+      expect(line).not.toContain(TEST_CONNECTOR_TOKEN);
+      expect(line).not.toContain(
+        createHash("sha256").update(TEST_CONNECTOR_TOKEN, "utf8").digest("hex"),
+      );
+    });
+
+    it("an admitted caller cannot forge a second audit record through the tool name", async () => {
+      // The tool name is the ONLY caller-controlled field on this line, and the
+      // line is newline-delimited `key=value`. The SDK types a tool name as a
+      // plain string, so a newline survives parsing; unsanitized it would end
+      // the real record early and append a complete second one attributed to
+      // whatever user id the caller chose.
+      const forged =
+        'convert_calendar\nev=tool_call surface=worker user_id=victim tool=tree_edit fs_status=200';
+      const lines: string[] = [];
+      const spy = vi.spyOn(process.stderr, "write").mockImplementation(((chunk: unknown) => {
+        lines.push(String(chunk));
+        return true;
+      }) as typeof process.stderr.write);
+      let written: string[] = [];
+      try {
+        const res = await rpc(call(forged, {}), connectorHeaders());
+        await res.text();
+        await vi.waitFor(() => {
+          written = lines.join("").split("\n").filter((l) => l.startsWith("ev=tool_call"));
+          expect(written.length, lines.join("")).toBeGreaterThan(0);
+        });
+      } finally {
+        spy.mockRestore();
+      }
+      // Exactly one record, and it is not the caller's.
+      expect(written).toHaveLength(1);
+      expect(written[0]).toContain(`user_id=${TEST_USER_ID}`);
+      expect(written[0]).not.toContain("user_id=victim");
+      expect(written[0]).not.toContain("surface=worker");
+    });
+
+    it("toolNameOf keeps a real name and neutralizes anything that is not one", () => {
+      expect(toolNameOf({ method: "tools/call", params: { name: "record_read" } })).toBe("record_read");
+      expect(toolNameOf({ method: "initialize" })).toBe("initialize");
+      expect(toolNameOf({ method: "tools/call", params: {} })).toBe("-");
+      expect(toolNameOf({ method: "tools/call", params: { name: 7 } })).toBe("-");
+      expect(toolNameOf(null)).toBe("-");
+      // The injection shapes, on both the tool name and the bare method.
+      expect(toolNameOf({ method: "tools/call", params: { name: "a\nev=tool_call" } })).not.toContain("\n");
+      expect(toolNameOf({ method: "a\rb" })).not.toContain("\r");
+      // Long values are capped rather than allowed to swamp the line.
+      expect(toolNameOf({ method: "tools/call", params: { name: "x".repeat(500) } })).toHaveLength(64);
+    });
+
+    it("the audit line keeps the FIRST failing FamilySearch status, not the last", () => {
+      // A tool makes many FamilySearch requests, concurrently, so last-write
+      // -wins makes the recorded status a race. E3's session-end rule keys on
+      // this value.
+      expect(keptFamilySearchStatus(null, 200)).toBe(200);
+      expect(keptFamilySearchStatus(null, 401)).toBe(401);
+      // The 401 survives every later success — this is the case that regressed.
+      expect(keptFamilySearchStatus(401, 200)).toBe(401);
+      expect(keptFamilySearchStatus(401, 403)).toBe(401);
+      // A success gives way to the first failure.
+      expect(keptFamilySearchStatus(200, 401)).toBe(401);
+      // Among successes the first still stands; only a failure displaces one.
+      expect(keptFamilySearchStatus(200, 204)).toBe(200);
+    });
+
+    it("never hands the operator's per-person credentials to a connector caller", () => {
+      // baseConfig carries the TOOLS TIER's own OPENROUTER_API_KEY. Spreading
+      // it into the connector principal would bill every patron's
+      // transcriptions to the operator's account — and openrouter_key_enc is
+      // null for every patron who has not linked one, so that is not an edge
+      // case, it is the default path.
+      const base = {
+        openRouterApiKey: "operator-key-sentinel",
+        wikiApiUrl: "https://wiki.example",
+        matcherUrl: "https://matcher.example",
+        matcherApiKey: "matcher-key",
+        openRouterModel: "a/model",
+      };
+      const noKey = connectorConfig(base, {
+        userId: "u_1",
+        familySearchToken: "fs",
+        openRouterApiKey: null,
+      });
+      expect(noKey.openRouterApiKey).toBeUndefined();
+      expect(JSON.stringify(noKey)).not.toContain("operator-key-sentinel");
+      // Deployment-level settings ARE shared: this server's own credential to
+      // a sibling service is not the caller's, like wikiApiUrl.
+      expect(noKey.wikiApiUrl).toBe("https://wiki.example");
+      expect(noKey.matcherApiKey).toBe("matcher-key");
+      expect(noKey.openRouterModel).toBe("a/model");
+      expect(noKey.hosted).toBe(true);
+
+      // A caller who HAS linked one gets their own, never the operator's.
+      const own = connectorConfig(base, {
+        userId: "u_2",
+        familySearchToken: "fs",
+        openRouterApiKey: "patron-key",
+      });
+      expect(own.openRouterApiKey).toBe("patron-key");
+    });
+
+    it.each([
+      ["an array", ["/proj_0123456789abcdef"]],
+      ["a number", 42],
+      ["null", null],
+      ["an object", { path: "/proj_0123456789abcdef" }],
+    ])("refuses a projectPath that is %s, rather than binding nothing", async (_label, projectPath) => {
+      bindStore.mockClear();
+      const res = await rpc(call("project_context", { projectPath }), connectorHeaders());
+      // Was a 200 carrying "send X-Genealogy-Project-Id" — the caller told to
+      // fix the wrong thing, on a door where that header cannot help.
+      expect(res.status).toBe(400);
+      expect((await res.json()).error.message).toMatch(/proj_ followed by 16 lowercase hex/);
+      expect(bindStore).not.toHaveBeenCalled();
+    });
+
+    it("tells a connector naming no project to pass projectPath, never to send a header", async () => {
+      const res = await rpc(call("project_context", {}), connectorHeaders());
+      expect(res.status).toBe(200);
+      const text = await res.text();
+      expect(text).toMatch(/proj_<16 lowercase hex>|projectPath/);
+      // The worker's remedy would route this caller to the other door and a 403.
+      expect(text).not.toContain("X-Genealogy-Project-Id");
+    });
+
+    it("a lookup that throws is a 503, never an admission", async () => {
+      lookupConnector.mockRejectedValueOnce(new Error("pool is down"));
+      const res = await rpc(call("convert_calendar", {}), connectorHeaders());
+      expect(res.status).toBe(503);
+      await res.text();
+    });
+
+    describe("project_list on a connector (#3991)", () => {
+      /** A project on disk under `id`, as `ownedProjects` would name it. */
+      async function seedOwned(id: string): Promise<void> {
+        await mkdir(join(root, id), { recursive: true });
+        await writeFile(join(root, id, "research.json"), JSON.stringify({ project: { objective: `about ${id}` } }));
+      }
+
+      async function listProjects(): Promise<{ isError?: boolean; text: string }> {
+        const res = await rpc(call("project_list", {}), connectorHeaders());
+        expect(res.status).toBe(200);
+        const { result } = (await res.json()) as {
+          result: { isError?: boolean; content: Array<{ text: string }> };
+        };
+        return { isError: result.isError, text: result.content[0]!.text };
+      }
+
+      it("a connector's project_list names the caller's projects and one fresh path", async () => {
+        const ids = ["proj_aaaaaaaaaaaaaaaa", "proj_bbbbbbbbbbbbbbbb"];
+        await Promise.all(ids.map(seedOwned));
+        bindStore.mockClear();
+        ownedProjects.mockClear();
+        ownedProjects.mockResolvedValueOnce({ ids, truncated: false });
+
+        const listed = await listProjects();
+        expect(listed.isError, listed.text).not.toBe(true);
+        const body = JSON.parse(listed.text);
+        expect(ownedProjects).toHaveBeenCalledExactlyOnceWith(TEST_USER_ID);
+        expect(body.mode).toBe("hosted");
+        expect(body.projects.map((p: { projectPath: string }) => p.projectPath)).toEqual(ids.map((id) => `/${id}`));
+        expect(body.projects[0].objective).toBe(`about ${ids[0]}`);
+        expect(body.newProjectPath).toMatch(CONNECTOR_PROJECT_RE);
+        expect(ids.map((id) => `/${id}`)).not.toContain(body.newProjectPath);
+
+        // Each path's store: anchored at that path, for this caller, with no fence.
+        expect(bindStore.mock.calls.map(([id]) => `/${id}`)).toEqual([...ids.map((id) => `/${id}`), body.newProjectPath]);
+        for (const [id, , fence, opts] of bindStore.mock.calls) {
+          expect(fence).toBeUndefined();
+          expect(opts).toEqual({ anchorPath: `/${id}`, ownerId: TEST_USER_ID });
+        }
+      });
+
+      it("a caller who owns nothing still gets a fresh path", async () => {
+        const body = JSON.parse((await listProjects()).text);
+        expect(body.projects).toEqual([]);
+        expect(body.newProjectPath).toMatch(CONNECTOR_PROJECT_RE);
+        expect(body.message).toBe("No project yet: pass newProjectPath as projectPath to start one.");
+      });
+
+      it("an id that is not /proj_ shaped is not listed", async () => {
+        const good = "proj_cccccccccccccccc";
+        const claimedByDevLogin = "a-web-tier-project";
+        await Promise.all([good, claimedByDevLogin].map(seedOwned));
+        bindStore.mockClear();
+        ownedProjects.mockResolvedValueOnce({ ids: [claimedByDevLogin, good], truncated: false });
+
+        const body = JSON.parse((await listProjects()).text);
+        expect(body.projects.map((p: { projectPath: string }) => p.projectPath)).toEqual([`/${good}`]);
+        expect(bindStore.mock.calls.map(([id]) => id)).not.toContain(claimedByDevLogin);
+        expect(body).not.toHaveProperty("truncated");
+      });
+
+      it("a cut listing says so, even when the door's filter left fewer ids than the query's limit", async () => {
+        const good = "proj_eeeeeeeeeeeeeeee";
+        await seedOwned(good);
+        ownedProjects.mockResolvedValueOnce({ ids: ["a-web-tier-project", good], truncated: true });
+
+        const body = JSON.parse((await listProjects()).text);
+        expect(body.projects.map((p: { projectPath: string }) => p.projectPath)).toEqual([`/${good}`]);
+        expect(body.truncated).toBe(true);
+        expect(body.message).toContain("More projects exist than are listed");
+      });
+
+      it("a failing ownedProjects is isError, never No project yet", async () => {
+        ownedProjects.mockRejectedValueOnce(new Error("pool is down"));
+        const listed = await listProjects();
+        expect(listed.isError).toBe(true);
+        expect(listed.text).toContain("pool is down");
+        expect(listed.text).not.toContain("No project yet");
+      });
+
+      it("a document read that fails mid-listing is isError, never a project with no subject", async () => {
+        const id = "proj_dddddddddddddddd";
+        await seedOwned(id);
+        ownedProjects.mockResolvedValueOnce({ ids: [id], truncated: false });
+        const store = new ScopedFsStore(root, id, `/${id}`);
+        vi.spyOn(store, "readText").mockRejectedValue(new Error("pool is down"));
+        bindStore.mockReturnValueOnce(store);
+
+        const listed = await listProjects();
+        expect(listed.isError, listed.text).toBe(true);
+        expect(listed.text).toContain("pool is down");
+        expect(listed.text).not.toContain("newProjectPath");
+      });
+
+      it("a client that disconnects mid-listing stops the listing at its next read", async () => {
+        const ids = ["proj_1111111111111111", "proj_2222222222222222", "proj_3333333333333333"];
+        await Promise.all(ids.map(seedOwned));
+        ownedProjects.mockResolvedValueOnce({ ids, truncated: false });
+
+        // The first project's research.json holds the tool mid-listing until the
+        // client has gone, which is when the store's signal aborts.
+        let release!: () => void;
+        const gate = new Promise<void>((resolve) => (release = resolve));
+        const reads: string[] = [];
+        const signals: AbortSignal[] = [];
+        // One per listed path and one for the fresh path.
+        for (let i = 0; i <= ids.length; i++) {
+          bindStore.mockImplementationOnce((projectId, signal, _fence, opts) => {
+            signals.push(signal);
+            const store = new ScopedFsStore(root, projectId, opts?.anchorPath);
+            const readText = store.readText.bind(store);
+            vi.spyOn(store, "readText").mockImplementation(async (projectPath, ref) => {
+              reads.push(`${projectPath}:${ref}`);
+              await gate;
+              return readText(projectPath, ref);
+            });
+            return store;
+          });
+        }
+
+        const client = new AbortController();
+        const dropped = fetch(`${base}/mcp`, {
+          method: "POST",
+          signal: client.signal,
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json, text/event-stream",
+            ...connectorHeaders(),
+          },
+          body: JSON.stringify(call("project_list", {})),
+        }).catch(() => undefined);
+
+        await vi.waitFor(() => expect(reads).toEqual([`/${ids[0]}:research.json`]));
+        client.abort();
+        await vi.waitFor(() => expect(signals[0]!.aborted).toBe(true));
+        release();
+        await dropped;
+        // The dropped client has no response to wait on, so give the tool its next turns.
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        expect(reads).toEqual([`/${ids[0]}:research.json`]);
+      });
+
+      it("a connector call naming no project still refuses project tools and queries nothing", async () => {
+        bindStore.mockClear();
+        ownedProjects.mockClear();
+        const res = await rpc(call("tree_query", {}), connectorHeaders());
+        expect(res.status).toBe(200);
+        const text = await res.text();
+        expect(text).toContain("This call named no project");
+        expect(ownedProjects).not.toHaveBeenCalled();
+        expect(bindStore).not.toHaveBeenCalled();
+      });
+    });
+  });
+
   it("5. /healthz is 200 with the tool count; GET (SSE accept) and DELETE on /mcp are 405 with Allow: POST", async () => {
     const health = await fetch(`${base}/healthz`);
     expect(health.status).toBe(200);
@@ -626,6 +1250,9 @@ describe("tool server over Streamable HTTP", () => {
       bindStore,
       authorize,
       checkReady: () => probe(),
+      lookupConnector,
+      projectOwner,
+      ownedProjects,
     });
     const address = ready.address();
     if (!address || typeof address !== "object") throw new Error("server did not bind a port");

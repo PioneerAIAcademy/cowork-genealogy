@@ -147,6 +147,19 @@ async def test_callback_refuses_a_second_fs_account_for_an_existing_email(fs_on)
     assert auth.COOKIE_NAME not in r.cookies
 
 
+async def test_callback_with_the_chat_off_stores_no_refresh_token(fs_on):
+    """Nothing on a chat-off tier reads it, and it outlives the access token it came with."""
+    fs_on.setenv("GENEALOGY_CHAT", "false")
+    _fake_fs(fs_on, access="access-plain", refresh="refresh-plain")
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    r = await _callback(store)
+    assert r.status_code in (302, 307), r.text
+    grant = next(iter(store.grants.values()))
+    assert auth.decrypt(grant["access_token_enc"]) == "access-plain"
+    assert grant["refresh_token_enc"] is None
+
+
 async def test_second_sign_in_resets_granted_at_and_keeps_refresh_token_when_omitted(fs_on):
     store = FakeStore()
     store.allowed = {"a@example.org"}
@@ -517,7 +530,7 @@ async def test_the_allowlist_gate_lifts_when_the_background_sync_succeeds(fs_on)
     fs_on.setenv("ALLOWED_EMAILS", "a@example.org")
     fs_on.setattr(app, "STARTUP_BACKOFF_FIRST_S", 0.0)
     store = FlakyStore()
-    fs_on.setattr(app, "PgStore", lambda dsn: store)
+    fs_on.setattr(app, "PgStore", lambda dsn, **kw: store)
     application = create_app(queue=FakeQueue())
     cookies = {auth.COOKIE_NAME: auth.session_cookie_value(USER_A.id)}
     async with application.router.lifespan_context(application):

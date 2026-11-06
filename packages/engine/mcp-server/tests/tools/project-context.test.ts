@@ -1,3 +1,4 @@
+import { CLAIM_KINDS } from "../../src/validation/validator.js";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
 import { join } from "path";
@@ -216,6 +217,15 @@ describe("project_context", () => {
     expect(bare.ok && bare.subjectPersonIds).toEqual([]);
   });
 
+  it("claimKinds lists every kind the engine accepts", async () => {
+    await writeProject(
+      { project: { id: "rp_001", objective: "Fresh", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      { persons: [], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok && r.claimKinds).toEqual([...CLAIM_KINDS]);
+  });
+
   it("returns empty arrays for an empty project", async () => {
     await writeProject(
       { project: { id: "rp_001", objective: "Fresh", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
@@ -246,6 +256,7 @@ describe("project_context", () => {
       ),
       unregisteredDisagreementCount: 0,
       exhaustedImageGroups: [],
+      claimKinds: ["relationship", "fact", "identity", "name", "finding"],
     });
   });
 
@@ -620,6 +631,34 @@ describe("project_context", () => {
     const q2 = r.questionStatuses.find((q) => q.id === "q_002");
     expect(q2?.storedStatus).toBeNull();
   });
+
+  // A resolved question is absent from openQuestions, so this is the only place its
+  // text reaches the router reading the objective against every question.
+  it("questionStatuses carries each question's text, resolved ones included, truncated", async () => {
+    const long = "W".repeat(200);
+    await writeProject(
+      {
+        project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
+        questions: [
+          { id: "q_001", question: "Where was Elizabeth born?", status: "resolved" },
+          { id: "q_002", question: long, status: "in_progress" },
+          { id: "q_003", status: "framed" },
+        ],
+      },
+      { persons: [], relationships: [], sources: [] },
+    );
+
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    expect(r.openQuestions.map((q) => q.id)).not.toContain("q_001");
+    const byId = new Map(r.questionStatuses.map((q) => [q.id, q.question]));
+    expect(byId.get("q_001")).toBe("Where was Elizabeth born?");
+    expect(byId.get("q_002")).toBe(`${"W".repeat(139)}…`);
+    expect(byId.get("q_002")).toBe(r.openQuestions.find((q) => q.id === "q_002")?.question);
+    expect(byId.get("q_003")).toBe("");
+  });
 });
 
 const EMPTY_RESEARCH = {
@@ -721,30 +760,31 @@ describe("project_context and project_create links", () => {
     return store ? runWithProjectStore(store, run) : run();
   }
 
-  it("returns projectUrl and uploadUrl from the store's project id when both settings are on", async () => {
+  it("returns uploadUrl from the store's project id when both settings are on, and never a viewer link", async () => {
     const r = await contextUnder(new ScopedFsStore(root, "p-42"), {
       webPublicUrl: "https://beta.example/",
       uploadsEnabled: true,
     });
-    expect(r.projectUrl).toBe("https://beta.example/#/p/p-42");
     expect(r.uploadUrl).toBe("https://beta.example/#/p/p-42/upload");
+    expect("projectUrl" in r).toBe(false);
   });
 
-  it("returns projectUrl but no uploadUrl while uploads are off", async () => {
+  it("returns no link while uploads are off", async () => {
     const off = await contextUnder(new ScopedFsStore(root, "p-42"), { webPublicUrl: "https://beta.example", uploadsEnabled: false });
-    expect(off.projectUrl).toBe("https://beta.example/#/p/p-42");
     expect("uploadUrl" in off).toBe(false);
+    expect("projectUrl" in off).toBe(false);
     const unset = await contextUnder(new ScopedFsStore(root, "p-43"), { webPublicUrl: "https://beta.example" });
     expect("uploadUrl" in unset).toBe(false);
+    expect("projectUrl" in unset).toBe(false);
   });
 
-  it("returns neither link without the public URL", async () => {
+  it("returns no link without the public URL", async () => {
     const r = await contextUnder(new ScopedFsStore(root, "p-42"), { uploadsEnabled: true });
     expect("projectUrl" in r).toBe(false);
     expect("uploadUrl" in r).toBe(false);
   });
 
-  it("returns neither link from a store with no project id, whatever projectPath is", async () => {
+  it("returns no link from a store with no project id, whatever projectPath is", async () => {
     fileStoreOnly("the file store is the one with no project id");
     const r = await contextUnder(null, { webPublicUrl: "https://beta.example", uploadsEnabled: true });
     expect("projectUrl" in r).toBe(false);

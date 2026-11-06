@@ -238,6 +238,11 @@ export function ResearchDataProvider({
     [transport]
   )
 
+  const sendPrompt = useMemo(
+    () => (transport.sendPrompt ? (text: string) => transport.sendPrompt!(text) : undefined),
+    [transport]
+  )
+
   const openSidecar = useCallback(
     (logId: string, focusPersonaId?: string) => {
       // Idempotent: opening the same already-loaded sidecar only updates
@@ -295,7 +300,8 @@ export function ResearchDataProvider({
       clearFocusPersona,
       submitFeedback,
       getFeedbackContext,
-      getSourceImage
+      getSourceImage,
+      sendPrompt
     }),
     [
       research,
@@ -319,7 +325,8 @@ export function ResearchDataProvider({
       clearFocusPersona,
       submitFeedback,
       getFeedbackContext,
-      getSourceImage
+      getSourceImage,
+      sendPrompt
     ]
   )
 

@@ -13,7 +13,8 @@
 //   and any ref not ending in .json    → the `blobs` table + an S3 object
 //   every other *.json ref             → the `documents` table (jsonb)
 // A document's `readText` is `JSON.stringify(doc, null, 2)` — jsonb keeps
-// neither key order nor whitespace, so the bytes are not the bytes written.
+// neither key order nor whitespace, so the bytes are not the bytes written. A
+// write over `MAX_DOCUMENT_BYTES` is refused before it touches anything.
 //
 // `withTransaction` is one pool connection holding `pg_advisory_xact_lock` on
 // the project id for the whole callback; every store method called inside the
@@ -86,6 +87,7 @@ import { PROJECT_ID_RE } from "./project-id.js";
 import type {
   ClaimFence,
   JsonWrite,
+  OwnedProjectIds,
   ProjectDirState,
   ProjectEntry,
   ProjectListing,
@@ -103,9 +105,25 @@ export const S3_REQUEST_TIMEOUT_MS = 90_000;
 /** The whole readiness probe's deadline: under the image HEALTHCHECK's 3 s and
  *  `make engine-smoke-http`'s final 2 s curl. */
 export const READY_TIMEOUT_MS = 1_500;
+/** The largest document a write may store, in bytes of its pretty text. A read
+ *  loads the whole document into a Postgres backend, and ten reads at once of a
+ *  100 MB one restarted every backend on a 2 GiB server; ten at this size did not.
+ *  The largest real research.json is about 1.55 MB. */
+export const MAX_DOCUMENT_BYTES = 16 * 1024 * 1024;
 /** The tables every store method queries; a missing one fails readiness.
  *  `turns` is the claim fence's (U6): a fenced store cannot commit without it. */
-export const STORE_TABLES = ["documents", "blobs", "staging", "projects", "turns"] as const;
+// `connector_tokens` is here for the same reason `turns` is: the door READS it
+// on every connector request (migration 017). Without it a tier deployed one
+// migration behind answers /healthz 200, passes the load balancer's check, and
+// then 503s every connector call with `error=42P01`.
+export const STORE_TABLES = [
+  "documents",
+  "blobs",
+  "staging",
+  "projects",
+  "turns",
+  "connector_tokens",
+] as const;
 /** The `turns` column the tool server's door reads (U4, migration 012); a
  *  database without it fails readiness. */
 const STAMP_COLUMN = "bearer_sha256";
@@ -168,6 +186,104 @@ export async function authorizeAttempt(
   const hash = createHash("sha256").update(req.bearer, "utf8").digest("hex");
   const rows = await backend.pool.query(ATTEMPT_DOOR_SQL, [req.fence.turnId, req.projectId, hash]);
   return rows.rows.length > 0 ? { ok: true } : { ok: false, reason: "no_match" };
+}
+
+/**
+ * Admit a connector token, or `null` (self-hosted beta E1).
+ *
+ * Times are compared in SQL with Postgres's `now()`, never a host clock —
+ * `017_connector_auth.sql`'s header says so, and the worker's fence does the
+ * same.
+ *
+ * `familysearch_tokens.expires_at` is DELIBERATELY not checked: the beta has no
+ * refresh, so FamilySearch's own 401 is what ends a session (E3's hook), and an
+ * expired token is a sign-in prompt either way. Checking it here would refuse at
+ * the door with a different message for the same user-visible state.
+ *
+ * A user with no FamilySearch token is refused: the join finds no row. So is a
+ * token that will not decrypt: it was written under another key, so it is not a
+ * token, and sending it would put gibberish on the wire.
+ */
+export async function lookupConnectorToken(
+  backend: PgS3Backend,
+  tokenSha256: string,
+  decryptWithKey: (ciphertext: string | null) => string | null,
+): Promise<{ userId: string; familySearchToken: string; openRouterApiKey: string | null } | null> {
+  const rows = await backend.pool.query<{
+    user_id: string;
+    blocked_at: Date | null;
+    access_token_enc: string;
+    openrouter_key_enc: string | null;
+  }>(CONNECTOR_DOOR_SQL, [tokenSha256]);
+  const row = rows.rows[0];
+  if (!row) return null;
+  if (row.blocked_at !== null) return null;
+  const familySearchToken = decryptWithKey(row.access_token_enc);
+  if (!familySearchToken) return null;
+  return {
+    userId: row.user_id,
+    familySearchToken,
+    // Null for a user who linked no account; the door treats it as "no key".
+    openRouterApiKey: decryptWithKey(row.openrouter_key_enc),
+  };
+}
+
+const CONNECTOR_DOOR_SQL = `
+  SELECT ct.user_id, u.blocked_at, ft.access_token_enc, u.openrouter_key_enc
+    FROM connector_tokens ct
+    JOIN users u ON u.id = ct.user_id
+    JOIN familysearch_tokens ft ON ft.user_id = ct.user_id
+   WHERE ct.token_sha256 = $1 AND ct.expires_at > now() AND ct.ended_at IS NULL
+`;
+
+/**
+ * Who owns a project id. An absent row is free — the first write decides
+ * (`touchProject`) — and a row whose `owner_id` is NULL is NOT: a connector
+ * never claims an ownerless project, unlike the web tier's
+ * `may_create_or_claim`. `projects.owner_id` is nullable on purpose
+ * (`008_auth_owner.sql`), so that state is live, not hypothetical.
+ */
+export async function projectOwnerOf(
+  backend: PgS3Backend,
+  projectId: string,
+): Promise<{ exists: boolean; ownerId: string | null }> {
+  const rows = await backend.pool.query<{ owner_id: string | null }>(
+    "SELECT owner_id FROM projects WHERE project_id = $1",
+    [projectId],
+  );
+  const row = rows.rows[0];
+  return row ? { exists: true, ownerId: row.owner_id ?? null } : { exists: false, ownerId: null };
+}
+
+/** How many projects one `project_list` names. Nothing caps a user's projects, and
+ *  the listing reads two documents for each on the shared pool. */
+export const MAX_LISTED_PROJECTS = 100;
+
+const OWNED_PROJECTS_SQL = `
+  SELECT p.project_id
+    FROM projects p
+    JOIN documents d ON d.project_id = p.project_id AND d.name = 'research.json'
+   WHERE p.owner_id = $1
+   ORDER BY d.updated_at DESC, p.project_id
+   LIMIT $2
+`;
+
+/**
+ * The ids a connector's `project_list` names: the user's projects, newest first,
+ * at most `MAX_LISTED_PROJECTS`; the query asks for one more to tell `truncated`.
+ * Only those holding a `research.json`: `project_list` takes the first path with
+ * none as `newProjectPath`, so an id a staged read claimed and nothing finished
+ * would displace the fresh path and offer its stale staging.
+ */
+export async function ownedProjectIds(backend: PgS3Backend, userId: string): Promise<OwnedProjectIds> {
+  const rows = await backend.pool.query<{ project_id: string }>(OWNED_PROJECTS_SQL, [
+    userId,
+    MAX_LISTED_PROJECTS + 1,
+  ]);
+  return {
+    ids: rows.rows.slice(0, MAX_LISTED_PROJECTS).map((row) => row.project_id),
+    truncated: rows.rows.length > MAX_LISTED_PROJECTS,
+  };
 }
 
 /** One store check's outcome. `error` is a short label (an error code or name),
@@ -520,6 +636,18 @@ function serialize(data: unknown): string {
   return text;
 }
 
+/** `serialize` for a write to `rel`, refusing a document over `MAX_DOCUMENT_BYTES`.
+ *  Called before the first store call, so a refused document writes nothing. */
+function serializeFor(rel: string, data: unknown): string {
+  const text = serialize(data);
+  if (routeRef(rel).kind === "document" && Buffer.byteLength(text, "utf-8") > MAX_DOCUMENT_BYTES) {
+    throw new Error(
+      `Nothing was saved: ${rel} would be larger than the ${MAX_DOCUMENT_BYTES / (1024 * 1024)} MB a project document may hold.`,
+    );
+  }
+  return text;
+}
+
 /** An absent ref, with the `.code` callers classify by (sidecar_read → not_found). */
 function enoent(projectId: string, ref: string): NodeJS.ErrnoException {
   const e: NodeJS.ErrnoException = new Error(`'${ref}' does not exist in project ${projectId}`);
@@ -557,6 +685,15 @@ export interface PgS3ProjectStoreOptions {
   /** The one `projectPath` string the tools pass for this project; every
    *  other value is "missing_dir". */
   anchorPath: string;
+  /**
+   * The connector caller who owns this project (self-hosted beta E1). Set,
+   * `touchProject` records it on a FRESH id and refuses a project owned by
+   * anyone else, and an absent row reads as an empty project: a connector's id
+   * exists from the moment `project_list` offers it, while a staged read or a
+   * scan may land before its `research.json`. Absent on the worker path, which
+   * keeps today's ownerless upsert and reads an absent row as no project.
+   */
+  ownerId?: string;
   /** Aborted when the caller that bound this store is gone (the HTTP server's
    *  client disconnected). A transaction still open then ROLLS BACK instead of
    *  committing, so a write whose result nobody can receive never lands. */
@@ -574,6 +711,8 @@ export class PgS3ProjectStore implements ProjectStore {
   readonly anchorPath: string;
   private readonly signal: AbortSignal | undefined;
   private readonly fence: ClaimFence | undefined;
+  /** The connector owner (E1); undefined on the worker path. */
+  private readonly ownerId: string | undefined;
 
   constructor(
     private readonly backend: PgS3Backend,
@@ -587,6 +726,7 @@ export class PgS3ProjectStore implements ProjectStore {
     }
     this.projectId = options.projectId;
     this.anchorPath = options.anchorPath;
+    this.ownerId = options.ownerId;
     this.signal = options.signal;
     this.fence = options.fence;
   }
@@ -714,7 +854,7 @@ export class PgS3ProjectStore implements ProjectStore {
     if (!this.isAnchor(projectPath)) return "missing_dir";
     const db = this.db();
     const row = await db.query("SELECT 1 FROM projects WHERE project_id = $1", [this.projectId]);
-    if (row.rowCount === 0) return "missing_dir";
+    if (row.rowCount === 0 && this.ownerId === undefined) return "missing_dir";
     const docs = await db.query(
       "SELECT 1 FROM documents WHERE project_id = $1 AND name IN ('research.json', 'tree.gedcomx.json') LIMIT 1",
       [this.projectId],
@@ -725,7 +865,7 @@ export class PgS3ProjectStore implements ProjectStore {
   async projectDirState(projectPath: string): Promise<ProjectDirState> {
     if (!this.isAnchor(projectPath)) return "missing";
     const row = await this.db().query("SELECT 1 FROM projects WHERE project_id = $1", [this.projectId]);
-    return row.rowCount === 0 ? "missing" : "directory";
+    return row.rowCount === 0 && this.ownerId === undefined ? "missing" : "directory";
   }
 
   /** Rows do not nest. */
@@ -823,7 +963,7 @@ export class PgS3ProjectStore implements ProjectStore {
   async writeJson(projectPath: string, ref: string, data: unknown): Promise<void> {
     this.assertAnchor(projectPath);
     const rel = assertRelativeRef(ref);
-    const text = serialize(data);
+    const text = serializeFor(rel, data);
     const route = routeRef(rel);
     if (this.fence && !this.tx() && route.kind !== "document") {
       await this.putObjectFenced(this.fence, rel, route, Buffer.from(text, "utf-8"));
@@ -838,9 +978,9 @@ export class PgS3ProjectStore implements ProjectStore {
   /**
    * Every write in ONE transaction: the bound one when called inside
    * `withTransaction`, otherwise a transaction of its own. Every value is
-   * serialized before the first write, so an unserialisable one writes nothing.
-   * The file backend's `onBeforeSecondRename` seam has no rename to sit between
-   * here and is ignored.
+   * serialized before the first write, so an unserialisable or oversized one
+   * writes nothing. The file backend's `onBeforeSecondRename` seam has no rename
+   * to sit between here and is ignored.
    */
   async writeJsonBoth(
     projectPath: string,
@@ -848,7 +988,10 @@ export class PgS3ProjectStore implements ProjectStore {
     _options?: WriteJsonBothOptions,
   ): Promise<void> {
     this.assertAnchor(projectPath);
-    const prepared = writes.map((w) => ({ ref: assertRelativeRef(w.ref), text: serialize(w.data) }));
+    const prepared = writes.map((w) => {
+      const ref = assertRelativeRef(w.ref);
+      return { ref, text: serializeFor(ref, w.data) };
+    });
     const run = async () => {
       await this.touchProject();
       for (const p of prepared) await this.putSerialized(p.ref, p.text);
@@ -935,10 +1078,34 @@ export class PgS3ProjectStore implements ProjectStore {
 
   /** Every write upserts the projects row, so a project exists from its first write. */
   private async touchProject(): Promise<void> {
-    await this.db().query(
-      "INSERT INTO projects (project_id) VALUES ($1) ON CONFLICT (project_id) DO NOTHING",
-      [this.projectId],
+    if (this.ownerId === undefined) {
+      // The worker path: ownerless, exactly as before.
+      await this.db().query(
+        "INSERT INTO projects (project_id) VALUES ($1) ON CONFLICT (project_id) DO NOTHING",
+        [this.projectId],
+      );
+      return;
+    }
+    // A connector write (E1). The DOOR's ownership check admits two users
+    // racing on the same fresh id -- it sees no row for either -- so the FIRST
+    // WRITE has to decide. `DO NOTHING` alone silently lets the loser write
+    // into the winner's project.
+    //
+    // ONE statement, not an INSERT followed by a SELECT. Outside a transaction
+    // `this.db()` is the POOL, so a second query can be served by a different
+    // backend; the no-op `DO UPDATE` makes the conflicting row visible to
+    // `RETURNING` on the same statement, which is the only form that is
+    // correct whether or not a transaction is open.
+    const claimed = await this.db().query<{ owner_id: string | null }>(
+      `INSERT INTO projects (project_id, owner_id) VALUES ($1, $2)
+         ON CONFLICT (project_id) DO UPDATE SET owner_id = projects.owner_id
+       RETURNING owner_id`,
+      [this.projectId, this.ownerId],
     );
+    const actual = claimed.rows[0]?.owner_id ?? null;
+    if (actual !== this.ownerId) {
+      throw new Error(`project '${this.projectId}' belongs to another account`);
+    }
   }
 
   /** Objects the index no longer points at: gone now outside a transaction,
