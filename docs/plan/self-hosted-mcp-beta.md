@@ -387,7 +387,7 @@ Issue #4003, in the icebox, holds the worker's half of the one door and server-s
 - **Research in chat.** Claude's docs say a chat session runs no hooks or agents, but the MCP App's host record shows the model listing `Agent` in chat on one account. This plugin is 2 skills and 31 agents. If the tool is there, the research skill's no-`Agent` line does not stop, and a run may fall to a general-purpose stand-in with no agent's tool list, which the hook would let through. Item 12 settles which. Either way, a rule that must hold in chat has to be a tool rule.
 - **A new account.** Research on the primary surfaces rests on plugin skills and agents reaching chat. If a new account gets neither, research does not run there at all, so acceptance step 2 is the main risk to the beta.
 - **A test on the lead's account.** It runs a variant plugin, so cards working there say nothing about the zip users install. Only acceptance step 2 does.
-- **One account's load.** E4's per-user cap holds an account to 4 calls at a time, and its calls past that wait, so a burst slows that account rather than the tool server.
+- **One account's load.** E4's per-user cap holds an account to 4 tool calls running at a time, and its calls past that wait. Each waiting call has still passed the door (two lookups and its body read), and nothing bounds how many wait.
 - **Code moving under a rehearsal.** One pinned commit for web, tools and the zip.
 - **Richard's path.** E1 changed the door his worker uses. It keeps admitting today's worker.
 - **Two languages.** Node decrypts what Python encrypts. A shared test vector pins the format, and both tiers need the same key.

@@ -65,14 +65,24 @@ as an empty project until its first write claims it.
 
 Each connector user runs at most **4** `tools/call` requests at a time (self-hosted beta
 E4, per user; a constant in `src/utils/user-limits.ts`, not a setting). A call over the
-cap waits its turn, oldest first, and is never refused; `initialize` and `tools/list`
-never wait, and the worker path is not capped. A waiting call whose client hangs up
-never runs, and writes `ev=tool_abandoned surface=connector user_id=<id> tool=<name>`
-instead of an `ev=tool_call` line. When FamilySearch answers a connector user 429, that
-user's authenticated FamilySearch calls pause for its `Retry-After`, or 30 s without
-one: a pause that ends inside the call's retry budget (10 s by default) is waited out,
-and a longer one refuses at once with `FamilySearch asked this account to wait; try
-again in about N seconds.` Anonymous FamilySearch calls (place lookups) are not paused.
+cap waits its turn, oldest first, and is never refused; `initialize`, `tools/list`,
+notifications and a `tools/call` naming no tool never wait, and the worker path is not
+capped. A call that waited has its connector token looked up again before it runs, so a
+user blocked meanwhile is refused 401, and it runs with the FamilySearch token that
+lookup returns. A waiting call whose client hangs up never runs, and writes
+`ev=tool_abandoned surface=connector user_id=<id> tool=<name>` instead of an
+`ev=tool_call` line; a running call keeps its slot until it ends, even after its client
+hangs up. The cap bounds tool work only: every waiting call has already had its token
+looked up, its project checked and its body (up to 1 MiB) read, and how many may wait is
+not bounded.
+
+When FamilySearch answers a connector user 429, that user's authenticated FamilySearch
+calls pause for its `Retry-After`, at most 15 minutes, or 30 s without one. A pause that
+ends inside the call's own time (its retry budget, 10 s by default, and never longer
+than its timeout) is waited out, and a longer one refuses at once with `FamilySearch
+asked this account to wait; try again in about N seconds.` The 429 still shows as
+`fs_status=429` on the call's `ev=tool_call` line. Anonymous FamilySearch calls (place
+lookups, public memory artifacts and story text) are not paused.
 
 The door reads each request body once, capped at **1 MiB**, and answers 413 past
 it. The cap binds the worker's writes too, because the body must be read to

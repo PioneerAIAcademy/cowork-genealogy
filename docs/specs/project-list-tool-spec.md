@@ -130,8 +130,9 @@ objective aborted V8 on a 1 GiB heap.
 
 These bounds are per call. How many calls one account has running is bounded at the
 door instead: a connector user runs at most 4 `tools/call` requests at a time and the
-rest wait their turn (self-hosted beta E4, `src/utils/user-limits.ts`), so one account's
-burst queues behind itself rather than on the pool.
+rest wait their turn (self-hosted beta E4, `src/utils/user-limits.ts`), so no more than
+4 of one account's calls hold documents at once. Each waiting call has still read its
+body and run the door's two lookups on the pool, and how many may wait is not bounded.
 
 #### 2.3.2 The cap on a document
 

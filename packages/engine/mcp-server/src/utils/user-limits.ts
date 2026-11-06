@@ -5,6 +5,9 @@
 //   door (`src/http-server.ts`). A call over the cap WAITS in FIFO order; it is
 //   never refused, because `locality-guide` sends ten or more calls in one turn
 //   and a refused call would read as a failed source (lead, rescope 2026-11-05).
+//   A running call keeps its slot until it ends, even after its client hangs
+//   up: the tool is still working, and releasing early would let a client that
+//   drops its connections run any number of calls at once.
 // - A pause when FamilySearch answers that user 429, taken in the authenticated
 //   fetch (`src/utils/fs-fetch.ts`).
 //
@@ -136,7 +139,8 @@ export async function runWithUserCallSlot(
 // ─── The 429 pause ──────────────────────────────────────────────────────────
 //
 // What it does NOT cover: anonymous FamilySearch calls carry no principal, so
-// `utils/place-api.ts`, `utils/memories.ts`'s unauthenticated lookups and
+// `utils/place-api.ts`, `utils/memories.ts`'s unauthenticated lookups and story
+// text, `utils/fs-image-fetch.ts`'s public memory artifacts and
 // `tools/external-links-search.ts` stay under the process-wide budget only.
 //
 // "Per user" assumes FamilySearch rate-limits per token. That is UNVERIFIED: if

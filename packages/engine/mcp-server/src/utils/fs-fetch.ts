@@ -14,9 +14,9 @@
  * holder's token (measured in PR #2859). Issue #2887.
  *
  * For a connector caller, both honour that user's 429 pause
- * (`user-limits.ts`, issue #3999): a 429 pauses the user, and every
- * FamilySearch call from a paused user waits the pause out within its retry
- * budget or is refused before any network I/O.
+ * (`user-limits.ts`, issue #3999): a 429 pauses the user, and every call these
+ * two make for a paused user waits the pause out within its time or is refused
+ * before any network I/O.
  */
 
 import type { Principal } from "../auth/principal.js";
@@ -86,6 +86,13 @@ function recordStatus(principal: Principal, status: number): void {
  * gate runs before every attempt, retries included, since each is a
  * FamilySearch call. Any hooks the caller passed still run. Unchanged for every
  * other principal.
+ *
+ * What the pause does not cover: anonymous FamilySearch calls carry no
+ * principal and never come through here (place lookups, public memory
+ * artifacts and story text, external-links search), so they stay under the
+ * process-wide budget only. And "per user" assumes FamilySearch rate-limits per
+ * token, which is UNVERIFIED: if its 429s are per IP address, every connector
+ * user shares one address and this pause protects nobody else.
  */
 function withUserPause(
   principal: Principal,
