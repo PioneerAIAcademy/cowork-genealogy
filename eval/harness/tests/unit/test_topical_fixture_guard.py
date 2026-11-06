@@ -36,8 +36,14 @@ def _run(tool_calls, builtin_tool_calls="omit"):
 
 
 def test_spawned_agent_with_zero_tool_calls_fails():
-    with pytest.raises(AssertionError, match="answered without reading"):
+    try:
         _run([], [_spawn("historical-context")])
+    except pytest.skip.Exception:
+        pytest.fail("guard skipped a spawned agent that read nothing")
+    except AssertionError as e:
+        assert "answered without reading" in str(e)
+    else:
+        pytest.fail("guard passed a spawned agent that read nothing")
 
 
 def test_spawned_agent_that_was_served_the_expected_fixture_passes():
