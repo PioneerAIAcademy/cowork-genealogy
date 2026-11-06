@@ -336,7 +336,7 @@ OWNED_DECLARATIONS = _guard.OWNED_DECLARATIONS
 OWNED_FIELDS = _guard.OWNED_FIELDS
 
 #: The multi-field claim map: `section -> (owning agent, claim fields, claim
-#: status)`, routed on a conflict's analytical product. Same discipline.
+#: statuses)`, routed on a conflict's analytical product. Same discipline.
 OWNED_CLAIMS = _guard.OWNED_CLAIMS
 
 #: The op-scoped map: `section -> owning agent`, routed on `op: "append"` only.
