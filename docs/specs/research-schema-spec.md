@@ -319,7 +319,7 @@ described under "Who actually writes a row" below.
 | `evaluations` | **the gps-mentor agent** | proof-conclusion, question-selection | Retire an entry by pointing `superseded_by` at its replacement; never delete. The owner is an agent, and the harness ownership check keys on the calling *skill's* name, so this row is not enforced there; the plugin hook routes the section to the gps-mentor agent instead, denying every other caller including the main thread |
 | `localities` | locality-guide | research-plan (+ the Research Viewer) | Mutable; never delete — a re-survey of the same place refreshes the existing `loc_` entry in place (there is no status field to supersede). Optional section — absent on projects that predate it. `search-records` does NOT read it (research-plan pre-translates the fact into `plan_item.rationale`) |
 | `warning_justifications` | (none — writer-tool only) | none: no tool returns it (`research_query` excludes it, `project_context` omits it) | Append-only; written by `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` as a side-effect of a justified write. Each entry carries `warning_id`, `justification`, `person_ids`, `tool`, `recorded_at`. |
-| `namesakes` | search-records (the owner: the plugin hook routes the section to it), with search-images and search-full-text as co-writers; `research_append` stamps `record_persona_ids` | `research_append` (the namesake cap and its §5.6 warning), `merge_tree_persons`, `materialize_facts` (the copy gate), `tree_edit` and `tree_correct` (the citation check) | Mutable (`name`, `place`, `time_period`, `record_ids`, `log_entry_ids`, `notes`); never delete. A row is never retired, and `research_append` refuses an update that sets `person_id` or `record_persona_ids` (Section 5.15). Optional section — absent until a namesake is recorded |
+| `namesakes` | search-records (the owner: the plugin hook routes the section to it), with search-images and search-full-text as co-writers; `research_append` stamps `record_persona_ids` and `birth_year`, and fills in `birth_year` on a row of a person a call links | `research_append` (the namesake cap and its §5.6 warning), `merge_tree_persons`, `materialize_facts` (the copy gate), `tree_edit` and `tree_correct` (the citation check) | Mutable (`name`, `place`, `time_period`, `record_ids`, `log_entry_ids`, `notes`); never delete. A row is never retired, and `research_append` refuses an update that sets `person_id`, `record_persona_ids` or `birth_year` (Section 5.15). Optional section — absent until a namesake is recorded |
 | `rejected_links` | person-evidence | any caller via `research_query` | Immutable except `reason`, which may be filled in later; `research_append` refuses an update that sets any other field (Section 5.14). Never delete — the whole point is that the record outlives the session that made it. Optional section — absent on projects that predate it. Sole owner: ruling a candidate link out is `person-evidence`'s judgement and no other skill produces it. **No skill body reads this section**: the re-link refusal is a `research_append` precondition, not a rule anyone has to remember (ADR-0011). It is queryable so an agent can *explain* a refusal, not so it can enforce one |
 | `hit_verdicts` | the evaluate-search-results agent (sole writer: the plugin hook routes the section to it); `research_append` rewrites `hit_id` to the stored form and folds a repeat append into an update | any caller via `research_query`; `merge_tree_persons` | Mutable (`verdict`, `new_vital_info`, `rationale`); never deleted, except that `merge_tree_persons` removes a collapsed person's row that agrees with its survivor's on the same hit. A row is never retired, and `research_append` refuses an update that sets any other field (Section 5.16). Optional section — absent until a hit is evaluated |
 
@@ -1209,8 +1209,9 @@ A **pool row** records instead a pool of people of the name, one of whom may be
 the subject, who cannot all be one person and of whom none is yet tied to the
 subject or ruled out. Its `record_ids` is empty, since listing a candidate who
 may be the subject would mark that record as not theirs, and its `notes` start
-`pool:` and name each candidate's record. The cap reads only that a row exists,
-so a pool row caps the person's untied links the same way.
+`pool:` and name each candidate's record. The cap reads only that a row exists and
+its `birth_year`, and a pool row lists no record to stamp a year from, so it caps
+the person's untied links the same way.
 **Optional section** (not in `required`): absent until a namesake is recorded.
 The `search-records` agent records a row when a search turns up such a person and
 it concludes he is not the subject, or a pool row, in its own `research_append`
@@ -1231,6 +1232,7 @@ measured by `packages/engine/mcp-server/dev/measure-namesake-cap.ts` §0).
 | `record_ids` | string[] | yes | The ids of the namesake's own records: a record id in the form assertions carry in `record_id`, a page's image id exactly as `image_transcribe` was given it (or its `ark`), or a full-text hit's `id`. Empty on a pool row |
 | `log_entry_ids` | string[] | no | `log_` references to the searches that found the namesake; each must name an existing log entry |
 | `record_persona_ids` | object | no | Tool-stamped, never the caller's: each listed record found in a sidecar of the row's `log_entry_ids`, mapped to the persona that search or read result names: its `primaryId`, or, where it has none, the person of its record whose ark is the listed id, a household member of a hit or read included. A record found in none has no key |
+| `birth_year` | integer | no | Tool-stamped, never the caller's: the earliest birth, christening or baptism year among the personas that lookup finds, absent when none states one. Stamped with `record_persona_ids`, and filled in on a row without one when a call links its person. The namesake cap's age exemption reads it (see below) |
 | `notes` | string or null | no | Free text |
 | `created` | string | yes | Tool-stamped ISO 8601 date |
 
@@ -1252,7 +1254,7 @@ as a result or as a person of a result's record, is stored in that sidecar's for
 as an assertion's is. A record found in no sidecar is left
 unstamped and the row is still written: unlike an assertion, whose persona is
 lost for good when its search staged no sidecar, a missing stamp costs a count,
-not an identity, because the cap reads only that a row exists. The first runs that write rows count, with
+not an identity: a row with no persona has no `birth_year`, so it caps every link as a row always did. The first runs that write rows count, with
 `dev/measure-namesake-cap.ts` §7, how many listed records were stamped, how many
 were not though their row cites such a search, and what a persona-keyed refusal
 would refuse and spare; item 10 is decided on those counts. A run whose engine
@@ -1268,6 +1270,19 @@ second. Ids no persona
 search can stamp, a page's image id (which every entry on that page shares) and
 a full-text hit's id, are counted on a line of their own, outside the stamped
 share, so a refusal never keys on an image id alone.
+
+**`birth_year` is what the age exemption reads** (Dallan, 2026-11-05; chesworthrm,
+2026-11-06). A row does not cap a link whose record is dated less than 12 years
+after it, when the record makes the persona an adult (`research-append-tool-spec.md`
+§5). The year comes from the persona the same lookup finds, never from
+`time_period`'s free text, and the earliest of several, which errs toward the cap.
+The stamp writes it with `record_persona_ids`; the fill in writes it alone, on each
+row without one of a person a call's `person_evidence` ops name, so a row written
+before the field existed gets one the first time its person is linked. A row
+listing only image ids or full-text hit ids (search-images, search-full-text), a
+pool row, and a row whose records no sidecar holds get no year and cap as before.
+Dallan's "use the tree person's date when a row can point to one" is deferred
+(chesworthrm, 2026-11-06): no field points a row at a tree person.
 
 **Why a section keyed on the tree person** (lead, 2026-10-13). The cap looks a
 row up by the link's `person_id`. A list on the question was rejected: questions

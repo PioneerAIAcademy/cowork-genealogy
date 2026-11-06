@@ -1005,11 +1005,14 @@ function linkGate(
   });
   if (cap === null || strong.some((e) => cap.verdicts.get(e.id)?.allowed === true)) return { refusal: null };
   const assertionOf = (id: string) => ((research?.assertions ?? []) as any[]).find((a) => a?.id === id);
+  // The rows that cap each link (the age exemption may lift some); a link the cap
+  // does not judge stands under all of them.
+  const cappingRows = (e: any) => cap.verdicts.get(e.id)?.rows ?? cap.rows;
   return {
-    refusal: namesakeCopyRefusal(personId, cap.rows, cap.verdicts, strong, cap.pairs),
+    refusal: namesakeCopyRefusal(personId, cappingRows(strong[0]), cap.verdicts, strong, cap.pairs),
     untied: strong,
     pairMember: cap.pairs.length > 0,
-    rowHolder: cap.rows.length > 0,
+    rowHolder: strong.some((e) => cappingRows(e).length > 0),
     partnerOpen:
       cap.pairs.length > 0 &&
       strong.some(

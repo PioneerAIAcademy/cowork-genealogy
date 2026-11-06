@@ -3338,10 +3338,12 @@ export function derivedNamesakePairs(tree: any, personId: string): NamesakePartn
   return out.sort((x, y) => x.personId.localeCompare(y.personId));
 }
 
+/** The facts that date a record. An office is held on a date, so a town record
+ *  whose only dated fact is its office is dated by it (#3363). */
 const PAIR_EVENT_TYPES: ReadonlySet<string> = new Set([
   "marriage", "death", "burial", "christening", "baptism", "census", "residence", "census_residence",
   "immigration", "probate", "naturalization", "birth_registration", "death_registration",
-  "marriage_intention", "event",
+  "marriage_intention", "event", "office",
 ]);
 const PAIR_BIRTH_TYPES: ReadonlySet<string> = new Set(["birth", "birth_date", "christening", "baptism"]);
 /** Facts that show a persona dead by the record's date: their death, burial or estate. */
@@ -3374,6 +3376,18 @@ export interface PairRecordFacts {
   death: number | null;
   /** The record shows its persona dead: a death, burial or estate of theirs. */
   dead: boolean;
+  /** The persona holds an office on the record, which only an adult does
+   *  (chesworthrm, 2026-11-06). */
+  office: boolean;
+  /** The year of the record's latest dated fact, any party and type: the year
+   *  the namesake age exemption reads. Never the source's date, never a year
+   *  read from a value (chesworthrm, 2026-11-06). */
+  dated: number | null;
+}
+
+/** An adult role, or an office: what the record says needs an adult. */
+function actsAsAdult(rf: PairRecordFacts): boolean {
+  return rf.role !== null && (PAIR_ADULT_ROLE.test(rf.role) || rf.office);
 }
 
 /** The assertions of `assertion`'s record, matched on the bare record id, and the
@@ -3388,9 +3402,10 @@ function pairRecordParties(research: any, assertion: any) {
 }
 
 /** What the linked record says about the persona `personId` is linked to: its
- *  role, its birth year (stated, or the record's year less a stated age), its
- *  death or burial year, and the record's own year (its latest event, else its
- *  latest birth, else the source's date). The persona is the linked assertion's
+ *  role, whether it holds an office, its birth year (stated, or the record's
+ *  year less a stated age), its death or burial year, the record's own year (its
+ *  latest event or office, else its latest birth, else the source's date), and
+ *  the year of its latest dated fact. The persona is the linked assertion's
  *  own; a two-party assertion speaks for two people, so for one the persona is
  *  the one `personId`'s one-party links on the record name most, else none. */
 export function pairRecordFacts(research: any, assertion: any, personId: string): PairRecordFacts {
@@ -3445,7 +3460,13 @@ export function pairRecordFacts(research: any, assertion: any, personId: string)
     if (LIFE_DEATH_FACTS.has(type(a)) && (death = yearIn(a)) !== null) break;
   }
   const dead = mine.some((a) => PAIR_POSTHUMOUS_TYPES.has(type(a)));
-  return { role: typeof role === "string" ? role.toLowerCase() : null, persona, year, birth, death, dead };
+  const office = mine.some((a) => type(a) === "office");
+  let dated: number | null = null;
+  for (const a of same) {
+    const y = yearOf(a?.date);
+    if (y !== null && (dated === null || y > dated)) dated = y;
+  }
+  return { role: typeof role === "string" ? role.toLowerCase() : null, persona, year, birth, death, dead, office, dated };
 }
 
 export interface PairLife {
@@ -3520,7 +3541,7 @@ function pairRuledOutBy(life: PairLife, rf: PairRecordFacts): PairTest[] {
   ) {
     out.push("lifespan");
   }
-  if (PAIR_ADULT_ROLE.test(rf.role) && rf.year !== null && life.birth !== null && rf.year - life.birth < PAIR_ADULT_AGE) {
+  if (actsAsAdult(rf) && rf.year !== null && life.birth !== null && rf.year - life.birth < PAIR_ADULT_AGE) {
     out.push("adult role");
   }
   return out;
@@ -3569,7 +3590,7 @@ export function pairJudgement(
       (rf.birth !== null && latest !== null && rf.birth > latest + PAIR_AGE_TOLERANCE) ||
       (rf.birth !== null && earliest !== null && rf.birth < earliest - PAIR_AGE_TOLERANCE) ||
       (rf.year !== null && earliest !== null && rf.year < earliest) ||
-      (rf.year !== null && earliest !== null && PAIR_ADULT_ROLE.test(rf.role) && rf.year - earliest < PAIR_ADULT_AGE)
+      (rf.year !== null && earliest !== null && actsAsAdult(rf) && rf.year - earliest < PAIR_ADULT_AGE)
     );
   };
   const { record, partyOf } = pairRecordParties(research, assertion);
@@ -3614,13 +3635,29 @@ export function pairJudgement(
 export type NamesakeTie =
   | { kind: "a"; link: string; relative: string; relation: TieRelation; crossRecord: boolean }
   | { kind: "b"; voucher: string; field: CapField; value: string }
-  | { kind: "pair"; partner: string; relation: PairRelation; test: PairTest };
+  | { kind: "pair"; partner: string; relation: PairRelation; test: PairTest }
+  | { kind: "age"; row: string; age: number; marker: string };
+
+/** A namesake under this age at the record's date cannot be its persona when
+ *  the record makes that persona an adult (Dallan, 2026-11-05). */
+export const NAMESAKE_MINOR_AGE = 12;
+
+/** What makes the record's persona an adult for the age exemption: a household
+ *  head's role (a numbered head too), or an office; `principal` alone is not one. */
+function adultMarker(rf: PairRecordFacts): string | null {
+  const role = rf.role === null ? null : rf.role.replace(/_\d+$/, "");
+  if (role !== null && HOUSEHOLD_HEADS.has(role)) return role;
+  return rf.office ? "office" : null;
+}
 
 export interface NamesakeVerdict {
   allowed: boolean;
   /** Every tie found; `crossRecord` marks a co-party on another record id of
    *  the same source. */
   ties: NamesakeTie[];
+  /** The person's rows that cap this link: every row but those the age
+   *  exemption lifts for its record. */
+  rows: any[];
   /** The link's source. */
   source: string;
   /** Why nothing ties the link, one clause each; empty when it is allowed. */
@@ -3654,9 +3691,17 @@ export interface NamesakeVerdicts {
  *  (`derivedNamesakePairs`) is judged too. A pair member's tie (a) or (b), row or
  *  no row, counts only when the record would not tie a partner as well, reading
  *  the partner's siblings among the partner's relatives, and with no row a link
- *  also stands when `pairJudgement` rules every partner out. A row
- *  holder still needs tie (a) or (b), since the pair tests say nothing about a
- *  stranger. */
+ *  also stands when `pairJudgement` rules every partner out.
+ *
+ *  A row does not cap a link whose record is dated less than
+ *  `NAMESAKE_MINOR_AGE` years after the row's `birth_year`, by the record's
+ *  latest dated fact, when the record makes the persona an adult
+ *  (`adultMarker`); except under `tiesOnly`. A link no row caps is judged as a
+ *  person with no row is: by the pair tests when the person has a namesake in
+ *  the tree, and otherwise it stands on the age ties. A link a row still caps
+ *  needs tie (a) or (b), since the pair tests say nothing about a stranger. A
+ *  row holder's link that only the exemption or the pair tests let stand
+ *  vouches for nothing. */
 export function namesakeVerdicts(
   personId: string,
   research: any,
@@ -3827,6 +3872,9 @@ export function namesakeVerdicts(
     pair: PairJudgement | null;
     /** The record parties the link speaks for. */
     speaking: Set<string>;
+    /** The rows that cap the link, and those the age exemption lifts. */
+    capping: any[];
+    exempt: Array<{ row: string; age: number; marker: string }>;
   }
   // With `only`, the links judged and every link that could vouch for one of
   // them, by an occupation or street address anywhere on its source; the rest
@@ -3945,13 +3993,26 @@ export function namesakeVerdicts(
       }
       fields.push({ field: k.field, value: k.value, vouchers, excluded, sameCall, sameNamed: shown });
     }
-    // The pair tests say nothing about a stranger, so a row holder is not judged by them.
+    // The age exemption: a row whose namesake was under NAMESAKE_MINOR_AGE at the
+    // record's latest dated fact, on a persona the record makes an adult, does not
+    // cap the link. Not under `tiesOnly`, where only ties (a) and (b) say whether
+    // the record ties a partner.
+    const capping: any[] = [];
+    const exempt: Pending["exempt"] = [];
+    const rf = rows.length > 0 && !opts.tiesOnly ? pairRecordFacts(research, a, personId) : null;
+    const marker = rf === null ? null : adultMarker(rf);
+    for (const r of rows) {
+      const age = rf?.dated != null && Number.isInteger(r.birth_year) ? rf.dated - r.birth_year : null;
+      if (marker !== null && age !== null && age < NAMESAKE_MINOR_AGE) exempt.push({ row: String(r.id), age, marker });
+      else capping.push(r);
+    }
+    // The pair tests say nothing about a stranger, so a link a row caps is not judged by them.
     const pair =
-      pairs.length > 0 && rows.length === 0 ? pairJudgement(personId, a, pairs, research, tree, opts.startingTree) : null;
-    pending.push({ e, source, sourceId, tieA: ties, reasons, fields, blocked, pair, speaking });
+      pairs.length > 0 && capping.length === 0 ? pairJudgement(personId, a, pairs, research, tree, opts.startingTree) : null;
+    pending.push({ e, source, sourceId, tieA: ties, reasons, fields, blocked, pair, speaking, capping, exempt });
   }
-  /** A link of a person with no row that the pair tests tie: the record fits
-   *  them and rules out every partner. */
+  /** A link no row caps that the pair tests tie: the record fits the person and
+   *  rules out every partner. */
   const pairStands = (j: Pending): boolean => j.pair !== null && j.pair.fits && j.pair.ties.length === pairs.length;
 
   // A pair member's tie counts only when the record would not tie a partner as
@@ -4002,9 +4063,12 @@ export function namesakeVerdicts(
 
   // Grounding: a voucher counts only when it is itself allowed, so the allowed
   // set grows from the links tie (a) holds, through grounded vouchers, until
-  // nothing changes.
+  // nothing changes. A row holder's link the pair tests or the age exemption let
+  // stand says only that the namesake is not its persona, so it seeds nothing.
   const allowedIds = new Set(
-    pending.filter((j) => (j.tieA.length > 0 && tiesCount(j)) || pairStands(j)).map((j) => String(j.e.id)),
+    pending
+      .filter((j) => (j.tieA.length > 0 && tiesCount(j)) || (rows.length === 0 && pairStands(j)))
+      .map((j) => String(j.e.id)),
   );
   for (let grew = true; grew; ) {
     grew = false;
@@ -4052,11 +4116,14 @@ export function namesakeVerdicts(
       j.blocked.add("pair");
     }
     if (pairStands(j)) for (const t of j.pair!.ties) ties.push({ kind: "pair", ...t });
+    // Rows, none capping, and no namesake in the tree: the exemption alone lets it stand.
+    if (j.capping.length === 0 && pairs.length === 0) for (const x of j.exempt) ties.push({ kind: "age", ...x });
     if (j.pair) reasons.unshift(...j.pair.reasons);
     const allowed = ties.length > 0;
     verdicts.set(j.e.id, {
       allowed,
       ties,
+      rows: j.capping,
       source: String(j.sourceId),
       reasons: allowed ? [] : reasons,
       blockedBy: allowed ? [] : [...j.blocked].sort(),
@@ -4145,11 +4212,12 @@ export function namesakeTieInvariants(
   const v = namesakeVerdicts(entry.person_id, research, tree, { startingPersonIds, derivedPairs: true, startingTree });
   const verdict = v?.verdicts.get(entry.id);
   if (!v || !verdict || verdict.allowed) return [];
-  return [namesakeRefusal(entry, v.rows, verdict, new Set(), v.pairs)];
+  return [namesakeRefusal(entry, verdict.rows, verdict, new Set(), v.pairs)];
 }
 
 /** The links one research_append call ASSERTS to a person with a namesake row
- *  or a namesake in the tree after the call, each with the cap's verdict: a link
+ *  or a namesake in the tree after the call, each with the cap's verdict, the
+ *  rows that cap it and the person's namesakes in the tree: a link
  *  live and probable or confident after the call whose pairing was not before,
  *  or whose confidence is above that pairing's strongest live link before the
  *  call (an append, a re-point, an un-supersede, a raise). Only those links are
@@ -4207,7 +4275,7 @@ export function assertedNamesakeVerdicts(
       startingTree: opts.startingTree,
     });
     if (!v) continue;
-    for (const [id, verdict] of v.verdicts) out.push({ entry: entryById.get(id), rows: v.rows, pairs: v.pairs, verdict });
+    for (const [id, verdict] of v.verdicts) out.push({ entry: entryById.get(id), rows: verdict.rows, pairs: v.pairs, verdict });
   }
   return out;
 }
@@ -4243,68 +4311,147 @@ export function factEvidenceParties(
 
 const isPersonaId = (v: unknown): v is string => typeof v === "string" && v !== "";
 
+function logIndex(research: any): Map<string, any> {
+  return new Map<string, any>(
+    (Array.isArray(research?.log) ? research.log : [])
+      .filter((e: any) => e && typeof e.id === "string")
+      .map((e: any) => [e.id, e]),
+  );
+}
+
+/** What the persona lookup of item 10 finds for one row in its own search and
+ *  read sidecars: each listed record id in the sidecar's form, the persona each
+ *  found record names (a search hit's `primaryId`, else the person whose ark is
+ *  the listed one), and those personas' own entries. */
+async function lookUpNamesakePersonas(
+  row: any,
+  logById: ReadonlyMap<string, any>,
+  readResults: (ref: string) => Promise<any[] | null>,
+): Promise<{ recordIds: unknown[]; stamp: Record<string, string>; personas: any[] }> {
+  const stamp: Record<string, string> = {};
+  const personas: any[] = [];
+  const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
+    if (typeof id !== "string") return id;
+    const bare = arkToBareId(id);
+    // A bare id is a record persona's.
+    const ark = toArk(id).startsWith("ark:/") ? toArk(id) : `ark:/61903/1:1:${bare}`;
+    // The form of a log that finds the record but names no persona for it; a
+    // later cited log may still name one.
+    let found: string | undefined;
+    for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
+      const entry = logById.get(logId);
+      if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
+      const results = (await readResults(entry.results_ref)) ?? [];
+      const hit = results.find((r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === bare);
+      let persona: unknown = hit?.primaryId;
+      let form: unknown = hit?.recordId;
+      let person: any = isPersonaId(persona)
+        ? (Array.isArray(hit?.gedcomx?.persons) ? hit.gedcomx.persons : []).find((p: any) => p?.id === persona)
+        : undefined;
+      if (!isPersonaId(persona)) {
+        // A record_read names its persona only among the record's persons, and a
+        // row may list another member of a hit's or a read's household.
+        const persons = results.flatMap((r) => (Array.isArray(r?.gedcomx?.persons) ? r.gedcomx.persons : []));
+        person = personaFor({ persons }, ark);
+        persona = person?.id;
+        form ??= person?.ark;
+      }
+      if (typeof form !== "string") continue;
+      if (isPersonaId(persona)) {
+        stamp[form] = persona;
+        if (person) personas.push(person);
+        return form;
+      }
+      found ??= form;
+    }
+    // Accepted unstamped, unlike #699's assertions: a row with no persona caps
+    // every link, so this loses a count and an age, not identity.
+    return found ?? id;
+  });
+  return { recordIds: await Promise.all(recordIds), stamp, personas };
+}
+
+/** The earliest birth year the personas state, or null. */
+function earliestPersonaBirthYear(personas: readonly any[]): number | null {
+  let out: number | null = null;
+  for (const p of personas) {
+    const y = anyBirthYear(p);
+    if (y !== null && (out === null || y < out)) out = y;
+  }
+  return out;
+}
+
 /** Item 10 of #3363 (chesworthrm, 2026-10-24): stamps `record_persona_ids` on
  *  each row the call appended, or updated through `record_ids` or
  *  `log_entry_ids`, from the row's own search and read sidecars, so the first
- *  runs can count what a persona-keyed refusal would catch. Overwrites whatever
- *  the caller supplied; an update cannot set the field (`updatableFields`). A
- *  found record id is stored in the sidecar's form, as an assertion's is. */
+ *  runs can count what a persona-keyed refusal would catch, and `birth_year`,
+ *  the earliest birth year those personas state, which the age exemption reads.
+ *  Overwrites whatever the caller supplied; an update cannot set either field
+ *  (`updatableFields`). A found record id is stored in the sidecar's form, as an
+ *  assertion's is. Returns the ids of the rows it stamped. */
 export async function stampNamesakePersonas(
   research: any,
   ops: ReadonlyArray<ResearchAppendOp>,
   applied: ReadonlyArray<AppliedOp>,
   readResults: (ref: string) => Promise<any[] | null>,
-): Promise<void> {
-  const logById = new Map<string, any>(
-    (Array.isArray(research?.log) ? research.log : [])
-      .filter((e: any) => e && typeof e.id === "string")
-      .map((e: any) => [e.id, e]),
-  );
+): Promise<Set<string>> {
+  const logById = logIndex(research);
   const rows = (Array.isArray(research?.namesakes) ? research.namesakes : []) as any[];
+  const stamped = new Set<string>();
   for (const a of applied) {
     if (a.section !== "namesakes" || a.noop) continue;
     const fields = (ops[a.opIndex] as any)?.fields;
     if (a.op === "update" && !("record_ids" in (fields ?? {})) && !("log_entry_ids" in (fields ?? {}))) continue;
     const row = rows.find((r) => r && r.id === a.entryId);
     if (!row) continue;
-    const stamp: Record<string, string> = {};
-    const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
-      if (typeof id !== "string") return id;
-      const bare = arkToBareId(id);
-      // A bare id is a record persona's.
-      const ark = toArk(id).startsWith("ark:/") ? toArk(id) : `ark:/61903/1:1:${bare}`;
-      // The form of a log that finds the record but names no persona for it; a
-      // later cited log may still name one.
-      let found: string | undefined;
-      for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
-        const entry = logById.get(logId);
-        if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
-        const results = (await readResults(entry.results_ref)) ?? [];
-        const hit = results.find((r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === bare);
-        let persona: unknown = hit?.primaryId;
-        let form: unknown = hit?.recordId;
-        if (!isPersonaId(persona)) {
-          // A record_read names its persona only among the record's persons, and a
-          // row may list another member of a hit's or a read's household.
-          const persons = results.flatMap((r) => (Array.isArray(r?.gedcomx?.persons) ? r.gedcomx.persons : []));
-          const person = personaFor({ persons }, ark);
-          persona = person?.id;
-          form ??= person?.ark;
-        }
-        if (typeof form !== "string") continue;
-        if (isPersonaId(persona)) {
-          stamp[form] = persona;
-          return form;
-        }
-        found ??= form;
-      }
-      // Accepted unstamped, unlike #699's assertions: the cap reads only that a row exists, so this loses a count, not identity.
-      return found ?? id;
-    });
-    row.record_ids = await Promise.all(recordIds);
+    const { recordIds, stamp, personas } = await lookUpNamesakePersonas(row, logById, readResults);
+    row.record_ids = recordIds;
     if (Object.keys(stamp).length > 0) row.record_persona_ids = stamp;
     else delete row.record_persona_ids;
+    const year = earliestPersonaBirthYear(personas);
+    if (year !== null) row.birth_year = year;
+    else delete row.birth_year;
+    stamped.add(row.id);
   }
+  return stamped;
+}
+
+/** The persons the call's applied person_evidence ops link, as they stand after it. */
+export function linkedPersonIds(research: any, applied: ReadonlyArray<AppliedByApplyOne>): string[] {
+  const ids = new Set(applied.filter((a) => a.section === "person_evidence" && !a.noop).map((a) => a.entryId));
+  if (ids.size === 0) return [];
+  const out = new Set<string>();
+  for (const e of (Array.isArray(research?.person_evidence) ? research.person_evidence : []) as any[]) {
+    if (e && ids.has(e.id) && typeof e.person_id === "string") out.add(e.person_id);
+  }
+  return [...out];
+}
+
+/** The fill in of #3363 (chesworthrm, 2026-11-06): each row of `personIds` with
+ *  no `birth_year` gets the year the persona lookup finds, and nothing else of
+ *  the row changes; a row it finds none for stays without one. Runs when a call
+ *  links the row's person, so a row written before the stamp read years gets
+ *  one. Rows in `skip` (just stamped) are left alone. Returns the ids it filled. */
+export async function fillNamesakeBirthYears(
+  research: any,
+  personIds: Iterable<string>,
+  readResults: (ref: string) => Promise<any[] | null>,
+  skip: ReadonlySet<string> = new Set(),
+): Promise<string[]> {
+  const persons = new Set(personIds);
+  const rows = ((Array.isArray(research?.namesakes) ? research.namesakes : []) as any[]).filter(
+    (r) => r && persons.has(r.person_id) && r.birth_year === undefined && !skip.has(r.id),
+  );
+  if (rows.length === 0) return [];
+  const logById = logIndex(research);
+  const filled: string[] = [];
+  for (const row of rows) {
+    const year = earliestPersonaBirthYear((await lookUpNamesakePersonas(row, logById, readResults)).personas);
+    if (year === null) continue;
+    row.birth_year = year;
+    filled.push(String(row.id));
+  }
+  return filled;
 }
 
 /** What the namesake warning lists for one person. */
@@ -4581,10 +4728,13 @@ export function namesakeCitationRefusals(
             : judgedStrong === undefined
               ? `its only link to '${c.personId}' rests on an assertion that records an absence, which ties nothing`
               : `its link '${judgedStrong.id}' to '${c.personId}' is not tied: ${(v?.verdicts.get(judgedStrong.id)?.reasons[0] ?? "nothing in the record ties it").replace(/\.$/, "")}`;
+        // The rows that cap the judged link; every row when no link is judged.
+        const capping = judgedStrong === undefined ? [] : (v?.verdicts.get(judgedStrong.id)?.rows ?? []);
+        const named = capping.length > 0 ? capping : own;
         findings.push({
           index: c.index,
           message:
-            `'${c.personId}' has a recorded namesake (${own.map((r) => `'${r.id}'`).join(", ")}), so a record goes ` +
+            `'${c.personId}' has a recorded namesake (${named.map((r: any) => `'${r.id}'`).join(", ")}), so a record goes ` +
             `onto '${c.personId}''s facts and names only when something in it ties it to '${c.personId}'. The ` +
             `${c.label} this op ${c.added ? "adds" : "changes"} cites ${ref} (research source '${src}'), and ${reason}. ` +
             `Nothing was written. Cite only records that tie to '${c.personId}', or hand the link to the ` +
@@ -4803,9 +4953,11 @@ export function mergeNamesakeRefusals(
             `'${d.T}' does not share in the tree.`;
         }
       }
-      const rows = d.rows.map((r) => `'${r.id}'`).join(", ");
+      // The rows of T that cap this link, which the age exemption may have narrowed.
+      const capping = verdict.rows.length > 0 ? verdict.rows : d.rows;
+      const rows = capping.map((r) => `'${r.id}'`).join(", ");
       lines.push(
-        `person_evidence '${id}' on '${d.G}' would stand under the namesake row${d.rows.length > 1 ? "s" : ""} ` +
+        `person_evidence '${id}' on '${d.G}' would stand under the namesake row${capping.length > 1 ? "s" : ""} ` +
           `${rows} of '${d.T}' after this merge: nothing in source '${verdict.source}' ties assertion ` +
           `'${e.assertion_id}' to '${d.T}'. ${namesakeReasonText(verdict)}${mark}`,
       );
@@ -11439,6 +11591,7 @@ export async function researchAppend(
           startingTree: prep.startingTree,
           applyOp,
           fmt,
+          readResults: sidecarResultsReader(readSidecar),
         });
         return fail(every.errors, every.hints);
       } catch {
@@ -11458,7 +11611,10 @@ export async function researchAppend(
     // in this same all-or-nothing write.
     const retire = retireRejectedLinks(applied, research, tree);
 
-    await stampNamesakePersonas(research, ops, applied, sidecarResultsReader(readSidecar));
+    // The rows' personas and birth years, before the namesake judgement reads them.
+    const readResults = sidecarResultsReader(readSidecar);
+    const stamped = await stampNamesakePersonas(research, ops, applied, readResults);
+    await fillNamesakeBirthYears(research, linkedPersonIds(research, applied), readResults, stamped);
 
     // When this call resolves the project's last open question, the minted
     // persons no edge connects to an imported person go, with the links that
@@ -11994,6 +12150,8 @@ async function everyOpFailure(c: {
   startingTree: SimplifiedGedcomX | null;
   applyOp: ApplyOp;
   fmt: (i: number, msg: string) => string;
+  /** The sidecar reader the namesake stamp and fill in use. */
+  readResults: (ref: string) => Promise<any[] | null>;
 }): Promise<{ errors: string[]; hints: ExampleHint[] }> {
   const { ops, first, before, fmt } = c;
   const failures: OpFailure[] = [];
@@ -12030,6 +12188,13 @@ async function everyOpFailure(c: {
   const hints = failures.map((f) => failedOpHint(ops[f.index], f.errors));
   let documentLines: string[] = [];
   if (applied.some((a) => !a.noop)) {
+    // The namesake stamp and fill in, as the success path runs them, on copies of
+    // the rows: they write in place, and the rows are still `before`'s.
+    if (Array.isArray(doc.namesakes)) {
+      doc = { ...doc, namesakes: doc.namesakes.map((r: any) => (r && typeof r === "object" ? { ...r } : r)) };
+    }
+    const stamped = await stampNamesakePersonas(doc, ops, applied, c.readResults);
+    await fillNamesakeBirthYears(doc, linkedPersonIds(doc, applied), c.readResults, stamped);
     const validation = await validateIntroduced(
       { research: before.research, tree: before.tree },
       { research: doc, tree: c.tree },

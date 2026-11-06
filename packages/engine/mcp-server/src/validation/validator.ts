@@ -891,7 +891,7 @@ export const RESEARCH_SHAPES = {
   ]),
   namesake: new Set([
     "id", "person_id", "name", "place", "time_period", "record_ids",
-    "log_entry_ids", "record_persona_ids", "notes", "created",
+    "log_entry_ids", "record_persona_ids", "birth_year", "notes", "created",
   ]),
   hit_verdict_entry: new Set([
     "id", "log_id", "hit_id", "person_id", "verdict", "new_vital_info",
@@ -2187,6 +2187,9 @@ function validateNamesakes(data: any, ids: ResearchIds, path: string, report: Va
           if (!listed.has(rid)) addError(report, sp, "keys a record not in record_ids");
         }
       }
+    }
+    if ("birth_year" in ns && !Number.isInteger(ns.birth_year)) {
+      addError(report, np, "birth_year must be an integer");
     }
     checkIsoDate(ns, "created", np, report);
   }

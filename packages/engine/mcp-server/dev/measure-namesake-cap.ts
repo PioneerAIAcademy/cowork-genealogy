@@ -1070,7 +1070,15 @@ function section8(states: FinalState[]): void {
               startingTree: startTree,
             })?.verdicts.get(id);
             if (VERBOSE && v?.allowed && !verdict.allowed && variant === "as committed") {
-              const ties = v.ties.map((t) => (t.kind === "a" ? `a:${t.relative}(${t.relation})` : t.kind === "b" ? `b:${t.field}` : `pair:${t.test}`));
+              const ties = v.ties.map((t) =>
+                t.kind === "a"
+                  ? `a:${t.relative}(${t.relation})`
+                  : t.kind === "b"
+                    ? `b:${t.field}`
+                    : t.kind === "age"
+                      ? `age:${t.row}(${t.age})`
+                      : `pair:${t.test}`,
+              );
               console.log(`    mix-up tied: ${s.slug} ${s.run} ${id} ${p} -> ${q} by ${ties.join(", ")}`);
             }
             return v?.allowed === true;

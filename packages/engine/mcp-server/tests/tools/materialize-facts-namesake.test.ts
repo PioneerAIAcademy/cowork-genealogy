@@ -157,6 +157,21 @@ describe("materialize_facts under a recorded namesake (#3363 PR 1d)", () => {
       expect(r.errors[0]).toContain("If this persona is someone else, omit personId");
     });
 
+    it("M1b names only the rows that still cap the link, and copies once the age exemption lifts them all", async () => {
+      // The census is dated 1852 by its latest dated fact, and the persona is its head.
+      const lifted = { ...ROW, time_period: "born 1845", birth_year: 1845 };
+      const capping = { ...ROW, id: "ns_002", time_period: "born 1800", birth_year: 1800 };
+      const t = tree([person(W, "Mary", "Smith", "Female")], [couple(W)]);
+      await setup({ ...research([link("pe_1", "a_001", P)]), namesakes: [lifted, capping] }, t);
+      const r = await materializeFacts({ projectPath: dir, personId: P, recordId: "REC-CEN", recordRole: "head" });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/^'KWCB-111' has a recorded namesake \('ns_002'\), so a record's facts reach/);
+      await setup({ ...research([link("pe_1", "a_001", P)]), namesakes: [lifted] }, t);
+      const copied = await materializeFacts({ projectPath: dir, personId: P, recordId: "REC-CEN", recordRole: "head" });
+      expect(copied.ok, JSON.stringify(copied)).toBe(true);
+    });
+
     it("M5 copies through the same link when no namesake is recorded", async () => {
       await setup(research([link("pe_1", "a_010", P)], { row: false }), tree([person(W, "Mary", "Smith", "Female")], [couple(W)]));
       const r = await materializeFacts({ projectPath: dir, personId: P, recordId: "REC-VOT", recordRole: "principal" });

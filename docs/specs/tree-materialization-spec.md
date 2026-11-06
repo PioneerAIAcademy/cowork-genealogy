@@ -332,13 +332,18 @@ qualify.
   or lowers it to 'speculative' naming the namesake. When the project holds no
   such tie yet, person-evidence lowers it now: a party still to extract or a
   record still to find is not a tie, and the link can be raised once the tie
-  is made.", followed by the arm's own suffix. When `personId` is omitted, a person the lookup would
+  is made.", followed by the arm's own suffix. It names the rows that still cap
+  its first link: a row the age exemption (research-append-tool-spec §5) lifts
+  for that record is not named, and a link no row caps, which only a namesake in
+  the tree can still refuse, gets the next item's refusal. When `personId` is omitted, a person the lookup would
   otherwise reuse is skipped, and the op takes the next eligible person or
   mints one, with a warning: "persona '<role>' of record '<record>' would
   have reused '<id>', but '<id>' has a recorded namesake and its link '<pe>'
   from this record is not tied; '<new>' was created instead. Route '<pe>' to
   person-evidence to tie or lower it.", or "'<other>' was used instead" when
-  the lookup takes another eligible person. Measured at `20ad24872` by
+  the lookup takes another eligible person. It reads "a recorded namesake and a
+  namesake in the tree" when a pair stands beside a row that still caps one of
+  the links, and "a namesake in the tree" when only a pair does. Measured at `20ad24872` by
   `dev/measure-namesake-cap.ts` §5 over the committed runs' persona ops, on
   each run's final state: with rows on every person holding a live strong
   link, 162 of the 967 explicit ops onto a row holder admitted without the row
