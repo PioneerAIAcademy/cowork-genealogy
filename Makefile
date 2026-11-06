@@ -31,7 +31,7 @@ ENGINE_BUILD  := $(ENGINE_DIR)/build/index.js
 ENGINE_DEPS   := $(ENGINE_DIR)/node_modules/.make-installed
 JS_DEPS       := node_modules/.make-installed
 
-# Root pnpm workspace (web, electron, viewer-ui, schema, eval/app). Reinstall when the
+# Root pnpm workspace (web, electron, mcp-viewer, viewer-ui, schema, eval/app). Reinstall when the
 # root manifest, the lockfile, the member list, or ANY member's manifest
 # changes. A member's package.json is listed because it carries that member's
 # lifecycle scripts, which the root two do not see: #1271 added a `postinstall`
@@ -316,7 +316,7 @@ test: ## Quick loop: JS workspace + server tests (a subset of test-all)
 	$(MAKE) server-test
 
 .PHONY: test-js
-test-js: $(JS_DEPS) ## JS workspace tests — web, electron, viewer-ui, schema, eval/app (turbo)
+test-js: $(JS_DEPS) ## JS workspace tests — web, electron, mcp-viewer, viewer-ui, schema, eval/app (turbo)
 	pnpm test
 
 .PHONY: server-test

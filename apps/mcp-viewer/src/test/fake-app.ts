@@ -64,7 +64,7 @@ export class FakeApp implements AppLike {
     })
   )
 
-  openLink = vi.fn(async (_params: { url: string }): Promise<{ isError?: boolean }> => ({}))
+  openLink = vi.fn(async (_params: { url: string }, _options?: { timeout?: number }): Promise<{ isError?: boolean }> => ({}))
 
   requestDisplayMode = vi.fn(async ({ mode }: { mode: DisplayMode }): Promise<{ mode: DisplayMode }> => ({ mode }))
 

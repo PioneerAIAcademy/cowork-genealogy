@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { PROJECT_META_KEY, type ToolInput } from './contract'
+import { TOOL_CALL_TIMEOUT_MS } from './hosts/app-host'
 import type { ToolResultEvent } from './hosts/host'
 import { createCardLoader, RESULT_WAIT_MS } from './load'
 import { LINK_PROBE_URL } from './probes'
@@ -524,7 +525,7 @@ describe('the probes', () => {
     const { session } = await connected(app)
     await session.runLinkProbe()
 
-    expect(app.openLink).toHaveBeenCalledWith({ url: LINK_PROBE_URL })
+    expect(app.openLink).toHaveBeenCalledWith({ url: LINK_PROBE_URL }, { timeout: TOOL_CALL_TIMEOUT_MS })
     expect(session.getState().linkProbe).toEqual({ status: 'answered', ms: 1_500 })
     expect(reportText(session.getState())).toContain('result: the host answered in 1500 ms')
   })
@@ -536,7 +537,7 @@ describe('the probes', () => {
     await session.runLinkProbe()
 
     expect(session.getState().linkProbe).toMatchObject({ status: 'refused', message: expect.any(String) })
-    expect(reportText(session.getState())).toContain('result: refused after')
+    expect(reportText(session.getState())).toMatch(/result: refused after \d+ ms: /)
   })
 
   it('the image probe falls back to images/probe.jpg and reports a refusal', async () => {

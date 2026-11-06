@@ -1,7 +1,7 @@
-// What the request log may say about a JSON-RPC exchange. Client-supplied names
-// are logged only when they are ones this server knows, so a path or token sent
-// in their place never lands in the log. clientInfo and the declared extensions
-// are what M0 is here to record.
+// What the request log may say about a JSON-RPC exchange. Method and tool names are
+// logged only when this server knows them or they have a method's shape. clientInfo,
+// the declared extensions and the user agent are client text, logged as sent, because
+// they are what M0 is here to record. Only a caller holding the secret reaches them.
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
 import type { JSONRPCMessage } from "@modelcontextprotocol/sdk/types.js";
 import { READ_PROJECT_VIEW, SHOW_PROJECT } from "./tools.js";
@@ -20,7 +20,7 @@ const KNOWN_METHODS = new Set([
 ]);
 const KNOWN_TOOLS = new Set([SHOW_PROJECT, READ_PROJECT_VIEW]);
 /** An unknown method worth naming: M0 needs to see what a host tries. Letters and one
- *  slash, so it cannot carry a path with a leading slash, a secret or a token. */
+ *  slash, so it cannot carry a path with a leading slash or the hex secret. */
 const METHOD_SHAPE = /^[a-z]+\/[a-zA-Z]{1,40}$/;
 const VERSION_SHAPE = /^\d{4}-\d{2}-\d{2}$/;
 const USER_AGENT_SHAPE = /^[\w .,;:()/+-]{1,120}$/;

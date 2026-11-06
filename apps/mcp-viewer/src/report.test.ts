@@ -116,6 +116,11 @@ describe('the report text', () => {
     expect(reportLine(text, 'first result keys')).toBe('first result keys: content, _meta')
   })
 
+  it('says when the link probe has not run, and while it waits', () => {
+    expect(reportText(state({ linkProbe: null }))).toContain('Link probe\n  not run')
+    expect(reportText(state({ linkProbe: { status: 'asking' } }))).toContain('result: waiting for the host')
+  })
+
   it('never prints a URL, because the block goes into a public doc', () => {
     const text = reportText(
       state({

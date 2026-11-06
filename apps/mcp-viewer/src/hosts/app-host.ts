@@ -16,7 +16,7 @@ export const APP_CAPABILITIES: McpUiAppCapabilities = {
   availableDisplayModes: ['inline', 'fullscreen']
 }
 
-/** The clock runs while a person reads the host's approval prompt, so the SDK's 60 seconds is too short. */
+/** The clock runs while a person reads the host's prompt, so the SDK's 60 seconds is too short. */
 export const TOOL_CALL_TIMEOUT_MS = 300_000
 
 /** The slice of ext-apps' `App` this page uses. It has no sendMessage: a card never posts. */
@@ -33,7 +33,7 @@ export interface AppLike {
     params: { name: string; arguments?: Record<string, unknown> },
     options?: { timeout?: number }
   ): Promise<CallToolResult>
-  openLink(params: { url: string }): Promise<{ isError?: boolean }>
+  openLink(params: { url: string }, options?: { timeout?: number }): Promise<{ isError?: boolean }>
   requestDisplayMode(params: { mode: DisplayMode }): Promise<{ mode: DisplayMode }>
 }
 
@@ -71,7 +71,7 @@ export function createAppHost(app: AppLike): Host {
     async openLink(url) {
       let answer: { isError?: boolean }
       try {
-        answer = await app.openLink({ url })
+        answer = await app.openLink({ url }, { timeout: TOOL_CALL_TIMEOUT_MS })
       } catch (err) {
         throw toToolCallError(err)
       }

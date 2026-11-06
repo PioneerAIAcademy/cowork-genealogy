@@ -10,7 +10,7 @@ one is filled.
 ## Run sheet
 
 Work top to bottom on the Mac that holds the project folders, from the root of a
-checkout of `mcp-app-viewer-m0`. Terminal 1 holds the server, terminal 2 everything
+checkout of `main`. Terminal 1 holds the server, terminal 2 everything
 else. A `text` block is what you type in the Cowork task. **New task** means exactly
 that: an earlier result in the same task spoils the next probe. Each step names the
 record blocks it fills.
@@ -161,9 +161,9 @@ Open every task on `~/mcp-probe/mcandrew`, with the connector on.
    grep -c 'resources/read' ~/mcp-probe/server.log
    ```
 
-   The client's declared extensions are stamped when the connector connects, not when
-   the task runs. A tool call arrives with no `initialize`, after a harmless
-   `server/discover` 400.
+   `Anthropic/ClaudeAI` connects when the connector does. Each conversation's
+   `claude-code` client connects about 1.5 s before its first tool call, after a
+   harmless `server/discover` 400.
 
    ```
    grep '"initialize"' ~/mcp-probe/server.log
@@ -213,9 +213,9 @@ Open every task on `~/mcp-probe/mcandrew`, with the connector on.
     |---|---|
     | First call: CONTENT only | `content` reaches the model, as the plan's "Result shape" needs. |
     | First call: none | The model gets no `content`, so the one line never arrives. The plan's result shape fails. |
-    | Second call: STRUCTURED, no CONTENT | `structuredContent` replaces `content`, as the plan says. `show_project` keeps omitting it. |
+    | Second call: STRUCTURED, no CONTENT | `structuredContent` replaces `content`. `show_project` keeps omitting it. |
     | Second call: STRUCTURED and CONTENT | The host passes both. `show_project` keeps omitting it, since anything there reaches the model. |
-    | Second call: CONTENT, no STRUCTURED | The host gives the model `content` only. The plan's reason for omitting it is wrong, and the omission is harmless. |
+    | Second call: CONTENT, no STRUCTURED | The host gives the model `content` only, and the omission is harmless. |
     | Either call: META | `_meta` reaches the model, so every card would put the whole project in its context. The result shape has to change before M1. |
 
     Fills **What the model receives**.
@@ -297,16 +297,16 @@ Open every task on `~/mcp-probe/mcandrew`, with the connector on.
     **`AskUserQuestion`**.
 
 20. **Variant plugin.** It carries only the "where the project stands" line for M0.
-    The plugin and the `.mcpb` are a pair. If the installed extension predates this
-    branch, also install `releases/genealogy-mcp.mcpb`, built by `make mcpb`, by the
+    The plugin and the `.mcpb` are a pair. If the installed extension predates the
+    viewer, also install `releases/genealogy-mcp.mcpb`, built by `make mcpb`, by the
     click-path `make cowork-install` prints: Claude Desktop → Settings → Extensions →
     Advanced Settings → Install extension.
 
     1. Make the branch once, in its own checkout. If it exists, rebase it onto
-       `mcp-app-viewer-m0` instead.
+       `main` instead.
 
        ```
-       git worktree add ../mcp-app-router-variant -b mcp-app-router-variant mcp-app-viewer-m0
+       git worktree add ../mcp-app-router-variant -b mcp-app-router-variant main
        cd ../mcp-app-router-variant
        ```
 

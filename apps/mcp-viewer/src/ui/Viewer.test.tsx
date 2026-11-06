@@ -43,6 +43,7 @@ describe('the hello card', () => {
     expect(report()).not.toContain('project:')
     expect(screen.queryByRole('button', { name: /Read/ })).toBeNull()
     expect(screen.queryByRole('button', { name: 'Load an image' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Open a link' })).toBeNull()
   })
 
   it('an error result shows its text', async () => {
@@ -111,6 +112,16 @@ describe('the open button', () => {
 })
 
 describe('the probe buttons', () => {
+  it('Open a link asks the host once and reports its answer', async () => {
+    const { app } = await mounted()
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Open a link' }))
+    })
+
+    expect(app.openLink).toHaveBeenCalledTimes(1)
+    expect(report()).toMatch(/result: the host answered in \d+ ms/)
+  })
+
   it('each size button makes one hidden read and reports it', async () => {
     const { app } = await mounted()
     for (const [name, pad] of [

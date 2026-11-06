@@ -91,6 +91,9 @@ locked-out audience.
   `packages/engine/mcp-server/build/`. The `.mcpb` is built from this.
 - `packages/engine/plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
   no compilation step.
+- `apps/mcp-viewer/` — the MCP App page: research cards drawn inside Claude. Its thin
+  server is `packages/engine/mcp-server/viewer/`, which ships in no artifact
+  (`docs/plan/mcp-app-viewer.md`).
 - `small-and-simple/` — single-purpose functions (a few FamilySearch calls and
   an LLM call each) for FamilySearch to run inside its own Node server.
   Independent of everything else here: own `package.json` and lockfile, imports

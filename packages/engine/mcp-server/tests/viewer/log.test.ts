@@ -30,6 +30,22 @@ describe("the request log", () => {
     expect(list).not.toHaveProperty("tool");
   });
 
+  it("logs a request's protocol version and user agent on its line", async () => {
+    const viewer = await startViewer(root());
+    await fetch(`${viewer.origin}/${SECRET}/mcp`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json, text/event-stream",
+        "MCP-Protocol-Version": "2025-11-25",
+        "User-Agent": "Claude-User",
+      },
+      body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "tools/list" }),
+    });
+    const [line] = await viewer.logged(1);
+    expect(line).toMatchObject({ method: "tools/list", protocolVersion: "2025-11-25", userAgent: "Claude-User" });
+  });
+
   it("logs a 404 as only that, whichever path or token it was", async () => {
     const viewer = await startViewer(root());
     await fetch(`${viewer.origin}/some/secret/looking/path`);
@@ -122,7 +138,7 @@ describe("describeRpc", () => {
 
   it("names an unknown method only when it has a method's shape", () => {
     expect(describeRpc({ method: "server/discover" })).toEqual({ method: "other", name: "server/discover" });
-    for (const method of ["/Users/x", "a/b/c", "server/abc123", "x".repeat(60), "bare"]) {
+    for (const method of ["/Users/x", "a/b/c", "server/abc123", `server/${"a".repeat(41)}`, "bare"]) {
       expect(describeRpc({ method })).toEqual({ method: "other" });
     }
   });

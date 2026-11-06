@@ -207,7 +207,8 @@ and the case file cannot disagree.
   - One connector is one URL, so it reaches one machine's folders.
   - `--root` is realpath'd once at startup. Every call realpaths its project
     folder, refuses on any error, refuses unless `isInsideProject(rootReal, real)`
-    holds, and passes `real` on to the store and into image tokens.
+    holds, and passes `real` on to the store. Image tokens carry the path relative to
+    `--root`.
 - **Project resolution** (both tools, same rule): `projectPath` is optional. An
   absolute path is used as given (then contained). A bare folder name is a folder
   under `--root`. Omitted: `--root` itself if it holds `research.json`; otherwise
@@ -507,14 +508,14 @@ before pushing, with no tunnel and no connector.
   `tests/viewer/` on a few named states.
 - **The demo:** a fresh project the lead runs in Cowork through the
   `Genealogy Research` connector, so its documents and images sit in Postgres and
-  MinIO. A page is saved and attached to its record only when the research reads a browsed
-  page: search-images, then `image_transcribe` with `projectPath`, then
-  record-structurer, whose `extraction_append` writes the source's `image_filename`
-  and `transcription`. An indexed record never gets a page, and asking for a
-  transcription afterwards saves the image without attaching it (and the sweep
-  removes uncited images after 24 hours). So the demo's objective is chosen so that
-  a deciding record comes from a browse-only collection, while others come from
-  indexed searches. Before recording, the lead asks for a second opinion naming the
+  MinIO. A page is saved and attached to its record when the research reads it with
+  `image_transcribe` and `projectPath`. A browsed page goes through record-structurer,
+  whose `extraction_append` writes the source's `image_filename` and `transcription`. A
+  held indexed record's page attaches through `extraction_append`'s
+  `attachWaitingPages`. A record with no `image_ark` gets no page, and the sweep removes
+  uncited images after 24 hours. So the demo's objective is chosen so that a deciding
+  record has a page the research read, while others come from indexed searches. Before
+  recording, the lead asks for a second opinion naming the
   proof, because the reviewer runs only when asked.
 
 ## Milestones
@@ -525,11 +526,11 @@ show only on the connector surface.
 
 ### Order
 
-1. Sit with the lead and remote-server, and fill the five answers that gate the fold
-   (Decision 8).
-2. Put a card on an OAuth connector, with `dev/probe-connector-server.ts`, and read what
-   the door's refusals do there. remote-server owns that file, so it gets the stub page
-   first.
+1. Sit with the lead and remote-server, and fill the answers that gate the fold
+   (Decision 8). `projectPath` needs a `/proj_` value, so it waits for the next step.
+2. Put a card on an OAuth connector, with `dev/probe-connector-server.ts`, and read
+   `projectPath` and what the door's refusals do there. remote-server owns that file, so
+   it gets the stub page first.
 3. Fold a skeleton into the tool server once issue #3991 lands.
 4. Build the demo scope (M1, M2 and M3).
 5. Merge the router lines under issue #4297, with one paid `research` eval run, before
@@ -662,7 +663,7 @@ Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
 ### M2: The other step cards (before the demo)
 
 Plan, link (with the identity question side by side when it asks one), conflict,
-hypothesis, assess. The router gains its remaining lines, or under
+hypothesis, assess. The router gains its lines, or under
 Decision 3's fallback only conflict, hypothesis and the conditional link line, and
 the report line.
 
@@ -684,7 +685,7 @@ and its page image with transcription and findings, open in the pane.
   card with its recorded doubt → open the case file → the evidence grid → click an
   indexed record's column → the search that returned it, in the pane → click the
   browsed record's column → its page image beside the transcription → Compare with
-  FamilySearch. Light and dark. Then a live run with the router lines calling the three
+  FamilySearch. Light and dark. Then a live run with the router lines calling the step
   cards and offering named next steps at the forks.
 - A short screen recording of the demo script.
 
@@ -730,7 +731,8 @@ The two tools and the page move onto the tool server, behind the door.
   on a valid token.
 - **Reading:** `viewer/project.ts` stays out of `src/`: it imports `node:fs`, which
   the no-fs lint forbids. The tools read through `ProjectStore` by `/proj_` id. A call
-  that names no project gets the door's refusal, and the tool descriptions say so in
+  that names no project gets a tool error naming `project_list`, and the tool
+  descriptions say so in
   place of the `--root` rule.
 - **The page:** the tools Dockerfile gains a pnpm stage that builds it. It sits beside
   `build/` in the image, not in `config/`, so the `.mcpb` does not carry it. The tool
