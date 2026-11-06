@@ -16,7 +16,7 @@ description: >-
   page-by-page (use search-images), or to scope a new project (use
   question-selection).
 model: claude-haiku-5-5
-effort: low
+effort: medium
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
