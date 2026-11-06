@@ -1893,7 +1893,7 @@ _COMPILED_TOOLS: dict[str, tuple[str, str]] = {
     "build_external_search_url": ("build-external-search-url.js", "buildExternalSearchUrlTool"),
     "sidecar_read": ("sidecar-read.js", "sidecarRead"),
     "get_name_variants": ("name-variants.js", "getNameVariants"),
-    # Takes no input: called as `projectList(LOCAL)` (`_COMPILED_TOOLS_WITHOUT_INPUT`).
+    # Takes no input: called as `projectList()` (`_COMPILED_TOOLS_WITHOUT_INPUT`).
     "project_list": ("project-list.js", "projectList"),
 }
 
@@ -1911,9 +1911,9 @@ _OPTIONAL_PROJECT_PATH_TOOLS: frozenset[str] = frozenset({"build_external_search
 #: handler script below is built from a Python f-string, no typechecker catches
 #: the mismatch. A tool missing from this set calls with one argument and its
 #: `principal` arrives `undefined`.
-_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset({"project_context", "project_list"})
+_COMPILED_TOOLS_WITH_PRINCIPAL: frozenset[str] = frozenset({"project_context"})
 
-#: Compiled tools that take no input, so the principal is their only argument.
+#: Compiled tools that take no input, so a principal would be their only argument.
 _COMPILED_TOOLS_WITHOUT_INPUT: frozenset[str] = frozenset({"project_list"})
 
 #: Extra JS arguments appended after `input` (and LOCAL) for a compiled tool.
@@ -2470,7 +2470,7 @@ def _make_compiled_tool_handler(
             )
             call_args = "input, LOCAL" if takes_principal else "input"
             if tool_name in _COMPILED_TOOLS_WITHOUT_INPUT:
-                call_args = "LOCAL"
+                call_args = "LOCAL" if takes_principal else ""
             if tool_name in _COMPILED_TOOL_EXTRA_ARGS:
                 call_args += ", " + _COMPILED_TOOL_EXTRA_ARGS[tool_name]
 

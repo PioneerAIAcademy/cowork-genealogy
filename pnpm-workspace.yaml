@@ -21,4 +21,5 @@ packages:
   - '!packages/engine/**'    # engine is npm-managed, not a pnpm member
   - apps/web
   - apps/electron
+  - apps/mcp-viewer
   - eval/app

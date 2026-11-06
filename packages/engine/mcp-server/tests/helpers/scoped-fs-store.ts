@@ -21,7 +21,8 @@ export const SCOPED_ANCHOR = "/project";
  * ids land in two directories under `root` and a request that names no id
  * reaches nothing.
  *
- * The anchor `/project` maps to `join(root, projectId)`; any other
+ * The anchor (`/project` unless a connector's own path is passed) maps to
+ * `join(root, projectId)`; any other
  * `projectPath` maps to a path under `root/__missing__` that nothing creates,
  * so `classifyProject` answers `missing_dir` exactly as the Pg store does for
  * a wrong path. Writes off the anchor throw the Pg store's message instead of
@@ -30,15 +31,15 @@ export const SCOPED_ANCHOR = "/project";
  */
 export class ScopedFsStore implements ProjectStore {
   private readonly inner = new FsProjectStore();
-  readonly anchorPath = SCOPED_ANCHOR;
 
   constructor(
     private readonly root: string,
     readonly projectId: string,
+    readonly anchorPath: string = SCOPED_ANCHOR,
   ) {}
 
   private isAnchor(projectPath: unknown): boolean {
-    return projectPath === SCOPED_ANCHOR;
+    return projectPath === this.anchorPath;
   }
 
   private map(projectPath: string): string {
@@ -51,7 +52,7 @@ export class ScopedFsStore implements ProjectStore {
       throw new Error("projectPath is required");
     }
     if (!this.isAnchor(projectPath)) {
-      throw new Error(`projectPath '${String(projectPath)}' is not this store's project (${SCOPED_ANCHOR})`);
+      throw new Error(`projectPath '${String(projectPath)}' is not this store's project (${this.anchorPath})`);
     }
   }
 
@@ -116,6 +117,6 @@ export class ScopedFsStore implements ProjectStore {
   }
 
   async listProjects(): Promise<ProjectListing> {
-    return { mode: "hosted", projectPaths: [SCOPED_ANCHOR] };
+    return { mode: "hosted", projectPaths: [this.anchorPath] };
   }
 }

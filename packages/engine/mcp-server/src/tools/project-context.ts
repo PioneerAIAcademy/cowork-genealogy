@@ -233,8 +233,6 @@ export type ProjectContextResult =
       unregisteredDisagreementCount: number;
       /** The files the user uploaded through the web tier. Absent when there are none. */
       uploads?: ProjectContextUpload[];
-      /** The project's viewer page, when the server knows its public URL. */
-      projectUrl?: string;
       /** The project's upload page, when uploads are on. */
       uploadUrl?: string;
     }
@@ -567,9 +565,9 @@ export const projectContextSchema = {
     "record); the writer tools handle every mechanical lookup themselves. Also " +
     "returns buildId, the engine build (version+date.sha) — quote it when reporting " +
     "a problem. uploads [{name, uploaded, hasText}] (absent when none) lists the files the " +
-    "user uploaded, newest first; hasText says a text layer exists. projectUrl, when present, " +
-    "is the project's page in the web app, and uploadUrl the page where the user uploads a " +
-    "file; give the user uploadUrl when they want to add a document. Writes nothing.",
+    "user uploaded, newest first; hasText says a text layer exists. uploadUrl, when present, " +
+    "is the page where the user uploads a file; give it to the user when they want to add a " +
+    "document. Writes nothing.",
   inputSchema: {
     type: "object" as const,
     properties: {
