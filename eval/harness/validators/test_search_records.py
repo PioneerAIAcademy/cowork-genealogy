@@ -773,6 +773,7 @@ _TOPICAL_FIXTURE_BY_TEST_ID = {
     "ut_search_records_d01": "wiki-read-united-states-census",
     "ut_search_records_d02": "wiki-read-united-states-census",
     "ut_search_records_h4k": "wiki-read-united-states-census",
+    "ut_search_records_t9p": "wiki-read-united-states-census",
     "ut_search_records_nickname_bitsie": "wiki-read-united-states-census",
     "ut_search_records_nickname_bitsie_in_record": "wiki-read-united-states-census",
 }

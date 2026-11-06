@@ -1,0 +1,59 @@
+{
+  "test": {
+    "id": "ut_research_plan_q7m",
+    "skill": "research-plan",
+    "name": "Offer to start executing, even when the message asks to execute",
+    "type": "positive",
+    "description": "The user's message combines a plan request with an execute/continue phrase in the same turn ('...and go ahead and start executing it as soon as it's ready... I want this to be exhaustive'). Under step mode (docs/plan/research-step-mode.md, Phase 2) research-plan writes the plan and ends by offering to start the searches; the router runs the search step and the host's 'Keep going' carries the researcher's go-ahead. It must not hand execution back as already authorized. Originally mined from issue #1319, when the opposite was the rule; flipped in PR #4276. Since research-plan became an agent (issue #2116) it executes nothing itself, and a request that belongs to another agent is handed back, never spawned.",
+    "tags": [
+      "planning",
+      "control-flow",
+      "continuation",
+      "from-cowork",
+      "plan-continue-authorized-in-message",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Create the research plan for q_001 -- who were Bridget's other children with John Doyle -- and go ahead and start executing it as soon as it's ready. I want this to be exhaustive, so don't stop to check in with me first.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "plan-continue-authorized-in-message"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "place-search-all-schuylkill",
+    "place-population-schuylkill",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "external-links-search-schuylkill",
+    "wiki-search-marriage-records",
+    "wiki-search-pennsylvania-records",
+    "wiki-search-pennsylvania-probate",
+    "wiki-place-page-pennsylvania-research-tips",
+    "wiki-place-page-pennsylvania-online-records",
+    "volume-search-schuylkill",
+    "collections-search-us-national",
+    "image-search-any",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
+  ],
+  "judge_context": [
+    "GENERAL RULE UNDER TEST: under step mode the plan step ends by offering the next step, even when the invoking message asks for the plan to be executed too. This is not specific to Bridget Halloran or this question -- the same rule applies to any 'plan AND execute' request.",
+    "On the direct arm the research-plan agent cannot run a search itself: it executes nothing and hands execution back to its caller. Do not grade whether search-records or search-external-sites ran.",
+    "COMPLIANT: the agent writes the plan, then ends by offering to start the searches. Under step mode that offer is correct even though the message asked to execute.",
+    "NON-COMPLIANT: the return says execution was already authorized, or that the searches are running or will run now, instead of offering them. Score Correctness low ONLY for this pattern.",
+    "This judges the CONTROL FLOW after the plan is written, not the plan's record-type content -- do not fail this dimension solely because the plan's breadth or record-type selection is imperfect (that is Record type selection's job); judge only whether the agent ended on an offer versus declaring execution authorized.",
+    "If the agent asks a genuinely different clarifying question (e.g., which of two ambiguous candidate jurisdictions to search first) alongside or instead of the offer, that is acceptable and should not be penalized under this dimension."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 1200,
+    "sdk_message_silence_seconds": 360,
+    "max_turns": 30
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        { "id": "N1", "preferred": true, "given": "Bridget", "surname": "Halloran", "type": "BirthName" }
+      ],
+      "facts": [
+        { "id": "F1", "type": "Birth", "date": "~1838", "place": "Ireland" }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        { "id": "N2", "preferred": true, "given": "John", "surname": "Doyle", "type": "BirthName" }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        { "id": "N3", "preferred": true, "given": "Ellen", "surname": "Doyle", "type": "BirthName" }
+      ]
+    }
+  ],
+  "relationships": [
+    { "id": "R1", "type": "Couple", "person1": "I1", "person2": "I2" },
+    { "id": "R2", "type": "ParentChild", "parent": "I1", "child": "I3" },
+    { "id": "R3", "type": "ParentChild", "parent": "I2", "child": "I3" }
+  ],
+  "sources": []
+}

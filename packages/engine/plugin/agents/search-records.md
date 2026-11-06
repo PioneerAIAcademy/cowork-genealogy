@@ -772,7 +772,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 
 ## Searching multiple repositories
 
-Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com go to `search-external-sites`: hand them back, never execute them. If the user says "search all repositories," execute the FamilySearch items then suggest: "The FamilySearch searches are complete. The plan also includes searches on [Ancestry/etc.] — would you like me to generate search URLs for those?" (naming search-external-sites in the caller-facing lines).
+Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com go to `search-external-sites`: hand them back, never execute them. If the user says "search all repositories," run this FamilySearch item, then suggest: "This FamilySearch search is complete. The plan also includes searches on [Ancestry/etc.] — would you like me to generate search URLs for those?" (naming search-external-sites in the caller-facing lines).
 
 ## Important rules
 

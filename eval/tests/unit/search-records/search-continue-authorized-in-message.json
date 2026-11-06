@@ -1,0 +1,44 @@
+{
+  "test": {
+    "id": "ut_search_records_t9p",
+    "skill": "search-records",
+    "name": "Run one plan item and offer the next, even when the message asks for both",
+    "type": "positive",
+    "description": "An active plan has two `planned` items. The user's message asks to execute both searches and explicitly scopes OUT extraction. Under step mode (docs/plan/research-step-mode.md, section D and Phase 2) the router dispatches one search agent per plan item, so search-records runs one plan item per call: it executes and logs pli_001, leaves pli_002 `planned`, and offers it. Running pli_002 in the same call is the old behaviour this test now guards against; flipped in PR #4276.",
+    "tags": [
+      "execution",
+      "control-flow",
+      "continuation",
+      "search-continue-authorized-in-message",
+      "topical-fixture-required",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Execute both plan items for q_001 -- the census search and the church-records search -- and continue straight from one to the other without stopping to check in with me. Just run the searches and log them; I'll handle extraction myself afterward.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "search-continue-authorized-in-message"
+  },
+  "mcp_fixtures": [
+    "wiki-read-united-states-census",
+    "record-search-1880-census-sheahan",
+    "record-search-church-sheahan-collectionid",
+    "record-search-church-sheahan-anyplace",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "judge_context": [
+    "GENERAL RULE UNDER TEST: search-records runs one plan item per call. Compliant: pli_001 is executed and logged, pli_002 stays `planned`, and the reply offers it. Non-compliant: pli_002 is executed in the same call.",
+    "This holds even though the message asks for both searches without a check-in: under step mode the router fans out one search agent per plan item, and the host's reply carries the go-ahead between steps.",
+    "Compliant behavior: pli_001 (census) is executed, logged, and has its plan-item status updated, regardless of what the search found; pli_002 (church) is not searched, and the reply names it as the next search to run.",
+    "Non-compliant behavior: a `record_search` for pli_002, a log entry for it, or a status update moving it off `planned` in this call.",
+    "This judges CONTROL FLOW via base Completeness, not search quality -- do not score Completeness down for imperfect query construction on pli_001 (that is Search strategy's and Tool Arguments' job); score Completeness low ONLY for executing pli_002 in this call.",
+    "If the agent stops before pli_001 completes for a reason like an authentication error, that is not a Completeness violation of this rule.",
+    "SCOPE NOTE: the message explicitly says extraction will be handled separately, precisely so the agent stays on the search this test is about. If it nonetheless attempts to delegate to extraction, note it, but do not let a downstream tool-scoping problem inside that delegation drag down Completeness.",
+    "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 400,
+    "max_turns": 40
+  }
+}

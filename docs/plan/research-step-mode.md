@@ -1,6 +1,6 @@
 # Research one step at a time
 
-**Status:** **Phase 0 complete (2026-10-19). Phase 1's PRs are all merged (2026-10-30):** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914, #3915 and #3916, PR 2 (#3917) and the conflict PR (#3937). Step mode is live on the alpha (build `365f4d903`), and the manual alpha check passed on 2026-11-02. Still open from Phase 1: the re-scoping of the two-question e2e fixtures. **Phase 2 complete:** the hosted half of deleting the Stop veto merged in PR #4146, `research_delivered` is deleted (PR #4148), the e2e half merged in PR #4206, and the same-turn hand-off lines are deleted. Phase 0's answers are in
+**Status:** **Phase 0 complete (2026-10-19). Phase 1's PRs are all merged (2026-10-30):** the research-plan prep (#3682), proof-conclusion prep (#3889), PR 1 (#3883), the route PRs #3914, #3915 and #3916, PR 2 (#3917) and the conflict PR (#3937). Step mode is live on the alpha (build `365f4d903`), and the manual alpha check passed on 2026-11-02. The two-question e2e fixtures are re-scoped to one question (#4210, #4235, #4239). **Phase 2 complete:** the hosted half of deleting the Stop veto merged in PR #4146, `research_delivered` is deleted (PR #4148), the e2e half merged in PR #4206, and the same-turn hand-off lines are deleted. Phase 0's answers are in
 ADR-0005 and decisions 23 and 24 below carry what they changed. For Praise to fold into the
 research-as-a-job work
 (`docs/plan/research-as-a-job-later.md`, PR #3262); see "Integrating with research-as-a-job".
@@ -1327,12 +1327,12 @@ in parallel with PR 2.
   `test_skill_runner.py` and `test_e2e_context_block.py`). Re-point the comments that give the
   veto as their reason: `delegation.py`'s docstring, `real_agent.py`'s comment above the
   rewrite, and `test_write_lockdown.py`'s section on it.
-- **Delete the same-turn hand-off lines** in research-plan and search-records. **Done** (this
-  PR): research-plan no longer hands execution back as already authorized, and search-records
+- **Delete the same-turn hand-off lines** in research-plan and search-records. **Done** (PR
+  #4276): research-plan no longer hands execution back as already authorized, and search-records
   no longer runs the next `planned` item itself; the router fans out one search per item and
-  each step ends on its offer. `ut_research_plan_q7m` and `ut_search_records_t9p`, which pinned
-  the old behaviour, are deleted with their scenarios. Paid runs: research-plan and
-  search-records.
+  each step ends on its offer. `ut_research_plan_q7m` and `ut_search_records_t9p` are flipped to
+  pin the new behaviour. Paid runs: research-plan, search-records and research
+  (`ut_research_rpn` runs research-plan live).
 
 ## Acceptance (each fails today)
 1. **Predicate unit tests:**
@@ -1537,7 +1537,7 @@ in parallel with PR 2.
 - **Paid eval runs, one per skill:** `research-plan`, `conflict-resolution`,
   `hypothesis-tracking`, `timeline` and `proof-conclusion` in the prep PRs; `research`,
   `research-exhaustiveness`, `person-evidence` and `question-selection` in PR 2; second runs of
-  `conflict-resolution` and `proof-conclusion` in the conflict PR; `search-records` in phase 2.
+  `conflict-resolution` and `proof-conclusion` in the conflict PR; `research-plan`, `search-records` and `research` in phase 2.
     **Not `make hook-smoke`:** there is no plugin step hook for it to bind (lead, 2026-10-21).
 - **Plus the suites a callee edit stales, until issue #3568's option D is built:**
   - each of the research-plan, conflict-resolution, hypothesis-tracking and proof-conclusion
