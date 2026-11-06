@@ -15,8 +15,8 @@ description: >-
   review their confidence (use person-evidence), to extract a record (use
   extraction_append), build a timeline (use timeline), or write a conclusion (use
   proof-conclusion).
-model: claude-sonnet-4-6
-effort: high
+model: claude-haiku-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and

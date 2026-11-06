@@ -830,28 +830,23 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
     expect(result.relatives.every((r: any) => r.id && r.name && r.relationship)).toBe(true);
   });
 
-  it("returns projectUrl from the store's project id inside the 2,000 characters, and none without the setting", async () => {
+  it("returns no viewer link with the public URL set, inside the 2,000 characters", async () => {
     const read = structuredClone(FAMILY);
     for (let i = 0; i < 63; i++) {
       const id = `KID${String(i).padStart(2, "0")}-AAA`;
       read.persons.push({ id, ark: `ark:/61903/4:1:${id}`, gender: "Male", living: false, names: [{ preferred: true, given: `Child Number ${i}`, surname: "Flynn" }] });
       read.relationships.push({ type: "ParentChild", parent: "LZNY-BRF", child: id, subtype: "Biological" });
     }
-    const createIn = (projectId: string, config: Record<string, unknown>) =>
-      runWithProjectStore(new ScopedFsStore(dir, projectId), () =>
-        runProjectCreate(
-          { projectPath: SCOPED_ANCHOR, objective: "x", personId: "LZNY-BRF" },
-          { readPerson: async () => ({ result: structuredClone(read), resolvedId: "LZNY-BRF", memoryKinds: {} }) },
-          bearerPrincipal("tok", config),
-        ),
-      ) as Promise<any>;
-    const linked = await createIn("p-linked", { webPublicUrl: "https://beta.example" });
-    expect(linked.ok).toBe(true);
-    expect(linked.projectUrl).toBe("https://beta.example/#/p/p-linked");
-    expect(JSON.stringify(linked).length).toBeLessThanOrEqual(2000);
-    const bare = await createIn("p-bare", {});
-    expect(bare.ok).toBe(true);
-    expect("projectUrl" in bare).toBe(false);
+    const created = (await runWithProjectStore(new ScopedFsStore(dir, "p-linked"), () =>
+      runProjectCreate(
+        { projectPath: SCOPED_ANCHOR, objective: "x", personId: "LZNY-BRF" },
+        { readPerson: async () => ({ result: structuredClone(read), resolvedId: "LZNY-BRF", memoryKinds: {} }) },
+        bearerPrincipal("tok", { webPublicUrl: "https://beta.example", uploadsEnabled: true }),
+      ),
+    )) as any;
+    expect(created.ok).toBe(true);
+    expect("projectUrl" in created).toBe(false);
+    expect(JSON.stringify(created).length).toBeLessThanOrEqual(2000);
   });
 
   it.each([
@@ -1410,4 +1405,143 @@ describe("project_create — a hand-entered fact or relationship cites the Famil
     expect(titleOf(tree, tree.persons[0].facts[0].sources)).toEqual([title]);
   });
 
+});
+
+describe("project_create — a ParentChild loop in the FamilySearch read (#4085)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-10-01T12:00:00Z"));
+    dir = await mkdtemp(join(tmpdir(), "project-create-loop-"));
+  });
+  afterEach(async () => {
+    vi.useRealTimers();
+    await rm(dir, { recursive: true, force: true });
+  });
+  const readJson = async (name: string) => JSON.parse(await readFile(join(dir, name), "utf-8"));
+  const person = (id: string, given: string, surname: string) => ({ id, gender: "Unknown", living: false, names: [{ given, surname }] });
+  const createWith = (personId: string, read: unknown): Promise<any> =>
+    runProjectCreate(
+      { projectPath: dir, objective: "Find the children", personId } as never,
+      { readPerson: async (id) => ({ result: structuredClone(read) as never, resolvedId: id, memoryKinds: {} }) },
+      LOCAL,
+    );
+
+  // salvador-choc-daughter's loop, without its dates: Catarina, Salvador's
+  // child, recorded as the parent of Petrona, Salvador's wife. With no dates
+  // the generation walk decides.
+  const SALVADOR_READ = {
+    persons: [person("MGDD-CB5", "Salvador", "Choc"), person("GG1G-697", "Petrona", "Ba"), person("94B1-P5D", "Catarina", "Choc")],
+    relationships: [
+      { type: "Couple", person1: "MGDD-CB5", person2: "GG1G-697" },
+      { type: "ParentChild", parent: "MGDD-CB5", child: "94B1-P5D" },
+      { type: "ParentChild", parent: "GG1G-697", child: "94B1-P5D" },
+      { type: "ParentChild", parent: "94B1-P5D", child: "GG1G-697" },
+    ],
+    sources: [],
+  };
+  const SALVADOR_NOTE =
+    "FamilySearch records Catarina Choc as Petrona Ba's parent and Petrona Ba as Catarina Choc's; " +
+    "the first link was left out of the tree, since a person cannot be their own ancestor.";
+
+  it("creates the project, leaves the loop-closing edge out, and says so first in notes", async () => {
+    const result = await createWith("MGDD-CB5", { ...SALVADOR_READ, notes: ["A note from the read."] });
+    expect(result.ok).toBe(true);
+    expect(result.notes).toEqual([SALVADOR_NOTE, "A note from the read."]);
+    expect(result.validation.warnings).toContain(SALVADOR_NOTE);
+
+    const tree = await readJson("tree.gedcomx.json");
+    const byId = Object.fromEntries(tree.persons.map((p: any) => [p.id, p.names[0].given]));
+    const parentChild = tree.relationships
+      .filter((r: any) => r.type === "ParentChild")
+      .map((r: any) => `${byId[r.parent]}>${byId[r.child]}`);
+    expect(parentChild).toEqual(["Salvador>Catarina", "Petrona>Catarina"]);
+    expect(await readJson("starting-tree.gedcomx.json")).toEqual(tree);
+  });
+
+  it("with the fixture's real dates, leaves out Petrona as Catarina's parent and says so", async () => {
+    const withDates = structuredClone(SALVADOR_READ) as any;
+    withDates.persons[1].facts = [{ type: "Christening", date: "14 Jul 1867" }];
+    withDates.persons[2].facts = [{ type: "Birth", date: "1838" }];
+    const result = await createWith("MGDD-CB5", withDates);
+    expect(result.ok).toBe(true);
+    expect(result.notes[0]).toBe(
+      "FamilySearch records Petrona Ba as Catarina Choc's parent and Catarina Choc as Petrona Ba's; " +
+        "the first link was left out of the tree, since a person cannot be their own ancestor.",
+    );
+    const tree = await readJson("tree.gedcomx.json");
+    const byId = Object.fromEntries(tree.persons.map((p: any) => [p.id, p.names[0].given]));
+    const parentChild = tree.relationships
+      .filter((r: any) => r.type === "ParentChild")
+      .map((r: any) => `${byId[r.parent]}>${byId[r.child]}`);
+    expect(parentChild).toEqual(["Salvador>Catarina", "Catarina>Petrona"]);
+  });
+
+  it("words a longer loop without claiming a reciprocal link FamilySearch does not hold", async () => {
+    // F is the subject's father and G is F's father; the subject is also
+    // recorded as G's parent. That edge is the one dropped
+    // (person-read-tree.test.ts).
+    const result = await createWith("SUBJ-001", {
+      persons: [person("SUBJ-001", "Sam", "Roe"), person("FATH-001", "Frank", "Roe"), person("GRAN-001", "George", "Roe")],
+      relationships: [
+        { type: "ParentChild", parent: "FATH-001", child: "SUBJ-001" },
+        { type: "ParentChild", parent: "GRAN-001", child: "FATH-001" },
+        { type: "ParentChild", parent: "SUBJ-001", child: "GRAN-001" },
+      ],
+      sources: [],
+    });
+    expect(result.ok).toBe(true);
+    expect(result.notes[0]).toBe(
+      "FamilySearch records Sam Roe as George Roe's parent, but also records George Roe as Sam Roe's " +
+        "ancestor; that link was left out of the tree, since a person cannot be their own ancestor.",
+    );
+  });
+
+  it("names an unnamed person on the loop by FamilySearch ID, never by the tree's own id", async () => {
+    const result = await createWith("SUBJ-001", {
+      persons: [person("SUBJ-001", "Sam", "Roe"), person("NONM-001", "", "")],
+      relationships: [
+        { type: "Couple", person1: "SUBJ-001", person2: "NONM-001" },
+        { type: "ParentChild", parent: "SUBJ-001", child: "NONM-001" },
+        { type: "ParentChild", parent: "NONM-001", child: "SUBJ-001" },
+      ],
+      sources: [],
+    });
+    expect(result.ok).toBe(true);
+    expect(result.notes[0]).toContain("the person with FamilySearch ID NONM-001");
+    expect(result.notes[0]).not.toMatch(/\bI\d+\b/);
+  });
+
+  it("adds no note for a read with no loop", async () => {
+    const result = await createWith("MGDD-CB5", { ...SALVADOR_READ, relationships: SALVADOR_READ.relationships.slice(0, 3) });
+    expect(result.ok).toBe(true);
+    expect(result.notes).toBeUndefined();
+  });
+
+  it("still refuses a hand-built tree with the same loop", async () => {
+    const result: any = await projectCreateAs(
+      {
+        projectPath: dir,
+        objective: "x",
+        subjectPersonIds: ["I1"],
+        tree: {
+          persons: [
+            { id: "I1", gender: "Male", living: false, names: [{ given: "Salvador", surname: "Choc" }] },
+            { id: "I2", gender: "Female", living: false, names: [{ given: "Petrona", surname: "Ba" }] },
+            { id: "I3", gender: "Female", living: false, names: [{ given: "Catarina", surname: "Choc" }] },
+          ],
+          relationships: [
+            { id: "R1", type: "Couple", person1: "I1", person2: "I2" },
+            { id: "R2", type: "ParentChild", parent: "I2", child: "I3" },
+            { id: "R3", type: "ParentChild", parent: "I3", child: "I2" },
+          ],
+          sources: [],
+        },
+      } as never,
+      LOCAL,
+    );
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(" ")).toMatch(/ParentChild ancestry cycle/);
+    expect(await access(join(dir, "tree.gedcomx.json")).then(() => true, () => false)).toBe(false);
+  });
 });

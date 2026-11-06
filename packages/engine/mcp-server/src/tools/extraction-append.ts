@@ -1,13 +1,14 @@
 // extraction_append — extraction in code, for research.json's `sources` and
 // `assertions` sections.
 //
-// Four call shapes, exactly one per call: `recordIds` (FamilySearch records,
+// Five call shapes, exactly one per call: `recordIds` (FamilySearch records,
 // read live and extracted from the index), `documents` (any other source,
 // structured by the record-structurer agent), `absences` (negative evidence
-// from a nil search), and `personId` (every indexed record attached to one tree
+// from a nil search), `personId` (every indexed record attached to one tree
 // person or to a relationship they are in, extracted and linked as unchecked
 // candidates to the tree persons who attach them, the one `person_evidence`
-// write this tool makes). In every shape the roles and the three classification
+// write this tool makes), and `attachWaitingPages` (a read page copied onto
+// the source of the record it shows, with no assertion). In every shape the roles and the three classification
 // layers are decided HERE, from the extraction table; no caller supplies them,
 // and the input has nowhere to put them.
 //
@@ -44,14 +45,21 @@ import {
 } from "../utils/record-extract.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import {
+  checkStagedResults,
   findFulltextHit,
+  locateStagedRef,
   readResultsEnvelope,
   readStagedResults,
+  resolveStagedRef,
   splitHitRef,
   STAGING_SUBDIR,
   type FulltextHitRow,
+  type StagedRefLocation,
 } from "../utils/results-staging.js";
 import { deedFormulaErrors } from "../utils/deed-formula.js";
+import { recordImageReadCap } from "../utils/image-store.js";
+import { waitingPages } from "../utils/waiting-pages.js";
+import { extractImageArk } from "./record-read.js";
 import { arkToBareId } from "../utils/ark.js";
 import { selectSubjectPersona } from "../utils/record-persona-select.js";
 import type { SimplifiedGedcomX } from "../types/gedcomx.js";
@@ -87,7 +95,7 @@ export const EXTRACTION_SECTIONS: ReadonlySet<string> = new Set([
 export const PLAN_COMPLETION_SECTIONS: ReadonlySet<string> = new Set(["plan_items"]);
 
 type BatchCall = ExtractionBatchInput &
-  ({ recordIds: string[] } | { absences: AbsenceInput[] } | { documents: DocumentInput[] } | { personId: string });
+  ({ recordIds: string[] } | { absences: AbsenceInput[] } | { documents: DocumentInput[] } | { personId: string } | { attachWaitingPages: true });
 
 export async function extractionAppend(
   input: BatchCall,
@@ -103,7 +111,7 @@ export async function runExtractionAppend(
   deps: ExtractionAppendDeps,
   principal: Principal,
 ): Promise<ExtractionBatchResult> {
-  const MODES = ["recordIds", "documents", "absences", "personId"] as const;
+  const MODES = ["recordIds", "documents", "absences", "personId", "attachWaitingPages"] as const;
   const got = MODES.filter((k) => (input as any)?.[k] !== undefined);
   const retired = RETIRED_EXTRACTION_KEYS.filter((k) => (input as any)?.[k] !== undefined);
   if (retired.length > 0) {
@@ -113,7 +121,7 @@ export async function runExtractionAppend(
   if (reextract !== undefined && typeof reextract !== "boolean") {
     return { ok: false, records: [], errors: ["`reextract` must be true or false."] };
   }
-  if (reextract === true && (input.personId !== undefined || input.absences !== undefined)) {
+  if (reextract === true && (input.personId !== undefined || input.absences !== undefined || input.attachWaitingPages !== undefined)) {
     return {
       ok: false,
       records: [],
@@ -129,11 +137,12 @@ export async function runExtractionAppend(
       records: [],
       errors: [
         (got.length === 0
-          ? "extraction_append received none of `recordIds`, `documents`, `absences` or `personId`. "
+          ? "extraction_append received none of `recordIds`, `documents`, `absences`, `personId` or `attachWaitingPages`. "
           : `extraction_append received ${got.map((k) => `\`${k}\``).join(" and ")} together. `) +
           "Send exactly one: `recordIds` to extract FamilySearch records, `documents` for any other " +
-          "source, `absences` to record people a search did not find, or `personId` to extract and " +
-          "link every indexed record attached to one tree person.",
+          "source, `absences` to record people a search did not find, `personId` to extract and " +
+          "link every indexed record attached to one tree person, or `attachWaitingPages` to keep " +
+          "the pages `project_context` lists in `waitingPages`.",
       ],
     };
   }
@@ -150,6 +159,7 @@ export async function runExtractionAppend(
   if (input.recordIds !== undefined) return recordIdsMode(input, deps, principal);
   if (input.personId !== undefined) return personIdMode(input, deps, principal);
   if (input.absences !== undefined) return absencesMode(input);
+  if (input.attachWaitingPages !== undefined) return attachWaitingPagesMode(input);
   return documentsMode(input);
 }
 
@@ -210,7 +220,9 @@ export interface ExtractionBatchInput {
   questionIds?: string[];
   /** A tree person (tree id or FamilySearch id) whose attached records to extract and link. */
   personId?: string;
-  /** Expected-but-absent persons for a record in `recordIds`, keyed by its id. */
+  /** Keep the pages `project_context` lists in `waitingPages`. Takes no refs: code joins them. */
+  attachWaitingPages?: boolean;
+  /** Expected-but-absent persons for a record in `recordIds` or `documents`, keyed by its id. */
   absentPersons?: { recordId?: string; name: string; factType?: string; note?: string }[];
   /** Extract an already-extracted record again and retire its old assertions (#3678). */
   reextract?: boolean;
@@ -252,6 +264,8 @@ export interface ExtractionBatchResult {
   ambiguous?: number;
   /** Relationship parties whose persona `selectSubjectPersona` could not choose. */
   unselected?: number;
+  /** `attachWaitingPages` only: sources that gained their page. */
+  attached?: number;
   /** Links the writer refused. */
   refused?: number;
   /** Assertions linked to tree persons other than the run's own, by person. */
@@ -1104,9 +1118,7 @@ async function recordIdsMode(
         o.summary = `${o.recordId}: logged as ${o.logId}, but its sidecar does not hold that record.`;
         continue;
       }
-      const absent = (input.absentPersons ?? []).filter(
-        (p) => p.recordId !== undefined && arkToBareId(p.recordId) === arkToBareId(o.recordId),
-      );
+      const absent = absentPersonsFor(input, o.recordId);
       const { ops, sourceDescription, extraction } = buildExtractionOps(
         { recordId: doc.recordId ?? o.recordId, gedcomx: doc.gedcomx ?? {}, indexFields: doc.indexFields },
         { logEntryId: o.logId!, questionIds: input.questionIds, absentPersons: absent },
@@ -1186,6 +1198,79 @@ async function tieOutcome(
   const { tied, warnings } = await tieRecordToQuestions(projectPath, research, recordIds, questionIds);
   if (tied.length > 0) o.summary = `${o.recordId}: already extracted as ${o.srcId}; tied to ${questionIds.join(", ")}.`;
   if (warnings.length > 0) o.warnings = [...(o.warnings ?? []), ...warnings];
+}
+
+/**
+ * Copy each waiting page's text and scan onto its record's source. It takes no
+ * refs, so a caller cannot name the wrong page, and it writes no assertion and no
+ * log entry. The page's file is left alone: a second held record extracted later
+ * can still find it, and a refused write loses nothing. One write per page, so a
+ * refusal leaves the others done.
+ */
+async function attachWaitingPagesMode(input: ExtractionBatchInput): Promise<ExtractionBatchResult> {
+  if (input.attachWaitingPages !== true) {
+    return { ok: false, records: [], errors: ["`attachWaitingPages` must be true."] };
+  }
+  let research: any;
+  try {
+    research = await readProjectJson(input.projectPath, "research.json");
+  } catch (e) {
+    return { ok: false, records: [], errors: [`could not read research.json: ${e instanceof Error ? e.message : String(e)}`] };
+  }
+  const waiting = await waitingPages(input.projectPath, research);
+  const sourceIdsByRef = new Map<string, string[]>();
+  for (const w of waiting) sourceIdsByRef.set(w.ref, [...(sourceIdsByRef.get(w.ref) ?? []), w.sourceId]);
+
+  const kept: string[] = [];
+  const errors: string[] = [];
+  for (const [ref, sourceIds] of sourceIdsByRef) {
+    let row: { transcription?: unknown; image_ref?: unknown; truncated?: unknown } | undefined;
+    try {
+      const rows = await readStagedResults(input.projectPath, ref);
+      row = (rows as any[]).find((r) => typeof r?.transcription === "string" && r.transcription !== "");
+    } catch {
+      row = undefined;
+    }
+    if (!row) {
+      errors.push(`the page at ${ref} could not be read; read it again with image_transcribe.`);
+      continue;
+    }
+    const imageRef = typeof row.image_ref === "string" && row.image_ref !== "" ? row.image_ref : undefined;
+    // The cap store is per process, and this can run in a later one than the read.
+    if (imageRef) recordImageReadCap(input.projectPath, imageRef, row.truncated === true);
+    const written = await researchAppend(
+      {
+        projectPath: input.projectPath,
+        ops: sourceIds.map((id) => ({
+          section: "sources" as const,
+          op: "update" as const,
+          entryId: id,
+          fields: { transcription: row!.transcription, ...(imageRef ? { image_filename: imageRef } : {}) },
+        })),
+      } as ResearchAppendInput,
+      { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
+    );
+    if (written.ok) kept.push(...sourceIds);
+    else errors.push(`the page for ${sourceIds.join(", ")} was not kept: ${written.errors.join("; ")}`);
+  }
+
+  const titles = kept.map((id) => {
+    const source = (research.sources as any[]).find((s) => s?.id === id);
+    return typeof source?.citation_detail?.what === "string" ? source.citation_detail.what : id;
+  });
+  return {
+    ok: kept.length > 0 || errors.length === 0,
+    records: [],
+    attached: kept.length,
+    summary:
+      (kept.length > 0
+        ? `Kept the page for ${titles.join("; ")}.`
+        : errors.length > 0
+          ? "No page was kept."
+          : "No read pages were waiting to be kept.") +
+      (errors.length > 0 ? ` ${errors.join(" ")}` : ""),
+    ...(errors.length > 0 ? { errors } : {}),
+  };
 }
 
 /**
@@ -1423,6 +1508,44 @@ function coerceComputed(f: unknown): void {
   fact.computed = [...new Set(out)];
 }
 
+/** The call's top-level `absentPersons` keyed to one record. */
+function absentPersonsFor(input: ExtractionBatchInput, recordId: string) {
+  return (input.absentPersons ?? []).filter(
+    (p) => p.recordId !== undefined && arkToBareId(p.recordId) === arkToBareId(recordId),
+  );
+}
+
+type StagedPage = { live: string } | { logId: string; resultsRef: string } | { refusal: string };
+
+function loggedPage(at: Extract<StagedRefLocation, { state: "logged" }>): StagedPage {
+  if (at.tool === "image_transcribe") return { logId: at.logId, resultsRef: at.resultsRef };
+  return {
+    refusal:
+      `transcriptionRef '${at.ref}' was logged as ${at.logId} by ${at.tool ?? "an unknown tool"}, ` +
+      `not as an image_transcribe read, so it holds no page to extract.`,
+  };
+}
+
+/**
+ * Sort one document's staged ref before anything is logged. `research_log_append`
+ * is all-or-nothing, so left to it one bad ref refuses every document beside it.
+ * A logged page is cited, never re-logged: the log's re-send check compares
+ * outcomes, so a page logged `negative` would refuse the batch from there too.
+ * It is located after the check fails, not before, so a concurrent call consuming
+ * the file between the two reads lands on the same path.
+ */
+async function stagedPage(projectPath: string, rawRef: string): Promise<StagedPage> {
+  const { ref } = await resolveStagedRef(projectPath, rawRef);
+  try {
+    await checkStagedResults({ projectPath, stagedResultsRef: ref, expectedTool: "image_transcribe" });
+    return { live: ref };
+  } catch (e) {
+    const at = await locateStagedRef(projectPath, ref);
+    if (at.state === "logged") return loggedPage(at);
+    return { refusal: e instanceof Error ? e.message : String(e) };
+  }
+}
+
 /**
  * Cite one full-text hit (`<base>#<hit>`) for a document, or say why not. The
  * hit must belong to a LOGGED `fulltext_search` (a staged search has no entry to
@@ -1439,11 +1562,15 @@ async function citeFulltextHit(
   hit: string,
 ): Promise<{ logId: string; resultsRef: string; hit: FulltextHitRow } | string> {
   if (base.startsWith(`${STAGING_SUBDIR}/`)) {
-    return (
-      `transcriptionRef '${ref}' names a hit of a full-text search that is not logged yet: log the ` +
-      `search first (research_log_append with stagedResultsRef '${base}'), then cite the hit as ` +
-      `'<its results_ref>#<hit id>'.`
-    );
+    const at = await locateStagedRef(projectPath, base);
+    if (at.state !== "logged") {
+      return (
+        `transcriptionRef '${ref}' names a hit of a full-text search that is not logged yet: log the ` +
+        `search first (research_log_append with stagedResultsRef '${base}'), then cite the hit as ` +
+        `'<its results_ref>#<hit id>'.`
+      );
+    }
+    base = at.resultsRef;
   }
   const entry = log.find((e) => e?.results_ref === base && typeof e?.id === "string");
   if (!entry || entry.tool !== "fulltext_search") {
@@ -1509,7 +1636,12 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
     if (!d.transcriptionRef || (d.document.recordType !== "land" && d.document.recordType !== "probate")) continue;
     let text: string | undefined;
     try {
-      const rows = await readStagedResults(input.projectPath, d.transcriptionRef);
+      // A consumed staged ref still names the page, and a held ref is what
+      // `reextract` sends, so this must not read as a page it cannot check.
+      const at = d.transcriptionRef.startsWith(`${STAGING_SUBDIR}/`)
+        ? await locateStagedRef(input.projectPath, d.transcriptionRef)
+        : null;
+      const rows = await readStagedResults(input.projectPath, at?.state === "logged" ? at.resultsRef : d.transcriptionRef);
       text = (rows as any[]).find((r) => typeof r?.transcription === "string")?.transcription;
     } catch {
       continue;
@@ -1601,7 +1733,20 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
       }
       continue;
     }
-    if (ref.startsWith(`${STAGING_SUBDIR}/`)) continue;
+    if (ref.startsWith(`${STAGING_SUBDIR}/`)) {
+      const page = await stagedPage(input.projectPath, ref);
+      if ("live" in page) {
+        // One spelling per page, or an exact ref and a near-copy of it become two ops.
+        o.d.transcriptionRef = page.live;
+      } else if ("logId" in page) {
+        cited.set(o, page);
+      } else {
+        o.status = "refused";
+        o.errors = [page.refusal];
+        o.summary = `${o.recordId}: not extracted: ${page.refusal}`;
+      }
+      continue;
+    }
     // Only a page logged as image_transcribe: a search sidecar cited here would
     // be written as a source with no text, and its search would read as extracted.
     const entry = log.find((e) => e?.results_ref === ref && e?.tool === "image_transcribe" && typeof e?.id === "string");
@@ -1675,7 +1820,7 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
             op: "append" as const,
             entry: a as unknown as Record<string, unknown>,
           })),
-          ...(o.d.document.absentPersons ?? []).map((p) => ({
+          ...[...(o.d.document.absentPersons ?? []), ...absentPersonsFor(input, o.recordId)].map((p) => ({
             section: "assertions" as const,
             op: "append" as const,
             entry: {
@@ -1773,6 +1918,7 @@ export function buildExtractionOps(
   const collection = collectionTitle(gx);
   const title = recordSd?.title ?? collection ?? `Record ${doc.recordId}`;
   const url = recordSd?.url;
+  const imageArk = extractImageArk(gx as SimplifiedGedcomX, doc.recordId);
   const accessed = todayIso();
 
   // The citation FamilySearch itself printed, when it printed one. A derived
@@ -1800,6 +1946,7 @@ export function buildExtractionOps(
     access_date: accessed,
     log_entry_id: input.logEntryId,
     ...(url ? { url } : {}),
+    ...(imageArk ? { image_ark: imageArk } : {}),
   };
 
   const ops: ResearchAppendOp[] = [
@@ -1917,6 +2064,9 @@ export const extractionAppendSchema = {
     "in, is extracted, and each persona is linked to the tree person who " +
     "attaches it as an UNVERIFIED candidate (`speculative`, no score). Checking " +
     "those links is a separate request.\n" +
+    "- `attachWaitingPages: true` — keep the read pages `project_context` lists " +
+    "under `waitingPages`, each on the source that waited. It takes no refs, and " +
+    "writes no assertion and no log entry.\n" +
     "\n" +
     "Returns one outcome per record, each with a code-written `summary`: relay " +
     "it verbatim, since you do not see the record yourself; `personId` also " +
@@ -1942,6 +2092,12 @@ export const extractionAppendSchema = {
           "THE PERSON'S ATTACHED RECORDS. A tree person id, or their FamilySearch " +
           "id. Send alone: no `recordIds`, `documents`, `absences` or `questionIds`.",
       },
+      attachWaitingPages: {
+        type: "boolean",
+        description:
+          "KEEP READ PAGES. Send `true` alone when `project_context` lists `waitingPages`: code copies " +
+          "each page onto the source of the record it shows. No refs, no assertions.",
+      },
       recordIds: {
         type: "array",
         items: { type: "string" },
@@ -1964,7 +2120,7 @@ export const extractionAppendSchema = {
           properties: {
             recordId: {
               type: "string",
-              description: "Which of the `recordIds` this person was expected on.",
+              description: "Which record in `recordIds` or `documents` this person was expected on.",
             },
             name: { type: "string", description: "Who was expected." },
             factType: { type: "string", description: "Defaults to `name`." },
