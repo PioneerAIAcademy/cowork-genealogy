@@ -11,8 +11,10 @@ one is filled.
 
 Work top to bottom on the Mac that holds the project folders, from the root of a
 checkout of `main`. Terminal 1 holds the server, terminal 2 everything
-else. A `text` block is what you type in the Cowork task. **New task** means exactly
-that: an earlier result in the same task spoils the next probe. Each step names the
+else. A `text` block is what you type. Wherever a step says a Cowork task or a new task,
+use a new conversation in Desktop Chat or claude.ai chat, because Cowork is not tested
+further. A new conversation means exactly that: an earlier result in the same one spoils
+the next probe. Each step names the
 record blocks it fills.
 
 Claude Desktop's button is **New**. Attaching a folder makes it a Cowork task, a cloud
@@ -515,7 +517,7 @@ as long as this runs. Go straight to **Stop** afterwards.
 Read **Approvals** first: it sets how many cards the demo can have. Then **Card
 renders**: it says which surfaces draw a card. **What the model receives**, **Fullscreen**,
 **Size**, **`openLink`** and **`projectPath`** gate the fold (Decision 8), so each needs an
-answer in a Cowork task, claude.ai chat and Desktop Chat. Name the surface in the cell. A
+answer in claude.ai chat and Desktop Chat. Name the surface in the cell. A
 `—` cell does not apply on that route. `no card` means the step needed a card and none rendered, which
 is an answer.
 

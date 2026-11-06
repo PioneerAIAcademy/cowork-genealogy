@@ -16,9 +16,9 @@ door, sign-in, `project_list` and the self-hosted stack. The lead merges.
 
 ## Decisions (lead, 2026-11-03 to 2026-11-05)
 
-1. **Cowork and chat are both first-class.** Project data lives on the remote server, so
-   a user can work in a Cowork task, claude.ai chat or Desktop Chat. Cards work the same
-   on all three: the same page and server, checked on each.
+1. **claude.ai chat and Desktop Chat are the primary surfaces.** Project data lives on the
+   remote server, so nothing ties a user to a Cowork task. Cards are checked on those two,
+   the same page and server on each. Cowork is not tested further.
 2. **A card is a picture, never a reply.** Nothing on a card posts a message or
    runs a step. The reply stays with the platform's own carrier (in Cowork today,
    the "Continue with …?" line). At a stopping point the order is: the step report,
@@ -45,7 +45,7 @@ door, sign-in, `project_list` and the self-hosted stack. The lead merges.
    `docs/mcp-app-host-probe.md`'s record has an answer, the Artifact and local rows
    included. Five answers gate the fold: does `_meta` reach the model (the canary), the
    fullscreen events and remount, the mount size past 300 KB, `openLink`, and
-   `projectPath`. Each needs an answer in a Cowork task, claude.ai chat and Desktop Chat.
+   `projectPath`. Each needs an answer in claude.ai chat and Desktop Chat.
 9. **The demo shows page images.** The demo project is run so that the pages
    that matter are transcribed and attached (see "Data").
 10. **FamilySearch links replace identifiers.** Wherever the project holds an
@@ -506,7 +506,7 @@ before pushing, with no tunnel and no connector.
   shows no notes or Flynn shows a verdict.
   Page tests in CI use a small committed fixture; `derived` is tested in
   `tests/viewer/` on a few named states.
-- **The demo:** a fresh project the lead runs in Cowork through the
+- **The demo:** a fresh project the lead runs in Desktop Chat through the
   `Genealogy Research` connector, so its documents and images sit in Postgres and
   MinIO. A page is saved and attached to its record when the research reads it with
   `image_transcribe` and `projectPath`. A browsed page goes through record-structurer,
@@ -541,7 +541,8 @@ show only on the connector surface.
 The server with the page resource, `show_project` returning a hello card that
 echoes its input and takes a `pad` size, `read_project_view` returning a payload
 of a requested size, a signed test image, the request log, and `make viewer`, which
-is the everyday development loop. Then, in a Cowork task:
+is the everyday development loop. Then, in Desktop Chat or claude.ai chat, wherever this
+section says a Cowork task:
 
 1. **Connector:** the server through the tunnel as an organization connector,
    from the main thread, after a ToolSearch load, and with the variant plugin
@@ -623,8 +624,8 @@ Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
   seeded project: a card, then the case file.
 
 **Done when:**
-- the first live run draws a card and opens the case file in a Cowork task, claude.ai
-  chat and Desktop Chat;
+- the first live run draws a card and opens the case file in claude.ai chat and Desktop
+  Chat;
 - `make mcp-viewer-sweep` renders the three cards and the case file over the McAndrew
   capture and every committed e2e end state without error;
 - the case file shows no Export GEDCOM, Print or Send Feedback button;
@@ -679,7 +680,7 @@ case with So far, the evidence grid and Leads; Compare with FamilySearch; People
 Sources and Log; and `show_project` opening each page by id. A record's search results,
 and its page image with transcription and findings, open in the pane.
 
-- **The demo script,** in a Cowork task in Claude Desktop, because Chrome on a tailnet
+- **The demo script,** in Desktop Chat, because Chrome on a tailnet
   device blocks page images, signed in through the `Genealogy Research` connector, on the
   demo project: "Where does the research stand?" → the conclusion
   card with its recorded doubt → open the case file → the evidence grid → click an
@@ -751,7 +752,7 @@ The two tools and the page move onto the tool server, behind the door.
   seed route, which follows issue #3997.
 - **Never touch Tailscale or Funnel on the self-hosted server.**
 
-**Done when:** a card draws in a Cowork task, claude.ai chat and Desktop Chat, signed in
+**Done when:** a card draws in claude.ai chat and Desktop Chat, signed in
 through `Genealogy Research`, on a seeded project; the worker's and the `.mcpb`'s tool lists hold neither tool; and
 a signed image link serves a page from MinIO. Sign-in itself needs issues #3992 and
 #3997 as well as #3991. `Genealogy Viewer` then retires.
