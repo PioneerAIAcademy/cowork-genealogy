@@ -1,5 +1,5 @@
 {
-  "run_log": "v44_2026-11-05_06-14-07.json",
+  "run_log": "v47_2026-11-05_19-13-01.json",
   "annotator": "mercybocumy2000@gmail.com",
   "corrections": [
     {
@@ -27,7 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_023",
+      "test_id": "ut_research_dq1",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -35,7 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_023",
+      "test_id": "ut_research_dq1",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -43,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_023",
+      "test_id": "ut_research_dq1",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -51,7 +51,39 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_020",
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_016",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_es9",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -59,7 +91,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_020",
+      "test_id": "ut_research_es9",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -67,7 +99,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_020",
+      "test_id": "ut_research_es9",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -75,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_c1k",
+      "test_id": "ut_research_fsh",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -83,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_c1k",
+      "test_id": "ut_research_fsh",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -91,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_c1k",
+      "test_id": "ut_research_fsh",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -99,7 +131,87 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_rpn",
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI correctly identified that the sibling inference about Nora and Lois is unproven and delegated to hypothesis-tracking, but the narration states the hypothesis was handed off and registered when the stub callee actually declined and nothing was written."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The AI correctly asked for the FamilySearch record identifier before proceeding, but did not flag that a death in 1861 would directly contradict h_002 (which assumes the same Robert Eastham married in 1870), leaving the most important implication of the reported evidence unaddressed."
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The AI invoked locality-guide and gave substantive guidance on Kenyan record types when it should have declined because this is a negative test where FamilySearch has no Kenya collections."
+    },
+    {
+      "test_id": "ut_research_ken",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -107,140 +219,28 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_019",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_019",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_019",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_rpn",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The AI asked for the project path and question ID instead of answering, even though both were already provided in the scenario."
-    },
-    {
-      "test_id": "ut_research_rpn",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The AI returned only an information request and never addressed whether planning is complete or what the next plan item should look like."
-    },
-    {
-      "test_id": "ut_research_ken",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 1,
-      "comment": "The AI generated record type suggestions for Kenya without tool backing when it should have declined since FamilySearch has no record collections for Kenya."
-    },
-    {
       "test_id": "ut_research_ken",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 1,
       "corrected_score": 1,
-      "comment": "The AI produced substantive output and offered to re-run the locality guide instead of declining the out-of-scope request."
+      "comment": "The AI performed the task instead of declining, which is the full failure on a negative test where the correct answer is to recognize the request is out of scope."
     },
     {
-      "test_id": "ut_research_ken",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_szk",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_szk",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_szk",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The AI pulled q_001 assertions and acknowledged that q_002 also needs person-evidence, but stopped and asked the user to confirm instead of invoking person-evidence for either question."
-    },
-    {
-      "test_id": "ut_research_9k4",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_9k4",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_9k4",
+      "test_id": "ut_research_016",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The AI correctly spotted the “look like” phrasing as an unregistered log inference and routed to hypothesis-tracking via Agent call before doing anything else, never stating the sibling relationship as a fact. It then said the relationship “has been handed off to be registered” when the stub confirmed nothing was written, which overclaims the outcome."
+      "comment": "The AI correctly called project_context and research_query and gathered accurate project state, but then answered the browsing planning question directly instead of declining and routing to research-plan."
     },
     {
-      "test_id": "ut_research_gm4",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_gm4",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The AI correctly identified that a death in 1861 makes the 1870 marriage impossible and contradicts h_002, but stated the 1870 bridegroom “may be a different Robert Eastham entirely” without noting this is speculative."
-    },
-    {
-      "test_id": "ut_research_gm4",
+      "test_id": "ut_research_016",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The AI addressed the main contradiction and identified h_002 as contradicted, but did not develop what to do next with the reported parental names James and Elizabeth or how they connect to the existing Eastham persons in the tree."
+      "comment": "The AI gave a complete and reasonable browsing strategy, but this is a negative test where the right behavior is to recognize the planning question as out of scope and hand it to research-plan."
     }
   ]
 }
