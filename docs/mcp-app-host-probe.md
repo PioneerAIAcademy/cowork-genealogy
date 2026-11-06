@@ -521,12 +521,12 @@ is an answer.
 
 | Run | |
 |---|---|
-| Date | 2026-11-05 |
+| Date | 2026-11-05 and 2026-11-06 |
 | Claude Desktop version | 4.16336.0 |
 | Where the task ran (cloud or local), and whether it had a folder | Cloud (`cse_` session), with a folder on this Mac |
 | Account the connector is on (organization or personal) | Personal |
 | macOS version | 15.8.2 |
-| Commit of `mcp-app-viewer-m0` | `5e61d3b5c` |
+| Commit of `mcp-app-viewer-m0` | `5e61d3b5c`, then `9a64649b1` on 2026-11-06 |
 
 ### Approvals
 
@@ -558,8 +558,8 @@ the local route does not render, testers see cards in the browser tab.
 | Control: claude.ai chat | Yes | Shown as `Genealogy Viewer show_project` |
 | Control: Desktop Chat | Yes, only after restarting Desktop | `mcp__Genealogy_Viewer__show_project` |
 | Connector, task with a folder on this Mac | Yes, after a ToolSearch load, on a project with one small document | `mcp__Genealogy_Viewer__show_project` |
-| Connector, task with no folder | | |
-| Connector, a chat opened after a Cowork task, with no reconnect (`anthropics/claude-code` #103924) | | |
+| Connector, task with no folder | Yes. **New** with no folder starts a Desktop Chat | |
+| Connector, a chat opened after a Cowork task, with no reconnect (`anthropics/claude-code` #103924) | Yes, in Desktop Chat and claude.ai | |
 | Connector, a chat that moved to a cloud session | | |
 | Connector, Claude mobile app (`anthropics/claude-ai-mcp` #1085) | | |
 | Connector, after a ToolSearch load | | |
@@ -585,6 +585,7 @@ resource itself.
 | Route | `clientInfo` | Declared extensions |
 |---|---|---|
 | Connector | `Anthropic/ClaudeAI` 1.0.0 at connect; `claude-code` 2.1.318 when the Cowork task started | `io.modelcontextprotocol/ui` from the first; none from the second, and the card still rendered |
+| Connector, 2026-11-06 | `claude-code` 2.1.319-ccs, about 1.5 s before each conversation's first tool call, on all three surfaces. On 2026-11-05 a chat's calls had no such line | `io.modelcontextprotocol/ui` |
 | Local | | |
 | Artifact | | |
 
@@ -606,12 +607,13 @@ artifact.
 
 | | Connector | Local |
 |---|---|---|
-| `availableDisplayModes` | `inline, fullscreen` | |
-| `host-context-changed` on entering fullscreen | | |
-| `host-context-changed` on the host's own close | | |
-| A card opened by a typed request goes straight to fullscreen | | |
-| A mode switch remounts the frame | | |
-| Where a typed card lands while the file is fullscreen | | |
+| `availableDisplayModes` | `inline, fullscreen`, on all three surfaces | |
+| `host-context-changed` on entering fullscreen | Yes, `displayMode fullscreen`, on all three | |
+| `host-context-changed` on the host's own close | Not read yet. The host's control is an X at the upper right, but the X closed the second card, and its report was not taken | |
+| A card opened by a typed request goes straight to fullscreen | Yes, with `show: "file"` and no tap, on all three | |
+| A mode switch remounts the frame | No, on all three: one `mount id`, and the link probe's result survives | |
+| Where a typed card lands while the file is fullscreen | It replaces the old card in the full screen view, on all three. The old card gets `displayMode inline` about 2 s after the call. Both cards stay in the conversation | |
+| What a card that lands in the full screen view reports | Not read yet. No `Back to the card` showed on it, so it may report `inline` | |
 
 ### Variant line
 
@@ -629,8 +631,8 @@ opens with "show me the project".
 
 | Strings the model quoted | Connector | Local |
 |---|---|---|
-| Plain call | | |
-| Call with `structuredCanary: true` | | |
+| Plain call | `CANARY-CONTENT-K7Q2` only, on all three surfaces, from the replies to the plain and `pad` calls | |
+| Call with `structuredCanary: true` | `CANARY-CONTENT-K7Q2` only, on all three surfaces. The result carried 80 more bytes | |
 
 ### Card receives `_meta`
 
@@ -640,8 +642,8 @@ project as it is now rather than at that step.
 
 | | Connector | Local |
 |---|---|---|
-| `result _meta arrived` | Yes, on a result of 361 bytes | |
-| `data came from` | `result _meta` | |
+| `result _meta arrived` | Yes, up to 300,005 bytes, on all three surfaces. No at 1,599,948 bytes | |
+| `data came from` | `result _meta`, or a `read_project_view` call when `_meta` did not arrive | |
 
 ### Size
 
@@ -652,10 +654,10 @@ of the largest project's research.json, `document` gains paging.
 |---|---|---|---|---|---|
 | 400k characters | | | Whole, 699,798 bytes, 2.0 to 7.1 s | | |
 | 1M characters | | | Whole, 1,299,798 bytes, 19.5 s | | |
-| 1.3M characters | | | Whole, 1,599,798 bytes, 14.5 s | | |
+| 1.3M characters | `_meta` dropped at 1,599,948 bytes, on all three surfaces | | Whole, 1,599,798 bytes, 14.5 s | | |
 | 2M characters | | | Whole, 2,299,798 bytes, 8.0 s | | |
-| Largest `resultBytes` accepted | 299,925 so far | | 2,299,798 so far | | |
-| What happens past it | | | | | |
+| Largest `resultBytes` accepted | 300,005 so far | | 2,299,798 so far | | |
+| What happens past it | The host drops `_meta` with no error, and the result's keys are `content, isError`. The card's one fallback read fills it, 2.9 to 3.2 s later on claude.ai and in Cowork and 20.8 s later in Desktop Chat. The model is told nothing | | | | |
 
 ### Image
 
@@ -673,9 +675,9 @@ rules' links need.
 
 | | Connector | Local |
 |---|---|---|
-| The page opens | | |
-| Claude asks first | | |
-| `Link probe` line | | |
+| The page opens | Yes. Desktop Chat: Desktop or Chrome, by choice. claude.ai: a new tab. Cowork: a side panel beside the conversation | |
+| Claude asks first | Desktop Chat: yes. Cowork: no. claude.ai: not noted | |
+| `Link probe` line | Answered in 20,166 ms in Desktop Chat, 3,287 ms on claude.ai and 1,897 ms in Cowork | |
 
 ### Door refusals
 
@@ -699,7 +701,7 @@ researcher is looking at. It posts nothing either way.
 
 | | Connector | Local |
 |---|---|---|
-| `updateModelContext offered` | Yes | |
+| `updateModelContext offered` | Yes, on all three surfaces | |
 
 ### Connector off for one task
 

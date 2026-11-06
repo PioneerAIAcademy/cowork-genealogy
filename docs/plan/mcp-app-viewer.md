@@ -228,11 +228,13 @@ from it, and an unannotated tool defaults to "not read-only".
   `log`), `questionId`, `logId`, `personId`, `planItemId`, `sourceId`.
   - `_meta.ui.resourceUri: "ui://genealogy/viewer.html"`. The description tells
     the model that the researcher sees the card and it must not restate it.
-  - **Result shape.** Claude Code, and so Cowork, gives the model a result's
-    `structuredContent` in place of its `content`, so `structuredContent` is
-    omitted and `content` is one line for the model. The result's `_meta` under
+  - **Result shape.** On all three surfaces the model sees a result's `content`, and
+    neither its `structuredContent` nor its `_meta`. `structuredContent` is omitted
+    and `content` is one line for the model. The result's `_meta` under
     `genealogy/project` carries `research`, `tree`, `startingTree`, `collections`
     and `derived`. A card is therefore a true snapshot of the project at that step.
+    A result too big for the host loses its `_meta` with no error, and the card reads
+    the project as it is now.
   - **`derived`** is what only the engine can compute: question states
     (`questionStatus`), unregistered disagreements, hand-offs awaiting the
     researcher, the tree changes from `treeDiff` against the starting tree, each
@@ -714,9 +716,9 @@ The two tools and the page move onto the tool server, behind the door.
   packaging stay untouched. The test is `principal.kind === "bearer"` and that surface,
   on dispatch as well as listing. `allToolSchemas`, `manifest.json` and the plugin
   hook's tool maps do not change. Every other surface gets the dispatcher's unknown-tool
-  error. Every connector client gets the same list, whatever it declares: a Cowork task
-  declares no UI extension and still draws a card, and a host may share one `tools/list`
-  per connector login.
+  error. Every connector client gets the same list, whatever it declares: clients have
+  differed in what they declare, and a host may share one `tools/list` per connector
+  login.
 - **Arguments:** `rejectUnknownArgs` skips a tool outside `allToolSchemas`, so the two
   tools keep their own unknown-argument check, which answers in plain text.
 - **Capabilities:** `createServer` gains the resources capability and handlers, and
