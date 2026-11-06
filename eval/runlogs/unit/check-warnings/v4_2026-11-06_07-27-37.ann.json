@@ -1,41 +1,17 @@
 {
-  "run_log": "v1_2026-10-14_16-56-14.json",
-  "annotator": "florencemashipei4@gmail.com",
+  "run_log": "v4_2026-11-06_07-27-37.json",
+  "annotator": "solomonbaidoo54@gmail.com",
   "corrections": [
     {
       "test_id": "ut_check_warnings_021",
       "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_021",
-      "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_021",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_021",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_021",
+      "test_id": "ut_check_warnings_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -43,31 +19,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_021",
+      "test_id": "ut_check_warnings_001",
       "dimension_source": "rubric",
       "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This criterion is not applicable to the task."
     },
     {
-      "test_id": "ut_check_warnings_022",
+      "test_id": "ut_check_warnings_001",
       "dimension_source": "rubric",
       "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This criterion is not applicable to the task."
     },
     {
-      "test_id": "ut_check_warnings_022",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_022",
+      "test_id": "ut_check_warnings_001",
       "dimension_source": "rubric",
       "dimension_name": "Detection accuracy",
       "llm_score": 3,
@@ -75,23 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_022",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_022",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_022",
+      "test_id": "ut_check_warnings_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -99,15 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_019",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_019",
+      "test_id": "ut_check_warnings_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -115,7 +59,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_019",
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_002",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -123,7 +83,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_019",
+      "test_id": "ut_check_warnings_002",
       "dimension_source": "rubric",
       "dimension_name": "Detection accuracy",
       "llm_score": 3,
@@ -131,68 +91,20 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_019",
+      "test_id": "ut_check_warnings_002",
       "dimension_source": "rubric",
       "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "With warningCount: 0 and no warnings returned, there are no severity tiers to classify. Per the rubric, this dimension is correctly N/A."
     },
     {
-      "test_id": "ut_check_warnings_019",
+      "test_id": "ut_check_warnings_002",
       "dimension_source": "rubric",
       "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "With no warnings found for I1, the rubric specifies that this dimension is N/A/null because there is nothing to make actionable."
     },
     {
       "test_id": "ut_check_warnings_004",
@@ -243,31 +155,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_020",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_020",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_020",
+      "test_id": "ut_check_warnings_005",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_020",
+      "test_id": "ut_check_warnings_005",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -275,15 +171,79 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_020",
+      "test_id": "ut_check_warnings_005",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "it incorrectly concludes that the warnings cannot be explained by a single wrong fact and recommends rebuilding the full timeline and searching for a split point"
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_check_warnings_020",
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_006",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_006",
       "dimension_source": "rubric",
       "dimension_name": "Actionability",
       "llm_score": 3,

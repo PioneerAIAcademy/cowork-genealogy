@@ -48,8 +48,14 @@ mob."
 **Single-person warnings run on the anchor *and* its one-hop relatives,
 not the anchor alone.** 28 of the 55 self-checks have a relative-mob variant
 (`relatives*`, `maleRelatives*`, `femaleRelatives*`) that fires the same
-condition on a parent, spouse, or child; the flagged relative is named in
-the warning's `personId`/`personName`. The other 26 run on the anchor only.
+condition on a parent, spouse, or child. Most variants emit one warning that
+keeps the anchor in `personId`/`personName` and names the flagged relative in
+`relatedPersonId`. The three per-relative variants,
+`relativesEarliestChildBirthToBirth12`, `relativesHasDeathBeforeChildBirth365_2`
+and `relativesHasDeathBeforeChildBirth30_10`, emit one warning per failing
+relative with the relative in `personId`/`personName`, and name that
+relative's child in `relatedPersonId` when the child has an id. The other 26
+run on the anchor only.
 The relative-variant tags in § Warning Definitions are the evidence.
 
 ---
@@ -730,8 +736,12 @@ same condition on a one-hop relative (parent, spouse, or child) instead of
 the anchor; the other 26 run on the anchor only. They are **always
 `implausible`** regardless of the self-check's
 severity — the anchor's own data isn't necessarily wrong; the issue is in
-the relationship — and the flagged relative is named in the warning's
-`personId`/`personName`. Prefix conventions: `relatives*` = any relative,
+the relationship. Most variants keep the anchor in the warning's
+`personId`/`personName` and name the flagged relative in `relatedPersonId`;
+the three per-relative variants (`relativesEarliestChildBirthToBirth12`,
+`relativesHasDeathBeforeChildBirth365_2`,
+`relativesHasDeathBeforeChildBirth30_10`) put the relative in
+`personId`/`personName` instead. Prefix conventions: `relatives*` = any relative,
 `maleRelatives*`/`femaleRelatives*` = gender-restricted. See each row's
 mirrored self-check for the rule. Ten of the 28 variants fire only in merge
 mode, marked below, so `person_warnings` can emit 18 of them.
