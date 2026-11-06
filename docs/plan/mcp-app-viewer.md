@@ -739,6 +739,9 @@ The two tools and the page move onto the tool server, behind the door.
 - **The page:** the tools Dockerfile gains a pnpm stage that builds it. It sits beside
   `build/` in the image, not in `config/`, so the `.mcpb` does not carry it. The tool
   server reads it through `src/utils/bundled-data.ts`, when a host asks for it.
+- **Large results:** M0 sends the documents in `_meta` at any size. Here `show_project`
+  leaves them out above 1,000,000 bytes and keeps the rest, and the page's loader reads
+  the id from that smaller `_meta`.
 - **Images:** `/img/<token>` becomes a branch in the door's `route()`. The token is an
   HMAC over the project id, the ref and the expiry, with no bearer. `createServer` signs
   and the door verifies, so they share one key. The door reads the image through a
