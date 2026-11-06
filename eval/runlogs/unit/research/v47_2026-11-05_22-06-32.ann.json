@@ -1,0 +1,342 @@
+{
+  "run_log": "v47_2026-11-05_22-06-32.json",
+  "annotator": "benteroyiembo@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_021`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that Cornelius Driscoll already has a death record attached (SD-DRIS-D, Quebec Civil Registration Deaths, 1867–1900) and a corroborating burial record (SD-DRIS-C). The tool response confirms both sources are present on the profile. Claude's statement that 'no search needed' is accurate given the user's bounded request. All factual claims are supported by the person_read tool response.\n\nJunior: (Pass - All factual claims are supported by the person_read tool response.)"
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_021`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The user asked a single, focused question: 'Is there a death record for Cornelius Driscoll, GJ72-9WD? Just that one thing.' Claude directly answered this by identifying the death record already attached and providing its citation. The response included the burial record as corroborating evidence, which is appropriate context. No required information was omitted.\n\nJunior: (Pass - No reqired information was omitted.)"
+    },
+    {
+      "test_id": "ut_research_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_021`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made three tool calls: project_list (no args expected), project_context (with correct projectPath), and person_read (with correct personId 'GJ72-9WD'). All arguments matched the expected_args semantically. The person_read call returned the full profile with all seven attached sources, enabling Claude to answer the question accurately.\n\nJunior: (Pass - All three tool calls made enabled Claude answer the question accurately.)"
+    },
+    {
+      "test_id": "ut_research_hvy",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_hvy`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified the hit from log_017 (hit 9, results/log_017.json#3Q9M-CSK3-ZSLR) and accurately described its content: a baptism record from Jackson, Washington, New York containing a 'Mary Robertson' entry with parents 'Mary Robertson & Hiram Hyde.' The sidecar_read tool confirmed the hit contains this exact entry in the church register. Claude's narration is factually accurate and supported by the tool response.\n\nJunior: (Pass - Claude's narration is factually accurate and supported by the tool response.)"
+    },
+    {
+      "test_id": "ut_research_hvy",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_hvy`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude completed the routing task as required. The user message asked to 'Continue' with extracting the Match from log_017 hit 9, and Claude correctly pulled the hit via sidecar_read, identified the relevant record, and spawned the record-structurer agent to extract it. All steps necessary for the routing handoff were performed.\n\nJunior: (Pass - Claude completed the routing task as required.)"
+    },
+    {
+      "test_id": "ut_research_hvy",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_hvy`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All MCP tool calls passed arguments matching expected usage. project_list and project_context were called with correct/standard args; sidecar_read was called with the exact ref 'results/log_017.json#3Q9M-CSK3-ZSLR' matching the user's citation of hit 9. The tool responses confirm all calls succeeded (matched.kind == 'live') with no fixture_not_found errors.\n\nJunior: (Pass - All MCP tool calls passed arguments matching expected usage.)"
+    },
+    {
+      "test_id": "ut_research_kg1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_kg1`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly identified that it was a routing test and invoked the person-evidence agent as the next step. The project_context response explicitly stated 'nextStep: person-evidence — none of this question's N assertions is linked to a person' for both questions, and Claude correctly routed to that step. The text response accurately describes the delegation ('Linking all 15 unique assertions across both questions to tree persons') without falsely claiming work was completed. No fabricated material or unsupported claims.\n\nJunior: (Pass - No fabricated material or unsupported claims.)"
+    },
+    {
+      "test_id": "ut_research_kg1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_kg1`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill completed the routing task as required. It queried the project context to determine the next step, retrieved the unlinked assertions for both questions (13 for q_001, 5 for q_002, with 3 shared assertions = 15 unique total), and correctly identified person-evidence as the required next step. The hand-off was made as designed; no further work was expected in this step.\n\nJunior: (Pass - The skill completed the routing task as required.)"
+    },
+    {
+      "test_id": "ut_research_kg1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_kg1`** — `base` / `Tool Arguments`\nLLM: 2 → Junior: 2\n\n> The skill made four tool calls. The first two (project_list and project_context) were correct. The third call to research_query used 'status: unlinked' which was rejected with a validation error ('status' is not a supported filter). Claude recovered by making two corrected calls using 'questionId' filters instead, which succeeded. This is a single validation rejection with immediate correction, which per the recovery policy scores partial (2) rather than full credit, because the initial call showed a misunderstanding of the API's supported filters for the assertions section.\n\nJunior: ( Scores partial (2), not full credit, because the first call demonstrated a misunderstanding of the API's supported assertion filters before being promptly corrected. )"
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_research_ken`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> Claude performed its own task when it should have declined. The test explicitly states this is a NEGATIVE test where the skill should decline without invoking any skill because the request is out of scope. Instead, Claude invoked the locality-guide agent and produced substantive output (general guidance on Kenya research, record types, jurisdictional context). Per the negative test rule, performing the task when decline was correct is a fail, regardless of output quality.\n\nJunior: (Fail - Fails under the negative-test rule: the correct behavior was to decline the task, so executing it is considered incorrect regardless of output quality. )"
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_research_ken`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> On a negative test, completeness is graded on the quality of the decline/routing decision. Claude did not decline; it invoked locality-guide and produced research guidance. The correct behavior was to decline without invoking any skill. Performing substantive work when the correct outcome is to decline is a completeness failure.\n\nJunior: (Fail - The expected behavior was to decline the request without skill invocation. Performing substantive work when a decline was warranted results in a completeness failure.)"
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_research_ken`** — `base` / `Tool Arguments`\nLLM: N/A → Junior: N/A\n\n> No MCP tool calls were made by Claude in this response. The locality-guide agent was invoked (a skill handoff, not an MCP tool call), but no direct MCP tool calls appear in the MCP tool calls section. Therefore Tool Arguments is N/A.\n\nJunior: (N/A - No MCP tool calls were made by Claude.)"
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_research_018`** — `base` / `Correctness`\nLLM: 1 → Junior: 1\n\n> This is a NEGATIVE test. The skill should have declined and routed to question-selection, but instead Claude performed its own task by analyzing the project state and offering research recommendations. The response substantively evaluated what to research next rather than declining to do so, which is the wrong behavior for this test scenario.\n\nJunior: (Fail - The response failed to decline as required and instead provided substantive recommendations on what to research next, which is contrary to the expected behavior for this scenario.)"
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "**`ut_research_018`** — `base` / `Completeness`\nLLM: 1 → Junior: 1\n\n> This is a NEGATIVE test. Completeness is graded on the quality of the decline/routing decision. The skill failed to decline or route to question-selection as required. Instead it produced a full research advisory, which means it did not complete the correct task (declining and routing).\n\nJunior: (Fail - The skill failed to decline or route to question-selection as required.)"
+    },
+    {
+      "test_id": "ut_research_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_018`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The skill made one MCP tool call to mcp__genealogy__project_context with the correct projectPath argument. The call matched expected_args and returned successfully (matched.kind == 'live'). The tool was used appropriately to gather context, though the skill should not have used that context to perform its own task.\n\nJunior: (Pass - The call matched expected_args and returned successfully (matched.kind == 'live').)"
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_research_024`** — `base` / `Correctness`\nLLM: N/A → Junior: N/A\n\n> [coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by its invariant validator alone, so Correctness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill was invoked but produced no text response and made no file changes. The user asked for plan suggestions for additional searches on the parentage question. The skill should have declined and routed to research-plan, but instead it appears to have executed research-plan as an agent without producing any output or substantive guidance. The empty response fails to address the user's request for what records remain to be checked.\n\nJunior: ([coerced-to-na] This is a correctly routed negative test whose outcome is determined solely by its invariant validator. As a result, Correctness is N/A, and the judge’s score of 1 was coerced to null.)"
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "**`ut_research_024`** — `base` / `Completeness`\nLLM: N/A → Junior: N/A\n\n> [coerced-to-na] this is a correctly-routed negative test, whose outcome is decided by its invariant validator alone, so Completeness is N/A and the judge's 1 was coerced to null. READ THE ORIGINAL BELOW BEFORE CONFIRMING THE N/A: on 4 of the 47 runs in the committed corpus the skill under test produced real output first (up to 1355 chars and 5 tool calls, including writes), and there a 1 names a genuine defect the routing pass hides. Original judge rationale: The skill produced no text response and no file changes. The user explicitly asked 'what records are left that we haven't checked yet?' — a direct request for research planning guidance. The skill should have either declined and routed to research-plan, or if it executed research-plan, should have produced a plan with specific record suggestions (probate records, post-1860 censuses, FAN research, naturalization records, passenger lists). The complete absence of output means the user's question went unanswered.\n\nJunior: ([coerced-to-na] This is a correctly routed negative test whose outcome is determined solely by the invariant validator. Therefore, Completeness is N/A, and the judge’s score of 1 was coerced to null.)"
+    },
+    {
+      "test_id": "ut_research_024",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_024`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> The single MCP tool call (mcp__genealogy__project_context) was invoked with correct arguments: the projectPath parameter matched the expected fixture path. The call succeeded with matched.kind == 'live' and returned valid project context. No tool argument errors occurred.\n\nJunior: (N/A - No tool argument errors occurred.)"
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_hva`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> The skill correctly relayed the stubbed Match verdicts from all 11 evaluate-search-results agents without fabrication. It made the required PROJECT_LIST call first to locate the project, then read the log_017 hits, spawned agents in three batches (5, 5, 1), and reported each verdict accurately. The stub's identical Match summaries for all hits were relayed as-is, which is correct behavior per the test assertion that the stub gives that Match even to implausible hits and relaying it is not a factual error. No contradictions with input state or unsupported claims.\n\nJunior: (Pass - No contradictions with input state or unsupported claims.)"
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_hva`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> The skill addressed the user's request to evaluate all 11 hits of log_017 for Iram Hyde. It spawned one agent per hit across three batches without stopping early or omitting any hits. It reported the completion of all 11 evaluations and offered the next step (extraction). No required work was left undone; the routing test explicitly states the router judges nothing from the hit list itself and extracts nothing in this turn, so the offer to continue with extraction is the correct endpoint.\n\nJunior: (Pass - No required work was left undone.)"
+    },
+    {
+      "test_id": "ut_research_hva",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_hva`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All tool calls passed arguments matching expected behavior. PROJECT_LIST was called with no arguments as required when no projectPath was named. PROJECT_CONTEXT received the correct projectPath from the live tool's folder answer. SIDECAR_READ received the correct projectPath and ref (results/log_017.json#hits). The 11 evaluate-search-results spawns (not visible in the tool calls list per the test note) were routed with projectPath, hitRef, and target per the test assertion. No critical identifiers were wrong, no fixture_not_found errors occurred, and no calls landed in error states.\n\nJunior: (Pass - All tool calls passed arguments matching expected behavior.)"
+    },
+    {
+      "test_id": "ut_research_m8t",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_m8t`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified the merge task, recognized that both persons (I3 and I4) are in the tree, and appropriately routed to tree-edit for execution. The response accurately states the user has confirmed identity and that the merge should proceed. No factual errors or unsupported claims are present in the narration.\n\nJunior: (Pass - No factual errors or unsupported claims are present in the narration.)"
+    },
+    {
+      "test_id": "ut_research_m8t",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_m8t`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the user's request completely: identified the two persons to merge (I3 from 1880 census, I4 from FamilySearch), confirmed they are in the tree, acknowledged the user's confirmation of identity, and routed to tree-edit for the merge operation. All required elements of the bounded request were covered.\n\nJunior: (Pass - All required elements of the bounded request were covered.)"
+    },
+    {
+      "test_id": "ut_research_m8t",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_m8t`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made two tool calls: project_list (no args required, correctly called with empty args) and project_context (correctly passed the projectPath from the live tool's response). Both calls matched expected usage. The project_list call is required when no projectPath is named, and project_context was appropriately invoked to gather project state before routing.\n\nJunior: (Pass - Both calls made matched expected usage.)"
+    },
+    {
+      "test_id": "ut_research_l4g",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_l4g`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified this as a bounded locality-guide request and routed it appropriately. The response contains no fabricated material, no contradictions with the input state, and no unsupported claims. Claude's narration accurately describes the task (a bounded locality-guide request for County Tipperary records 1830-1850) and the routing decision. No file changes were made, which is correct for a routing scenario where execution stops at the stub.\n\nJunior: (Pass - No file changes were made, which is correct for routing scenario where execution stops at the stub.)"
+    },
+    {
+      "test_id": "ut_research_l4g",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_l4g`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed everything required by the input state. The user asked for a bounded deliverable (records guide for County Tipperary, 1830-1850), and Claude correctly identified this as locality-guide's responsibility and routed it. No additional work was required from the research skill itself. The routing was the complete and correct response to this bounded request.\n\nJunior: (Pass - Claude addressed everything required by the input state.)"
+    },
+    {
+      "test_id": "ut_research_l4g",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_l4g`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made one MCP tool call: project_list with empty args ({}), which matches expected_args of null. This is the required first step when no projectPath is named, per the per-test context. The call was correct and necessary to locate the project before routing. No other tool calls were needed or made.\n\nJunior: (Pass - No other tool calls were needed or made.)"
+    },
+    {
+      "test_id": "ut_research_p3v",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_p3v`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified that the user's question about identity (whether the 1870/1880 Patrick Flynn born ~1832 in Pennsylvania is the same person as the subject Patrick Flynn born ~1845 in Ireland) is a bounded-request routing task owned by person-evidence. The response accurately described the project state (hypothesis h_002 already exists for this exact question, assertions a_014–a_019 from the 1870/1880 censuses are already extracted). Claude's narration was factually accurate: the project does have the records extracted and the hypothesis open. No fabricated claims or unsupported assertions were made.\n\nJunior: (Pass - No fabricated claims or unsupported assertions were made.)"
+    },
+    {
+      "test_id": "ut_research_p3v",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_p3v`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude completed the required task for a bounded-request routing test: it recognized the deliverable (a verdict on identity), identified the correct owner (person-evidence), and routed to that skill. The response addressed everything the input state required. No silent omissions occurred. The per-test context explicitly states that walking the job routing table before the hand-off is a failure this test catches, and Claude correctly skipped that, routing directly to person-evidence.\n\nJunior: (Pass - The response addressed everything the input state required. No silent omissions occurred.)"
+    },
+    {
+      "test_id": "ut_research_p3v",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_p3v`** — `base` / `Tool Arguments`\nLLM: 2 → Junior: 2\n\n> Claude made five tool calls. The first two (project_list and project_context) were correct and necessary for routing. The third call to research_query used `sourceIds` (plural) as a parameter, which the tool does not accept; the tool rejected it with 'unknown_args_refused' and correctly noted the parameter should be `sourceId`. Claude then corrected this on the fourth call, using `sourceId` as an array, which succeeded. This represents a single validation rejection followed by immediate correction—a clean recovery that scores full credit per the recovery policy. The fifth call (hypotheses query) was correct. The final persisted state reflects correct tool usage after the recovery.\n\nJunior: (Partial - Scores partial (2): the first research_query call failed validation due to incorrect parameter usage (sourceIds instead of sourceId). The model recovered cleanly, but the initial rejection demonstrates imperfect tool usage, preventing full credit despite successful completion of the task.)"
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_szk`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified the routing requirement and accurately described the project state. The response correctly states that 13 assertions belong to q_001 and 5 to q_002, all unlinked. Claude accurately noted that person-evidence must assign record personas to tree persons before conflict resolution can proceed. The claim that 'Elizabeth Duncan' as mother in the Edinburgh record creates a persona-matching problem is factually grounded in the source data (src_004 names Elizabeth Duncan, while the tree shows I3 as Phillis Mackannel). No fabricated material or unsupported claims appear.\n\nJunior: (Pass - No fabricated material or unsupported claims appear.)"
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_szk`** — `base` / `Completeness`\nLLM: 2 → Junior: 2\n\n> Claude addressed the routing requirement and correctly identified that person-evidence must be invoked before conflict resolution. However, the response is incomplete in a critical way: it did not actually invoke person-evidence or any other skill to begin the linking work. The user asked to 'settle which is his and write the conclusion,' and Claude's response ends with 'Continue with `linking the records`? (q_002 assertions next)' — a question to the user rather than action. The per-test context requires that the router hand off to person-evidence; Claude narrated the need but did not execute the handoff. The response stops at analysis without performing the delegated work.\n\nJunior: (Partial - Claude narrated the need but did not execute the handoff. The response stops at analysis without perfoming the delegated work.)"
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_szk`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made three MCP tool calls: project_list (no args expected), project_context (with correct projectPath), and two research_query calls (with correct projectPath and section/questionId pairs). All arguments match the expected shape. The project_context call correctly passed the temp folder path. The research_query calls correctly specified section='assertions' and the two question IDs (q_001 and q_002). No tool calls landed in fixture_not_found; all matched.kind == 'live'. Arguments are semantically correct.\n\nJunior: (Pass - All tool calls matched kind == \"live\" with no fixture_not_found errors. Arguments were semantically correct.)"
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_h22`** — `base` / `Correctness`\nLLM: 3 → Junior: 3\n\n> Claude correctly identified the unregistered disagreements blocking the path to proof (Elizabeth's birthplace: England in 1850 vs. Alabama in 1860/1880; Sarah Martha's birthplace: Alabama in 1850 vs. Mississippi in 1860). The tool calls retrieved the exact assertions (a_007, a_023, a_044, a_011, a_027) and confirmed the conflicts. Claude accurately characterized the state and appropriately routed to conflict-resolution without attempting to resolve the conflicts itself or dismissing them as minor. No fabricated material or unsupported claims.\n\nJunior: (Pass - No fabricated material or unsupported claims.)"
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_h22`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the user's request to wrap up q_001 by correctly identifying that the path to conclusion is blocked by unregistered conflicts. The response identified both conflicting facts (I2 and I3 birthplaces), retrieved the supporting assertions, and routed appropriately. The user's implicit request to write a conclusion was correctly deferred pending conflict resolution, which is the complete and proper response given the project state.\n\nJunior: (Pass - The user's implicit request for a conclusion was appropriately deferred until the conflict is resolved, which constitutes the complete and correct response given the current project state.)"
+    },
+    {
+      "test_id": "ut_research_h22",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_h22`** — `base` / `Tool Arguments`\nLLM: 2 → Junior: 2\n\n> Claude made one failed attempt to query assertions using an unsupported `ids` parameter, then recovered by querying each assertion individually by `assertionId`. The recovery was clean and successful—all five target assertions (a_007, a_023, a_044, a_011, a_027) were retrieved with correct IDs. However, the initial incorrect parameter call (research_query with `ids` instead of individual `assertionId` queries) represents a partial defect in argument construction, though the final persisted state and retrieved data are correct.\n\nJunior: (Partial -  The model's first retrieval attempt failed due to invalid argument construction (ids instead of assertionId). Although recovery was immediate and all target assertions were ultimately retrieved correctly, the initial validation rejection demonstrates imperfect tool usage and therefore does not merit full credit.)"
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_9k4`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> Claude correctly identified that the log note treats Nora and Lois as Elizabeth's sisters based only on shared surname and South Dakota birth, with no record linking them. However, Claude then states 'The sibling relationship between Nora Stowers, Lois Stowers, and Elizabeth Stouer has been handed off to register as an active hypothesis' — this is unsupported. The tool response shows hypotheses section returned empty (count: 0), and the per-test context explicitly states 'The hypothesis-tracking callee is a stub that writes nothing, so hypotheses staying empty after the hand-off is expected.' Claude claims a hypothesis was registered when the tool evidence shows it was not. This is a factually incorrect assertion about what was persisted.\n\nJunior: (Partial - The response correctly evaluated the evidence and concluded that the sibling relationship was unproven. However, it incorrectly asserted that the relationship had been recorded as an active hypothesis when the tool results showed no such persistence. The analytical conclusion was correct, but the claim about the resulting system state was not, preventing full credit.)"
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_9k4`** — `base` / `Completeness`\nLLM: 3 → Junior: 3\n\n> Claude addressed the core requirement: identifying the unproven sibling premise in the log note, recognizing it needs hypothesis registration before proceeding, and routing to the next planned search (1910 census). The response correctly identified what should happen next and did not omit any required element of the workflow state assessment.\n\nJunior: (Pass -The response correctly identified the next action and did not omit any required aspect of the workflow assessment.)"
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_9k4`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> All four MCP tool calls used correct arguments matching expected patterns: project_list with no args, project_context with correct projectPath, and two research_query calls with correct section and questionId parameters. No calls landed in fixture_not_found, and all arguments were semantically appropriate for the task.\n\nJunior: (Pass - No tool invocations resulted in fixture_not_found; all arguments were relevant, semantically correct, and aligned with the task requirements.)"
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_gm4`** — `base` / `Correctness`\nLLM: 2 → Junior: 2\n\n> Claude correctly identifies the death record as evidence bearing on hypothesis h_002 (Robert Eastham Jr. as Polley Burton's sibling) and accurately notes the parental names (James and Elizabeth Eastham) from the researcher's report. However, Claude makes an unsupported inference by stating 'If Polley was their daughter too, her maiden name would be Eastham through that line' — the researcher never stated Polley was the daughter of James and Elizabeth, only that Robert was. Claude also claims the death record 'strengthens the main hypothesis' when in fact it introduces a potential contradiction: if Robert died in 1861 in Pulaski County with parents James and Elizabeth, this conflicts with the 1870 marriage bond (src_004, a_157, a_159) where Robert himself swore his father was born in Virginia and mother in Kentucky. The death record's parental information contradicts Robert's own sworn statement, yet Claude does not flag this conflict or note that the record may refer to a different Robert Eastham entirely. Claude correctly asks for the record identifier before formally incorporating it, which is appropriate, but the analytical framing treats the record as corroborating when it actually raises identity and contradiction questions that should be surfaced.\n\nJunior: (Partial - The response correctly identified the record's relevance and extracted key details, but it overinterpreted the evidence by inferring an unsupported parent-child relationship and framing the record as supportive of the hypothesis. It failed to flag significant inconsistencies with existing evidence that could indicate either a source conflict or a different individual altogether. The core evidence review was useful, but the analytical assessment was incomplete and partially incorrect.)"
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "**`ut_research_gm4`** — `base` / `Completeness`\nLLM: 2 → Junior: 2\n\n> Claude addresses the main task — analyzing the reported death record against existing hypotheses — but omits a critical step: recognizing and flagging the contradiction between the death record's parental information (James and Elizabeth Eastham) and Robert's sworn 1870 marriage bond statement (Virginia-born father, Kentucky-born mother). The per-test context requires that 'if the record makes a hypothesis's identity impossible... presenting it as corroboration... is the failure. Ruling out or flagging the contradicted hypothesis is expected.' Claude does not flag this potential identity problem or note that the death record may refer to a different Robert Eastham. Claude also does not treat the death record as a new lead requiring research into James and Elizabeth Eastham in Pulaski County — the per-test context states 'A record that contradicts the research direction is a new lead... The failure is a forward plan that goes from that record straight to wrap-up on the existing question with no step that researches the people the record names where it places them.' Claude's response ends by asking for the record identifier rather than proposing research steps for the parents or the death record itself.\n\nJunior: (Partial - The response handled the record procedurally correctly but missed key genealogical implications. It neither identified the conflict between the death record and Robert's prior sworn statement nor treated the newly named parents as a research lead requiring further investigation. The task was substantially addressed, but critical contradiction analysis and follow-up planning were omitted.)"
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "**`ut_research_gm4`** — `base` / `Tool Arguments`\nLLM: 3 → Junior: 3\n\n> Claude made two tool calls: project_list (with no args, expected_args null) and project_context (with projectPath matching the test fixture path, expected_args null). Both calls matched the expected behavior. Claude then made research_query with section='hypotheses' to retrieve the active hypotheses before analyzing the new evidence. All tool calls were semantically correct and used appropriate arguments for the task of retrieving project state and hypothesis details.\n\nJunior: (Pass - All tool calls were semantically correct and used appropriate arguments to retrieve the project state and relevant hypothesis details.)"
+    }
+  ]
+}
