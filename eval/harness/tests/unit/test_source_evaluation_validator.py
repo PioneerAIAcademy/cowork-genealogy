@@ -2095,3 +2095,25 @@ def test_a_census_named_by_a_foreign_id_with_a_year_token_is_still_a_flag():
             "The 1850 census (ST8Y-Z2C) birth year of 1839 conflicts with the profile's birth date.\n\n"
             "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
         )
+
+
+def test_a_weakness_list_does_not_join_the_birth_item_to_the_mother_item():
+    """Replay of two live runs: "the birth date specifics are unresolved; the mother's name has a
+    genuine conflict (... Hannah in the 1850 census)" is two items, and only one is about birth."""
+    _age_check(
+        "The principal weaknesses are: the birth date specifics are unresolved and the year is in "
+        "question; the mother's name has a genuine conflict (Jane Patterson in death records vs Hannah "
+        "in the 1850 census); and three of the death records have indexing errors.\n\n"
+        "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+    )
+
+
+def test_a_census_flagged_in_its_own_birth_item_after_a_semicolon_is_still_a_flag():
+    """The other direction: the semicolon only separates items, so the census named inside the
+    birth item itself is still caught."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(
+            "The weaknesses are: the marriages are unsourced; the 1850 census birth year of 1839 conflicts "
+            "with the profile's birth date; and the residences are unsourced.\n\n"
+            "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+        )
