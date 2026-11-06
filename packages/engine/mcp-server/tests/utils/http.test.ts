@@ -615,14 +615,14 @@ describe("fetchWithRetry's onRetryableResponse and beforeAttempt hooks", () => {
     const err = (await fetchWithRetry("https://example.com/stalls", {}, 1000, {
       attempts: 1,
       budgetMs: 5000,
-      beforeAttempt: (ms) => new Promise((resolve) => setTimeout(resolve, Math.min(ms, 300))),
+      beforeAttempt: (ms) => new Promise((resolve) => setTimeout(resolve, Math.min(ms, 450))),
     }).catch((e: unknown) => e)) as Error;
     const elapsed = Date.now() - started;
-    // The 300 ms wait left about 700 ms for the request: about 1 s in all, not 1.3 s.
+    // The 450 ms wait left about 550 ms for the request: about 1 s in all, not 1.45 s.
     const timedOutAfter = Number(/timed out after (\d+)ms/.exec(err.message)?.[1]);
-    expect(timedOutAfter).toBeGreaterThan(600);
-    expect(timedOutAfter).toBeLessThanOrEqual(705);
-    expect(elapsed).toBeLessThan(1_200);
+    expect(timedOutAfter).toBeGreaterThan(450);
+    expect(timedOutAfter).toBeLessThanOrEqual(555);
+    expect(elapsed).toBeLessThan(1_250);
   });
 
   it("a marked refusal from beforeAttempt is rethrown at once: no fetch, no retry", async () => {

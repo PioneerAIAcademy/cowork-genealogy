@@ -405,12 +405,12 @@ describe("the per-user 429 pause", () => {
           });
         }),
     );
-    recordFsPause("u_A", 300);
+    recordFsPause("u_A", 450);
     const started = performance.now();
     const err = (await fsFetchWithTimeout(userA, FS_URL, {}, 1000).catch((e: unknown) => e)) as Error;
-    // The wait came out of the 1 s: about 1 s in all, not 1.3 s.
-    expect(performance.now() - started).toBeLessThan(1_200);
-    expect(Number(/timed out after (\d+)ms/.exec(err.message)?.[1])).toBeLessThanOrEqual(705);
+    // The wait came out of the 1 s: about 1 s in all, not 1.45 s.
+    expect(performance.now() - started).toBeLessThan(1_250);
+    expect(Number(/timed out after (\d+)ms/.exec(err.message)?.[1])).toBeLessThanOrEqual(555);
     expect(wire).toHaveBeenCalledTimes(1);
 
     // A pause that outlasts the caller's timeout is refused at once, even
