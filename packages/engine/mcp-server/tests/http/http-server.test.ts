@@ -1663,4 +1663,70 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
     expect(upstream.calls.map((c) => c.authorization)).toContain("Bearer fs-tok-A-replaced");
     expect(upstream.calls.map((c) => c.authorization)).not.toContain("Bearer fs-tok-A");
   });
+
+  it("a call that waited is refused, and never runs, when its token now names another user", async () => {
+    bindStore.mockClear();
+    const gated = gatedStores(5);
+    const held = Array.from({ length: 4 }, (_, i) =>
+      rpc(call("project_context", { projectPath: projPath("9c", i) }), userA),
+    );
+    const otherId = projPath("9c", 4).slice(1);
+    const waiting = rpc(call("project_context", { projectPath: `/${otherId}` }), userA);
+    try {
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+      lookupConnector.mockImplementationOnce(async () => ({
+        userId: "u_B",
+        familySearchToken: "fs-tok-B",
+        openRouterApiKey: null,
+      }));
+    } finally {
+      await release(gated, held);
+    }
+    const res = await waiting;
+    expect(res.status).toBe(401);
+    expect(gated.entered.has(otherId)).toBe(false);
+    await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+  });
+
+  it("a call whose client hangs up during its second lookup never runs, and is logged as abandoned", async () => {
+    bindStore.mockClear();
+    const gated = gatedStores(5);
+    const held = Array.from({ length: 4 }, (_, i) =>
+      rpc(call("project_context", { projectPath: projPath("9d", i) }), userA),
+    );
+    const goneId = projPath("9d", 4).slice(1);
+    const client = new AbortController();
+    const lines: string[] = [];
+    const spy = vi.spyOn(process.stderr, "write").mockImplementation(((chunk: unknown) => {
+      lines.push(String(chunk));
+      return true;
+    }) as typeof process.stderr.write);
+    let answerLookup!: () => void;
+    let lookupStarted = false;
+    try {
+      const dropped = rpc(call("project_context", { projectPath: `/${goneId}` }), userA, {
+        signal: client.signal,
+      }).catch(() => undefined);
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+      // The waiter's second lookup is slow; the client leaves while it runs.
+      lookupConnector.mockImplementationOnce(async () => {
+        lookupStarted = true;
+        await new Promise<void>((resolve) => (answerLookup = resolve));
+        return { userId: "u_A", familySearchToken: "fs-tok-A", openRouterApiKey: null };
+      });
+      await release(gated, held);
+      await vi.waitFor(() => expect(lookupStarted).toBe(true));
+      client.abort();
+      await dropped;
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      answerLookup();
+      await vi.waitFor(() =>
+        expect(lines.join("")).toContain("ev=tool_abandoned surface=connector user_id=u_A tool=project_context"),
+      );
+    } finally {
+      spy.mockRestore();
+    }
+    expect(gated.entered.has(goneId)).toBe(false);
+    await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+  });
 });

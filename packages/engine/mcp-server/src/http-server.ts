@@ -810,11 +810,17 @@ async function handleMcpPost(
   // E4, per user: the slot is released however `run` ends, a throw included.
   if (capUserId !== undefined && isToolsCall(body.value)) {
     const userId = capUserId;
+    let hungUp = false;
     const ran = await runWithUserCallSlot(userId, disconnected.signal, async (waited) => {
       if (waited && !(await stillAdmitted(userId))) return;
+      // The client may have hung up during that second lookup.
+      if (disconnected.signal.aborted) {
+        hungUp = true;
+        return;
+      }
       await run();
     });
-    if (!ran) {
+    if (!ran || hungUp) {
       // The client hung up while the call waited, so there is no one to answer
       // and nothing ran. One line, so the call is not missing from the log.
       process.stderr.write(
