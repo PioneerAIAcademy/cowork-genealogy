@@ -18,6 +18,7 @@ import {
   CLAIM_FENCE_SQL,
   CLAIM_PRECHECK_SQL,
   createPgS3Backend,
+  MAX_DOCUMENT_BYTES,
   PgS3Backend,
   PgS3ProjectStore,
   StaleClaimError,
@@ -941,6 +942,79 @@ if (!DSN || !ENDPOINT) {
           expect(r.rows[0].doc).toEqual({ v: 3 });
         }));
 
+      describe("the document size cap", () => {
+        const emptyPad = Buffer.byteLength(JSON.stringify({ pad: "" }, null, 2));
+        /** A document whose pretty text is exactly `bytes` long. */
+        const ofBytes = (bytes: number) => ({ pad: "x".repeat(bytes - emptyPad) });
+        const refused = /^Nothing was saved: .+ would be larger than the 16 MB a project document may hold\.$/;
+        const version = async (projectId: string, name: string): Promise<number | undefined> => {
+          const r = await backend.pool.query("SELECT version FROM documents WHERE project_id = $1 AND name = $2", [
+            projectId,
+            name,
+          ]);
+          return r.rows[0]?.version;
+        };
+
+        it("stores a document of exactly the cap", () =>
+          withProject(async ({ store }) => {
+            await store.writeJson(ANCHOR, "research.json", ofBytes(MAX_DOCUMENT_BYTES));
+            const text = await store.readText(ANCHOR, "research.json");
+            expect(Buffer.byteLength(text)).toBe(MAX_DOCUMENT_BYTES);
+          }));
+
+        it.each([
+          ["a root document", "research.json"],
+          ["a document in a folder", "evaluations/verdict.json"],
+        ])("refuses %s one byte past the cap, leaving no project behind", async (_shape, ref) => {
+          const projectId = randomUUID();
+          const store = new PgS3ProjectStore(backend, { projectId, anchorPath: ANCHOR });
+          await expect(store.writeJson(ANCHOR, ref, ofBytes(MAX_DOCUMENT_BYTES + 1))).rejects.toThrow(refused);
+          expect(await projectRows(projectId)).toBe(0);
+          expect(await version(projectId, ref)).toBeUndefined();
+        });
+
+        it("counts bytes, not characters", () =>
+          withProject(async ({ store }) => {
+            const doc = { pad: "\u00e9".repeat(MAX_DOCUMENT_BYTES / 2) };
+            expect(JSON.stringify(doc, null, 2).length).toBeLessThan(MAX_DOCUMENT_BYTES);
+            await expect(store.writeJson(ANCHOR, "research.json", doc)).rejects.toThrow(refused);
+          }));
+
+        it("keeps the document a refused rewrite would have replaced", () =>
+          withProject(async ({ projectId, store }) => {
+            await store.writeJson(ANCHOR, "research.json", { v: 1 });
+            await expect(store.writeJson(ANCHOR, "research.json", ofBytes(MAX_DOCUMENT_BYTES + 1))).rejects.toThrow(
+              refused,
+            );
+            expect(JSON.parse(await store.readText(ANCHOR, "research.json"))).toEqual({ v: 1 });
+            expect(await version(projectId, "research.json")).toBe(1);
+          }));
+
+        it.each([
+          ["first", [0, 1]],
+          ["last", [1, 0]],
+        ])("writeJsonBoth writes neither document when the %s is over the cap", (_position, order) =>
+          withProject(async ({ projectId, store }) => {
+            await store.writeJson(ANCHOR, "tree.gedcomx.json", { tree: "old" });
+            const writes = [
+              { ref: "tree.gedcomx.json", data: ofBytes(MAX_DOCUMENT_BYTES + 1) },
+              { ref: "research.json", data: { research: "new" } },
+            ];
+            await expect(store.writeJsonBoth(ANCHOR, order.map((i) => writes[i]!))).rejects.toThrow(refused);
+            expect(JSON.parse(await store.readText(ANCHOR, "tree.gedcomx.json"))).toEqual({ tree: "old" });
+            expect(await version(projectId, "research.json")).toBeUndefined();
+          }));
+
+        it("leaves a staged or sidecar result alone: it is an object in S3, never loaded by a Postgres backend", () =>
+          withProject(async ({ store }) => {
+            const big = ofBytes(MAX_DOCUMENT_BYTES + 1);
+            await store.writeJson(ANCHOR, "results/log_001.json", big);
+            await store.writeJson(ANCHOR, "results/.staging/abc.json", big);
+            expect(await store.exists(ANCHOR, "results/log_001.json")).toBe(true);
+            expect(await store.exists(ANCHOR, "results/.staging/abc.json")).toBe(true);
+          }));
+      });
+
       /** Before each of the first `times` GETs, a second store overwrites `ref`
        *  with `v1\n`, `v2\n`…: the row moves to a new object and the old one is
        *  deleted between the reader's index lookup and its GET — the
@@ -1038,6 +1112,16 @@ if (!DSN || !ENDPOINT) {
             await purge(projectId);
           }
         }
+      });
+
+      it("a store with an owner reads an absent row as an empty project and claims nothing", async () => {
+        const projectId = randomUUID();
+        const store = new PgS3ProjectStore(backend, { projectId, anchorPath: ANCHOR, ownerId: "u_no_row_needed" });
+        expect(await store.classifyProject(ANCHOR)).toBe("no_project");
+        expect(await store.projectDirState(ANCHOR)).toBe("directory");
+        expect(await store.classifyProject(MISSING)).toBe("missing_dir");
+        expect(await store.projectDirState(MISSING)).toBe("missing");
+        expect(await projectRows(projectId)).toBe(0);
       });
 
       it("lists a staged write under results/.staging and not under results/", () =>
