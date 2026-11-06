@@ -243,12 +243,15 @@ export interface RetryBudgetOptions {
    */
   onRetryableResponse?: (status: number, retryAfterMs: number | null) => void;
   /**
-   * Awaited before every attempt, the first included, with the budget left in
-   * ms. It may wait inside that, or throw a refusal marked for
-   * `isFsBudgetExhausted`, which the loop rethrows without retrying. `fsFetch`
+   * Awaited before every attempt, the first included, with how long it may
+   * wait in ms: the budget left, and on the first attempt no more than that
+   * attempt's timeout. It may wait inside that, or throw a refusal marked for
+   * `isFsBudgetExhausted`, which the loop rethrows without retrying. The wait
+   * comes out of the attempt's own time, never on top of it, so a caller that
+   * sized `timeoutMs` and `budgetMs` to fit a ceiling still fits it. `fsFetch`
    * holds a paused connector user here (issue #3999).
    */
-  beforeAttempt?: (remainingMs: number) => Promise<void>;
+  beforeAttempt?: (maxWaitMs: number) => Promise<void>;
 }
 
 const retrySleep = (ms: number): Promise<void> =>
@@ -292,11 +295,19 @@ export async function fetchWithRetry(
 
     let response: Response;
     try {
-      // Inside the `try`, so a marked refusal takes the rethrow below.
-      if (beforeAttempt) await beforeAttempt(Math.max(0, deadline - Date.now()));
+      // Inside the `try`, so a marked refusal takes the rethrow below. A wait
+      // comes out of this attempt's time: the first attempt's timeout shrinks by
+      // it, and a later attempt is clamped to the deadline anyway.
+      let waited = 0;
+      if (beforeAttempt) {
+        const before = Date.now();
+        const left = Math.max(0, deadline - before);
+        await beforeAttempt(attempt === 0 ? Math.min(timeoutMs, left) : left);
+        waited = Date.now() - before;
+      }
       const attemptTimeout =
         attempt === 0
-          ? timeoutMs
+          ? Math.max(0, timeoutMs - waited)
           : Math.min(timeoutMs, Math.max(0, deadline - Date.now()));
       response = await fetchWithTimeout(url, init, attemptTimeout);
     } catch (err) {

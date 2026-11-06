@@ -555,23 +555,50 @@ describe("fetchWithRetry's onRetryableResponse and beforeAttempt hooks", () => {
     ]);
   });
 
-  it("beforeAttempt runs before every attempt, the first included, with the budget left", async () => {
-    const remaining: number[] = [];
+  it("beforeAttempt runs before every attempt: the first may wait no longer than its timeout, a later one the budget left", async () => {
+    const maxWait: number[] = [];
     mockFetch
-      .mockResolvedValueOnce(mockResponse(503))
+      .mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve(mockResponse(503)), 100)))
       .mockResolvedValueOnce(mockResponse(200));
     const res = await fetchWithRetry("https://example.com", {}, 1000, {
       budgetMs: 5000,
       baseMs: 1,
       beforeAttempt: async (ms) => {
-        remaining.push(ms);
+        maxWait.push(ms);
       },
     });
     expect(res.status).toBe(200);
-    expect(remaining).toHaveLength(2);
-    expect(remaining[0]).toBeGreaterThan(4_900);
-    expect(remaining[0]).toBeLessThanOrEqual(5_000);
-    expect(remaining[1]).toBeLessThanOrEqual(remaining[0]!);
+    expect(maxWait).toHaveLength(2);
+    // min(timeoutMs, budget left), not the whole budget.
+    expect(maxWait[0]).toBe(1000);
+    // What is left of the 5 s budget after the first attempt's 100 ms.
+    expect(maxWait[1]).toBeLessThanOrEqual(4_900);
+    expect(maxWait[1]).toBeGreaterThan(4_000);
+  });
+
+  it("a wait in beforeAttempt comes out of the first attempt's timeout, never on top of it", async () => {
+    // A connection that stalls until its timeout fires, as above.
+    mockFetch.mockImplementation((_url: string, init?: RequestInit) => {
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => {
+          const err = new Error("The operation timed out.");
+          err.name = "TimeoutError";
+          reject(err);
+        });
+      });
+    });
+    const started = Date.now();
+    const err = (await fetchWithRetry("https://example.com/stalls", {}, 1000, {
+      attempts: 1,
+      budgetMs: 5000,
+      beforeAttempt: (ms) => new Promise((resolve) => setTimeout(resolve, Math.min(ms, 300))),
+    }).catch((e: unknown) => e)) as Error;
+    const elapsed = Date.now() - started;
+    // The 300 ms wait left about 700 ms for the request: about 1 s in all, not 1.3 s.
+    const timedOutAfter = Number(/timed out after (\d+)ms/.exec(err.message)?.[1]);
+    expect(timedOutAfter).toBeGreaterThan(600);
+    expect(timedOutAfter).toBeLessThanOrEqual(705);
+    expect(elapsed).toBeLessThan(1_200);
   });
 
   it("a marked refusal from beforeAttempt is rethrown at once: no fetch, no retry", async () => {

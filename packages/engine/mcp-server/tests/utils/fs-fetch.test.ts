@@ -327,6 +327,36 @@ describe("the per-user 429 pause", () => {
     expect(__userLimitsStateForTests().pausedUsers).toBe(0);
   });
 
+  it("fsFetchWithTimeout takes a pause wait out of its own timeout, and refuses a pause longer than that timeout", async () => {
+    // A connection that stalls until its timeout fires.
+    wire.mockImplementation(
+      (_url, init) =>
+        new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            const err = new Error("The operation timed out.");
+            err.name = "TimeoutError";
+            reject(err);
+          });
+        }),
+    );
+    recordFsPause("u_A", 300);
+    const started = performance.now();
+    const err = (await fsFetchWithTimeout(userA, FS_URL, {}, 1000).catch((e: unknown) => e)) as Error;
+    // The wait came out of the 1 s: about 1 s in all, not 1.3 s.
+    expect(performance.now() - started).toBeLessThan(1_200);
+    expect(Number(/timed out after (\d+)ms/.exec(err.message)?.[1])).toBeLessThanOrEqual(705);
+    expect(wire).toHaveBeenCalledTimes(1);
+
+    // A pause that outlasts the caller's timeout is refused at once, even
+    // though it would fit the 10 s retry budget: volume_bisect sized its
+    // download leg to its timeout.
+    recordFsPause("u_A", 5_000);
+    const t0 = performance.now();
+    await expect(fsFetchWithTimeout(userA, FS_URL, {}, 2_000)).rejects.toThrow("about 5 seconds");
+    expect(performance.now() - t0).toBeLessThan(100);
+    expect(wire).toHaveBeenCalledTimes(1);
+  });
+
   it("fsFetchWithTimeout records a pause from its own 429 and then refuses without a fetch", async () => {
     wire.mockResolvedValueOnce(tooMany("60"));
     // No retry loop here, so the 429 comes back to the caller as before.

@@ -22,6 +22,7 @@
 import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import {
+  DEFAULT_FETCH_TIMEOUT_MS,
   DEFAULT_RETRY_BUDGET_MS,
   fetchWithRetry,
   fetchWithTimeout,
@@ -91,9 +92,9 @@ function withUserPause(principal: Principal, retryOpts?: RetryBudgetOptions): Re
       if (status === 429) recordFsPause(userId, retryAfter);
       retryOpts?.onRetryableResponse?.(status, retryAfter);
     },
-    beforeAttempt: async (remainingMs) => {
-      await awaitFsPause(userId, remainingMs);
-      await retryOpts?.beforeAttempt?.(remainingMs);
+    beforeAttempt: async (maxWaitMs) => {
+      await awaitFsPause(userId, maxWaitMs);
+      await retryOpts?.beforeAttempt?.(maxWaitMs);
     },
   };
 }
@@ -133,8 +134,10 @@ export async function fsFetch(
  * Use for `match-engine.ts` and `fs-image-fetch.ts` which manage their own
  * retry or carry timeouts too long for the retry budget.
  *
- * With no retry loop of its own, a paused connector user waits up to the
- * default retry budget, the same as an `fsFetch` call, and its own 429 records
+ * With no retry loop of its own, a paused connector user waits at most the
+ * default retry budget, and never longer than `timeoutMs`; the wait comes out
+ * of `timeoutMs`, so the call never runs longer than its caller sized it
+ * (volume_bisect's legs sum to fit Cowork's 60 s abort). Its own 429 records
  * the pause.
  */
 export async function fsFetchWithTimeout(
@@ -144,11 +147,17 @@ export async function fsFetchWithTimeout(
   timeoutMs?: number,
 ): Promise<Response> {
   const userId = connectorUserId(principal);
-  if (userId !== undefined) await awaitFsPause(userId, DEFAULT_RETRY_BUDGET_MS);
+  let requestTimeoutMs = timeoutMs;
+  if (userId !== undefined) {
+    const limit = timeoutMs ?? DEFAULT_FETCH_TIMEOUT_MS;
+    const before = Date.now();
+    await awaitFsPause(userId, Math.min(DEFAULT_RETRY_BUDGET_MS, limit));
+    requestTimeoutMs = Math.max(0, limit - (Date.now() - before));
+  }
   const token = await getValidToken(principal);
   const authedInit = mergeAuth(token, init);
 
-  const response = await fetchWithTimeout(url, authedInit, timeoutMs);
+  const response = await fetchWithTimeout(url, authedInit, requestTimeoutMs);
   if (userId !== undefined && response.status === 429) recordFsPause(userId, retryAfterMs(response));
 
   return recordFamilySearchStatus(
