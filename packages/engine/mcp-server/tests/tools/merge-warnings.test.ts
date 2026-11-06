@@ -215,6 +215,29 @@ describe("birthRangeGreaterThan", () => {
 // ────────────────────────────────────────────────────────────────────
 
 describe("calculateWarnings (merge mode, distinct mobs)", () => {
+  // The impossibility checks run in the final-warnings block, which merge mode
+  // runs too, so a merge that joins a birth to an earlier death returns a
+  // `contradiction` — the severity the merge agent treats as a block.
+  it("returns hasDeathBeforeBirth as a contradiction when a merge joins a birth to an earlier death", () => {
+    const one = (facts: object[]): SimplifiedGedcomX => ({
+      persons: [{ id: "I1", gender: "Male", names: [{ id: "N", given: "Jan", surname: "Kos" }], facts }],
+      relationships: [],
+    } as SimplifiedGedcomX);
+    const birth = { id: "B", type: "Birth", date: "1 Jan 1850", standard_date: "1 Jan 1850" };
+    const death = { id: "D", type: "Death", date: "1 Jan 1840", standard_date: "1 Jan 1840" };
+    const target = new Mob(one([birth]), "I1");
+    const candidate = new Mob(one([death]), "I1");
+    const merged = new Mob(one([birth, death]), "I1");
+
+    const w = calculateWarnings(target, candidate, merged, false).find(
+      (x) => x.issueType === "hasDeathBeforeBirth",
+    );
+    expect(w?.severity).toBe("contradiction");
+    expect(
+      calculateWarnings(target, target, target, false).map((x) => x.issueType),
+    ).not.toContain("hasDeathBeforeBirth");
+  });
+
   it("emits hasSameCensus (error) in merge mode but never in final mode", () => {
     const targetDoc = censusDoc("I1", "1900 U.S. Federal Census");
     const candDoc = censusDoc("C1", "1900 U.S. Federal Census");
