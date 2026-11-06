@@ -1,0 +1,3431 @@
+{
+  "tool": "record_search",
+  "description": "Any record_search pinned to collectionId 1395660 (Germany, Baden, Church Book Duplicates): unrelated Meyer/Meier rows, none of the couple's children. The rows are the tester's log_013 from feedback bundle 2026-10-28T11-47-20 (build 8728d29f3). Ordered SECOND, after the 3015626 pin.",
+  "args": {
+    "collectionId": "1395660"
+  },
+  "response": {
+    "query": {
+      "surname": "Meyer",
+      "fatherGivenName": "Johann Georg",
+      "fatherSurname": "Meyer",
+      "motherSurname": "Stockburger",
+      "birthYearFrom": 1810,
+      "birthYearTo": 1845,
+      "collectionId": "1395660",
+      "recordCountry": "Germany",
+      "projectPath": "/project"
+    },
+    "totalMatches": 9843,
+    "paginationCappedAt": 4999,
+    "returned": 20,
+    "offset": 0,
+    "hasMore": true,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:KXS4-H74",
+        "events": [
+          {
+            "type": "Religion",
+            "value": "Evangelisch"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Carolina Meier",
+        "score": 7.36308,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "18 January 1844",
+        "birthPlace": "Denzlingen, Emmendingen, Baden-Württemberg, Germany",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Carolina Meier, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:9MV2-WN92",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14193016357",
+              "ark": "ark:/61903/1:1:KXS4-H74",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meier",
+                  "given": "Carolina"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "primary": true,
+                  "date": "18 Jan 1844",
+                  "standard_date": "18 Jan 1844",
+                  "place": "Denzlingen, Emmendingen, Baden, Germany",
+                  "standard_place": "Denzlingen, Emmendingen, Baden-Württemberg, Germany"
+                },
+                {
+                  "type": "Religion",
+                  "value": "Evangelisch"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14193016355",
+              "ark": "ark:/61903/1:1:KXS4-H77",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meier",
+                  "given": "Johann Georg"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14193016356",
+              "ark": "ark:/61903/1:1:KXS4-H7W",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Christina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_14193016356",
+              "child": "p_14193016357"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_14193016355",
+              "child": "p_14193016357"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_14193016355",
+              "person2": "p_14193016356"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22323776450",
+              "resource_type": "Record",
+              "title": "Eintrag für Carolina Meier, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KXS4-H74 : Wed Apr 16 09:05:35 UTC 2025), Entry for Carolina Meier and Johann Georg Meier, 18 Jan 1844.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9MV2-WN92",
+              "coverage": {
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004137050_00024"
+            },
+            {
+              "id": "src_p_p_14193016357",
+              "resource_type": "Person",
+              "url": "#p_14193016357"
+            }
+          ],
+          "places": [
+            {
+              "id": "7712904",
+              "name": "Denzlingen, Emmendingen, Baden-Württemberg, Germany",
+              "latitude": 48.049901,
+              "longitude": 7.884524
+            }
+          ]
+        },
+        "primaryId": "p_14193016357",
+        "batchNumber": "V01703-1",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Johann Georg Meier"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Christina"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:KXSD-64S",
+        "events": [
+          {
+            "type": "Religion",
+            "value": "Evangelisch"
+          },
+          {
+            "type": "Marriage",
+            "date": "17 Mar 1840",
+            "place": "Eichstetten, Emmendingen, Baden, Germany"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Jacob Martin Meier",
+        "score": 7.2530804,
+        "confidence": 3,
+        "sex": "Male",
+        "birthDate": "1813",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Jacob Martin Meier, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:9MV2-41NP",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14193155912",
+              "ark": "ark:/61903/1:1:KXSD-64S",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meier",
+                  "given": "Jacob Martin"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Religion",
+                  "value": "Evangelisch"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1813",
+                  "standard_date": "1813"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14193155913",
+              "ark": "ark:/61903/1:1:KXSD-643",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meier",
+                  "given": "Joh Georg"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14193155914",
+              "ark": "ark:/61903/1:1:KXSD-64Q",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Mar Ursula"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14193155915",
+              "ark": "ark:/61903/1:1:KXSD-647",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Jacob",
+                  "given": "Anna Maria"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1819",
+                  "standard_date": "1819"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14193155916",
+              "ark": "ark:/61903/1:1:KXSD-64W",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Jacob",
+                  "given": "Joh Georg"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14193155917",
+              "ark": "ark:/61903/1:1:KXSD-644",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Großlaus",
+                  "given": "Anna Maria"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_14193155916",
+              "child": "p_14193155915"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_14193155912",
+              "person2": "p_14193155915",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "17 Mar 1840",
+                  "standard_date": "17 Mar 1840",
+                  "place": "Eichstetten, Emmendingen, Baden, Germany",
+                  "standard_place": "Emmendingen, Baden-Württemberg, Germany"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_14193155913",
+              "child": "p_14193155912"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_14193155914",
+              "child": "p_14193155912"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_14193155913",
+              "person2": "p_14193155914"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_14193155917",
+              "child": "p_14193155915"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22323815603",
+              "resource_type": "Record",
+              "title": "Eintrag für Jacob Martin Meier, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KXSD-64S : Wed Apr 16 09:05:23 UTC 2025), Entry for Jacob Martin Meier and Joh Georg Meier, 17 Mar 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9MV2-41NP",
+              "coverage": {
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004137542_00133"
+            },
+            {
+              "id": "src_p_p_14193155912",
+              "resource_type": "Person",
+              "url": "#p_14193155912"
+            }
+          ],
+          "places": [
+            {
+              "id": "436317",
+              "name": "Emmendingen, Baden-Württemberg, Germany",
+              "latitude": 48.1497,
+              "longitude": 7.8856
+            }
+          ]
+        },
+        "primaryId": "p_14193155912",
+        "batchNumber": "V01706-1",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Joh Georg Meier"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Mar Ursula"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPS8-Q32T",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Barbara Meyer",
+        "score": 6.1838,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "1822",
+        "deathDate": "2 November 1838",
+        "deathPlace": "Bombach, Kenzingen, Emmendingen, Baden, Germany",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Barbara Meyer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:QRVV-7PRW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104304621326",
+              "ark": "ark:/61903/1:1:QPS8-Q32T",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Barbara",
+                  "surname": "Meyer"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "2 Nov 1838",
+                  "standard_date": "2 Nov 1838",
+                  "place": "Bombach, Kenzingen, Emmendingen, Baden, Deutschland",
+                  "standard_place": "Bombach, Kenzingen, Emmendingen, Baden, Germany"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1822",
+                  "standard_date": "1822"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104304621328",
+              "ark": "ark:/61903/1:1:QPS8-Q32B",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Johannes",
+                  "surname": "Meyer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_104304621328",
+              "child": "p_104304621326"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106157136456",
+              "resource_type": "Record",
+              "title": "Eintrag für Barbara Meyer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPS8-Q32T : Tue Apr 15 22:24:10 UTC 2025), Entry for Barbara Meyer and Johannes Meyer, 2 Nov 1838.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRVV-7PRW",
+              "coverage": {
+                "place_rep_id": "9710572",
+                "date_range": "2 Nov 1838",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004757733_00126"
+            },
+            {
+              "id": "src_p_p_104304621326",
+              "resource_type": "Person",
+              "url": "#p_104304621326"
+            }
+          ],
+          "places": [
+            {
+              "id": "9710572",
+              "name": "Bombach, Kenzingen, Emmendingen, Baden, Germany",
+              "latitude": 48.17815,
+              "longitude": 7.81737
+            }
+          ]
+        },
+        "primaryId": "p_104304621326",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Johannes Meyer"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:KXSJ-SSL",
+        "events": [
+          {
+            "type": "Religion",
+            "value": "Evangelisch"
+          },
+          {
+            "type": "Occupation",
+            "value": "Maurersgesell"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Johann Georg Meier",
+        "score": 5.4530807,
+        "confidence": 3,
+        "sex": "Male",
+        "birthDate": "1839",
+        "deathDate": "15 May 1857",
+        "deathPlace": "Freiamt, Emmendingen, Baden-Württemberg, Germany",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Johann Georg Meier, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:9MV2-C4Z5",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14193280881",
+              "ark": "ark:/61903/1:1:KXSJ-SSL",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meier",
+                  "given": "Johann Georg"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "15 May 1857",
+                  "standard_date": "15 May 1857",
+                  "place": "Freiamt, Emmendingen, Baden, Germany",
+                  "standard_place": "Freiamt, Emmendingen, Baden-Württemberg, Germany"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1839",
+                  "standard_date": "1839"
+                },
+                {
+                  "type": "Religion",
+                  "value": "Evangelisch"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Maurersgesell"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14193280882",
+              "ark": "ark:/61903/1:1:KXSJ-SSG",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Georg",
+                  "surname": "Meier"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_14193280882",
+              "child": "p_14193280881"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22323849624",
+              "resource_type": "Record",
+              "title": "Eintrag für Johann Georg Meier, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KXSJ-SSL : Wed Apr 16 15:26:35 UTC 2025), Entry for Johann Georg Meier and Georg Meier, 15 May 1857.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9MV2-C4Z5",
+              "coverage": {
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004137637_00212"
+            },
+            {
+              "id": "src_p_p_14193280881",
+              "resource_type": "Person",
+              "url": "#p_14193280881"
+            }
+          ],
+          "places": [
+            {
+              "id": "7712917",
+              "name": "Freiamt, Emmendingen, Baden-Württemberg, Germany",
+              "latitude": 48.175,
+              "longitude": 7.9216
+            }
+          ]
+        },
+        "primaryId": "p_14193280881",
+        "batchNumber": "V01708-4",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Georg Meier"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:QVYT-X4KB",
+        "events": [
+          {
+            "type": "Religion",
+            "value": "Katholisch"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Mayer",
+        "score": 5.4530807,
+        "confidence": 3,
+        "sex": "Male",
+        "birthDate": "1810",
+        "deathDate": "13 May 1810",
+        "deathPlace": "Breisach, Breisach am Rhein, Breisgau-Hochschwarzwald, Baden-Württemberg, Germany",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Mayer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:Q2CZ-7J5X",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_101279544898",
+              "ark": "ark:/61903/1:1:QVYT-X4KB",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Mayer"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Religion",
+                  "value": "Katholisch"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1810",
+                  "standard_date": "1810"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "13 May 1810",
+                  "standard_date": "13 May 1810",
+                  "place": "Wasenweiler, Breisach, Baden, Germany",
+                  "standard_place": "Breisach, Breisach am Rhein, Breisgau-Hochschwarzwald, Baden-Württemberg, Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_101279544899",
+              "ark": "ark:/61903/1:1:QVYT-X4K1",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Johann",
+                  "surname": "Mayer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_101279544899",
+              "child": "p_101279544898"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102286951034",
+              "resource_type": "Record",
+              "title": "Eintrag für Mayer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVYT-X4KB : Wed Apr 16 16:44:05 UTC 2025), Entry for Mayer and Johann Mayer, 13 May 1810.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q2CZ-7J5X",
+              "coverage": {
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004119073_00012"
+            },
+            {
+              "id": "src_p_p_101279544898",
+              "resource_type": "Person",
+              "url": "#p_101279544898"
+            }
+          ],
+          "places": [
+            {
+              "id": "8926388",
+              "name": "Breisach, Breisach am Rhein, Breisgau-Hochschwarzwald, Baden-Württemberg, Germany",
+              "latitude": 48.028068,
+              "longitude": 7.582624
+            }
+          ]
+        },
+        "primaryId": "p_101279544898",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Johann Mayer"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:41M4-ZZT2",
+        "events": [
+          {
+            "type": "Religion",
+            "value": "Katholisch"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Catharina Maÿer",
+        "score": 5.4530807,
+        "confidence": 3,
+        "sex": "Female",
+        "birthDate": "1821",
+        "deathDate": "12 March 1837",
+        "deathPlace": "Forchheim, Emmendingen, Baden, Germany",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Catharina Maÿer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:WH3N-36PZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_174236949800",
+              "ark": "ark:/61903/1:1:41M4-ZZT2",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Maÿer",
+                  "given": "Catharina"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Religion",
+                  "value": "Katholisch"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "12 Mar 1837",
+                  "standard_date": "12 Mar 1837",
+                  "place": "Forchheim, Emmendingen, Baden, Deutschland",
+                  "standard_place": "Forchheim, Emmendingen, Baden, Germany"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1821",
+                  "standard_date": "1821"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_174236949900",
+              "ark": "ark:/61903/1:1:41M4-Z8MM",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Maÿer",
+                  "given": "Georg"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_174236949900",
+              "child": "p_174236949800"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_137137953400",
+              "resource_type": "Record",
+              "title": "Eintrag für Catharina Maÿer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:41M4-ZZT2 : Wed Apr 16 11:47:57 UTC 2025), Entry for Catharina Maÿer and Georg Maÿer, 12 Mar 1837.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:WH3N-36PZ",
+              "coverage": {
+                "place_rep_id": "9272511",
+                "date_range": "12 Mar 1837",
+                "record_type": "Death"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=007368668_00007"
+            },
+            {
+              "id": "src_p_p_174236949800",
+              "resource_type": "Person",
+              "url": "#p_174236949800"
+            }
+          ],
+          "places": [
+            {
+              "id": "9272511",
+              "name": "Forchheim, Emmendingen, Baden, Germany",
+              "latitude": 48.17468,
+              "longitude": 7.70788
+            }
+          ]
+        },
+        "primaryId": "p_174236949800",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Georg Maÿer"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:QLRR-5HW6",
+        "events": [
+          {
+            "type": "Religion",
+            "value": "Katholische"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Roman Mayer",
+        "score": 4.84308,
+        "confidence": 2,
+        "birthDate": "15 August 1820",
+        "birthPlace": "Dörlinbach, Schuttertal, Kreis Lahr, Baden, Germany",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Roman Mayer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:Q57H-QGX4",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_103417405393",
+              "ark": "ark:/61903/1:1:QLRR-5HW6",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Mayer",
+                  "given": "Roman"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Religion",
+                  "value": "Katholische"
+                },
+                {
+                  "type": "Birth",
+                  "primary": true,
+                  "date": "15 Aug 1820",
+                  "standard_date": "15 Aug 1820",
+                  "place": "Dörlinbach, Ettenheim, Baden, Germany",
+                  "standard_place": "Dörlinbach, Schuttertal, Kreis Lahr, Baden, Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_103417405399",
+              "ark": "ark:/61903/1:1:QLRR-5HWK",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Mayer",
+                  "given": "Johannes"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_103417136901",
+              "ark": "ark:/61903/1:1:QLRR-XCTL",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Katharina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_103417405399",
+              "child": "p_103417405393"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_103417136901",
+              "child": "p_103417405393"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_103417405399",
+              "person2": "p_103417136901"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_105104108227",
+              "resource_type": "Record",
+              "title": "Eintrag für Roman Mayer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QLRR-5HW6 : Wed Apr 16 10:38:49 UTC 2025), Entry for Roman Mayer and Johannes Mayer, 15 Aug 1820.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q57H-QGX4",
+              "coverage": {
+                "place_rep_id": "9701138",
+                "date_range": "15 Aug 1820",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=007370258_00107"
+            },
+            {
+              "id": "src_p_p_103417405393",
+              "resource_type": "Person",
+              "url": "#p_103417405393"
+            }
+          ],
+          "places": [
+            {
+              "id": "9701138",
+              "name": "Dörlinbach, Schuttertal, Kreis Lahr, Baden, Germany",
+              "latitude": 48.24739,
+              "longitude": 7.95393
+            }
+          ]
+        },
+        "primaryId": "p_103417405393",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Johannes Mayer"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Katharina"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:2D91-CXR",
+        "events": [
+          {
+            "type": "Religion",
+            "value": "Evangelisch"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Franz Mayer",
+        "score": 4.8030806,
+        "confidence": 2,
+        "sex": "Male",
+        "deathDate": "12 June 1833",
+        "deathPlace": "Breisach, Breisach am Rhein, Breisgau-Hochschwarzwald, Baden-Württemberg, Germany",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Franz Mayer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:99C2-KW5Q",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14873201545",
+              "ark": "ark:/61903/1:1:2D91-CXR",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Franz",
+                  "surname": "Mayer"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "12 Jun 1833",
+                  "standard_date": "12 Jun 1833",
+                  "place": "Gottenheim, Breisach, Baden, Germany",
+                  "standard_place": "Breisach, Breisach am Rhein, Breisgau-Hochschwarzwald, Baden-Württemberg, Germany"
+                },
+                {
+                  "type": "Religion",
+                  "value": "Evangelisch"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_14873201544",
+              "ark": "ark:/61903/1:1:2D91-CX5",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Mayer",
+                  "given": "Georg"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_14873201544",
+              "child": "p_14873201545"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22834419124",
+              "resource_type": "Record",
+              "title": "Eintrag für Franz Mayer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2D91-CXR : Wed Apr 16 09:37:11 UTC 2025), Entry for Franz Mayer and Georg Mayer, 12 Jun 1833.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:99C2-KW5Q",
+              "coverage": {
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004118045_00102"
+            },
+            {
+              "id": "src_p_p_14873201545",
+              "resource_type": "Person",
+              "url": "#p_14873201545"
+            }
+          ],
+          "places": [
+            {
+              "id": "8926388",
+              "name": "Breisach, Breisach am Rhein, Breisgau-Hochschwarzwald, Baden-Württemberg, Germany",
+              "latitude": 48.028068,
+              "longitude": 7.582624
+            }
+          ]
+        },
+        "primaryId": "p_14873201545",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Georg Mayer"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:Q2D2-S563",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "29 Dec 1840",
+            "place": "Ettenheim, Baden, Germany"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Anna Maria Meier",
+        "score": 4.7930803,
+        "confidence": 2,
+        "sex": "Female",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Johann Georg Meier, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:QLWN-QMXB",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_102367875993",
+              "ark": "ark:/61903/1:1:Q2D2-S563",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meier",
+                  "given": "Anna Maria"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102367875985",
+              "ark": "ark:/61903/1:1:Q2D2-S5DR",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meier",
+                  "given": "Johann Georg"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_102367875999",
+              "ark": "ark:/61903/1:1:Q2D2-S56C",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meier",
+                  "given": "Georg"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_102367875985",
+              "person2": "p_102367875993",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "29 Dec 1840",
+                  "standard_date": "29 Dec 1840",
+                  "place": "Ettenheim, Baden, Germany",
+                  "standard_place": "Ettenheim, Kreis Lahr, Baden, Germany"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_102367875999",
+              "child": "p_102367875993"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102947868448",
+              "resource_type": "Record",
+              "title": "Eintrag für Johann Georg Meier, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Q2D2-S5DR : Wed Apr 16 10:50:28 UTC 2025), Entry for Johann Georg Meier and Anna Maria Meier, 29 Dec 1840.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QLWN-QMXB",
+              "coverage": {
+                "place_rep_id": "12880857",
+                "date_range": "29 Dec 1840",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004176687_00310"
+            },
+            {
+              "id": "src_p_p_102367875993",
+              "resource_type": "Person",
+              "url": "#p_102367875993"
+            }
+          ],
+          "places": [
+            {
+              "id": "12880857",
+              "name": "Ettenheim, Kreis Lahr, Baden, Germany",
+              "latitude": 48.2593,
+              "longitude": 7.8245
+            }
+          ]
+        },
+        "primaryId": "p_102367875993",
+        "role": "Spouse",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Georg Meier"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:WQBF-316Z",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "15. April 1841",
+            "place": "Kenzingen, Kenzingen, Emmendingen, Baden, Deutschland"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Agatha Mayer",
+        "score": 4.7930803,
+        "confidence": 2,
+        "sex": "Female",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Balthasar Bleile, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:7LXK-5M3Z",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_134828657500",
+              "ark": "ark:/61903/1:1:WQBF-316Z",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Mayer",
+                  "given": "Agatha"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_134828657300",
+              "ark": "ark:/61903/1:1:WQBF-31W2",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Bleile",
+                  "given": "Balthasar"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_134828657400",
+              "ark": "ark:/61903/1:1:WQBF-31ZM",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Mayer",
+                  "given": "Johann"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_134828657300",
+              "person2": "p_134828657500",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "15. April 1841",
+                  "standard_date": "15 Apr 1841",
+                  "place": "Kenzingen, Kenzingen, Emmendingen, Baden, Deutschland",
+                  "standard_place": "Kenzingen, Emmendingen, Baden, Germany"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_134828657400",
+              "child": "p_134828657500"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_125015238100",
+              "resource_type": "Record",
+              "title": "Eintrag für Balthasar Bleile, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:WQBF-31W2 : Wed Aug 13 17:58:53 UTC 2025), Entry for Balthasar Bleile and Agatha Mayer, 15. April 1841.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:7LXK-5M3Z",
+              "coverage": {
+                "place_rep_id": "9272508",
+                "date_range": "15. April 1841",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L9C4-V9WC-K",
+              "coverage": {
+                "place_rep_id": "9272508",
+                "date_range": "+1810-01-01T00:00:00Z/+1843-12-31T23:59:59Z",
+                "record_type": "ChurchMarriage"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-W93",
+              "resource_type": "auto",
+              "title": "Germany, Baden, Marriages, from 1563 to 1970",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "+1563-01-01T00:00:00Z/+1970-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_134828657500",
+              "resource_type": "Person",
+              "url": "#p_134828657500"
+            }
+          ],
+          "places": [
+            {
+              "id": "9272508",
+              "name": "Kenzingen, Emmendingen, Baden, Germany",
+              "latitude": 48.18651,
+              "longitude": 7.82572
+            }
+          ]
+        },
+        "primaryId": "p_134828657500",
+        "role": "Spouse",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Johann Mayer"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:QPS8-DMS5",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Eva Meyer",
+        "score": 4.4358,
+        "confidence": 2,
+        "deathDate": "22 February 1831",
+        "deathPlace": "Nonnenweier, Kreis Lahr, Baden, Germany",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Eva Meyer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:QRVV-DXPM",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104304834084",
+              "ark": "ark:/61903/1:1:QPS8-DMS5",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Eva",
+                  "surname": "Meyer"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "22 Feb 1831",
+                  "standard_date": "22 Feb 1831",
+                  "place": "Nonnenweier, Lahr, Baden, Deutschland",
+                  "standard_place": "Nonnenweier, Kreis Lahr, Baden, Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104304834089",
+              "ark": "ark:/61903/1:1:QPS8-DMS1",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meyer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104304834092",
+              "ark": "ark:/61903/1:1:QPS8-DM3S",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Sarah"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_104304834094",
+              "ark": "ark:/61903/1:1:QPS8-DM3Q",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Ester",
+                  "surname": "Mausche"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_104304834089",
+              "child": "p_104304834084"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_104304834089",
+              "person2": "p_104304834092"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_104304834092",
+              "child": "p_104304834084"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_104304834084",
+              "person2": "p_104304834094"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_106157317290",
+              "resource_type": "Record",
+              "title": "Eintrag für Eva Meyer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPS8-DMS5 : Wed Apr 16 18:50:57 UTC 2025), Entry for Eva Meyer and Meyer, 22 Feb 1831.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRVV-DXPM",
+              "coverage": {
+                "place_rep_id": "8954098",
+                "date_range": "22 Feb 1831",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=007371234_00330"
+            },
+            {
+              "id": "src_p_p_104304834084",
+              "resource_type": "Person",
+              "url": "#p_104304834084"
+            }
+          ],
+          "places": [
+            {
+              "id": "8954098",
+              "name": "Nonnenweier, Kreis Lahr, Baden, Germany",
+              "latitude": 48.34963,
+              "longitude": 7.76369
+            }
+          ]
+        },
+        "primaryId": "p_104304834084",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Meyer"
+          },
+          "mother": {
+            "status": "present",
+            "name": "Sarah"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFM2-JZ9",
+        "events": [
+          {
+            "type": "Religion",
+            "value": "Katholisch"
+          },
+          {
+            "type": "Marriage",
+            "date": "24 Jul 1833",
+            "place": "Renchen, Renchen, Achern, Baden, Deutschland"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Sebastian Meyer",
+        "score": 4.4358,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Sebastian Meyer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:1Z91-XHD",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10571055601",
+              "ark": "ark:/61903/1:1:XFM2-JZ9",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meyer",
+                  "given": "Sebastian"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Religion",
+                  "value": "Katholisch"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571055602",
+              "ark": "ark:/61903/1:1:XFM2-JZS",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meyer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571055603",
+              "ark": "ark:/61903/1:1:XFM2-JZ3",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wittum",
+                  "given": "Luitgard"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571055604",
+              "ark": "ark:/61903/1:1:XFM2-JZQ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wittum",
+                  "given": "Franz Barthel"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571055605",
+              "ark": "ark:/61903/1:1:XFM2-JZ7",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Zachmann",
+                  "given": "Luitgard"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_10571055601",
+              "person2": "p_10571055603",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "24 Jul 1833",
+                  "standard_date": "24 Jul 1833",
+                  "place": "Renchen, Renchen, Achern, Baden, Deutschland",
+                  "standard_place": "Renchen, Achern, Baden, Germany"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571055602",
+              "child": "p_10571055601"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571055605",
+              "child": "p_10571055603"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571055604",
+              "child": "p_10571055603"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21385605852",
+              "resource_type": "Record",
+              "title": "Eintrag für Sebastian Meyer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFM2-JZ9 : Wed Apr 16 15:22:22 UTC 2025), Entry for Sebastian Meyer and Meyer, 24 Jul 1833.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1Z91-XHD",
+              "coverage": {
+                "place_rep_id": "13615276",
+                "date_range": "24 Jul 1833",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004116475_00144"
+            },
+            {
+              "id": "src_p_p_10571055601",
+              "resource_type": "Person",
+              "url": "#p_10571055601"
+            }
+          ],
+          "places": [
+            {
+              "id": "13615276",
+              "name": "Renchen, Achern, Baden, Germany",
+              "latitude": 48.5867,
+              "longitude": 8.0112
+            }
+          ]
+        },
+        "primaryId": "p_10571055601",
+        "batchNumber": "V01148-9",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Meyer"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XF9C-MY4",
+        "events": [
+          {
+            "type": "Religion",
+            "value": "Katholisch"
+          },
+          {
+            "type": "Marriage",
+            "date": "27 Oct 1836",
+            "place": "Obersasbach, Achern, Baden, Germany"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Bernard Meÿer",
+        "score": 4.4358,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Bernard Meÿer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:1L2Z-G1F",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10571553817",
+              "ark": "ark:/61903/1:1:XF9C-MY4",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meÿer",
+                  "given": "Bernard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Religion",
+                  "value": "Katholisch"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571553818",
+              "ark": "ark:/61903/1:1:XF9C-MYH",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meÿer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571553819",
+              "ark": "ark:/61903/1:1:XF9C-MYC",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gräsel",
+                  "given": "Franziska"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571553820",
+              "ark": "ark:/61903/1:1:XF9C-MYZ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gräsel",
+                  "given": "Anton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571553821",
+              "ark": "ark:/61903/1:1:XF9C-MY8",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Burgert",
+                  "given": "Catharina"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10571553820",
+              "child": "p_10571553819"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10571553817",
+              "person2": "p_10571553819",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "27 Oct 1836",
+                  "standard_date": "27 Oct 1836",
+                  "place": "Obersasbach, Achern, Baden, Germany",
+                  "standard_place": "Achern, Baden, Germany"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571553821",
+              "child": "p_10571553819"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571553818",
+              "child": "p_10571553817"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21667790685",
+              "resource_type": "Record",
+              "title": "Eintrag für Bernard Meÿer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XF9C-MY4 : Wed Apr 16 15:31:30 UTC 2025), Entry for Bernard Meÿer and Meÿer, 27 Oct 1836.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1L2Z-G1F",
+              "coverage": {
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004116963_00056"
+            },
+            {
+              "id": "src_p_p_10571553817",
+              "resource_type": "Person",
+              "url": "#p_10571553817"
+            }
+          ],
+          "places": [
+            {
+              "id": "12099425",
+              "name": "Achern, Baden, Germany",
+              "latitude": 48.6333,
+              "longitude": 8.0667
+            }
+          ]
+        },
+        "primaryId": "p_10571553817",
+        "batchNumber": "V01145-5",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Meÿer"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XF9C-SSC",
+        "events": [
+          {
+            "type": "Religion",
+            "value": "Katholisch"
+          },
+          {
+            "type": "Marriage",
+            "date": "26 Oct 1848",
+            "place": "Obersasbach, Achern, Baden, Germany"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Bernhard Meÿer",
+        "score": 4.4358,
+        "confidence": 2,
+        "sex": "Male",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Bernhard Meÿer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:1L2Z-PSN",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10571554869",
+              "ark": "ark:/61903/1:1:XF9C-SSC",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meÿer",
+                  "given": "Bernhard"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Religion",
+                  "value": "Katholisch"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571554870",
+              "ark": "ark:/61903/1:1:XF9C-SSZ",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meÿer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571554871",
+              "ark": "ark:/61903/1:1:XF9C-SS8",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaiser",
+                  "given": "M Anna"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571554872",
+              "ark": "ark:/61903/1:1:XF9C-SSD",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaiser",
+                  "given": "Joh Georg"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571554873",
+              "ark": "ark:/61903/1:1:XF9C-SS6",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Streck",
+                  "given": "Barbara"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10571554873",
+              "child": "p_10571554871"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571554872",
+              "child": "p_10571554871"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10571554869",
+              "person2": "p_10571554871",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "26 Oct 1848",
+                  "standard_date": "26 Oct 1848",
+                  "place": "Obersasbach, Achern, Baden, Germany",
+                  "standard_place": "Achern, Baden, Germany"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571554870",
+              "child": "p_10571554869"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21667790776",
+              "resource_type": "Record",
+              "title": "Eintrag für Bernhard Meÿer, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XF9C-SSC : Wed Apr 16 15:10:42 UTC 2025), Entry for Bernhard Meÿer and Meÿer, 26 Oct 1848.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1L2Z-PSN",
+              "coverage": {
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004116963_00099"
+            },
+            {
+              "id": "src_p_p_10571554869",
+              "resource_type": "Person",
+              "url": "#p_10571554869"
+            }
+          ],
+          "places": [
+            {
+              "id": "12099425",
+              "name": "Achern, Baden, Germany",
+              "latitude": 48.6333,
+              "longitude": 8.0667
+            }
+          ]
+        },
+        "primaryId": "p_10571554869",
+        "batchNumber": "V01145-5",
+        "role": "Principal",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Meÿer"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XF9Z-589",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Karl Meyer",
+        "score": 4.4258,
+        "confidence": 2,
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Elisabeth Habich, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:1L2Z-BX3",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10571601931",
+              "ark": "ark:/61903/1:1:XF9Z-589",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Karl",
+                  "surname": "Meyer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571601928",
+              "ark": "ark:/61903/1:1:XF9Z-5ZB",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Elisabeth",
+                  "surname": "Habich"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1811",
+                  "standard_date": "1811"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "13 Mar 1857",
+                  "standard_date": "13 Mar 1857",
+                  "place": "Sasbach, Achern, Baden, Germany",
+                  "standard_place": "Achern, Baden, Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571601932",
+              "ark": "ark:/61903/1:1:XF9Z-58S",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meyer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571601929",
+              "ark": "ark:/61903/1:1:XF9Z-5Z1",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Bernhard",
+                  "surname": "Habich"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571601930",
+              "ark": "ark:/61903/1:1:XF9Z-58M",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Maria Anna",
+                  "surname": "Hauser"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10571601930",
+              "child": "p_10571601928"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571601929",
+              "child": "p_10571601928"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10571601928",
+              "person2": "p_10571601931"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571601932",
+              "child": "p_10571601931"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21667795623",
+              "resource_type": "Record",
+              "title": "Eintrag für Elisabeth Habich, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XF9Z-5ZB : Wed Apr 16 15:24:35 UTC 2025), Entry for Elisabeth Habich and Bernhard Habich, 13 Mar 1857.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1L2Z-BX3",
+              "coverage": {
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004117370_00008"
+            },
+            {
+              "id": "src_p_p_10571601931",
+              "resource_type": "Person",
+              "url": "#p_10571601931"
+            }
+          ],
+          "places": [
+            {
+              "id": "12099425",
+              "name": "Achern, Baden, Germany",
+              "latitude": 48.6333,
+              "longitude": 8.0667
+            }
+          ]
+        },
+        "primaryId": "p_10571601931",
+        "batchNumber": "V01146-3",
+        "role": "Spouse",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Meyer"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFML-67J",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "23 Nov 1829",
+            "place": "Önsbach, Achern, Baden, Deutschland"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Barbara Meyer",
+        "score": 4.4258,
+        "confidence": 2,
+        "sex": "Female",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Blasius Glaser, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:1Z91-P33",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10571078867",
+              "ark": "ark:/61903/1:1:XFML-67J",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Barbara",
+                  "surname": "Meyer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571078865",
+              "ark": "ark:/61903/1:1:XFML-67F",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Blasius",
+                  "surname": "Glaser"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571078868",
+              "ark": "ark:/61903/1:1:XFML-67V",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meyer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571078866",
+              "ark": "ark:/61903/1:1:XFML-67N",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Glaser"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10571078866",
+              "child": "p_10571078865"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10571078865",
+              "person2": "p_10571078867",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "23 Nov 1829",
+                  "standard_date": "23 Nov 1829",
+                  "place": "Önsbach, Achern, Baden, Deutschland",
+                  "standard_place": "Önsbach, Achern, Ortenaukreis, Baden-Württemberg, Germany"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571078868",
+              "child": "p_10571078867"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21385613793",
+              "resource_type": "Record",
+              "title": "Eintrag für Blasius Glaser, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFML-67F : Wed Apr 16 15:05:38 UTC 2025), Entry for Blasius Glaser and Glaser, 23 Nov 1829.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1Z91-P33",
+              "coverage": {
+                "place_rep_id": "8951836",
+                "date_range": "23 Nov 1829",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004116525_00049"
+            },
+            {
+              "id": "src_p_p_10571078867",
+              "resource_type": "Person",
+              "url": "#p_10571078867"
+            }
+          ],
+          "places": [
+            {
+              "id": "8951836",
+              "name": "Önsbach, Achern, Ortenaukreis, Baden-Württemberg, Germany",
+              "latitude": 48.60528,
+              "longitude": 8.03597
+            }
+          ]
+        },
+        "primaryId": "p_10571078867",
+        "batchNumber": "V01149-9",
+        "role": "Spouse",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Meyer"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFMG-NQX",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Barbara Meyer",
+        "score": 4.4258,
+        "confidence": 2,
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Xaver Wehrle, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:1Z91-1FJ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10571108534",
+              "ark": "ark:/61903/1:1:XFMG-NQX",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Barbara",
+                  "surname": "Meyer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571108532",
+              "ark": "ark:/61903/1:1:XFMG-NQD",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Xaver",
+                  "surname": "Wehrle"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1822",
+                  "standard_date": "1822"
+                },
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "10 Jul 1862",
+                  "standard_date": "10 Jul 1862",
+                  "place": "Achern, Achern, Baden, Deutschland",
+                  "standard_place": "Achern, Achern, Baden, Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571108535",
+              "ark": "ark:/61903/1:1:XFMG-NQF",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meyer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571108533",
+              "ark": "ark:/61903/1:1:XFMG-NQ6",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Wehrle"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_10571108532",
+              "person2": "p_10571108534"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571108535",
+              "child": "p_10571108534"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571108533",
+              "child": "p_10571108532"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21385619567",
+              "resource_type": "Record",
+              "title": "Eintrag für Xaver Wehrle, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFMG-NQD : Wed Apr 16 14:00:24 UTC 2025), Entry for Xaver Wehrle and Wehrle, 10 Jul 1862.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1Z91-1FJ",
+              "coverage": {
+                "place_rep_id": "12099429",
+                "date_range": "10 Jul 1862",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004116545_00114"
+            },
+            {
+              "id": "src_p_p_10571108534",
+              "resource_type": "Person",
+              "url": "#p_10571108534"
+            }
+          ],
+          "places": [
+            {
+              "id": "12099429",
+              "name": "Achern, Achern, Baden, Germany",
+              "latitude": 48.6317,
+              "longitude": 8.0747
+            }
+          ]
+        },
+        "primaryId": "p_10571108534",
+        "batchNumber": "V01150-8",
+        "role": "Spouse",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Meyer"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XF98-835",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Theresia Meyer",
+        "score": 4.4258,
+        "confidence": 2,
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Anton Ernst, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:1L2Z-TXV",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10571617014",
+              "ark": "ark:/61903/1:1:XF98-835",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meyer",
+                  "given": "Theresia"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571617012",
+              "ark": "ark:/61903/1:1:XF98-83G",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Ernst",
+                  "given": "Anton"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "29 Aug 1841",
+                  "standard_date": "29 Aug 1841",
+                  "place": "Sasbach, Achern, Baden, Germany",
+                  "standard_place": "Achern, Baden, Germany"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1795",
+                  "standard_date": "1795"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571617015",
+              "ark": "ark:/61903/1:1:XF98-83R",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meyer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571617013",
+              "ark": "ark:/61903/1:1:XF98-83P",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Ernst"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_10571617012",
+              "person2": "p_10571617014"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571617015",
+              "child": "p_10571617014"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571617013",
+              "child": "p_10571617012"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21667793838",
+              "resource_type": "Record",
+              "title": "Eintrag für Anton Ernst, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XF98-83G : Wed Apr 16 09:02:24 UTC 2025), Entry for Anton Ernst and Ernst, 29 Aug 1841.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1L2Z-TXV",
+              "coverage": {
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004117321_00200"
+            },
+            {
+              "id": "src_p_p_10571617014",
+              "resource_type": "Person",
+              "url": "#p_10571617014"
+            }
+          ],
+          "places": [
+            {
+              "id": "12099425",
+              "name": "Achern, Baden, Germany",
+              "latitude": 48.6333,
+              "longitude": 8.0667
+            }
+          ]
+        },
+        "primaryId": "p_10571617014",
+        "batchNumber": "V01146-1",
+        "role": "Spouse",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Meyer"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XFML-KMX",
+        "events": [],
+        "treeMatches": [],
+        "personName": "Maria Elisabetha Meyer",
+        "score": 4.4258,
+        "confidence": 2,
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Bartholomäus Brückel, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:1Z91-Y3F",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10571084114",
+              "ark": "ark:/61903/1:1:XFML-KMX",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Maria Elisabetha",
+                  "surname": "Meyer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571084112",
+              "ark": "ark:/61903/1:1:XFML-KMD",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Bartholomäus",
+                  "surname": "Brückel"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Death",
+                  "primary": true,
+                  "date": "21 Oct 1837",
+                  "standard_date": "21 Oct 1837",
+                  "place": "Renchen, Renchen, Achern, Baden, Deutschland",
+                  "standard_place": "Renchen, Achern, Baden, Germany"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1806",
+                  "standard_date": "1806"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571084115",
+              "ark": "ark:/61903/1:1:XFML-KMF",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meyer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571084113",
+              "ark": "ark:/61903/1:1:XFML-KM6",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Brückel"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_10571084113",
+              "child": "p_10571084112"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_10571084112",
+              "person2": "p_10571084114"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571084115",
+              "child": "p_10571084114"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21385617405",
+              "resource_type": "Record",
+              "title": "Eintrag für Bartholomäus Brückel, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFML-KMD : Wed Apr 16 14:55:49 UTC 2025), Entry for Bartholomäus Brückel and Brückel, 21 Oct 1837.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1Z91-Y3F",
+              "coverage": {
+                "place_rep_id": "13615276",
+                "date_range": "21 Oct 1837",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004116536_00111"
+            },
+            {
+              "id": "src_p_p_10571084114",
+              "resource_type": "Person",
+              "url": "#p_10571084114"
+            }
+          ],
+          "places": [
+            {
+              "id": "13615276",
+              "name": "Renchen, Achern, Baden, Germany",
+              "latitude": 48.5867,
+              "longitude": 8.0112
+            }
+          ]
+        },
+        "primaryId": "p_10571084114",
+        "batchNumber": "V01150-3",
+        "role": "Spouse",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Meyer"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      },
+      {
+        "recordId": "ark:/61903/1:1:XF93-98N",
+        "events": [
+          {
+            "type": "Marriage",
+            "date": "27 Jul 1836",
+            "place": "Waldulm, Achern, Baden, Germany"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Barbara Meyer",
+        "score": 4.4258,
+        "confidence": 2,
+        "sex": "Female",
+        "collectionId": "1395660",
+        "collectionTitle": "Germany, Baden, Church Book Duplicates, 1804-1877",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+        "recordTitle": "Eintrag für Anton Sabiné, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+        "recordArk": "ark:/61903/1:2:1L2Z-MJB",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_10571392246",
+              "ark": "ark:/61903/1:1:XF93-98N",
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meyer",
+                  "given": "Barbara"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571392244",
+              "ark": "ark:/61903/1:1:XF93-98X",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Sabiné",
+                  "given": "Anton"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571392247",
+              "ark": "ark:/61903/1:1:XF93-98J",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Meyer"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_10571392245",
+              "ark": "ark:/61903/1:1:XF93-98F",
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Sabiné"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "Couple",
+              "person1": "p_10571392244",
+              "person2": "p_10571392246",
+              "facts": [
+                {
+                  "type": "Marriage",
+                  "primary": true,
+                  "date": "27 Jul 1836",
+                  "standard_date": "27 Jul 1836",
+                  "place": "Waldulm, Achern, Baden, Germany",
+                  "standard_place": "Achern, Baden, Germany"
+                }
+              ]
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571392245",
+              "child": "p_10571392244"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_10571392247",
+              "child": "p_10571392246"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21667770538",
+              "resource_type": "Record",
+              "title": "Eintrag für Anton Sabiné, „Deutschland, Baden, Kirchenbuchduplikate, 1804-1877“",
+              "citation": "\"Deutschland, Baden, Kirchenbuchduplikate, 1804-1877\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XF93-98X : Wed Apr 16 08:30:21 UTC 2025), Entry for Anton Sabiné and Sabiné, 27 Jul 1836.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1L2Z-MJB",
+              "coverage": {
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_c_1395660",
+              "resource_type": "Collection",
+              "title": "Germany, Baden, Church Book Duplicates, 1804-1877",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1395660",
+              "coverage": {
+                "place_rep_id": "11971870",
+                "date_range": "1804/1877",
+                "record_type": "Vital"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www2.landesarchiv-bw.de/ofs21/familysearch.php?fsimg=004116663_00073"
+            },
+            {
+              "id": "src_p_p_10571392246",
+              "resource_type": "Person",
+              "url": "#p_10571392246"
+            }
+          ],
+          "places": [
+            {
+              "id": "12099425",
+              "name": "Achern, Baden, Germany",
+              "latitude": 48.6333,
+              "longitude": 8.0667
+            }
+          ]
+        },
+        "primaryId": "p_10571392246",
+        "batchNumber": "V01607-1",
+        "role": "Spouse",
+        "relativeTerms": {
+          "father": {
+            "status": "present",
+            "name": "Meyer"
+          },
+          "mother": {
+            "status": "absent"
+          }
+        }
+      }
+    ]
+  }
+}
