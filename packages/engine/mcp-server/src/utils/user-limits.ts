@@ -138,7 +138,9 @@ export async function runWithUserCallSlot(
 
 // ─── The 429 pause ──────────────────────────────────────────────────────────
 //
-// What it does NOT cover: anonymous FamilySearch calls carry no principal, so
+// What it does NOT cover: `withSessionTree`'s switch back (`ignoreUserPause`),
+// which the pause must never refuse or hold; and anonymous
+// FamilySearch calls, which carry no principal, so
 // `utils/place-api.ts`, `utils/memories.ts`'s unauthenticated lookups and story
 // text, `utils/fs-image-fetch.ts`'s public memory artifacts and
 // `tools/external-links-search.ts` stay under the process-wide budget only.

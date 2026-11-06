@@ -16,7 +16,8 @@
  * For a connector caller, both honour that user's 429 pause
  * (`user-limits.ts`, issue #3999): a 429 pauses the user, and every call these
  * two make for a paused user waits the pause out within its time or is refused
- * before any network I/O.
+ * before any network I/O, except one marked `ignoreUserPause` (the switch back
+ * after `withSessionTree`).
  */
 
 import type { Principal } from "../auth/principal.js";
@@ -88,8 +89,10 @@ function recordStatus(principal: Principal, status: number): void {
  * FamilySearch call. Any hooks the caller passed still run. Unchanged for every
  * other principal.
  *
- * What the pause does not cover: anonymous FamilySearch calls carry no
- * principal and never come through here (place lookups, public memory
+ * What the pause does not cover: a call marked `ignoreUserPause` (the switch
+ * back after `withSessionTree`), which still records a 429 but never waits on
+ * the pause or is refused by it; and anonymous FamilySearch calls, which carry
+ * no principal and never come through here (place lookups, public memory
  * artifacts and story text, external-links search), so they stay under the
  * process-wide budget only. And "per user" assumes FamilySearch rate-limits per
  * token, which is UNVERIFIED: if its 429s are per IP address, every connector
@@ -97,23 +100,37 @@ function recordStatus(principal: Principal, status: number): void {
  */
 function withUserPause(
   principal: Principal,
-  retryOpts: RetryBudgetOptions | undefined,
+  fsOpts: FsFetchOptions | undefined,
   seen: (status: number) => void,
 ): RetryBudgetOptions | undefined {
+  const { ignoreUserPause, ...retryOpts } = fsOpts ?? {};
   const userId = connectorUserId(principal);
-  if (userId === undefined) return retryOpts;
+  if (userId === undefined) return fsOpts === undefined ? undefined : retryOpts;
   return {
     ...retryOpts,
     onRetryableResponse: (status, retryAfter) => {
       seen(status);
       if (status === 429) recordFsPause(userId, retryAfter);
-      retryOpts?.onRetryableResponse?.(status, retryAfter);
+      retryOpts.onRetryableResponse?.(status, retryAfter);
     },
     beforeAttempt: async (maxWaitMs) => {
-      await awaitFsPause(userId, maxWaitMs);
-      await retryOpts?.beforeAttempt?.(maxWaitMs);
+      if (!ignoreUserPause) await awaitFsPause(userId, maxWaitMs);
+      await retryOpts.beforeAttempt?.(maxWaitMs);
     },
   };
+}
+
+/** `fetchWithRetry`'s options, plus one that only `fsFetch` reads. */
+export interface FsFetchOptions extends RetryBudgetOptions {
+  /**
+   * Skip the user's 429 pause for this call: never wait on it, never be
+   * refused by it. Only for a call that undoes what this process already did to
+   * the user's FamilySearch session (`withSessionTree`'s switch back): refusing
+   * or holding it would leave the session, which the user's open browser tabs
+   * share, on another tree, with nothing left to try again. A 429 it gets still
+   * pauses the user.
+   */
+  ignoreUserPause?: boolean;
 }
 
 /**
@@ -125,7 +142,7 @@ export async function fsFetch(
   url: string | URL,
   init: RequestInit = {},
   timeoutMs?: number,
-  retryOpts?: RetryBudgetOptions,
+  retryOpts?: FsFetchOptions,
 ): Promise<Response> {
   const token = await getValidToken(principal);
   const authedInit = mergeAuth(token, init);

@@ -87,7 +87,8 @@ has when that is shorter, and a request never runs longer than its own timeout
 `FamilySearch asked this account to wait; try again in about N seconds.` A FamilySearch
 call that ends in a throw after a 429 or 5xx answer records that status for the call's
 `fs_status`. Anonymous FamilySearch calls (place lookups, public memory artifacts and
-story text) are not paused.
+story text) are not paused, and neither is switching a session's current tree back after
+a call that switched it (a 429 on it still pauses the user).
 
 The door reads each request body once, capped at **1 MiB**, and answers 413 past
 it. The cap binds the worker's writes too, because the body must be read to
