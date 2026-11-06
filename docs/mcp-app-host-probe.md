@@ -558,11 +558,11 @@ the local route does not render, testers see cards in the browser tab.
 | Control: claude.ai chat | Yes | Shown as `Genealogy Viewer show_project` |
 | Control: Desktop Chat | Yes, only after restarting Desktop | `mcp__Genealogy_Viewer__show_project` |
 | Connector, task with a folder on this Mac | Yes, after a ToolSearch load, on a project with one small document | `mcp__Genealogy_Viewer__show_project` |
-| Connector, task with no folder | Yes. **New** with no folder starts a Desktop Chat | |
+| Connector, task with no folder | Yes. **New** with no folder starts a Desktop Chat | `mcp__Genealogy_Viewer__show_project` |
 | Connector, a chat opened after a Cowork task, with no reconnect (`anthropics/claude-code` #103924) | Yes, in Desktop Chat and claude.ai | |
 | Connector, a chat that moved to a cloud session | | |
 | Connector, Claude mobile app (`anthropics/claude-ai-mcp` #1085) | | |
-| Connector, after a ToolSearch load | | |
+| Connector, after a ToolSearch load | Yes: `show_project` is deferred on all three surfaces | `mcp__Genealogy_Viewer__show_project` |
 | Connector, with the variant plugin | | |
 | Local | | |
 | Artifact (shows the page, not a card) | | — |
@@ -600,6 +600,21 @@ card that reports `window.claude.use` as a function would boot on the wrong host
 | Local | | | |
 | Artifact | | | |
 
+### Tools on each surface
+
+**Decides:** what research a chat user can get. Read from the model's own list on one
+account with the plugin installed. No agent was spawned, and this says nothing about the
+hook, so the last two rows stay open.
+
+| | Desktop Chat | claude.ai | Cowork task |
+|---|---|---|---|
+| `Agent`, `Bash` and `Skill` | Yes | Yes | Yes |
+| The `genealogy-research:research` skill | Yes | Yes | Yes |
+| `show_project` | Deferred | Deferred | Deferred |
+| `read_project_view` | Not listed | Not listed | Not listed |
+| A plugin agent spawns | | | |
+| The plugin's hook binds | | | |
+
 ### Fullscreen
 
 **Decides:** where the case file lives. If Cowork offers no fullscreen, it runs as an
@@ -609,11 +624,11 @@ artifact.
 |---|---|---|
 | `availableDisplayModes` | `inline, fullscreen`, on all three surfaces | |
 | `host-context-changed` on entering fullscreen | Yes, `displayMode fullscreen`, on all three | |
-| `host-context-changed` on the host's own close | Not read yet. The host's control is an X at the upper right, but the X closed the second card, and its report was not taken | |
+| `host-context-changed` on the host's own close | Yes, `displayMode inline`, on all three. The host's control is an X at the upper right | |
 | A card opened by a typed request goes straight to fullscreen | Yes, with `show: "file"` and no tap, on all three | |
 | A mode switch remounts the frame | No, on all three: one `mount id`, and the link probe's result survives | |
 | Where a typed card lands while the file is fullscreen | It replaces the old card in the full screen view, on all three. The old card gets `displayMode inline` about 2 s after the call. Both cards stay in the conversation | |
-| What a card that lands in the full screen view reports | Not read yet. No `Back to the card` showed on it, so it may report `inline` | |
+| What a card that lands in the full screen view reports | `fullscreen` from its first event, with `Back to the card` showing, on all three. It is a new mount. The X sends it `inline` with no remount | |
 
 ### Variant line
 
@@ -642,7 +657,7 @@ project as it is now rather than at that step.
 
 | | Connector | Local |
 |---|---|---|
-| `result _meta arrived` | Yes, up to 300,005 bytes, on all three surfaces. No at 1,599,948 bytes | |
+| `result _meta arrived` | Yes, up to 999,947 bytes, on all three surfaces. No at 1,299,948 bytes | |
 | `data came from` | `result _meta`, or a `read_project_view` call when `_meta` did not arrive | |
 
 ### Size
@@ -653,11 +668,13 @@ of the largest project's research.json, `document` gains paging.
 | Rung | Mount, connector | Mount, local | Hidden call, connector | Hidden call, local | Hidden call, artifact |
 |---|---|---|---|---|---|
 | 400k characters | | | Whole, 699,798 bytes, 2.0 to 7.1 s | | |
-| 1M characters | | | Whole, 1,299,798 bytes, 19.5 s, in Cowork | | |
+| 500k characters | Arrives, 799,947 bytes, on all three surfaces | | | | |
+| 700k characters | Arrives, 999,947 bytes, on all three surfaces | | | | |
+| 1M characters | `_meta` dropped at 1,299,948 bytes, on all three surfaces | | Whole, 1,299,798 bytes, 19.5 s, in Cowork | | |
 | 1.3M characters | `_meta` dropped at 1,599,948 bytes, on all three surfaces | | Whole, 1,599,798 bytes, 14.5 s, in Cowork | | |
-| 2M characters | | | Whole, 2,299,798 bytes, 8.0 s, in Cowork | | |
-| Largest `resultBytes` accepted | 300,005 so far | | 2,299,798 in Cowork and 699,798 in chat, so far | | |
-| What happens past it | The host drops `_meta` with no error, and the result's keys are `content, isError`. The card's one fallback read fills it, 2.9 to 3.2 s later on claude.ai and in Cowork and 20.8 s later in Desktop Chat. The model is told nothing | | | | |
+| 2M characters | | | Whole, 2,299,798 bytes: 8.0 s in Cowork, 3.1 s on claude.ai, 3.8 s in Desktop Chat | | |
+| Largest `resultBytes` accepted | 999,947 | | 2,299,798 so far, on all three surfaces | | |
+| What happens past it | The host drops `_meta` with no error, and the result's keys are `content, isError`. The card's one fallback read fills it, 2 to 3 s later. Desktop Chat once took 20.8 s, at 1,599,948 bytes. The model is told nothing | | | | |
 
 ### Image
 
@@ -676,7 +693,7 @@ rules' links need.
 | | Connector | Local |
 |---|---|---|
 | The page opens | Yes. Desktop Chat: Desktop or Chrome, by choice. claude.ai: a new tab. Cowork: a side panel beside the conversation | |
-| Claude asks first | Desktop Chat: yes. Cowork: no. claude.ai: not noted | |
+| Claude asks first | Desktop Chat: yes, Desktop or Chrome. claude.ai: yes, an "Open external link" dialog naming the URL. Cowork: no | |
 | `Link probe` line | Answered in 20,166 ms in Desktop Chat, 3,287 ms on claude.ai and 1,897 ms in Cowork | |
 
 ### Door refusals
@@ -737,11 +754,14 @@ decision after M0.
 
 ### `projectPath`
 
-**Decides:** whether a live run can pass the path the model holds, or has to use a bare
-folder name under `--root`.
+**Decides:** on the tool server, that a project is named by the `/proj_<16 hex>` value
+from `project_list`. These two rows gate the fold. On the thin server, whether a live run
+can pass the path the model holds, or has to use a bare folder name under `--root`.
 
 | | Answer |
 |---|---|
-| Shape of the path the model passes (`<folder>` for the name) | |
-| Readable on the Mac | |
-| A bare folder name works | |
+| The model passes the `/proj_` value it got from `project_list` | |
+| The card passes the same value to `read_project_view` | |
+| Thin server: shape of the path the model passes (`<folder>` for the name) | |
+| Thin server: readable on the Mac | |
+| Thin server: a bare folder name works | |

@@ -89,7 +89,9 @@ through the demo, with fixes only.
   frame, the message box stays, and closing returns to the same place in the
   conversation. Fullscreen covers the transcript, and MCP Apps have no side-panel
   mode (the modes are inline, fullscreen and picture-in-picture), so side-by-side
-  work happens inside the file, in its right-hand pane.
+  work happens inside the file, in its right-hand pane. A card the model sends while
+  the file is open takes over the view as a new mount, already in fullscreen, so what
+  the researcher had open there does not carry over by itself.
 - **An artifact beside the task** is the only true side panel, and M0 tests it
   either way. Claude's help centre says an artifact opens beside the conversation
   and can use custom connectors, and its page can read a connector's read-only
@@ -233,8 +235,8 @@ from it, and an unannotated tool defaults to "not read-only".
     and `content` is one line for the model. The result's `_meta` under
     `genealogy/project` carries `research`, `tree`, `startingTree`, `collections`
     and `derived`. A card is therefore a true snapshot of the project at that step.
-    A result too big for the host loses its `_meta` with no error, and the card reads
-    the project as it is now.
+    The host drops `_meta` with no error somewhere past 1 MB, so above 1,000,000 bytes
+    `show_project` leaves it out, and the card reads the project as it is now.
   - **`derived`** is what only the engine can compute: question states
     (`questionStatus`), unregistered disagreements, hand-offs awaiting the
     researcher, the tree changes from `treeDiff` against the starting tree, each
