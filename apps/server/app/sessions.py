@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 from datetime import datetime, timedelta, timezone
 
@@ -37,10 +38,28 @@ _LOG_ID_RE = re.compile(r"^[A-Za-z0-9_.-]+$")
 _IMAGE_REF_RE = re.compile(r"^images/[A-Za-z0-9._-]+\.jpg$")
 # Researcher uploads land in <project>/uploads/ — inside the project folder, so
 # the agent reads them with a relative path and they ride along in a feedback
-# bundle. The name is taken as a basename and constrained; no subdirectories.
+# bundle. The name is taken as a basename and cleaned; no subdirectories.
 _UPLOAD_DIR = "uploads"
 _UPLOAD_MAX_BYTES = 25 * 1024 * 1024
-_UPLOAD_NAME_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._ -]{0,120}$")
+
+
+# Copied as safe_upload_name in apps/server/proto/web/project_blobs.py, not imported:
+# the web bundle has no `app` package. Keep the two in step.
+def _clean_upload_name(raw: str | None) -> str | None:
+    name = (raw or "").replace("\\", "/").split("/")[-1].strip()
+    if not name or name.startswith(".") or ".." in name:
+        return None
+    name = re.sub(r"[^A-Za-z0-9._ -]", "_", name)
+    if len(name) > 120:
+        stem, ext = os.path.splitext(name)
+        if len(ext) <= 20:
+            name = stem[:120 - len(ext)].rstrip(" .") + ext
+        else:
+            name = name[:120].rstrip(" .")
+    if re.search(r"[A-Za-z0-9]", name) is None:
+        return None
+    return name
+
 
 router = APIRouter(prefix="/api/sessions", tags=["sessions"])
 
@@ -473,14 +492,11 @@ async def upload_session_file(
 
     # Basename only: a client-supplied name may carry a path (some browsers send
     # one for directory uploads) and must never steer the write.
-    raw_name = (file.filename or "").replace("\\", "/").split("/")[-1].strip()
-    if not _UPLOAD_NAME_RE.match(raw_name) or ".." in raw_name:
+    name = _clean_upload_name(file.filename)
+    if name is None:
         raise HTTPException(
             status_code=400,
-            detail=(
-                "Invalid filename. Use letters, numbers, spaces, dots, dashes or "
-                "underscores (max 120 characters)."
-            ),
+            detail="Invalid filename: it is empty, starts with a dot, contains '..', or has no letters or digits.",
         )
 
     data = await file.read()
@@ -493,7 +509,7 @@ async def upload_session_file(
         )
 
     sandbox = await provider.resume(project.sandbox_id)
-    rel = f"{_UPLOAD_DIR}/{raw_name}"
+    rel = f"{_UPLOAD_DIR}/{name}"
     await sandbox.write_file(f"{PROJECT_DIR}/{rel}", data)
     return {"path": rel, "sizeBytes": len(data)}
 

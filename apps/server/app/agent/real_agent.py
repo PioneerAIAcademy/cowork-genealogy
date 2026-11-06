@@ -153,6 +153,10 @@ def stage_plugin_agents(project_dir: Path) -> list[str]:
 # from eval/ or from the control-plane package (see the module docstring).
 # starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
 # diffs against (issue #1490); overwriting it would defeat that gate.
+# Lowercase, and matched through `_protected_name`, which folds a name the way
+# Windows and macOS hosts resolve it. This sandbox is Linux, where `Research.JSON`
+# is another file; the fold is kept so the three copies stay identical
+# (`test_write_lockdown_parity.py`).
 PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
 # Tools that write a file directly, by `file_path`. Bash is deliberately NOT
@@ -320,6 +324,26 @@ def _basename(value: str) -> str:
     return value.replace("\\", "/").rsplit("/", 1)[-1]
 
 
+def _protected_name(path: str) -> str | None:
+    """The protected file `path` names, as its canonical lowercase name, or None.
+
+    Folded the way a Windows or macOS host resolves a name: case is folded
+    (`casefold`, so a long-s spelling (U+017F) matches as APFS matches it), and a stream
+    suffix (`research.json::$DATA`) and trailing dots and spaces
+    (`research.json.`) are dropped, since Windows ignores both. An 8.3 short
+    name (`RESEAR~1.JSO`) is not matched: it cannot be told from a real file
+    by name alone. A suffix after `:` is a stream only when it holds no
+    whitespace, so one-line file content such as `research.json: notes` on the
+    device bridge is not read as a path.
+    """
+    name = _basename(path)
+    head, colon, stream = name.partition(":")
+    if colon and not any(c.isspace() for c in stream):
+        name = head
+    name = name.rstrip(". ").casefold()
+    return name if name in PROTECTED_PROJECT_FILES else None
+
+
 def _path_like_strings(value, depth: int = 0):
     """Every string in `value` that could be a path, walked structurally.
 
@@ -352,8 +376,8 @@ def _device_bridge_target(tool_name: str, tool_input) -> str | None:
     if _basename(tool_name.replace("__", "/")) not in DEVICE_WRITE_TOOLS:
         return None
     for candidate in _path_like_strings(tool_input or {}):
-        name = _basename(candidate)
-        if name in PROTECTED_PROJECT_FILES:
+        name = _protected_name(candidate)
+        if name:
             return name
     return None
 
@@ -374,8 +398,7 @@ def direct_project_file_write(tool_name: str, tool_input: dict | None) -> str | 
     if tool_name not in _FILE_WRITE_TOOLS:
         return _device_bridge_target(tool_name, tool_input)
     file_path = str((tool_input or {}).get("file_path") or "")
-    name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
-    return name if name in PROTECTED_PROJECT_FILES else None
+    return _protected_name(file_path)
 
 
 _SECRETS_MARKERS = (
@@ -792,7 +815,11 @@ def build_options(project_dir: Path, resume: str | None = None, api_key: str | N
         "read and update those files there (do NOT look in the home directory). "
         "Follow the genealogy skills, and apply "
         "researcher_profile.narration_guidance from research.json as your "
-        "narration style."
+        "narration style. "
+        "With no project and no FamilySearch person ID, a request for the names and details "
+        "recorded in a record set (a roll, register, muster list or volume) goes to the "
+        "search-images agent with no projectPath, even when it names no images; relay "
+        "everything after its final --- verbatim."
     )
     main = load_main_thread(_PLUGIN_DIR)
     kwargs = dict(
