@@ -205,8 +205,8 @@ change; keep no local copy.
 - `test_research_plan_reuses_counted_locality_collections`: on
   `reuses-counted-locality` tests (`ut_research_plan_clc`), research-plan makes no
   `collections_search` call whose scope (a port of `standardPlaceToCollectionsQuery`)
-  equals that of a counted `localities` entry's `place` or `for_place`; `United States`
-  is exempt. `_collection_person_counts` also reads counted entry collections, so the
+  equals that of the `place` of a `localities` entry counted on every collection; `United States`
+  is exempt. `_collection_person_counts` also reads entry counts for collections no response served, so the
   availability check grades a plan written from the entry. `test_names_collections_only_from_search`
   (`validators/test_research.py`, Kenya test only) still accepts only search-returned
   titles. Proven to fail in `eval/harness/tests/unit/test_research_plan_validator.py`.
