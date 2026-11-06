@@ -1230,19 +1230,14 @@ _PERCENT_INDEXED_RE = re.compile(
 
 def _collection_person_counts(tool_calls, research=None) -> dict[str, set[int]]:
     """id -> set of personCounts across every collections_search response
-    this run received, plus every counted collection in the before-state
-    `localities` entries (research-plan plans from those without a call,
-    #3545). An id can be served with different counts in different
+    this run received, plus, for an id no response served, its count in the
+    before-state `localities` entries (research-plan plans from those without
+    a call). A served count always wins over a stored one. An id can be
+    served with different counts in different
     responses (1999196 was once 0 in schuylkill and 893214 in pennsylvania,
     reconciled 2026-09-24 under issue #2685), so key on the response, not
     the id."""
     counts: dict[str, set[int]] = {}
-    for entry in (research or {}).get("localities") or []:
-        for col in entry.get("collections") or []:
-            cid, pc = col.get("id"), col.get("person_count")
-            if cid is None or not isinstance(pc, int):
-                continue
-            counts.setdefault(str(cid), set()).add(pc)
     for c in tool_calls or []:
         if _bare(c.get("tool", "")) != "collections_search":
             continue
@@ -1252,6 +1247,13 @@ def _collection_person_counts(tool_calls, research=None) -> dict[str, set[int]]:
             if cid is None or pc is None:
                 continue
             counts.setdefault(str(cid), set()).add(int(pc))
+    served = set(counts)
+    for entry in (research or {}).get("localities") or []:
+        for col in entry.get("collections") or []:
+            cid, pc = col.get("id"), col.get("person_count")
+            if cid is None or not isinstance(pc, int) or str(cid) in served:
+                continue
+            counts.setdefault(str(cid), set()).add(pc)
     return counts
 
 
@@ -1306,14 +1308,16 @@ def test_research_plan_availability_claim_matches_counts(
                 if claims_indexed and not any(pc > 0 for pc in pcs):
                     errors.append(
                         f"{plan.get('id')} item {item.get('id')} calls "
-                        f"collection {cid} \"indexed\" but every response this "
-                        f"run received returned personCount 0"
+                        f"collection {cid} \"indexed\" but its personCount "
+                        f"(from this run's collections_search responses, else "
+                        f"the localities entry) is 0"
                     )
                 elif claims_browse and not any(pc == 0 for pc in pcs):
                     errors.append(
                         f"{plan.get('id')} item {item.get('id')} calls "
-                        f"collection {cid} browse/image-only but the served "
-                        f"response returned personCount {sorted(pcs)}"
+                        f"collection {cid} browse/image-only but its "
+                        f"personCount (from this run's collections_search "
+                        f"responses, else the localities entry) is {sorted(pcs)}"
                     )
     assert not errors, (
         "availability claim contradicts returned personCount:\n  - "
@@ -1344,12 +1348,13 @@ def test_research_plan_reuses_counted_locality_collections(
     before_state, tool_calls, test
 ):
     """Tag-gated (`reuses-counted-locality`): when a before-state `localities`
-    entry carries a collection with a `person_count`, research-plan plans
+    entry carries a `person_count` on every collection, research-plan plans
     from it and makes no `collections_search` call answered at the same
-    scope as the entry's `place` or `for_place`. The national
-    `United States` call is exempt. Issue #3545 lead 3: in 4 of 10 e2e runs
-    research-plan repeated locality-guide's call on the place it had just
-    surveyed. Matching is on the call's args, never its response."""
+    scope as the entry's `place` (a standard place; `for_place` is free text
+    with no country and is not scoped). The national `United States` call is
+    exempt. Issue #3545 lead 3: in 4 of 10 e2e runs research-plan repeated
+    locality-guide's call on the place it had just surveyed. Matching is on
+    the call's args, never its response."""
     if "reuses-counted-locality" not in test.get("tags", []):
         pytest.skip("not a reuses-counted-locality scenario")
     before = before_state.get("research_json")
@@ -1358,17 +1363,14 @@ def test_research_plan_reuses_counted_locality_collections(
 
     covered: dict[str, str] = {}
     for entry in before.get("localities") or []:
-        if not any(
-            isinstance(c.get("person_count"), int)
-            for c in entry.get("collections") or []
-        ):
+        cols = entry.get("collections") or []
+        if not cols or not all(isinstance(c.get("person_count"), int) for c in cols):
             continue
-        for key in ("place", "for_place"):
-            place = entry.get(key)
-            if isinstance(place, str) and place.strip():
-                scope = _collections_scope(place).casefold()
-                if scope != "united states":
-                    covered.setdefault(scope, entry.get("id") or "?")
+        place = entry.get("place")
+        if isinstance(place, str) and place.strip():
+            scope = _collections_scope(place).casefold()
+            if scope != "united states":
+                covered.setdefault(scope, entry.get("id") or "?")
     assert covered, (
         "reuses-counted-locality test has no localities entry with a counted "
         "collection; the fixture cannot exercise this check"

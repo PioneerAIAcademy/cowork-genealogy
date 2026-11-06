@@ -240,7 +240,8 @@ items, and the user wants a recap. Narrate which item is next, why,
 and what follows — **do not create a new plan or modify items.** The
 active plan is the audit trail; review is explanatory only. If the
 item you confirm as the next step names no specific collection, take it
-from its jurisdiction's `localities` entry, else run a quick
+from its jurisdiction's `localities` entry when every collection there
+carries a `personCount`, else run a quick
 `collections_search` at that jurisdiction, to confirm the source
 is actually available and cite the collection/repository — a read-only
 catalog check that makes the recommendation actionable, never a new
@@ -346,9 +347,10 @@ constructed URL.
 
 **(b) Then discover which records exist**, with your own tools, applying
 that know-how. When a `localities` entry whose `place` or `forPlace` names
-the place or its state has a collection with a `personCount`, plan from that
-entry's `collections[]` and make no `collections_search` call for the place
-or its state; the national call below still applies.
+the place or its state has a `personCount` on every collection in
+`collections[]` (`for_place` and `person_count` in `research_query` rows),
+plan from those collections and make no `collections_search` call for the
+place or its state; the national call below still applies.
 
 ```
 collections_search({ standardPlace: "Schuylkill, Pennsylvania, United States" })   // only when no localities entry with a personCount covers it
@@ -688,7 +690,7 @@ research_append({
         jurisdiction: "Schuylkill County, Pennsylvania",
         date_range: "1875-1890",
         repository: "FamilySearch",
-        rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). loc_001 lists the Pennsylvania probate collection with personCount 0, so this is an image browse of the county's probate dockets, not a name search. A will naming Patrick as a son would be direct evidence of parentage.",
+        rationale: "Thomas Flynn likely died circa 1881 (disappears from tax records). loc_001 lists the Pennsylvania probate collection as browse-only (personCount 0), so this is an image browse of the county's probate dockets, not a name search. A will naming Patrick as a son would be direct evidence of parentage.",
         fallback_for: null,
         status: "planned"
       }

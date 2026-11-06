@@ -360,6 +360,16 @@ def test_v5_passes_an_entry_count_claim_that_matches():
     _no_skip(check_v5, _with_locality(before), after, [])
 
 
+def test_v5_served_count_wins_over_the_entry_count():
+    # The entry stores 1999196 at 0, the run's own response serves it at 893214:
+    # a browse-only claim must fail on the served count, not pass on the stored one.
+    before, after = _states([_item("pli_010", rationale="Collection 1999196 is browse-only (personCount 0).")])
+    served = [_call("collections_search", {"results": [{"id": "1999196", "personCount": 893214}]},
+                    {"standardPlace": "Pennsylvania, United States"})]
+    with pytest.raises(AssertionError, match="1999196"):
+        check_v5(_with_locality(before), after, served)
+
+
 def test_v5_still_skips_with_no_entry_and_no_call():
     before, after = _states([_item("pli_010", rationale="Collection 1999196 is fully indexed.")])
     with pytest.raises(pytest.skip.Exception):
@@ -441,6 +451,20 @@ def test_reuse_fails_loudly_when_the_entry_is_uncounted():
     # A fixture whose entry has no counted collection cannot exercise the check.
     with pytest.raises(AssertionError, match="cannot exercise"):
         check_reuse(_with_locality({"research_json": {}}, counts=(None, None)), [], _REUSE_TEST)
+
+
+def test_reuse_fails_loudly_when_the_entry_is_partly_counted():
+    with pytest.raises(AssertionError, match="cannot exercise"):
+        check_reuse(_with_locality({"research_json": {}}, counts=(0, None)), [], _REUSE_TEST)
+
+
+def test_reuse_does_not_scope_for_place():
+    # for_place is free text with no country; only the standard `place` is scoped.
+    before = _with_locality({"research_json": {}})
+    del before["research_json"]["localities"][0]["place"]
+    before["research_json"]["localities"][0]["for_place"] = "Toronto, Ontario"
+    with pytest.raises(AssertionError, match="cannot exercise"):
+        check_reuse(before, [], _REUSE_TEST)
 
 
 def test_reuse_skips_an_untagged_test():
