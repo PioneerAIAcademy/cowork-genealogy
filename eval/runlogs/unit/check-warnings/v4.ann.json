@@ -1,9 +1,9 @@
 {
-  "run_log": "v1_2026-10-14_16-56-14.json",
-  "annotator": "florencemashipei4@gmail.com",
+  "run_log": "v4.json",
+  "annotator": "eruth937@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_check_warnings_021",
+      "test_id": "ut_check_warnings_022",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -11,65 +11,9 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_021",
+      "test_id": "ut_check_warnings_022",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_021",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_021",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_021",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_021",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_022",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_022",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_022",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -84,16 +28,56 @@
     },
     {
       "test_id": "ut_check_warnings_022",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_check_warnings_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_019",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -115,71 +99,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_019",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_019",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_019",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_019",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Actionability",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_010",
+      "test_id": "ut_check_warnings_009",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -187,39 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_004",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_004",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_004",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_004",
+      "test_id": "ut_check_warnings_009",
       "dimension_source": "rubric",
       "dimension_name": "Detection accuracy",
       "llm_score": 3,
@@ -227,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_004",
+      "test_id": "ut_check_warnings_009",
       "dimension_source": "rubric",
       "dimension_name": "Severity classification",
       "llm_score": 3,
@@ -235,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_004",
+      "test_id": "ut_check_warnings_009",
       "dimension_source": "rubric",
       "dimension_name": "Actionability",
       "llm_score": 3,
@@ -243,23 +131,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_020",
-      "dimension_source": "rubric",
-      "dimension_name": "Severity classification",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_020",
-      "dimension_source": "rubric",
-      "dimension_name": "Detection accuracy",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_020",
+      "test_id": "ut_check_warnings_009",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -267,25 +139,153 @@
       "comment": null
     },
     {
-      "test_id": "ut_check_warnings_020",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_check_warnings_020",
+      "test_id": "ut_check_warnings_009",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "it incorrectly concludes that the warnings cannot be explained by a single wrong fact and recommends rebuilding the full timeline and searching for a split point"
+      "comment": "The response identifies the warnings and severity levels correctly, but the cluster analysis does not follow the required escalation logic. The three warnings on Ambrose Keane share the same death evidence and should first be treated as a cluster that may be explained by a single incorrect death fact. The response instead concludes that \"no single correction explains\" the contradictions and moves directly toward a merged-identity interpretation and timeline-rebuild recommendation. Per the scenario requirements, the first question should be whether verifying the shared death record resolves the cluster; only if no single fact can explain the warnings should the stronger identity-confusion reading be favored. The relative warning on Michael Keane was handled appropriately and separately."
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_020",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_check_warnings_020",
       "dimension_source": "rubric",
       "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_020",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null

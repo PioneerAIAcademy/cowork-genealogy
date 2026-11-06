@@ -803,7 +803,9 @@ function conflictInvariants(entry: any): string[] {
   // a genealogical judgment; it owes only the reason, because there is nothing
   // to weigh or to declare independent once the conflict has stopped bearing
   // on the question. Measured cost: 0 of the 1 moot conflict in the committed
-  // e2e corpus (`ogletree-children` c_006, which carries one).
+  // e2e corpus (`ogletree-children` c_006, which carries one). The analyses are
+  // optional here but not inert: a moot conflict that carries both can lift the
+  // core-identifier cap on its competitors (`resolvedAgainstIds`).
   if (entry.status === "moot") {
     const rationale = entry.resolution_rationale;
     // Trimmed, and type-checked: a whitespace-only string asserts exactly as
@@ -1396,8 +1398,9 @@ const WEAK_INFORMANT_PROXIMITY: ReadonlySet<string> = new Set([
  *  tree. Measured over every committed scenario fixture 2026-09-24: with these
  *  two gates the arm refuses **0 of 323** confident/probable person_evidence
  *  entries, against 38 without them and 274 comparing any place at all. An
- *  assertion a resolved conflict decided against, on the attribute that conflict
- *  disputed, is not credible either (`resolvedAgainstIds`). */
+ *  assertion a settled conflict set aside, on the attribute that conflict
+ *  disputed, is not credible either: one a resolved conflict decided against, or
+ *  a competitor in a moot one that carries both analyses (`resolvedAgainstIds`). */
 function contradictionIsCredible(assertion: any, resolvedAgainst: ReadonlySet<string>): boolean {
   if (resolvedAgainst.has(assertion?.id)) return false;
   if (assertion?.information_quality === "secondary") return false;
@@ -1423,28 +1426,76 @@ export interface ResolvedAgainst {
   date: ReadonlySet<string>;
 }
 
-/** Assertions a RESOLVED FACT conflict decided against, per arm: every
- *  competitor that is not its `preferred_assertion_id`, released only on the
- *  arm its `disputed_attribute` names. A contradiction the project has already
- *  weighed and set aside is not a live one, so it cannot cap the link; one it did
- *  not weigh (a birthplace dispute says nothing about the same record's
- *  christening date) still does. An identity conflict releases nothing: its
- *  loser was judged to be a different person, so a link through it to the
- *  rejected identity is exactly what must stay capped. Read from the document as
- *  this op sees it, so a conflict resolved LATER in the same batch still
- *  refuses, which fails safe. Figures: `dev/measure-core-identifier-gate.ts`. */
-function resolvedAgainstIds(research: any): ResolvedAgainst {
+/** Assertions a settled FACT conflict set aside, per arm, released only on the
+ *  arm its `disputed_attribute` names: every competitor but its
+ *  `preferred_assertion_id`. A `resolved` conflict settles when it names a
+ *  preferred assertion. A `moot` one settles only when it carries non-blank
+ *  `independence_analysis` and `weighing_analysis`, the bar `resolved` meets:
+ *  `moot` itself owes only a `resolution_rationale`, and one sentence must not
+ *  lift the cap. Issue #4255: a late group baptism, 12 years after the birth,
+ *  found to be two events and marked moot, left every link capped with no way
+ *  out. A contradiction the project has already weighed and set aside is not a
+ *  live one, so it cannot cap the link; one it did not weigh (a birthplace
+ *  dispute says nothing about the same record's christening date) still does.
+ *
+ *  An identity conflict releases nothing: its loser was judged to be a
+ *  different person, so a link through it to the rejected identity is exactly
+ *  what must stay capped. For the same reason a moot conflict releases nothing
+ *  while an identity conflict still doubts the record person behind one of its
+ *  competitors: `moot` is also how a fact conflict ends when its record turns
+ *  out to be someone else (#2475), and that must not lift the cap onto the
+ *  wrong person. The doubt is read by record person (`recordParties`), not by
+ *  assertion id, because an identity conflict usually names the persona's name
+ *  assertion rather than its christening. It holds at any status: a `resolved`
+ *  identity conflict does not say which way it settled (the corpus holds one
+ *  whose rationale rejects the person its preferred assertion names). A moot
+ *  meaning "someone else" written with no identity conflict beside it cannot be
+ *  told apart from the documents, and releases.
+ *
+ *  Read from the document as this op sees it, so a conflict settled LATER in the
+ *  same batch still refuses, which fails safe. Figures:
+ *  `dev/measure-core-identifier-gate.ts`. */
+function resolvedAgainstIds(research: any, assertionById: Map<string, any>): ResolvedAgainst {
   const place = new Set<string>();
   const date = new Set<string>();
-  for (const c of (research?.conflicts ?? []) as any[]) {
-    if (c?.status !== "resolved" || c.conflict_type !== "fact") continue;
-    if (typeof c.preferred_assertion_id !== "string") continue;
+  const conflicts: any[] = Array.isArray(research?.conflicts) ? research.conflicts : [];
+  const competingIds = (c: any): string[] =>
+    Array.isArray(c?.competing_assertion_ids)
+      ? c.competing_assertion_ids.filter((id: unknown): id is string => typeof id === "string")
+      : [];
+  // The record person an assertion is about, or the assertion itself when its
+  // record or party cannot be read.
+  const keyers = new Map<string, (a: any) => string | null>();
+  const personOf = (id: string): string => {
+    const a = assertionById.get(id);
+    const recordId = a ? recordIdOf(a) : null;
+    if (recordId == null) return `assertion ${id}`;
+    let keyOf = keyers.get(recordId);
+    if (!keyOf) keyers.set(recordId, (keyOf = recordParties(assertionById.values(), recordId).partyKey));
+    const party = keyOf(a);
+    return party == null ? `assertion ${id}` : `${recordId} ${party}`;
+  };
+  const doubted = new Set(
+    conflicts
+      .filter((c) => c?.conflict_type === "identity")
+      .flatMap(competingIds)
+      .map(personOf),
+  );
+  for (const c of conflicts) {
+    if (c?.conflict_type !== "fact") continue;
     const attr = String(c.disputed_attribute ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
     const into = BIRTH_PLACE_DISPUTES.has(attr) ? place : BIRTH_DATE_DISPUTES.has(attr) ? date : null;
     if (!into) continue;
-    for (const id of (c.competing_assertion_ids ?? []) as unknown[]) {
-      if (typeof id === "string" && id !== c.preferred_assertion_id) into.add(id);
-    }
+    const ids = competingIds(c);
+    const settled =
+      c.status === "resolved"
+        ? typeof c.preferred_assertion_id === "string"
+        : c.status === "moot" &&
+          !isBlank(c.independence_analysis) &&
+          !isBlank(c.weighing_analysis) &&
+          !ids.some((id) => doubted.has(personOf(id)));
+    if (!settled) continue;
+    for (const id of ids) if (id !== c.preferred_assertion_id) into.add(id);
   }
   return { place, date };
 }
@@ -1782,7 +1833,7 @@ function contradictionScope(
   // against a father who the tree says was born 1818 produced 30 refusals that
   // are all one household, not one contradiction.
   const sameRecord = onRecord.filter((a: any) => parties.includes(partyKey(a) as string));
-  return { birth, sameRecord, resolvedAgainst: resolvedAgainstIds(research) };
+  return { birth, sameRecord, resolvedAgainst: resolvedAgainstIds(research, assertionById) };
 }
 
 /** The record's birth-place assertions that disagree with the tree's Birth
@@ -1902,8 +1953,12 @@ export function coreIdentifierContradictionInvariants(
     `confidence '${entry.confidence}' is not available on this link: ${findings.join("; ")}. ` +
       `A contradicted core identifier caps the link at 'speculative' regardless of the match ` +
       `score, and the user is asked before it stands. Use 'speculative' and name the ` +
-      `contradiction in the rationale, or resolve it first — a confident wrong identity is ` +
-      `worse than a flagged uncertain one.`,
+      `contradiction in the rationale, or have conflict-resolution settle it first in a fact ` +
+      `conflict whose disputed_attribute is 'birth_place' (or 'birth_date' for a date): ` +
+      `'resolved' preferring another assertion, or 'moot' carrying independence_analysis and ` +
+      `weighing_analysis (a moot still caps with only a resolution_rationale, or while any ` +
+      `identity conflict names that record's person). A confident wrong identity is worse ` +
+      `than a flagged uncertain one.`,
   ];
 }
 

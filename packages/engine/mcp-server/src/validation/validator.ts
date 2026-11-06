@@ -623,7 +623,8 @@ export const SETTLED_CONFLICT_STATUSES = new Set(["resolved", "moot"]);
  *  Use it wherever a gate asks "is this conflict settled?" — comparing `status`
  *  inline is how `disputedSourceIds` came to treat a `moot` conflict as still
  *  disputing its sources. Not every status read asks that question:
- *  `resolvedAgainstIds` deliberately exonerates on `resolved` alone, and
+ *  `resolvedAgainstIds` reads the two apart, exonerating on `resolved` and on a
+ *  `moot` only when it also carries both analyses, and
  *  `utils/question-state.ts` tests `status !== "unresolved"`, which agrees with
  *  this on any document the validator accepts. The harness keeps a Python copy,
  *  `is_settled_conflict` in `eval/harness/harness/skill_invocation.py`;
