@@ -869,28 +869,23 @@ describe("project_create — personId (#3384; the tree build from #2944 Stage B)
     expect(result.relatives.every((r: any) => r.id && r.name && r.relationship)).toBe(true);
   });
 
-  it("returns projectUrl from the store's project id inside the 2,000 characters, and none without the setting", async () => {
+  it("returns no viewer link with the public URL set, inside the 2,000 characters", async () => {
     const read = structuredClone(FAMILY);
     for (let i = 0; i < 63; i++) {
       const id = `KID${String(i).padStart(2, "0")}-AAA`;
       read.persons.push({ id, ark: `ark:/61903/4:1:${id}`, gender: "Male", living: false, names: [{ preferred: true, given: `Child Number ${i}`, surname: "Flynn" }] });
       read.relationships.push({ type: "ParentChild", parent: "LZNY-BRF", child: id, subtype: "Biological" });
     }
-    const createIn = (projectId: string, config: Record<string, unknown>) =>
-      runWithProjectStore(new ScopedFsStore(dir, projectId), () =>
-        runProjectCreate(
-          { projectPath: SCOPED_ANCHOR, objective: "x", personId: "LZNY-BRF" },
-          { readPerson: async () => ({ result: structuredClone(read), resolvedId: "LZNY-BRF", memoryKinds: {} }) },
-          bearerPrincipal("tok", config),
-        ),
-      ) as Promise<any>;
-    const linked = await createIn("p-linked", { webPublicUrl: "https://beta.example" });
-    expect(linked.ok).toBe(true);
-    expect(linked.projectUrl).toBe("https://beta.example/#/p/p-linked");
-    expect(JSON.stringify(linked).length).toBeLessThanOrEqual(2000);
-    const bare = await createIn("p-bare", {});
-    expect(bare.ok).toBe(true);
-    expect("projectUrl" in bare).toBe(false);
+    const created = (await runWithProjectStore(new ScopedFsStore(dir, "p-linked"), () =>
+      runProjectCreate(
+        { projectPath: SCOPED_ANCHOR, objective: "x", personId: "LZNY-BRF" },
+        { readPerson: async () => ({ result: structuredClone(read), resolvedId: "LZNY-BRF", memoryKinds: {} }) },
+        bearerPrincipal("tok", { webPublicUrl: "https://beta.example", uploadsEnabled: true }),
+      ),
+    )) as any;
+    expect(created.ok).toBe(true);
+    expect("projectUrl" in created).toBe(false);
+    expect(JSON.stringify(created).length).toBeLessThanOrEqual(2000);
   });
 
   it.each([

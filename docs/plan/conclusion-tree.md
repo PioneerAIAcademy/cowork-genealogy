@@ -148,6 +148,7 @@ Order: 1a, 1b, 1c, 2, 2b, 3, 3b, 4.
   - `src/tools/project-context.ts`: `claimKinds`. `tests/tools/project-context.test.ts`'s "returns empty arrays for an empty project" compares the whole projection, so it gains `claimKinds`.
   - `src/validation/rule-modes.ts` (new): the mode of every rule that warns before it refuses. A rule in warn mode returns its message prefixed "Will be refused:" and names what it concerns, since `research_append`, `tree_edit` and `tree_correct` each return one flat warning list per call: the summary id for `research_append`; for the tree tools, the object's holder and id (`personId` or `relationshipId` plus `factId` for a fact, `personId` plus `nameId` for a name, an edge's `relationshipId`). A fact id alone is ambiguous: 65 of the 136 e2e starting trees put one fact id on two or more persons, up to 15.
   - `src/tools/research-append-examples.ts`: the claims example gains `shortfall`, so it validates verbatim.
+  - *Built (2026-11-04):* `ProofClaimRelationship` is one interface with optional ends, not a union: `schema-interface-drift.test.ts` requires an interface for every `$def`. The schema's `oneOf` and the validator still bind which ends go with which type.
   - `packages/viewer-ui/src/components/sections/ProofSummariesSection.tsx` renders every claim kind without assuming `relationship`.
 - **Specs:**
   - Delete the claims that `proof_tier` marks tree objects, and all upload language, from:
