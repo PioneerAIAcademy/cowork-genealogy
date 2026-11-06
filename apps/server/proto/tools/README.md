@@ -78,10 +78,11 @@ not bounded.
 
 When FamilySearch answers a connector user 429, that user's authenticated FamilySearch
 calls pause for its `Retry-After`, at most 15 minutes, or 30 s without one. A pause that
-ends inside the call's own time (its retry budget, 10 s by default, and never longer
-than its timeout) is waited out, and a longer one refuses at once with `FamilySearch
-asked this account to wait; try again in about N seconds.` The 429 still shows as
-`fs_status=429` on the call's `ev=tool_call` line. Anonymous FamilySearch calls (place
+ends inside the call's own time (its retry budget, 10 s by default, while the request
+keeps at least 2 s, or half its timeout, to run) is waited out, and a longer one refuses
+at once with `FamilySearch asked this account to wait; try again in about N seconds.` A
+call that ends in a throw after FamilySearch answered 429 shows `fs_status=429` on its
+`ev=tool_call` line. Anonymous FamilySearch calls (place
 lookups, public memory artifacts and story text) are not paused.
 
 The door reads each request body once, capped at **1 MiB**, and answers 413 past

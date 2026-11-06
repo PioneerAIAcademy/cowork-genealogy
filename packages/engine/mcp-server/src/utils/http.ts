@@ -244,18 +244,35 @@ export interface RetryBudgetOptions {
   onRetryableResponse?: (status: number, retryAfterMs: number | null) => void;
   /**
    * Awaited before every attempt, the first included, with how long it may
-   * wait in ms: the budget left, and on the first attempt no more than that
-   * attempt's timeout. It may wait inside that, or throw a refusal marked for
-   * `isFsBudgetExhausted`, which the loop rethrows without retrying. The wait
-   * comes out of the attempt's own time, never on top of it, so a caller that
-   * sized `timeoutMs` and `budgetMs` to fit a ceiling still fits it. `fsFetch`
-   * holds a paused connector user here (issue #3999).
+   * wait in ms (`pauseWaitAllowance`: inside the budget left, and leaving the
+   * attempt's request time to run). It may wait inside that, or throw a
+   * refusal marked for `isFsBudgetExhausted`, which the loop rethrows without
+   * retrying. The wait comes out of the attempt's own time, never on top of
+   * it, so a caller that sized `timeoutMs` and `budgetMs` to fit a ceiling
+   * still fits it. `fsFetch` holds a paused connector user here (issue #3999).
    */
   beforeAttempt?: (maxWaitMs: number) => Promise<void>;
 }
 
 const retrySleep = (ms: number): Promise<void> =>
   new Promise((r) => setTimeout(r, ms));
+
+/** The least a request keeps for itself when a pause wait comes out of its
+ *  time, or half that time when it is shorter. A wait that left less would end
+ *  in "timed out after 0ms", an unmarked failure that reads as the network
+ *  rather than "try again in about N seconds". */
+export const MIN_REQUEST_AFTER_WAIT_MS = 2_000;
+
+/**
+ * How long a pause may be waited out before a request whose time is `spanMs`,
+ * with `leftMs` of the retry budget left: inside the budget, and leaving the
+ * request at least MIN_REQUEST_AFTER_WAIT_MS (or half of `spanMs`). Past that,
+ * the caller refuses instead of waiting.
+ */
+export function pauseWaitAllowance(spanMs: number, leftMs: number): number {
+  const keep = Math.min(MIN_REQUEST_AFTER_WAIT_MS, spanMs / 2);
+  return Math.max(0, Math.min(leftMs, spanMs - keep));
+}
 
 /**
  * `fetchWithTimeout` + automatic retry of transient failures.
@@ -302,7 +319,9 @@ export async function fetchWithRetry(
       if (beforeAttempt) {
         const before = Date.now();
         const left = Math.max(0, deadline - before);
-        await beforeAttempt(attempt === 0 ? Math.min(timeoutMs, left) : left);
+        // The first attempt runs until its own timeout; a later one until the
+        // deadline.
+        await beforeAttempt(pauseWaitAllowance(attempt === 0 ? timeoutMs : left, left));
         waited = Date.now() - before;
       }
       const attemptTimeout =

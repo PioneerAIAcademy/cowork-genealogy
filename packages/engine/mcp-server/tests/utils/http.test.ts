@@ -13,6 +13,8 @@ import {
   RETRYABLE_STATUS,
   DEFAULT_RETRY_BUDGET_MS,
   CONNECT_ATTEMPT_TIMEOUT_MS,
+  MIN_REQUEST_AFTER_WAIT_MS,
+  pauseWaitAllowance,
   raiseConnectAttemptTimeout,
 } from "../../src/utils/http.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
@@ -568,7 +570,7 @@ describe("fetchWithRetry's onRetryableResponse and beforeAttempt hooks", () => {
     ]);
   });
 
-  it("beforeAttempt runs before every attempt: the first may wait no longer than its timeout, a later one the budget left", async () => {
+  it("beforeAttempt runs before every attempt, and may wait only while the request keeps time to run", async () => {
     const maxWait: number[] = [];
     mockFetch
       .mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve(mockResponse(503)), 100)))
@@ -582,11 +584,20 @@ describe("fetchWithRetry's onRetryableResponse and beforeAttempt hooks", () => {
     });
     expect(res.status).toBe(200);
     expect(maxWait).toHaveLength(2);
-    // min(timeoutMs, budget left), not the whole budget.
-    expect(maxWait[0]).toBe(1000);
-    // What is left of the 5 s budget after the first attempt's 100 ms.
-    expect(maxWait[1]).toBeLessThanOrEqual(4_900);
-    expect(maxWait[1]).toBeGreaterThan(4_000);
+    // The first attempt runs until its 1 s timeout and keeps half of it.
+    expect(maxWait[0]).toBe(500);
+    // A later one runs until the deadline: about 4.9 s left, less the 2 s it keeps.
+    expect(maxWait[1]).toBeLessThanOrEqual(2_900);
+    expect(maxWait[1]).toBeGreaterThan(2_000);
+  });
+
+  it("pauseWaitAllowance leaves the request at least 2 s, or half its time, and stays inside the budget", () => {
+    expect(MIN_REQUEST_AFTER_WAIT_MS).toBe(2_000);
+    expect(pauseWaitAllowance(30_000, 10_000)).toBe(10_000);
+    expect(pauseWaitAllowance(10_000, 10_000)).toBe(8_000);
+    expect(pauseWaitAllowance(1_000, 10_000)).toBe(500);
+    expect(pauseWaitAllowance(5_000, 0)).toBe(0);
+    expect(pauseWaitAllowance(0, 10_000)).toBe(0);
   });
 
   it("a wait in beforeAttempt comes out of the first attempt's timeout, never on top of it", async () => {

@@ -346,6 +346,19 @@ describe("the per-user 429 pause", () => {
     expect(wire).toHaveBeenCalledTimes(1);
   });
 
+  it("a pause that would leave the request no time to run is refused, not waited into a timeout", async () => {
+    wire.mockImplementation(async () => {
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      return ok();
+    });
+    // 950 ms of a 1 s call: waiting would leave the request 50 ms.
+    recordFsPause("u_A", 950);
+    const refused = await fsFetch(userA, FS_URL, {}, 1000, { budgetMs: 1000 }).catch((e: unknown) => e);
+    expect(isFsBudgetExhausted(refused)).toBe(true);
+    await expect(fsFetchWithTimeout(userA, FS_URL, {}, 1000)).rejects.toThrow("FamilySearch asked this account to wait");
+    expect(wire).not.toHaveBeenCalled();
+  });
+
   it("a connector caller's own retry hooks still run beside the pause's", async () => {
     const statuses: number[] = [];
     const waits: number[] = [];

@@ -26,6 +26,7 @@ import {
   DEFAULT_RETRY_BUDGET_MS,
   fetchWithRetry,
   fetchWithTimeout,
+  pauseWaitAllowance,
   retryAfterMs,
   type RetryBudgetOptions,
 } from "./http.js";
@@ -158,10 +159,10 @@ export async function fsFetch(
  * retry or carry timeouts too long for the retry budget.
  *
  * With no retry loop of its own, a paused connector user waits at most the
- * default retry budget, and never longer than `timeoutMs`; the wait comes out
- * of `timeoutMs`, so the call never runs longer than its caller sized it
- * (volume_bisect's legs sum to fit Cowork's 60 s abort). Its own 429 records
- * the pause.
+ * default retry budget, and only while the request keeps time to run
+ * (`pauseWaitAllowance`); the wait comes out of `timeoutMs`, so the call never
+ * runs longer than its caller sized it (volume_bisect's legs sum to fit
+ * Cowork's 60 s abort). Its own 429 records the pause.
  */
 export async function fsFetchWithTimeout(
   principal: Principal,
@@ -174,7 +175,7 @@ export async function fsFetchWithTimeout(
   if (userId !== undefined) {
     const limit = timeoutMs ?? DEFAULT_FETCH_TIMEOUT_MS;
     const before = Date.now();
-    await awaitFsPause(userId, Math.min(DEFAULT_RETRY_BUDGET_MS, limit));
+    await awaitFsPause(userId, pauseWaitAllowance(limit, DEFAULT_RETRY_BUDGET_MS));
     requestTimeoutMs = Math.max(0, limit - (Date.now() - before));
   }
   const token = await getValidToken(principal);
