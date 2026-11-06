@@ -679,8 +679,11 @@ Architecturally:
   is the one stamped on that open turn of that project (U4). Every other request
   is the connector path: the bearer is looked up by sha256 in
   `connector_tokens`, the project comes from the call's own `/proj_<16 hex>`
-  `projectPath` rather than a header, and a refusal is 401 with
-  `WWW-Authenticate`) are entrypoints that only connect
+  `projectPath` rather than a header, a refusal is 401 with
+  `WWW-Authenticate`, and a call naming no project binds a store that refuses
+  every project tool and answers `project_list` with the caller's projects plus
+  one fresh path, which `make engine-smoke-http` checks against a seeded second
+  user) are entrypoints that only connect
   a transport, so a new arm goes in `server.ts` and both get it. A
   commented-out `case` does not
   count as live, and if dispatch is ever refactored to a lookup map the
@@ -1007,7 +1010,12 @@ they have different fixes, and only one of them is a description problem.
    **The instrument for an agent is a routing negative**, not the optimizer: a
    test with a `user_message`, no `grade_on_invariant`, and a
    `negative.correct_skill` naming the agent asserts that the utterance routes
-   there, and the harness resolves an agent file as a valid target.
+   there, and the harness resolves an agent file as a valid target. Its message
+   must be one the agent can act on (for an agent that acts on a person, the
+   message names one): the harness stubs the spawn, so a hand-back the agent
+   would return is never seen. A message naming no person and no edit is
+   correctly answered with a clarifying question, not a hand-off, so it is not a
+   routing negative.
    `research`'s suite hosts them (`eval/tests/unit/research/route-agent-*.json`),
    because a message the main thread should hand straight to an agent must not
    enter `research` first. A negative that sets `grade_on_invariant` is not one:
@@ -1779,6 +1787,7 @@ workbench locally"); this section is the shape.
 | `packages/schema` | **single source** of `research.json` + simplified-GedcomX TS types and JSON Schemas. Consumed by viewer-ui, web, and server. Mirrors the engine's schemas (§6.4). |
 | `packages/viewer-ui` | the extracted renderer — App, the section components in `src/components/sections/`, shared components, `ResearchDataProvider`. **Transport-agnostic** via a `ResearchTransport` interface (`src/transport.ts`). |
 | `apps/electron` | the desktop viewer, consuming `viewer-ui` over an **IPC** transport. |
+| `apps/mcp-viewer` | the MCP App page: research cards drawn inside Claude, served by the thin server in `packages/engine/mcp-server/viewer/`. Neither ships in an artifact (`docs/plan/mcp-app-viewer.md`). |
 | `apps/web` | React + Vite client: login, session list, chat sidebar, and the shared viewer over a **WebSocket + REST** transport. With `VITE_SESSION_TRANSPORT=sse` (`make web-proto`) the same client runs over **SSE + REST** against the search-agent prototype's web tier (`apps/server/proto/web`); the `SessionConnection` interface is the seam. |
 | `apps/server` | the **FastAPI control plane** (Python/uv): auth + allowlist, session/sandbox orchestration behind a vendor-neutral `SandboxProvider`, and `app/agent/` (the in-sandbox `agent_runner`, mock + real). |
 
@@ -2100,7 +2109,7 @@ outside `apps/server/` needs a line in `server-tests.yml`'s `PATTERNS`, which a 
 |---|---|---|
 | **`make test-all`** (= `scripts/test.sh`) | **everything offline**: typecheck, JS workspace, `apps/server`, engine + packaging lints, CRUD UI, eval harness. The target delegates to the script, so the two are one command; the PR template names it. Runs every suite before reporting, so one failure doesn't hide the next. Deterministic and free — **no suite in it calls a model**, which is what keeps it ~30s and therefore actually run. | anything needing a model or a live API: a single tool (`dev/try-<tool>.ts`), agent tool binding (`make agent-smoke`), skill behaviour (`make eval-skill`) |
 | `make test` | `test-js` + `server-test` | **engine, packaging lints, harness** — an engine-only change gets *zero* coverage, and this is **not** the eval-harness gate despite what `CLAUDE.md` and `DEVELOPMENT.md` imply |
-| `make test-js` | the JS workspace (turbo): web, electron, viewer-ui, schema, eval/app — including the **`packages/schema` TypeScript mirror** (`schema-interface-drift.test.ts`) | Python; the engine (npm-managed, outside the pnpm workspace); eval/app's Playwright suite (needs a browser — its own CI job) |
+| `make test-js` | the JS workspace (turbo): web, electron, mcp-viewer, viewer-ui, schema, eval/app — including the **`packages/schema` TypeScript mirror** (`schema-interface-drift.test.ts`) | Python; the engine (npm-managed, outside the pnpm workspace); eval/app's Playwright suite (needs a browser — its own CI job) |
 | `make engine-test` | `packages/engine/mcp-server` (vitest) + all packaging lints | the `packages/schema` mirror; anything needing a live API |
 | `make engine-test-pg` | the same suite with every tool's project I/O on `PgS3ProjectStore` (`PROTO_STORE=pg`, the compose Postgres + MinIO; CI's `vitest-pg` job), failing on any skipped test, then the harness's live `--store pg` cases (`test_pg_store_switch.py`), then `proto-store-test`'s keyless arm. The tests still seed and assert on disk: `tests/helpers/pg-routing-store.ts` mirrors each project directory into its own Postgres project around every call | the cases marked `fileStoreOnly(...)` (symlinks, nesting, permissions, the rename seam, a document that is not JSON), which run on the file store in this leg too; per-request binding and the claim fence (`http-server-pg.test.ts` and the store suite own those); any skill or agent on Postgres (the paid half of U15) |
 | `make harness-test` | `eval/harness` (pytest) — including the **`packages/schema/schemas/` JSON mirror** (`test_schema_mirrors.py`) and the three write-lockdown copies' parity | engine unit tests, though it *does* execute the compiled `build/` — a broken engine fails here wearing the costume of a harness bug. **Not** the TS half of the `packages/schema` mirror — that is `make test-js` |
