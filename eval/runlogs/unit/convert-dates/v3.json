@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "convert-dates",
   "version": 3,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-11-06_07-33-23",
@@ -137,7 +137,7 @@
       },
       "totals": {
         "duration_ms": 20639.164193999022,
-        "duration_api_ms": 17900.0,
+        "duration_api_ms": 17900,
         "judge_duration_ms": 9519.479608992697,
         "wall_clock_ms": 30465.237617492676,
         "num_turns": 2,
@@ -160,7 +160,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 20639.164193999022,
-          "duration_api_ms": 17900.0,
+          "duration_api_ms": 17900,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1501,
@@ -250,7 +250,7 @@
           },
           "skill_cost_usd": 0.17123470000000002,
           "output": {
-            "text_response": "No project exists, so nothing was logged.\n\n**Original date:** 14 September 1582, Madrid (Julian / Old Style, as recorded)\n\n**Result: No Gregorian conversion is possible \u2014 or appropriate \u2014 for this date.**\n\nHere's why:\n\nSpain adopted the Gregorian calendar on **15 October 1582** \u2014 the very first day the new calendar came into effect. The date in your parish record, **14 September 1582**, falls *before* that switchover. At that moment, there was no Gregorian calendar yet in use anywhere, so no correction applies and no \"modern equivalent\" exists in a meaningful sense.\n\n**How to cite it:** Record the date exactly as written \u2014 **14 September 1582 (Julian / Old Style)** \u2014 and label it as such. A proleptic Gregorian equivalent (calculating backwards as if the Gregorian rules had always existed) could theoretically be computed, but it would be a modern construct that no Madrid clerk of 1582 would have recognized or used.\n\n**Rule of thumb for Spanish records:** Only convert dates recorded **on or after 15 October 1582** to the Gregorian calendar. For records before that date, preserve the Julian date and label it accordingly.",
+            "text_response": "No project exists, so nothing was logged.\n\n**Original date:** 14 September 1582, Madrid (Julian / Old Style, as recorded)\n\n**Result: No Gregorian conversion is possible — or appropriate — for this date.**\n\nHere's why:\n\nSpain adopted the Gregorian calendar on **15 October 1582** — the very first day the new calendar came into effect. The date in your parish record, **14 September 1582**, falls *before* that switchover. At that moment, there was no Gregorian calendar yet in use anywhere, so no correction applies and no \"modern equivalent\" exists in a meaningful sense.\n\n**How to cite it:** Record the date exactly as written — **14 September 1582 (Julian / Old Style)** — and label it as such. A proleptic Gregorian equivalent (calculating backwards as if the Gregorian rules had always existed) could theoretically be computed, but it would be a modern construct that no Madrid clerk of 1582 would have recognized or used.\n\n**Rule of thumb for Spanish records:** Only convert dates recorded **on or after 15 October 1582** to the Gregorian calendar. For records before that date, preserve the Julian date and label it accordingly.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -269,7 +269,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-06.b9b8850e"
                 }
@@ -630,7 +630,7 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented what the convert_calendar tool returned. For England, it cited the tool's applied rule 'Julian \u2192 Gregorian: +11 days' and the offsetDays value of 11 directly from the response_summary. For France, it correctly noted that the tool returned an empty applied[] array and explained that no offset was needed because France was already Gregorian. The skill did not perform hand arithmetic; it relied on the tool responses."
+            "rationale": "The skill correctly presented what the convert_calendar tool returned. For England, it cited the tool's applied rule 'Julian → Gregorian: +11 days' and the offsetDays value of 11 directly from the response_summary. For France, it correctly noted that the tool returned an empty applied[] array and explained that no offset was needed because France was already Gregorian. The skill did not perform hand arithmetic; it relied on the tool responses."
           }
         ],
         "review_dimensions": [
@@ -674,13 +674,13 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented what the convert_calendar tool returned. For England, it cited the tool's applied rule 'Julian \u2192 Gregorian: +11 days' and the offsetDays value of 11 directly from the response_summary. For France, it correctly noted that the tool returned an empty applied[] array and explained that no offset was needed because France was already Gregorian. The skill did not perform hand arithmetic; it relied on the tool responses."
+            "rationale": "The skill correctly presented what the convert_calendar tool returned. For England, it cited the tool's applied rule 'Julian → Gregorian: +11 days' and the offsetDays value of 11 directly from the response_summary. For France, it correctly noted that the tool returned an empty applied[] array and explained that no offset was needed because France was already Gregorian. The skill did not perform hand arithmetic; it relied on the tool responses."
           }
         ]
       },
       "totals": {
         "duration_ms": 19355.63986899797,
-        "duration_api_ms": 17032.0,
+        "duration_api_ms": 17032,
         "judge_duration_ms": 9757.62999500148,
         "wall_clock_ms": 29129.666090011597,
         "num_turns": 2,
@@ -703,7 +703,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 19355.63986899797,
-          "duration_api_ms": 17032.0,
+          "duration_api_ms": 17032,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1506,
@@ -796,7 +796,7 @@
           },
           "skill_cost_usd": 0.15218949999999998,
           "output": {
-            "text_response": "No, they are not the same day. The two records use different calendars.\n\n1. **French baptism:** 14 May 1730 (France, already Gregorian). No correction applies \u2014 it stays **14 May 1730 (Gregorian)**.\n2. **English marriage:** 14 May 1730 (England, Julian / Old Style). Applying the Julian-to-Gregorian shift of +11 days for 1730, it becomes **25 May 1730 (Gregorian)**.\n\nThe two events are **11 days apart** in real time. This gap reflects the standard calendar offset between England (still on the Julian calendar in 1730) and France (already on the Gregorian calendar). It is a calendar difference, not a conflict between sources. The year is unaffected because both dates fall after 25 March.\n\n**When comparing these two records, use:**\n- Baptism: **14 May 1730** (Gregorian)\n- Marriage: **25 May 1730** (Gregorian)",
+            "text_response": "No, they are not the same day. The two records use different calendars.\n\n1. **French baptism:** 14 May 1730 (France, already Gregorian). No correction applies — it stays **14 May 1730 (Gregorian)**.\n2. **English marriage:** 14 May 1730 (England, Julian / Old Style). Applying the Julian-to-Gregorian shift of +11 days for 1730, it becomes **25 May 1730 (Gregorian)**.\n\nThe two events are **11 days apart** in real time. This gap reflects the standard calendar offset between England (still on the Julian calendar in 1730) and France (already on the Gregorian calendar). It is a calendar difference, not a conflict between sources. The year is unaffected because both dates fall after 25 March.\n\n**When comparing these two records, use:**\n- Baptism: **14 May 1730** (Gregorian)\n- Marriage: **25 May 1730** (Gregorian)",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -815,7 +815,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-06.b9b8850e"
                 }
@@ -854,7 +854,7 @@
                   "applied": [
                     {
                       "correction": "julianToGregorianDay",
-                      "rule": "Julian \u2192 Gregorian: +11 days",
+                      "rule": "Julian → Gregorian: +11 days",
                       "offsetDays": 11
                     }
                   ],
@@ -917,7 +917,7 @@
             "agent_returns": [
               {
                 "subagent_type": "convert-dates",
-                "text": "No, they are not the same day. The two records use different calendars.\n\n1. **French baptism:** 14 May 1730 (France, already Gregorian). No correction applies, so it stays **14 May 1730 (Gregorian)**.\n2. **English marriage:** 14 May 1730 (England, Julian / Old Style). The tool applied the Julian to Gregorian day shift, \"Julian \u2192 Gregorian: +11 days\", so it becomes **25 May 1730 (Gregorian)**.\n\nThe two events are 11 days apart in real time. This gap matches the expected calendar offset, so it is a calendar difference and not a conflict between sources. The year is unaffected because the date falls after 25 March.\n\nNo project was open, so nothing was logged.\n\n---\n\nThe French record was written in the Gregorian calendar, which is the one we use today, so 14 May 1730 means 14 May 1730 now. England was still on the older Julian calendar, which ran 11 days behind in 1730. The English record's \"14 May 1730\" therefore falls on 25 May 1730 by today's calendar. The same number on the page covers two different days.\n\nWhen you compare these two records, use 14 May 1730 for the baptism and 25 May 1730 for the marriage."
+                "text": "No, they are not the same day. The two records use different calendars.\n\n1. **French baptism:** 14 May 1730 (France, already Gregorian). No correction applies, so it stays **14 May 1730 (Gregorian)**.\n2. **English marriage:** 14 May 1730 (England, Julian / Old Style). The tool applied the Julian to Gregorian day shift, \"Julian → Gregorian: +11 days\", so it becomes **25 May 1730 (Gregorian)**.\n\nThe two events are 11 days apart in real time. This gap matches the expected calendar offset, so it is a calendar difference and not a conflict between sources. The year is unaffected because the date falls after 25 March.\n\nNo project was open, so nothing was logged.\n\n---\n\nThe French record was written in the Gregorian calendar, which is the one we use today, so 14 May 1730 means 14 May 1730 now. England was still on the older Julian calendar, which ran 11 days behind in 1730. The English record's \"14 May 1730\" therefore falls on 25 May 1730 by today's calendar. The same number on the page covers two different days.\n\nWhen you compare these two records, use 14 May 1730 for the baptism and 25 May 1730 for the marriage."
               }
             ]
           },
@@ -1161,7 +1161,7 @@
                 "source": "rubric",
                 "name": "Tool response interpretation",
                 "score": 3,
-                "rationale": "The skill correctly presented what the convert_calendar tool returned. For England, it cited the tool's applied rule 'Julian \u2192 Gregorian: +11 days' and the offsetDays value of 11 directly from the response_summary. For France, it correctly noted that the tool returned an empty applied[] array and explained that no offset was needed because France was already Gregorian. The skill did not perform hand arithmetic; it relied on the tool responses."
+                "rationale": "The skill correctly presented what the convert_calendar tool returned. For England, it cited the tool's applied rule 'Julian → Gregorian: +11 days' and the offsetDays value of 11 directly from the response_summary. For France, it correctly noted that the tool returned an empty applied[] array and explained that no offset was needed because France was already Gregorian. The skill did not perform hand arithmetic; it relied on the tool responses."
               }
             ],
             "judge_cost_usd": 0.0092058,
@@ -1195,7 +1195,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly converted 11 Brumaire an VIII to 2 November 1799 Gregorian. The tool call returned ok: true with the correct conversion rule (French Republican \u2192 Gregorian) and the converted date matches the per-test context assertion. The original date and conversion rule are both accurately stated in the response."
+            "rationale": "The skill correctly converted 11 Brumaire an VIII to 2 November 1799 Gregorian. The tool call returned ok: true with the correct conversion rule (French Republican → Gregorian) and the converted date matches the per-test context assertion. The original date and conversion rule are both accurately stated in the response."
           },
           {
             "source": "base",
@@ -1213,7 +1213,7 @@
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The conversion applied the correct rule for French Republican to Gregorian: 11 Brumaire an VIII \u2192 2 November 1799. This matches the per-test context assertion and the tool's applied[] entry confirms the rule 'French Republican \u2192 Gregorian' was used. The offset and direction are correct for the jurisdiction and time period."
+            "rationale": "The conversion applied the correct rule for French Republican to Gregorian: 11 Brumaire an VIII → 2 November 1799. This matches the per-test context assertion and the tool's applied[] entry confirms the rule 'French Republican → Gregorian' was used. The offset and direction are correct for the jurisdiction and time period."
           },
           {
             "source": "rubric",
@@ -1231,7 +1231,7 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented the tool's response: the rule 'French Republican \u2192 Gregorian' and the converted date (2 Nov 1799) both trace directly to the tool's applied[] entry and converted field. The response states what the tool returned rather than performing hand arithmetic, and the ok: true result was properly interpreted as a successful conversion."
+            "rationale": "The skill correctly presented the tool's response: the rule 'French Republican → Gregorian' and the converted date (2 Nov 1799) both trace directly to the tool's applied[] entry and converted field. The response states what the tool returned rather than performing hand arithmetic, and the ok: true result was properly interpreted as a successful conversion."
           }
         ],
         "review_dimensions": [
@@ -1239,7 +1239,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly converted 11 Brumaire an VIII to 2 November 1799 Gregorian. The tool call returned ok: true with the correct conversion rule (French Republican \u2192 Gregorian) and the converted date matches the per-test context assertion. The original date and conversion rule are both accurately stated in the response."
+            "rationale": "The skill correctly converted 11 Brumaire an VIII to 2 November 1799 Gregorian. The tool call returned ok: true with the correct conversion rule (French Republican → Gregorian) and the converted date matches the per-test context assertion. The original date and conversion rule are both accurately stated in the response."
           },
           {
             "source": "base",
@@ -1257,7 +1257,7 @@
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The conversion applied the correct rule for French Republican to Gregorian: 11 Brumaire an VIII \u2192 2 November 1799. This matches the per-test context assertion and the tool's applied[] entry confirms the rule 'French Republican \u2192 Gregorian' was used. The offset and direction are correct for the jurisdiction and time period."
+            "rationale": "The conversion applied the correct rule for French Republican to Gregorian: 11 Brumaire an VIII → 2 November 1799. This matches the per-test context assertion and the tool's applied[] entry confirms the rule 'French Republican → Gregorian' was used. The offset and direction are correct for the jurisdiction and time period."
           },
           {
             "source": "rubric",
@@ -1275,13 +1275,13 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented the tool's response: the rule 'French Republican \u2192 Gregorian' and the converted date (2 Nov 1799) both trace directly to the tool's applied[] entry and converted field. The response states what the tool returned rather than performing hand arithmetic, and the ok: true result was properly interpreted as a successful conversion."
+            "rationale": "The skill correctly presented the tool's response: the rule 'French Republican → Gregorian' and the converted date (2 Nov 1799) both trace directly to the tool's applied[] entry and converted field. The response states what the tool returned rather than performing hand arithmetic, and the ok: true result was properly interpreted as a successful conversion."
           }
         ]
       },
       "totals": {
         "duration_ms": 16729.4829050079,
-        "duration_api_ms": 13130.0,
+        "duration_api_ms": 13130,
         "judge_duration_ms": 9506.854094011942,
         "wall_clock_ms": 26254.5108795166,
         "num_turns": 2,
@@ -1304,7 +1304,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 16729.4829050079,
-          "duration_api_ms": 13130.0,
+          "duration_api_ms": 13130,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1502,
@@ -1394,7 +1394,7 @@
           },
           "skill_cost_usd": 0.1429123,
           "output": {
-            "text_response": "**11 Brumaire an VIII converts to 2 November 1799 (Gregorian).**\n\nHere's the breakdown:\n\n- **Original date:** 11 Brumaire an VIII (French Republican calendar)\n- **Calendar used:** France's civil registers used the French Republican calendar from 1793 to 1805. The year (\"an\") is counted from the founding of the Republic, and months have their own names (Brumaire being the second month, covering late October\u2013late November).\n- **Gregorian equivalent:** **2 November 1799**\n\nYou can record the birth as **2 Nov 1799** while preserving the original Republican wording (\"11 Brumaire an VIII\") alongside it for source accuracy.",
+            "text_response": "**11 Brumaire an VIII converts to 2 November 1799 (Gregorian).**\n\nHere's the breakdown:\n\n- **Original date:** 11 Brumaire an VIII (French Republican calendar)\n- **Calendar used:** France's civil registers used the French Republican calendar from 1793 to 1805. The year (\"an\") is counted from the founding of the Republic, and months have their own names (Brumaire being the second month, covering late October–late November).\n- **Gregorian equivalent:** **2 November 1799**\n\nYou can record the birth as **2 Nov 1799** while preserving the original Republican wording (\"11 Brumaire an VIII\") alongside it for source accuracy.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1413,7 +1413,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-06.b9b8850e"
                 }
@@ -1451,7 +1451,7 @@
                   "applied": [
                     {
                       "correction": "frenchRepublican",
-                      "rule": "French Republican \u2192 Gregorian"
+                      "rule": "French Republican → Gregorian"
                     }
                   ],
                   "notes": []
@@ -1473,7 +1473,7 @@
             "agent_returns": [
               {
                 "subagent_type": "convert-dates",
-                "text": "Not a research project, so nothing is logged.\n\nStep by step:\n- Original: 11 Brumaire an VIII (French Republican calendar, Nord, France)\n- Rule applied: French Republican \u2192 Gregorian\n- Converted: 2 Nov 1799 (Gregorian)\n\n---\n\nThe record gives the date as 11 Brumaire in the year VIII. That is the French Republican calendar, which France's civil registers used from 1793 to 1805. That date is 2 November 1799 in our modern calendar. Nothing was a correction in the usual sense. The Republican calendar has its own month names and counts its years from the founding of the Republic, so the date was translated into the modern calendar.\n\nNext, you can record the birth as 2 Nov 1799 and keep the original Republican wording alongside it."
+                "text": "Not a research project, so nothing is logged.\n\nStep by step:\n- Original: 11 Brumaire an VIII (French Republican calendar, Nord, France)\n- Rule applied: French Republican → Gregorian\n- Converted: 2 Nov 1799 (Gregorian)\n\n---\n\nThe record gives the date as 11 Brumaire in the year VIII. That is the French Republican calendar, which France's civil registers used from 1793 to 1805. That date is 2 November 1799 in our modern calendar. Nothing was a correction in the usual sense. The Republican calendar has its own month names and counts its years from the founding of the Republic, so the date was translated into the modern calendar.\n\nNext, you can record the birth as 2 Nov 1799 and keep the original Republican wording alongside it."
               }
             ]
           },
@@ -1681,7 +1681,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly converted 11 Brumaire an VIII to 2 November 1799 Gregorian. The tool call returned ok: true with the correct conversion rule (French Republican \u2192 Gregorian) and the converted date matches the per-test context assertion. The original date and conversion rule are both accurately stated in the response."
+                "rationale": "The skill correctly converted 11 Brumaire an VIII to 2 November 1799 Gregorian. The tool call returned ok: true with the correct conversion rule (French Republican → Gregorian) and the converted date matches the per-test context assertion. The original date and conversion rule are both accurately stated in the response."
               },
               {
                 "source": "base",
@@ -1699,7 +1699,7 @@
                 "source": "rubric",
                 "name": "Conversion accuracy",
                 "score": 3,
-                "rationale": "The conversion applied the correct rule for French Republican to Gregorian: 11 Brumaire an VIII \u2192 2 November 1799. This matches the per-test context assertion and the tool's applied[] entry confirms the rule 'French Republican \u2192 Gregorian' was used. The offset and direction are correct for the jurisdiction and time period."
+                "rationale": "The conversion applied the correct rule for French Republican to Gregorian: 11 Brumaire an VIII → 2 November 1799. This matches the per-test context assertion and the tool's applied[] entry confirms the rule 'French Republican → Gregorian' was used. The offset and direction are correct for the jurisdiction and time period."
               },
               {
                 "source": "rubric",
@@ -1717,7 +1717,7 @@
                 "source": "rubric",
                 "name": "Tool response interpretation",
                 "score": 3,
-                "rationale": "The skill correctly presented the tool's response: the rule 'French Republican \u2192 Gregorian' and the converted date (2 Nov 1799) both trace directly to the tool's applied[] entry and converted field. The response states what the tool returned rather than performing hand arithmetic, and the ok: true result was properly interpreted as a successful conversion."
+                "rationale": "The skill correctly presented the tool's response: the rule 'French Republican → Gregorian' and the converted date (2 Nov 1799) both trace directly to the tool's applied[] entry and converted field. The response states what the tool returned rather than performing hand arithmetic, and the ok: true result was properly interpreted as a successful conversion."
               }
             ],
             "judge_cost_usd": 0.0081718,
@@ -1837,7 +1837,7 @@
       },
       "totals": {
         "duration_ms": 23702.772418997483,
-        "duration_api_ms": 20542.0,
+        "duration_api_ms": 20542,
         "judge_duration_ms": 11545.259061997058,
         "wall_clock_ms": 35332.45944976807,
         "num_turns": 2,
@@ -1860,7 +1860,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 23702.772418997483,
-          "duration_api_ms": 20542.0,
+          "duration_api_ms": 20542,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1494,
@@ -1953,7 +1953,7 @@
           },
           "skill_cost_usd": 0.15576970000000004,
           "output": {
-            "text_response": "The date **15 February 1749/50** (Julian calendar, England) converts to **26 February 1750** in the modern Gregorian calendar.\n\nHere's what was applied:\n\n1. **Double-dated year resolved**: England's civil year began on 25 March, so February dates were written with both years (1749/50). The later year \u2014 **1750** \u2014 is the correct New Style year.\n2. **Julian-to-Gregorian day adjustment**: Adding 11 days (the offset for the 18th century) moves **15 February \u2192 26 February**.\n\n> **Note:** England used the Julian calendar until 2 September 1752, after which 14 September 1752 followed immediately (skipping 11 days). For any date before that switch, the Julian-to-Gregorian offset applies.\n\nYou can record this as **26 Feb 1750 (Gregorian)** while preserving the original \"15 February 1749/50\" in your source citation.",
+            "text_response": "The date **15 February 1749/50** (Julian calendar, England) converts to **26 February 1750** in the modern Gregorian calendar.\n\nHere's what was applied:\n\n1. **Double-dated year resolved**: England's civil year began on 25 March, so February dates were written with both years (1749/50). The later year — **1750** — is the correct New Style year.\n2. **Julian-to-Gregorian day adjustment**: Adding 11 days (the offset for the 18th century) moves **15 February → 26 February**.\n\n> **Note:** England used the Julian calendar until 2 September 1752, after which 14 September 1752 followed immediately (skipping 11 days). For any date before that switch, the Julian-to-Gregorian offset applies.\n\nYou can record this as **26 Feb 1750 (Gregorian)** while preserving the original \"15 February 1749/50\" in your source citation.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1989,7 +1989,7 @@
                       "id": "q_001",
                       "question": "Who were the parents of Patrick Flynn (b. ~1845, PA, d. 1908)?",
                       "state": "concluded",
-                      "nextStep": "proof-conclusion \u2014 concluded while blocked: re-conclude ps_001",
+                      "nextStep": "proof-conclusion — concluded while blocked: re-conclude ps_001",
                       "openConflictIds": [],
                       "storedStatus": "in_progress",
                       "unregisteredDisagreements": [],
@@ -1999,7 +1999,7 @@
                       "id": "q_002",
                       "question": "Where was Patrick Flynn in the 1850 census?",
                       "state": "evidence-gathered",
-                      "nextStep": "proof-conclusion \u2014 resolved with no proof summary",
+                      "nextStep": "proof-conclusion — resolved with no proof summary",
                       "openConflictIds": [],
                       "storedStatus": "resolved",
                       "unregisteredDisagreements": [],
@@ -2206,7 +2206,7 @@
                     },
                     {
                       "correction": "julianToGregorianDay",
-                      "rule": "Julian \u2192 Gregorian: +11 days",
+                      "rule": "Julian → Gregorian: +11 days",
                       "offsetDays": 11
                     }
                   ],
@@ -2251,7 +2251,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -2611,7 +2611,7 @@
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The skill applied the correct 11-day Julian-to-Gregorian offset for England in 1750, which is the right offset for this jurisdiction and year. The tool confirmed this with 'Julian \u2192 Gregorian: +11 days' in its applied rules. The conversion direction and magnitude are both correct."
+            "rationale": "The skill applied the correct 11-day Julian-to-Gregorian offset for England in 1750, which is the right offset for this jurisdiction and year. The tool confirmed this with 'Julian → Gregorian: +11 days' in its applied rules. The conversion direction and magnitude are both correct."
           },
           {
             "source": "rubric",
@@ -2655,7 +2655,7 @@
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The skill applied the correct 11-day Julian-to-Gregorian offset for England in 1750, which is the right offset for this jurisdiction and year. The tool confirmed this with 'Julian \u2192 Gregorian: +11 days' in its applied rules. The conversion direction and magnitude are both correct."
+            "rationale": "The skill applied the correct 11-day Julian-to-Gregorian offset for England in 1750, which is the right offset for this jurisdiction and year. The tool confirmed this with 'Julian → Gregorian: +11 days' in its applied rules. The conversion direction and magnitude are both correct."
           },
           {
             "source": "rubric",
@@ -2679,7 +2679,7 @@
       },
       "totals": {
         "duration_ms": 20945.074517992907,
-        "duration_api_ms": 18488.0,
+        "duration_api_ms": 18488,
         "judge_duration_ms": 9552.334444000735,
         "wall_clock_ms": 30511.74831390381,
         "num_turns": 2,
@@ -2702,7 +2702,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 20945.074517992907,
-          "duration_api_ms": 18488.0,
+          "duration_api_ms": 18488,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1490,
@@ -2792,7 +2792,7 @@
           },
           "skill_cost_usd": 0.14657599999999998,
           "output": {
-            "text_response": "**15 February 1749/50 (Old Style, Julian) = 26 February 1750 (New Style, Gregorian)**\n\nHere is the full explanation:\n\n1. **The double date explained:** England used the Julian calendar before 1752, and the civil year began on 25 March rather than 1 January. Because 15 February falls between 1 January and 24 March, record-keepers wrote two years \u2014 \"1749\" (old English year) / \"1750\" (the year as we would count it today). The correct modern year is **1750**.\n\n2. **Julian-to-Gregorian day shift:** In the mid-18th century the Julian calendar ran 11 days behind the Gregorian calendar, so 15 February becomes **26 February**.\n\n**Result:** 15 February 1749/50 (O.S.) \u2192 **26 February 1750 (Gregorian)**\n\n**Practical tip:** When citing this date in research notes, retain \"15 Feb 1749/50\" as the date *as recorded* in the original document, and use \"26 Feb 1750\" for any comparisons with sources that follow the modern calendar.",
+            "text_response": "**15 February 1749/50 (Old Style, Julian) = 26 February 1750 (New Style, Gregorian)**\n\nHere is the full explanation:\n\n1. **The double date explained:** England used the Julian calendar before 1752, and the civil year began on 25 March rather than 1 January. Because 15 February falls between 1 January and 24 March, record-keepers wrote two years — \"1749\" (old English year) / \"1750\" (the year as we would count it today). The correct modern year is **1750**.\n\n2. **Julian-to-Gregorian day shift:** In the mid-18th century the Julian calendar ran 11 days behind the Gregorian calendar, so 15 February becomes **26 February**.\n\n**Result:** 15 February 1749/50 (O.S.) → **26 February 1750 (Gregorian)**\n\n**Practical tip:** When citing this date in research notes, retain \"15 Feb 1749/50\" as the date *as recorded* in the original document, and use \"26 Feb 1750\" for any comparisons with sources that follow the modern calendar.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2811,7 +2811,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-06.b9b8850e"
                 }
@@ -2858,7 +2858,7 @@
                     },
                     {
                       "correction": "julianToGregorianDay",
-                      "rule": "Julian \u2192 Gregorian: +11 days",
+                      "rule": "Julian → Gregorian: +11 days",
                       "offsetDays": 11
                     }
                   ],
@@ -3109,7 +3109,7 @@
                 "source": "rubric",
                 "name": "Conversion accuracy",
                 "score": 3,
-                "rationale": "The skill applied the correct 11-day Julian-to-Gregorian offset for England in 1750, which is the right offset for this jurisdiction and year. The tool confirmed this with 'Julian \u2192 Gregorian: +11 days' in its applied rules. The conversion direction and magnitude are both correct."
+                "rationale": "The skill applied the correct 11-day Julian-to-Gregorian offset for England in 1750, which is the right offset for this jurisdiction and year. The tool confirmed this with 'Julian → Gregorian: +11 days' in its applied rules. The conversion direction and magnitude are both correct."
               },
               {
                 "source": "rubric",
@@ -3199,7 +3199,7 @@
       },
       "totals": {
         "duration_ms": 14962.630576002994,
-        "duration_api_ms": 13225.0,
+        "duration_api_ms": 13225,
         "judge_duration_ms": 5168.957613990642,
         "wall_clock_ms": 20164.568424224854,
         "num_turns": 2,
@@ -3222,7 +3222,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 14962.630576002994,
-          "duration_api_ms": 13225.0,
+          "duration_api_ms": 13225,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1484,
@@ -3307,7 +3307,7 @@
           },
           "skill_cost_usd": 0.1377465,
           "output": {
-            "text_response": "The convert-dates agent has handed this back, as it falls outside its scope. Here is its response:\n\n---\n\nQuakers wrote months as numbers instead of names, such as \"3rd month\" in place of March. Your question is about the **reason** for that habit, which is a historical-context question \u2014 not a date conversion.\n\nThe convert-dates agent handles converting specific dates across calendar systems (e.g., \"convert 3rd month 1749 to Gregorian\"). Since no specific date was given here, no conversion is needed.\n\nIf you'd like to explore the history behind why Quakers used numbered months, that question is best directed to the **historical-context** agent. And if you have a specific Quaker date you'd like converted, feel free to share it and the convert-dates agent can help!",
+            "text_response": "The convert-dates agent has handed this back, as it falls outside its scope. Here is its response:\n\n---\n\nQuakers wrote months as numbers instead of names, such as \"3rd month\" in place of March. Your question is about the **reason** for that habit, which is a historical-context question — not a date conversion.\n\nThe convert-dates agent handles converting specific dates across calendar systems (e.g., \"convert 3rd month 1749 to Gregorian\"). Since no specific date was given here, no conversion is needed.\n\nIf you'd like to explore the history behind why Quakers used numbered months, that question is best directed to the **historical-context** agent. And if you have a specific Quaker date you'd like converted, feel free to share it and the convert-dates agent can help!",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -3341,7 +3341,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -3407,7 +3407,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -3443,7 +3443,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -3461,13 +3461,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -3617,7 +3617,7 @@
       },
       "totals": {
         "duration_ms": 14124.064821997308,
-        "duration_api_ms": 11000.0,
+        "duration_api_ms": 11000,
         "judge_duration_ms": 5370.074267004384,
         "wall_clock_ms": 19511.415481567383,
         "num_turns": 2,
@@ -3640,7 +3640,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 14124.064821997308,
-          "duration_api_ms": 11000.0,
+          "duration_api_ms": 11000,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1490,
@@ -3729,7 +3729,7 @@
           },
           "skill_cost_usd": 0.13832290000000003,
           "output": {
-            "text_response": "**15 Feb 1821** written as **February 15, 1821**.\n\nThis is a formatting change only \u2014 the date is already in the modern (Gregorian) calendar, so no calendar conversion was needed. The day, month, and year remain exactly the same; only the layout changed.",
+            "text_response": "**15 Feb 1821** written as **February 15, 1821**.\n\nThis is a formatting change only — the date is already in the modern (Gregorian) calendar, so no calendar conversion was needed. The day, month, and year remain exactly the same; only the layout changed.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -3748,7 +3748,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-06.b9b8850e"
                 }
@@ -3785,7 +3785,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -3851,7 +3851,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -3887,7 +3887,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -3905,13 +3905,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -4061,7 +4061,7 @@
       },
       "totals": {
         "duration_ms": 16554.467131005367,
-        "duration_api_ms": 14738.0,
+        "duration_api_ms": 14738,
         "judge_duration_ms": 4262.487300991779,
         "wall_clock_ms": 20832.454204559326,
         "num_turns": 2,
@@ -4084,7 +4084,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 16554.467131005367,
-          "duration_api_ms": 14738.0,
+          "duration_api_ms": 14738,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1495,
@@ -4169,7 +4169,7 @@
           },
           "skill_cost_usd": 0.1382898,
           "output": {
-            "text_response": "The `convert-dates` agent noted that \"15 Feb 1749/50\" is indeed a **double-dated year** \u2014 a valid historical convention used in England before 1752, when the legal year began on 25 March. A February date would fall in the old year by the legal calendar but the new year by the historical/astronomical calendar, so both years were written together (e.g., 1749/50).\n\nHowever, the agent clarified that **whether the validator will accept this format** in `research.json` is a schema validation question, not a calendar conversion question. That determination belongs to the **`validate-schema`** agent, which checks field values against the project's schema rules.\n\nIf you'd like, I can route that question to the validate-schema agent to confirm whether `'15 Feb 1749/50'` is an accepted date string format in your project's data files.",
+            "text_response": "The `convert-dates` agent noted that \"15 Feb 1749/50\" is indeed a **double-dated year** — a valid historical convention used in England before 1752, when the legal year began on 25 March. A February date would fall in the old year by the legal calendar but the new year by the historical/astronomical calendar, so both years were written together (e.g., 1749/50).\n\nHowever, the agent clarified that **whether the validator will accept this format** in `research.json` is a schema validation question, not a calendar conversion question. That determination belongs to the **`validate-schema`** agent, which checks field values against the project's schema rules.\n\nIf you'd like, I can route that question to the validate-schema agent to confirm whether `'15 Feb 1749/50'` is an accepted date string format in your project's data files.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -4204,7 +4204,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -4270,7 +4270,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -4306,7 +4306,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -4324,13 +4324,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -4528,7 +4528,7 @@
       },
       "totals": {
         "duration_ms": 16850.156949003576,
-        "duration_api_ms": 13999.0,
+        "duration_api_ms": 13999,
         "judge_duration_ms": 9523.905223992188,
         "wall_clock_ms": 26390.007972717285,
         "num_turns": 2,
@@ -4551,7 +4551,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 16850.156949003576,
-          "duration_api_ms": 13999.0,
+          "duration_api_ms": 13999,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1492,
@@ -4640,7 +4640,7 @@
           },
           "skill_cost_usd": 0.14034270000000001,
           "output": {
-            "text_response": "**15 March 1850, London** requires no calendar conversion.\n\n- **Original date:** 15 March 1850 (London, England)\n- **Gregorian equivalent:** **15 March 1850 \u2014 unchanged**\n\nBy 1850, England had long been using the Gregorian calendar (since 1752), so this date is already in modern terms. No day-shift adjustment is needed, and no Old Style year correction applies (that would only matter for dates between 1 January and 24 March in years prior to the calendar reform). You can use the date exactly as recorded.",
+            "text_response": "**15 March 1850, London** requires no calendar conversion.\n\n- **Original date:** 15 March 1850 (London, England)\n- **Gregorian equivalent:** **15 March 1850 — unchanged**\n\nBy 1850, England had long been using the Gregorian calendar (since 1752), so this date is already in modern terms. No day-shift adjustment is needed, and no Old Style year correction applies (that would only matter for dates between 1 January and 24 March in years prior to the calendar reform). You can use the date exactly as recorded.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -4659,7 +4659,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-06.b9b8850e"
                 }
@@ -4958,7 +4958,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified that W\u00fcrttemberg, as a Protestant German state, used the Julian calendar in January 1699 and applied the correct +10 day offset for the Julian-to-Gregorian conversion. The converted date of 25 January 1699 is factually correct. The tool response confirms the applied rule and offset, and the skill's narration matches the tool's returned values exactly."
+            "rationale": "The skill correctly identified that Württemberg, as a Protestant German state, used the Julian calendar in January 1699 and applied the correct +10 day offset for the Julian-to-Gregorian conversion. The converted date of 25 January 1699 is factually correct. The tool response confirms the applied rule and offset, and the skill's narration matches the tool's returned values exactly."
           },
           {
             "source": "base",
@@ -4970,13 +4970,13 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The convert_calendar tool was called with correct arguments: date {year: 1699, month: 1, day: 15}, jurisdiction 'Protestant German states' (appropriate mapping from W\u00fcrttemberg), and corrections {julianToGregorianDay: true}. The project_context call correctly checked for project state and received the expected 'no_project' response. Both calls match the expected behavior for this stateless test."
+            "rationale": "The convert_calendar tool was called with correct arguments: date {year: 1699, month: 1, day: 15}, jurisdiction 'Protestant German states' (appropriate mapping from Württemberg), and corrections {julianToGregorianDay: true}. The project_context call correctly checked for project state and received the expected 'no_project' response. Both calls match the expected behavior for this stateless test."
           },
           {
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The skill applied the correct +10 day offset for Protestant German states in 1699. The tool response confirms this is the right rule ('Julian \u2192 Gregorian: +10 days') and the skill correctly distinguished this from Catholic German states (which adopted in 1583-1585). The conversion is accurate for the jurisdiction and time period."
+            "rationale": "The skill applied the correct +10 day offset for Protestant German states in 1699. The tool response confirms this is the right rule ('Julian → Gregorian: +10 days') and the skill correctly distinguished this from Catholic German states (which adopted in 1583-1585). The conversion is accurate for the jurisdiction and time period."
           },
           {
             "source": "rubric",
@@ -4994,7 +4994,7 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented the tool's response: the rule 'Julian \u2192 Gregorian: +10 days' and the offset of 10 days both come directly from the tool's applied[] entry. The converted date (25 January 1699) matches the tool's returned converted value. The skill did not perform hand arithmetic; it relied on and accurately reported the tool's result."
+            "rationale": "The skill correctly presented the tool's response: the rule 'Julian → Gregorian: +10 days' and the offset of 10 days both come directly from the tool's applied[] entry. The converted date (25 January 1699) matches the tool's returned converted value. The skill did not perform hand arithmetic; it relied on and accurately reported the tool's result."
           }
         ],
         "review_dimensions": [
@@ -5002,7 +5002,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified that W\u00fcrttemberg, as a Protestant German state, used the Julian calendar in January 1699 and applied the correct +10 day offset for the Julian-to-Gregorian conversion. The converted date of 25 January 1699 is factually correct. The tool response confirms the applied rule and offset, and the skill's narration matches the tool's returned values exactly."
+            "rationale": "The skill correctly identified that Württemberg, as a Protestant German state, used the Julian calendar in January 1699 and applied the correct +10 day offset for the Julian-to-Gregorian conversion. The converted date of 25 January 1699 is factually correct. The tool response confirms the applied rule and offset, and the skill's narration matches the tool's returned values exactly."
           },
           {
             "source": "base",
@@ -5014,13 +5014,13 @@
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The convert_calendar tool was called with correct arguments: date {year: 1699, month: 1, day: 15}, jurisdiction 'Protestant German states' (appropriate mapping from W\u00fcrttemberg), and corrections {julianToGregorianDay: true}. The project_context call correctly checked for project state and received the expected 'no_project' response. Both calls match the expected behavior for this stateless test."
+            "rationale": "The convert_calendar tool was called with correct arguments: date {year: 1699, month: 1, day: 15}, jurisdiction 'Protestant German states' (appropriate mapping from Württemberg), and corrections {julianToGregorianDay: true}. The project_context call correctly checked for project state and received the expected 'no_project' response. Both calls match the expected behavior for this stateless test."
           },
           {
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The skill applied the correct +10 day offset for Protestant German states in 1699. The tool response confirms this is the right rule ('Julian \u2192 Gregorian: +10 days') and the skill correctly distinguished this from Catholic German states (which adopted in 1583-1585). The conversion is accurate for the jurisdiction and time period."
+            "rationale": "The skill applied the correct +10 day offset for Protestant German states in 1699. The tool response confirms this is the right rule ('Julian → Gregorian: +10 days') and the skill correctly distinguished this from Catholic German states (which adopted in 1583-1585). The conversion is accurate for the jurisdiction and time period."
           },
           {
             "source": "rubric",
@@ -5038,13 +5038,13 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented the tool's response: the rule 'Julian \u2192 Gregorian: +10 days' and the offset of 10 days both come directly from the tool's applied[] entry. The converted date (25 January 1699) matches the tool's returned converted value. The skill did not perform hand arithmetic; it relied on and accurately reported the tool's result."
+            "rationale": "The skill correctly presented the tool's response: the rule 'Julian → Gregorian: +10 days' and the offset of 10 days both come directly from the tool's applied[] entry. The converted date (25 January 1699) matches the tool's returned converted value. The skill did not perform hand arithmetic; it relied on and accurately reported the tool's result."
           }
         ]
       },
       "totals": {
         "duration_ms": 18166.711369995028,
-        "duration_api_ms": 15890.0,
+        "duration_api_ms": 15890,
         "judge_duration_ms": 9317.87223200081,
         "wall_clock_ms": 27506.204843521118,
         "num_turns": 2,
@@ -5067,7 +5067,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 18166.711369995028,
-          "duration_api_ms": 15890.0,
+          "duration_api_ms": 15890,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1497,
@@ -5122,7 +5122,7 @@
           "subagents": [
             {
               "agent_type": "convert-dates",
-              "description": "Convert W\u00fcrttemberg date to Gregorian",
+              "description": "Convert Württemberg date to Gregorian",
               "num_assistant_turns": 3,
               "max_output_tokens": 350,
               "hit_output_cap": false,
@@ -5157,7 +5157,7 @@
           },
           "skill_cost_usd": 0.14646480000000003,
           "output": {
-            "text_response": "No project exists here, so nothing was logged.\n\n**Step by step:**\n- **Original:** 15 January 1699 (Julian, W\u00fcrttemberg, treated as a Protestant German state).\n- **Rule applied:** Julian \u2192 Gregorian, +10 days.\n- **Converted:** **25 January 1699 (Gregorian).**\n\nThe Protestant German states (including W\u00fcrttemberg) did not switch to the Gregorian calendar until after 18 February 1700 (followed by 1 March 1700). A January 1699 date therefore falls before the switch and was still written in the Julian calendar. Only the day shift was applied; the year does not change.\n\n---\n\n**In plain terms:** The record says 15 January 1699. It was written in the Julian calendar, which Protestant W\u00fcrttemberg still used at that time. In today's (Gregorian) calendar, that same day is **25 January 1699** \u2014 ten days were added to bring the old calendar in line with the modern one.\n\n> **Best practice:** Record both dates \u2014 the original source date (15 January 1699 O.S.) alongside the converted date (25 January 1699 N.S.) \u2014 so the source wording is preserved.",
+            "text_response": "No project exists here, so nothing was logged.\n\n**Step by step:**\n- **Original:** 15 January 1699 (Julian, Württemberg, treated as a Protestant German state).\n- **Rule applied:** Julian → Gregorian, +10 days.\n- **Converted:** **25 January 1699 (Gregorian).**\n\nThe Protestant German states (including Württemberg) did not switch to the Gregorian calendar until after 18 February 1700 (followed by 1 March 1700). A January 1699 date therefore falls before the switch and was still written in the Julian calendar. Only the day shift was applied; the year does not change.\n\n---\n\n**In plain terms:** The record says 15 January 1699. It was written in the Julian calendar, which Protestant Württemberg still used at that time. In today's (Gregorian) calendar, that same day is **25 January 1699** — ten days were added to bring the old calendar in line with the modern one.\n\n> **Best practice:** Record both dates — the original source date (15 January 1699 O.S.) alongside the converted date (25 January 1699 N.S.) — so the source wording is preserved.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -5176,7 +5176,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-06.b9b8850e"
                 }
@@ -5215,7 +5215,7 @@
                   "applied": [
                     {
                       "correction": "julianToGregorianDay",
-                      "rule": "Julian \u2192 Gregorian: +10 days",
+                      "rule": "Julian → Gregorian: +10 days",
                       "offsetDays": 10
                     }
                   ],
@@ -5230,8 +5230,8 @@
               {
                 "tool": "Agent",
                 "args": {
-                  "description": "Convert W\u00fcrttemberg date to Gregorian",
-                  "prompt": "Convert this W\u00fcrttemberg birth record date to the modern Gregorian calendar: '15 January 1699'.\n\nprojectPath: /tmp/eval-ut_convert_dates_009-0-0-8ch_gcw4",
+                  "description": "Convert Württemberg date to Gregorian",
+                  "prompt": "Convert this Württemberg birth record date to the modern Gregorian calendar: '15 January 1699'.\n\nprojectPath: /tmp/eval-ut_convert_dates_009-0-0-8ch_gcw4",
                   "subagent_type": "convert-dates",
                   "run_in_background": "False"
                 }
@@ -5240,7 +5240,7 @@
             "agent_returns": [
               {
                 "subagent_type": "convert-dates",
-                "text": "No project exists here, so nothing was logged.\n\nStep by step:\n- Original: 15 January 1699 (Julian, W\u00fcrttemberg, treated as a Protestant German state).\n- Rule applied: Julian \u2192 Gregorian, +10 days (`julianToGregorianDay`).\n- Converted: 25 January 1699 (Gregorian).\n\nThe tool noted that the Protestant German states switched after 18 Feb 1700, which was followed by 1 Mar 1700. A January 1699 date therefore falls before the switch and was still written in the Julian calendar. I applied only the day shift, because you asked only for the Gregorian conversion. I mapped W\u00fcrttemberg to \"Protestant German states\" because the tool has no separate W\u00fcrttemberg entry.\n\n---\n\nThe record says 15 January 1699. It was written in the Julian calendar, which Protestant W\u00fcrttemberg still used then. In today's calendar that day is 25 January 1699. Ten days were added to line the old calendar up with the modern one, and the year does not change.\n\nRecord the original date together with the converted one, so the source wording is preserved."
+                "text": "No project exists here, so nothing was logged.\n\nStep by step:\n- Original: 15 January 1699 (Julian, Württemberg, treated as a Protestant German state).\n- Rule applied: Julian → Gregorian, +10 days (`julianToGregorianDay`).\n- Converted: 25 January 1699 (Gregorian).\n\nThe tool noted that the Protestant German states switched after 18 Feb 1700, which was followed by 1 Mar 1700. A January 1699 date therefore falls before the switch and was still written in the Julian calendar. I applied only the day shift, because you asked only for the Gregorian conversion. I mapped Württemberg to \"Protestant German states\" because the tool has no separate Württemberg entry.\n\n---\n\nThe record says 15 January 1699. It was written in the Julian calendar, which Protestant Württemberg still used then. In today's calendar that day is 25 January 1699. Ten days were added to line the old calendar up with the modern one, and the year does not change.\n\nRecord the original date together with the converted one, so the source wording is preserved."
               }
             ]
           },
@@ -5448,7 +5448,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified that W\u00fcrttemberg, as a Protestant German state, used the Julian calendar in January 1699 and applied the correct +10 day offset for the Julian-to-Gregorian conversion. The converted date of 25 January 1699 is factually correct. The tool response confirms the applied rule and offset, and the skill's narration matches the tool's returned values exactly."
+                "rationale": "The skill correctly identified that Württemberg, as a Protestant German state, used the Julian calendar in January 1699 and applied the correct +10 day offset for the Julian-to-Gregorian conversion. The converted date of 25 January 1699 is factually correct. The tool response confirms the applied rule and offset, and the skill's narration matches the tool's returned values exactly."
               },
               {
                 "source": "base",
@@ -5460,13 +5460,13 @@
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The convert_calendar tool was called with correct arguments: date {year: 1699, month: 1, day: 15}, jurisdiction 'Protestant German states' (appropriate mapping from W\u00fcrttemberg), and corrections {julianToGregorianDay: true}. The project_context call correctly checked for project state and received the expected 'no_project' response. Both calls match the expected behavior for this stateless test."
+                "rationale": "The convert_calendar tool was called with correct arguments: date {year: 1699, month: 1, day: 15}, jurisdiction 'Protestant German states' (appropriate mapping from Württemberg), and corrections {julianToGregorianDay: true}. The project_context call correctly checked for project state and received the expected 'no_project' response. Both calls match the expected behavior for this stateless test."
               },
               {
                 "source": "rubric",
                 "name": "Conversion accuracy",
                 "score": 3,
-                "rationale": "The skill applied the correct +10 day offset for Protestant German states in 1699. The tool response confirms this is the right rule ('Julian \u2192 Gregorian: +10 days') and the skill correctly distinguished this from Catholic German states (which adopted in 1583-1585). The conversion is accurate for the jurisdiction and time period."
+                "rationale": "The skill applied the correct +10 day offset for Protestant German states in 1699. The tool response confirms this is the right rule ('Julian → Gregorian: +10 days') and the skill correctly distinguished this from Catholic German states (which adopted in 1583-1585). The conversion is accurate for the jurisdiction and time period."
               },
               {
                 "source": "rubric",
@@ -5484,7 +5484,7 @@
                 "source": "rubric",
                 "name": "Tool response interpretation",
                 "score": 3,
-                "rationale": "The skill correctly presented the tool's response: the rule 'Julian \u2192 Gregorian: +10 days' and the offset of 10 days both come directly from the tool's applied[] entry. The converted date (25 January 1699) matches the tool's returned converted value. The skill did not perform hand arithmetic; it relied on and accurately reported the tool's result."
+                "rationale": "The skill correctly presented the tool's response: the rule 'Julian → Gregorian: +10 days' and the offset of 10 days both come directly from the tool's applied[] entry. The converted date (25 January 1699) matches the tool's returned converted value. The skill did not perform hand arithmetic; it relied on and accurately reported the tool's result."
               }
             ],
             "judge_cost_usd": 0.008596800000000002,
@@ -5518,7 +5518,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified the Quaker date and applied the post-1752 numbering rule. The tool returned the conversion (2nd month \u2192 February, day 3 unchanged, year 1845 unchanged), and Claude accurately reported this result. The original date notation was preserved alongside the converted form. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly identified the Quaker date and applied the post-1752 numbering rule. The tool returned the conversion (2nd month → February, day 3 unchanged, year 1845 unchanged), and Claude accurately reported this result. The original date notation was preserved alongside the converted form. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -5536,7 +5536,7 @@
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The skill applied the correct post-1752 Quaker numbering rule: 2nd month maps to calendar month 2 (February), with 1st month = January. The tool's applied[] entry confirms 'Post-1752 Quaker numbering: 2 month \u2192 calendar month 2 (1st = January)' with monthShift of 0. This is the correct offset for an 1845 date, which falls well after the 1752 transition."
+            "rationale": "The skill applied the correct post-1752 Quaker numbering rule: 2nd month maps to calendar month 2 (February), with 1st month = January. The tool's applied[] entry confirms 'Post-1752 Quaker numbering: 2 month → calendar month 2 (1st = January)' with monthShift of 0. This is the correct offset for an 1845 date, which falls well after the 1752 transition."
           },
           {
             "source": "rubric",
@@ -5554,7 +5554,7 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented the tool's response. The rule ('Post-1752 Quaker numbering: 2 month \u2192 calendar month 2') and the monthShift (0) both trace directly to the tool's applied[] entry. The converted date (3 Feb 1845) matches the tool's converted output. Claude did not perform hand arithmetic; it reported what the tool returned."
+            "rationale": "The skill correctly presented the tool's response. The rule ('Post-1752 Quaker numbering: 2 month → calendar month 2') and the monthShift (0) both trace directly to the tool's applied[] entry. The converted date (3 Feb 1845) matches the tool's converted output. Claude did not perform hand arithmetic; it reported what the tool returned."
           }
         ],
         "review_dimensions": [
@@ -5562,7 +5562,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified the Quaker date and applied the post-1752 numbering rule. The tool returned the conversion (2nd month \u2192 February, day 3 unchanged, year 1845 unchanged), and Claude accurately reported this result. The original date notation was preserved alongside the converted form. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly identified the Quaker date and applied the post-1752 numbering rule. The tool returned the conversion (2nd month → February, day 3 unchanged, year 1845 unchanged), and Claude accurately reported this result. The original date notation was preserved alongside the converted form. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -5580,7 +5580,7 @@
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The skill applied the correct post-1752 Quaker numbering rule: 2nd month maps to calendar month 2 (February), with 1st month = January. The tool's applied[] entry confirms 'Post-1752 Quaker numbering: 2 month \u2192 calendar month 2 (1st = January)' with monthShift of 0. This is the correct offset for an 1845 date, which falls well after the 1752 transition."
+            "rationale": "The skill applied the correct post-1752 Quaker numbering rule: 2nd month maps to calendar month 2 (February), with 1st month = January. The tool's applied[] entry confirms 'Post-1752 Quaker numbering: 2 month → calendar month 2 (1st = January)' with monthShift of 0. This is the correct offset for an 1845 date, which falls well after the 1752 transition."
           },
           {
             "source": "rubric",
@@ -5598,13 +5598,13 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented the tool's response. The rule ('Post-1752 Quaker numbering: 2 month \u2192 calendar month 2') and the monthShift (0) both trace directly to the tool's applied[] entry. The converted date (3 Feb 1845) matches the tool's converted output. Claude did not perform hand arithmetic; it reported what the tool returned."
+            "rationale": "The skill correctly presented the tool's response. The rule ('Post-1752 Quaker numbering: 2 month → calendar month 2') and the monthShift (0) both trace directly to the tool's applied[] entry. The converted date (3 Feb 1845) matches the tool's converted output. Claude did not perform hand arithmetic; it reported what the tool returned."
           }
         ]
       },
       "totals": {
         "duration_ms": 18102.82175098837,
-        "duration_api_ms": 15784.0,
+        "duration_api_ms": 15784,
         "judge_duration_ms": 11126.544821992866,
         "wall_clock_ms": 29243.24870109558,
         "num_turns": 2,
@@ -5627,7 +5627,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 18102.82175098837,
-          "duration_api_ms": 15784.0,
+          "duration_api_ms": 15784,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1500,
@@ -5717,7 +5717,7 @@
           },
           "skill_cost_usd": 0.1447619,
           "output": {
-            "text_response": "The Quaker date **\"3rd day of 2nd month 1845\"** converts to **3 February 1845** in the standard calendar.\n\nHere's the reasoning:\n\n- Quakers avoided using the traditional month names (which had pagan or Roman origins), so they numbered the months instead.\n- By 1845 (post-1752), Quaker month numbering simply started with **January as the 1st month**, so the **2nd month = February**.\n- The \"3rd day\" is just the day of the month \u2014 the 3rd.\n- No Julian-to-Gregorian day shift or year correction was needed \u2014 only the month name was translated.\n\n**Result: 3 February 1845**\n\nYou can record this as `3 Feb 1845` and note the original Quaker wording alongside it in your research notes.",
+            "text_response": "The Quaker date **\"3rd day of 2nd month 1845\"** converts to **3 February 1845** in the standard calendar.\n\nHere's the reasoning:\n\n- Quakers avoided using the traditional month names (which had pagan or Roman origins), so they numbered the months instead.\n- By 1845 (post-1752), Quaker month numbering simply started with **January as the 1st month**, so the **2nd month = February**.\n- The \"3rd day\" is just the day of the month — the 3rd.\n- No Julian-to-Gregorian day shift or year correction was needed — only the month name was translated.\n\n**Result: 3 February 1845**\n\nYou can record this as `3 Feb 1845` and note the original Quaker wording alongside it in your research notes.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -5736,7 +5736,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-06.b9b8850e"
                 }
@@ -5776,7 +5776,7 @@
                   "applied": [
                     {
                       "correction": "quakerMonth",
-                      "rule": "Post-1752 Quaker numbering: 2 month \u2192 calendar month 2 (1st = January)",
+                      "rule": "Post-1752 Quaker numbering: 2 month → calendar month 2 (1st = January)",
                       "monthShift": 0
                     }
                   ],
@@ -6006,7 +6006,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified the Quaker date and applied the post-1752 numbering rule. The tool returned the conversion (2nd month \u2192 February, day 3 unchanged, year 1845 unchanged), and Claude accurately reported this result. The original date notation was preserved alongside the converted form. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly identified the Quaker date and applied the post-1752 numbering rule. The tool returned the conversion (2nd month → February, day 3 unchanged, year 1845 unchanged), and Claude accurately reported this result. The original date notation was preserved alongside the converted form. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
@@ -6024,7 +6024,7 @@
                 "source": "rubric",
                 "name": "Conversion accuracy",
                 "score": 3,
-                "rationale": "The skill applied the correct post-1752 Quaker numbering rule: 2nd month maps to calendar month 2 (February), with 1st month = January. The tool's applied[] entry confirms 'Post-1752 Quaker numbering: 2 month \u2192 calendar month 2 (1st = January)' with monthShift of 0. This is the correct offset for an 1845 date, which falls well after the 1752 transition."
+                "rationale": "The skill applied the correct post-1752 Quaker numbering rule: 2nd month maps to calendar month 2 (February), with 1st month = January. The tool's applied[] entry confirms 'Post-1752 Quaker numbering: 2 month → calendar month 2 (1st = January)' with monthShift of 0. This is the correct offset for an 1845 date, which falls well after the 1752 transition."
               },
               {
                 "source": "rubric",
@@ -6042,7 +6042,7 @@
                 "source": "rubric",
                 "name": "Tool response interpretation",
                 "score": 3,
-                "rationale": "The skill correctly presented the tool's response. The rule ('Post-1752 Quaker numbering: 2 month \u2192 calendar month 2') and the monthShift (0) both trace directly to the tool's applied[] entry. The converted date (3 Feb 1845) matches the tool's converted output. Claude did not perform hand arithmetic; it reported what the tool returned."
+                "rationale": "The skill correctly presented the tool's response. The rule ('Post-1752 Quaker numbering: 2 month → calendar month 2') and the monthShift (0) both trace directly to the tool's applied[] entry. The converted date (3 Feb 1845) matches the tool's converted output. Claude did not perform hand arithmetic; it reported what the tool returned."
               }
             ],
             "judge_cost_usd": 0.008859800000000001,
@@ -6076,7 +6076,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified that Russia used the Julian calendar in 1900, applied the correct 12-day offset (not 13), and produced the correct converted date of 26 February 1900. The tool response confirms the rule 'Julian \u2192 Gregorian: +12 days' and offsetDays: 12, which the skill accurately presented. The original date (14 Feb 1900) was preserved and both forms were presented clearly."
+            "rationale": "The skill correctly identified that Russia used the Julian calendar in 1900, applied the correct 12-day offset (not 13), and produced the correct converted date of 26 February 1900. The tool response confirms the rule 'Julian → Gregorian: +12 days' and offsetDays: 12, which the skill accurately presented. The original date (14 Feb 1900) was preserved and both forms were presented clearly."
           },
           {
             "source": "base",
@@ -6094,7 +6094,7 @@
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The skill applied the correct 12-day offset for Russia in February 1900. The tool response explicitly confirmed 'Julian \u2192 Gregorian: +12 days' with offsetDays: 12. This is the correct offset for this jurisdiction and date\u2014the offset becomes 13 days only from 1 March 1900 onward, after the Julian 29 February. The conversion from 14 Feb to 26 Feb is accurate."
+            "rationale": "The skill applied the correct 12-day offset for Russia in February 1900. The tool response explicitly confirmed 'Julian → Gregorian: +12 days' with offsetDays: 12. This is the correct offset for this jurisdiction and date—the offset becomes 13 days only from 1 March 1900 onward, after the Julian 29 February. The conversion from 14 Feb to 26 Feb is accurate."
           },
           {
             "source": "rubric",
@@ -6112,7 +6112,7 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented what the convert_calendar tool returned. The stated rule 'Julian \u2192 Gregorian: +12 days' and the 12-day offset both trace directly to the tool's applied[] entry. The skill did not perform hand arithmetic; it relied on and accurately reported the tool's response, including the tool's note about Russia's calendar transition in 1918."
+            "rationale": "The skill correctly presented what the convert_calendar tool returned. The stated rule 'Julian → Gregorian: +12 days' and the 12-day offset both trace directly to the tool's applied[] entry. The skill did not perform hand arithmetic; it relied on and accurately reported the tool's response, including the tool's note about Russia's calendar transition in 1918."
           }
         ],
         "review_dimensions": [
@@ -6120,7 +6120,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified that Russia used the Julian calendar in 1900, applied the correct 12-day offset (not 13), and produced the correct converted date of 26 February 1900. The tool response confirms the rule 'Julian \u2192 Gregorian: +12 days' and offsetDays: 12, which the skill accurately presented. The original date (14 Feb 1900) was preserved and both forms were presented clearly."
+            "rationale": "The skill correctly identified that Russia used the Julian calendar in 1900, applied the correct 12-day offset (not 13), and produced the correct converted date of 26 February 1900. The tool response confirms the rule 'Julian → Gregorian: +12 days' and offsetDays: 12, which the skill accurately presented. The original date (14 Feb 1900) was preserved and both forms were presented clearly."
           },
           {
             "source": "base",
@@ -6138,7 +6138,7 @@
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The skill applied the correct 12-day offset for Russia in February 1900. The tool response explicitly confirmed 'Julian \u2192 Gregorian: +12 days' with offsetDays: 12. This is the correct offset for this jurisdiction and date\u2014the offset becomes 13 days only from 1 March 1900 onward, after the Julian 29 February. The conversion from 14 Feb to 26 Feb is accurate."
+            "rationale": "The skill applied the correct 12-day offset for Russia in February 1900. The tool response explicitly confirmed 'Julian → Gregorian: +12 days' with offsetDays: 12. This is the correct offset for this jurisdiction and date—the offset becomes 13 days only from 1 March 1900 onward, after the Julian 29 February. The conversion from 14 Feb to 26 Feb is accurate."
           },
           {
             "source": "rubric",
@@ -6156,13 +6156,13 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented what the convert_calendar tool returned. The stated rule 'Julian \u2192 Gregorian: +12 days' and the 12-day offset both trace directly to the tool's applied[] entry. The skill did not perform hand arithmetic; it relied on and accurately reported the tool's response, including the tool's note about Russia's calendar transition in 1918."
+            "rationale": "The skill correctly presented what the convert_calendar tool returned. The stated rule 'Julian → Gregorian: +12 days' and the 12-day offset both trace directly to the tool's applied[] entry. The skill did not perform hand arithmetic; it relied on and accurately reported the tool's response, including the tool's note about Russia's calendar transition in 1918."
           }
         ]
       },
       "totals": {
         "duration_ms": 17446.688650990836,
-        "duration_api_ms": 15178.0,
+        "duration_api_ms": 15178,
         "judge_duration_ms": 9971.861528989393,
         "wall_clock_ms": 27434.459686279297,
         "num_turns": 2,
@@ -6185,7 +6185,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 17446.688650990836,
-          "duration_api_ms": 15178.0,
+          "duration_api_ms": 15178,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1497,
@@ -6275,7 +6275,7 @@
           },
           "skill_cost_usd": 0.14355220000000002,
           "output": {
-            "text_response": "The date **14 February 1900** from a Moscow Russian parish register was recorded in the **Julian (Old Style) calendar**, which Russia used until 1918.\n\n**Conversion:** Julian \u2192 Gregorian requires adding **12 days** for the year 1900.\n\n> **14 February 1900 (Julian) = 26 February 1900 (Gregorian)**\n\nThe year remains the same. When documenting this, it's good practice to record both dates: **14 Feb 1900 O.S. / 26 Feb 1900 N.S.**",
+            "text_response": "The date **14 February 1900** from a Moscow Russian parish register was recorded in the **Julian (Old Style) calendar**, which Russia used until 1918.\n\n**Conversion:** Julian → Gregorian requires adding **12 days** for the year 1900.\n\n> **14 February 1900 (Julian) = 26 February 1900 (Gregorian)**\n\nThe year remains the same. When documenting this, it's good practice to record both dates: **14 Feb 1900 O.S. / 26 Feb 1900 N.S.**",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6294,7 +6294,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-06.b9b8850e"
                 }
@@ -6333,7 +6333,7 @@
                   "applied": [
                     {
                       "correction": "julianToGregorianDay",
-                      "rule": "Julian \u2192 Gregorian: +12 days",
+                      "rule": "Julian → Gregorian: +12 days",
                       "offsetDays": 12
                     }
                   ],
@@ -6358,7 +6358,7 @@
             "agent_returns": [
               {
                 "subagent_type": "convert-dates",
-                "text": "The project check returned no_project, so I skipped the log entry.\n\nStep-by-step:\n- Original: 14 Feb 1900 (Julian / Old Style, Russia).\n- Rule applied: Julian \u2192 Gregorian: +12 days.\n- Converted: 26 Feb 1900 (Gregorian).\n\nThe tool's note says Russia reckoned days on the Julian calendar as written until 31 Jan 1918, which was followed by 14 Feb 1918. The 1900 date is therefore Julian.\n\n---\n\nThe register gives the date as 14 February 1900. It was written in the Julian calendar, which Russia still used then. That calendar ran 12 days behind the modern Gregorian calendar. Moving the date forward by 12 days gives 26 February 1900 in our modern calendar. The year stays the same.\n\nNext, you can use 26 Feb 1900 as the modern date and keep the original 14 Feb 1900 beside it."
+                "text": "The project check returned no_project, so I skipped the log entry.\n\nStep-by-step:\n- Original: 14 Feb 1900 (Julian / Old Style, Russia).\n- Rule applied: Julian → Gregorian: +12 days.\n- Converted: 26 Feb 1900 (Gregorian).\n\nThe tool's note says Russia reckoned days on the Julian calendar as written until 31 Jan 1918, which was followed by 14 Feb 1918. The 1900 date is therefore Julian.\n\n---\n\nThe register gives the date as 14 February 1900. It was written in the Julian calendar, which Russia still used then. That calendar ran 12 days behind the modern Gregorian calendar. Moving the date forward by 12 days gives 26 February 1900 in our modern calendar. The year stays the same.\n\nNext, you can use 26 Feb 1900 as the modern date and keep the original 14 Feb 1900 beside it."
               }
             ]
           },
@@ -6566,7 +6566,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified that Russia used the Julian calendar in 1900, applied the correct 12-day offset (not 13), and produced the correct converted date of 26 February 1900. The tool response confirms the rule 'Julian \u2192 Gregorian: +12 days' and offsetDays: 12, which the skill accurately presented. The original date (14 Feb 1900) was preserved and both forms were presented clearly."
+                "rationale": "The skill correctly identified that Russia used the Julian calendar in 1900, applied the correct 12-day offset (not 13), and produced the correct converted date of 26 February 1900. The tool response confirms the rule 'Julian → Gregorian: +12 days' and offsetDays: 12, which the skill accurately presented. The original date (14 Feb 1900) was preserved and both forms were presented clearly."
               },
               {
                 "source": "base",
@@ -6584,7 +6584,7 @@
                 "source": "rubric",
                 "name": "Conversion accuracy",
                 "score": 3,
-                "rationale": "The skill applied the correct 12-day offset for Russia in February 1900. The tool response explicitly confirmed 'Julian \u2192 Gregorian: +12 days' with offsetDays: 12. This is the correct offset for this jurisdiction and date\u2014the offset becomes 13 days only from 1 March 1900 onward, after the Julian 29 February. The conversion from 14 Feb to 26 Feb is accurate."
+                "rationale": "The skill applied the correct 12-day offset for Russia in February 1900. The tool response explicitly confirmed 'Julian → Gregorian: +12 days' with offsetDays: 12. This is the correct offset for this jurisdiction and date—the offset becomes 13 days only from 1 March 1900 onward, after the Julian 29 February. The conversion from 14 Feb to 26 Feb is accurate."
               },
               {
                 "source": "rubric",
@@ -6602,7 +6602,7 @@
                 "source": "rubric",
                 "name": "Tool response interpretation",
                 "score": 3,
-                "rationale": "The skill correctly presented what the convert_calendar tool returned. The stated rule 'Julian \u2192 Gregorian: +12 days' and the 12-day offset both trace directly to the tool's applied[] entry. The skill did not perform hand arithmetic; it relied on and accurately reported the tool's response, including the tool's note about Russia's calendar transition in 1918."
+                "rationale": "The skill correctly presented what the convert_calendar tool returned. The stated rule 'Julian → Gregorian: +12 days' and the 12-day offset both trace directly to the tool's applied[] entry. The skill did not perform hand arithmetic; it relied on and accurately reported the tool's response, including the tool's note about Russia's calendar transition in 1918."
               }
             ],
             "judge_cost_usd": 0.008406799999999999,
@@ -6636,7 +6636,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified the Julian-to-Gregorian conversion for Russia in 1918, applied the correct +13 day offset, and produced the accurate converted date of 14 February 1918. The tool response confirms the rule and offset. The skill also correctly flagged the boundary condition (31 Jan \u2192 14 Feb skip) and appropriately cautioned about the unusual nature of a 1 Feb 1918 date. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly identified the Julian-to-Gregorian conversion for Russia in 1918, applied the correct +13 day offset, and produced the accurate converted date of 14 February 1918. The tool response confirms the rule and offset. The skill also correctly flagged the boundary condition (31 Jan → 14 Feb skip) and appropriately cautioned about the unusual nature of a 1 Feb 1918 date. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -6654,25 +6654,25 @@
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The skill applied the correct 13-day offset for Russia in 1918, as confirmed by the tool's applied[] entry showing 'Julian \u2192 Gregorian: +13 days'. This is the jurisdiction-specific and time-period-specific offset required for Russia at that date. The conversion direction (Julian to Gregorian) is correct."
+            "rationale": "The skill applied the correct 13-day offset for Russia in 1918, as confirmed by the tool's applied[] entry showing 'Julian → Gregorian: +13 days'. This is the jurisdiction-specific and time-period-specific offset required for Russia at that date. The conversion direction (Julian to Gregorian) is correct."
           },
           {
             "source": "rubric",
             "name": "Ambiguity handling",
             "score": 3,
-            "rationale": "The input contains genuine ambiguity: 1 February 1918 falls within the skipped span (31 Jan \u2192 14 Feb) when Russia switched calendars. The skill explicitly flagged this boundary condition, noted that the date is 'unusual' and 'worth double-checking', and advised the genealogist to verify the clerk's calendar convention by checking surrounding entries or other documents. Both interpretations (Old Style habit vs. transcription error vs. Gregorian date) are surfaced, allowing the researcher to pick."
+            "rationale": "The input contains genuine ambiguity: 1 February 1918 falls within the skipped span (31 Jan → 14 Feb) when Russia switched calendars. The skill explicitly flagged this boundary condition, noted that the date is 'unusual' and 'worth double-checking', and advised the genealogist to verify the clerk's calendar convention by checking surrounding entries or other documents. Both interpretations (Old Style habit vs. transcription error vs. Gregorian date) are surfaced, allowing the researcher to pick."
           },
           {
             "source": "rubric",
             "name": "Genealogical presentation",
             "score": 3,
-            "rationale": "The skill presented the conversion in clear genealogical notation: 'Original: 1 Feb 1918 (Julian / Old Style, Russia, St. Petersburg)' and 'Converted: 14 Feb 1918 (Gregorian)'. Both the original and converted forms are preserved and clearly labeled. The format is clean, consistent, and usable as a genealogical record. The step-by-step presentation ('1 Feb 1918 (Julian / Old Style, Russia, St. Petersburg). Rule applied: Julian \u2192 Gregorian, +13 days. Converted: 14 Feb 1918 (Gregorian)') meets standard genealogical notation."
+            "rationale": "The skill presented the conversion in clear genealogical notation: 'Original: 1 Feb 1918 (Julian / Old Style, Russia, St. Petersburg)' and 'Converted: 14 Feb 1918 (Gregorian)'. Both the original and converted forms are preserved and clearly labeled. The format is clean, consistent, and usable as a genealogical record. The step-by-step presentation ('1 Feb 1918 (Julian / Old Style, Russia, St. Petersburg). Rule applied: Julian → Gregorian, +13 days. Converted: 14 Feb 1918 (Gregorian)') meets standard genealogical notation."
           },
           {
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented what convert_calendar returned. The stated rule ('Julian \u2192 Gregorian: +13 days') and offset (13 days) trace directly to the tool's applied[] entry. The tool's note about the calendar skip ('31 Jan 1918 was followed by 14 Feb 1918') is accurately surfaced and used to contextualize the ambiguity. The skill did not perform hand arithmetic; it relied on the tool's response and interpreted it faithfully."
+            "rationale": "The skill correctly presented what convert_calendar returned. The stated rule ('Julian → Gregorian: +13 days') and offset (13 days) trace directly to the tool's applied[] entry. The tool's note about the calendar skip ('31 Jan 1918 was followed by 14 Feb 1918') is accurately surfaced and used to contextualize the ambiguity. The skill did not perform hand arithmetic; it relied on the tool's response and interpreted it faithfully."
           }
         ],
         "review_dimensions": [
@@ -6680,7 +6680,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified the Julian-to-Gregorian conversion for Russia in 1918, applied the correct +13 day offset, and produced the accurate converted date of 14 February 1918. The tool response confirms the rule and offset. The skill also correctly flagged the boundary condition (31 Jan \u2192 14 Feb skip) and appropriately cautioned about the unusual nature of a 1 Feb 1918 date. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly identified the Julian-to-Gregorian conversion for Russia in 1918, applied the correct +13 day offset, and produced the accurate converted date of 14 February 1918. The tool response confirms the rule and offset. The skill also correctly flagged the boundary condition (31 Jan → 14 Feb skip) and appropriately cautioned about the unusual nature of a 1 Feb 1918 date. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -6698,31 +6698,31 @@
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The skill applied the correct 13-day offset for Russia in 1918, as confirmed by the tool's applied[] entry showing 'Julian \u2192 Gregorian: +13 days'. This is the jurisdiction-specific and time-period-specific offset required for Russia at that date. The conversion direction (Julian to Gregorian) is correct."
+            "rationale": "The skill applied the correct 13-day offset for Russia in 1918, as confirmed by the tool's applied[] entry showing 'Julian → Gregorian: +13 days'. This is the jurisdiction-specific and time-period-specific offset required for Russia at that date. The conversion direction (Julian to Gregorian) is correct."
           },
           {
             "source": "rubric",
             "name": "Ambiguity handling",
             "score": 3,
-            "rationale": "The input contains genuine ambiguity: 1 February 1918 falls within the skipped span (31 Jan \u2192 14 Feb) when Russia switched calendars. The skill explicitly flagged this boundary condition, noted that the date is 'unusual' and 'worth double-checking', and advised the genealogist to verify the clerk's calendar convention by checking surrounding entries or other documents. Both interpretations (Old Style habit vs. transcription error vs. Gregorian date) are surfaced, allowing the researcher to pick."
+            "rationale": "The input contains genuine ambiguity: 1 February 1918 falls within the skipped span (31 Jan → 14 Feb) when Russia switched calendars. The skill explicitly flagged this boundary condition, noted that the date is 'unusual' and 'worth double-checking', and advised the genealogist to verify the clerk's calendar convention by checking surrounding entries or other documents. Both interpretations (Old Style habit vs. transcription error vs. Gregorian date) are surfaced, allowing the researcher to pick."
           },
           {
             "source": "rubric",
             "name": "Genealogical presentation",
             "score": 3,
-            "rationale": "The skill presented the conversion in clear genealogical notation: 'Original: 1 Feb 1918 (Julian / Old Style, Russia, St. Petersburg)' and 'Converted: 14 Feb 1918 (Gregorian)'. Both the original and converted forms are preserved and clearly labeled. The format is clean, consistent, and usable as a genealogical record. The step-by-step presentation ('1 Feb 1918 (Julian / Old Style, Russia, St. Petersburg). Rule applied: Julian \u2192 Gregorian, +13 days. Converted: 14 Feb 1918 (Gregorian)') meets standard genealogical notation."
+            "rationale": "The skill presented the conversion in clear genealogical notation: 'Original: 1 Feb 1918 (Julian / Old Style, Russia, St. Petersburg)' and 'Converted: 14 Feb 1918 (Gregorian)'. Both the original and converted forms are preserved and clearly labeled. The format is clean, consistent, and usable as a genealogical record. The step-by-step presentation ('1 Feb 1918 (Julian / Old Style, Russia, St. Petersburg). Rule applied: Julian → Gregorian, +13 days. Converted: 14 Feb 1918 (Gregorian)') meets standard genealogical notation."
           },
           {
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented what convert_calendar returned. The stated rule ('Julian \u2192 Gregorian: +13 days') and offset (13 days) trace directly to the tool's applied[] entry. The tool's note about the calendar skip ('31 Jan 1918 was followed by 14 Feb 1918') is accurately surfaced and used to contextualize the ambiguity. The skill did not perform hand arithmetic; it relied on the tool's response and interpreted it faithfully."
+            "rationale": "The skill correctly presented what convert_calendar returned. The stated rule ('Julian → Gregorian: +13 days') and offset (13 days) trace directly to the tool's applied[] entry. The tool's note about the calendar skip ('31 Jan 1918 was followed by 14 Feb 1918') is accurately surfaced and used to contextualize the ambiguity. The skill did not perform hand arithmetic; it relied on the tool's response and interpreted it faithfully."
           }
         ]
       },
       "totals": {
         "duration_ms": 22978.884552998352,
-        "duration_api_ms": 20307.0,
+        "duration_api_ms": 20307,
         "judge_duration_ms": 11154.016323998803,
         "wall_clock_ms": 34144.81329917908,
         "num_turns": 2,
@@ -6745,7 +6745,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 22978.884552998352,
-          "duration_api_ms": 20307.0,
+          "duration_api_ms": 20307,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1500,
@@ -6835,7 +6835,7 @@
           },
           "skill_cost_usd": 0.1494754,
           "output": {
-            "text_response": "Here is what the convert-dates agent found:\n\n**Original date:** 1 February 1918 (Julian / Old Style, St. Petersburg, Russia)\n**Calendar correction:** Julian \u2192 Gregorian, +13 days\n**Converted date: 14 February 1918 (Gregorian)**\n\n---\n\n**Important caveat:** Russia switched calendars during that very month. The Soviet government decreed that 31 January 1918 would be followed directly by 14 February 1918 \u2014 meaning 1\u201313 February 1918 were skipped entirely as civil dates. A record dated \"1 February 1918\" is therefore unusual and worth scrutinizing:\n\n- The clerk may have been writing in the **old Julian reckoning by habit** (common in church/parish registers), in which case the Gregorian equivalent is **14 February 1918**.\n- If the record is **already in the new Gregorian calendar**, no conversion is needed.\n- The date may be a **transcription error**.\n\n**Recommended next step:** Examine surrounding entries in the register (or a second document for the same event) to determine which calendar the clerk was using. Orthodox parish registers in particular often continued using Old Style dating even after the civil switch.",
+            "text_response": "Here is what the convert-dates agent found:\n\n**Original date:** 1 February 1918 (Julian / Old Style, St. Petersburg, Russia)\n**Calendar correction:** Julian → Gregorian, +13 days\n**Converted date: 14 February 1918 (Gregorian)**\n\n---\n\n**Important caveat:** Russia switched calendars during that very month. The Soviet government decreed that 31 January 1918 would be followed directly by 14 February 1918 — meaning 1–13 February 1918 were skipped entirely as civil dates. A record dated \"1 February 1918\" is therefore unusual and worth scrutinizing:\n\n- The clerk may have been writing in the **old Julian reckoning by habit** (common in church/parish registers), in which case the Gregorian equivalent is **14 February 1918**.\n- If the record is **already in the new Gregorian calendar**, no conversion is needed.\n- The date may be a **transcription error**.\n\n**Recommended next step:** Examine surrounding entries in the register (or a second document for the same event) to determine which calendar the clerk was using. Orthodox parish registers in particular often continued using Old Style dating even after the civil switch.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6854,7 +6854,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-06.b9b8850e"
                 }
@@ -6893,7 +6893,7 @@
                   "applied": [
                     {
                       "correction": "julianToGregorianDay",
-                      "rule": "Julian \u2192 Gregorian: +13 days",
+                      "rule": "Julian → Gregorian: +13 days",
                       "offsetDays": 13
                     }
                   ],
@@ -6918,7 +6918,7 @@
             "agent_returns": [
               {
                 "subagent_type": "convert-dates",
-                "text": "1. Original: 1 Feb 1918 (Julian / Old Style, Russia, St. Petersburg).\n2. Rule applied: Julian \u2192 Gregorian, +13 days.\n3. Converted: 14 Feb 1918 (Gregorian).\n\nThe tool's note says that in Russia 31 Jan 1918 was followed directly by 14 Feb 1918. That means 1 Feb 1918 was not a valid civil date in Russia. A record dated 1 Feb 1918 is therefore unusual. Check whether the clerk was still writing Old Style by habit, or whether the date was written or transcribed in error. Church records (for example, Orthodox parish registers) sometimes kept the old reckoning. If the record is a Gregorian date, no conversion is needed. The +13 day result above assumes the date was written in the Julian calendar.\n\nNo project was open, so nothing was logged.\n\n---\n\nThe record says 1 February 1918, written in the Julian calendar that Russia used at the time. That calendar ran 13 days behind the one we use today, so the date corresponds to 14 February 1918 in the modern calendar. The correction just moves the day forward by 13 days.\n\nThere is a catch. Russia switched calendars during that very month, and 1 February 1918 was skipped, because 31 January was followed straight away by 14 February. A date that falls inside the skipped span is odd and is worth double-checking.\n\nNext, look at the surrounding entries in the register, or at another document for the same event, to confirm which calendar the clerk was using."
+                "text": "1. Original: 1 Feb 1918 (Julian / Old Style, Russia, St. Petersburg).\n2. Rule applied: Julian → Gregorian, +13 days.\n3. Converted: 14 Feb 1918 (Gregorian).\n\nThe tool's note says that in Russia 31 Jan 1918 was followed directly by 14 Feb 1918. That means 1 Feb 1918 was not a valid civil date in Russia. A record dated 1 Feb 1918 is therefore unusual. Check whether the clerk was still writing Old Style by habit, or whether the date was written or transcribed in error. Church records (for example, Orthodox parish registers) sometimes kept the old reckoning. If the record is a Gregorian date, no conversion is needed. The +13 day result above assumes the date was written in the Julian calendar.\n\nNo project was open, so nothing was logged.\n\n---\n\nThe record says 1 February 1918, written in the Julian calendar that Russia used at the time. That calendar ran 13 days behind the one we use today, so the date corresponds to 14 February 1918 in the modern calendar. The correction just moves the day forward by 13 days.\n\nThere is a catch. Russia switched calendars during that very month, and 1 February 1918 was skipped, because 31 January was followed straight away by 14 February. A date that falls inside the skipped span is odd and is worth double-checking.\n\nNext, look at the surrounding entries in the register, or at another document for the same event, to confirm which calendar the clerk was using."
               }
             ]
           },
@@ -7126,7 +7126,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified the Julian-to-Gregorian conversion for Russia in 1918, applied the correct +13 day offset, and produced the accurate converted date of 14 February 1918. The tool response confirms the rule and offset. The skill also correctly flagged the boundary condition (31 Jan \u2192 14 Feb skip) and appropriately cautioned about the unusual nature of a 1 Feb 1918 date. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly identified the Julian-to-Gregorian conversion for Russia in 1918, applied the correct +13 day offset, and produced the accurate converted date of 14 February 1918. The tool response confirms the rule and offset. The skill also correctly flagged the boundary condition (31 Jan → 14 Feb skip) and appropriately cautioned about the unusual nature of a 1 Feb 1918 date. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
@@ -7144,25 +7144,25 @@
                 "source": "rubric",
                 "name": "Conversion accuracy",
                 "score": 3,
-                "rationale": "The skill applied the correct 13-day offset for Russia in 1918, as confirmed by the tool's applied[] entry showing 'Julian \u2192 Gregorian: +13 days'. This is the jurisdiction-specific and time-period-specific offset required for Russia at that date. The conversion direction (Julian to Gregorian) is correct."
+                "rationale": "The skill applied the correct 13-day offset for Russia in 1918, as confirmed by the tool's applied[] entry showing 'Julian → Gregorian: +13 days'. This is the jurisdiction-specific and time-period-specific offset required for Russia at that date. The conversion direction (Julian to Gregorian) is correct."
               },
               {
                 "source": "rubric",
                 "name": "Ambiguity handling",
                 "score": 3,
-                "rationale": "The input contains genuine ambiguity: 1 February 1918 falls within the skipped span (31 Jan \u2192 14 Feb) when Russia switched calendars. The skill explicitly flagged this boundary condition, noted that the date is 'unusual' and 'worth double-checking', and advised the genealogist to verify the clerk's calendar convention by checking surrounding entries or other documents. Both interpretations (Old Style habit vs. transcription error vs. Gregorian date) are surfaced, allowing the researcher to pick."
+                "rationale": "The input contains genuine ambiguity: 1 February 1918 falls within the skipped span (31 Jan → 14 Feb) when Russia switched calendars. The skill explicitly flagged this boundary condition, noted that the date is 'unusual' and 'worth double-checking', and advised the genealogist to verify the clerk's calendar convention by checking surrounding entries or other documents. Both interpretations (Old Style habit vs. transcription error vs. Gregorian date) are surfaced, allowing the researcher to pick."
               },
               {
                 "source": "rubric",
                 "name": "Genealogical presentation",
                 "score": 3,
-                "rationale": "The skill presented the conversion in clear genealogical notation: 'Original: 1 Feb 1918 (Julian / Old Style, Russia, St. Petersburg)' and 'Converted: 14 Feb 1918 (Gregorian)'. Both the original and converted forms are preserved and clearly labeled. The format is clean, consistent, and usable as a genealogical record. The step-by-step presentation ('1 Feb 1918 (Julian / Old Style, Russia, St. Petersburg). Rule applied: Julian \u2192 Gregorian, +13 days. Converted: 14 Feb 1918 (Gregorian)') meets standard genealogical notation."
+                "rationale": "The skill presented the conversion in clear genealogical notation: 'Original: 1 Feb 1918 (Julian / Old Style, Russia, St. Petersburg)' and 'Converted: 14 Feb 1918 (Gregorian)'. Both the original and converted forms are preserved and clearly labeled. The format is clean, consistent, and usable as a genealogical record. The step-by-step presentation ('1 Feb 1918 (Julian / Old Style, Russia, St. Petersburg). Rule applied: Julian → Gregorian, +13 days. Converted: 14 Feb 1918 (Gregorian)') meets standard genealogical notation."
               },
               {
                 "source": "rubric",
                 "name": "Tool response interpretation",
                 "score": 3,
-                "rationale": "The skill correctly presented what convert_calendar returned. The stated rule ('Julian \u2192 Gregorian: +13 days') and offset (13 days) trace directly to the tool's applied[] entry. The tool's note about the calendar skip ('31 Jan 1918 was followed by 14 Feb 1918') is accurately surfaced and used to contextualize the ambiguity. The skill did not perform hand arithmetic; it relied on the tool's response and interpreted it faithfully."
+                "rationale": "The skill correctly presented what convert_calendar returned. The stated rule ('Julian → Gregorian: +13 days') and offset (13 days) trace directly to the tool's applied[] entry. The tool's note about the calendar skip ('31 Jan 1918 was followed by 14 Feb 1918') is accurately surfaced and used to contextualize the ambiguity. The skill did not perform hand arithmetic; it relied on the tool's response and interpreted it faithfully."
               }
             ],
             "judge_cost_usd": 0.0094638,
@@ -7196,7 +7196,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified that Scotland changed its legal year-start to 1 January in 1600, so the Old Style year correction does not apply to 1730 Scottish dates. It correctly applied the +11 day Julian-to-Gregorian shift (the offset for 18th-century dates after Feb 29 Julian 1700). The conversion 14 Feb 1730 \u2192 25 Feb 1730 is accurate. All claims are supported by the tool response, which explicitly states 'Scotland began its civil year on 1 January from 1600, so a 1730 date needs no Old Style year shift' and applied the julianToGregorianDay correction with +11 days. No fabricated material."
+            "rationale": "The skill correctly identified that Scotland changed its legal year-start to 1 January in 1600, so the Old Style year correction does not apply to 1730 Scottish dates. It correctly applied the +11 day Julian-to-Gregorian shift (the offset for 18th-century dates after Feb 29 Julian 1700). The conversion 14 Feb 1730 → 25 Feb 1730 is accurate. All claims are supported by the tool response, which explicitly states 'Scotland began its civil year on 1 January from 1600, so a 1730 date needs no Old Style year shift' and applied the julianToGregorianDay correction with +11 days. No fabricated material."
           },
           {
             "source": "base",
@@ -7214,7 +7214,7 @@
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The skill applied the correct offset of +11 days for an 18th-century Scottish date. This is the correct offset after Feb 29 Julian 1700. The tool response confirms 'Julian \u2192 Gregorian: +11 days' was applied. The conversion is accurate for the jurisdiction and year combination."
+            "rationale": "The skill applied the correct offset of +11 days for an 18th-century Scottish date. This is the correct offset after Feb 29 Julian 1700. The tool response confirms 'Julian → Gregorian: +11 days' was applied. The conversion is accurate for the jurisdiction and year combination."
           },
           {
             "source": "rubric",
@@ -7232,7 +7232,7 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented what convert_calendar returned. The stated rule 'Julian \u2192 Gregorian: +11 days' and offset of 11 days trace directly to the tool's applied[] entry. The response correctly noted that osNsYear was not applied, citing the tool's note that 'Scotland began its civil year on 1 January from 1600, so a 1730 date needs no Old Style year shift.' The response did not perform hand arithmetic; it relied on the tool's response_summary values."
+            "rationale": "The skill correctly presented what convert_calendar returned. The stated rule 'Julian → Gregorian: +11 days' and offset of 11 days trace directly to the tool's applied[] entry. The response correctly noted that osNsYear was not applied, citing the tool's note that 'Scotland began its civil year on 1 January from 1600, so a 1730 date needs no Old Style year shift.' The response did not perform hand arithmetic; it relied on the tool's response_summary values."
           }
         ],
         "review_dimensions": [
@@ -7240,7 +7240,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified that Scotland changed its legal year-start to 1 January in 1600, so the Old Style year correction does not apply to 1730 Scottish dates. It correctly applied the +11 day Julian-to-Gregorian shift (the offset for 18th-century dates after Feb 29 Julian 1700). The conversion 14 Feb 1730 \u2192 25 Feb 1730 is accurate. All claims are supported by the tool response, which explicitly states 'Scotland began its civil year on 1 January from 1600, so a 1730 date needs no Old Style year shift' and applied the julianToGregorianDay correction with +11 days. No fabricated material."
+            "rationale": "The skill correctly identified that Scotland changed its legal year-start to 1 January in 1600, so the Old Style year correction does not apply to 1730 Scottish dates. It correctly applied the +11 day Julian-to-Gregorian shift (the offset for 18th-century dates after Feb 29 Julian 1700). The conversion 14 Feb 1730 → 25 Feb 1730 is accurate. All claims are supported by the tool response, which explicitly states 'Scotland began its civil year on 1 January from 1600, so a 1730 date needs no Old Style year shift' and applied the julianToGregorianDay correction with +11 days. No fabricated material."
           },
           {
             "source": "base",
@@ -7258,7 +7258,7 @@
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The skill applied the correct offset of +11 days for an 18th-century Scottish date. This is the correct offset after Feb 29 Julian 1700. The tool response confirms 'Julian \u2192 Gregorian: +11 days' was applied. The conversion is accurate for the jurisdiction and year combination."
+            "rationale": "The skill applied the correct offset of +11 days for an 18th-century Scottish date. This is the correct offset after Feb 29 Julian 1700. The tool response confirms 'Julian → Gregorian: +11 days' was applied. The conversion is accurate for the jurisdiction and year combination."
           },
           {
             "source": "rubric",
@@ -7276,13 +7276,13 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented what convert_calendar returned. The stated rule 'Julian \u2192 Gregorian: +11 days' and offset of 11 days trace directly to the tool's applied[] entry. The response correctly noted that osNsYear was not applied, citing the tool's note that 'Scotland began its civil year on 1 January from 1600, so a 1730 date needs no Old Style year shift.' The response did not perform hand arithmetic; it relied on the tool's response_summary values."
+            "rationale": "The skill correctly presented what convert_calendar returned. The stated rule 'Julian → Gregorian: +11 days' and offset of 11 days trace directly to the tool's applied[] entry. The response correctly noted that osNsYear was not applied, citing the tool's note that 'Scotland began its civil year on 1 January from 1600, so a 1730 date needs no Old Style year shift.' The response did not perform hand arithmetic; it relied on the tool's response_summary values."
           }
         ]
       },
       "totals": {
         "duration_ms": 22382.907453007647,
-        "duration_api_ms": 20142.0,
+        "duration_api_ms": 20142,
         "judge_duration_ms": 12031.59033099655,
         "wall_clock_ms": 34435.99581718445,
         "num_turns": 2,
@@ -7305,7 +7305,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 22382.907453007647,
-          "duration_api_ms": 20142.0,
+          "duration_api_ms": 20142,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1524,
@@ -7395,7 +7395,7 @@
           },
           "skill_cost_usd": 0.151075,
           "output": {
-            "text_response": "Here is the result from the convert-dates agent:\n\n---\n\n**Date:** 14 February 1730, Edinburgh (as written in the record)\n\n**Converted to Gregorian:** **25 February 1730**\n\n**How the conversion works:**\n- Scotland used the **Julian calendar** for day-counting until the British calendar reform of 1752.\n- Applying the Julian-to-Gregorian offset of **+11 days**: 14 Feb \u2192 **25 Feb 1730**.\n- The year stays **1730** \u2014 no Old Style year shift is needed.\n\n**Was the 1752 year-start change relevant for Scotland?**\nNo \u2014 not for the year. Scotland had already been starting its civil year on **1 January since 1600**, well before England's 1752 switch. So for a 1730 Scottish record, the year is simply 1730 (not a double-dated 1729/30 as you'd see in English records of the same era). The 1752 reform only affected the **day count** for Scottish records, not the year.\n\n**Best practice:** Record both forms \u2014\n- *As written:* 14 Feb 1730\n- *Modern Gregorian equivalent:* 25 Feb 1730",
+            "text_response": "Here is the result from the convert-dates agent:\n\n---\n\n**Date:** 14 February 1730, Edinburgh (as written in the record)\n\n**Converted to Gregorian:** **25 February 1730**\n\n**How the conversion works:**\n- Scotland used the **Julian calendar** for day-counting until the British calendar reform of 1752.\n- Applying the Julian-to-Gregorian offset of **+11 days**: 14 Feb → **25 Feb 1730**.\n- The year stays **1730** — no Old Style year shift is needed.\n\n**Was the 1752 year-start change relevant for Scotland?**\nNo — not for the year. Scotland had already been starting its civil year on **1 January since 1600**, well before England's 1752 switch. So for a 1730 Scottish record, the year is simply 1730 (not a double-dated 1729/30 as you'd see in English records of the same era). The 1752 reform only affected the **day count** for Scottish records, not the year.\n\n**Best practice:** Record both forms —\n- *As written:* 14 Feb 1730\n- *Modern Gregorian equivalent:* 25 Feb 1730",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -7414,7 +7414,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-06.b9b8850e"
                 }
@@ -7454,7 +7454,7 @@
                   "applied": [
                     {
                       "correction": "julianToGregorianDay",
-                      "rule": "Julian \u2192 Gregorian: +11 days",
+                      "rule": "Julian → Gregorian: +11 days",
                       "offsetDays": 11
                     }
                   ],
@@ -7479,7 +7479,7 @@
             "agent_returns": [
               {
                 "subagent_type": "convert-dates",
-                "text": "No project exists at that path, so nothing was logged.\n\nStep-by-step result:\n- Original: 14 Feb 1730 (Julian, Scotland, Edinburgh).\n- Rule applied: Julian \u2192 Gregorian: +11 days (offsetDays 11).\n- Converted: 25 Feb 1730 (Gregorian).\n- Year-start change: it was not relevant for Scotland. The tool reports that Scotland began its civil year on 1 January from 1600. A 1730 date therefore needs no Old Style year shift, and the year stays 1730, not 1729/30.\n- The 1752 British correction affects only the day count. Scotland kept Julian day reckoning until then, which is why the 11-day shift applies.\n- Keep both forms on the record: 14 Feb 1730 as written and 25 Feb 1730 as the Gregorian equivalent.\n\n---\n\nThe record says 14 February 1730. It was written in the Julian calendar, which Scotland still used for counting days at that time. In today's Gregorian calendar the same day is 25 February 1730. Eleven days were added to line the old calendar up with ours. The year does not change, because Scotland had already been starting its year on 1 January since 1600. The 1752 change therefore only mattered for the days, not the year.\n\nNext, you can record 25 Feb 1730 as the modern-calendar date and keep 14 Feb 1730 as the date as written."
+                "text": "No project exists at that path, so nothing was logged.\n\nStep-by-step result:\n- Original: 14 Feb 1730 (Julian, Scotland, Edinburgh).\n- Rule applied: Julian → Gregorian: +11 days (offsetDays 11).\n- Converted: 25 Feb 1730 (Gregorian).\n- Year-start change: it was not relevant for Scotland. The tool reports that Scotland began its civil year on 1 January from 1600. A 1730 date therefore needs no Old Style year shift, and the year stays 1730, not 1729/30.\n- The 1752 British correction affects only the day count. Scotland kept Julian day reckoning until then, which is why the 11-day shift applies.\n- Keep both forms on the record: 14 Feb 1730 as written and 25 Feb 1730 as the Gregorian equivalent.\n\n---\n\nThe record says 14 February 1730. It was written in the Julian calendar, which Scotland still used for counting days at that time. In today's Gregorian calendar the same day is 25 February 1730. Eleven days were added to line the old calendar up with ours. The year does not change, because Scotland had already been starting its year on 1 January since 1600. The 1752 change therefore only mattered for the days, not the year.\n\nNext, you can record 25 Feb 1730 as the modern-calendar date and keep 14 Feb 1730 as the date as written."
               }
             ]
           },
@@ -7687,7 +7687,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified that Scotland changed its legal year-start to 1 January in 1600, so the Old Style year correction does not apply to 1730 Scottish dates. It correctly applied the +11 day Julian-to-Gregorian shift (the offset for 18th-century dates after Feb 29 Julian 1700). The conversion 14 Feb 1730 \u2192 25 Feb 1730 is accurate. All claims are supported by the tool response, which explicitly states 'Scotland began its civil year on 1 January from 1600, so a 1730 date needs no Old Style year shift' and applied the julianToGregorianDay correction with +11 days. No fabricated material."
+                "rationale": "The skill correctly identified that Scotland changed its legal year-start to 1 January in 1600, so the Old Style year correction does not apply to 1730 Scottish dates. It correctly applied the +11 day Julian-to-Gregorian shift (the offset for 18th-century dates after Feb 29 Julian 1700). The conversion 14 Feb 1730 → 25 Feb 1730 is accurate. All claims are supported by the tool response, which explicitly states 'Scotland began its civil year on 1 January from 1600, so a 1730 date needs no Old Style year shift' and applied the julianToGregorianDay correction with +11 days. No fabricated material."
               },
               {
                 "source": "base",
@@ -7705,7 +7705,7 @@
                 "source": "rubric",
                 "name": "Conversion accuracy",
                 "score": 3,
-                "rationale": "The skill applied the correct offset of +11 days for an 18th-century Scottish date. This is the correct offset after Feb 29 Julian 1700. The tool response confirms 'Julian \u2192 Gregorian: +11 days' was applied. The conversion is accurate for the jurisdiction and year combination."
+                "rationale": "The skill applied the correct offset of +11 days for an 18th-century Scottish date. This is the correct offset after Feb 29 Julian 1700. The tool response confirms 'Julian → Gregorian: +11 days' was applied. The conversion is accurate for the jurisdiction and year combination."
               },
               {
                 "source": "rubric",
@@ -7723,7 +7723,7 @@
                 "source": "rubric",
                 "name": "Tool response interpretation",
                 "score": 3,
-                "rationale": "The skill correctly presented what convert_calendar returned. The stated rule 'Julian \u2192 Gregorian: +11 days' and offset of 11 days trace directly to the tool's applied[] entry. The response correctly noted that osNsYear was not applied, citing the tool's note that 'Scotland began its civil year on 1 January from 1600, so a 1730 date needs no Old Style year shift.' The response did not perform hand arithmetic; it relied on the tool's response_summary values."
+                "rationale": "The skill correctly presented what convert_calendar returned. The stated rule 'Julian → Gregorian: +11 days' and offset of 11 days trace directly to the tool's applied[] entry. The response correctly noted that osNsYear was not applied, citing the tool's note that 'Scotland began its civil year on 1 January from 1600, so a 1730 date needs no Old Style year shift.' The response did not perform hand arithmetic; it relied on the tool's response_summary values."
               }
             ],
             "judge_cost_usd": 0.009688800000000001,
@@ -7781,7 +7781,7 @@
             "source": "rubric",
             "name": "Ambiguity handling",
             "score": null,
-            "rationale": "The input date '15 February 1750/1' contains no genuine ambiguity\u2014it is explicitly dual-dated by the source, making the interpretation deterministic. The skill correctly resolved it to 1751 per the established convention. No alternative interpretations exist that the skill should have flagged. N/A applies."
+            "rationale": "The input date '15 February 1750/1' contains no genuine ambiguity—it is explicitly dual-dated by the source, making the interpretation deterministic. The skill correctly resolved it to 1751 per the established convention. No alternative interpretations exist that the skill should have flagged. N/A applies."
           },
           {
             "source": "rubric",
@@ -7793,7 +7793,7 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The response accurately presents what convert_calendar returned: the rule from applied[] ('Double-dated year resolved to the later (New Style) year (+1)'), the year adjustment (1750 \u2192 1751), and the unchanged day and month. Claude does not perform hand arithmetic; it attributes the conversion to the tool's result. The response correctly states the day was not shifted to Gregorian, which aligns with the tool's output showing day: 15 unchanged."
+            "rationale": "The response accurately presents what convert_calendar returned: the rule from applied[] ('Double-dated year resolved to the later (New Style) year (+1)'), the year adjustment (1750 → 1751), and the unchanged day and month. Claude does not perform hand arithmetic; it attributes the conversion to the tool's result. The response correctly states the day was not shifted to Gregorian, which aligns with the tool's output showing day: 15 unchanged."
           }
         ],
         "review_dimensions": [
@@ -7825,7 +7825,7 @@
             "source": "rubric",
             "name": "Ambiguity handling",
             "score": null,
-            "rationale": "The input date '15 February 1750/1' contains no genuine ambiguity\u2014it is explicitly dual-dated by the source, making the interpretation deterministic. The skill correctly resolved it to 1751 per the established convention. No alternative interpretations exist that the skill should have flagged. N/A applies."
+            "rationale": "The input date '15 February 1750/1' contains no genuine ambiguity—it is explicitly dual-dated by the source, making the interpretation deterministic. The skill correctly resolved it to 1751 per the established convention. No alternative interpretations exist that the skill should have flagged. N/A applies."
           },
           {
             "source": "rubric",
@@ -7837,13 +7837,13 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The response accurately presents what convert_calendar returned: the rule from applied[] ('Double-dated year resolved to the later (New Style) year (+1)'), the year adjustment (1750 \u2192 1751), and the unchanged day and month. Claude does not perform hand arithmetic; it attributes the conversion to the tool's result. The response correctly states the day was not shifted to Gregorian, which aligns with the tool's output showing day: 15 unchanged."
+            "rationale": "The response accurately presents what convert_calendar returned: the rule from applied[] ('Double-dated year resolved to the later (New Style) year (+1)'), the year adjustment (1750 → 1751), and the unchanged day and month. Claude does not perform hand arithmetic; it attributes the conversion to the tool's result. The response correctly states the day was not shifted to Gregorian, which aligns with the tool's output showing day: 15 unchanged."
           }
         ]
       },
       "totals": {
         "duration_ms": 20194.89272100327,
-        "duration_api_ms": 18099.0,
+        "duration_api_ms": 18099,
         "judge_duration_ms": 10657.678206989658,
         "wall_clock_ms": 30865.914821624756,
         "num_turns": 2,
@@ -7866,7 +7866,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 20194.89272100327,
-          "duration_api_ms": 18099.0,
+          "duration_api_ms": 18099,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1495,
@@ -7956,7 +7956,7 @@
           },
           "skill_cost_usd": 0.1454378,
           "output": {
-            "text_response": "**15 February 1750/1** is a **double date** \u2014 a convention used in England before the calendar reform of 1752.\n\n**What it means:**\n- Before 1752, England's legal year began on **25 March**, not 1 January.\n- Dates falling between 1 January and 24 March sat in a gap: the old year by English law, but the new year by modern reckoning.\n- Clerks who were aware of this often wrote **both years** (\"1750/1\") to avoid ambiguity.\n\n**Which year to use:**\n- **In your research notes, use 1751** \u2014 the modern (New Style) year.\n- Also preserve the original notation: record the source date as **15 Feb 1750/1**, then note the modern equivalent as **15 February 1751**.\n\nThis way your citation faithfully reflects what the record says, and your comparative work (timelines, ages, other records) uses the correct modern year.",
+            "text_response": "**15 February 1750/1** is a **double date** — a convention used in England before the calendar reform of 1752.\n\n**What it means:**\n- Before 1752, England's legal year began on **25 March**, not 1 January.\n- Dates falling between 1 January and 24 March sat in a gap: the old year by English law, but the new year by modern reckoning.\n- Clerks who were aware of this often wrote **both years** (\"1750/1\") to avoid ambiguity.\n\n**Which year to use:**\n- **In your research notes, use 1751** — the modern (New Style) year.\n- Also preserve the original notation: record the source date as **15 Feb 1750/1**, then note the modern equivalent as **15 February 1751**.\n\nThis way your citation faithfully reflects what the record says, and your comparative work (timelines, ages, other records) uses the correct modern year.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -7975,7 +7975,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-06.b9b8850e"
                 }
@@ -8273,7 +8273,7 @@
                 "source": "rubric",
                 "name": "Ambiguity handling",
                 "score": null,
-                "rationale": "The input date '15 February 1750/1' contains no genuine ambiguity\u2014it is explicitly dual-dated by the source, making the interpretation deterministic. The skill correctly resolved it to 1751 per the established convention. No alternative interpretations exist that the skill should have flagged. N/A applies."
+                "rationale": "The input date '15 February 1750/1' contains no genuine ambiguity—it is explicitly dual-dated by the source, making the interpretation deterministic. The skill correctly resolved it to 1751 per the established convention. No alternative interpretations exist that the skill should have flagged. N/A applies."
               },
               {
                 "source": "rubric",
@@ -8285,7 +8285,7 @@
                 "source": "rubric",
                 "name": "Tool response interpretation",
                 "score": 3,
-                "rationale": "The response accurately presents what convert_calendar returned: the rule from applied[] ('Double-dated year resolved to the later (New Style) year (+1)'), the year adjustment (1750 \u2192 1751), and the unchanged day and month. Claude does not perform hand arithmetic; it attributes the conversion to the tool's result. The response correctly states the day was not shifted to Gregorian, which aligns with the tool's output showing day: 15 unchanged."
+                "rationale": "The response accurately presents what convert_calendar returned: the rule from applied[] ('Double-dated year resolved to the later (New Style) year (+1)'), the year adjustment (1750 → 1751), and the unchanged day and month. Claude does not perform hand arithmetic; it attributes the conversion to the tool's result. The response correctly states the day was not shifted to Gregorian, which aligns with the tool's output showing day: 15 unchanged."
               }
             ],
             "judge_cost_usd": 0.0086708,
@@ -8319,7 +8319,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified 30 February 1712 as a real Swedish date, not an OCR error. The tool response confirms the historical fact: Sweden ran its own calendar from 1 Mar 1700\u201330 Feb 1712 (one day ahead of Julian, ten behind Gregorian), and added an extra day to February 1712 to revert to Julian. The conversion Swedish 30 Feb 1712 \u2192 Julian 29 Feb 1712 \u2192 Gregorian 11 Mar 1712 is accurate and matches the tool's applied rule (Julian\u2192Gregorian +10 days). All factual claims are supported by the tool response."
+            "rationale": "The skill correctly identified 30 February 1712 as a real Swedish date, not an OCR error. The tool response confirms the historical fact: Sweden ran its own calendar from 1 Mar 1700–30 Feb 1712 (one day ahead of Julian, ten behind Gregorian), and added an extra day to February 1712 to revert to Julian. The conversion Swedish 30 Feb 1712 → Julian 29 Feb 1712 → Gregorian 11 Mar 1712 is accurate and matches the tool's applied rule (Julian→Gregorian +10 days). All factual claims are supported by the tool response."
           },
           {
             "source": "base",
@@ -8337,13 +8337,13 @@
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The skill applied the correct conversion rule for Sweden in 1712: Julian\u2192Gregorian +10 days. The tool response confirms this is the jurisdiction-specific offset for the Swedish calendar period (1 Mar 1700\u201330 Feb 1712). The conversion from Swedish 30 Feb 1712 to Gregorian 11 Mar 1712 is accurate, using the correct offset for the time period and jurisdiction."
+            "rationale": "The skill applied the correct conversion rule for Sweden in 1712: Julian→Gregorian +10 days. The tool response confirms this is the jurisdiction-specific offset for the Swedish calendar period (1 Mar 1700–30 Feb 1712). The conversion from Swedish 30 Feb 1712 to Gregorian 11 Mar 1712 is accurate, using the correct offset for the time period and jurisdiction."
           },
           {
             "source": "rubric",
             "name": "Ambiguity handling",
             "score": null,
-            "rationale": "No genuine ambiguity exists in the input. The date 30 February 1712 in Sweden is deterministic\u2014it has one correct interpretation as a real Swedish calendar date. The skill was not required to flag alternative interpretations because none exist. N/A."
+            "rationale": "No genuine ambiguity exists in the input. The date 30 February 1712 in Sweden is deterministic—it has one correct interpretation as a real Swedish calendar date. The skill was not required to flag alternative interpretations because none exist. N/A."
           },
           {
             "source": "rubric",
@@ -8355,7 +8355,7 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented what the convert_calendar tool returned. The stated rule ('Julian \u2192 Gregorian, +10 days') and offset (10 days) trace directly to the tool's applied[] entry. The conversion result (11 Mar 1712) matches the tool's converted value. The skill did not perform hand arithmetic; it relied on the tool's response and accurately reported its findings."
+            "rationale": "The skill correctly presented what the convert_calendar tool returned. The stated rule ('Julian → Gregorian, +10 days') and offset (10 days) trace directly to the tool's applied[] entry. The conversion result (11 Mar 1712) matches the tool's converted value. The skill did not perform hand arithmetic; it relied on the tool's response and accurately reported its findings."
           }
         ],
         "review_dimensions": [
@@ -8363,7 +8363,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified 30 February 1712 as a real Swedish date, not an OCR error. The tool response confirms the historical fact: Sweden ran its own calendar from 1 Mar 1700\u201330 Feb 1712 (one day ahead of Julian, ten behind Gregorian), and added an extra day to February 1712 to revert to Julian. The conversion Swedish 30 Feb 1712 \u2192 Julian 29 Feb 1712 \u2192 Gregorian 11 Mar 1712 is accurate and matches the tool's applied rule (Julian\u2192Gregorian +10 days). All factual claims are supported by the tool response."
+            "rationale": "The skill correctly identified 30 February 1712 as a real Swedish date, not an OCR error. The tool response confirms the historical fact: Sweden ran its own calendar from 1 Mar 1700–30 Feb 1712 (one day ahead of Julian, ten behind Gregorian), and added an extra day to February 1712 to revert to Julian. The conversion Swedish 30 Feb 1712 → Julian 29 Feb 1712 → Gregorian 11 Mar 1712 is accurate and matches the tool's applied rule (Julian→Gregorian +10 days). All factual claims are supported by the tool response."
           },
           {
             "source": "base",
@@ -8381,13 +8381,13 @@
             "source": "rubric",
             "name": "Conversion accuracy",
             "score": 3,
-            "rationale": "The skill applied the correct conversion rule for Sweden in 1712: Julian\u2192Gregorian +10 days. The tool response confirms this is the jurisdiction-specific offset for the Swedish calendar period (1 Mar 1700\u201330 Feb 1712). The conversion from Swedish 30 Feb 1712 to Gregorian 11 Mar 1712 is accurate, using the correct offset for the time period and jurisdiction."
+            "rationale": "The skill applied the correct conversion rule for Sweden in 1712: Julian→Gregorian +10 days. The tool response confirms this is the jurisdiction-specific offset for the Swedish calendar period (1 Mar 1700–30 Feb 1712). The conversion from Swedish 30 Feb 1712 to Gregorian 11 Mar 1712 is accurate, using the correct offset for the time period and jurisdiction."
           },
           {
             "source": "rubric",
             "name": "Ambiguity handling",
             "score": null,
-            "rationale": "No genuine ambiguity exists in the input. The date 30 February 1712 in Sweden is deterministic\u2014it has one correct interpretation as a real Swedish calendar date. The skill was not required to flag alternative interpretations because none exist. N/A."
+            "rationale": "No genuine ambiguity exists in the input. The date 30 February 1712 in Sweden is deterministic—it has one correct interpretation as a real Swedish calendar date. The skill was not required to flag alternative interpretations because none exist. N/A."
           },
           {
             "source": "rubric",
@@ -8399,13 +8399,13 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presented what the convert_calendar tool returned. The stated rule ('Julian \u2192 Gregorian, +10 days') and offset (10 days) trace directly to the tool's applied[] entry. The conversion result (11 Mar 1712) matches the tool's converted value. The skill did not perform hand arithmetic; it relied on the tool's response and accurately reported its findings."
+            "rationale": "The skill correctly presented what the convert_calendar tool returned. The stated rule ('Julian → Gregorian, +10 days') and offset (10 days) trace directly to the tool's applied[] entry. The conversion result (11 Mar 1712) matches the tool's converted value. The skill did not perform hand arithmetic; it relied on the tool's response and accurately reported its findings."
           }
         ]
       },
       "totals": {
         "duration_ms": 18216.100965990336,
-        "duration_api_ms": 15554.0,
+        "duration_api_ms": 15554,
         "judge_duration_ms": 10034.198398992885,
         "wall_clock_ms": 28678.29418182373,
         "num_turns": 2,
@@ -8428,7 +8428,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 18216.100965990336,
-          "duration_api_ms": 15554.0,
+          "duration_api_ms": 15554,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1504,
@@ -8518,7 +8518,7 @@
           },
           "skill_cost_usd": 0.1714176,
           "output": {
-            "text_response": "**It is not an OCR error. 30 February 1712 was a real date in Sweden.**\n\nHere is what the convert-dates agent found:\n\n**The date is genuine.** Sweden, from 1700 to 1712, ran its own intermediate calendar \u2014 one day ahead of Julian but still 10 days behind Gregorian. To revert to the Julian calendar, Sweden *added* an extra day to February 1712, creating **30 February 1712** \u2014 a day that existed nowhere else in the world.\n\n- **Record date:** 30 Feb 1712 (Swedish calendar)\n- **Modern equivalent:** 11 March 1712 (Gregorian)\n\n**How to record it:** Treat the date as valid. You can note it as *30 Feb 1712 (Swedish calendar)* with the modern equivalent of *11 Mar 1712 (N.S.)* for clarity.",
+            "text_response": "**It is not an OCR error. 30 February 1712 was a real date in Sweden.**\n\nHere is what the convert-dates agent found:\n\n**The date is genuine.** Sweden, from 1700 to 1712, ran its own intermediate calendar — one day ahead of Julian but still 10 days behind Gregorian. To revert to the Julian calendar, Sweden *added* an extra day to February 1712, creating **30 February 1712** — a day that existed nowhere else in the world.\n\n- **Record date:** 30 Feb 1712 (Swedish calendar)\n- **Modern equivalent:** 11 March 1712 (Gregorian)\n\n**How to record it:** Treat the date as valid. You can note it as *30 Feb 1712 (Swedish calendar)* with the modern equivalent of *11 Mar 1712 (N.S.)* for clarity.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -8537,7 +8537,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-06.b9b8850e"
                 }
@@ -8576,12 +8576,12 @@
                   "applied": [
                     {
                       "correction": "julianToGregorianDay",
-                      "rule": "Julian \u2192 Gregorian: +10 days",
+                      "rule": "Julian → Gregorian: +10 days",
                       "offsetDays": 10
                     }
                   ],
                   "notes": [
-                    "Sweden: swedish day reckoning on the date as written. 1 Mar 1700\u201330 Feb 1712 Sweden ran its own calendar, 1 day ahead of Julian and 10 behind Gregorian. 30 Feb 1712 is a REAL Swedish date, inserted to revert to Julian: Swedish 30 Feb 1712 = Julian 29 Feb 1712 = Gregorian 11 Mar 1712. Gregorian from 1753 (17 Feb 1753 was followed by 1 Mar 1753).",
+                    "Sweden: swedish day reckoning on the date as written. 1 Mar 1700–30 Feb 1712 Sweden ran its own calendar, 1 day ahead of Julian and 10 behind Gregorian. 30 Feb 1712 is a REAL Swedish date, inserted to revert to Julian: Swedish 30 Feb 1712 = Julian 29 Feb 1712 = Gregorian 11 Mar 1712. Gregorian from 1753 (17 Feb 1753 was followed by 1 Mar 1753).",
                     "Swedish calendar in force: one day ahead of Julian, ten behind Gregorian. Reduced to its Julian equivalent before the day offset."
                   ]
                 }
@@ -8602,7 +8602,7 @@
             "agent_returns": [
               {
                 "subagent_type": "convert-dates",
-                "text": "No project exists at that path, so nothing is logged.\n\n**It is not an OCR error. 30 February 1712 was a real date in Sweden.**\n\n1. Original: 30 Feb 1712 (Swedish calendar, Stockholm).\n2. Rule applied: Julian \u2192 Gregorian, +10 days. The tool's notes say that from 1 Mar 1700 to 30 Feb 1712 Sweden ran its own calendar, 1 day ahead of Julian and 10 days behind Gregorian.\n3. Per the tool, 30 Feb 1712 was inserted to revert Sweden to the Julian calendar. Swedish 30 Feb 1712 = Julian 29 Feb 1712 = **11 Mar 1712 (Gregorian)**.\n\nI applied only the day shift, since you asked only whether the date could be genuine.\n\n---\n\nThe record says 30 February 1712, a day that doesn't exist in any normal calendar. Sweden really did have one. It had been running a calendar of its own, and an extra day was added to February 1712 to put the country back on the Julian calendar. In today's calendar the date is 11 March 1712, so it is a genuine date and not a transcription mistake.\n\nNext, you can treat the date as valid and record it as 30 Feb 1712 (Swedish), with 11 Mar 1712 as the modern equivalent."
+                "text": "No project exists at that path, so nothing is logged.\n\n**It is not an OCR error. 30 February 1712 was a real date in Sweden.**\n\n1. Original: 30 Feb 1712 (Swedish calendar, Stockholm).\n2. Rule applied: Julian → Gregorian, +10 days. The tool's notes say that from 1 Mar 1700 to 30 Feb 1712 Sweden ran its own calendar, 1 day ahead of Julian and 10 days behind Gregorian.\n3. Per the tool, 30 Feb 1712 was inserted to revert Sweden to the Julian calendar. Swedish 30 Feb 1712 = Julian 29 Feb 1712 = **11 Mar 1712 (Gregorian)**.\n\nI applied only the day shift, since you asked only whether the date could be genuine.\n\n---\n\nThe record says 30 February 1712, a day that doesn't exist in any normal calendar. Sweden really did have one. It had been running a calendar of its own, and an extra day was added to February 1712 to put the country back on the Julian calendar. In today's calendar the date is 11 March 1712, so it is a genuine date and not a transcription mistake.\n\nNext, you can treat the date as valid and record it as 30 Feb 1712 (Swedish), with 11 Mar 1712 as the modern equivalent."
               }
             ]
           },
@@ -8810,7 +8810,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified 30 February 1712 as a real Swedish date, not an OCR error. The tool response confirms the historical fact: Sweden ran its own calendar from 1 Mar 1700\u201330 Feb 1712 (one day ahead of Julian, ten behind Gregorian), and added an extra day to February 1712 to revert to Julian. The conversion Swedish 30 Feb 1712 \u2192 Julian 29 Feb 1712 \u2192 Gregorian 11 Mar 1712 is accurate and matches the tool's applied rule (Julian\u2192Gregorian +10 days). All factual claims are supported by the tool response."
+                "rationale": "The skill correctly identified 30 February 1712 as a real Swedish date, not an OCR error. The tool response confirms the historical fact: Sweden ran its own calendar from 1 Mar 1700–30 Feb 1712 (one day ahead of Julian, ten behind Gregorian), and added an extra day to February 1712 to revert to Julian. The conversion Swedish 30 Feb 1712 → Julian 29 Feb 1712 → Gregorian 11 Mar 1712 is accurate and matches the tool's applied rule (Julian→Gregorian +10 days). All factual claims are supported by the tool response."
               },
               {
                 "source": "base",
@@ -8828,13 +8828,13 @@
                 "source": "rubric",
                 "name": "Conversion accuracy",
                 "score": 3,
-                "rationale": "The skill applied the correct conversion rule for Sweden in 1712: Julian\u2192Gregorian +10 days. The tool response confirms this is the jurisdiction-specific offset for the Swedish calendar period (1 Mar 1700\u201330 Feb 1712). The conversion from Swedish 30 Feb 1712 to Gregorian 11 Mar 1712 is accurate, using the correct offset for the time period and jurisdiction."
+                "rationale": "The skill applied the correct conversion rule for Sweden in 1712: Julian→Gregorian +10 days. The tool response confirms this is the jurisdiction-specific offset for the Swedish calendar period (1 Mar 1700–30 Feb 1712). The conversion from Swedish 30 Feb 1712 to Gregorian 11 Mar 1712 is accurate, using the correct offset for the time period and jurisdiction."
               },
               {
                 "source": "rubric",
                 "name": "Ambiguity handling",
                 "score": null,
-                "rationale": "No genuine ambiguity exists in the input. The date 30 February 1712 in Sweden is deterministic\u2014it has one correct interpretation as a real Swedish calendar date. The skill was not required to flag alternative interpretations because none exist. N/A."
+                "rationale": "No genuine ambiguity exists in the input. The date 30 February 1712 in Sweden is deterministic—it has one correct interpretation as a real Swedish calendar date. The skill was not required to flag alternative interpretations because none exist. N/A."
               },
               {
                 "source": "rubric",
@@ -8846,7 +8846,7 @@
                 "source": "rubric",
                 "name": "Tool response interpretation",
                 "score": 3,
-                "rationale": "The skill correctly presented what the convert_calendar tool returned. The stated rule ('Julian \u2192 Gregorian, +10 days') and offset (10 days) trace directly to the tool's applied[] entry. The conversion result (11 Mar 1712) matches the tool's converted value. The skill did not perform hand arithmetic; it relied on the tool's response and accurately reported its findings."
+                "rationale": "The skill correctly presented what the convert_calendar tool returned. The stated rule ('Julian → Gregorian, +10 days') and offset (10 days) trace directly to the tool's applied[] entry. The conversion result (11 Mar 1712) matches the tool's converted value. The skill did not perform hand arithmetic; it relied on the tool's response and accurately reported its findings."
               }
             ],
             "judge_cost_usd": 0.008961,
@@ -8880,13 +8880,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The response correctly identifies that 25 March 1750/1 is anomalous because double dating applies only to 1 January\u201324 March in pre-1752 England. The skill accurately explains that on 25 March the Old Style year increments, so both systems agree and a slash is unexpected. The two possible readings (1750 vs 1751) are both factually defensible. The tool response confirms this interpretation: the convert_calendar tool returned ok: false with the exact error message the skill cites. No fabricated material; all claims are supported by the tool response and historical fact."
+            "rationale": "The response correctly identifies that 25 March 1750/1 is anomalous because double dating applies only to 1 January–24 March in pre-1752 England. The skill accurately explains that on 25 March the Old Style year increments, so both systems agree and a slash is unexpected. The two possible readings (1750 vs 1751) are both factually defensible. The tool response confirms this interpretation: the convert_calendar tool returned ok: false with the exact error message the skill cites. No fabricated material; all claims are supported by the tool response and historical fact."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The response addresses all required elements: explains dual-dating notation and its window (1 Jan\u201324 Mar), recognizes that 25 March falls outside that window, presents both possible readings (1750 and 1751) without foreclosing either, explains how to settle the ambiguity (check surrounding register entries), preserves the original notation '1750/1', and correctly declines to compute a Gregorian day shift since the user asked only about the year. The project context check and calendar conversion attempt were both appropriate."
+            "rationale": "The response addresses all required elements: explains dual-dating notation and its window (1 Jan–24 Mar), recognizes that 25 March falls outside that window, presents both possible readings (1750 and 1751) without foreclosing either, explains how to settle the ambiguity (check surrounding register entries), preserves the original notation '1750/1', and correctly declines to compute a Gregorian day shift since the user asked only about the year. The project context check and calendar conversion attempt were both appropriate."
           },
           {
             "source": "base",
@@ -8916,7 +8916,7 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presents what convert_calendar returned: ok: false with the error message that doubleDatedYear does not apply to 3/25 because double dating covers only Jan 1\u2013Mar 24. The skill cites this tool response directly and does not assert a converted date or perform hand arithmetic. The explanation of why the slash is anomalous comes from the tool's error message, not from the skill's own tables. The response accurately surfaces the tool's finding and explains what it means for this date."
+            "rationale": "The skill correctly presents what convert_calendar returned: ok: false with the error message that doubleDatedYear does not apply to 3/25 because double dating covers only Jan 1–Mar 24. The skill cites this tool response directly and does not assert a converted date or perform hand arithmetic. The explanation of why the slash is anomalous comes from the tool's error message, not from the skill's own tables. The response accurately surfaces the tool's finding and explains what it means for this date."
           }
         ],
         "review_dimensions": [
@@ -8924,13 +8924,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The response correctly identifies that 25 March 1750/1 is anomalous because double dating applies only to 1 January\u201324 March in pre-1752 England. The skill accurately explains that on 25 March the Old Style year increments, so both systems agree and a slash is unexpected. The two possible readings (1750 vs 1751) are both factually defensible. The tool response confirms this interpretation: the convert_calendar tool returned ok: false with the exact error message the skill cites. No fabricated material; all claims are supported by the tool response and historical fact."
+            "rationale": "The response correctly identifies that 25 March 1750/1 is anomalous because double dating applies only to 1 January–24 March in pre-1752 England. The skill accurately explains that on 25 March the Old Style year increments, so both systems agree and a slash is unexpected. The two possible readings (1750 vs 1751) are both factually defensible. The tool response confirms this interpretation: the convert_calendar tool returned ok: false with the exact error message the skill cites. No fabricated material; all claims are supported by the tool response and historical fact."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The response addresses all required elements: explains dual-dating notation and its window (1 Jan\u201324 Mar), recognizes that 25 March falls outside that window, presents both possible readings (1750 and 1751) without foreclosing either, explains how to settle the ambiguity (check surrounding register entries), preserves the original notation '1750/1', and correctly declines to compute a Gregorian day shift since the user asked only about the year. The project context check and calendar conversion attempt were both appropriate."
+            "rationale": "The response addresses all required elements: explains dual-dating notation and its window (1 Jan–24 Mar), recognizes that 25 March falls outside that window, presents both possible readings (1750 and 1751) without foreclosing either, explains how to settle the ambiguity (check surrounding register entries), preserves the original notation '1750/1', and correctly declines to compute a Gregorian day shift since the user asked only about the year. The project context check and calendar conversion attempt were both appropriate."
           },
           {
             "source": "base",
@@ -8960,13 +8960,13 @@
             "source": "rubric",
             "name": "Tool response interpretation",
             "score": 3,
-            "rationale": "The skill correctly presents what convert_calendar returned: ok: false with the error message that doubleDatedYear does not apply to 3/25 because double dating covers only Jan 1\u2013Mar 24. The skill cites this tool response directly and does not assert a converted date or perform hand arithmetic. The explanation of why the slash is anomalous comes from the tool's error message, not from the skill's own tables. The response accurately surfaces the tool's finding and explains what it means for this date."
+            "rationale": "The skill correctly presents what convert_calendar returned: ok: false with the error message that doubleDatedYear does not apply to 3/25 because double dating covers only Jan 1–Mar 24. The skill cites this tool response directly and does not assert a converted date or perform hand arithmetic. The explanation of why the slash is anomalous comes from the tool's error message, not from the skill's own tables. The response accurately surfaces the tool's finding and explains what it means for this date."
           }
         ]
       },
       "totals": {
         "duration_ms": 26482.956673004082,
-        "duration_api_ms": 23594.0,
+        "duration_api_ms": 23594,
         "judge_duration_ms": 11866.56038700312,
         "wall_clock_ms": 38700.21343231201,
         "num_turns": 2,
@@ -8989,7 +8989,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 26482.956673004082,
-          "duration_api_ms": 23594.0,
+          "duration_api_ms": 23594,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1495,
@@ -9079,7 +9079,7 @@
           },
           "skill_cost_usd": 0.15257719999999997,
           "output": {
-            "text_response": "The date **25 March 1750/1** on your English marriage record is unusual, and here's what it means:\n\n---\n\n### Background: Old Style year-start in England\nBefore the Calendar (New Style) Act 1752, England's legal year began on **25 March** (Lady Day). This is why clerks used *double dating* \u2014 writing two years, like **1748/9** \u2014 but only for dates falling between **1 January and 24 March**, when Old Style and New Style reckoning disagreed.\n\n---\n\n### Why this date is odd\n**25 March was New Year's Day itself.** Both Old Style and New Style agree on the year from that date forward, so a double year on 25 March is unexpected. The clerk may have been:\n- Still writing the outgoing year (**1750**), or\n- Already switching to the new year (**1751**)\n\nThe calendar conversion tool confirmed it cannot resolve which year is correct from this entry alone.\n\n---\n\n### What to do\n\n1. **Do not choose a year yet.** Transcribe the date exactly as written: *25 March 1750/1*.\n2. **Check the neighbouring register entries.** Look at the pages just before and after this marriage entry to see when the year number turns over \u2014 that will tell you whether the clerk was still writing 1750 or had already moved to 1751.\n3. **Add a research note** flagging that the year is unresolved between 1750 and 1751 pending the register check.\n\nNo day shift is involved \u2014 only the year is in question.",
+            "text_response": "The date **25 March 1750/1** on your English marriage record is unusual, and here's what it means:\n\n---\n\n### Background: Old Style year-start in England\nBefore the Calendar (New Style) Act 1752, England's legal year began on **25 March** (Lady Day). This is why clerks used *double dating* — writing two years, like **1748/9** — but only for dates falling between **1 January and 24 March**, when Old Style and New Style reckoning disagreed.\n\n---\n\n### Why this date is odd\n**25 March was New Year's Day itself.** Both Old Style and New Style agree on the year from that date forward, so a double year on 25 March is unexpected. The clerk may have been:\n- Still writing the outgoing year (**1750**), or\n- Already switching to the new year (**1751**)\n\nThe calendar conversion tool confirmed it cannot resolve which year is correct from this entry alone.\n\n---\n\n### What to do\n\n1. **Do not choose a year yet.** Transcribe the date exactly as written: *25 March 1750/1*.\n2. **Check the neighbouring register entries.** Look at the pages just before and after this marriage entry to see when the year number turns over — that will tell you whether the clerk was still writing 1750 or had already moved to 1751.\n3. **Add a research note** flagging that the year is unresolved between 1750 and 1751 pending the register check.\n\nNo day shift is involved — only the year is in question.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -9098,7 +9098,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ],
                   "buildId": "0.1.0+2026-11-06.b9b8850e"
                 }
@@ -9126,7 +9126,7 @@
                 "response": {
                   "ok": false,
                   "errors": [
-                    "doubleDatedYear does not apply to 3/25: double dating covers Jan 1\u2013Mar 24 only. On March 25 the Old-Style year increments, so the Old-Style and New-Style years agree from that date onward. A slash written outside the window is anomalous \u2014 check where the year turns over in the surrounding register entries rather than resolving it."
+                    "doubleDatedYear does not apply to 3/25: double dating covers Jan 1–Mar 24 only. On March 25 the Old-Style year increments, so the Old-Style and New-Style years agree from that date onward. A slash written outside the window is anomalous — check where the year turns over in the surrounding register entries rather than resolving it."
                   ]
                 }
               }
@@ -9354,13 +9354,13 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The response correctly identifies that 25 March 1750/1 is anomalous because double dating applies only to 1 January\u201324 March in pre-1752 England. The skill accurately explains that on 25 March the Old Style year increments, so both systems agree and a slash is unexpected. The two possible readings (1750 vs 1751) are both factually defensible. The tool response confirms this interpretation: the convert_calendar tool returned ok: false with the exact error message the skill cites. No fabricated material; all claims are supported by the tool response and historical fact."
+                "rationale": "The response correctly identifies that 25 March 1750/1 is anomalous because double dating applies only to 1 January–24 March in pre-1752 England. The skill accurately explains that on 25 March the Old Style year increments, so both systems agree and a slash is unexpected. The two possible readings (1750 vs 1751) are both factually defensible. The tool response confirms this interpretation: the convert_calendar tool returned ok: false with the exact error message the skill cites. No fabricated material; all claims are supported by the tool response and historical fact."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The response addresses all required elements: explains dual-dating notation and its window (1 Jan\u201324 Mar), recognizes that 25 March falls outside that window, presents both possible readings (1750 and 1751) without foreclosing either, explains how to settle the ambiguity (check surrounding register entries), preserves the original notation '1750/1', and correctly declines to compute a Gregorian day shift since the user asked only about the year. The project context check and calendar conversion attempt were both appropriate."
+                "rationale": "The response addresses all required elements: explains dual-dating notation and its window (1 Jan–24 Mar), recognizes that 25 March falls outside that window, presents both possible readings (1750 and 1751) without foreclosing either, explains how to settle the ambiguity (check surrounding register entries), preserves the original notation '1750/1', and correctly declines to compute a Gregorian day shift since the user asked only about the year. The project context check and calendar conversion attempt were both appropriate."
               },
               {
                 "source": "base",
@@ -9390,7 +9390,7 @@
                 "source": "rubric",
                 "name": "Tool response interpretation",
                 "score": 3,
-                "rationale": "The skill correctly presents what convert_calendar returned: ok: false with the error message that doubleDatedYear does not apply to 3/25 because double dating covers only Jan 1\u2013Mar 24. The skill cites this tool response directly and does not assert a converted date or perform hand arithmetic. The explanation of why the slash is anomalous comes from the tool's error message, not from the skill's own tables. The response accurately surfaces the tool's finding and explains what it means for this date."
+                "rationale": "The skill correctly presents what convert_calendar returned: ok: false with the error message that doubleDatedYear does not apply to 3/25 because double dating covers only Jan 1–Mar 24. The skill cites this tool response directly and does not assert a converted date or perform hand arithmetic. The explanation of why the slash is anomalous comes from the tool's error message, not from the skill's own tables. The response accurately surfaces the tool's finding and explains what it means for this date."
               }
             ],
             "judge_cost_usd": 0.0098078,
@@ -9410,7 +9410,7 @@
   ],
   "totals": {
     "duration_ms": 327835.41752098245,
-    "duration_api_ms": 284602.0,
+    "duration_api_ms": 284602,
     "judge_duration_ms": 160367.303840947,
     "num_turns": 34,
     "input_tokens": 25466,
