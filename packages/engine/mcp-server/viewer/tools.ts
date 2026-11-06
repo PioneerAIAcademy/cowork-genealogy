@@ -57,8 +57,8 @@ export const toolSchemas = [
 
 export interface ToolContext {
   rootReal: string;
-  /** A signed link to one page image. Absent on stdio, which has no route to serve it. */
-  signImage?: (project: ProjectRef, ref: string) => { url: string; expiresAt: number };
+  /** A signed link to one page image. */
+  signImage: (project: ProjectRef, ref: string) => { url: string; expiresAt: number };
 }
 
 type Args = Record<string, unknown>;
@@ -77,9 +77,7 @@ const padField = (pad: number | undefined) => (pad === undefined ? {} : { pad: "
 function viewContext({ rootReal, signImage }: ToolContext): ProjectViewContext {
   return {
     resolveProject: async (projectPath) => (await resolveProject(rootReal, projectPath)).real,
-    ...(signImage
-      ? { signImage: (real: string, ref: string) => signImage({ real, rel: relative(rootReal, real) }, ref) }
-      : {}),
+    signImage: (real, ref) => signImage({ real, rel: relative(rootReal, real) }, ref),
   };
 }
 

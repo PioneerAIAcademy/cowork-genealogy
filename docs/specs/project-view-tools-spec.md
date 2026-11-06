@@ -328,8 +328,7 @@ differ, and the tool server accepts none of them:
 - `pad`, `structuredCanary` and the canary strings are its probes. `pad` is added after
   the cut, so the size probe still works, and `echo` keeps every argument.
 - Its image route is `/img/<token>`, with its own key, and the claim's `project` is the
-  path relative to `--root`. Over stdio it has no route, so `part: "image"` answers
-  `This server has no route to page images.`
+  path relative to `--root`.
 - A failed call answers the failure's message, with the root's path taken out.
 - It reads `viewer/page/viewer.html` once at start-up and refuses to start without it.
   `resources/list` and `resources/read` are always on.

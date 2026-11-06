@@ -3,7 +3,6 @@
 // the declared extensions and the user agent are client text, logged as sent, because
 // they are what M0 is here to record. Only a caller holding the secret reaches them.
 import type { Transport } from "@modelcontextprotocol/sdk/shared/transport.js";
-import type { JSONRPCMessage } from "@modelcontextprotocol/sdk/types.js";
 import { READ_PROJECT_VIEW, SHOW_PROJECT } from "../src/tools/project-view.js";
 
 export type LogFields = Record<string, unknown>;
@@ -72,32 +71,11 @@ export function describeRpc(body: unknown): LogFields {
   return { method };
 }
 
-/** Calls `onSend` with each message `transport` sends and its size in bytes. */
-export function observeSends(transport: Transport, onSend: (message: JSONRPCMessage, bytes: number) => void): void {
+/** Calls `onSend` with the size in bytes of each message `transport` sends. */
+export function observeSends(transport: Transport, onSend: (bytes: number) => void): void {
   const send = transport.send.bind(transport);
   transport.send = (message, options) => {
-    onSend(message, Buffer.byteLength(JSON.stringify(message), "utf8"));
+    onSend(Buffer.byteLength(JSON.stringify(message), "utf8"));
     return send(message, options);
   };
-}
-
-/**
- * One log line per message on a long-lived transport, written when the response
- * goes out so it carries the size. Set before `server.connect`, which chains this
- * `onmessage` ahead of its own.
- */
-export function logExchanges(transport: Transport, write: (fields: LogFields) => void): void {
-  const pending = new Map<string | number, LogFields>();
-  transport.onmessage = (message) => {
-    const fields = describeRpc(message);
-    if ("id" in message && message.id !== undefined) pending.set(message.id, fields);
-    else write(fields);
-  };
-  observeSends(transport, (message, bytes) => {
-    if (!("id" in message) || message.id === undefined) return;
-    const fields = pending.get(message.id);
-    if (!fields) return;
-    pending.delete(message.id);
-    write({ ...fields, resultBytes: bytes });
-  });
 }

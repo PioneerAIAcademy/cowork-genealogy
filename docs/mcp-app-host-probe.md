@@ -3,9 +3,9 @@
 **The repo is public: never write a connector URL, a tunnel hostname, a secret or a
 real person's data in this file.**
 
-M0 of `docs/plan/mcp-app-viewer.md`. The run sheet walks the live legs in Cowork; the
-record holds the answers. Every answer starts empty, and M0 is not done until every
-one is filled.
+M0 of `docs/plan/mcp-app-viewer.md`. The run sheet walks the live legs in claude.ai chat
+and Desktop Chat; the record holds the answers. M0 closes when every row of the record
+has an answer, and a failure is an answer.
 
 ## Run sheet
 
@@ -132,7 +132,7 @@ a missing card in Cowork is about Cowork. An open bug report says a Cowork sessi
 replace the connector's shared tool list and stop cards in Chat, so reconnect the
 connector if Chat stops drawing them.
 
-Open every task on `~/mcp-probe/mcandrew`, with the connector on.
+Open every conversation with the connector on.
 
 9. **Card.** New task:
 
@@ -217,7 +217,7 @@ Open every task on `~/mcp-probe/mcandrew`, with the connector on.
     | First call: none | The model gets no `content`, so the one line never arrives. The plan's result shape fails. |
     | Second call: STRUCTURED, no CONTENT | `structuredContent` replaces `content`. `show_project` keeps omitting it. |
     | Second call: STRUCTURED and CONTENT | The host passes both. `show_project` keeps omitting it, since anything there reaches the model. |
-    | Second call: CONTENT, no STRUCTURED | The host gives the model `content` only, and the omission is harmless. |
+    | Second call: CONTENT, no STRUCTURED | The host gives the model `content` only, and the omission is harmless. On a cloud task a server-side gate can also produce this, so it does not prove a different host. |
     | Either call: META | `_meta` reaches the model, so every card would put the whole project in its context. The result shape has to change before M1. |
 
     Fills **What the model receives**.
@@ -280,16 +280,16 @@ Open every task on `~/mcp-probe/mcandrew`, with the connector on.
 
     Fills **Fullscreen**.
 
-18. **Connector off.** New task. Find the per-task connector switch (the help centre
-    documents a per-conversation toggle), turn `Genealogy Viewer` off, and type the
-    line below. Then check that a second new task still has it on. Fills **Connector
-    off for one task**.
+18. **Connector off.** New conversation. Find the per-conversation connector switch,
+    which the help centre documents, turn `Genealogy Viewer` off, and type the line
+    below. Then check that a second new conversation still has it on. Fills **Connector
+    off for one conversation**.
 
     ```text
     Use ToolSearch with the query +show_project and tell me whether you found it.
     ```
 
-19. **`AskUserQuestion`.** New task:
+19. **`AskUserQuestion`.** New conversation:
 
     ```text
     Use AskUserQuestion to ask me which of these to do next: "Search the census", "Check city directories", "Write up what we have". Then tell me the exact text you received as my answer.
@@ -298,58 +298,50 @@ Open every task on `~/mcp-probe/mcandrew`, with the connector on.
     Pick one. Note how the options show and what text comes back. Fills
     **`AskUserQuestion`**.
 
-20. **Variant plugin.** It carries only the "where the project stands" line for M0.
-    The plugin and the `.mcpb` are a pair. If the installed extension predates the
-    viewer, also install `releases/genealogy-mcp.mcpb`, built by `make mcpb`, by the
-    click-path `make cowork-install` prints: Claude Desktop → Settings → Extensions →
-    Advanced Settings → Install extension.
+20. **Variant plugin.** This step runs on the sign-in probe
+    (`dev/probe-connector-server.ts`), not on `Genealogy Viewer`: a chat has no project
+    folder and the thin server has no `project_context`, while the probe lists every tool
+    under one connector. The plugin is the local branch `mcp-app-router-variant`, one
+    commit on `main`, never a PR. In `packages/engine/plugin/skills/research/SKILL.md`,
+    under "Bounded request or job", its "where the project stands" entry reads:
 
-    1. Make the branch once, in its own checkout. If it exists, rebase it onto
-       `main` instead.
+    ```text
+    where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers; then call `show_project` with `show: latest` and the same `projectPath`, loaded by bare name with `+show_project` in ToolSearch).
+    ```
+
+    1. Build the zip in its own checkout. If `main` has moved, rebase the branch onto it
+       first. The zip lands at `releases/genealogy-plugin.zip` in that checkout.
 
        ```
-       git worktree add ../mcp-app-router-variant -b mcp-app-router-variant main
+       git worktree add ../mcp-app-router-variant mcp-app-router-variant
        cd ../mcp-app-router-variant
-       ```
-
-    2. In `packages/engine/plugin/skills/research/SKILL.md`, under "Bounded request or
-       job", change the "where the project stands" entry to:
-
-       ```text
-       where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers; then call `show_project` with `show: latest`, loaded by bare name with `+show_project` in ToolSearch).
-       ```
-
-    3. Commit on that branch only, never a PR, and build the zip. It lands at
-       `releases/genealogy-plugin.zip` in that checkout.
-
-       ```
-       git commit -am "research: where the project stands calls show_project (variant)"
        node scripts/package-plugin.mjs
        cd -
        ```
 
-    4. Install it by the click-path `make cowork-install` prints, without running the
-       target: Claude Desktop → Cowork tab → Customize or Plugins, remove any Genealogy Research
-       plugin, then Add → Upload Plugin → that zip. Fully quit and reopen Claude
-       Desktop.
+    2. Install it at claude.ai's plugin page: remove the plugin that is there, then Add,
+       Upload plugin, and pick that zip. Fully quit and reopen Claude Desktop.
 
-    5. New task:
+    3. Connect the sign-in probe, then start a new conversation. Turn `Genealogy Viewer`
+       off in it, as in **Connector off**, so only the probe offers `show_project`. If
+       there is no switch, a `show_project` line in `server.log` counts as a call too.
 
        ```text
        where does the research stand?
        ```
 
-       A call shows as the paragraph, then a card whose `input:` line shows
-       `"show":"latest"`. It may stop at the paragraph: a status question need not load
-       the research skill, so the line may go unread. If it does not call the tool, try
-       the line below in a new task.
+       Read a call from the probe's `show_project` log line. On the probe `project_context`
+       is a stub that says it did nothing, so the paragraph will be empty of facts: only
+       whether `show_project` is called counts. It may stop at the paragraph: a status
+       question need not load the research skill, so the line may go unread. If it does
+       not call the tool, try the line below in a new conversation.
 
        ```text
        show me the project
        ```
 
        Keep the line under test alone in its message. Once a line has called the tool,
-       ask in the same task:
+       ask in the same conversation:
 
        ```text
        Tell me the full name of the tool you called.
@@ -357,79 +349,33 @@ Open every task on `~/mcp-probe/mcandrew`, with the connector on.
 
     Fills **Card renders** and **Variant line**.
 
-### Leg 2: local
-
-21. **Add the local server.** Back up the config, then add an `mcpServers` key beside
-    the ones already there, with `<checkout>` as the absolute path of this checkout.
-    The entry has no working-directory setting, so `/bin/sh -c` does the `cd`, and it
-    sets `PATH` because Claude Desktop does not read your shell profile.
-
-    ```
-    cp "$HOME/Library/Application Support/Claude/claude_desktop_config.json" ~/mcp-probe/claude_desktop_config.backup.json
-    ```
-
-    ```json
-    "mcpServers": {
-      "genealogy-viewer": {
-        "command": "/bin/sh",
-        "args": [
-          "-c",
-          "export PATH=/opt/homebrew/bin:$PATH; cd \"<checkout>/packages/engine/mcp-server\" && exec npx tsx viewer/stdio.ts --root \"$HOME/mcp-probe/mcandrew\""
-        ]
-      }
-    }
-    ```
-
-    Fully quit and reopen Claude Desktop. This leg's request log is
-    `~/Library/Logs/Claude/mcp-server-genealogy-viewer.log`; `server.log` stays silent.
-
-22. **Run the leg.** New task, with the connector off if **Connector off** found a
-    switch, so only one `show_project` exists. If both show, name the tool in the
-    prompt, and treat a line in `server.log` as the call having gone the wrong way.
-
-    ```text
-    Use ToolSearch with the query +show_project to load the tool, then call it with show "latest". Tell me the tool's full name.
-    ```
-
-    The client's declared extensions are in this leg's log. Search for `clientInfo`,
-    not `initialize`: Claude's wrapper also logs a bare line with that word.
-
-    ```
-    grep clientInfo ~/Library/Logs/Claude/mcp-server-genealogy-viewer.log
-    ```
-
-    Fills the Local rows of **Card renders** and **Declared extensions**. If no card
-    appears, still repeat **Approvals on `show_project`** and **Canary**, write `no card`
-    in the Local cells the other steps would fill, and go to leg 3. If one does, repeat
-    **Card**, **Approvals on `show_project`**, **Hidden call**, **Canary**, the two size
-    steps and **Fullscreen** here, with this leg's log in place of `server.log`. Skip
-    **Image**: this leg has no `/img`.
-
-### Leg 3: artifact
+### Leg 2: artifact
 
 The connector stays on.
 
-23. **Publish.** Put the built page in the task's folder:
+21. **Publish.** A chat has no folder, so copy the built page out to attach it:
 
     ```
-    cp apps/mcp-viewer/dist/index.html ~/mcp-probe/mcandrew/viewer-artifact.html
+    cp apps/mcp-viewer/dist/index.html ~/mcp-probe/viewer-artifact.html
     ```
 
-    New task:
+    New conversation, with that file attached:
 
     ```text
-    Publish viewer-artifact.html from this folder as an artifact, unchanged, with capabilities { mcp: { servers: [{ server: "Genealogy Viewer", tools: ["read_project_view"] }] } }. Then open it.
+    Publish the attached file as an artifact, unchanged, with capabilities { mcp: { servers: [{ server: "Genealogy Viewer", tools: ["read_project_view"] }] } }. Then open it.
     ```
 
-    Does it open beside the task? If the task has no way to publish, record that, then
-    publish the same file with the same capabilities from Claude Code and open the link
-    in Claude Desktop, so the other artifact answers still get filled. Fills **Artifact**.
+    Does it open beside the conversation? If the conversation has no way to publish,
+    record that, then publish the same file with the same capabilities from Claude Code
+    and open the link in Claude Desktop, so the other artifact answers still get filled.
+    Fills **Artifact**.
 
-24. **Read it.** Allow the connector when the page's first call asks. The page loads
+22. **Read it.** Allow the connector when the page's first call asks. The page loads
     by one `document` call, so `sources: 5` and `questions: 1` in the report mean a
     whole document came through `payload`. Copy the host facts, tap the four size
     buttons in order, then `Load an image`. The line stamped at the page's first call
-    gives the client's declared extensions:
+    gives the client's declared extensions. The artifact's call may log no `initialize`
+    line; if so, record that.
 
     ```
     grep '"initialize"' ~/mcp-probe/server.log
@@ -438,7 +384,7 @@ The connector stays on.
     Fills **Card renders**, **Declared extensions**, **What the page sees**, **Size**
     and **Artifact**.
 
-25. **If the app-only tool is refused.** A refusal is a rejected publish, or a
+23. **If the app-only tool is refused.** A refusal is a rejected publish, or a
     `not_in_manifest` after you allowed the connector. A size button prints the error
     code on its **Size ladder** line. Record which, then make the plan's change: its
     visibility becomes `["model", "app"]`, with a description telling the model not to
@@ -454,7 +400,7 @@ The connector stays on.
       Record it under **Artifact**.
     - Claude will not publish because it cannot read the whole file. The Artifact tool
       has it read any file it did not write, here or in Claude Code, and this one is
-      about 530,000 characters of minified code. That is not the app-only tool being
+      about 660,000 characters of minified code. That is not the app-only tool being
       refused, so change no visibility. Publish a small page instead; it prints what
       the page sees, reach, `payload`, the image result and the four size rungs, with
       no buttons to tap.
@@ -465,7 +411,7 @@ The connector stays on.
 
 ### Stop
 
-26. **Turn the funnel off.** A funnel left on stays public, through reboots. Run this
+24. **Turn the funnel off.** A funnel left on stays public, through reboots. Run this
     only on this Mac, never on the sidecar host in `scripts/tailscale-services.sh`.
 
     ```
@@ -475,12 +421,11 @@ The connector stays on.
 
     The last line prints `No serve config`.
 
-27. **Stop the server** with Ctrl-C in terminal 1.
+25. **Stop the server** with Ctrl-C in terminal 1.
 
-28. **Put Claude Desktop back.** Remove the `mcpServers` key from **Add the local server**.
-    Reinstall the usual plugin, and the usual `.mcpb` if **Variant plugin** replaced
-    it, by the same click-paths, and fully quit and reopen. Delete the connector if you
-    will not re-run soon; with the tunnel off it reaches nothing.
+26. **Put Claude Desktop back.** Reinstall the usual plugin by the same click-path, and
+    fully quit and reopen. Delete the connector if you will not re-run soon; with the
+    tunnel off it reaches nothing.
 
 ## Record
 
@@ -506,24 +451,23 @@ is an answer.
 does not stick, only setup, search, link (when it asks an identity question), conflict,
 hypothesis and conclusion get a card, and the router lines shrink to match.
 
-| | Connector | Local |
-|---|---|---|
-| Task run mode | Cloud (`cse_` session) | |
-| `show_project`, first call in a task | Asked; allowed once | |
-| `show_project`, second call | Asked | |
-| `show_project`, third call | Asked; chose "always allow" | |
-| `show_project`, next call after "always allow" | No prompt | |
-| `show_project`, first call in a new task after "always allow" | No prompt | |
-| A tapped button makes a hidden call | Yes | |
-| `read_project_view`, first tap | No prompt | |
-| `read_project_view`, next tap after "always allow" | Never asked | |
-| `read_project_view`, first tap in a new task after "always allow" | Never asked, in any new task | |
+| | Connector |
+|---|---|
+| Task run mode | Cloud (`cse_` session) |
+| `show_project`, first call in a task | Asked; allowed once |
+| `show_project`, second call | Asked |
+| `show_project`, third call | Asked; chose "always allow" |
+| `show_project`, next call after "always allow" | No prompt |
+| `show_project`, first call in a new task after "always allow" | No prompt |
+| A tapped button makes a hidden call | Yes |
+| `read_project_view`, first tap | No prompt |
+| `read_project_view`, next tap after "always allow" | Never asked |
+| `read_project_view`, first tap in a new task after "always allow" | Never asked, in any new task |
 
 ### Card renders
 
 **Decides:** which surfaces draw a card. Before calling a missing card final, check that
-Claude Desktop was restarted after the connector was added, and read the table below. If
-the local route does not render, testers see cards in the browser tab.
+Claude Desktop was restarted after the connector was added, and read the table below.
 
 | Route | Renders? | Tool's full name |
 |---|---|---|
@@ -531,12 +475,11 @@ the local route does not render, testers see cards in the browser tab.
 | Control: Desktop Chat | Yes, only after restarting Desktop | `mcp__Genealogy_Viewer__show_project` |
 | Connector, task with a folder on this Mac | Yes, after a ToolSearch load, on a project with one small document | `mcp__Genealogy_Viewer__show_project` |
 | Connector, task with no folder | Yes. **New** with no folder starts a Desktop Chat | `mcp__Genealogy_Viewer__show_project` |
-| Connector, a chat opened after a Cowork task, with no reconnect (`anthropics/claude-code` #103924) | Yes, in Desktop Chat and claude.ai | |
+| Connector, a chat opened after a Cowork task, with no reconnect (`anthropics/claude-code` #103924) | Yes, in Desktop Chat and claude.ai | Not read: Cowork is not tested |
 | Connector, a chat that moved to a cloud session | | |
 | Connector, Claude mobile app (`anthropics/claude-ai-mcp` #1085) | | |
 | Connector, after a ToolSearch load | Yes: `show_project` is deferred on all three surfaces | `mcp__Genealogy_Viewer__show_project` |
 | Connector, with the variant plugin | | |
-| Local | | |
 | Artifact (shows the page, not a card) | | — |
 
 | You see | `resources/read` lines | It means |
@@ -558,7 +501,6 @@ resource itself.
 |---|---|---|
 | Connector | `Anthropic/ClaudeAI` 1.0.0 at connect; `claude-code` 2.1.318 when the Cowork task started | `io.modelcontextprotocol/ui` from the first; none from the second, and the card still rendered |
 | Connector, 2026-11-06 | `claude-code` 2.1.319-ccs, about 1.5 s before each conversation's first tool call, on all three surfaces. On 2026-11-05 a chat's calls had no such line | `io.modelcontextprotocol/ui` |
-| Local | | |
 | Artifact | | |
 
 ### What the page sees
@@ -569,7 +511,6 @@ card that reports `window.claude.use` as a function would boot on the wrong host
 | Route | `typeof window.claude` | `typeof window.claude?.use` | `window.parent === window` |
 |---|---|---|---|
 | Connector | `undefined` | `undefined` | `false` |
-| Local | | | |
 | Artifact | | | |
 
 ### Tools on each surface
@@ -584,28 +525,29 @@ hook, so the last two rows stay open.
 | The `genealogy-research:research` skill | Yes | Yes | Yes |
 | `show_project` | Deferred | Deferred | Deferred |
 | `read_project_view` | Not listed | Not listed | Not listed |
-| A plugin agent spawns | | | |
-| The plugin's hook binds | | | |
+| A plugin agent spawns | | | — |
+| The plugin's hook binds | | | — |
 
 ### Fullscreen
 
 **Decides:** where the case file lives. If Cowork offers no fullscreen, it runs as an
 artifact.
 
-| | Connector | Local |
-|---|---|---|
-| `availableDisplayModes` | `inline, fullscreen`, on all three surfaces | |
-| `host-context-changed` on entering fullscreen | Yes, `displayMode fullscreen`, on all three | |
-| `host-context-changed` on the host's own close | Yes, `displayMode inline`, on all three. The host's control is an X at the upper right | |
-| A card opened by a typed request goes straight to fullscreen | Yes, with `show: "file"` and no tap, on all three | |
-| A mode switch remounts the frame | No, on all three: one `mount id`, and the link probe's result survives | |
-| Where a typed card lands while the file is fullscreen | It replaces the old card in the full screen view, on all three. The old card gets `displayMode inline` about 2 s after the call. Both cards stay in the conversation | |
-| What a card that lands in the full screen view reports | `fullscreen` from its first event, with `Back to the card` showing, on all three. It is a new mount. The X sends it `inline` with no remount | |
+| | Connector |
+|---|---|
+| `availableDisplayModes` | `inline, fullscreen`, on all three surfaces |
+| `host-context-changed` on entering fullscreen | Yes, `displayMode fullscreen`, on all three |
+| `host-context-changed` on the host's own close | Yes, `displayMode inline`, on all three. The host's control is an X at the upper right |
+| A card opened by a typed request goes straight to fullscreen | Yes, with `show: "file"` and no tap, on all three |
+| A mode switch remounts the frame | No, on all three: one `mount id`, and the link probe's result survives |
+| Where a typed card lands while the file is fullscreen | It replaces the old card in the full screen view, on all three. The old card gets `displayMode inline` about 2 s after the call. Both cards stay in the conversation |
+| What a card that lands in the full screen view reports | `fullscreen` from its first event, with `Back to the card` showing, on all three. It is a new mount. The X sends it `inline` with no remount |
 
 ### Variant line
 
 **Decides:** how the demo opens. If the line does not call `show_project`, the demo
-opens with "show me the project".
+opens with "show me the project". Read on the sign-in probe, from its `show_project` log
+line.
 
 | | Answer |
 |---|---|
@@ -616,10 +558,10 @@ opens with "show me the project".
 
 **Decides:** the plan's "Result shape". What each outcome means is in **Canary** above.
 
-| Strings the model quoted | Connector | Local |
-|---|---|---|
-| Plain call | `CANARY-CONTENT-K7Q2` only, on all three surfaces, from the replies to the plain and `pad` calls | |
-| Call with `structuredCanary: true` | `CANARY-CONTENT-K7Q2` only, on all three surfaces. The result carried 80 more bytes | |
+| Strings the model quoted | Connector |
+|---|---|
+| Plain call | `CANARY-CONTENT-K7Q2` only, on all three surfaces, from the replies to the plain and `pad` calls |
+| Call with `structuredCanary: true` | `CANARY-CONTENT-K7Q2` only, on all three surfaces. The result carried 80 more bytes |
 
 ### Card receives `_meta`
 
@@ -627,47 +569,47 @@ opens with "show me the project".
 `_meta`, it falls back to one `read_project_view` call per mount, which shows the
 project as it is now rather than at that step.
 
-| | Connector | Local |
-|---|---|---|
-| `result _meta arrived` | Yes, up to 999,947 bytes, on all three surfaces. No at 1,299,948 bytes | |
-| `data came from` | `result _meta`, or a `read_project_view` call when `_meta` did not arrive | |
-| A reopened conversation's card gets the result's `_meta` again | Yes, in Desktop Chat and claude.ai, at up to 799,947 bytes. It is a new mount, and the tool input comes again too | |
+| | Connector |
+|---|---|
+| `result _meta arrived` | Yes, up to 999,947 bytes, on all three surfaces. No at 1,299,948 bytes |
+| `data came from` | `result _meta`, or a `read_project_view` call when `_meta` did not arrive |
+| A reopened conversation's card gets the result's `_meta` again | Yes, in Desktop Chat and claude.ai, at up to 799,947 bytes. It is a new mount, and the tool input comes again too |
 
 ### Size
 
 **Decides:** paging. If the largest `resultBytes` accepted is below 1.55 MB, the size
 of the largest project's research.json, `document` gains paging.
 
-| Rung | Mount, connector | Mount, local | Hidden call, connector | Hidden call, local | Hidden call, artifact |
-|---|---|---|---|---|---|
-| 400k characters | | | Whole, 699,798 bytes, 2.0 to 7.1 s | | |
-| 500k characters | Arrives, 799,947 bytes, on all three surfaces | | | | |
-| 700k characters | Arrives, 999,947 bytes, on all three surfaces | | | | |
-| 1M characters | `_meta` dropped at 1,299,948 bytes, on all three surfaces | | Whole, 1,299,798 bytes, 19.5 s, in Cowork | | |
-| 1.3M characters | `_meta` dropped at 1,599,948 bytes, on all three surfaces | | Whole, 1,599,798 bytes, 14.5 s, in Cowork | | |
-| 2M characters | | | Whole, 2,299,798 bytes: 8.0 s in Cowork, 3.1 s on claude.ai, 3.8 s in Desktop Chat | | |
-| Largest `resultBytes` accepted | 999,947 | | 2,299,798 so far, on all three surfaces | | |
-| What happens past it | The host drops `_meta` with no error, and the result's keys are `content, isError`. The card's one fallback read fills it, 2 to 3 s later. Desktop Chat once took 20.8 s, at 1,599,948 bytes. The model is told nothing | | | | |
+| Rung | Mount, connector | Hidden call, connector | Hidden call, artifact |
+|---|---|---|---|
+| 400k characters | — | Whole, 699,798 bytes, 2.0 to 7.1 s | |
+| 500k characters | Arrives, 799,947 bytes, on all three surfaces | — | — |
+| 700k characters | Arrives, 999,947 bytes, on all three surfaces | — | — |
+| 1M characters | `_meta` dropped at 1,299,948 bytes, on all three surfaces | Whole, 1,299,798 bytes, 19.5 s, in Cowork | |
+| 1.3M characters | `_meta` dropped at 1,599,948 bytes, on all three surfaces | Whole, 1,599,798 bytes, 14.5 s, in Cowork | |
+| 2M characters | — | Whole, 2,299,798 bytes: 8.0 s in Cowork, 3.1 s on claude.ai, 3.8 s in Desktop Chat | |
+| Largest `resultBytes` accepted | 999,947 | 2,299,798 so far, on all three surfaces | |
+| What happens past it | The host drops `_meta` with no error, and the result's keys are `content, isError`. The card's one fallback read fills it, 2 to 3 s later. Desktop Chat once took 20.8 s, at 1,599,948 bytes. The model is told nothing | Not reached: 2M was the top rung | |
 
 ### Image
 
 **Decides:** whether a card can show a page image from `/img/<token>`, which Decision 9
 needs. An artifact's answer is in **Artifact**.
 
-| | Connector | Local |
-|---|---|---|
-| The image loads from the declared host | Yes, 1200 x 675, in a Cowork task, Desktop Chat and claude.ai off the tailnet. Blocked in Chrome on a tailnet device | — |
+| | Connector |
+|---|---|
+| The image loads from the declared host | Yes, 1200 x 675, in a Cowork task, Desktop Chat and claude.ai off the tailnet. Blocked in Chrome on a tailnet device |
 
 ### `openLink`
 
 **Decides:** whether a card can open a link to a FamilySearch page, which the display
 rules' links need.
 
-| | Connector | Local |
-|---|---|---|
-| The page opens | Yes. Desktop Chat: Desktop or Chrome, by choice. claude.ai: a new tab. Cowork: a side panel beside the conversation | |
-| Claude asks first | Desktop Chat: yes, Desktop or Chrome. claude.ai: yes, an "Open external link" dialog naming the URL. Cowork: no | |
-| `Link probe` line | Answered in 20,166 ms in Desktop Chat, 3,287 ms on claude.ai and 1,897 ms in Cowork | |
+| | Connector |
+|---|---|
+| The page opens | Yes. Desktop Chat: Desktop or Chrome, by choice. claude.ai: a new tab. Cowork: a side panel beside the conversation |
+| Claude asks first | Desktop Chat: yes, Desktop or Chrome. claude.ai: yes, an "Open external link" dialog naming the URL. Cowork: no |
+| `Link probe` line | Answered in 20,166 ms in Desktop Chat, 3,287 ms on claude.ai and 1,897 ms in Cowork |
 
 ### Door refusals
 
@@ -689,18 +631,18 @@ the sign-in probe with the stub card: a project path picks the refusal, and the 
 **Decides:** whether selecting a row in the case file can tell Claude what the
 researcher is looking at. It posts nothing either way.
 
-| | Connector | Local |
-|---|---|---|
-| `updateModelContext offered` | Yes, on all three surfaces | |
+| | Connector |
+|---|---|
+| `updateModelContext offered` | Yes, on all three surfaces |
 
-### Connector off for one task
+### Connector off for one conversation
 
 **Decides:** whether a branch test can run beside the organization's connector without
-Cowork holding two copies of every tool, as "Local testing" asks.
+holding two copies of every tool, as "Local testing" asks.
 
 | | Answer |
 |---|---|
-| A switch exists, and it holds for one task only | |
+| A switch exists, and it holds for one conversation only | |
 
 ### `AskUserQuestion`
 
@@ -720,7 +662,7 @@ decision after M0.
 
 | | Answer |
 |---|---|
-| Opens beside a Cowork task | |
+| Opens beside the conversation | |
 | Reaches a `visibility: ["app"]` tool | |
 | Its `payload` carries a whole document | |
 | Loads an image from `/img/<token>` | |

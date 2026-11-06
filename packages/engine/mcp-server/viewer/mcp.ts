@@ -1,5 +1,4 @@
-// One MCP Server: the two tools and the page resource. HTTP builds one per
-// request; stdio builds one for the process.
+// One MCP Server per request: the two tools and the page resource.
 import { Server } from "@modelcontextprotocol/sdk/server/index.js";
 import {
   CallToolRequestSchema,
@@ -19,8 +18,8 @@ import { callTool, toolSchemas, type ToolContext } from "./tools.js";
 
 export interface McpOptions extends ToolContext {
   pageHtml: string;
-  /** The origin images load from. Absent on stdio. */
-  publicUrl?: string;
+  /** The origin images load from. */
+  publicUrl: string;
 }
 
 export function createMcpServer(options: McpOptions): Server {

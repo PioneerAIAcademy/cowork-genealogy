@@ -16,7 +16,7 @@ door, sign-in, `project_list` and the self-hosted stack. The lead merges.
 3. **One viewer to maintain,** with a case file a senior researcher would choose over
    today's viewer. That file is in the demo (M3).
 
-## Decisions (lead, 2026-11-03 to 2026-11-05)
+## Decisions (lead, 2026-11-03 to 2026-11-06)
 
 1. **claude.ai chat and Desktop Chat are the primary surfaces.** Project data lives on the
    remote server, so nothing ties a user to a Cowork task. Cards are checked on those two,
@@ -44,9 +44,9 @@ door, sign-in, `project_list` and the self-hosted stack. The lead merges.
    No heuristics of the card's own.
 7. **No live watching.** Steps will run under five minutes.
 8. **M0 gates the fold.** M0 stays open until every row in
-   `docs/mcp-app-host-probe.md`'s record has an answer, the Artifact and local rows
-   included. Five answers gate the fold: does `_meta` reach the model (the canary), the
-   fullscreen events and remount, the mount size past 300 KB, `openLink`, and
+   `docs/mcp-app-host-probe.md`'s record has an answer, the Artifact rows included, and a
+   failure is an answer. Five answers gate the fold: does `_meta` reach the model (the
+   canary), the fullscreen events and remount, the mount size past 300 KB, `openLink`, and
    `projectPath`. Each needs an answer in claude.ai chat and Desktop Chat.
 9. **The demo shows page images.** The demo project is run so that the pages
    that matter are transcribed and attached (see "Data").
@@ -93,14 +93,13 @@ through the demo, with fixes only.
   work happens inside the file, in its right-hand pane. A card the model sends while
   the file is open takes over the view as a new mount, already in fullscreen, so what
   the researcher had open there does not carry over by itself.
-- **An artifact beside the task** is the only true side panel, and M0 tests it
+- **An artifact beside the conversation** is the only true side panel, and M0 tests it
   either way. Claude's help centre says an artifact opens beside the conversation
   and can use custom connectors, and its page can read a connector's read-only
-  tools as the viewer. Its limits: it does not arrive with the connector, a
-  connected artifact can be shared inside the organization but not by link, and
-  nothing documents how one opens in a Cowork task. If Cowork's fullscreen does not
-  work, the case file runs as an artifact, the same page on a second host. Otherwise,
-  using one as well is a separate decision after M0.
+  tools as the viewer. Its limits: it does not arrive with the connector, and a
+  connected artifact can be shared inside the organization but not by link. If
+  fullscreen does not work, the case file runs as an artifact, the same page on a
+  second host. Otherwise, using one as well is a separate decision after M0.
 
 ## The case file
 
@@ -184,8 +183,7 @@ and the case file cannot disagree.
   server, and `viewer/tools.ts` adds M0's probes around it.
 - **Transport:** Streamable HTTP, stateless, plain JSON, one `Server` per
   request, as `src/http-server.ts` and the MCP Apps examples do. Binds
-  `127.0.0.1`; reached through a public HTTPS tunnel. A stdio entry exists only
-  for M0's local leg.
+  `127.0.0.1`; reached through a public HTTPS tunnel.
 - **Command line:** `--secret <random> --root <dir> --public-url <https origin>
   [--port 8090]`, or `--local --root <dir> [--port 8090]`.
   - `--public-url` is the tunnel's origin. The CSP entry and every image link are
@@ -485,11 +483,10 @@ before pushing, with no tunnel and no connector.
   runs the branch's server on `127.0.0.1` with `--local`, and opens a browser tab,
   reading the same folder the Cowork task writes. The tab shows every step card and
   the whole case file; reloading picks up the latest.
-- **A card inline in a Cowork task.** Members cannot add connectors, and the `.mcpb`
-  draws no cards, so a tester's only route is `viewer/stdio.ts` as a local server. If
-  M0's local leg does not render, testers see cards in the browser tab, which runs the
-  same page, and anything that depends on Claude as the host (fullscreen, theme, link
-  confirmation) is checked on the `Genealogy Research` connector.
+- **A card in Claude.** A tester's route to a card is the connector and the browser
+  tab, and nothing depends on a local server. The tab runs the same page, and anything
+  that depends on Claude as the host (fullscreen, theme, link confirmation) is checked
+  on the `Genealogy Research` connector.
 
 ## Data
 
@@ -552,11 +549,9 @@ is the everyday development loop. Then, in Desktop Chat or claude.ai chat, where
 section says a Cowork task:
 
 1. **Connector:** the server through the tunnel as an organization connector,
-   from the main thread, after a ToolSearch load, and with the variant plugin
-   installed.
-2. **Local:** the same server over stdio as a local server, to see whether a local
-   card renders in Cowork today.
-3. **Artifact:** a small artifact reading a whole document through the connector.
+   from the main thread and after a ToolSearch load, then the sign-in probe with the
+   variant plugin installed.
+2. **Artifact:** a small artifact reading a whole document through the connector.
 
 Record, in `docs/mcp-app-host-probe.md` (never the connector URL: the repo is
 public):
@@ -730,7 +725,7 @@ a seeded test project and sign-in. The rename to `Genealogy Research`, `derived`
 are still HTTP refusals.
 
 - **Where:** `src/tools/project-view.ts` holds the tools, the page's resource and the
-  connector's context. `src/` cannot import `viewer/`, so `viewer/` keeps its entries and
+  connector's context. `src/` cannot import `viewer/`, so `viewer/` keeps its entry and
   imports from `src/` for `make viewer`, adding only M0's probes.
 - **Listing:** `createServer` lists `show_project` and `read_project_view` only when
   `principal.surface` is `"connector"`, so the `.mcpb`, the worker, Fly and the harness

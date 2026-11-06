@@ -105,7 +105,7 @@ export function createViewer(options: ViewerOptions): RequestListener {
     Object.assign(entry, describeRpc(body), headerFields(req.headers), { resultBytes: 0 });
     const server = mcpServer();
     const transport = new StreamableHTTPServerTransport({ sessionIdGenerator: undefined, enableJsonResponse: true });
-    observeSends(transport, (_message, bytes) => {
+    observeSends(transport, (bytes) => {
       entry.resultBytes = (entry.resultBytes as number) + bytes;
     });
     try {
