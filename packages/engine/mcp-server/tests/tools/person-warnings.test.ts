@@ -5410,4 +5410,68 @@ describe("hasPlaceStandardOtherCountry", () => {
     expect(() => finalWarnings(new Mob(tree, "I1"))).not.toThrow();
     expect(findWarning(tree)).toBeUndefined();
   });
+
+  // The state-level half (issue #4299): FamilySearch's own place.normalized put
+  // "Washington County, Texas" in Kentucky.
+  describe("a place text and standard_place in different US states", () => {
+    const treeWith = (place: string, standard_place: string): SimplifiedGedcomX => ({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "James", surname: "Stribling" }],
+          facts: [{ id: "F1", type: "Death", date: "1843", standard_date: "1843", place, standard_place }],
+        },
+      ],
+    });
+
+    it("fires on the tester's pair and names a state or province, not a country", () => {
+      const w = findWarning(treeWith("Washington County, Texas", "Texas, Washington, Kentucky, United States"));
+      expect(w).toBeDefined();
+      expect(w!.severity).toBe("implausible");
+      expect(w!.message).toContain("a different state or province");
+      expect(w!.facts).toEqual([{ id: "F1", type: "Death", date: "1843" }]);
+    });
+
+    it("fires on an abbreviated state, and on a Couple fact", () => {
+      expect(findWarning(treeWith("Washington Co., TX", "Texas, Washington, Kentucky, United States"))).toBeDefined();
+      const tree: SimplifiedGedcomX = {
+        persons: [
+          { id: "I1", gender: "Female", names: [{ id: "N1", given: "A", surname: "B" }] },
+          { id: "I2", gender: "Male", names: [{ id: "N2", given: "C", surname: "D" }] },
+        ],
+        relationships: [
+          {
+            id: "R1",
+            type: "Couple",
+            person1: "I1",
+            person2: "I2",
+            facts: [
+              {
+                id: "F3",
+                type: "Marriage",
+                place: "Washington County, Texas",
+                standard_place: "Texas, Washington, Kentucky, United States",
+              },
+            ],
+          },
+        ],
+      };
+      expect(findWarning(tree)).toBeDefined();
+    });
+
+    it("keeps saying country when the countries differ", () => {
+      const w = findWarning(treeWith("Nairobi, Kenya", "Madagascar"));
+      expect(w!.message).toContain("a different country");
+    });
+
+    it.each([
+      ["the same state", "Washington County, Texas", "Washington, Texas, United States"],
+      ["the same state, abbreviated", "Washington Co., TX", "Washington, Texas, United States"],
+      ["a text naming no state", "Washington County", "Texas, Washington, Kentucky, United States"],
+      ["a place inside the named state", "Independence Cemetery, Independence, Washington, Texas", "Rock Hill Graves, Washington, Washington, Texas, United States"],
+    ])("is silent for %s", (_label, place, standard) => {
+      expect(findWarning(treeWith(place, standard))).toBeUndefined();
+    });
+  });
 });
