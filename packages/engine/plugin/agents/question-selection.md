@@ -199,8 +199,7 @@ Apply these priorities in order.
 | 3 | Pedigree analysis reveals missing key data or inconsistencies **within the objective's scope** — including an `implausible` `person_warnings` result, or a missing-child group from `census_children_gap` | `objective_decomposition` |
 
 A `contradiction` from `person_warnings` is never a question (Step 1a). An
-`implausible` warning maps to Priority 3, except `noGenderFound`,
-`nonStandardDate` and `nonStandardPlace`, which are never a question.
+`implausible` warning maps to Priority 3.
 
 **Priority 2 detail:** Fires for the first question on a single-fact objective
 too — there the question is the objective at its own scope. It names the fact,
