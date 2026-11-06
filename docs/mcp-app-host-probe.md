@@ -463,39 +463,9 @@ The connector stays on.
       Write a small HTML page that first prints typeof window.claude, typeof window.claude?.use and window.parent === window. It then awaits window.claude.use("mcp"), calls callTool("Genealogy Viewer", "read_project_view", { part: "document" }, { cache: false }), and prints the keys of result.payload, the length of result.payload.research.sources, and any rejection's code and message. It calls read_project_view the same way with { part: "image", id: "images/probe.jpg" }, shows result.payload.url in an img, and prints that img's load or error result. Last, it calls read_project_view the same way with { part: "document", pad } at pad 400000, 1000000, 1300000 and 2000000, in that order, printing result.payload.pad.length or the error code for each. Publish it with capabilities { mcp: { servers: [{ server: "Genealogy Viewer", tools: ["read_project_view"] }] } } and open it.
       ```
 
-### The real project path
-
-Last, because every member who connected the connector can read the real project for
-as long as this runs. Go straight to **Stop** afterwards.
-
-26. **Restart the server.** First remove the `mcpServers` key from **Add the local
-    server** and fully quit and reopen Claude Desktop, so only the connector holds
-    `show_project`. Then restart the server in terminal 1 at the folder that holds the
-    real Cowork project, and open a new task on that project:
-
-    ```
-    npx tsx viewer/cli.ts --secret "$(cat ~/.mcp-viewer-secret)" --root "<parent of the real project>" --public-url "$VIEWER_ORIGIN" --port 8090 | tee -a ~/mcp-probe/server.log
-    ```
-
-    ```text
-    Call show_project with show "latest" and projectPath set to the absolute path of this project's folder.
-    ```
-
-    A call counts only if it leaves a `tools/call` line in `server.log`: the local
-    server refuses with the same text, so a call that reached it answers nothing. The
-    card's `input:` line shows what the model passed. `No project folder … can be
-    reached from this viewer` means that path is not inside `--root` on this Mac. Then,
-    in a new task, with the folder's name:
-
-    ```text
-    Call show_project with show "latest" and projectPath "<folder name>".
-    ```
-
-    Fills **`projectPath`**. Record the path's shape with `<folder>` for the name.
-
 ### Stop
 
-27. **Turn the funnel off.** A funnel left on stays public, through reboots. Run this
+26. **Turn the funnel off.** A funnel left on stays public, through reboots. Run this
     only on this Mac, never on the sidecar host in `scripts/tailscale-services.sh`.
 
     ```
@@ -505,10 +475,10 @@ as long as this runs. Go straight to **Stop** afterwards.
 
     The last line prints `No serve config`.
 
-28. **Stop the server** with Ctrl-C in terminal 1.
+27. **Stop the server** with Ctrl-C in terminal 1.
 
-29. **Put Claude Desktop back.** **Restart the server** already removed the `mcpServers`
-    key. Reinstall the usual plugin, and the usual `.mcpb` if **Variant plugin** replaced
+28. **Put Claude Desktop back.** Remove the `mcpServers` key from **Add the local server**.
+    Reinstall the usual plugin, and the usual `.mcpb` if **Variant plugin** replaced
     it, by the same click-paths, and fully quit and reopen. Delete the connector if you
     will not re-run soon; with the tunnel off it reaches nothing.
 
@@ -661,6 +631,7 @@ project as it is now rather than at that step.
 |---|---|---|
 | `result _meta arrived` | Yes, up to 999,947 bytes, on all three surfaces. No at 1,299,948 bytes | |
 | `data came from` | `result _meta`, or a `read_project_view` call when `_meta` did not arrive | |
+| A reopened conversation's card gets the result's `_meta` again | | |
 
 ### Size
 
@@ -756,14 +727,12 @@ decision after M0.
 
 ### `projectPath`
 
-**Decides:** on the tool server, that a project is named by the `/proj_<16 hex>` value
-from `project_list`. These two rows gate the fold. On the thin server, whether a live run
-can pass the path the model holds, or has to use a bare folder name under `--root`.
+**Decides:** that the project's id gets where it needs to go. On the tool server
+`projectPath` is the project's database id, the `/proj_<16 hex>` value from `project_list`.
+Read on the sign-in probe, from the `project_path` on its `show_project` and `hidden_call`
+log lines.
 
 | | Answer |
 |---|---|
 | The model passes the `/proj_` value it got from `project_list` | |
 | The card passes the same value to `read_project_view` | |
-| Thin server: shape of the path the model passes (`<folder>` for the name) | |
-| Thin server: readable on the Mac | |
-| Thin server: a bare folder name works | |

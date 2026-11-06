@@ -235,8 +235,10 @@ from it, and an unannotated tool defaults to "not read-only".
     and `content` is one line for the model. The result's `_meta` under
     `genealogy/project` carries `research`, `tree`, `startingTree`, `collections`
     and `derived`. A card is therefore a true snapshot of the project at that step.
-    The host drops `_meta` with no error somewhere past 1 MB, so above 1,000,000 bytes
-    `show_project` leaves it out, and the card reads the project as it is now.
+    The host drops `_meta` with no error somewhere past 1 MB. So above 1,000,000 bytes
+    `show_project` leaves the documents out of `_meta` and keeps the rest, which is small
+    and holds the `projectPath` the call named. The card then reads the project as it
+    is now, with that id.
   - **`derived`** is what only the engine can compute: question states
     (`questionStatus`), unregistered disagreements, hand-offs awaiting the
     researcher, the tree changes from `treeDiff` against the starting tree, each
@@ -581,8 +583,7 @@ public):
   chosen text comes back as the researcher's answer;
 - does an artifact open beside a Cowork task, can it reach a `visibility: ["app"]`
   tool, does its `payload` carry a whole document, and does it load an image from
-  `/img/<token>` (if not, `part: "image"` returns a data URL for it);
-- is the `projectPath` the model passes in Cowork readable on the Mac.
+  `/img/<token>` (if not, `part: "image"` returns a data URL for it).
 
 **Done when:** every item above has a recorded answer, and the server's tests
 pass, each with a stub page HTML:
@@ -761,8 +762,9 @@ a signed image link serves a page from MinIO. Sign-in itself needs issues #3992 
 
 - Tool names, args and `_meta` stay as in M0, except M0's probe inputs, `pad` and
   `structuredCanary`, which do not reach the tool server.
-- `projectPath` is the `/proj_<16 hex>` value from `project_list`, and the card passes
-  it to `read_project_view`.
+- `projectPath` is the project's database id, the `/proj_<16 hex>` value from
+  `project_list`, and the card passes it to `read_project_view`. Every `show_project`
+  result carries it in `_meta`, so the card has it even with no tool input.
 - There is one public origin, `WEB_PUBLIC_URL`. The page's `resourceDomains` and every
   image link use it. `projectUrl` goes away.
 - A tool error reaches the card as text. A 401 stays HTTP, because that is what makes
