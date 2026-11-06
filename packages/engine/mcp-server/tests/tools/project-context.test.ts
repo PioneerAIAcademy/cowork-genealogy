@@ -760,30 +760,31 @@ describe("project_context and project_create links", () => {
     return store ? runWithProjectStore(store, run) : run();
   }
 
-  it("returns projectUrl and uploadUrl from the store's project id when both settings are on", async () => {
+  it("returns uploadUrl from the store's project id when both settings are on, and never a viewer link", async () => {
     const r = await contextUnder(new ScopedFsStore(root, "p-42"), {
       webPublicUrl: "https://beta.example/",
       uploadsEnabled: true,
     });
-    expect(r.projectUrl).toBe("https://beta.example/#/p/p-42");
     expect(r.uploadUrl).toBe("https://beta.example/#/p/p-42/upload");
+    expect("projectUrl" in r).toBe(false);
   });
 
-  it("returns projectUrl but no uploadUrl while uploads are off", async () => {
+  it("returns no link while uploads are off", async () => {
     const off = await contextUnder(new ScopedFsStore(root, "p-42"), { webPublicUrl: "https://beta.example", uploadsEnabled: false });
-    expect(off.projectUrl).toBe("https://beta.example/#/p/p-42");
     expect("uploadUrl" in off).toBe(false);
+    expect("projectUrl" in off).toBe(false);
     const unset = await contextUnder(new ScopedFsStore(root, "p-43"), { webPublicUrl: "https://beta.example" });
     expect("uploadUrl" in unset).toBe(false);
+    expect("projectUrl" in unset).toBe(false);
   });
 
-  it("returns neither link without the public URL", async () => {
+  it("returns no link without the public URL", async () => {
     const r = await contextUnder(new ScopedFsStore(root, "p-42"), { uploadsEnabled: true });
     expect("projectUrl" in r).toBe(false);
     expect("uploadUrl" in r).toBe(false);
   });
 
-  it("returns neither link from a store with no project id, whatever projectPath is", async () => {
+  it("returns no link from a store with no project id, whatever projectPath is", async () => {
     fileStoreOnly("the file store is the one with no project id");
     const r = await contextUnder(null, { webPublicUrl: "https://beta.example", uploadsEnabled: true });
     expect("projectUrl" in r).toBe(false);
