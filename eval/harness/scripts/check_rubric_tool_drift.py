@@ -387,6 +387,18 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
+        "file": "eval/tests/unit/research-exhaustiveness/sealed-record-not-a-gap.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "if the skill declares, it writes via research_append (and may call validate_research_schema)",
+        ],
+        "reason": (
+            "not-needed, permissive 'may' - 'if the skill declares, it "
+            "writes via research_append (and may call "
+            "validate_research_schema)'"
+        ),
+    },
+    {
         "file": "eval/tests/unit/research-plan/locality-survey-first-plan.json",
         "tool": "wiki_search",
         "quotes": [

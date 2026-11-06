@@ -14,7 +14,7 @@ description: >-
   question-selection), to plan more searches (use research-plan), to write the
   proof conclusion (use proof-conclusion), or to resolve a conflict (use
   conflict-resolution).
-model: claude-haiku-5-5
+model: claude-sonnet-5-5
 effort: low
 tools:
   - mcp__genealogy__research_append
