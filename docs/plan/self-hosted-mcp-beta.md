@@ -369,7 +369,7 @@ Issue #4003, in the icebox, holds the worker's half of the one door and server-s
 | About 19 Nov | The first live sign-in |
 | About 23 Nov | A full run with cards, a planted dead token, and signing in again |
 | By 1 Dec | Policy text and plain pages |
-| Before the demo | The MCP App's step cards (M2), then one pinned commit, schemas frozen, approvals warmed, and timed rehearsals |
+| Before the demo | The MCP App's M1, M2 and M3, with the new case file, then one pinned commit, schemas frozen, approvals warmed, and timed rehearsals |
 | When it is ready | The demo, which has no date |
 | After the demo | The lead decides what happens to the alpha, Electron and the handoff's chat screens |
 | Before launch | The MCP App work and G6 merged |
