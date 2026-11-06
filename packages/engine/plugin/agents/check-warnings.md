@@ -92,6 +92,8 @@ For each warning, report:
 
 **Before listing individual warnings, count -- then ask whether one correction explains them all.** If 2 or more `severity: "contradiction"` warnings fire on the same person, open the report with a cluster note before the individual warnings. Test the single-cause reading on this cluster's own facts and dates: for each fact the contradictions cite, ask whether correcting that one fact to any date would clear every contradiction at once, working from what each tag measures (Appendix B) and from every date the tool returned, including those on implausible warnings. Report the test's conclusion and the returned facts it turns on. Contradictions with disjoint `facts` fail the test outright, since no one fact is in all of them. **`hasEventAfterDeath1` cites every fact the person has, so sharing a fact with it proves nothing -- a shared fact is a candidate to test, not an answer.** No `facts` returned cannot settle it, so keep both readings open. Never argue in general that one direction of date error fires one tag; the only question is whether this cluster has one correction that clears it. **When one correction would clear the cluster, say so and do not assert a merge:** "2 contradictions plus N implausible warnings on this one person. These may share a single cause -- correcting [the fact] would clear all of them -- or they may be records from two different individuals merged into one profile. Verifying [the fact] against its original source distinguishes the two." **When no single correction clears it** -- including when correcting the shared fact clears one contradiction only by leaving or worsening another -- the merge reading is the stronger one, not an established identity conclusion: "2 contradictions that no single correction explains is a strong signal that records from two different individuals have been merged into one profile -- only the records themselves can show it." **The recommendation is gated.** When one correction would clear the cluster, recommend only that the fact be verified against its original source -- do not also send the user hunting for a split point. Only when no single correction does: recommend verifying the dates the cluster's warnings cite against their original sources first, then: "I'd recommend rebuilding a chronological timeline of every recorded event for this person and going through each one to identify where one person's records end and another's begin -- once we find the split point, we can reassign the records that belong to the other individual." List individual warnings *under* that note, not above it.
 
+**Report `noGenderFound`, `nonStandardDate` and `nonStandardPlace` after every other warning**, under one heading, one line each.
+
 **Special case -- `missingFactsAndRelatives`:** Report with Implausible severity and add: "Note: this person has limited data, so most warning checks need dates and relatives to fire. Adding more research may surface additional issues currently hidden."
 
 **Special case -- `hasAgeRangeGreaterThan120`:** A lifespan exceeding 120 years has two common causes: a wrong vital date and two individuals' records merged into one profile. Always mention both possibilities when reporting this warning -- recommend verifying the vital dates against their original sources and flag the identity-confusion reading as a second candidate. Do not frame this as a date-error-only problem.
@@ -261,7 +263,8 @@ Always investigate.
 
 #### `hasEventBeforeBirth365_2`
 - Rule: at least one event is dated more than 2 years before the
-  person's earliest birth-like fact.
+  person's latest birth-like fact. With a dated Birth, a christening
+  or baptism is not read as the birth.
 - Cause: wrong birth date, wrong event attribution, or identity
   confusion.
 - Action: verify the birth date and whether the early-dated event
@@ -309,7 +312,8 @@ Always investigate.
 
 #### `hasEventBeforeChristening365_3`
 - Rule: at least one non-Birth event is dated more than 3 years
-  before the latest Christening.
+  before the latest Christening. Not raised when a dated Birth comes
+  on or before every christening.
 - Cause: wrong event attribution or records from two persons
   merged.
 - Action: verify event ownership.
@@ -345,6 +349,42 @@ Always investigate.
   die the same day, but not 2+ days before.
 - Cause: data error or wrong mother attribution.
 - Action: verify dates.
+
+#### `hasDeathBeforeBirth`
+- Rule: the death is dated before the birth on every reading of the
+  dates.
+- Cause: a wrong birth or death date, or two people merged.
+- Action: verify both dates against their sources.
+
+#### `hasChildBornBeforeParent`
+- Rule: a biological child was born before this person, on every
+  reading of the dates. One warning per child.
+- Cause: a wrong date, or a wrong parent-child link.
+- Action: verify the link before either date.
+
+#### `hasMarriageBeforeBirth` / `hasMarriageAfterDeath`
+- Rule: a marriage on one of this person's couple relationships is
+  dated before their birth, or after their death.
+- Cause: a wrong date, or the marriage of a same-name person.
+- Action: verify which person the marriage record names.
+
+#### `hasSpouseNotAliveTogether`
+- Rule: one spouse died before the other was born. Raised on both
+  spouses.
+- Cause: a wrong date, or a same-name spouse of another generation.
+- Action: verify the couple link and both dates.
+
+#### `hasCoupleWithSelf`
+- Rule: the person is recorded as married to themselves.
+- Action: remove the couple relationship.
+
+#### `hasSpouseWhoIsAncestor` / `hasSpouseWhoIsSibling`
+- Rule: a spouse is also this person's biological ancestor or
+  descendant, or shares a biological parent with them. Raised on both
+  spouses.
+- Cause: a wrong parent-child link; for a shared parent, often a step
+  or adoptive link recorded as biological.
+- Action: verify the parent-child links before the marriage.
 
 #### `hasNoChildrenConflict`
 - Rule: a "No Children" marker the tree contradicts: the person's
@@ -391,6 +431,8 @@ treating as established.
 - `earliestChildBirthToBirthFemale14` -- mother had a child before age 14.
 - `latestChildBirthToBirth80` -- child born 80+ years after this person's birth.
 - `latestChildBirthToBirthFemale45` -- mother was age 45 or older at a child's birth.
+- `latestChildBirthToBirth75` -- parent was 75 to 79 at a biological child's birth.
+- `earliestChildEventToBirth12` -- a child with no birth date has an event dated before this person turned 12.
 
 #### Marriage timing
 - `hasEarlyMarriage14` -- married before age 14.
@@ -405,12 +447,14 @@ treating as established.
 - `tooManyDeathDates2` -- two or more distinct perfect-DMY death dates spaced > 14 days apart.
 - `deathRangeGreaterThan2` -- death-like dates span more than 2 years.
 - `hasBurialAfterDeath31` -- the latest possible burial is more than 31 days before the earliest possible death. (Despite the Java name, this fires on "burial before death" outliers.) Imprecise dates are read at their closest, so a year-only burial in the same year as the death does not fire.
+- `hasLateChristening18` -- a christening or baptism 18+ years after the birth: an adult baptism, or another date filed as a christening.
 - `hasDelayedBurial365` -- the earliest possible burial is more than 365 days after the latest possible death. Imprecise dates are read at their closest, as for `hasBurialAfterDeath31`. A burial delayed about a year for a later funeral can be real in some places, as can a reburial or a later burial of ashes. A burial 3 or more calendar years late also fires `deathRangeGreaterThan2`.
 
 #### Family structure
 - `tooManyChildren18` -- 18 or more children.
 - `tooManyFathers2` -- multiple fathers (only one biological father is possible).
 - `tooManyMothers2` -- multiple mothers.
+- `tooManyParents3` -- three or more biological parents, at least one with no sex recorded.
 - `childBirthRange40` -- span between earliest and latest child's birth is 40+ years.
 - `missingFactsAndRelatives` -- empty stub record (no facts other than `GenderChange`, no relatives).
 - `hasBlankName` -- no name on the record.
@@ -430,6 +474,15 @@ treating as established.
 
 #### Birthplace far from the parents' residence
 - `hasBirthFarFromParentsResidence` -- the birthplace (Birth, else Christening, else Baptism) is farther from a parent's residence dated within 20 years of the birth than the era allows: 25 mi before 1850, 250 mi 1850-1949, 500 mi from 1950. Usually a record of a different person attached, or a mis-standardised place. Skipped when the place lookup fails, so its absence proves nothing.
+
+#### Birth estimated from a christening
+With no Birth recorded, the birth is read as up to 2 years before the christening. These are the checks above on that estimate, and a late christening can cause any of them: verify the christening and look for a birth record first.
+- `hasDeathBeforeBirthEstimated`, `hasChildBornBeforeParentEstimated`, `hasMarriageBeforeBirthEstimated`, `hasSpouseNotAliveTogetherEstimated`, `earliestChildEventToBirth12Estimated`.
+
+#### Data quality
+- `noGenderFound` -- no sex recorded.
+- `nonStandardDate` -- a date no date check can read (`dead`, `Spring 1790`).
+- `nonStandardPlace` -- a place not linked to a standard place.
 
 #### Extreme lifetimes after specific events
 - `hasDeathAfterChildBirth90` -- died more than 90 years after the earliest child's birth.
