@@ -48,8 +48,14 @@ mob."
 **Single-person warnings run on the anchor *and* its one-hop relatives,
 not the anchor alone.** 28 of the 55 self-checks have a relative-mob variant
 (`relatives*`, `maleRelatives*`, `femaleRelatives*`) that fires the same
-condition on a parent, spouse, or child; the flagged relative is named in
-the warning's `personId`/`personName`. The other 26 run on the anchor only.
+condition on a parent, spouse, or child. Most variants emit one warning that
+keeps the anchor in `personId`/`personName` and names the flagged relative in
+`relatedPersonId`. The three per-relative variants,
+`relativesEarliestChildBirthToBirth12`, `relativesHasDeathBeforeChildBirth365_2`
+and `relativesHasDeathBeforeChildBirth30_10`, emit one warning per failing
+relative with the relative in `personId`/`personName`, and name that
+relative's child in `relatedPersonId` when the child has an id. The other 26
+run on the anchor only.
 The relative-variant tags in § Warning Definitions are the evidence.
 
 ---
@@ -730,8 +736,12 @@ same condition on a one-hop relative (parent, spouse, or child) instead of
 the anchor; the other 26 run on the anchor only. They are **always
 `implausible`** regardless of the self-check's
 severity — the anchor's own data isn't necessarily wrong; the issue is in
-the relationship — and the flagged relative is named in the warning's
-`personId`/`personName`. Prefix conventions: `relatives*` = any relative,
+the relationship. Most variants keep the anchor in the warning's
+`personId`/`personName` and name the flagged relative in `relatedPersonId`;
+the three per-relative variants (`relativesEarliestChildBirthToBirth12`,
+`relativesHasDeathBeforeChildBirth365_2`,
+`relativesHasDeathBeforeChildBirth30_10`) put the relative in
+`personId`/`personName` instead. Prefix conventions: `relatives*` = any relative,
 `maleRelatives*`/`femaleRelatives*` = gender-restricted. See each row's
 mirrored self-check for the rule. Ten of the 28 variants fire only in merge
 mode, marked below, so `person_warnings` can emit 18 of them.
@@ -772,7 +782,7 @@ mode, marked below, so `person_warnings` can emit 18 of them.
 | Tag | Severity | Rule | Cause |
 |-----|----------|------|-------|
 | `hasEventInOtherCountry` | implausible | A non-migration, non-residence event (on the person or on a Couple relationship) is in a country that bidirectionally contradicts every birth and death anchor country, when those anchors agree | A record attached to the wrong person, or a mis-standardised place |
-| `hasPlaceStandardOtherCountry` | implausible | A fact (on the person, then on a Couple relationship) has a `place` text whose country `countryConsistency` finds its own `standard_place` contradicts; the first such fact is reported | A mis-standardised place, usually FamilySearch-supplied — the standardized value, not the event, is wrong |
+| `hasPlaceStandardOtherCountry` | implausible | A fact (on the person, then on a Couple relationship) has a `place` text whose country `countryConsistency` finds its own `standard_place` contradicts, or whose last part names a US state, Puerto Rico or Canadian province that `divisionContradiction` finds its `standard_place` lies outside ("Washington County, Texas" with "Texas, Washington, Kentucky, United States"); the first such fact is reported, and the message says "country" or "state or province" | A mis-standardised place, usually FamilySearch-supplied — the standardized value, not the event, is wrong |
 | `hasBirthFarFromParentsResidence` | implausible | person_warnings only (never `calculateWarnings`): the anchor's birthplace (a placed Birth, else Christening, else Baptism) is farther from a parent's residence dated within 20 years of the birth than the era's limit — 25 mi before 1850, 250 mi 1850–1949, 500 mi from 1950 | A record of a different person attached, or a mis-standardised place |
 
 ### Birthplace far from the parents' residence
