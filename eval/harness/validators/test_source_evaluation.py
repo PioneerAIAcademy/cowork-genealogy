@@ -1317,6 +1317,11 @@ _AGE_BLOCK_WORDS = r"conflict|discrepan|error|finding|disagree|mismatch|inconsis
 # Reports that fault the profile's year against "every source" without naming the
 # census or index: the claim is about all of them, the age-derived ones included.
 _AGE_UNNAMED_NAME = "unnamed: every source giving a birth year"
+# An every-source claim is a flag only when it is framed as a disagreement, or sits in a
+# birth finding; a sentence that only reports where the sources cluster is not.
+_AGE_UNNAMED_CONTEXT_RE = re.compile(
+    r"inconsisten|contradict|conflict|disagree|discrepan|mismatch|\bdiffers?\b", re.IGNORECASE
+)
 _AGE_UNNAMED_RE = re.compile(
     r"\b(?:every|all|each|multiple|most|several)\b[^.]{0,60}\bsources?\b[^.]{0,80}\b(?:say|says|give|gives|"
     r"report|reports|show|shows|indicate|indicates|agree|agrees|record|records)\b[^.]{0,40}\b1839\b"
@@ -1369,9 +1374,18 @@ def _age_source_hits(text: str, sources: list[dict]) -> list[str]:
             hits.append(s["name"])
             continue
         foreign = bool(named_ids) and not named_ids & set(ids)
-        if any(t.lower() in low and not (foreign and not re.fullmatch(r"\d{4}", t)) for t in titles):
+        if any(_age_title_hit(t, low, text, foreign) for t in titles):
             hits.append(s["name"])
     return hits
+
+
+def _age_title_hit(token: str, low: str, text: str, foreign: bool) -> bool:
+    """A bare year names a source only on its own, not inside a range ("circa 1865-1875")."""
+    if re.fullmatch(r"\d{4}", token):
+        return bool(
+            re.search(r"(?<!\d)(?<!\d{4}[–-])(?<!\d{4} [–-] )" + token + r"(?!\d|\s*[–-]\s*\d{4})", text)
+        )
+    return token.lower() in low and not foreign
 
 
 def _age_table_cells(line: str) -> list[str]:
@@ -1462,11 +1476,12 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
                     continue
                 about_birth = re.search(r"\bbirth\b(?!\s+(?:mother|father|parents?|place|family))", sentence, re.IGNORECASE)
                 if (about_birth and _AGE_CONFLICT_WORD_RE.search(sentence)) or (
-                    in_birth_block and re.search(r"\b18\d\d\b", clause)
+                    in_birth_block and re.search(r"\b18(?!38\b)\d\d\b", clause)
                 ):
                     flagged += hits
             if (
                 _AGE_UNNAMED_RE.search(sentence)
+                and (in_birth_block or _AGE_UNNAMED_CONTEXT_RE.search(sentence))
                 and not _AGE_DENIED_RE.search(sentence)
                 and not _AGE_FULL_DATE_RE.search(sentence)
             ):

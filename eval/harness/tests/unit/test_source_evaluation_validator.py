@@ -2117,3 +2117,61 @@ def test_a_census_flagged_in_its_own_birth_item_after_a_semicolon_is_still_a_fla
             "with the profile's birth date; and the residences are unsourced.\n\n"
             "The tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
         )
+
+
+_TAIL_CONFLICT = "\nThe tombstone's 31 Jan 1839 conflicts with 30 November 1838.\n"
+
+
+def test_a_consistent_cluster_sentence_outside_a_finding_is_not_an_unnamed_flag():
+    """Replay of a live run: "all specific death-record evidence clusters around 1839 as the birth
+    year" reports no conflict, and "death-record" must not read as the word "records"."""
+    _age_check(
+        "The year 1838 is at the edge of most source ranges, and all specific death-record evidence "
+        "clusters around 1839 as the birth year." + _TAIL_CONFLICT
+    )
+
+
+def test_the_same_claim_inside_a_birth_finding_is_still_an_unnamed_flag():
+    """The other direction: inside a birth finding block the claim is a flag."""
+    with pytest.raises(AssertionError, match="unnamed"):
+        _age_check(
+            "**Finding 1 — Birth date conflict with the profile**\n\n"
+            "Every source that records a year gives 1839 as the birth year." + _TAIL_CONFLICT
+        )
+
+
+def test_the_profile_year_alone_in_a_birth_finding_is_not_a_flag():
+    """Replay of a live run: the Vermont death record is named only to say it does not reflect
+    the profile's 30 November 1838, which counts it toward no other year."""
+    _age_check(
+        "**Finding 1 — Birth date conflict with the profile**\n\n"
+        'The source of the profile\'s "30 November 1838" is not reflected in any indexed record retrieved, '
+        "including the Vermont death record attached to the birth conclusion.\n"
+        + _TAIL_CONFLICT
+    )
+
+
+def test_a_census_counted_toward_a_different_year_in_a_birth_finding_is_still_a_flag():
+    """The other direction: a year other than the profile's, in a birth finding, still counts."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(
+            "**Finding 1 — Birth date conflict with the profile**\n\n"
+            "The 1850 census gives 1839 as the birth year.\n" + _TAIL_CONFLICT
+        )
+
+
+def test_a_year_range_in_a_research_suggestion_does_not_name_a_census():
+    """Replay of a live run: "a marriage ... circa 1865–1875" is not the 1865 census."""
+    _age_check(
+        "The highest-priority actions are: resolve the birth date conflict (re-read the death "
+        "certificate), locate a marriage record for Clarissa Wade (a marriage in Essex County, "
+        "circa 1865–1875), and investigate the mother." + _TAIL_CONFLICT
+    )
+
+
+def test_a_lone_census_year_still_names_the_census():
+    """The other direction: the bare year on its own, not in a range, still names the census."""
+    with pytest.raises(AssertionError, match="1865 census"):
+        _age_check(
+            "The 1865 census birth year of 1839 conflicts with the profile's birth date." + _TAIL_CONFLICT
+        )
