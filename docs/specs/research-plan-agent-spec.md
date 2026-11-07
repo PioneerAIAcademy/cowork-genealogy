@@ -40,7 +40,7 @@ So the split is:
 |---|---|---|---|
 | Jurisdictions, boundary changes, register start dates, indexing quirks, record loss and substitutes | place | `locality-guide` | the `localities` entry research-plan reads |
 | Levy rolls for sons, naming conventions | subject × country | `research-plan` | `wiki_read` in the Step 3 pre-work block |
-| Which records exist for the place | place | `research-plan` | the `localities` entry's `collections[]` when every one carries a `person_count` (no `collections_search` for that place, its state, or outside the US, Canada and Mexico its country, then; the national `United States` call is unchanged), else `collections_search`; `volume_search`; third-party collections from the stored list (`project_context` `externalCollections`, `research_query` `external_collections`), with `external_links_search` only for a place never fetched. A third-party item's `collection_url` is a stored row's `url`, which `research_append` checks |
+| Which records exist for the place | place | `research-plan` | the `localities` entry's `collections[]` when its `time_period` covers the years being planned and every one carries a `person_count` (no `collections_search` for that place, its state, or outside the US, Canada and Mexico its country, then; the national `United States` call is unchanged), else `collections_search`; `volume_search`; third-party collections from the stored list (`project_context` `externalCollections`, `research_query` `external_collections`), with `external_links_search` only for a place never fetched. A third-party item's `collection_url` is a stored row's `url`, which `research_append` checks |
 | Relatives, facts and attached sources the project tree lacks | the question person | `research-plan` | `person_read`, for each person the question's text names who is not a project subject (`project_context` `subjectPersonIds`) and whose tree entry has an `ark`, before any plan item; no one else's profile is read. A subject is planned from the project tree, which `project_create` built from the subject's full read. That holds because init-project, the one caller, creates a project with `personId` and `subjectPersonIds` set to that same id and no hand-built `tree`; a subject a project was given some other way (a hand-built tree, a second subject) is not covered, and no shipped caller produces one. The trade: memories left untranscribed at creation, and sources attached on FamilySearch since, are no longer picked up by research-plan's re-read; another agent's `person_read`, at the researcher's request, still can |
 | Record-type selection by goal, FAN, sequencing, BCG 9–18 | GPS craft | `research-plan` | body and its Appendices A and B |
 
@@ -205,8 +205,9 @@ change; keep no local copy.
 - `test_research_plan_reuses_counted_locality_collections`: on
   `reuses-counted-locality` tests (`ut_research_plan_clc`), research-plan makes no
   `collections_search` call whose scope (a port of `standardPlaceToCollectionsQuery`)
-  equals that of the `place` of a `localities` entry counted on every collection; `United States`
-  is exempt. `_collection_person_counts` also reads entry counts for collections no response served, so the
+  equals that of the `place` of a `localities` entry counted on every collection, unless the
+  call's `startYear`–`endYear` reach outside the entry's `time_period`; an entry with no
+  parseable `time_period` covers nothing. `United States` is exempt. `_collection_person_counts` also reads entry counts for collections no response served, so the
   availability check grades a plan written from the entry. `test_names_collections_only_from_search`
   (`validators/test_research.py`, Kenya test only) still accepts only search-returned
   titles. Proven to fail in `eval/harness/tests/unit/test_research_plan_validator.py`.

@@ -1344,6 +1344,18 @@ def _collections_scope(place: str) -> str:
     return country
 
 
+def _year_span(text) -> tuple[int, int] | None:
+    """`time_period` text such as "1840-1880" or "1901" as a year span, or
+    None when it is missing or not that shape."""
+    if not isinstance(text, str):
+        return None
+    m = re.fullmatch(r"\s*(\d{4})(?:\s*[-–]\s*(\d{4}))?\s*", text)
+    if not m:
+        return None
+    start = int(m.group(1))
+    return start, int(m.group(2) or start)
+
+
 def test_research_plan_reuses_counted_locality_collections(
     before_state, tool_calls, test
 ):
@@ -1351,44 +1363,51 @@ def test_research_plan_reuses_counted_locality_collections(
     entry carries a `person_count` on every collection, research-plan plans
     from it and makes no `collections_search` call answered at the same
     scope as the entry's `place` (a standard place; `for_place` is free text
-    with no country and is not scoped). The national `United States` call is
-    exempt. Issue #3545 lead 3: in 4 of 10 e2e runs research-plan repeated
-    locality-guide's call on the place it had just surveyed. Matching is on
-    the call's args, never its response."""
+    with no country and is not scoped). A call whose `startYear`-`endYear`
+    reach outside the entry's `time_period` is a new period, not a repeat; an
+    entry with no parseable `time_period` covers nothing. The national
+    `United States` call is exempt. Issue #3545 lead 3: in 6 of 10 e2e runs
+    research-plan repeated locality-guide's call on a place or country it had
+    just surveyed. Matching is on the call's args, never its response."""
     if "reuses-counted-locality" not in test.get("tags", []):
         pytest.skip("not a reuses-counted-locality scenario")
     before = before_state.get("research_json")
     if before is None:
         pytest.skip("missing before-state research.json")
 
-    covered: dict[str, str] = {}
+    covered: dict[str, list[tuple[str, tuple[int, int]]]] = {}
     for entry in before.get("localities") or []:
         cols = entry.get("collections") or []
         if not cols or not all(isinstance(c.get("person_count"), int) for c in cols):
             continue
+        span = _year_span(entry.get("time_period"))
         place = entry.get("place")
-        if isinstance(place, str) and place.strip():
+        if span and isinstance(place, str) and place.strip():
             scope = _collections_scope(place).casefold()
             if scope != "united states":
-                covered.setdefault(scope, entry.get("id") or "?")
+                covered.setdefault(scope, []).append((entry.get("id") or "?", span))
     assert covered, (
         "reuses-counted-locality test has no localities entry with a counted "
-        "collection; the fixture cannot exercise this check"
+        "collection and a time_period; the fixture cannot exercise this check"
     )
 
     errors: list[str] = []
     for c in tool_calls or []:
         if _bare(c.get("tool", "")) != "collections_search":
             continue
-        place = (c.get("args") or {}).get("standardPlace")
+        args = c.get("args") or {}
+        place = args.get("standardPlace")
         if not isinstance(place, str):
             continue
-        scope = _collections_scope(place).casefold()
-        if scope in covered:
+        start, end = args.get("startYear"), args.get("endYear")
+        for entry_id, (lo, hi) in covered.get(_collections_scope(place).casefold(), []):
+            if (isinstance(start, int) and start < lo) or (isinstance(end, int) and end > hi):
+                continue
             errors.append(
                 f"collections_search({place!r}) repeats the survey of "
-                f"{covered[scope]}, whose counted collections cover that scope"
+                f"{entry_id}, whose counted collections cover that scope and period"
             )
+            break
     assert not errors, (
         "research-plan re-ran a counted locality survey:\n  - "
         + "\n  - ".join(errors)

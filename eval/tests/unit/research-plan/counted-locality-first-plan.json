@@ -4,7 +4,7 @@
     "skill": "research-plan",
     "name": "First plan for q_001 plans from loc_001 counted collections without re-running collections_search",
     "type": "positive",
-    "description": "Same state as ut_research_plan_005, but loc_001 carries the six Pennsylvania collections locality-guide saved, each with a person_count. research-plan must plan from those collections and make no collections_search call for Schuylkill or Pennsylvania (the call would return the same state-scoped set); the national United States call for the federal census stays allowed. Issue #3545 lead 3: in 4 of 10 post-#3860 e2e runs research-plan repeated locality-guide's collections_search on the place it had just surveyed.",
+    "description": "Same state as ut_research_plan_005, but loc_001 carries the six Pennsylvania collections locality-guide saved, each with a person_count. research-plan must plan from those collections and make no collections_search call for Schuylkill or Pennsylvania (the call would return the same state-scoped set); the national United States call for the federal census stays allowed. Issue #3545 lead 3: in 6 of 10 post-#3860 e2e runs research-plan repeated locality-guide's collections_search on the place it had just surveyed.",
     "tags": [
       "planning",
       "reads-localities-entry",

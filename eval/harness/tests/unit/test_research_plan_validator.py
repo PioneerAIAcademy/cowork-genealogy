@@ -330,6 +330,7 @@ def _with_locality(state, counts=(0, 1048378)):
         "id": "loc_001",
         "place": "Pennsylvania, United States",
         "for_place": "Schuylkill County, Pennsylvania",
+        "time_period": "1840-1880",
         "collections": [
             {"id": "1999196", "title": "Pennsylvania, Probate Records", "person_count": counts[0]},
             {"id": "1921317", "title": "Pennsylvania, County Marriages", "person_count": counts[1]},
@@ -403,9 +404,35 @@ def test_reuse_fires_on_a_repeat_at_the_entry_scope(place):
 
 def test_reuse_fires_with_years_on_the_call():
     call = _call("collections_search", _PA_RESPONSE,
-                 {"standardPlace": "Pennsylvania, United States", "startYear": 1820, "endYear": 1845})
+                 {"standardPlace": "Pennsylvania, United States", "startYear": 1850, "endYear": 1880})
     with pytest.raises(AssertionError, match="loc_001"):
         check_reuse(_REUSE_BEFORE, [call], _REUSE_TEST)
+
+
+@pytest.mark.parametrize("years", [(1820, 1845), (1870, 1900), (1700, 1750)])
+def test_reuse_passes_a_call_for_another_period(years):
+    # clark-parents surveyed Berks for 1750-1850; a later question outside it needs the call.
+    call = _call("collections_search", None, {"standardPlace": "Pennsylvania, United States",
+                                              "startYear": years[0], "endYear": years[1]})
+    _no_skip(check_reuse, _REUSE_BEFORE, [call], _REUSE_TEST)
+
+
+@pytest.mark.parametrize("period", [None, "", "nineteenth century", "1840s"])
+def test_reuse_fails_loudly_when_the_entry_has_no_period(period):
+    before = _with_locality({"research_json": {}})
+    before["research_json"]["localities"][0]["time_period"] = period
+    with pytest.raises(AssertionError, match="cannot exercise"):
+        check_reuse(before, [], _REUSE_TEST)
+
+
+def test_reuse_reads_a_single_year_and_an_en_dash():
+    for period, inside in (("1901", (1901, 1901)), ("1840–1880", (1845, 1870))):
+        before = _with_locality({"research_json": {}})
+        before["research_json"]["localities"][0]["time_period"] = period
+        call = _call("collections_search", None, {"standardPlace": "Pennsylvania, United States",
+                                                  "startYear": inside[0], "endYear": inside[1]})
+        with pytest.raises(AssertionError, match="loc_001"):
+            check_reuse(before, [call], _REUSE_TEST)
 
 
 @pytest.mark.parametrize("response", [
@@ -432,14 +459,14 @@ def test_reuse_exempts_the_national_call_even_for_a_national_entry():
     # hale-* scenarios carry a localities entry placed at "United States".
     before = _with_locality({"research_json": {}})
     before["research_json"]["localities"].append({
-        "id": "loc_002", "place": "United States",
+        "id": "loc_002", "place": "United States", "time_period": "1880",
         "collections": [{"id": "1325221", "title": "United States Census, 1880", "person_count": 50000000}],
     })
     _no_skip(check_reuse, before, [_call("collections_search", None, {"standardPlace": "United States"})], _REUSE_TEST)
 
 
 _NO_BEFORE = {"research_json": {"localities": [{
-    "id": "loc_001", "place": "Hordaland, Norway",
+    "id": "loc_001", "place": "Hordaland, Norway", "time_period": "1800-1900",
     "collections": [{"id": "4237104", "title": "Norway, Church Books", "person_count": 0}],
 }]}}
 

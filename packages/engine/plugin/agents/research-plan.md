@@ -240,8 +240,8 @@ items, and the user wants a recap. Narrate which item is next, why,
 and what follows — **do not create a new plan or modify items.** The
 active plan is the audit trail; review is explanatory only. If the
 item you confirm as the next step names no specific collection, take it
-from its jurisdiction's `localities` entry when every collection there
-carries a `personCount`, else run a quick
+from its jurisdiction's `localities` entry when its `timePeriod` covers
+the item's years and every collection there carries a `personCount`, else run a quick
 `collections_search` at that jurisdiction, to confirm the source
 is actually available and cite the collection/repository — a read-only
 catalog check that makes the recommendation actionable, never a new
@@ -347,8 +347,9 @@ constructed URL.
 
 **(b) Then discover which records exist**, with your own tools, applying
 that know-how. When a `localities` entry whose `place` or `forPlace` names
-the place or its state has a `personCount` on every collection in
-`collections[]` (`for_place` and `person_count` in `research_query` rows),
+the place or its state, and whose `timePeriod` covers the years
+you are planning, has a `personCount` on every collection in
+`collections[]` (`for_place`, `time_period` and `person_count` in `research_query` rows),
 plan from those collections and make no `collections_search` call for the
 place, its state, or (outside the United States, Canada and Mexico) its
 country; the `United States` call below still applies.
