@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "check-warnings",
   "version": 5,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-11-07_13-57-09",
@@ -156,7 +156,7 @@
       },
       "totals": {
         "duration_ms": 23609.004252997693,
-        "duration_api_ms": 19724.0,
+        "duration_api_ms": 19724,
         "judge_duration_ms": 9739.134288014611,
         "wall_clock_ms": 33863.35372924805,
         "num_turns": 2,
@@ -179,7 +179,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 23609.004252997693,
-          "duration_api_ms": 19724.0,
+          "duration_api_ms": 19724,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1555,
@@ -258,7 +258,7 @@
           },
           "skill_cost_usd": 0.14015028499999999,
           "output": {
-            "text_response": "## Warnings for Margaret Mercer (MRCR-MOM)\n\n**Individual checks:** No genealogical warnings found \u2014 all checks passed.\n\n---\n\n## Missing Children from the Census\n\n**2 children are missing from the tree.**\n\nChildren currently in the tree (6): Mary Mercer (1889), John Mercer (1891), Anna Mercer (1893), Edward Mercer (1896), Grace Mercer (1898), and William Mercer (1906).\n\nComparing those 6 against the census counts (1900: 6 born, 5 living; 1910: 8 born, 7 living), two children appear unaccounted for:\n\n1. **Child born on or before 1 June 1900, died before 1 June 1900** \u2014 this child was already dead at the time of the 1900 census and also absent from the 1910 census.\n2. **Child born between 1 June 1900 and 15 April 1910, living on 15 April 1910** \u2014 this child was born after the 1900 census but was alive at the time of the 1910 census.\n\n---\n\n**Next steps:** Search records for a child of Margaret Mercer in each of the two birth windows above \u2014 one born and deceased before mid-1900 (look for death or burial records), and one born between mid-1900 and April 1910 who was still living in 1910.",
+            "text_response": "## Warnings for Margaret Mercer (MRCR-MOM)\n\n**Individual checks:** No genealogical warnings found — all checks passed.\n\n---\n\n## Missing Children from the Census\n\n**2 children are missing from the tree.**\n\nChildren currently in the tree (6): Mary Mercer (1889), John Mercer (1891), Anna Mercer (1893), Edward Mercer (1896), Grace Mercer (1898), and William Mercer (1906).\n\nComparing those 6 against the census counts (1900: 6 born, 5 living; 1910: 8 born, 7 living), two children appear unaccounted for:\n\n1. **Child born on or before 1 June 1900, died before 1 June 1900** — this child was already dead at the time of the 1900 census and also absent from the 1910 census.\n2. **Child born between 1 June 1900 and 15 April 1910, living on 15 April 1910** — this child was born after the 1900 census but was alive at the time of the 1910 census.\n\n---\n\n**Next steps:** Search records for a child of Margaret Mercer in each of the two birth windows above — one born and deceased before mid-1900 (look for death or burial records), and one born between mid-1900 and April 1910 who was still living in 1910.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -425,7 +425,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -824,7 +824,7 @@
       },
       "totals": {
         "duration_ms": 22847.872844984522,
-        "duration_api_ms": 19986.0,
+        "duration_api_ms": 19986,
         "judge_duration_ms": 11495.64418400405,
         "wall_clock_ms": 34431.729793548584,
         "num_turns": 2,
@@ -847,7 +847,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 22847.872844984522,
-          "duration_api_ms": 19986.0,
+          "duration_api_ms": 19986,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1555,
@@ -926,7 +926,7 @@
           },
           "skill_cost_usd": 0.14000876,
           "output": {
-            "text_response": "## Warnings for Ellen Brannon (BRNN-MOM)\n\n**No genealogical warnings found** \u2014 Ellen's dates and relationships pass all the data-integrity checks.\n\n---\n\n## Missing Children \u2014 Census Gap Analysis\n\n**1 child is missing from the tree.**\n\nThe tool compared these census records you provided against the three children currently in the tree:\n\n| Child in Tree | Born | Death |\n|---|---|---|\n| James Brannon (BRNN-CH1) | 1892 | \u2014 |\n| Catherine Brannon (BRNN-CH2) | 1895 | \u2014 |\n| Thomas Brannon (BRNN-CH3) | 1904 | \u2014 |\n\n**The problem:** The 1900 census records 3 children born and 3 living, and the 1910 census records 4 children born and 4 still living. Thomas (born 1904) would not yet have been born in 1900, so the 1900 count of 3 is accounted for by James, Catherine, and **one unidentified child**. By 1910 the count rises to 4 \u2014 but Thomas's addition brings the tree total to 4 total births, while that fourth person (born before June 1900 and alive in 1910) is not in the tree.\n\n**The missing child:** Born **on or before 1 June 1900**, living at both the 1900 and 1910 censuses. This child does not currently appear in Ellen's tree.\n\n**Recommended next step:** Search for a child of Ellen Brannon born before June 1900 who can be found in both the 1900 and 1910 census records.",
+            "text_response": "## Warnings for Ellen Brannon (BRNN-MOM)\n\n**No genealogical warnings found** — Ellen's dates and relationships pass all the data-integrity checks.\n\n---\n\n## Missing Children — Census Gap Analysis\n\n**1 child is missing from the tree.**\n\nThe tool compared these census records you provided against the three children currently in the tree:\n\n| Child in Tree | Born | Death |\n|---|---|---|\n| James Brannon (BRNN-CH1) | 1892 | — |\n| Catherine Brannon (BRNN-CH2) | 1895 | — |\n| Thomas Brannon (BRNN-CH3) | 1904 | — |\n\n**The problem:** The 1900 census records 3 children born and 3 living, and the 1910 census records 4 children born and 4 still living. Thomas (born 1904) would not yet have been born in 1900, so the 1900 count of 3 is accounted for by James, Catherine, and **one unidentified child**. By 1910 the count rises to 4 — but Thomas's addition brings the tree total to 4 total births, while that fourth person (born before June 1900 and alive in 1910) is not in the tree.\n\n**The missing child:** Born **on or before 1 June 1900**, living at both the 1900 and 1910 censuses. This child does not currently appear in Ellen's tree.\n\n**Recommended next step:** Search for a child of Ellen Brannon born before June 1900 who can be found in both the 1900 and 1910 census records.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1063,7 +1063,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -1463,7 +1463,7 @@
       },
       "totals": {
         "duration_ms": 14883.62415501615,
-        "duration_api_ms": 12576.0,
+        "duration_api_ms": 12576,
         "judge_duration_ms": 8409.398987976601,
         "wall_clock_ms": 23373.4290599823,
         "num_turns": 2,
@@ -1486,7 +1486,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 14883.62415501615,
-          "duration_api_ms": 12576.0,
+          "duration_api_ms": 12576,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1494,
@@ -1564,7 +1564,7 @@
           },
           "skill_cost_usd": 0.13181059499999997,
           "output": {
-            "text_response": "**Warnings for Patrick Flynn (I1)**\n\nNo genealogical warnings were found. All checks passed \u2014 Patrick Flynn's recorded information is internally consistent. Specifically, the tool found no:\n\n- **Contradictions** (e.g., death before birth, events after death)\n- **Implausible patterns** (e.g., impossible ages, out-of-order dates)\n\nThis means his data is self-consistent, though it doesn't confirm the facts are historically accurate. The result has been saved to the research log.",
+            "text_response": "**Warnings for Patrick Flynn (I1)**\n\nNo genealogical warnings were found. All checks passed — Patrick Flynn's recorded information is internally consistent. Specifically, the tool found no:\n\n- **Contradictions** (e.g., death before birth, events after death)\n- **Implausible patterns** (e.g., impossible ages, out-of-order dates)\n\nThis means his data is self-consistent, though it doesn't confirm the facts are historically accurate. The result has been saved to the research log.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1619,7 +1619,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -2019,7 +2019,7 @@
       },
       "totals": {
         "duration_ms": 14465.59164201608,
-        "duration_api_ms": 12009.0,
+        "duration_api_ms": 12009,
         "judge_duration_ms": 8762.7561330155,
         "wall_clock_ms": 23368.562936782837,
         "num_turns": 2,
@@ -2042,7 +2042,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 14465.59164201608,
-          "duration_api_ms": 12009.0,
+          "duration_api_ms": 12009,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1496,
@@ -2120,7 +2120,7 @@
           },
           "skill_cost_usd": 0.131659785,
           "output": {
-            "text_response": "No genealogical warnings found for **I1**. All checks passed.\n\nThe tool reviewed the profile for impossible or implausible details \u2014 events dated after death, impossible ages, parents who were too young, and similar issues \u2014 and nothing was flagged. The dates and relationships on this profile are internally consistent. The result is logged, and the project can close on this point. If new records are added later, the check can be run again.",
+            "text_response": "No genealogical warnings found for **I1**. All checks passed.\n\nThe tool reviewed the profile for impossible or implausible details — events dated after death, impossible ages, parents who were too young, and similar issues — and nothing was flagged. The dates and relationships on this profile are internally consistent. The result is logged, and the project can close on this point. If new records are added later, the check can be run again.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2175,7 +2175,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -2575,7 +2575,7 @@
       },
       "totals": {
         "duration_ms": 25305.37326799822,
-        "duration_api_ms": 21270.0,
+        "duration_api_ms": 21270,
         "judge_duration_ms": 10141.466311004478,
         "wall_clock_ms": 35935.06407737732,
         "num_turns": 2,
@@ -2598,7 +2598,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 25305.37326799822,
-          "duration_api_ms": 21270.0,
+          "duration_api_ms": 21270,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1489,
@@ -2676,7 +2676,7 @@
           },
           "skill_cost_usd": 0.13786550499999997,
           "output": {
-            "text_response": "## Warnings for Cornelius Brady (I1)\n\nThe check found **two contradictions** \u2014 no implausible-but-possible warnings. Because the two contradictions don't share a common cause, the most likely explanation is that records from two different individuals have been merged into one profile.\n\n---\n\n### \u26a0\ufe0f Contradiction 1 \u2014 Christening before Birth\n**A christening cannot precede the birth it follows.**\n\n| Fact | Date |\n|------|------|\n| Christening (F5) | 1843 |\n| Birth (F1) | ~1845 |\n\n**Next step:** Verify both dates against their original source documents.\n\n---\n\n### \u26a0\ufe0f Contradiction 2 \u2014 Burial before Death\n**A burial cannot precede the death it follows.**\n\n| Fact | Date |\n|------|------|\n| Burial (F6) | 1905 |\n| Death (F2) | 12 March 1908 |\n\n**Next step:** Verify both dates against their original source documents.\n\n---\n\n### Summary\n\nThese two impossibilities don't share a single correctable cause, which raises the strong possibility that records for **two different men named Cornelius Brady** have been merged into one profile. To confirm this, check all four disputed dates against their source records. If the dates hold up, the recommended next step is to build a full chronological timeline and identify where one person's records end and another's begin.",
+            "text_response": "## Warnings for Cornelius Brady (I1)\n\nThe check found **two contradictions** — no implausible-but-possible warnings. Because the two contradictions don't share a common cause, the most likely explanation is that records from two different individuals have been merged into one profile.\n\n---\n\n### ⚠️ Contradiction 1 — Christening before Birth\n**A christening cannot precede the birth it follows.**\n\n| Fact | Date |\n|------|------|\n| Christening (F5) | 1843 |\n| Birth (F1) | ~1845 |\n\n**Next step:** Verify both dates against their original source documents.\n\n---\n\n### ⚠️ Contradiction 2 — Burial before Death\n**A burial cannot precede the death it follows.**\n\n| Fact | Date |\n|------|------|\n| Burial (F6) | 1905 |\n| Death (F2) | 12 March 1908 |\n\n**Next step:** Verify both dates against their original source documents.\n\n---\n\n### Summary\n\nThese two impossibilities don't share a single correctable cause, which raises the strong possibility that records for **two different men named Cornelius Brady** have been merged into one profile. To confirm this, check all four disputed dates against their source records. If the dates hold up, the recommended next step is to build a full chronological timeline and identify where one person's records end and another's begin.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2731,7 +2731,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -3131,7 +3131,7 @@
       },
       "totals": {
         "duration_ms": 35244.17160800658,
-        "duration_api_ms": 32333.0,
+        "duration_api_ms": 32333,
         "judge_duration_ms": 13598.919179989025,
         "wall_clock_ms": 49380.29384613037,
         "num_turns": 2,
@@ -3154,7 +3154,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 35244.17160800658,
-          "duration_api_ms": 32333.0,
+          "duration_api_ms": 32333,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1489,
@@ -3232,7 +3232,7 @@
           },
           "skill_cost_usd": 0.14552015499999998,
           "output": {
-            "text_response": "## Warnings for Ambrose Keane (I1)\n\nThe check found **4 warnings total** \u2014 2 contradictions and 2 implausible patterns. These may share a single cause (possibly records of two different men merged into one profile).\n\n---\n\n### \u26a0\ufe0f Contradiction \u2014 Event After Death `[hasEventAfterDeath1]`\nA **1925 Residence** (F4) is recorded more than 1 year after the latest death date.\n- Birth: ~1785 (F1)\n- Death: 1908-03-12 (F2)\n- Death: 1909-11-02 (F7)\n- Residence: 1925 (F4)\n\n**Possible causes:** wrong death date; a same-name individual's record merged in; or a posthumous mention (estate/probate) attached as a Residence fact.\n**Next step:** Examine the original 1925 Residence record to determine what kind of document it is.\n\n---\n\n### \u26a0\ufe0f Contradiction \u2014 Lifespan Over 120 Years `[hasAgeRangeGreaterThan120]`\nBirth ~1785 to Death 1908 or 1909 exceeds plausible biological limits.\n**Next step:** Verify birth and death dates against original sources; consider whether two people's records have been merged.\n\n---\n\n### \u26a0\ufe0f Implausible \u2014 Multiple Death Dates `[tooManyDeathDates2]`\nTwo distinct death dates more than 14 days apart:\n- Death: 1908-03-12 (F2)\n- Death: 1909-11-02 (F7)\n\n**Next step:** Reconcile the two death records against their original sources.\n\n---\n\n### \u26a0\ufe0f Implausible \u2014 Relative Lifespan Over 120 Years `[relativesHasAgeRangeGreaterThan120]`\nThis applies to a **relative (I2)**, not Ambrose directly: Birth ~1818 (F3), Death 1945 (F5).\n**Next step:** Confirm the parent-child or spousal link to I2 before changing any data on that person.\n\n---\n\n**Summary:** No single correction will resolve all issues. The root cause is likely either wrong dates on one or more records, or two men named Ambrose Keane whose records were merged. Checking the original death records and the 1925 Residence document against the sources is the recommended first step.\n\n*(Logged as log_002.)*",
+            "text_response": "## Warnings for Ambrose Keane (I1)\n\nThe check found **4 warnings total** — 2 contradictions and 2 implausible patterns. These may share a single cause (possibly records of two different men merged into one profile).\n\n---\n\n### ⚠️ Contradiction — Event After Death `[hasEventAfterDeath1]`\nA **1925 Residence** (F4) is recorded more than 1 year after the latest death date.\n- Birth: ~1785 (F1)\n- Death: 1908-03-12 (F2)\n- Death: 1909-11-02 (F7)\n- Residence: 1925 (F4)\n\n**Possible causes:** wrong death date; a same-name individual's record merged in; or a posthumous mention (estate/probate) attached as a Residence fact.\n**Next step:** Examine the original 1925 Residence record to determine what kind of document it is.\n\n---\n\n### ⚠️ Contradiction — Lifespan Over 120 Years `[hasAgeRangeGreaterThan120]`\nBirth ~1785 to Death 1908 or 1909 exceeds plausible biological limits.\n**Next step:** Verify birth and death dates against original sources; consider whether two people's records have been merged.\n\n---\n\n### ⚠️ Implausible — Multiple Death Dates `[tooManyDeathDates2]`\nTwo distinct death dates more than 14 days apart:\n- Death: 1908-03-12 (F2)\n- Death: 1909-11-02 (F7)\n\n**Next step:** Reconcile the two death records against their original sources.\n\n---\n\n### ⚠️ Implausible — Relative Lifespan Over 120 Years `[relativesHasAgeRangeGreaterThan120]`\nThis applies to a **relative (I2)**, not Ambrose directly: Birth ~1818 (F3), Death 1945 (F5).\n**Next step:** Confirm the parent-child or spousal link to I2 before changing any data on that person.\n\n---\n\n**Summary:** No single correction will resolve all issues. The root cause is likely either wrong dates on one or more records, or two men named Ambrose Keane whose records were merged. Checking the original death records and the 1925 Residence document against the sources is the recommended first step.\n\n*(Logged as log_002.)*",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -3287,7 +3287,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -3692,7 +3692,7 @@
       },
       "totals": {
         "duration_ms": 18498.59625598765,
-        "duration_api_ms": 16294.0,
+        "duration_api_ms": 16294,
         "judge_duration_ms": 8490.221371001098,
         "wall_clock_ms": 27059.99207496643,
         "num_turns": 2,
@@ -3715,7 +3715,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 18498.59625598765,
-          "duration_api_ms": 16294.0,
+          "duration_api_ms": 16294,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1480,
@@ -3793,7 +3793,7 @@
           },
           "skill_cost_usd": 0.13496522,
           "output": {
-            "text_response": "## Warnings for Cornelius Brady (I1)\n\n**1 implausible warning found \u2014 no contradictions.**\n\n---\n\n### \u26a0\ufe0f Implausible \u2014 Early Marriage (`hasEarlyMarriage14`)\n\n> \"This person was married before age 14, which is biologically and socially unusual.\"\n\n**Facts involved:**\n- Birth: ~1845 (F1)\n- Marriage: 1857-09-20 (F9)\n\nThis would put Cornelius at approximately **12 years old** at the time of marriage \u2014 unusual even in historical contexts.\n\n---\n\n### Recommended Next Steps\n\n1. **Verify the marriage date** against the original marriage record.\n2. **Verify the birth year** against original birth or baptism records.\n3. If both originals confirm the dates, document this as a known early marriage exception with a note in the research record.\n4. If either date is in error, correct the fact accordingly.\n\nNo impossible (contradictory) events were found \u2014 this is flagged as *implausible* rather than a hard contradiction, so it warrants investigation rather than immediate correction.",
+            "text_response": "## Warnings for Cornelius Brady (I1)\n\n**1 implausible warning found — no contradictions.**\n\n---\n\n### ⚠️ Implausible — Early Marriage (`hasEarlyMarriage14`)\n\n> \"This person was married before age 14, which is biologically and socially unusual.\"\n\n**Facts involved:**\n- Birth: ~1845 (F1)\n- Marriage: 1857-09-20 (F9)\n\nThis would put Cornelius at approximately **12 years old** at the time of marriage — unusual even in historical contexts.\n\n---\n\n### Recommended Next Steps\n\n1. **Verify the marriage date** against the original marriage record.\n2. **Verify the birth year** against original birth or baptism records.\n3. If both originals confirm the dates, document this as a known early marriage exception with a note in the research record.\n4. If either date is in error, correct the fact accordingly.\n\nNo impossible (contradictory) events were found — this is flagged as *implausible* rather than a hard contradiction, so it warrants investigation rather than immediate correction.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -3848,7 +3848,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -4248,7 +4248,7 @@
       },
       "totals": {
         "duration_ms": 18953.166460007196,
-        "duration_api_ms": 15717.0,
+        "duration_api_ms": 15717,
         "judge_duration_ms": 8185.521969979163,
         "wall_clock_ms": 27205.596446990967,
         "num_turns": 2,
@@ -4271,7 +4271,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 18953.166460007196,
-          "duration_api_ms": 15717.0,
+          "duration_api_ms": 15717,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1480,
@@ -4349,7 +4349,7 @@
           },
           "skill_cost_usd": 0.133898435,
           "output": {
-            "text_response": "## Warnings for Patrick Flynn (I1)\n\n**1 warning found (implausible \u2014 no contradictions):**\n\n---\n\n### \u26a0\ufe0f Implausible \u2014 Empty Stub Record `[missingFactsAndRelatives]`\n\nPatrick Flynn's profile has **no recorded facts** (other than gender) and **no linked relatives** \u2014 it is an empty stub record.\n\n> **Note:** Because the profile has so little data, most warning checks (which rely on dates and relationships) cannot fire yet. Additional data may surface more issues.\n\n**Next step:** Add the facts you can document from sources (birth, death, residence) and link any known relatives, then re-run the check.\n\n---\n\nA log entry has been recorded as **log_001** in the project's `research.json`.",
+            "text_response": "## Warnings for Patrick Flynn (I1)\n\n**1 warning found (implausible — no contradictions):**\n\n---\n\n### ⚠️ Implausible — Empty Stub Record `[missingFactsAndRelatives]`\n\nPatrick Flynn's profile has **no recorded facts** (other than gender) and **no linked relatives** — it is an empty stub record.\n\n> **Note:** Because the profile has so little data, most warning checks (which rely on dates and relationships) cannot fire yet. Additional data may surface more issues.\n\n**Next step:** Add the facts you can document from sources (birth, death, residence) and link any known relatives, then re-run the check.\n\n---\n\nA log entry has been recorded as **log_001** in the project's `research.json`.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -4404,7 +4404,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -4809,7 +4809,7 @@
       },
       "totals": {
         "duration_ms": 20565.61284000054,
-        "duration_api_ms": 17661.0,
+        "duration_api_ms": 17661,
         "judge_duration_ms": 10029.317317996174,
         "wall_clock_ms": 30701.582431793213,
         "num_turns": 2,
@@ -4832,7 +4832,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 20565.61284000054,
-          "duration_api_ms": 17661.0,
+          "duration_api_ms": 17661,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1484,
@@ -4910,7 +4910,7 @@
           },
           "skill_cost_usd": 0.13787516,
           "output": {
-            "text_response": "## Warnings for Cornelius Brady (I1)\n\n**One contradiction found \u2014 no implausible warnings.**\n\n---\n\n### \u26a0\ufe0f Contradiction: Event After Death [`hasEventAfterDeath1`]\n\n> People cannot act after their death, but a posthumous mention can be misattached to their profile.\n\nAn event is dated **more than 1 year after** Cornelius Brady's recorded death.\n\n**Facts involved:**\n- Birth: ~1845 (F1)\n- Death: 1908-03-12 (F2)\n- **Residence: 1925 (F4)** \u2190 the problem\n\n---\n\n### Likely Causes\n\n**(a)** The recorded death date is wrong.\n**(b)** The 1925 residence record belongs to a same-name individual who outlived him.\n**(c)** The 1925 record is a posthumous mention \u2014 e.g., an obituary, death notice, city directory, a descendant's death certificate, or an estate/probate record that names him without describing actions by him.\n\n---\n\n### Next Step\n\nExamine the source attached to the **1925 Residence (F4)** and determine what kind of document it is:\n- If it describes actions **by Cornelius himself**, the death date or the identity of the record needs to be checked against the original death record.\n- If it is a record **about someone else** that only names him, unlink it from his events and keep it as a reference instead.\n\n---\n\n**(1 warning total)**",
+            "text_response": "## Warnings for Cornelius Brady (I1)\n\n**One contradiction found — no implausible warnings.**\n\n---\n\n### ⚠️ Contradiction: Event After Death [`hasEventAfterDeath1`]\n\n> People cannot act after their death, but a posthumous mention can be misattached to their profile.\n\nAn event is dated **more than 1 year after** Cornelius Brady's recorded death.\n\n**Facts involved:**\n- Birth: ~1845 (F1)\n- Death: 1908-03-12 (F2)\n- **Residence: 1925 (F4)** ← the problem\n\n---\n\n### Likely Causes\n\n**(a)** The recorded death date is wrong.\n**(b)** The 1925 residence record belongs to a same-name individual who outlived him.\n**(c)** The 1925 record is a posthumous mention — e.g., an obituary, death notice, city directory, a descendant's death certificate, or an estate/probate record that names him without describing actions by him.\n\n---\n\n### Next Step\n\nExamine the source attached to the **1925 Residence (F4)** and determine what kind of document it is:\n- If it describes actions **by Cornelius himself**, the death date or the identity of the record needs to be checked against the original death record.\n- If it is a record **about someone else** that only names him, unlink it from his events and keep it as a reference instead.\n\n---\n\n**(1 warning total)**",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -4965,7 +4965,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -5365,7 +5365,7 @@
       },
       "totals": {
         "duration_ms": 18782.715179986553,
-        "duration_api_ms": 16401.0,
+        "duration_api_ms": 16401,
         "judge_duration_ms": 10633.621239976492,
         "wall_clock_ms": 29569.374084472656,
         "num_turns": 2,
@@ -5388,7 +5388,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 18782.715179986553,
-          "duration_api_ms": 16401.0,
+          "duration_api_ms": 16401,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1483,
@@ -5466,7 +5466,7 @@
           },
           "skill_cost_usd": 0.13501206000000002,
           "output": {
-            "text_response": "## Warnings for Owen Brady (I2)\n\n**1 contradiction found.**\n\n---\n\n### \u26a0\ufe0f Contradiction \u2014 Death Before Child's Birth\n\n**Rule:** A father cannot father a child more than ~300 days after his own death.\n\n**Facts involved:**\n- **Death:** 1843-02-10 (Owen Brady)\n- **Child's Birth:** 1845-06-04 (person I1) \u2014 over **2 years** after Owen's recorded death\n\n---\n\n### Summary\n\nOwen Brady's profile has one serious problem: the tree records his death in **February 1843**, but a child is recorded as born in **June 1845** \u2014 more than two years later. This is biologically impossible for a father.\n\n**Next steps:**\n1. Verify Owen Brady's death date against the original death record.\n2. Confirm that the child (I1) is correctly linked to Owen as a parent.\n\nOne of the two dates or the parent-child relationship link is likely wrong.",
+            "text_response": "## Warnings for Owen Brady (I2)\n\n**1 contradiction found.**\n\n---\n\n### ⚠️ Contradiction — Death Before Child's Birth\n\n**Rule:** A father cannot father a child more than ~300 days after his own death.\n\n**Facts involved:**\n- **Death:** 1843-02-10 (Owen Brady)\n- **Child's Birth:** 1845-06-04 (person I1) — over **2 years** after Owen's recorded death\n\n---\n\n### Summary\n\nOwen Brady's profile has one serious problem: the tree records his death in **February 1843**, but a child is recorded as born in **June 1845** — more than two years later. This is biologically impossible for a father.\n\n**Next steps:**\n1. Verify Owen Brady's death date against the original death record.\n2. Confirm that the child (I1) is correctly linked to Owen as a parent.\n\nOne of the two dates or the parent-child relationship link is likely wrong.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -5521,7 +5521,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -5921,7 +5921,7 @@
       },
       "totals": {
         "duration_ms": 19031.05686500203,
-        "duration_api_ms": 15759.0,
+        "duration_api_ms": 15759,
         "judge_duration_ms": 9477.020024991361,
         "wall_clock_ms": 28577.823877334595,
         "num_turns": 2,
@@ -5944,7 +5944,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 19031.05686500203,
-          "duration_api_ms": 15759.0,
+          "duration_api_ms": 15759,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1486,
@@ -6022,7 +6022,7 @@
           },
           "skill_cost_usd": 0.13492163,
           "output": {
-            "text_response": "## Warnings for Ambrose Keane (I1)\n\n**1 contradiction found, 0 implausible warnings.**\n\n---\n\n### \u26a0\ufe0f Contradiction \u2014 Long Lifespan [`hasAgeRangeGreaterThan120`]\n\n> *A recorded lifespan cannot exceed plausible biological limits (~120 years).*\n\nAmbrose Keane's lifespan as recorded exceeds 120 years, which is not biologically possible.\n\n**Facts involved:**\n- Birth: ~1785 (F1)\n- Death: 1908-03-12 (F2)\n\n**What this usually means:**\n1. A wrong birth or death date, or\n2. Records of two different people merged into one profile.\n\n**Recommended next steps:** Verify both dates against their original sources. If both hold up, check whether records of a same-name individual were merged into this profile.",
+            "text_response": "## Warnings for Ambrose Keane (I1)\n\n**1 contradiction found, 0 implausible warnings.**\n\n---\n\n### ⚠️ Contradiction — Long Lifespan [`hasAgeRangeGreaterThan120`]\n\n> *A recorded lifespan cannot exceed plausible biological limits (~120 years).*\n\nAmbrose Keane's lifespan as recorded exceeds 120 years, which is not biologically possible.\n\n**Facts involved:**\n- Birth: ~1785 (F1)\n- Death: 1908-03-12 (F2)\n\n**What this usually means:**\n1. A wrong birth or death date, or\n2. Records of two different people merged into one profile.\n\n**Recommended next steps:** Verify both dates against their original sources. If both hold up, check whether records of a same-name individual were merged into this profile.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6077,7 +6077,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -6403,7 +6403,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly invoked person_warnings for Patrick Flynn (I1) and accurately reported the hasEventAfterDeath1 contradiction returned by the tool. The facts cited (F1 Birth, F2 Death 1908-03-12, F3 Residence 1925) match the tool response exactly. The skill correctly identified the Residence as dated 1925 and sourced from a relative's obituary (S5), which is the signature of a posthumous mention. The explanation of the three possible causes is accurate, and the recommended action\u2014to examine the 1925 record and unlink it if it is a posthumous mention\u2014is correct and well-grounded in the tool output. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly invoked person_warnings for Patrick Flynn (I1) and accurately reported the hasEventAfterDeath1 contradiction returned by the tool. The facts cited (F1 Birth, F2 Death 1908-03-12, F3 Residence 1925) match the tool response exactly. The skill correctly identified the Residence as dated 1925 and sourced from a relative's obituary (S5), which is the signature of a posthumous mention. The explanation of the three possible causes is accurate, and the recommended action—to examine the 1925 record and unlink it if it is a posthumous mention—is correct and well-grounded in the tool output. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -6441,7 +6441,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly invoked person_warnings for Patrick Flynn (I1) and accurately reported the hasEventAfterDeath1 contradiction returned by the tool. The facts cited (F1 Birth, F2 Death 1908-03-12, F3 Residence 1925) match the tool response exactly. The skill correctly identified the Residence as dated 1925 and sourced from a relative's obituary (S5), which is the signature of a posthumous mention. The explanation of the three possible causes is accurate, and the recommended action\u2014to examine the 1925 record and unlink it if it is a posthumous mention\u2014is correct and well-grounded in the tool output. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly invoked person_warnings for Patrick Flynn (I1) and accurately reported the hasEventAfterDeath1 contradiction returned by the tool. The facts cited (F1 Birth, F2 Death 1908-03-12, F3 Residence 1925) match the tool response exactly. The skill correctly identified the Residence as dated 1925 and sourced from a relative's obituary (S5), which is the signature of a posthumous mention. The explanation of the three possible causes is accurate, and the recommended action—to examine the 1925 record and unlink it if it is a posthumous mention—is correct and well-grounded in the tool output. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -6477,7 +6477,7 @@
       },
       "totals": {
         "duration_ms": 22829.077404981945,
-        "duration_api_ms": 20176.0,
+        "duration_api_ms": 20176,
         "judge_duration_ms": 12495.906024996657,
         "wall_clock_ms": 35918.80822181702,
         "num_turns": 2,
@@ -6500,7 +6500,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 22829.077404981945,
-          "duration_api_ms": 20176.0,
+          "duration_api_ms": 20176,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1485,
@@ -6578,7 +6578,7 @@
           },
           "skill_cost_usd": 0.13840081499999998,
           "output": {
-            "text_response": "## Warnings for Patrick Flynn (I1)\n\n**1 contradiction found, 0 implausible warnings.**\n\n---\n\n### \u26a0\ufe0f Contradiction \u2014 Event After Death [`hasEventAfterDeath1`]\n\n> *People cannot act after their death, but a posthumous mention can be misattached to their profile.*\n\nAn event is dated more than 1 year after Patrick Flynn's latest death-like fact.\n\n**Facts involved:**\n- **Birth** (F1) \u2014 date not recorded\n- **Death** (F2) \u2014 1908-03-12\n- **Residence** (F3) \u2014 1925\n\n---\n\n### What's Likely Happening\n\nThis contradiction typically has one of three causes:\n\n1. **The recorded death date is wrong** \u2014 the 1908 date may be an error.\n2. **The 1925 record belongs to a same-name individual** \u2014 another Patrick Flynn who outlived him.\n3. **The 1925 record is a posthumous mention** \u2014 such as an obituary, death notice, city directory, estate/probate record, or a descendant's death certificate that names him without describing actions by him.\n\n---\n\n### Recommended Next Step\n\nExamine the **1925 Residence record (F3)** and determine what kind of document it is:\n\n- **If it shows Patrick Flynn doing something in 1925** \u2192 check whether it belongs to a different same-named individual.\n- **If it only mentions him** (e.g., as a deceased person in someone else's record) \u2192 unlink it from his events and keep it as a reference only.\n- **If the 1908 death date looks wrong** \u2192 verify it against the original death record.",
+            "text_response": "## Warnings for Patrick Flynn (I1)\n\n**1 contradiction found, 0 implausible warnings.**\n\n---\n\n### ⚠️ Contradiction — Event After Death [`hasEventAfterDeath1`]\n\n> *People cannot act after their death, but a posthumous mention can be misattached to their profile.*\n\nAn event is dated more than 1 year after Patrick Flynn's latest death-like fact.\n\n**Facts involved:**\n- **Birth** (F1) — date not recorded\n- **Death** (F2) — 1908-03-12\n- **Residence** (F3) — 1925\n\n---\n\n### What's Likely Happening\n\nThis contradiction typically has one of three causes:\n\n1. **The recorded death date is wrong** — the 1908 date may be an error.\n2. **The 1925 record belongs to a same-name individual** — another Patrick Flynn who outlived him.\n3. **The 1925 record is a posthumous mention** — such as an obituary, death notice, city directory, estate/probate record, or a descendant's death certificate that names him without describing actions by him.\n\n---\n\n### Recommended Next Step\n\nExamine the **1925 Residence record (F3)** and determine what kind of document it is:\n\n- **If it shows Patrick Flynn doing something in 1925** → check whether it belongs to a different same-named individual.\n- **If it only mentions him** (e.g., as a deceased person in someone else's record) → unlink it from his events and keep it as a reference only.\n- **If the 1908 death date looks wrong** → verify it against the original death record.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6633,7 +6633,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -6893,7 +6893,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly invoked person_warnings for Patrick Flynn (I1) and accurately reported the hasEventAfterDeath1 contradiction returned by the tool. The facts cited (F1 Birth, F2 Death 1908-03-12, F3 Residence 1925) match the tool response exactly. The skill correctly identified the Residence as dated 1925 and sourced from a relative's obituary (S5), which is the signature of a posthumous mention. The explanation of the three possible causes is accurate, and the recommended action\u2014to examine the 1925 record and unlink it if it is a posthumous mention\u2014is correct and well-grounded in the tool output. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly invoked person_warnings for Patrick Flynn (I1) and accurately reported the hasEventAfterDeath1 contradiction returned by the tool. The facts cited (F1 Birth, F2 Death 1908-03-12, F3 Residence 1925) match the tool response exactly. The skill correctly identified the Residence as dated 1925 and sourced from a relative's obituary (S5), which is the signature of a posthumous mention. The explanation of the three possible causes is accurate, and the recommended action—to examine the 1925 record and unlink it if it is a posthumous mention—is correct and well-grounded in the tool output. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
@@ -6977,7 +6977,7 @@
             "source": "rubric",
             "name": "Detection accuracy",
             "score": 3,
-            "rationale": "The skill correctly detected the genuine impossibility: a lifespan of 127 years (1818\u20131945) exceeds the ~120-year threshold and is implausible. The tool returned this warning and the skill reported it without false positives. No valid edge cases were flagged as problems."
+            "rationale": "The skill correctly detected the genuine impossibility: a lifespan of 127 years (1818–1945) exceeds the ~120-year threshold and is implausible. The tool returned this warning and the skill reported it without false positives. No valid edge cases were flagged as problems."
           },
           {
             "source": "rubric",
@@ -7015,7 +7015,7 @@
             "source": "rubric",
             "name": "Detection accuracy",
             "score": 3,
-            "rationale": "The skill correctly detected the genuine impossibility: a lifespan of 127 years (1818\u20131945) exceeds the ~120-year threshold and is implausible. The tool returned this warning and the skill reported it without false positives. No valid edge cases were flagged as problems."
+            "rationale": "The skill correctly detected the genuine impossibility: a lifespan of 127 years (1818–1945) exceeds the ~120-year threshold and is implausible. The tool returned this warning and the skill reported it without false positives. No valid edge cases were flagged as problems."
           },
           {
             "source": "rubric",
@@ -7033,7 +7033,7 @@
       },
       "totals": {
         "duration_ms": 22432.22232098924,
-        "duration_api_ms": 19535.0,
+        "duration_api_ms": 19535,
         "judge_duration_ms": 9322.752534004394,
         "wall_clock_ms": 31834.176301956177,
         "num_turns": 2,
@@ -7056,7 +7056,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 22432.22232098924,
-          "duration_api_ms": 19535.0,
+          "duration_api_ms": 19535,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1484,
@@ -7134,7 +7134,7 @@
           },
           "skill_cost_usd": 0.13601224,
           "output": {
-            "text_response": "## Warnings for Patrick Flynn (I1)\n\n**1 warning found: 0 contradictions, 1 implausible.**\n\n---\n\n### \u26a0\ufe0f Implausible \u2014 Relative Has Lifespan Over 120 Years\n\n**Warning code:** `relativesHasAgeRangeGreaterThan120`\n\nA relative of Patrick Flynn (person **I2**) has a recorded lifespan greater than 120 years, which is implausible.\n\n- **Birth:** ~1818 (F3)\n- **Death:** 1945 (F4)\n- **Implied lifespan:** ~127 years\n\n**Patrick's own record passed every check.** This warning concerns a linked relative (I2), not Patrick directly.\n\n---\n\n### Recommended Next Steps\n\n1. **Confirm the relationship** \u2014 Verify that I2 is correctly linked as Patrick's relative. A same-name record may have been attached by mistake.\n2. **Check I2's dates** \u2014 Review I2's birth and death dates against their original source documents.\n3. **Consider a merged profile** \u2014 A lifespan over 120 years often indicates either a wrong vital date or two different people's records merged into one profile.",
+            "text_response": "## Warnings for Patrick Flynn (I1)\n\n**1 warning found: 0 contradictions, 1 implausible.**\n\n---\n\n### ⚠️ Implausible — Relative Has Lifespan Over 120 Years\n\n**Warning code:** `relativesHasAgeRangeGreaterThan120`\n\nA relative of Patrick Flynn (person **I2**) has a recorded lifespan greater than 120 years, which is implausible.\n\n- **Birth:** ~1818 (F3)\n- **Death:** 1945 (F4)\n- **Implied lifespan:** ~127 years\n\n**Patrick's own record passed every check.** This warning concerns a linked relative (I2), not Patrick directly.\n\n---\n\n### Recommended Next Steps\n\n1. **Confirm the relationship** — Verify that I2 is correctly linked as Patrick's relative. A same-name record may have been attached by mistake.\n2. **Check I2's dates** — Review I2's birth and death dates against their original source documents.\n3. **Consider a merged profile** — A lifespan over 120 years often indicates either a wrong vital date or two different people's records merged into one profile.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -7181,7 +7181,7 @@
                   "performed": "2026-11-07T13:58:07.363Z",
                   "resultsRef": null,
                   "returnedCount": null,
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -7459,7 +7459,7 @@
                 "source": "rubric",
                 "name": "Detection accuracy",
                 "score": 3,
-                "rationale": "The skill correctly detected the genuine impossibility: a lifespan of 127 years (1818\u20131945) exceeds the ~120-year threshold and is implausible. The tool returned this warning and the skill reported it without false positives. No valid edge cases were flagged as problems."
+                "rationale": "The skill correctly detected the genuine impossibility: a lifespan of 127 years (1818–1945) exceeds the ~120-year threshold and is implausible. The tool returned this warning and the skill reported it without false positives. No valid edge cases were flagged as problems."
               },
               {
                 "source": "rubric",
@@ -7581,7 +7581,7 @@
       },
       "totals": {
         "duration_ms": 33076.245450996794,
-        "duration_api_ms": 30243.0,
+        "duration_api_ms": 30243,
         "judge_duration_ms": 10309.269516001223,
         "wall_clock_ms": 43872.050523757935,
         "num_turns": 2,
@@ -7604,7 +7604,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 33076.245450996794,
-          "duration_api_ms": 30243.0,
+          "duration_api_ms": 30243,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1502,
@@ -7682,7 +7682,7 @@
           },
           "skill_cost_usd": 0.14297089500000001,
           "output": {
-            "text_response": "## Warnings for Ambrose Keane (I1)\n\nThe check-warnings agent **cannot confirm the merge from warnings alone**, and cannot name a definitive split point \u2014 but the warnings are strongly suggestive. Here is what was found:\n\n---\n\n### \u2757 Contradiction \u2014 Event After Death (`hasEventAfterDeath1`)\nA **Residence dated 1925** (F4) falls after **both** recorded death dates:\n- Death 1908-03-12 (F2)\n- Death 1909-11-02 (F7)\n\nA person cannot act after their death. This strongly implies the 1925 residence belongs to a different man.\n\n---\n\n### \u2757 Contradiction \u2014 Long Lifespan (`hasAgeRangeGreaterThan120`)\nThe lifespan runs from **Birth ~1785** (F1) to **Death 1908 or 1909** \u2014 over **120 years**, which is biologically impossible. This is a classic sign of two men merged into one profile.\n\n---\n\n### \u26a0\ufe0f Implausible \u2014 Multiple Death Dates (`tooManyDeathDates2`)\nTwo distinct death dates more than 14 days apart:\n- **1908-03-12** (F2)\n- **1909-11-02** (F7)\n\nOne likely belongs to the first man, and one to the second.\n\n---\n\n### Where to look for the split point\nThe warnings point to the split being somewhere around **1908\u20131909** (the two death dates), with the 1925 residence belonging to the second man. To confirm it, the original sources for both death records and the 1925 residence need to be reviewed. Building a full chronological timeline of every event will show where one man's records end and the other's begin.\n\nThe log entry for this check is **log_002** in research.json.",
+            "text_response": "## Warnings for Ambrose Keane (I1)\n\nThe check-warnings agent **cannot confirm the merge from warnings alone**, and cannot name a definitive split point — but the warnings are strongly suggestive. Here is what was found:\n\n---\n\n### ❗ Contradiction — Event After Death (`hasEventAfterDeath1`)\nA **Residence dated 1925** (F4) falls after **both** recorded death dates:\n- Death 1908-03-12 (F2)\n- Death 1909-11-02 (F7)\n\nA person cannot act after their death. This strongly implies the 1925 residence belongs to a different man.\n\n---\n\n### ❗ Contradiction — Long Lifespan (`hasAgeRangeGreaterThan120`)\nThe lifespan runs from **Birth ~1785** (F1) to **Death 1908 or 1909** — over **120 years**, which is biologically impossible. This is a classic sign of two men merged into one profile.\n\n---\n\n### ⚠️ Implausible — Multiple Death Dates (`tooManyDeathDates2`)\nTwo distinct death dates more than 14 days apart:\n- **1908-03-12** (F2)\n- **1909-11-02** (F7)\n\nOne likely belongs to the first man, and one to the second.\n\n---\n\n### Where to look for the split point\nThe warnings point to the split being somewhere around **1908–1909** (the two death dates), with the 1925 residence belonging to the second man. To confirm it, the original sources for both death records and the 1925 residence need to be reviewed. Building a full chronological timeline of every event will show where one man's records end and the other's begin.\n\nThe log entry for this check is **log_002** in research.json.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -7737,7 +7737,7 @@
                       "returnedCount": null
                     }
                   ],
-                  "next": "Now return the report you just logged, in full, above the --- line, as your reply \u2014 not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
+                  "next": "Now return the report you just logged, in full, above the --- line, as your reply — not a note that it was logged. Only your final message reaches the caller: anything you wrote before this call is not returned, so write the whole report again; never say it is above.",
                   "filesWritten": [
                     "research.json"
                   ],
@@ -8106,7 +8106,7 @@
       },
       "totals": {
         "duration_ms": 13458.213322999654,
-        "duration_api_ms": 11674.0,
+        "duration_api_ms": 11674,
         "judge_duration_ms": 7004.295557999285,
         "wall_clock_ms": 20543.933629989624,
         "num_turns": 2,
@@ -8129,7 +8129,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 13458.213322999654,
-          "duration_api_ms": 11674.0,
+          "duration_api_ms": 11674,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1498,
@@ -8200,7 +8200,7 @@
           },
           "skill_cost_usd": 0.13250294499999998,
           "output": {
-            "text_response": "The check-warnings subagent handed this back with the following explanation:\n\n> The request is about two records that disagree on where this man was born, so it is a conflict between sources \u2014 not a check for impossible or unlikely data within the family tree. No tree data was checked here.\n>\n> The next step is a comparison of the census and death certificate entries against each other, which is handled by the **conflict-resolution** agent.\n\nIn other words, the County Kerry vs. County Cork birthplace discrepancy is a **source conflict** (two records disagreeing about the same fact), not the kind of warning the check-warnings agent handles (impossible dates, implausible ages, events after death, etc.). To formally flag and resolve the mismatch, it should be routed to the **conflict-resolution** agent. Would you like me to do that?",
+            "text_response": "The check-warnings subagent handed this back with the following explanation:\n\n> The request is about two records that disagree on where this man was born, so it is a conflict between sources — not a check for impossible or unlikely data within the family tree. No tree data was checked here.\n>\n> The next step is a comparison of the census and death certificate entries against each other, which is handled by the **conflict-resolution** agent.\n\nIn other words, the County Kerry vs. County Cork birthplace discrepancy is a **source conflict** (two records disagreeing about the same fact), not the kind of warning the check-warnings agent handles (impossible dates, implausible ages, events after death, etc.). To formally flag and resolve the mismatch, it should be routed to the **conflict-resolution** agent. Would you like me to do that?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -8218,7 +8218,7 @@
             "agent_returns": [
               {
                 "subagent_type": "check-warnings",
-                "text": "Hand-back: conflict-resolution \u2014 flag the mismatch between a census record saying the man was born in County Kerry and a death certificate saying County Cork.\n\n---\n\nThe request is about two records that disagree on where this man was born, so it is a conflict between sources, not a check for impossible or unlikely data within the family tree. The conflict will be handled in a separate review, and no tree data was checked here.\n\nThe next step is a comparison of the census and death certificate entries against each other, which is handled separately."
+                "text": "Hand-back: conflict-resolution — flag the mismatch between a census record saying the man was born in County Kerry and a death certificate saying County Cork.\n\n---\n\nThe request is about two records that disagree on where this man was born, so it is a conflict between sources, not a check for impossible or unlikely data within the family tree. The conflict will be handled in a separate review, and no tree data was checked here.\n\nThe next step is a comparison of the census and death certificate entries against each other, which is handled separately."
               }
             ],
             "warnings": [
@@ -8241,7 +8241,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -8307,7 +8307,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -8343,7 +8343,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -8361,13 +8361,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -8505,7 +8505,7 @@
       },
       "totals": {
         "duration_ms": 14829.116203007288,
-        "duration_api_ms": 12879.0,
+        "duration_api_ms": 12879,
         "judge_duration_ms": 5699.518891022308,
         "wall_clock_ms": 20543.034315109253,
         "num_turns": 2,
@@ -8528,7 +8528,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 14829.116203007288,
-          "duration_api_ms": 12879.0,
+          "duration_api_ms": 12879,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1502,
@@ -8603,7 +8603,7 @@
           },
           "skill_cost_usd": 0.13314510499999999,
           "output": {
-            "text_response": "Your family tree in this folder isn't set up as a research project yet, so the warnings check couldn't run \u2014 there's no **research.json** file present in `/tmp/eval-ut_check_warnings_023-0-0-thytwnjt`.\n\nHere's what needs to happen first:\n\n1. **Initialize a project** for KWCJ-RN4 (your great-grandfather). This creates the `research.json` and `tree.gedcomx.json` files that the system works with.\n2. **Then run the warnings check**, which will look for impossible or implausible dates and relationships in his record.\n\nWould you like me to go ahead and initialize the project for KWCJ-RN4 so we can then check it for problems?",
+            "text_response": "Your family tree in this folder isn't set up as a research project yet, so the warnings check couldn't run — there's no **research.json** file present in `/tmp/eval-ut_check_warnings_023-0-0-thytwnjt`.\n\nHere's what needs to happen first:\n\n1. **Initialize a project** for KWCJ-RN4 (your great-grandfather). This creates the `research.json` and `tree.gedcomx.json` files that the system works with.\n2. **Then run the warnings check**, which will look for impossible or implausible dates and relationships in his record.\n\nWould you like me to go ahead and initialize the project for KWCJ-RN4 so we can then check it for problems?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -8623,7 +8623,7 @@
                   "ok": false,
                   "reason": "no_project",
                   "errors": [
-                    "This folder is not a research project \u2014 there is no research.json here. There is no project state to read \u2014 anything you are working on is standalone."
+                    "This folder is not a research project — there is no research.json here. There is no project state to read — anything you are working on is standalone."
                   ]
                 }
               }
@@ -8643,7 +8643,7 @@
             "agent_returns": [
               {
                 "subagent_type": "check-warnings",
-                "text": "Hand-back: init-project \u2014 create a project for KWCJ-RN4, then check it\n\nThis folder has no research project (no research.json), so the warnings check could not run. No warnings were produced, and nothing was logged.\n\n---\nYour family tree in this folder isn't set up as a research project yet, so I couldn't check your great-grandfather's record for problems. Setting up the project comes first, and then the check can run. Once that is done, I can look for impossible or unlikely dates and relationships on his record."
+                "text": "Hand-back: init-project — create a project for KWCJ-RN4, then check it\n\nThis folder has no research project (no research.json), so the warnings check could not run. No warnings were produced, and nothing was logged.\n\n---\nYour family tree in this folder isn't set up as a research project yet, so I couldn't check your great-grandfather's record for problems. Setting up the project comes first, and then the check can run. Once that is done, I can look for impossible or unlikely dates and relationships on his record."
               }
             ],
             "warnings": [
@@ -8666,7 +8666,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -8732,7 +8732,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -8768,7 +8768,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -8786,13 +8786,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -8878,7 +8878,7 @@
   ],
   "totals": {
     "duration_ms": 338811.66007497814,
-    "duration_api_ms": 294237.0,
+    "duration_api_ms": 294237,
     "judge_duration_ms": 153794.76353197242,
     "num_turns": 32,
     "input_tokens": 23962,
