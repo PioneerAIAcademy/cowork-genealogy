@@ -1,0 +1,15 @@
+{
+  "tool": "image_transcribe",
+  "description": "SYNTHETIC (issue #4136): written by hand, not captured live — the FamilySearch session had expired. The NARA M246 title is real; the film note, image group 008246133, image ids and roll contents are invented for the no-project test. Page 1 of 2 of Capt. Moses Dustin's company roll, image 008246133_00412. Anchored to the full id. Pair with image-transcribe-any, ordered last.",
+  "args": {
+    "imageId": "~008246133_00412"
+  },
+  "response": {
+    "transcription": "A Muster and Pay Roll of Capt. Moses Dustin's Company in Col. George Reid's Regiment of New Hampshire Militia, in the Brigade commanded by Brig. Gen. John Stark, 1777.\n\nNames | Rank | Time of Enlistment | Time of Discharge\nMoses Dustin | Captain | July 19, 1777 | Sept. 25, 1777\nJoseph Kelley | Lieutenant | July 19, 1777 | Sept. 25, 1777\nSamuel Ayer | Ensign | July 20, 1777 | Sept. 25, 1777\nDaniel Wood | Sergeant | July 20, 1777 | Sept. 25, 1777\nNathaniel Emerson | Sergeant | July 21, 1777 | Sept. 25, 1777\nJonathan Corliss | Corporal | July 21, 1777 | Sept. 25, 1777\n[continued on next page]",
+    "metadata": {
+      "imageId": "008246133_00412",
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1702113
+    }
+  }
+}

@@ -24,5 +24,8 @@
     "The paragraph must contain NO file names (research.json, tree.gedcomx.json), tool names, or field names.",
     "The main thread must have called project_context. It must NOT have called Read on research.json or tree.gedcomx.json, must NOT have spawned any Agent, and must NOT have called research_append. The deterministic validator gates these; a failure there is a validator failure, not a judge failure.",
     "Facts of this scenario, to check the paragraph against (do not recount them from the transcript): four sources carry assertions, 13 in all; three are FamilySearch records and one is from Ancestry. Five more FamilySearch sources are attached with no assertions yet. The tree makes Thomas Flynn the parent of Patrick Flynn and of Mary and James Flynn. A paragraph stating any of these is correct."
-  ]
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
 }

@@ -424,11 +424,11 @@ const DELEGATION_EDGES: Record<string, Edge> = {
       // sides of that key are pinned.
       {
         side: "caller",
-        excerpt: "a `planItemIds:` line with the `pli_` ids research-exhaustiveness named",
+        excerpt: "a `planItemIds:` line with the `pli_` ids `project_context` or research-exhaustiveness named",
       },
       {
         side: "agent",
-        excerpt: "research-exhaustiveness refused a declaration and names `planItemIds`, take",
+        excerpt: "when the delegation names `planItemIds` to dispose of, take Dispose mode",
       },
     ],
   },

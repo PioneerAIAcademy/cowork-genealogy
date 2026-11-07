@@ -177,9 +177,9 @@ way, each a 1-2 sentence assessment tied to project state: what was met, what
 failed, and what the evidence could not reach. Where a criterion turns on
 whether a civil registration record could exist for this event, state the start
 date Step 1 read and the page it came from; "registration had not begun" is an
-assessment only when it rests on that fetched date. Declaring requires all seven met.
-A decline carries the same seven, honestly assessed, with the blocking criterion
-named in `justification`.
+assessment only when it rests on that fetched date. Declaring requires all seven met,
+written only in the call's arguments. A decline carries the same seven, honestly
+assessed, with the blocking criterion named in `justification`.
 
 | Criterion | Key question |
 |-----------|-------------|
@@ -387,10 +387,11 @@ the offending field — do not blindly retry the same payload.
 
 ## 5. Present
 
-- If exhaustive: "Research declared reasonably exhaustive. Ready for
+- If exhaustive: only "Research declared reasonably exhaustive. Ready for
   proof-conclusion."
 - If not yet exhaustive and gaps want planning: "Not yet exhaustive.
-  [What's missing.] Continue with planning the searches?"
+  [Every unsearched avenue, including ones your results showed.] Continue
+  with planning the searches?"
 - If declining (§"The decline"): the sentence that verdict calls for, then
   "Continue with writing the conclusion?" (low) or "Continue with planning
   the searches?" (high). Those exact lines — the host reads the last one

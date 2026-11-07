@@ -42,6 +42,7 @@ from web.app import (  # noqa: E402
     DEFAULT_TITLE,
     Activity,
     AdmissionRefused,
+    EmailTaken,
     EventRow,
     IdentityMismatch,
     ProjectNotOwned,
@@ -107,6 +108,10 @@ class FakeStore:
         # U23: turns a worker has received (a put-back must leave them running), and put-backs.
         self.received: set[str] = set()
         self.put_back: list[str] = []
+        # #3988: users.openrouter_key_enc, as the route passed it (ciphertext).
+        self.openrouter_keys: dict[str, str] = {}
+        # #3992: signin_states, state_sha256 -> used_at (None while unused).
+        self.signin_states: dict[str, datetime | None] = {}
 
     def seed_session(
         self, session_id: str = "sess_1", project_id: str = "proj_1", owner: str | None = USER_A.id
@@ -269,18 +274,39 @@ class FakeStore:
         return self.users.get(user_id)
 
     async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None) -> User:
+        """PgStore.upsert_user's four steps (#3992), without the locks."""
         email = email.strip().lower()
-        user = next((u for u in self.users.values() if u.email == email), None)
-        if user is None:
+        by_email = next((u for u in self.users.values() if u.email == email), None)
+        user = next((u for u in self.users.values() if familysearch_id and u.familysearch_id == familysearch_id), None)
+        if user is not None:
+            if user.blocked_at is None and user.email != email:
+                if by_email is not None:
+                    raise EmailTaken(email)
+                user = dataclasses.replace(user, email=email)
+        elif by_email is not None:
+            user = by_email
+            if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
+                raise IdentityMismatch(email)
+            if familysearch_id and not user.familysearch_id and user.blocked_at is None:
+                user = dataclasses.replace(user, familysearch_id=familysearch_id)
+        else:
             if max_users is not None and len(self.users) >= max_users:
                 raise AdmissionRefused(email)
-            user = User(f"usr_{len(self.users) + 1}", email)
-        if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
-            raise IdentityMismatch(email)
-        if familysearch_id and not user.familysearch_id and user.blocked_at is None:
-            user = dataclasses.replace(user, familysearch_id=familysearch_id)
+            user = User(f"usr_{len(self.users) + 1}", email, familysearch_id=familysearch_id or None)
         self.users[user.id] = user
         return user
+
+    async def create_signin_state(self, state_sha256: str) -> None:
+        self.signin_states[state_sha256] = None
+
+    async def signin_state_unused(self, state_sha256: str) -> bool:
+        return state_sha256 in self.signin_states and self.signin_states[state_sha256] is None
+
+    async def consume_signin_state(self, state_sha256: str) -> bool:
+        if not await self.signin_state_unused(state_sha256):
+            return False
+        self.signin_states[state_sha256] = datetime.now(tz=timezone.utc)
+        return True
 
     def block(self, user_id: str) -> None:
         """The operator's block (016): refused at sign-in and on every request."""
@@ -305,6 +331,15 @@ class FakeStore:
             "granted_at": datetime.now(tz=timezone.utc),
             "writes": old.get("writes", 0) + 1,
         }
+
+    async def openrouter_key_enc(self, user_id: str) -> str | None:
+        return self.openrouter_keys.get(user_id)
+
+    async def set_openrouter_key(self, user_id: str, key_enc: str) -> None:
+        self.openrouter_keys[user_id] = key_enc
+
+    async def clear_openrouter_key(self, user_id: str) -> None:
+        self.openrouter_keys.pop(user_id, None)
 
 
 class FakeQueue:
@@ -486,7 +521,7 @@ async def test_state_reads_documents_and_the_unserved_routes_say_so():
         # design rests on, so a 501 here is the feature missing, not a gap in the tier.
         assert (await c.post(f"/api/sessions/{row.session_id}/interrupt")).status_code == 202
         config = (await c.get("/auth/config")).json()
-        assert config == {"familysearch": False, "devLogin": True}
+        assert config == {"familysearch": False, "devLogin": True, "openrouter": False}
         assert (await c.get("/auth/me")).json() == {"id": USER_A.id, "email": USER_A.email}
 
 
@@ -1435,7 +1470,7 @@ async def test_create_session_on_a_seeded_project_and_refuse_a_bad_project_id():
 
 AUTH_ENV = ("PUBLIC_URL", "WEB_ORIGIN", "SESSION_SECRET", "FS_TOKEN_ENC_KEY", "ALLOWED_EMAILS",
             "FAMILYSEARCH_WEB_ENABLED", "FAMILYSEARCH_CONFIG", "DEV_LOGIN", "GENEALOGY_CHAT", "GENEALOGY_MAX_USERS",
-            "UPLOADS_ENABLED")
+            "UPLOADS_ENABLED", "OPENROUTER_LINKING_ENABLED", "FS_REDIRECT_URI", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE")
 
 
 @pytest.fixture(autouse=True)
@@ -2679,6 +2714,9 @@ async def test_a_trailing_slash_redirect_stays_under_the_prefix_and_relative(mon
     ("http://h.test:8085/x", "h.test", PREFIX, "http://h.test:8085/x"),
     ("/already/relative", "h.test", PREFIX, "/already/relative"),
     ("http://h.test/x", None, PREFIX, "http://h.test/x"),
+    # #3988: the callback's SPA route survives.
+    ("http://h.test/#/openrouter", "h.test", "", "/#/openrouter"),
+    ("http://h.test/?a=1#/s/x", "h.test", PREFIX, f"{PREFIX}/?a=1#/s/x"),
 ])
 def test_self_redirects_become_root_relative_under_the_prefix_and_others_are_untouched(location, host, base, want):
     assert app._relative_self_location(location, host, base) == want
@@ -2801,6 +2839,46 @@ async def test_an_upload_stores_the_original_and_its_text_layer(uploads_on):
     assert db.body(blobs, "proj_a", "uploads/deed.pdf.txt") == b"Know all men by these presents"
     # The sniffed type is stored, not the client's.
     assert blobs.types[db.rows[("proj_a", "uploads/deed.pdf")]] == "application/pdf"
+
+
+async def test_a_project_upload_cleans_an_ancestry_filename_and_its_text_key(uploads_on):
+    store, db, blobs = uploads_on
+    async with make_client(store, FakeQueue(), blobs=blobs) as c:
+        r = await _upload(c, "Ancestry Download - Massachusetts, U.S., Wills and Probate Records.pdf",
+                          TWO_PAGE_PDF, text="probate records")
+    assert r.status_code == 200, r.text
+    path = "uploads/Ancestry Download - Massachusetts_ U.S._ Wills and Probate Records.pdf"
+    assert r.json()["path"] == path
+    assert r.json()["textPath"] == path + ".txt"
+    assert db.body(blobs, "proj_a", path) == TWO_PAGE_PDF
+    assert db.body(blobs, "proj_a", path + ".txt") == b"probate records"
+
+
+async def test_a_session_upload_cleans_an_ancestry_filename(uploads_on):
+    store, db, blobs = uploads_on
+    row = store.seed_session(project_id="proj_a")
+    async with make_client(store, FakeQueue(), blobs=blobs) as c:
+        r = await c.post(f"/api/sessions/{row.session_id}/files", files={"file": (
+            "Ancestry Download - Massachusetts, U.S., Wills and Probate Records.pdf",
+            ONE_PAGE_PDF, "application/pdf")})
+    assert r.status_code == 200, r.text
+    path = "uploads/Ancestry Download - Massachusetts_ U.S._ Wills and Probate Records.pdf"
+    assert r.json()["path"] == path
+    assert db.body(blobs, "proj_a", path) == ONE_PAGE_PDF
+
+
+@pytest.mark.parametrize("route", ["project", "session"])
+async def test_an_upload_rejects_a_name_with_no_letters_or_digits(uploads_on, route):
+    store, db, blobs = uploads_on
+    row = store.seed_session(project_id="proj_a")
+    async with make_client(store, FakeQueue(), blobs=blobs) as c:
+        if route == "project":
+            r = await _upload(c, ",,,", JPEG)
+        else:
+            r = await c.post(f"/api/sessions/{row.session_id}/files", files={"file": (",,,", JPEG)})
+    assert r.status_code == 400, r.text
+    assert r.json()["detail"] == "filename is empty, starts with a dot, contains '..', or has no letters or digits"
+    assert db.rows == {}
 
 
 async def test_reuploading_a_name_with_no_text_drops_the_old_text_layer(uploads_on):

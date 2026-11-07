@@ -21,7 +21,13 @@ with the chat on (#3985, ``GENEALOGY_CHAT``):
                                                 404 unless UPLOADS_ENABLED=true)
   GET  /api/projects/{id}/download             the project as a zip, streamed from /var/tmp (#3987)
   GET  /auth/config, /auth/me, POST /auth/dev-login, /auth/logout, GET /auth/familysearch/login,
-  GET  /callback   (patron sign-in, web/auth.py; every /api/sessions and /api/projects route needs the cookie)
+  GET  /callback   (patron sign-in, web/auth.py; every /api/sessions and /api/projects route needs the cookie;
+                   served at FS_REDIRECT_URI's path, /callback by default, #3992)
+  GET  /privacy, /terms (no sign-in), GET /api/account (the id and deletion code)
+                                                only with the chat off (#3993); 404 with it on
+  GET  /openrouter, /openrouter/link, /openrouter/callback, POST /openrouter/unlink
+                                                the patron's own OpenRouter key (#3988; served only
+                                                with OPENROUTER_LINKING_ENABLED=true; cookie needed)
   GET  /api/sessions/{id}/sidecar/{log_id}     search-result body, or 404 when absent
   GET  /api/sessions/{id}/image?filename=      persisted source page scan, or 404 when absent
   GET  /api/sessions/{id}/logs -> 501; POST .../files stores a researcher upload
@@ -56,7 +62,12 @@ fchDatabase object to read instead, U29; both set refuses to start), QUEUE_URL (
 queue URL, the shim's shape; required with the chat on -- unset or empty refuses to start),
 GENEALOGY_CHAT (unset or true; false serves no /api/sessions route and needs no queue),
 GENEALOGY_MAX_USERS (unset: the allowlist admits; a positive integer: the user cap does),
+PG_POOL_MAX_SIZE (unset: one connection per query; a positive integer: a checked pool of that size),
 UPLOADS_ENABLED (unset or false: the project upload route answers 404; true or false only),
+OPENROUTER_LINKING_ENABLED (unset or false: no /openrouter route; true or false only),
+FS_REDIRECT_URI (unset: PUBLIC_URL + /callback; the callback route is served at its path),
+GENEALOGY_SIGNIN_CALLS_PER_MINUTE (unset: no sign-in budget; a whole number of at least 2:
+the code exchange and identity read share that many calls per sliding minute),
 POLL_S (1), SSE_PING_S (15, at most ``SSE_PING_MAX_S``),
 GENEALOGY_SQS_ACCESS_KEY + GENEALOGY_SQS_SECRET_KEY (both
 or neither; neither signs SendMessage with the default AWS chain, the instance profile on
@@ -138,6 +149,7 @@ from pg_credentials import PgCredentials  # noqa: E402
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 from web import blobstore  # noqa: E402  (U20: the S3 client, the engine's GENEALOGY_S3_* semantics)
 from web import feedback  # noqa: E402  (U20: the feedback bundle)
+from web import policies  # noqa: E402  (#3993: the privacy and terms text)
 from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
 from web.job_state import job_state  # noqa: E402  (the four states the list shows)
 from web.project_blobs import (  # noqa: E402  (source scans in, researcher uploads out)
@@ -344,6 +356,12 @@ class IdentityMismatch(Exception):
     signed in as the existing user."""
 
 
+class EmailTaken(IdentityMismatch):
+    """#3992: a known FamilySearch account now reports an email another user holds, so the
+    sign-in cannot move the account to it. A subclass, so a caller that catches only
+    IdentityMismatch still refuses; the callback answers it with its own page."""
+
+
 class AdmissionRefused(Exception):
     """A new user's sign-in found ``GENEALOGY_MAX_USERS`` users already (blocked users
     count). No row is written; the callback answers 403 before any grant."""
@@ -363,8 +381,9 @@ ADMISSION_REFUSALS: dict[str, tuple[int, str, str]] = {
 
 class AdmissionBusy(Exception):
     """A capped sign-in could not take the user's row (a returning user) or the admission
-    lock (a new one) within ``grants.QUEUE_LOCK_TIMEOUT_S``; the callback answers 503 and
-    nothing is written."""
+    lock (a new one) within ``grants.QUEUE_LOCK_TIMEOUT_S``, or a racing sign-in took the
+    email or the FamilySearch id between this one's read and its write, or deadlocked with it
+    (#3992); the callback answers 503 and nothing is written. A retry lands on the right branch."""
 
 
 @dataclass(frozen=True)
@@ -416,6 +435,10 @@ class Store(Protocol):
     # 008: sign-in. store_grant takes CIPHERTEXT; web/auth.py encrypts before the call.
     async def get_user(self, user_id: str) -> User | None: ...
     async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None) -> User: ...
+    # #3992: single-use sign-in state (017 signin_states), keyed by auth.state_sha256.
+    async def create_signin_state(self, state_sha256: str) -> None: ...
+    async def signin_state_unused(self, state_sha256: str) -> bool: ...
+    async def consume_signin_state(self, state_sha256: str) -> bool: ...
     async def is_allowed(self, email: str) -> bool: ...
     async def sync_allowlist(self, emails: set[str]) -> None: ...
     async def revoke_sessions(self, user_id: str) -> None: ...
@@ -430,6 +453,10 @@ class Store(Protocol):
         self, project_id: str, session_id: str, subpath: str, after: int, limit: int
     ) -> list[tuple[int, Any]]: ...
     async def grant_ciphertexts(self, user_id: str) -> tuple[str | None, str | None]: ...
+    # #3988: the patron's OpenRouter key, CIPHERTEXT only (auth.encrypt), in users.openrouter_key_enc.
+    async def openrouter_key_enc(self, user_id: str) -> str | None: ...
+    async def set_openrouter_key(self, user_id: str, key_enc: str) -> None: ...
+    async def clear_openrouter_key(self, user_id: str) -> None: ...
 
 
 class Queue(Protocol):
@@ -776,15 +803,51 @@ def check_out(state: str) -> dict[str, Any]:
 # ── Postgres store ───────────────────────────────────────────────────────────────
 
 
+# #3980: the optional pool's bounds. A borrow waits at most POOL_TIMEOUT_S, as a direct
+# connect does (U23's connect_timeout); a failing background connect keeps retrying on its
+# backoff for at most POOL_RECONNECT_TIMEOUT_S (psycopg_pool's default is 300 s), so a borrow
+# after Postgres returns starts a fresh attempt instead of waiting out a long backoff.
+POOL_TIMEOUT_S = 10.0
+POOL_RECONNECT_TIMEOUT_S = 10.0
+# Each hand-out check's own cap, inside POOL_TIMEOUT_S: a connection whose peer went silent
+# (no RST) would otherwise hold the check until the kernel gives up, about 15 minutes.
+POOL_CHECK_TIMEOUT_S = 2.0
+
+
+def _abandon_check(conn: Any, check: asyncio.Future) -> None:
+    """Give up on a hand-out check still running: close the socket, which psycopg would
+    otherwise keep waiting on even to cancel, so the check ends and the pool discards it."""
+    if not check.done():
+        conn.pgconn.finish()
+        check.cancel()
+    check.add_done_callback(lambda f: f.cancelled() or f.exception())
+
+
+def pool_max_size() -> int | None:
+    """``PG_POOL_MAX_SIZE`` (#3980): the query pool's size, or None (unset) for one
+    connection per call, the handoff's behaviour. Anything but a positive integer refuses."""
+    return auth.positive_int_env("PG_POOL_MAX_SIZE")
+
+
 class PgStore:
-    """One AsyncConnection per call -- streams included, so an open stream costs three or
-    four short connects per poll. n=1 in the prototype; a pool is a production concern.
+    """Queries run on ``_connect``: one AsyncConnection per call by default -- streams
+    included, so an open stream costs three or four short connects per poll -- or, with
+    ``pool_max_size`` (``PG_POOL_MAX_SIZE``, #3980), a connection borrowed from a
+    ``psycopg_pool`` pool that checks each one as it hands it out, so one the server closed
+    while idle (Neon does) is replaced rather than handed to a query. The lifespan opens and
+    closes the pool. Readiness, the schema check and each grant refresh (``refresh_grant``)
+    always connect on their own (``_aconn``); the refresher loop's ``due_grant_users`` borrows.
 
     Connections are ``autocommit=True``: a read is one round trip, and the writers that
-    need several statements to land together say so with ``conn.transaction()``."""
+    need several statements to land together say so with ``conn.transaction()``. Nothing on
+    ``_connect`` sets session state: lock timeouts are transaction-local, and the session
+    advisory locks live on ``_grant_connect``. So a pooled connection carries nothing to its
+    next borrower."""
 
-    def __init__(self, creds: PgCredentials | str) -> None:
+    def __init__(self, creds: PgCredentials | str, *, pool_max_size: int | None = None) -> None:
         self.creds = PgCredentials.fixed(creds) if isinstance(creds, str) else creds
+        self.pool_max_size = pool_max_size
+        self._pool: Any = None
         # U10: the one readiness probe in flight, shared by concurrent /api/health calls,
         # and the postgres check's last outcome for the transition log.
         self._ready_task: asyncio.Task | None = None
@@ -848,10 +911,91 @@ class PgStore:
             raise ReadyCheckError(f"schema: missing {names}", f"web tables or functions missing: {names}")
 
     async def _connect(self):
+        """An async context manager over one query connection: a pooled one, returned to the
+        pool on exit, or a connection of its own, closed on exit. Used as
+        ``async with await self._connect() as conn``."""
+        if self._pool is not None:
+            return self._borrow()
         from psycopg.rows import dict_row
 
         # U23: a connect to a vanished host fails in 10 s rather than the OS's TCP timeout.
         return await self._aconn(row_factory=dict_row, autocommit=True, connect_timeout=10)
+
+    @contextlib.asynccontextmanager
+    async def _borrow(self):
+        """A pooled connection that has just answered a check, within one POOL_TIMEOUT_S.
+        A dead one is discarded (the pool replaces it in the background) and the next is
+        tried at once. The pool's own ``check=`` would sleep its reconnect backoff (1 s, 2 s,
+        4 s...) after each failure, and Neon suspending an idle compute kills every pooled
+        connection together. Each check is capped at POOL_CHECK_TIMEOUT_S, for a peer that
+        went silent rather than closing; a cancelled borrow gives its connection back."""
+        from psycopg_pool import AsyncConnectionPool, PoolTimeout
+
+        pool = self._pool
+        deadline = time.monotonic() + POOL_TIMEOUT_S
+        for _ in range(pool.max_size + 1):
+            conn = await pool.getconn(max(deadline - time.monotonic(), 0.001))
+            check = asyncio.ensure_future(AsyncConnectionPool.check_connection(conn))
+            try:
+                limit = min(POOL_CHECK_TIMEOUT_S, max(deadline - time.monotonic(), 0.001))
+                done, _ = await asyncio.wait({check}, timeout=limit)
+                if not done:
+                    raise TimeoutError(f"the connection check did not answer in {limit:.1f}s")
+                check.result()
+            except Exception:  # noqa: BLE001 - a dead or silent connection; putconn discards it
+                _abandon_check(conn, check)
+                await pool.putconn(conn)
+                continue
+            except BaseException:  # cancellation (a closed SSE tab, a timed-out step): give it back
+                _abandon_check(conn, check)
+                await pool.putconn(conn)
+                raise
+            try:
+                async with conn:
+                    yield conn
+            finally:
+                await pool.putconn(conn)
+            return
+        raise PoolTimeout(f"no live connection in {pool.max_size + 1} hand-outs")
+
+    async def open_pool(self) -> None:
+        """Open the query pool when ``pool_max_size`` is set; a no-op otherwise, so no
+        ``psycopg_pool`` object exists. Never waits for a connection: the tier listens and
+        reports 503 while Postgres is down (U10 D8). Every pooled connect goes through
+        ``pg_credentials.aconnect``, so it resolves the current DSN and re-reads SAS once on
+        an invalid password (U29), as ``_aconn`` does; the pool's own conninfo is unused.
+        ``kwargs`` names no ``sslmode``/``sslrootcert``: libpq reads ``PGSSL*`` from the
+        environment."""
+        if self.pool_max_size is None or self._pool is not None:
+            return
+        import psycopg
+        from psycopg.rows import dict_row
+        from psycopg_pool import AsyncConnectionPool
+
+        creds = self.creds
+
+        class CredentialsConnection(psycopg.AsyncConnection):
+            @classmethod
+            async def connect(cls, conninfo: str = "", **kwargs: Any):
+                return await pg_credentials.aconnect(
+                    creds, lambda d, **k: super(CredentialsConnection, cls).connect(d, **k), **kwargs)
+
+        self._pool = AsyncConnectionPool(
+            "", connection_class=CredentialsConnection, open=False, name="web",
+            min_size=0, max_size=self.pool_max_size,
+            timeout=POOL_TIMEOUT_S, reconnect_timeout=POOL_RECONNECT_TIMEOUT_S,
+            # prepare_threshold=None: psycopg prepares a query server-side after five runs on
+            # one connection, and a pooled one lives long enough; a migration that changes a
+            # result type would then fail that statement until the connection expired.
+            kwargs={"row_factory": dict_row, "autocommit": True, "connect_timeout": 10,
+                    "prepare_threshold": None},
+        )
+        await self._pool.open(wait=False)
+
+    async def close_pool(self) -> None:
+        pool, self._pool = self._pool, None
+        if pool is not None:
+            await pool.close()
 
     async def verify_schema(self, sql_dir: Path = SQL_DIR) -> list[str]:
         """The ledger ``migrate.py`` keeps against the files under ``sql_dir``: the shipped
@@ -1306,57 +1450,116 @@ class PgStore:
         return self._user(row) if row else None
 
     async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None) -> User:
-        """The user for this email, created on first sign-in. The FamilySearch id is
-        pinned on first sight; a later sign-in presenting a DIFFERENT one raises
-        IdentityMismatch (trust on first use). A blocked user is returned unpinned, so the
-        caller's refusal writes nothing.
+        """The user for this FamilySearch identity, created on first sign-in (#3992).
+
+        With a FamilySearch id, in this order: (1) a row with this id is the user, and a new
+        email FamilySearch reports replaces the stored one, unless another row holds it
+        (EmailTaken); (2) else a row with this email and no id gets the id pinned (trust
+        on first use); (3) a row with this email and a different id is IdentityMismatch; (4)
+        else a new row. Without one (dev-login) the email alone keys the user. A blocked user
+        is returned unchanged -- not pinned, its email not updated -- so the caller's refusal
+        writes nothing; every other refusal raises inside the transaction, so it writes nothing
+        either.
 
         With ``max_users`` (#3985, ``GENEALOGY_MAX_USERS``), an existing user is returned
         whatever the count, without the admission lock; a new one is inserted only while
-        ``users`` holds fewer rows, else AdmissionRefused. Only a new email takes the
-        tier-wide admission lock, and counts and inserts under it, so two sign-ins at cap-1
-        cannot both pass; a wait past ``grants.QUEUE_LOCK_TIMEOUT_S`` on that lock or on the
-        user's row raises AdmissionBusy."""
+        ``users`` holds fewer rows, else AdmissionRefused. Only a new user takes the tier-wide
+        admission lock, and counts and inserts under it, so two sign-ins at cap-1 cannot both
+        pass; a wait past ``grants.QUEUE_LOCK_TIMEOUT_S`` on that lock or on the user's row
+        raises AdmissionBusy. So does a unique violation (a racing sign-in took this email or
+        id between the read and the write, and a retry finds the row it wrote) and a deadlock
+        (two users each reporting the other's email at once)."""
         from psycopg import errors
 
         email = email.strip().lower()
         new_id = "usr_" + uuid.uuid4().hex[:16]
-        insert = "INSERT INTO users (id, email) VALUES (%s, %s) ON CONFLICT (email) DO NOTHING"
-        select = self._USER + " WHERE email = %s FOR UPDATE"
+        insert = ("INSERT INTO users (id, email, familysearch_id) VALUES (%s, %s, %s) "
+                  "ON CONFLICT DO NOTHING")
+        by_email = self._USER + " WHERE email = %s FOR UPDATE"
+        by_id = self._USER + " WHERE familysearch_id = %s FOR UPDATE"
+
+        async def existing(conn: Any) -> User | None:
+            """Steps 1-3: the user this identity already is, updated; None for a new one."""
+            if familysearch_id:
+                row = await (await conn.execute(by_id, (familysearch_id,))).fetchone()
+                if row is not None:
+                    user = self._user(row)
+                    if user.blocked_at is None and user.email != email:
+                        taken = await (await conn.execute(by_email, (email,))).fetchone()
+                        if taken is not None:
+                            raise EmailTaken(email)
+                        await conn.execute("UPDATE users SET email = %s WHERE id = %s", (email, user.id))
+                        user = replace(user, email=email)
+                    return user
+            row = await (await conn.execute(by_email, (email,))).fetchone()
+            if row is None:
+                return None
+            user = self._user(row)
+            if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
+                raise IdentityMismatch(email)
+            if familysearch_id and not user.familysearch_id and user.blocked_at is None:
+                await conn.execute("UPDATE users SET familysearch_id = %s WHERE id = %s", (familysearch_id, user.id))
+                user = replace(user, familysearch_id=familysearch_id)
+            return user
+
         try:
             async with await self._connect() as conn:
                 async with conn.transaction():
-                    row = None
-                    if max_users is None:
-                        await conn.execute(insert, (new_id, email))
-                    else:
-                        # One bounded wait for both locks below. An existing user, row-locked
-                        # so a concurrent delete waits; else the admission lock, the same read
-                        # again (a sign-in for this email may have inserted while this one
-                        # waited), the count, the insert.
+                    if max_users is not None:
+                        # One bounded wait for every lock below: the user's row, else the
+                        # admission lock, then the same reads again (a sign-in for this
+                        # identity may have inserted while this one waited), the count, the
+                        # insert.
                         await conn.execute(grants.QUEUE_LOCK_TIMEOUT_SQL, (grants.queue_lock_timeout(),))
-                        row = await (await conn.execute(select, (email,))).fetchone()
-                        if row is None:
-                            await conn.execute(grants.ADMISSION_LOCK_SQL, (grants.ADMISSION_LOCK_NS,))
-                            row = await (await conn.execute(select, (email,))).fetchone()
-                        if row is None:
+                    user = await existing(conn)
+                    if user is None and max_users is not None:
+                        await conn.execute(grants.ADMISSION_LOCK_SQL, (grants.ADMISSION_LOCK_NS,))
+                        user = await existing(conn)
+                        if user is None:
                             cur = await conn.execute("SELECT count(*) AS n FROM users")
                             if (await cur.fetchone())["n"] >= max_users:
                                 raise AdmissionRefused(email)
-                            await conn.execute(insert, (new_id, email))
-                    if row is None:
-                        row = await (await conn.execute(select, (email,))).fetchone()
-                    user = self._user(row)
-                    if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
-                        raise IdentityMismatch(email)
-                    if familysearch_id and not user.familysearch_id and user.blocked_at is None:
-                        await conn.execute(
-                            "UPDATE users SET familysearch_id = %s WHERE id = %s", (familysearch_id, user.id)
-                        )
-                        user = replace(user, familysearch_id=familysearch_id)
-        except errors.LockNotAvailable as exc:
+                    if user is None:
+                        await conn.execute(insert, (new_id, email, familysearch_id or None))
+                        user = await existing(conn)
+                    if user is None:
+                        # The insert hit a conflict whose row neither read finds: another
+                        # identity's row holds this email and a racing sign-in changed it.
+                        raise AdmissionBusy(email)
+        except (errors.LockNotAvailable, errors.UniqueViolation, errors.DeadlockDetected) as exc:
+            # DeadlockDetected: two users each took their own row and then the other's, each
+            # reporting the other's email. Postgres aborts one; a retry refuses it as EmailTaken.
             raise AdmissionBusy(email) from exc
         return user
+
+    async def create_signin_state(self, state_sha256: str) -> None:
+        """Record one sign-in's state (#3992, chat off). Rows older than the state cookie's life
+        (``auth.FS_OAUTH_MAX_AGE``) can never pass the callback, whose cookie has expired, so
+        each insert deletes them, through 019's index on ``created_at``: the table holds about
+        ten minutes of sign-ins."""
+        async with await self._connect() as conn:
+            async with conn.transaction():
+                await conn.execute(
+                    "DELETE FROM signin_states WHERE created_at < now() - make_interval(secs => %s)",
+                    (auth.FS_OAUTH_MAX_AGE,),
+                )
+                await conn.execute("INSERT INTO signin_states (state_sha256) VALUES (%s)", (state_sha256,))
+
+    async def signin_state_unused(self, state_sha256: str) -> bool:
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "SELECT 1 FROM signin_states WHERE state_sha256 = %s AND used_at IS NULL", (state_sha256,)
+            )
+            return (await cur.fetchone()) is not None
+
+    async def consume_signin_state(self, state_sha256: str) -> bool:
+        """One atomic UPDATE: of two concurrent callbacks with one state, exactly one gets True."""
+        async with await self._connect() as conn:
+            cur = await conn.execute(
+                "UPDATE signin_states SET used_at = now() WHERE state_sha256 = %s AND used_at IS NULL RETURNING 1",
+                (state_sha256,),
+            )
+            return (await cur.fetchone()) is not None
 
     async def is_allowed(self, email: str) -> bool:
         async with await self._connect() as conn:
@@ -1376,6 +1579,24 @@ class PgStore:
     async def revoke_sessions(self, user_id: str) -> None:
         async with await self._connect() as conn:
             await conn.execute("UPDATE users SET sessions_revoked_at = now() WHERE id = %s", (user_id,))
+
+    # -- OpenRouter key (#3988, 016) ---------------------------------------------------
+
+    async def openrouter_key_enc(self, user_id: str) -> str | None:
+        async with await self._connect() as conn:
+            cur = await conn.execute("SELECT openrouter_key_enc FROM users WHERE id = %s", (user_id,))
+            row = await cur.fetchone()
+        return row["openrouter_key_enc"] if row else None
+
+    async def set_openrouter_key(self, user_id: str, key_enc: str) -> None:
+        """Ciphertext only: the route encrypts with ``auth.encrypt`` before the call. A new
+        link replaces the old key."""
+        async with await self._connect() as conn:
+            await conn.execute("UPDATE users SET openrouter_key_enc = %s WHERE id = %s", (key_enc, user_id))
+
+    async def clear_openrouter_key(self, user_id: str) -> None:
+        async with await self._connect() as conn:
+            await conn.execute("UPDATE users SET openrouter_key_enc = NULL WHERE id = %s", (user_id,))
 
     async def store_grant(
         self, user_id: str, access_token_enc: str, refresh_token_enc: str | None, expires_at: datetime
@@ -1563,8 +1784,9 @@ def _relative_self_location(location: str, host: str | None, base_path: str = ""
     Behind the edge this tier sees http from its load balancer and a path with the prefix
     stripped, so an absolute URL Starlette builds from the request (its trailing-slash 307)
     leaves the prefix and drops https. A path already under the prefix (the callback's
-    PUBLIC_URL target) keeps it once. Any other host, or a host:port that differs from the
-    request's, is left alone."""
+    PUBLIC_URL target) keeps it once. The fragment is kept: a callback's ``#/...`` SPA route
+    (``auth.redirect_target``) is where the patron lands (#3988). Any other host, or a
+    host:port that differs from the request's, is left alone."""
     if not host:
         return location
     parts = urlparse(location)
@@ -1573,7 +1795,7 @@ def _relative_self_location(location: str, host: str | None, base_path: str = ""
     path = parts.path or "/"
     if base_path and path != base_path and not path.startswith(f"{base_path}/"):
         path = f"{base_path}{path}"
-    return path + (f"?{parts.query}" if parts.query else "")
+    return path + (f"?{parts.query}" if parts.query else "") + (f"#{parts.fragment}" if parts.fragment else "")
 
 
 def _env_float(name: str, default: float) -> float:
@@ -1700,6 +1922,7 @@ def create_app(
     @asynccontextmanager
     async def lifespan(app: FastAPI):
         auth.preflight()  # before anything binds: a misconfigured tier must not come up
+        pool_size = pool_max_size()  # #3980: a bad PG_POOL_MAX_SIZE refuses here too
         # U7: a half SQS pair refuses here, before a startup step or its background retry
         # exists, so the refusal leaves nothing running. #3985: with the chat off there is no
         # queue to need, and app.state.queue stays None.
@@ -1738,7 +1961,7 @@ def create_app(
         log.info("postgres: pg_credentials=%s", app.state.pg_creds.description)
         steps: dict[str, Callable[[], Awaitable[Any]]] = {}
         if app.state.store is None:
-            app.state.store = PgStore(creds)
+            app.state.store = PgStore(creds, pool_max_size=pool_size)
             steps["schema"] = app.state.store.verify_schema
         store = app.state.store
         if hasattr(store, "sync_allowlist"):
@@ -1770,6 +1993,12 @@ def create_app(
                 refresh_age_s=grants.env_seconds(os.environ, "FS_GRANT_REFRESH_AGE_S", grants.DEFAULT_REFRESH_AGE_S),
             ))
         try:
+            # #3980: inside the try, so a startup cancelled from here on still closes it, and
+            # after the inline steps, which run on connections of their own exactly as with
+            # no pool: the tier listens at once with Postgres down, each check naming its
+            # cause. Opening never waits for a connection (U10 D8).
+            if hasattr(store, "open_pool"):
+                await store.open_pool()
             yield
         finally:
             for task in (retry, refresher):
@@ -1777,6 +2006,8 @@ def create_app(
                     task.cancel()
                     with contextlib.suppress(asyncio.CancelledError):
                         await task
+            if hasattr(store, "close_pool"):
+                await store.close_pool()
 
     # U12: no /docs, /redoc or /openapi.json -- FastAPI serves them unauthenticated on a
     # public host, and nothing in the repo reads them.
@@ -1786,6 +2017,13 @@ def create_app(
     app.state.chat = auth.chat_enabled()
     # #3987: None (unset), True or False; a bad value refuses here, as GENEALOGY_CHAT does.
     app.state.uploads = auth.uploads_setting()
+    # #3988: off unless true; a bad value refuses here. Off registers no /openrouter route.
+    app.state.openrouter = auth.openrouter_linking_enabled()
+    # #3992: the sign-in budget, None when unset; a bad value refuses here.
+    calls = auth.signin_calls_per_minute()
+    app.state.signin_budget = auth.SigninBudget(calls) if calls is not None else None
+    # #3992: the callback's route path, from FS_REDIRECT_URI; a bad value refuses here.
+    app.state.callback_path = auth.callback_path()
     app.state.store = store
     # #3985: a chat-off tier has no queue, even when a caller passes one.
     app.state.queue = queue if app.state.chat else None
@@ -1806,6 +2044,10 @@ def create_app(
     prefix_mismatch_logged = False
     app.state.stream_max_polls = stream_max_polls
 
+    # Every route that returns one user's data goes here: it gets `private, no-store` and
+    # `Vary: Cookie`, refusals included. A new per-user route outside these prefixes gets neither.
+    PER_USER_CACHE_PATHS = ("/api/account", "/api/projects")
+
     class ProjectCacheHeaders:
         def __init__(self, app: ASGIApp) -> None:
             self.app = app
@@ -1815,7 +2057,7 @@ def create_app(
                 await self.app(scope, receive, send)
                 return
             path = get_route_path(scope)
-            if not (path == "/api/projects" or path.startswith("/api/projects/")):
+            if not any(path == p or path.startswith(p + "/") for p in PER_USER_CACHE_PATHS):
                 await self.app(scope, receive, send)
                 return
 
@@ -1913,7 +2155,7 @@ def create_app(
 
     async def current_user(request: Request) -> User:
         """The signed-in patron, or 401/403. On every /api/sessions and /api/projects route."""
-        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
+        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME), chat=app.state.chat)
         if data is None:
             raise HTTPException(status_code=401, detail="Not signed in")
         store = _store(request)
@@ -1986,7 +2228,8 @@ def create_app(
 
     def _signed_in(response: Response, user: User) -> dict:
         response.set_cookie(
-            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.COOKIE_MAX_AGE, **auth.cookie_kwargs()
+            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.session_max_age(chat=app.state.chat),
+            **auth.cookie_kwargs(),
         )
         return {"id": user.id, "email": user.email}
 
@@ -1996,6 +2239,8 @@ def create_app(
         # #3987: only when UPLOADS_ENABLED is set, so an unset tier answers as it always did.
         if app.state.uploads is not None:
             config["uploads"] = app.state.uploads
+        # #3988: always sent, so the browser app (#4001) shows the OpenRouter page only on true.
+        config["openrouter"] = app.state.openrouter
         return config
 
     @app.get("/auth/me")
@@ -2013,14 +2258,14 @@ def create_app(
 
     @app.post("/auth/logout")
     async def logout(request: Request, response: Response) -> dict:
-        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME))
+        data = auth.read_session_cookie(request.cookies.get(auth.COOKIE_NAME), chat=app.state.chat)
         if data is not None:
             await _store(request).revoke_sessions(data["uid"])
         response.delete_cookie(auth.COOKIE_NAME, path=auth.cookie_path(), samesite="lax", secure=auth.is_https())
         return {"ok": True}
 
     @app.get("/auth/familysearch/login")
-    async def familysearch_login(next: str | None = None) -> Response:
+    async def familysearch_login(request: Request, next: str | None = None) -> Response:
         if not auth.familysearch_configured():
             raise HTTPException(
                 status_code=501,
@@ -2028,18 +2273,45 @@ def create_app(
             )
         verifier, challenge = auth.pkce()
         state = secrets.token_urlsafe(16)
-        resp = RedirectResponse(auth.authorize_url(challenge, state))
+        if not app.state.chat:
+            # #3992: the single-use record the callback consumes before it calls FamilySearch.
+            await _store(request).create_signin_state(auth.state_sha256(state))
+        resp = RedirectResponse(auth.authorize_url(challenge, state, chat=app.state.chat))
         resp.set_cookie(
             auth.FS_OAUTH_COOKIE, auth.oauth_state_cookie(verifier, state, next),
             max_age=auth.FS_OAUTH_MAX_AGE, **auth.cookie_kwargs(),
         )
         return resp
 
-    @app.get("/callback")
-    async def familysearch_callback(request: Request, code: str | None = None, state: str | None = None) -> Response:
-        """The registered FamilySearch redirect: a TOP-LEVEL /callback (auth.redirect_uri).
+    async def _claim_signin_state(request: Request, state: str, fail: str) -> Response | None:
+        """The sign-in's claim on FamilySearch (#3992), after the signed state cookie has
+        matched ``state``: None to go on, else the refusal. One helper, so the connector flow
+        (#3997) runs the same check. With the chat off: the state's record must be present and
+        unused (400), then the budget (503), then the one atomic consume (400 if a racing
+        callback won). With it on, the cookie alone guards the state, as in the handoff, and
+        only the budget applies. A refusal before the budget leaves it untouched, and the
+        budget's own 503 consumes nothing and keeps the ``fs_oauth`` cookie, so a reload
+        retries."""
+        store = _store(request)
+        digest = auth.state_sha256(state)
+        if not app.state.chat and not await store.signin_state_unused(digest):
+            return HTMLResponse(f"This sign-in link was already used or has expired. {fail}", status_code=400)
+        budget = app.state.signin_budget
+        if budget is not None and not budget.try_take(2):  # the code exchange and the identity read
+            return HTMLResponse("Sign-in is busy; try again.", status_code=503)
+        if not app.state.chat and not await store.consume_signin_state(digest):
+            if budget is not None:
+                budget.give_back(2)  # a racing callback won; this one calls nothing
+            return HTMLResponse(f"This sign-in link was already used or has expired. {fail}", status_code=400)
+        return None
 
-        Order matters, and each refusal writes nothing: state, code exchange, identity,
+    @app.get(app.state.callback_path)
+    async def familysearch_callback(request: Request, code: str | None = None, state: str | None = None) -> Response:
+        """The registered FamilySearch redirect, served at ``auth.callback_path()``:
+        ``FS_REDIRECT_URI``'s path, a TOP-LEVEL /callback by default (auth.redirect_uri).
+
+        Order matters, and each refusal writes nothing: state, its claim
+        (``_claim_signin_state``: the single-use record and the sign-in budget), code exchange, identity,
         allowlist (none under ``GENEALOGY_MAX_USERS``), then the user (refused if the email is
         pinned to another FamilySearch account, if it is new and the cap is reached, or if it
         is blocked), and only then the grant -- encrypted here, so the store sees ciphertext.
@@ -2053,6 +2325,8 @@ def create_app(
             return HTMLResponse(f"Missing or invalid OAuth state. {fail}", status_code=400)
         if not code or not state or state != data.get("state"):
             return HTMLResponse(f"OAuth state mismatch. {fail}", status_code=400)
+        if (refusal := await _claim_signin_state(request, state, fail)) is not None:
+            return refusal
         token_json = await auth.exchange_code(code, str(data.get("verifier") or ""))
         if token_json is None:
             return HTMLResponse(f"Token exchange failed. {fail}", status_code=502)
@@ -2078,6 +2352,12 @@ def create_app(
         fs_id = identity.get("id")
         try:
             user = await store.upsert_user(email, str(fs_id) if fs_id else None, max_users=auth.max_users())
+        except EmailTaken:
+            return HTMLResponse(
+                f"Your FamilySearch account's email, <strong>{html.escape(email)}</strong>, already belongs "
+                "to another user here, so this sign-in cannot move your account to it. Ask the administrator.",
+                status_code=403,
+            )
         except IdentityMismatch:
             return HTMLResponse(
                 f"<strong>{html.escape(email)}</strong> is already linked to a different FamilySearch "
@@ -2093,7 +2373,8 @@ def create_app(
             return HTMLResponse(f"Sign-in is busy; try again. {fail}", status_code=503)
         if (reason := await _admission_refusal(request, email, user)) is not None:
             return refused(reason)
-        refresh = token_json.get("refresh_token")
+        # A chat-off tier runs no refresher, so a stored refresh token would sit unread.
+        refresh = token_json.get("refresh_token") if app.state.chat else None
         try:
             await store.store_grant(
                 user.id,
@@ -2105,10 +2386,97 @@ def create_app(
             return HTMLResponse(f"Sign-in is busy; try again. {fail}", status_code=503)
         resp = RedirectResponse(auth.redirect_target(data.get("next")))
         resp.set_cookie(
-            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.COOKIE_MAX_AGE, **auth.cookie_kwargs()
+            auth.COOKIE_NAME, auth.session_cookie_value(user.id), max_age=auth.session_max_age(chat=app.state.chat),
+            **auth.cookie_kwargs(),
         )
         resp.delete_cookie(auth.FS_OAUTH_COOKIE, path=auth.cookie_path())
         return resp
+
+    # -- OpenRouter linking (#3988) ---------------------------------------------------
+    # Registered only with OPENROUTER_LINKING_ENABLED=true, so with it off every /openrouter
+    # route is a 404 before any cookie is read, as /api/sessions is with the chat off. Each
+    # route runs current_user, so a blocked or revoked session is refused on all of them.
+
+    linking = app if app.state.openrouter else APIRouter()
+
+    def _drop_or_state(resp: Response) -> Response:
+        """Delete the state cookie with the attributes it was set with."""
+        resp.delete_cookie(auth.OR_OAUTH_COOKIE, **auth.cookie_kwargs())
+        return resp
+
+    @linking.get("/openrouter")
+    async def openrouter_status(request: Request, response: Response, user: User = Depends(current_user)) -> dict:
+        """``{linked: bool}`` for the browser app's OpenRouter page (#4001). Never the key.
+        Linked means a key that decrypts under the current FS_TOKEN_ENC_KEY: one written under
+        another key is no key to the tool server either (#3984), so the page offers a relink."""
+        response.headers["Cache-Control"] = "private, no-store"
+        return {"linked": auth.decrypt(await _store(request).openrouter_key_enc(user.id)) is not None}
+
+    @linking.get("/openrouter/link")
+    async def openrouter_link(next: str | None = None, user: User = Depends(current_user)) -> Response:
+        """Start OpenRouter's PKCE flow: the state cookie (uid, verifier, state), then a
+        redirect to openrouter.ai, whose callback URL carries the state back."""
+        verifier, challenge = auth.pkce()
+        state = secrets.token_urlsafe(16)
+        resp = RedirectResponse(auth.openrouter_authorize_url(challenge, state))
+        resp.set_cookie(
+            auth.OR_OAUTH_COOKIE, auth.openrouter_state_cookie(user.id, verifier, state, next),
+            max_age=auth.OR_OAUTH_MAX_AGE, **auth.cookie_kwargs(),
+        )
+        return resp
+
+    @linking.get("/openrouter/callback")
+    async def openrouter_callback(request: Request, code: str | None = None, state: str | None = None) -> Response:
+        """Where openrouter.ai sends the browser back: a top-level navigation, so every answer
+        is a page, and every answer drops the state cookie.
+
+        Refused, writing nothing and exchanging nothing: no session (or a refused one, with
+        current_user's status), a missing or invalid state cookie, a cookie another user's
+        session started, a state that does not match, and a return with no code (the patron
+        cancelled). Then the exchange; only on a key is it encrypted (``auth.encrypt``, the
+        FamilySearch grant's Fernet key) and stored. Once the code is spent, a lost response
+        or a failed write may leave a key on the patron's OpenRouter account that we never
+        stored, and the page says so. The key and the exchange's body are never logged."""
+        fail = "Return to the app and try again."
+        orphan = ("OpenRouter may have created a key named “" + auth.OPENROUTER_KEY_LABEL
+                  + "” that was not saved here; delete it in your OpenRouter account settings.")
+
+        def page(text: str, status: int) -> Response:
+            return _drop_or_state(HTMLResponse(f"Linking OpenRouter failed: {text} {fail}", status_code=status))
+
+        try:
+            user = await current_user(request)
+        except HTTPException as exc:
+            return page(f"{exc.detail}.", exc.status_code)
+        data = auth.read_openrouter_state_cookie(request.cookies.get(auth.OR_OAUTH_COOKIE))
+        if data is None:
+            return page("the link state is missing or has expired.", 400)
+        if data["uid"] != user.id:
+            return page("this link was started from another account.", 400)
+        if not state or state != data["state"]:
+            return page("the link state does not match.", 400)
+        if not code:
+            return page("OpenRouter returned no authorization (the request was cancelled or denied).", 400)
+        result = await auth.exchange_openrouter_code(code, data["verifier"])
+        if result.outcome != "ok":
+            log.warning("ev=openrouter_exchange_failed outcome=%s reason=%s", result.outcome, result.reason)
+            if result.outcome == "ambiguous":
+                return page(f"no answer came back from OpenRouter. {orphan}", 502)
+            return page("OpenRouter did not issue a key.", 502)
+        try:
+            await _store(request).set_openrouter_key(user.id, auth.encrypt(result.key))
+        except Exception as exc:  # noqa: BLE001 - the patron is told; the key never reaches the log
+            log.warning("ev=openrouter_store_failed error=%s", type(exc).__name__)
+            return page(f"the key could not be saved. {orphan}", 503)
+        return _drop_or_state(RedirectResponse(auth.redirect_target(data.get("next"))))
+
+    @linking.post("/openrouter/unlink")
+    async def openrouter_unlink(request: Request, user: User = Depends(current_user)) -> dict:
+        """Forget the key: the column goes NULL and nothing is sent to OpenRouter (the page
+        tells the patron to delete the key there, plan W4). POST only: the session cookie is
+        SameSite=Lax, so a GET could be fired from another site."""
+        await _store(request).clear_openrouter_key(user.id)
+        return {"linked": False}
 
     # -- projects -----------------------------------------------------------------
 
@@ -2360,7 +2728,7 @@ def create_app(
             if name is None:
                 raise HTTPException(
                     status_code=400,
-                    detail="filename must be a plain basename of letters, digits, dot, dash, space or underscore",
+                    detail="filename is empty, starts with a dot, contains '..', or has no letters or digits",
                 )
             # The spooled size before the read: a chunked body has no Content-Length to
             # refuse above, and `max_part_size` does not bound a file part.
@@ -2455,7 +2823,7 @@ def create_app(
             if name is None:
                 raise HTTPException(
                     status_code=400,
-                    detail="filename must be a plain basename of letters, digits, dot, dash, space or underscore",
+                    detail="filename is empty, starts with a dot, contains '..', or has no letters or digits",
                 )
             if file.size is not None and file.size + len(text) > UPLOAD_MAX_BYTES:
                 raise HTTPException(status_code=413, detail=too_big)
@@ -2751,6 +3119,28 @@ def create_app(
         log.info("ev=feedback result=stored session=%s project=%s key=%s bytes=%d files=%d transcripts=%d dropped=%d",
                  row.session_id, row.project_id, key, meta["bytes"], n_files, n_transcripts, meta["dropped"])
         return {"ok": True, "filename": key.rsplit("/", 1)[-1]}
+
+    # -- chat-off pages and account (#3993) -----------------------------------------
+    # The inverse of `sessions` above: registered on the app only with the chat off, so a
+    # chat-on tier answers 404 for all three, as before. With the chat on the router is
+    # deliberately never included: it is a sink so the decorators below have somewhere to
+    # register. Do not "fix" it by including it.
+    beta = APIRouter() if app.state.chat else app
+
+    @beta.get("/privacy")
+    async def privacy_page() -> HTMLResponse:
+        return HTMLResponse(policies.PRIVACY_HTML)
+
+    @beta.get("/terms")
+    async def terms_page() -> HTMLResponse:
+        return HTMLResponse(policies.TERMS_HTML)
+
+    @beta.get("/api/account")
+    async def account(user: User = Depends(current_user)) -> dict:
+        """The account menu's data. Its own route, not /auth/me, so the code does not ride on
+        every page load. ProjectCacheHeaders adds ``private, no-store`` and ``Vary: Cookie``
+        to every response here, refusals included."""
+        return {"accountId": user.id, "deletionCode": auth.deletion_code(user.id)}
 
     # Last, so it sees every API route it must not shadow (web/spa.py).
     spa.mount_spa(app, tier_root=PROTO_DIR, base_path=app.state.base_path)

@@ -62,6 +62,9 @@ export interface ResearchDataState {
   /** Fetch a saved source page-scan as a `data:` URL (Electron). Absent in the
    *  web client, so treat as optional (no scan shown). */
   getSourceImage?: (filename: string) => Promise<string | null>
+  /** Send a prompt to the chat (web only). Absent in Electron; hide UI that
+   *  depends on it when this is undefined. */
+  sendPrompt?: (prompt: string) => void
 }
 
 export const ResearchDataContext = createContext<ResearchDataState | null>(null)
@@ -93,6 +96,7 @@ export function buildIndex(
     ['sources', asArray(research.sources)],
     ['assertions', asArray(research.assertions)],
     ['person_evidence', asArray(research.person_evidence)],
+    ['rejected_links', asArray(research.rejected_links)],
     ['conflicts', asArray(research.conflicts)],
     ['hypotheses', asArray(research.hypotheses)],
     ['timelines', asArray(research.timelines)],
