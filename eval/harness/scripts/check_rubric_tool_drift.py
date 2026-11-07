@@ -299,6 +299,22 @@ SUPPRESSIONS: list[dict[str, str]] = [
         ),
     },
     {
+        "file": "eval/tests/unit/research-exhaustiveness/direct-declare-exhaustive-complete.json",
+        "tool": "validate_research_schema",
+        "quotes": [
+            "Claude does not need to call validate_research_schema - it is not in this skill's allowed-tools, and per SKILL.md, research_append validates-before-persist",
+            "Do NOT penalize Tool Arguments or Completeness for the absence of a separate validate_research_schema call",
+        ],
+        "reason": (
+            "not-needed, naming the allowed-tools fact outright - 'Claude "
+            "does not need to call validate_research_schema - it is not in "
+            "this skill's allowed-tools, and per SKILL.md, research_append "
+            "validates-before-persist ... Do NOT penalize Tool Arguments or "
+            "Completeness for the absence of a separate "
+            "validate_research_schema call'"
+        ),
+    },
+    {
         "file": "eval/tests/unit/research-exhaustiveness/honest-early-termination.json",
         "tool": "validate_research_schema",
         "quotes": [
