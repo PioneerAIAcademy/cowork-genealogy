@@ -16,8 +16,8 @@ description: >-
   conflict-resolution), to declare exhaustiveness (use
   research-exhaustiveness), or to select the next question (use
   question-selection).
-model: claude-sonnet-4-6
-effort: high
+model: claude-haiku-5-5
+effort: low
 tools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append
