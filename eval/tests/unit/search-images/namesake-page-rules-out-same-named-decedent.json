@@ -1,0 +1,41 @@
+{
+  "test": {
+    "id": "ut_search_images_013",
+    "skill": "search-images",
+    "name": "A page showing a same-named man the browse rules out is recorded as a namesake, and the untied links it warns about go to person-evidence",
+    "type": "positive",
+    "description": "Executing pli_006 (Thomas Flynn's estate, 1870-1890), the agent browses the unindexed Schuylkill County probate volume. Image 007936749_00012 is an estate docket page holding the 1882 administration of a Patrick Flynn of Pottsville, who died 14 May 1882. The subject, Patrick Flynn (I1), died 12 March 1908, so that man is someone else. The delegation hands the subject, so the agent records him as a namesakes row on I1 listing the page's imageId exactly as it passed it to image_transcribe (step 7b), and the write's warning about pe_004 and pe_005 goes to person-evidence in a Hand-back line. The Heydöcker shape: issue #3363, PR 3.",
+    "tags": [
+      "browse",
+      "unindexed",
+      "probate",
+      "namesake",
+      "namesake-row",
+      "namesake-warning",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Execute plan item pli_006 by browsing the digitized Schuylkill County probate volume for Thomas Flynn's estate papers. Read images 007936749_00011 through 007936749_00013 and log the browse.\n\nplanItemId: pli_006\nimageGroupNumber: 007936749\nstandardPlace: Schuylkill, Pennsylvania, United States\nlooking_for: Thomas Flynn's estate papers\nprojectPath: <workspace>\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Patrick\",\n      \"surname\": \"Flynn\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": {\n    \"date\": \"about 1845\",\n    \"place\": \"Ireland\"\n  },\n  \"death\": {\n    \"date\": \"12 March 1908\",\n    \"place\": \"Schuylkill County, Pennsylvania\"\n  }\n}",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "volume-search-schuylkill-probate-only",
+    "image-search-schuylkill-probate",
+    "image-transcribe-schuylkill-probate-flynn-1882-estate",
+    "image-transcribe-any"
+  ],
+  "execution": {
+    "max_turns": 35,
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour.",
+    "HARNESS NOTE: the agent reads pages itself with image_transcribe. The mock serves image 007936749_00012 as an estate docket page holding the 1882 administration of a Patrick Flynn of Pottsville (died 14 May 1882, widow Bridget); any other page returns an unrelated will through a catch-all. Reading the three named pages is the browse; reading others is optional and not required.",
+    "CORE (Correctness): the subject, Patrick Flynn (I1), died 12 March 1908. The 1882 decedent on image 00012 is a different man of his name. The agent must not take the page as the subject's or offer it for extraction as his, and must say plainly it is someone else.",
+    "Namesake row: having ruled that man out, the agent records him as a namesakes row on I1 (one research_append call, section namesakes, after the browse is logged), listing the page's imageId exactly as passed to image_transcribe (007936749_00012) in record_ids, the browse's log id, and the ground (died 1882, the subject in 1908) as notes. Recording him does not adopt him and is not extraction; do not mark it down as either.",
+    "Hand-back: the namesakes write returns a warning that links pe_004 and pe_005 to I1 stand with nothing in their records tying them to him. search-images cannot write person_evidence, so its return must carry a 'Hand-back: person-evidence' line naming both links. Lowering or tying them itself, or leaving them unmentioned, is the failure this test guards.",
+    "Do NOT require the agent to find Thomas Flynn's estate; it is not on the pages read. A positive or partial browse outcome that says so honestly is right, and the plan item may be completed per the agent's step 7."
+  ],
+  "judge_reads_files": true
+}

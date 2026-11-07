@@ -26,7 +26,7 @@ import type {
   SourceClassification, Severity, ExternalSite, DateCertaintyTimeline,
   EvaluationFocus, EvaluationTargetType, EvaluationVerdict, ExperienceLevel,
   StoppedBecause, Subscription, LocalityPageSection, LocalityPageOutcome, ResolutionKind,
-  SkipCategory, RegistrationEvent, RegistrationLevel,
+  SkipCategory, RegistrationEvent, RegistrationLevel, ClaimPolarity, FindingType, HitVerdict,
 } from './enums.generated.js'
 
 // ============================================================
@@ -185,6 +185,9 @@ export interface Source {
   /** Project-relative path of the saved page scan (images/<key>.jpg), when the
    *  source is image-backed and image_transcribe persisted it (§8.5). */
   image_filename?: string | null
+  /** The ARK of the page this indexed record sits on, with any `i=` or `groupId=`
+   *  that selects the image. Stamped at extraction; absent on older sources. */
+  image_ark?: string
 }
 
 export interface Assertion {
@@ -309,12 +312,53 @@ export interface Timeline {
   gaps: TimelineGap[]
 }
 
+// A ParentChild edge names parent and child (and may name a subtype); a Couple
+// edge names person1 and person2. The validator enforces which pair goes with
+// which type, so every end is optional here, as in the schema's `required`.
 export interface ProofClaimRelationship {
-  type: 'ParentChild'
-  parent: string
-  child: string
+  type: 'ParentChild' | 'Couple'
+  parent?: string
+  child?: string
+  subtype?: string
+  person1?: string
+  person2?: string
 }
 
+export interface ProofClaimPair {
+  person1: string
+  person2: string
+}
+
+export interface ProofClaimFact {
+  subject: string | ProofClaimPair
+  fact_type: string
+  date?: string
+  place?: string
+  value?: string
+}
+
+// A record party linked to a person (record_id, party, person), or two persons
+// that are one (person, same_as).
+export interface ProofClaimIdentity {
+  record_id?: string
+  party?: string
+  person: string
+  same_as?: string
+}
+
+export interface ProofClaimName {
+  person: string
+  given?: string
+  surname?: string
+}
+
+export interface ProofClaimFinding {
+  finding_type: FindingType
+  statement: string
+  log_entry_ids?: string[]
+}
+
+// Exactly one of relationship, fact, identity, name and finding is present.
 export interface ProofClaim {
   claim: string
   proof_tier: ProofTier
@@ -323,8 +367,13 @@ export interface ProofClaim {
   // wrong for no gain. Optionality follows the schema's `required` list, and a
   // drift test asserts the `?` in both directions.
   shortfall?: ProofShortfall
+  polarity?: ClaimPolarity
   supporting_assertion_ids: string[]
-  relationship: ProofClaimRelationship
+  relationship?: ProofClaimRelationship
+  fact?: ProofClaimFact
+  identity?: ProofClaimIdentity
+  name?: ProofClaimName
+  finding?: ProofClaimFinding
 }
 
 export interface ProofSummary {
@@ -426,8 +475,9 @@ export interface WarningJustification {
   recorded_at: string
 }
 
-/** A different person who shares a tree person's name, keyed by the tree
- *  person_id it shadows. */
+/** A different person who shares a tree person's name, or a pool of such
+ *  people one of whom may be that person (notes starting `pool:`, no
+ *  record_ids), keyed by the tree person_id it shadows. */
 export interface Namesake {
   id: string
   person_id: string
@@ -436,9 +486,27 @@ export interface Namesake {
   time_period?: string | null
   record_ids: string[]
   log_entry_ids?: string[]
-  /** Stamped by research_append: listed record id to the persona its search result names. */
+  /** Stamped by research_append: listed record id to the persona its search or read result names. */
   record_persona_ids?: Record<string, string>
   notes?: string | null
+  created: string
+}
+
+/** One verdict on whether a full-text search hit is about a tree person.
+ *  `hit_verdicts` on research.json; written by the evaluate-search-results agent. */
+export interface HitVerdictEntry {
+  id: string
+  /** The fulltext_search log entry whose retained results hold the hit. */
+  log_id: string
+  /** The hit's id as that search's sidecar stores it. */
+  hit_id: string
+  person_id: string
+  verdict: HitVerdict
+  /** As of the evaluation; a later extraction does not clear it. Treat the hit
+   *  as not new once some assertion's `record_id` has the same bare id (the part
+   *  after the last `:`) as `hit_id`. */
+  new_vital_info: boolean
+  rationale: string
   created: string
 }
 
@@ -464,6 +532,7 @@ export interface ResearchData {
   localities?: Locality[]
   warning_justifications?: WarningJustification[]
   namesakes?: Namesake[]
+  hit_verdicts?: HitVerdictEntry[]
 }
 
 // ============================================================

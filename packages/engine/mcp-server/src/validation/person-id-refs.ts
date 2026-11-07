@@ -15,7 +15,8 @@ export type PersonIdRefField =
   | "subject_person_ids"
   | "timelines"
   | "proof_summaries"
-  | "namesakes";
+  | "namesakes"
+  | "hit_verdicts";
 
 /** The research.json fields that hold tree person-id references. */
 export const PERSON_ID_REF_FIELDS: readonly PersonIdRefField[] = [
@@ -25,6 +26,7 @@ export const PERSON_ID_REF_FIELDS: readonly PersonIdRefField[] = [
   "timelines",
   "proof_summaries",
   "namesakes",
+  "hit_verdicts",
 ];
 
 export interface PersonIdRef {
@@ -43,7 +45,7 @@ export interface PersonIdRef {
 /**
  * Yield every tree-person-id reference in `research`, in the same order the
  * validator's cross-file check has always emitted them (person_evidence,
- * subject_person_ids, timelines, proof_summaries, namesakes).
+ * subject_person_ids, timelines, proof_summaries, namesakes, hit_verdicts).
  * Each ref carries the
  * validator's exact error path/message and an in-place setter for the remap.
  *
@@ -141,8 +143,8 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
     }
   }
 
-  // proof_summaries[].claims[].relationship.{parent,child} — a per-claim tier
-  // breakdown's tree endpoint (#1711). Without this, a dangling or merged-away
+  // proof_summaries[].claims[] — every person a claim names (#1711, and the
+  // claim kinds in research-schema-spec.md's `claims` table). Without this, a dangling or merged-away
   // person id here validates clean, and merge_tree_persons never remaps it —
   // the tree-encoding gate then looks for a relationship at an id that no
   // longer exists and re-invokes proof-conclusion for an already-answered
@@ -156,20 +158,39 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
       ? proofSummaries[i].claims
       : [];
     for (let j = 0; j < claims.length; j++) {
-      if (!isObject(claims[j])) continue;
-      const rel = claims[j].relationship;
-      if (!isObject(rel)) continue;
-      const clp = `research.json/proof_summaries[${i}]/claims[${j}]/relationship`;
-      for (const side of ["parent", "child"] as const) {
-        const pid = rel[side];
-        if (!pid) continue;
+      const claim = claims[j];
+      if (!isObject(claim)) continue;
+      const clp = `research.json/proof_summaries[${i}]/claims[${j}]`;
+      // Every person a claim names, by the object that holds it: both ends of
+      // a ParentChild or Couple edge, a fact's subject or subject pair, an
+      // identity's person and same_as, a name's person.
+      const holders: [Record<string, any>, string, string][] = [];
+      if (isObject(claim.relationship)) {
+        for (const side of ["parent", "child", "person1", "person2"]) {
+          holders.push([claim.relationship, side, `relationship.${side}`]);
+        }
+      }
+      if (isObject(claim.fact)) {
+        if (isObject(claim.fact.subject)) {
+          for (const side of ["person1", "person2"]) holders.push([claim.fact.subject, side, `fact.subject.${side}`]);
+        } else {
+          holders.push([claim.fact, "subject", "fact.subject"]);
+        }
+      }
+      if (isObject(claim.identity)) {
+        for (const side of ["person", "same_as"]) holders.push([claim.identity, side, `identity.${side}`]);
+      }
+      if (isObject(claim.name)) holders.push([claim.name, "person", "name.person"]);
+      for (const [holder, key, label] of holders) {
+        const pid = holder[key];
+        if (typeof pid !== "string" || !pid) continue;
         yield {
           pid,
           field: "proof_summaries",
-          path: clp,
-          message: `relationship.${side} '${pid}' not found in tree.gedcomx.json persons`,
+          path: `${clp}/${label.split(".")[0]}`,
+          message: `${label} '${pid}' not found in tree.gedcomx.json persons`,
           set: (newId) => {
-            rel[side] = newId;
+            holder[key] = newId;
           },
         };
       }
@@ -191,6 +212,25 @@ export function* iteratePersonIdRefs(research: any): Generator<PersonIdRef> {
       message: `person_id '${pid}' not found in tree.gedcomx.json persons`,
       set: (newId) => {
         ns.person_id = newId;
+      },
+    };
+  }
+
+  // hit_verdicts[].person_id — the person a verdict judged the hit
+  // against. An update cannot re-point it, so a merge re-keys it here.
+  const hitVerdicts = Array.isArray(research.hit_verdicts) ? research.hit_verdicts : [];
+  for (let i = 0; i < hitVerdicts.length; i++) {
+    const hv = hitVerdicts[i];
+    if (!isObject(hv)) continue;
+    const pid = hv.person_id;
+    if (!pid) continue;
+    yield {
+      pid,
+      field: "hit_verdicts",
+      path: `research.json/hit_verdicts[${i}]`,
+      message: `person_id '${pid}' not found in tree.gedcomx.json persons`,
+      set: (newId) => {
+        hv.person_id = newId;
       },
     };
   }

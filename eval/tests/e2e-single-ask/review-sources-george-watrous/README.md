@@ -25,6 +25,8 @@ PASS review-sources-george-watrous  expected=source-evaluation  first=source-eva
     units: source-evaluation  extraction_append=0
 ```
 
+The `delivered=` column was retired with `research_delivered` (PR #4148); the line above is the output as measured.
+
 ## Starting state
 
 Starting tree: `person_read` of KNDB-F71 with relatives and sources, snapshotted 2026-11-02 through

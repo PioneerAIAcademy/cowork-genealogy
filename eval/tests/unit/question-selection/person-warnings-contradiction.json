@@ -19,7 +19,7 @@
   "judge_context": [
     "Should call person_warnings on the subject (I1) before deciding",
     "Should recognize the hasEventAfterDeath1 contradiction (a Residence event dated after the subject's death) and name it as evidence for conflict-resolution on q_001",
-    "**No question is proposed.** A `person_warnings` contradiction is evidence to weigh on the question already open: it goes to `conflict-resolution`, and from there to plan items. Calling `person_warnings` and reporting the contradiction is still correct and should be credited; writing a question for it is not.",
-    "**`research_append` REFUSES a new question here** (step mode, section E): `q_001` is still `in_progress` and its active plan has an open item (`pli_006`). The exemption needs a proof summary AND nothing open; the summary alone is not enough. So writing a question is not a judgement call the agent can get right — the call fails. Report that the question is still open, name what is outstanding, and route the work there instead."
+    "**No question is proposed.** A `person_warnings` contradiction is evidence to weigh on the question already open: it goes to `conflict-resolution`, and from there to plan items. Calling `person_warnings` and reporting the contradiction is still correct and should be credited; writing a question for it is not. Nor is a mother question: `q_001` asks who Patrick's **parents** were, and `ps_001` concludes only the father, so the mother is `q_001`'s own unfinished work and goes to research-plan as items on `q_001`. A new question for her is a FAIL.",
+    "`research_append` ACCEPTS a new question in this scenario: `q_001` has a proof summary and no `planned` or `in_progress` item on its active plan (`pli_004`–`pli_006` are completed), which is the concluded-question exemption. Whether to open one is the agent's judgement, graded by the line above, not something the writer decides."
   ]
 }

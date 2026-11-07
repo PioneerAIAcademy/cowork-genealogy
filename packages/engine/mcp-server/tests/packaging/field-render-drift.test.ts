@@ -72,6 +72,8 @@ const COMPONENTS = join(
 const NOT_RENDERED: Record<string, string> = {
   "conflict.weighed_log_entry_ids":
     "Bookkeeping for the ladder, not a finding: which of the question's log entries conflict-resolution has already weighed, so a second pass can tell new evidence from evidence it has seen. The researcher reads the analysis fields and the resolution, never this list of ids.",
+  "source.image_ark":
+    "A join key from a source to the page it sits on, read only by code; the viewer shows the page itself through image_filename.",
   "namesake.record_persona_ids":
     "Tool-stamped persona ids kept only to measure a later rule; meaningless to a researcher, and the raw-data view still shows them.",
   "researcher_profile.experience_level":

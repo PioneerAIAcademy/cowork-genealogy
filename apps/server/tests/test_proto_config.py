@@ -281,14 +281,15 @@ def test_tools_and_worker_read_one_store():
     assert set(tools) == {
         "GENEALOGY_PG_DSN", "GENEALOGY_S3_ENDPOINT", "GENEALOGY_S3_BUCKET",
         "GENEALOGY_S3_ACCESS_KEY", "GENEALOGY_S3_SECRET_KEY", "GENEALOGY_ANCHOR_PATH",
-        # The two process-wide limits (self-hosted beta E4, issue #3979). Passed
+        # The process-wide settings (self-hosted beta E4, issues #3979 and #4048). Passed
         # through from the shell and EMPTY by default, which readLimitsEnv reads
         # as off -- so compose behaves as it always has unless an operator sets
         # one. They are listed here rather than exempted from the set: this
         # assertion is what would catch a GENEALOGY_PROJECT_ID being added, and
         # that only works while the set stays closed.
         "GENEALOGY_FS_CALLS_PER_MINUTE", "GENEALOGY_MAX_TRANSCRIPTIONS",
-    }, "the five store variables, the anchor and the two E4 limits, and no GENEALOGY_PROJECT_ID: the id is per request"
+        "GENEALOGY_SHARED_COLLECTIONS_CACHE",
+    }, "the five store variables, the anchor and the three E4 settings, and no GENEALOGY_PROJECT_ID: the id is per request"
 
 
 def test_compose_runs_the_worker_with_dev_paths_and_names_its_tool_server():
@@ -347,6 +348,34 @@ _INTERPOLATION = re.compile(r"^\$\{(\w+):?-([^}]*)\}$")
 def _compose_default(value: str) -> tuple[str | None, str]:
     match = _INTERPOLATION.match(value.strip())
     return (match.group(1), match.group(2)) if match else (None, value.strip())
+
+
+def test_tools_carries_the_connector_door_settings():
+    """E1's two settings reach the tools tier, passed through from the shell.
+
+    Deliberately NOT in test_tools_and_worker_read_one_store's closed set: that
+    set is built from the GENEALOGY_-prefixed keys only, so these two can never
+    appear on its left-hand side and adding them to the expected literal would
+    make the equality FAIL. (#3979's two limits ARE prefixed, which is why that
+    precedent does not carry.) Nothing else asserts they are present, so without
+    this test their absence would be invisible.
+    """
+    compose = _load(COMPOSE)
+    tools = _env(_service(compose, "tools"))
+    # Empty by default: every tier falls back to grants.py's development key,
+    # so an unset value has to work on all of them or none.
+    assert tools["FS_TOKEN_ENC_KEY"] == "${FS_TOKEN_ENC_KEY:-}"
+    assert tools["OAUTH_ISSUER"] == "${OAUTH_ISSUER:-}"
+
+
+def test_the_tiers_share_one_fs_token_encryption_key():
+    """web, worker and tools must read the SAME variable: a tier on a different
+    key reads the others' tokens as undecryptable, which looks exactly like an
+    expired session with nothing naming the cause."""
+    compose = _load(COMPOSE)
+    for service in ("web", "worker", "tools"):
+        env = _env(_service(compose, service))
+        assert env.get("FS_TOKEN_ENC_KEY") == "${FS_TOKEN_ENC_KEY:-}", service
 
 
 def test_tools_carries_the_per_user_config_the_engine_reads():
@@ -1101,6 +1130,8 @@ def test_committed_requirements_are_the_uv_export(tier):
         ("web", "fastapi", None),
         ("web", "uvicorn", None),
         ("web", "psycopg-binary", None),
+        # #3980: imported only with PG_POOL_MAX_SIZE set, so no other test would miss it.
+        ("web", "psycopg-pool", None),
         ("worker", "claude-agent-sdk", "0.2.172"),
         ("worker", "psycopg-binary", None),
         ("worker", "botocore", None),

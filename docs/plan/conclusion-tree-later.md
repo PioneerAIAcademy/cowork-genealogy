@@ -33,10 +33,8 @@ tree-encoding gate, which sends an `encode` item back to proof-conclusion when i
 unchanged.
 - The continue text points at the first owed item that is not advisory, in the engine's order:
   extract, then conclude, hypothesis and encode. The hosted copy (`CONTINUE_REASON`) was deleted
-  with the Stop veto in step mode phase 2, so the only copy left is a string literal in the e2e
-  harness's `stop_hook` (`eval/harness/e2e/orchestrator.py`), and the e2e half of phase 2 deletes
-  that veto too. Under
-  step mode this item is moot unless that veto survives. U24 in
+  with the Stop veto in step mode phase 2, and the e2e half of phase 2 (PR #4206) deleted the e2e
+  harness's `stop_hook` with it, so no copy of the text survives and this item is moot. U24 in
   [`familysearch-handoff.md`](familysearch-handoff.md) is re-deciding the same text, and
   [`single-asks-router-batch.md`](single-asks-router-batch.md) quotes it too. If U24 has landed by
   then, this is its own PR after Stage 1b, editing the text U24 settled; U24 does not wait for it.
@@ -44,8 +42,10 @@ unchanged.
 - The status answer (per `project_context`'s description) leads a resumed project with its first owed item that is not advisory, in plain words. This is
   Cowork's lever: 10 deeply linked Cowork projects ended with no proof.
 - After an unrecorded answer about a project person, the agent offers in one line to save it as a
-  finding. On yes, the light path runs and the finding may stand at `possible`. `DELIVERY_GUIDANCE`
-  lists the save as a bounded deliverable. When no question matches, proof-conclusion appends one
+  finding. On yes, the light path runs and the finding may stand at `possible`. The research router's
+  bounded routing list (`research/SKILL.md`, "the message asks for one or more deliverables")
+  has no save item yet; adding one is owed with this plan (`DELIVERY_GUIDANCE`, which this first
+  named, was deleted in step mode phase 2). When no question matches, proof-conclusion appends one
   in the same batch, exempt from `newQuestionWhileSearchInFlightInvariants`.
 - **Decided (2026-10-07): no hosted "Save as finding" button.** The one-line chat offer does the
   same work with no UI. Revisit if fewer than 10 of the 20 sessions in the acceptance check below
@@ -90,7 +90,8 @@ census that links the person stays at `possible` unless a record carries the val
 
 ## Part 3 — the hosted delivery check (decided: hold)
 
-A check on `research_delivered` that refuses to end a bounded turn until its answer is recorded.
+**Premise lapsed:** `research_delivered` was deleted in step mode phase 2, so there is no call to
+check. A check on `research_delivered` that refuses to end a bounded turn until its answer is recorded.
 It is held because it puts the 13–19 minute recording tail back on bounded asks; issue #2921's
 tester asked "Why is it building a tree when I simply asked it to help me find a christening
 record?".

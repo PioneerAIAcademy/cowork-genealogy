@@ -67,7 +67,7 @@ from harness.ts_validator import validate_parsed
 # Python.
 #
 # It was called REQUIRED_SECTIONS and was neither: it omitted `evaluations`,
-# which the schema does require, and now carries two sections the schema makes
+# which the schema does require, and now carries sections the schema makes
 # optional. What it actually is is the diff set, so that is its name.
 #
 # Every top-level property EXCEPT `researcher_profile`, which is an object rather
@@ -84,6 +84,7 @@ DIFFED_SECTIONS = [
     "assertions", "person_evidence", "conflicts",
     "hypotheses", "timelines", "proof_summaries",
     "evaluations", "localities", "rejected_links", "namesakes",
+    "hit_verdicts",
 ]
 
 
@@ -616,6 +617,42 @@ def _explained_by_appends(before_section, after_section) -> bool:
     return len(after_section) > len(before_section)
 
 
+_PAGE_FIELDS = {"transcription", "transcription_truncated", "image_filename"}
+
+
+def _attached_pages(tool_calls) -> bool:
+    """True when the run called `extraction_append({ attachWaitingPages: true })`."""
+    return any(
+        isinstance(c, dict)
+        and (c.get("tool") or "").rsplit("__", 1)[-1] == "extraction_append"
+        and (c.get("args") or {}).get("attachWaitingPages") is True
+        for c in (tool_calls or [])
+    )
+
+
+def _explained_by_page_attach(before_section, after_section) -> bool:
+    """True when existing sources gained a read page they did not hold and changed
+    in nothing else. New entries may sit beside them. An entry with no `id`, a
+    removed entry, or a section that is not a list fails closed."""
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    after_by_id: dict[str, dict] = {}
+    for e in after_section:
+        if not isinstance(e, dict) or not isinstance(e.get("id"), str):
+            return False
+        after_by_id[e["id"]] = e
+    changed = False
+    for e in before_section:
+        if not isinstance(e, dict) or e.get("id") not in after_by_id:
+            return False
+        after = after_by_id[e["id"]]
+        keys = {k for k in set(e) | set(after) if e.get(k) != after.get(k)}
+        if not keys <= _PAGE_FIELDS or any(e.get(k) for k in keys):
+            return False
+        changed = changed or bool(keys)
+    return changed
+
+
 def _ids_unique(section) -> list[str] | None:
     """The section's entry ids in order, or None when one is missing or repeated."""
     if not isinstance(section, list):
@@ -947,6 +984,9 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
                 if section == "assertions"
                 else _explained_by_attachment_links(before.get(section), after.get(section))
                 if section == "person_evidence"
+                else _explained_by_page_attach(before.get(section), after.get(section))
+                or _explained_by_appends(before.get(section), after.get(section))
+                if section == "sources" and _attached_pages(tool_calls)
                 else _explained_by_appends(before.get(section), after.get(section))
             ):
                 continue
@@ -1644,6 +1684,31 @@ def test_direct_test_spawned_its_agent(test, builtin_tool_calls):
     )
 
 
+_PROJECT_PATH_VALUE = re.compile(r"(projectPath:[ \t]*)([^\r\n]*)")
+
+
+def _delegation_pattern(delegation: str) -> re.Pattern[str]:
+    """`delegation` as a pattern matching it exactly, except that `/` and `\\`
+    are interchangeable inside each `projectPath:` value (to the end of its line).
+
+    The harness sends that value with forward slashes, and a Windows dispatcher
+    has been measured rewriting some of them to `\\` (ut_check_warnings_020,
+    ut_question_selection_015) while delivering the same folder. Nothing else is
+    loosened: the key, every other line, other paths and URLs, and every
+    non-separator character of the path still match literally. A relay that adds
+    CRLF or JSON-escapes the backslashes still fails.
+    """
+    parts, pos = [], 0
+    for m in _PROJECT_PATH_VALUE.finditer(delegation):
+        parts.append(re.escape(delegation[pos : m.start(2)]))
+        parts.append(
+            "".join(r"[/\\]" if ch in "/\\" else re.escape(ch) for ch in m.group(2))
+        )
+        pos = m.end(2)
+    parts.append(re.escape(delegation[pos:]))
+    return re.compile("".join(parts))
+
+
 def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
     """The recorded spawn prompt must contain the test's delegation verbatim.
 
@@ -1654,15 +1719,17 @@ def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
     was never asked to resist, the agent passes, and the suite reports having
     survived an attack that never arrived.
 
-    `in`, not `==`: a harmless preamble is tolerated, a reword is not. What the
-    substring check permits is reported separately by
-    `report_direct_delegation_extra_text`.
+    A substring search, not `==`: a harmless preamble is tolerated, a reword is
+    not. What the substring check permits is reported separately by
+    `report_direct_delegation_extra_text`. The one character-level allowance is
+    `/` vs `\\` inside the `projectPath:` value (`_delegation_pattern`).
     """
     delegation = test.get("delegation")
     if not delegation:
         pytest.skip("not a direct-agent test")
     _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
-    if any(delegation in p for p in prompts):
+    pattern = _delegation_pattern(delegation)
+    if any(pattern.search(p) for p in prompts):
         return
     from harness.skill_runner import BUILTIN_ARG_TRUNCATE, _UNTRUNCATED_ARGS
 
@@ -1676,7 +1743,8 @@ def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
     rendered = "\n---\n".join(prompts) if prompts else "(no spawn prompt recorded)"
     assert False, (
         "the main thread did not relay the delegation verbatim.\n\n"
-        f"EXPECTED to find, as an exact substring:\n{delegation}\n\n"
+        "EXPECTED to find (exact, except '/' and '\\' are interchangeable in the "
+        f"projectPath: value):\n{delegation}\n\n"
         f"ACTUAL spawn prompt(s):\n{rendered}{cut_note}"
     )
 
@@ -1695,11 +1763,13 @@ def report_direct_delegation_extra_text(test, builtin_tool_calls):
     if not delegation:
         pytest.skip("not a direct-agent test")
     _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
+    pattern = _delegation_pattern(delegation)
     extras = []
     for p in prompts:
-        if delegation not in p:
+        m = pattern.search(p)
+        if not m:
             continue
-        before, _, after = p.partition(delegation)
+        before, after = p[: m.start()], p[m.end() :]
         if before.strip() or after.strip():
             extras.append(
                 f"before={before.strip()[:300]!r} after={after.strip()[:300]!r}"
@@ -1752,6 +1822,9 @@ def test_skill_calls_name_a_shipped_skill(builtin_tool_calls, test=None):
 
 # --- An out-of-lane request is handed back to its owner ------------------
 
+_HAND_BACK_READS = frozenset({"project_context", "tree_query", "research_query"})
+
+
 def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_returns=None):
     """On a hand-back test the agent makes no MCP tool call and its reply names
     the owner, read off `negative.correct_skill[0]`.
@@ -1774,6 +1847,11 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
     The 'project-context-guard' tag admits one call: a `project_context` that
     opens the run, which is how init-project learns a project already exists
     (it writes nothing). Any second call, or any other tool, still fails.
+
+    The 'reads-before-hand-back' tag admits the read-only project tools
+    (`project_context`, `tree_query`, `research_query`) in any number: an agent
+    that must look at the project to see the request is out of its lane has
+    still not done the work. Any other tool, a writer included, still fails.
     """
     from harness.skill_runner import subject_reply_text
 
@@ -1788,12 +1866,17 @@ def test_hand_back_names_its_owner(tool_calls, text_response, test, agent_return
         and _bare_tool_name(calls[0].get("tool") or "") == "project_context"
     ):
         calls = calls[1:]
+    if "reads-before-hand-back" in test.get("tags", []):
+        calls = [c for c in calls if _bare_tool_name(c.get("tool") or "") not in _HAND_BACK_READS]
     assert calls == [], (
         "a hand-back makes no tool call; got "
         f"{len(calls)} call(s): "
         + ", ".join(c.get("tool", "?") for c in calls)
     )
-    reply = subject_reply_text(agent_returns, text_response, test.get("skill") or "", test)
+    # A failed spawn is recorded under the agent's name with `is_error`, and its
+    # runtime text ("Available agents: ...") names every owner (issue #3935).
+    own_returns = [r for r in (agent_returns or []) if not r.get("is_error")]
+    reply = subject_reply_text(own_returns, text_response, test.get("skill") or "", test)
     if not owners:
         assert "hand-back:" in reply.lower(), "the reply carries no `Hand-back:` line"
         return

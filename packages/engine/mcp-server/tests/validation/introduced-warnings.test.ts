@@ -51,6 +51,30 @@ function plausiblePerson(id: string, given: string, surname: string) {
 }
 
 describe("introducedWarnings", () => {
+  // A gating impossibility refuses; its christening-proxy form is exempt.
+  // `hasSpouseNotAliveTogetherEstimated` is the one estimated tag that can be
+  // introduced alone — the other four always co-fire a tag that already gates
+  // (`earliestChildBirthToBirth12`, `hasEventAfterDeath1`, `hasEarlyMarriage14`).
+  it("(a2) refuses an introduced hasChildBornBeforeParent", () => {
+    const parent = person("P", "Ann", "Kos", [{ id: "PB", type: "Birth", date: "1 Jan 1820", standard_date: "1 Jan 1820" }]);
+    const child = person("K", "Jan", "Kos", [{ id: "KB", type: "Birth", date: "1 Jan 1800", standard_date: "1 Jan 1800" }]);
+    const before = tree([parent, child]);
+    const after = tree([parent, child], [{ id: "R", type: "ParentChild", parent: "P", child: "K" }]);
+    const tags = introducedWarnings(before, after, ["P", "K"]).unjustified.map((w) => w.issueType);
+    expect(tags).toContain("hasChildBornBeforeParent");
+  });
+
+  it("(a3) lets an introduced hasSpouseNotAliveTogetherEstimated land", () => {
+    const a = person("A", "Jan", "Kos", [{ id: "AD", type: "Death", date: "1790", standard_date: "1790" }]);
+    const s = { ...person("S", "Ann", "Bor", [{ id: "SC", type: "Christening", date: "1800", standard_date: "1800" }]), gender: "Female" };
+    const before = tree([a, s]);
+    const after = tree([a, s], [{ id: "C", type: "Couple", person1: "A", person2: "S" }]);
+    // With exemptions off the write introduces the tag; with them on it lands.
+    const unexempted = introducedWarnings(before, after, ["A", "S"], undefined, undefined, false);
+    expect(unexempted.unjustified.map((w) => w.issueType)).toContain("hasSpouseNotAliveTogetherEstimated");
+    expect(introducedWarnings(before, after, ["A", "S"]).unjustified).toEqual([]);
+  });
+
   it("(a) an introduced warning with no justification is unjustified", () => {
     const before = tree([plausiblePerson("I1", "John", "Smith")]);
     // After: birth changed to 1800, making lifespan 170 years
@@ -349,6 +373,67 @@ describe("introducedWarnings", () => {
       expect(
         r.unjustified.map((w) => `${w.issueType}|${w.relatedPersonId}`),
       ).toContain("earliestChildBirthToBirth12|D");
+    });
+  });
+
+  // Issue #4224: the death-before-child-birth tags were keyed on the EARLIEST
+  // child, so a second posthumous child behind an in-time one raised nothing.
+  describe("(i) death-before-child-birth gate: each posthumous child is judged on its own", () => {
+    const kid = (id: string, date: string) => ({
+      id,
+      gender: "Male",
+      names: [{ id: `${id}-n`, given: id, surname: "X" }],
+      facts: [{ id: `${id}b`, type: "Birth", date, standard_date: date }],
+    });
+    const parent = (id: string, gender: string, death: string) => ({
+      id,
+      gender,
+      names: [{ id: `${id}-n`, given: id, surname: "X" }],
+      facts: [{ id: `${id}d`, type: "Death", date: death, standard_date: death }],
+    });
+    const addEdge = (
+      par: ReturnType<typeof parent>,
+      kids: Array<[string, string]>,
+      existing: string[],
+      add: string,
+    ) => {
+      const build = (linked: string[]) =>
+        tree(
+          [par, ...kids.map(([id, d]) => kid(id, d))],
+          linked.map((id, i) => ({
+            id: `R${i}`,
+            type: "ParentChild",
+            parent: par.id,
+            child: id,
+          })),
+        );
+      const before = build(existing);
+      const after = build([...existing, add]);
+      return introducedWarnings(
+        before, after, computeTouchedPersonIds(before, after),
+      );
+    };
+
+    it("refuses a second posthumous child behind one born in time", () => {
+      const r = addEdge(
+        parent("F", "Male", "12 Jan 1859"),
+        [["A", "1 Jan 1820"], ["B", "9 Aug 1935"], ["C", "1 Mar 1940"]],
+        ["A", "B"],
+        "C",
+      );
+      expect(
+        r.unjustified.map((w) => `${w.issueType}|${w.relatedPersonId}`),
+      ).toContain("hasDeathBeforeChildBirth30_10|C");
+    });
+
+    it("lands an in-time child added to a mother who already has a posthumous one", () => {
+      const r = addEdge(
+        parent("M", "Female", "1 Jan 1850"),
+        [["A", "1 Jan 1840"], ["B", "1 Jun 1855"], ["D", "1 Jan 1845"]],
+        ["A", "B"],
+        "D",
+      );
+      expect(r.unjustified).toHaveLength(0);
     });
   });
 

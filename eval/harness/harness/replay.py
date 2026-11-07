@@ -127,6 +127,7 @@ SECTION_ID_PREFIX = {
     "localities": "loc_",
     "namesakes": "ns_",
     "rejected_links": "rj_",
+    "hit_verdicts": "hv_",
 }
 
 _ID_RE = re.compile(r'"(?:entryId|logId)"\s*:\s*"([^"]+)"')
@@ -666,6 +667,10 @@ def replay(
         # the generic path below would read it as one log entry.
         if name == "extraction_append" and "personId" in args and not args.get("recordIds"):
             out.note_unmodelled("extraction_append:person-links")
+            continue
+        # attachWaitingPages copies staged pages its arguments do not carry.
+        if name == "extraction_append" and args.get("attachWaitingPages"):
+            out.note_unmodelled("extraction_append:attach-pages")
             continue
         if _is_staged_extraction(name, args):
             _apply_staged_extraction(entry, final_research, out)

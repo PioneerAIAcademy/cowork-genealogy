@@ -168,6 +168,13 @@ missed, and this skill is not the whole-board pass.
 
 Put one to the lead with a recommendation and the context behind it. He decides.
 
+**Check every remedy before you recommend it, not when you write the issue.** Any
+tool, agent or edit you propose must work on this input. Check its spec's limits,
+what the bundle showed it doing, and the code at the fix site, including any hook
+that denies the call. An `image_read` re-read was once written into an issue after
+the same bundle's log had shown `image_read` refusing that page as too large. A
+capability nobody has verified does not go to the lead or into an issue.
+
 | Verdict | When | What you do |
 |---|---|---|
 | **Not planned** | Nothing to build: the agent behaved correctly, the lead has ruled the ask out of scope, the claim is refuted with nothing real underneath, or it is a duplicate submission of another feedback item. | Close with a one-line reason. The card moves itself. |
@@ -226,12 +233,6 @@ Write into the body:
   his answer, the option it beat, and why. A ruling made on one item binds the
   rest of the run. Apply it to every later item it touches, and say so where you
   do.
-
-**Check every remedy before you write it.** Any tool or agent named in "What to
-do" must work on this input. Check its spec's limits, and what the bundle showed
-it doing. An `image_read` re-read was once written into an issue after the same
-bundle's log had shown `image_read` refusing that page as too large. A
-capability nobody has verified does not go into an issue.
 
 **Prefer a tool rule to skill prose.** If the thing can be decided by reading the
 project documents alone, it is a writer-tool precondition, where it binds

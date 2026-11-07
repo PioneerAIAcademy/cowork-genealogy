@@ -111,7 +111,7 @@ PLUGIN_DIR = SERVER.parents[1] / "packages" / "engine" / "plugin"
 ORCHESTRATOR = SERVER.parents[1] / "eval" / "harness" / "e2e" / "orchestrator.py"
 
 TRANSIENT = frozenset({"text_delta", "thinking_delta", "task_progress"})
-AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "gps-mentor", "historical-context", "hypothesis-tracking", "init-project", "locality-guide", "person-evidence", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "search-records", "research-plan", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "timeline", "translation", "tree-edit", "tree-survey", "validate-schema", "where-else-to-search"}
+AGENTS = {"check-warnings", "citation", "conflict-resolution", "convert-dates", "evaluate-search-results", "gps-mentor", "historical-context", "hypothesis-tracking", "init-project", "locality-guide", "person-evidence", "proof-conclusion", "question-selection", "record-structurer", "research-exhaustiveness", "search-records", "research-plan", "search-external-sites", "search-familysearch-wiki", "search-full-text", "search-hints", "search-images", "search-wikipedia", "source-evaluation", "survey-surname", "timeline", "translation", "tree-edit", "tree-survey", "validate-schema", "where-else-to-search"}
 
 
 # ── fakes ─────────────────────────────────────────────────────────────────────────
@@ -627,6 +627,7 @@ def test_a_read_under_the_anchor_is_denied_and_routed(tmp_path):
     kw = dict(cwd=str(root), project_root=str(root), config_root=str(cfg))
     reason = deny.project_read_denied("Read", {"file_path": str(root / "research.json")}, **kw)
     assert reason and "research_query" in reason and "Read on research.json" in reason
+    assert "research_query" in deny.project_read_denied("Read", {"file_path": str(root / "Research.JSON")}, **kw)
     assert "record_read" in deny.project_read_denied("Read", {"file_path": str(root / "results" / "abc.json")}, **kw)
     assert "sidecar_read" in deny.project_read_denied("Read", {"file_path": str(root / "evaluations" / "v.json")}, **kw)
     assert "sidecar_read" in deny.project_read_denied("Grep", {"pattern": "x", "path": str(root / "uploads")}, **kw)
@@ -1099,7 +1100,7 @@ def test_registration_fails_on_a_missing_bare_agent_or_a_missing_skill():
     assert options.check_registration(None, expected_agents=AGENTS, expected_skills=6)
 
 
-def test_the_plugin_ships_thirty_agents_and_two_skills():
+def test_the_plugin_ships_thirty_one_agents_and_two_skills():
     from proto.worker.plugin_agents import load_agent_definitions
 
     assert set(load_agent_definitions(PLUGIN_DIR)) == AGENTS
@@ -1142,7 +1143,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
     loaded = set(load_agent_definitions(copy))
     assert loaded == AGENTS - {"gps-mentor"} and loaded != worker.EXPECTED_AGENTS
     agents, error = worker.load_plugin_agents(str(copy))
-    assert agents is None, "twenty-nine agents must not become the expectation"
+    assert agents is None, "thirty agents must not become the expectation"
     assert error == f"plugin agents ['gps-mentor'] missing under {copy}/agents"
     # An agent the plugin does not ship is named too (the name is the frontmatter's,
     # not the file's), so a mis-typed `name:` shows both halves.
@@ -1154,7 +1155,7 @@ def test_a_plugin_missing_an_agent_is_refused_at_load_not_narrowed_to_what_loade
 
 
 def test_registration_problems_compares_against_the_constants_not_the_loaded_set(tmp_path):
-    # Thirty agents and 2 skills registered: clean. Twenty-nine, or 1: the miss, whatever loaded --
+    # Thirty-one agents and 2 skills registered: clean. Thirty, or 1: the miss, whatever loaded --
     # the helper takes neither an agents argument nor a skill count, so neither figure
     # from the image can reach it.
     assert worker.registration_problems(_info(AGENTS, 2)) == []
@@ -1820,6 +1821,16 @@ def test_run_turn_completes_a_good_stream_with_the_results_figures(turn_env):
     assert "cost_usd = COALESCE" in update and "output_tokens = COALESCE" in update
     assert summary["cost_usd"] == 0.01 and summary["num_turns"] == 1 and summary["resumed"] is False
     assert summary["events"] == 1 and summary["sdk_session_id"] == SID and summary["seq"] == 2, "text event, then turn_done"
+
+
+def test_a_main_thread_delivered_call_no_longer_halts_the_turn(turn_env):
+    """Step mode phase 2 deleted `research_delivered`: a call by that name (a stale model
+    habit) runs into no halt arm, and the turn ends on its own as `ok`."""
+    summary = _run(turn_env, [
+        _init(), ToolCall("mcp__genealogy__research_delivered"), _text("x"), _result(num_turns=2),
+    ])
+    assert summary["outcome"] == "ok"
+    assert turn_env["client"].pretool_replies[-1] == {}
 
 
 def test_run_turn_binds_no_stop_hook_even_for_a_message_stamped_with_a_cap(turn_env, monkeypatch, tmp_path):
@@ -4648,189 +4659,24 @@ def test_session_spend_usd_prices_decimal_sums(turn_env, monkeypatch):
     assert not [f for f in logged if f.get("ev") == "spend_estimate_failed"]
 
 
-# ── the `delivered` exit ──────────────────────────────────────────────────────────
-#
-# A bounded request -- "create a plan but leave it at that", a single lookup, "where are
-# we?" -- must stop at its deliverable rather than running on to the proof, the nudge cap
-# or the spend bound. `delivered` is how a turn says it did the thing that was asked and
-# stopped on purpose. It is a NEW value, not `ok`: `ok` means "ended with no terminal
-# reason" and chatEvents renders it as nothing, while a delivery has something to report.
+# ── the system prompt ─────────────────────────────────────────────────────────────
 
 
-def test_the_delivered_tool_name_is_pinned():
-    assert options.DELIVERED_TOOL == "mcp__genealogy__research_delivered"
+def test_the_prompt_routes_a_first_message_with_no_project_and_names_no_deleted_tool(tmp_path):
+    """#3768's routing sentence lived in DELIVERY_GUIDANCE; it moved to the project note
+    when `research_delivered` was deleted (step mode phase 2) rather than going with it."""
+    prompt = _options(config_dir=str(tmp_path)).system_prompt["append"]
+    assert "a request to research a person is a research job, not a single lookup" in prompt
+    assert "research_delivered" not in prompt
 
 
-def test_the_delivery_instruction_rides_the_same_turn_prompt(tmp_path):
-    """The ONLY check that the guidance reaches the model at all. Every other test here
-    drives `make_pretool_hook` directly and never touches `build_worker_options`, so
-    without this the wiring could be dropped and the tool would ship advertised but
-    inert, with nothing instructing the model to call it."""
+def test_the_sources_instruction_rides_the_same_turn_prompt(tmp_path):
+    """Issue #4011: the worker names a source, collection, book or citation only from a
+    tool result, the same text the alpha and the Cowork hook carry."""
     opts = _options(config_dir=str(tmp_path))
-    assert options.DELIVERY_GUIDANCE in opts.system_prompt["append"]
+    assert options.SOURCES_GUIDANCE in opts.system_prompt["append"]
+    assert opts.system_prompt["append"].startswith("You are the hosted genealogy research agent")
 
-
-def test_the_instruction_names_the_tool_it_is_about():
-    """A rule that does not name its tool cannot be followed. The bare name is what
-    appears in the prompt; the hook matches the qualified one."""
-    assert "research_delivered" in options.DELIVERY_GUIDANCE
-    assert options.DELIVERED_TOOL.endswith("research_delivered")
-
-
-def test_the_instruction_draws_both_boundaries():
-    """Two ways this misfires, and both must be excluded in the text itself: calling it
-    when the whole objective is finished (that is `completed`, and the run ends on its
-    own), and calling it instead of asking a question (an ask waits for an answer; a
-    delivery waits for nothing)."""
-    lowered = options.DELIVERY_GUIDANCE.lower()
-    assert "objective" in lowered, "must exclude the project-complete case"
-    # NOT `"question" in lowered or "ask" in lowered`: "ask" lives inside "asked" and
-    # "question" inside "status question", BOTH in the guidance's positive half, so that
-    # assertion cannot fail. Same collision shape as the "search"/"re-SEARCH" one above.
-    assert "in place of asking" in lowered, "must exclude the ask case"
-
-
-def test_a_turn_that_delivers_is_recorded_as_delivered(turn_env):
-    """End to end through the REAL hook: the hook-level tests cannot see the worker's
-    closure, and a break test that sets the closure to the wrong outcome leaves them all
-    green."""
-    summary = _run(turn_env, [
-        _init(), ToolCall("mcp__genealogy__research_query"),
-        ToolCall(options.DELIVERED_TOOL),
-        _result(num_turns=2),
-    ])
-    assert summary["outcome"] == "delivered", (
-        f"a turn that delivered recorded {summary['outcome']!r}"
-    )
-    _, params = next((sql, p) for sql, p in turn_env["conn"].executed
-                     if sql.startswith("UPDATE turns SET completed_at"))
-    assert params[0] == "delivered", "and the row says so too"
-
-
-def test_a_turn_that_never_delivers_is_untouched_by_the_exit(turn_env):
-    """The arm that is easy to skip. Adding an exit must not re-route the ordinary run
-    through it."""
-    summary = _run(turn_env, [
-        _init(), ToolCall("mcp__genealogy__research_query"),
-        ToolCall("mcp__genealogy__record_read"),
-        _result(num_turns=2),
-    ])
-    assert summary["outcome"] != "delivered"
-
-
-def test_a_stop_outranks_a_delivery():
-    """The researcher's own stop wins: the halt check runs before the delivered arm."""
-    hook = options.make_pretool_hook(
-        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=lambda row: None, halt=lambda *, subagent: "stopped",
-    )
-    out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL, "tool_input": {}}, "u1", None))
-    assert out.get("stopReason") == "stopped", "a halt must outrank the delivery arm"
-
-
-def test_a_subagent_cannot_end_the_main_turn_with_a_delivery():
-    """The arm matches on tool NAME, and a subagent holds the session's tool set -- so
-    without a caller check a record-extractor saying "delivered" ends the researcher's
-    whole turn.
-
-    `agent_id` is tested for MEMBERSHIP, not truthiness: it is absent as a KEY on the
-    main thread, and `agent_type` alone is not sufficient because it is present on the
-    main thread of a session started with `--agent`. Same discriminator the shipped
-    plugin hook uses (`owner_denied`, hooks/guard_project_files.py)."""
-    halted: list[str] = []
-    hook = options.make_pretool_hook(
-        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=lambda row: None, on_delivered=lambda: halted.append("x"),
-    )
-    out = asyncio.run(hook(
-        {"tool_name": options.DELIVERED_TOOL, "tool_input": {"summary": "s"},
-         "agent_id": "ag_1", "agent_type": "record-extractor"},
-        "u1", None,
-    ))
-    assert out.get("continue_") is not False, "a subagent's delivery must not halt the turn"
-    assert halted == [], "and must not fire the delivered exit"
-
-
-def test_the_main_thread_still_delivers_with_agent_type_present():
-    """The other direction, and the reason `agent_type` alone cannot be the test: a
-    session started with `--agent` carries agent_type on its MAIN thread. Keying on it
-    would silently stop the feature working for those sessions."""
-    halted: list[str] = []
-    hook = options.make_pretool_hook(
-        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=lambda row: None, on_delivered=lambda: halted.append("x"),
-    )
-    out = asyncio.run(hook(
-        {"tool_name": options.DELIVERED_TOOL, "tool_input": {"summary": "s"},
-         "agent_type": "research"},
-        "u1", None,
-    ))
-    assert out.get("continue_") is False, "the main thread must still deliver"
-    assert halted == ["x"]
-
-
-def test_the_guidance_tells_the_model_how_to_find_the_schema_without_claiming_it_is_deferred():
-    """The one tool the system prompt names has to be findable, and the short bounded
-    turns this feature exists for are the ones holding the fewest schemas -- so the
-    find-it clause stays.
-
-    What changed: `research_delivered` IS in ALWAYS_LOAD now, so on a hosted turn the
-    schema is already held and "its schema is deferred" is simply false. The clause is
-    conditional instead. It is not deleted, because ALWAYS_LOAD is a `_meta` hint the
-    CLIENT honours -- the unit harness's mock drops `_meta` entirely, so the schema is
-    still deferred there, and a model that has to search must still be told how."""
-    # NOT `"search" in lowered`: "re-SEARCH" contains it, and the guidance says
-    # "researcher" and "research_delivered", so that assertion can never fail. This is
-    # the field-name-collision shape CLAUDE.md names as a silent pass; it was caught by
-    # break-testing this very test, which stayed green with the clause deleted.
-    lowered = options.DELIVERY_GUIDANCE.lower()
-    assert "search for it by name" in lowered, "must tell the model how to find it"
-    assert "if you do not already hold" in lowered, "and must make that conditional"
-    assert "schema is deferred" not in lowered, (
-        "the schema is in ALWAYS_LOAD now, so stating it is deferred is false on every "
-        "hosted turn -- the plane this guidance is written for"
-    )
-
-
-def test_the_delivery_summary_reaches_a_human():
-    """The one field the researcher-facing contract is built on, and the hook halts
-    BEFORE the tool body runs -- so if it is not captured here it reaches nobody:
-    `input_path` is None for this tool, the tool_calls row has no column for it, and the
-    browser renders a fixed string from chatEvents. It must survive in the stop reason
-    and in the log event."""
-    events: list[dict] = []
-    hook = options.make_pretool_hook(
-        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=lambda row: None,
-        log=lambda **kw: events.append(kw),
-    )
-    out = asyncio.run(hook(
-        {"tool_name": options.DELIVERED_TOOL,
-         "tool_input": {"summary": "the Mogan marriage record, 1874"}},
-        "u1", None,
-    ))
-    # startswith, not `in`: containment passes even when the summary is appended
-    # AFTER the reason, which is the ordering the chip cut makes load-bearing.
-    # With `in`, a reorder in the shared helper failed the alpha only.
-    assert out["stopReason"].startswith("Delivered: the Mogan marriage record, 1874"), (
-        "the summary must survive into the text the model is handed"
-    )
-    delivered = [e for e in events if e.get("ev") == "delivered"]
-    assert delivered and delivered[0]["summary"] == "the Mogan marriage record, 1874"
-
-
-def test_an_empty_summary_does_not_corrupt_the_stop_reason():
-    """`summary` is declared required but NOTHING enforces it: the hook halts before the
-    body, and the server refuses unknown argument names but never a call for a missing
-    required key alone. An argument-free call must still
-    produce a clean reason rather than a dangling 'Delivered: '."""
-    hook = options.make_pretool_hook(
-        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=lambda row: None,
-    )
-    out = asyncio.run(hook({"tool_name": options.DELIVERED_TOOL}, "u1", None))
-    assert out["stopReason"] == options.DELIVERED_REASON
-    assert "Delivered:" not in out["stopReason"]
 
 # ── U3: the attempt bears its owner's current grant ──────────────────────────────
 
@@ -5125,43 +4971,6 @@ def test_worker_tables_include_the_grant_tables():
     """acquire_grant reads projects.owner_id and familysearch_tokens; /healthz must fail on a
     database missing either rather than every turn failing at its first attempt."""
     assert {"projects", "familysearch_tokens"} <= set(worker.WORKER_TABLES)
-
-
-def test_a_delivered_turn_on_an_unfinished_project_is_labelled_delivered(turn_env, monkeypatch):
-    """A delivery records its own reason, and nothing later relabels it -- the turn would
-    otherwise be rendered as something it was not."""
-    turn_env["conn"].research = _INCOMPLETE
-    monkeypatch.setattr(worker, "stop_requested", lambda conn, sid: False)
-    summary = _run(turn_env, [
-        _init(), ToolCall(options.DELIVERED_TOOL), _text("x"),
-        _result(num_turns=2),
-    ])
-    assert summary["outcome"] == "delivered"
-    row = next(p for sql, p in turn_env["conn"].executed
-               if sql.startswith("UPDATE turns SET completed_at"))
-    assert row[0] == "delivered", "the row keeps the delivery's own reason"
-
-
-def test_the_main_thread_gate_is_membership_not_truthiness():
-    """The comment on that gate calls the membership test load-bearing, and it is: a
-    subagent whose `agent_id` is falsy (None, "") is still a subagent. A truthiness test
-    (`not data.get("agent_id")`) passes the whole existing suite, so this pins the rule
-    with the one shape that separates them."""
-    halted: list[str] = []
-    hook = options.make_pretool_hook(
-        turn_id="t1", session_id="s1", cwd="/project", config_root="/cfg",
-        record=lambda row: None, on_delivered=lambda: halted.append("x"),
-    )
-    out = asyncio.run(hook(
-        {"tool_name": options.DELIVERED_TOOL, "tool_input": {"summary": "s"},
-         "agent_id": None, "agent_type": "record-extractor"},
-        "u1", None,
-    ))
-    assert out.get("continue_") is not False, (
-        "agent_id present but falsy is STILL a subagent -- a truthiness test lets it "
-        "end the researcher's turn"
-    )
-    assert halted == []
 
 
 # ── U11: the dev-only paths ──────────────────────────────────────────────────────

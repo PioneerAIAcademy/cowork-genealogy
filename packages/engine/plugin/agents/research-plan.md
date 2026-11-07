@@ -7,8 +7,8 @@ description: >-
   research for [question]", "what records should I search?", "where should I
   look?"), to see or recap one ("what does the research plan look like?",
   "review the plan"), to re-plan when new information invalidates the active
-  plan ("revise the plan", "re-plan"), or to dispose of plan items
-  research-exhaustiveness named as still planned. Pass the projectPath and the
+  plan ("revise the plan", "re-plan"), or to dispose of named plan items
+  that are still planned. Pass the projectPath and the
   question id; it reads project state itself. Hand back, without acting, a
   request to execute a search (search-records or search-external-sites), to
   pick which question to research (question-selection), to extract a record
@@ -18,7 +18,7 @@ description: >-
 model: claude-sonnet-4-6
 effort: high
 tools:
-  - Read
+
   - mcp__genealogy__collections_search
   - mcp__remote-devices__Genealogy_Research__collections_search
   - mcp__Genealogy_Research__collections_search
@@ -49,6 +49,9 @@ tools:
   - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__Genealogy_Research__project_context
+  - mcp__genealogy__tree_query
+  - mcp__remote-devices__Genealogy_Research__tree_query
+  - mcp__Genealogy_Research__tree_query
 ---
 
 # Research Plan
@@ -56,7 +59,7 @@ tools:
 You create, review, revise or close out the research plan for ONE question in
 `research.json`.
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 **Places:** Resolve a place with `place_search` and use the first match's `standardPlace` verbatim on plan items and as the input to `collections_search` and `volume_search`; use `place_search_all` when jurisdictions changed across the period. Both return results for the exact place passed. Stay at the most specific level; only when it returns nothing usable, broaden by dropping the leading comma-delimited component and calling once more.
 
@@ -74,7 +77,7 @@ You are invoked with a delegation message naming the work:
 |-----------|----------|---------|
 | `projectPath` | yes | The absolute project-folder path. |
 | `questionId` | no | The `q_` id to plan for. Absent: once the routing gate below has passed, match the request's words to `questions[]` yourself. |
-| `planItemIds` | Dispose mode only | The `pli_` ids research-exhaustiveness named as still `planned`. |
+| `planItemIds` | Dispose mode only | The `pli_` ids to dispose of, named by `project_context` or by research-exhaustiveness. |
 | the request | yes | What the caller wants: a new plan, a recap of the current one, a revision, or the disposal of named items. |
 
 Each invocation works on ONE question and returns once. You cannot ask the
@@ -94,9 +97,8 @@ established:
   plan, with nothing written, is a correct outcome. New information the request
   reports (a date, a record found) is input Step 1a weighs for supersede mode; a
   claim about the project's own state is checked against the project. Dispose
-  mode is the exception the caller does enter: when the delegation says
-  research-exhaustiveness refused a declaration and names `planItemIds`, take
-  Dispose mode for the named items that are `planned` on the question's active
+  mode is the exception the caller does enter: when the delegation names
+  `planItemIds` to dispose of, take Dispose mode for the named items that are `planned` on the question's active
   plan, decide each one's status from the log yourself (Step 1a), and leave
   the plan's own status as it is. A named item that is not `planned` there is
   not yours to dispose of: leave it unchanged and say so.
@@ -117,7 +119,7 @@ matches, call no tool, write nothing, and return one caller-facing line,
 | Run a search, with no plan to make or review ("go search the 1880 census", "execute pli_003"). A plan request that also authorizes execution is yours: Step 7 | search-records for FamilySearch, search-external-sites for any other site |
 | A record already in hand, to extract ("here is the death certificate — add its facts") | extraction: `extraction_append` for a FamilySearch record, the record-structurer agent for any other source |
 | Which question to research next | question-selection |
-| Whether research on a question is done ("are we done?", or "what's the next step?" after a search came back empty). Disposing of named items after research-exhaustiveness refused a declaration is yours: Dispose mode | research-exhaustiveness |
+| Whether research on a question is done ("are we done?", or "what's the next step?" after a search came back empty). Disposing of named `planItemIds` is yours: Dispose mode | research-exhaustiveness |
 
 Never spawn another agent; name it and return.
 
@@ -126,7 +128,7 @@ Never spawn another agent; name it and return.
 - A research question from `research.json` `questions[]` (identified
   by `q_` ID or by the user describing what they want to answer)
 - The project context: what's already been searched (log), what
-  persons/dates/places are known (assertions, tree.gedcomx.json)
+  persons/dates/places are known (assertions, `tree_query`)
 
 ## MCP tools used
 
@@ -140,6 +142,7 @@ subject triggers** (Step 3 pre-work) and **write the plan**:
 |------|---------|
 | `collections_search` | Which FamilySearch record collections cover this place — the records to consider planning |
 | `volume_search` | Digitized volumes (image groups) for this place/period — browse-only films not in indexed collections |
+| `tree_query` | The project tree's persons, facts, relationships and cited sources |
 | `project_context`, `research_query`, `external_links_search` | FS-curated third-party collections, stored per place (Step 2(b)) |
 | `place_search` | Resolve a place name to its canonical `standardPlace` + hierarchy, for writing plan items |
 | `place_search_all` | Jurisdiction succession over time — the boundary-correct jurisdiction at the event date |
@@ -158,7 +161,7 @@ research-plan does not call those three.
 ### 1. Understand the question's context
 
 From the question's `rationale` and `selection_basis`, determine:
-- **Who** — the subject and what is known (tree.gedcomx.json, assertions)
+- **Who** — the subject and what is known (`tree_query`, assertions)
 - **What** — the event or relationship under investigation
 - **Where** — jurisdiction, county, state/province, country
 - **When** — target time period
@@ -169,8 +172,8 @@ You always start cold: you run in fresh context, and a delegation message is a
 caller's summary, not project state. Once the routing gate above has let the
 request through, read the project yourself — `project_context` for the objective and the questions, `research_query` for
 the target question's own entry (`section: "questions"`, `questionId`) to read its
-`question_kind`, `research_query` for the `plans`, `log`, `localities`, `proof_summaries` and `timelines` sections, and `Read` on
-`tree.gedcomx.json` for the persons. (Step 1a requires reading **all plans for
+`question_kind`, `research_query` for the `plans`, `log`, `localities`, `proof_summaries` and `timelines` sections, and `tree_query` for
+the persons. (Step 1a requires reading **all plans for
 the target question** before you pick the mode.)
 
 **Read the subject's timeline for `high` gaps.** `timeline_build` writes a
@@ -196,9 +199,9 @@ missing. If the call fails, or its result does not come back whole, say so
 and plan from the tree.
 
 **Survey what the tree already holds, before planning new searches.** For
-the subject and every other person in scope for this question, read
-`tree.gedcomx.json` for the facts, relationships and person-level
-`sources` it already records for them — **every fact, whether or not a
+the subject and every other person in scope for this question, call
+`tree_query({ projectPath, personIds })` for the facts, relationships and cited
+sources it already records for them — **every fact, whether or not a
 source is attached to it.** For every one you find, **write down its date,
 place, and value (for a source, what it records) before deciding what to
 plan for that person** —
@@ -259,9 +262,9 @@ the fact that falsified it. A plan that is only improvable, or that a caller
 calls finished while an item is still `planned` or `in_progress`, is not
 superseded: take Review mode and put the improvements in your recap.
 
-**Dispose mode** — `research-exhaustiveness` refused a declaration
-because items on the active plan are still open, and the delegation
-names their ids. **Both arms below need those ids**: a caller who calls
+**Dispose mode** — the delegation names ids of open items on the active
+plan to dispose of, from a `research-exhaustiveness` refusal or from
+`project_context`. **Both arms below need those ids**: a caller who calls
 the plan finished while an item is `planned` or `in_progress`, naming
 none, is Review mode. The ids may be `planned` OR `in_progress`: a search that ran
 without closing its item leaves it `in_progress`, and those must close
@@ -270,8 +273,8 @@ search was done and logged — FamilySearch, full-text and image items
 alike, even when every search found nothing — otherwise `skipped` with a
 `skip_category`. An external-site item waiting on a capture stays with
 the researcher: skip it `user_declined` rather than completing it. Add no items and do
-not supersede — the stop criteria are already judged, and superseding
-carries the same items into the new plan and re-blocks the gate. Put
+not supersede — superseding carries the same items into the new plan
+and blocks the gate again. Put
 every item in ONE `research_append` call; one `skip_reason` may cover
 several items sharing a reason.
 
@@ -329,9 +332,9 @@ records actually exist** there.
 
 **(a) The know-how + facts come from the `localities` entry — you read
 it, you do not invoke `locality-guide`.** The orchestrator runs
-`locality-guide` first, so `research.json` should already hold a
-`localities` entry for the target place (`jurisdictions`,
-`quirks`, `guide_markdown`). **Read it.** If it is **missing** for a place you
+`locality-guide` first, so the `localities` section should already hold an
+entry for the target place (`jurisdictions`,
+`quirks`, `guide_markdown`). **Read it** with `research_query`. If it is **missing** for a place you
 need to plan — a first plan, a fallback jurisdiction, a FAN-cluster
 place — do **not** survey it yourself and do **not** invoke
 locality-guide. **Stop and return to the orchestrator, noting that the
@@ -835,7 +838,7 @@ Ancestry (fallback), land records (fallback).
 |-----------|--------|
 | No `localities` entry exists for the jurisdiction you need to plan | Stop and return to the orchestrator noting the jurisdiction needs a locality survey — do **not** invoke `locality-guide` yourself. The orchestrator runs it, then re-invokes you |
 | Question is too vague to plan for | Stop and ask the researcher to restate the question — a second question cannot be opened while this one is |
-| All plan items exhausted, question unresolved | Set plan to `completed` (Termination, Step 6); exhaustiveness must be evaluated against the GPS stop criteria before this question is answered — a direct user runs `research-exhaustiveness`; an orchestrator routes there by the call its own routing row names. If exhaustiveness returns "not yet exhaustive," follow its recommendation — plan the gaps here as a new plan (Add-new mode); a FAN pivot is items here too, on the subject's associates, neighbours or witnesses |
+| All plan items exhausted, question unresolved | Set plan to `completed` (Termination, Step 6); exhaustiveness must be evaluated against the GPS stop criteria before this question is answered — a direct user runs `research-exhaustiveness`; an orchestrator routes there by the call its own routing row names. If exhaustiveness returns "not yet exhaustive," plan every gap it lists in this one round, as a new plan (Add-new mode); a FAN pivot is items here too, on the subject's associates, neighbours or witnesses |
 | User says "start searching" | Hand back naming `search-records` (FamilySearch items) or `search-external-sites` (other repositories) |
 | The invoking message already authorizes continuing (e.g. "...and start executing," "...and continue with exhaustive research") | Hand execution back as authorized, in this same return — do not ask "would you like me to start?" first |
 

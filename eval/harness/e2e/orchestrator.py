@@ -59,6 +59,7 @@ from harness.context_policy import (
     owner_denied,  # the SHIPPED hook's predicate, not a copy — see main_thread_owned_section
     subagent_only_denial,
     AGENT_ONLY_TOOLS,  # the SHIPPED hook's map, not a copy
+    sources_note_hook,  # adds the SHIPPED hook's sentence, not a copy
     SUBAGENT_ONLY_TOOLS,
 )
 from harness.delegation import foreground_rewrite
@@ -100,16 +101,11 @@ from e2e.result import (
     write_result_files,
 )
 from e2e.stop_checker import (
-    COUNTED_TERMINAL_REASONS,
-    classify_hand_back,
     derive_stop_reason,
-    hand_back_key,
     project_completed,
     read_external_collection_keys,
     read_research_json,
     read_tree_json,
-    should_continue_run,
-    terminal_reason,
 )
 from e2e.subagent_capture import (
     collect_subagents,
@@ -354,6 +350,8 @@ def is_fixture_blocked_tool(tool_name: str, blocked_tools: frozenset) -> bool:
 # docs/specs/guardrail-enforcement-spec.md §6. starting-tree.gedcomx.json is the
 # write-once baseline the tree-encoding gate diffs against (issue #1490);
 # overwriting it would defeat that gate.
+# Lowercase, and matched through `_protected_name`, which folds a name the way
+# Windows and macOS hosts resolve it (`Research.JSON` is `research.json` there).
 PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 # The device-bridge writer, matched on the BARE TAIL because Cowork namespaces it
 # (`mcp__remote-devices__device_commit_files`) and the plugin cannot control the
@@ -394,6 +392,26 @@ def _basename(value: str) -> str:
     return value.replace("\\", "/").rsplit("/", 1)[-1]
 
 
+def _protected_name(path: str) -> str | None:
+    """The protected file `path` names, as its canonical lowercase name, or None.
+
+    Folded the way a Windows or macOS host resolves a name: case is folded
+    (`casefold`, so a long-s spelling (U+017F) matches as APFS matches it), and a stream
+    suffix (`research.json::$DATA`) and trailing dots and spaces
+    (`research.json.`) are dropped, since Windows ignores both. An 8.3 short
+    name (`RESEAR~1.JSO`) is not matched: it cannot be told from a real file
+    by name alone. A suffix after `:` is a stream only when it holds no
+    whitespace, so one-line file content such as `research.json: notes` on the
+    device bridge is not read as a path.
+    """
+    name = _basename(path)
+    head, colon, stream = name.partition(":")
+    if colon and not any(c.isspace() for c in stream):
+        name = head
+    name = name.rstrip(". ").casefold()
+    return name if name in PROTECTED_PROJECT_FILES else None
+
+
 def _path_like_strings(value, depth: int = 0):
     """Every string in `value` that could be a path, walked structurally.
 
@@ -426,8 +444,8 @@ def _device_bridge_target(tool_name: str, tool_input) -> str | None:
     if _basename(tool_name.replace("__", "/")) not in DEVICE_WRITE_TOOLS:
         return None
     for candidate in _path_like_strings(tool_input or {}):
-        name = _basename(candidate)
-        if name in PROTECTED_PROJECT_FILES:
+        name = _protected_name(candidate)
+        if name:
             return name
     return None
 
@@ -452,8 +470,7 @@ def direct_project_file_write(tool_name: str, tool_input: dict) -> str | None:
     if tool_name not in ("Write", "Edit", "NotebookEdit"):
         return _device_bridge_target(tool_name, tool_input)
     file_path = str((tool_input or {}).get("file_path") or "")
-    name = file_path.replace("\\", "/").rsplit("/", 1)[-1]
-    return name if name in PROTECTED_PROJECT_FILES else None
+    return _protected_name(file_path)
 
 
 def credential_read_denied(tool_name: str, tool_input) -> str | None:
@@ -557,7 +574,7 @@ def _project_read_route(target: str, root: str) -> str:
         )
     if _under(target, root + "/evaluations") or _under(target, root + "/uploads"):
         return "sidecar_read({projectPath, ref})"
-    if _basename(target) == "research.json":
+    if _basename(target).casefold() == "research.json":
         return "research_query"
     return "project_context"
 
@@ -740,14 +757,6 @@ class FixtureCaps:
     tool_calls: int = 300
     max_turns: int = 250
     max_cost_usd: float = 15.0
-    # Voluntary-yield nudges allowed before an autonomous run is permitted to
-    # end. The agent sometimes narrates the next step then stops mid-loop; a
-    # Stop hook vetoes that, bounded by this cap. See should_continue_run().
-    # Generous by design: a full GPS proof yields after each of ~10+ sub-skill
-    # steps, so a stingy cap ends the loop before proof-conclusion. The
-    # no-progress check (see should_continue_run) is the real backstop against
-    # a genuinely idle agent; this cap only bounds the worst case.
-    max_continue_nudges: int = 40
 
 
 @dataclass
@@ -828,9 +837,6 @@ def load_caps(caps_raw: dict[str, Any]) -> FixtureCaps:
         tool_calls=caps_raw.get("tool_calls", defaults.tool_calls),
         max_turns=caps_raw.get("max_turns", defaults.max_turns),
         max_cost_usd=caps_raw.get("max_cost_usd", defaults.max_cost_usd),
-        max_continue_nudges=caps_raw.get(
-            "max_continue_nudges", defaults.max_continue_nudges
-        ),
     )
 
 
@@ -1862,8 +1868,8 @@ async def _run_agent(
     blocked_tree_reads, blocked_context_calls, guardrail_shadow_violations,
     unnamed_delegate_violations).
 
-    ``single_ask`` (spec §16) sends ``user_message`` as one ordinary turn: the
-    Stop hook never nudges, and the universal live-tree block is lifted, since
+    ``single_ask`` (spec §16) sends ``user_message`` as one ordinary turn, and
+    the universal live-tree block is lifted, since
     a single-ask fixture has no answer key to hide. ``user_message`` defaults
     to the autonomous ``/research --autonomous`` rendering.
     """
@@ -1900,14 +1906,8 @@ async def _run_agent(
     usage: dict[str, Any] = {}
     aborted_reason: str | None = None
     error: str | None = None
-    # mcp__-only, for the tool_calls budget cap. Distinct from activity_count
-    # below, which powers the no-progress stop check.
+    # mcp__-only, for the tool_calls budget cap.
     tool_call_count = {"n": 0}
-    # Any-tool counter (Skill, Read, mcp__, …) for the no-progress check. A
-    # read-only sub-skill step (e.g. research-exhaustiveness deciding "not yet
-    # exhaustive" and writing nothing) is real progress, not a stuck agent —
-    # gating no-progress on mcp__-only calls false-killed runs mid-loop.
-    activity_count = {"n": 0}
     # Every denied attempt to read the answer off the live tree. A
     # non-empty list means the agent tried to shortcut research — surfaced
     # in the result so a reviewer can audit the run. See spec §6.1.
@@ -1919,20 +1919,8 @@ async def _run_agent(
     # too. The attempt itself is in `tool_calls` (streamed from the ToolUseBlock
     # before the PreToolUse deny); this list is the record that it did not run.
     blocked_context_calls: list[dict[str, Any]] = []
-    # Continue-nudge state: when the agent voluntarily yields before
-    # project.status == "completed" (the known "narrated next step then
-    # stopped" stall), the Stop hook vetoes the yield and tells it to resume —
-    # bounded by max_continue_nudges + a no-progress check (see
-    # should_continue_run) so a genuinely stuck run still ends and fails.
-    continue_nudges = {"n": 0}
-    # Per-class hand-back tallies (#2328). Counts hand-backs INCLUDING terminal ones,
-    # so it exceeds `continue_nudges`, which stays the nudge total.
-    hand_back_classes: dict[str, int] = {}
-    last_nudge_activity_count = {"n": -1}
     # #941 — the genealogy MCP surface's health. `unavailable` latches True on
-    # the first detector hit and is read by the Stop hook (so an in-flight
-    # nudge can't push the agent back into an empty tool set) and by the abort
-    # path. `misses` is the consecutive no-match ToolSearch streak feeding the
+    # the first detector hit and is read by the abort path. `misses` is the consecutive no-match ToolSearch streak feeding the
     # mid-run backstop; see e2e.mcp_health for how it is calibrated.
     # `queries` keeps only the last CONSECUTIVE_TOOL_SEARCH_MISSES *no-match*
     # ToolSearch queries — the ones that actually built the streak — so a
@@ -2058,15 +2046,8 @@ async def _run_agent(
             input_data.get("agent_id"),
             input_data.get("agent_type"),
         )
-        # Count EVERY tool the agent issues (Skill, Read, mcp__, …) toward the
-        # no-progress signal — invoking a sub-skill is progress even when that
-        # skill writes nothing. The mcp__-only budget cap is tool_call_count,
-        # incremented separately below.
-        activity_count["n"] += 1
-
-        # The boundary sits AFTER attribution and the activity count, so a denied
-        # crossing is still attributed and still counts as progress -- a turn that
-        # tried to take a second step plainly did work.
+        # The boundary sits AFTER attribution, so a denied crossing is still
+        # attributed.
         if (_gate := _current_gate()) is not None:
             try:
                 _verdict = _gate.check(
@@ -2385,105 +2366,6 @@ async def _run_agent(
             }
         return {}
 
-    async def stop_hook(_input_data, _tool_use_id, _ctx):
-        # A single ask is one turn: whatever stop ends it is the answer.
-        if single_ask:
-            return {}
-        # A step-mode turn ends at its boundary on purpose; the host's reply
-        # continues the run, and `next_auto_reply`'s cap replaces
-        # `max_continue_nudges` (section F). Its own statement, not folded into
-        # the one above: `test_e2e_single_ask.py` pins that one's exact shape.
-        if _boundary is not None:
-            return {}
-        # The agent is ending its turn. In an autonomous e2e run the only
-        # valid end is project.status == "completed"; an earlier yield is the
-        # known stall. Veto it (decision=block) and tell the agent to resume,
-        # bounded by should_continue_run() so a stuck run still ends + fails.
-        research = read_research_json(workspace)
-
-        # Classify the hand-back BEFORE the gate, so the stop that actually ENDS a run
-        # is not invisible — it returns {} below and used to be counted nowhere. The
-        # class is telemetry only; the reply below never depends on it (U17).
-        # Only the agent's last words count, and only when no tool call landed after
-        # them: 2 of the 71 committed narration nudges have tool calls between the last
-        # TextBlock and the nudge, and a hand-back narrated before a batch of calls
-        # would otherwise read as `step` on a turn that ended silently.
-        last_text = None
-        for entry in reversed(narration):
-            # `blocked` is a hook-deny message, not the agent's words — and a
-            # denied call never lands in `tool_calls`, so it shares the same
-            # `tool_calls_before` and would otherwise read as the closing text.
-            if entry.get("kind") in ("harness", "blocked"):
-                continue
-            if entry.get("tool_calls_before") == len(tool_calls):
-                last_text = entry.get("text")
-            break
-        hand_back = classify_hand_back(last_text)
-        completed_now = project_completed(research)
-
-        if not should_continue_run(
-            research=research,
-            nudges_used=continue_nudges["n"],
-            max_nudges=fixture.caps.max_continue_nudges,
-            tool_count=activity_count["n"],
-            tool_count_at_last_nudge=last_nudge_activity_count["n"],
-            mcp_unavailable=mcp_state["unavailable"],
-        ):
-            # Terminal. Count the class only where the stop is a defect — `completed`
-            # is the successful path (134 of 181 committed runs), `mcp_unavailable`
-            # is infrastructure (#941) and `ok` has no project (#3274); attributing any
-            # of them to the agent's hand-back would make the rate dominated by runs
-            # that did the right thing.
-            reason = terminal_reason(
-                research=research,
-                nudges_used=continue_nudges["n"],
-                max_nudges=fixture.caps.max_continue_nudges,
-                mcp_unavailable=mcp_state["unavailable"],
-            )
-            if reason in COUNTED_TERMINAL_REASONS:
-                key = hand_back_key(hand_back, project_is_completed=completed_now)
-                hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
-            else:
-                key = f"terminal_{reason}"
-                hand_back_classes[key] = hand_back_classes.get(key, 0) + 1
-            return {}
-
-        counter_key = hand_back_key(hand_back, project_is_completed=completed_now)
-        hand_back_classes[counter_key] = hand_back_classes.get(counter_key, 0) + 1
-        continue_nudges["n"] += 1
-        last_nudge_activity_count["n"] = activity_count["n"]
-        narration.append(
-            {
-                "tool_calls_before": len(tool_calls),
-                "kind": "harness",
-                "text": (
-                    f"continue-nudge {continue_nudges['n']}/"
-                    f"{fixture.caps.max_continue_nudges}: agent yielded "
-                    f"({counter_key}) before project.status=='completed'; "
-                    "instructing it to resume the loop."
-                ),
-            }
-        )
-        _emit(
-            f"[continue-nudge {continue_nudges['n']}/"
-            f"{fixture.caps.max_continue_nudges}] agent yielded "
-            f"({counter_key}); resuming"
-        )
-        # One reply for every vetoed stop, whatever its class: once the worker's
-        # CONTINUE_REASON verbatim (U17). The hosted planes deleted their veto, and that
-        # constant with it, in step mode phase 2, so this literal is the only copy and
-        # nothing pins it; the e2e half of phase 2 deletes this veto.
-        return {
-            "decision": "block",
-            "reason": (
-                "You are mid-run in an autonomous /research session and the "
-                "project is not yet complete (project.status is not "
-                "'completed'). Re-read research.json and invoke the `research` "
-                "skill now; keep going until project.status is "
-                "'completed' or you hit a genuine, logged blocker."
-            ),
-        }
-
     options = ClaudeAgentOptions(
         cwd=str(workspace),
         setting_sources=["project"],
@@ -2566,7 +2448,8 @@ async def _run_agent(
         max_buffer_size=10 * 1024 * 1024,
         hooks={
             "PreToolUse": [HookMatcher(matcher=None, hooks=[pretool_hook])],
-            "Stop": [HookMatcher(matcher=None, hooks=[stop_hook])],
+            # Issue #4011: the sentence every production path carries, added as Cowork does.
+            "UserPromptSubmit": [HookMatcher(matcher=None, hooks=[sources_note_hook])],
         },
     )
 
@@ -2687,7 +2570,22 @@ async def _run_agent(
             prototype worker calls, so e2e exercises the mechanism rather than a
             harness-shaped imitation. Everything here is just gathering its
             arguments.
+
+            The caps bound the RUN, and the host is where a step run can stop
+            between steps: no reply once a cap has fired. `num_turns` is per turn,
+            so the turn cap is checked here on the run's sum. `cost_cap` is the
+            exception: it stays a reporting threshold (spec, "`cost_cap` was a
+            post-hoc label"), so the host keeps replying past it, and the turn cap
+            still fires and outranks it, as the tool cap and an SDK error do.
             """
+            nonlocal aborted_reason, error
+            run_turns = accumulate_usage(_step_turns[: turn.index + 1]).get("num_turns") or 0
+            if aborted_reason in (None, "cost_cap") and run_turns > fixture.caps.max_turns:
+                aborted_reason = "max_turns"
+                error = f"{run_turns} SDK turns across the run > cap {fixture.caps.max_turns}"
+            if aborted_reason not in (None, "cost_cap"):
+                _emit(f"[host reply] none after turn {turn.index}: {aborted_reason}")
+                return None
             previous = next(
                 (t.step for t in reversed(_step_turns[: turn.index]) if t.step), None
             )
@@ -3035,8 +2933,8 @@ async def _run_agent(
                         health = classify_server_status(servers)
                         # Only a run that has done NOTHING can be declared never
                         # to have happened. This branch is NOT reachable only at
-                        # t=0: a resume after a stall (resume_on_stall, ON by
-                        # default) re-spawns the CLI — and with it the MCP server
+                        # t=0: a resume after a stall (resume_on_stall, which a
+                        # run without step mode can take) re-spawns the CLI — and with it the MCP server
                         # — and emits a FRESH init. If that second spawn fails 40
                         # minutes into a run that already did real, tool-backed
                         # research, aborting would raise before
@@ -3127,7 +3025,7 @@ async def _run_agent(
                     # written when the SDK supplied it — absent, never null or {}.
                     if isinstance(getattr(message, "model_usage", None), dict):
                         usage["model_usage"] = message.model_usage
-                    if message.is_error and aborted_reason is None:
+                    if message.is_error and aborted_reason in (None, "cost_cap"):
                         detail = message.result or message.stop_reason or ""
                         # The SDK surfaces a turn-cap hit as an *error result*
                         # rather than a clean stop_reason="max_turns". Reclassify.
@@ -3152,8 +3050,8 @@ async def _run_agent(
 
                 # The PreToolUse deny's `continue_: False` does not end the session:
                 # past the cap every call is denied, a denied call still counts as
-                # activity, and the Stop hook nudged the agent on until cost or the
-                # wall clock ended it (hannah 2026-10-05: 56 denied calls, 38 nudges).
+                # activity, and the Stop hook (deleted in step mode phase 2) nudged the
+                # agent on until cost or the wall clock ended it (hannah 2026-10-05: 56 denied calls, 38 nudges).
                 # The cap is crossed mid-run, so it outranks a cost_cap set from the
                 # final ResultMessage.
                 if tool_call_count["n"] > fixture.caps.tool_calls and aborted_reason in (
@@ -3333,15 +3231,8 @@ async def _run_agent(
         "usage_source": "result_message" if result_message_seen else "streamed_fallback",
         "message_usage": _message_usage,
         "thread_windows": _thread_windows,
-        "continue_nudges": continue_nudges["n"],
         # Read by run_e2e_test's clock fields (sleep_usage_fields).
         "counted_sleep_seconds": sleep_detector.counted_sleep_seconds,
-        # Per-class hand-back tallies (#2328). Counts hand-backs INCLUDING the
-        # terminal one, so a hook-terminated run carries one more than
-        # continue_nudges — but NOT universally: a run killed by the wall clock, the
-        # tool cap, inactivity or an error never reaches this hook and records no
-        # terminal class. Additive: branch on key presence, no schema bump.
-        "hand_back_classes": hand_back_classes,
         # Stall-resume + forensics (added with the progress watchdog). `timeline`
         # is [elapsed_seconds, kind, tool_names, wall_ts, message_id] per SDK
         # message — split structural vs stall
@@ -3603,7 +3494,6 @@ async def run_e2e_test(
     mcp_server_entry: Path = DEFAULT_MCP_SERVER_ENTRY,
     skills_dir: Path = DEFAULT_PLUGIN_SKILLS,
     skip_judge: bool = False,
-    resume_on_stall: bool = False,
     effort_level: str | None = None,
     max_output_tokens: int | None = None,
     agent_model: str | None = None,
@@ -3611,7 +3501,7 @@ async def run_e2e_test(
     deny_project_reads: bool = False,
     context_1m: bool = False,
     tool_search: bool = True,
-    step_mode: str | None = None,
+    step_mode: str | None = "job",
     wrap_up_after: str | None = None,
 ) -> tuple[E2eResult, dict[str, Path]]:
     """Run one e2e fixture end-to-end. Returns (result, written-paths).
@@ -3678,7 +3568,6 @@ async def run_e2e_test(
             fixture=fixture,
             workspace=workspace,
             mcp_server_entry=mcp_server_entry,
-            resume_on_stall=resume_on_stall,
             max_output_tokens=max_output_tokens,
             agent_model=agent_model,
             effort=effort_level,

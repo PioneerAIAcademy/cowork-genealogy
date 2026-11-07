@@ -29,12 +29,11 @@ tools:
   - mcp__genealogy__wiki_read
   - mcp__remote-devices__Genealogy_Research__wiki_read
   - mcp__Genealogy_Research__wiki_read
-  - Read
 ---
 
 # Research Exhaustiveness
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** Call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null or there is no project, default to a one-line preamble per action.
 
 You are invoked with a `questionId` and a `projectPath`. Read what you need from
 the project yourself — do not expect the caller to have gathered it.
@@ -178,9 +177,9 @@ way, each a 1-2 sentence assessment tied to project state: what was met, what
 failed, and what the evidence could not reach. Where a criterion turns on
 whether a civil registration record could exist for this event, state the start
 date Step 1 read and the page it came from; "registration had not begun" is an
-assessment only when it rests on that fetched date. Declaring requires all seven met.
-A decline carries the same seven, honestly assessed, with the blocking criterion
-named in `justification`.
+assessment only when it rests on that fetched date. Declaring requires all seven met,
+written only in the call's arguments. A decline carries the same seven, honestly
+assessed, with the blocking criterion named in `justification`.
 
 | Criterion | Key question |
 |-----------|-------------|
@@ -388,10 +387,11 @@ the offending field — do not blindly retry the same payload.
 
 ## 5. Present
 
-- If exhaustive: "Research declared reasonably exhaustive. Ready for
+- If exhaustive: only "Research declared reasonably exhaustive. Ready for
   proof-conclusion."
 - If not yet exhaustive and gaps want planning: "Not yet exhaustive.
-  [What's missing.] Continue with planning the searches?"
+  [Every unsearched avenue, including ones your results showed.] Continue
+  with planning the searches?"
 - If declining (§"The decline"): the sentence that verdict calls for, then
   "Continue with writing the conclusion?" (low) or "Continue with planning
   the searches?" (high). Those exact lines — the host reads the last one

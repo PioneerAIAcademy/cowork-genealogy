@@ -9,7 +9,8 @@
 
 ```
 sidecar_read({ projectPath, ref, offset?, maxChars? })
-  -> { ok: true, ref, totalChars, offset, content, truncated, nextOffset?, hitId?, hitIndex?, logId? }
+  -> { ok: true, ref, totalChars, offset, content, truncated, nextOffset?,
+       hitId?, hitIndex?, logId?, title?, recordDate?, recordPlace? }
    | { ok: false, reason: "no_project" | "invalid_ref" | "not_found" | "not_text", errors: string[] }
 
 sidecar_read({ projectPath, refs, maxChars? })
@@ -25,7 +26,9 @@ and paged like a file; and **one full-text hit's `textDocument`** (lead,
 2026-10-20), addressed `results/<file>#<hit id>`, with
 `results/<file>#hits` listing the hits. Any other bare `results/` ref (a record or
 search sidecar, or a full-text sidecar with no `#` selector) is refused as
-`invalid_ref`, with a pointer (§6 has the selector errors). `refs` reads several refs in one call, each from
+`invalid_ref`, with a pointer (§6 has the selector errors). A staged ref whose file
+is gone reads through the log entry that consumed it, and is `not_found` when no
+entry did (§6). `refs` reads several refs in one call, each from
 its start; it is the agent's one "read all" turn. `ref` and `refs` together, or
 an empty `refs`, is refused.
 
@@ -104,23 +107,28 @@ response to mirror.
   hitId?: string,       // the hit's `id` as the sidecar stores it
   hitIndex?: number,    // its 1-based position in the sidecar's `payload.results` — the viewer's card order
   logId?: string | null, // the finalized sidecar's `log_id`; null for a staged handle
+  // also on a hit read, each only when the hit's row carries it as a string (§7.1):
+  title?: string,       // the row's `title`, verbatim
+  recordDate?: string,  // the row's `recordDate`, verbatim
+  recordPlace?: string, // the row's `recordPlace`, verbatim
 }
 ```
 
 An `offset` at or past `totalChars` returns `content: ""`, `truncated: false`
 and no `nextOffset` — a legitimate empty page, not an error. On a hit read the
-text measured and paged is that hit's `textDocument`; a `#hits` read carries
-none of the three hit fields, and its text is the hit list (§7.1).
+text measured and paged is that hit's `textDocument`, and the six hit fields
+ride on every page of it; a `#hits` read carries none of them, and its text is
+the hit list (§7.1).
 
 ## 3. Ref rules
 
 `ref` is accepted **positively**: a prefix, then one or more segments separated
 by `/`. Every segment is non-empty, is not `.` or `..`, and contains no `/`,
 `\` or NUL. Any other character is allowed — upload names carry spaces and run
-to 121 characters (`_UPLOAD_NAME_RE` in `apps/server/app/sessions.py`). The
+to 120 characters (`_clean_upload_name` in `apps/server/app/sessions.py`). The
 prefixes are `evaluations` and `uploads`, plus `results`, which passes §3 only
 to be decided by §7: a `results/` ref is one of the two texts §7 serves, or
-`invalid_ref` there.
+`invalid_ref` there, or `not_found` for a staged ref that is gone (§6).
 
 Nesting is allowed under both. `evaluations[].file_path` is a free string
 (schema `"type": "string"`; the validator checks presence only), and a desktop
@@ -209,9 +217,11 @@ So the page is built in three steps:
 
 `truncated = offset + page.length < totalChars`; `nextOffset = offset +
 page.length` when truncated. The envelope's other fields add a few dozen
-characters, so the whole serialized result stays under ~41,000 and is never
-spillable. A caller pages by passing `nextOffset` back as `offset` until
-`truncated` is false.
+characters, or a few hundred on a hit read, whose `title` and `recordPlace` can
+each list several places (881 measured, the most on any committed full-text
+sidecar: `results/log_017.json#3Q9M-CSK3-ZSDZ` in the g9gj scenario), so the
+whole serialized result stays under ~41,000 and is never spillable. A caller
+pages by passing `nextOffset` back as `offset` until `truncated` is false.
 
 `offset` is a UTF-16 code-unit index, the same unit `content.length` and
 `totalChars` are measured in, so `offset + content.length` is always the right
@@ -258,12 +268,15 @@ the file's length. Two in a short file still do.
 | `ref` names a directory (`EISDIR`) | `{ ok: false, reason: "invalid_ref", errors }` — "names a directory" |
 | `ref` is longer than the filesystem allows (`ENAMETOOLONG` — a segment over 255 bytes, or the whole path over the platform limit) | `{ ok: false, reason: "invalid_ref", errors }` — no file can have this name |
 | an `evaluations/` or `uploads/` `ref` is absent (`ENOENT`), or a segment of the path is a regular file (`ENOTDIR`) | `{ ok: false, reason: "not_found", errors }` — the message says where a ref comes from (verdict paths from `research_query({section: "evaluations"})`'s `file_path`; uploads named in the conversation by the researcher) and that this tool does not list directories |
-| a `results/` ref with no selector that holds no staged transcription: a record or search sidecar, a missing file, anything else | `{ ok: false, reason: "invalid_ref", errors }` — points at `record_read({recordId, resultsRef})` for a `record_read` sidecar, and at `record_read` / `rank_search_matches` otherwise. Never `not_found` |
+| a `results/` ref with no selector that holds no staged transcription: a record or search sidecar, a missing top-level file, anything the rows below do not name | `{ ok: false, reason: "invalid_ref", errors }` — points at `record_read({recordId, resultsRef})` for a `record_read` sidecar, and at `record_read` / `rank_search_matches` otherwise |
+| a `results/.staging/` ref whose file is gone, and a log entry's `staged_ref` names it with a `results_ref` | read at that finalized path, with or without a selector, so every row here applies to it there. An agent holding the ref after `extraction_append` consumed it reads the page this way |
+| a `results/.staging/` ref with no selector that is a near-copy of one live staged file | read as that file: a page is served, and any other sidecar gets its row's refusal |
+| a `results/.staging/` ref whose file is gone, with no such entry and no near-copy | `{ ok: false, reason: "not_found", errors }` — names both causes, pruned after 24 hours or never staged under that name, and says to read the page again with `image_transcribe` or re-run the search |
 | a full-text sidecar (`fulltext_search`, staged or finalized) with no selector | `invalid_ref` — names its hit count and both selectors, `#hits` and `#<hit id>` (§7.1) |
 | an empty selector, `results/<file>#` | `invalid_ref` — points at `#hits` |
 | a selector on a sidecar no `fulltext_search` wrote (a staged transcription, a record search) | `invalid_ref` — names the tool that wrote it; pass the ref without the selector |
 | a selector on a `results/` ref that is neither a staged handle under `results/.staging/` nor a top-level `results/<name>.json`, or whose file is not JSON or has no `payload.results` array | `invalid_ref` |
-| a selector whose file is absent | `not_found` |
+| a selector whose file is absent and that no log entry holds | `not_found`. A selector is never near-copy corrected |
 | `#<hit id>` naming no hit in the sidecar | `not_found` — names the hit count and `#hits` |
 | `#<hit id>` naming a hit with no `textDocument` | `not_found` — "carries no transcript: FamilySearch returned none for it"; `#hits` lists it with `hasTranscript: false` |
 | the file is binary / non-UTF-8 (§5) | `{ ok: false, reason: "not_text", errors }` |
@@ -343,6 +356,13 @@ machine transcript, and the hosted path has no `Read` to reach it.
   by §4, plus `hitId`, `hitIndex` and `logId` (§2.1). A whole sidecar's
   transcripts run far past one page, and a caller judging or extracting one hit
   needs that hit's text only; several hits are several refs in one `refs` call.
+- **A hit read carries its row's `title`, `recordDate` and `recordPlace`**,
+  each verbatim and only when the row holds it as a string, so a caller
+  judging one hit needs no `#hits` read beside it. The transcript alone
+  can lack them: hit 9 of the g9gj scenario's `log_017` (`3Q9M-CSK3-ZSLR`)
+  never names Jackson, which only its `recordPlace` gives. These are the same
+  three `#hits` lists, where an absent one is null; on a hit read an absent one
+  is left out.
 - **`#hits` lists the hits**, one JSON line each, with no transcript text:
   `{hitIndex, hitId, title, recordDate, recordPlace, hasTranscript, ref}`.
   `title`, `recordDate` and `recordPlace` are null when the hit has none;
@@ -357,9 +377,10 @@ machine transcript, and the hosted path has no `Read` to reach it.
   both selectors. It is never answered with the list or a hit: a selector the
   caller dropped must not read back as different content.
 - **Staged or finalized, and inside `refs`.** `logId` is null on a staged
-  handle. A staged handle is gone once `research_log_append` finalizes it, so a
-  ref handed on to another turn or agent is the finalized
-  `results/<log_id>.json#<hit id>`.
+  handle. A staged handle's file is gone once `research_log_append` finalizes it,
+  so a ref handed on to another turn or agent is the finalized
+  `results/<log_id>.json#<hit id>`; a held staged ref still reads through its
+  log entry (§6).
 - **Every other reader but `extraction_append` refuses a selector.** `resolveStagedRef` never
   near-copy-corrects a ref holding a `#` (`<uuid>#1` is two edits from `<uuid>`,
   and correcting it would read the whole file as if it were the hit), and
@@ -445,7 +466,7 @@ fixture, not a defect.
 ## 12. Tests
 
 `tests/tools/sidecar-read.test.ts`: happy path on a verdict JSON; a text upload
-with a space in its name and one with a 121-character name; nested refs under
+with a space in its name and one with a 120-character name; nested refs under
 both prefixes; pagination (`offset` / `maxChars` / `truncated` / `nextOffset`,
 `offset ≥ totalChars`, the surrogate-pair boundary, `maxChars: 1` on a pair
 and an offset landing on one keep the pair whole, a lone high surrogate is
@@ -475,12 +496,19 @@ One full-text hit (§7.1), on the committed real sidecar
 `eval/fixtures/scenarios/g9gj-proof-update-after-later-search/results/log_003.json`,
 whose 20 hits each carry a distinct transcript, so a wrong position or a wrong
 id can never read back the right text: hit 5 by full ARK, bare id and resolver
-URL returns its `textDocument` with `hitIndex: 5` and `logId: "log_003"`; a hit
-read from a staged copy carries `logId: null`; `#hits` gives 20 JSON lines with
-ids, positions and refs and no transcript text; a bare ref is `invalid_ref`
-naming 20 hits and `#hits`; two hit refs inside `refs`; a second page of one
-transcript by `offset: nextOffset`; an unknown hit is `not_found` naming 20, an
-empty selector `invalid_ref`, a missing file `not_found`; on
+URL returns its `textDocument` with `hitIndex: 5`, `logId: "log_003"` and its
+row's `title`, `recordDate` and `recordPlace` (asserted as literals, so a
+dropped field cannot match an `undefined` read off the fixture); hit 1, whose
+row has no `recordDate`, carries `title` and `recordPlace` and no `recordDate`
+key, and the flynn hit below carries `recordPlace` alone; a hit read from a
+staged copy carries `logId: null` and its `title`; `#hits` gives 20 JSON lines
+with ids, positions and refs and no transcript text, and carries none of the
+six hit fields on the result; a bare ref is `invalid_ref` naming 20 hits and
+`#hits`; two hit refs inside `refs`, the second with its `title` and
+`recordDate`; a second page of one transcript by `offset: nextOffset`, still
+carrying the hit's `hitIndex`, `title` and `recordDate`; an unknown hit is
+`not_found` naming 20, an empty selector `invalid_ref`, a missing file
+`not_found`; on
 `eval/fixtures/scenarios/research-competing-parent-sets-no-hypotheses/results/log_020.json`
 a hit with no transcript is `not_found` and `#hits` lists all five with
 `hasTranscript: false`; a hit stored under a resolver-URL id

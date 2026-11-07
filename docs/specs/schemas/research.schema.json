@@ -116,6 +116,13 @@
       "items": {
         "$ref": "#/$defs/rejected_link_entry"
       }
+    },
+    "hit_verdicts": {
+      "type": "array",
+      "description": "The evaluate-search-results agent's verdicts on full-text search hits: one row per hit and target person.",
+      "items": {
+        "$ref": "#/$defs/hit_verdict_entry"
+      }
     }
   },
   "$defs": {
@@ -754,6 +761,9 @@
             "string",
             "null"
           ]
+        },
+        "image_ark": {
+          "type": "string"
         },
         "log_entry_id": {
           "anyOf": [
@@ -1573,13 +1583,19 @@
       }
     },
     "proof_claim": {
-      "description": "One claim within a multi-claim question (e.g. paternity or maternity within a single parentage question), tiered independently of the proof_summary's scalar `tier`. Optional and additive — omit entirely for the default, single-conclusion case. `tier` on the parent proof_summary carries the stronger of the per-claim tiers; the tree-encoding gate reads each claim's own `proof_tier` to decide whether that claim's `relationship` is written, independent of the scalar.",
+      "description": "One claim of a proof summary, tiered independently of the summary's scalar `tier`, which may not exceed the strongest claim at `possible` or better. Optional and additive: omit `claims` for the single-conclusion case. A claim names exactly one object: a `relationship`, a `fact`, an `identity`, a `name`, or a `finding` (a conclusion that is no tree object). The tree-encoding gate reads each claim's own `proof_tier`.",
       "type": "object",
       "required": [
         "claim",
         "proof_tier",
-        "supporting_assertion_ids",
-        "relationship"
+        "supporting_assertion_ids"
+      ],
+      "oneOf": [
+        { "required": ["relationship"] },
+        { "required": ["fact"] },
+        { "required": ["identity"] },
+        { "required": ["name"] },
+        { "required": ["finding"] }
       ],
       "additionalProperties": false,
       "properties": {
@@ -1592,6 +1608,9 @@
         "shortfall": {
           "$ref": "enums.schema.json#/$defs/proof_shortfall"
         },
+        "polarity": {
+          "$ref": "enums.schema.json#/$defs/claim_polarity"
+        },
         "supporting_assertion_ids": {
           "type": "array",
           "items": {
@@ -1601,27 +1620,179 @@
         },
         "relationship": {
           "$ref": "#/$defs/proof_claim_relationship"
+        },
+        "fact": {
+          "$ref": "#/$defs/proof_claim_fact"
+        },
+        "identity": {
+          "$ref": "#/$defs/proof_claim_identity"
+        },
+        "name": {
+          "$ref": "#/$defs/proof_claim_name"
+        },
+        "finding": {
+          "$ref": "#/$defs/proof_claim_finding"
         }
       }
     },
     "proof_claim_relationship": {
-      "description": "The tree endpoint a proof_claim concludes — a ParentChild relationship in tree.gedcomx.json, named so the tree-encoding gate has something to bind to mechanically rather than a prose label. Scoped to ParentChild only (paternity/maternity); a Couple (marriage) claim split can be added later if a second concrete need for it arises.",
+      "description": "The tree relationship a claim concludes: a ParentChild edge (`parent`, `child`, optional `subtype`) or a Couple edge (`person1`, `person2`).",
       "type": "object",
       "required": [
-        "type",
-        "parent",
-        "child"
+        "type"
+      ],
+      "oneOf": [
+        {
+          "properties": { "type": { "const": "ParentChild" } },
+          "required": ["parent", "child"],
+          "not": { "anyOf": [{ "required": ["person1"] }, { "required": ["person2"] }] }
+        },
+        {
+          "properties": { "type": { "const": "Couple" } },
+          "required": ["person1", "person2"],
+          "not": { "anyOf": [{ "required": ["parent"] }, { "required": ["child"] }, { "required": ["subtype"] }] }
+        }
       ],
       "additionalProperties": false,
       "properties": {
         "type": {
-          "const": "ParentChild"
+          "type": "string"
         },
         "parent": {
           "type": "string"
         },
         "child": {
           "type": "string"
+        },
+        "subtype": {
+          "$ref": "enums.schema.json#/$defs/parent_subtype_recommended"
+        },
+        "person1": {
+          "type": "string"
+        },
+        "person2": {
+          "type": "string"
+        }
+      }
+    },
+    "proof_claim_fact": {
+      "description": "A fact a claim concludes. `subject` is a tree person id, or a `{person1, person2}` pair for a couple event such as a marriage. A date range is one `date` value.",
+      "type": "object",
+      "required": [
+        "subject",
+        "fact_type"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "subject": {
+          "oneOf": [
+            { "type": "string" },
+            { "$ref": "#/$defs/proof_claim_pair" }
+          ]
+        },
+        "fact_type": {
+          "type": "string"
+        },
+        "date": {
+          "type": "string"
+        },
+        "place": {
+          "type": "string"
+        },
+        "value": {
+          "type": "string"
+        }
+      }
+    },
+    "proof_claim_pair": {
+      "description": "Two tree persons, the subject of a couple fact.",
+      "type": "object",
+      "required": [
+        "person1",
+        "person2"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "person1": {
+          "type": "string"
+        },
+        "person2": {
+          "type": "string"
+        }
+      }
+    },
+    "proof_claim_identity": {
+      "description": "An identity a claim concludes: a record party is a tree person (`record_id`, `party`, `person`, where `party` is the record_persona_id, else the record_role), or two tree persons are one (`person`, `same_as`).",
+      "type": "object",
+      "required": [
+        "person"
+      ],
+      "oneOf": [
+        {
+          "required": ["record_id", "party"],
+          "not": { "required": ["same_as"] }
+        },
+        {
+          "required": ["same_as"],
+          "not": { "anyOf": [{ "required": ["record_id"] }, { "required": ["party"] }] }
+        }
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "record_id": {
+          "type": "string"
+        },
+        "party": {
+          "type": "string"
+        },
+        "person": {
+          "type": "string"
+        },
+        "same_as": {
+          "type": "string"
+        }
+      }
+    },
+    "proof_claim_name": {
+      "description": "A name a claim concludes for a tree person.",
+      "type": "object",
+      "required": [
+        "person"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "person": {
+          "type": "string"
+        },
+        "given": {
+          "type": "string"
+        },
+        "surname": {
+          "type": "string"
+        }
+      }
+    },
+    "proof_claim_finding": {
+      "description": "A conclusion that is no tree object. `log_entry_ids` names the searches it rests on, each a log entry that exists.",
+      "type": "object",
+      "required": [
+        "finding_type",
+        "statement"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "finding_type": {
+          "$ref": "enums.schema.json#/$defs/finding_type"
+        },
+        "statement": {
+          "type": "string"
+        },
+        "log_entry_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^log_"
+          }
         }
       }
     },
@@ -1971,7 +2142,7 @@
       }
     },
     "namesake": {
-      "description": "A different person who shares the name of a tree person, recorded so that a probable or confident person_evidence link to the tree person needs something in its record that ties the record to that person. Keyed by the tree person_id it shadows. Never retired; an update never changes its person_id, and merge_tree_persons re-keys it onto the merge survivor; see research-schema-spec.md.",
+      "description": "A different person who shares the name of a tree person, or a pool of such people one of whom may be that person (notes starting 'pool:', record_ids empty), recorded so that a probable or confident person_evidence link to the tree person needs something in its record that ties the record to that person. Keyed by the tree person_id it shadows. Never retired; an update never changes its person_id, and merge_tree_persons re-keys it onto the merge survivor; see research-schema-spec.md.",
       "type": "object",
       "required": [
         "id",
@@ -2019,7 +2190,7 @@
           }
         },
         "record_persona_ids": {
-          "description": "Tool-stamped by research_append, never by a caller: for each listed record found in a sidecar of the row's log_entry_ids, the persona that search result names. A record found in no sidecar has no key.",
+          "description": "Tool-stamped by research_append, never by a caller: for each listed record found in a sidecar of the row's log_entry_ids, the persona that search or read result names, or a household member of it found by ark. A record found in no sidecar has no key.",
           "type": "object",
           "additionalProperties": {
             "type": "string",
@@ -2031,6 +2202,55 @@
             "string",
             "null"
           ]
+        },
+        "created": {
+          "$ref": "enums.schema.json#/$defs/iso_date"
+        }
+      }
+    },
+    "hit_verdict_entry": {
+      "description": "A verdict on whether one full-text search hit is about one tree person, and whether it holds a vital fact that person lacks. research_append rewrites hit_id to the hit's stored id, refuses a hit not in that search, and folds a second append for the same log_id, hit_id and person_id into an update of the first. Never retired; an update sets only verdict, new_vital_info and rationale, and merge_tree_persons re-keys person_id onto the merge survivor; see research-schema-spec.md.",
+      "type": "object",
+      "required": [
+        "id",
+        "log_id",
+        "hit_id",
+        "person_id",
+        "verdict",
+        "new_vital_info",
+        "rationale",
+        "created"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^hv_"
+        },
+        "log_id": {
+          "description": "The fulltext_search log entry whose retained results hold the hit.",
+          "type": "string",
+          "pattern": "^log_"
+        },
+        "hit_id": {
+          "description": "The hit's id as that search's sidecar stores it.",
+          "type": "string",
+          "minLength": 1
+        },
+        "person_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "verdict": {
+          "$ref": "enums.schema.json#/$defs/hit_verdict"
+        },
+        "new_vital_info": {
+          "description": "As of the evaluation: the hit dates or places a birth, death or marriage, or names a spouse, parent or child, that the target lacks. A later extraction does not clear it.",
+          "type": "boolean"
+        },
+        "rationale": {
+          "type": "string",
+          "pattern": "\\S"
         },
         "created": {
           "$ref": "enums.schema.json#/$defs/iso_date"
