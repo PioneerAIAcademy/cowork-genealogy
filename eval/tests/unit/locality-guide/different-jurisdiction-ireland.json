@@ -41,6 +41,7 @@
     "place-search-all-any",
     "catalog-search-empty",
     "collections-search-any",
-    "volume-search-any"
+    "volume-search-any",
+    "place-search-any"
   ]
 }
