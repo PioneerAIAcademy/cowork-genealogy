@@ -300,8 +300,9 @@ def test_escalates_to_external_sites_after_fs_exhaustion(
     generate Ancestry URLs?") is the failure this exists to catch: it names the
     site but not the agent, so it does not match.
 
-    Tag-gated: only the nil-exhaustion escalation test asserts this. Ordinary
-    search tests must NOT escalate.
+    Tag-gated: only the escalation tests assert this -- FamilySearch exhausted
+    across variants, or a record set FamilySearch holds no collection for (issue
+    #4139). Ordinary search tests must NOT escalate.
     """
     from harness.skill_runner import agent_return_text
 
@@ -312,6 +313,98 @@ def test_escalates_to_external_sites_after_fs_exhaustion(
         "FamilySearch was exhausted across name variants, so the agent had to "
         "hand back to search-external-sites in its return. Offering Ancestry in "
         f"prose is not escalating. return text: {reply[:600]!r}"
+    )
+
+
+# A claim that a record set sits at one repository alone. "held at NY State
+# Library only" is the #4130 wording; the rest are its common rewordings. The
+# first alternative stops at `,` and `;` so an unrelated "only" later in the
+# sentence ("held at the NYSL, and only 1855 onward is on FamilySearch") is not
+# read as part of the claim; "only in" is left out because "found only in the
+# 1849 directory" reports a search result, not a holding.
+_SOLE_REPOSITORY_CLAIM = re.compile(
+    r"\bheld at [^.,;\n|]{0,60}\bonly\b"
+    r"|\b(?:held|available|found|kept|exists?) only (?:at|by)\b"
+    r"|\bonly (?:held|available|found|kept) (?:at|by)\b"
+    r"|\bonly at\b"
+    r"|\([^()\n]{0,60}(?:Library|Archives?|Society)[^()\n]{0,10}\bonly\)"
+    r"|\bsole (?:repository|holder|source|custodian)\b"
+    r"|\bnot available (?:elsewhere|anywhere else)\b"
+    r"|\bno other (?:repository|archive|site)\b"
+    r"|\bexclusively (?:at|held|from|by)\b",
+    re.I,
+)
+
+
+def test_no_sole_repository_claim(agent_returns, text_response, test):
+    """Issue #4139 -- the agent must not say a record set is held only at one
+    repository, or is not available elsewhere. It has no tool that checks outside
+    holdings; which outside sites hold the set is `search-external-sites`' answer.
+
+    Reads the agent's own return (`subject_reply_text`), never the dispatcher's
+    relay, so a relay cannot fail a clean agent.
+
+    Tag-gated: only the no-FamilySearch-collection test asserts this.
+    """
+    from harness.skill_runner import subject_reply_text
+
+    if "no-sole-repository-claim" not in test.get("tags", []):
+        pytest.skip("only the no-FamilySearch-collection test")
+    reply = subject_reply_text(agent_returns, text_response, "search-records", test)
+    found = _SOLE_REPOSITORY_CLAIM.search(reply)
+    assert found is None, (
+        "the return claims a record set is held at one repository alone, which no "
+        f"tool checked: {found.group(0)!r} in {reply[:600]!r}"
+    )
+
+
+# A named outside site said to hold or index the set: "indexed on Ancestry.com",
+# "held at MyHeritage", or the site first, "Ancestry indexes the ... schedules".
+# Markdown emphasis may sit before the name ("indexed on **Ancestry.com**").
+# Offering a search URL for a site ("generate an Ancestry search URL") is not a
+# holding claim and does not match.
+_OUTSIDE_HOLDING = re.compile(
+    r"\b(?:indexed|held|available|digiti[sz]ed|hosted|kept|online)\b[^.\n]{0,40}?"
+    r"\b(?:on|at|by|in|through)\s+[*_\"']*(?:ancestry(?:\.com)?|myheritage|find ?my ?past)\b"
+    r"|\b(?:ancestry(?:\.com)?|myheritage|find ?my ?past)\s+(?:indexes|holds|hosts|has indexed)\b",
+    re.I,
+)
+
+
+def test_names_no_outside_holding(agent_returns, text_response, test):
+    """Issue #4139 (PR #4229 review) -- the agent must not say an outside site
+    holds or indexes the record set. No tool it has checks outside holdings; the
+    v12_2026-11-05_08-38-01 run said the 1825-1845 schedules "are indexed on
+    Ancestry.com" with nothing returned to support it.
+
+    Reads the agent's own return (`subject_reply_text`). Tag-gated like
+    `test_no_sole_repository_claim`.
+    """
+    from harness.skill_runner import subject_reply_text
+
+    if "no-sole-repository-claim" not in test.get("tags", []):
+        pytest.skip("only the no-FamilySearch-collection test")
+    reply = subject_reply_text(agent_returns, text_response, "search-records", test)
+    found = _OUTSIDE_HOLDING.search(reply)
+    assert found is None, (
+        f"named an outside holding no tool returned: {found.group(0)!r} in {reply[:600]!r}"
+    )
+
+
+def test_searched_before_no_collection_hand_back(tool_calls, test):
+    """Issue #4139 -- Step 8 item 7 hands back a record set FamilySearch holds no
+    collection for only after one logged `record_search`. A run that hands back on
+    the wiki page alone has no search behind its "not on FamilySearch", and one
+    observed run then logged a search it never ran.
+
+    Tag-gated with `test_no_sole_repository_claim`.
+    """
+    if "no-sole-repository-claim" not in test.get("tags", []):
+        pytest.skip("only the no-FamilySearch-collection test")
+    searches = [c for c in (tool_calls or []) if _bare_tool_name(c.get("tool")) == "record_search"]
+    assert searches, (
+        "the agent reported the record set not on FamilySearch without running a "
+        "record_search; Step 8 item 7 requires one logged search first"
     )
 
 
@@ -745,8 +838,9 @@ def test_unstaged_log_query_filters_were_sent(before_state, after_state, tool_ca
 # `mcp_fixtures` (validator_runner.py). Add an entry here whenever the
 # "topical-fixture-required" tag is added to a test.
 #
-# Every entry is the SAME stem because every census scenario in this suite is a
-# US one. `England_Census` and the other `{Country}_Census` branches of the
+# Every entry but ut_search_records_no_fs_collection (a New York state census,
+# which reads the state's page) is the SAME stem because every other census
+# scenario in this suite is a US federal one. `England_Census` and the other `{Country}_Census` branches of the
 # Step 2 pre-work block therefore ship unexercised by this suite -- recorded
 # here rather than left to look like coverage.
 #
@@ -776,6 +870,7 @@ _TOPICAL_FIXTURE_BY_TEST_ID = {
     "ut_search_records_t9p": "wiki-read-united-states-census",
     "ut_search_records_nickname_bitsie": "wiki-read-united-states-census",
     "ut_search_records_nickname_bitsie_in_record": "wiki-read-united-states-census",
+    "ut_search_records_no_fs_collection": "wiki-read-new-york-census",
 }
 
 

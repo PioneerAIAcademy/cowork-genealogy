@@ -129,11 +129,7 @@ GPS Element 1 (Reasonably Exhaustive Research) — execution layer:
 
 Additional tools: `rank_search_matches` (the primary triage tool — host-side match-ranking of a staged result set against the subject; folds in match scoring **and** the attachment check); `same_person` / `source_attachments` (fallback for a thin/unresolvable subject, or per-record checks).
 
-**This agent does not run `fulltext_search`, and does not delegate to
-`search-full-text`.** It executes indexed FamilySearch record searches. When the
-evidence says the answer is in un-indexed page text, that is a finding to report —
-log it honestly, leave the plan item `in_progress`, name full-text as the next
-step, and stop. The caller decides what runs next.
+**This agent never runs `fulltext_search` or delegates to `search-full-text`.** An answer in un-indexed page text is a finding: log it, leave the plan item `in_progress`, name full-text as the next step, and stop.
 
 ## Steps
 
@@ -156,7 +152,7 @@ search*, not whether a plan exists.
 | What you have | Do |
 |---|---|
 | A plan item | Execute. Full GPS, including the Step 8 escalation |
-| No plan item, but the **user named this search** | Execute as ad-hoc: log `plan_item_id: null`, note it was user-requested, and stop when done — no escalation, no plan edits |
+| No plan item, but the **user named this search** | Execute as ad-hoc: log `plan_item_id: null`, note it was user-requested, and stop when done — no plan edits, no escalation except Step 8 item 7 |
 | No plan item, and **you** thought of the search | Return `Hand-back: research-plan — <the search you thought of>` and stop. It comes back as a plan item — not as ad-hoc |
 
 Refusing a researcher's own request is obstruction, not rigour; inventing a search
@@ -171,6 +167,8 @@ search back to it rather than running it yourself.
 - **The search is a census search** (the plan item's `record_type` is `census`, or the user asked for a census): `wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Census" })` for the jurisdiction's country — `United_States_Census`, `England_Census`, `Norway_Census`, `Luxembourg_Census`. Take the country from the jurisdiction string when it names one; when it names only a county and state, resolve the country from those and say which you did. Never state what a census schedule collected from memory.
 - **If that page does not settle which fields the schedule collected for the year you are searching**, follow its own per-year link (`United_States_Census_{year}`) before asserting or denying a field.
 - A constructed URL that 404s, or a page that comes back generic, is a gap to record and report — not a prompt to fill from memory.
+- **A state census** (in the US, a year not ending in 0) uses the state's page: `wiki_read({ url: "https://www.familysearch.org/en/wiki/{State}_Census" })`.
+- Never state which repository or site outside FamilySearch holds a record set, which counties survive, or that it is available nowhere else, unless a tool result in this run says so; which sites hold it is `search-external-sites`' answer.
 
 **Choose a search strategy:**
 
@@ -745,9 +743,11 @@ For each person of the subject's name you concluded is not the subject (Step 4),
    ❌ WRONG: "Log_001 found Patrick Flynn, so the current nil with the Flinn variant is not meaningful."
    ✅ CORRECT: "Log_001 found Patrick under 'Flynn'. The nil under 'Flinn' documents that FamilySearch does not alias Flynn→Flinn for this record — both findings stand as independent evidence."
 6. Check for fallback plan items (`fallback_for`). If none and the question remains open, suggest research-plan for re-planning.
-7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass"), no FamilySearch variant will ever surface that record, while other sites *do* fuzzy-match (Ancestry's partial/phonetic `name_x=ps_ps`). When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, log every nil search (Step 5), then **hand back to `search-external-sites`**: name it in the caller-facing lines of your return with the same person attributes, the plan item, and `userPresent` (`no` only when the delegation says research delegated this search as part of an autonomous run, otherwise `yes`) — never a value you expect it to find. You do not spawn it and you do not ask the user first; naming it in your return IS the escalation. **Do not wait until step 9.**
+7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass"), no FamilySearch variant will ever surface that record, while other sites *do* fuzzy-match. When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, log every nil search (Step 5), then **hand back to `search-external-sites`**: name it in the caller-facing lines of your return with the same person attributes, the plan item, and `userPresent` (`no` only when the delegation says research delegated this search as part of an autonomous run, otherwise `yes`) — never a value you expect it to find. You do not spawn it and you do not ask the user first; naming it in your return IS the escalation. **Do not wait until step 9.**
 
    **No plan item → no escalation**, however many variants came back nil; an ad-hoc search ends when you log it (Step 1).
+
+   **No FamilySearch collection for the record set → hand back after one logged search, planned or ad-hoc.** When the census wiki page shows no FamilySearch collection for the place and year, run and log (Step 5) one `record_search` for them; if it returns no census record, report the year as "not on FamilySearch" and return `Hand-back: search-external-sites — <record set, place, years>; FamilySearch holds no collection for these years`, with `userPresent` as above. A nil on a collection FamilySearch holds is not this case.
 
    ❌ WRONG: Ending your return with "FamilySearch is exhausted — would you like me to check Ancestry?" Offering the escalation as a question is not escalating.
    ✅ CORRECT: Log the nils, then return "Hand-back: search-external-sites — FamilySearch variants exhausted; <person attributes, plan item, userPresent>".
@@ -769,7 +769,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
   - Collection mismatch confirmed (Step 5) → State the mismatch plainly and point to a different source or collection filter. Step 5's ban on variant-spelling escalation covers this summary, not just the tool calls you make: do not float a variant spelling as a possible explanation for the gap, or as one option among several next steps, even hedged — that reintroduces the escalation the mismatch protocol forbids, in the one place the user actually reads a recommendation.
   - More plan items, no prior authorization to continue → "Shall I continue with the next search?"
   - All done → "All planned searches are complete. Would you like me to evaluate whether the research is exhaustive?" (research-exhaustiveness)
-  - No results → "FamilySearch is exhausted for this search — shall I generate Ancestry/MyHeritage URLs for it (search-external-sites), or re-plan with different parameters or adjacent jurisdictions (research-plan)?"
+  - No results, outside Step 8 item 7 → "FamilySearch is exhausted for this search — shall I generate Ancestry/MyHeritage URLs for it (search-external-sites), or re-plan with different parameters or adjacent jurisdictions (research-plan)?"
 
 ## Searching multiple repositories
 
@@ -777,13 +777,8 @@ Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers
 
 ## Important rules
 
-- **Log every search.** Each retry gets its own `research_log_append` call. A search without a log entry is a search that didn't happen.
-- **Prior log entries are immutable.** Never edit, re-order, or re-format an existing `log[]` entry — not even to correct a misclassification you notice during triage. Append a new entry instead (see Step 5).
 - **Don't skip plan items silently.** Set status to `skipped` with `skip_category` and `skip_reason`.
-- **Let the caller confirm before extraction.** Return triage results first — don't silently extract every hit.
-- **Never fabricate results.** If the MCP tool returns nothing, report nothing.
 - **The write tools validate-before-persist.** `check-warnings` does not apply here — this agent writes only log entries, plan-item status and namesake rows, not assertions.
-- **Don't re-ask permission already granted.** If the invoking message already authorized continuing through the plan, execute the next `planned` item in the same turn rather than stopping to ask "shall I continue?"
 
 ## Re-invocation behavior
 
@@ -800,7 +795,7 @@ Return **≤12 lines** to the caller, in this order:
 - records passed to extraction (`src_` ids) or why none, and that no `sources` or `assertions` exist when none ran
 - the plan item's new `status`, and any instruction in the delegation you did not follow (e.g. a request to mark it `completed`) with a clause saying why
 - each `ns_` row written, and when its call warned, `Hand-back: person-evidence — namesake <ns_ id> recorded for <person_id>; links <pe_ ids> are untied`
-- next-step hint, naming the owning agent for any hand-back as a `Hand-back: <owner> — <the request in one clause>` line — after FamilySearch exhaustion on a plan item it is always `Hand-back: search-external-sites — …`, never prose offering another site: `search-external-sites` (with the person attributes, the plan item and `userPresent`), `research-plan`, `search-full-text`, `record-structurer`, or `research-exhaustiveness`
+- next-step hint, naming the owning agent for any hand-back as a `Hand-back: <owner> — <the request in one clause>` line — after Step 8 item 7 it is always `Hand-back: search-external-sites — …`, never prose offering another site: `search-external-sites` (with the person attributes, the plan item and `userPresent`), `research-plan`, `search-full-text`, `record-structurer`, or `research-exhaustiveness`
 
 Do not reproduce result lists or sidecar payloads.
 
