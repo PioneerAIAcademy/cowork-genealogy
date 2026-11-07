@@ -116,7 +116,7 @@ matches, call no tool, write nothing, and return one caller-facing line,
 
 | The request | Owner |
 |-------------|-------|
-| Run a search, with no plan to make or review ("go search the 1880 census", "execute pli_003"). A plan request that also authorizes execution is yours: Step 7 | search-records for FamilySearch, search-external-sites for any other site |
+| Run a search, with no plan to make or review ("go search the 1880 census", "execute pli_003"). A plan request that also asks to execute is yours: Step 7 | search-records for FamilySearch, search-external-sites for any other site |
 | A record already in hand, to extract ("here is the death certificate — add its facts") | extraction: `extraction_append` for a FamilySearch record, the record-structurer agent for any other source |
 | Which question to research next | question-selection |
 | Whether research on a question is done ("are we done?", or "what's the next step?" after a search came back empty). Disposing of named `planItemIds` is yours: Dispose mode | research-exhaustiveness |
@@ -794,18 +794,10 @@ re-issue it first. Then present the plan:
 - Fallback relationships ("if step 1 yields nothing, step 3 is
   the fallback")
 - Total estimated scope (how many searches)
-- **If the invoking message already authorized execution** — a phrase
-  like "...and start executing it," "...and continue with exhaustive
-  research," or "...don't stop to check in with me" — hand execution back to
-  your caller as already authorized instead of asking: search-records for
-  FamilySearch items, search-external-sites for others, search-hints for the
-  `fs_hints` hints-review item, naming the plan item
-  and never the result you expect. You execute nothing yourself.
-  If only some items can execute right now (e.g. one
-  repository or tool is unavailable but another isn't), hand back those and
-  report the block on the rest — don't let an item that's blocked for any
-  reason hold up items that aren't.
-- Otherwise, suggest next step: "Would you like me to start executing this
+- If only some items can execute right now (e.g. one repository or tool is
+  unavailable but another isn't), name those and report the block on the
+  rest — don't let a blocked item hold up items that aren't.
+- Suggest the next step: "Would you like me to start executing this
   plan?" (`search-records` / `search-external-sites` / `search-hints`, depending on
   the item)
 - **A plan item that ends at an external archive the researcher must open
@@ -840,7 +832,6 @@ Ancestry (fallback), land records (fallback).
 | Question is too vague to plan for | Stop and ask the researcher to restate the question — a second question cannot be opened while this one is |
 | All plan items exhausted, question unresolved | Set plan to `completed` (Termination, Step 6); exhaustiveness must be evaluated against the GPS stop criteria before this question is answered — a direct user runs `research-exhaustiveness`; an orchestrator routes there by the call its own routing row names. If exhaustiveness returns "not yet exhaustive," plan every gap it lists in this one round, as a new plan (Add-new mode); a FAN pivot is items here too, on the subject's associates, neighbours or witnesses |
 | User says "start searching" | Hand back naming `search-records` (FamilySearch items) or `search-external-sites` (other repositories) |
-| The invoking message already authorizes continuing (e.g. "...and start executing," "...and continue with exhaustive research") | Hand execution back as authorized, in this same return — do not ask "would you like me to start?" first |
 
 ## Re-invocation behavior
 
@@ -882,8 +873,7 @@ the caller, in this order:
 - for a review, the next item and why, then what follows it and why; when
   nothing was written, the one-line reason
 - the hand-back: search-records for FamilySearch items, search-external-sites
-  for the others, or the destination a routing case names, and whether the
-  delegation already authorized execution
+  for the others, or the destination a routing case names
 
 ### `summary_for_user`
 
