@@ -431,8 +431,9 @@ flapping test is a defect to fix.
 
 ### 4. Gemini Flash judge option
 
-**Cut:** Haiku 4.5 only (Sonnet 4.6 and Opus 4.7 are priced in `JUDGE_PRICING`
-but the SDK client is hardcoded to Anthropic).
+**Cut:** Anthropic models only. The unit judge is Sonnet 4.6 since 2026-11-06;
+Haiku 4.5 and Opus 4.7 are also priced in `JUDGE_PRICING`, but the SDK client
+is hardcoded to Anthropic.
 
 **Integration point:** `eval/harness/harness/judge.py::_make_client` —
 branch on model name. Gemini uses `google.generativeai` and has different
@@ -569,8 +570,8 @@ suite on Linux once the SDK ships a fix.
   `_pytest.outcomes`. `validator_runner.py` catches it as
   "validator does not apply" → passed with a `skipped: <reason>` marker.
 - **Model ID `claude-sonnet-4-6-20250514` doesn't exist.** Use
-  `claude-sonnet-4-6`. Haiku has the date suffix:
-  `claude-haiku-4-5-20251001`.
+  `claude-sonnet-4-6`, the unit judge's id since 2026-11-06. Haiku has the
+  date suffix: `claude-haiku-4-5-20251001`.
 - **Subscription auth + judge:** Judge bypasses the Agent SDK and talks to
   the Anthropic SDK directly, which has no subscription path. CLI warns at
   startup when subscription-only mode is selected.

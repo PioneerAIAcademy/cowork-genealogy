@@ -28,14 +28,15 @@ from harness.rubric import Rubric
 HARNESS_DIR = Path(__file__).resolve().parents[1]
 JUDGE_PROMPT_PATH = HARNESS_DIR / "judge" / "prompt.md"
 
-DEFAULT_JUDGE_MODEL = "claude-haiku-4-5-20251001"
+DEFAULT_JUDGE_MODEL = "claude-sonnet-4-6"
 # Pin the judge's first sample to greedy decoding so one transcript grades the
 # same way run to run. Scope matters: only the *judge* is pinned. The skill run
 # under test still samples freely (claude-agent-sdk exposes no temperature), so
 # this removes grading jitter, not test-outcome jitter. Greedy decoding narrows
 # variance; it is not a determinism guarantee.
 #
-# Model-gated: Haiku 4.5 accepts sampling params. The e2e judge's Opus 4.8 does
+# Model-gated: the unit judge, Sonnet 4.6, accepts sampling params on
+# LEGACY_SAMPLING_API_VERSION (as Haiku 4.5 did). The e2e judge's Opus 4.8 does
 # not — `temperature` is removed on the Opus 4.7/4.8 family and returns a 400,
 # so that judge cannot be pinned at all (see e2e/judge.py).
 JUDGE_TEMPERATURE = 0.0
@@ -54,10 +55,11 @@ JUDGE_PRICING = {
     # Per-million-token prices as of January 2026 list price. Update here
     # when Anthropic publishes new rates; the judge will pick them up.
     "claude-haiku-4-5-20251001": {"input": 1.0, "output": 5.0, "cached_input": 0.10},
-    # Sonnet 4.6 and Opus 4.7 are listed even though nothing selects them today:
-    # the judge model is a module constant with no CLI override, so these entries
-    # exist so that changing DEFAULT_JUDGE_MODEL cannot silently start reporting
-    # $0. An unpriced model falls back to _FALLBACK_PRICING and warns.
+    # Sonnet 4.6 is the unit judge (DEFAULT_JUDGE_MODEL, lead 2026-11-06, #4330).
+    # Haiku 4.5 and Opus 4.7 stay listed because the judge model is a module
+    # constant with no CLI override: changing DEFAULT_JUDGE_MODEL must never
+    # silently start reporting $0. An unpriced model falls back to
+    # _FALLBACK_PRICING and warns.
     "claude-sonnet-4-6": {"input": 3.0, "output": 15.0, "cached_input": 0.30},
     # Opus 4.7 — cost is much higher, so the table matters more, not less.
     "claude-opus-4-7": {"input": 15.0, "output": 75.0, "cached_input": 1.50},
@@ -391,7 +393,7 @@ _SLOT_RE = re.compile(r"\{([a-z_]+)\}")
 
 
 # Size guard for the tool_calls slot. Even with per-response summarization,
-# many calls × moderate sizes can blow past Haiku's context. The budget is
+# many calls × moderate sizes can blow past the judge's context. The budget is
 # spent on evidence: once the block exceeds _TOOL_CALLS_MAX_CHARS the harness
 # drops the oldest tool calls and prepends a "_dropped_for_size" marker so
 # reviewers can see truncation happened. That budget is measured with the args
@@ -405,7 +407,7 @@ _SLOT_RE = re.compile(r"\{([a-z_]+)\}")
 # _TOOL_CALLS_HARD_MAX_CHARS by cutting live args (first their strings to the
 # per-string cap, then the args whole to the marker), never by dropping more
 # evidence. ~50K chars ≈ ~12K tokens and the 100K ceiling ≈ ~25K, both well
-# under Haiku's window even with the rest of the prompt.
+# under the judge model's window even with the rest of the prompt.
 _TOOL_CALLS_MAX_CHARS = 50_000
 _TOOL_CALLS_HARD_MAX_CHARS = 2 * _TOOL_CALLS_MAX_CHARS
 
