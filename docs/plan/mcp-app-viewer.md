@@ -124,11 +124,15 @@ leaving the page, so a researcher can compare without losing their place.
   - **Leads:** what is still worth trying, each with why it was not searched and
     "needs you" when only the researcher can reach it. A recorded high overturn risk
     heads the list as "could change the answer".
-- **Compare with FamilySearch:** by person, what this research adds to the tree as
-  it stood when the project started: people, facts and relationships. The page shows
-  that date, because the viewer makes no FamilySearch calls. A birth, christening,
-  death or burial is tagged Differs when the person already had one with another
-  value, shown beside it; every other finding is New. Each finding names its record
+- **Compare with FamilySearch:** by person, what this research found against the tree
+  as it stood when the project started: people, facts and relationships. The page shows
+  that date, because the viewer makes no FamilySearch calls, and opens with a count, such
+  as "1 possible relative, 3 people with new findings". Each finding sits beside the
+  tree's value with one tag: **Already in tree** when they agree or the finding says
+  less; **Improved** when it is the same fact told more exactly, a year becoming a full
+  date in that year or a country a town inside it; **Differs** when a birth,
+  christening, death or burial already had another value; and **New** otherwise.
+  Agreement is shown because it is evidence too. Each finding names its record
   with the link strength of each person on it, and its link opens the record on
   FamilySearch, where the researcher can attach it; nothing here writes to the tree.
   A research-added person shows their link strength in words, and one with only
@@ -459,13 +463,15 @@ the same call with `show: latest`, after its paragraph.
   exhaustive" choice and the conclusion, the variant asks through `AskUserQuestion`
   instead of writing the "Continue with …?" line: up to three concrete moves from the
   recorded leads plus the offered step, since the tool allows four options and adds
-  "Other" itself. With fewer than two options, it keeps today's ending. The answer
+  "Other" itself. Each option's label is the move as a button reads ("Search the 1900
+  census"), and its description the whole move, so what comes back is enough to act
+  on. With fewer than two options, it keeps today's ending. The answer
   returns inside the turn and is treated as the
   researcher's reply; a move is a steer, which the router already turns into a plan
   item. Every other stop keeps its line. This does not ship from this plan: after the
   demo it goes to step mode as an issue, with what the demo showed.
 - **A readable report** is one more line in the router's bounded-request list:
-  "write this up" produces a Word or PDF file in Cowork from the proof summary, the
+  "write this up" produces a Word or PDF file in the conversation from the proof summary, the
   family and the sources. It adds no claims and keeps the rating, any reviewer's
   verdict, what does not fit and what was not searched. No viewer code.
 
@@ -616,7 +622,9 @@ Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
 
 - The **setup, search and conclusion cards**, plus `latest`; until M2, planned
   shows setup and evidence-gathered shows search. The conclusion card's action is
-  "Open the case file". It gains "Compare with FamilySearch" in M3.
+  "Open the case file". It gains "Compare with FamilySearch" in M3, as one line
+  counting the findings tagged New or Improved ("This research found 4 things that
+  aren't on FamilySearch yet") that opens that page, and `latest` shows the same line.
 - **The case file:** `ViewerBody` in fullscreen, fed by `McpAppResearchTransport`. A
   search's results open in its side panel, and Sources shows a record's page image
   and transcription.
