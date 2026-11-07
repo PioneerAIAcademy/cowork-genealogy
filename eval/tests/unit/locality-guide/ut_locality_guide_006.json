@@ -39,7 +39,8 @@
     "place-population-any",
     "place-search-all-any",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "catalog-search-empty"
   ],
   "judge_context": [
     "Recognize Ohio was part of the Northwest Territory in 1790, not yet a state, and highlight territorial land grants, military records, church registers, and tax lists while avoiding Ohio state archives or statewide vital registration, which didn't exist yet.",

@@ -30,7 +30,8 @@
     "external-links-search-schuylkill",
     "wiki-search-any",
     "wiki-read-any",
-    "wiki-place-page-any"
+    "wiki-place-page-any",
+    "catalog-search-empty"
   ],
   "judge_context": [
     "Read-coverage is enforced deterministically by the validator (`test_localities_persisted_with_full_page_coverage` checks a localities[] entry was persisted with `pages_read` covering all four wiki sections). Do NOT independently re-count wiki_place_page calls or fail Completeness/Tool Arguments solely on how many sections were re-read — grade the guide's substance instead.",

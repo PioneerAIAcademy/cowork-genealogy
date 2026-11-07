@@ -41,7 +41,8 @@
     "place-population-any",
     "place-search-all-any",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "catalog-search-empty"
   ],
   "judge_context": [
     "Recognize Boston was a major immigration port in the 1840s. Mention passenger lists, customs records, naturalization files, and church registers. Highlight repositories like the National Archives (Boston), the Massachusetts State Archives, and parish archives. Avoid Ellis Island records for the 1840s.",

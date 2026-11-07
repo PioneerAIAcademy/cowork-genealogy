@@ -40,7 +40,8 @@
     "place-population-any",
     "place-search-all-any",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "catalog-search-empty"
   ],
   "judge_context": [
     "volume_search returns totalResults 0 for the Alabama/Mississippi Territory pre-statehood period. The skill must state that FamilySearch currently has no digitized image groups (browsable or indexed) for this place/period \u2014 and must not phrase this as evidence that no records were ever created or survived. It should still point to the territorial, church, and court record classes already covered by collections_search/wiki_search, since record existence and FamilySearch digitization coverage are separate facts.",

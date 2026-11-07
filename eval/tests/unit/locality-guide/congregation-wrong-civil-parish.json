@@ -42,6 +42,7 @@
     "wiki-read-any",
     "wiki-place-page-any",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "catalog-search-empty"
   ]
 }
