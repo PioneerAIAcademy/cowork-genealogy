@@ -343,7 +343,6 @@ The lead's two agents hold the first group. The team builds the rest; an issue l
 | D2 Monitoring | none | remote-server agent | Before invited users |
 | MCP App cards, case file and fold | [the MCP App plan](mcp-app-viewer.md) | MCP App agent | The demo |
 | G6 The router PR | issue #4297 | MCP App agent | Before launch |
-| W2 Users, sessions, state, redirect, budget | issue #3992 | clack391 | 19 Nov |
 | W4 Plain pages (D4) | issue #4001 | team | 30 Nov |
 | E5 Fit for a connector | issue #3996 | team | The pin |
 | E5 Direct reads | issue #4311 | team, senior | The pin |
