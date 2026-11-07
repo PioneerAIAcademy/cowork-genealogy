@@ -1228,12 +1228,15 @@ _PERCENT_INDEXED_RE = re.compile(
 )
 
 
-def _collection_person_counts(tool_calls) -> dict[str, set[int]]:
+def _collection_person_counts(tool_calls, research=None) -> dict[str, set[int]]:
     """id -> set of personCounts across every collections_search response
-    this run received. An id can be served with different counts in
-    different responses (1999196 was once 0 in schuylkill and 893214 in
-    pennsylvania, reconciled 2026-09-24 under issue #2685), so key on the
-    response, not the id."""
+    this run received, plus, for an id no response served, its count in the
+    before-state `localities` entries (research-plan plans from those without
+    a call). A served count always wins over a stored one. An id can be
+    served with different counts in different
+    responses (1999196 was once 0 in schuylkill and 893214 in pennsylvania,
+    reconciled 2026-09-24 under issue #2685), so key on the response, not
+    the id."""
     counts: dict[str, set[int]] = {}
     for c in tool_calls or []:
         if _bare(c.get("tool", "")) != "collections_search":
@@ -1244,6 +1247,13 @@ def _collection_person_counts(tool_calls) -> dict[str, set[int]]:
             if cid is None or pc is None:
                 continue
             counts.setdefault(str(cid), set()).add(int(pc))
+    served = set(counts)
+    for entry in (research or {}).get("localities") or []:
+        for col in entry.get("collections") or []:
+            cid, pc = col.get("id"), col.get("person_count")
+            if cid is None or not isinstance(pc, int) or str(cid) in served:
+                continue
+            counts.setdefault(str(cid), set()).add(pc)
     return counts
 
 
@@ -1271,9 +1281,9 @@ def test_research_plan_availability_claim_matches_counts(
     if not new_plans:
         pytest.skip("run added no new plan")
 
-    counts = _collection_person_counts(tool_calls)
+    counts = _collection_person_counts(tool_calls, before)
     if not counts:
-        pytest.skip("no collections_search response to check against")
+        pytest.skip("no collections_search response or counted locality collection to check against")
 
     errors: list[str] = []
     for plan in new_plans:
@@ -1298,17 +1308,108 @@ def test_research_plan_availability_claim_matches_counts(
                 if claims_indexed and not any(pc > 0 for pc in pcs):
                     errors.append(
                         f"{plan.get('id')} item {item.get('id')} calls "
-                        f"collection {cid} \"indexed\" but every response this "
-                        f"run received returned personCount 0"
+                        f"collection {cid} \"indexed\" but its personCount "
+                        f"(from this run's collections_search responses, else "
+                        f"the localities entry) is 0"
                     )
                 elif claims_browse and not any(pc == 0 for pc in pcs):
                     errors.append(
                         f"{plan.get('id')} item {item.get('id')} calls "
-                        f"collection {cid} browse/image-only but the served "
-                        f"response returned personCount {sorted(pcs)}"
+                        f"collection {cid} browse/image-only but its "
+                        f"personCount (from this run's collections_search "
+                        f"responses, else the localities entry) is {sorted(pcs)}"
                     )
     assert not errors, (
         "availability claim contradicts returned personCount:\n  - "
+        + "\n  - ".join(errors)
+    )
+
+
+# --- Tag-gated: plan from a counted localities entry, not a repeat survey ---
+
+
+def _collections_scope(place: str) -> str:
+    """Python port of `standardPlaceToCollectionsQuery`
+    (packages/engine/mcp-server/src/tools/collections-search.ts): the scope a
+    `collections_search` call on `place` is answered at."""
+    parts = [p.strip() for p in place.split(",") if p.strip()]
+    if not parts:
+        return place.strip()
+    country = parts[-1]
+    state = parts[-2] if len(parts) >= 2 else None
+    if country == "United States":
+        return state or country
+    if country in ("Canada", "Mexico"):
+        return f"{country}, {state}" if state else country
+    return country
+
+
+def _year_span(text) -> tuple[int, int] | None:
+    """`time_period` text such as "1840-1880" or "1901" as a year span, or
+    None when it is missing or not that shape."""
+    if not isinstance(text, str):
+        return None
+    m = re.fullmatch(r"\s*(\d{4})(?:\s*[-–]\s*(\d{4}))?\s*", text)
+    if not m:
+        return None
+    start = int(m.group(1))
+    return start, int(m.group(2) or start)
+
+
+def test_research_plan_reuses_counted_locality_collections(
+    before_state, tool_calls, test
+):
+    """Tag-gated (`reuses-counted-locality`): when a before-state `localities`
+    entry carries a `person_count` on every collection, research-plan plans
+    from it and makes no `collections_search` call answered at the same
+    scope as the entry's `place` (a standard place; `for_place` is free text
+    with no country and is not scoped). A call whose `startYear`-`endYear`
+    reach outside the entry's `time_period` is a new period, not a repeat; an
+    entry with no parseable `time_period` covers nothing. The national
+    `United States` call is exempt. Issue #3545 lead 3: in 6 of 10 e2e runs
+    research-plan repeated locality-guide's call on a place or country it had
+    just surveyed. Matching is on the call's args, never its response."""
+    if "reuses-counted-locality" not in test.get("tags", []):
+        pytest.skip("not a reuses-counted-locality scenario")
+    before = before_state.get("research_json")
+    if before is None:
+        pytest.skip("missing before-state research.json")
+
+    covered: dict[str, list[tuple[str, tuple[int, int]]]] = {}
+    for entry in before.get("localities") or []:
+        cols = entry.get("collections") or []
+        if not cols or not all(isinstance(c.get("person_count"), int) for c in cols):
+            continue
+        span = _year_span(entry.get("time_period"))
+        place = entry.get("place")
+        if span and isinstance(place, str) and place.strip():
+            scope = _collections_scope(place).casefold()
+            if scope != "united states":
+                covered.setdefault(scope, []).append((entry.get("id") or "?", span))
+    assert covered, (
+        "reuses-counted-locality test has no localities entry with a counted "
+        "collection and a time_period; the fixture cannot exercise this check"
+    )
+
+    errors: list[str] = []
+    for c in tool_calls or []:
+        if _bare(c.get("tool", "")) != "collections_search":
+            continue
+        args = c.get("args") or {}
+        place = args.get("standardPlace")
+        if not isinstance(place, str):
+            continue
+        start, end = args.get("startYear"), args.get("endYear")
+        for entry_id, (lo, hi) in covered.get(_collections_scope(place).casefold(), []):
+            if (isinstance(start, int) and start < lo) or (isinstance(end, int) and end > hi):
+                continue
+            errors.append(
+                f"collections_search({place!r}) repeats the survey of "
+                f"{entry_id}, whose counted collections cover that scope and period"
+            )
+            break
+    assert not errors, (
+        "research-plan re-ran a counted locality survey:\n  - "
         + "\n  - ".join(errors)
     )
 
