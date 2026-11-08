@@ -249,6 +249,30 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_convert_dates_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The assessment correctly identifies the negative-test failure: the skill should have declined or stayed silent, but instead performed the out-of-scope reformatting task. That is a substantive failure despite the output being accurate and polished."
+    },
+    {
+      "test_id": "ut_convert_dates_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The assessment correctly identifies the negative-test failure, but the skill actually performed the task when it was required to decline without acting. That is a substantive failure of the expected behavior."
+    },
+    {
+      "test_id": "ut_convert_dates_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the single project_context call used the correct projectPath, matched the live fixture, and produced no fixture_not_found error. The tool use was reasonable for the task."
     }
   ]
 }

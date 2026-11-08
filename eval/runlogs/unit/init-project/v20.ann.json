@@ -281,6 +281,174 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies a concrete omission: the stored objective drops the user-stated birth detail, “born around 1845 in Pennsylvania,” despite the per-test requirement to preserve those facts. The rest of the behavior is described as correct, but this objective-preservation defect is substantive enough to prevent a 3/3."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately evaluates the criterion as task completion: all required actions were completed and no substantive required task was omitted. The objective-preservation issue is relevant to a different criterion, but it does not undermine this specific completeness assessment."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that both required tool calls used the correct arguments and identifiers, matched the live fixtures, and produced no fixture_not_found errors. It also correctly notes that no separate person_read or tree argument was required."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the tree faithfully represents the fixture data, preserves source attribution, avoids fabrication, correctly leaves Patrick’s mother unknown, and properly handles the birthplace discrepancy and Michael Flynn hypothesis. The missing-parent information is also appropriately communicated without overstating the evidence."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that both files contain the required sections and that the project metadata, title, persons, relationships, and sources are properly populated. It also correctly notes the source-notes placement without identifying any missing or malformed required structure."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly confirms that the objective was taken directly from the delegation, no unsupported subscriptions were added, and the agent did not ask for personal researcher information. The profile fields handled automatically by project_create are appropriately treated as outside the visible file-change evidence."
+    },
+    {
+      "test_id": "ut_init_project_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the written tree preserves the tool-supplied standard_place and standard_date values without fabrication, alteration, or omission. It also correctly distinguishes the user's hand-entered Pennsylvania detail from the FamilySearch-derived tree data."
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the factual claims are supported by the tool responses and that the written tree preserves the returned dates, places, and FamilySearch source attribution. It also correctly notes that no relatives were fabricated and that FamilySearch reported none."
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies a concrete omission: the response noted Patrick’s isolation but failed to explain its research implications—specifically, that the lack of linked relatives makes FAN research harder and increases reliance on direct records. That missing required observation is substantive enough to prevent a 3/3."
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that both tool calls used the correct arguments and identifiers, matched the live fixtures, and produced no fixture_not_found errors. The tool execution was complete and correct."
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the tree contains exactly the expected person and facts, with correct source attribution, local IDs, and FamilySearch ark. It also correctly verifies that no relatives or placeholder stubs were fabricated and that the relationships array is appropriately empty."
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the project metadata and required tree sections are complete, correctly populated, and schema-conformant. It also notes that no deterministic validators failed, supporting the conclusion that the written artifacts are valid."
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the objective came directly from the delegation, no unsupported subscriptions were added, and the agent did not ask for unnecessary profile information. The automatically populated profile fields are appropriately treated as host-generated rather than agent behavior."
+    },
+    {
+      "test_id": "ut_init_project_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that both standard_place values match the tool-returned standardized forms and were neither fabricated nor altered. It also correctly distinguishes the standardized values from the raw place text."
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the project, objective, title, tree facts, source attribution, researcher profile, and absence of fabricated relatives all match the expected behavior. It also correctly notes that the user's stated experience level was not improperly persisted."
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that both required files and all required project, tree, source, and researcher-profile elements were completed. It also correctly notes that no unnecessary personal questions or unsupported subscriptions were introduced."
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies that the persisted state is ultimately correct, but the actual project_create arguments used the bare ID instead of the subject’s name for both the objective and title. Even though the tool normalized them successfully, this is still a concrete argument-level mismatch and prevents a fully correct 3/3 assessment."
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Stub & tree fidelity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the tree stub faithfully represents the known data, with correct facts, source attribution, local IDs, and no fabricated relatives or fields. Nothing substantive is omitted."
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Project section seeding & schema validity",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that all required project metadata and tree sections are present, correctly populated, and schema-conformant. The concise, non-verbatim title and absence of validator failures further support a complete and correct result."
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Researcher profile",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that all researcher-profile requirements were met: the fixed novice experience level and house-style narration guidance were preserved, no unsupported subscription was added, the user-stated objective was not defaulted, and no unnecessary personal questions were asked."
+    },
+    {
+      "test_id": "ut_init_project_wzk",
+      "dimension_source": "rubric",
+      "dimension_name": "Place standardization",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that both standard_place values were preserved exactly as supplied by the tool, with no invented or altered places. It also correctly notes the expected FamilySearch normalization of the death place."
     }
   ]
 }

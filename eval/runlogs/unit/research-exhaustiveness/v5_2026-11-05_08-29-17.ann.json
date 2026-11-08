@@ -385,6 +385,110 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the evidence, stopping rationale, required “Overturn risk: high” framing, and unsearched research avenues all match the tool responses and requirements. It also correctly notes that the marriage record does not prove Patrick’s parentage and that no unsupported or fabricated claims were introduced."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that every required element was addressed, including the resources_spent stop, missing-record analysis, alternative research avenues, “wrap it up” option, exact closing question, and four deferred avenues. Nothing required by the scenario was omitted."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the wiki_read URL matched the expected predicate and that all other tool calls used the correct project and section arguments. It also correctly notes that no fixture_not_found errors or sibling-page misses occurred."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the skill used the stop criteria as a proper gate, grounded its reasoning in the specific research logs, identified the missing child-linking evidence as the blocking gap, and appropriately declined to declare parentage. It also correctly notes the concrete unsearched repositories rather than relying on generic reasoning."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the skill resisted pressure to declare exhaustive, used the required resources_spent/`stop_criteria: null` pattern, kept the project in progress, and clearly documented the remaining evidence gaps. The justification is appropriately cautious and grounded in the stated research results."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies the blocking criterion and the Issue #1843 nuance, but it still acknowledges that the written record only partially documents the stop criteria. That omission is meaningful for this dimension, so 2/3 is more appropriate than 3/3."
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_d2b",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_d2b",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_d2b",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_d2b",
+      "dimension_source": "rubric",
+      "dimension_name": "Gate reasoning",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_d2b",
+      "dimension_source": "rubric",
+      "dimension_name": "Declaration honesty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_exhaustiveness_d2b",
+      "dimension_source": "rubric",
+      "dimension_name": "Stop criteria coverage",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies that the blocking overturn_risk criterion is substantively supported, but the other six stop criteria are not individually assessed."
     }
   ]
 }

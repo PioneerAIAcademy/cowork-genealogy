@@ -289,6 +289,30 @@
       "llm_score": 2,
       "corrected_score": 2,
       "comment": "I checked how Claude evaluated the independence of the 1850 and 1860 census records. It correctly identified them as separate records and recognized that the relationships were inferred from household positions rather than explicitly stated. However, it did not fully examine whether the same household member, possibly Thomas Flynn or his wife, supplied the information for both census entries. This is important because a shared informant would weaken their independence when establishing Patrick's parentage. The analysis recognized some limitations but needed a more specific examination of the informant chain."
+    },
+    {
+      "test_id": "ut_conflict_resolution_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The assessment acknowledges that the skill produced substantive output on a negative test that expected it to decline or stay silent, but then incorrectly treats the test-author override as sufficient to excuse that behavior. The no-harm invariant passed, but that does not erase the explicit negative-test requirement."
+    },
+    {
+      "test_id": "ut_conflict_resolution_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "Given the explicit per-test override, the assessment is correct: inline classification was acceptable provided no state was written. The skill covered all 13 assertions, created no conflict entry, and satisfied the no-harm invariant."
+    },
+    {
+      "test_id": "ut_conflict_resolution_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that all three MCP calls used the correct projectPath and appropriate arguments for retrieving the project context and assertion/source data. Since the fixture declared no specific argument constraints, there is no identified argument error."
     }
   ]
 }

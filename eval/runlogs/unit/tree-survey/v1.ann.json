@@ -281,6 +281,118 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Although selecting five of six holes is within the numerical limit, the assessment itself identifies that TGAP-H5A was silently dropped without consideration or acknowledgment. That is a minor but meaningful completeness issue under the per-test requirement to consider all returned holes before selecting the best five."
+    },
+    {
+      "test_id": "ut_tree_survey_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Survey",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage check",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Suggestions",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies the concrete defect: Edmund Ashby’s question asks for both the death date and death place, violating the single-fact-question requirement. The other questions are appropriately scoped, so this is a partial defect rather than a complete failure."
+    },
+    {
+      "test_id": "ut_tree_survey_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Hand-off and prose",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Survey",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Coverage check",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Suggestions",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_tree_survey_012",
+      "dimension_source": "rubric",
+      "dimension_name": "Hand-off and prose",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "I agree with the LLM. The assessment ultimately claims a full pass, but the evaluation should preserve the identified minor hand-off defect rather than upgrading it away. The core placement and formatting requirements were met, but the assessment’s own uncertainty about the hand-off means 2/3 is the safer rating."
     }
   ]
 }
