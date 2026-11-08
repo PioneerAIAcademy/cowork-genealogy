@@ -840,6 +840,39 @@ def _explained_by_caller_assertion_update(before_section, after_section, updated
     return changed
 
 
+#: The tools whose person_evidence writes run research_append's namesake fill
+#: in: research_append itself, and extraction_append's attachment links, which
+#: it writes through research_append.
+_BIRTH_YEAR_FILL_TOOLS = frozenset({"research_append", "extraction_append"})
+
+
+def _explained_by_birth_year_fill(before_section, after_section) -> bool:
+    """True when the only change to `namesakes` is research_append's fill in
+    (#3363): the same rows in the same order, each changed row differing only by
+    a `birth_year` integer it did not have before. A row added, removed,
+    reordered or otherwise edited, or a year changed, fails closed.
+    """
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    if len(before_section) != len(after_section):
+        return False
+    changed = False
+    for old, new in zip(before_section, after_section):
+        if not isinstance(old, dict) or not isinstance(new, dict):
+            return False
+        if not isinstance(old.get("id"), str) or old.get("id") != new.get("id"):
+            return False
+        if old == new:
+            continue
+        year = new.get("birth_year")
+        if "birth_year" in old or isinstance(year, bool) or not isinstance(year, int):
+            return False
+        if {k: v for k, v in new.items() if k != "birth_year"} != old:
+            return False
+        changed = True
+    return changed
+
+
 def _explained_by_merge(before_section, after_section, remap: dict[str, str]) -> bool:
     """True when the section's whole delta is the merge's id permutation.
 
@@ -881,7 +914,11 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     (`_explained_by_plan_completion`) and for tying a re-found record's
     assertions to a question (`_explained_by_question_tie`). The third is
     `research_append`'s one caller write to `assertions`, an update of
-    `informant_bias_notes` alone (`_explained_by_caller_assertion_update`).
+    `informant_bias_notes` alone (`_explained_by_caller_assertion_update`). The
+    fourth is the birth year `research_append` fills in on a namesake row of a
+    person a call links, whichever tool wrote the link
+    (`_explained_by_birth_year_fill`): it is not `toolAuthorized`, which would
+    grant the section to every caller of the tool.
 
     The merge path is scoped to research.json. `test_tree_ownership_table` does
     NOT take it: the tree rows already list `merge_tree_persons` among their
@@ -994,6 +1031,13 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
             # caller-writable fields and nothing else.
             if section == "assertions" and _explained_by_caller_assertion_update(
                 before.get(section), after.get(section), _caller_notes_update_ids(tool_calls)
+            ):
+                continue
+            # research_append, and extraction_append through it: a call that
+            # links a person fills in the birth year of that person's namesake
+            # rows that have none (#3363), and changes nothing else there.
+            if section == "namesakes" and called & _BIRTH_YEAR_FILL_TOOLS and _explained_by_birth_year_fill(
+                before.get(section), after.get(section)
             ):
                 continue
             unauthorized.append(section)
@@ -1684,21 +1728,29 @@ def test_direct_test_spawned_its_agent(test, builtin_tool_calls):
     )
 
 
-_PROJECT_PATH_LINE = re.compile(r"(projectPath:[ \t]*)([^\n]*)")
+_PROJECT_PATH_VALUE = re.compile(r"(projectPath:[ \t]*)([^\r\n]*)")
 
 
-def _unify_project_path_separators(text):
-    """`\\` -> `/` in the value of each `projectPath:` line, and nowhere else.
+def _delegation_pattern(delegation: str) -> re.Pattern[str]:
+    """`delegation` as a pattern matching it exactly, except that `/` and `\\`
+    are interchangeable inside each `projectPath:` value (to the end of its line).
 
-    The harness writes the run folder with forward slashes, and a Windows
-    dispatcher has been seen relaying it as `C:/Users/x/AppData\\Local\\Temp\\...`
-    (locality-guide v7_2026-11-05_20-38-13: 3 of 38 runs). Both spellings name
-    the same folder, so that is not a reworded delegation. Every other character
-    of the delegation is still compared exactly.
+    The harness sends that value with forward slashes, and a Windows dispatcher
+    has been measured rewriting some of them to `\\` (ut_check_warnings_020,
+    ut_question_selection_015) while delivering the same folder. Nothing else is
+    loosened: the key, every other line, other paths and URLs, and every
+    non-separator character of the path still match literally. A relay that adds
+    CRLF or JSON-escapes the backslashes still fails.
     """
-    return _PROJECT_PATH_LINE.sub(
-        lambda m: m.group(1) + m.group(2).replace("\\", "/"), text
-    )
+    parts, pos = [], 0
+    for m in _PROJECT_PATH_VALUE.finditer(delegation):
+        parts.append(re.escape(delegation[pos : m.start(2)]))
+        parts.append(
+            "".join(r"[/\\]" if ch in "/\\" else re.escape(ch) for ch in m.group(2))
+        )
+        pos = m.end(2)
+    parts.append(re.escape(delegation[pos:]))
+    return re.compile("".join(parts))
 
 
 def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
@@ -1711,16 +1763,17 @@ def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
     was never asked to resist, the agent passes, and the suite reports having
     survived an attack that never arrived.
 
-    `in`, not `==`: a harmless preamble is tolerated, a reword is not. What the
-    substring check permits is reported separately by
-    `report_direct_delegation_extra_text`.
+    A substring search, not `==`: a harmless preamble is tolerated, a reword is
+    not. What the substring check permits is reported separately by
+    `report_direct_delegation_extra_text`. The one character-level allowance is
+    `/` vs `\\` inside the `projectPath:` value (`_delegation_pattern`).
     """
     delegation = test.get("delegation")
     if not delegation:
         pytest.skip("not a direct-agent test")
     _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
-    wanted = _unify_project_path_separators(delegation)
-    if any(wanted in _unify_project_path_separators(p) for p in prompts):
+    pattern = _delegation_pattern(delegation)
+    if any(pattern.search(p) for p in prompts):
         return
     from harness.skill_runner import BUILTIN_ARG_TRUNCATE, _UNTRUNCATED_ARGS
 
@@ -1734,7 +1787,8 @@ def test_direct_delegation_relayed_verbatim(test, builtin_tool_calls):
     rendered = "\n---\n".join(prompts) if prompts else "(no spawn prompt recorded)"
     assert False, (
         "the main thread did not relay the delegation verbatim.\n\n"
-        f"EXPECTED to find, as an exact substring:\n{delegation}\n\n"
+        "EXPECTED to find (exact, except '/' and '\\' are interchangeable in the "
+        f"projectPath: value):\n{delegation}\n\n"
         f"ACTUAL spawn prompt(s):\n{rendered}{cut_note}"
     )
 
@@ -1753,13 +1807,13 @@ def report_direct_delegation_extra_text(test, builtin_tool_calls):
     if not delegation:
         pytest.skip("not a direct-agent test")
     _, prompts = _spawn_records(builtin_tool_calls, test.get("skill"))
-    wanted = _unify_project_path_separators(delegation)
+    pattern = _delegation_pattern(delegation)
     extras = []
     for p in prompts:
-        p = _unify_project_path_separators(p)
-        if wanted not in p:
+        m = pattern.search(p)
+        if not m:
             continue
-        before, _, after = p.partition(wanted)
+        before, after = p[: m.start()], p[m.end() :]
         if before.strip() or after.strip():
             extras.append(
                 f"before={before.strip()[:300]!r} after={after.strip()[:300]!r}"

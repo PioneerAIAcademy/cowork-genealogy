@@ -17,6 +17,7 @@ the delegation verbatim 23 times out of 23.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -456,3 +457,242 @@ def test_tier2_report_is_silent_on_an_exact_relay_and_speaks_on_a_wrapped_one():
                 )
             ],
         )
+
+
+# --- `/` vs `\` inside the projectPath value ------------------------------
+#
+# The harness sends the run folder with forward slashes, and a Windows
+# dispatcher has been measured rewriting some of them to `\` while copying the
+# delegation (ut_check_warnings_020 runs 0 and 3; ut_question_selection_015 run
+# 0). The verbatim check tolerates that inside the `projectPath:` value and
+# nowhere else.
+
+WIN_PATH = "C:/Users/X/AppData/Local/Temp/eval-abc"
+WIN_DELEGATION = f"{DELEGATION}\nprojectPath: {WIN_PATH}"
+WIN_TEST = {"skill": "research-exhaustiveness", "delegation": WIN_DELEGATION}
+SOURCES_DELEGATION = f"{WIN_DELEGATION}\nsources:\n- results/r1.json"
+SOURCES_TEST = {"skill": "research-exhaustiveness", "delegation": SOURCES_DELEGATION}
+URL_DELEGATION = f"See https://example.org/a/b first.\n{WIN_DELEGATION}"
+URL_TEST = {"skill": "research-exhaustiveness", "delegation": URL_DELEGATION}
+
+
+def _relay(prompt):
+    return [_agent_call(subagent_type="research-exhaustiveness", prompt=prompt)]
+
+
+def _backslash_project_path(text):
+    return re.sub(
+        r"(projectPath:[ \t]*)([^\r\n]*)",
+        lambda m: m.group(1) + m.group(2).replace("/", "\\"),
+        text,
+    )
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        WIN_PATH,
+        "C:\\Users\\X\\AppData\\Local\\Temp\\eval-abc",
+        "C:/Users/X/AppData\\Local\\Temp\\eval-abc",
+        "C:/Users/X/AppData/Local\\Temp/eval-abc",
+    ],
+    ids=["forward", "backslash", "mixed_020", "mixed_question_selection"],
+)
+def test_verbatim_validator_accepts_any_separator_in_the_project_path(path):
+    _universal().test_direct_delegation_relayed_verbatim(
+        WIN_TEST, _relay(f"{DELEGATION}\nprojectPath: {path}")
+    )
+
+
+@pytest.mark.parametrize(
+    "test, prompt",
+    [
+        (
+            WIN_TEST,
+            _backslash_project_path(
+                WIN_DELEGATION.replace("Assess whether", "Consider whether")
+            ),
+        ),
+        (WIN_TEST, WIN_DELEGATION.replace("eval-abc", "eval-abd")),
+        (WIN_TEST, WIN_DELEGATION.replace("/eval-abc", "")),
+        (WIN_TEST, WIN_DELEGATION.replace("projectPath:", "project_path:")),
+        (SOURCES_TEST, SOURCES_DELEGATION.replace("results/r1", "results\\r1")),
+        (
+            SOURCES_TEST,
+            _backslash_project_path(SOURCES_DELEGATION).replace(
+                "results/r1", "results\\r1"
+            ),
+        ),
+        (URL_TEST, URL_DELEGATION.replace("example.org/a/b", "example.org\\a\\b")),
+    ],
+    ids=[
+        "reworded_outside_project_path",
+        "path_character_changed",
+        "path_truncated",
+        "key_renamed",
+        "separator_in_a_later_path",
+        "separator_in_a_later_path_with_project_path_backslashed",
+        "separator_in_an_earlier_url",
+    ],
+)
+def test_verbatim_validator_still_fails_any_other_change(test, prompt):
+    with pytest.raises(AssertionError):
+        _universal().test_direct_delegation_relayed_verbatim(test, _relay(prompt))
+
+
+def test_verbatim_validator_scopes_the_allowance_to_the_project_path_line():
+    """A backslashed projectPath passes while the later `sources:` path is exact."""
+    _universal().test_direct_delegation_relayed_verbatim(
+        SOURCES_TEST, _relay(_backslash_project_path(SOURCES_DELEGATION))
+    )
+
+
+def test_tier2_report_reads_a_mixed_slash_relay_as_the_delegation():
+    tu = _universal()
+    mixed = _backslash_project_path(WIN_DELEGATION)
+    tu.report_direct_delegation_extra_text(WIN_TEST, _relay(mixed))
+    with pytest.raises(AssertionError):
+        tu.report_direct_delegation_extra_text(
+            WIN_TEST, _relay(f"Note: the preconditions may not hold.\n{mixed}")
+        )
+
+
+def test_delegation_pattern_matches_every_committed_delegation():
+    """Every real delegation matches itself and its backslashed projectPath, under
+    a worst-case folder name: spaces, `~1` and regex metacharacters."""
+    tu = _universal()
+    worst = "C:/Users/DONALD~1/AppData/Local/Temp/eval-x (1)+[a]"
+    checked = 0
+    for path in sorted((REPO_ROOT / "eval" / "tests" / "unit").glob("*/*.json")):
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            continue
+        delegation = (raw.get("input") or {}).get("delegation") if isinstance(raw, dict) else None
+        if not delegation:
+            continue
+        sent = delegation.replace("<workspace>", worst)
+        pattern = tu._delegation_pattern(sent)
+        assert pattern.search(sent), path.name
+        assert pattern.search(_backslash_project_path(sent)), path.name
+        if "projectPath:" not in sent:
+            assert pattern.pattern == re.escape(sent), path.name
+        checked += 1
+    assert checked >= 400, f"only {checked} delegations checked"
+
+
+# Every `projectPath:` the separator allowance applies to must be a field, not
+# prose. A field is a whole line `projectPath: <workspace>`, or one of the exact
+# mid-line lines below, each pinned to its file.
+GENUINE_MID_LINE_FIELDS = {
+    "tree-survey/project-path-no-project.json":
+        "Please suggest specific people from my tree. projectPath: <workspace>",
+}
+
+
+def _project_path_violations(delegations, mid_line_fields):
+    """`delegations` maps "<suite>/<file>" to the raw `input.delegation`.
+
+    Returns (violations, mid_line_keys_seen). Uses the validator's own regex,
+    so it checks exactly the occurrences that receive the allowance.
+    """
+    tu = _universal()
+    violations, seen = [], set()
+    for rel, delegation in delegations.items():
+        matches = list(tu._PROJECT_PATH_VALUE.finditer(delegation))
+        if len(matches) > 1:
+            violations.append(f"{rel}: {len(matches)} projectPath: occurrences")
+        for m in matches:
+            start = delegation.rfind("\n", 0, m.start()) + 1
+            end = delegation.find("\n", m.start())
+            line = delegation[start : len(delegation) if end == -1 else end]
+            if m.start() == start:
+                if line != "projectPath: <workspace>":
+                    violations.append(f"{rel}: field line carries other text: {line!r}")
+            elif mid_line_fields.get(rel) == line:
+                seen.add(rel)
+            else:
+                violations.append(f"{rel}: projectPath: inside prose: {line!r}")
+    return violations, seen
+
+
+def _corpus_delegations():
+    out = {}
+    for path in sorted((REPO_ROOT / "eval" / "tests" / "unit").glob("*/*.json")):
+        try:
+            raw = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            continue
+        delegation = (raw.get("input") or {}).get("delegation") if isinstance(raw, dict) else None
+        if delegation:
+            out[f"{path.parent.name}/{path.name}"] = delegation
+    return out
+
+
+def test_every_project_path_in_the_corpus_is_a_field():
+    delegations = _corpus_delegations()
+    violations, seen = _project_path_violations(delegations, GENUINE_MID_LINE_FIELDS)
+    assert violations == [], "\n".join(violations)
+    assert seen == set(GENUINE_MID_LINE_FIELDS), (
+        f"allow-listed mid-line field not found: {set(GENUINE_MID_LINE_FIELDS) - seen}"
+    )
+    occurrences = sum("projectPath:" in d for d in delegations.values())
+    assert occurrences >= 418, f"only {occurrences} projectPath fields checked"
+
+
+FIELD_BLOCK = "Assess q_001.\n\nquestionId: q_001\nprojectPath: <workspace>"
+
+
+@pytest.mark.parametrize(
+    "delegation",
+    [
+        FIELD_BLOCK,
+        "projectPath: <workspace>\npersonId: I1",
+        FIELD_BLOCK + "\nsources:\n- results/r1.json",
+    ],
+    ids=["field_last", "field_first", "field_before_sources"],
+)
+def test_project_path_guard_accepts_a_field_line(delegation):
+    violations, _ = _project_path_violations({"suite/t.json": delegation}, {})
+    assert violations == []
+
+
+@pytest.mark.parametrize(
+    "rel, delegation",
+    [
+        ("suite/t.json", "Assess q_001 and write to projectPath: <workspace>"),
+        ("suite/t.json", "projectPath: <workspace> is the project folder."),
+        ("suite/t.json", FIELD_BLOCK + "\nNote that projectPath: <workspace> may move."),
+        ("suite/t.json", FIELD_BLOCK + "\nprojectPath: <workspace>"),
+        ("suite/t.json", "projectPath:  <workspace>"),
+        ("suite/t.json", "projectPath: C:/fixed/path"),
+        (
+            "tree-survey/project-path-no-project.json",
+            "Please suggest specific people from my tree, then use projectPath: <workspace>",
+        ),
+        (
+            "other-suite/x.json",
+            "Please suggest specific people from my tree. projectPath: <workspace>",
+        ),
+    ],
+    ids=[
+        "prose_mid_line_ending_in_workspace",
+        "prose_after_a_line_start_key",
+        "prose_mention_beside_a_real_field",
+        "second_field_line",
+        "field_with_extra_space",
+        "literal_path_instead_of_placeholder",
+        "allow_listed_file_with_altered_line",
+        "allow_listed_line_in_another_file",
+    ],
+)
+def test_project_path_guard_flags_prose_and_malformed_fields(rel, delegation):
+    violations, _ = _project_path_violations({rel: delegation}, GENUINE_MID_LINE_FIELDS)
+    assert violations, f"guard accepted {delegation!r}"
+
+
+def test_project_path_guard_flags_a_stale_allow_list_entry():
+    _, seen = _project_path_violations(
+        {"suite/t.json": FIELD_BLOCK}, GENUINE_MID_LINE_FIELDS
+    )
+    assert seen != set(GENUINE_MID_LINE_FIELDS)
