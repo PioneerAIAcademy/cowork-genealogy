@@ -25,6 +25,20 @@ which is why they live in one repo. The search-agent prototype adds three
 Elastic Beanstalk source bundles, web, worker and tools (`make eb-bundles`;
 `docs/plan/familysearch-handoff.md`).
 
+## Testing and deploying the beta
+
+The beta runs on one server, `malachi`, behind the `Genealogy Research` connector, with
+no test server, and only the lead deploys to it. So everyone tests their own branch, in
+their own Claude account, before it reaches anyone else: a skill, agent or hook through
+their own uploaded plugin on that connector; an MCP tool through the branch's `.mcpb` in
+a Cowork task with a folder, with the connector switched off meanwhile; a card or the
+case file in `make viewer`'s browser tab. A tool change is written once in `src/`, and
+the `.mcpb` and the server both run it. Only what exists on the connector alone, such as
+cards inside Claude, connector sign-in, uploads and owner checks, is first tried on the
+live server, so the lead backs up before every deploy, undoes a bad one by redeploying
+the previous commit, and deploys nothing during the demo or its rehearsals. Recipes:
+[DEVELOPMENT.md](./DEVELOPMENT.md), "Testing a change before it reaches anyone".
+
 ## Architecture you must understand before changing anything
 
 Cowork runs Claude inside a sandboxed Linux VM. The VM has restricted

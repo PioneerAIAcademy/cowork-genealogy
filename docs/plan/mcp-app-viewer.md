@@ -479,15 +479,11 @@ question never loads the skill, so nothing reads that row's line until one does
 
 ## Local testing
 
-Anyone changing the server, the page, the skills or the agents tests their branch
-before pushing, with no tunnel and no connector.
+How everyone tests a change before it reaches anyone is in `DEVELOPMENT.md`,
+"Testing a change before it reaches anyone". For this work:
 
-- **The research:** `make cowork-install` builds the `.mcpb` and the plugin zip
-  from the branch, and they install as they do today. Turn the organization's
-  connector off while testing, so Cowork does not hold two copies of every tool, and
-  switch it back on afterwards: it stays off in every new conversation until then.
-  The `.mcpb` lists neither tool and carries no page, because both are for the
-  connector only.
+- **The research:** the `.mcpb` lists neither tool and carries no page, because both
+  are for the connector only.
 - **The cards and the case file:** `make viewer PROJECT=<folder>` builds the page,
   runs the branch's server on `127.0.0.1` with `--local`, and opens a browser tab,
   reading the same folder the Cowork task writes. The tab shows every step card and

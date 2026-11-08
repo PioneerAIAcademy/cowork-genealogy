@@ -14,7 +14,7 @@
 - The lead's two agents build the remote server and the MCP App. The team builds the rest from issues. Richard reviews every change to the handoff's code. Each change is additive and keeps the handoff's behavior as the default, except where the handoff's alignment section says.
 - The lead does what needs his accounts, his server or GeneFun: FamilySearch's approval (P0.1), the sign-in redirect (P0.4), the live sittings, the policies (L1), every decision and the final deletion.
 
-## Decisions (lead, 2026-10-25 to 2026-11-05)
+## Decisions (lead, 2026-10-25 to 2026-11-08)
 
 | Topic | Decision |
 |---|---|
@@ -28,6 +28,7 @@
 | Tokens | One long connector token lifetime, 30 days proposed, with no refresh token, if sitting 2 shows Claude keeps using it. If not, our own refresh token on our own token. |
 | Front door | One door on the tool server. Every caller presents our own token, and the door loads that user's stored FamilySearch token and OpenRouter key. |
 | Projects | `projectPath` carries an id the server mints. The user who first writes to it owns it. |
+| Testing and deploys | One server and no test server. Everyone tests their own branch in their own Claude account first: skills, agents and hooks through their own plugin on the connector, tools through the branch's `.mcpb` in a Cowork task with a folder, cards in `make viewer`'s tab. What exists only on the connector is first tried on this server, so only the lead deploys, backs up first, undoes a bad deploy by redeploying the previous commit, and deploys nothing during the demo or its rehearsals. A test server comes when an hour's breakage would hurt users the lead cannot message. Recipes: `DEVELOPMENT.md`, "Testing a change before it reaches anyone". |
 | UI | MCP App cards and a case file, in one connector named exactly "Genealogy Research". |
 | Surface | claude.ai and Desktop Chat are the primary surfaces, because project data lives on the server and nothing sits on the user's disk. Cowork is no longer tested. Claude's plugin docs say a chat session ignores a plugin's agents and hooks. What research a chat session gets is undecided. |
 | Sign-up | An allowlist the lead keeps. Each user needs a FamilySearch account whose email no other user has. Removing an email does not end a connector token; one SQL update does, if it is ever needed. |
