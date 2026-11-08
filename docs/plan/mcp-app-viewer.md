@@ -632,6 +632,16 @@ Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
   search's results open in its side panel, and Sources shows a record's page image
   and transcription.
 - The display rules those need, including FamilySearch links.
+- **The card kit,** which M2's cards are built on, so a card only composes:
+  - the display rules, finished and tested, the FamilySearch link rules with their
+    attack cases included, so a card calls them and never re-implements them;
+  - a card shell that holds the host's height limit, light and dark, and the "Open
+    the case file" button, and shared pieces: a person's name, a record link, a tier
+    in words, a status label;
+  - every card kind registered, M2's five as stubs, so a card's PR touches only its
+    own file, its tests and its sweep coverage;
+  - a checklist for a finished card: the sweep passes, screenshots in light and dark,
+    the id check passes on its text, and no retired row shows.
 - **A first live run,** signed in through the `Genealogy Research` connector, on a
   seeded project: a card, then the case file.
 
@@ -676,7 +686,12 @@ Built on the tool server after the fold, on Postgres and MinIO behind sign-in.
 ### M2: The other step cards (before the demo)
 
 Plan, link (with the identity question side by side when it asks one), conflict,
-hypothesis, assess. The router gains its lines, or under
+hypothesis, assess. Genealogists who take developer tasks build them, one issue per
+card, labelled `genealogist` and `developer`, on M1's kit, and each card says what a
+researcher needs to see at its step. A developer reviews the code and a genealogist
+what the card says. One card goes first, plan or link, and its review tightens the
+kit's checklist before the other four open. Until a card lands, `latest` shows a
+neighbouring card, as in M1. The router gains its lines, or under
 Decision 3's fallback only conflict, hypothesis and the conditional link line, and
 the report line.
 
