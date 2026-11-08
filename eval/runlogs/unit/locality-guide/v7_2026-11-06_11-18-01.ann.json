@@ -151,8 +151,8 @@
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "The guide cites FHL film #1793684 as covering 1834-1889, but the catalog entry shows only \"Images not available\" with no years given, so the guide overclaimed the film's coverage."
     },
     {
       "test_id": "ut_locality_guide_n8p",
@@ -183,8 +183,8 @@
       "dimension_source": "rubric",
       "dimension_name": "Record availability",
       "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "corrected_score": 2,
+      "comment": "The guide cites FHL film #1793684 as covering 1834-1889, but the catalog entry shows only \"Images not available\" with no years given, so the guide overclaimed the film's coverage."
     },
     {
       "test_id": "ut_locality_guide_n8p",
@@ -487,8 +487,8 @@
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The responses should have been clearer that the one FamilySearch volume is available online and browseable, just not indexed. "
+      "corrected_score": 3,
+      "comment": "Regraded up: the judge asked only for clearer presentation (that the one FamilySearch volume is online and browseable, not indexed), not a factual error."
     },
     {
       "test_id": "ut_locality_guide_005",
@@ -535,8 +535,8 @@
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The response did a great job, but the claim about FamilySearch Wiki pages returning only generic content is unsupported by the tool responses, which show the wiki_place_page calls returned generic boilerplate content, not Virginia-specific guidance."
+      "corrected_score": 3,
+      "comment": "Regraded up: the wiki tools did return only generic content, so the guide's statement that they did is accurate and supported by the tool responses."
     },
     {
       "test_id": "ut_locality_guide_009",
@@ -631,8 +631,8 @@
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "Error on the main objective about Patrick Flynn (b. ~1845, d. 1908 in Schuylkill County, PA), yet the entire response addresses early 1600s Puritan settlements in Massachusetts. "
+      "corrected_score": 3,
+      "comment": "Regraded up: the judge penalized the guide for not addressing Patrick Flynn, but the delegation asked only about Massachusetts in the early 1600s, and the guide answered that."
     },
     {
       "test_id": "ut_locality_guide_019",
