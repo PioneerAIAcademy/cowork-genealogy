@@ -2236,13 +2236,13 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1), plu
 |------|-------|-----------|
 | Main thread (a skill suite's skill, an agent-keyed suite's dispatcher or router) | `packages/engine/plugin/main-thread.json`'s model and effort, passed as `--model` / `--effort` | The one setting the hosted alpha and beta and both harnesses run. A skill cannot set its own model or effort. |
 | Agent-keyed suite: the agent | Its own `model:` / `effort:` frontmatter | Applied by the CLI to the subagent on every surface, Cowork included, and outranks the session's effort. |
-| LLM judge | Sonnet 4.6 (`claude-sonnet-4-6`) | Sonnet 4.6 since 2026-11-06 (lead). Haiku misread a note it quoted on `ut_citation_007` (0/3 vs Sonnet 3/3, issue #4119), and per-misread judge lines did not converge. |
+| LLM judge | Sonnet 4.6 (`claude-sonnet-4-6`) | Sonnet 4.6 since 2026-11-06 (lead). Haiku misread a note it quoted on `ut_citation_007` (0/3 vs Sonnet 3/3), and per-misread judge lines did not converge. |
 
-**Alternative judge model:** Gemini 2.5 Flash (~$0.15/1M input, $0.60/1M output) is cheaper still than Haiku, and so than the Sonnet 4.6 judge. If Google APIs are already in use, Flash is an option only after it is shown not to repeat Haiku's misreadings (issue #4119). The harness should support configurable judge model selection so the cheapest adequate model can be used.
+**Alternative judge model:** Gemini 2.5 Flash (~$0.15/1M input, $0.60/1M output) is cheaper still than Haiku, and so than the Sonnet 4.6 judge. If Google APIs are already in use, Flash is an option only after it is shown not to repeat Haiku's misreadings. The harness should support configurable judge model selection so the cheapest adequate model can be used.
 
 ### Cost optimizations
 
-1. **Judge model.** The biggest judge-cost lever, traded against grading accuracy. Haiku 4.5 costs about a third of Sonnet 4.6 at list price, but misgraded evidence it could see (issue #4119), so the unit judge is Sonnet 4.6.
+1. **Judge model.** The biggest judge-cost lever, traded against grading accuracy. Haiku 4.5 costs about a third of Sonnet 4.6 at list price, but misgraded evidence it could see, so the unit judge is Sonnet 4.6.
 
 2. **Prompt caching for batched skill runs.** When running 15 tests for one skill, the SKILL.md + references (~5-10K tokens) is identical across all tests. With prompt caching, cached input tokens cost 90% less. The harness structures prompts so cacheable content (skill prompt) comes first and test-specific content (scenario state, user message) comes last.
 
