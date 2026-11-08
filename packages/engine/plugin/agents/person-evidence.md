@@ -248,6 +248,11 @@ In this mode:
   match threshold policy, rationale quality, multi-attribute
   corroboration. Look for daylight between the recorded confidence
   and what the evidence actually supports.
+- When the entry under review has a null `match_score`, call
+  `same_person({ projectPath, assertionId, treePersonId })` for it before
+  judging the tier, as Step 2 requires when linking. It changes neither
+  `research.json` nor the tree. Report the score in your analysis; do not
+  write it onto the entry.
 - **Produce a written analysis only.** Do NOT write to `research.json`
   or `tree.gedcomx.json`. Do NOT create new `pe_` entries. Do NOT
   modify the entry under review (not its `confidence`, not its
@@ -569,8 +574,10 @@ the `rationale` as a departure; it does not move the tier by itself.
 |------------|-------------------|--------|
 | **Weak** — only the name matches, or a core identifier conflicts. **Not Weak: a strong household relationship-fit** — a member positioned under known parents or beside a known spouse — even when the persona is a fact-less stub (see the note below the table). | `speculative` only | **Pause for user confirmation.** Present the evidence and ask: "This is a weak match. The name/age/place similarities are [details]. Do you want to create a speculative link, or is this a different person?" Never auto-link. |
 | **Moderate** — core identifiers agree but some are missing or only approximate | `probable` | Present the evidence to the user before linking. Explain what matches and what doesn't. Create the link with `probable` confidence if the user agrees. |
-| **Strong** — name, age, place, and relationship fit all agree, with the place inside the residence cluster or a move outside it that something bridges | `confident` | May create the link without explicit user confirmation, but still present the rationale. |
+| **Strong** — name, age, place, and relationship fit all agree, with the place inside the residence cluster or a move outside it that something bridges | `confident` with independent corroboration; otherwise `probable` | May create the link without explicit user confirmation, but still present the rationale. |
 | **Obvious** — same record already linked for another role, or the person was found by searching for this specific individual | `confident` or `probable`, based on reasoning | No separate analysis needed. State the rationale clearly. |
+
+**`confident` needs independent corroboration.** A record that is the only source tying its role to this tree person is `probable` at most, in every row and whatever the score or the informant. `confident` needs a second record from a different source, already linked to this person or linked in this run, that agrees on the identifiers this one matches on. Name that record in the `rationale`.
 
 **Stub match on relationship-fit alone (household enrichment).** A
 fact-less stub is still matchable — by its name, gender, and parent-child
@@ -1061,8 +1068,8 @@ and "my daughter Margaret Flynn." Three assertions were extracted:
 
 | Assertion | Person | Confidence | Rationale |
 |-----------|--------|-----------|-----------|
-| a_020 → I2 | Thomas Flynn | confident | Same name, same county, death date matches — strong match on all identifiers. |
-| a_021 → I1 | Patrick Flynn | confident | Will explicitly names "my son Patrick." Patrick is known to reside in same county. |
+| a_020 → I2 | Thomas Flynn | probable | Same name, same county, death date matches — strong match on all identifiers, but the will is the only record linked to I2. |
+| a_021 → I1 | Patrick Flynn | confident | Will explicitly names "my son Patrick." Patrick is known to reside in same county, and the 1860 census already linked to I1 places him in Thomas's household. |
 | a_022 → I7 (new stub) | Margaret Flynn | probable | New person — no Margaret Flynn in tree. Created stub with gender Female. Will context ("my daughter") establishes relationship. |
 
 **Person evidence entries created:** pe_007, pe_008, pe_009
