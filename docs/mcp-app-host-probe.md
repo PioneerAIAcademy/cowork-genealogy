@@ -19,7 +19,9 @@ record blocks it fills.
 
 Claude Desktop's button is **New**. Attaching a folder makes it a Cowork task, a cloud
 `cse_` session: `claude-code` connects to the server seconds after the folder is
-granted. With no folder it is a chat, and no `claude-code` line appears.
+granted. With no folder it is a chat, which on 2026-11-08 ran as a cloud session too,
+and its `claude-code` client connects just before its first tool call. Only an
+Incognito chat at claude.ai opens no client of its own.
 
 ### Set up
 
@@ -156,16 +158,19 @@ Open every conversation with the connector on.
    into the record, never the whole report: its **Card** section names the project.
    `result _meta arrived` says whether the result's `_meta` reached the card, and
    `first result keys:` names what the result did hold. The size ladder and image
-   buttons are on the card too. The log shows whether the page asked for the card: each
-   card makes one `resources/read`, just before its `tools/call`.
+   buttons are on the card too. The log shows whether the page asked for the card: the
+   first card makes one `resources/read`, close to its `tools/call`: on 2026-11-08 it came
+   2.6 s after the call on this server and about 1.4 s before it on the sign-in probe.
+   Later cards on the same connector in the same app may draw from a cached page and
+   make none.
 
    ```
    grep -c 'resources/read' ~/mcp-probe/server.log
    ```
 
-   `Anthropic/ClaudeAI` connects when the connector does. Each conversation's
+   `Anthropic/ClaudeAI` connects when the connector does. Each ordinary conversation's
    `claude-code` client connects about 1.5 s before its first tool call, after a
-   harmless `server/discover` 400.
+   harmless `server/discover` 400. An Incognito chat opens none.
 
    ```
    grep '"initialize"' ~/mcp-probe/server.log
@@ -280,10 +285,11 @@ Open every conversation with the connector on.
 
     Fills **Fullscreen**.
 
-18. **Connector off.** New conversation. Find the per-conversation connector switch,
-    which the help centre documents, turn `Genealogy Viewer` off, and type the line
-    below. Then check that a second new conversation still has it on. Fills **Connector
-    off for one conversation**.
+18. **Connector off.** New conversation. Find the connector switch under the message
+    box's `+`, then Connectors, turn `Genealogy Viewer` off, and type the line below.
+    Then check whether a second new conversation has it on, and switch it back on
+    there, because it stays off until you do. Fills **Connector off for one
+    conversation**.
 
     ```text
     Use ToolSearch with the query +show_project and tell me whether you found it.
@@ -324,8 +330,9 @@ Open every conversation with the connector on.
        Upload plugin, and pick that zip. Fully quit and reopen Claude Desktop.
 
     3. Connect the sign-in probe, then start a new conversation. Turn `Genealogy Viewer`
-       off in it, as in **Connector off**, so only the probe offers `show_project`. If
-       there is no switch, a `show_project` line in `server.log` counts as a call too.
+       off in it, as in **Connector off**, so only the probe offers `show_project`, and
+       switch it back on after this step. If there is no switch, a `show_project` line
+       in `server.log` counts as a call too.
 
        ```text
        where does the research stand?
@@ -353,7 +360,7 @@ Open every conversation with the connector on.
 
 ### Leg 2: artifact
 
-The connector stays on.
+Switch `Genealogy Viewer` back on if step 20 left it off.
 
 21. **Publish.** A chat has no folder, so copy the built page out to attach it:
 
@@ -440,12 +447,12 @@ is an answer.
 
 | Run | |
 |---|---|
-| Date | 2026-11-05 and 2026-11-06 |
-| Claude Desktop version | 4.16336.0 |
-| Where the task ran (cloud or local), and whether it had a folder | Cloud (`cse_` session), with a folder on this Mac |
-| Account the connector is on (organization or personal) | Personal |
+| Date | 2026-11-05 and 2026-11-06; the rest on 2026-11-08 |
+| Claude Desktop version | 4.16336.0; 4.23118.0 on 2026-11-08 |
+| Where the task ran (cloud or local), and whether it had a folder | Cloud (`cse_` session), with a folder on this Mac. On 2026-11-08 an ordinary chat with no folder, in Desktop or at claude.ai, was a cloud session too (`E=remote_cowork`, `T=cloud_default`) |
+| Account the connector is on (organization or personal) | Personal for `Genealogy Viewer`. On 2026-11-08 the sign-in probe's connector was added from Desktop's Customize page on the same account, which is on the Ultra plan |
 | macOS version | 15.8.2 |
-| Commit of `mcp-app-viewer-m0` | `5e61d3b5c`, then `9a64649b1` on 2026-11-06 |
+| Commit of the viewer server | `5e61d3b5c` on `mcp-app-viewer-m0`, then `9a64649b1` on 2026-11-06; `6dd95fe80` on `mcp-app-fold` on 2026-11-08. The sign-in probe ran from PR #4308 at `fc66f4285` |
 
 ### Approvals
 
@@ -465,6 +472,10 @@ hypothesis and conclusion get a card, and the router lines shrink to match.
 | `read_project_view`, first tap | No prompt |
 | `read_project_view`, next tap after "always allow" | Never asked |
 | `read_project_view`, first tap in a new task after "always allow" | Never asked, in any new task |
+| `show_project`, first call in each new chat, 2026-11-08 | Asked, at claude.ai and in Desktop Chat |
+| "Always allow" chosen at the prompt, Desktop Chat, 2026-11-08 (`record_read`) | Does not stick: asked again on the next two calls, and the connector's page still showed Needs approval |
+| "Always allow" set on the connector's page, Desktop Chat, 2026-11-08 (`record_read`, `record_search`) | No prompt, from the main thread and from an agent, in an open conversation, a new one and after restarting Desktop |
+| Bulk allow on the connector's page | One control per group: Interactive tools, Read-only tools and Other tools. None covers every tool, and App-only tools have none |
 
 ### Card renders
 
@@ -478,15 +489,16 @@ Claude Desktop was restarted after the connector was added, and read the table b
 | Connector, task with a folder on this Mac | Yes, after a ToolSearch load, on a project with one small document | `mcp__Genealogy_Viewer__show_project` |
 | Connector, task with no folder | Yes. **New** with no folder starts a Desktop Chat | `mcp__Genealogy_Viewer__show_project` |
 | Connector, a chat opened after a Cowork task, with no reconnect (`anthropics/claude-code` #103924) | Yes, in Desktop Chat and claude.ai | Not read: Cowork is not tested |
-| Connector, a chat that moved to a cloud session | | |
-| Connector, Claude mobile app (`anthropics/claude-ai-mcp` #1085) | | |
+| Connector, a chat that moved to a cloud session | No chat moved on 2026-11-08. An ordinary chat in Desktop or at claude.ai was a cloud session from its first call (`E=remote_cowork`, `T=cloud_default`), and an Incognito chat ran no shell. Cards drew in all three | `mcp__Genealogy_Research__show_project` |
+| Connector, Claude mobile app (`anthropics/claude-ai-mcp` #1085) | Yes, in the iPhone app 1.261104.19, and a tap on the card made a hidden call | `mcp__Genealogy_Research__show_project` |
+| Connector, claude.ai Incognito chat | Yes | `mcp__Genealogy_Research__show_project` |
 | Connector, after a ToolSearch load | Yes: `show_project` is deferred on all three surfaces | `mcp__Genealogy_Viewer__show_project` |
-| Connector, with the variant plugin | | |
-| Artifact (shows the page, not a card) | | — |
+| Connector, with the variant plugin | Yes, from "show me the project" in Desktop Chat | `mcp__Genealogy_Research__show_project` |
+| Artifact (shows the page, not a card) | Yes, in Desktop Chat and in Chrome at claude.ai | — |
 
 | You see | `resources/read` lines | It means |
 |---|---|---|
-| Card | One per mount | The route works. |
+| Card | One for the first card; none when the app drew it from its cached page | The route works. |
 | Plain tool row | None | The page found no connector for the row. Restart Claude Desktop and retry. |
 | Plain tool row after a restart | None | The page refused the row. Run the same line in a task with no folder, then with another MCP App connector. |
 | Empty frame or error | None | The read failed before our server. |
@@ -503,7 +515,8 @@ resource itself.
 |---|---|---|
 | Connector | `Anthropic/ClaudeAI` 1.0.0 at connect; `claude-code` 2.1.318 when the Cowork task started | `io.modelcontextprotocol/ui` from the first; none from the second, and the card still rendered |
 | Connector, 2026-11-06 | `claude-code` 2.1.319-ccs, about 1.5 s before each conversation's first tool call, on all three surfaces. On 2026-11-05 a chat's calls had no such line | `io.modelcontextprotocol/ui` |
-| Artifact | | |
+| Connector, 2026-11-08 | `claude-code` 2.1.320-ccs in each Desktop Chat conversation, on this server and on the sign-in probe. An ordinary claude.ai chat also opened a client of its own, version not read. An Incognito chat opened none: its calls ran on a session already open | `io.modelcontextprotocol/ui`, read in Desktop Chat |
+| Artifact | `Claude` 1.0, at the page's first call | None |
 
 ### What the page sees
 
@@ -513,22 +526,29 @@ card that reports `window.claude.use` as a function would boot on the wrong host
 | Route | `typeof window.claude` | `typeof window.claude?.use` | `window.parent === window` |
 |---|---|---|---|
 | Connector | `undefined` | `undefined` | `false` |
-| Artifact | | | |
+| Artifact | `object` | `function` | `false` |
 
 ### Tools on each surface
 
-**Decides:** what research a chat user can get. Read from the model's own list on one
-account with the plugin installed. No agent was spawned, and this says nothing about the
-hook, so the last two rows stay open.
+**Decides:** what research a chat user can get. The first four rows are the model's own
+list on one account with the plugin installed. The last two were measured on the sign-in
+probe on 2026-11-08: a plugin agent's reply ends with a heading only its instructions
+hold, and the hook binds when the main thread's `record_search` is refused and never
+reaches the probe. An ordinary chat on either surface ran as a cloud session with the
+account's plugins synced from claude.ai. An Incognito chat is a plain chat.
 
-| | Desktop Chat | claude.ai | Cowork task |
-|---|---|---|---|
-| `Agent`, `Bash` and `Skill` | Yes | Yes | Yes |
-| The `genealogy-research:research` skill | Yes | Yes | Yes |
-| `show_project` | Deferred | Deferred | Deferred |
-| `read_project_view` | Not listed | Not listed | Not listed |
-| A plugin agent spawns | | | — |
-| The plugin's hook binds | | | — |
+| | Desktop Chat | claude.ai | claude.ai Incognito | Cowork task |
+|---|---|---|---|---|
+| `Agent`, `Bash` and `Skill` | Yes | Yes | `Skill` only | Yes |
+| The `genealogy-research:research` skill | Yes | Yes | Yes | Yes |
+| `show_project` | Deferred | Deferred | Not read | Deferred |
+| `read_project_view` | Not listed | Not listed | Not read | Not listed |
+| A plugin agent spawns | Yes | Yes, 3 of 3 on the first message | No: no `Agent` tool | — |
+| The plugin's hook binds | Yes | Yes | No: `record_search` reached the probe twice | — |
+
+With the skill and no agent, an Incognito chat declined "Research the parents of …",
+saying its research agents are not available there, and answered a request for a plan
+from the main thread, with nothing saved.
 
 ### Fullscreen
 
@@ -553,8 +573,8 @@ line.
 
 | | Answer |
 |---|---|
-| "where does the research stand?" calls `show_project` | |
-| "show me the project" calls `show_project` | |
+| "where does the research stand?" calls `show_project` | No, in Desktop Chat. Claude called `project_list` and `project_context` and answered in one paragraph. The research skill never loaded, so the line went unread |
+| "show me the project" calls `show_project` | Yes, in Desktop Chat, after `project_list` and with no research skill loaded: the tool's own description was enough |
 
 ### What the model receives
 
@@ -564,6 +584,7 @@ line.
 |---|---|
 | Plain call | `CANARY-CONTENT-K7Q2` only, on all three surfaces, from the replies to the plain and `pad` calls |
 | Call with `structuredCanary: true` | `CANARY-CONTENT-K7Q2` only, on all three surfaces. The result carried 80 more bytes |
+| The server's `instructions` (`CANARY-INSTRUCTIONS-P3V8`), 2026-11-08 | None before a tool call, at claude.ai, in Incognito and in Desktop Chat; the model quoted them once tool calls had run, on all three. In Incognito the host attached them to the conversation's first tool result, marked as written by the server, and the model once withheld them there as embedded text |
 
 ### Card receives `_meta`
 
@@ -584,14 +605,14 @@ of the largest project's research.json, `document` gains paging.
 
 | Rung | Mount, connector | Hidden call, connector | Hidden call, artifact |
 |---|---|---|---|
-| 400k characters | — | Whole, 699,798 bytes, 2.0 to 7.1 s | |
+| 400k characters | — | Whole, 699,798 bytes, 2.0 to 7.1 s | Whole, 699,807 bytes, 6.5 s, in Desktop Chat |
 | 500k characters | Arrives, 799,947 bytes, on all three surfaces | — | — |
 | 700k characters | Arrives, 999,947 bytes, on all three surfaces | — | — |
-| 1M characters | `_meta` dropped at 1,299,948 bytes, on all three surfaces | Whole, 1,299,798 bytes, 19.5 s, in Cowork | |
-| 1.3M characters | `_meta` dropped at 1,599,948 bytes, on all three surfaces | Whole, 1,599,798 bytes, 14.5 s, in Cowork | |
-| 2M characters | — | Whole, 2,299,798 bytes: 8.0 s in Cowork, 3.1 s on claude.ai, 3.8 s in Desktop Chat | |
-| Largest `resultBytes` accepted | 999,947 | 2,299,798 so far, on all three surfaces | |
-| What happens past it | The host drops `_meta` with no error, and the result's keys are `content, isError`. The card's one fallback read fills it, 2 to 3 s later. Desktop Chat once took 20.8 s, at 1,599,948 bytes. The model is told nothing | Not reached: 2M was the top rung | |
+| 1M characters | `_meta` dropped at 1,299,948 bytes, on all three surfaces | Whole, 1,299,798 bytes, 19.5 s, in Cowork | Whole, 1,299,806 bytes, 2.1 s |
+| 1.3M characters | `_meta` dropped at 1,599,948 bytes, on all three surfaces | Whole, 1,599,798 bytes, 14.5 s, in Cowork | Whole, 1,599,806 bytes, 2.3 s |
+| 2M characters | — | Whole, 2,299,798 bytes: 8.0 s in Cowork, 3.1 s on claude.ai, 3.8 s in Desktop Chat | Whole, 2,299,806 bytes, 28.5 s |
+| Largest `resultBytes` accepted | 999,947 | 2,299,798 so far, on all three surfaces | 2,299,806 |
+| What happens past it | The host drops `_meta` with no error, and the result's keys are `content, isError`. The card's one fallback read fills it, 2 to 3 s later. Desktop Chat once took 20.8 s, at 1,599,948 bytes. The model is told nothing | Not reached: 2M was the top rung | Not reached: 2M was the top rung |
 
 ### Image
 
@@ -622,11 +643,14 @@ the sign-in probe with the stub card: a project path picks the refusal, and the 
 
 | | 400 bad path | 403 not yours | 503 unavailable |
 |---|---|---|---|
-| `show_project`: what the researcher sees | | | |
-| `show_project`: a card draws | | | |
-| `show_project`: what the model does next | | | |
-| Hidden call: what the card shows | | | |
-| The connector still works afterwards, with no new sign-in | | | |
+| `show_project`: what the researcher sees | A failed tool row carrying our message, "projectPath must be /proj_ followed by 16 lowercase hex characters" | A failed row with the host's text instead of ours: "MCP server returned 403 Forbidden. The request may have been blocked by a firewall or security service." | A failed row with only the host's "Error POSTing to endpoint: Service Unavailable" |
+| `show_project`: a card draws | No. A frame shows for about a second or less, then the failed row replaces it | No, the same | No, the same |
+| `show_project`: what the model does next | Quotes the error and explains the path's format. No retry | Quotes it and says the connector refused the call; in Desktop Chat it guessed at a sign-in, permission or network block. No retry | Quotes it and calls it an outage on the server's side, not a missing project. No retry |
+| Hidden call: what the card shows | A tool error carrying our message | A rejected call, `-32603`, with the host's `permission_error` text (`mcp_request_blocked`) | A rejected call, `-32603`, with our message, "Project authorization is unavailable.", inside the host's text |
+| The connector still works afterwards, with no new sign-in | Yes | Yes | Yes |
+
+Read on 2026-11-08, the same at claude.ai and in Desktop Chat, on one token throughout.
+Calls after the 403 worked with no reconnect.
 
 ### `ui/update-model-context`
 
@@ -644,7 +668,7 @@ holding two copies of every tool, as "Local testing" asks.
 
 | | Answer |
 |---|---|
-| A switch exists, and it holds for one conversation only | |
+| A switch exists, and it holds for one conversation only | A switch exists in Desktop Chat: the message box's `+`, then Connectors, one toggle per connector. It does not hold for one conversation: the connector stays off in every new conversation until switched back on. In the conversation where it was switched off, a tool already listed was removed |
 
 ### `AskUserQuestion`
 
@@ -652,8 +676,8 @@ holding two copies of every tool, as "Local testing" asks.
 
 | | Answer |
 |---|---|
-| How named options show | |
-| The chosen text comes back as the researcher's answer | |
+| How named options show | A numbered list to click, then a "Something else" line for the researcher's own words and a Skip button, in Desktop Chat. Only labels were tested, not descriptions |
+| The chosen text comes back as the researcher's answer | Yes, word for word: `"Which of these should we do next?"="Search the census"`, inside "Your questions have been answered: … You can now continue with these answers in mind." |
 
 ### Artifact
 
@@ -664,10 +688,10 @@ decision after M0.
 
 | | Answer |
 |---|---|
-| Opens beside the conversation | |
-| Reaches a `visibility: ["app"]` tool | |
-| Its `payload` carries a whole document | |
-| Loads an image from `/img/<token>` | |
+| Opens beside the conversation | Yes, in a pane at the right of a wide Desktop window; a narrow window shows it in place of the conversation. Desktop Chat published the page itself in two approved steps, publish and then declare capabilities. Told to open it, it opened it in Chrome through Claude in Chrome (two approvals) rather than beside the conversation |
+| Reaches a `visibility: ["app"]` tool | Yes, in Chrome and in Desktop, after one consent ("This artifact uses connectors": Genealogy Viewer, "Can only read", 1 tool) that carried over between them. Before the capability was declared, `use("mcp")` resolved `null` |
+| Its `payload` carries a whole document | Yes: 5 sources and 1 question, 299,797 bytes |
+| Loads an image from `/img/<token>` | No. The artifact page's CSP sets `img-src` to its own frame origin, `data:` and `blob:`, so the request never leaves the page. Chrome's console names the CSP, so it is not the tailnet |
 
 ### `projectPath`
 
@@ -678,5 +702,5 @@ log lines.
 
 | | Answer |
 |---|---|
-| The model passes the `/proj_` value it got from `project_list` | |
-| The card passes the same value to `read_project_view` | |
+| The model passes the `/proj_` value it got from `project_list` | Yes, at claude.ai and in Desktop Chat |
+| The card passes the same value to `read_project_view` | Yes, at claude.ai and in Desktop Chat |

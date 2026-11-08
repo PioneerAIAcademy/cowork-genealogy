@@ -1,7 +1,7 @@
 # MCP App viewer: research cards and a case file inside Claude
 
-**Status:** Adopted. M0 is built, and `docs/mcp-app-host-probe.md` holds the answers still
-to fill. The fold's skeleton is built and tested on the connector path, but no card has
+**Status:** Adopted. M0 is closed: every row of `docs/mcp-app-host-probe.md`'s record has
+an answer (2026-11-08). The fold's skeleton is built and tested on the connector path, but no card has
 drawn through the door yet, so the fold is not done (see "The fold"). The demo scope is
 not built.
 **Owner:** the MCP App session, full-time. A second session, remote-server, owns the
@@ -448,7 +448,9 @@ One line per stopping point in `skills/research/SKILL.md`: after the step report
 call `show_project` with the step and the `questionId` it worked on, then the reply.
 The tool is found by bare name
 (`+show_project` in ToolSearch). The bounded "where the project stands" row gains
-the same call with `show: latest`, after its paragraph.
+the same call with `show: latest`, after its paragraph. M0 found that a status
+question never loads the skill, so nothing reads that row's line until one does
+(the record's **Variant line**).
 
 - **Where they live:** on main, through issue #4297, which merges with the MCP App work
   before launch in one paid `research` eval run. Invited users get the zip
@@ -482,7 +484,8 @@ before pushing, with no tunnel and no connector.
 
 - **The research:** `make cowork-install` builds the `.mcpb` and the plugin zip
   from the branch, and they install as they do today. Turn the organization's
-  connector off for that task, so Cowork does not hold two copies of every tool.
+  connector off while testing, so Cowork does not hold two copies of every tool, and
+  switch it back on afterwards: it stays off in every new conversation until then.
   The `.mcpb` lists neither tool and carries no page, because both are for the
   connector only.
 - **The cards and the case file:** `make viewer PROJECT=<folder>` builds the page,
@@ -691,7 +694,7 @@ and its page image with transcription and findings, open in the pane.
 
 - **The demo script,** in Desktop Chat, because Chrome on a tailnet
   device blocks page images, signed in through the `Genealogy Research` connector, on the
-  demo project: "Where does the research stand?" → the conclusion
+  demo project: "Show me the project" → the conclusion
   card with its recorded doubt → open the case file → the evidence grid → click an
   indexed record's column → the search that returned it, in the pane → click the
   browsed record's column → its page image beside the transcription → Compare with
@@ -798,7 +801,8 @@ a signed image link serves a page from MinIO. Sign-in itself needs issues #3992 
   query.
 - A tool error reaches the card as text. A 401 stays HTTP, because that is what makes
   Claude refresh. Whether the door's 400, 403 and 503 become tool errors on the connector
-  path waits on what the stub card shows.
+  path is now due: the record's **Door refusals** shows our text survives a 400 and is
+  replaced on a 403 and a 503.
 - Later, `show_project`'s `_meta` carries `session: {signedIn, url}` for a sign-in
   banner.
 
