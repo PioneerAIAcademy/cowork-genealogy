@@ -448,8 +448,9 @@ carries `matchRank`, `searchRank`, `matchScore`, and where available
 `candidateFactCount`, `birthYearConflict` with `birthYearGap` when the
 birth years differ by more than two, and the `attachedTo*` flags — and the
 list is ordered **best first**. `ranked` carries metadata only (plus
-`subjectTooThin: true` when the subject lacks both a narrow date and a named
-relative — see `rank-search-matches-tool-spec.md` § `subjectTooThin`); it has
+`subjectTooThin: true` and its `subjectTooThinNote` when the subject lacks both a
+narrow date and a named relative — see `rank-search-matches-tool-spec.md` §
+`subjectTooThin`); it has
 no row list of its own. There is one set of rows, never two.
 
 `searchRank` is what keeps that re-ordering **auditable rather than lossy**.

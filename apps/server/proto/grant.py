@@ -104,8 +104,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--port", type=int, default=DEFAULT_PORT, help="the registered redirect's port")
     p.add_argument("--no-browser", action="store_true", help="print the sign-in URL without opening it")
     args = p.parse_args(argv)
-    # redirect_uri() is PUBLIC_URL + /callback; it must be the dev key's registration.
+    # redirect_uri() is PUBLIC_URL + /callback; it must be the dev key's registration, so a
+    # shell's FS_REDIRECT_URI must not move it (#3992). The grant is for the chat-on
+    # refresher, so it asks for offline_access whatever the shell's GENEALOGY_CHAT says.
     os.environ["PUBLIC_URL"] = f"http://127.0.0.1:{args.port}"
+    os.environ.pop("FS_REDIRECT_URI", None)
+    os.environ["GENEALOGY_CHAT"] = "true"
     from web import auth
     from web.app import PgStore
 

@@ -1,0 +1,50 @@
+{
+  "tool": "rank_search_matches",
+  "description": "Ranking of the two Milan Ugo Stella hits against I1 for ut_search_records_ugo, with subjectTooThin: true and its note -- I1 is a name and nothing else. Every matchScore is near zero (top 0.023, the score the session recorded). Folded into record_search's `ranked` by the mock when the call names subjectId. Reconstructed from the Ugo Stella alpha feedback as issue #2213 records it (bundle feedback-2026-09-22T15-34-02-839294Z.zip): the record's ids, collection id and the groom are hand-authored.",
+  "args": {
+    "subjectId": "~I1"
+  },
+  "response": {
+    "subjectId": "I1",
+    "scoredCount": 2,
+    "returnedCount": 2,
+    "scoringErrors": 0,
+    "scoreLogError": null,
+    "subjectTooThin": true,
+    "subjectTooThinNote": "Nothing in the project separates this person from a namesake: no date narrower than a year and no named spouse, parent or child. Every row is `needs-review — possible namesake`, whatever its score and however well it agrees. Report no row's family as this person's. Name what would settle identity (a precise date, or a named spouse, parent or child) and the record most likely to state it.",
+    "matches": [
+      {
+        "matchRank": 1,
+        "searchRank": 1,
+        "recordId": "6X2K-UGO1",
+        "primaryId": "P1",
+        "personName": "Ugo Stella",
+        "sex": "Male",
+        "birthDate": null,
+        "birthPlace": null,
+        "collectionTitle": "Italy, Milano, Milano, Civil Registration (State Archive), 1866-1942",
+        "candidateFactCount": 1,
+        "recordArk": "https://www.familysearch.org/ark:/61903/1:1:6X2K-UGO1",
+        "matchScore": 0.023,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      },
+      {
+        "matchRank": 2,
+        "searchRank": 2,
+        "recordId": "6X2K-UGO2",
+        "primaryId": "P1",
+        "personName": "Ugo Stella",
+        "sex": "Male",
+        "birthDate": null,
+        "birthPlace": null,
+        "collectionTitle": "Italy, Milano, Milano, Civil Registration (State Archive), 1866-1942",
+        "candidateFactCount": 1,
+        "recordArk": "https://www.familysearch.org/ark:/61903/1:1:6X2K-UGO2",
+        "matchScore": 0.009,
+        "attachedToSubject": false,
+        "attachedToOther": false
+      }
+    ]
+  }
+}
