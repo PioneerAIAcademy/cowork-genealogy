@@ -70,37 +70,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly reported that both project files passed schema validation with no errors or warnings. The validator tool returned valid: true, errors: [], warnings: [], and the skill accurately conveyed this result. The skill did not fabricate any errors or mischaracterize the validation outcome. The log entry was correctly created with outcome 'positive' as appropriate for a clean validation pass."
+            "rationale": "The skill correctly reported that both project files passed all schema validation checks. The tool returned valid=true, errors=[], warnings=[], and the skill accurately relayed this. It did not falsely flag the ev_001 evaluations entry, which is legitimate per the per-test context. The log entry (log_006) was correctly appended. No fabricated claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill fully addressed the user's request to validate project files for schema compliance. It reported on both research.json and tree.gedcomx.json, confirmed all checks passed (required fields, enum values, ID-prefix conventions, cross-file references), and explicitly stated no errors or warnings were found. The response is complete and requires no additional validation work."
+            "rationale": "The skill addressed everything required: it called validate_research_schema, reported the clean result for both research.json and tree.gedcomx.json, noted no errors or warnings, and appended a log entry. The per-test context confirms 'reporting both project files are valid is the correct and complete response,' which the skill did."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both MCP tool calls used correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call properly structured the log entry with tool='validate_schema', outcome='positive', and accurate notes summarizing the validation results. No fixture_not_found errors occurred; both calls matched.kind='live'. Arguments were semantically correct and complete."
+            "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops entry with tool='validate_schema', outcome='positive', and appropriate notes. Both calls matched 'live' (not fixture_not_found). expected_args was null for both, meaning no specific arg shape was mandated beyond what was used."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no errors (valid: true, errors: []). This dimension applies only when errors are present and require explanation. The clean-pass scenario does not trigger this dimension."
+            "rationale": "The validator returned no errors (valid=true, errors=[]). This is a clean-pass test, so there are no errors to explain. N/A per rubric instructions."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no errors were reported by the validator, so there are no fixes to suggest. This dimension applies only when errors are present. The clean-pass scenario does not trigger this dimension."
+            "rationale": "No errors were reported by the validator. This is a clean-pass test with nothing to fix. N/A per rubric instructions."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill correctly stayed within its lane: it reported the validation results and did not edit any project files to 'fix' errors (there were none to fix). The only file change was the log entry appended via research_log_append, which is the correct and expected behavior for this skill. The skill did not substitute schema validation for other checks or venture into logical-impossibility or GPS-quality questions. Scope was properly maintained."
+            "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix any errors (the only file change was appending a log entry, which is the expected behavior). It correctly reported the clean validation result and stopped, without volunteering off-scope opinions or blurring into other skill domains."
           }
         ],
         "review_dimensions": [
@@ -108,37 +108,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly reported that both project files passed schema validation with no errors or warnings. The validator tool returned valid: true, errors: [], warnings: [], and the skill accurately conveyed this result. The skill did not fabricate any errors or mischaracterize the validation outcome. The log entry was correctly created with outcome 'positive' as appropriate for a clean validation pass."
+            "rationale": "The skill correctly reported that both project files passed all schema validation checks. The tool returned valid=true, errors=[], warnings=[], and the skill accurately relayed this. It did not falsely flag the ev_001 evaluations entry, which is legitimate per the per-test context. The log entry (log_006) was correctly appended. No fabricated claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill fully addressed the user's request to validate project files for schema compliance. It reported on both research.json and tree.gedcomx.json, confirmed all checks passed (required fields, enum values, ID-prefix conventions, cross-file references), and explicitly stated no errors or warnings were found. The response is complete and requires no additional validation work."
+            "rationale": "The skill addressed everything required: it called validate_research_schema, reported the clean result for both research.json and tree.gedcomx.json, noted no errors or warnings, and appended a log entry. The per-test context confirms 'reporting both project files are valid is the correct and complete response,' which the skill did."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both MCP tool calls used correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call properly structured the log entry with tool='validate_schema', outcome='positive', and accurate notes summarizing the validation results. No fixture_not_found errors occurred; both calls matched.kind='live'. Arguments were semantically correct and complete."
+            "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops entry with tool='validate_schema', outcome='positive', and appropriate notes. Both calls matched 'live' (not fixture_not_found). expected_args was null for both, meaning no specific arg shape was mandated beyond what was used."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no errors (valid: true, errors: []). This dimension applies only when errors are present and require explanation. The clean-pass scenario does not trigger this dimension."
+            "rationale": "The validator returned no errors (valid=true, errors=[]). This is a clean-pass test, so there are no errors to explain. N/A per rubric instructions."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no errors were reported by the validator, so there are no fixes to suggest. This dimension applies only when errors are present. The clean-pass scenario does not trigger this dimension."
+            "rationale": "No errors were reported by the validator. This is a clean-pass test with nothing to fix. N/A per rubric instructions."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill correctly stayed within its lane: it reported the validation results and did not edit any project files to 'fix' errors (there were none to fix). The only file change was the log entry appended via research_log_append, which is the correct and expected behavior for this skill. The skill did not substitute schema validation for other checks or venture into logical-impossibility or GPS-quality questions. Scope was properly maintained."
+            "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix any errors (the only file change was appending a log entry, which is the expected behavior). It correctly reported the clean validation result and stopped, without volunteering off-scope opinions or blurring into other skill domains."
           }
         ]
       },
@@ -551,45 +551,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly reported that both project files passed schema validation with no errors or warnings. The validator tool returned valid: true, errors: [], warnings: [], and the skill accurately conveyed this result. The skill did not fabricate any errors or mischaracterize the validation outcome. The log entry was correctly created with outcome 'positive' as appropriate for a clean validation pass."
+                "rationale": "The skill correctly reported that both project files passed all schema validation checks. The tool returned valid=true, errors=[], warnings=[], and the skill accurately relayed this. It did not falsely flag the ev_001 evaluations entry, which is legitimate per the per-test context. The log entry (log_006) was correctly appended. No fabricated claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill fully addressed the user's request to validate project files for schema compliance. It reported on both research.json and tree.gedcomx.json, confirmed all checks passed (required fields, enum values, ID-prefix conventions, cross-file references), and explicitly stated no errors or warnings were found. The response is complete and requires no additional validation work."
+                "rationale": "The skill addressed everything required: it called validate_research_schema, reported the clean result for both research.json and tree.gedcomx.json, noted no errors or warnings, and appended a log entry. The per-test context confirms 'reporting both project files are valid is the correct and complete response,' which the skill did."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both MCP tool calls used correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call properly structured the log entry with tool='validate_schema', outcome='positive', and accurate notes summarizing the validation results. No fixture_not_found errors occurred; both calls matched.kind='live'. Arguments were semantically correct and complete."
+                "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops entry with tool='validate_schema', outcome='positive', and appropriate notes. Both calls matched 'live' (not fixture_not_found). expected_args was null for both, meaning no specific arg shape was mandated beyond what was used."
               },
               {
                 "source": "rubric",
                 "name": "Tool-response interpretation & error explanation",
                 "score": null,
-                "rationale": "N/A \u2014 the validator returned no errors (valid: true, errors: []). This dimension applies only when errors are present and require explanation. The clean-pass scenario does not trigger this dimension."
+                "rationale": "The validator returned no errors (valid=true, errors=[]). This is a clean-pass test, so there are no errors to explain. N/A per rubric instructions."
               },
               {
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": null,
-                "rationale": "N/A \u2014 no errors were reported by the validator, so there are no fixes to suggest. This dimension applies only when errors are present. The clean-pass scenario does not trigger this dimension."
+                "rationale": "No errors were reported by the validator. This is a clean-pass test with nothing to fix. N/A per rubric instructions."
               },
               {
                 "source": "rubric",
                 "name": "No-edit discipline & scope adherence",
                 "score": 3,
-                "rationale": "The skill correctly stayed within its lane: it reported the validation results and did not edit any project files to 'fix' errors (there were none to fix). The only file change was the log entry appended via research_log_append, which is the correct and expected behavior for this skill. The skill did not substitute schema validation for other checks or venture into logical-impossibility or GPS-quality questions. Scope was properly maintained."
+                "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix any errors (the only file change was appending a log entry, which is the expected behavior). It correctly reported the clean validation result and stopped, without volunteering off-scope opinions or blurring into other skill domains."
               }
             ],
-            "judge_cost_usd": 0.0109721,
+            "judge_cost_usd": 0.031131,
             "duration_ms": 8891.67979999911,
             "error": null,
             "input_tokens": 7122,
-            "cached_input_tokens": 4451,
-            "output_tokens": 681
+            "cached_input_tokens": 0,
+            "output_tokens": 651
           },
           "started_at": 1793317011.3710241,
           "ended_at": 1793317058.3541014
@@ -615,37 +615,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified and reported the schema validation error: person_evidence[0]'s id 'x_001' should start with 'pe_'. The error was accurately surfaced with the specific field, value, and problem. The fix suggestion (rename to pe_001 and update references) is correct. The skill did not edit files to fix the error, only logged the validation report. The claim that tree.gedcomx.json had no errors is accurate per the validator response."
+            "rationale": "The skill correctly reported that validation FAILED, surfaced the exact error ('x_001' should start with 'pe_'), explained the ID-prefix convention, and suggested renaming to 'pe_001'. It did not claim the files were valid. The log entry was appended as log_006. No fabricated material; all claims are supported by the tool response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: it reported that validation failed (not claiming files are valid), surfaced the specific error with its location and value, explained the ID-prefix convention for person_evidence entries, and suggested a concrete fix. The response included both the detailed technical explanation and a plain-language summary for the researcher. All aspects of the validation result were covered."
+            "rationale": "The skill addressed everything required: it called validate_research_schema, reported the single error with its location (person_evidence[0]), explained the pe_ prefix convention, suggested a concrete fix, noted that cross-references should also be updated, confirmed tree.gedcomx.json passed, and logged the result. Nothing required by the per-test context was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The validate_research_schema call passed the correct projectPath argument. The research_log_append call correctly structured the log entry with tool name, query, outcome 'positive' (as instructed for error-path tests), resultsExamined count, and detailed notes explaining the error and fix. Both tool calls matched expected usage patterns and succeeded without validation errors."
+            "rationale": "Both tool calls used the correct projectPath. The validate_research_schema call matched 'live' (not fixture_not_found). The research_log_append call included correct ops with tool='validate_schema', outcome='positive', and a detailed notes field. expected_args was null for both calls, meaning no specific arg shape was mandated beyond what was used."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": 3,
-            "rationale": "The skill correctly interpreted the validator's error response and explained it clearly. It surfaced the concrete detail (person_evidence[0], id 'x_001') and explained in plain language what the problem means: person_evidence entries must use IDs starting with 'pe_', and this one violates that convention. The explanation goes beyond echoing the validator string to make the constraint and violation understandable to a researcher."
+            "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error (person_evidence[0], id 'x_001'), explained in plain language that person_evidence entries must use IDs starting with 'pe_', and did not merely echo the raw validator string \u2014 it added context about what the prefix convention means and why the current value is invalid."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": 3,
-            "rationale": "The skill provided a specific, correct remedy for the error: rename the id to a 'pe_' form, with 'pe_001' given as a concrete example. It also correctly noted that any other references to 'x_001' in the project must be updated to maintain resolution. This is actionable guidance that would actually resolve the schema violation."
+            "rationale": "The fix suggestion is concrete and correct: rename 'x_001' to a 'pe_' form such as 'pe_001', and update any other references to 'x_001' in the project so they still resolve. This is actionable and names the valid form explicitly."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill stayed within its lane: it reported the error and suggested a fix but did not edit research.json or tree.gedcomx.json to correct the problem. The only file change was the validate_schema log entry (log_006), which is the required reporting mechanism, not a fix. The skill did not substitute schema validation for other checks or blur scope into logical/GPS questions."
+            "rationale": "The skill made no edits to research.json to fix the error \u2014 its only write was the validate_schema log entry (log_006), which is the permitted write. It did not route to check-warnings or proof-conclusion, correctly treating the ID-prefix violation as a structural schema error it owns. Scope adherence is clean."
           }
         ],
         "review_dimensions": [
@@ -653,37 +653,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified and reported the schema validation error: person_evidence[0]'s id 'x_001' should start with 'pe_'. The error was accurately surfaced with the specific field, value, and problem. The fix suggestion (rename to pe_001 and update references) is correct. The skill did not edit files to fix the error, only logged the validation report. The claim that tree.gedcomx.json had no errors is accurate per the validator response."
+            "rationale": "The skill correctly reported that validation FAILED, surfaced the exact error ('x_001' should start with 'pe_'), explained the ID-prefix convention, and suggested renaming to 'pe_001'. It did not claim the files were valid. The log entry was appended as log_006. No fabricated material; all claims are supported by the tool response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: it reported that validation failed (not claiming files are valid), surfaced the specific error with its location and value, explained the ID-prefix convention for person_evidence entries, and suggested a concrete fix. The response included both the detailed technical explanation and a plain-language summary for the researcher. All aspects of the validation result were covered."
+            "rationale": "The skill addressed everything required: it called validate_research_schema, reported the single error with its location (person_evidence[0]), explained the pe_ prefix convention, suggested a concrete fix, noted that cross-references should also be updated, confirmed tree.gedcomx.json passed, and logged the result. Nothing required by the per-test context was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The validate_research_schema call passed the correct projectPath argument. The research_log_append call correctly structured the log entry with tool name, query, outcome 'positive' (as instructed for error-path tests), resultsExamined count, and detailed notes explaining the error and fix. Both tool calls matched expected usage patterns and succeeded without validation errors."
+            "rationale": "Both tool calls used the correct projectPath. The validate_research_schema call matched 'live' (not fixture_not_found). The research_log_append call included correct ops with tool='validate_schema', outcome='positive', and a detailed notes field. expected_args was null for both calls, meaning no specific arg shape was mandated beyond what was used."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": 3,
-            "rationale": "The skill correctly interpreted the validator's error response and explained it clearly. It surfaced the concrete detail (person_evidence[0], id 'x_001') and explained in plain language what the problem means: person_evidence entries must use IDs starting with 'pe_', and this one violates that convention. The explanation goes beyond echoing the validator string to make the constraint and violation understandable to a researcher."
+            "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error (person_evidence[0], id 'x_001'), explained in plain language that person_evidence entries must use IDs starting with 'pe_', and did not merely echo the raw validator string \u2014 it added context about what the prefix convention means and why the current value is invalid."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": 3,
-            "rationale": "The skill provided a specific, correct remedy for the error: rename the id to a 'pe_' form, with 'pe_001' given as a concrete example. It also correctly noted that any other references to 'x_001' in the project must be updated to maintain resolution. This is actionable guidance that would actually resolve the schema violation."
+            "rationale": "The fix suggestion is concrete and correct: rename 'x_001' to a 'pe_' form such as 'pe_001', and update any other references to 'x_001' in the project so they still resolve. This is actionable and names the valid form explicitly."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill stayed within its lane: it reported the error and suggested a fix but did not edit research.json or tree.gedcomx.json to correct the problem. The only file change was the validate_schema log entry (log_006), which is the required reporting mechanism, not a fix. The skill did not substitute schema validation for other checks or blur scope into logical/GPS questions."
+            "rationale": "The skill made no edits to research.json to fix the error \u2014 its only write was the validate_schema log entry (log_006), which is the permitted write. It did not route to check-warnings or proof-conclusion, correctly treating the ID-prefix violation as a structural schema error it owns. Scope adherence is clean."
           }
         ]
       },
@@ -1100,45 +1100,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified and reported the schema validation error: person_evidence[0]'s id 'x_001' should start with 'pe_'. The error was accurately surfaced with the specific field, value, and problem. The fix suggestion (rename to pe_001 and update references) is correct. The skill did not edit files to fix the error, only logged the validation report. The claim that tree.gedcomx.json had no errors is accurate per the validator response."
+                "rationale": "The skill correctly reported that validation FAILED, surfaced the exact error ('x_001' should start with 'pe_'), explained the ID-prefix convention, and suggested renaming to 'pe_001'. It did not claim the files were valid. The log entry was appended as log_006. No fabricated material; all claims are supported by the tool response."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: it reported that validation failed (not claiming files are valid), surfaced the specific error with its location and value, explained the ID-prefix convention for person_evidence entries, and suggested a concrete fix. The response included both the detailed technical explanation and a plain-language summary for the researcher. All aspects of the validation result were covered."
+                "rationale": "The skill addressed everything required: it called validate_research_schema, reported the single error with its location (person_evidence[0]), explained the pe_ prefix convention, suggested a concrete fix, noted that cross-references should also be updated, confirmed tree.gedcomx.json passed, and logged the result. Nothing required by the per-test context was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The validate_research_schema call passed the correct projectPath argument. The research_log_append call correctly structured the log entry with tool name, query, outcome 'positive' (as instructed for error-path tests), resultsExamined count, and detailed notes explaining the error and fix. Both tool calls matched expected usage patterns and succeeded without validation errors."
+                "rationale": "Both tool calls used the correct projectPath. The validate_research_schema call matched 'live' (not fixture_not_found). The research_log_append call included correct ops with tool='validate_schema', outcome='positive', and a detailed notes field. expected_args was null for both calls, meaning no specific arg shape was mandated beyond what was used."
               },
               {
                 "source": "rubric",
                 "name": "Tool-response interpretation & error explanation",
                 "score": 3,
-                "rationale": "The skill correctly interpreted the validator's error response and explained it clearly. It surfaced the concrete detail (person_evidence[0], id 'x_001') and explained in plain language what the problem means: person_evidence entries must use IDs starting with 'pe_', and this one violates that convention. The explanation goes beyond echoing the validator string to make the constraint and violation understandable to a researcher."
+                "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error (person_evidence[0], id 'x_001'), explained in plain language that person_evidence entries must use IDs starting with 'pe_', and did not merely echo the raw validator string \u2014 it added context about what the prefix convention means and why the current value is invalid."
               },
               {
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": 3,
-                "rationale": "The skill provided a specific, correct remedy for the error: rename the id to a 'pe_' form, with 'pe_001' given as a concrete example. It also correctly noted that any other references to 'x_001' in the project must be updated to maintain resolution. This is actionable guidance that would actually resolve the schema violation."
+                "rationale": "The fix suggestion is concrete and correct: rename 'x_001' to a 'pe_' form such as 'pe_001', and update any other references to 'x_001' in the project so they still resolve. This is actionable and names the valid form explicitly."
               },
               {
                 "source": "rubric",
                 "name": "No-edit discipline & scope adherence",
                 "score": 3,
-                "rationale": "The skill stayed within its lane: it reported the error and suggested a fix but did not edit research.json or tree.gedcomx.json to correct the problem. The only file change was the validate_schema log entry (log_006), which is the required reporting mechanism, not a fix. The skill did not substitute schema validation for other checks or blur scope into logical/GPS questions."
+                "rationale": "The skill made no edits to research.json to fix the error \u2014 its only write was the validate_schema log entry (log_006), which is the permitted write. It did not route to check-warnings or proof-conclusion, correctly treating the ID-prefix violation as a structural schema error it owns. Scope adherence is clean."
               }
             ],
-            "judge_cost_usd": 0.0117351,
+            "judge_cost_usd": 0.034308599999999995,
             "duration_ms": 10073.372699989704,
             "error": null,
-            "input_tokens": 7380,
-            "cached_input_tokens": 4451,
-            "output_tokens": 782
+            "input_tokens": 7361,
+            "cached_input_tokens": 4452,
+            "output_tokens": 726
           },
           "started_at": 1793316969.9771898,
           "ended_at": 1793317011.818191
@@ -1153,48 +1153,48 @@
       "expected_outcome": "pass",
       "scenario": "mid-research-flynn-bad-sidecar",
       "mcp_fixtures": [],
-      "outcome": "pass",
+      "outcome": "partial",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
-          "pass"
+          "partial"
         ],
         "aggregated_dimensions": [
           {
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified and reported the schema validation error: the results/log_001.json sidecar declares returned_count of 5 but contains only 2 actual results. The explanation accurately describes the truncation issue and its likely cause. The skill did not claim the files were valid, correctly reported the error as a failure, and did not edit files to mask the problem. All factual claims are supported by the validator response."
+            "rationale": "The skill correctly reported that validation FAILED with 1 error. It accurately surfaced the specific error: results/log_001.json has returned_count=5 but only 2 results in the payload. The tool response confirms this exact error. The skill did not claim files were valid, did not fabricate any information, and correctly noted that tree.gedcomx.json and research.json passed other checks. The log entry was appended as log_006 with outcome 'positive' (correct per instructions). No edits were made to fix the error."
           },
           {
             "source": "base",
             "name": "Completeness",
-            "score": 3,
-            "rationale": "The skill addressed all required elements: reported validation failure status, surfaced the specific error with concrete details (object, field, declared vs. actual values), explained the meaning of the sidecar mismatch, suggested a concrete fix (restore from original or re-run), and confirmed that tree.gedcomx.json and research.json passed. The log entry was created as required. No required work was omitted."
+            "score": 2,
+            "rationale": "The skill addressed the main requirements: reported validation failure, surfaced the specific error with field/value detail, and suggested a fix. However, the per-test context requires explaining what a results sidecar IS (the saved tool-response file a log entry points to via results_ref) and why the count must match the stored results. The skill's explanation ('This usually means the payload was cut short or the file was edited by hand') touches on the why but does not explain what a results sidecar is or the results_ref mechanism. This is a concrete omission of a required explanatory element."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both MCP calls used correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call correctly structured the log entry with tool='validate_schema', outcome='positive' (as instructed for reporting runs), and comprehensive notes documenting the error, explanation, and fix suggestion. No critical arguments were wrong; no fixture_not_found errors occurred."
+            "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops entry with tool='validate_schema', outcome='positive', and detailed notes. Both calls matched 'live' (not fixture_not_found). Expected_args were null for both calls, meaning no specific arg shape was mandated beyond what was used."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": 3,
-            "rationale": "The skill correctly interpreted the validator's error response and explained it in plain language. It identified the specific object (results/log_001.json), the specific field (returned_count), the concrete values (5 declared vs. 2 actual), and explained the meaning: the sidecar indicates 5 results were returned but only 2 are stored, suggesting truncation. The explanation goes beyond echoing the validator string to clarify what a results sidecar is and why the mismatch matters."
+            "rationale": "The skill correctly interpreted the validator response. It surfaced the specific error with concrete detail: the object (results/log_001.json), the field (returned_count), the declared value (5) vs actual results length (2). It explained in plain language that the sidecar says 5 results were returned but only 2 are present, and that this usually means the payload was cut short or the file was edited by hand. This goes beyond merely echoing the raw validator string."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": 3,
-            "rationale": "The skill provided a specific, correct remedy: restore results/log_001.json from the original search output to include all 5 results, or re-run the search if the original is unavailable. Critically, it advised against manually changing returned_count to 2, explaining that would hide the truncation. The fix directly addresses the root cause and is actionable by the researcher."
+            "rationale": "The skill provided a specific, actionable fix: restore results/log_001.json from the original search output so it contains all 5 results, with the explicit warning not to change returned_count to 2 by hand (which would hide truncation). It also offered an alternative: if the original output is gone, re-run the search and log a fresh entry. These are concrete, correct remedies that a researcher could act on."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill stayed within its lane: it reported the error and suggested a fix without editing research.json, tree.gedcomx.json, or the sidecar file itself. The only write was the validate_schema log entry (log_006), which is the required reporting mechanism, not a file edit to mask the error. The skill did not route to check-warnings or proof-conclusion; sidecar integrity is correctly owned by validate-schema."
+            "rationale": "The skill made no edits to research.json, tree.gedcomx.json, or the sidecar to fix the error. Its only write was the validate_schema log entry (log_006), which is the permitted action. It did not route to check-warnings or proof-conclusion. The file changes summary confirms only a log entry was added. The skill stayed entirely within its lane."
           }
         ],
         "review_dimensions": [
@@ -1202,37 +1202,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified and reported the schema validation error: the results/log_001.json sidecar declares returned_count of 5 but contains only 2 actual results. The explanation accurately describes the truncation issue and its likely cause. The skill did not claim the files were valid, correctly reported the error as a failure, and did not edit files to mask the problem. All factual claims are supported by the validator response."
+            "rationale": "The skill correctly reported that validation FAILED with 1 error. It accurately surfaced the specific error: results/log_001.json has returned_count=5 but only 2 results in the payload. The tool response confirms this exact error. The skill did not claim files were valid, did not fabricate any information, and correctly noted that tree.gedcomx.json and research.json passed other checks. The log entry was appended as log_006 with outcome 'positive' (correct per instructions). No edits were made to fix the error."
           },
           {
             "source": "base",
             "name": "Completeness",
-            "score": 3,
-            "rationale": "The skill addressed all required elements: reported validation failure status, surfaced the specific error with concrete details (object, field, declared vs. actual values), explained the meaning of the sidecar mismatch, suggested a concrete fix (restore from original or re-run), and confirmed that tree.gedcomx.json and research.json passed. The log entry was created as required. No required work was omitted."
+            "score": 2,
+            "rationale": "The skill addressed the main requirements: reported validation failure, surfaced the specific error with field/value detail, and suggested a fix. However, the per-test context requires explaining what a results sidecar IS (the saved tool-response file a log entry points to via results_ref) and why the count must match the stored results. The skill's explanation ('This usually means the payload was cut short or the file was edited by hand') touches on the why but does not explain what a results sidecar is or the results_ref mechanism. This is a concrete omission of a required explanatory element."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both MCP calls used correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call correctly structured the log entry with tool='validate_schema', outcome='positive' (as instructed for reporting runs), and comprehensive notes documenting the error, explanation, and fix suggestion. No critical arguments were wrong; no fixture_not_found errors occurred."
+            "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops entry with tool='validate_schema', outcome='positive', and detailed notes. Both calls matched 'live' (not fixture_not_found). Expected_args were null for both calls, meaning no specific arg shape was mandated beyond what was used."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": 3,
-            "rationale": "The skill correctly interpreted the validator's error response and explained it in plain language. It identified the specific object (results/log_001.json), the specific field (returned_count), the concrete values (5 declared vs. 2 actual), and explained the meaning: the sidecar indicates 5 results were returned but only 2 are stored, suggesting truncation. The explanation goes beyond echoing the validator string to clarify what a results sidecar is and why the mismatch matters."
+            "rationale": "The skill correctly interpreted the validator response. It surfaced the specific error with concrete detail: the object (results/log_001.json), the field (returned_count), the declared value (5) vs actual results length (2). It explained in plain language that the sidecar says 5 results were returned but only 2 are present, and that this usually means the payload was cut short or the file was edited by hand. This goes beyond merely echoing the raw validator string."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": 3,
-            "rationale": "The skill provided a specific, correct remedy: restore results/log_001.json from the original search output to include all 5 results, or re-run the search if the original is unavailable. Critically, it advised against manually changing returned_count to 2, explaining that would hide the truncation. The fix directly addresses the root cause and is actionable by the researcher."
+            "rationale": "The skill provided a specific, actionable fix: restore results/log_001.json from the original search output so it contains all 5 results, with the explicit warning not to change returned_count to 2 by hand (which would hide truncation). It also offered an alternative: if the original output is gone, re-run the search and log a fresh entry. These are concrete, correct remedies that a researcher could act on."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill stayed within its lane: it reported the error and suggested a fix without editing research.json, tree.gedcomx.json, or the sidecar file itself. The only write was the validate_schema log entry (log_006), which is the required reporting mechanism, not a file edit to mask the error. The skill did not route to check-warnings or proof-conclusion; sidecar integrity is correctly owned by validate-schema."
+            "rationale": "The skill made no edits to research.json, tree.gedcomx.json, or the sidecar to fix the error. Its only write was the validate_schema log entry (log_006), which is the permitted action. It did not route to check-warnings or proof-conclusion. The file changes summary confirms only a log entry was added. The skill stayed entirely within its lane."
           }
         ]
       },
@@ -1257,7 +1257,7 @@
         {
           "run_index": 0,
           "run_id": "run_ut_validate_schema_009_2026-10-29_23-35-19_0",
-          "outcome": "pass",
+          "outcome": "partial",
           "aborted_reason": null,
           "error": null,
           "duration_ms": 38187.54800001625,
@@ -1649,45 +1649,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified and reported the schema validation error: the results/log_001.json sidecar declares returned_count of 5 but contains only 2 actual results. The explanation accurately describes the truncation issue and its likely cause. The skill did not claim the files were valid, correctly reported the error as a failure, and did not edit files to mask the problem. All factual claims are supported by the validator response."
+                "rationale": "The skill correctly reported that validation FAILED with 1 error. It accurately surfaced the specific error: results/log_001.json has returned_count=5 but only 2 results in the payload. The tool response confirms this exact error. The skill did not claim files were valid, did not fabricate any information, and correctly noted that tree.gedcomx.json and research.json passed other checks. The log entry was appended as log_006 with outcome 'positive' (correct per instructions). No edits were made to fix the error."
               },
               {
                 "source": "base",
                 "name": "Completeness",
-                "score": 3,
-                "rationale": "The skill addressed all required elements: reported validation failure status, surfaced the specific error with concrete details (object, field, declared vs. actual values), explained the meaning of the sidecar mismatch, suggested a concrete fix (restore from original or re-run), and confirmed that tree.gedcomx.json and research.json passed. The log entry was created as required. No required work was omitted."
+                "score": 2,
+                "rationale": "The skill addressed the main requirements: reported validation failure, surfaced the specific error with field/value detail, and suggested a fix. However, the per-test context requires explaining what a results sidecar IS (the saved tool-response file a log entry points to via results_ref) and why the count must match the stored results. The skill's explanation ('This usually means the payload was cut short or the file was edited by hand') touches on the why but does not explain what a results sidecar is or the results_ref mechanism. This is a concrete omission of a required explanatory element."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both MCP calls used correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call correctly structured the log entry with tool='validate_schema', outcome='positive' (as instructed for reporting runs), and comprehensive notes documenting the error, explanation, and fix suggestion. No critical arguments were wrong; no fixture_not_found errors occurred."
+                "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops entry with tool='validate_schema', outcome='positive', and detailed notes. Both calls matched 'live' (not fixture_not_found). Expected_args were null for both calls, meaning no specific arg shape was mandated beyond what was used."
               },
               {
                 "source": "rubric",
                 "name": "Tool-response interpretation & error explanation",
                 "score": 3,
-                "rationale": "The skill correctly interpreted the validator's error response and explained it in plain language. It identified the specific object (results/log_001.json), the specific field (returned_count), the concrete values (5 declared vs. 2 actual), and explained the meaning: the sidecar indicates 5 results were returned but only 2 are stored, suggesting truncation. The explanation goes beyond echoing the validator string to clarify what a results sidecar is and why the mismatch matters."
+                "rationale": "The skill correctly interpreted the validator response. It surfaced the specific error with concrete detail: the object (results/log_001.json), the field (returned_count), the declared value (5) vs actual results length (2). It explained in plain language that the sidecar says 5 results were returned but only 2 are present, and that this usually means the payload was cut short or the file was edited by hand. This goes beyond merely echoing the raw validator string."
               },
               {
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": 3,
-                "rationale": "The skill provided a specific, correct remedy: restore results/log_001.json from the original search output to include all 5 results, or re-run the search if the original is unavailable. Critically, it advised against manually changing returned_count to 2, explaining that would hide the truncation. The fix directly addresses the root cause and is actionable by the researcher."
+                "rationale": "The skill provided a specific, actionable fix: restore results/log_001.json from the original search output so it contains all 5 results, with the explicit warning not to change returned_count to 2 by hand (which would hide truncation). It also offered an alternative: if the original output is gone, re-run the search and log a fresh entry. These are concrete, correct remedies that a researcher could act on."
               },
               {
                 "source": "rubric",
                 "name": "No-edit discipline & scope adherence",
                 "score": 3,
-                "rationale": "The skill stayed within its lane: it reported the error and suggested a fix without editing research.json, tree.gedcomx.json, or the sidecar file itself. The only write was the validate_schema log entry (log_006), which is the required reporting mechanism, not a file edit to mask the error. The skill did not route to check-warnings or proof-conclusion; sidecar integrity is correctly owned by validate-schema."
+                "rationale": "The skill made no edits to research.json, tree.gedcomx.json, or the sidecar to fix the error. Its only write was the validate_schema log entry (log_006), which is the permitted action. It did not route to check-warnings or proof-conclusion. The file changes summary confirms only a log entry was added. The skill stayed entirely within its lane."
               }
             ],
-            "judge_cost_usd": 0.0122231,
+            "judge_cost_usd": 0.0378096,
             "duration_ms": 10537.834099988686,
             "error": null,
             "input_tokens": 7663,
-            "cached_input_tokens": 4451,
-            "output_tokens": 823
+            "cached_input_tokens": 4452,
+            "output_tokens": 899
           },
           "started_at": 1793317012.5517771,
           "ended_at": 1793317062.555618
@@ -1713,37 +1713,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified and reported the validation error: sources[0]'s gedcomx_source_description_id 'GX-MISSING' does not exist in tree.gedcomx.json sources. The error explanation is factually accurate\u2014this is a cross-file reference integrity failure. The skill did not edit files to mask the error, and the log entry was correctly appended with outcome 'positive' (recording that the check ran and produced a report, not that files are valid). All claims are supported by the validator response."
+            "rationale": "The skill correctly reported that validation FAILED with 1 error. It accurately identified the specific error: sources[0]'s gedcomx_source_description_id 'GX-MISSING' is not found in tree.gedcomx.json sources. The explanation of the cross-file link is accurate \u2014 research.json sources must point to existing source descriptions in tree.gedcomx.json. No fabricated material; all claims are supported by the tool response. The skill did not claim the files were valid."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: reported that validation failed (not claiming validity), surfaced the specific error with concrete detail (sources[0], field gedcomx_source_description_id, value 'GX-MISSING'), explained the cross-file link requirement, and suggested concrete fixes (correct the ID to an existing source description ID, or add the missing source to tree.gedcomx.json). No required work was omitted."
+            "rationale": "The skill addressed all required elements: it reported validation failure, surfaced the specific error (sources[0], field gedcomx_source_description_id, value 'GX-MISSING'), explained the cross-file integrity issue, and suggested concrete fixes. It also correctly appended a log entry. No required element was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both MCP tool calls passed correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call correctly structured the log entry with tool='validate_schema', outcome='positive', and detailed notes capturing the error, problem, and fix. No fixture_not_found errors occurred. Arguments match expected usage semantically."
+            "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops array with the appropriate tool, query, outcome, and notes fields. Both calls matched 'live' (not fixture_not_found). expected_args was null for both, so no specific arg shape was mandated beyond what the tool itself requires."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": 3,
-            "rationale": "The skill correctly interpreted the validator's error response and explained it in plain language. It surfaced the specific error (sources[0], gedcomx_source_description_id 'GX-MISSING' not found in tree.gedcomx.json sources) and explained what it means: the cross-file reference is broken because the ID does not exist in the target file. The explanation goes beyond echoing the validator string to clarify the structural integrity requirement."
+            "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error with concrete detail: which object (sources[0]), which field (gedcomx_source_description_id), what value ('GX-MISSING'), and explained in plain language that this ID does not exist in tree.gedcomx.json sources, making the cross-file reference broken. This goes beyond merely echoing the raw validator string."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": 3,
-            "rationale": "The skill provided two concrete, correct remedies: (1) change the ID to an existing source description ID in tree.gedcomx.json (actionable because the researcher can look up valid IDs like S1, S2, S3, S4), or (2) add a source description with ID 'GX-MISSING' to tree.gedcomx.json sources. Both fixes would resolve the error. The skill also correctly cautioned against simply removing the reference, showing understanding of the consequence."
+            "rationale": "The skill offered two specific, actionable fixes: (1) change the ID to an existing source description ID in tree.gedcomx.json, or (2) add a source description with ID 'GX-MISSING' to tree.gedcomx.json sources. It also correctly noted not to simply remove the reference, as that would leave the source record unlinked. These are concrete, correct remedies."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill stayed within its lane: it reported the error and suggested fixes but did not edit research.json or tree.gedcomx.json to mask the problem. Its only write was the validate_schema log entry (outcome 'positive', recording that the check ran and produced a report). The skill did not route to check-warnings or proof-conclusion\u2014it correctly recognized this as a structural integrity error that validate-schema owns. Scope was properly maintained."
+            "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix the error. Its only write was the validate_schema log entry (log_006), which is the expected and permitted write. It did not route to check-warnings or proof-conclusion, correctly treating the broken cross-file link as a structural integrity error within its own scope."
           }
         ],
         "review_dimensions": [
@@ -1751,37 +1751,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified and reported the validation error: sources[0]'s gedcomx_source_description_id 'GX-MISSING' does not exist in tree.gedcomx.json sources. The error explanation is factually accurate\u2014this is a cross-file reference integrity failure. The skill did not edit files to mask the error, and the log entry was correctly appended with outcome 'positive' (recording that the check ran and produced a report, not that files are valid). All claims are supported by the validator response."
+            "rationale": "The skill correctly reported that validation FAILED with 1 error. It accurately identified the specific error: sources[0]'s gedcomx_source_description_id 'GX-MISSING' is not found in tree.gedcomx.json sources. The explanation of the cross-file link is accurate \u2014 research.json sources must point to existing source descriptions in tree.gedcomx.json. No fabricated material; all claims are supported by the tool response. The skill did not claim the files were valid."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: reported that validation failed (not claiming validity), surfaced the specific error with concrete detail (sources[0], field gedcomx_source_description_id, value 'GX-MISSING'), explained the cross-file link requirement, and suggested concrete fixes (correct the ID to an existing source description ID, or add the missing source to tree.gedcomx.json). No required work was omitted."
+            "rationale": "The skill addressed all required elements: it reported validation failure, surfaced the specific error (sources[0], field gedcomx_source_description_id, value 'GX-MISSING'), explained the cross-file integrity issue, and suggested concrete fixes. It also correctly appended a log entry. No required element was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both MCP tool calls passed correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call correctly structured the log entry with tool='validate_schema', outcome='positive', and detailed notes capturing the error, problem, and fix. No fixture_not_found errors occurred. Arguments match expected usage semantically."
+            "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops array with the appropriate tool, query, outcome, and notes fields. Both calls matched 'live' (not fixture_not_found). expected_args was null for both, so no specific arg shape was mandated beyond what the tool itself requires."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": 3,
-            "rationale": "The skill correctly interpreted the validator's error response and explained it in plain language. It surfaced the specific error (sources[0], gedcomx_source_description_id 'GX-MISSING' not found in tree.gedcomx.json sources) and explained what it means: the cross-file reference is broken because the ID does not exist in the target file. The explanation goes beyond echoing the validator string to clarify the structural integrity requirement."
+            "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error with concrete detail: which object (sources[0]), which field (gedcomx_source_description_id), what value ('GX-MISSING'), and explained in plain language that this ID does not exist in tree.gedcomx.json sources, making the cross-file reference broken. This goes beyond merely echoing the raw validator string."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": 3,
-            "rationale": "The skill provided two concrete, correct remedies: (1) change the ID to an existing source description ID in tree.gedcomx.json (actionable because the researcher can look up valid IDs like S1, S2, S3, S4), or (2) add a source description with ID 'GX-MISSING' to tree.gedcomx.json sources. Both fixes would resolve the error. The skill also correctly cautioned against simply removing the reference, showing understanding of the consequence."
+            "rationale": "The skill offered two specific, actionable fixes: (1) change the ID to an existing source description ID in tree.gedcomx.json, or (2) add a source description with ID 'GX-MISSING' to tree.gedcomx.json sources. It also correctly noted not to simply remove the reference, as that would leave the source record unlinked. These are concrete, correct remedies."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill stayed within its lane: it reported the error and suggested fixes but did not edit research.json or tree.gedcomx.json to mask the problem. Its only write was the validate_schema log entry (outcome 'positive', recording that the check ran and produced a report). The skill did not route to check-warnings or proof-conclusion\u2014it correctly recognized this as a structural integrity error that validate-schema owns. Scope was properly maintained."
+            "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix the error. Its only write was the validate_schema log entry (log_006), which is the expected and permitted write. It did not route to check-warnings or proof-conclusion, correctly treating the broken cross-file link as a structural integrity error within its own scope."
           }
         ]
       },
@@ -2198,45 +2198,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified and reported the validation error: sources[0]'s gedcomx_source_description_id 'GX-MISSING' does not exist in tree.gedcomx.json sources. The error explanation is factually accurate\u2014this is a cross-file reference integrity failure. The skill did not edit files to mask the error, and the log entry was correctly appended with outcome 'positive' (recording that the check ran and produced a report, not that files are valid). All claims are supported by the validator response."
+                "rationale": "The skill correctly reported that validation FAILED with 1 error. It accurately identified the specific error: sources[0]'s gedcomx_source_description_id 'GX-MISSING' is not found in tree.gedcomx.json sources. The explanation of the cross-file link is accurate \u2014 research.json sources must point to existing source descriptions in tree.gedcomx.json. No fabricated material; all claims are supported by the tool response. The skill did not claim the files were valid."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: reported that validation failed (not claiming validity), surfaced the specific error with concrete detail (sources[0], field gedcomx_source_description_id, value 'GX-MISSING'), explained the cross-file link requirement, and suggested concrete fixes (correct the ID to an existing source description ID, or add the missing source to tree.gedcomx.json). No required work was omitted."
+                "rationale": "The skill addressed all required elements: it reported validation failure, surfaced the specific error (sources[0], field gedcomx_source_description_id, value 'GX-MISSING'), explained the cross-file integrity issue, and suggested concrete fixes. It also correctly appended a log entry. No required element was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both MCP tool calls passed correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call correctly structured the log entry with tool='validate_schema', outcome='positive', and detailed notes capturing the error, problem, and fix. No fixture_not_found errors occurred. Arguments match expected usage semantically."
+                "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops array with the appropriate tool, query, outcome, and notes fields. Both calls matched 'live' (not fixture_not_found). expected_args was null for both, so no specific arg shape was mandated beyond what the tool itself requires."
               },
               {
                 "source": "rubric",
                 "name": "Tool-response interpretation & error explanation",
                 "score": 3,
-                "rationale": "The skill correctly interpreted the validator's error response and explained it in plain language. It surfaced the specific error (sources[0], gedcomx_source_description_id 'GX-MISSING' not found in tree.gedcomx.json sources) and explained what it means: the cross-file reference is broken because the ID does not exist in the target file. The explanation goes beyond echoing the validator string to clarify the structural integrity requirement."
+                "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error with concrete detail: which object (sources[0]), which field (gedcomx_source_description_id), what value ('GX-MISSING'), and explained in plain language that this ID does not exist in tree.gedcomx.json sources, making the cross-file reference broken. This goes beyond merely echoing the raw validator string."
               },
               {
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": 3,
-                "rationale": "The skill provided two concrete, correct remedies: (1) change the ID to an existing source description ID in tree.gedcomx.json (actionable because the researcher can look up valid IDs like S1, S2, S3, S4), or (2) add a source description with ID 'GX-MISSING' to tree.gedcomx.json sources. Both fixes would resolve the error. The skill also correctly cautioned against simply removing the reference, showing understanding of the consequence."
+                "rationale": "The skill offered two specific, actionable fixes: (1) change the ID to an existing source description ID in tree.gedcomx.json, or (2) add a source description with ID 'GX-MISSING' to tree.gedcomx.json sources. It also correctly noted not to simply remove the reference, as that would leave the source record unlinked. These are concrete, correct remedies."
               },
               {
                 "source": "rubric",
                 "name": "No-edit discipline & scope adherence",
                 "score": 3,
-                "rationale": "The skill stayed within its lane: it reported the error and suggested fixes but did not edit research.json or tree.gedcomx.json to mask the problem. Its only write was the validate_schema log entry (outcome 'positive', recording that the check ran and produced a report). The skill did not route to check-warnings or proof-conclusion\u2014it correctly recognized this as a structural integrity error that validate-schema owns. Scope was properly maintained."
+                "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix the error. Its only write was the validate_schema log entry (log_006), which is the expected and permitted write. It did not route to check-warnings or proof-conclusion, correctly treating the broken cross-file link as a structural integrity error within its own scope."
               }
             ],
-            "judge_cost_usd": 0.0122741,
+            "judge_cost_usd": 0.035988599999999996,
             "duration_ms": 10292.202600016026,
             "error": null,
-            "input_tokens": 7514,
-            "cached_input_tokens": 4451,
-            "output_tokens": 863
+            "input_tokens": 7506,
+            "cached_input_tokens": 4452,
+            "output_tokens": 809
           },
           "started_at": 1793316969.9789507,
           "ended_at": 1793317011.089023
@@ -2262,37 +2262,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified and reported the specific schema error: assertions[0] references source 'src_999' which does not exist. The explanation accurately describes the problem (broken cross-reference), and the suggested fixes are correct and actionable. The skill did not claim the files were valid; it correctly reported validation failed. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly reported that validation FAILED with 1 error. It accurately surfaced the specific error: assertions[0] references source 'src_999' which does not exist. The tool response confirms this exact error. The skill did not claim files were valid, did not fabricate any information, and correctly noted tree.gedcomx.json had no errors. The log entry was appended as log_006, which is the only file change made."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: reported that validation failed, surfaced the specific error with concrete detail (assertions[0], src_999), explained what the error means (source ID does not exist in sources list), suggested concrete fixes (point to existing source or add missing source), and noted tree.gedcomx.json passed. The log entry was created as required."
+            "rationale": "The skill addressed all required elements: it ran validate_research_schema, reported the failure, surfaced the specific error (assertions[0] referencing src_999), explained what the broken link means, suggested a concrete fix, and logged the result. Nothing required by the per-test context was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The skill made two tool calls. First call to validate_research_schema passed the correct projectPath argument and received the expected error response. Second call to research_log_append passed correct projectPath and properly structured ops array with tool name, query, outcome 'positive', and detailed notes. Both calls matched expected usage patterns; no fixture_not_found errors occurred."
+            "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops entry with tool='validate_schema', outcome='positive', and detailed notes. Both calls matched 'live' (not fixture_not_found). Expected_args were null for both, so no mismatch possible."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": 3,
-            "rationale": "The skill correctly interpreted the validator's response and surfaced the specific error with concrete detail: 'assertions[0]' references 'src_999' which does not exist. The explanation in plain language clarifies that the assertion points to a source ID not defined in research.json, making the link broken. This goes beyond merely echoing the validator string."
+            "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error (assertions[0] references source 'src_999' which does not exist), explained in plain language that the assertion points to a source ID not defined in research.json (a broken link), and did not merely echo the raw validator string. The explanation is clear and researcher-friendly."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": 3,
-            "rationale": "For the reported error, the skill suggested two specific, correct remedies: (1) change the assertion to reference an existing source ID in research.json, or (2) add a source with ID 'src_999' to research.json. Both fixes are concrete and would actually resolve the dangling reference without creating new errors."
+            "rationale": "The skill offered two concrete, correct remedies: (1) change the assertion to reference an existing source ID, or (2) add a source with ID 'src_999' to research.json. Both options are actionable and correct \u2014 either would resolve the dangling reference without introducing a new error. This matches the per-test context requirement exactly."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill stayed within its lane: it reported the error and suggested fixes but did not silently edit research.json or tree.gedcomx.json to resolve the problem. The only file write was the validate_schema log entry (log_006), which is the required reporting mechanism, not an edit to fix the error. The skill did not route to check-warnings or proof-conclusion; it correctly owned the structural integrity error."
+            "rationale": "The skill made exactly one write: appending a validate_schema log entry (log_006). It did not edit research.json to fix the dangling src_999 reference, did not route to check-warnings or proof-conclusion, and stayed squarely within the validate-schema scope. The file changes summary confirms only the log section was modified."
           }
         ],
         "review_dimensions": [
@@ -2300,37 +2300,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified and reported the specific schema error: assertions[0] references source 'src_999' which does not exist. The explanation accurately describes the problem (broken cross-reference), and the suggested fixes are correct and actionable. The skill did not claim the files were valid; it correctly reported validation failed. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly reported that validation FAILED with 1 error. It accurately surfaced the specific error: assertions[0] references source 'src_999' which does not exist. The tool response confirms this exact error. The skill did not claim files were valid, did not fabricate any information, and correctly noted tree.gedcomx.json had no errors. The log entry was appended as log_006, which is the only file change made."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: reported that validation failed, surfaced the specific error with concrete detail (assertions[0], src_999), explained what the error means (source ID does not exist in sources list), suggested concrete fixes (point to existing source or add missing source), and noted tree.gedcomx.json passed. The log entry was created as required."
+            "rationale": "The skill addressed all required elements: it ran validate_research_schema, reported the failure, surfaced the specific error (assertions[0] referencing src_999), explained what the broken link means, suggested a concrete fix, and logged the result. Nothing required by the per-test context was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The skill made two tool calls. First call to validate_research_schema passed the correct projectPath argument and received the expected error response. Second call to research_log_append passed correct projectPath and properly structured ops array with tool name, query, outcome 'positive', and detailed notes. Both calls matched expected usage patterns; no fixture_not_found errors occurred."
+            "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops entry with tool='validate_schema', outcome='positive', and detailed notes. Both calls matched 'live' (not fixture_not_found). Expected_args were null for both, so no mismatch possible."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": 3,
-            "rationale": "The skill correctly interpreted the validator's response and surfaced the specific error with concrete detail: 'assertions[0]' references 'src_999' which does not exist. The explanation in plain language clarifies that the assertion points to a source ID not defined in research.json, making the link broken. This goes beyond merely echoing the validator string."
+            "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error (assertions[0] references source 'src_999' which does not exist), explained in plain language that the assertion points to a source ID not defined in research.json (a broken link), and did not merely echo the raw validator string. The explanation is clear and researcher-friendly."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": 3,
-            "rationale": "For the reported error, the skill suggested two specific, correct remedies: (1) change the assertion to reference an existing source ID in research.json, or (2) add a source with ID 'src_999' to research.json. Both fixes are concrete and would actually resolve the dangling reference without creating new errors."
+            "rationale": "The skill offered two concrete, correct remedies: (1) change the assertion to reference an existing source ID, or (2) add a source with ID 'src_999' to research.json. Both options are actionable and correct \u2014 either would resolve the dangling reference without introducing a new error. This matches the per-test context requirement exactly."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill stayed within its lane: it reported the error and suggested fixes but did not silently edit research.json or tree.gedcomx.json to resolve the problem. The only file write was the validate_schema log entry (log_006), which is the required reporting mechanism, not an edit to fix the error. The skill did not route to check-warnings or proof-conclusion; it correctly owned the structural integrity error."
+            "rationale": "The skill made exactly one write: appending a validate_schema log entry (log_006). It did not edit research.json to fix the dangling src_999 reference, did not route to check-warnings or proof-conclusion, and stayed squarely within the validate-schema scope. The file changes summary confirms only the log section was modified."
           }
         ]
       },
@@ -2747,45 +2747,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified and reported the specific schema error: assertions[0] references source 'src_999' which does not exist. The explanation accurately describes the problem (broken cross-reference), and the suggested fixes are correct and actionable. The skill did not claim the files were valid; it correctly reported validation failed. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly reported that validation FAILED with 1 error. It accurately surfaced the specific error: assertions[0] references source 'src_999' which does not exist. The tool response confirms this exact error. The skill did not claim files were valid, did not fabricate any information, and correctly noted tree.gedcomx.json had no errors. The log entry was appended as log_006, which is the only file change made."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: reported that validation failed, surfaced the specific error with concrete detail (assertions[0], src_999), explained what the error means (source ID does not exist in sources list), suggested concrete fixes (point to existing source or add missing source), and noted tree.gedcomx.json passed. The log entry was created as required."
+                "rationale": "The skill addressed all required elements: it ran validate_research_schema, reported the failure, surfaced the specific error (assertions[0] referencing src_999), explained what the broken link means, suggested a concrete fix, and logged the result. Nothing required by the per-test context was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The skill made two tool calls. First call to validate_research_schema passed the correct projectPath argument and received the expected error response. Second call to research_log_append passed correct projectPath and properly structured ops array with tool name, query, outcome 'positive', and detailed notes. Both calls matched expected usage patterns; no fixture_not_found errors occurred."
+                "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops entry with tool='validate_schema', outcome='positive', and detailed notes. Both calls matched 'live' (not fixture_not_found). Expected_args were null for both, so no mismatch possible."
               },
               {
                 "source": "rubric",
                 "name": "Tool-response interpretation & error explanation",
                 "score": 3,
-                "rationale": "The skill correctly interpreted the validator's response and surfaced the specific error with concrete detail: 'assertions[0]' references 'src_999' which does not exist. The explanation in plain language clarifies that the assertion points to a source ID not defined in research.json, making the link broken. This goes beyond merely echoing the validator string."
+                "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error (assertions[0] references source 'src_999' which does not exist), explained in plain language that the assertion points to a source ID not defined in research.json (a broken link), and did not merely echo the raw validator string. The explanation is clear and researcher-friendly."
               },
               {
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": 3,
-                "rationale": "For the reported error, the skill suggested two specific, correct remedies: (1) change the assertion to reference an existing source ID in research.json, or (2) add a source with ID 'src_999' to research.json. Both fixes are concrete and would actually resolve the dangling reference without creating new errors."
+                "rationale": "The skill offered two concrete, correct remedies: (1) change the assertion to reference an existing source ID, or (2) add a source with ID 'src_999' to research.json. Both options are actionable and correct \u2014 either would resolve the dangling reference without introducing a new error. This matches the per-test context requirement exactly."
               },
               {
                 "source": "rubric",
                 "name": "No-edit discipline & scope adherence",
                 "score": 3,
-                "rationale": "The skill stayed within its lane: it reported the error and suggested fixes but did not silently edit research.json or tree.gedcomx.json to resolve the problem. The only file write was the validate_schema log entry (log_006), which is the required reporting mechanism, not an edit to fix the error. The skill did not route to check-warnings or proof-conclusion; it correctly owned the structural integrity error."
+                "rationale": "The skill made exactly one write: appending a validate_schema log entry (log_006). It did not edit research.json to fix the dangling src_999 reference, did not route to check-warnings or proof-conclusion, and stayed squarely within the validate-schema scope. The file changes summary confirms only the log section was modified."
               }
             ],
-            "judge_cost_usd": 0.0115171,
+            "judge_cost_usd": 0.0346206,
             "duration_ms": 9521.1915000109,
             "error": null,
-            "input_tokens": 7362,
-            "cached_input_tokens": 4451,
-            "output_tokens": 742
+            "input_tokens": 7345,
+            "cached_input_tokens": 4452,
+            "output_tokens": 750
           },
           "started_at": 1793316969.9540205,
           "ended_at": 1793317012.2662587
@@ -2811,37 +2811,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified the schema error: assertion a_001's information_quality value 'tertiary' is not in the closed enum (primary, secondary, indeterminate). The response accurately reports validation failed, surfaces the specific error with its concrete detail, and explains what it means in plain language. The skill did not edit the file to fix the error\u2014it only logged the report. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly reported that validation FAILED, surfaced the exact error (assertions[0] information_quality 'tertiary' is not valid), explained the closed enum constraint, and suggested changing to one of the valid values (indeterminate, primary, secondary). It did not claim the files were valid. The log entry was appended with outcome 'positive' as required by the tool protocol. No fabricated claims were made."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: reported that validation failed (not claiming files are valid), surfaced the specific error in assertion a_001, explained the enum constraint in plain terms, suggested a concrete fix (change to one of the valid values, noting 'indeterminate' as likely appropriate), and confirmed tree.gedcomx.json passed. No required work was omitted."
+            "rationale": "The skill addressed everything required: it called validate_research_schema, reported the single error with its location (assertions[0]), explained the enum constraint, suggested a fix, noted that tree.gedcomx.json passed, and appended a log entry. Nothing required by the scenario was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Two tool calls were made. The validate_research_schema call passed the correct projectPath argument and matched.kind is 'live' (no fixture_not_found error). The research_log_append call correctly passed projectPath, ops array with tool='validate_schema', outcome='positive' (as instructed), and detailed notes explaining the error and fix. Both calls used correct arguments."
+            "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath, tool name 'validate_schema', and appropriate ops structure. Both calls matched 'live' (not fixture_not_found). expected_args was null for both, so no mismatch is possible."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": 3,
-            "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error (assertion a_001, information_quality='tertiary'), identified which field and which object were affected, and explained in plain language that information_quality is a closed enum with only three allowed values (indeterminate, primary, secondary), and 'tertiary' is not one of them. The explanation is concrete and understandable to a researcher."
+            "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error (assertions[0] information_quality = 'tertiary'), identified the object and field, and explained in plain language that information_quality is a closed enum and 'tertiary' is not one of its members. It went beyond echoing the raw validator string by explaining what the enum constraint means and giving context about how tertiary sources are typically classified."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": 3,
-            "rationale": "The skill provided a specific, correct remedy: 'change the value to whichever of the three best describes the information in that assertion.' It named all three valid options (indeterminate, primary, secondary) and added helpful guidance that tertiary sources like compiled indexes or derivative trees are 'usually recorded as secondary or indeterminate,' giving the researcher concrete direction on which value to choose."
+            "rationale": "The skill provided a specific, actionable fix: change the value to one of the three valid options (indeterminate, primary, secondary), and even offered guidance that a tertiary source is usually best recorded as 'secondary' or 'indeterminate'. This is concrete and correct \u2014 it names the valid options and gives reasoning for choosing among them."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill stayed within its lane: it reported the schema error and did not edit research.json or tree.gedcomx.json to fix the error. Its only file write was the validate_schema log entry (log_006), which is the required report, not a fix. The skill did not route to check-warnings or proof-conclusion\u2014it correctly recognized this as a structural schema error within validate-schema's scope."
+            "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix the error. Its only write was the required validate_schema log entry via research_log_append. It explicitly told the user 'Edit the value in the file yourself.' It did not route to check-warnings or proof-conclusion, correctly recognizing this as a structural schema error within its own scope."
           }
         ],
         "review_dimensions": [
@@ -2849,37 +2849,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified the schema error: assertion a_001's information_quality value 'tertiary' is not in the closed enum (primary, secondary, indeterminate). The response accurately reports validation failed, surfaces the specific error with its concrete detail, and explains what it means in plain language. The skill did not edit the file to fix the error\u2014it only logged the report. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly reported that validation FAILED, surfaced the exact error (assertions[0] information_quality 'tertiary' is not valid), explained the closed enum constraint, and suggested changing to one of the valid values (indeterminate, primary, secondary). It did not claim the files were valid. The log entry was appended with outcome 'positive' as required by the tool protocol. No fabricated claims were made."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: reported that validation failed (not claiming files are valid), surfaced the specific error in assertion a_001, explained the enum constraint in plain terms, suggested a concrete fix (change to one of the valid values, noting 'indeterminate' as likely appropriate), and confirmed tree.gedcomx.json passed. No required work was omitted."
+            "rationale": "The skill addressed everything required: it called validate_research_schema, reported the single error with its location (assertions[0]), explained the enum constraint, suggested a fix, noted that tree.gedcomx.json passed, and appended a log entry. Nothing required by the scenario was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Two tool calls were made. The validate_research_schema call passed the correct projectPath argument and matched.kind is 'live' (no fixture_not_found error). The research_log_append call correctly passed projectPath, ops array with tool='validate_schema', outcome='positive' (as instructed), and detailed notes explaining the error and fix. Both calls used correct arguments."
+            "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath, tool name 'validate_schema', and appropriate ops structure. Both calls matched 'live' (not fixture_not_found). expected_args was null for both, so no mismatch is possible."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": 3,
-            "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error (assertion a_001, information_quality='tertiary'), identified which field and which object were affected, and explained in plain language that information_quality is a closed enum with only three allowed values (indeterminate, primary, secondary), and 'tertiary' is not one of them. The explanation is concrete and understandable to a researcher."
+            "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error (assertions[0] information_quality = 'tertiary'), identified the object and field, and explained in plain language that information_quality is a closed enum and 'tertiary' is not one of its members. It went beyond echoing the raw validator string by explaining what the enum constraint means and giving context about how tertiary sources are typically classified."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": 3,
-            "rationale": "The skill provided a specific, correct remedy: 'change the value to whichever of the three best describes the information in that assertion.' It named all three valid options (indeterminate, primary, secondary) and added helpful guidance that tertiary sources like compiled indexes or derivative trees are 'usually recorded as secondary or indeterminate,' giving the researcher concrete direction on which value to choose."
+            "rationale": "The skill provided a specific, actionable fix: change the value to one of the three valid options (indeterminate, primary, secondary), and even offered guidance that a tertiary source is usually best recorded as 'secondary' or 'indeterminate'. This is concrete and correct \u2014 it names the valid options and gives reasoning for choosing among them."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill stayed within its lane: it reported the schema error and did not edit research.json or tree.gedcomx.json to fix the error. Its only file write was the validate_schema log entry (log_006), which is the required report, not a fix. The skill did not route to check-warnings or proof-conclusion\u2014it correctly recognized this as a structural schema error within validate-schema's scope."
+            "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix the error. Its only write was the required validate_schema log entry via research_log_append. It explicitly told the user 'Edit the value in the file yourself.' It did not route to check-warnings or proof-conclusion, correctly recognizing this as a structural schema error within its own scope."
           }
         ]
       },
@@ -3296,45 +3296,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified the schema error: assertion a_001's information_quality value 'tertiary' is not in the closed enum (primary, secondary, indeterminate). The response accurately reports validation failed, surfaces the specific error with its concrete detail, and explains what it means in plain language. The skill did not edit the file to fix the error\u2014it only logged the report. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly reported that validation FAILED, surfaced the exact error (assertions[0] information_quality 'tertiary' is not valid), explained the closed enum constraint, and suggested changing to one of the valid values (indeterminate, primary, secondary). It did not claim the files were valid. The log entry was appended with outcome 'positive' as required by the tool protocol. No fabricated claims were made."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: reported that validation failed (not claiming files are valid), surfaced the specific error in assertion a_001, explained the enum constraint in plain terms, suggested a concrete fix (change to one of the valid values, noting 'indeterminate' as likely appropriate), and confirmed tree.gedcomx.json passed. No required work was omitted."
+                "rationale": "The skill addressed everything required: it called validate_research_schema, reported the single error with its location (assertions[0]), explained the enum constraint, suggested a fix, noted that tree.gedcomx.json passed, and appended a log entry. Nothing required by the scenario was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Two tool calls were made. The validate_research_schema call passed the correct projectPath argument and matched.kind is 'live' (no fixture_not_found error). The research_log_append call correctly passed projectPath, ops array with tool='validate_schema', outcome='positive' (as instructed), and detailed notes explaining the error and fix. Both calls used correct arguments."
+                "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath, tool name 'validate_schema', and appropriate ops structure. Both calls matched 'live' (not fixture_not_found). expected_args was null for both, so no mismatch is possible."
               },
               {
                 "source": "rubric",
                 "name": "Tool-response interpretation & error explanation",
                 "score": 3,
-                "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error (assertion a_001, information_quality='tertiary'), identified which field and which object were affected, and explained in plain language that information_quality is a closed enum with only three allowed values (indeterminate, primary, secondary), and 'tertiary' is not one of them. The explanation is concrete and understandable to a researcher."
+                "rationale": "The skill correctly interpreted the validator's error response. It surfaced the specific error (assertions[0] information_quality = 'tertiary'), identified the object and field, and explained in plain language that information_quality is a closed enum and 'tertiary' is not one of its members. It went beyond echoing the raw validator string by explaining what the enum constraint means and giving context about how tertiary sources are typically classified."
               },
               {
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": 3,
-                "rationale": "The skill provided a specific, correct remedy: 'change the value to whichever of the three best describes the information in that assertion.' It named all three valid options (indeterminate, primary, secondary) and added helpful guidance that tertiary sources like compiled indexes or derivative trees are 'usually recorded as secondary or indeterminate,' giving the researcher concrete direction on which value to choose."
+                "rationale": "The skill provided a specific, actionable fix: change the value to one of the three valid options (indeterminate, primary, secondary), and even offered guidance that a tertiary source is usually best recorded as 'secondary' or 'indeterminate'. This is concrete and correct \u2014 it names the valid options and gives reasoning for choosing among them."
               },
               {
                 "source": "rubric",
                 "name": "No-edit discipline & scope adherence",
                 "score": 3,
-                "rationale": "The skill stayed within its lane: it reported the schema error and did not edit research.json or tree.gedcomx.json to fix the error. Its only file write was the validate_schema log entry (log_006), which is the required report, not a fix. The skill did not route to check-warnings or proof-conclusion\u2014it correctly recognized this as a structural schema error within validate-schema's scope."
+                "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix the error. Its only write was the required validate_schema log entry via research_log_append. It explicitly told the user 'Edit the value in the file yourself.' It did not route to check-warnings or proof-conclusion, correctly recognizing this as a structural schema error within its own scope."
               }
             ],
-            "judge_cost_usd": 0.0118321,
+            "judge_cost_usd": 0.0349296,
             "duration_ms": 10515.251699980581,
             "error": null,
-            "input_tokens": 7432,
-            "cached_input_tokens": 4451,
-            "output_tokens": 791
+            "input_tokens": 7413,
+            "cached_input_tokens": 4452,
+            "output_tokens": 757
           },
           "started_at": 1793317012.5517771,
           "ended_at": 1793317064.522358
@@ -3360,37 +3360,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified and reported the specific schema error: questions[0] is missing the required 'rationale' field. The error message accurately reflects the validator's response. The skill did not fabricate or mischaracterize the error, and correctly explained that 'rationale' is a required field. The log entry was properly appended with outcome 'positive' (recording that the check ran and produced a report, not that files are valid). The skill did not edit any files to fix the error, maintaining proper scope."
+            "rationale": "The skill correctly reported that validation FAILED with 1 error and 0 warnings. It accurately surfaced the specific error from the tool response: 'research.json, questions[0]: missing required field `rationale`'. It did not claim the files were valid. The log entry was appended (not an edit to fix the error). No fabricated material is present \u2014 all claims are supported by the tool response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: it reported that validation failed (not claiming files are valid), surfaced the specific error with its location (questions[0]), explained what the error means (missing required field), and suggested a concrete fix (add a rationale string explaining why the question matters). The skill also correctly noted that tree.gedcomx.json passed validation. All aspects the input state required were covered."
+            "rationale": "The skill addressed everything required: it called validate_research_schema, reported the failure, surfaced the specific error (questions[0] missing 'rationale'), explained what it means, suggested a fix (add a rationale string explaining why the question matters), noted tree.gedcomx.json passed, and appended a log entry. Nothing required by the scenario was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both MCP tool calls used correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call properly structured the log entry with the tool name, query, outcome set to 'positive', resultsExamined count, and detailed notes explaining the error and fix. Both calls matched the expected behavior for this validation scenario. No fixture_not_found errors occurred."
+            "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops entry with tool='validate_schema', outcome='positive', and accurate notes. Both calls matched 'live' (not fixture_not_found). expected_args was null for both, so no mismatch is possible."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": 3,
-            "rationale": "The skill correctly interpreted the validator's error response and explained it clearly in plain language. It surfaced the concrete detail (questions[0] is missing 'rationale'), explained what this means (the first research question has no rationale explaining why it matters), and provided context that this is a required field. The explanation goes beyond merely echoing the validator string\u2014it clarifies the practical meaning for the researcher."
+            "rationale": "The skill correctly interpreted the tool response showing valid=false with error 'research.json/questions[0]: missing required field rationale'. It surfaced the specific object (questions[0]), the specific missing field ('rationale'), and explained in plain language that the first research question has no rationale \u2014 going beyond just echoing the raw validator string by explaining that it is a required explanation of why the question matters."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": 3,
-            "rationale": "The skill provided a specific, correct, and actionable fix: 'add a rationale string to questions[0] in research.json explaining why the question matters.' This is concrete enough for a researcher to act on\u2014it names the exact location (questions[0]), the exact field ('rationale'), the file (research.json), and what the content should convey (why the question matters). The fix would actually resolve the error."
+            "rationale": "The skill provided a concrete, actionable fix: 'add a `rationale` string to `questions[0]` in `research.json` that explains why the question matters.' This names the exact file, the exact array element, the exact field to add, and what its content should describe \u2014 specific enough for a researcher to act on immediately."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill maintained proper scope discipline. It did not edit research.json or tree.gedcomx.json to fix the error; its only file write was the validate_schema log entry (which is the correct and required action). The skill reported the error and left the fix to the user, as required. It did not route to check-warnings or proof-conclusion\u2014correctly recognizing that a missing required field is a structural schema error within validate-schema's scope."
+            "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix the error. Its only write was the research_log_append call adding a validate_schema log entry (log_006), which is the permitted write. It did not route to check-warnings or proof-conclusion, correctly treating the missing required field as a structural schema error within its own scope."
           }
         ],
         "review_dimensions": [
@@ -3398,37 +3398,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified and reported the specific schema error: questions[0] is missing the required 'rationale' field. The error message accurately reflects the validator's response. The skill did not fabricate or mischaracterize the error, and correctly explained that 'rationale' is a required field. The log entry was properly appended with outcome 'positive' (recording that the check ran and produced a report, not that files are valid). The skill did not edit any files to fix the error, maintaining proper scope."
+            "rationale": "The skill correctly reported that validation FAILED with 1 error and 0 warnings. It accurately surfaced the specific error from the tool response: 'research.json, questions[0]: missing required field `rationale`'. It did not claim the files were valid. The log entry was appended (not an edit to fix the error). No fabricated material is present \u2014 all claims are supported by the tool response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: it reported that validation failed (not claiming files are valid), surfaced the specific error with its location (questions[0]), explained what the error means (missing required field), and suggested a concrete fix (add a rationale string explaining why the question matters). The skill also correctly noted that tree.gedcomx.json passed validation. All aspects the input state required were covered."
+            "rationale": "The skill addressed everything required: it called validate_research_schema, reported the failure, surfaced the specific error (questions[0] missing 'rationale'), explained what it means, suggested a fix (add a rationale string explaining why the question matters), noted tree.gedcomx.json passed, and appended a log entry. Nothing required by the scenario was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both MCP tool calls used correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call properly structured the log entry with the tool name, query, outcome set to 'positive', resultsExamined count, and detailed notes explaining the error and fix. Both calls matched the expected behavior for this validation scenario. No fixture_not_found errors occurred."
+            "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops entry with tool='validate_schema', outcome='positive', and accurate notes. Both calls matched 'live' (not fixture_not_found). expected_args was null for both, so no mismatch is possible."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": 3,
-            "rationale": "The skill correctly interpreted the validator's error response and explained it clearly in plain language. It surfaced the concrete detail (questions[0] is missing 'rationale'), explained what this means (the first research question has no rationale explaining why it matters), and provided context that this is a required field. The explanation goes beyond merely echoing the validator string\u2014it clarifies the practical meaning for the researcher."
+            "rationale": "The skill correctly interpreted the tool response showing valid=false with error 'research.json/questions[0]: missing required field rationale'. It surfaced the specific object (questions[0]), the specific missing field ('rationale'), and explained in plain language that the first research question has no rationale \u2014 going beyond just echoing the raw validator string by explaining that it is a required explanation of why the question matters."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": 3,
-            "rationale": "The skill provided a specific, correct, and actionable fix: 'add a rationale string to questions[0] in research.json explaining why the question matters.' This is concrete enough for a researcher to act on\u2014it names the exact location (questions[0]), the exact field ('rationale'), the file (research.json), and what the content should convey (why the question matters). The fix would actually resolve the error."
+            "rationale": "The skill provided a concrete, actionable fix: 'add a `rationale` string to `questions[0]` in `research.json` that explains why the question matters.' This names the exact file, the exact array element, the exact field to add, and what its content should describe \u2014 specific enough for a researcher to act on immediately."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill maintained proper scope discipline. It did not edit research.json or tree.gedcomx.json to fix the error; its only file write was the validate_schema log entry (which is the correct and required action). The skill reported the error and left the fix to the user, as required. It did not route to check-warnings or proof-conclusion\u2014correctly recognizing that a missing required field is a structural schema error within validate-schema's scope."
+            "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix the error. Its only write was the research_log_append call adding a validate_schema log entry (log_006), which is the permitted write. It did not route to check-warnings or proof-conclusion, correctly treating the missing required field as a structural schema error within its own scope."
           }
         ]
       },
@@ -3845,45 +3845,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified and reported the specific schema error: questions[0] is missing the required 'rationale' field. The error message accurately reflects the validator's response. The skill did not fabricate or mischaracterize the error, and correctly explained that 'rationale' is a required field. The log entry was properly appended with outcome 'positive' (recording that the check ran and produced a report, not that files are valid). The skill did not edit any files to fix the error, maintaining proper scope."
+                "rationale": "The skill correctly reported that validation FAILED with 1 error and 0 warnings. It accurately surfaced the specific error from the tool response: 'research.json, questions[0]: missing required field `rationale`'. It did not claim the files were valid. The log entry was appended (not an edit to fix the error). No fabricated material is present \u2014 all claims are supported by the tool response."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: it reported that validation failed (not claiming files are valid), surfaced the specific error with its location (questions[0]), explained what the error means (missing required field), and suggested a concrete fix (add a rationale string explaining why the question matters). The skill also correctly noted that tree.gedcomx.json passed validation. All aspects the input state required were covered."
+                "rationale": "The skill addressed everything required: it called validate_research_schema, reported the failure, surfaced the specific error (questions[0] missing 'rationale'), explained what it means, suggested a fix (add a rationale string explaining why the question matters), noted tree.gedcomx.json passed, and appended a log entry. Nothing required by the scenario was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both MCP tool calls used correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call properly structured the log entry with the tool name, query, outcome set to 'positive', resultsExamined count, and detailed notes explaining the error and fix. Both calls matched the expected behavior for this validation scenario. No fixture_not_found errors occurred."
+                "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call used the correct projectPath and a well-formed ops entry with tool='validate_schema', outcome='positive', and accurate notes. Both calls matched 'live' (not fixture_not_found). expected_args was null for both, so no mismatch is possible."
               },
               {
                 "source": "rubric",
                 "name": "Tool-response interpretation & error explanation",
                 "score": 3,
-                "rationale": "The skill correctly interpreted the validator's error response and explained it clearly in plain language. It surfaced the concrete detail (questions[0] is missing 'rationale'), explained what this means (the first research question has no rationale explaining why it matters), and provided context that this is a required field. The explanation goes beyond merely echoing the validator string\u2014it clarifies the practical meaning for the researcher."
+                "rationale": "The skill correctly interpreted the tool response showing valid=false with error 'research.json/questions[0]: missing required field rationale'. It surfaced the specific object (questions[0]), the specific missing field ('rationale'), and explained in plain language that the first research question has no rationale \u2014 going beyond just echoing the raw validator string by explaining that it is a required explanation of why the question matters."
               },
               {
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": 3,
-                "rationale": "The skill provided a specific, correct, and actionable fix: 'add a rationale string to questions[0] in research.json explaining why the question matters.' This is concrete enough for a researcher to act on\u2014it names the exact location (questions[0]), the exact field ('rationale'), the file (research.json), and what the content should convey (why the question matters). The fix would actually resolve the error."
+                "rationale": "The skill provided a concrete, actionable fix: 'add a `rationale` string to `questions[0]` in `research.json` that explains why the question matters.' This names the exact file, the exact array element, the exact field to add, and what its content should describe \u2014 specific enough for a researcher to act on immediately."
               },
               {
                 "source": "rubric",
                 "name": "No-edit discipline & scope adherence",
                 "score": 3,
-                "rationale": "The skill maintained proper scope discipline. It did not edit research.json or tree.gedcomx.json to fix the error; its only file write was the validate_schema log entry (which is the correct and required action). The skill reported the error and left the fix to the user, as required. It did not route to check-warnings or proof-conclusion\u2014correctly recognizing that a missing required field is a structural schema error within validate-schema's scope."
+                "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix the error. Its only write was the research_log_append call adding a validate_schema log entry (log_006), which is the permitted write. It did not route to check-warnings or proof-conclusion, correctly treating the missing required field as a structural schema error within its own scope."
               }
             ],
-            "judge_cost_usd": 0.0118251,
+            "judge_cost_usd": 0.034593599999999995,
             "duration_ms": 10168.581800011452,
             "error": null,
-            "input_tokens": 7225,
-            "cached_input_tokens": 4451,
-            "output_tokens": 831
+            "input_tokens": 7206,
+            "cached_input_tokens": 4452,
+            "output_tokens": 776
           },
           "started_at": 1793317058.5505075,
           "ended_at": 1793317089.581987
@@ -3909,37 +3909,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified that no project exists in the folder (no research.json or tree.gedcomx.json), accurately reported the tool's response (ok: false, reason: 'no_project'), and made no false claims about file validity or invented errors. The response is factually accurate."
+            "rationale": "Claude correctly identified that there is no project in the folder, accurately stated that research.json and tree.gedcomx.json are created together by init-project, and did not claim the files are valid or invent schema errors. The tool returned ok: false with reason 'no_project', and Claude's response accurately reflects this. No fabricated material."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed the complete situation: recognized there is no project to validate, explained why (files created together by init-project), declined to validate, and correctly routed the user to init-project as the next step. All required elements of the correct response are present."
+            "rationale": "Claude addressed everything required: it recognized there is no project to validate, explained that both files are created together by init-project, and directed the user to run init-project before validating again. No required element was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Claude made one MCP call to validate_research_schema with the correct projectPath argument. The tool returned ok: false with reason 'no_project', which is the expected and correct response for an empty folder with no project files. The call was appropriate and the argument was correct."
+            "rationale": "The single tool call to mcp__genealogy__validate_research_schema was made with the correct projectPath argument matching the workspace path. The expected_args field is null (no specific expectation declared), and the call matched as 'live', confirming correct usage."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no errors to explain (ok: false with reason 'no_project' is a status, not a schema error). This dimension applies only when errors are reported; no error explanation was required here."
+            "rationale": "The validator returned no schema errors \u2014 it returned ok: false with reason 'no_project', meaning there is no project to validate at all. This is a clean no-project scenario, not an error-with-errors scenario, so this dimension is N/A."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no schema errors were reported, so no fixes needed to be suggested. This dimension applies only when errors are present; the correct outcome here is no errors to fix."
+            "rationale": "No schema errors were reported because there is no project. The fix-suggestion dimension applies only when errors are reported; since the tool returned no_project (not schema errors), this dimension is N/A."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "Claude stayed within scope: it did not edit any files, did not attempt to validate when no project existed, and correctly routed to init-project rather than substituting a schema pass for the actual task. The skill properly declined and redirected."
+            "rationale": "Claude made no edits to any files \u2014 the file changes summary confirms '(no research.json or tree.gedcomx.json changes)'. Claude correctly reported the no-project state and directed the user to init-project without attempting to create or modify any files, staying fully within its reporting-only role."
           }
         ],
         "review_dimensions": [
@@ -3947,37 +3947,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified that no project exists in the folder (no research.json or tree.gedcomx.json), accurately reported the tool's response (ok: false, reason: 'no_project'), and made no false claims about file validity or invented errors. The response is factually accurate."
+            "rationale": "Claude correctly identified that there is no project in the folder, accurately stated that research.json and tree.gedcomx.json are created together by init-project, and did not claim the files are valid or invent schema errors. The tool returned ok: false with reason 'no_project', and Claude's response accurately reflects this. No fabricated material."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed the complete situation: recognized there is no project to validate, explained why (files created together by init-project), declined to validate, and correctly routed the user to init-project as the next step. All required elements of the correct response are present."
+            "rationale": "Claude addressed everything required: it recognized there is no project to validate, explained that both files are created together by init-project, and directed the user to run init-project before validating again. No required element was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Claude made one MCP call to validate_research_schema with the correct projectPath argument. The tool returned ok: false with reason 'no_project', which is the expected and correct response for an empty folder with no project files. The call was appropriate and the argument was correct."
+            "rationale": "The single tool call to mcp__genealogy__validate_research_schema was made with the correct projectPath argument matching the workspace path. The expected_args field is null (no specific expectation declared), and the call matched as 'live', confirming correct usage."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no errors to explain (ok: false with reason 'no_project' is a status, not a schema error). This dimension applies only when errors are reported; no error explanation was required here."
+            "rationale": "The validator returned no schema errors \u2014 it returned ok: false with reason 'no_project', meaning there is no project to validate at all. This is a clean no-project scenario, not an error-with-errors scenario, so this dimension is N/A."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no schema errors were reported, so no fixes needed to be suggested. This dimension applies only when errors are present; the correct outcome here is no errors to fix."
+            "rationale": "No schema errors were reported because there is no project. The fix-suggestion dimension applies only when errors are reported; since the tool returned no_project (not schema errors), this dimension is N/A."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "Claude stayed within scope: it did not edit any files, did not attempt to validate when no project existed, and correctly routed to init-project rather than substituting a schema pass for the actual task. The skill properly declined and redirected."
+            "rationale": "Claude made no edits to any files \u2014 the file changes summary confirms '(no research.json or tree.gedcomx.json changes)'. Claude correctly reported the no-project state and directed the user to init-project without attempting to create or modify any files, staying fully within its reporting-only role."
           }
         ]
       },
@@ -4316,45 +4316,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified that no project exists in the folder (no research.json or tree.gedcomx.json), accurately reported the tool's response (ok: false, reason: 'no_project'), and made no false claims about file validity or invented errors. The response is factually accurate."
+                "rationale": "Claude correctly identified that there is no project in the folder, accurately stated that research.json and tree.gedcomx.json are created together by init-project, and did not claim the files are valid or invent schema errors. The tool returned ok: false with reason 'no_project', and Claude's response accurately reflects this. No fabricated material."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed the complete situation: recognized there is no project to validate, explained why (files created together by init-project), declined to validate, and correctly routed the user to init-project as the next step. All required elements of the correct response are present."
+                "rationale": "Claude addressed everything required: it recognized there is no project to validate, explained that both files are created together by init-project, and directed the user to run init-project before validating again. No required element was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Claude made one MCP call to validate_research_schema with the correct projectPath argument. The tool returned ok: false with reason 'no_project', which is the expected and correct response for an empty folder with no project files. The call was appropriate and the argument was correct."
+                "rationale": "The single tool call to mcp__genealogy__validate_research_schema was made with the correct projectPath argument matching the workspace path. The expected_args field is null (no specific expectation declared), and the call matched as 'live', confirming correct usage."
               },
               {
                 "source": "rubric",
                 "name": "Tool-response interpretation & error explanation",
                 "score": null,
-                "rationale": "N/A \u2014 the validator returned no errors to explain (ok: false with reason 'no_project' is a status, not a schema error). This dimension applies only when errors are reported; no error explanation was required here."
+                "rationale": "The validator returned no schema errors \u2014 it returned ok: false with reason 'no_project', meaning there is no project to validate at all. This is a clean no-project scenario, not an error-with-errors scenario, so this dimension is N/A."
               },
               {
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": null,
-                "rationale": "N/A \u2014 no schema errors were reported, so no fixes needed to be suggested. This dimension applies only when errors are present; the correct outcome here is no errors to fix."
+                "rationale": "No schema errors were reported because there is no project. The fix-suggestion dimension applies only when errors are reported; since the tool returned no_project (not schema errors), this dimension is N/A."
               },
               {
                 "source": "rubric",
                 "name": "No-edit discipline & scope adherence",
                 "score": 3,
-                "rationale": "Claude stayed within scope: it did not edit any files, did not attempt to validate when no project existed, and correctly routed to init-project rather than substituting a schema pass for the actual task. The skill properly declined and redirected."
+                "rationale": "Claude made no edits to any files \u2014 the file changes summary confirms '(no research.json or tree.gedcomx.json changes)'. Claude correctly reported the no-project state and directed the user to init-project without attempting to create or modify any files, staying fully within its reporting-only role."
               }
             ],
-            "judge_cost_usd": 0.00628,
+            "judge_cost_usd": 0.0206556,
             "duration_ms": 7667.5150000082795,
             "error": null,
             "input_tokens": 3330,
-            "cached_input_tokens": 0,
-            "output_tokens": 590
+            "cached_input_tokens": 4452,
+            "output_tokens": 622
           },
           "started_at": 1793316922.8465703,
           "ended_at": 1793316961.9483776
@@ -4380,37 +4380,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly reported that both research.json and tree.gedcomx.json passed all validation checks with 0 errors and 0 warnings. The validator response confirms valid: true, errors: [], warnings: []. The skill accurately stated the validator checked required fields, enum values, ID-prefix conventions, and cross-file references. No fabricated claims or unsupported assertions were made."
+            "rationale": "The skill correctly reported that both research.json and tree.gedcomx.json passed all validation checks with 0 errors and 0 warnings. The tool response confirms `valid: true, errors: [], warnings: []`, and the skill's text accurately reflects this. No fabricated claims or contradictions with the tool response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed everything required: it ran the validate_research_schema tool, received a clean pass result, reported both files validated successfully, logged the result with research_log_append (creating log_006), and provided a clear summary that no action is needed. All required steps were completed."
+            "rationale": "The skill addressed everything required: it called validate_research_schema, reported the clean result for both files, logged the outcome as log_006, and confirmed no action is needed. The per-test context requires reporting that both files validate with no errors, which was done."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both MCP tool calls used correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call correctly structured the ops array with tool name, query, outcome: 'positive', resultsExamined: 0, and detailed notes. Both calls matched.kind == 'live' with no fixture_not_found errors. Arguments were semantically correct."
+            "rationale": "Both tool calls matched live fixtures (matched.kind == 'live'). The validate_research_schema call used the correct projectPath. The research_log_append call used appropriate ops with tool='validate_schema', outcome='positive', and a descriptive notes field. expected_args is null for both calls, meaning no specific arg shape was mandated, and the args passed are reasonable."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no errors (valid: true, errors: []). This dimension applies only when errors are reported. The clean-pass scenario means there is no error to interpret or explain."
+            "rationale": "The validator returned no errors (clean-pass test). There are no errors to explain, so this dimension is N/A per the rubric's explicit N/A condition."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no errors were reported by the validator, so there are no fixes to suggest. This dimension applies only when errors are present. The skill correctly stated 'Nothing needs fixing, so no action is needed.'"
+            "rationale": "No errors were reported by the validator (clean-pass test). There is nothing to fix, so this dimension is N/A per the rubric's explicit N/A condition."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill stayed within its lane perfectly. It did not edit research.json or tree.gedcomx.json to 'fix' anything (no such edits were needed). It only appended a log entry via research_log_append, which is the correct reporting mechanism. It did not substitute schema validation for other checks or venture into logical-impossibility or GPS-quality questions. Scope was properly maintained."
+            "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix errors (there were none). The only file change was appending log_006 to the log section, which is the expected and permitted log entry. The skill stayed within its reporting lane and did not volunteer off-scope opinions or attempt to edit data files."
           }
         ],
         "review_dimensions": [
@@ -4418,37 +4418,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly reported that both research.json and tree.gedcomx.json passed all validation checks with 0 errors and 0 warnings. The validator response confirms valid: true, errors: [], warnings: []. The skill accurately stated the validator checked required fields, enum values, ID-prefix conventions, and cross-file references. No fabricated claims or unsupported assertions were made."
+            "rationale": "The skill correctly reported that both research.json and tree.gedcomx.json passed all validation checks with 0 errors and 0 warnings. The tool response confirms `valid: true, errors: [], warnings: []`, and the skill's text accurately reflects this. No fabricated claims or contradictions with the tool response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed everything required: it ran the validate_research_schema tool, received a clean pass result, reported both files validated successfully, logged the result with research_log_append (creating log_006), and provided a clear summary that no action is needed. All required steps were completed."
+            "rationale": "The skill addressed everything required: it called validate_research_schema, reported the clean result for both files, logged the outcome as log_006, and confirmed no action is needed. The per-test context requires reporting that both files validate with no errors, which was done."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "Both MCP tool calls used correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call correctly structured the ops array with tool name, query, outcome: 'positive', resultsExamined: 0, and detailed notes. Both calls matched.kind == 'live' with no fixture_not_found errors. Arguments were semantically correct."
+            "rationale": "Both tool calls matched live fixtures (matched.kind == 'live'). The validate_research_schema call used the correct projectPath. The research_log_append call used appropriate ops with tool='validate_schema', outcome='positive', and a descriptive notes field. expected_args is null for both calls, meaning no specific arg shape was mandated, and the args passed are reasonable."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no errors (valid: true, errors: []). This dimension applies only when errors are reported. The clean-pass scenario means there is no error to interpret or explain."
+            "rationale": "The validator returned no errors (clean-pass test). There are no errors to explain, so this dimension is N/A per the rubric's explicit N/A condition."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no errors were reported by the validator, so there are no fixes to suggest. This dimension applies only when errors are present. The skill correctly stated 'Nothing needs fixing, so no action is needed.'"
+            "rationale": "No errors were reported by the validator (clean-pass test). There is nothing to fix, so this dimension is N/A per the rubric's explicit N/A condition."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill stayed within its lane perfectly. It did not edit research.json or tree.gedcomx.json to 'fix' anything (no such edits were needed). It only appended a log entry via research_log_append, which is the correct reporting mechanism. It did not substitute schema validation for other checks or venture into logical-impossibility or GPS-quality questions. Scope was properly maintained."
+            "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix errors (there were none). The only file change was appending log_006 to the log section, which is the expected and permitted log entry. The skill stayed within its reporting lane and did not volunteer off-scope opinions or attempt to edit data files."
           }
         ]
       },
@@ -4861,45 +4861,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly reported that both research.json and tree.gedcomx.json passed all validation checks with 0 errors and 0 warnings. The validator response confirms valid: true, errors: [], warnings: []. The skill accurately stated the validator checked required fields, enum values, ID-prefix conventions, and cross-file references. No fabricated claims or unsupported assertions were made."
+                "rationale": "The skill correctly reported that both research.json and tree.gedcomx.json passed all validation checks with 0 errors and 0 warnings. The tool response confirms `valid: true, errors: [], warnings: []`, and the skill's text accurately reflects this. No fabricated claims or contradictions with the tool response."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed everything required: it ran the validate_research_schema tool, received a clean pass result, reported both files validated successfully, logged the result with research_log_append (creating log_006), and provided a clear summary that no action is needed. All required steps were completed."
+                "rationale": "The skill addressed everything required: it called validate_research_schema, reported the clean result for both files, logged the outcome as log_006, and confirmed no action is needed. The per-test context requires reporting that both files validate with no errors, which was done."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "Both MCP tool calls used correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call correctly structured the ops array with tool name, query, outcome: 'positive', resultsExamined: 0, and detailed notes. Both calls matched.kind == 'live' with no fixture_not_found errors. Arguments were semantically correct."
+                "rationale": "Both tool calls matched live fixtures (matched.kind == 'live'). The validate_research_schema call used the correct projectPath. The research_log_append call used appropriate ops with tool='validate_schema', outcome='positive', and a descriptive notes field. expected_args is null for both calls, meaning no specific arg shape was mandated, and the args passed are reasonable."
               },
               {
                 "source": "rubric",
                 "name": "Tool-response interpretation & error explanation",
                 "score": null,
-                "rationale": "N/A \u2014 the validator returned no errors (valid: true, errors: []). This dimension applies only when errors are reported. The clean-pass scenario means there is no error to interpret or explain."
+                "rationale": "The validator returned no errors (clean-pass test). There are no errors to explain, so this dimension is N/A per the rubric's explicit N/A condition."
               },
               {
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": null,
-                "rationale": "N/A \u2014 no errors were reported by the validator, so there are no fixes to suggest. This dimension applies only when errors are present. The skill correctly stated 'Nothing needs fixing, so no action is needed.'"
+                "rationale": "No errors were reported by the validator (clean-pass test). There is nothing to fix, so this dimension is N/A per the rubric's explicit N/A condition."
               },
               {
                 "source": "rubric",
                 "name": "No-edit discipline & scope adherence",
                 "score": 3,
-                "rationale": "The skill stayed within its lane perfectly. It did not edit research.json or tree.gedcomx.json to 'fix' anything (no such edits were needed). It only appended a log entry via research_log_append, which is the correct reporting mechanism. It did not substitute schema validation for other checks or venture into logical-impossibility or GPS-quality questions. Scope was properly maintained."
+                "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix errors (there were none). The only file change was appending log_006 to the log section, which is the expected and permitted log entry. The skill stayed within its reporting lane and did not volunteer off-scope opinions or attempt to edit data files."
               }
             ],
-            "judge_cost_usd": 0.0133741,
+            "judge_cost_usd": 0.039402599999999996,
             "duration_ms": 9160.27779999422,
             "error": null,
             "input_tokens": 9524,
-            "cached_input_tokens": 4451,
-            "output_tokens": 681
+            "cached_input_tokens": 4452,
+            "output_tokens": 633
           },
           "started_at": 1793316922.8775723,
           "ended_at": 1793316966.95414
@@ -4925,37 +4925,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly reported that schema validation passed with no errors and no warnings. The validator response confirms both research.json and tree.gedcomx.json are valid. The skill accurately stated that the two unresolved conflicts have the correct shape under the schema, and correctly noted that schema validation does not assess substantive resolution. All claims are supported by the tool response."
+            "rationale": "The skill correctly called validate_research_schema, which returned valid:true with no errors. Claude accurately reported that both files passed all validation checks, including the two unresolved conflicts having correct shape. The per-test context confirms that the validator returning no errors IS the correct confirmation. Claude also correctly noted that the schema check does not assess substantive resolution \u2014 this is accurate and appropriate. No fabricated claims or contradictions with the tool response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill fully addressed the user's request to validate project files and check that both unresolved conflicts have the right shape. It confirmed validation passed, explicitly noted both conflicts are structurally valid, and logged the result. The per-test context confirms that reporting 'validation passed, no errors' is the correct and complete response for this read-only skill."
+            "rationale": "The skill addressed everything required: it called validate_research_schema, reported the clean pass result, noted that both conflicts are structurally valid under the schema, logged the result as log_006, and clarified the scope boundary (schema validity vs. substantive resolution). The per-test context confirms that reporting 'validation passed, no errors' is the correct and complete response for this read-only skill. Nothing was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The skill made two tool calls with correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call properly structured the log entry with appropriate tool name, query, outcome ('positive'), and notes summarizing the validation result. Both calls matched expected usage patterns and succeeded without errors."
+            "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call included appropriate ops with tool='validate_schema', outcome='positive', and descriptive notes. The expected_args for both calls are null (no fixture constraints), and matched.kind is 'live' for both \u2014 no fixture_not_found errors. Arguments were reasonable and correct."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no errors (clean-pass test). The skill correctly interpreted the clean result and reported it. There are no errors to explain, so this dimension does not apply."
+            "rationale": "The validator returned no errors (valid:true, errors:[], warnings:[]). This is a clean-pass test, so there are no errors to explain. Per the rubric, this dimension is N/A when the validator returned no errors."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no errors were reported by the validator (clean-pass test). There is nothing to fix, so this dimension does not apply."
+            "rationale": "No errors were reported by the validator \u2014 this is a clean-pass test. Per the rubric, this dimension is N/A when no errors were reported and nothing needs fixing."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill stayed within its lane as a read-only validation reporter. It made no edits to research.json or tree.gedcomx.json to 'fix' anything. It reported the validation result and logged it, then stopped. It did not substitute schema validation for other checks or venture into logical/GPS-quality assessment. The skill correctly adhered to its scope."
+            "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix anything \u2014 the only file change was appending log_006 to the log section, which is the expected and permitted log entry. Claude correctly stayed in report-only mode, did not attempt to fix the null fields on the conflicts, and appropriately noted that substantive resolution is out of scope for this check. No scope blurring or unauthorized edits occurred."
           }
         ],
         "review_dimensions": [
@@ -4963,37 +4963,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly reported that schema validation passed with no errors and no warnings. The validator response confirms both research.json and tree.gedcomx.json are valid. The skill accurately stated that the two unresolved conflicts have the correct shape under the schema, and correctly noted that schema validation does not assess substantive resolution. All claims are supported by the tool response."
+            "rationale": "The skill correctly called validate_research_schema, which returned valid:true with no errors. Claude accurately reported that both files passed all validation checks, including the two unresolved conflicts having correct shape. The per-test context confirms that the validator returning no errors IS the correct confirmation. Claude also correctly noted that the schema check does not assess substantive resolution \u2014 this is accurate and appropriate. No fabricated claims or contradictions with the tool response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill fully addressed the user's request to validate project files and check that both unresolved conflicts have the right shape. It confirmed validation passed, explicitly noted both conflicts are structurally valid, and logged the result. The per-test context confirms that reporting 'validation passed, no errors' is the correct and complete response for this read-only skill."
+            "rationale": "The skill addressed everything required: it called validate_research_schema, reported the clean pass result, noted that both conflicts are structurally valid under the schema, logged the result as log_006, and clarified the scope boundary (schema validity vs. substantive resolution). The per-test context confirms that reporting 'validation passed, no errors' is the correct and complete response for this read-only skill. Nothing was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "The skill made two tool calls with correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call properly structured the log entry with appropriate tool name, query, outcome ('positive'), and notes summarizing the validation result. Both calls matched expected usage patterns and succeeded without errors."
+            "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call included appropriate ops with tool='validate_schema', outcome='positive', and descriptive notes. The expected_args for both calls are null (no fixture constraints), and matched.kind is 'live' for both \u2014 no fixture_not_found errors. Arguments were reasonable and correct."
           },
           {
             "source": "rubric",
             "name": "Tool-response interpretation & error explanation",
             "score": null,
-            "rationale": "N/A \u2014 the validator returned no errors (clean-pass test). The skill correctly interpreted the clean result and reported it. There are no errors to explain, so this dimension does not apply."
+            "rationale": "The validator returned no errors (valid:true, errors:[], warnings:[]). This is a clean-pass test, so there are no errors to explain. Per the rubric, this dimension is N/A when the validator returned no errors."
           },
           {
             "source": "rubric",
             "name": "Fix-suggestion specificity",
             "score": null,
-            "rationale": "N/A \u2014 no errors were reported by the validator (clean-pass test). There is nothing to fix, so this dimension does not apply."
+            "rationale": "No errors were reported by the validator \u2014 this is a clean-pass test. Per the rubric, this dimension is N/A when no errors were reported and nothing needs fixing."
           },
           {
             "source": "rubric",
             "name": "No-edit discipline & scope adherence",
             "score": 3,
-            "rationale": "The skill stayed within its lane as a read-only validation reporter. It made no edits to research.json or tree.gedcomx.json to 'fix' anything. It reported the validation result and logged it, then stopped. It did not substitute schema validation for other checks or venture into logical/GPS-quality assessment. The skill correctly adhered to its scope."
+            "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix anything \u2014 the only file change was appending log_006 to the log section, which is the expected and permitted log entry. Claude correctly stayed in report-only mode, did not attempt to fix the null fields on the conflicts, and appropriately noted that substantive resolution is out of scope for this check. No scope blurring or unauthorized edits occurred."
           }
         ]
       },
@@ -5406,45 +5406,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly reported that schema validation passed with no errors and no warnings. The validator response confirms both research.json and tree.gedcomx.json are valid. The skill accurately stated that the two unresolved conflicts have the correct shape under the schema, and correctly noted that schema validation does not assess substantive resolution. All claims are supported by the tool response."
+                "rationale": "The skill correctly called validate_research_schema, which returned valid:true with no errors. Claude accurately reported that both files passed all validation checks, including the two unresolved conflicts having correct shape. The per-test context confirms that the validator returning no errors IS the correct confirmation. Claude also correctly noted that the schema check does not assess substantive resolution \u2014 this is accurate and appropriate. No fabricated claims or contradictions with the tool response."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill fully addressed the user's request to validate project files and check that both unresolved conflicts have the right shape. It confirmed validation passed, explicitly noted both conflicts are structurally valid, and logged the result. The per-test context confirms that reporting 'validation passed, no errors' is the correct and complete response for this read-only skill."
+                "rationale": "The skill addressed everything required: it called validate_research_schema, reported the clean pass result, noted that both conflicts are structurally valid under the schema, logged the result as log_006, and clarified the scope boundary (schema validity vs. substantive resolution). The per-test context confirms that reporting 'validation passed, no errors' is the correct and complete response for this read-only skill. Nothing was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "The skill made two tool calls with correct arguments. The validate_research_schema call passed the correct projectPath. The research_log_append call properly structured the log entry with appropriate tool name, query, outcome ('positive'), and notes summarizing the validation result. Both calls matched expected usage patterns and succeeded without errors."
+                "rationale": "Both tool calls used correct arguments. The validate_research_schema call used the correct projectPath. The research_log_append call included appropriate ops with tool='validate_schema', outcome='positive', and descriptive notes. The expected_args for both calls are null (no fixture constraints), and matched.kind is 'live' for both \u2014 no fixture_not_found errors. Arguments were reasonable and correct."
               },
               {
                 "source": "rubric",
                 "name": "Tool-response interpretation & error explanation",
                 "score": null,
-                "rationale": "N/A \u2014 the validator returned no errors (clean-pass test). The skill correctly interpreted the clean result and reported it. There are no errors to explain, so this dimension does not apply."
+                "rationale": "The validator returned no errors (valid:true, errors:[], warnings:[]). This is a clean-pass test, so there are no errors to explain. Per the rubric, this dimension is N/A when the validator returned no errors."
               },
               {
                 "source": "rubric",
                 "name": "Fix-suggestion specificity",
                 "score": null,
-                "rationale": "N/A \u2014 no errors were reported by the validator (clean-pass test). There is nothing to fix, so this dimension does not apply."
+                "rationale": "No errors were reported by the validator \u2014 this is a clean-pass test. Per the rubric, this dimension is N/A when no errors were reported and nothing needs fixing."
               },
               {
                 "source": "rubric",
                 "name": "No-edit discipline & scope adherence",
                 "score": 3,
-                "rationale": "The skill stayed within its lane as a read-only validation reporter. It made no edits to research.json or tree.gedcomx.json to 'fix' anything. It reported the validation result and logged it, then stopped. It did not substitute schema validation for other checks or venture into logical/GPS-quality assessment. The skill correctly adhered to its scope."
+                "rationale": "The skill made no edits to research.json or tree.gedcomx.json to fix anything \u2014 the only file change was appending log_006 to the log section, which is the expected and permitted log entry. Claude correctly stayed in report-only mode, did not attempt to fix the null fields on the conflicts, and appropriately noted that substantive resolution is out of scope for this check. No scope blurring or unauthorized edits occurred."
               }
             ],
-            "judge_cost_usd": 0.011138100000000001,
+            "judge_cost_usd": 0.0347346,
             "duration_ms": 8478.496900002938,
             "error": null,
             "input_tokens": 7483,
-            "cached_input_tokens": 4451,
-            "output_tokens": 642
+            "cached_input_tokens": 4452,
+            "output_tokens": 730
           },
           "started_at": 1793316922.8967047,
           "ended_at": 1793316967.343968
@@ -5471,7 +5471,7 @@
     "total_cost_usd": 1.5277924999999999,
     "wall_clock_ms": 166735.4166507721
   },
-  "judge_model": "claude-haiku-4-5-20251001",
+  "judge_model": "claude-sonnet-4-6",
   "review_sample": {
     "tests": [
       "ut_validate_schema_001",
@@ -5504,5 +5504,6 @@
       "research_log_append": "71aa18a46fd17ae9455f0063f272606e1dc7ee27757cea6ddd7e5169c78a5ba1",
       "validate_research_schema": "c2dddaf7092cb66cead742957e563fe44abb330f43ffe32348b32c1e9899ec93"
     }
-  }
+  },
+  "judge_render_hash": "cf600bf59c407dfba24a72a5e156c44463e5db3f0449fe867c84e8194a103c77"
 }
