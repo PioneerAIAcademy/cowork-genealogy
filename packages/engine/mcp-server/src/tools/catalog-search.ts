@@ -126,7 +126,7 @@ function objectsIn(v: unknown): Collapsed[] {
 }
 
 /** The first real object in a collapsed container. `item.source` is the
- *  PARENT of note/author/subject/film_note — all four are defended against
+ *  PARENT of note/subject/film_note — all three are defended against
  *  the object-for-one / array-for-several collapse and their container was
  *  not, so `source: [{...}]` reported `hydrated: true` with every field
  *  empty: "not filmed, not online, no notes", the opposite of the truth and
@@ -987,7 +987,7 @@ export async function catalogSearchTool(
         if (Date.now() >= deadline) return;
         // EVERY source block, not just the first. `firstObject` closed the
         // array-of-one collapse and silently dropped an array of several,
-        // taking its notes, authors, subjects and imageGroupNumbers with it —
+        // taking its notes, subjects and imageGroupNumbers with it —
         // while every sibling container reads all elements through asArray.
         const sources = objectsIn(item.source);
         if (sources.length > 0) hydrateFromSource(hit, sources);
