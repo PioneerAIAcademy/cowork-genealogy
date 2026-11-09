@@ -215,6 +215,8 @@ export interface Assertion {
   /** Non-null means retired by a re-extraction: the replacing `a_` id, or "retracted". */
   superseded_by?: string | null
   superseded_reason?: string | null
+  /** Tool-stamped: the index assertion on the same source this page reading disputes. */
+  disputes_assertion_id?: string
 }
 
 /**

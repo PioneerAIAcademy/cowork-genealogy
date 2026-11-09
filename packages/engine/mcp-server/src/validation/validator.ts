@@ -818,6 +818,7 @@ export const RESEARCH_SHAPES = {
     "place", "standard_place", "information_quality", "informant",
     "informant_proximity", "informant_bias_notes", "record_basis",
     "log_entry_id", "extracted_for_question_ids", "superseded_by", "superseded_reason",
+    "disputes_assertion_id",
   ]),
   person_evidence_entry: new Set([
     "id", "assertion_id", "person_id", "confidence", "rationale",
@@ -1549,6 +1550,36 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       addError(report, ap, `superseded_by '${by}' names the assertion itself`);
     } else {
       checkRefExists(by, ids.assertions, "assertion", ap, report);
+    }
+  }
+  // A page reading names the index assertion it disputes (#4286). Existence, not
+  // liveness: a re-extracted target is retired, and the dispute follows its
+  // `superseded_by` to the successor. Same source only: a page disputes its own
+  // record's index, never another record's.
+  const sourceOfAssertion = new Map<string, unknown>();
+  for (const a of assertions) {
+    if (a && typeof a === "object" && typeof a.id === "string") sourceOfAssertion.set(a.id, a.source_id);
+  }
+  for (let i = 0; i < assertions.length; i++) {
+    const a = assertions[i];
+    if (!a || typeof a !== "object" || !("disputes_assertion_id" in a)) continue;
+    const ap = `${path}/assertions[${i}]`;
+    const target = a.disputes_assertion_id;
+    if (typeof target !== "string") {
+      addError(report, ap, `disputes_assertion_id must be a string, got ${target === null ? "null" : typeof target}`);
+    } else if (!target.startsWith(ID_PREFIXES.assertions)) {
+      addError(report, ap, `disputes_assertion_id '${target}' must be an '${ID_PREFIXES.assertions}' id`);
+    } else if (target === a.id) {
+      addError(report, ap, `disputes_assertion_id '${target}' names the assertion itself`);
+    } else if (!sourceOfAssertion.has(target)) {
+      checkRefExists(target, ids.assertions, "assertion", ap, report);
+    } else if (sourceOfAssertion.get(target) !== a.source_id) {
+      addError(
+        report,
+        ap,
+        `disputes_assertion_id '${target}' is on source '${String(sourceOfAssertion.get(target))}', ` +
+          `not this assertion's source '${String(a.source_id)}': a page disputes only its own record's index`,
+      );
     }
   }
 

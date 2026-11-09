@@ -8819,6 +8819,9 @@ function applyOne(
         "record_document_id is not updatable: research_append stamps it from the record's results sidecar on append",
       );
     }
+    if (section === "assertions" && "disputes_assertion_id" in op.fields) {
+      throw new ResearchAppendError(DISPUTES_NOT_CALLERS);
+    }
     const existingIndex = array.findIndex((e) => e && e.id === op.entryId);
     if (existingIndex === -1) {
       throw new ResearchAppendError(`entryId '${op.entryId}' not found in '${section}'`);
@@ -9941,7 +9944,7 @@ export function reextractionKey(a: any): string | undefined {
 /** A fact type's comparison key after the `FACT_TYPE_ALIASES` fold: "Baptism",
  *  `baptism` and `christening` are one fact type, as are "BirthRegistration" and
  *  `birth_registration`. */
-function canonicalFactKey(ft: unknown): string {
+export function canonicalFactKey(ft: unknown): string {
   const key = factTypeKey(ft);
   return Object.hasOwn(FACT_TYPE_ALIASES, key) ? factTypeKey(FACT_TYPE_ALIASES[key]) : key;
 }
@@ -10795,6 +10798,10 @@ async function prepareOps(
     if (!entry || typeof entry !== "object") continue;
     // Only the sidecar names the document (stamped below); a caller's value is dropped.
     delete entry.record_document_id;
+    if ("disputes_assertion_id" in entry && options.stampDisputes !== true) {
+      errors.push(fmt(i, DISPUTES_NOT_CALLERS));
+      continue;
+    }
 
     // ── D2: persona/record-id matrix against the log entry's sidecar ──
     let matchedRecord: any = null;
@@ -11216,7 +11223,16 @@ export interface ResearchAppendOptions {
    *  `recordId` against the batch's appends, in the same write (`planRetirement`).
    *  Never set by a tool caller. */
   retireAssertions?: RetireAssertions;
+  /** extraction_append's page readings (#4286): its assertion appends may carry
+   *  `disputes_assertion_id`. Never set by a tool caller. */
+  stampDisputes?: boolean;
 }
+
+/** `disputes_assertion_id` is the tool's to write, never a caller's (#4286). */
+export const DISPUTES_NOT_CALLERS =
+  "disputes_assertion_id is written only by extraction_append, when record-structurer reports what a " +
+  "read page says (`attachWaitingPages` with `pageReadings`). Leave it out: a page reading is not written " +
+  "through research_append.";
 
 export interface RetireAssertions {
   recordId: string;
