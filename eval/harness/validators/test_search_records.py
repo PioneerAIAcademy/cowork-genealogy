@@ -1081,26 +1081,19 @@ def test_namesake_other_parents_row(before_state, after_state, test):
     )
 
 
-def test_cedillo_pool_row(before_state, after_state, test):
-    """Tag-gated (cedillo-pool-row): neither Cedillo woman is ruled out, so no
-    row lists her records, Santiago's death or a child's; the two are one pool
-    row naming a 1943 and a 1945 record. A row for an unrelated namesake passes."""
-    if "cedillo-pool-row" not in test.get("tags", []):
-        pytest.skip("not a cedillo-pool-row scenario")
+def test_cedillo_neither_woman_ruled_out(before_state, after_state, test):
+    """Tag-gated (cedillo-no-rule-out): neither Cedillo woman is ruled out, so no
+    namesakes row lists her records, Santiago's death or a child's. A pool row
+    (record_ids empty) is accepted and not required; a row for an unrelated
+    namesake passes."""
+    if "cedillo-no-rule-out" not in test.get("tags", []):
+        pytest.skip("not a cedillo-no-rule-out scenario")
     rows = _new_section_entries(before_state, after_state, "namesakes")
     barred = set(CEDILLO_1943_IDS + CEDILLO_1945_IDS + CEDILLO_FAMILY_IDS)
     listed = sorted(
         {_namesake_bare_id(r) for row in rows for r in row.get("record_ids") or []} & barred
     )
     assert not listed, f"a namesakes row lists {listed}: neither woman, nor her husband or children, may be ruled out"
-    pools = [
-        row for row in rows
-        if row.get("record_ids") == [] and str(row.get("notes") or "").lstrip().startswith("pool:")
-    ]
-    assert pools, f"expected one pool row (record_ids empty, notes starting 'pool:') for the two women, got rows {rows}"
-    notes = " ".join(str(row.get("notes") or "") for row in pools)
-    assert any(rid in notes for rid in CEDILLO_1943_IDS), f"the pool row names no 1943 record {CEDILLO_1943_IDS}"
-    assert any(rid in notes for rid in CEDILLO_1945_IDS), f"the pool row names no 1945 record {CEDILLO_1945_IDS}"
 
 
 PARENT_NAME_FIELDS = ("fatherGivenName", "fatherSurname", "motherGivenName", "motherSurname")

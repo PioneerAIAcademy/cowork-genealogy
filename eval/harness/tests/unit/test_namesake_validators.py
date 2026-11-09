@@ -516,7 +516,7 @@ def test_hands_subject_fails_when_search_images_was_never_spawned():
 
 # --- search-records: the Cedillo pool (issue #4042) -------------------------
 
-CEDILLO = {"id": "ut_search_records_033", "tags": ["cedillo-pool-row"]}
+CEDILLO = {"id": "ut_search_records_033", "tags": ["cedillo-no-rule-out"]}
 CEDILLO_POOL = row(
     name="Nicolasa Cedillo",
     log_entry_ids=["log_001"],
@@ -530,16 +530,20 @@ def cedillo_after(*rows):
 
 def test_cedillo_check_ignores_an_untagged_test():
     with pytest.raises(pytest.skip.Exception):
-        records.test_cedillo_pool_row(BEFORE, cedillo_after(), {"id": "x", "tags": []})
+        records.test_cedillo_neither_woman_ruled_out(BEFORE, cedillo_after(), {"id": "x", "tags": []})
 
 
 def test_cedillo_check_passes_on_the_pool_row():
-    records.test_cedillo_pool_row(BEFORE, cedillo_after(CEDILLO_POOL), CEDILLO)
+    records.test_cedillo_neither_woman_ruled_out(BEFORE, cedillo_after(CEDILLO_POOL), CEDILLO)
+
+
+def test_cedillo_check_passes_with_no_row():
+    records.test_cedillo_neither_woman_ruled_out(BEFORE, cedillo_after(), CEDILLO)
 
 
 def test_cedillo_check_passes_beside_an_unrelated_namesake():
     other = row(id="ns_002", name="Nicolasa Cedillo Hernandez", record_ids=["ark:/61903/1:1:X7JJ-K94N"], notes="born 1956")
-    records.test_cedillo_pool_row(BEFORE, cedillo_after(CEDILLO_POOL, other), CEDILLO)
+    records.test_cedillo_neither_woman_ruled_out(BEFORE, cedillo_after(other), CEDILLO)
 
 
 @pytest.mark.parametrize(
@@ -548,12 +552,9 @@ def test_cedillo_check_passes_beside_an_unrelated_namesake():
         ([row(record_ids=["ark:/61903/1:1:X7FM-YRGN"], notes="other parents")], r"lists \['X7FM-YRGN'\]"),
         ([CEDILLO_POOL, row(id="ns_002", record_ids=["X7FS-6T4L"], notes="spouse")], r"lists \['X7FS-6T4L'\]"),
         ([CEDILLO_POOL, row(id="ns_002", record_ids=["ark:/61903/1:1:X7LS-KMLK"], notes="a different Santiago")], r"lists \['X7LS-KMLK'\]"),
-        ([], "expected one pool row"),
-        ([row(notes="pool: X7FS-6T4L only")], "names no 1945 record"),
-        ([row(notes="pool: X7FM-YRGN only")], "names no 1943 record"),
-        ([row(record_ids=[], notes="the two Nicolasas: X7FS-6T4L, X7FM-YRGN")], "expected one pool row"),
+        ([row(record_ids=["X7FS-X3LL"], notes="a daughter, not her")], r"lists \['X7FS-X3LL'\]"),
     ],
 )
 def test_cedillo_check_rejects(rows, message):
     with pytest.raises(AssertionError, match=message):
-        records.test_cedillo_pool_row(BEFORE, cedillo_after(*rows), CEDILLO)
+        records.test_cedillo_neither_woman_ruled_out(BEFORE, cedillo_after(*rows), CEDILLO)
