@@ -2719,7 +2719,7 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
       PERIOD, MODERN, "Rieti, Roma, Lazio, Italy", "Rieti, Umbria, Umbria, Italy",
       "Rieti, Perugia, Umbria, Papal States", "Rieti, Umbria, Papal States",
     ]));
-    const expansion = out.placeExpansion as { searches: Array<{ places: Record<string, string>; totalMatches: number }>; mergedCount: number };
+    const expansion = out.placeExpansion!;
     expect(expansion.searches[0]).toMatchObject({ places: { deathPlace: PERIOD }, totalMatches: 33 });
     expect(expansion.searches[1]).toMatchObject({ places: { deathPlace: MODERN }, totalMatches: 41 });
     expect(out.totalMatches).toBe(41);
@@ -2733,7 +2733,7 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
     const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL);
 
     expect(out.results.map((r) => r.recordId.split(":").pop())).toEqual(["A1AA-AAAA", "SHRD-AAAA", "B2BB-BBBB", "A3AA-AAAA"]);
-    expect((out.placeExpansion as { mergedCount: number }).mergedCount).toBe(4);
+    expect(out.placeExpansion?.mergedCount).toBe(4);
     expect(out.returned).toBe(4);
     expect(out.hasMore).toBe(false);
   });
@@ -2763,13 +2763,63 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
     expect(searchUrls.every((u) => Number(u.searchParams.get("count")) <= 100)).toBe(true);
   });
 
-  it("searches only the typed place, and says so, when paging is too deep to read every name", async () => {
+  it("refuses a page too deep to read every name, rather than switching orderings mid-paging", async () => {
     byPlace[PERIOD] = ids("PER", 3);
-    const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 100, offset: 400 }, LOCAL);
-    expect(searchUrls).toHaveLength(1);
-    expect(searchUrls[0]!.searchParams.get("q.deathLikePlace")).toBe(PERIOD);
-    expect(searchUrls[0]!.searchParams.get("offset")).toBe("400");
-    expect(out.placeExpansion).toMatchObject({ skipped: "offset too deep" });
+    // 6 names x 5 pages of 100 = 30 requests, past the 24 allowed.
+    await expect(
+      recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 100, offset: 400 }, LOCAL),
+    ).rejects.toThrow(/too deep to search every name of the place: 6 names/);
+    expect(searchUrls).toHaveLength(0);
+    // 6 x 4 = 24 is still allowed.
+    await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 100, offset: 300 }, LOCAL);
+    expect(searchUrls.length).toBeGreaterThan(0);
+  });
+
+  it("does not report 'found nothing' when a name it could not search might hold the record", async () => {
+    failPlace = MODERN;
+    await expect(recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL)).rejects.toThrow(
+      /did not complete for every name of the place \(Rieti, Rieti, Lazio, Italy: .*NOT an empty result/,
+    );
+  });
+
+  it("stops starting further names past the time limit, and still answers from what it searched", async () => {
+    byPlace[PERIOD] = [TARGET];
+    let now = 1_000_000;
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => (now += 11_000));
+    try {
+      const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL);
+      expect(out.results.map((r) => r.recordId)).toEqual([`ark:/61903/1:1:${TARGET}`]);
+      const errors = (out.placeExpansion?.searches ?? []).filter((s) => s.error).map((s) => s.error);
+      expect(errors.length).toBeGreaterThan(0);
+      expect(errors.every((e) => /time limit/.test(e!))).toBe(true);
+    } finally {
+      clock.mockRestore();
+    }
+  });
+
+  it("starts no further search once the typed search has failed", async () => {
+    failPlace = PERIOD;
+    await expect(recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL)).rejects.toThrow();
+    await new Promise((r) => setTimeout(r, 0));
+    // The typed search plus at most the two that started beside it.
+    expect(searchUrls.length).toBeLessThanOrEqual(3);
+  });
+
+  it("reports hasMore false when the rows past the page all fail mapping", async () => {
+    byPlace[PERIOD] = ids("PER", 3);
+    byPlace[MODERN] = ["NOID"];
+    const base = mockFetch.getMockImplementation()!;
+    mockFetch.mockImplementation(async (input: string | URL, init?: RequestInit) => {
+      const res = await base(input, init);
+      if (!String(input).includes(encodeURIComponent(MODERN).replace(/%20/g, "+")) && !String(input).includes(encodeURIComponent(MODERN))) return res;
+      const body = await (res as { json: () => Promise<FSSearchResponse> }).json();
+      // A row with no represented person: mapEntry drops it.
+      body.entries = [{ id: "NOID", content: { gedcomx: { persons: [] } } } as unknown as FSSearchEntry];
+      return { ...res, json: async () => body };
+    });
+    const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 3 }, LOCAL);
+    expect(out.results).toHaveLength(3);
+    expect(out.hasMore).toBe(false);
   });
 
   it("adds the modern parent under *PlaceExact and keeps .exact on every search", async () => {
@@ -2785,7 +2835,7 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
     failPlace = "Rieti, Umbria, Papal States";
     const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL);
     expect(out.results.map((r) => r.recordId)).toContain(`ark:/61903/1:1:${TARGET}`);
-    const failed = (out.placeExpansion as { searches: Array<{ places: Record<string, string>; error?: string }> }).searches
+    const failed = out.placeExpansion!.searches
       .filter((s) => s.error !== undefined);
     expect(failed.map((s) => s.places.deathPlace)).toEqual(["Rieti, Umbria, Papal States"]);
   });
@@ -2863,6 +2913,19 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
       const sidecar = JSON.parse(await readFile(join(dir, out.staged!.resultsRef), "utf-8"));
       expect(sidecar.payload.results.length).toBeGreaterThan(10);
       expect(sidecar.payload.returned).toBe(10);
+    });
+
+    it("caps the ranked pool, keeping every name's best rows", async () => {
+      byPlace[PERIOD] = ids("PER", 60);
+      byPlace[MODERN] = [TARGET, ...ids("MOD", 59)];
+      ["Rieti, Roma, Lazio, Italy", "Rieti, Umbria, Umbria, Italy", "Rieti, Perugia, Umbria, Papal States", "Rieti, Umbria, Papal States"]
+        .forEach((p, i) => { byPlace[p] = ids(`X${i}Y`, 60); });
+      // 6 names x 60 distinct rows = 360 merged, past the 300 ranked pool.
+      const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 60, projectPath: dir, subjectId: "I1" }, LOCAL);
+      expect(out.placeExpansion?.rankedPoolCapped).toBe(true);
+      expect(out.results[0]!.recordId).toBe(`ark:/61903/1:1:${TARGET}`);
+      const sidecar = JSON.parse(await readFile(join(dir, out.staged!.resultsRef), "utf-8"));
+      expect(sidecar.payload.results).toHaveLength(300);
     });
 
     it("still cuts to count, in merged order, when ranking fails", async () => {

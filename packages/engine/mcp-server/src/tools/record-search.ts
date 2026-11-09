@@ -28,6 +28,7 @@ import type {
   RecordSearchEvent,
   TreeMatch,
   RecordSearchToolResponse,
+  PlaceField,
 } from "../types/record-search.js";
 import {
   isFourDigitYear,
@@ -1066,20 +1067,26 @@ export interface RecordSearchOptions {
   expandPlaces?: boolean;
 }
 
-type PlaceField = "birthPlace" | "deathPlace" | "marriagePlace" | "residencePlace" | "anyPlace";
 const PLACE_FIELDS: readonly PlaceField[] = EVENT_GROUPS.map((g) => `${g.prefix}Place` as PlaceField);
 /** Most searches one call fans out to (the product over its place fields). */
 const MAX_PLACE_SEARCHES = 12;
-/** Most upstream requests an expansion may make; deeper, the typed text alone. */
+/** Most upstream requests an expansion may make; a deeper page is refused. */
 const MAX_EXPANSION_REQUESTS = 24;
+/** Most merged rows staged and ranked under a subject. Ranking costs one
+ *  FamilySearch match call per row plus an attachment check; an 81-row Rieti
+ *  pool ranked in about 6 seconds live, so this stays well inside Cowork's 60s
+ *  abort. Taken in interleave order, so every name's best rows are kept. */
+const RANKED_POOL_MAX = 300;
+/** A further name's search not started by this many ms after the fan-out began
+ *  is not run (reported as an error), so the call stays inside Cowork's 60s
+ *  abort with ranking still to come. The typed search always runs. */
+const EXPANSION_DEADLINE_MS = 30_000;
 /** Largest page FamilySearch serves, and the tool's own `count` maximum. */
 const UPSTREAM_PAGE_MAX = 100;
 const EXPANSION_CONCURRENCY = 3;
 
 const PLACE_EXPANSION_NOTE =
   "The place was searched under every name FamilySearch has for it, and the records merged without duplicates: an index finds a record only under the name it standardized the place to, which need not be the name in force at the record's date. totalMatches is the largest single search's total; each search's own total is listed here.";
-const PLACE_EXPANSION_SKIPPED_NOTE =
-  "Only the place as typed was searched: reading every name of the place this deep would take too many requests. Narrow the query rather than paging deeper.";
 
 type PlaceCombo = Partial<Record<PlaceField, string>>;
 
@@ -1092,13 +1099,13 @@ type PlaceCombo = Partial<Record<PlaceField, string>>;
 async function planPlaceSearches(
   input: RecordSearchInput,
 ): Promise<{ combos: PlaceCombo[]; truncated: boolean } | null> {
-  const lists: Array<[PlaceField, string[]]> = [];
-  for (const field of PLACE_FIELDS) {
-    const place = input[field];
-    if (!place) continue;
-    const exact = input[`${field}Exact` as keyof RecordSearchInput] === true;
-    lists.push([field, (await placeSearchNames(place, exact)) ?? [place]]);
-  }
+  const lists: Array<[PlaceField, string[]]> = await Promise.all(
+    PLACE_FIELDS.filter((field) => input[field]).map(async (field): Promise<[PlaceField, string[]]> => {
+      const place = input[field] as string;
+      const exact = input[`${field}Exact` as keyof RecordSearchInput] === true;
+      return [field, (await placeSearchNames(place, exact)) ?? [place]];
+    }),
+  );
   if (!lists.some(([, names]) => names.length > 1)) return null;
 
   let truncated = false;
@@ -1190,7 +1197,16 @@ export async function recordSearchTool(
   const plan = opts.expandPlaces === false ? null : await planPlaceSearches(paired);
   const depth = offset + count;
   const requestsPerSearch = Math.ceil(depth / UPSTREAM_PAGE_MAX);
-  const tooDeep = plan !== null && plan.combos.length * requestsPerSearch > MAX_EXPANSION_REQUESTS;
+  // Refused, not narrowed to the typed place: switching orderings mid-paging
+  // would silently skip every record between the two.
+  if (plan !== null && plan.combos.length * requestsPerSearch > MAX_EXPANSION_REQUESTS) {
+    throw new Error(
+      `This page is too deep to search every name of the place: ${plan.combos.length} names, ` +
+        `each read from the start to offset + count = ${depth}, would take more than ` +
+        `${MAX_EXPANSION_REQUESTS} requests. Narrow the query (a surname, a year range, ` +
+        "a collectionId) so the records fit in fewer pages, rather than paging deeper.",
+    );
+  }
 
   let entries: FSSearchEntry[];
   let totalMatches: number;
@@ -1199,39 +1215,58 @@ export async function recordSearchTool(
   let placeExpansion: RecordSearchToolResponse["placeExpansion"];
   let expandedPool = false;
   const rankedPool = Boolean(input.projectPath && input.subjectId);
-  if (plan === null || tooDeep) {
+  let searchesHaveMore = false;
+  if (plan === null) {
     const data = await fetchSearchPage(buildSearchUrl(paired), principal);
     entries = data.entries ?? [];
     totalMatches = data.results ?? 0;
     responseOffset = data.index ?? input.offset ?? 0;
     hasMore = data.links?.next?.href != null;
-    if (tooDeep) placeExpansion = { skipped: "offset too deep", note: PLACE_EXPANSION_SKIPPED_NOTE };
   } else {
+    const started = Date.now();
+    let failed = false;
+    const notRun = (places: PlaceCombo, error: string): ExpandedSearch =>
+      ({ places, entries: [], totalMatches: 0, more: false, error });
     const settled = await mapWithConcurrency(
       plan.combos,
       EXPANSION_CONCURRENCY,
       async (places, index): Promise<ExpandedSearch> => {
+        // Once the call has failed nothing will read the rest; past the deadline
+        // a further name is not worth Cowork's 60s abort.
+        if (failed) return notRun(places, "not searched: the call failed");
+        if (index > 0 && Date.now() - started > EXPANSION_DEADLINE_MS) {
+          return notRun(places, "not searched: the time limit for this call ran out");
+        }
         try {
           return await readExpandedSearch(paired, places, depth, principal);
         } catch (err) {
           // The typed search (index 0) fails the call exactly as today; a further
           // name's failure is reported and the merge goes on, unless it is the
           // shared FS budget refusing, which must reach the agent as itself.
-          if (index === 0 || isFsBudgetExhausted(err)) throw err;
-          return {
-            places,
-            entries: [],
-            totalMatches: 0,
-            more: false,
-            error: err instanceof Error ? err.message : String(err),
-          };
+          if (index === 0 || isFsBudgetExhausted(err)) {
+            failed = true;
+            throw err;
+          }
+          return notRun(places, err instanceof Error ? err.message : String(err));
         }
       },
     );
     entries = interleaveEntries(settled);
     totalMatches = Math.max(0, ...settled.map((s) => s.totalMatches));
+    // A name that was not searched could hold the record: no total of 0 may
+    // stand for "found nothing" then, or the log would take a false negative.
+    const unsearched = settled.filter((s) => s.error !== undefined);
+    if (totalMatches === 0 && unsearched.length > 0) {
+      throw new Error(
+        "FamilySearch record search did not complete for every name of the place " +
+          `(${unsearched.map((s) => Object.values(s.places).join(" / ")).join("; ")}: ` +
+          `${unsearched[0]!.error}). The names that were searched found nothing. ` +
+          "This is a transient failure, NOT an empty result — coverage is unknown.",
+      );
+    }
     responseOffset = offset;
-    hasMore = settled.some((s) => s.more) || entries.length > depth;
+    searchesHaveMore = settled.some((s) => s.more);
+    hasMore = searchesHaveMore;
     expandedPool = true;
     placeExpansion = {
       searches: settled.map((s) => ({
@@ -1247,9 +1282,17 @@ export async function recordSearchTool(
   }
   // Not point-free: `.map(mapEntry)` would pass the array index as `terms`.
   const kinTerms = suppliedKinTerms(input);
-  const results = entries
+  const mapped = entries
     .map((entry) => mapEntry(entry, kinTerms))
     .filter((r): r is RecordSearchResult => r !== null);
+  // Under an expansion, the merged rows past the page decide `hasMore` (after
+  // mapping, which can drop rows), and a ranked pool is capped.
+  if (expandedPool) hasMore = searchesHaveMore || mapped.length > depth;
+  const poolCap = Math.max(depth, RANKED_POOL_MAX);
+  const results = expandedPool && rankedPool && mapped.length > poolCap ? mapped.slice(0, poolCap) : mapped;
+  if (results !== mapped && placeExpansion && "searches" in placeExpansion) {
+    placeExpansion.rankedPoolCapped = true;
+  }
 
   // Standardize places across the whole response in one pass (dedup spans all
   // entries; the resolver caches identical strings). Best-effort — never throws.

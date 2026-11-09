@@ -129,6 +129,17 @@ describe("placeSearchNames", () => {
     expect(names).not.toContain("Rieti, Old0, Italy");
   });
 
+  it("never adds a country as the exact parent", async () => {
+    rietiResolves();
+    mockGetPlaceById.mockImplementation(async (id: string) =>
+      id === "7065321"
+        ? ({ placeRepId: "7065321", placeId: "4662032", fullName: MODERN, name: "Rieti", type: "Municipality", parentPlaceRepId: "1" } as Described)
+        : ({ placeRepId: "1", placeId: "p-it", fullName: "Italy", name: "Italy", type: "Country" } as Described));
+    const names = await placeSearchNames(PERIOD, true);
+    expect(names).not.toContain("Italy");
+    expect(names?.slice(0, 2)).toEqual([PERIOD, MODERN]);
+  });
+
   it("skips the parent when no representation is open-ended", async () => {
     rietiResolves(RIETI_REPS.slice(1));
     const names = await placeSearchNames(PERIOD, true);

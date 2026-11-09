@@ -348,7 +348,9 @@ cases above, and done in the tool it needs no agent rule.
 - **Which names.** The typed place is resolved once to its FamilySearch place
   (`placeSearchNames`, `src/utils/place-resolver.ts`) and searched under the
   typed text, the modern representation (open-ended, latest start year), with
-  `*PlaceExact` the modern representation's parent, and then every other
+  `*PlaceExact` the modern representation's parent (never a country, which
+  would turn an exact search of a state into one of the whole country), and
+  then every other
   representation, most recent first. At most 8 names. The typed text is always
   searched, so the merged set is never smaller than the old single search.
   Under `*PlaceExact` the parent is there because the modern town can miss
@@ -365,11 +367,19 @@ cases above, and done in the tool it needs no agent rule.
 - **Merging.** The searches' rows are interleaved by each search's own rank,
   typed search first in each round, and de-duplicated by record. A further
   name's failed search is reported in `placeExpansion` and the merge goes on; the
-  typed search failing fails the call as before. Every place lookup goes through
+  typed search failing fails the call as before. But when every name that was
+  searched found nothing and some name could not be searched, the call fails as
+  a transient error rather than reporting 0: the unsearched name could hold the
+  record, and a nil feeds a negative log entry. A further name not started within
+  30 seconds of the first search is not run (reported as an error), so the call
+  stays inside Cowork's 60-second abort. Every place lookup goes through
   the resolver's in-process caches, so a repeated place costs no lookup.
 - **Cost.** A place with N names is N searches (Rieti: 6). Measured live
   2026-11-09: the Rieti, Orvieto and Denver calls below took 2 to 3 seconds
-  unranked, and the ranked Rieti call 6 seconds for an 81-record pool. On a
+  unranked, and the ranked Rieti call 6 seconds for an 81-record pool. With a
+  subject, at most 300 merged rows (taken in merged order, so every name's best
+  rows are in it) are staged and ranked; `placeExpansion.rankedPoolCapped` says
+  when the list was longer. On a
   hosted server that sets `GENEALOGY_FS_CALLS_PER_MINUTE`, each search counts
   against the budget.
 
@@ -494,8 +504,10 @@ never the individual searches. Each search is read from offset 0 to
 so unranked pages concatenate to it with no gap and no repeat. Ranked pages are
 re-ranked over a deeper pool each time and do not partition it. Because each page
 re-reads from 0, a deep page costs more requests: when the searches times the
-pages per search would pass 24 requests, only the typed place is searched and
-`placeExpansion.skipped` says so. `survey-surname` (`count: 100`, stopping at 600
+pages per search would pass 24 requests, the call is refused with an error that
+says to narrow the query. It is refused rather than narrowed to the typed place,
+because switching from the merged list to another ordering mid-paging would skip
+every record between the two. `survey-surname` (`count: 100`, stopping at 600
 matches) stays inside that for a place with up to 4 names.
 
 ### The response is re-ordered; the staged sidecar is not
@@ -609,8 +621,8 @@ Strict surname + birth-place match:
 | `paginationCappedAt` | number | The hard limit on how many results are reachable through pagination (4999). When `totalMatches > paginationCappedAt`, the rest are unreachable — narrow the query. |
 | `returned` | number | Number of results in this response (≤ `count`). Under a place expansion it is the page shown even when the staged sidecar holds the larger ranked pool; `staged.returnedCount` says the same. |
 | `offset` | number | Echo of the input offset (0 if not supplied). Under a place expansion it is an offset into the merged list. |
-| `hasMore` | boolean | `true` when more pages are available (the response includes a `links.next`). Under a place expansion, when any search has rows past `offset + count` or the merged list runs past the page. |
-| `placeExpansion` | object \| undefined | Present **only** when a place field was searched under more than one name: `searches[]` (each search's `places`, `totalMatches`, rows `returned`, and an `error` if it failed), `mergedCount` (records in the merged list read), `truncated` when names were left out to stay within 12 searches, and a one-sentence `note`. Or `{ skipped: "offset too deep", note }` when only the typed place was searched. **Serialized before `results`**; staged with the response, since it records what was searched. See "Life event fields". |
+| `hasMore` | boolean | `true` when more pages are available (the response includes a `links.next`). Under a place expansion, when any search has rows past `offset + count` or the merged list, after mapping, runs past the page. |
+| `placeExpansion` | object \| undefined | Present **only** when a place field was searched under more than one name: `searches[]` (each search's `places`, `totalMatches`, rows `returned`, and an `error` if it failed), `mergedCount` (records in the merged list read), `truncated` when names were left out to stay within 12 searches, `rankedPoolCapped` when only the first 300 merged rows were staged and ranked, and a one-sentence `note`. **Serialized before `results`**; staged with the response, since it records what was searched. See "Life event fields". |
 | `rankingSkipped` | string \| undefined | Present **only** when `projectPath` was supplied and `subjectId` was not. Names the two features that therefore did not run, and how to get them. **Serialized before `results`** — see below. |
 | `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses with no `research.json` log entry. Advisory — the search still succeeded and nothing is refused. **Serialized before `results`** — see below. |
 | `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied **and `totalMatches` is 0** — not merely when `results` is empty, which is the post-`mapEntry` set. A nil search stages no file, so `unloggedSearches` structurally cannot see it. **Serialized before `results`.** |

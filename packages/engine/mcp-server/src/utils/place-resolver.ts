@@ -1670,7 +1670,8 @@ export const MAX_PLACE_SEARCH_NAMES = 8;
  * Order, and so what a cap drops last: the typed text; the modern
  * representation (open-ended, latest start year); with `exact`, the modern
  * representation's parent, since an exact search of the modern town misses
- * records indexed to its province (Orvieto: "Terni, Umbria, Italy"); then the
+ * records indexed to its province (Orvieto: "Terni, Umbria, Italy"), unless the
+ * parent is a country; then the
  * remaining representations, most recent start year first. De-duplicated
  * case-insensitively, capped at `MAX_PLACE_SEARCH_NAMES`.
  *
@@ -1704,7 +1705,9 @@ export async function placeSearchNames(
   if (exact && modern) {
     const parentRepId = (await getRepInfo(modern.placeRepId))?.parentRepId;
     const parent = parentRepId ? await repIdToStandardPlace(parentRepId) : null;
-    if (parent) names.push(parent);
+    // A country parent would turn an exact search of a state into one of the
+    // whole country.
+    if (parent && placeSegments(parent).length > 1) names.push(parent);
   }
   const rest = dated
     .filter((d) => d.rep !== modern)
