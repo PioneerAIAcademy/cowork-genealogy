@@ -679,7 +679,7 @@ Never write a bare sentence there — a prose `query` carrying an ARK is rejecte
 - **Stop after confirming the mismatch.** Variant spellings will NOT fix a collection mismatch — do not execute them, and do not recommend them as next steps. Suggest a different source or collection filter instead.
 - **A collection mismatch is not a nil, and repeating it is not "still exhausting levers."** If a follow-up attempt at fixing the *collection* targeting (an explicit `collectionId` pin, a broadened year window) still returns the same wrong-collection record, that repetition is the confirmation — not license to reach for Step 8's nil-lever escalation. The record that keeps surfacing is real; it simply isn't from the collection being asked about.
   ❌ WRONG: three straight 1870-census queries all return the 1850 record → try a "Flinn" spelling variant next.
-  ✅ CORRECT: three straight 1870-census queries all return the 1850 record → stop, log the pattern, and suggest a different collection/repository (a different state's archive, Ancestry's independently-indexed 1870 census) — never a spelling change.
+  ✅ CORRECT: three straight 1870-census queries all return the 1850 record → stop, log the pattern, and suggest a different collection or a `search-external-sites` hand-back — never a spelling change.
 
 **outcome values:**
 - `positive`: Matching results found
