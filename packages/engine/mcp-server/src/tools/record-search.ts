@@ -975,20 +975,13 @@ export function mapEntry(
   return result;
 }
 
-export async function recordSearchTool(
-  input: RecordSearchInput,
-  principal: Principal
-): Promise<RecordSearchToolResponse> {
-  validateInput(input);
-
-  const normalizedInput: RecordSearchInput = { ...input };
-  if (normalizedInput.sex) {
-    normalizedInput.sex = normalizeSex(normalizedInput.sex) ?? normalizedInput.sex;
-  }
-  const paired = applyAltNameAutoPair(normalizedInput);
-
-  const url = buildSearchUrl(paired);
-
+/** One upstream search request, with every error mapped to the message the
+ *  agent reads. Shared by the single search and each search of a place
+ *  expansion (issue #4067). */
+async function fetchSearchPage(
+  url: string,
+  principal: Principal,
+): Promise<FSSearchResponse> {
   // #1316 / #2054: fsFetch wraps fetchWithRetry with automatic retry
   // of transient failures (429/5xx, network errors, timeouts) and handles
   // Authorization internally. On a 401 under LOCAL it re-reads tokens.json once.
@@ -1061,7 +1054,23 @@ export async function recordSearchTool(
     );
   }
 
-  const data: FSSearchResponse = await response.json();
+  return (await response.json()) as FSSearchResponse;
+}
+
+export async function recordSearchTool(
+  input: RecordSearchInput,
+  principal: Principal
+): Promise<RecordSearchToolResponse> {
+  validateInput(input);
+
+  const normalizedInput: RecordSearchInput = { ...input };
+  if (normalizedInput.sex) {
+    normalizedInput.sex = normalizeSex(normalizedInput.sex) ?? normalizedInput.sex;
+  }
+  const paired = applyAltNameAutoPair(normalizedInput);
+
+  const url = buildSearchUrl(paired);
+  const data = await fetchSearchPage(url, principal);
   const entries = data.entries ?? [];
   // Not point-free: `.map(mapEntry)` would pass the array index as `terms`.
   const kinTerms = suppliedKinTerms(input);
