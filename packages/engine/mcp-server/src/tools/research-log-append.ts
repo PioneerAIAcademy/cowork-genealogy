@@ -1758,8 +1758,8 @@ const RETRY_DROPPED_KEYS: ReadonlySet<string> = new Set(["collectionId", "offset
 /**
  * Refuse a zero-hit `record_search` log op pinned to one `collectionId` that has
  * no unpinned retry: no sibling `record_search` WITHOUT `collectionId` whose name
- * fields equal this op's (after trimming, ignoring case, and alternate-name
- * auto-pairing), in the same batch or already in `log[]`; a sibling logged `error`
+ * fields equal this op's (after Unicode NFC normalization, trimming, ignoring
+ * case, and alternate-name auto-pairing), in the same batch or already in `log[]`; a sibling logged `error`
  * never ran and does not count. A pinned nil does not rule the record out —
  * it may be indexed in another collection (issue #3854; research-log-editor-spec.md
  * §8.5). The names are the search terms, so each name variant needs its own
