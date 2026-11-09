@@ -1,0 +1,1145 @@
+{
+  "tool": "catalog_search",
+  "description": "catalog_search for Kolonica matched on keywords rather than standardPlace - 2 hits: koha:727653 'Cirkevná matrika, 1824-1924' (the Kolonica Greek Catholic registers) and koha:385993, an 1869 census of Zemplén county. Measured live 2026-11-04 with catalogSearchTool({ standardPlace: 'Slovakia', keywords: 'Kolonica' }). Predicate matches ~Kolonica in keywords.",
+  "args": {
+    "keywords": "~Kolonica"
+  },
+  "response": {
+    "totalHits": 2,
+    "returned": 2,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 10,
+    "hits": [
+      {
+        "id": "koha:727653",
+        "title": "Cirkevná matrika, 1824-1924",
+        "creator": "Grécko-katolícka cirkev. Farský úrad Kolonica (Snina)",
+        "repositoryCalls": [
+          "Granite Mountain Record Vault",
+          "FamilySearch Library",
+          "Online"
+        ],
+        "url": "https://www.familysearch.org/service/search/catalog/item/koha:727653",
+        "hydrated": true,
+        "notes": [
+          "Greek Catholic parish registers of baptisms, marriages and deaths for Kolonica, Slovakia, formerly Kolonica, Zemplén, Hungary. Text in Latin and Hungarian.",
+          "Povôdné dokumnety boli mikrofilmované v Štátnom oblastnom archíve v Levoči.",
+          "Slovakia Church and Synagogue Books are available online, click here. Images for film number 1793684 are not available. (https://familysearch.org/search/collection/1554443)"
+        ],
+        "authors": [],
+        "subjects": [
+          "Czechoslovakia, Slovensko, Snina, Kolonica - Church records",
+          "Hungary, Zemplén, Kolonica - Church records",
+          "Slovakia, Snina, Kolonica - Church records"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "1792766",
+            "imageGroupNumber": "4406755",
+            "indexed": "Y",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Inv. č. 460 Krsty 1824-1833 -- Manželstvá 1825-1833 -- Úmrtia 1824-1833 -- Inv. č. 461 Krsty 1890-1922"
+          },
+          {
+            "filmNumber": "1792767",
+            "imageGroupNumber": "4405907",
+            "indexed": "Y",
+            "copyLocation": "FamilySearch Library",
+            "text": "Inv. č. 461 (pokrač.) Krsty 1922-1924 -- Manželstvá 1890-1924 -- Úmrtia 1890-1924"
+          }
+        ],
+        "availableOnline": true
+      },
+      {
+        "id": "koha:385993",
+        "title": "Népszámlálás, Zemplén (megye) 1869",
+        "creator": "Magyar Statisztikai Hivatal",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Granite Mountain Record Vault",
+          "Online"
+        ],
+        "url": "https://www.familysearch.org/service/search/catalog/item/koha:385993",
+        "hydrated": true,
+        "notes": [
+          "1869 census of Zemplén County, Hungary, now divided between Slovakia and Hungary. Localities are listed alphabetically by Hungarian name; Slovak place names are listed parenthetically. Only the images for localities in Slovakia are available on-line.",
+          "Az eredeti iratok mikrofilmre vétele Budapesten a Magyar Országos Levéltárban történt.",
+          "Records of Slovakia Census, 1869 are available online, click here (https://familysearch.org/search/collection/1986782)"
+        ],
+        "authors": [],
+        "subjects": [
+          "Czechoslovakia, Slovensko - Census - 1869",
+          "Hungary - Census - 1869",
+          "Hungary, Zemplén - Census - 1869",
+          "Slovakia - Census - 1869"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "722666",
+            "imageGroupNumber": "8305306",
+            "copyLocation": "FamilySearch Library",
+            "text": "Abara (Oborín)"
+          },
+          {
+            "filmNumber": "722667",
+            "imageGroupNumber": "8144688",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Agárd (Zemplénagárd)"
+          },
+          {
+            "filmNumber": "722668",
+            "imageGroupNumber": "8266382",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Agyagos (Hlinné) -- Agyidócz (Adidovce) -- Alsóbereczki -- Alsócsebinye (Nižnie Čabiny) -- Alsógolop"
+          },
+          {
+            "filmNumber": "722669",
+            "imageGroupNumber": "8305307",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Alsórahócz (Nižní Hraboves) -- Alsójablonka (Nižná Jablonka) -- Alsókörtvélyes (Nižny Hrusov)"
+          },
+          {
+            "filmNumber": "722670",
+            "imageGroupNumber": "8144591",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Alsóolsva (Nižná Ol̓šava) -- Alsóregmec -- Alsósitnyicze (Nižná Šitnica) -- Aranyospatak (Zlatník) Arbonyazsadány (Sárazsadány)"
+          },
+          {
+            "filmNumber": "722671",
+            "imageGroupNumber": "8266383",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Ardó (Végardó) -- Bacska (Bačka) -- Bacskó (Bačkov)"
+          },
+          {
+            "filmNumber": "722672",
+            "imageGroupNumber": "8266384",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Barancs (Baranč) -- Barkó (Brekov) -- Baskócz (Baškovce) -- Bánócz (Bánovce nad Ondavou)"
+          },
+          {
+            "filmNumber": "722673",
+            "imageGroupNumber": "8305308",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Bánszka (Banské) -- Bekecs"
+          },
+          {
+            "filmNumber": "722674",
+            "imageGroupNumber": "8305309",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Berető (Bracovce) -- Berzék -- Bély (Biel̓)"
+          },
+          {
+            "filmNumber": "722675",
+            "imageGroupNumber": "8305310",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Biste (Byšta) -- Bodrogkeresztúr"
+          },
+          {
+            "filmNumber": "722676",
+            "imageGroupNumber": "8144592",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Bodrogkisfalud (Bodrogszegi) -- Bodrogolaszi"
+          },
+          {
+            "filmNumber": "722677",
+            "imageGroupNumber": "8266385",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Bodrogsára (Sárazsadány) -- Bodrogszerdahely (Streda nad Bodrogom) -- Bodrogvécs (Vécs) -- Bodzás (Bžany)"
+          },
+          {
+            "filmNumber": "722678",
+            "imageGroupNumber": "8144593",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Bodzásujlak (Ujlak) -- Boly (Bol̓) -- Borró (Borov)"
+          },
+          {
+            "filmNumber": "2189407",
+            "imageGroupNumber": "5510093",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Boksa (Bokša)"
+          },
+          {
+            "filmNumber": "722679",
+            "imageGroupNumber": "8144594",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Borsi (Borša) -- Bosnyicza (Božčice) -- Bottyán (Bot̓any) -- Bresztó (Brestov)"
+          },
+          {
+            "filmNumber": "722680",
+            "imageGroupNumber": "7994316",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Brezócz (Berezovec) -- Bruznyicza (Brusnica) -- Bukócz (Bukovec) -- Butka (Budkovce)"
+          },
+          {
+            "filmNumber": "722681",
+            "imageGroupNumber": "8144595",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Csábócz (Cabov) -- Czéke (Cejkov)"
+          },
+          {
+            "filmNumber": "722682",
+            "imageGroupNumber": "8305311",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Cziróka-Béla (Béla nad Cirochou)"
+          },
+          {
+            "filmNumber": "722683",
+            "imageGroupNumber": "8266386",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Cziróka-Hosszúmező (Dlhé nad Cirochou) -- Csabalócz (Čabalovce)"
+          },
+          {
+            "filmNumber": "722684",
+            "imageGroupNumber": "8305312",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Csáklyó (Čaklov) -- Cselej (Čelovce) -- Csernahó (Černochov) -- Csernina (Černina)"
+          },
+          {
+            "filmNumber": "722685",
+            "imageGroupNumber": "8266387",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Csertész (Čertižné) -- Cséke (Lácacséke) -- Csicsóka (Čičava) -- Csicsva-Alja (Csicsvaalja) -- Csörgő (Čergov) -- Csukalócz (Čukalovce)"
+          },
+          {
+            "filmNumber": "722686",
+            "imageGroupNumber": "8266388",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Dara -- Dargó (Dargov) -- Dámócz (Dámóc) -- Dávidvágás (Davidov)"
+          },
+          {
+            "filmNumber": "722687",
+            "imageGroupNumber": "8266389",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Dedasócz (Dedačov) -- Detrik (Detrík) -- Deregnyő (Drahňov)"
+          },
+          {
+            "filmNumber": "722688",
+            "imageGroupNumber": "7994319",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Dobra (Dobrá) -- Dricsna (Malá Driečná) -- Dubrava (Dúbrava) -- Dubróka (Dúbravka)"
+          },
+          {
+            "filmNumber": "2150626",
+            "imageGroupNumber": "5503677",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Bukócz (Bukovce) | Dricsna (DrieČna)"
+          },
+          {
+            "filmNumber": "722689",
+            "imageGroupNumber": "8305313",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Egres (Egreš)"
+          },
+          {
+            "filmNumber": "722690",
+            "imageGroupNumber": "8266390",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Erdőbénye"
+          },
+          {
+            "filmNumber": "722691",
+            "imageGroupNumber": "8144596",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Erdőbénye"
+          },
+          {
+            "filmNumber": "722692",
+            "imageGroupNumber": "8266391",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Erdőbénye"
+          },
+          {
+            "filmNumber": "722693",
+            "imageGroupNumber": "8305314",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Erdőhorváti"
+          },
+          {
+            "filmNumber": "722694",
+            "imageGroupNumber": "8305315",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Falkus (Falkušovce) -- Feketepatak (Čierne nad Topl̓ou) -- Felsőberczki (Felsőberecki) -- Felsőcsebinye (Vyšné Čabiny) -- Felsőgolop"
+          },
+          {
+            "filmNumber": "722695",
+            "imageGroupNumber": "8144597",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Felsőjablonka (Vyšná Jablonka) -- Felsőkörtvélyes (Vyšny Hrušov) -- Felsőolsva (Vyšná Olšava) -- Felsőregmecz (Felsőregmec) -- Felsősitnyicze (Vyšná Sitnica) -- Fias (Fijaš) -- Füzesér (Fišar)"
+          },
+          {
+            "filmNumber": "722696",
+            "imageGroupNumber": "8266392",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Garany (Garaň) -- Gatály (Hatalov)"
+          },
+          {
+            "filmNumber": "722697",
+            "imageGroupNumber": "8144598",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Gálszécs (Sečovce)"
+          },
+          {
+            "filmNumber": "722698",
+            "imageGroupNumber": "8266393",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Gálszécs (Sečovce)"
+          },
+          {
+            "filmNumber": "722699",
+            "imageGroupNumber": "8266394",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Gercsely (Gerčel̓) -- Gerenda (Hriadky)"
+          },
+          {
+            "filmNumber": "722700",
+            "imageGroupNumber": "8266395",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Gesztely"
+          },
+          {
+            "filmNumber": "722701",
+            "imageGroupNumber": "8266396",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Giglócz (Giglovce) -- Girincs -- Girócz (Girovce) -- Golop -- Göröginye (Ohradzany) -- Grozócz (Gruzovce) -- Gyapalócz (Ďapalovce) -- Györgyös (Ďurďoš)"
+          },
+          {
+            "filmNumber": "722702",
+            "imageGroupNumber": "8266397",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Habura (Habura) -- Hankócz (Hankovce) -- Hardicsa (Hardište)"
+          },
+          {
+            "filmNumber": "722703",
+            "imageGroupNumber": "8266398",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Havaj (Havaj) -- Hazsina (Hažín) -- Hegedűsfalva (Hudcovce) -- Hegyi (Kopčany)"
+          },
+          {
+            "filmNumber": "722704",
+            "imageGroupNumber": "7994320",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Helmeczke (Chlumec) -- Henczócz (Hencovce) -- Hernádkak"
+          },
+          {
+            "filmNumber": "722705",
+            "imageGroupNumber": "8266399",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Hernádnémeti"
+          },
+          {
+            "filmNumber": "722706",
+            "imageGroupNumber": "8305316",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Hocsa (Chotča) -- Holcsikócz (Holčikovce)"
+          },
+          {
+            "filmNumber": "722707",
+            "imageGroupNumber": "8144599",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Homonna (Humenné)"
+          },
+          {
+            "filmNumber": "722708",
+            "imageGroupNumber": "8266400",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Homonnaolyka (Vyšná Ol̓ka) -- Homonnarokitó (Humenský Rokytov) -- Homonnazbojna (Nižné Zbojné) -- Hor (Horovce)"
+          },
+          {
+            "filmNumber": "722709",
+            "imageGroupNumber": "8266401",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Hoporty (Sóstófalva) -- Horbokcsebinye (Čabiny u Horbka) -- Horbokradvány (Nižná Radvaň) -- Hosztavicza (Hostovice) -- Hosszúláz (Széphalom) -- Hrubó (Hrubov)"
+          },
+          {
+            "filmNumber": "722710",
+            "imageGroupNumber": "8266402",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Imreg (Imbreg) -- Inócz (Inovce) -- Isztáncs (Stanča) -- Izbugya (Zbudza)"
+          },
+          {
+            "filmNumber": "722711",
+            "imageGroupNumber": "8144600",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Izbugya-Béla Valentócz (Zbudská Belá a Valentovce) -- Izbugya-Bresztó (Brestov) -- Izbugya-Hosszúmező (Zbudske Dlhé) -- Izbugya-Hrabócz (Hrabovec) -- Izbugya-Radvány (Vyšná Radvaň) -- Izbugya-Rokitó (Zbudský Rokitov) -- Izbugya-Zbojna (Vyšné Zbojné) -- Izbugya-Volya (Izbugyavolya)"
+          },
+          {
+            "filmNumber": "722712",
+            "imageGroupNumber": "7994321",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Jakusócz (Jakušovce) -- Jalova (Jalová) -- Jankócz (Jankovce) -- Jeszenócz (Jasenovce) -- Jeszenő (Jasenov) -- Józseffalva (Újpatak=Sárospatak) -- Józsefvölgy (Juskova Vol̓a) -- Kalenó (Kalinov) -- Kaponya (Kapoňa)"
+          },
+          {
+            "filmNumber": "722713",
+            "imageGroupNumber": "8305317",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Karád (Tiszakarád) -- Karcsa"
+          },
+          {
+            "filmNumber": "722714",
+            "imageGroupNumber": "8266403",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Karna (Karná) -- Káros -- Koskócz (Koškovce) -- Kazsu (Kožuchov) -- Kacsánd (Kačanov) -- Kálna (Kalná) -- Kálna-Rosztoka (Kalná Roztoka)"
+          },
+          {
+            "filmNumber": "722715",
+            "imageGroupNumber": "8144601",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Károlyfalva -- Kásó (Kašov) -- Kelcse (Kelča) -- Kelecsény (Klečenov) -- Kereplye (Kraviany)"
+          },
+          {
+            "filmNumber": "722716",
+            "imageGroupNumber": "8305503",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Kesznyéten"
+          },
+          {
+            "filmNumber": "722717",
+            "imageGroupNumber": "8144602",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Királyhelmecz (Král̓ovský Chlumec)"
+          },
+          {
+            "filmNumber": "722718",
+            "imageGroupNumber": "8305504",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Kisazar (Malé Ozorovce) -- Kisbányácska (Széphalom) -- Kisbari (Malá Bara) -- Kisbőcs -- Kisbreznyica (Brežnička)"
+          },
+          {
+            "filmNumber": "722719",
+            "imageGroupNumber": "8305505",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Kiscigánd (Cigánd)"
+          },
+          {
+            "filmNumber": "722720",
+            "imageGroupNumber": "8305506",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Kiscsécs -- Kisdobsza -- Kisdomása (Malá Domaša) -- Kisgéres (Malý Gýreš)"
+          },
+          {
+            "filmNumber": "722721",
+            "imageGroupNumber": "8305507",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Kiskázmér (Malý Kazimír) -- Kiskemencze (Kamienka) -- Kiskövesd (Malý Kevežd) -- Kisráska (Malé Raškovce)"
+          },
+          {
+            "filmNumber": "722722",
+            "imageGroupNumber": "8266404",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Kisrozvágy -- Kisruszka (Malý Ruskov) -- Kistárkány (Malý Tarkan)"
+          },
+          {
+            "filmNumber": "722723",
+            "imageGroupNumber": "8266405",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Kistoronya (Malá Toroňa) -- Kisujlak (Malý Ujlak) -- Kiszte (Kista) -- Kladzán (Kladzany) -- Klenova (Klenová) -- Kobulnyicza (Kobylnice)"
+          },
+          {
+            "filmNumber": "722724",
+            "imageGroupNumber": "8305508",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Kohanócz (Kochanovce) -- Kohány (Kochanovce) -- Kolbása (Kolbaš) -- Kolbászó (Kolbasov) -- Kolbócz (Kolbovce)"
+          },
+          {
+            "filmNumber": "722725",
+            "imageGroupNumber": "8144603",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Kolcs-Hosszúmező (Kolčovské Dlhé) -- Kolonicza (Kolonica) -- Komarócz (Komariany)"
+          },
+          {
+            "filmNumber": "722726",
+            "imageGroupNumber": "8305509",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Kosarócz (Košarovce) -- Kozma (Kuzmice) -- Köröm"
+          },
+          {
+            "filmNumber": "722727",
+            "imageGroupNumber": "8144604",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Krasznibród (Krásny Brod) -- Krasznócz (Krásnovce) -- Krivostyán (Krivošt̓any) -- Kriva"
+          },
+          {
+            "filmNumber": "722728",
+            "imageGroupNumber": "8144605",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Kriva-Olyka (Krivá Ol̓ka) -- Krizslyócz (Krišlovce) -- Kudlócz (Kudlovce) -- Kucsin (Kučin) -- Kvakócz (Kvakovce)"
+          },
+          {
+            "filmNumber": "722729",
+            "imageGroupNumber": "8291100",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Laborczvoja (Vol̓a) -- Ladmócz (Ladmovce) -- Ladomér (Ladomirov) -- Lask (Laškovce)"
+          },
+          {
+            "filmNumber": "722730",
+            "imageGroupNumber": "7765159",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Lasztócz (Lastovce) -- Lasztomér (Lastomír)"
+          },
+          {
+            "filmNumber": "722731",
+            "imageGroupNumber": "8305510",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Lázon (Ložín) -- Lácza (Lácacséke) -- Láczafalva (Lackovce)"
+          },
+          {
+            "filmNumber": "722732",
+            "imageGroupNumber": "8144606",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Leányvár (Révleányvár) -- Legenye (Legiňa)"
+          },
+          {
+            "filmNumber": "722733",
+            "imageGroupNumber": "8305511",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Legyesbénye"
+          },
+          {
+            "filmNumber": "722734",
+            "imageGroupNumber": "8144607",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Lelesz (Leles)"
+          },
+          {
+            "filmNumber": "722735",
+            "imageGroupNumber": "8144608",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Leleszpolyán (Pol̓any) -- Leszkócz (Lieskovec) -- Leszna (Lesné) -- Lomna (Lomné) -- Lomnicza (Lomnica)"
+          },
+          {
+            "filmNumber": "722736",
+            "imageGroupNumber": "8144609",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Luka (Bodroghalom) Lukasócz (Lukačovce) -- Lyubise (L̓ubiša)"
+          },
+          {
+            "filmNumber": "722737",
+            "imageGroupNumber": "8144610",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Magyarizsép (Uhorský Žipov) -- Magyarjesztreb (Jastrabie)"
+          },
+          {
+            "filmNumber": "722738",
+            "imageGroupNumber": "8144611",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Magyarkrucsó (Uhorský Kručov) -- Majorócz (Majerovce) -- Makócz (Makovce) -- Makkoshotyka -- Matyasócz (Matiašovce)"
+          },
+          {
+            "filmNumber": "722739",
+            "imageGroupNumber": "8144612",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Maskócz (Maškovce) -- Málcza (Malčice) -- Márk (Markovce) -- Márk-Csemernye (Pusté Čemernjé) -- Mátyásháza Felsöregmec -- Mátyáska (Mataška)"
+          },
+          {
+            "filmNumber": "722740",
+            "imageGroupNumber": "8144613",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Mád"
+          },
+          {
+            "filmNumber": "722741",
+            "imageGroupNumber": "8144614",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Mád"
+          },
+          {
+            "filmNumber": "722742",
+            "imageGroupNumber": "8305512",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Mezőzombor -- Megyaszó"
+          },
+          {
+            "filmNumber": "722743",
+            "imageGroupNumber": "8305513",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Megyaszó -- Mernyik (Merník)"
+          },
+          {
+            "filmNumber": "722744",
+            "imageGroupNumber": "8144615",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Mezőlaborcz (Medzilaborce) -- Micsák (Mičakovce) -- Miglécz (Miglešov) -- Mihajló (Michajlov) -- Mihályi (Michal̓any)"
+          },
+          {
+            "filmNumber": "722745",
+            "imageGroupNumber": "8305514",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Mikóháza -- Mikova (Miková) -- Minyócz (Miňovce) -- Mislina (Myslina)"
+          },
+          {
+            "filmNumber": "722746",
+            "imageGroupNumber": "8144616",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Mocsár (Močarany) -- Modra -- Mogyoróska (Skrabské)"
+          },
+          {
+            "filmNumber": "722747",
+            "imageGroupNumber": "8266406",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Monok"
+          },
+          {
+            "filmNumber": "722748",
+            "imageGroupNumber": "8144617",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Monok -- Morva (Moraviany) -- Mrázócz (Mrázovce)"
+          },
+          {
+            "filmNumber": "722749",
+            "imageGroupNumber": "8305515",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Nagyazar (Vel̓ké Ozorovce) -- Nagybari (Vel̓ká Bara) -- Nagybresnyicze (Breznica)"
+          },
+          {
+            "filmNumber": "722750",
+            "imageGroupNumber": "8305516",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Nagycigánd (Cigánd) -- Nagycseb (Welké Zbince)"
+          },
+          {
+            "filmNumber": "722751",
+            "imageGroupNumber": "8144618",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Nagydomása (Vel̓ká Domaša) -- Nagygéres (Vel̓ký Gýreš) -- Nagykázmér (Vel̓ký Kazimír)"
+          },
+          {
+            "filmNumber": "722752",
+            "imageGroupNumber": "8266407",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Nagykemence (Kamenica nad Cirochou) -- Nagykövesd (Vel̓ký Kevežd) -- Nagypolena (Vel̓ká Pol̓ana)"
+          },
+          {
+            "filmNumber": "722753",
+            "imageGroupNumber": "8144619",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Nagymihály (Michalovce)"
+          },
+          {
+            "filmNumber": "722754",
+            "imageGroupNumber": "8144620",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Nagymihály (Michalovce)"
+          },
+          {
+            "filmNumber": "722755",
+            "imageGroupNumber": "8305517",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Nagyráska (Vel̓ké Raškovce) -- Nagyrozvágy"
+          },
+          {
+            "filmNumber": "722756",
+            "imageGroupNumber": "8266408",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Nagyruszka (Vel̓ký Ruskov) -- Nagytárkány (Vel̓ký Tarkan)"
+          },
+          {
+            "filmNumber": "722757",
+            "imageGroupNumber": "7994323",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Nagytoronya (Vel̓ká Toroňa) -- Nátafalva (Nacina Ves)"
+          },
+          {
+            "filmNumber": "722758",
+            "imageGroupNumber": "8305518",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Nechvalpolyánka (Nechválova Pol̓anka) -- Néspest (Kucanyi) -- Novoszelicza (Nová Sedlica) -- Nyágó (Ňagov)"
+          },
+          {
+            "filmNumber": "722759",
+            "imageGroupNumber": "7994325",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Olaszliszka"
+          },
+          {
+            "filmNumber": "722760",
+            "imageGroupNumber": "8266409",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Olsinkó (Ol̓šinkov) -- Ond -- Oreszka (Oreské) -- Oroszbisztra (Bystrá) -- Oroszhrabócz (Ruský Hrabovec)"
+          },
+          {
+            "filmNumber": "722761",
+            "imageGroupNumber": "7994326",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Oroszkajnya (Ruská Kajňa) -- Oroszkázmér (Ruský Kazimír) -- Oroszkrucsó (Ruský Kručov) -- Oroszpatak (Ruský Potok) -- Oroszpetrócz (Petrovce) -- Oroszporuba (Ruská Poruba) -- Oroszruszka (Ruské) -- Orosztokaj (Tokajík) -- Oroszvolicza -- Oroszvolya (Ruská Vol̓a) -- Osztruzsnyicza (Ostrožnica)"
+          },
+          {
+            "filmNumber": "722762",
+            "imageGroupNumber": "8266410",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Őrmező (Strážske) -- Őrős (Strážné)"
+          },
+          {
+            "filmNumber": "722763",
+            "imageGroupNumber": "8266411",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Pakasztó (Pakostova) -- Palota -- Papina (Papín) -- Parihuzócz (Parihuzovce)"
+          },
+          {
+            "filmNumber": "722764",
+            "imageGroupNumber": "8144621",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Parnó (Parchoviany) -- Pazdics (Pozdišovce)"
+          },
+          {
+            "filmNumber": "722765",
+            "imageGroupNumber": "8266412",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Páczin (Pácin) -- Pálfölde (Pavlovo) -- Perbenyik (Perbeník)"
+          },
+          {
+            "filmNumber": "722766",
+            "imageGroupNumber": "8305519",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Pelejte (Plechotice) -- Pecsolina (Pčoliné) -- Peticse (Ptičie) -- Petkócz (Petkovce)"
+          },
+          {
+            "filmNumber": "722767",
+            "imageGroupNumber": "8144622",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Petőfalva (Petejovce) -- Petrahó (Bodroghalász = Sárospatak) -- Petrik (Petrikovce) -- Petrócz (Petrovce)"
+          },
+          {
+            "filmNumber": "722768",
+            "imageGroupNumber": "8266413",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Pichnyé (Pichne) -- Piszkorócz (Poskorovce) -- Pravrócz (Pravrovce) -- Pritulyán (Pritul̓any) -- Proszács (Prosačov) -- Puczák (Pucak) -- Poruba (Kamenná Poruba)"
+          },
+          {
+            "filmNumber": "722769",
+            "imageGroupNumber": "8141378",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Porubka -- Possa (Poša) -- Potocska (Potočky)"
+          },
+          {
+            "filmNumber": "722770",
+            "imageGroupNumber": "8285478",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Rád (Rad) -- Rafajócz (Rafajovce) -- Rákócz (Rakovec nad Ondavou)"
+          },
+          {
+            "filmNumber": "722771",
+            "imageGroupNumber": "8266414",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Rátka -- Remenye (Remeniny) -- Repejő (Repejov)"
+          },
+          {
+            "filmNumber": "719776",
+            "imageGroupNumber": "8266340",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Ricse -- Rokitócz (Rokytovce) -- Roskócz (Roškovce) -- Rosztoka (Roztoka) -- Rovna (Rovné) -- Rozsnyik (Rožňik)"
+          },
+          {
+            "filmNumber": "719777",
+            "imageGroupNumber": "8291096",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Rudabányácska -- Rudlyó (Rudlov) -- Runyina (Runina)"
+          },
+          {
+            "filmNumber": "719778",
+            "imageGroupNumber": "8141377",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Sajóhídvég -- Sámogy (Šamudovce)"
+          },
+          {
+            "filmNumber": "2189409",
+            "imageGroupNumber": "5510095",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Sandal (Šandal)"
+          },
+          {
+            "filmNumber": "719779",
+            "imageGroupNumber": "8266341",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Sáros-Kispatak (Sárospatak)"
+          },
+          {
+            "filmNumber": "719780",
+            "imageGroupNumber": "8144654",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Sáros-Nagypatak (Sárospatak)"
+          },
+          {
+            "filmNumber": "719781",
+            "imageGroupNumber": "8144655",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Sáros-Nagypatak (Sárospatak)"
+          },
+          {
+            "filmNumber": "719782",
+            "imageGroupNumber": "8144656",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Sáros-Nagypatak (Sárospatak) -- Sátoraljaújhely"
+          },
+          {
+            "filmNumber": "719783",
+            "imageGroupNumber": "8144674",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Sátoraljaújhely"
+          },
+          {
+            "filmNumber": "719784",
+            "imageGroupNumber": "8144673",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Sátoraljaújhely"
+          },
+          {
+            "filmNumber": "719785",
+            "imageGroupNumber": "8266342",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Sátoraljaújhely -- Semjén"
+          },
+          {
+            "filmNumber": "719786",
+            "imageGroupNumber": "8144672",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Sókút (Sol̓) -- Stefanócz (Štefanovce) -- Szacsúr (Sačurov)"
+          },
+          {
+            "filmNumber": "719787",
+            "imageGroupNumber": "8144671",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Szalók (Slavkovce) -- Szálnyik (Solník) -- Szedliczke (Sedliská) -- Szegilong -- Szelepka (Sliepkovce)"
+          },
+          {
+            "filmNumber": "719788",
+            "imageGroupNumber": "8305277",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Szentes -- Szentmária (Svätá Mária) -- Szerencs"
+          },
+          {
+            "filmNumber": "719789",
+            "imageGroupNumber": "8144670",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Szerencs -- Szécskeresztúr (Kerestúr)"
+          },
+          {
+            "filmNumber": "719790",
+            "imageGroupNumber": "8305278",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Szécstarnóka (Ternavka) -- Szilvásújfalu (Silvaš) -- Szinna (Snina)"
+          },
+          {
+            "filmNumber": "719791",
+            "imageGroupNumber": "8144669",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Szinna (Snina) -- Szinyér -- Szmolnik (Smolník) -- Szolnocska (Solnička) -- Szomotor (Somotor)"
+          },
+          {
+            "filmNumber": "719792",
+            "imageGroupNumber": "8266343",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Szopkócz (Sopkovce) -- Szögh (Bodrogszög) -- Szőlőske (Seleška) -- Sztakcsin (Stakčín) -- Sztakcsin-Rosztoka (Stakčianska Roztoka)"
+          },
+          {
+            "filmNumber": "719793",
+            "imageGroupNumber": "8305279",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Sztankócz (Stankovce) -- Sztarina (Starina) -- Sztaskócz (Vel̓ké Staškovce) -- Sztára (Staré)"
+          },
+          {
+            "filmNumber": "2150627",
+            "imageGroupNumber": "5503678",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Sztarkócz (Stačkovce)"
+          },
+          {
+            "filmNumber": "719794",
+            "imageGroupNumber": "8144668",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Szterkócz (Čabalovce a Sterkovce) -- Sztriócz (Strihovce) -- Sztropkó (Stropkov)"
+          },
+          {
+            "filmNumber": "719795",
+            "imageGroupNumber": "8144667",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Sztropkó (Stropkov) -- Sztropkó-Olyka (Nižna Ol̓ka) -- Sztropkó-Polena (Malá Pol̓ana)"
+          },
+          {
+            "filmNumber": "719796",
+            "imageGroupNumber": "8144666",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Sztropkó-Pojánka (Stropkov Pol̓anka) -- Szuha (Suchá) -- Szukó (Sukov)"
+          },
+          {
+            "filmNumber": "719797",
+            "imageGroupNumber": "8305280",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Szürnyeg (Sirnek) -- Taktaharkány"
+          },
+          {
+            "filmNumber": "720000",
+            "imageGroupNumber": "8305297",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Taktaszada -- Tapolyhermány (Hermanovce) -- Tavarnapolyánka (Tovarniansak Pol̓anka)"
+          },
+          {
+            "filmNumber": "720001",
+            "imageGroupNumber": "8305298",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Techna (Dvorianky) -- Telepócz (Telepovce) -- Tarcal"
+          },
+          {
+            "filmNumber": "720002",
+            "imageGroupNumber": "8305299",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Tarcal"
+          },
+          {
+            "filmNumber": "720003",
+            "imageGroupNumber": "7994273",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Tarcal -- Tállya"
+          },
+          {
+            "filmNumber": "720004",
+            "imageGroupNumber": "7994274",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Tállya"
+          },
+          {
+            "filmNumber": "720005",
+            "imageGroupNumber": "7994275",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Tállya"
+          },
+          {
+            "filmNumber": "720006",
+            "imageGroupNumber": "8144660",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Tiszalúc"
+          },
+          {
+            "filmNumber": "720007",
+            "imageGroupNumber": "8266344",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Topoloka (Topol̓ovka) -- Topolya (Topol̓a) -- Topolyán (Topol̓any) -- Tokaj"
+          },
+          {
+            "filmNumber": "720008",
+            "imageGroupNumber": "8144659",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Tokaj"
+          },
+          {
+            "filmNumber": "720009",
+            "imageGroupNumber": "8144658",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Tokaj -- Tolcsva"
+          },
+          {
+            "filmNumber": "720010",
+            "imageGroupNumber": "8305300",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Tolcsva"
+          },
+          {
+            "filmNumber": "720011",
+            "imageGroupNumber": "8266345",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Tolcsva -- Tóthbisztra -- Tóthizsép (Slovenský Žipov) -- Tóthjablonya (Jabloň)"
+          },
+          {
+            "filmNumber": "720012",
+            "imageGroupNumber": "8144657",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Tóthjesztreb (Jastrabie) -- Tóthkajnya (Slovenská Kajňa) -- Tóthkriva (Slovenské Krivé) -- Tóthvolova (Slovenská Volová) -- Tarczonfalva (Tarconfalva)"
+          },
+          {
+            "filmNumber": "720013",
+            "imageGroupNumber": "8144675",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Tőketerebes (Trebišov)"
+          },
+          {
+            "filmNumber": "720014",
+            "imageGroupNumber": "8144676",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Tőketerebes (Trebišov)"
+          },
+          {
+            "filmNumber": "720015",
+            "imageGroupNumber": "8144677",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Trepec -- Turány (Turiany) -- Turczócz (Turcovce) -- Tusa (Tušice) -- Tusaújfalu (Tušicka Nová Ves) -- Ubja (Ubl̓a)"
+          },
+          {
+            "filmNumber": "720016",
+            "imageGroupNumber": "8266346",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Udva (Udvaské) -- Újcsanálos"
+          },
+          {
+            "filmNumber": "720017",
+            "imageGroupNumber": "8144678",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Ulics (Ulič) -- Upor (Úpor) -- Vajdácska -- Valentócz (Zbudská Belá a Valentovce)"
+          },
+          {
+            "filmNumber": "720018",
+            "imageGroupNumber": "8141379",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Valkó (Valkov) -- Vajaskócz (Valaškovce) -- Varannó (Vranov nad Topl̓ou)"
+          },
+          {
+            "filmNumber": "720019",
+            "imageGroupNumber": "8144679",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Varannócsemernye (Čemerné) -- Varannóhoszúmező (Vranoské Dlhé) -- Varehócz (Varechovce) -- Vavricz (Vavric)"
+          },
+          {
+            "filmNumber": "720020",
+            "imageGroupNumber": "8144680",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Vámosújfalu -- Vásárhely (Trhovište) -- Vehécz (Vechec)"
+          },
+          {
+            "filmNumber": "720021",
+            "imageGroupNumber": "8144681",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Velejte (Vel̓aty) -- Velkrop -- Velepolya (Vel̓opolie) -- Vécse (Vojčice)"
+          },
+          {
+            "filmNumber": "719798",
+            "imageGroupNumber": "8144665",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Véke -- Vidrány (Vydraň) -- Világ (Világy)"
+          },
+          {
+            "filmNumber": "719799",
+            "imageGroupNumber": "8305281",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Vily (Vilyvitány) -- Virava (Výrava) -- Visnyó (Višňov)"
+          },
+          {
+            "filmNumber": "719800",
+            "imageGroupNumber": "8144664",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Vitány (Vilyvitány) -- Vladicsa (Vladiča) -- Vajtócz (Vajtóc) -- Volicza (Volica)"
+          },
+          {
+            "filmNumber": "2150628",
+            "imageGroupNumber": "5503679",
+            "copyLocation": "FamilySearch Library",
+            "text": "tiež Vladicsa (Vladiča)"
+          },
+          {
+            "filmNumber": "719801",
+            "imageGroupNumber": "8144663",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Závada -- Závadka -- Zamutó (Zamutov) -- Zboj"
+          },
+          {
+            "filmNumber": "719802",
+            "imageGroupNumber": "8144662",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Zebegnyő (Zbehňov) -- Zemplén (Zemplín) -- Zempléndobra (Dobrá nad Ondavou)"
+          },
+          {
+            "filmNumber": "719803",
+            "imageGroupNumber": "8305282",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Zétény -- Zombor (Mezőzombor)"
+          },
+          {
+            "filmNumber": "719804",
+            "imageGroupNumber": "8144661",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Zubna (Zubné) -- Zuella (Zvala) -- Zsalubina (Žalobín)"
+          },
+          {
+            "filmNumber": "719805",
+            "imageGroupNumber": "8305283",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Névmutató: A-Z -- Tállya (a könyvtáros megállapítása) -- Abara -- Agárd -- Agyagos -- Agyidócz -- Ágcsernyő -- (?) -- (?) -- Kis-Azar -- (?)"
+          },
+          {
+            "filmNumber": "719806",
+            "imageGroupNumber": "8305284",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Névmutató"
+          },
+          {
+            "filmNumber": "719807",
+            "imageGroupNumber": "8305285",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Statisztikai összefoglaló"
+          },
+          {
+            "filmNumber": "719808",
+            "imageGroupNumber": "8305286",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Statisztikai összefoglaló"
+          },
+          {
+            "filmNumber": "719809",
+            "imageGroupNumber": "8291097",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Statisztikai összefoglaló"
+          },
+          {
+            "filmNumber": "719810",
+            "imageGroupNumber": "8305287",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Statisztikai összefoglaló"
+          },
+          {
+            "filmNumber": "719811",
+            "imageGroupNumber": "8305288",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Statisztikai összefoglaló"
+          },
+          {
+            "filmNumber": "719812",
+            "imageGroupNumber": "8305289",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Statisztikai összefoglaló"
+          },
+          {
+            "filmNumber": "719813",
+            "imageGroupNumber": "8305290",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Statisztikai összefoglaló"
+          },
+          {
+            "filmNumber": "719814",
+            "imageGroupNumber": "8305291",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Statisztikai összefoglaló"
+          },
+          {
+            "filmNumber": "719815",
+            "imageGroupNumber": "8305292",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Statisztikai összefoglaló"
+          },
+          {
+            "filmNumber": "719816",
+            "imageGroupNumber": "8305293",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Statisztikai összefoglaló"
+          },
+          {
+            "filmNumber": "719817",
+            "imageGroupNumber": "8305294",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Statisztikai összefoglaló"
+          },
+          {
+            "filmNumber": "719818",
+            "imageGroupNumber": "8305295",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Statisztikai összefoglaló"
+          },
+          {
+            "filmNumber": "719819",
+            "imageGroupNumber": "8305296",
+            "copyLocation": "Granite Mountain Record Vault",
+            "text": "Statisztikai összefoglaló"
+          }
+        ],
+        "availableOnline": true
+      }
+    ]
+  }
+}
