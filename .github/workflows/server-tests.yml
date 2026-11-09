@@ -123,7 +123,10 @@ jobs:
           # to run this job. Without it the one guard that exists for the
           # `continue_` trap never ran on the change it exists for.
           #
-          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^packages/engine/plugin/hooks/|^packages/engine/plugin/skills/|^docs/specs/schemas/|^\.gitignore$|^deploy/|^scripts/eb_bundles/|^scripts/build-stamp\.mjs$|^Makefile$|^\.github/workflows/server-tests\.yml$|^docs/architecture\.md$|^docs/plan/familysearch-handoff\.md$|^docs/search-agent-prototype-report\.md$|^packages/engine/mcp-server/(src/|package\.json$|package-lock\.json$|tsconfig[^/]*\.json$)'
+          # `^scripts/tailscale-services\.sh$`: tests/test_malachi_stack.py runs the
+          # script's check against a fake curl.
+          #
+          PATTERNS: '^apps/server/|^packages/engine/plugin/agents/|^packages/engine/plugin/hooks/|^packages/engine/plugin/skills/|^docs/specs/schemas/|^\.gitignore$|^deploy/|^scripts/eb_bundles/|^scripts/build-stamp\.mjs$|^scripts/tailscale-services\.sh$|^Makefile$|^\.github/workflows/server-tests\.yml$|^docs/architecture\.md$|^docs/plan/familysearch-handoff\.md$|^docs/search-agent-prototype-report\.md$|^packages/engine/mcp-server/(src/|package\.json$|package-lock\.json$|tsconfig[^/]*\.json$)'
         run: |
           set -euo pipefail
           files="$(gh api "repos/${{ github.repository }}/pulls/${PR_NUMBER}/files" \

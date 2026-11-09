@@ -82,6 +82,9 @@ const SEED_FS_TOKEN_SQL =
 const SEED_CONNECTOR_TOKEN_SQL =
   "INSERT INTO connector_tokens (token_sha256, user_id, client_id, scopes, expires_at) " +
   "VALUES ($1, $2, 'smoke', ARRAY['mcp'], now() + interval '1 hour')";
+const SEED_OWNED_PROJECT_SQL = "INSERT INTO projects (project_id, owner_id) VALUES ($1, $2)";
+const SEED_RESEARCH_SQL =
+  "INSERT INTO documents (project_id, name, doc) VALUES ($1, 'research.json', '{\"project\": {}}'::jsonb)";
 
 /**
  * Teardown is ORDERED, and the order is the point.
@@ -90,16 +93,16 @@ const SEED_CONNECTOR_TOKEN_SQL =
  * (008_auth_owner.sql), unlike connector_tokens and familysearch_tokens, which
  * both CASCADE. The connector client runs the store rows of the plan, so by
  * exit it owns a project — and deleting the user first raises 23503 on every
- * single run.
+ * single run. Every project goes before any user.
  */
-const CONNECTOR_TEARDOWN_SQL: ReadonlyArray<[string, "project" | "user"]> = [
-  ["DELETE FROM staging WHERE project_id = $1", "project"],
-  ["DELETE FROM blobs WHERE project_id = $1", "project"],
-  ["DELETE FROM documents WHERE project_id = $1", "project"],
-  ["DELETE FROM projects WHERE project_id = $1", "project"],
-  // Only now: connector_tokens and familysearch_tokens go with it by CASCADE.
-  ["DELETE FROM users WHERE id = $1", "user"],
+const CONNECTOR_PROJECT_TEARDOWN_SQL: readonly string[] = [
+  "DELETE FROM staging WHERE project_id = $1",
+  "DELETE FROM blobs WHERE project_id = $1",
+  "DELETE FROM documents WHERE project_id = $1",
+  "DELETE FROM projects WHERE project_id = $1",
 ];
+/** Only after the projects: connector_tokens and familysearch_tokens go by CASCADE. */
+const CONNECTOR_USER_TEARDOWN_SQL = "DELETE FROM users WHERE id = $1";
 
 const { values } = parseArgs({
   options: {
@@ -137,7 +140,11 @@ const connectorEnabled = values.connector === true;
  */
 const connectorProjectPath = `/proj_${randomBytes(8).toString("hex")}`;
 const connectorProjectId = connectorProjectPath.slice(1);
+/** Seeded for the listing check: the caller's second project, and another user's. */
+const secondProjectPath = `/proj_${randomBytes(8).toString("hex")}`;
+const foreignProjectPath = `/proj_${randomBytes(8).toString("hex")}`;
 const connectorUserId = `smoke-user-${randomUUID()}`;
+const foreignUserId = `smoke-user-${randomUUID()}`;
 const connectorToken = `smoke-connector-${randomBytes(32).toString("hex")}`;
 const connectorTokenSha256 = createHash("sha256").update(connectorToken).digest("hex");
 /** All tiers agree on this when FS_TOKEN_ENC_KEY is unset (grants.py). */
@@ -230,12 +237,19 @@ function cleanup(): Promise<string | null> {
         error = describe(e);
       }
       if (connectorSeeded) {
-        // In order: the project's rows, then the project, then the user. See
-        // CONNECTOR_TEARDOWN_SQL — the other way round is a foreign-key error
-        // on every run.
-        for (const [sql, keyKind] of CONNECTOR_TEARDOWN_SQL) {
+        // In order: each project's rows, then the project, then the users. See
+        // CONNECTOR_PROJECT_TEARDOWN_SQL — the other way round is a foreign-key
+        // error on every run.
+        const steps: Array<[string, string]> = [
+          ...[connectorProjectId, secondProjectPath.slice(1), foreignProjectPath.slice(1)].flatMap((id) =>
+            CONNECTOR_PROJECT_TEARDOWN_SQL.map((sql): [string, string] => [sql, id]),
+          ),
+          [CONNECTOR_USER_TEARDOWN_SQL, connectorUserId],
+          [CONNECTOR_USER_TEARDOWN_SQL, foreignUserId],
+        ];
+        for (const [sql, key] of steps) {
           try {
-            await db.query(sql, [keyKind === "project" ? connectorProjectId : connectorUserId]);
+            await db.query(sql, [key]);
           } catch (e) {
             error ??= describe(e);
           }
@@ -347,9 +361,10 @@ try {
       // `${connectorProjectPath}/nope`: that is malformed, so the door refuses
       // it at 400 before a store exists and the row fails for the wrong
       // reason. An unwritten /proj_ path has no projects row, so the door
-      // admits it (the first write would claim it) and the tools see exactly
-      // the "no project there" state this row is about.
+      // admits it (the first write would claim it) and the store reads it as
+      // an empty project, which is what `connector` makes this row require.
       missingProjectPath: `/proj_${randomBytes(8).toString("hex")}`,
+      connector: true,
       values: {},
     };
     const connectorRun = await runPlan(
@@ -357,26 +372,46 @@ try {
       connectorCtx,
       {
         offlineOnly,
-        // Two exclusions, both from E1 itself.
-        //
-        // project_list is E2's half (#3991): for a connector the door must bind
-        // a store that LISTS the user's projects plus one fresh id, and nothing
-        // builds that yet.
-        //
         // The FamilySearch rows are excluded by the spec — "the connector
         // client runs no FamilySearch row" — because a connector's token comes
         // from the database, not the header, so these would test the seeded
         // placeholder rather than the door.
-        skip: (tool, step) =>
-          tool === "project_list"
-            ? "E2's half (#3991)"
-            : step.familySearch
-              ? "connector runs no FamilySearch row (E1)"
-              : null,
+        skip: (_tool, step) => (step.familySearch ? "connector runs no FamilySearch row (E1)" : null),
       },
     );
     calls += connectorRun.calls;
     failures = failures.concat(connectorRun.failures.map((f) => `connector: ${f}`));
+
+    // The owner check, which no plan row can reach: both of the caller's
+    // projects, one fresh path, and never another user's project.
+    stage = "connector listing";
+    await db.query(SEED_USER_SQL, [foreignUserId, `${foreignUserId}@smoke.invalid`]);
+    for (const [path, owner] of [
+      [secondProjectPath, connectorUserId],
+      [foreignProjectPath, foreignUserId],
+    ] as const) {
+      await db.query(SEED_OWNED_PROJECT_SQL, [path.slice(1), owner]);
+      await db.query(SEED_RESEARCH_SQL, [path.slice(1)]);
+    }
+    const listing = await callViaClient(connectorClient, "project_list", {});
+    const paths: string[] = (listing.body?.projects ?? []).map((p: any) => p?.projectPath);
+    const fresh = listing.body?.newProjectPath;
+    const wrong: string[] = [];
+    if (listing.isError) wrong.push(`isError: ${listing.text.slice(0, 200)}`);
+    for (const path of [connectorProjectPath, secondProjectPath]) {
+      if (!paths.includes(path)) wrong.push(`own project missing: ${path}`);
+    }
+    if (paths.includes(foreignProjectPath)) wrong.push(`foreign project listed: ${foreignProjectPath}`);
+    if (typeof fresh !== "string" || !/^\/proj_[0-9a-f]{16}$/.test(fresh) || paths.includes(fresh)) {
+      wrong.push(`no fresh path: ${String(fresh)}`);
+    }
+    report(
+      "connector: project_list owner check",
+      wrong.length === 0,
+      wrong.length === 0 ? `${paths.length} listed, fresh ${String(fresh)}` : wrong.join("; "),
+    );
+    calls += 1;
+    if (wrong.length > 0) failures.push("connector: project_list owner check");
   }
 } catch (error) {
   report(stage, false, describe(error));

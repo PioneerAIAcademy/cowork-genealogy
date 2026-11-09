@@ -1,0 +1,198 @@
+{
+  "run_log": "v4_2026-11-06_00-25-41.json",
+  "annotator": "solomonbaidoo54@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately verifies both contradictions, the exact facts involved, and their treatment as separate fact families. It also correctly concludes that neither contradiction alone explains the other and that source verification plus a chronological timeline rebuild is an appropriate next step."
+    },
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that all required elements were completed: correct person query, both warnings reported, disjoint fact-family analysis, merged-profile conclusion, timeline rebuild recommendation, and research-log update. It is complete and identifies no substantive omissions."
+    },
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately verifies the correct person_warnings and research_log_append arguments, including all required fields and the full report in notes. It also correctly confirms semantic fixture matching and the absence of incorrect critical arguments or fixture_not_found errors."
+    },
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that both genuine date contradictions returned by the tool were detected and reported, with no false positives, omissions, or fabricated warnings."
+    },
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that both warnings were classified as Contradiction/Fundamental, exactly matching the tool-returned severity and Appendix C mapping, with no misclassification or use of retired severity tiers."
+    },
+    {
+      "test_id": "ut_check_warnings_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment confirms that each warning identifies the relevant records and provides specific, actionable verification and timeline-reconstruction steps. It also appropriately treats the merged-profile hypothesis and split-point search as concrete research actions rather than generic recommendations."
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the single missingFactsAndRelatives warning was correctly classified as Implausible and that the response included both required ideas: limited data explains the lack of checks, and further research may reveal hidden issues. It also correctly treats the profile as an empty research stub and recommends adding evidence through research rather than fabrication."
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment confirms that all required elements were addressed: correct warning retrieval and severity, both prescribed explanations, appropriate treatment of the empty stub, actionable next steps, and the expected research log entry. No substantive requirement was omitted."
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that person_warnings used the correct personId, while the additional projectPath was reasonable and non-problematic. The research_log_append call also correctly documented the check with the necessary identifiers and details, with no critical argument errors."
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment correctly identifies the empty stub as a genuine data gap that prevents meaningful analysis, rather than a false positive or valid historical edge case. The detection is appropriately characterized as accurate and actionable."
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the warning was classified as Implausible, matching the tool’s severity, and that the response explicitly labeled and explained the violation correctly. The tier classification is consistent and appropriate throughout."
+    },
+    {
+      "test_id": "ut_check_warnings_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment confirms that the warning is highly actionable: it identifies the specific person and data gap, gives concrete research steps, and explains why those steps are necessary. The guidance is clear enough for a genealogist to act on immediately."
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the warning and all cited dates match the tool response, and the explanation of the biological impossibility is sound. It also correctly notes the absence of fabricated or unsupported claims."
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment confirms that the skill fully addressed the warning check: it reported the single returned warning, accurately cited the relevant facts, explained the biological impossibility, and provided actionable next steps. Nothing required was omitted."
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that both tool calls used the correct identifiers and appropriate fields, succeeded as expected, and produced no fixture_not_found errors. The arguments and execution were fully correct."
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Detection accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms the genuine biological impossibility, matches the tool-returned warning, and notes that the skill reported it without introducing any spurious detections."
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Severity classification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the warning was classified as Contradiction/Fundamental, matching the tool’s contradiction severity and the skill’s labeling. The classification is consistent with the specified severity tier."
+    },
+    {
+      "test_id": "ut_check_warnings_005",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment confirms that the warning identifies the specific records and both plausible error sources, while providing concrete verification steps. The recommended actions give a genealogist clear direction for resolving the contradiction."
+    },
+    {
+      "test_id": "ut_check_warnings_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "The County Kerry vs County Cork conflict is stated in the test's own delegation. The agent repeated it and correctly handed back to conflict-resolution without a tool call. The judge misread the delegation as a fabrication."
+    },
+    {
+      "test_id": "ut_check_warnings_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the skill correctly declined the task, routed it to the required destination, and provided an appropriate researcher-facing explanation without exposing internal skill, agent, tool, or field names."
+    },
+    {
+      "test_id": "ut_check_warnings_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "This criterion is not applicable to the task."
+    },
+    {
+      "test_id": "ut_check_warnings_023",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms the no_project handling, the correct refusal to perform check-warnings, and the absence of fabricated evidence. It also verifies that the hand-back and researcher-facing explanations followed the required format and content constraints."
+    },
+    {
+      "test_id": "ut_check_warnings_023",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment confirms that all required negative-test behaviors were satisfied: declining check-warnings, routing to init-project with the person ID, making exactly one tool call, and providing both required explanations. No required element was omitted."
+    },
+    {
+      "test_id": "ut_check_warnings_023",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": "The assessment accurately confirms that the single person_warnings call used the correct personId and projectPath, returned the expected no_project result, and had no fixture_not_found error. The tool execution and resulting routing decision were fully correct."
+    }
+  ]
+}

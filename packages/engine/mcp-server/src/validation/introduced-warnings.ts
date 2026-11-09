@@ -101,9 +101,11 @@ export const GATE_EXEMPT_TYPES: ReadonlySet<string> = new Set([
   //
   // `earliestChildBirthToBirth12` and `relativesEarliestChildBirthToBirth12`
   // are the deliberate hole in that pairing, and are NOT exempt. At cutoff 12
-  // the tag stops being an age prior: it is the only check that fires when a
-  // child is born BEFORE their parent, an impossibility rather than an
-  // implausibility, and exempting it let every gated writer accept one. The
+  // the tag stops being an age prior: it fires when a child is born BEFORE
+  // their parent, an impossibility rather than an implausibility (as does
+  // `hasChildBornBeforeParent` since #4287, but only on Birth facts, where
+  // this one reads the whole birth-like family), and exempting it let every
+  // gated writer accept one. The
   // gendered forms at cutoff 14 stay exempt -- 13 and 14 are young, not
   // impossible. What makes un-exempting 12 safe is that the predicate now
   // reads the child's LATEST date bound, so an imprecise date no longer
@@ -122,6 +124,20 @@ export const GATE_EXEMPT_TYPES: ReadonlySet<string> = new Set([
   // FamilySearch-supplied. Gating it would refuse a write that merely carries
   // the bad pair forward (issue #3976).
   "hasPlaceStandardOtherCountry",
+
+  // Issue #4287. A birth read through the christening proxy is an estimate,
+  // and a late christening trips it, so the proxy forms never gate
+  // (review-ready, 2026-11-05). Their Birth-read siblings gate.
+  "hasDeathBeforeBirthEstimated",
+  "hasChildBornBeforeParentEstimated",
+  "hasMarriageBeforeBirthEstimated",
+  "hasSpouseNotAliveTogetherEstimated",
+  "earliestChildEventToBirth12Estimated",
+  "latestChildBirthToBirth75",    // an age prior, the class of the exempt `…Female45`
+  "hasLateChristening18",         // an adult baptism or a misfiled date: report it, do not refuse
+  "noGenderFound",                // data quality, never blocks (lead, 2026-11-05)
+  "nonStandardDate",              // data quality, never blocks (lead, 2026-11-05)
+  "nonStandardPlace",             // data quality, never blocks (lead, 2026-11-05)
 ]);
 
 /** Compute warnings for a single person on a tree, returning [] if the

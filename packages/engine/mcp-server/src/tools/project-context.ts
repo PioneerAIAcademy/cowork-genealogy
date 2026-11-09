@@ -67,7 +67,14 @@ export interface ProjectContextLocality {
   forPlace: string | null;
   timePeriod: string | null;
   jurisdictions: { name: string; dateRange: string | null }[];
-  collections: { id: string; title: string; dateRange: string | null }[];
+  /** personCount/recordCount: the counts locality-guide copied from collections_search (null when absent). */
+  collections: {
+    id: string;
+    title: string;
+    dateRange: string | null;
+    personCount: number | null;
+    recordCount: number | null;
+  }[];
   quirks: string[];
   /** Wiki sections actually fetched (pages_read with found:true) — read-coverage. */
   pagesRead: string[];
@@ -226,8 +233,6 @@ export type ProjectContextResult =
       unregisteredDisagreementCount: number;
       /** The files the user uploaded through the web tier. Absent when there are none. */
       uploads?: ProjectContextUpload[];
-      /** The project's viewer page, when the server knows its public URL. */
-      projectUrl?: string;
       /** The project's upload page, when uploads are on. */
       uploadUrl?: string;
     }
@@ -340,6 +345,8 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
         id: c.id,
         title: typeof c.title === "string" ? c.title : "",
         dateRange: typeof c.date_range === "string" ? c.date_range : null,
+        personCount: Number.isInteger(c.person_count) ? c.person_count : null,
+        recordCount: Number.isInteger(c.record_count) ? c.record_count : null,
       }));
     const quirks = (Array.isArray(l.quirks) ? l.quirks : []).filter(
       (q: any): q is string => typeof q === "string",
@@ -515,7 +522,8 @@ export const projectContextSchema = {
     "by from its dated Death or Burial facts (null if none); and sources [{id, repository, " +
     "gedcomxSourceDescriptionId, recordIds, assertionCount}] — every research " +
     "source with the record ids its assertions cover; and localities [{id, place, " +
-    "forPlace, timePeriod, jurisdictions, collections, quirks, pagesRead}] — the " +
+    "forPlace, timePeriod, jurisdictions, collections [{id, title, dateRange, personCount, " +
+    "recordCount}], quirks, pagesRead}] — the " +
     "place/locale research knowledge (from locality-guide) that research-plan uses " +
     "to stage searches (guide_markdown prose is omitted here); and questionStatuses " +
     "[{id, question, state, nextStep, openConflictIds, storedStatus, unregisteredDisagreements, " +
@@ -557,9 +565,9 @@ export const projectContextSchema = {
     "record); the writer tools handle every mechanical lookup themselves. Also " +
     "returns buildId, the engine build (version+date.sha) — quote it when reporting " +
     "a problem. uploads [{name, uploaded, hasText}] (absent when none) lists the files the " +
-    "user uploaded, newest first; hasText says a text layer exists. projectUrl, when present, " +
-    "is the project's page in the web app, and uploadUrl the page where the user uploads a " +
-    "file; give the user uploadUrl when they want to add a document. Writes nothing.",
+    "user uploaded, newest first; hasText says a text layer exists. uploadUrl, when present, " +
+    "is the page where the user uploads a file; give it to the user when they want to add a " +
+    "document. Writes nothing.",
   inputSchema: {
     type: "object" as const,
     properties: {

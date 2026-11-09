@@ -871,6 +871,14 @@ def test_018_adds_an_idempotent_spend_correction_column_that_reads_zero_and_its_
     ], "the cap's per-tool-call join reaches turns through sessions.sdk_session_id: it needs the index"
 
 
+def test_019_adds_an_idempotent_index_for_the_signin_state_cleanup():
+    """#3992: each chat-off login deletes the expired signin_states rows by created_at, from an
+    unauthenticated route, so that DELETE needs an index rather than a scan."""
+    assert _statements(SQL_DIR / "019_signin_states_created_at.sql") == [
+        "CREATE INDEX IF NOT EXISTS signin_states_created_at_idx ON signin_states (created_at)",
+    ]
+
+
 # U9: a shipped file runs once and is never edited, so a later file may only add. Read off the
 # comment-stripped statements, dollar-quoted bodies included (an EXECUTE string is still DDL).
 _CONTRACTING = (

@@ -39,7 +39,7 @@
     "rootDir": ".",
     "declaration": false
   },
-  "include": ["src/**/*", "dev/**/*", "tests/**/*"]
+  "include": ["src/**/*", "dev/**/*", "tests/**/*", "viewer/**/*"]
 
   // No `exclude`, deliberately. This landed with 13 files carved out carrying
   // those 126 errors; all were fixed and the list is gone. Do not reintroduce

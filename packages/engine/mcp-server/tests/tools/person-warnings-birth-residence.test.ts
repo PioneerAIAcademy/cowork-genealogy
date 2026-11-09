@@ -84,6 +84,25 @@ describe("hasBirthFarFromParentsResidence", () => {
     expect((await run(t2, { [near]: nearMiles })).warning).toBeUndefined();
   });
 
+  // The tool appends this tag after calculateWarnings returns, so it must
+  // re-sort: the data-quality tags are reported after every other warning,
+  // in the single and the list form alike.
+  it("returns the data-quality tags after this one, single and list", async () => {
+    const unplaced = { id: "F3", type: "Residence", date: "1846", standard_date: "1846", place: "Springville" };
+    const t = tree([fact("F1", "Birth", "1840", BIRTHPLACE), unplaced], [fact("F2", "Residence", "1845", far)]);
+    const single = await run(t, { [far]: 30 });
+    const tags = single.all.map((w) => w.issueType);
+    expect(tags).toContain(TAG);
+    expect(tags[tags.length - 1]).toBe("nonStandardPlace");
+
+    const { resolver } = resolverFor({ [far]: 30 });
+    const list = await personWarningsTool({ projectPath: dir, personId: ["I1", "I2"] }, { placeCoords: resolver });
+    if (!("results" in list)) throw new Error("expected a list result");
+    const listed = (list.results[0].warnings ?? []).map((w) => w.issueType);
+    expect(listed).toContain(TAG);
+    expect(listed[listed.length - 1]).toBe("nonStandardPlace");
+  });
+
   it("compares only a residence within 20 years of the birth, and never looks up the others", async () => {
     const outside = await run(
       tree([fact("F1", "Birth", "1840", BIRTHPLACE)], [fact("F2", "Residence", "1865", far)]),

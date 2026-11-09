@@ -62,6 +62,14 @@ describe('NamesakesSection', () => {
     expect(screen.queryByText(/No namesakes recorded/)).not.toBeInTheDocument()
   })
 
+  it('adds the stamped birth year to the summary when the row has one', () => {
+    mockResearch({ namesakes: [makeNamesake({ birth_year: 1796 })] })
+    render(<NamesakesSection />)
+    expect(
+      screen.getByText('Schuylkill County, Pennsylvania, United States, died 1882, birth year 1796')
+    ).toBeInTheDocument()
+  })
+
   it('labels a ruled-out row as not the same person, with its records', async () => {
     mockResearch({ namesakes: [makeNamesake()] })
     render(<NamesakesSection />)

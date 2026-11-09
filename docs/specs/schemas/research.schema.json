@@ -2197,6 +2197,10 @@
             "minLength": 1
           }
         },
+        "birth_year": {
+          "description": "Tool-stamped by research_append, never by a caller: the earliest birth, christening or baptism year among the personas the persona lookup finds for the listed records, absent when none states one. Stamped with record_persona_ids, and filled in on a row without one when a call links its person. The namesake cap's age exemption reads it.",
+          "type": "integer"
+        },
         "notes": {
           "type": [
             "string",

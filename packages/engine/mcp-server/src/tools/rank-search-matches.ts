@@ -632,9 +632,15 @@ function wellFormedTree(tree: SimplifiedGedcomX): SimplifiedGedcomX {
   };
 }
 
-/** The response's `subjectTooThin` field: present only when true. */
-function tooThinField(subject: SubjectDoc): { subjectTooThin?: true } {
-  return subject.subjectTooThin ? { subjectTooThin: true } : {};
+const SUBJECT_TOO_THIN_NOTE =
+  "Nothing in the project separates this person from a namesake: no date narrower than a year and " +
+  "no named spouse, parent or child. Every row is `needs-review — possible namesake`, whatever its " +
+  "score and however well it agrees. Report no row's family as this person's. Name what would settle " +
+  "identity (a precise date, or a named spouse, parent or child) and the record most likely to state it.";
+
+/** The response's `subjectTooThin` fields: present only when true. */
+function tooThinField(subject: SubjectDoc): { subjectTooThin?: true; subjectTooThinNote?: string } {
+  return subject.subjectTooThin ? { subjectTooThin: true, subjectTooThinNote: SUBJECT_TOO_THIN_NOTE } : {};
 }
 
 interface SubjectDoc {

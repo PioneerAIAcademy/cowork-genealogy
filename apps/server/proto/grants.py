@@ -32,7 +32,7 @@ second half is ``hashtext(session_id)`` -- so the engine's single-bigint
                    capped sign-in holds it across counting ``users`` and inserting the new
                    row, so two sign-ins at cap-1 cannot both pass the count. Taken inside
                    ``upsert_user``'s transaction only when ``GENEALOGY_MAX_USERS`` is set and
-                   the email is new. ``QUEUE_LOCK_TIMEOUT_SQL`` bounds that wait and the
+                   neither the FamilySearch id nor the email has a row (#3992). ``QUEUE_LOCK_TIMEOUT_SQL`` bounds that wait and the
                    returning user's row lock alike.
 
 A ``hashtext`` collision between two patrons only over-serializes them (a refresh is

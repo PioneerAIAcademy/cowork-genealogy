@@ -28,11 +28,12 @@
 #
 #   https://malachi.taild68f1b.ts.net/wiki        -> 127.0.0.1:8008  wiki-query-api
 #   https://malachi.taild68f1b.ts.net/pop-stats   -> 127.0.0.1:8005  pop-stats-api
-#   https://malachi.taild68f1b.ts.net/            -> 127.0.0.1:8006  (reserved)
+#   https://malachi.taild68f1b.ts.net/            -> 127.0.0.1:8006  malachi stack edge
 #
-# The first two are durable. The third is a reserved slot, held for a test MCP
-# server not yet deployed. The #3529 connector probe occupied it until
-# 2026-11-03 and is retired; its own `:8443` mapping is gone (see RETIRED).
+# The first two are durable. The third is the malachi stack's edge
+# (apps/server/proto/malachi/), and answers 502 while the edge is stopped.
+# The #3529 connector probe may hold it for a sitting; its `:8443` mapping
+# is gone (see RETIRED).
 #
 # THE RESERVED SLOT: WHY IT IS THE BARE ROOT
 #
@@ -93,12 +94,11 @@
 # Both are Type=simple, Restart=always, RestartSec=3, After/Wants
 # network-online.target, running as the host user.
 #
-# Nothing occupies the reserved slot today. When the test MCP server lands,
-# note that the #3529 probe deliberately had no unit: its OAuth tokens lived in
+# The stack's edge has no unit either: Docker restarts it. The #3529 probe
+# deliberately had none, because its OAuth tokens lived in
 # memory, so a restart invalidated every issued token in a way a client cannot
 # distinguish from expiry, and Restart=always would have silently broken the
-# measurements it existed to take. Whether that applies to the real server
-# depends on where it keeps its tokens.
+# measurements it existed to take.
 #
 # A NOTE ON PORTS
 #
@@ -144,19 +144,21 @@ cmd_status() {
 # app itself -- correct, but indistinguishable from a broken mapping. openapi.json
 # is a real route, so a 200 proves the whole path end to end.
 #
-# The reserved slot must answer 502: nothing is meant to be listening on 8006.
-# 404 means the mapping is gone; anything else means a process bound 8006 and
-# is now public -- the hazard the header warns about, which nothing else
-# detects. When the test server lands, probe its liveness route instead.
+# The reserved slot is probed on /livez, the malachi stack's public liveness route,
+# and on /auth/config, which only that stack's web tier serves: 502 means nothing is
+# listening on 8006 and 200 means the stack's edge is up. 404 at /livez means the
+# mapping is gone; 404 at /auth/config alone is a tool server or the connector probe,
+# which answer /livez too. Anything else means some other process bound 8006 and is
+# now public -- the hazard the header warns about, which nothing else detects.
 cmd_check() {
   local fail=0
-  _probe() { # label expected url
+  _probe() { # label expected url, where expected is a space-separated list
     local label=$1 expected=$2 url=$3 got
     # The fallback is required under `set -e` (curl exits non-zero when it cannot
     # connect) but must print nothing: curl has already written `000` from -w, so
     # an `echo 000` here would report the doubled "000000".
     got=$(curl -s -o /dev/null -w '%{http_code}' --max-time 10 "$url" || true)
-    if [[ "$got" == "$expected" ]]; then
+    if [[ " $expected " == *" $got "* ]]; then
       printf '  ok    %-28s %s\n' "$label" "$got"
     else
       printf '  FAIL  %-28s got %s, want %s  (%s)\n' "$label" "$got" "$expected" "$url"
@@ -166,13 +168,14 @@ cmd_check() {
   printf 'checking https://%s\n' "$HOST_FQDN"
   _probe "wiki"            200 "https://${HOST_FQDN}/wiki/openapi.json"
   _probe "pop-stats"       200 "https://${HOST_FQDN}/pop-stats/openapi.json"
-  _probe "reserved / (502)" 502 "https://${HOST_FQDN}/"
+  _probe "reserved /livez (502 or 200)" "502 200" "https://${HOST_FQDN}/livez"
+  _probe "reserved /auth/config (502 or 200)" "502 200" "https://${HOST_FQDN}/auth/config"
   if (( fail )); then
     printf '\nA probe failure is either the mapping or the service behind it.\n'
     printf 'Check both: ./scripts/tailscale-services.sh status\n'
     printf '            systemctl status wiki-query-api pop-stats-api\n'
-    printf 'If the reserved slot did not answer 502, something bound 8006 and is\n'
-    printf 'now public at the host root: ss -ltnp | grep :8006\n'
+    printf 'If the reserved slot answered neither 502 nor 200, something other than\n'
+    printf "the stack's edge bound 8006 and is public at the host root: ss -ltnp | grep :8006\n"
     return 1
   fi
 }

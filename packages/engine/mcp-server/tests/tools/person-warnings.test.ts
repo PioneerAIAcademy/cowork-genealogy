@@ -297,9 +297,29 @@ describe("hasEventBeforeBirth predicate", () => {
     expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(true);
   });
 
-  it("matches Java on exact dates: a birth 5 years before the latest christening fires", () => {
-    // The latest birth-like fact is the christening; the birth is the event.
+  // Diverges from Java on purpose: a christening after a dated Birth is not
+  // where the birth is read from, so a late christening is not a contradiction.
+  it("is silent on a christening 5 years after a dated Birth", () => {
     const mob = onePerson([fact("F1", "Birth", "1 Jan 1800"), fact("F2", "Christening", "1 Jan 1805")]);
+    expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(false);
+  });
+
+  it("is silent on Birth 1800 / Christening 1808, the issue's late christening", () => {
+    const mob = onePerson([fact("F1", "Birth", "1 Jan 1800"), fact("F2", "Christening", "1 Jan 1808")]);
+    expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(false);
+  });
+
+  it("still fires on a death before the birth when a late christening is present", () => {
+    const mob = onePerson([
+      fact("F1", "Death", "1 Jan 1790"),
+      fact("F2", "Birth", "1 Jan 1800"),
+      fact("F3", "Christening", "1 Jan 1808"),
+    ]);
+    expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(true);
+  });
+
+  it("still reads a christening as the birth when there is no Birth", () => {
+    const mob = onePerson([fact("F1", "Residence", "1 Jan 1800"), fact("F2", "Christening", "1 Jan 1805")]);
     expect(hasEventBeforeBirth(mob, 365 * 2)).toBe(true);
   });
 });
@@ -5409,5 +5429,368 @@ describe("hasPlaceStandardOtherCountry", () => {
     };
     expect(() => finalWarnings(new Mob(tree, "I1"))).not.toThrow();
     expect(findWarning(tree)).toBeUndefined();
+  });
+
+  // The state-level half (issue #4299): FamilySearch's own place.normalized put
+  // "Washington County, Texas" in Kentucky.
+  describe("a place text and standard_place in different US states", () => {
+    const treeWith = (place: string, standard_place: string): SimplifiedGedcomX => ({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "James", surname: "Stribling" }],
+          facts: [{ id: "F1", type: "Death", date: "1843", standard_date: "1843", place, standard_place }],
+        },
+      ],
+    });
+
+    it("fires on the tester's pair and names a state or province, not a country", () => {
+      const w = findWarning(treeWith("Washington County, Texas", "Texas, Washington, Kentucky, United States"));
+      expect(w).toBeDefined();
+      expect(w!.severity).toBe("implausible");
+      expect(w!.message).toContain("a different state or province");
+      expect(w!.facts).toEqual([{ id: "F1", type: "Death", date: "1843" }]);
+    });
+
+    it("fires on an abbreviated state, and on a Couple fact", () => {
+      expect(findWarning(treeWith("Washington Co., TX", "Texas, Washington, Kentucky, United States"))).toBeDefined();
+      const tree: SimplifiedGedcomX = {
+        persons: [
+          { id: "I1", gender: "Female", names: [{ id: "N1", given: "A", surname: "B" }] },
+          { id: "I2", gender: "Male", names: [{ id: "N2", given: "C", surname: "D" }] },
+        ],
+        relationships: [
+          {
+            id: "R1",
+            type: "Couple",
+            person1: "I1",
+            person2: "I2",
+            facts: [
+              {
+                id: "F3",
+                type: "Marriage",
+                place: "Washington County, Texas",
+                standard_place: "Texas, Washington, Kentucky, United States",
+              },
+            ],
+          },
+        ],
+      };
+      expect(findWarning(tree)).toBeDefined();
+    });
+
+    it("keeps saying country when the countries differ", () => {
+      const w = findWarning(treeWith("Nairobi, Kenya", "Madagascar"));
+      expect(w!.message).toContain("a different country");
+    });
+
+    it.each([
+      ["the same state", "Washington County, Texas", "Washington, Texas, United States"],
+      ["the same state, abbreviated", "Washington Co., TX", "Washington, Texas, United States"],
+      ["a text naming no state", "Washington County", "Texas, Washington, Kentucky, United States"],
+      ["a place inside the named state", "Independence Cemetery, Independence, Washington, Texas", "Rock Hill Graves, Washington, Washington, Texas, United States"],
+    ])("is silent for %s", (_label, place, standard) => {
+      expect(findWarning(treeWith(place, standard))).toBeUndefined();
+    });
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// Impossible dates and family shapes (the twenty tags read through
+// utils/impossible-date-range.ts). Every test drives calculateWarnings: the
+// drift lint reads source text and passes on a check that is never wired in.
+// ────────────────────────────────────────────────────────────────────
+
+describe("impossibility checks", () => {
+  type F = { id: string; type: string; date?: string; standard_date?: string; place?: string; standard_place?: string };
+  type R = SimplifiedGedcomX["relationships"];
+  const f = (id: string, type: string, date: string): F => ({ id, type, date, standard_date: date });
+  const p = (id: string, facts: F[], gender: "Male" | "Female" | null = "Male"): SimplifiedPerson => ({
+    id,
+    ...(gender ? { gender } : {}),
+    names: [{ id: `N${id}`, given: id, surname: "S" }],
+    facts,
+  });
+  const pc = (parent: string, child: string, subtype?: string) => ({
+    id: `R${parent}${child}`,
+    type: "ParentChild",
+    parent,
+    child,
+    ...(subtype ? { subtype } : {}),
+  });
+  const couple = (a: string, b: string, facts: F[] = []) => ({ id: `C${a}${b}`, type: "Couple", person1: a, person2: b, facts });
+  const tags = (persons: SimplifiedPerson[], rels: R, anchor: string) =>
+    finalWarnings(new Mob({ persons, relationships: rels }, anchor)).map((w) => w.issueType);
+  const find = (persons: SimplifiedPerson[], rels: R, anchor: string, tag: string) =>
+    finalWarnings(new Mob({ persons, relationships: rels }, anchor)).filter((w) => w.issueType === tag);
+
+  describe("hasDeathBeforeBirth", () => {
+    it("fires on Birth 1 Jun 1850, Death 1 Mar 1850 (inside the other checks' tolerances)", () => {
+      const w = find([p("A", [f("B", "Birth", "1 Jun 1850"), f("D", "Death", "1 Mar 1850")])], [], "A", "hasDeathBeforeBirth");
+      expect(w).toHaveLength(1);
+      expect(w[0].severity).toBe("contradiction");
+      expect(w[0].facts?.map((x) => x.id).sort()).toEqual(["B", "D"]);
+    });
+    it("is silent when a year-only death could fall after the birth", () => {
+      expect(tags([p("A", [f("B", "Birth", "1 Jun 1850"), f("D", "Death", "1850")])], [], "A")).not.toContain("hasDeathBeforeBirth");
+    });
+    it("is silent on `Aft 1840`, which has no latest day", () => {
+      expect(tags([p("A", [f("B", "Birth", "1 Jun 1850"), f("D", "Death", "Aft 1840")])], [], "A")).not.toContain("hasDeathBeforeBirth");
+    });
+    it("does not read a Will as a death", () => {
+      expect(tags([p("A", [f("B", "Birth", "1 Jun 1850"), f("W", "Will", "1 Mar 1850")])], [], "A")).not.toContain("hasDeathBeforeBirth");
+    });
+    it("reads a Burial before the birth as a death before it", () => {
+      expect(tags([p("A", [f("B", "Birth", "1 Jun 1850"), f("U", "Burial", "1 Mar 1850")])], [], "A")).toContain("hasDeathBeforeBirth");
+    });
+    it("lets a pre-1752 1 Jan–24 Mar death belong to the following year", () => {
+      // 1 Feb 1700 Old Style is 1 Feb 1701 as we count, after a June 1700 birth.
+      expect(tags([p("A", [f("B", "Birth", "1 Jun 1700"), f("D", "Death", "1 Feb 1700")])], [], "A")).not.toContain("hasDeathBeforeBirth");
+      // The same dates after 1752 have no such reading.
+      expect(tags([p("A", [f("B", "Birth", "1 Jun 1800"), f("D", "Death", "1 Feb 1800")])], [], "A")).toContain("hasDeathBeforeBirth");
+    });
+    it("does not move a split year a second time", () => {
+      // `1 Feb 1700/01` is already read as 1701. Moved again it would reach
+      // 1 Feb 1702 and overlap a 1 Jan 1702 birth; read once, it is before it.
+      expect(tags([p("A", [f("B", "Birth", "1 Jan 1702"), f("D", "Death", "1 Feb 1700/01")])], [], "A")).toContain("hasDeathBeforeBirth");
+    });
+  });
+
+  describe("hasDeathBeforeBirthEstimated", () => {
+    it("fires, implausible, when the birth is read from a christening", () => {
+      const w = find([p("A", [f("C", "Christening", "1 Jun 1850"), f("D", "Death", "1 Mar 1840")])], [], "A", "hasDeathBeforeBirthEstimated");
+      expect(w).toHaveLength(1);
+      expect(w[0].severity).toBe("implausible");
+      expect(w[0].message).toMatch(/estimated/);
+    });
+    it("never emits the contradiction tag on the estimate", () => {
+      expect(tags([p("A", [f("C", "Christening", "1 Jun 1850"), f("D", "Death", "1 Mar 1840")])], [], "A")).not.toContain("hasDeathBeforeBirth");
+    });
+    it("is silent when the death falls inside the 2-year proxy window", () => {
+      expect(tags([p("A", [f("C", "Christening", "1 Jun 1850"), f("D", "Death", "1 Mar 1849")])], [], "A")).not.toContain("hasDeathBeforeBirthEstimated");
+    });
+  });
+
+  describe("hasChildBornBeforeParent", () => {
+    const persons = [p("P", [f("PB", "Birth", "1 Jan 1820")]), p("K", [f("KB", "Birth", "1 Jan 1800")])];
+    it("fires on child Birth 1 Jan 1800 under a parent born 1 Jan 1820, naming the child", () => {
+      const w = find(persons, [pc("P", "K")], "P", "hasChildBornBeforeParent");
+      expect(w).toHaveLength(1);
+      expect(w[0].severity).toBe("contradiction");
+      expect(w[0].relatedPersonId).toBe("K");
+    });
+    it("skips a step link", () => {
+      expect(tags(persons, [pc("P", "K", "Step")], "P")).not.toContain("hasChildBornBeforeParent");
+    });
+    it("is silent when a `Bef` parent birth could be earlier", () => {
+      const ps = [p("P", [f("PB", "Birth", "Bef 1820")]), p("K", [f("KB", "Birth", "1 Jan 1800")])];
+      expect(tags(ps, [pc("P", "K")], "P")).not.toContain("hasChildBornBeforeParent");
+    });
+    it("emits the Estimated form when the child is known only by a christening", () => {
+      const ps = [p("P", [f("PB", "Birth", "1 Jan 1820")]), p("K", [f("KC", "Christening", "1 Jan 1800")])];
+      const t = tags(ps, [pc("P", "K")], "P");
+      expect(t).toContain("hasChildBornBeforeParentEstimated");
+      expect(t).not.toContain("hasChildBornBeforeParent");
+    });
+  });
+
+  describe("hasMarriageBeforeBirth / hasMarriageAfterDeath", () => {
+    it("fires on Birth 1 Jan 1850 with a couple Marriage 1 Jan 1840", () => {
+      const ps = [p("A", [f("B", "Birth", "1 Jan 1850")]), p("S", [], "Female")];
+      const w = find(ps, [couple("A", "S", [f("M", "Marriage", "1 Jan 1840")])], "A", "hasMarriageBeforeBirth");
+      expect(w).toHaveLength(1);
+      expect(w[0].severity).toBe("contradiction");
+      expect(w[0].facts?.map((x) => x.id)).toContain("M");
+    });
+    it("emits the Estimated form on a christening-only person", () => {
+      const ps = [p("A", [f("C", "Christening", "1 Jan 1850")]), p("S", [], "Female")];
+      const t = tags(ps, [couple("A", "S", [f("M", "Marriage", "1 Jan 1840")])], "A");
+      expect(t).toContain("hasMarriageBeforeBirthEstimated");
+      expect(t).not.toContain("hasMarriageBeforeBirth");
+    });
+    it("fires on Death 1 Jan 1840 with a couple Marriage 1 Jan 1850", () => {
+      const ps = [p("A", [f("D", "Death", "1 Jan 1840")]), p("S", [], "Female")];
+      const w = find(ps, [couple("A", "S", [f("M", "Marriage", "1 Jan 1850")])], "A", "hasMarriageAfterDeath");
+      expect(w).toHaveLength(1);
+      expect(w[0].severity).toBe("contradiction");
+    });
+    it("does not read a MarriageRegistration as a marriage after death", () => {
+      const ps = [p("A", [f("D", "Death", "1 Jan 1840")]), p("S", [], "Female")];
+      expect(tags(ps, [couple("A", "S", [f("M", "MarriageRegistration", "1 Jan 1850")])], "A")).not.toContain("hasMarriageAfterDeath");
+    });
+  });
+
+  describe("hasSpouseNotAliveTogether", () => {
+    const ps = [p("A", [f("AD", "Death", "1750")]), p("S", [f("SB", "Birth", "1800")], "Female")];
+    it("fires from both spouses, citing the same facts", () => {
+      const a = find(ps, [couple("A", "S")], "A", "hasSpouseNotAliveTogether");
+      const s = find(ps, [couple("A", "S")], "S", "hasSpouseNotAliveTogether");
+      expect(a).toHaveLength(1);
+      expect(s).toHaveLength(1);
+      expect(a[0].severity).toBe("contradiction");
+      expect(a[0].facts?.map((x) => x.id).sort()).toEqual(s[0].facts?.map((x) => x.id).sort());
+    });
+    it("is silent when their lives overlap", () => {
+      const ok = [p("A", [f("AD", "Death", "1850")]), p("S", [f("SB", "Birth", "1800")], "Female")];
+      expect(tags(ok, [couple("A", "S")], "A")).not.toContain("hasSpouseNotAliveTogether");
+    });
+    it("emits the Estimated form when the spouse is known only by a christening", () => {
+      const est = [p("A", [f("AD", "Death", "1790")]), p("S", [f("SC", "Christening", "1800")], "Female")];
+      const t = tags(est, [couple("A", "S")], "A");
+      expect(t).toContain("hasSpouseNotAliveTogetherEstimated");
+      expect(t).not.toContain("hasSpouseNotAliveTogether");
+    });
+  });
+
+  describe("hasCoupleWithSelf", () => {
+    it("fires on a Couple with the same person at both ends, and not hasSpouseWhoIsSibling", () => {
+      const ps = [p("A", [f("B", "Birth", "1800")]), p("P", [f("PB", "Birth", "1770")])];
+      const t = tags(ps, [couple("A", "A"), pc("P", "A")], "A");
+      expect(t).toContain("hasCoupleWithSelf");
+      expect(t).not.toContain("hasSpouseWhoIsSibling");
+      expect(t).not.toContain("hasSpouseWhoIsAncestor");
+    });
+  });
+
+  describe("earliestChildEventToBirth12", () => {
+    it("fires on a child Residence 1805 under a parent born 1 Jan 1800, the child with no birth", () => {
+      const ps = [p("P", [f("PB", "Birth", "1 Jan 1800")]), p("K", [f("KR", "Residence", "1 Jan 1805")])];
+      const w = find(ps, [pc("P", "K")], "P", "earliestChildEventToBirth12");
+      expect(w).toHaveLength(1);
+      expect(w[0].relatedPersonId).toBe("K");
+    });
+    it("fires on a child Death 1 Jan 1840 under a parent born 1 Jan 1850", () => {
+      const ps = [p("P", [f("PB", "Birth", "1 Jan 1850")]), p("K", [f("KD", "Death", "1 Jan 1840")])];
+      expect(tags(ps, [pc("P", "K")], "P")).toContain("earliestChildEventToBirth12");
+    });
+    it("leaves a child with a birth-like fact to earliestChildBirthToBirth12", () => {
+      const ps = [p("P", [f("PB", "Birth", "1 Jan 1800")]), p("K", [f("KC", "Christening", "1 Jan 1805")])];
+      expect(tags(ps, [pc("P", "K")], "P")).not.toContain("earliestChildEventToBirth12");
+    });
+    it("is silent on a child event after the parent turned 12", () => {
+      const ps = [p("P", [f("PB", "Birth", "1 Jan 1800")]), p("K", [f("KR", "Residence", "1830")])];
+      expect(tags(ps, [pc("P", "K")], "P")).not.toContain("earliestChildEventToBirth12");
+    });
+    it("emits the Estimated form, gate-exempt, when the parent is known only by a christening", () => {
+      const ps = [p("P", [f("PC", "Christening", "1830")]), p("K", [f("KR", "Residence", "1835")])];
+      const t = tags(ps, [pc("P", "K")], "P");
+      expect(t).toContain("earliestChildEventToBirth12Estimated");
+      expect(t).not.toContain("earliestChildEventToBirth12");
+    });
+  });
+
+  describe("latestChildBirthToBirth75", () => {
+    it("fires on a parent born 1 Jan 1800 with a child born 1 Jan 1877", () => {
+      const ps = [p("P", [f("PB", "Birth", "1 Jan 1800")]), p("K", [f("KB", "Birth", "1 Jan 1877")])];
+      const t = tags(ps, [pc("P", "K")], "P");
+      expect(t).toContain("latestChildBirthToBirth75");
+      expect(t).not.toContain("latestChildBirthToBirth80");
+    });
+    it("gives way to latestChildBirthToBirth80 at 80", () => {
+      const ps = [p("P", [f("PB", "Birth", "1800")]), p("K", [f("KB", "Birth", "1881")])];
+      expect(tags(ps, [pc("P", "K")], "P")).not.toContain("latestChildBirthToBirth75");
+    });
+    it("skips an adoptive child", () => {
+      const ps = [p("P", [f("PB", "Birth", "1800")]), p("K", [f("KB", "Birth", "1877")])];
+      expect(tags(ps, [pc("P", "K", "Adoptive")], "P")).not.toContain("latestChildBirthToBirth75");
+    });
+  });
+
+  describe("tooManyParents3", () => {
+    const kid = p("K", [f("KB", "Birth", "1850")]);
+    it("fires on three parents with sex unstated", () => {
+      const ps = [kid, p("X", [], null), p("Y", [], null), p("Z", [], null)];
+      expect(tags(ps, [pc("X", "K"), pc("Y", "K"), pc("Z", "K")], "K")).toContain("tooManyParents3");
+    });
+    it("fires on M, M, F with one father's sex changed to Unknown", () => {
+      const ps = [kid, p("X", []), p("Y", [], null), p("Z", [], "Female")];
+      expect(tags(ps, [pc("X", "K"), pc("Y", "K"), pc("Z", "K")], "K")).toContain("tooManyParents3");
+    });
+    it("does not count a guardian", () => {
+      const ps = [kid, p("X", [], null), p("Y", [], null), p("Z", [], null)];
+      expect(tags(ps, [pc("X", "K"), pc("Y", "K"), pc("Z", "K", "Guardian")], "K")).not.toContain("tooManyParents3");
+    });
+  });
+
+  describe("hasSpouseWhoIsAncestor / hasSpouseWhoIsSibling", () => {
+    it("fires on a person married to their grandmother, from both ends", () => {
+      const ps = [p("A", []), p("M", [], "Female"), p("G", [], "Female")];
+      const rels = [pc("G", "M"), pc("M", "A"), couple("A", "G")];
+      expect(tags(ps, rels, "A")).toContain("hasSpouseWhoIsAncestor");
+      expect(tags(ps, rels, "G")).toContain("hasSpouseWhoIsAncestor");
+    });
+    it("is silent when the line runs through a step link", () => {
+      const ps = [p("A", []), p("M", [], "Female"), p("G", [], "Female")];
+      expect(tags(ps, [pc("G", "M", "Step"), pc("M", "A"), couple("A", "G")], "A")).not.toContain("hasSpouseWhoIsAncestor");
+    });
+    it("survives a parent loop", () => {
+      const ps = [p("A", []), p("B", [], "Female")];
+      expect(() => tags(ps, [pc("A", "B"), pc("B", "A"), couple("A", "B")], "A")).not.toThrow();
+    });
+    it("fires on a couple who share a parent, naming a step link as one cause", () => {
+      const ps = [p("A", []), p("S", [], "Female"), p("P", [])];
+      const w = find(ps, [pc("P", "A"), pc("P", "S"), couple("A", "S")], "A", "hasSpouseWhoIsSibling");
+      expect(w).toHaveLength(1);
+      expect(w[0].severity).toBe("contradiction");
+      expect(w[0].message).toMatch(/step/i);
+    });
+    it("is silent when the shared parent is a step parent of one of them", () => {
+      const ps = [p("A", []), p("S", [], "Female"), p("P", [])];
+      expect(tags(ps, [pc("P", "A"), pc("P", "S", "Step"), couple("A", "S")], "A")).not.toContain("hasSpouseWhoIsSibling");
+    });
+  });
+
+  describe("hasLateChristening18", () => {
+    it("fires on a christening 20 years after the birth, and the birth checks stay silent", () => {
+      const t = tags([p("A", [f("B", "Birth", "1 Jan 1800"), f("C", "Christening", "1 Jan 1820")])], [], "A");
+      expect(t).toContain("hasLateChristening18");
+      expect(t).not.toContain("hasEventBeforeBirth365_2");
+    });
+    it("is silent on a christening 8 years after the birth", () => {
+      expect(tags([p("A", [f("B", "Birth", "1 Jan 1800"), f("C", "Christening", "1 Jan 1808")])], [], "A")).not.toContain("hasLateChristening18");
+    });
+  });
+
+  describe("hasEventBeforeChristening365_3 after the late-christening fix", () => {
+    it("is silent on Birth 1800, Residence 1804, Christening 1808", () => {
+      const t = tags([p("A", [f("B", "Birth", "1800"), f("R", "Residence", "1804"), f("C", "Christening", "1808")])], [], "A");
+      expect(t).not.toContain("hasEventBeforeChristening365_3");
+    });
+    it("is silent on an adult baptism: Birth 1800, Census 1810, Christening 1820", () => {
+      const t = tags([p("A", [f("B", "Birth", "1800"), f("X", "Census", "1810"), f("C", "Christening", "1820")])], [], "A");
+      expect(t).not.toContain("hasEventBeforeChristening365_3");
+    });
+    it("still fires with no Birth", () => {
+      const t = tags([p("A", [f("R", "Residence", "1800"), f("C", "Christening", "1808")])], [], "A");
+      expect(t).toContain("hasEventBeforeChristening365_3");
+    });
+  });
+
+  describe("data-quality tags", () => {
+    it("noGenderFound fires on a person with no sex, and is reported last", () => {
+      const w = finalWarnings(new Mob({ persons: [p("A", [f("B", "Birth", "1800"), f("D", "Death", "1790")], null)] }, "A"));
+      expect(w.map((x) => x.issueType)).toContain("noGenderFound");
+      expect(w[w.length - 1].issueType).toBe("noGenderFound");
+    });
+    it("nonStandardDate fires on `dead` and `Spring 1790`, not on `abt 1868`", () => {
+      const facts: F[] = [
+        { id: "D1", type: "Death", date: "dead" },
+        { id: "R1", type: "Residence", date: "Spring 1790" },
+        { id: "R2", type: "Residence", date: "abt 1868" },
+      ];
+      const w = find([p("A", facts)], [], "A", "nonStandardDate");
+      expect(w).toHaveLength(1);
+      expect(w[0].facts?.map((x) => x.id).sort()).toEqual(["D1", "R1"]);
+    });
+    it("nonStandardPlace fires on `Springville` with no standard_place, not on a standardized one", () => {
+      const facts: F[] = [
+        { id: "R1", type: "Residence", place: "Springville" },
+        { id: "R2", type: "Residence", place: "Ryegate", standard_place: "Ryegate, Caledonia, Vermont, United States" },
+      ];
+      const w = find([p("A", facts)], [], "A", "nonStandardPlace");
+      expect(w).toHaveLength(1);
+      expect(w[0].facts?.map((x) => x.id)).toEqual(["R1"]);
+    });
   });
 });

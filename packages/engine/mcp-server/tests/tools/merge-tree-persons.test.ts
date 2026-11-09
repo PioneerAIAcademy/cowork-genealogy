@@ -391,6 +391,28 @@ describe("merge_tree_persons: pair and namesake checks", () => {
     expect(m).not.toContain("Do not lower it");
   });
 
+  it("MF1b names only the row holder's rows that still cap the moved link, and merges once the age exemption lifts them all", async () => {
+    // An 1880 census whose head is the moved link's persona: a namesake born 1873 was seven.
+    const lifted = { ...row("ns_001", T), birth_year: 1873 };
+    const capping = { ...row("ns_002", T), time_period: "born 1800", birth_year: 1800 };
+    const p = (namesakes: any[]) =>
+      project({
+        persons: [person(T, "John", "Smith"), cited("I7", "John", "Smith", ["S1", "S9"])],
+        sources: [1, 9],
+        assertions: [
+          assertion("a_001", 1, "head", "name", "John Smith"),
+          assertion("a_002", 1, "head", "census", "1880", { date: "1880" }),
+          assertion("a_009", 9, "head", "name", "John Smith"),
+        ],
+        links: [link("pe_001", "a_001", "I7")],
+        namesakes,
+      });
+    const m = await refusedText([[T, "I7"]], p([lifted, capping]));
+    expect(m).toContain(`person_evidence 'pe_001' on 'I7' would stand under the namesake row 'ns_002' of '${T}' after this merge`);
+    expect(m).not.toContain("ns_001");
+    await merged([[T, "I7"]], p([lifted]));
+  });
+
   it("MF1p refuses it at probable too", async () => {
     expect(await refusedText([[T, "I7"]], mf1("probable"))).toContain("person_evidence 'pe_001' on 'I7'");
   });

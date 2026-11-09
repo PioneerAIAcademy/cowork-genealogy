@@ -19,6 +19,7 @@ import re
 
 import pytest
 
+from harness.skill_runner import agent_return_text, subject_reply_text, tail_after_final_rule
 from validators_lib import (
     assert_only_logs_report,
     assert_reply_carries_report,
@@ -76,10 +77,16 @@ def test_tree_gedcomx_unmodified(before_state, after_state, test):
 
 # --- V2: No unsourced 4-digit year in the response ---
 
-def report_unsourced_year_in_response(tool_calls, text_response, test):
-    """V2: every 4-digit year in the response must come from a tool response
+def report_unsourced_year_in_response(tool_calls, text_response, test, agent_returns=None):
+    """V2: every 4-digit year in the researcher-facing text must come from a tool response
     the run actually received, or from the user's own message. No arithmetic or
     tree knowledge the tool never returned.
+
+    Reads the text after the final `---` of check-warnings' own return, the
+    part printed for the researcher, and falls back to `text_response` only
+    when the agent made no return on a routed test; on a direct test a silent
+    agent is graded as silent (`subject_reply_text`). A year above the `---`, inside a
+    hypothetical correction, is not checked (lead, 2026-11-05).
 
     Tier 2 — reports, never gates.
 
@@ -106,7 +113,12 @@ def report_unsourced_year_in_response(tool_calls, text_response, test):
 
     if test.get("type") == "negative":
         pytest.skip("negative test — skill body does not run")
-    response = text_response or ""
+    returned = agent_return_text(agent_returns, "check-warnings")
+    response = (
+        tail_after_final_rule(returned)
+        if returned
+        else subject_reply_text(agent_returns, text_response, "check-warnings", test)
+    )
     if not response.strip():
         pytest.skip("no response text to check")
 
@@ -132,7 +144,7 @@ def report_unsourced_year_in_response(tool_calls, text_response, test):
     unsourced = sorted(y for y in years if y not in all_source)
     if unsourced:
         raise AssertionError(
-            f"the response contains {unsourced} — 4-digit year(s) absent from "
+            f"the researcher-facing text contains {unsourced} — 4-digit year(s) absent from "
             "every tool response this run received and from the user's "
             "message; SKILL.md forbids citing figures the tool never returned"
         )

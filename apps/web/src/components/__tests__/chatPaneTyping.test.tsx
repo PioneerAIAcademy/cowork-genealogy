@@ -576,3 +576,17 @@ describe('step mode: the replies a turn offers', () => {
     expect(screen.getAllByRole('button').filter((b) => b.className === 'stepReply')).toHaveLength(1)
   })
 })
+
+describe('the composer does not let the browser rewrite what was typed', () => {
+  // #4205: a tester typed the surname "Kenneda" and the browser autocorrected it to
+  // "Kennedy" before the send path (a bare `.trim()`) ever saw it. The box is mostly
+  // surnames and place names a spell checker gets wrong, so both are off. jsdom exposes
+  // no `.autocorrect` property and this suite has no jest-dom, so assert the ATTRIBUTE;
+  // a default <textarea> returns null for both, so removing either prop reds this.
+  it('turns off autocorrect and spellcheck on the textarea', () => {
+    mount()
+    const box = screen.getByRole('textbox')
+    expect(box.getAttribute('autocorrect')).toBe('off')
+    expect(box.getAttribute('spellcheck')).toBe('false')
+  })
+})

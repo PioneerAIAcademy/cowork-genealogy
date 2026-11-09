@@ -79,6 +79,7 @@ e2b.Dockerfile @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-gene
 /apps/server/proto/eb-web/ @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
 /apps/server/proto/eb-worker/ @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
 /apps/server/proto/eb-tools/ @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
+/apps/server/proto/malachi/ @PioneerAIAcademy/senior-developers @PioneerAIAcademy/senior-genealogists
 
 # The proto web and worker pins, exported from uv.lock with hashes and installed
 # --require-hashes by both images and both bundles: an edit changes what ships.

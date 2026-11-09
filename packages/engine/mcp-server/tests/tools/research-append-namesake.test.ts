@@ -1326,6 +1326,137 @@ describe("namesake cap", () => {
         }
       });
     });
+
+    describe("birth_year (#3363)", () => {
+      const ARK = (bare: string) => `ark:/61903/1:1:${bare}`;
+      const born = (year: string) => [{ type: "Birth", date: year, standard_date: year }];
+      /** One log entry and sidecar per set, log_001 first, over `r`. */
+      async function sidecars(sets: Array<{ tool: string; results: unknown[] }>, r: Record<string, any> = research({ namesakes: [] })) {
+        const ids = sets.map((_, i) => `log_00${i + 1}`);
+        await setup({ ...r, log: sets.map((s, i) => log(ids[i], s.tool, `results/${ids[i]}.json`)) });
+        await mkdir(join(dir, "results"), { recursive: true });
+        for (const [i, { tool, results }] of sets.entries()) {
+          const sidecar = { log_id: ids[i], tool, retrieved: "2026-11-06T00:00:00Z", returned_count: results.length,
+            payload: { query: {}, results } };
+          await writeFile(join(dir, "results", `${ids[i]}.json`), JSON.stringify(sidecar));
+        }
+      }
+      /** A search hit whose persona is the record's own, born in `year`. */
+      const hit = (recordId: string, personaId: string, year: string | null) => ({
+        recordId,
+        primaryId: personaId,
+        gedcomx: { persons: [{ id: personaId, ark: recordId, facts: year === null ? [] : born(year) }] },
+      });
+      const search = (...results: unknown[]) => [{ tool: "record_search", results }];
+
+      it("S1 stamps the birth year of the persona the row's search names", async () => {
+        await sidecars(search(hit(REC.voter, "p_555", "1796")));
+        const r = await appendRow({ record_ids: [REC.voter], log_entry_ids: ["log_001"] });
+        expect(r.ok, errs(r)).toBe(true);
+        expect((await row()).birth_year).toBe(1796);
+      });
+
+      it("S2 stamps the birth year of a read household member found by her own ark", async () => {
+        await sidecars([{ tool: "record_read", results: [{ recordId: ARK("XS3W-W3M"), gedcomx: { persons: [
+          { id: "p_1", ark: ARK("XS3W-W3M"), facts: born("1848") },
+          { id: "p_2", ark: ARK("XS3W-W39"), facts: born("1850") },
+        ] } }] }]);
+        const r = await appendRow({ record_ids: [ARK("XS3W-W39")], log_entry_ids: ["log_001"] });
+        expect(r.ok, errs(r)).toBe(true);
+        expect((await row()).birth_year).toBe(1850);
+      });
+
+      it("S3 takes the earliest year when two listed records give two", async () => {
+        await sidecars(search(hit(REC.voter, "p_555", "1796"), hit(REC.death, "p_556", "1790")));
+        const r = await appendRow({ record_ids: [REC.voter, REC.death], log_entry_ids: ["log_001"] });
+        expect(r.ok, errs(r)).toBe(true);
+        expect((await row()).birth_year).toBe(1790);
+      });
+
+      it("S4 stamps no year for a listed id no persona's ark matches, though a person of the row's name is there", async () => {
+        await sidecars([{ tool: "record_read", results: [{ recordId: ARK("XS3W-W3M"), gedcomx: { persons: [
+          { id: "p_1", ark: ARK("XS3W-W3M"), names: [{ given: "Edwin", surname: "Earnest" }] },
+          { id: "p_2", ark: ARK("XS3W-W39"), names: [{ given: "John", surname: "Smith" }], facts: born("1873") },
+        ] } }] }]);
+        const r = await appendRow({ record_ids: ["DTH3-003"], log_entry_ids: ["log_001"] });
+        expect(r.ok, errs(r)).toBe(true);
+        expect((await row()).birth_year).toBeUndefined();
+        expect((await row()).record_persona_ids).toBeUndefined();
+      });
+
+      it("S5 overwrites a caller's year, and drops it when the persona states none", async () => {
+        await sidecars(search(hit(REC.voter, "p_555", "1796")));
+        expect((await appendRow({ record_ids: [REC.voter], log_entry_ids: ["log_001"], birth_year: 1700 })).ok).toBe(true);
+        expect((await row()).birth_year).toBe(1796);
+        await sidecars(search(hit(REC.voter, "p_555", null)));
+        const r = await appendRow({ record_ids: [REC.voter], log_entry_ids: ["log_001"], birth_year: 1700 });
+        expect(r.ok, errs(r)).toBe(true);
+        expect((await row()).record_persona_ids).toEqual({ [REC.voter]: "p_555" });
+        expect((await row()).birth_year).toBeUndefined();
+      });
+
+      it("S6 refuses an update that sets the year", async () => {
+        await sidecars(search(hit(REC.voter, "p_555", "1796")));
+        expect((await appendRow({ record_ids: [REC.voter], log_entry_ids: ["log_001"] })).ok).toBe(true);
+        const r = await researchAppend({
+          projectPath: dir, section: "namesakes", op: "update", entryId: "ns_001", fields: { birth_year: 1800 },
+        } as any);
+        expect(r.ok).toBe(false);
+        expect(errs(r)).toContain("not updatable on 'namesakes': birth_year");
+        expect((await row()).birth_year).toBe(1796);
+      });
+
+      describe("the fill in", () => {
+        // The 1880 census, dated by its census fact: a namesake born 1873 was seven.
+        const CENSUS_DATE = assertion("a_006", "src_001", REC.census, "head", "census", "1880", { date: "1880" });
+        /** The row as a write before this change left it: stamped persona, no year. */
+        const OLD_ROW = { ...ROW, log_entry_ids: ["log_001"], record_persona_ids: { [REC.voter]: "p_555" } };
+        const project = (namesakes: unknown[]) => research({ namesakes, assertions: [...baseAssertions(), CENSUS_DATE] });
+
+        it("S7 fills in an old row's year when a call links its person, and that 1880 link stands", async () => {
+          await sidecars(search(hit(REC.voter, "p_555", "1873")), project([OLD_ROW]));
+          await attest(["a_001", P]);
+          const res = await call(link("a_001", P));
+          expect(res.ok, errs(res)).toBe(true);
+          expect(await row()).toEqual({ ...OLD_ROW, birth_year: 1873 });
+        });
+
+        it("S8 leaves a row's year as it was, and every other field of a row it fills", async () => {
+          const dated = { ...OLD_ROW, birth_year: 1850, record_persona_ids: { [REC.voter]: "p_old" } };
+          const undated = { ...OLD_ROW, id: "ns_002", record_persona_ids: { [REC.voter]: "p_old" } };
+          // The sidecar holds the record in its bare form, under another persona.
+          await sidecars(search(hit("VOT2-002", "p_555", "1873")), project([dated, undated]));
+          await attest(["a_001", P]);
+          const res = await call(link("a_001", P, "speculative"));
+          expect(res.ok, errs(res)).toBe(true);
+          const [a, b] = (await readResearch()).namesakes;
+          expect(a).toEqual(dated);
+          expect(b).toEqual({ ...undated, birth_year: 1873 });
+        });
+
+        it("S9 judges a call that fails for another reason on the filled-in document, and writes nothing", async () => {
+          await sidecars(search(hit(REC.voter, "p_555", "1873")), project([OLD_ROW]));
+          await attest(["a_001", P]);
+          const res = await call(link("a_001", P), update("pe_404", { rationale: "no such link" }));
+          expect(res.ok).toBe(false);
+          const m = errs(res);
+          expect(m).toContain("pe_404");
+          expect(m).not.toContain("namesake(s) of");
+          expect((await row()).birth_year).toBeUndefined();
+        });
+
+        it("S10 fills in only the rows of a person the call links", async () => {
+          const other = { ...OLD_ROW, id: "ns_002", person_id: N, name: "Peter Jones" };
+          await sidecars(search(hit(REC.voter, "p_555", "1873")), project([OLD_ROW, other]));
+          await attest(["a_001", P]);
+          const res = await call(link("a_001", P));
+          expect(res.ok, errs(res)).toBe(true);
+          const [mine, theirs] = (await readResearch()).namesakes;
+          expect(mine.birth_year).toBe(1873);
+          expect(theirs).toEqual(other);
+        });
+      });
+    });
   });
 });
 
@@ -1459,6 +1590,47 @@ describe("tree-derived namesake pairs (#3681)", () => {
       person_evidence: [standing("pe_001", "a_001", SO)],
     });
     expect(pairRecordFacts(r, r.assertions[0], SO)).toMatchObject({ year: 1850, birth: 1850 });
+  });
+
+  describe("an office in the pair tests (#3363)", () => {
+    const TOWN = "ark:/61903/1:1:TWN9-004";
+    /** A town record whose principal is a John Pratt holding an office dated
+     *  `year` (unless `office` is false), beside a clerk's event of the same year
+     *  (unless `event` is false), so the office need not date it. */
+    function officeRecord(year: string, personId: string, opts: { office?: boolean; event?: boolean } = {}) {
+      return research({
+        namesakes: [],
+        sources: [source("src_001", "S1")],
+        assertions: [
+          assertion("a_001", "src_001", TOWN, "principal", "name", "John Pratt"),
+          ...(opts.office === false
+            ? []
+            : [assertion("a_002", "src_001", TOWN, "principal", "office", "Constable", { date: year })]),
+          ...(opts.event === false
+            ? []
+            : [assertion("a_003", "src_001", TOWN, "clerk", "event", "Town meeting", { date: year })]),
+        ],
+        person_evidence: [standing("pe_001", "a_001", personId)],
+      });
+    }
+    const judge = (personId: string, r: any, t: any) =>
+      pairJudgement(personId, r.assertions[0], derivedNamesakePairs(t, personId), r, t, null);
+
+    it("P1 rules out a partner under 15 whom the record makes an office holder, and not one it names principal alone", () => {
+      expect(judge(FA, officeRecord("1860", FA), pairTree()).ties).toEqual([{ partner: SO, relation: "child", test: "adult role" }]);
+      expect(judge(FA, officeRecord("1860", FA, { office: false }), pairTree()).ties).toEqual([]);
+    });
+
+    it("P2 dates a record by its office when no other fact dates it", () => {
+      const r = officeRecord("1799", FA, { event: false });
+      expect(pairRecordFacts(r, r.assertions[0], FA)).toMatchObject({ role: "principal", office: true, year: 1799, dated: 1799 });
+    });
+
+    it("P3 reads an office as an adult role in the family limit", () => {
+      const t = pairTree();
+      t.persons[1].facts = [];
+      expect(judge(FA, officeRecord("1845", FA), t).ties).toEqual([{ partner: SO, relation: "child", test: "family limit" }]);
+    });
   });
 
   describe("independentLife (rule 3)", () => {
@@ -1694,7 +1866,7 @@ describe("tree-derived namesake pairs (#3681)", () => {
       expect(verdict?.reasons[0]).toBe(`The record does not fit '${FA}' (age, family limit).`);
     });
 
-    it("still asks a row holder for tie (a) or (b): a pair test says nothing about a stranger", () => {
+    it("still asks for tie (a) or (b) when a row caps the link: a pair test says nothing about a stranger", () => {
       const r = marriageResearch({
         namesakes: [{ ...ROW, person_id: SO, record_ids: [OTHER] }],
         person_evidence: [standing("pe_001", "a_001", SO)],
@@ -2040,5 +2212,377 @@ describe("a source holding two documents (#2537 case 2)", () => {
     const v = namesakeVerdicts(P, r, tree())!.verdicts.get("pe_201")!;
     expect(v.allowed).toBe(false);
     expect(v.reasons.join(" ")).not.toContain("its voucher");
+  });
+});
+
+// ─── The namesake age exemption (issue #3363) ─────────────────────────────────
+//
+// Dallan, 2026-11-05: a row does not cap a link whose record is dated less than
+// 12 years after the row's birth year when the record makes the persona an adult
+// (a household head, or an office). The shape is the #4208 project's: Paul
+// Raymond, born 1770, and a namesake row for a Paul Raymond born 1796.
+
+describe("namesake age exemption (#3363)", () => {
+  const I1 = "I1"; // Paul Raymond, born 1770, the subject
+  const I2 = "I2"; // Mary Raymond, his wife
+  const I4 = "I4"; // Paul Raymond, his father, 1744 to 1828
+  const I7 = "I7"; // Paul Raymond, his son, born 1796
+  const CEN1800 = "ark:/61903/1:1:AGE1-800";
+  const CEN1810 = "ark:/61903/1:1:AGE1-810";
+  const TOWN1799 = "ark:/61903/1:1:AGE1-799";
+  const TOWN1800 = "ark:/61903/1:1:AGE2-800";
+
+  const dated = (type: string, year: string) => ({ id: `${type}-${year}`, type, date: year });
+  const paul = (id: string, facts: unknown[]) => person(id, "Paul", "Raymond", "Male", { facts });
+
+  /** I1 alone, or with his father, his son (undated with `undatedSon`) or his wife. */
+  function ageTree(opts: { father?: boolean; son?: boolean; undatedSon?: boolean; wife?: boolean } = {}) {
+    const persons: any[] = [paul(I1, [dated("Birth", "1770")])];
+    const relationships: any[] = [];
+    if (opts.father) {
+      persons.push(paul(I4, [dated("Birth", "1744"), dated("Death", "1828")]));
+      relationships.push({ id: "R3", type: "ParentChild", parent: I4, child: I1 });
+    }
+    if (opts.wife) {
+      persons.push(person(I2, "Mary", "Raymond", "Female", { facts: [] }));
+      relationships.push({ id: "R1", type: "Couple", person1: I1, person2: I2 });
+    }
+    if (opts.son || opts.undatedSon) {
+      persons.push(paul(I7, opts.undatedSon ? [] : [dated("Birth", "1796")]));
+      relationships.push({ id: "R5", type: "ParentChild", parent: I1, child: I7 });
+      if (opts.wife) relationships.push({ id: "R6", type: "ParentChild", parent: I2, child: I7 });
+    }
+    return { persons, relationships, sources: [1, 2, 3, 4].map((n) => ({ id: `S${n}`, title: `Record S${n}` })) };
+  }
+
+  /** A census whose `role` is a Paul Raymond, dated by its census fact. */
+  const census = (prefix: string, src: string, record: string, year: string, role = "head_of_household") => [
+    assertion(`${prefix}1`, src, record, role, "name", "Paul Raymond"),
+    assertion(`${prefix}2`, src, record, role, "census", year, { date: year }),
+  ];
+  /** A town record naming a Paul Raymond its principal: holding an office dated
+   *  `office`, or at an event dated `event` with no office. */
+  const town = (prefix: string, src: string, record: string, dates: { office?: string; event?: string }) => [
+    assertion(`${prefix}1`, src, record, "principal", "name", "Paul Raymond"),
+    ...(dates.office !== undefined
+      ? [assertion(`${prefix}2`, src, record, "principal", "office", "Surveyor of Highways", { date: dates.office })]
+      : []),
+    ...(dates.event !== undefined
+      ? [assertion(`${prefix}3`, src, record, "principal", "event", "Town meeting", { date: dates.event })]
+      : []),
+  ];
+  const ROW_1796 = {
+    id: "ns_001",
+    person_id: I1,
+    name: "Paul Raymond",
+    place: "Bristol, Addison, Vermont, United States",
+    time_period: "born 1796",
+    record_ids: ["ark:/61903/1:1:MC2W-5TM"],
+    birth_year: 1796,
+    created: "2026-11-02",
+  };
+
+  function ageResearch(extra: Record<string, unknown> = {}): Record<string, any> {
+    return research({
+      sources: [1, 2, 3, 4].map((n) => source(`src_00${n}`, `S${n}`)),
+      assertions: [
+        ...census("a_10", "src_001", CEN1800, "1800"),
+        ...census("a_11", "src_002", CEN1810, "1810"),
+        ...town("a_12", "src_003", TOWN1799, { office: "5 March 1799" }),
+      ],
+      namesakes: [ROW_1796],
+      ...extra,
+    });
+  }
+
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-append-namesake-age-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  /** The tree is the starting tree too, as in a hosted project. */
+  async function setup(r: Record<string, any>, t: Record<string, any>) {
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+    await writeProjectFile(join(dir, "tree.gedcomx.json"), JSON.stringify(t, null, 2));
+    await writeProjectFile(join(dir, "starting-tree.gedcomx.json"), JSON.stringify(t, null, 2));
+  }
+  const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+  const call = (...ops: unknown[]) => researchAppend({ projectPath: dir, ops } as any);
+  const errs = (r: any) => (r.ok ? "" : (r.errors as string[]).join("\n"));
+  /** A probable link of `assertionId` to `personId`, its same_person score recorded first. */
+  async function raise(r: Record<string, any>, assertionId: string, personId = I1) {
+    const a = (r.assertions as any[]).find((x) => x.id === assertionId);
+    await recordMatchScore(dir, {
+      record_id: a.record_id,
+      record_persona_id: null,
+      record_role: a.record_role,
+      tree_person_id: personId,
+      score: 0.9,
+      scorer: "familysearch",
+      model: null,
+      assertion_id: assertionId,
+      record_source: "record_read",
+      computed: "2026-11-06T00:00:00Z",
+    });
+    return call(link(assertionId, personId));
+  }
+  /** The verdict on the link of `assertionId` as the project now stands, rows only. */
+  async function verdictOn(assertionId: string, t: Record<string, any>, personId = I1) {
+    const now = await readResearch();
+    const e = (now.person_evidence as any[]).find((x) => x.assertion_id === assertionId && x.person_id === personId);
+    return namesakeVerdicts(personId, now, t)?.verdicts.get(e.id);
+  }
+
+  it("T1 lifts the row on a household head's census four years after the namesake's birth", async () => {
+    const r = ageResearch();
+    await setup(r, ageTree());
+    const res = await raise(r, "a_101");
+    expect(res.ok, errs(res)).toBe(true);
+    expect(await verdictOn("a_101", ageTree())).toMatchObject({
+      allowed: true,
+      ties: [{ kind: "age", row: "ns_001", age: 4, marker: "head_of_household" }],
+      rows: [],
+    });
+  });
+
+  it("T2 lifts the row on an office holder three years after the namesake's birth", async () => {
+    const r = ageResearch();
+    await setup(r, ageTree());
+    const res = await raise(r, "a_121");
+    expect(res.ok, errs(res)).toBe(true);
+    expect(await verdictOn("a_121", ageTree())).toMatchObject({
+      allowed: true,
+      ties: [{ kind: "age", row: "ns_001", age: 3, marker: "office" }],
+    });
+  });
+
+  it("T3 keeps the cap at fourteen", async () => {
+    const r = ageResearch();
+    await setup(r, ageTree());
+    const res = await raise(r, "a_111");
+    expect(res.ok).toBe(false);
+    expect(errs(res)).toContain(`namesake(s) of '${I1}' are recorded (ns_001: Paul Raymond`);
+  });
+
+  it("T3b lifts the row at eleven and keeps the cap at twelve", async () => {
+    for (const [year, lifts] of [["1807", true], ["1808", false]] as const) {
+      const r = ageResearch({ assertions: census("a_10", "src_001", CEN1800, year) });
+      await setup(r, ageTree());
+      const res = await raise(r, "a_101");
+      expect(res.ok, `${year}: ${errs(res)}`).toBe(lifts);
+      if (lifts) {
+        expect((await verdictOn("a_101", ageTree()))?.ties, year).toEqual([
+          { kind: "age", row: "ns_001", age: 11, marker: "head_of_household" },
+        ]);
+      } else {
+        expect(errs(res), year).toContain(`namesake(s) of '${I1}' are recorded (ns_001: Paul Raymond`);
+      }
+    }
+  });
+
+  it("T4 keeps the cap on a principal with no office, whose record says nothing of age", async () => {
+    const r = ageResearch({
+      assertions: [...ageResearch().assertions, ...town("a_13", "src_004", TOWN1800, { event: "1800" })],
+    });
+    await setup(r, ageTree());
+    const res = await raise(r, "a_131");
+    expect(res.ok).toBe(false);
+    expect(errs(res)).toContain(`namesake(s) of '${I1}' are recorded (ns_001`);
+  });
+
+  it("T4b keeps the cap on a principal when the office on the record is another party's", async () => {
+    const r = ageResearch({
+      assertions: [
+        ...ageResearch().assertions,
+        ...town("a_14", "src_004", TOWN1800, { event: "1799" }),
+        assertion("a_145", "src_004", TOWN1800, "town_clerk", "name", "Elijah Hill"),
+        assertion("a_146", "src_004", TOWN1800, "town_clerk", "office", "Town Clerk", { date: "1799" }),
+      ],
+    });
+    await setup(r, ageTree());
+    const res = await raise(r, "a_141");
+    expect(res.ok).toBe(false);
+    expect(errs(res)).toContain(`namesake(s) of '${I1}' are recorded (ns_001: Paul Raymond`);
+  });
+
+  it("T5 keeps the cap when the row has no birth year", async () => {
+    const { birth_year: _none, ...unborn } = ROW_1796;
+    const r = ageResearch({ namesakes: [unborn] });
+    await setup(r, ageTree());
+    const res = await raise(r, "a_101");
+    expect(res.ok).toBe(false);
+    expect(errs(res)).toContain(`namesake(s) of '${I1}' are recorded (ns_001`);
+  });
+
+  it("T6 reads a numbered household head, a head and a self as household heads", async () => {
+    for (const [role, marker] of [
+      ["head_of_household_2", "head_of_household"],
+      ["head", "head"],
+      ["self", "self"],
+    ]) {
+      const r = ageResearch({ assertions: census("a_10", "src_001", CEN1800, "1800", role) });
+      await setup(r, ageTree());
+      const res = await raise(r, "a_101");
+      expect(res.ok, `${role}: ${errs(res)}`).toBe(true);
+      expect((await verdictOn("a_101", ageTree()))?.ties, role).toEqual([{ kind: "age", row: "ns_001", age: 4, marker }]);
+    }
+  });
+
+  it("T7 keeps the cap while another row still caps, and names only that row", async () => {
+    const older = { ...ROW_1796, id: "ns_002", time_period: "born 1750", birth_year: 1750 };
+    const r = ageResearch({ namesakes: [ROW_1796, older] });
+    await setup(r, ageTree());
+    const res = await raise(r, "a_101");
+    expect(res.ok).toBe(false);
+    const m = errs(res);
+    expect(m).toContain(`namesake(s) of '${I1}' are recorded (ns_002: Paul Raymond`);
+    expect(m).not.toContain("ns_001");
+  });
+
+  describe("T8, the #4208 case: a father and a son of the same name in the tree", () => {
+    it("T8a refuses all three while the father may be the persona, naming him and no row on the two the row lets go", async () => {
+      const t = ageTree({ father: true, son: true });
+      const r = ageResearch();
+      for (const id of ["a_101", "a_121"]) {
+        await setup(r, t);
+        const res = await raise(r, id);
+        expect(res.ok, id).toBe(false);
+        const m = errs(res);
+        expect(m, id).toContain(`'${I1}' has a namesake in the tree (`);
+        expect(m, id).toContain(`Nothing rules out '${I4}', '${I1}''s parent of the same given name`);
+        expect(m, id).not.toContain(`Nothing rules out '${I7}'`);
+        expect(m, id).not.toContain("ns_001");
+      }
+      await setup(r, t);
+      const later = await raise(r, "a_111");
+      expect(later.ok).toBe(false);
+      expect(errs(later)).toContain(`namesake(s) of '${I1}' are recorded (ns_001`);
+    });
+
+    it("T8b lifts the 1800 and 1799 links once the father is not the subject's parent, and keeps 1810 capped", async () => {
+      const t = ageTree({ son: true });
+      const r = ageResearch();
+      await setup(r, t);
+      for (const id of ["a_101", "a_121"]) {
+        const res = await raise(r, id);
+        expect(res.ok, `${id}: ${errs(res)}`).toBe(true);
+      }
+      const later = await raise(r, "a_111");
+      expect(later.ok).toBe(false);
+      expect(errs(later)).toContain(`namesake(s) of '${I1}' are recorded (ns_001`);
+      const now = await readResearch();
+      const v = namesakeVerdicts(I1, now, t, { derivedPairs: true, startingTree: t });
+      for (const id of ["a_101", "a_121"]) {
+        const e = (now.person_evidence as any[]).find((x) => x.assertion_id === id);
+        expect(v?.verdicts.get(e.id), id).toMatchObject({
+          allowed: true,
+          ties: [{ kind: "pair", partner: I7, relation: "child", test: "adult role" }],
+          rows: [],
+        });
+      }
+    });
+  });
+
+  it("T9 lets an exempt link vouch for nothing: a capped link sharing its occupation stays capped", async () => {
+    const r = ageResearch({
+      assertions: [
+        ...ageResearch().assertions,
+        assertion("a_103", "src_001", CEN1800, "head_of_household", "occupation", "Farmer"),
+        assertion("a_113", "src_002", CEN1810, "head_of_household", "occupation", "Farmer"),
+      ],
+      person_evidence: [standing("pe_001", "a_101", I1), standing("pe_002", "a_103", I1)],
+    });
+    await setup(r, ageTree());
+    expect((await verdictOn("a_101", ageTree()))?.allowed).toBe(true);
+    const res = await raise(r, "a_111");
+    expect(res.ok).toBe(false);
+    expect(errs(res)).toContain(
+      "The occupation 'farmer' on this source matches no record linked to 'I1' at 'probable' or better before this " +
+        "call that is itself tied (its voucher 'pe_002' is not tied).",
+    );
+    // Every link judged, as the copy gate and the row warning judge them: the
+    // exempt link's own exemption is read, and it still grounds nothing.
+    const all = { ...r, person_evidence: [...r.person_evidence, standing("pe_003", "a_111", I1)] };
+    const verdicts = namesakeVerdicts(I1, all, ageTree())?.verdicts;
+    expect(verdicts?.get("pe_002")?.ties).toEqual([{ kind: "age", row: "ns_001", age: 4, marker: "head_of_household" }]);
+    expect(verdicts?.get("pe_003")?.allowed).toBe(false);
+  });
+
+  it("T10 judges a partner by ties alone: a row of his the record would lift does not take the person's tie", async () => {
+    const t = ageTree({ wife: true, undatedSon: true });
+    const r = ageResearch({
+      assertions: [
+        ...census("a_10", "src_001", CEN1800, "1800"),
+        assertion("a_104", "src_001", CEN1800, "wife", "name", "Mary Raymond"),
+      ],
+      namesakes: [{ ...ROW_1796, person_id: I7, time_period: "born 1795", birth_year: 1795 }],
+      person_evidence: [standing("pe_001", "a_104", I2)],
+    });
+    await setup(r, t);
+    const res = await raise(r, "a_101");
+    expect(res.ok, errs(res)).toBe(true);
+  });
+
+  it("T11 dates the record by its own dated facts, never the source's date", async () => {
+    const SPAN = "ark:/61903/1:1:AGE3-771";
+    const undatedOffice = assertion("a_142", "src_004", SPAN, "principal", "office", "Surveyor of Highways");
+    const withSource = (assertions: Record<string, unknown>[], birthYear: number) => {
+      const r = ageResearch({ assertions, namesakes: [{ ...ROW_1796, birth_year: birthYear }] });
+      r.sources[3].citation_detail.when_created = "entries dated 1771, 1783, 1794, and 1799";
+      return r;
+    };
+    const name = assertion("a_141", "src_004", SPAN, "principal", "name", "Paul Raymond");
+
+    // Undated facts: the source's "1771" would make a namesake born 1765 six.
+    const undated = withSource([name, undatedOffice], 1765);
+    await setup(undated, ageTree());
+    const refused = await raise(undated, "a_141");
+    expect(refused.ok).toBe(false);
+    expect(errs(refused)).toContain(`namesake(s) of '${I1}' are recorded (ns_001`);
+
+    // Dated facts from 1771 to 1799: the record is dated by the latest.
+    const span = [
+      name,
+      { ...undatedOffice, date: "1799" },
+      assertion("a_143", "src_004", SPAN, "clerk", "event", "Town meeting", { date: "1771" }),
+    ];
+    const old = withSource(span, 1765);
+    await setup(old, ageTree());
+    expect((await raise(old, "a_141")).ok).toBe(false);
+    const young = withSource(span, 1790);
+    await setup(young, ageTree());
+    const lifted = await raise(young, "a_141");
+    expect(lifted.ok, errs(lifted)).toBe(true);
+    expect((await verdictOn("a_141", ageTree()))?.ties).toEqual([{ kind: "age", row: "ns_001", age: 9, marker: "office" }]);
+  });
+
+  it("T12 dates the record by its events, never by a birth or christening the household lists", async () => {
+    // A census a Paul Raymond heads, with a younger brother born or christened in
+    // 1800. Undated, it could be any year he headed it in; the brother's date
+    // would make the namesake (born 1796) four.
+    const CEN = "ark:/61903/1:1:AGE4-800";
+    const household = (brother: string, censusDate?: string) => [
+      assertion("a_151", "src_004", CEN, "head_of_household", "name", "Paul Raymond"),
+      assertion("a_152", "src_004", CEN, "head_of_household", "census", "", censusDate ? { date: censusDate } : {}),
+      assertion("a_153", "src_004", CEN, "brother", "name", "John Raymond"),
+      assertion("a_154", "src_004", CEN, "brother", brother, "", { date: "1800" }),
+    ];
+    for (const brother of ["birth", "christening"]) {
+      const undated = ageResearch({ assertions: household(brother) });
+      await setup(undated, ageTree());
+      const refused = await raise(undated, "a_151");
+      expect(refused.ok, brother).toBe(false);
+      expect(errs(refused), brother).toContain(`namesake(s) of '${I1}' are recorded (ns_001`);
+    }
+    // The census fact dated 1800 dates it: the namesake was four.
+    const dated = ageResearch({ assertions: household("birth", "1800") });
+    await setup(dated, ageTree());
+    const lifted = await raise(dated, "a_151");
+    expect(lifted.ok, errs(lifted)).toBe(true);
+    expect((await verdictOn("a_151", ageTree()))?.ties).toEqual([
+      { kind: "age", row: "ns_001", age: 4, marker: "head_of_household" },
+    ]);
   });
 });

@@ -1,0 +1,83 @@
+/* Fallbacks for a host that gives no variables, as a tab and an artifact do. */
+:root {
+  --fallback-background: #ffffff;
+  --fallback-panel: #f3f3f0;
+  --fallback-text: #1d1d1b;
+  --fallback-line: #d4d4cf;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --fallback-background: #1c1c1a;
+    --fallback-panel: #2a2a27;
+    --fallback-text: #ecece8;
+    --fallback-line: #45453f;
+  }
+}
+
+:root[data-theme='dark'] {
+  --fallback-background: #1c1c1a;
+  --fallback-panel: #2a2a27;
+  --fallback-text: #ecece8;
+  --fallback-line: #45453f;
+}
+
+body {
+  margin: 0;
+  background: var(--color-background-primary, var(--fallback-background));
+  color: var(--color-text-primary, var(--fallback-text));
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.page {
+  padding: 16px;
+}
+
+h1 {
+  margin: 0 0 12px;
+  font-size: 18px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+p {
+  margin: 0 0 12px;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+button {
+  padding: 6px 10px;
+  border: 1px solid var(--color-border-primary, var(--fallback-line));
+  border-radius: 6px;
+  background: var(--color-background-secondary, var(--fallback-panel));
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.probe-image {
+  display: block;
+  max-width: 100%;
+  margin-bottom: 12px;
+}
+
+.report {
+  margin: 0;
+  padding: 12px;
+  border: 1px solid var(--color-border-primary, var(--fallback-line));
+  border-radius: 6px;
+  background: var(--color-background-secondary, var(--fallback-panel));
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 12px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  user-select: text;
+}

@@ -10,7 +10,8 @@
 //
 // It never reads a response. A block or challenge page, a 403 or a 429 fails
 // only its own call and trips nothing process-wide (plan, E4); the per-user
-// 429 pause is a different limit (issue #3999).
+// 429 pause is a different limit (`user-limits.ts`, issue #3999), whose
+// refusal carries this module's marker.
 //
 // Module state on purpose: the limit is process-wide, so it cannot hang off a
 // `Principal` or a request.
@@ -40,7 +41,9 @@ export function monotonicNow(): number {
  *  loaded, matching `isFetchTimeout`'s marker in `http.ts`. */
 const BUDGET_EXHAUSTED = Symbol.for("cowork-genealogy.fsBudget.exhausted");
 
-/** True for the refusal this module throws.
+/** True for a local FamilySearch refusal: the one this module throws, and the
+ *  per-user 429 pause's (`user-limits.ts`), which `markFsRefusal` marks the
+ *  same way so every guard below keeps it intact too.
  *
  *  Every retry loop over a FamilySearch call must check this and rethrow at
  *  once. There are two: `fetchWithRetry` (`http.ts`) and `withRetry`
@@ -55,13 +58,20 @@ export function isFsBudgetExhausted(err: unknown): boolean {
   );
 }
 
-function exhaustedError(retryAfterS: number): Error {
-  const err = new Error(
-    `The server's shared FamilySearch request budget is spent; ` +
-      `try again in about ${retryAfterS} ${retryAfterS === 1 ? "second" : "seconds"}.`,
-  );
+/** Mark `err` as a local FamilySearch refusal, so `isFsBudgetExhausted` is
+ *  true for it: nothing reached FamilySearch, and retrying cannot help. */
+export function markFsRefusal(err: Error): Error {
   (err as unknown as Record<symbol, unknown>)[BUDGET_EXHAUSTED] = true;
   return err;
+}
+
+function exhaustedError(retryAfterS: number): Error {
+  return markFsRefusal(
+    new Error(
+      `The server's shared FamilySearch request budget is spent; ` +
+        `try again in about ${retryAfterS} ${retryAfterS === 1 ? "second" : "seconds"}.`,
+    ),
+  );
 }
 
 let perMinute: number | undefined;

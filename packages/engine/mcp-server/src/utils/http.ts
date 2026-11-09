@@ -234,10 +234,45 @@ export interface RetryBudgetOptions {
   budgetMs?: number;
   /** Base delay for exponential backoff when no Retry-After. Default 200. */
   baseMs?: number;
+  /**
+   * Called with every retryable response (429, 5xx) as it arrives, BEFORE the
+   * loop decides to retry it, return it or throw. A `Retry-After` longer than
+   * the budget makes this loop throw rather than return, so a caller checking
+   * the response after `fetchWithRetry` never sees that 429. `fsFetch` records
+   * a connector user's 429 pause here (issue #3999).
+   */
+  onRetryableResponse?: (status: number, retryAfterMs: number | null) => void;
+  /**
+   * Awaited before every attempt, the first included, with how long it may
+   * wait in ms (`pauseWaitAllowance`: inside the budget left, and leaving the
+   * attempt's request time to run). It may wait inside that, or throw a
+   * refusal marked for `isFsBudgetExhausted`, which the loop rethrows without
+   * retrying. The wait comes out of the attempt's own time, never on top of
+   * it, so a caller that sized `timeoutMs` and `budgetMs` to fit a ceiling
+   * still fits it. `fsFetch` holds a paused connector user here (issue #3999).
+   */
+  beforeAttempt?: (maxWaitMs: number) => Promise<void>;
 }
 
 const retrySleep = (ms: number): Promise<void> =>
   new Promise((r) => setTimeout(r, ms));
+
+/** The least a request keeps for itself when a pause wait comes out of its
+ *  time, or half that time when it is shorter. A wait that left less would end
+ *  in "timed out after 0ms", an unmarked failure that reads as the network
+ *  rather than "try again in about N seconds". */
+export const MIN_REQUEST_AFTER_WAIT_MS = 2_000;
+
+/**
+ * How long a pause may be waited out before a request whose time is `spanMs`,
+ * with `leftMs` of the retry budget left: inside the budget, and leaving the
+ * request at least MIN_REQUEST_AFTER_WAIT_MS (or half of `spanMs`). Past that,
+ * the caller refuses instead of waiting.
+ */
+export function pauseWaitAllowance(spanMs: number, leftMs: number): number {
+  const keep = Math.min(MIN_REQUEST_AFTER_WAIT_MS, spanMs / 2);
+  return Math.max(0, Math.min(leftMs, spanMs - keep));
+}
 
 /**
  * `fetchWithTimeout` + automatic retry of transient failures.
@@ -263,6 +298,8 @@ export async function fetchWithRetry(
     attempts = 3,
     budgetMs = DEFAULT_RETRY_BUDGET_MS,
     baseMs = 200,
+    onRetryableResponse,
+    beforeAttempt,
   } = retryOpts;
   const deadline = Date.now() + budgetMs;
   let lastErr: unknown;
@@ -275,9 +312,22 @@ export async function fetchWithRetry(
 
     let response: Response;
     try {
+      // Inside the `try`, so a marked refusal takes the rethrow below. A wait
+      // comes out of the call's time, never on top of it. `span` is how long
+      // this attempt may run: the first until its own timeout, or until the
+      // deadline when that is later and retries remain; a later one until the
+      // deadline.
+      const before = Date.now();
+      const left = Math.max(0, deadline - before);
+      const span = attempt > 0 ? left : attempts > 1 ? Math.max(timeoutMs, left) : timeoutMs;
+      let waited = 0;
+      if (beforeAttempt) {
+        await beforeAttempt(pauseWaitAllowance(span, left));
+        waited = Date.now() - before;
+      }
       const attemptTimeout =
         attempt === 0
-          ? timeoutMs
+          ? Math.max(0, Math.min(timeoutMs, span - waited))
           : Math.min(timeoutMs, Math.max(0, deadline - Date.now()));
       response = await fetchWithTimeout(url, init, attemptTimeout);
     } catch (err) {
@@ -314,6 +364,7 @@ export async function fetchWithRetry(
     }
 
     // Retryable HTTP status (429/5xx).
+    onRetryableResponse?.(response.status, retryAfterMs(response));
     lastResponse = response;
     lastErr = new Error(
       `HTTP ${response.status} ${response.statusText}`,
@@ -326,6 +377,9 @@ export async function fetchWithRetry(
 
     const ra = retryAfterMs(response);
     if (ra !== null && ra > remaining) {
+      // Nothing reads this response once the loop throws, and an unread undici
+      // body holds its socket until GC (the same reason as the drain above).
+      await response.text().catch(() => "");
       throw new Error(
         `Server requested a ${Math.ceil(ra / 1000)}s wait (Retry-After: ${response.headers.get("retry-after")}), ` +
           `but only ${Math.ceil(remaining / 1000)}s of the ${Math.ceil(budgetMs / 1000)}s retry budget remains. ` +

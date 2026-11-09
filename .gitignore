@@ -124,6 +124,8 @@ __pycache__/
 *.pyc
 # LocalProvider mock sandbox project dirs + local viewer backup mirror
 .workbench-data/
+# The MCP App page, copied here by `make mcp-viewer-build` for the viewer server.
+packages/engine/mcp-server/viewer/page/viewer.html
 # Build provenance written into the E2B build context by build-image.sh and baked
 # into the image as BUILD_INFO.json. Generated on every build, never committed:
 # a tracked copy would dirty the tree on each `make sandbox-image` and would go

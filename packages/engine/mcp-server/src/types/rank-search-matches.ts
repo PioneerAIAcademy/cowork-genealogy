@@ -130,9 +130,11 @@ export interface RankSearchMatchesResult {
    * or qualified year such as "1829" or "Abt 1829" does not count) AND no named
    * spouse, parent or child in the tree or the subject's linked evidence —
    * i.e. nothing that separates this person from any same-named individual.
-   * For the search-records namesake gate (#2213 PR3, not yet built).
+   * Advisory: nothing refuses a thin subject's records.
    * Omitted when the subject is not too thin; never `false`.
    */
   subjectTooThin?: true;
+  /** Present with `subjectTooThin`: what the agent reading the rows must do. */
+  subjectTooThinNote?: string;
   matches: RankedMatch[];
 }

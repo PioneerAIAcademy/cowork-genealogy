@@ -26,7 +26,7 @@ import { treePidOfArk } from "./ark.js";
 import { earliestYearOfFacts, latestYearOfFacts } from "./fact-helpers.js";
 import { BIRTHLIKE_FACT_TYPES } from "./mob.js";
 import { collectFacts, standardizePlaces } from "./gedcomx-convert.js";
-import { isNonPlacePhrase } from "./place-resolver.js";
+import { divisionContradiction, isNonPlacePhrase } from "./place-resolver.js";
 // The one relationship identity. A private copy here keyed on type and
 // endpoints only, so an import carrying both a Biological and a Step parent on
 // one pair was refused as a repeat — the opposite of what the tree says
@@ -651,6 +651,24 @@ export function unresolvedPlacesOf(facts: readonly Obj[]): string[] {
   for (const f of facts) {
     if (typeof f.place !== "string" || f.place.trim() === "" || f.standard_place || isNonPlacePhrase(f.place)) continue;
     if (!out.has(placeKey(f.place))) out.set(placeKey(f.place), f.place);
+  }
+  return [...out.values()];
+}
+
+/** The place/standard_place pairs among `facts` where the text ends with one US
+ *  state, Puerto Rico or Canadian province and the standard place lies in
+ *  another (`divisionContradiction`), each pair once. A FamilySearch-supplied
+ *  value is carried through unchecked (issue #3976), so this is how the pair
+ *  gets seen: "Washington County, Texas" standardized to "Texas, Washington,
+ *  Kentucky, United States" (issue #4299). */
+export function divisionMismatchesOf(facts: readonly Obj[]): { place: string; standardPlace: string }[] {
+  const out = new Map<string, { place: string; standardPlace: string }>();
+  for (const f of facts) {
+    const { place, standard_place: standardPlace } = f;
+    if (typeof place !== "string" || typeof standardPlace !== "string") continue;
+    if (!divisionContradiction(place, standardPlace)) continue;
+    const key = `${placeKey(place)} ${standardPlace}`;
+    if (!out.has(key)) out.set(key, { place, standardPlace });
   }
   return [...out.values()];
 }

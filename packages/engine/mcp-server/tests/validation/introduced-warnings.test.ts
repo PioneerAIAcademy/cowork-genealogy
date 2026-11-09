@@ -51,6 +51,30 @@ function plausiblePerson(id: string, given: string, surname: string) {
 }
 
 describe("introducedWarnings", () => {
+  // A gating impossibility refuses; its christening-proxy form is exempt.
+  // `hasSpouseNotAliveTogetherEstimated` is the one estimated tag that can be
+  // introduced alone — the other four always co-fire a tag that already gates
+  // (`earliestChildBirthToBirth12`, `hasEventAfterDeath1`, `hasEarlyMarriage14`).
+  it("(a2) refuses an introduced hasChildBornBeforeParent", () => {
+    const parent = person("P", "Ann", "Kos", [{ id: "PB", type: "Birth", date: "1 Jan 1820", standard_date: "1 Jan 1820" }]);
+    const child = person("K", "Jan", "Kos", [{ id: "KB", type: "Birth", date: "1 Jan 1800", standard_date: "1 Jan 1800" }]);
+    const before = tree([parent, child]);
+    const after = tree([parent, child], [{ id: "R", type: "ParentChild", parent: "P", child: "K" }]);
+    const tags = introducedWarnings(before, after, ["P", "K"]).unjustified.map((w) => w.issueType);
+    expect(tags).toContain("hasChildBornBeforeParent");
+  });
+
+  it("(a3) lets an introduced hasSpouseNotAliveTogetherEstimated land", () => {
+    const a = person("A", "Jan", "Kos", [{ id: "AD", type: "Death", date: "1790", standard_date: "1790" }]);
+    const s = { ...person("S", "Ann", "Bor", [{ id: "SC", type: "Christening", date: "1800", standard_date: "1800" }]), gender: "Female" };
+    const before = tree([a, s]);
+    const after = tree([a, s], [{ id: "C", type: "Couple", person1: "A", person2: "S" }]);
+    // With exemptions off the write introduces the tag; with them on it lands.
+    const unexempted = introducedWarnings(before, after, ["A", "S"], undefined, undefined, false);
+    expect(unexempted.unjustified.map((w) => w.issueType)).toContain("hasSpouseNotAliveTogetherEstimated");
+    expect(introducedWarnings(before, after, ["A", "S"]).unjustified).toEqual([]);
+  });
+
   it("(a) an introduced warning with no justification is unjustified", () => {
     const before = tree([plausiblePerson("I1", "John", "Smith")]);
     // After: birth changed to 1800, making lifespan 170 years

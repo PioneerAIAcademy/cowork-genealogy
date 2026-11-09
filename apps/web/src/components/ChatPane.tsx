@@ -861,6 +861,8 @@ export default function ChatPane({
               type into was the only part that shrank. */}
           <textarea
             className="chatTextarea"
+            autoCorrect="off"
+            spellCheck={false}
             placeholder={
               !ready
                 ? 'Connecting…'

@@ -950,8 +950,8 @@ DEDICATED_AGENT_NAMES = frozenset(
         # log entry arriving from it is not read as an unnamed-delegate bypass.
         "historical-context",
         # The proof-conclusion shape, claim-scoped (issue #1852): the hook
-        # routes a conflict's analytical product -- a resolve, or any of
-        # CONFLICT_ANALYSIS_FIELDS -- to this agent, so every legitimate
+        # routes a conflict's analytical product -- a resolve or a moot, or any
+        # of CONFLICT_ANALYSIS_FIELDS -- to this agent, so every legitimate
         # resolution now arrives from it.
         "conflict-resolution",
         # Same shape as search-images (issue #2065): a new agent, not a

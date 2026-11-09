@@ -1,12 +1,11 @@
 # `project_list` — which projects this server keeps — Spec
 
-> **Status:** New (2026-10-26). The folder and single-project modes are built.
-> The signed-in user's listing (§2.3) is the contract the remote MCP server
-> must serve; until it does, the research suite's hosted tests serve it from
-> fixtures.
+> **Status:** Built, in all three modes: folder, a store bound to one project,
+> and the signed-in user's listing (§2.3) on the connector door. The research
+> suite's hosted tests serve the listing from fixtures.
 
 ```
-project_list({}) -> { mode, projects?, newProjectPath?, message }   (read-only)
+project_list({}) -> { mode, projects?, truncated?, newProjectPath?, message }   (read-only)
 ```
 
 ---
@@ -27,10 +26,7 @@ project_list({})
 ```
 
 No parameters. Read-only: writes nothing, on any backend. The mode comes from the
-active `ProjectStore`'s `listProjects()`. The function takes the call's principal as its last
-parameter, for the entries' `projectUrl`; no entry carries one yet, because filling
-it needs a map from each listed `projectPath` to its store's project id, which
-no store keeps yet.
+active `ProjectStore`'s `listProjects()`.
 
 ### 2.1 Return value
 
@@ -41,17 +37,18 @@ Wire-side **camelCase**:
   mode: "folder" | "hosted",
   projects?: [{                       // hosted only
     projectPath: string,              // pass as projectPath to continue it
-    objective: string | null,         // research.project.objective, verbatim
+    objective: string | null,         // research.project.objective, verbatim unless bounded (§2.3.1)
     subjects: [{
       id: string,                     // each research.project.subject_person_ids entry
       name: string | null,            // that tree person's preferred name, "Given Surname"
     }],
+    moreSubjects?: number,            // subjects a bounded entry left out; absent when none were
     status: string | null,            // research.project.status
     updated: string | null,           // research.project.updated
-    projectUrl?: string,              // the project's viewer page, when the server knows its public URL
   }],
+  truncated?: true,                   // more projects exist than are listed; absent when all are
   newProjectPath?: string,            // where a new project goes; absent when none can be started
-  message: string,                    // what to pass as projectPath, in one or two sentences
+  message: string,                    // what to pass as projectPath, and whether the list was cut
 }
 ```
 
@@ -72,17 +69,88 @@ otherwise skipped that read and sent an existing project to `init-project`.
 The store names the paths the caller may use. Each path that holds a
 `research.json` is listed as a project; the first that holds none is returned as
 `newProjectPath`. A document that does not parse lists its project with `null`
-fields rather than failing the call.
+fields rather than failing the call, as an absent `tree.gedcomx.json` does; a read
+that fails any other way fails the call, because `null` fields read as a project
+about nobody.
 
 - **A store bound to one project** (the prototype worker's `PgS3ProjectStore`,
   bound per request by `X-Genealogy-Project-Id`) names its anchor. The anchor is
   listed once it holds a `research.json`, and is the `newProjectPath` until then.
-- **The signed-in user's listing.** A server that admits a user to many projects
-  names each project the user owns that holds a `research.json`, plus one fresh
-  path, `/proj_<16 lowercase hex>`, that no project uses yet. The first write to
-  the fresh path makes the caller its owner.
-- **A shared server's unbound store** rejects, so a request that names no
-  project gets the dispatcher's `isError` answer with that store's message.
+  Its entry is verbatim: one project is one read.
+- **The signed-in user's listing.** A connector call naming no project names the
+  newest projects the user owns that hold a `research.json`, newest document first
+  and bounded as §2.3.1 says, and only ids of the door's `/proj_<16 lowercase hex>`
+  shape, then one fresh path of that shape that no project uses yet. A fresh path
+  reads as an empty project
+  (`project_context` answers `reason: "no_project"`), and the first write to it,
+  a staged read included, makes the caller its owner. An id claimed that way and
+  still holding no `research.json` is not listed, so it never displaces the fresh
+  path. A failed listing is the dispatcher's `isError`, never an empty list. Every
+  other project tool on such a call still rejects with the connector's message.
+- **A shared server's process store** is unbound: anything that runs outside a
+  request's binding rejects with that store's message.
+
+#### 2.3.1 Bounds on the signed-in user's listing
+
+Any signed-in account can reach this listing on the shared tool server, nothing caps
+how many projects it owns, and an objective can run to the store's document cap, so
+the listing bounds itself:
+
+| What | Bound | Why this value |
+|---|---|---|
+| Projects listed | 100, newest document first (`MAX_LISTED_PROJECTS`, a `LIMIT` on the query) | A project is hours of work on one person: one new project every day takes over three months to reach it. |
+| `objective` | 400 characters (`MAX_OBJECTIVE_CHARS`) | Above the longest in the eval corpus (341 of 602; median 124), so only an abuse is cut. |
+| `subjects` | The first 5 (`MAX_LISTED_SUBJECTS`) | The corpus has none above 2. |
+| A subject's `id` and `name`, `status`, `updated` | 100 characters (`MAX_FIELD_CHARS`) | The validator bounds neither a subject id nor a name, and the entry's bound should not rest on it for the other two. |
+
+A cut text ends in `…`. What it keeps is a copy, because a V8 slice keeps its whole
+parent string alive: with a plain `slice`, each of the 100 entries holds its full
+objective until the call returns, and the bound frees nothing. A surrogate pair the
+cut splits becomes U+FFFD, because half a pair is invalid in the JSON a client sends
+on to its model. `moreSubjects` counts the subjects left out.
+
+When the user owns more than the limit, the query's extra row sets `truncated: true`
+and `message` adds that more projects exist, the most recently updated come first,
+and a person none of them is about may already have one, so ask the researcher before
+starting a new project. The flag comes from the query, not from the number of paths
+left after the door's shape filter: a listing shortened by that filter still says so,
+and never says "No project yet". There is no way to page past the limit; a project
+beyond it is still reachable by its `projectPath`.
+
+One call holds one project's documents and one pool connection at a time, and its
+answer is a few hundred kilobytes at most. It still reads each listed project's whole
+`research.json` and `tree.gedcomx.json`, three sequential queries a project with the
+`exists` check, because `ProjectStore` reads whole documents and a narrower read would
+be new surface on every backend. The limit is what bounds that work.
+
+A call's tree read queues behind every other call on the pool, so `research.json` is
+cut down to the entry's fields and let go before that read starts. Holding it across
+the wait is what crashed the server: 1,000 concurrent calls on one project with a 1 MB
+objective aborted V8 on a 1 GiB heap.
+
+These bounds are per call. How many calls one account has running is bounded at the
+door instead: a connector user runs at most 4 `tools/call` requests at a time and the
+rest wait their turn (self-hosted beta E4, `src/utils/user-limits.ts`), so no more than
+4 of one account's calls hold documents at once. Each waiting call has still read its
+body and run up to two of the door's lookups on the pool, and how many may wait is not bounded.
+
+#### 2.3.2 The cap on a document
+
+`PgS3ProjectStore` refuses a write of a document over 16 MiB of pretty text
+(`MAX_DOCUMENT_BYTES`), answering `Nothing was saved: research.json would be larger
+than the 16 MB a project document may hold.` A read loads the whole document into a
+Postgres backend. With Postgres limited to 2 GiB, ten concurrent reads of 100 MB
+documents had a backend killed and every connection dropped; ten of 16 MiB did not.
+The largest real `research.json` is about 1.55 MB, so a real project does not reach it.
+
+The refusal comes before the first store call, so it writes nothing, not even the
+project's row, and one document over the cap in `writeJsonBoth` writes neither. A read
+is never refused. Results and staged reads are S3 objects no Postgres backend loads, so
+the cap leaves them alone, and the file store has no cap: it is one user's own folder.
+It bounds one document, not a project or an account.
+
+A client that disconnects ends the listing at its next read: the store rejects, so the
+loop stops rather than answering short.
 
 ### 2.4 How the research router uses it
 
@@ -90,19 +158,43 @@ The router calls `project_list` first when the conversation names no
 `projectPath`. In folder mode it routes the working folder. In hosted
 mode it continues the listed project whose subject or objective the message
 names, starts a new project at `newProjectPath` for a person no listed project is
-about, and otherwise lists the projects and asks which one to continue. With no
+about, and otherwise lists the projects and asks which one to continue. On a
+`truncated` listing it follows `message`: it asks before starting a new project,
+because the person may be in a project the list left out. With no
 `project_list` tool at all (an expired connector sign-in, or a desktop extension
 older than this tool), it says the genealogy tools are not connected and stops.
-A reply that ends the router's turn ends with the project's `projectUrl` when a
-tool returned one.
 
 ## 3. Tests
 
 - `tests/tools/project-list.test.ts` — folder mode on the process store, with no
   `projects` key; a bound
   store with a project, with none yet, and with a document that does not parse;
-  an unbound store's rejection.
+  a read that fails other than by absence; an unbound store's rejection. The user
+  listing's bounds at and past each limit, a cut objective's text released from the
+  heap, concurrent calls waiting on their tree read holding none of a huge field, a
+  surrogate pair at the cut, `truncated` with and without projects, a read stopped by
+  an abort, and a bound store left verbatim.
+- `tests/http/http-server.test.ts` — the connector's listing over a file double:
+  the caller's paths and one fresh path, a caller with none, an id of another
+  shape, `truncated` surviving the shape filter, a failed query, a failed document
+  read, a client disconnecting mid-listing, and a project tool naming no project
+  querying nothing.
+- `tests/store/project-store.test.ts` — the owned-projects store's reads rejecting
+  once its signal aborts.
+- `tests/http/http-server-pg.test.ts` — three projects newest first in no id order
+  and another user's never, an ownerless project and a claimed id left out, a user
+  exactly at the listing limit and one past it, a `research_append` under the document
+  cap landing and one past it refused in words, and
+  `project_list`, `person_read`, `project_create`, `project_list` end to end.
+- `tests/store/pg-s3-project-store.test.ts` — a document at the cap stored and one byte
+  past it refused with no project left behind, bytes counted rather than characters, a
+  refused rewrite keeping the old document, `writeJsonBoth` writing neither, and results
+  left alone.
 - `dev/smoke-calls.ts` — the stdio smoke expects folder mode; the HTTP smoke
-  expects the project its earlier `project_create` row wrote to be listed.
+  expects the project its earlier `project_create` row wrote to be listed, and
+  the connector pass a fresh `newProjectPath` beside it.
+- `dev/smoke-http.ts` — the connector pass seeds the caller's second project and
+  another user's, and requires both of the caller's, a fresh path, and not the
+  other user's.
 - `eval/tests/unit/research/` — the router's hosted routes, served by the
   `project-list-hosted-*` fixtures.

@@ -1176,7 +1176,7 @@ describe("the guard script's decisions", () => {
   // CLAIM-scoped over several fields, not section-scoped: six skills open a
   // conflict with only the schema's required fields, and proof-conclusion
   // re-opens one, so a section route would deny every one of them. The claim is
-  // the analytical product — a resolve, or any analysis field set truthy.
+  // the analytical product — a resolve or a moot, or any analysis field set truthy.
   const CR_OWNER = "genealogy-research:conflict-resolution";
   const SKELETON = {
     conflict_id: "c_001",
@@ -1211,6 +1211,9 @@ describe("the guard script's decisions", () => {
     // The only moot the tool accepts carries a rationale, so a moot is the
     // agent's too. Pinned so nobody "fixes" the hook to let one through.
     ["a moot, with the rationale the tool requires", { status: "moot", resolution_rationale: "a different Patrick" }],
+    // On a conflict that already carries its analyses, the status alone settles
+    // it, and a moot with both analyses lifts the core-identifier cap.
+    ["a status-only moot", { status: "moot" }],
   ])("denies the main thread a conflict claim — %s", (_label, fields) => {
     const out = runGuard({
       tool_name: "mcp__genealogy__research_append",

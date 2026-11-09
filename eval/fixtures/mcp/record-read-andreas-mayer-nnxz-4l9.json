@@ -1,0 +1,139 @@
+{
+  "tool": "record_read",
+  "description": "Andreas Mayer, christened 5 Sep 1812 at Sankt Georgen, Freiburg, Baden (collection 1473000); parents Johann Georg Mayer and Maria Dorothea Stokburger. Stocked so that an agent that reads the record before logging it does not stop on an unregistered call. Captured live 2026-11-05 via recordReadTool.",
+  "args": {
+    "recordId": "~NNXZ-4L9"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_12064416931",
+        "ark": "ark:/61903/1:1:NNXZ-4L9",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "Andreas",
+            "surname": "Mayer"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Christening",
+            "primary": true,
+            "date": "5 Sep 1812",
+            "standard_date": "5 Sep 1812",
+            "place": "Sankt Georgen, Freiburg, Baden, Deutschland"
+          },
+          {
+            "type": "Birth",
+            "date": "5 Sep 1812",
+            "standard_date": "5 Sep 1812"
+          },
+          {
+            "type": "Death",
+            "date": "29 Feb 1852",
+            "standard_date": "29 Feb 1852"
+          }
+        ]
+      },
+      {
+        "id": "p_12064416932",
+        "ark": "ark:/61903/1:1:NNXZ-4LS",
+        "gender": "Male",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "Johann Georg",
+            "surname": "Mayer"
+          }
+        ]
+      },
+      {
+        "id": "p_12064416933",
+        "ark": "ark:/61903/1:1:NNXZ-4L3",
+        "gender": "Female",
+        "names": [
+          {
+            "type": "BirthName",
+            "given": "Maria Dorothea",
+            "surname": "Stokburger"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "MM9.1.6/XGJD-96NL",
+        "type": "ParentChild",
+        "parent": "p_12064416932",
+        "child": "p_12064416931"
+      },
+      {
+        "id": "MM9.1.6/XGJD-9629",
+        "type": "ParentChild",
+        "parent": "p_12064416933",
+        "child": "p_12064416931"
+      },
+      {
+        "id": "MM9.1.6/XGJD-96P8",
+        "type": "Couple",
+        "person1": "p_12064416932",
+        "person2": "p_12064416933"
+      }
+    ],
+    "sources": [
+      {
+        "id": "sd_c_1473000",
+        "resource_type": "Collection",
+        "title": "Germany, Births and Baptisms, 1558-1898",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1473000",
+        "coverage": {
+          "date_range": "1558/1898",
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "src_r_526664879",
+        "resource_type": "Record",
+        "title": "Entry for Andreas Mayer, \"Germany, Births and Baptisms, 1558-1898\"",
+        "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:2:ML2W-371 : 26 October 2021), Entry for Andreas Mayer, 1812.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:ML2W-371",
+        "coverage": {
+          "place_rep_id": "6725539",
+          "date_range": "5 Sep 1812",
+          "record_type": "Vital",
+          "standard_place": "Sankt Georgen, Freiburg, Baden"
+        }
+      },
+      {
+        "id": "sd_p_12064416931",
+        "resource_type": "Person",
+        "title": "Andreas Mayer, \"Germany, Births and Baptisms, 1558-1898\"",
+        "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NNXZ-4L9 : 26 October 2021), Andreas Mayer, 1812.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:NNXZ-4L9"
+      },
+      {
+        "id": "sd_p_12064416932",
+        "resource_type": "Person",
+        "title": "Johann Georg Mayer in entry for Andreas Mayer, \"Germany, Births and Baptisms, 1558-1898\"",
+        "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NNXZ-4LS : 26 October 2021), Johann Georg Mayer in entry for Andreas Mayer, 1812.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:NNXZ-4LS"
+      },
+      {
+        "id": "sd_p_12064416933",
+        "resource_type": "Person",
+        "title": "Maria Dorothea Stokburger in entry for Andreas Mayer, \"Germany, Births and Baptisms, 1558-1898\"",
+        "citation": "\"Deutschland Geburten und Taufen, 1558-1898\", database, <i>FamilySearch</i> (https://familysearch.org/ark:/61903/1:1:NNXZ-4L3 : 26 October 2021), Maria Dorothea Stokburger in entry for Andreas Mayer, 1812.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:NNXZ-4L3"
+      }
+    ],
+    "places": [
+      {},
+      {
+        "id": "place_1927074"
+      }
+    ]
+  }
+}

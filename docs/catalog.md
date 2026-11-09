@@ -99,7 +99,7 @@ way project state changes.
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 | `tree_query` | Read-only filtered read of tree.gedcomx.json (persons with names, facts, ark; Couple and ParentChild edges with facts; cited sources with authors) — what agents call instead of opening the tree file | None |
 | `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
-| `project_list` | Which projects this server keeps. On the desktop extension the task's working folder is the project; on a hosted server it lists the caller's projects (objective, subjects, status) and, when one can be started, the `newProjectPath` for it. The research router's first call when a conversation names no project | None |
+| `project_list` | Which projects this server keeps. On the desktop extension the task's working folder is the project; on a hosted server it lists the caller's newest 100 projects (objective, subjects, status), saying when there are more, and, when one can be started, the `newProjectPath` for it. The research router's first call when a conversation names no project | None |
 | `get_name_variants` | Look up a given name's alternate forms (nicknames, diminutives, formal forms) from a bundled bidirectional table. Given names only, no caller yet | None |
 
 ### Auth (FamilySearch OAuth 2.0 + PKCE)

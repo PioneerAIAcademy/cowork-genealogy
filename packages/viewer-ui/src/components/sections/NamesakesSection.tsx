@@ -30,7 +30,9 @@ export default function NamesakesSection(): React.JSX.Element {
           key={ns.id}
           id={ns.id}
           title={ns.name}
-          summary={[ns.place, ns.time_period].filter(Boolean).join(', ')}
+          summary={[ns.place, ns.time_period, ns.birth_year !== undefined ? `birth year ${ns.birth_year}` : null]
+            .filter(Boolean)
+            .join(', ')}
           rawData={ns}
           footer={
             <div className={styles.footer}>

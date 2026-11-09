@@ -590,7 +590,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // declared, plus `Read` for research.json and `research_query`, which Step 1
   // reads assertions and person_evidence with. `research_append` is the conflict
   // write, and the plugin hook routes a conflict's analytical product (a
-  // resolve, or any analysis field) to this agent alone. The research-side place
+  // resolve or a moot, or any analysis field) to this agent alone. The research-side place
   // tools its folded places guidance lists (collections, volumes, external
   // links, population, wiki place pages) are deliberately absent: it resolves
   // place names and does not search.

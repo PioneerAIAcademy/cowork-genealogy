@@ -63,9 +63,14 @@ describe("person_warnings fixtures are coherent with their own messages", () => 
     for (const { name, warnings } of fixtures()) {
       for (const w of warnings.filter((x) => /AgeRangeGreaterThan120/.test(x.issueType))) {
         const births = (w.facts ?? []).filter((f) => /Birth|Christening|Baptism/.test(f.type));
-        const deaths = (w.facts ?? []).filter((f) => /Death|Burial|Probate|Will/.test(f.type));
-        // A relative-scoped warning may cite only the relative's birth; the span
-        // is asserted by the tool, not derivable. Only check when both ends are cited.
+        const deaths = (w.facts ?? []).filter((f) =>
+          /Death|Burial|Cremation|Funeral|Obituary|Probate|Will/.test(f.type),
+        );
+        // checkRelativesHasAgeRangeGreaterThan120 cannot fire without a dated
+        // death-like fact on the relative, and cites it beside the birth.
+        if (/^relatives/.test(w.issueType)) {
+          expect(deaths.length, `${name} / ${w.issueType} cites no death-like fact`).toBeGreaterThan(0);
+        }
         if (births.length === 0 || deaths.length === 0) continue;
         const b = year(births[0].date), d = year(deaths[deaths.length - 1].date);
         if (b === null || d === null) continue;

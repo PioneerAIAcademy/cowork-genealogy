@@ -42,6 +42,7 @@ from web.app import (  # noqa: E402
     DEFAULT_TITLE,
     Activity,
     AdmissionRefused,
+    EmailTaken,
     EventRow,
     IdentityMismatch,
     ProjectNotOwned,
@@ -109,6 +110,8 @@ class FakeStore:
         self.put_back: list[str] = []
         # #3988: users.openrouter_key_enc, as the route passed it (ciphertext).
         self.openrouter_keys: dict[str, str] = {}
+        # #3992: signin_states, state_sha256 -> used_at (None while unused).
+        self.signin_states: dict[str, datetime | None] = {}
 
     def seed_session(
         self, session_id: str = "sess_1", project_id: str = "proj_1", owner: str | None = USER_A.id
@@ -271,18 +274,39 @@ class FakeStore:
         return self.users.get(user_id)
 
     async def upsert_user(self, email: str, familysearch_id: str | None, *, max_users: int | None = None) -> User:
+        """PgStore.upsert_user's four steps (#3992), without the locks."""
         email = email.strip().lower()
-        user = next((u for u in self.users.values() if u.email == email), None)
-        if user is None:
+        by_email = next((u for u in self.users.values() if u.email == email), None)
+        user = next((u for u in self.users.values() if familysearch_id and u.familysearch_id == familysearch_id), None)
+        if user is not None:
+            if user.blocked_at is None and user.email != email:
+                if by_email is not None:
+                    raise EmailTaken(email)
+                user = dataclasses.replace(user, email=email)
+        elif by_email is not None:
+            user = by_email
+            if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
+                raise IdentityMismatch(email)
+            if familysearch_id and not user.familysearch_id and user.blocked_at is None:
+                user = dataclasses.replace(user, familysearch_id=familysearch_id)
+        else:
             if max_users is not None and len(self.users) >= max_users:
                 raise AdmissionRefused(email)
-            user = User(f"usr_{len(self.users) + 1}", email)
-        if familysearch_id and user.familysearch_id and user.familysearch_id != familysearch_id:
-            raise IdentityMismatch(email)
-        if familysearch_id and not user.familysearch_id and user.blocked_at is None:
-            user = dataclasses.replace(user, familysearch_id=familysearch_id)
+            user = User(f"usr_{len(self.users) + 1}", email, familysearch_id=familysearch_id or None)
         self.users[user.id] = user
         return user
+
+    async def create_signin_state(self, state_sha256: str) -> None:
+        self.signin_states[state_sha256] = None
+
+    async def signin_state_unused(self, state_sha256: str) -> bool:
+        return state_sha256 in self.signin_states and self.signin_states[state_sha256] is None
+
+    async def consume_signin_state(self, state_sha256: str) -> bool:
+        if not await self.signin_state_unused(state_sha256):
+            return False
+        self.signin_states[state_sha256] = datetime.now(tz=timezone.utc)
+        return True
 
     def block(self, user_id: str) -> None:
         """The operator's block (016): refused at sign-in and on every request."""
@@ -1446,7 +1470,7 @@ async def test_create_session_on_a_seeded_project_and_refuse_a_bad_project_id():
 
 AUTH_ENV = ("PUBLIC_URL", "WEB_ORIGIN", "SESSION_SECRET", "FS_TOKEN_ENC_KEY", "ALLOWED_EMAILS",
             "FAMILYSEARCH_WEB_ENABLED", "FAMILYSEARCH_CONFIG", "DEV_LOGIN", "GENEALOGY_CHAT", "GENEALOGY_MAX_USERS",
-            "UPLOADS_ENABLED", "OPENROUTER_LINKING_ENABLED")
+            "UPLOADS_ENABLED", "OPENROUTER_LINKING_ENABLED", "FS_REDIRECT_URI", "GENEALOGY_SIGNIN_CALLS_PER_MINUTE")
 
 
 @pytest.fixture(autouse=True)

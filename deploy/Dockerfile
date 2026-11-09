@@ -50,6 +50,7 @@ COPY apps/electron/package.json apps/electron/
 # tighten. Nothing in CI builds this image (js-tests.yml header), so
 # `make deploy-preflight` is the only check either way.
 COPY eval/app/package.json eval/app/
+COPY apps/mcp-viewer/package.json apps/mcp-viewer/
 RUN pnpm install --frozen-lockfile --filter web...
 
 COPY packages/viewer-ui packages/viewer-ui

@@ -81,16 +81,16 @@ describe("person-warnings spec catalogue and the shipped tags agree", () => {
   // heading or a broken pattern turns every assertion below into a comparison of
   // empty sets, which passes and reads as coverage.
   it("finds the tags to compare on all three sides", () => {
-    expect(shipped.size, "ALL_WARNING_TAGS is empty or lost entries").toBe(83);
+    expect(shipped.size, "ALL_WARNING_TAGS is empty or lost entries").toBe(103);
     expect(
       catalogueTags().size,
       "no tag rows parsed from the spec's § Tag Catalogue — if its heading or " +
         "table shape changed, fix this parser rather than deleting the test",
-    ).toBe(83);
+    ).toBe(103);
     expect(
       emittedTags().size,
       "no `issueType:` emit sites parsed from person-warnings.ts",
-    ).toBe(83);
+    ).toBe(103);
   });
 
   // (1) Keeps the hand-maintained array honest: it must be exactly the tags the
@@ -156,8 +156,8 @@ describe("person-warnings spec catalogue and the shipped tags agree", () => {
   //
   // Deliberate exception: `earliestChildBirthToBirth12` and its relative form
   // travel together but are both GATING, unlike their cutoff-14 siblings —
-  // at cutoff 12 the tag is the only check that fires when a child is born
-  // before their parent. That is a pair agreeing, so the rule still holds.
+  // at cutoff 12 the tag fires when a child is born before their parent,
+  // across the birth-like family. That is a pair agreeing, so the rule still holds.
   const GENDERS = ["male", "female"] as const;
 
   /** The self form of a relative-form tag, or null if there is no such tag. */

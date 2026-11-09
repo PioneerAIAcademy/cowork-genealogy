@@ -2764,8 +2764,8 @@ def test_image_transcribe_stages_the_scan_ref_beside_the_text(tmp_path, monkeypa
 
 
 def test_principal_sets_match_each_compiled_tools_arity():
-    """The harness calls a compiled tool as `input`, `input, LOCAL` or `LOCAL`, then any
-    `_COMPILED_TOOL_EXTRA_ARGS`, from an f-string no typechecker sees. So each built
+    """The harness calls a compiled tool as `input`, `input, LOCAL`, `LOCAL` or with nothing,
+    then any `_COMPILED_TOOL_EXTRA_ARGS`, from an f-string no typechecker sees. So each built
     function's required-parameter count must equal what the harness passes before the
     extras: a tool that gains a `principal` without joining `_COMPILED_TOOLS_WITH_PRINCIPAL`
     runs with it undefined."""
@@ -2785,6 +2785,18 @@ def test_principal_sets_match_each_compiled_tools_arity():
         for tool in tools
     }
     assert json.loads(result.stdout) == passed
+
+
+@pytest.mark.requires_engine_build
+def test_project_list_runs_live_with_no_arguments(tmp_path):
+    """The arity test above pins the tables, not the call the f-string builds from them: a
+    call still naming `LOCAL` with no import breaks only here, at harness runtime."""
+    _server, _call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+
+    result = _invoke(tools_by_name, "project_list", {})
+
+    assert result.get("is_error") is not True
+    assert _extract_response_dict(result)["mode"] == "folder"
 
 
 # --- the unknown-argument guard (issue #3947) --------------------------------

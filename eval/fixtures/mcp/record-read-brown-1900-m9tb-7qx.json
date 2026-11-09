@@ -1,0 +1,93 @@
+{
+  "tool": "record_read",
+  "description": "The 1900 Bedford County household behind M9TB-7QX, so extraction_append (whose mock reads ids from record_read fixtures) can complete if the skill hands the record to extraction -- the behaviour ut_search_records_d29 fails. Hand-authored.",
+  "args": {
+    "recordId": "~M9TB-7QX"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p1",
+        "names": [
+          {
+            "given": "William",
+            "surname": "Brown"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Residence",
+            "date": "1900",
+            "place": "Bedford, Virginia, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "Mar 1872",
+            "place": "Virginia, United States"
+          }
+        ]
+      },
+      {
+        "id": "p2",
+        "names": [
+          {
+            "given": "Lucy",
+            "surname": "Brown"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Residence",
+            "date": "1900",
+            "place": "Bedford, Virginia, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1875",
+            "place": "Virginia, United States"
+          }
+        ]
+      },
+      {
+        "id": "p3",
+        "names": [
+          {
+            "given": "Edward",
+            "surname": "Brown"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Residence",
+            "date": "1900",
+            "place": "Bedford, Virginia, United States"
+          },
+          {
+            "type": "Birth",
+            "date": "1897",
+            "place": "Virginia, United States"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "Couple",
+        "person1": "p1",
+        "person2": "p2"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "p1",
+        "child": "p3"
+      }
+    ],
+    "sources": [
+      {
+        "title": "United States Census, 1900",
+        "recordId": "ark:/61903/1:1:M9TB-7QX"
+      }
+    ],
+    "places": []
+  }
+}
