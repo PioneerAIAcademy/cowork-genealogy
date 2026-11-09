@@ -703,6 +703,8 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 **Do not** set status to `completed` from this agent — that is set once extraction has created the assertions.
 
+**After this item's status update, go on to Step 7 and then Step 9; never return to Step 1 in this call,** even when the delegation asked for more items. Step 9's next-search offer carries the next item.
+
 ### 6b. Record namesakes
 
 For each person of the subject's name you concluded is not the subject (Step 4), whatever the search was for and even when it found nothing for its own target, call `research_append` once, single form, after the status update: `section: "namesakes"`, `op: "append"`, `entry: { person_id, name, place, time_period, record_ids, log_entry_ids, notes }` — `person_id` the subject's `subjectId`; `name`, `place` and `time_period` as his result gives them; `record_ids` each `recordId` of his, verbatim (never `recordArk`); `log_entry_ids` the `log_` id Step 5 returned; `notes` the ground. For a pool (Step 4) write one row instead: `record_ids: []`; `name`, `place` and `time_period` the pool's; `notes` starting `pool:`, then each candidate's `recordId` and why each stays possible. If the call returns a warning listing links, put their `pe_` ids in a `Hand-back: person-evidence` line (Return contract).
