@@ -382,8 +382,8 @@ The `Parent` suffix is dropped in the simplified format because the parent-child
 | `Education` | yes | |
 | `Religion` | yes | |
 | `Property` | **no** | Extension. No standard GedcomX type. Conversion function uses a custom type URI |
-| `Will` | **no** | Extension. No standard GedcomX type. Same caveat as Property |
-| `Probate` | **no** | Extension. No standard GedcomX type. Same caveat as Property |
+| `Will` | **no** | Extension. No standard GedcomX type. Conversion function uses a custom type URI, as for Property |
+| `Probate` | **no** | Extension. No standard GedcomX type. Conversion function uses a custom type URI, as for Property |
 | `Parents` | **no** | Extension. A FamilySearch **person-level** documentary fact that transcribes the parents named in an indexed record; its `value` holds the parents' names (e.g. `"Geo[illegible] Wilcox - Caroline E Woodruff"`). Redundant with the `ParentChild` structure, so `tree_forget` `parents-of` sweeps it (§2.1.1); not emitted onto the tree by our own writers. No standard GedcomX person fact type |
 
 **Casing convention:** Fact and name types use PascalCase (matching GedcomX conventions with URI prefixes dropped). This contrasts with `research.json` which uses lowercase_with_underscores. When mapping between the two files, convert case: `birth` ↔ `Birth`, `military_service` ↔ `Military`, `residence` ↔ `Residence`. The research.json types `name`, `relationship`, and `other` are research-only and do not appear as GedcomX fact types.
