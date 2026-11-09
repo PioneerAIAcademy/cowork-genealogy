@@ -97,6 +97,13 @@ async def test_signed_in_names_the_account_and_lists_the_callers_projects():
     assert r.headers["cache-control"] == "private, no-store" and "cookie" in r.headers["vary"].lower()
 
 
+async def test_signed_in_points_back_to_the_setup_steps():
+    """Signed in before finishing setup, a patron no longer sees the steps; the page says
+    how to get them back."""
+    r = await _home(FakeStore())
+    assert "Sign out to see the setup steps" in r.text and "Get started" not in r.text
+
+
 async def test_signed_in_with_no_projects_says_so():
     r = await _home(FakeStore())
     assert r.status_code == 200 and "No projects yet" in r.text

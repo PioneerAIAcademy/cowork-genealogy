@@ -82,7 +82,7 @@ def signed_out_page(*, public_url: str, sign_in: Literal["familysearch", "dev"] 
 <h2>Get started</h2>
 <ol>
 <li><a href="{escape(connector_link(public_url))}">Add the custom connector in Claude</a>.
-Keep its name, <strong>{escape(CONNECTOR_NAME)}</strong>: under any other name every agent is left without its tools.</li>
+Keep the name exactly <strong>{escape(CONNECTOR_NAME)}</strong>. The research tools only work under that name.</li>
 <li>{step2}</li>
 <li>Install the plugin once from Claude's Plugins page. It follows your Claude account.
 <span class="note">Placeholder: where the plugin comes from has not been decided yet.</span></li>
@@ -133,12 +133,14 @@ def signed_in_page(
         + f"""<h1>You're signed in</h1>
 <p>Signed in with the FamilySearch account {who}.</p>
 <p><strong>Go back to Claude and say "continue".</strong></p>
+<p class="note">Not set up yet? Sign out to see the setup steps.</p>
 <h2>Your projects</h2>
 {project_list}
 {_openrouter_section(openrouter_linked)}<h2>Your account</h2>
 <p>Account id: <code>{escape(account_id)}</code><br>
 Deletion code: <code>{escape(deletion_code)}</code></p>
-<p class="note">To have your account and projects deleted, write in with both. Keep the deletion code private.</p>
+<p class="note">To have your account and projects deleted, email the feedback address with both.
+Placeholder: the feedback address has not been supplied yet. Keep the deletion code private.</p>
 <p><button type="button" onclick="postAndReload('auth/logout')">Sign out</button></p>
 {_POST_AND_RELOAD}"""
         + _FOOT
