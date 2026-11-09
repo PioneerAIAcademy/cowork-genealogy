@@ -209,12 +209,10 @@ describe("annotateResultsWithRanking", () => {
   });
 
   it("copies the surname-not-on-subject flag and surname onto the annotated row, and keeps the note on `ranked`", () => {
-    const shaped = resp(rankedWith([
+    const out = annotateResultsWithRanking(resp(rankedWith([
       { recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.9, surnameNotOnSubject: true, candidateSurname: "Fenstermaker" },
       { recordId: rowB.recordId, matchRank: 2, searchRank: 2, matchScore: 0.8 },
-    ]));
-    (shaped.ranked as { surnameNote?: string }).surnameNote = "note";
-    const out = annotateResultsWithRanking(shaped);
+    ], { surnameNote: "note" })));
     expect(out.results[0]).toMatchObject({ surnameNotOnSubject: true, candidateSurname: "Fenstermaker" });
     expect(out.results[1]).not.toHaveProperty("surnameNotOnSubject");
     expect(out.results[1]).not.toHaveProperty("candidateSurname");
