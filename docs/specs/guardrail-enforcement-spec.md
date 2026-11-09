@@ -1732,8 +1732,8 @@ some of them fails `make harness-test`.
   `validate_research_schema`, …) load it to validate or rewrite it. But none of
   them hand the agent its contents to inspect: the writers return a result, not
   the tree, and `project_context` returns only a flat person roster
-  (`{id, name, gender, sourceRefs}`) — no facts, no dates or places, no
-  relationships, no per-fact sources. An agent that needs to see what the tree
+  (`{id, name, gender}` and one-hop family ids) — no facts, no dates or places,
+  no cited sources. An agent that needs to see what the tree
   actually says has `Read` and nothing else. (`person_read` is not a substitute
   — it hits the live FamilySearch API, a different data source.) Closing that is
   a build project, not a config change.
