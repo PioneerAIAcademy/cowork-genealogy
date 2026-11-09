@@ -1993,6 +1993,9 @@ export function buildExtractionOps(
  * for the event type too. Falls back to any dated fact only when the record
  * carries none of its own event type, which is better than `unknown` and is the
  * only case where the old behaviour was right.
+ *
+ * Dating a person's age is a different job and has its own list, `EVENT_FACT` in
+ * `utils/record-extract.ts` (`eventDateFor`): keep the two in step.
  */
 const RECORD_EVENT_FACT: Record<string, RegExp> = {
   census: /census/i,
