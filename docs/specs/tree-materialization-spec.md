@@ -54,7 +54,7 @@ first-hand shows the report **measured the wrong thing**:
 | `research.json` assertions | **80/80 carry `source_id`**; 7/7 sources carry `gedcomx_source_description_id` **and** a `citation` |
 | tree facts | **0 of ~13 carry any source-ref** (`sources[]` empty on every fact) |
 | tree names | **0 of 19 carry a source-ref** |
-| tree S-entries | 7/8 have no ESM `citation` string — **working as specified** (omit during research; `simplified-gedcomx-spec.md` §4.3) |
+| tree S-entries | 7/8 have no ESM `citation` string — **working as specified** (omit until proof-conclusion writes the source entry; `simplified-gedcomx-spec.md` §4.3) |
 
 The defect is **not** absent ESM citation strings (those are deliberately
 left to proof-conclusion). It is that **every fact and name on the tree is a
@@ -105,7 +105,7 @@ stays a separate, later act**. This is how competent genealogists actually
 work — attach evidence to a person as you find it, layer the conclusion on
 top — and it is the whole point of the GedcomX evidence/conclusion split.
 
-Two invariants keep the relaxation safe:
+One invariant keeps the relaxation safe:
 
 - **Conflicting values coexist; never suppress.** Agreeing values collapse
   to one fact accumulating multiple source-refs; disagreeing values coexist
@@ -1234,9 +1234,9 @@ the **source-ref (pointer)**; the `citation` agent / proof-conclusion own the
   churn that would arise if materialization guessed a preferred value and
   later facts forced a change.
 - **A person may legitimately carry facts with no `primary` yet** (before
-  proof runs). Defined fallback:
-  - **Viewer:** display the sole fact of a type; if several coexist and none
-    is `primary`, show them as un-ranked evidence (surface the conflict).
+  proof runs). The viewer displays the sole fact of a type; if several
+  coexist and none is `primary`, it shows them as un-ranked evidence
+  (surfacing the conflict).
 - A `primary` fact is a *concluded display value*, **not** a proof claim.
   Strength always lives in the proof summary (`tier`, and each claim's
   `proof_tier` when claims are present); a lone
