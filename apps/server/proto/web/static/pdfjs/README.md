@@ -29,7 +29,13 @@ It also runs in older browsers, so no patron is locked out for not having the ne
 1. Pick a release at least two weeks old.
 2. `npm pack pdfjs-dist@<version>`, and check the tarball against `npm view pdfjs-dist@<version> dist.integrity`.
 3. Copy `legacy/build/pdf.min.mjs`, `legacy/build/pdf.worker.min.mjs` and `LICENSE` here.
-4. Update the version, integrity and hashes above, then run `tests/test_pdfjs_vendored.py`.
+4. Update the version, integrity and hashes above, and `PDFJS_VERSION` in `web/pages.py`.
+   Then run `tests/test_pdfjs_vendored.py` and `tests/test_proto_rehearsal.py`.
+
+The hashes are load-bearing. Minified pdf.js has 12-digit runs in its data tables, and
+`test_proto_rehearsal.py`'s scan for pasted AWS account ids skips these two files only
+while their sha256 matches the table above. Edit a file, or skip the hash update, and the
+scan reads it again.
 
 This README is not shipped: the Beanstalk web bundle copies only the three files
 above (`scripts/eb_bundles/build.py`), because its verifier refuses a `README.md`

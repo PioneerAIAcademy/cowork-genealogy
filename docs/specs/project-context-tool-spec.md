@@ -587,7 +587,7 @@ stripped) **and** `uploadsEnabled` is `true` **and** the bound store has a
 `projectId`. The id is the store's, never derived from `projectPath`: on the
 worker path every project arrives under the same anchor path, `/project`. The
 file store has no id, so the desktop gets no link. The link is the web tier's
-chat-off upload page, `/upload/<id>` (#4001), which serves only the `proj_<16 hex>`
+chat-off upload page, `/upload/<id>`, which serves only the `proj_<16 hex>`
 ids the connector and the web tier mint; it replaced the SPA's `#/p/<id>/upload`
 route, which has no reader with the chat off. No project tool returns a link
 to a viewer page. On the hosted tool server the settings arrive as `WEB_PUBLIC_URL` and
