@@ -36,6 +36,7 @@ import uuid
 
 import psycopg
 import pytest
+from psycopg.types.json import Jsonb
 
 from proto.worker import options, worker
 from proto.worker.session_store import PgSessionStore
@@ -117,8 +118,10 @@ class GatedClaim:
 
 
 def seeded(dsn: str) -> dict:
-    """A session with an open turn whose message is ``go``: the turn dict ``claim`` takes."""
+    """A session with an open turn whose message is ``go``, on a seeded project: the turn
+    dict ``claim`` takes."""
     row = session(dsn)
+    seed_project(dsn, row.project_id)
     turn_id = turn(dsn, row.session_id, row.project_id, "go")
     return {"turn_id": turn_id, "session_id": row.session_id, "project_id": row.project_id,
             "message": {"text": "go"}}
@@ -144,8 +147,23 @@ def headers(row: dict, epoch: int, bearer: str = BEARER) -> dict[str, str]:
                                        claim_epoch=epoch)
 
 
-def create(title: str) -> dict:
-    return {"projectPath": ANCHOR, "objective": f"Who were {title}'s parents?", "title": title}
+SECTIONS = ("questions", "plans", "log", "sources", "assertions", "person_evidence", "conflicts",
+            "hypotheses", "timelines", "proof_summaries", "evaluations")
+SEED_TREE = {"persons": [{"id": "I1", "gender": "Male", "names": [{"id": "N1", "given": "Seed"}]}],
+             "relationships": [], "sources": []}
+
+
+def seed_project(dsn: str, project_id: str) -> None:
+    """The project the writes below land in. ``project_create`` always reads a FamilySearch
+    person, which this test cannot reach, so the documents go in as the tool server's store
+    writes them: the projects row, then one documents row per ref."""
+    research = {"project": {"id": "rp_001", "objective": "Who was Seed's father?", "subject_person_ids": ["I1"],
+                            "status": "active", "created": "2026-11-04", "updated": "2026-11-04"},
+                **{section: [] for section in SECTIONS}}
+    sql(dsn, "INSERT INTO projects (project_id) VALUES (%s) ON CONFLICT DO NOTHING", (project_id,))
+    for name, doc in (("research.json", research), ("tree.gedcomx.json", SEED_TREE),
+                      ("starting-tree.gedcomx.json", SEED_TREE)):
+        sql(dsn, "INSERT INTO documents (project_id, name, doc) VALUES (%s, %s, %s)", (project_id, name, Jsonb(doc)))
 
 
 def log_entry(name: str) -> dict:
@@ -216,7 +234,7 @@ def test_a_stale_write_through_a_second_tool_server_is_a_no_op(pg_dsn, servers):
         try:
             # A's write starts against the committed epoch 1, so its BEGIN pre-check passes,
             # and its commit-time fence must wait on B's uncommitted claim.
-            stale = asyncio.create_task(call_tool(s1, headers(row, a.epoch), "project_create", create("alpha")))
+            stale = asyncio.create_task(call_tool(s1, headers(row, a.epoch), "research_log_append", log_entry("alpha")))
             await lock_waiter(pg_dsn, "%claim_epoch%FOR SHARE%",
                               "A's commit-time fence never waited on B's uncommitted claim")
         finally:
@@ -225,13 +243,13 @@ def test_a_stale_write_through_a_second_tool_server_is_a_no_op(pg_dsn, servers):
         assert_refused(await stale, 1)
 
         # U4: B's claim cleared A's stamp and B has not stamped yet: the door refuses A.
-        await refused_at_door(s1, headers(row, 1), "project_create", create("alpha"))
+        await refused_at_door(s1, headers(row, 1), "research_log_append", log_entry("alpha"))
         stamp(pg_dsn, row, b.epoch)
 
         # A's retry after B's claim committed and B stamped the same bearer: past the door,
         # refused at its BEGIN pre-check.
-        assert_refused(await call_tool(s1, headers(row, 1), "project_create", create("alpha")), 1)
-        live = await call_tool(s2, headers(row, b.epoch), "project_create", create("bravo"))
+        assert_refused(await call_tool(s1, headers(row, 1), "research_log_append", log_entry("alpha")), 1)
+        live = await call_tool(s2, headers(row, b.epoch), "research_log_append", log_entry("bravo"))
         assert not live.isError, result_text(live)
 
         # A real parallel write through both servers: the live one lands, the stale one does not.
@@ -247,7 +265,7 @@ def test_a_stale_write_through_a_second_tool_server_is_a_no_op(pg_dsn, servers):
     names = [name for name, _, _ in docs]
     assert "research.json" in names, docs
     research = next(doc for name, _, doc in docs if name == "research.json")
-    assert '"title": "bravo"' in research and '"givenName": "Bravo"' in research, research
+    assert '"givenName": "bravo"' in research and '"givenName": "Bravo"' in research, research
     assert not any("alpha" in doc.lower() for _, _, doc in docs), "a superseded attempt's write landed"
     assert epoch_of(pg_dsn, row["turn_id"]) == 2
 
@@ -265,16 +283,17 @@ def test_a_fence_naming_another_project_s_turn_is_refused(pg_dsn, servers):
     own = claim(pg_dsn, ours, 1)
     stamp(pg_dsn, ours, own.epoch, "t-ours")
     mine = ours["project_id"]
+    before = documents(pg_dsn, mine)
 
     async def scenario():
         forged = options.tool_server_headers(project_id=mine, bearer="t-theirs", turn_id=theirs["turn_id"],
                                              claim_epoch=live.epoch)
-        await refused_at_door(s1, forged, "project_create", create("forged"))
-        await refused_at_door(s1, headers(ours, own.epoch, "t-theirs"), "project_create", create("borrowed"))
+        await refused_at_door(s1, forged, "research_log_append", log_entry("forged"))
+        await refused_at_door(s1, headers(ours, own.epoch, "t-theirs"), "research_log_append", log_entry("borrowed"))
         await refused_at_door(s1, {"Authorization": "Bearer t-ours", options.PROJECT_ID_HEADER: mine},
-                              "project_create", create("plain"))
-        assert documents(pg_dsn, mine) == [], "a refused request wrote"
-        return await call_tool(s1, headers(ours, own.epoch, "t-ours"), "project_create", create("fenced"))
+                              "research_log_append", log_entry("plain"))
+        assert documents(pg_dsn, mine) == before, "a refused request wrote"
+        return await call_tool(s1, headers(ours, own.epoch, "t-ours"), "research_log_append", log_entry("fenced"))
 
     fenced = asyncio.run(scenario())
     assert not fenced.isError, result_text(fenced)
@@ -417,6 +436,7 @@ def test_a_fenced_batch_never_holds_the_turn_lock_across_an_await(pg_dsn):
 def test_a_sweep_close_fences_the_attempt_it_gave_up_on(pg_dsn, servers, monkeypatch):
     s1, _ = servers
     row = seeded(pg_dsn)
+    seed_docs = documents(pg_dsn, row["project_id"])
     assert claim(pg_dsn, row, 1).epoch == 1
     stamp(pg_dsn, row, 1)
     sql(pg_dsn, "UPDATE turns SET claimed_at = now() - interval '1 hour' WHERE turn_id = %s", (row["turn_id"],))
@@ -427,8 +447,8 @@ def test_a_sweep_close_fences_the_attempt_it_gave_up_on(pg_dsn, servers, monkeyp
     assert sql(pg_dsn, "SELECT completed_at IS NOT NULL, claim_epoch FROM turns WHERE turn_id = %s",
                (row["turn_id"],)) == [(True, 2)]
     # U4: the turn is closed, so its own bearer and fence are a 403 at the door.
-    assert_forbidden(s1, headers(row, 1), "project_create", create("survivor"))
-    assert documents(pg_dsn, row["project_id"]) == []
+    assert_forbidden(s1, headers(row, 1), "research_log_append", log_entry("survivor"))
+    assert documents(pg_dsn, row["project_id"]) == seed_docs
 
 
 def web_store():
@@ -446,6 +466,7 @@ def test_a_web_tier_fail_turn_fences_a_claimed_attempt(pg_dsn, servers):
     legitimate direction: failing a row already closed keeps its closer's outcome and epoch."""
     s1, _ = servers
     row = seeded(pg_dsn)
+    seed_docs = documents(pg_dsn, row["project_id"])
     tid = row["turn_id"]
     assert claim(pg_dsn, row, 1).epoch == 1
     stamp(pg_dsn, row, 1)
@@ -453,8 +474,8 @@ def test_a_web_tier_fail_turn_fences_a_claimed_attempt(pg_dsn, servers):
     assert sql(pg_dsn, "SELECT completed_at IS NOT NULL, outcome, claim_epoch FROM turns WHERE turn_id = %s",
                (tid,)) == [(True, "enqueue_failed", 2)], "the web tier's fail_turn did not fence the claim"
 
-    assert_forbidden(s1, headers(row, 1), "project_create", create("ghost"))  # U4: closed, so the door
-    assert documents(pg_dsn, row["project_id"]) == []
+    assert_forbidden(s1, headers(row, 1), "research_log_append", log_entry("ghost"))  # U4: closed, so the door
+    assert documents(pg_dsn, row["project_id"]) == seed_docs
     stale = PgSessionStore(pg_dsn, row["project_id"], turn_id=tid, claim_epoch=1)
     with pytest.raises(RuntimeError, match="superseded"):
         asyncio.run(stale.append(key(row), entries("after_fail")))

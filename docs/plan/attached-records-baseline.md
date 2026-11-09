@@ -214,7 +214,7 @@ The developer has Claude fill the table, from the live catalog (`dev/probe-censu
 - [ ] **Unit harness.** `timeline_build` is a live tool, served like `extraction_append`.
   - Add it to `LIVE_TOOLS` and to `LIVE_MODULES` in `eval/harness/harness/instrument.py`; `test_instrument.py` asserts the two match. Also add it to `OK_FALSE_IS_FAILURE_LIVE` in `mock_mcp.py`, and to its docstring's live-tool list.
   - Add a `_make_timeline_build_handler` in `mock_mcp.py`, dispatched from `_make_live_handler`. It runs the compiled tool against the workspace with injected deps:
-    - raw place text resolves to the first result's `standardPlace` from the test's `place_search` fixture whose predicate matches it as `placeName`, as `_place_table` does for `project_create`;
+    - raw place text resolves to the first result's `standardPlace` from the test's `place_search` fixture whose predicate matches it as `placeName` (`_timeline_place_tables` in `mock_mcp.py`);
     - coordinates come from those same fixtures (`latitude`/`longitude`);
     - census years come from the compiled table, as in production;
     - anything absent answers null (no `standard_place`, null distance), and the handler never makes a request.
