@@ -228,8 +228,9 @@ places** below for the resolution rules.
      `place_distance` is symmetric, so `place_distance(A, B)` equals
      `place_distance(B, A)`; cache the result by unordered pair and never re-call
      it with the arguments reversed.
-3. Skip (leave `distance_from_previous_km` null) when either event lacks a
-   `standard_place`.
+3. Leave `distance_from_previous_km` null on the **first** event — it has no
+   previous — and on any pair where either event lacks a `standard_place`.
+   Never write `0` on the first event: `0` means two events share one place.
 
 **Example enriched event:**
 
