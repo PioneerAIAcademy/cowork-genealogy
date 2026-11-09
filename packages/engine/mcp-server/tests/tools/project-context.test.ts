@@ -512,7 +512,11 @@ describe("project_context", () => {
             for_place: "Ringebu, Oppland, Norway",
             time_period: "1870-1880",
             jurisdictions: [{ name: "Ringebu, Oppland, Norway", date_range: "1838-" }],
-            collections: [{ id: "4237104", title: "Norway, Church Books", date_range: "1797-1958" }],
+            collections: [
+              { id: "4237104", title: "Norway, Church Books", date_range: "1797-1958", person_count: 0, record_count: 12 },
+              { id: "1", title: "Uncounted", date_range: null, person_count: null },
+              { id: "2", title: "Bad count", person_count: "5", record_count: 1.5 },
+            ],
             quirks: ["Indexed only at county level."],
             guide_markdown: "## Norway\nlong prose that must not leak into the compact projection",
             pages_read: [
@@ -536,7 +540,11 @@ describe("project_context", () => {
         forPlace: "Ringebu, Oppland, Norway",
         timePeriod: "1870-1880",
         jurisdictions: [{ name: "Ringebu, Oppland, Norway", dateRange: "1838-" }],
-        collections: [{ id: "4237104", title: "Norway, Church Books", dateRange: "1797-1958" }],
+        collections: [
+          { id: "4237104", title: "Norway, Church Books", dateRange: "1797-1958", personCount: 0, recordCount: 12 },
+          { id: "1", title: "Uncounted", dateRange: null, personCount: null, recordCount: null },
+          { id: "2", title: "Bad count", dateRange: null, personCount: null, recordCount: null },
+        ],
         quirks: ["Indexed only at county level."],
         pagesRead: ["home"],
       },
