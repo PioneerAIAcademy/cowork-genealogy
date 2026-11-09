@@ -26,17 +26,14 @@ from validators_lib import (
     assert_only_logs_report,
     assert_reply_carries_report,
     assert_report_logged,
+    as_mapping,
     bare_tool_name,
-    sidecar_read_refs,
+    sidecar_reads,
 )
 
-_ALLOWED_TOOLS = {
-    "research_log_append",
-    "validate_research_schema",
-    "project_context",
-    "image_transcribe",
-    "sidecar_read",
-}
+_ALLOWED_TOOLS = {"research_log_append", "validate_research_schema", "project_context"}
+#: Only a test that hands the agent an image may read one.
+_IMAGE_TOOLS = {"image_transcribe", "sidecar_read"}
 
 
 # --- Tool-call enforcement -------------------------------------------
@@ -46,7 +43,8 @@ def test_only_logs_translation(tool_calls, test):
     `research_log_append` that logs it (issue #3524), at most once. The
     universal `validate_research_schema` is exempted: post commit 861d3c9 it's
     the built-in schema verifier any skill may call, not a research tool.
-    `image_transcribe` and `sidecar_read` read a project upload (issue #4311)."""
+    `image_transcribe` and `sidecar_read` read a project upload, on a
+    `reads-upload` test only (issue #4311)."""
     if test.get("type") != "positive":
         pytest.skip("negative tests are not applicable to the direct-arm agent")
     names = [
@@ -54,11 +52,12 @@ def test_only_logs_translation(tool_calls, test):
         for tc in tool_calls
         if tc.get("tool", "").startswith("mcp__")
     ]
-    other = [n for n in names if n not in _ALLOWED_TOOLS]
+    allowed = _ALLOWED_TOOLS | (_IMAGE_TOOLS if "reads-upload" in test.get("tags", []) else set())
+    other = [n for n in names if n not in allowed]
     assert not other, (
         "translation should call no MCP tool other than research_log_append "
-        "(and validate_research_schema, project_context, image_transcribe, "
-        f"sidecar_read), but called: {other}"
+        "(and validate_research_schema, project_context; image_transcribe and "
+        f"sidecar_read only when handed an image), but called: {other}"
     )
     logs = names.count("research_log_append")
     assert logs <= 1, f"translation called research_log_append {logs} times; one translation is one entry"
@@ -66,28 +65,31 @@ def test_only_logs_translation(tool_calls, test):
 
 def test_upload_read_through_tools(tool_calls, builtin_tool_calls, test):
     """Tag `reads-upload`: the delegation names a project upload. The agent
-    transcribes it with `image_transcribe({ file: "uploads/..." })`, reads the
-    full staged page with `sidecar_read` (the response holds only a 300-character
-    digest), and never `Read`s the file, which a connector does not have."""
+    transcribes it once with `image_transcribe({ file: "uploads/..." })`, reads
+    the full page with a served `sidecar_read` of the `staged.resultsRef` that
+    call returned (the response holds only a 300-character digest), and never
+    `Read`s the file, which a connector does not have."""
     if "reads-upload" not in test.get("tags", []):
         pytest.skip("not a reads-upload test")
-    files = [
-        str((c.get("args") or {}).get("file") or "")
-        for c in tool_calls or []
-        if bare_tool_name(c.get("tool", "")) == "image_transcribe"
-    ]
+    transcribes = [c for c in tool_calls or [] if bare_tool_name(c.get("tool", "")) == "image_transcribe"]
+    files = [str(as_mapping(c.get("args")).get("file") or "") for c in transcribes]
     uploads = [f for f in files if f.startswith("uploads/")]
     assert uploads, (
         f"the upload was never transcribed with image_transcribe(file: 'uploads/...'); file args: {files}"
     )
     assert len(uploads) == 1, f"the upload was transcribed {len(uploads)} times; one OCR call reads it: {uploads}"
-    refs = sidecar_read_refs(tool_calls)
-    assert any(r.startswith("results/") for r in refs), (
-        "the staged transcription was never read with sidecar_read; image_transcribe "
-        f"returns only a digest. sidecar_read refs: {refs}"
+    staged = {
+        as_mapping(as_mapping(c.get("response")).get("staged")).get("resultsRef")
+        for c in transcribes
+    } - {None}
+    reads = sidecar_reads(tool_calls)
+    assert any(served and ref in staged for ref, served in reads), (
+        "the staged transcription was never read with a served sidecar_read of the "
+        f"staged.resultsRef image_transcribe returned ({sorted(staged)}); the response "
+        f"holds only a digest. sidecar_read (ref, served): {reads}"
     )
-    reads = agent_read_paths(builtin_tool_calls)
-    assert not reads, f"the agent used Read on {reads}; a project upload is read through image_transcribe"
+    read_paths = agent_read_paths(builtin_tool_calls)
+    assert not read_paths, f"the agent used Read on {read_paths}; a project upload is read through image_transcribe"
 
 
 def test_research_json_only_logs_report(before_state, after_state, test):

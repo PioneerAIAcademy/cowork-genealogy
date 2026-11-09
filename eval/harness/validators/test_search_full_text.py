@@ -21,7 +21,7 @@ import pytest
 
 from validators_lib import agent_read_paths as _agent_read_paths
 from validators_lib import as_mapping as _as_mapping
-from validators_lib import sidecar_read_refs as _sidecar_read_refs
+from validators_lib import sidecar_reads as _sidecar_reads
 from validators_lib import assert_namesake_rows_cite as _assert_namesake_rows_cite
 from validators_lib import assert_namesake_warning_handed_back as _assert_namesake_warning_handed_back
 from validators_lib import assert_no_namesake_row_without_subject as _assert_no_namesake_row_without_subject
@@ -673,17 +673,16 @@ def test_namesake_warning_handed_to_person_evidence(tool_calls, agent_returns, t
 
 
 def test_hit_transcript_read_through_sidecar(tool_calls, builtin_tool_calls, test):
-    """Tag-gated (reads-hit-transcript): the hit's role can be judged only from
-    its transcript, which the response drops. The agent reads it with
-    `sidecar_read` on `<resultsRef>#<hit id>` — never a bare full-text ref (the
-    tool refuses it), never only `#hits` (no transcript), never `Read` of a
-    `results/` file (a connector has none)."""
+    """Tag-gated (reads-hit-transcript): the act's date is only in the hit's
+    transcript, which the response drops. The agent reads it with a
+    `sidecar_read` of `<resultsRef>#<hit id>` that the tool serves — a `#hits`
+    list holds no transcript, a refused read reads nothing, and a refused bare
+    ref it recovers from is fine. It never `Read`s a `results/` file, which a
+    connector does not have."""
     if "reads-hit-transcript" not in test.get("tags", []):
         pytest.skip("not a reads-hit-transcript scenario")
-    refs = _sidecar_read_refs(tool_calls)
-    hit_reads = [r for r in refs if "#" in r and r.split("#", 1)[1] not in ("", "hits")]
-    assert hit_reads, f"no sidecar_read of one hit's transcript (`<ref>#<hit id>`); refs read: {refs}"
-    bare = [r for r in refs if r.startswith("results/") and "#" not in r]
-    assert not bare, f"sidecar_read was called on a full-text ref with no hit selector: {bare}"
+    reads = _sidecar_reads(tool_calls)
+    hit_reads = [r for r, served in reads if served and "#" in r and r.split("#", 1)[1] not in ("", "hits")]
+    assert hit_reads, f"no served sidecar_read of one hit's transcript (`<ref>#<hit id>`); reads (ref, served): {reads}"
     reads = [p for p in _agent_read_paths(builtin_tool_calls) if "results/" in p]
     assert not reads, f"the agent used Read on staged results {reads}; read the hit with sidecar_read"

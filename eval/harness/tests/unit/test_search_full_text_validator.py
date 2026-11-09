@@ -932,43 +932,61 @@ from test_search_full_text import test_hit_transcript_read_through_sidecar as ch
 _TEST = {"type": "positive", "tags": ["reads-hit-transcript"]}
 _REF = "results/.staging/u1.json"
 _HIT = f"{_REF}#https://familysearch.org/ark:/61903/1:1:QV9N-YS37"
+_SERVED = {"ok": True, "content": "Signed sealed and delivered in the presence of Thomas Flynn"}
+_REFUSED = {"ok": False, "reason": "invalid_ref", "errors": ["full-text sidecar: add #hits or #<hit id>"]}
 
 
-def _read(**args):
-    return {"tool": "mcp__genealogy__sidecar_read", "args": {"projectPath": "/p", **args}}
+def _read(response, **args):
+    return {"tool": "mcp__genealogy__sidecar_read", "args": {"projectPath": "/p", **args}, "response": response}
 
 
 def test_hit_read_passes():
-    check_hit_read([_read(ref=_HIT)], [], _TEST)
+    check_hit_read([_read(_SERVED, ref=_HIT)], [], _TEST)
 
 
 def test_hit_read_in_refs_list_passes():
-    check_hit_read([_read(refs=[_HIT])], [], _TEST)
+    check_hit_read([_read({"ok": True, "results": [{**_SERVED, "ref": _HIT}]}, refs=[_HIT])], [], _TEST)
+
+
+def test_hit_read_recovering_from_a_bare_ref_passes():
+    check_hit_read([_read(_REFUSED, ref=_REF), _read(_SERVED, ref=_HIT)], [], _TEST)
+
+
+def test_hit_read_refused_hit_fires():
+    with pytest.raises(AssertionError, match="no served sidecar_read"):
+        check_hit_read([_read({"ok": False, "reason": "not_found", "errors": []}, ref=f"{_REF}#bogus")], [], _TEST)
+
+
+def test_hit_read_refused_entry_in_refs_list_fires():
+    refused = {"ok": False, "reason": "not_found", "errors": [], "ref": _HIT}
+    with pytest.raises(AssertionError, match="no served sidecar_read"):
+        check_hit_read([_read({"ok": True, "results": [refused]}, refs=[_HIT])], [], _TEST)
 
 
 def test_hit_read_hits_list_only_fires():
-    with pytest.raises(AssertionError, match="no sidecar_read of one hit"):
-        check_hit_read([_read(ref=f"{_REF}#hits")], [], _TEST)
+    with pytest.raises(AssertionError, match="no served sidecar_read"):
+        check_hit_read([_read(_SERVED, ref=f"{_REF}#hits")], [], _TEST)
 
 
 def test_hit_read_no_read_fires():
-    with pytest.raises(AssertionError, match="no sidecar_read of one hit"):
+    with pytest.raises(AssertionError, match="no served sidecar_read"):
         check_hit_read([], [], _TEST)
-
-
-def test_hit_read_bare_ref_fires():
-    with pytest.raises(AssertionError, match="no hit selector"):
-        check_hit_read([_read(ref=_HIT), _read(ref=_REF)], [], _TEST)
 
 
 def test_hit_read_agent_read_of_staged_file_fires():
     read = {"tool": "Read", "args": {"file_path": f"/p/{_REF}"}, "agent_id": "a1"}
     with pytest.raises(AssertionError, match="used Read on staged results"):
-        check_hit_read([_read(ref=_HIT)], [read], _TEST)
+        check_hit_read([_read(_SERVED, ref=_HIT)], [read], _TEST)
+
+
+def test_hit_read_windows_read_path_fires():
+    read = {"tool": "Read", "args": {"file_path": "C:\\p\\results\\.staging\\u1.json"}, "agent_id": "a1"}
+    with pytest.raises(AssertionError, match="used Read on staged results"):
+        check_hit_read([_read(_SERVED, ref=_HIT)], [read], _TEST)
 
 
 def test_hit_read_main_thread_read_is_not_the_agents():
-    check_hit_read([_read(ref=_HIT)], [{"tool": "Read", "args": {"file_path": f"/p/{_REF}"}}], _TEST)
+    check_hit_read([_read(_SERVED, ref=_HIT)], [{"tool": "Read", "args": {"file_path": f"/p/{_REF}"}}], _TEST)
 
 
 def test_hit_read_untagged_test_skips():

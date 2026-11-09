@@ -900,19 +900,40 @@ def assert_namesake_warning_handed_back(
 
 def sidecar_read_refs(tool_calls) -> list[str]:
     """Every ref this run's `sidecar_read` calls named, from `ref` or `refs`."""
-    out: list[str] = []
+    return [ref for ref, _ in sidecar_reads(tool_calls)]
+
+
+def sidecar_reads(tool_calls) -> list[tuple[str, bool]]:
+    """`(ref, served)` for every ref this run's `sidecar_read` calls named.
+
+    `served` is True when the tool answered that ref with `ok: true` and some
+    `content` — a single `ref` call's response, or that ref's entry in a `refs`
+    call's `results`. A refused read (`invalid_ref`, `not_found`) is not served.
+    """
+    out: list[tuple[str, bool]] = []
     for c in tool_calls or []:
         if bare_tool_name(c.get("tool", "")) != "sidecar_read":
             continue
         args = as_mapping(c.get("args"))
-        refs = [args["ref"]] if isinstance(args.get("ref"), str) else args.get("refs")
+        response = as_mapping(c.get("response"))
+        if isinstance(args.get("ref"), str):
+            out.append((args["ref"], _served(response)))
+            continue
+        refs = args.get("refs")
         if isinstance(refs, str):
             try:
                 refs = json.loads(refs)
             except ValueError:
                 refs = [refs]
-        out.extend(r for r in refs or [] if isinstance(r, str))
+        results = [as_mapping(r) for r in response.get("results") or []] if isinstance(response.get("results"), list) else []
+        for ref in refs or []:
+            if isinstance(ref, str):
+                out.append((ref, any(r.get("ref") == ref and _served(r) for r in results)))
     return out
+
+
+def _served(response: dict) -> bool:
+    return response.get("ok") is True and bool(response.get("content"))
 
 
 def agent_read_paths(builtin_tool_calls) -> list[str]:

@@ -835,11 +835,10 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   },
   // Cost- and context-motivated conversion (issue #2120), not a hook route.
   // The grant is derived from what the folded body actually calls: step 1 reads
-  // research.json directly via Read (not project_context, which returns neither
-  // plans nor log); the narration line reads researcher_profile.narration_guidance
-  // the same way; step 6 reads one hit's transcript with sidecar_read (#4311 —
-  // a `Read` of the staged file finds nothing on a connector); and wiki_search /
-  // wiki_read are called in the pre-work block of step 3.
+  // plans and log with research_query; step 6 reads one hit's transcript with
+  // sidecar_read (#4311 — a `Read` of the staged file finds nothing on a
+  // connector); and wiki_search / wiki_read are called in the pre-work block of
+  // step 3. `Read` stays for folder mode.
   "search-full-text.md": {
     tools: [
       "Read",
