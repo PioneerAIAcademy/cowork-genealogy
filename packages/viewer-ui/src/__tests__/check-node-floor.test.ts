@@ -157,24 +157,28 @@ describe('every reinstall path and eval\\Setup.bat check first', () => {
    * -1 when there is no such pair.
    */
   function guardedCheck(text: string, call: RegExp): number {
-    const lines = text.split(/\r?\n/)
+    // Each line keeps its own ending, so offsets stay exact on the CRLF .bat files.
+    const raw = text.split(/(?<=\n)/)
+    const lines = raw.map((line) => line.replace(/\r?\n$/, ''))
+    const EXIT = 'exit /b (?:[1-9]|%errorlevel%)'
     let offset = 0
     for (let i = 0; i < lines.length - 1; i++) {
       const guard = lines[i + 1]
-      if (call.test(lines[i]) && /^if errorlevel 1 /.test(guard)) {
-        let stops = /^if errorlevel 1 exit \/b [1-9]/.test(guard)
+      if (call.test(lines[i]) && /^if errorlevel 1 /i.test(guard)) {
+        // cmd matches these words in any case: EXIT /B %ERRORLEVEL% stops too.
+        let stops = new RegExp(`^if errorlevel 1 ${EXIT}`, 'i').test(guard)
         if (!stops && guard.trimEnd().endsWith('(')) {
           for (let j = i + 2; j < lines.length && !/^\s*\)\s*$/.test(lines[j]); j++) {
-            if (/^\s*exit \/b [1-9]/.test(lines[j])) stops = true
+            if (new RegExp(`^\\s*${EXIT}`, 'i').test(lines[j])) stops = true
           }
         }
         if (stops) return offset
       }
-      offset += lines[i].length + 1
+      offset += raw[i].length
     }
     return -1
   }
-  const CHECK = /^call node "?[^"]*check-node-floor\.mjs"?$/
+  const CHECK = /^call node "?[^"]*check-node-floor\.mjs"?$/i
 
   it('Reinstall.bat checks from the repo root, before its first rmdir', () => {
     const text = read('Reinstall.bat')
@@ -193,10 +197,20 @@ describe('every reinstall path and eval\\Setup.bat check first', () => {
   })
 
   it('make reinstall checks before clean-deps, which is not a prerequisite', () => {
-    const recipe = /^reinstall:([^#\n]*)(?:##[^\n]*)?\n((?:\t[^\n]*\n)+)/m.exec(read('Makefile'))
+    const makefile = read('Makefile')
+    const recipe = /^reinstall:([^#\n]*)(?:##[^\n]*)?\n((?:\t[^\n]*\n)+)/m.exec(makefile)
     expect(recipe).not.toBeNull()
     // A prerequisite runs before the recipe, so clean-deps there would delete first.
-    expect(recipe![1].trim()).toBe('')
+    // make merges the prerequisites of every rule line naming `reinstall` among its
+    // targets (`reinstall : x`, `other reinstall: x`); `reinstall: FOO := bar` sets a
+    // target-specific variable and adds none.
+    const prerequisites: string[] = []
+    for (const line of makefile.split('\n')) {
+      const rule = /^([^\t#=:][^#=:]*?)\s*::?(?!=)([^#\n]*)/.exec(line)
+      if (!rule || !rule[1].trim().split(/\s+/).includes('reinstall')) continue
+      if (!rule[2].includes('=')) prerequisites.push(rule[2].trim())
+    }
+    expect(prerequisites.filter(Boolean)).toEqual([])
     // `@` only silences the echo; `-` would let make ignore a refusal and delete anyway.
     const steps = recipe![2].split('\n').map((line) => line.trim().replace(/^@/, ''))
     expect(steps.slice(0, 3)).toEqual(['node scripts/check-node-floor.mjs', '$(MAKE) clean-deps', '$(MAKE) install'])
@@ -204,7 +218,7 @@ describe('every reinstall path and eval\\Setup.bat check first', () => {
 
   it('eval\\Setup.bat finds node, then checks, before its first install step', () => {
     const text = read('eval/Setup.bat')
-    const where = guardedCheck(text, /^where node >nul 2>nul$/)
+    const where = guardedCheck(text, /^where node >nul 2>nul$/i)
     const check = guardedCheck(text, CHECK)
     expect(where).toBeGreaterThan(-1)
     expect(check).toBeGreaterThan(where)
