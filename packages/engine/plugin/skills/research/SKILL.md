@@ -211,7 +211,9 @@ question (answered from `project_context`), which take no hand-off at all.
 **A bounded first message that names a FamilySearch person ID and finds no
 project** spawns `@plugin:init-project`, then, in the same turn, the agent that
 owns the deliverable. Never `@plugin:question-selection` in that turn, and
-`@plugin:locality-guide` only when it owns the deliverable. Relay the first
+`@plugin:locality-guide` only when it owns the deliverable. The deliverable needs no
+question or plan: `@plugin:search-records` runs a search the user named with
+`projectPath` and `subject` alone, as an ad-hoc search. Relay the first
 paragraph of init-project's report, then the deliverable's report, and end on
 the deliverable's "Continue with …?" line. The record-set and transcription
 paths with no project are unchanged.
@@ -333,7 +335,7 @@ message.
    | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume) rather than research on one person | `@plugin:search-images` with the message verbatim and no `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | `project_context` lists **`waitingPages`** | `extraction_append({ projectPath, attachWaitingPages: true })`: one call, no hand-off. Then route again. |
-   | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
+   | Objective but no questions | `@plugin:question-selection` — never in the turn a bounded first message created the project (§"Bounded request or job"). **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
    | A question with no plan, and **no `localities` entry yet for its target jurisdiction** | `@plugin:locality-guide` (survey the place first — it persists a `loc_` entry with the how-to-search facts and quirks that research-plan then plans from) |
    | A question with no plan, and its jurisdiction **already has a `localities` entry** | `@plugin:research-plan` |
    | A log note, or your own reading, treats people as related by shared surname, place or era with **no record linking them**, and no `hypotheses` entry covers that relationship — check this before dispatching any plan item, routing to person-evidence, **or** invoking research-exhaustiveness | `@plugin:hypothesis-tracking`, naming the people and the inferred relationship. Never search, filter or reject by it until hypothesis-tracking has written the entry |

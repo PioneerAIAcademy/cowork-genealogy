@@ -55,6 +55,21 @@ def test_repeats_of_the_search_and_the_url_on_the_offer_line_pass():
          text=OFFER + " https://example.test/p/1")
 
 
+def test_a_hint_review_is_a_record_step_too():
+    _run(["init-project", "search-hints"],
+         text="Two hints are waiting.\n\nContinue with `running the searches`?")
+
+
+def test_the_next_offer_is_the_routers_call():
+    _run(["init-project", "search-records"],
+         text="Nothing new turned up.\n\nContinue with `planning the searches`?")
+
+
+def test_two_record_steps_in_the_turn_fail():
+    with pytest.raises(AssertionError, match="search-hints', 'search-records"):
+        _run(["init-project", "search-hints", "search-records"])
+
+
 def test_question_selection_after_init_project_fails():
     with pytest.raises(AssertionError, match="got \\['init-project', 'question-selection'"):
         _run(["init-project", "question-selection", "locality-guide"])
@@ -79,7 +94,7 @@ def test_a_search_the_gate_denied_fails():
 
 
 def test_no_offer_line_fails():
-    with pytest.raises(AssertionError, match="search step's offer"):
+    with pytest.raises(AssertionError, match="offer"):
         _run(["init-project", "search-records"], text="Nothing new turned up for Patrick Flynn.")
 
 

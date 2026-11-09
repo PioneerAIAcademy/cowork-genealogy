@@ -220,14 +220,16 @@ handed off to nothing.
 `ut_research_b4i` (`bounded-first-message-runs-in-the-setup-turn.json`) and
 `ut_research_b4w` (`…-step-gate.json`) cover a bounded first message with a
 FamilySearch ID and no project (issue #2813 item 3, feedback #4237): init-project
-runs live, then the record search runs in the same turn, with no question,
+runs live, then one record step (a search, or a hint review, since records not
+yet attached are what hints are) runs in the same turn, with no question,
 locality survey or plan first. b4i has no `step_mode`, the alpha's and Cowork's
 shape; b4w runs under the prototype's step gate, which before #2813 denied the
 search because init-project fixed the setup group. Both are deterministic through
 the `bounded-after-init` tag and
 `test_bounded_first_message_runs_its_deliverable_after_init_project`, which reads
-the hand-off list, the search's returned text (a gate denial carries the gate's
-reason) and the closing offer. **They put init-project's full body in this
+the hand-off list, the record step's returned text (a gate denial carries the
+gate's reason) and that the reply ends on an offer; which step it offers is the
+router's call. **They put init-project's full body in this
 suite's snapshot**, so an init-project body edit now owes a research run.
 
 `ut_research_021` (`attached-before-searching.json`) covers the third rule in that

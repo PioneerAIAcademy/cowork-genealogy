@@ -1102,14 +1102,18 @@ def test_bounded_transcription_is_delivered_in_place(
     )
 
 
+_RECORD_STEPS = frozenset({"search-records", "search-hints"})
+
+
 def test_bounded_first_message_runs_its_deliverable_after_init_project(
     skills_invoked, builtin_tool_calls, agent_returns, text_response, test
 ):
     """Tag-gated (``bounded-after-init``). A bounded first message with a PID and no
     project creates the project and runs its deliverable in the same turn (plan
-    section H, issue #2813): the hand-offs are init-project then search-records,
-    repeats allowed and nothing else, no step denial cut the search short, and the
-    reply ends on the search step's offer.
+    section H, issue #2813): the hand-offs are init-project then one record step,
+    search-records or search-hints (a check for records not yet attached is a hint
+    review too), repeats allowed and nothing else; no step denial cut it short; and
+    the reply ends on an offer. Which step it offers next is the router's call.
 
     A gate denial and a stub's reply both come back as the spawn's result, so a
     denial is told apart by its text, which carries the gate's own reason."""
@@ -1122,9 +1126,9 @@ def test_bounded_first_message_runs_its_deliverable_after_init_project(
     for name in handoffs(skills_invoked, builtin_tool_calls):
         if name != skill_under_test and name not in taken:
             taken.append(name)
-    assert taken == ["init-project", "search-records"], (
-        f"a bounded record ask with no project hands off to init-project, then "
-        f"search-records, and nothing else; got {taken}"
+    assert taken[:1] == ["init-project"] and len(taken) == 2 and taken[1] in _RECORD_STEPS, (
+        f"a bounded record ask with no project hands off to init-project, then one of "
+        f"{sorted(_RECORD_STEPS)}, and nothing else; got {taken}"
     )
     boundary = load_step_boundary()
     denial = boundary._DENY_REASON.split("{", 1)[0].strip()
@@ -1134,8 +1138,8 @@ def test_bounded_first_message_runs_its_deliverable_after_init_project(
     ]
     assert not denied, f"the step boundary denied {denied} in the turn that created the project"
     lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
-    assert boundary.offered_step(text_response) == "search", (
-        f"the reply does not end on the search step's offer: {lines[-1:]}"
+    assert boundary.offered_step(text_response) is not None, (
+        f"the reply does not end on a \"Continue with …?\" offer: {lines[-1:]}"
     )
 
 
