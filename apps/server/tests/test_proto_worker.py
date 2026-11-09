@@ -4683,10 +4683,8 @@ def test_the_researcher_view_note_is_alpha_only(tmp_path):
     specific to the alpha's own download story (#3987 / #4001 gave the beta its own
     download route), so it must not ride the shared continue_policy prompt text the
     worker also appends."""
-    from app.agent.real_agent import RESEARCHER_VIEW_NOTE
-
     opts = _options(config_dir=str(tmp_path))
-    assert RESEARCHER_VIEW_NOTE not in opts.system_prompt["append"]
+    assert "cannot open or download files" not in opts.system_prompt["append"]
 
 
 # ── U3: the attempt bears its owner's current grant ──────────────────────────────
