@@ -11,7 +11,9 @@
       "topical-fixture-required", "direct-arm", "logs-overview"]
   },
   "input": {
-    "delegation": "Given what I'm researching about Patrick Flynn — born Ireland ~1845, in Schuylkill County by 1850 — what historical context from his lifetime should inform what records I should be looking for?",
+    "delegation": "Given what I'm researching about Patrick Flynn — born Ireland ~1845, in Schuylkill County by 1850 — what historical context from his lifetime should inform what records I should be looking for?
+
+projectPath: <workspace>",
     "scenario": "mid-research-flynn"
   },
   "execution": {
