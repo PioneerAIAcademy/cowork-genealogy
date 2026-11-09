@@ -488,7 +488,7 @@ export interface Namesake {
   log_entry_ids?: string[]
   /** Stamped by research_append: listed record id to the persona its search or read result names, when that persona shares a given word with the row's name. */
   record_persona_ids?: Record<string, string>
-  /** Stamped by research_append: the earliest birth year among those personas. */
+  /** Stamped by research_append: the earliest birth year among those personas, each sharing a given word with the row's name. */
   birth_year?: number
   notes?: string | null
   created: string

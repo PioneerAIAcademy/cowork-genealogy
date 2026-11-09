@@ -4518,8 +4518,9 @@ export function linkedPersonIds(research: any, applied: ReadonlyArray<AppliedByA
 }
 
 /** The fill in of #3363 (chesworthrm, 2026-11-06): each row of `personIds` with
- *  no `birth_year` gets the year the persona lookup finds, and nothing else of
- *  the row changes; a row it finds none for stays without one. Runs when a call
+ *  no `birth_year` gets the year the persona lookup finds, from personas of the
+ *  row's given name only, and nothing else of the row changes; a row it finds
+ *  none for stays without one. Runs when a call
  *  links the row's person, so a row written before the stamp read years gets
  *  one. Rows in `skip` (just stamped) are left alone. Returns the ids it filled. */
 export async function fillNamesakeBirthYears(
