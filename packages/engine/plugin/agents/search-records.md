@@ -138,6 +138,8 @@ Additional tools: `rank_search_matches` (the primary triage tool — host-side m
 Find the plan item the delegation names (`planItemId`), or when it names none the next plan item with `status: "planned"` in the active plan for the
 current question. When the delegation carries `plan_item` and `planId`, and its `id` equals `planItemId`, that is the plan item and its status: issue no `research_query` this invocation (the status update uses the delegated `planId`), and skip the rest of this section's query rules. A `plan_item` that arrives without `planId`, or whose `id` differs from `planItemId`, is not the item you were asked to run: ignore it, call `research_query` for `planItemId` as your first tool call, and make no `record_search` until it returns.
 
+Run only that one item, even when the delegation asks for several or to continue without checking in: every other item stays `planned`, and Step 9 offers the next one.
+
 **With no matching `plan_item`, fetch the project state you lack with
 `research_query` — never a whole-file `Read`, never a `grep`.** `research.json`
 grows all run, so a whole-file read costs more context every time.
