@@ -71,6 +71,8 @@ from test_search_external_sites import (  # noqa: E402
     test_base_url_is_the_plan_items_collection_url as check_collection_url,
     report_collection_scoped_url_with_no_backed_collection_id as check_2521,
     test_writes_only_to_log_and_plans as check_v7b,
+    test_fs_holdings_note_reaches_the_researcher as check_fs_holdings,
+    test_plan_item_links_match_the_searched_repository as check_repo_link,
 )
 
 from tests.unit.skip_blind import expect_fires, expect_passes  # noqa: E402
@@ -177,8 +179,23 @@ def test_v4_fires_when_the_logged_url_is_not_in_the_reply():
 
 
 def test_v4_quiet_when_the_reply_carries_the_url():
+    """The URL must be after the final `---` — that's the text the caller
+    relays to the researcher (issue #4179); a reply with no `---` at all has
+    an empty tail and must fire, which is exactly why this fixture has one."""
     before, after = _states(after_log=[_site_entry()])
-    expect_passes(lambda: check_v4(before, after, f"Open this in your browser: {URL}", POSITIVE))
+    reply = f"Invocation: hand-off.\n---\nOpen this in your browser: {URL}"
+    expect_passes(lambda: check_v4(before, after, reply, POSITIVE))
+
+
+def test_v4_fires_when_the_url_is_only_above_the_final_rule():
+    """The original #4179 defect: the URL sits in the caller-facing report
+    above the `---`, and the researcher-facing tail never mentions it."""
+    before, after = _states(after_log=[_site_entry()])
+    reply = f"Invocation: hand-off.\nLink: {URL}\n---\nOpen the link I sent you."
+    expect_fires(
+        lambda: check_v4(before, after, reply, POSITIVE),
+        "not in\n?.*the final|never presented",
+    )
 
 
 def test_v4_ignores_an_entry_with_no_url():
@@ -546,9 +563,12 @@ def test_2521_skips_a_run_with_no_collection_scoped_url():
 
 def test_v4_reads_the_agents_own_return_on_the_direct_arm():
     """On the direct arm the main thread only relays; the URL is in the agent's
-    return. Reading `text_response` there would fire on a correct run."""
+    return, after its own final `---`. Reading `text_response` there would
+    fire on a correct run."""
     before, after = _states(after_log=[_site_entry()])
-    returns = [{"subagent_type": "search-external-sites", "text": f"Search link: {URL}"}]
+    returns = [
+        {"subagent_type": "search-external-sites", "text": f"Invocation: hand-off.\n---\nSearch link: {URL}"}
+    ]
     expect_passes(lambda: check_v4(before, after, "Relayed.", POSITIVE, agent_returns=returns))
 
 
@@ -690,3 +710,128 @@ def test_ancestry_key_regex_matches_the_engines():
     assert m, "ANCESTRY_ID not found in external-collections-store.ts"
     assert m.group(1).replace("\\/", "/") == _ANCESTRY_ID.pattern
     assert _ANCESTRY_ID.flags & _re.I
+
+
+# --- the FamilySearch-holds-this-too note reaches the researcher (#4179) --
+
+FS_HOLDINGS = {"type": "positive", "tags": ["fs-holdings"]}
+
+
+def test_fs_holdings_fires_when_the_note_is_only_above_the_line():
+    """The #4179 defect: the FamilySearch note sits in the caller-facing
+    report, and the researcher-facing tail never mentions it."""
+    reply = "FamilySearch holds collection 1459985 too.\n---\nHere is the MyHeritage link."
+    expect_fires(
+        lambda: check_fs_holdings(reply, FS_HOLDINGS),
+        "never reached",
+    )
+
+
+def test_fs_holdings_quiet_when_the_note_is_after_the_line():
+    reply = "Invocation: hand-off.\n---\nFamilySearch also holds this census, searchable via search-records."
+    expect_passes(lambda: check_fs_holdings(reply, FS_HOLDINGS))
+
+
+def test_fs_holdings_skips_untagged_tests():
+    with pytest.raises(pytest.skip.Exception):
+        check_fs_holdings("no FamilySearch mention anywhere", POSITIVE)
+
+
+def test_fs_holdings_is_case_insensitive():
+    reply = "Invocation: hand-off.\n---\nfamilysearch holds the same collection."
+    expect_passes(lambda: check_fs_holdings(reply, FS_HOLDINGS))
+
+
+# --- a plan-item link must match the searched repository (#4179) ---------
+
+LINK_TEST = {"type": "positive", "tags": []}
+ANCESTRY_URL = "https://www.ancestry.com/search/collections/8800/"
+MYHERITAGE_URL = "https://www.myheritage.com/research/collection-20822/1855-massachusetts-state-census"
+
+
+def _link_before(repository="FamilySearch", item_id="pli_006"):
+    item = _item(item_id)
+    item["repository"] = repository
+    return {"research_json": {"log": [], "plans": _plan([item])}}
+
+
+def test_repo_link_fires_on_a_different_repository():
+    """The #4179 regression this restores: `pli_006`'s repository is
+    FamilySearch, so an Ancestry search must not stamp its id."""
+    calls = [_build(site="ancestry", baseUrl=ANCESTRY_URL, planItemId="pli_006")]
+    expect_fires(
+        lambda: check_repo_link(_link_before("FamilySearch"), calls, LINK_TEST),
+        "different repositories",
+    )
+
+
+def test_repo_link_fires_on_a_nonexistent_plan_item():
+    """`ut_search_external_sites_015` once passed `pli_000`, an id that does
+    not exist in the project."""
+    calls = [_build(site="ancestry", baseUrl=ANCESTRY_URL, planItemId="pli_000")]
+    expect_fires(
+        lambda: check_repo_link(_link_before("FamilySearch", "pli_006"), calls, LINK_TEST),
+        "names no plan item",
+    )
+
+
+def test_repo_link_quiet_on_the_matching_repository():
+    """The real `ut_search_external_sites_fhk` shape: the plan already has a
+    MyHeritage item for this exact census, and linking it is correct —
+    confirmed against the real committed v4/v5/v6 runs, which all pass
+    planItemId: "pli_001" for this scenario."""
+    calls = [_build(site="myheritage", baseUrl=MYHERITAGE_URL, planItemId="pli_001")]
+    expect_passes(
+        lambda: check_repo_link(_link_before("MyHeritage", "pli_001"), calls, LINK_TEST)
+    )
+
+
+def test_repo_link_quiet_when_no_planitemid_is_sent():
+    calls = [_build(site="ancestry", baseUrl=ANCESTRY_URL)]
+    expect_passes(lambda: check_repo_link(_link_before(), calls, LINK_TEST))
+
+
+def test_repo_link_skips_a_run_with_no_linked_call():
+    with pytest.raises(pytest.skip.Exception):
+        check_repo_link(_link_before(), [], LINK_TEST)
+
+
+def test_repo_link_quiet_on_an_aliased_repository_spelling():
+    """review, 2026-11-05: `archives_gov`'s recommended repository spelling is
+    "NARA", not a substring of the site's own enum value - a correct link
+    must not fail for this mismatch."""
+    calls = [_build(site="archives_gov", baseUrl="https://catalog.archives.gov/search", planItemId="pli_006")]
+    expect_passes(
+        lambda: check_repo_link(_link_before("NARA", "pli_006"), calls, LINK_TEST)
+    )
+
+
+def test_repo_link_quiet_on_an_other_repository():
+    """`repository_recommended` is an open enum whose own documented example
+    includes "other" - a plan item with nothing concrete to match against
+    must not be flagged."""
+    calls = [_build(site="archive_org", baseUrl="https://archive.org/search", planItemId="pli_006")]
+    expect_passes(
+        lambda: check_repo_link(_link_before("other", "pli_006"), calls, LINK_TEST)
+    )
+
+
+def test_repo_link_still_fires_on_a_familysearch_item_via_ancestry():
+    """The alias/open-enum carve-outs must not swallow the original
+    regression: a FamilySearch-only plan item is still wrong for any
+    external site."""
+    calls = [_build(site="ancestry", baseUrl=ANCESTRY_URL, planItemId="pli_006")]
+    expect_fires(
+        lambda: check_repo_link(_link_before("FamilySearch", "pli_006"), calls, LINK_TEST),
+        "different repositories",
+    )
+
+
+def test_repo_link_still_fires_on_a_nonexistent_plan_item_with_aliases_present():
+    """The alias/open-enum carve-outs must not swallow the nonexistent-id
+    check either."""
+    calls = [_build(site="archives_gov", baseUrl="https://catalog.archives.gov/search", planItemId="pli_000")]
+    expect_fires(
+        lambda: check_repo_link(_link_before("NARA", "pli_006"), calls, LINK_TEST),
+        "names no plan item",
+    )

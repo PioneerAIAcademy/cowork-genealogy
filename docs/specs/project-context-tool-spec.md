@@ -105,7 +105,11 @@ repo's identifier-casing rule):
     recordIds: string[],                 // distinct record_id values across its assertions
     assertionCount: number,              // assertions with source_id = this id
   }],
-  localities: [...],                     // place/locale projection for research-plan
+  localities: [...],                     // place/locale projection for research-plan; each
+                                         //   collection carries {id, title, dateRange, personCount,
+                                         //   recordCount}, counts null when the entry has none —
+                                         //   research-plan plans from them without re-running
+                                         //   collections_search
   awaitingUser: [{                       // open external-site hand-offs — §2.3
     logId: string,                       // log_* of the in-flight entry
     site: string,                        // external_site.site
@@ -118,6 +122,11 @@ repo's identifier-casing rule):
     imagesRead: number,                  // distinct images counted, >= 20
     planItemIds: string[],               // open plan items with an image_search log entry on it
   }],
+  waitingPages?: [{                      // read pages of held records — §2.8; absent when none
+    sourceId: string,
+    ref: string,                         // the staged page
+  }],
+  claimKinds: string[],                  // proof_summaries claim kinds this engine accepts: relationship, fact, identity, name, finding
   externalCollections?: {                // stored curated collections, counts only — §2.4
     [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
   },
@@ -128,8 +137,7 @@ repo's identifier-casing rule):
     uploaded: string,                    // ISO, from the store's mtime
     hasText: boolean,                    // uploads/<name>.txt exists
   }],
-  projectUrl?: string,                   // viewer page; only with webPublicUrl and a store id — §2.7
-  uploadUrl?: string,                    // upload page; only when uploadsEnabled too — §2.7
+  uploadUrl?: string,                    // upload page; only with webPublicUrl, uploadsEnabled and a store id — §2.7
 }
 // on failure: { ok: false, errors: string[], buildId }   — buildId on EVERY branch
 ```
@@ -557,12 +565,11 @@ the October 2026 e2e corpus 98 of 98 of those reads came back empty; in two
 hosted sessions of 2026-10-05/06, 12 of 21 did. The reads were issued in
 parallel, so the counts save tokens and calls more than wall-clock time.
 
-### 2.7 `uploads`, `projectUrl`, `uploadUrl` — the self-hosted beta's web tier
+### 2.7 `uploads`, `uploadUrl` — the self-hosted beta's web tier
 
 ```typescript
 uploads?: [{ name: string, uploaded: string /* ISO, from the store's mtime */, hasText: boolean }]
-projectUrl?: string   // `${webPublicUrl}/#/p/${projectId}`
-uploadUrl?: string    // `${projectUrl}/upload`
+uploadUrl?: string    // `${webPublicUrl}/#/p/${projectId}/upload`
 ```
 
 `uploads` lists the store's `uploads/` entries, newest first, ties by name. An
@@ -574,21 +581,37 @@ an upload. A dotfile is not an upload. `<name>` is the full basename with its ex
 must use that name. `uploads` is **omitted** when there are none, so
 every desktop and harness response is unchanged, and when the listing fails.
 
-The links come from `projectLinks(principal)` (`src/utils/project-links.ts`):
-`projectUrl` only when the per-user config has `webPublicUrl` (trailing slashes
-stripped) **and** the bound store has a `projectId`; `uploadUrl` only when
-`uploadsEnabled` is also `true`. The id is the store's, never derived from
-`projectPath`: on the hosted path every project arrives under the same anchor
-path, `/project`. The file store has no id, so the desktop gets no link. On the
-hosted tool server the settings arrive as `WEB_PUBLIC_URL` and
+The link comes from `projectLinks(principal)` (`src/utils/project-links.ts`):
+`uploadUrl` only when the per-user config has `webPublicUrl` (trailing slashes
+stripped) **and** `uploadsEnabled` is `true` **and** the bound store has a
+`projectId`. The id is the store's, never derived from `projectPath`: on the
+worker path every project arrives under the same anchor path, `/project`. The
+file store has no id, so the desktop gets no link. No project tool returns a link
+to a viewer page. On the hosted tool server the settings arrive as `WEB_PUBLIC_URL` and
 `UPLOADS_ENABLED` (`src/hosted-config-env.ts`); a switch other than
 `true`/`false`, or a `WEB_PUBLIC_URL` that is not a plain http(s) URL with no
 `#`, `?`, credentials, backslash, space or control character, refuses start-up
 with exit 2. The tool takes the principal as its last parameter because the
-links read the per-user config.
+link reads the per-user config.
 
 What nothing checks: that the web tier writes the text layer under the name
 this side reads. Each side is tested against its own fixture.
+
+### 2.8 `waitingPages` — read pages of held records
+
+A source whose record has a known page (`image_ark`) and no `transcription`, joined
+to an `image_transcribe` read of that page, logged or staged, on the bare ARK. A
+logged read is an `image_transcribe` log entry with a `results_ref`, named by
+`query.ark` or `query.imageArk`. It is listed only if its sidecar holds text: a
+logged page never expires, so one that could not be attached would be listed for
+good. `cc=` selects
+nothing and is ignored. An ARK with `i=` or `groupId=` never joins: those pick one
+image of several, and a read that fails on them falls back to the bare URL, which can
+land on any image. The oldest logged read wins, then the oldest staged one. Read-only.
+Absent when nothing waits. The router answers with one
+`extraction_append({ attachWaitingPages: true })`. A page that expires from staging
+drops out. It reads every fresh staged file while any source waits, as
+`unloggedStagedSearches` does on a search.
 
 ## 3. Decisions recorded
 
@@ -706,13 +729,13 @@ untouched.
   a capture on a different URL closes nothing; an earlier capture does not
   close a later hand-off; a `positive` entry with `capture_received: false`
   never lists; a non-`external_site` entry never lists.
-- **uploads and links** — `X` and `X.txt` list once with `hasText: true`, a lone
+- **uploads and the link** — `X` and `X.txt` list once with `hasText: true`, a lone
   `notes.txt` lists as an upload; newest first, ties by name (seeded with `fs`,
   so `make engine-test-pg` runs it on Postgres/S3); no uploads → key absent.
-  With a project-id store: both links with both settings, no `uploadUrl` while
-  uploads are off or unset, neither link without `webPublicUrl` or without a
-  store id; a failing listing omits `uploads` and still answers.
-  `tests/http/http-server.test.ts` 2d drives both links, with both settings on,
+  With a project-id store: `uploadUrl` with both settings, none while uploads are
+  off or unset, none without `webPublicUrl` or without a store id, and never a
+  `projectUrl`; a failing listing omits `uploads` and still answers.
+  `tests/http/http-server.test.ts` 2d drives the link, with both settings on,
   through `startHttpServer`'s `baseConfig`.
 - **`exhaustedImageGroups`** — a film at 20 distinct images lists with the plan
   items of its `image_search` entries, across sub-volumes of the film, and not those

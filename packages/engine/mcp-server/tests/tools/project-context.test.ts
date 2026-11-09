@@ -1,3 +1,4 @@
+import { CLAIM_KINDS } from "../../src/validation/validator.js";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, mkdir, writeFile, rm, utimes } from "fs/promises";
 import { join } from "path";
@@ -216,6 +217,15 @@ describe("project_context", () => {
     expect(bare.ok && bare.subjectPersonIds).toEqual([]);
   });
 
+  it("claimKinds lists every kind the engine accepts", async () => {
+    await writeProject(
+      { project: { id: "rp_001", objective: "Fresh", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
+      { persons: [], relationships: [], sources: [] },
+    );
+    const r = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.ok && r.claimKinds).toEqual([...CLAIM_KINDS]);
+  });
+
   it("returns empty arrays for an empty project", async () => {
     await writeProject(
       { project: { id: "rp_001", objective: "Fresh", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
@@ -246,6 +256,7 @@ describe("project_context", () => {
       ),
       unregisteredDisagreementCount: 0,
       exhaustedImageGroups: [],
+      claimKinds: ["relationship", "fact", "identity", "name", "finding"],
     });
   });
 
@@ -501,7 +512,11 @@ describe("project_context", () => {
             for_place: "Ringebu, Oppland, Norway",
             time_period: "1870-1880",
             jurisdictions: [{ name: "Ringebu, Oppland, Norway", date_range: "1838-" }],
-            collections: [{ id: "4237104", title: "Norway, Church Books", date_range: "1797-1958" }],
+            collections: [
+              { id: "4237104", title: "Norway, Church Books", date_range: "1797-1958", person_count: 0, record_count: 12 },
+              { id: "1", title: "Uncounted", date_range: null, person_count: null },
+              { id: "2", title: "Bad count", person_count: "5", record_count: 1.5 },
+            ],
             quirks: ["Indexed only at county level."],
             guide_markdown: "## Norway\nlong prose that must not leak into the compact projection",
             pages_read: [
@@ -525,7 +540,11 @@ describe("project_context", () => {
         forPlace: "Ringebu, Oppland, Norway",
         timePeriod: "1870-1880",
         jurisdictions: [{ name: "Ringebu, Oppland, Norway", dateRange: "1838-" }],
-        collections: [{ id: "4237104", title: "Norway, Church Books", dateRange: "1797-1958" }],
+        collections: [
+          { id: "4237104", title: "Norway, Church Books", dateRange: "1797-1958", personCount: 0, recordCount: 12 },
+          { id: "1", title: "Uncounted", dateRange: null, personCount: null, recordCount: null },
+          { id: "2", title: "Bad count", dateRange: null, personCount: null, recordCount: null },
+        ],
         quirks: ["Indexed only at county level."],
         pagesRead: ["home"],
       },
@@ -749,30 +768,31 @@ describe("project_context and project_create links", () => {
     return store ? runWithProjectStore(store, run) : run();
   }
 
-  it("returns projectUrl and uploadUrl from the store's project id when both settings are on", async () => {
+  it("returns uploadUrl from the store's project id when both settings are on, and never a viewer link", async () => {
     const r = await contextUnder(new ScopedFsStore(root, "p-42"), {
       webPublicUrl: "https://beta.example/",
       uploadsEnabled: true,
     });
-    expect(r.projectUrl).toBe("https://beta.example/#/p/p-42");
     expect(r.uploadUrl).toBe("https://beta.example/#/p/p-42/upload");
+    expect("projectUrl" in r).toBe(false);
   });
 
-  it("returns projectUrl but no uploadUrl while uploads are off", async () => {
+  it("returns no link while uploads are off", async () => {
     const off = await contextUnder(new ScopedFsStore(root, "p-42"), { webPublicUrl: "https://beta.example", uploadsEnabled: false });
-    expect(off.projectUrl).toBe("https://beta.example/#/p/p-42");
     expect("uploadUrl" in off).toBe(false);
+    expect("projectUrl" in off).toBe(false);
     const unset = await contextUnder(new ScopedFsStore(root, "p-43"), { webPublicUrl: "https://beta.example" });
     expect("uploadUrl" in unset).toBe(false);
+    expect("projectUrl" in unset).toBe(false);
   });
 
-  it("returns neither link without the public URL", async () => {
+  it("returns no link without the public URL", async () => {
     const r = await contextUnder(new ScopedFsStore(root, "p-42"), { uploadsEnabled: true });
     expect("projectUrl" in r).toBe(false);
     expect("uploadUrl" in r).toBe(false);
   });
 
-  it("returns neither link from a store with no project id, whatever projectPath is", async () => {
+  it("returns no link from a store with no project id, whatever projectPath is", async () => {
     fileStoreOnly("the file store is the one with no project id");
     const r = await contextUnder(null, { webPublicUrl: "https://beta.example", uploadsEnabled: true });
     expect("projectUrl" in r).toBe(false);

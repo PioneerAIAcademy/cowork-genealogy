@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from "vitest";
 import type { Server as HttpServer } from "node:http";
 import { mkdir, mkdtemp, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
@@ -35,8 +35,14 @@ vi.mock("../../src/utils/http.js", async (importOriginal) => {
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
 import {
+  __resetUserLimitsForTests,
+  __userLimitsStateForTests,
+  USER_CALL_CAP,
+} from "../../src/utils/user-limits.js";
+import {
   CLAIM_EPOCH_HEADER,
   claimFenceFromHeaders,
+  CONNECTOR_PROJECT_RE,
   HEALTHZ_TIMEOUT_MS,
   PROJECT_ID_HEADER,
   MAX_BODY_BYTES,
@@ -52,7 +58,7 @@ import {
 } from "../../src/http-server.js";
 import { allToolSchemas } from "../../src/tool-schemas.js";
 import { HOSTED_REAUTH_INSTRUCTION } from "../../src/auth/config.js";
-import type { ClaimFence, ProjectStore } from "../../src/store/project-store.js";
+import type { ClaimFence, OwnedProjectIds, ProjectStore } from "../../src/store/project-store.js";
 import { ScopedFsStore, SCOPED_ANCHOR } from "../helpers/scoped-fs-store.js";
 import { logArgs, seedProject } from "../helpers/seed-project.js";
 
@@ -70,8 +76,8 @@ const bindStore = vi.fn(
     _signal: AbortSignal,
     _fence?: ClaimFence,
     // E1: a connector request names its own anchor and owner.
-    _opts?: { anchorPath?: string; ownerId?: string },
-  ): ProjectStore => new ScopedFsStore(root, projectId),
+    opts?: { anchorPath?: string; ownerId?: string },
+  ): ProjectStore => new ScopedFsStore(root, projectId, opts?.anchorPath),
 );
 // Allow-all unless a case says otherwise: the project check itself is U4's
 // section below and tests/http/http-server-pg.test.ts.
@@ -146,6 +152,9 @@ const projectOwner = vi.fn(
   }),
 );
 
+/** The caller owns nothing unless a case says otherwise. */
+const ownedProjects = vi.fn(async (_userId: string): Promise<OwnedProjectIds> => ({ ids: [], truncated: false }));
+
 /** The headers a connector request carries. */
 function connectorHeaders(extra: Record<string, string> = {}): Record<string, string> {
   return { Authorization: `Bearer ${TEST_CONNECTOR_TOKEN}`, ...extra };
@@ -161,6 +170,7 @@ beforeAll(async () => {
     authorize,
     lookupConnector,
     projectOwner,
+    ownedProjects,
   });
   const address = server.address();
   if (!address || typeof address !== "object") throw new Error("server did not bind a port");
@@ -300,7 +310,7 @@ describe("tool server over Streamable HTTP", () => {
     expect(dirs.every((d) => d.startsWith("alpha-") || d.startsWith("beta-"))).toBe(true);
   });
 
-  it("2d. baseConfig's public URL reaches project_context as links built from the header's project id", async () => {
+  it("2d. baseConfig's public URL reaches project_context as an upload link built from the header's project id, and no viewer link", async () => {
     const linked = await startHttpServer({
       host: "127.0.0.1",
       port: 0,
@@ -308,7 +318,8 @@ describe("tool server over Streamable HTTP", () => {
       bindStore,
       authorize,
       lookupConnector,
-      projectOwner
+      projectOwner,
+      ownedProjects,
     });
     const address = linked.address();
     if (!address || typeof address !== "object") throw new Error("server did not bind a port");
@@ -319,7 +330,7 @@ describe("tool server over Streamable HTTP", () => {
       const ctx = JSON.parse(
         textOf(await client.callTool({ name: "project_context", arguments: { projectPath: SCOPED_ANCHOR } })),
       );
-      expect(ctx.projectUrl).toBe(`https://beta.example/#/p/${id}`);
+      expect("projectUrl" in ctx).toBe(false);
       expect(ctx.uploadUrl).toBe(`https://beta.example/#/p/${id}/upload`);
     } finally {
       linked.closeAllConnections();
@@ -839,6 +850,7 @@ describe("tool server over Streamable HTTP", () => {
         authorize,
         lookupConnector,
         projectOwner,
+        ownedProjects,
         issuer,
       });
       const addr = withIssuer.address();
@@ -1035,6 +1047,160 @@ describe("tool server over Streamable HTTP", () => {
       expect(res.status).toBe(503);
       await res.text();
     });
+
+    describe("project_list on a connector (#3991)", () => {
+      /** A project on disk under `id`, as `ownedProjects` would name it. */
+      async function seedOwned(id: string): Promise<void> {
+        await mkdir(join(root, id), { recursive: true });
+        await writeFile(join(root, id, "research.json"), JSON.stringify({ project: { objective: `about ${id}` } }));
+      }
+
+      async function listProjects(): Promise<{ isError?: boolean; text: string }> {
+        const res = await rpc(call("project_list", {}), connectorHeaders());
+        expect(res.status).toBe(200);
+        const { result } = (await res.json()) as {
+          result: { isError?: boolean; content: Array<{ text: string }> };
+        };
+        return { isError: result.isError, text: result.content[0]!.text };
+      }
+
+      it("a connector's project_list names the caller's projects and one fresh path", async () => {
+        const ids = ["proj_aaaaaaaaaaaaaaaa", "proj_bbbbbbbbbbbbbbbb"];
+        await Promise.all(ids.map(seedOwned));
+        bindStore.mockClear();
+        ownedProjects.mockClear();
+        ownedProjects.mockResolvedValueOnce({ ids, truncated: false });
+
+        const listed = await listProjects();
+        expect(listed.isError, listed.text).not.toBe(true);
+        const body = JSON.parse(listed.text);
+        expect(ownedProjects).toHaveBeenCalledExactlyOnceWith(TEST_USER_ID);
+        expect(body.mode).toBe("hosted");
+        expect(body.projects.map((p: { projectPath: string }) => p.projectPath)).toEqual(ids.map((id) => `/${id}`));
+        expect(body.projects[0].objective).toBe(`about ${ids[0]}`);
+        expect(body.newProjectPath).toMatch(CONNECTOR_PROJECT_RE);
+        expect(ids.map((id) => `/${id}`)).not.toContain(body.newProjectPath);
+
+        // Each path's store: anchored at that path, for this caller, with no fence.
+        expect(bindStore.mock.calls.map(([id]) => `/${id}`)).toEqual([...ids.map((id) => `/${id}`), body.newProjectPath]);
+        for (const [id, , fence, opts] of bindStore.mock.calls) {
+          expect(fence).toBeUndefined();
+          expect(opts).toEqual({ anchorPath: `/${id}`, ownerId: TEST_USER_ID });
+        }
+      });
+
+      it("a caller who owns nothing still gets a fresh path", async () => {
+        const body = JSON.parse((await listProjects()).text);
+        expect(body.projects).toEqual([]);
+        expect(body.newProjectPath).toMatch(CONNECTOR_PROJECT_RE);
+        expect(body.message).toBe("No project yet: pass newProjectPath as projectPath to start one.");
+      });
+
+      it("an id that is not /proj_ shaped is not listed", async () => {
+        const good = "proj_cccccccccccccccc";
+        const claimedByDevLogin = "a-web-tier-project";
+        await Promise.all([good, claimedByDevLogin].map(seedOwned));
+        bindStore.mockClear();
+        ownedProjects.mockResolvedValueOnce({ ids: [claimedByDevLogin, good], truncated: false });
+
+        const body = JSON.parse((await listProjects()).text);
+        expect(body.projects.map((p: { projectPath: string }) => p.projectPath)).toEqual([`/${good}`]);
+        expect(bindStore.mock.calls.map(([id]) => id)).not.toContain(claimedByDevLogin);
+        expect(body).not.toHaveProperty("truncated");
+      });
+
+      it("a cut listing says so, even when the door's filter left fewer ids than the query's limit", async () => {
+        const good = "proj_eeeeeeeeeeeeeeee";
+        await seedOwned(good);
+        ownedProjects.mockResolvedValueOnce({ ids: ["a-web-tier-project", good], truncated: true });
+
+        const body = JSON.parse((await listProjects()).text);
+        expect(body.projects.map((p: { projectPath: string }) => p.projectPath)).toEqual([`/${good}`]);
+        expect(body.truncated).toBe(true);
+        expect(body.message).toContain("More projects exist than are listed");
+      });
+
+      it("a failing ownedProjects is isError, never No project yet", async () => {
+        ownedProjects.mockRejectedValueOnce(new Error("pool is down"));
+        const listed = await listProjects();
+        expect(listed.isError).toBe(true);
+        expect(listed.text).toContain("pool is down");
+        expect(listed.text).not.toContain("No project yet");
+      });
+
+      it("a document read that fails mid-listing is isError, never a project with no subject", async () => {
+        const id = "proj_dddddddddddddddd";
+        await seedOwned(id);
+        ownedProjects.mockResolvedValueOnce({ ids: [id], truncated: false });
+        const store = new ScopedFsStore(root, id, `/${id}`);
+        vi.spyOn(store, "readText").mockRejectedValue(new Error("pool is down"));
+        bindStore.mockReturnValueOnce(store);
+
+        const listed = await listProjects();
+        expect(listed.isError, listed.text).toBe(true);
+        expect(listed.text).toContain("pool is down");
+        expect(listed.text).not.toContain("newProjectPath");
+      });
+
+      it("a client that disconnects mid-listing stops the listing at its next read", async () => {
+        const ids = ["proj_1111111111111111", "proj_2222222222222222", "proj_3333333333333333"];
+        await Promise.all(ids.map(seedOwned));
+        ownedProjects.mockResolvedValueOnce({ ids, truncated: false });
+
+        // The first project's research.json holds the tool mid-listing until the
+        // client has gone, which is when the store's signal aborts.
+        let release!: () => void;
+        const gate = new Promise<void>((resolve) => (release = resolve));
+        const reads: string[] = [];
+        const signals: AbortSignal[] = [];
+        // One per listed path and one for the fresh path.
+        for (let i = 0; i <= ids.length; i++) {
+          bindStore.mockImplementationOnce((projectId, signal, _fence, opts) => {
+            signals.push(signal);
+            const store = new ScopedFsStore(root, projectId, opts?.anchorPath);
+            const readText = store.readText.bind(store);
+            vi.spyOn(store, "readText").mockImplementation(async (projectPath, ref) => {
+              reads.push(`${projectPath}:${ref}`);
+              await gate;
+              return readText(projectPath, ref);
+            });
+            return store;
+          });
+        }
+
+        const client = new AbortController();
+        const dropped = fetch(`${base}/mcp`, {
+          method: "POST",
+          signal: client.signal,
+          headers: {
+            "Content-Type": "application/json",
+            Accept: "application/json, text/event-stream",
+            ...connectorHeaders(),
+          },
+          body: JSON.stringify(call("project_list", {})),
+        }).catch(() => undefined);
+
+        await vi.waitFor(() => expect(reads).toEqual([`/${ids[0]}:research.json`]));
+        client.abort();
+        await vi.waitFor(() => expect(signals[0]!.aborted).toBe(true));
+        release();
+        await dropped;
+        // The dropped client has no response to wait on, so give the tool its next turns.
+        await new Promise((resolve) => setTimeout(resolve, 100));
+        expect(reads).toEqual([`/${ids[0]}:research.json`]);
+      });
+
+      it("a connector call naming no project still refuses project tools and queries nothing", async () => {
+        bindStore.mockClear();
+        ownedProjects.mockClear();
+        const res = await rpc(call("tree_query", {}), connectorHeaders());
+        expect(res.status).toBe(200);
+        const text = await res.text();
+        expect(text).toContain("This call named no project");
+        expect(ownedProjects).not.toHaveBeenCalled();
+        expect(bindStore).not.toHaveBeenCalled();
+      });
+    });
   });
 
   it("5. /healthz is 200 with the tool count; GET (SSE accept) and DELETE on /mcp are 405 with Allow: POST", async () => {
@@ -1077,7 +1243,8 @@ describe("tool server over Streamable HTTP", () => {
       authorize,
       checkReady: () => probe(),
       lookupConnector,
-      projectOwner
+      projectOwner,
+      ownedProjects,
     });
     const address = ready.address();
     if (!address || typeof address !== "object") throw new Error("server did not bind a port");
@@ -1211,5 +1378,346 @@ describe("tool server over Streamable HTTP", () => {
     await new Promise((resolve) => setImmediate(resolve));
     expect(signals).toHaveLength(2);
     expect(signals[1].aborted).toBe(false);
+  });
+});
+
+// Self-hosted beta E4, per-user half (issue #3999): at most 4 `tools/call`
+// requests in flight per connector user, at the door. A call over the cap WAITS
+// in FIFO order; it is never refused. Kept at the end of the file, apart from
+// the cases above, because the limiter is module state shared by every request.
+describe("E4. per-user limits on the connector door (#3999)", () => {
+  const rpc = (body: unknown, headers: Record<string, string>, init: RequestInit = {}) =>
+    fetch(`${base}/mcp`, {
+      ...init,
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", ...headers },
+      body: JSON.stringify(body),
+    });
+  const call = (name: string, args: Record<string, unknown>) => ({
+    jsonrpc: "2.0", id: 1, method: "tools/call", params: { name, arguments: args },
+  });
+  const userA = { Authorization: "Bearer connector-token-A" };
+  const userB = { Authorization: "Bearer connector-token-B" };
+  /** A connector project path of its own per call, so each call's store is told apart. */
+  const projPath = (prefix: string, n: number) => `/proj_${prefix}${n.toString(16).padStart(16 - prefix.length, "0")}`;
+  const settle = () => new Promise((resolve) => setTimeout(resolve, 150));
+
+  beforeEach(() => {
+    __resetUserLimitsForTests();
+  });
+
+  /**
+   * The next `n` stores `bindStore` hands out hold every method until `open()`,
+   * then 20 ms more, so calls overlap after the gate too. A request counts as
+   * inside the tool while one of its store methods is in flight; `high()` is
+   * the most requests that were ever inside at once. Each request binds exactly
+   * one store, before the door's slot is taken.
+   */
+  function gatedStores(n: number) {
+    let open!: () => void;
+    const gate = new Promise<void>((resolve) => (open = resolve));
+    const inFlight = new Map<string, number>();
+    const entered = new Set<string>();
+    /** Each request's disconnect signal, by project id. */
+    const signals = new Map<string, AbortSignal>();
+    let high = 0;
+    const insideNow = () => [...inFlight.values()].filter((count) => count > 0).length;
+    for (let i = 0; i < n; i++) {
+      bindStore.mockImplementationOnce((projectId, signal, _fence, opts) => {
+        signals.set(projectId, signal);
+        const inner = new ScopedFsStore(root, projectId, opts?.anchorPath);
+        return new Proxy(inner, {
+          get(target, key, receiver) {
+            const v = Reflect.get(target, key, receiver);
+            if (typeof v !== "function") return v;
+            return async (...args: unknown[]) => {
+              entered.add(projectId);
+              inFlight.set(projectId, (inFlight.get(projectId) ?? 0) + 1);
+              high = Math.max(high, insideNow());
+              try {
+                await gate;
+                await new Promise((resolve) => setTimeout(resolve, 20));
+                return await v.apply(target, args);
+              } finally {
+                inFlight.set(projectId, inFlight.get(projectId)! - 1);
+              }
+            };
+          },
+        });
+      });
+    }
+    return { open: () => open(), entered, signals, high: () => high, insideNow };
+  }
+
+  /** User A's 12 calls, held at the gate. Resolves once every one has reached
+   *  the door (bindStore runs before the slot) and had time to enter the tool
+   *  if the door let it. */
+  async function holdTwelve() {
+    bindStore.mockClear();
+    lookupConnector.mockClear();
+    const gated = gatedStores(12);
+    const paths = Array.from({ length: 12 }, (_, i) => projPath("a", i));
+    const answers = paths.map((projectPath) => rpc(call("project_context", { projectPath }), userA));
+    await vi.waitFor(() => expect(bindStore).toHaveBeenCalledTimes(12));
+    // Wait for the calls the door admits to reach the tool, however slow the
+    // runner, then give any call it should NOT have admitted time to show up.
+    await vi.waitFor(() => expect(gated.entered.size).toBeGreaterThanOrEqual(4));
+    await settle();
+    return { gated, answers };
+  }
+
+  /** Open the gate and read every answer, so a failed case leaves no request hanging. */
+  async function release(gated: { open: () => void }, answers: Array<Promise<Response>>) {
+    gated.open();
+    return Promise.all(
+      answers.map(async (answer) => {
+        const res = await answer;
+        return { status: res.status, body: await res.text() };
+      }),
+    );
+  }
+
+  it("12 parallel tools/call requests from one user all complete, never more than 4 running at once", async () => {
+    expect(USER_CALL_CAP).toBe(4);
+    const { gated, answers } = await holdTwelve();
+    let done: Array<{ status: number; body: string }>;
+    try {
+      expect(gated.entered.size).toBe(4);
+      expect(gated.insideNow()).toBe(4);
+      expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 8 });
+    } finally {
+      done = await release(gated, answers);
+    }
+    for (const { status, body } of done) {
+      expect(status).toBe(200);
+      expect(body).toContain('"result"');
+    }
+    expect(gated.entered.size).toBe(12);
+    expect(gated.high()).toBe(4);
+    // Each call's token was looked up at the door, and the 8 that waited were
+    // looked up again when their slot came.
+    expect(lookupConnector).toHaveBeenCalledTimes(12 + 8);
+    // Nothing running or waiting, so the user's entry is gone.
+    await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+  });
+
+  it("a second user's calls start at once while the first has 4 running and 8 waiting, and the first's tools/list is not queued", async () => {
+    const { gated, answers } = await holdTwelve();
+    try {
+      expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 8 });
+      // B's stores are the default, ungated ones: these answer while A is held.
+      const fromB = await Promise.all(
+        Array.from({ length: 4 }, (_, i) =>
+          rpc(call("project_context", { projectPath: projPath("b", i) }), userB).then(async (res) => ({
+            status: res.status,
+            body: await res.text(),
+          })),
+        ),
+      );
+      for (const { status, body } of fromB) {
+        expect(status).toBe(200);
+        expect(body).toContain('"result"');
+      }
+      // A's own tools/list takes no slot, so it does not wait behind A's 8.
+      const list = await rpc({ jsonrpc: "2.0", id: 2, method: "tools/list" }, userA);
+      expect(list.status).toBe(200);
+      expect(await list.text()).toContain('"project_context"');
+      // Nor does a tools/call that can run no tool: a notification (no id),
+      // which is never answered, and a request with no tool name.
+      const notification = await rpc(
+        { jsonrpc: "2.0", method: "tools/call", params: { name: "project_context", arguments: {} } },
+        userA,
+      );
+      expect(notification.status).toBe(202);
+      await notification.text();
+      const nameless = await rpc({ jsonrpc: "2.0", id: 3, method: "tools/call" }, userA);
+      expect(nameless.status).toBe(200);
+      expect(await nameless.text()).toContain('"error"');
+      expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 8 });
+      expect(gated.entered.size).toBe(4);
+    } finally {
+      await release(gated, answers);
+    }
+    await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+  });
+
+  it("a waiting call whose client hangs up leaves the queue, never runs, and is logged as abandoned", async () => {
+    bindStore.mockClear();
+    const gated = gatedStores(5);
+    const held = Array.from({ length: 4 }, (_, i) =>
+      rpc(call("project_context", { projectPath: projPath("c", i) }), userA),
+    );
+    await vi.waitFor(() => expect(bindStore).toHaveBeenCalledTimes(4));
+    await settle();
+
+    const lines: string[] = [];
+    const spy = vi.spyOn(process.stderr, "write").mockImplementation(((chunk: unknown) => {
+      lines.push(String(chunk));
+      return true;
+    }) as typeof process.stderr.write);
+    const goneId = projPath("c", 4).slice(1);
+    const client = new AbortController();
+    try {
+      const dropped = rpc(call("project_context", { projectPath: `/${goneId}` }), userA, {
+        signal: client.signal,
+      }).catch(() => undefined);
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+      client.abort();
+      await dropped;
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 0 }));
+      await vi.waitFor(() =>
+        expect(lines.join("")).toContain("ev=tool_abandoned surface=connector user_id=u_A tool=project_context"),
+      );
+    } finally {
+      // Still capturing while the held calls finish, so a wrongly-run abandoned
+      // call would log its own ev=tool_call line here.
+      await release(gated, held);
+      await settle();
+      spy.mockRestore();
+    }
+    // The four held calls finished; the abandoned one never touched its store.
+    expect(gated.entered.has(goneId)).toBe(false);
+    expect(gated.entered.size).toBe(4);
+    const toolCalls = lines.join("").match(/ev=tool_call [^\n]*user_id=u_A tool=project_context/g) ?? [];
+    expect(toolCalls).toHaveLength(4);
+    await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+  });
+
+  it("the worker path is not capped: 6 parallel worker calls are all inside the tool at once", async () => {
+    bindStore.mockClear();
+    const gated = gatedStores(6);
+    const answers = Array.from({ length: 6 }, () =>
+      rpc(call("project_context", { projectPath: SCOPED_ANCHOR }), {
+        Authorization: "Bearer worker-bearer",
+        [PROJECT_HEADER]: `worker-${randomUUID()}`,
+      }),
+    );
+    try {
+      await vi.waitFor(() => expect(bindStore).toHaveBeenCalledTimes(6));
+      await vi.waitFor(() => expect(gated.insideNow()).toBe(6));
+      expect(__userLimitsStateForTests().users).toBe(0);
+    } finally {
+      const done = await release(gated, answers);
+      for (const { status } of done) expect(status).toBe(200);
+    }
+  });
+
+  it("a call that waited is refused, and never runs, when its token stopped being admitted meanwhile", async () => {
+    bindStore.mockClear();
+    const gated = gatedStores(5);
+    const held = Array.from({ length: 4 }, (_, i) =>
+      rpc(call("project_context", { projectPath: projPath("e", i) }), userA),
+    );
+    const blockedId = projPath("e", 4).slice(1);
+    const waiting = rpc(call("project_context", { projectPath: `/${blockedId}` }), userA);
+    try {
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+      // The user is blocked while the call waits: the next lookup, the waiter's
+      // second one, admits nothing.
+      lookupConnector.mockImplementationOnce(async () => null);
+    } finally {
+      await release(gated, held);
+    }
+    const res = await waiting;
+    expect(res.status).toBe(401);
+    expect(res.headers.get("WWW-Authenticate")).toBe("Bearer");
+    expect((await res.json()).error.message).toBe("Not authenticated. Sign in again to reconnect.");
+    expect(gated.entered.has(blockedId)).toBe(false);
+    await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+  });
+
+  it("a call that waited runs with the FamilySearch token the second lookup returns", async () => {
+    bindStore.mockClear();
+    const gated = gatedStores(4);
+    const held = Array.from({ length: 4 }, (_, i) =>
+      rpc(call("project_context", { projectPath: projPath("f", i) }), userA),
+    );
+    let answer!: Promise<Response>;
+    try {
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 0 }));
+      // record_read reaches FamilySearch (the mocked upstream) with whatever
+      // token the call's principal carries.
+      answer = rpc(call("record_read", { recordId: "QVS9-WAIT" }), userA);
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+      // The web tier replaced the user's FamilySearch token while the call waited.
+      lookupConnector.mockImplementationOnce(async () => ({
+        userId: "u_A",
+        familySearchToken: "fs-tok-A-replaced",
+        openRouterApiKey: null,
+      }));
+      upstream.calls.length = 0;
+    } finally {
+      await release(gated, held);
+    }
+    await (await answer).text();
+    expect(upstream.calls.map((c) => c.authorization)).toContain("Bearer fs-tok-A-replaced");
+    expect(upstream.calls.map((c) => c.authorization)).not.toContain("Bearer fs-tok-A");
+  });
+
+  it("a call that waited is refused, and never runs, when its token now names another user", async () => {
+    bindStore.mockClear();
+    const gated = gatedStores(5);
+    const held = Array.from({ length: 4 }, (_, i) =>
+      rpc(call("project_context", { projectPath: projPath("9c", i) }), userA),
+    );
+    const otherId = projPath("9c", 4).slice(1);
+    const waiting = rpc(call("project_context", { projectPath: `/${otherId}` }), userA);
+    try {
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+      lookupConnector.mockImplementationOnce(async () => ({
+        userId: "u_B",
+        familySearchToken: "fs-tok-B",
+        openRouterApiKey: null,
+      }));
+    } finally {
+      await release(gated, held);
+    }
+    const res = await waiting;
+    expect(res.status).toBe(401);
+    expect(gated.entered.has(otherId)).toBe(false);
+    await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+  });
+
+  it("a call whose client hangs up during its second lookup never runs, and is logged as abandoned", async () => {
+    bindStore.mockClear();
+    const gated = gatedStores(5);
+    const held = Array.from({ length: 4 }, (_, i) =>
+      rpc(call("project_context", { projectPath: projPath("9d", i) }), userA),
+    );
+    const goneId = projPath("9d", 4).slice(1);
+    const client = new AbortController();
+    const lines: string[] = [];
+    const spy = vi.spyOn(process.stderr, "write").mockImplementation(((chunk: unknown) => {
+      lines.push(String(chunk));
+      return true;
+    }) as typeof process.stderr.write);
+    let answerLookup!: () => void;
+    let lookupStarted = false;
+    try {
+      const dropped = rpc(call("project_context", { projectPath: `/${goneId}` }), userA, {
+        signal: client.signal,
+      }).catch(() => undefined);
+      await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+      // The waiter's second lookup is slow; the client leaves while it runs.
+      lookupConnector.mockImplementationOnce(async () => {
+        lookupStarted = true;
+        await new Promise<void>((resolve) => (answerLookup = resolve));
+        return { userId: "u_A", familySearchToken: "fs-tok-A", openRouterApiKey: null };
+      });
+      await release(gated, held);
+      await vi.waitFor(() => expect(lookupStarted).toBe(true));
+      client.abort();
+      await dropped;
+      // Answer the lookup only once the server has seen the client go.
+      await vi.waitFor(() => expect(gated.signals.get(goneId)?.aborted).toBe(true));
+      answerLookup();
+      await vi.waitFor(() =>
+        expect(lines.join("")).toContain("ev=tool_abandoned surface=connector user_id=u_A tool=project_context"),
+      );
+    } finally {
+      spy.mockRestore();
+    }
+    expect(gated.entered.has(goneId)).toBe(false);
+    await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
   });
 });

@@ -230,6 +230,16 @@ standard place found: …`. A non-place phrase such as "Same House"
 (`isNonPlacePhrase`) has no standard form to miss and is left out. The line is
 absent when every place was standardized.
 
+**A state the text and the standard place disagree on is reported, never
+silent.** After the fill, each distinct `place` / `standard_place`
+pair on the tree's facts that `divisionContradiction` finds in conflict — the
+text ends with one US state, Puerto Rico or Canadian province and the standard
+place lies in another ("Washington County, Texas" with "Texas, Washington,
+Kentucky, United States", a FamilySearch `place.normalized` value) — is named in
+one `validation.warnings` line, `Place '…' names one state or province but its
+standard place '…' lies in another`. The value is kept as read, as the converter
+keeps every FamilySearch-supplied value; only the warning is new.
+
 **The result** is a summary, never the tree, held under
 `SUMMARY_MAX_CHARS` (2,000 serialized characters): `subject` (`id`,
 `familySearchId`, `name`, and `birth` / `death` as "date, place" when the read
@@ -249,15 +259,6 @@ and every person stays findable afterwards in the project tree.
 `idMap` is not returned: its `sources` map runs to hundreds of entries on a
 well-sourced profile, and a caller names people by the summary's tree ids.
 
-**`projectUrl`.** The project's page in the self-hosted
-beta's web app, `<webPublicUrl>/#/p/<projectId>`, present only when the per-user
-config has `webPublicUrl` and the bound store has a `projectId`
-(`projectLinks(principal)`, `src/utils/project-links.ts`; the same helper and
-rules as `project_context`'s, its spec §2.7). That id is the store's, so it is
-**not** the `projectId: "rp_001"` this result also carries, which is the
-research project's id inside `research.json`. It is built inside the summary's
-2,000-character cap. The desktop's file store has no id, so the
-desktop never gets one.
 
 **Naming the subject.** A caller that has only the FamilySearch ID writes the
 objective and title before the read, so it can name the subject only by that ID.

@@ -1,6 +1,7 @@
 """Tests for harness.workspace — per-test temp dirs and file snapshots."""
 
 import json
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
@@ -104,6 +105,37 @@ def test_scenario_workspace_copies_results_sidecars(tmp_path):
     sidecar = ws / "results" / "log_001.json"
     assert sidecar.exists()
     assert json.loads(sidecar.read_text(encoding="utf-8"))["log_id"] == "log_001"
+
+
+def test_a_staged_page_reads_as_read_just_now(tmp_path):
+    """A staged page expires 24 hours after it is read, so a committed one would
+    never reach the run. Anything else in results/ keeps its date."""
+    scenarios = tmp_path / "scenarios"
+    scen = scenarios / "with-staged-page"
+    (scen / "results" / ".staging").mkdir(parents=True)
+    (scen / "research.json").write_text(json.dumps({"log": []}), encoding="utf-8")
+    (scen / "tree.gedcomx.json").write_text(json.dumps({"persons": []}), encoding="utf-8")
+    old = "2026-01-01T00:00:00.000Z"
+    (scen / "results" / ".staging" / "page.json").write_text(
+        json.dumps({"tool": "image_transcribe", "retrieved": old, "payload": {"results": [{"id": "p"}]}}),
+        encoding="utf-8",
+    )
+    (scen / "results" / "log_001.json").write_text(json.dumps({"retrieved": old}), encoding="utf-8")
+    target = tmp_path / "ws"
+    target.mkdir()
+    ws = build_workspace(
+        scenario_name="with-staged-page",
+        scenarios_dir=scenarios,
+        skills_dir=PLUGIN_SKILLS,
+        target_dir=target,
+    )
+    staged = json.loads((ws / "results" / ".staging" / "page.json").read_text(encoding="utf-8"))
+    age = datetime.now(timezone.utc) - datetime.fromisoformat(staged["retrieved"])
+    assert age < timedelta(minutes=5)
+    assert staged["payload"] == {"results": [{"id": "p"}]}
+    assert json.loads((ws / "results" / "log_001.json").read_text(encoding="utf-8"))["retrieved"] == old
+    source = json.loads((scen / "results" / ".staging" / "page.json").read_text(encoding="utf-8"))
+    assert source["retrieved"] == old
 
 
 def test_scenario_starting_tree_is_staged_only_when_the_scenario_ships_one(tmp_path):

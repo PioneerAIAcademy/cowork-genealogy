@@ -71,6 +71,7 @@ import {
   accessDate,
   buildFromStagedRead,
   displayName,
+  divisionMismatchesOf,
   factsOf,
   unresolvedPlacesOf,
   type BuiltTree,
@@ -82,7 +83,6 @@ import {
   PERSON_READ_REF_REMOVED,
   PROJECT_TREE_REMOVED,
 } from "../utils/tool-hint-messages.js";
-import { projectLinks } from "../utils/project-links.js";
 
 /** The sections a new project starts with, all empty (`sources` aside, which
  *  holds the subject's transcribed memories when the person is read here). */
@@ -174,8 +174,6 @@ const NEVER_TRIMMED: ReadonlySet<SummaryPerson["relationship"]> = new Set([
 export interface ProjectCreateSummary {
   ok: true;
   projectId: string;
-  /** The project's viewer page, when the server knows its public URL. */
-  projectUrl?: string;
   filesWritten: string[];
   subject: { id: string; familySearchId: string; name: string; birth?: string; death?: string };
   /** The objective and title as stored, after `nameForId`. */
@@ -421,6 +419,12 @@ export async function runProjectCreate(
     if (unresolvedPlaces.length > 0) {
       refWarnings.push(`Places kept as written, with no standard place found: ${unresolvedPlaces.join("; ")}.`);
     }
+    for (const m of divisionMismatchesOf(factsOf(tree))) {
+      refWarnings.push(
+        `Place '${m.place}' names one state or province but its standard place '${m.standardPlace}' lies in another ` +
+          "(FamilySearch's own value when it came with the tree read): check it before relying on it for a place search.",
+      );
+    }
     // The fill can take seconds, so check again that no other create landed
     // while it ran: create never overwrites.
     for (const ref of ["research.json", "tree.gedcomx.json"]) {
@@ -440,10 +444,8 @@ export async function runProjectCreate(
     ]);
 
     const warnings = [...refWarnings, ...formatIssues(validation.warnings)];
-    const { projectUrl } = await projectLinks(principal);
     return summarize({
       outcome,
-      ...(projectUrl ? { projectUrl } : {}),
       tree,
       subjectId: idMap.persons[outcome.resolvedId],
       objective: storedObjective,
@@ -581,7 +583,6 @@ function factLine(person: Record<string, any> | undefined, type: string): string
  */
 function summarize(args: {
   outcome: PersonReadOutcome;
-  projectUrl?: string;
   tree: { persons: Record<string, any>[]; relationships: Record<string, any>[]; sources: unknown[] };
   subjectId: string;
   objective: string;
@@ -607,7 +608,6 @@ function summarize(args: {
   const build = (): ProjectCreateSummary => ({
     ok: true,
     projectId: "rp_001",
-    ...(args.projectUrl ? { projectUrl: args.projectUrl } : {}),
     filesWritten: ["tree.gedcomx.json", "research.json", "starting-tree.gedcomx.json"],
     subject: {
       id: subjectId,
@@ -695,9 +695,7 @@ export const projectCreateSchema = {
     "fixed house `researcher_profile`; it does NOT write subscriptions — add those " +
     "afterwards with research_append, only from what the researcher actually told you.\n" +
     "\n" +
-    "Tell the user the project was created and where, naming the folder. A success also " +
-    "returns projectUrl, the project's page in the web app, when the server knows it; give " +
-    "it to the user.",
+    "Tell the user the project was created and where, naming the folder.",
   inputSchema: {
     type: "object",
     properties: {

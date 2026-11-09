@@ -15,8 +15,8 @@ description: >-
   there, whether anything was mis-indexed — to source-evaluation. Given a
   mother's 1900 or 1910 US census children-born and children-living counts, it
   also reports which of her children the tree is missing and when each was born.
-model: claude-sonnet-4-6
-effort: high
+model: claude-haiku-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
@@ -75,7 +75,7 @@ The `personId` is the simplified GedcomX id from `tree.gedcomx.json` (e.g. `I1` 
 
 Once you've confirmed this is a warnings task (not a handoff — see the Handoff rules; a source-vs-source disagreement goes to `conflict-resolution`, not here), then for each person to check:
 
-1. Call `person_warnings({ projectPath, personId })` — the impossibility check that runs for every person you check. `projectPath` is the delegation's; when none was given, treat it as `no_project` (step 2). The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`.
+1. Call `person_warnings({ projectPath, personId })` — the impossibility check that runs for every person you check. `projectPath` is the delegation's; when none was given, treat it as `no_project` (step 2). The tool reads `tree.gedcomx.json` itself and returns each warning's `issueType`, `severity`, `personId`, `personName`, and `message`, plus `relatedPersonId` when a warning has one.
 2. **No project here.** If `person_warnings` returns `reason: "no_project"`, make no further call and return `Hand-back: init-project — create a project for <the person id>, then check it`, then the return contract. Never create the project yourself.
 3. **Census counts.** If the request gives a mother's 1900 or 1910 US census counts of children born and children living, call `census_children_gap({ censuses: [{ year, childrenBorn, childrenLiving }], projectPath, motherId })` once for that mother, with `motherId` her person id. Never pass `knownChildren`, and never work out the missing children yourself, even when the tool errors.
 
@@ -90,7 +90,9 @@ For each warning, report:
 - **The facts involved — only when the tool named them.** If the warning includes a `facts` array, name each one by its `type` and its `date` **exactly as returned**, with the id in parentheses — "Thomas's Birth, ~1818 (F3)" — never the bare id, which a researcher cannot act on. When a fact's `date` is `null`, name its type and id and say nothing about when it happened: do not call it undated, approximate or unknown, and do not supply a year. If the warning has no `facts` array, **do not read `tree.gedcomx.json` to hunt for them** — report the `message` as-is and don't invent fact ids, dates, or sources the tool didn't return. (Most warnings are about a single constrained event — Birth, Death, Burial — so the `message` alone already makes clear which fact is meant.)
 - A concrete next step, phrased from the tool's `message` (e.g. "verify the recorded death date against the original death record"). Don't cite a specific fact/source id unless the tool provided it.
 
-**Before listing individual warnings, count -- then ask whether one error explains them all.** If 2 or more `severity: "contradiction"` warnings fire on the same person, open the report with a cluster note before the individual warnings. First check whether the contradictions cite the same facts: overlapping `facts` means one wrong fact is a live explanation for the whole cluster -- two symptoms, not two people; disjoint `facts` mean no single fact explains them; no `facts` returned cannot settle it, so keep both readings open. **`hasEventAfterDeath1` cites every fact the person has, so it overlaps everything and can never establish disjointness -- read disjointness off the other contradictions.** Never reason from which direction of date error fires which tag. **When one error would explain the cluster, say so and do not assert a merge:** "2 contradictions plus N implausible warnings on this one person. These may share a single cause -- they all cite the same [fact] -- or they may be records from two different individuals merged into one profile. Verifying [the shared fact] against its original source distinguishes the two." **Only when the contradictions cannot share one cause** is the merge reading the stronger one: "2 contradictions that no single wrong fact explains is a strong signal that records from two different individuals have been merged into one profile." **The recommendation is gated.** When one error would explain the cluster, recommend only that the fact be verified against its original source -- do not also send the user hunting for a split point. Only when no single fact explains the cluster: "I'd recommend rebuilding a chronological timeline of every recorded event for this person and going through each one to identify where one person's records end and another's begin -- once we find the split point, we can reassign the records that belong to the other individual." List individual warnings *under* that note, not above it.
+**Before listing individual warnings, count -- then ask whether one correction explains them all.** If 2 or more `severity: "contradiction"` warnings fire on the same person, open the report with a cluster note before the individual warnings. Test the single-cause reading on this cluster's own facts and dates: for each fact the contradictions cite, ask whether correcting that one fact to any date would clear every contradiction at once, working from what each tag measures (Appendix B) and from every date the tool returned, including those on implausible warnings. Report the test's conclusion and the returned facts it turns on. Contradictions with disjoint `facts` fail the test outright, since no one fact is in all of them. **`hasEventAfterDeath1` cites every fact the person has, so sharing a fact with it proves nothing -- a shared fact is a candidate to test, not an answer.** No `facts` returned cannot settle it, so keep both readings open. Never argue in general that one direction of date error fires one tag; the only question is whether this cluster has one correction that clears it. **When one correction would clear the cluster, say so and do not assert a merge:** "2 contradictions plus N implausible warnings on this one person. These may share a single cause -- correcting [the fact] would clear all of them -- or they may be records from two different individuals merged into one profile. Verifying [the fact] against its original source distinguishes the two." **When no single correction clears it** -- including when correcting the shared fact clears one contradiction only by leaving or worsening another -- the merge reading is the stronger one, not an established identity conclusion: "2 contradictions that no single correction explains is a strong signal that records from two different individuals have been merged into one profile -- only the records themselves can show it." **The recommendation is gated.** When one correction would clear the cluster, recommend only that the fact be verified against its original source -- do not also send the user hunting for a split point. Only when no single correction does: recommend verifying the dates the cluster's warnings cite against their original sources first, then: "I'd recommend rebuilding a chronological timeline of every recorded event for this person and going through each one to identify where one person's records end and another's begin -- once we find the split point, we can reassign the records that belong to the other individual." List individual warnings *under* that note, not above it.
+
+**Report `noGenderFound`, `nonStandardDate` and `nonStandardPlace` after every other warning**, under one heading, one line each.
 
 **Special case -- `missingFactsAndRelatives`:** Report with Implausible severity and add: "Note: this person has limited data, so most warning checks need dates and relatives to fire. Adding more research may surface additional issues currently hidden."
 
@@ -112,11 +114,12 @@ When the cause is ambiguous (the most common case), report the warning, list the
 WARNINGS FOR: Patrick Flynn (I1)
 
     2 contradictions plus 0 implausible warnings on this one
-    person. These may share a single cause -- both
-    contradictions cite the same death fact -- or
-    they may be records from two different individuals merged
-    into one profile. Verifying the recorded death date against
-    the original death record distinguishes the two.
+    person. These may share a single cause or they may be
+    records from two different individuals merged into one
+    profile -- without the facts behind each warning, the
+    warnings alone cannot tell which. Verifying the recorded
+    birth and death dates against their original sources is
+    the first step.
 
 [!]  Contradiction -- Event after death  [hasEventAfterDeath1]
     [Fundamental: people cannot act after their death -- but a
@@ -176,7 +179,7 @@ The full escalation table is in Appendix B.
 
 ### 5. Log the report
 
-Before you write your reply, including a report that found no warnings: one `research_log_append` call with the `projectPath` you passed `person_warnings` and one op: `tool: "check_warnings"`, `query: {personIds, request}` (the ids checked and the request in a few words), `planItemId: null`, `outcome: "positive"`, `resultsExamined` (persons checked), `notes` set to the **full** report exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
+Before you write your reply, including a report that found no warnings: one `research_log_append` call with the `projectPath` you passed `person_warnings` and one op: `tool: "check_warnings"`, `query: {personIds, request}` (the ids checked and the request in a few words), `planItemId: null`, `outcome: "positive"`, `resultsExamined` (persons checked), `notes` set to the **full** report exactly as you return it above the `---` line, never a summary, and never a sentence or figure the reply does not contain. **You must actually call it — do not just describe it in your response.**
 
 - `reason: "no_project"` → stop; write nothing.
 - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite `notes` as instructed, use the same text in your return, and re-send. Never drop the entry.
@@ -193,7 +196,7 @@ When the tool returns `warningCount: 0`, report: "No genealogical warnings found
 
 - **Warnings are informational, not gates.** They don't block further work.
 - **Don't auto-correct.** Report the warning; let the user or other skills investigate.
-- **The tool is the arbiter; don't re-derive.** The tool's output is ground truth. Do not read the tree to verify whether the tool's verdict is correct. **Do not perform your own date arithmetic to explain a warning the tool already explained** -- report the span the `message` states and compute none of your own. A warning that cites both a birth and a death hands you both ends of a lifespan; subtracting them and reporting the difference is inventing a number the response did not contain, exactly as "208 years" was. Cite only the `facts`, sources, and persons the tool's response actually mentions, and **name no specific date, event year, source type, or source description the response did not contain** -- the `facts` array carries `id`, `type` and `date` and nothing else, so a place, a source description, or a date for a fact the response did not name could only have come from reading `tree.gedcomx.json`.
+- **The tool is the arbiter; don't re-derive.** The tool's output is ground truth. Do not read the tree to verify whether the tool's verdict is correct. Cite only the `facts`, sources, and persons the tool's response actually mentions, and **name no specific date, event year, source type, or source description the response did not contain as a fact about the record** -- the `facts` array carries `id`, `type` and `date` and nothing else, so a place, a source description, or a date for a fact the response did not name could only have come from reading `tree.gedcomx.json`.
 - **Don't speculate about the underlying data or how the tool derived a warning.** Do not claim a fact does or does not exist, or narrate how a date was inferred — you cannot see that, and guessing produces self-contradictions (e.g. saying "no death fact is recorded" while explaining a death-based warning). Report the tool's `message`, the facts it cites, and the *general* reason the warning matters (e.g. "a father cannot die more than ~300 days before his child is born — gestation is finite"). Never make a claim about the tree's contents that the tool's response didn't state, and never one that contradicts the warning you're reporting.
 - **Historical exceptions exist.** A 13-year-old bride or a 105-year-old death is unusual by modern standards but documented historically. Present warnings with appropriate context.
 - **Surface tool errors verbatim.** If the tool returns an error (e.g. `personId` not found in `tree.gedcomx.json`), surface it as-is. Do not fall back to manual reasoning -- the whole point is determinism.
@@ -227,6 +230,8 @@ paragraphs of plain prose with **no label, heading or field name**:
    warning tags, field names, or skill or agent names. Build it only from the
    tool's response: name no date, year, place, record or research gap the
    response did not contain, and do not read a project file to write it.
+   When it reports a merge reading, it says in that paragraph that only the
+   records can show it.
 2. One sentence: what happens next, in plain language, naming no skill or agent.
    When nothing was found, say only that the check is clear.
 
@@ -258,7 +263,8 @@ Always investigate.
 
 #### `hasEventBeforeBirth365_2`
 - Rule: at least one event is dated more than 2 years before the
-  person's earliest birth-like fact.
+  person's latest birth-like fact. With a dated Birth, a christening
+  or baptism is not read as the birth.
 - Cause: wrong birth date, wrong event attribution, or identity
   confusion.
 - Action: verify the birth date and whether the early-dated event
@@ -293,7 +299,7 @@ Always investigate.
   this person.
 
 #### `hasAgeRangeGreaterThan120`
-- Rule: latest possible death year minus latest possible birth
+- Rule: earliest possible death year minus latest possible birth
   year is greater than 120.
 - Cause: wrong birth or death date, or two people merged.
 - Action: verify both vital dates against source documents.
@@ -306,7 +312,8 @@ Always investigate.
 
 #### `hasEventBeforeChristening365_3`
 - Rule: at least one non-Birth event is dated more than 3 years
-  before the latest Christening.
+  before the latest Christening. Not raised when a dated Birth comes
+  on or before every christening.
 - Cause: wrong event attribution or records from two persons
   merged.
 - Action: verify event ownership.
@@ -342,6 +349,42 @@ Always investigate.
   die the same day, but not 2+ days before.
 - Cause: data error or wrong mother attribution.
 - Action: verify dates.
+
+#### `hasDeathBeforeBirth`
+- Rule: the death is dated before the birth on every reading of the
+  dates.
+- Cause: a wrong birth or death date, or two people merged.
+- Action: verify both dates against their sources.
+
+#### `hasChildBornBeforeParent`
+- Rule: a biological child was born before this person, on every
+  reading of the dates. One warning per child.
+- Cause: a wrong date, or a wrong parent-child link.
+- Action: verify the link before either date.
+
+#### `hasMarriageBeforeBirth` / `hasMarriageAfterDeath`
+- Rule: a marriage on one of this person's couple relationships is
+  dated before their birth, or after their death.
+- Cause: a wrong date, or the marriage of a same-name person.
+- Action: verify which person the marriage record names.
+
+#### `hasSpouseNotAliveTogether`
+- Rule: one spouse died before the other was born. Raised on both
+  spouses.
+- Cause: a wrong date, or a same-name spouse of another generation.
+- Action: verify the couple link and both dates.
+
+#### `hasCoupleWithSelf`
+- Rule: the person is recorded as married to themselves.
+- Action: remove the couple relationship.
+
+#### `hasSpouseWhoIsAncestor` / `hasSpouseWhoIsSibling`
+- Rule: a spouse is also this person's biological ancestor or
+  descendant, or shares a biological parent with them. Raised on both
+  spouses.
+- Cause: a wrong parent-child link; for a shared parent, often a step
+  or adoptive link recorded as biological.
+- Action: verify the parent-child links before the marriage.
 
 #### `hasNoChildrenConflict`
 - Rule: a "No Children" marker the tree contradicts: the person's
@@ -388,6 +431,8 @@ treating as established.
 - `earliestChildBirthToBirthFemale14` -- mother had a child before age 14.
 - `latestChildBirthToBirth80` -- child born 80+ years after this person's birth.
 - `latestChildBirthToBirthFemale45` -- mother was age 45 or older at a child's birth.
+- `latestChildBirthToBirth75` -- parent was 75 to 79 at a biological child's birth.
+- `earliestChildEventToBirth12` -- a child with no birth date has an event dated before this person turned 12.
 
 #### Marriage timing
 - `hasEarlyMarriage14` -- married before age 14.
@@ -402,12 +447,14 @@ treating as established.
 - `tooManyDeathDates2` -- two or more distinct perfect-DMY death dates spaced > 14 days apart.
 - `deathRangeGreaterThan2` -- death-like dates span more than 2 years.
 - `hasBurialAfterDeath31` -- the latest possible burial is more than 31 days before the earliest possible death. (Despite the Java name, this fires on "burial before death" outliers.) Imprecise dates are read at their closest, so a year-only burial in the same year as the death does not fire.
+- `hasLateChristening18` -- a christening or baptism 18+ years after the birth: an adult baptism, or another date filed as a christening.
 - `hasDelayedBurial365` -- the earliest possible burial is more than 365 days after the latest possible death. Imprecise dates are read at their closest, as for `hasBurialAfterDeath31`. A burial delayed about a year for a later funeral can be real in some places, as can a reburial or a later burial of ashes. A burial 3 or more calendar years late also fires `deathRangeGreaterThan2`.
 
 #### Family structure
 - `tooManyChildren18` -- 18 or more children.
 - `tooManyFathers2` -- multiple fathers (only one biological father is possible).
 - `tooManyMothers2` -- multiple mothers.
+- `tooManyParents3` -- three or more biological parents, at least one with no sex recorded.
 - `childBirthRange40` -- span between earliest and latest child's birth is 40+ years.
 - `missingFactsAndRelatives` -- empty stub record (no facts other than `GenderChange`, no relatives).
 - `hasBlankName` -- no name on the record.
@@ -428,6 +475,15 @@ treating as established.
 #### Birthplace far from the parents' residence
 - `hasBirthFarFromParentsResidence` -- the birthplace (Birth, else Christening, else Baptism) is farther from a parent's residence dated within 20 years of the birth than the era allows: 25 mi before 1850, 250 mi 1850-1949, 500 mi from 1950. Usually a record of a different person attached, or a mis-standardised place. Skipped when the place lookup fails, so its absence proves nothing.
 
+#### Birth estimated from a christening
+With no Birth recorded, the birth is read as up to 2 years before the christening. These are the checks above on that estimate, and a late christening can cause any of them: verify the christening and look for a birth record first.
+- `hasDeathBeforeBirthEstimated`, `hasChildBornBeforeParentEstimated`, `hasMarriageBeforeBirthEstimated`, `hasSpouseNotAliveTogetherEstimated`, `earliestChildEventToBirth12Estimated`.
+
+#### Data quality
+- `noGenderFound` -- no sex recorded.
+- `nonStandardDate` -- a date no date check can read (`dead`, `Spring 1790`).
+- `nonStandardPlace` -- a place not linked to a standard place.
+
 #### Extreme lifetimes after specific events
 - `hasDeathAfterChildBirth90` -- died more than 90 years after the earliest child's birth.
 - `hasChildDeathAfterParentBirth200` -- died more than 200 years after the earliest parent's birth.
@@ -446,8 +502,10 @@ Naming patterns:
 - `maleRelatives<CheckName>` -- only male relatives are considered.
 - `femaleRelatives<CheckName>` -- only female relatives are considered.
 
-The relative being flagged is named in the warning's `personName`
-/ `personId`, not the focal person.
+A `relatives*`, `maleRelatives*` or `femaleRelatives*` warning is about a
+relative, never about the person you checked, so leave it out of that
+person's cluster count. Name the relative from `personId` when it differs
+from the id you passed, otherwise from `relatedPersonId`.
 
 The current set of relative-mob tags: `relativesDeathRangeGreaterThan2`,
 `relativesEarliestChildBirthToBirth12`,
@@ -668,25 +726,24 @@ Escalation guidance:
 - 1 `contradiction` on its own: investigate the specific condition
 - 1 `contradiction` + 1+ `implausible`s: likely identity confusion; recommend
   timeline review
-- 2+ `contradiction`s: first ask whether one wrong fact would produce
-  all of them, and settle it from the `facts` the tool returned --
-  contradictions citing overlapping facts are two symptoms of one
-  wrong fact rather than two people; disjoint `facts` mean no single
-  fact explains them. One tag cannot take part in that test:
+- 2+ `contradiction`s: first ask whether one correction would clear
+  all of them -- one cited fact corrected to any date. Work it from
+  every date the tool returned and what each tag measures:
+  `hasEventAfterDeath1` is `latest(any fact) - latest(death-like
+  fact) > 1 year`; `hasAgeRangeGreaterThan120` is `earliestDeath -
+  latestBirth > 120 years`. Disjoint `facts` fail the test outright --
+  `hasChristeningBeforeBirth` (Christening, Birth) and
+  `hasBurialBeforeDeath` (Burial, Death) are disjoint families.
   `hasEventAfterDeath1` builds its `facts` from `selfFactIds(mob,
-  null)`, every typed fact the person has, so it overlaps every other
-  warning by construction. Read disjointness off the narrower-scope
-  contradictions -- `hasChristeningBeforeBirth` (Christening, Birth)
-  and `hasBurialBeforeDeath` (Burial, Death) are disjoint families. Do not infer a shared cause from which
-  direction of date error would fire which tag: `hasEventAfterDeath1`
-  measures `latest(any fact) - latest(death-like fact)` and
-  `hasAgeRangeGreaterThan120` measures `earliestDeath - latestBirth`,
-  so a death date moved earlier fires the first and suppresses the
-  second. If one error explains the cluster,
-  verify that fact against its original source first. If no single
-  error explains it, two people merged is the stronger reading;
-  recommend splitting the profile and rebuilding the record-to-person
-  links from the sources
+  null)`, every typed fact the person has, so sharing a fact with it
+  settles nothing by itself. Do not argue in general from which
+  direction of error fires which tag; apply the measures to this
+  cluster's dates. If one correction clears the cluster, verify that fact
+  against its original source first. If none does, two people merged
+  is the stronger reading, not an established one; recommend
+  verifying the cited dates first, then rebuilding the timeline to
+  find where one person's records end, and only then splitting the
+  profile and rebuilding the record-to-person links from the sources
 - Any `contradiction` involving the death-vs-event sequence
   (`hasEventAfterDeath1`, `hasEventBeforeBirth365_2`): stop and
   investigate immediately regardless of other warning count
