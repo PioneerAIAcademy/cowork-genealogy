@@ -119,7 +119,12 @@ import { gatherRelatives, isRealGivenName, PLACEHOLDER_GIVEN } from "../utils/re
 import { factsEquivalent, namesEquivalent, relationshipMatches } from "../utils/merge-gedcomx.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
-import { countsForProofGate, isAttachmentLink } from "../utils/tree-person.js";
+import {
+  countsForProofGate,
+  isAttachmentLink,
+  isDerivedEntryLink,
+  derivedEntryLinkRationale,
+} from "../utils/tree-person.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
 
@@ -2941,6 +2946,11 @@ export function circularCorroborationCallCheck(
   const findings: Array<{ index: number | null; message: string }> = [];
   for (const e of (Array.isArray(after.research?.person_evidence) ? after.research.person_evidence : []) as any[]) {
     if (!isLiveStrong(e) || typeof e.id !== "string" || typeof e.person_id !== "string") continue;
+    // #4226: a derived row shares its trigger's person AND record entry, and
+    // this verdict is computed from exactly those two, so its finding is always
+    // a second copy of the trigger's. Reporting both told the caller twice
+    // about one link they wrote once.
+    if (isDerivedEntryLink(e)) continue;
     const prev = strongBefore.get(pairingKey(e));
     if (prev && CONFIDENCE_RANK[e.confidence] <= CONFIDENCE_RANK[prev.confidence]) continue;
     const verdict = circularCorroborationVerdict(e, after.research, after.tree, baseline);
@@ -4618,6 +4628,10 @@ export function namesakeCallCheck(
   const findings: Array<{ index: number | null; message: string }> = [];
   for (const { entry, rows, pairs, verdict } of assertedNamesakeVerdicts(before, after, startingPersonIds, { startingTree })) {
     if (verdict.allowed) continue;
+    // #4226: as in `circularCorroborationCallCheck` — the cap judges a (person,
+    // record) pairing, which a derived row shares with its trigger, so its
+    // finding duplicates one the caller already has.
+    if (isDerivedEntryLink(entry)) continue;
     let index: number | null = null;
     for (let i = applied.length - 1; i >= 0; i--) {
       if (applied[i].section === "person_evidence" && applied[i].entryId === entry.id) {
@@ -7127,6 +7141,11 @@ interface SingleSuccess {
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces?: ResolvedPlaceEcho[];
   /** Places looked up and left with no standard_place (§3.6). */
+  /** #4226: derived `person_evidence` rows a gate refused, so they were rolled
+   *  back out of the document rather than failing the call. Present only when
+   *  an entry did not expand fully, so the caller can see why it got fewer
+   *  rows than the entry has facts. */
+  skippedDerivedLinks?: string[];
   unresolvedPlaces?: string[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
@@ -7137,6 +7156,11 @@ interface BatchSuccess {
   sourceDescriptionId?: string;
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces?: ResolvedPlaceEcho[];
+  /** #4226: derived `person_evidence` rows a gate refused, so they were rolled
+   *  back out of the document rather than failing the call. Present only when
+   *  an entry did not expand fully, so the caller can see why it got fewer
+   *  rows than the entry has facts. */
+  skippedDerivedLinks?: string[];
   unresolvedPlaces?: string[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
@@ -7291,6 +7315,11 @@ interface AppliedByApplyOne {
   /** A settled no-op (e.g. re-declaring an already-exhaustive question): the
    *  document was not mutated, so the caller may skip the write. */
   noop?: boolean;
+  /** #4226: this op was a DERIVED `person_evidence` row and a gate refused it,
+   *  so it was rolled back out of the document instead of failing the call.
+   *  Carries the first refusal, for the response's skip list. The caller did
+   *  not write this row and cannot act on a failure about it. */
+  skippedDerived?: string;
   warnings?: string[];
 }
 
@@ -8315,6 +8344,10 @@ function applyOne(
   // Ids that count as taken beyond the entries the document shows: the ones ops
   // that failed would have had. Only the failure path sets it.
   reservedIds?: ReadonlySet<string>,
+  // #4226: this op is a `person_evidence` row `planEntryLinkExpansion` derived
+  // from the caller's own link, not one the caller wrote. Set by index at the
+  // call site, never from the op's contents.
+  derivedLink = false,
 ): AppliedByApplyOne {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -9232,7 +9265,15 @@ function applyOne(
     // gate). Exempt only on extraction_append's internal flag AND the entry's
     // full attachment shape, so neither half alone reaches the exemption.
     const exemptAttachment = attachmentLink && op.op === "append" && isAttachmentLink(resultEntry);
-    if (writesScore && !exemptAttachment) {
+    // #4226: a derived row carries no score because none was computed for its
+    // pairing, and none can be: the attestation is keyed on the ASSERTION, and
+    // its persona arm fires only where the assertion carries a non-null
+    // `record_persona_id` -- null on thousands of corpus links. The caller made
+    // one scored identity decision about the entry, which is what the ruling
+    // says a link is. Keyed on the op's index, so no caller-supplied shape can
+    // reach this exemption.
+    const exemptDerived = derivedLink && op.op === "append";
+    if (writesScore && !exemptAttachment && !exemptDerived) {
       invariantErrors.push(
         ...personEvidenceScoreInvariants(
           resultEntry,
@@ -9337,6 +9378,17 @@ function applyOne(
     }
   }
   if (invariantErrors.length > 0) {
+    // #4226: a derived row is the TOOL's, not the caller's. Any gate refusing
+    // one must drop that row, never fail the call: the caller did not write it
+    // and cannot act on a message about it. General on purpose -- an earlier
+    // draft pre-checked two named invariants in the planner instead, and the
+    // circular-corroboration gate and the namesake cap, which fire here, each
+    // emitted a second copy of their trigger's own error (22 tests).
+    if (derivedLink && op.op === "append" && typeof arrayIndex === "number") {
+      const list = research[section];
+      if (Array.isArray(list) && list.length > arrayIndex) list.splice(arrayIndex, 1);
+      return { section, op: op.op, entryId, skippedDerived: invariantErrors[0] };
+    }
     throw new ResearchAppendError(invariantErrors);
   }
 
@@ -11168,6 +11220,180 @@ function expandNarrativeEdits(
 /** The one field a direct `research_append` call may change on an assertion. */
 const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
 
+/** #4226: the rows a one-party `person_evidence` append implies.
+ *
+ *  Lead ruling 2026-11-04 — a link means THE RECORD ENTRY is this person, so
+ *  once the person in role X of record Y is linked to tree person Z, every
+ *  one-party fact of that entry belongs to Z. The caller writes one link; this
+ *  writes the rest.
+ *
+ *  Four rules decide what is in an entry, and each has cost a measurement:
+ *
+ *  - **The party key is `recordPartyKeyer`'s**, not a local one. It reads the
+ *    whole record (persona id, else role, with #2537's corrections) and is the
+ *    same key `contradictionScope` uses, so the write rule and the gate cannot
+ *    disagree about what a party is.
+ *  - **`absent` is not an entry, and that is applied HERE, at the key.** The
+ *    keyer returns the persona id for negative evidence filed against a persona
+ *    (anders-monsen's "Unna absent from 1801 Hamre" is filed on ANDERS' persona
+ *    and linked to Unna). Dropped only at the point of use, it makes Unna a
+ *    holder of Anders' entry and the refusal below fires on a correct record.
+ *    Both spellings: `record_basis: "absent"` and the legacy `record_role`.
+ *  - **A two-party fact is neither a trigger nor a product.** Its link does not
+ *    say which of the two parties it is about, so it cannot identify an entry
+ *    (ADR-0009 constraint 3).
+ *  - **An attachment-shaped link does not trigger.** The baseline step assumes
+ *    every FamilySearch attachment is correct and runs no `same_person`;
+ *    expanding there multiplies an assumption instead of recording a judgement.
+ *
+ *  The refusal ("an entry belongs to one tree person") counts only ONE-PARTY
+ *  links on the holder side. Counting any live link refuses 1,138 further
+ *  (entry, person) pairs across the committed corpus -- roughly 44% of all
+ *  linked record parties are multi-person solely through two-party links.
+ *  Measured by `dev/replay-entry-link.ts`.
+ *
+ *  A derived row that an invariant would refuse is SKIPPED and reported, never
+ *  raised: the caller did not write it and cannot act on a failure about it. */
+export function planEntryLinkExpansion(
+  ops: ResearchAppendOp[],
+  research: any,
+): { derived: ResearchAppendOp[]; refusals: string[] } {
+  const derived: ResearchAppendOp[] = [];
+  const refusals: string[] = [];
+
+  const live = new Map<string, any>();
+  for (const [id, a] of batchAssertionsById(research, ops)) {
+    if (isLiveAssertion(a)) live.set(id, { ...a, id });
+  }
+
+  const byRecord = new Map<string, any[]>();
+  for (const a of live.values()) {
+    if (recordBasisOf(a) === "absent" || a.record_role === "absent") continue;
+    const rec = arkToBareId(String(a.record_id ?? ""));
+    if (rec === "") continue;
+    const list = byRecord.get(rec);
+    if (list) list.push(a);
+    else byRecord.set(rec, [a]);
+  }
+  const entryOf = new Map<string, string>();
+  const inEntry = new Map<string, any[]>();
+  for (const [rec, list] of byRecord) {
+    const keyer = recordPartyKeyer(list);
+    for (const a of list) {
+      const party = keyer(a);
+      if (party === null) continue;
+      const k = `${rec}/${party}`;
+      entryOf.set(a.id, k);
+      const bucket = inEntry.get(k);
+      if (bucket) bucket.push(a);
+      else inEntry.set(k, [a]);
+    }
+  }
+
+  // Links the document already holds, PLUS this batch's own appends: a batch
+  // linking two facts of one entry must not derive the second from the first.
+  type Held = { person: string; assertionId: string; oneParty: boolean };
+  const held: Held[] = [];
+  const note = (personId: unknown, assertionId: unknown): void => {
+    const a = live.get(String(assertionId));
+    if (!a) return;
+    held.push({
+      person: String(personId),
+      assertionId: String(assertionId),
+      oneParty: !isTwoParty(a.fact_type),
+    });
+  };
+  for (const pe of (research?.person_evidence ?? []) as any[]) {
+    if (pe?.superseded_by != null) continue;
+    note(pe?.person_id, pe?.assertion_id);
+  }
+  for (const op of ops) {
+    if (op.section !== "person_evidence" || op.op !== "append") continue;
+    const e = op.entry as any;
+    if (e && typeof e === "object") note(e.person_id, e.assertion_id);
+  }
+  const heldByEntry = new Map<string, Held[]>();
+  for (const h of held) {
+    const k = entryOf.get(h.assertionId);
+    if (k === undefined) continue;
+    const b = heldByEntry.get(k);
+    if (b) b.push(h);
+    else heldByEntry.set(k, [h]);
+  }
+
+  const emitted = new Set<string>();
+
+  for (const op of ops) {
+    if (op.section !== "person_evidence" || op.op !== "append") continue;
+    const entry = op.entry as any;
+    if (!entry || typeof entry !== "object") continue;
+    const trigger = live.get(String(entry.assertion_id));
+    if (!trigger) continue;
+    if (isTwoParty(trigger.fact_type)) continue;
+    if (isAttachmentLink(entry)) continue;
+    if (isDerivedEntryLink(entry)) continue;
+    const k = entryOf.get(trigger.id);
+    if (k === undefined) continue;
+    const person = String(entry.person_id);
+
+    const others = [
+      ...new Set(
+        (heldByEntry.get(k) ?? [])
+          .filter((h) => h.oneParty && h.person !== person)
+          .map((h) => h.person),
+      ),
+    ];
+    if (others.length > 0) {
+      const theirs = (heldByEntry.get(k) ?? [])
+        .filter((h) => h.oneParty && h.person !== person)
+        .map((h) => h.assertionId);
+      refusals.push(
+        `person_evidence for '${person}' links ${trigger.id}, but that record entry ` +
+          `(${k}) is already this project's entry for ${others.join(", ")}, via ${theirs.join(", ")}. ` +
+          `A record entry is one person: linking a one-party fact of it claims the whole entry. ` +
+          `Either supersede the existing link, record a rejected_links entry for the pairing you ` +
+          `are ruling out, or link an assertion of the party you actually mean.`,
+      );
+      continue;
+    }
+
+    const already = new Set(
+      (heldByEntry.get(k) ?? []).filter((h) => h.person === person).map((h) => h.assertionId),
+    );
+    for (const sib of inEntry.get(k) ?? []) {
+      if (already.has(sib.id) || isTwoParty(sib.fact_type)) continue;
+      const dedupe = `${k}\u0000${person}\u0000${sib.id}`;
+      if (emitted.has(dedupe)) continue;
+      const row: Record<string, unknown> = {
+        assertion_id: sib.id,
+        person_id: person,
+        confidence: entry.confidence,
+        match_score: null,
+        rationale: derivedEntryLinkRationale(String(trigger.id), k),
+      };
+      // Inherited, not defaulted. `unexplainedMoveInvariants` reads the move off
+      // the RECORD and the PARTY -- the same record and party a derived row sits
+      // on -- so a `confident` trigger that cleared it by carrying a bridge would
+      // otherwise produce rows that every one get refused, and the entry would
+      // not expand at all. That is the bug this card exists to fix, surviving on
+      // a named class.
+      if (typeof entry.move_bridge === "string" && entry.move_bridge.trim() !== "") {
+        row.move_bridge = entry.move_bridge;
+      }
+      if (entry.core_identifier_conflict != null) {
+        row.core_identifier_conflict = entry.core_identifier_conflict;
+      }
+      // No gate pre-check here. Every gate runs in `applyOne`, which rolls a
+      // refused derived row back out of the document (`skippedDerived`). A
+      // second, partial copy of that rule in this planner is what let the
+      // circular-corroboration gate and the namesake cap through.
+      emitted.add(dedupe);
+      derived.push({ section: "person_evidence", op: "append", entry: row });
+    }
+  }
+  return { derived, refusals };
+}
+
 /** `research_append` as an MCP caller reaches it. Assertions are written only by
  *  `extraction_append`, which calls `researchAppend` directly and so never meets
  *  this check. A caller may update one existing assertion's
@@ -11366,6 +11592,22 @@ export async function researchAppend(
       retracted = plan.retracted;
     }
 
+    // #4226: a one-party link claims its whole record entry, so write the rest
+    // of that entry's rows. BEFORE prepareOps, never inside it: prepareOps is
+    // where the batch's derived views are built FROM `ops`
+    // (`batchAssertionsById`, `batchPersonLinks`, the per-record attestation
+    // load), so rows added inside it would be judged against a snapshot
+    // computed without them -- the contradiction gate's two-party arm and the
+    // score-gate load would both silently miss them.
+    const expansion = planEntryLinkExpansion(ops, research);
+    if (expansion.refusals.length > 0) return fail(boundErrors(expansion.refusals));
+    const derivedFrom = ops.length;
+    ops.push(...expansion.derived);
+    // Index-based, not a marker on the op: the failure path below re-applies
+    // `structuredClone(ops)`, which would drop any non-enumerable property.
+    const derivedOpIndices = new Set<number>();
+    for (let i = derivedFrom; i < ops.length; i++) derivedOpIndices.add(i);
+
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
     const readSidecar = sidecarReader(projectPath);
     const prep = await prepareOps(input, ops, research, tree, projectPath, fmt, options, readSidecar);
@@ -11402,6 +11644,7 @@ export async function researchAppend(
         storedCollectionUrls,
         options.attachmentLink === true,
         ctx.reserved,
+        derivedOpIndices.has(opIndex),
       ),
       opIndex,
     });
@@ -11649,16 +11892,26 @@ export async function researchAppend(
       valid: true as const,
       warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...removalWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
     };
-    const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces" | "unresolvedPlaces"> = {};
+    const extras: Pick<
+      BatchSuccess,
+      "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces" | "unresolvedPlaces" | "skippedDerivedLinks"
+    > = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
     if (prep.sourceReuse) extras.sourceReuse = prep.sourceReuse;
     if (prep.resolvedPlaces.length > 0) extras.resolvedPlaces = prep.resolvedPlaces;
     if (prep.unresolvedPlaces.length > 0) extras.unresolvedPlaces = prep.unresolvedPlaces;
 
+    // #4226: a derived row a gate refused was rolled back out of the document,
+    // so it is not a result. Reported instead, so the caller can see that the
+    // entry did not expand fully rather than silently getting fewer rows.
+    const skippedDerived = applied.flatMap((a) => (a.skippedDerived ? [a.skippedDerived] : []));
+    if (skippedDerived.length > 0) extras.skippedDerivedLinks = skippedDerived;
+    const written = applied.filter((a) => !a.skippedDerived);
+
     if (isBatch) {
       return {
         ok: true,
-        results: applied.map((a) => ({ section: a.section, op: a.op, entryId: a.entryId })),
+        results: written.map((a) => ({ section: a.section, op: a.op, entryId: a.entryId })),
         ...extras,
         filesWritten,
         validation: validationBlock,

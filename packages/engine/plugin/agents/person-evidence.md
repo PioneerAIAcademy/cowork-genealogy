@@ -123,7 +123,14 @@ pattern for relationship assertions. Example:
 - Create two `pe_` entries: one linking a_004 → I1, another
   linking a_004 → I2
 
-Create one `pe_` entry per person the assertion bears on.
+Create one `pe_` entry per person the assertion bears on — for an assertion
+that names two people: a relationship, a marriage, a couple event, or a fact
+about someone else filed on this persona.
+
+For a fact about one person (name, sex, birth, death, residence, occupation),
+write ONE entry, to the person whose record entry it is. Do not link it to a
+relative as well. `research_append` writes that entry's other one-party facts
+to the same person itself.
 
 **Do this proactively, in the same pass.** When an assertion implies a
 relationship (a census household, a will naming a child, a marriage record),

@@ -260,12 +260,20 @@ camelCase convenience fields the same way `research_log_append` does.
   },
   resolvedPlaces?: [{ place, standardPlace, source: "sidecar" | "geocoded" }], // §3.6
   unresolvedPlaces?: string[],     // §3.6 — each place looked up and left with no standard_place
+  skippedDerivedLinks?: string[],  // §5.12 — derived rows a gate refused, rolled back
   filesWritten: ["research.json"], // + "tree.gedcomx.json" first, when §3.4 wrote the S
                                    //   entry or §3.1's assertion-update rewrote a fact
   validation: { valid: true, warnings: string[] },
 }
 // on failure: { ok: false, errors: string[] } — nothing written
 ```
+
+**One `person_evidence` append can produce several `results[]` rows.** A link
+claims its whole record entry (§5.12), so the tool writes that entry's other
+one-party rows in the same call and each gets its own `results[i]`, in the order
+written, after the caller's own. A caller that assumed `results.length ===
+ops.length` will miscount. Rows a gate refused are **not** in `results` — they
+were rolled back — and are named in `skippedDerivedLinks` instead.
 
 A `hit_verdicts` append that §3.10 folds into an update of an existing row
 returns `op: "update"` and that row's `entryId`, and a warning naming the row; in
@@ -1289,6 +1297,7 @@ audit's recommendation #5):
 | any op citing an assertion (`person_evidence.assertion_id`; a conflict's `competing_assertion_ids`/`preferred_assertion_id`; a hypothesis's supporting/contradicting ids; a proof summary's `supporting_assertion_ids`, top level or in `claims[]`; a timeline event's `assertion_ids`; a question's `resolution_assertion_ids`) | **A retired assertion is not evidence.** An op that *newly* cites an assertion whose `superseded_by` is non-null is refused, naming it and what superseded it; an id the stored entry already held is not new. A retirement is refused while anything rests on the assertion (§11.6.1), so a stored citation of one does not arise | `retiredAssertionCitations` |
 | `extraction_append` re-extraction (internal `retireAssertions`) | **Nothing may rest on an assertion it retires.** Under the lock, every id must still be live and carry the record's id, and none may be cited by a live `person_evidence` row, a `rejected_links` row, a tree fact's `assertion_id`, a proof summary, a conflict, a hypothesis, a timeline event or a question's `resolution_assertion_ids`; when a relationship claim is among them, no tree relationship may cite the record's `S`. The whole batch is refused, each referrer named | `planRetirement` / `assertionReferrers` |
 | `assertions` append or update, `fact_type: relationship` | **`structured_value.relationship_type` must not contradict what `value` says about the record SUBJECT.** `relationship_type` is the subject's own role and `related_person_role` is the other party's, so a death certificate naming the father is `"child"` on the deceased, not `"parent"`. The legal categories are `parent`, `child`, `spouse` and `sibling` — `sibling` included, which earlier guidance omitted, and the omission is the live defect: 5 sightings across three of the five current record-extraction run logs, every one a sister typed `child`. **Position decides whose role the value names**, and that is why two earlier guards on this field were abandoned: `child of Jim Neal` states the subject's role, while `father named as Casper` and `father: Jan Roelfs` label the other party and are skipped. Comparing relation words without regard to position refused 22 of the 37 it flagged over the e2e run logs, and 27 of 47 over the full population below — re-derivable with `measure_relationship_direction.py --counterfactual`. Unknown spellings fail open, never refused — 63 assertions across 16 spellings over the e2e run logs, 73 across 18 over the full population (`grandparent`, `ParentChild`, `administrator`, `ward`, `grandchild` are the commonest; `stepfather` and `father_in_law` occur nowhere in any of them and are not useful examples). Forward direction only, on the ops being written, so a project holding an assertion written before this rule stays writable | Refuses **21 of 2586 (0.8%)** across the e2e run logs, the unit run logs, the scenario fixtures and the hosted seed — 19 distinct assertions, since a unit log carries an id-less write op beside its persisted copy; **0** in the fixtures and **0** in the seed. All read individually, all true positives. Measured at 1d5656fe3 by `eval/harness/scripts/measure_relationship_direction.py`. ADR-0011 |
+| `person_evidence` append of a one-party fact | **A record entry belongs to one tree person.** A link says the person in role X of record Y *is* tree person Z, so it claims that entry, not the one fact it names: the call is refused when another tree person already holds the entry through a one-party link of their own. The holder side counts **only one-party links** — a two-party assertion's link does not say which of its two parties it is about, so counting it would refuse the ordinary household shape. The refusal names the holding assertions and the three ways out: supersede the existing link, record a `rejected_links` row for the pairing being ruled out, or link an assertion of the party actually meant. Order-dependent by construction: whichever link arrives second is the one refused | Refuses **104 (entry, person) pairs across 51 entries** over the 237 committed e2e final states; the rejected any-live-link reading refuses **1,242**. Read individually: 19 entries where the later arrival is the thinner claim (the defect), **4 where it is the fuller claim and the refusal is wrong**, 28 where both sides are equally thin. The 4 are an accepted false-deny cost, stated per ADR-0011. Measured at 02ffc4da1 by `packages/engine/mcp-server/dev/replay-entry-link.ts`. §5.12 |
 | `assertions` append or update | **`informant_proximity: "unknown"` implies `information_quality: "indeterminate"`.** If the informant cannot be identified, neither firsthand knowledge nor its absence has been established, so the Layer-2 decision tree terminates at its first question and never reaches the primary/secondary split. **Forward only, and deliberately not a biconditional**: `indeterminate` does NOT imply `unknown` — a NAMED informant whose relationship to the specific fact cannot be established is the tree's "cannot tell" branch at a known proximity, which is the ordinary census shape, and an `iff` reading would refuse it. Fires only for the two in-enum values that claim a determination: a missing `information_quality` is `checkRequired`'s error and an out-of-enum one is `checkEnum`'s, and adding this on top would name the wrong fix — not hypothetical, `mid-research-flynn-bad-enum` a_001 is `unknown` + `tertiary` and `ut_validate_schema_004` pins the validator at exactly ONE error for it. The update arm validates the MERGED entry, which is the case the rule exists for: flipping proximity to `unknown` and leaving a stale `secondary` behind. The update arm checks it only when the op sets `informant_proximity` or `information_quality`, which still catches that flip; an update touching neither, such as a question tie on a legacy pair, is not re-checked | Prose in `record-extractor.md` (since retired), and prose did not hold: the model broke it on **248 of 982** `unknown` assertions across the committed e2e corpus. Mirrored at the document tier in `validator.ts`; six scenario assertions backfilled with it |
 | `conflicts` append (fact) | ≥2 `competing_assertion_ids`; identity ≥1 | `validateResearch` (`"fact conflict requires at least 2 competing_assertion_ids"`) |
 | `conflicts` append (fact), or an update that (re)sets `competing_assertion_ids` | **no competing pair whose `place` values are in a containment relationship, when the dispute is about place** — "Ireland" and "County Cork, Ireland" are one claim at two levels of precision, not a disagreement, so the entry asserts a dispute the sources do not have. Three conditions, each load-bearing. **(a) `disputed_attribute` must name place and nothing else**, matched against an exact allow-list: the field is free text — 28 distinct values across the 102 corpus fact conflicts, including whole sentences and two compounds (`birth_year_and_birthplace`) — so a dispute about the *year* between two places in containment is a real dispute, and refusing it with a message saying they "do not disagree" is false about the axis actually in dispute. **(b) no pair may disagree at all**: `compatiblePlace` is true for EQUAL places as well as for containment (including a place written without the country the other adds, "Ohio" against "Ohio, United States"), so the canonical Flynn conflict (Ireland / Ireland / Pennsylvania) has two compatible Irelands beside a Pennsylvania that genuinely disagrees. **(c) at least one pair must be a *strict* containment** — compatible with differing hierarchy depth, counted in normalized segments via `placeSegments`, which is what the comparator itself counts; a raw comma count disagrees with it in both directions ("Ireland" vs "Ireland," wrongly refused, "Cork, Ireland" vs "Ireland," wrongly allowed). A place that is blank or comma-only is "no place" and is skipped, not read as a disagreement, which would silently disable the guard for the whole entry. Reads free-text `place` because that is the value the comparator is built for and the one every assertion carries however it was authored — not because `standard_place` is empty (it is empty on the hand-authored fixtures only; `research_append` resolves and writes it itself on every assertion append carrying a place). Siblings ("Schuylkill, Pennsylvania" vs "Allegheny, Pennsylvania") are incompatible and stay allowed. Scoped to ops that set the pairing, so a conflict written before the rule existed stays editable. `conflict_type: "identity"` is out of scope | Alpha feedback 2026-08-28: the agent filed a country-vs-county pair as a birthplace dispute, and corrected itself only when the researcher pushed back. Measured cost: **0 of 37** corpus fact conflicts are refused, and 0 of the 102 fact conflicts across the wider 406-document corpus. A predicate keyed on any-compatible-pair — the first revision — refused **35 of 37** |
@@ -2060,6 +2069,58 @@ ended with every question resolved, and in 6 of them the rule removes 17
 persons. The only `research.json` entries naming those persons are 91
 `person_evidence` links.
 
+### 5.12 A link claims its whole record entry
+
+A `person_evidence` row answers "is the person in role X of record Y the same as
+tree person Z". Once it says yes, every fact that record states about that
+person is about Z, so the tool writes the entry's remaining rows itself rather
+than leaving the answer recorded against one fact.
+
+**What an entry is.** The record (`arkToBareId`) plus the party key
+`recordPartyKeyer` gives — the `record_persona_id` when the record named one,
+else the `record_role`, read across the whole record. The same key the
+contradiction gate uses, so the write rule and the gate cannot disagree about
+what a party is.
+
+**Three things are not part of an entry.** A two-party fact (a relationship, a
+marriage, a couple event, or a fact about someone else filed on this persona):
+its link does not say which of the two parties it is about, so it neither
+triggers an expansion nor is produced by one. Negative evidence: `absent` is not
+an entry, and this is applied when the key is computed, because
+`recordPartyKeyer` returns the persona id for an absent-role assertion that
+carries one — negative evidence filed against a persona would otherwise sit
+inside that persona's party. And an attachment-shaped link
+(`isAttachmentLink`), which the baseline step writes with no `same_person` call
+behind it; expanding there would multiply an assumption rather than record a
+judgement.
+
+**What a derived row carries.** Its trigger's `person_id`, `confidence`,
+`move_bridge` and `core_identifier_conflict`; `match_score: null`; and a
+rationale naming the link it came from and the entry key, which is what makes
+it distinguishable from a row a caller wrote (`isDerivedEntryLink`). The
+`move_bridge` inheritance is load-bearing rather than tidiness:
+`unexplainedMoveInvariants` reads the move off the record and the party — the
+same ones a derived row sits on — and returns early only on a non-empty bridge,
+so without it every derived row of a bridged entry is refused and the entry
+quietly fails to expand.
+
+**Gates.** Derived rows skip the `same_person` score gate: the attestation is
+keyed on the assertion, and its persona arm fires only where the assertion
+carries a non-null `record_persona_id`, so a derived row would owe a score that
+cannot exist. They are exempt by op index, not by any shape a caller can send.
+Every other gate still runs, and a derived row one refuses is **rolled back out
+of the document and reported in `skippedDerivedLinks`**, never raised as an
+error — the caller did not write that row and cannot act on a failure about it.
+The two call-level post-checks (circular corroboration, the namesake cap) skip
+derived rows outright, since each judges a (person, record-entry) pairing a
+derived row shares with its trigger, so its finding would duplicate one the
+caller already has.
+
+**Scope.** The rule runs at write time, so a project written before it stays
+partly linked; nothing backfills. It reaches an entry only where one one-party
+fact is already linked. An entry reached solely through two-party links — the
+common shape — is not expanded, by the reasoning above.
+
 ## 6. Decisions recorded
 
 - **One tool with `section` + `op`, not per-section tools.** Same rationale as
@@ -2184,6 +2245,18 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
 - **append-only enforced** — there is no delete op; an update never shrinks an array.
 - **camelCase→snake_case** — persisted entry uses snake_case keys.
 - **atomicity** — a validation failure leaves `research.json` byte-unchanged.
+- **entry-link expansion (§5.12)** — `research-append-entry-link.test.ts`, a
+  labelled case set per ADR-0011. Must-fire: an entry another person holds
+  through a one-party link refuses; a derived row a gate refuses is skipped and
+  reported, not raised. Must-not-fire: a two-party fact neither triggers nor is
+  produced; negative evidence is not part of an entry, in both the
+  `record_basis` and `record_role` spellings; an attachment-shaped link does not
+  expand; a two-party holder does not make the entry someone else's; a derived
+  row does not chain. Plus the positive arms — expansion, no score owed,
+  `move_bridge` inherited, and the key falling back to `record_role` when the
+  record named no persona. Every case was watched failing on a planted break
+  (the naive any-live-link reading, the `isTwoParty` filter removed, each half
+  of the `absent` filter removed, and expansion disabled outright), not assumed.
 - **composite create** — `sourceDescription` writes the `S` entry (shared `nextId`
   allocator), stamps the sources op, echoes `sourceDescriptionId`, writes both
   files tree-first with `atomicWriteBoth` (no `.bak`).
