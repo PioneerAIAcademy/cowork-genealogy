@@ -1,0 +1,215 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age. The raw recapi body carried the age (PR_AGE 74), which record_read never returned, so it rides in `indexFields`, where a captured sidecar keeps it; the mock never serves it inline and computes `birthRanges` from it. The age is not in the bundle: it is the age the issue gives (1850: 11, 1865: 26, 1910: 71, and the death indexes 74) or the year the index's bare birth year implies (1870: 29, 1880: 40).",
+  "args": {
+    "recordId": "~F8R4-RYM"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_11222762310",
+        "ark": "ark:/61903/1:1:F8R4-RYM",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "001678c2-6d82-41bc-8ab9-61f2c4a3eebf",
+            "type": "BirthName",
+            "surname": "Mollman",
+            "given": "Edward"
+          }
+        ],
+        "facts": [
+          {
+            "id": "bf9901ec-b5d2-4bcc-8c73-08a026e0ddf9",
+            "type": "Death",
+            "primary": true,
+            "date": "16 Aug 1913",
+            "standard_date": "16 Aug 1913",
+            "place": "Burlington, Chittenden, Vermont, United States",
+            "standard_place": "Burlington, Chittenden, Vermont, United States"
+          },
+          {
+            "id": "436c8b20-9161-45b6-8778-6957e6ea497d",
+            "type": "Birth",
+            "date": "1839",
+            "standard_date": "1839"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_11222762311",
+        "ark": "ark:/61903/1:1:F8R4-RY9",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "2487fa3a-b43d-4fd8-9216-89f54f261521",
+            "type": "BirthName",
+            "surname": "...Allman",
+            "given": "Joseph"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_11222762312",
+        "ark": "ark:/61903/1:1:F8R4-RYS",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "d5984004-a038-401f-80a9-e925c6f4a6d2",
+            "type": "BirthName",
+            "surname": "Patterson",
+            "given": "Jane"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_11222762313",
+        "ark": "ark:/61903/1:1:F8R4-RY3",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "7c3a579e-c48b-44d5-9beb-23f380332b60",
+            "type": "BirthName",
+            "surname": "Wade",
+            "given": "Clarissa"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "8c56e1fb-5e04-4310-938e-fdcf9f4696d3",
+        "type": "Couple",
+        "person1": "p_11222762310",
+        "person2": "p_11222762313"
+      },
+      {
+        "id": "97903117-abd2-49a4-a62f-78ac42d2f527",
+        "type": "ParentChild",
+        "parent": "p_11222762311",
+        "child": "p_11222762310"
+      },
+      {
+        "id": "065f1401-2a3f-4de5-a44e-48eb474afa14",
+        "type": "ParentChild",
+        "parent": "p_11222762312",
+        "child": "p_11222762310"
+      },
+      {
+        "id": "e1bf4546-4b47-4b8d-8df9-11492eb84919",
+        "type": "Couple",
+        "person1": "p_11222762311",
+        "person2": "p_11222762312"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_732063633",
+        "resource_type": "Record",
+        "title": "Entry for Edward Mollman, \"Vermont, Deaths and Burials, 1871-1965\"",
+        "citation": "\"Vermont, Deaths and Burials, 1871-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F8R4-RYM : Fri Oct 16 14:23:34 UTC 2026), Entry for Edward Mollman and Joseph ...Allman, 16 Aug 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9M3P-X93",
+        "coverage": {
+          "place_rep_id": "8027775",
+          "date_range": "16 Aug 1913",
+          "record_type": "Vital",
+          "standard_place": "Burlington, Chittenden, Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_c_1675549",
+        "resource_type": "Collection",
+        "title": "Vermont, Deaths and Burials, 1871-1965",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1675549",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1871/1965",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L99P-5ZTX",
+        "coverage": {
+          "place_rep_id": "8027775",
+          "date_range": "1911",
+          "record_type": "DeathCertificate",
+          "standard_place": "Burlington, Chittenden, Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_11222762310",
+        "resource_type": "Person",
+        "title": "Edward Mollman, \"Vermont, Deaths and Burials, 1871-1965\"",
+        "citation": "\"Vermont, Deaths and Burials, 1871-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F8R4-RYM : Fri Oct 16 14:23:34 UTC 2026), Edward Mollman, 16 Aug 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:F8R4-RYM"
+      },
+      {
+        "id": "sd_p_11222762312",
+        "resource_type": "Person",
+        "title": "Jane Patterson, \"Vermont, Deaths and Burials, 1871-1965\"",
+        "citation": "\"Vermont, Deaths and Burials, 1871-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F8R4-RYS : Fri Oct 16 14:23:34 UTC 2026), Jane Patterson in entry for Edward Mollman, 16 Aug 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:F8R4-RYS"
+      },
+      {
+        "id": "sd_p_11222762313",
+        "resource_type": "Person",
+        "title": "Clarissa Wade, \"Vermont, Deaths and Burials, 1871-1965\"",
+        "citation": "\"Vermont, Deaths and Burials, 1871-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F8R4-RY3 : Fri Oct 16 14:23:34 UTC 2026), Clarissa Wade in entry for Edward Mollman, 16 Aug 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:F8R4-RY3"
+      },
+      {
+        "id": "sd_p_11222762311",
+        "resource_type": "Person",
+        "title": "Joseph ...Allman, \"Vermont, Deaths and Burials, 1871-1965\"",
+        "citation": "\"Vermont, Deaths and Burials, 1871-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F8R4-RY9 : Fri Oct 16 14:23:34 UTC 2026), Joseph ...Allman in entry for Edward Mollman, 16 Aug 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:F8R4-RY9"
+      },
+      {
+        "id": "sd_auto_M924-R5S",
+        "resource_type": "auto",
+        "title": "United States, Vermont, Deaths, from 0021 to 2990",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "+0021-01-01T00:00:00Z/+2990-12-31T23:59:59Z",
+          "standard_place": "Vermont, United States"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_8027775"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:3QS7-L99P-5ZTX",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L99P-5ZTX",
+    "indexFields": {
+      "p_11222762310": {
+        "age": "74"
+      }
+    }
+  }
+}

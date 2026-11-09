@@ -180,7 +180,8 @@ to the step that owns its deliverable — a plan to `@plugin:research-plan`, a r
 `@plugin:search-records`, a review of the sources attached to a person to
 `@plugin:source-evaluation`, whether two people are the same or should be merged
 to `@plugin:person-evidence` (a researcher who doubts or denies that a record is this
-person goes there with their message copied verbatim), a verdict on a hint to `@plugin:search-hints`, where
+person goes there with their message copied verbatim, even when an open hypothesis
+already asks that identity question), a verdict on a hint to `@plugin:search-hints`, where
 the records are for a place and period to `@plugin:locality-guide`, and whether a
 person's children or siblings are complete to `@plugin:search-records`, returning
 candidates rather than a verdict. Hand that ask to `@plugin:search-records` first
@@ -311,8 +312,8 @@ message.
    yet in the project, with no record id or ARK, take only what the
    researcher stated: add no place, date, origin or relationship they did not
    state, and do not identify a person it names with anyone already in the
-   project. A report that makes a hypothesis's identity impossible contradicts
-   it: name that hypothesis id when you spawn `@plugin:hypothesis-tracking`.
+   project. A report of such a record that makes a hypothesis's identity
+   impossible contradicts it: name that hypothesis id when you spawn `@plugin:hypothesis-tracking`.
    The record and each person it names are new leads: spawn
    `@plugin:research-plan` with `projectPath` and the question id to plan a
    search for each, or ask the researcher for the record's identifier, before
