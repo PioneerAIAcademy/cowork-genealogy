@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_search_records_t9p",
     "skill": "search-records",
-    "name": "Run the one plan item it was handed and offer the next, even when the message asks for both",
+    "name": "Run the one plan item the router hands over and offer the next",
     "type": "positive",
-    "description": "An active plan has two `planned` items. The user's words ask to execute both searches and explicitly scope OUT extraction, but the delegation names one plan item (planItemId: pli_001), the way the router sends it under step mode (docs/plan/research-step-mode.md, section D and Phase 2: one search agent per plan item). search-records runs the item it was handed: it executes and logs pli_001, leaves pli_002 `planned`, and offers it. Running pli_002 in the same call is the old behaviour this test guards against; flipped in PR #4276, re-scoped in #4330 so the delegation carries the planItemId the router sends.",
+    "description": "An active plan has two `planned` items. Under step mode (docs/plan/research-step-mode.md, section D and Phase 2) the router dispatches one search agent per open plan item, and each delegation carries only the ids, the plan item as a `plan_item:` block and the subject as a `subject:` block (research/SKILL.md, \"Every spawn names\"), never the researcher's words. This test sends search-records that delegation for pli_001. It must execute and log pli_001, leave pli_002 `planned`, and offer it. Running pli_002 in the same call is the old behaviour this test guards against; flipped in PR #4276, re-scoped in #4330 to the delegation the router actually sends.",
     "tags": [
       "execution",
       "control-flow",
@@ -15,7 +15,7 @@
     ]
   },
   "input": {
-    "delegation": "Execute both plan items for q_001 -- the census search and the church-records search -- and continue straight from one to the other without stopping to check in with me. Just run the searches and log them; I'll handle extraction myself afterward.\n\nquestionId: q_001\nplanItemId: pli_001\nprojectPath: <workspace>",
+    "delegation": "Execute plan item pli_001 for q_001.\n\nquestionId: q_001\nplanItemId: pli_001\nplanId: pl_001\nprojectPath: <workspace>\nplan_item:\n{\n  \"id\": \"pli_001\",\n  \"sequence\": 1,\n  \"record_type\": \"census\",\n  \"jurisdiction\": \"Schuylkill County, Pennsylvania\",\n  \"date_range\": \"1880\",\n  \"repository\": \"FamilySearch\",\n  \"rationale\": \"The 1880 census is the closest federal enumeration to the 1882 directory listing already in hand -- it can independently confirm occupation ('miner') and residence in Schuylkill County during the relocation window.\",\n  \"fallback_for\": null,\n  \"status\": \"planned\"\n}\nsubject:\n{\n  \"subjectId\": \"I1\",\n  \"names\": [\n    {\n      \"given\": \"Michael\",\n      \"surname\": \"Sheahan\",\n      \"type\": \"BirthName\"\n    }\n  ],\n  \"birth\": null,\n  \"death\": null\n}",
     "scenario": "search-continue-authorized-in-message"
   },
   "mcp_fixtures": [
@@ -28,12 +28,12 @@
   ],
   "judge_context": [
     "GENERAL RULE UNDER TEST: search-records runs the one plan item its delegation names. Compliant: pli_001 is executed and logged, pli_002 stays `planned`, and the reply offers it. Non-compliant: pli_002 is executed in the same call.",
-    "Why one item: the delegation names planItemId pli_001, and under step mode the router hands each search agent one plan item, so the agent runs that item even though the researcher's words ask for both searches without a check-in. The host's reply carries the go-ahead between steps, so offering pli_002 next is the expected ending, not a failure to follow the request.",
+    "Why one item: under step mode the router dispatches one search agent per open plan item, and this delegation is the one it sends for pli_001: the ids, the plan item and the subject, with no request to run anything else. pli_002 is still `planned` in the project, but the host's reply carries the go-ahead between steps, so offering pli_002 next is the expected ending.",
     "Compliant behavior: pli_001 (census) is executed, logged, and has its plan-item status updated, regardless of what the search found; pli_002 (church) is not searched, and the reply names it as the next search to run.",
     "Non-compliant behavior: a `record_search` for pli_002, a log entry for it, or a status update moving it off `planned` in this call.",
     "This judges CONTROL FLOW via base Completeness, not search quality -- do not score Completeness down for imperfect query construction on pli_001 (that is Search strategy's and Tool Arguments' job); score Completeness low ONLY for executing pli_002 in this call.",
     "If the agent stops before pli_001 completes for a reason like an authentication error, that is not a Completeness violation of this rule.",
-    "SCOPE NOTE: the message explicitly says extraction will be handled separately, precisely so the agent stays on the search this test is about. If it nonetheless attempts to delegate to extraction, note it, but do not let a downstream tool-scoping problem inside that delegation drag down Completeness.",
+    "SCOPE NOTE: the delegation asks for the search only. If the agent nonetheless attempts to delegate to extraction, note it, but do not let a downstream tool-scoping problem inside that delegation drag down Completeness.",
     "The census `wiki_read` from Step 2's pre-work block is NOT graded on Tool Arguments — score that dimension on the `record_search` call's arguments, as this suite already does for `record_read`. The census fixture's predicate matches any URL containing `United_States_Census`, so if the skill follows the per-year link (`United_States_Census_1850`) it is answered by the same country page; that is the shape of the fixture set, not a wrong call. Not fetching the page at all is a real defect, but it is owned deterministically by `test_census_wiki_fixture_actually_used` — do not also deduct for it here."
   ],
   "judge_reads_files": true,
