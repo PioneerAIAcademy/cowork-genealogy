@@ -4678,6 +4678,17 @@ def test_the_sources_instruction_rides_the_same_turn_prompt(tmp_path):
     assert opts.system_prompt["append"].startswith("You are the hosted genealogy research agent")
 
 
+def test_the_researcher_view_note_is_alpha_only(tmp_path):
+    """Issue #4241: the note the alpha carries about sandbox paths and Findings is
+    specific to the alpha's own download story (#3987 / #4001 gave the beta its own
+    download route), so it must not ride the shared continue_policy prompt text the
+    worker also appends."""
+    from app.agent.real_agent import RESEARCHER_VIEW_NOTE
+
+    opts = _options(config_dir=str(tmp_path))
+    assert RESEARCHER_VIEW_NOTE not in opts.system_prompt["append"]
+
+
 # ── U3: the attempt bears its owner's current grant ──────────────────────────────
 
 
