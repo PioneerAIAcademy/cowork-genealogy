@@ -1705,7 +1705,17 @@ is listed, and the name sentence only when a name is. It rides
   form and maps it to that result's `primaryId`, or, where the result has none (a
   read), to the person of its record whose ark is the listed id (`personaFor`). A
   listed household member of a hit or a read is found the same way, by that
-  person's ark, and stored in it. A log that finds the record but names no persona
+  person's ark, and stored in it. **A persona is taken only when one of its names
+  shares a given word with the row's `name`** (chesworthrm, 2026-11-09): words come
+  from `ownGivenWords`, with accents folded, hyphenated words split and punctuation
+  trimmed, and the row's are its name's words less name suffixes and less the last
+  word, the surname, when two or more are left (`sharesRowGivenName`). A persona
+  with no entry, or with no such word, counts as none named, so a household member
+  listed by mistake (a husband's own record for his wife's namesake) is left
+  unstamped and gives the row no year. A Latin given name for an English one (Maria
+  for Mary), an abbreviation (Wm for William) and a surname first row lose their
+  stamp too: the safe direction, since a wrong stamp corrupts item 10's counts and
+  the age exemption's year. A log that finds the record but names no persona
   for it does not end the lookup: a later cited log may still stamp it, and
   otherwise the first found form is kept. `birth_year` is the earliest birth,
   christening or baptism year among the personas so found, and is deleted when
@@ -1718,7 +1728,7 @@ is listed, and the name sentence only when a name is. It rides
   `person_evidence` ops name a person, each of that person's rows with no
   `birth_year` gets one by the same lookup (`fillNamesakeBirthYears`), before the
   cap judges; nothing else of the row changes, and a row whose listed records no
-  persona matches exactly stays without one. So a row written before the year was
+  persona matches exactly, or only one of another given name, stays without one. So a row written before the year was
   stamped gets one the first time a call links its person. A row whose personas
   state no year is looked up again on each later call that links its person; the
   call reads each sidecar once, and a read that fails leaves the row to the next

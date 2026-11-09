@@ -1140,11 +1140,13 @@ describe("namesake cap", () => {
       results_examined: 1, results_ref: resultsRef, results_available: 1, notes: null, external_site: null,
     });
     const SEARCH = log("log_001", "record_search", "results/log_001.json");
+    /** The row's name, as a record names the namesake. */
+    const JOHN_SMITH = [{ given: "John", surname: "Smith" }];
     async function setupSearch(logs: unknown[] = [SEARCH], result: Record<string, unknown> = { recordId: REC.voter, primaryId: "p_555" }) {
       await setup(research({ namesakes: [], log: logs }));
       await mkdir(join(dir, "results"), { recursive: true });
       const sidecar = { log_id: "log_001", tool: "record_search", retrieved: "2026-10-24T00:00:00Z", returned_count: 1,
-        payload: { query: {}, results: [{ ...result, gedcomx: { persons: [{ id: result.primaryId }] } }] } };
+        payload: { query: {}, results: [{ ...result, gedcomx: { persons: [{ id: result.primaryId, names: JOHN_SMITH }] } }] } };
       await writeFile(join(dir, "results", "log_001.json"), JSON.stringify(sidecar));
     }
     const appendRow = (extra: Record<string, unknown>) =>
@@ -1234,9 +1236,12 @@ describe("namesake cap", () => {
     // arks are the run's own, from its transcript.
     describe("from a record's own persons", () => {
       const ARK = (bare: string) => `ark:/61903/1:1:${bare}`;
-      const HANNAH_1901 = { id: "p_10259312010", ark: ARK("XS75-FJM") };
-      const EDWIN = { id: "p_10257197490", ark: ARK("XS3W-W3M") };
-      const HANNAH_QB = { id: "p_10257197491", ark: ARK("XS3W-W39") };
+      const HANNAH = [{ given: "Hannah", surname: "Earnest" }];
+      const HANNAH_1901 = { id: "p_10259312010", ark: ARK("XS75-FJM"), names: HANNAH };
+      const EDWIN = { id: "p_10257197490", ark: ARK("XS3W-W3M"), names: [{ given: "Edwin", surname: "Earnest" }] };
+      const HANNAH_QB = { id: "p_10257197491", ark: ARK("XS3W-W39"), names: HANNAH };
+      /** The hannah run's rows record Hannah Earnest's namesakes. */
+      const appendHannah = (extra: Record<string, unknown>) => appendRow({ name: "Hannah Earnest", ...extra });
       type Sidecar = { tool: string; results: Array<Record<string, unknown>> };
       /** One log entry and sidecar per element, log_001 first. */
       async function setupSidecars(sidecars: Sidecar[]) {
@@ -1253,7 +1258,7 @@ describe("namesake cap", () => {
 
       it("stamps a record_read's persona, which its sidecar names only in the record's persons", async () => {
         await setupSidecar("record_read", [{ recordId: HANNAH_1901.ark, gedcomx: { persons: [HANNAH_1901] } }]);
-        const r = await appendRow({ record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] });
+        const r = await appendHannah({ record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] });
         expect(r.ok, errs(r)).toBe(true);
         expect((await row()).record_ids).toEqual([HANNAH_1901.ark]);
         expect((await row()).record_persona_ids).toEqual({ [HANNAH_1901.ark]: HANNAH_1901.id });
@@ -1261,7 +1266,7 @@ describe("namesake cap", () => {
 
       it("stamps a member of the read persona's household listed by her own ark", async () => {
         await setupSidecar("record_read", [{ recordId: EDWIN.ark, gedcomx: { persons: [EDWIN, HANNAH_QB] } }]);
-        const r = await appendRow({ record_ids: [HANNAH_QB.ark], log_entry_ids: ["log_001"] });
+        const r = await appendHannah({ record_ids: [HANNAH_QB.ark], log_entry_ids: ["log_001"] });
         expect(r.ok, errs(r)).toBe(true);
         expect((await row()).record_persona_ids).toEqual({ [HANNAH_QB.ark]: HANNAH_QB.id });
       });
@@ -1270,7 +1275,7 @@ describe("namesake cap", () => {
         await setupSidecar("record_search", [
           { recordId: EDWIN.ark, primaryId: EDWIN.id, gedcomx: { persons: [EDWIN, HANNAH_QB] } },
         ]);
-        const r = await appendRow({ record_ids: ["XS3W-W39"], log_entry_ids: ["log_001"] });
+        const r = await appendHannah({ record_ids: ["XS3W-W39"], log_entry_ids: ["log_001"] });
         expect(r.ok, errs(r)).toBe(true);
         expect((await row()).record_ids).toEqual([HANNAH_QB.ark]);
         expect((await row()).record_persona_ids).toEqual({ [HANNAH_QB.ark]: HANNAH_QB.id });
@@ -1278,7 +1283,10 @@ describe("namesake cap", () => {
 
       it("stamps a search hit's primaryId over a person of the record with the same ark", async () => {
         await setupSidecar("record_search", [
-          { recordId: REC.voter, primaryId: "p_555", gedcomx: { persons: [{ id: "p_777", ark: REC.voter }] } },
+          { recordId: REC.voter, primaryId: "p_555", gedcomx: { persons: [
+            { id: "p_555", names: JOHN_SMITH },
+            { id: "p_777", ark: REC.voter, names: JOHN_SMITH },
+          ] } },
         ]);
         const r = await appendRow({ record_ids: [REC.voter], log_entry_ids: ["log_001"] });
         expect(r.ok, errs(r)).toBe(true);
@@ -1304,7 +1312,7 @@ describe("namesake cap", () => {
       it("stores the read's own record id form, the one an assertion from it carries", async () => {
         // A fixture read can stage a bare recordId (gaetjen-namesake-confident-link log_015).
         await setupSidecar("record_read", [{ recordId: "XS75-FJM", gedcomx: { persons: [HANNAH_1901] } }]);
-        const r = await appendRow({ record_ids: [HANNAH_1901.ark], log_entry_ids: ["log_001"] });
+        const r = await appendHannah({ record_ids: [HANNAH_1901.ark], log_entry_ids: ["log_001"] });
         expect(r.ok, errs(r)).toBe(true);
         expect((await row()).record_ids).toEqual(["XS75-FJM"]);
         expect((await row()).record_persona_ids).toEqual({ "XS75-FJM": HANNAH_1901.id });
@@ -1319,11 +1327,79 @@ describe("namesake cap", () => {
         };
         for (const cited of [["log_001", "log_002"], ["log_002", "log_001"]]) {
           await setupSidecars([read, search]);
-          const r = await appendRow({ record_ids: ["XS75-FJM"], log_entry_ids: cited });
+          const r = await appendHannah({ record_ids: ["XS75-FJM"], log_entry_ids: cited });
           expect(r.ok, errs(r)).toBe(true);
           expect((await row()).record_ids).toEqual([HANNAH_1901.ark]);
           expect((await row()).record_persona_ids, cited.join(", ")).toEqual({ [HANNAH_1901.ark]: HANNAH_1901.id });
         }
+      });
+
+      // #3363 Step 6b (chesworthrm, 2026-11-09): a persona is stamped only when one
+      // of its names shares a given word with the row's name.
+      describe("the given name check", () => {
+        const searchHit = (persons: unknown[], primary: { id: string; ark: string }) =>
+          setupSidecar("record_search", [{ recordId: primary.ark, primaryId: primary.id, gedcomx: { persons } }]);
+        const persona = (id: string, given: string, surname: string) => ({ id, ark: ARK("XS75-FJM"), names: [{ given, surname }] });
+
+        it("G1 leaves a row listing her husband's own record unstamped, with no birth year", async () => {
+          const born1846 = [{ type: "Birth", date: "1846", standard_date: "1846" }];
+          await searchHit([{ ...EDWIN, facts: born1846 }, HANNAH_QB], EDWIN);
+          const r = await appendHannah({ record_ids: ["XS3W-W3M"], log_entry_ids: ["log_001"] });
+          expect(r.ok, errs(r)).toBe(true);
+          expect((await row()).record_ids).toEqual([EDWIN.ark]);
+          expect((await row()).record_persona_ids).toBeUndefined();
+          expect((await row()).birth_year).toBeUndefined();
+        });
+
+        it("G2 compares words with case, accents, dots and brackets folded", async () => {
+          for (const [name, given, surname] of [
+            ["Jose Garcia", "JOSÉ.", "García"],
+            ["Hermann (Herman Conrad) Gaetjen", "Herman Conrad", "Gaetjen"],
+          ]) {
+            const p = persona("p_1", given, surname);
+            await searchHit([p], p);
+            const r = await appendRow({ name, record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] });
+            expect(r.ok, errs(r)).toBe(true);
+            expect((await row()).record_persona_ids, name).toEqual({ [p.ark]: "p_1" });
+          }
+        });
+
+        it("G3 drops a Latin form of the row's given name, Maria for Mary", async () => {
+          const p = persona("p_1", "Maria", "Vazsan");
+          await searchHit([p], p);
+          const r = await appendRow({ name: "Mary Vazsan", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] });
+          expect(r.ok, errs(r)).toBe(true);
+          expect((await row()).record_persona_ids).toBeUndefined();
+        });
+
+        it("G4 stamps neither a persona with no name nor a primaryId with no entry", async () => {
+          const nameless = { id: "p_1", ark: ARK("XS75-FJM") };
+          await searchHit([nameless], nameless);
+          expect((await appendHannah({ record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toBeUndefined();
+          await searchHit([], { id: "p_2", ark: ARK("XS75-FJM") });
+          expect((await appendHannah({ record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toBeUndefined();
+        });
+
+        it("G5 does not take the row's surname for a given name", async () => {
+          const p = persona("p_1", "Earnest", "Smith");
+          await searchHit([p], p);
+          const r = await appendHannah({ record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] });
+          expect(r.ok, errs(r)).toBe(true);
+          expect((await row()).record_persona_ids).toBeUndefined();
+        });
+
+        it("G6 drops a name suffix before taking the last word as the surname", async () => {
+          const smith = persona("p_1", "Smith", "Jones");
+          await searchHit([smith], smith);
+          expect((await appendRow({ name: "John Smith Jr", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toBeUndefined();
+          const john = persona("p_2", "John", "Smith");
+          await searchHit([john], john);
+          expect((await appendRow({ name: "John A. Smith Jr.", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toEqual({ [john.ark]: "p_2" });
+        });
       });
     });
 
@@ -1345,7 +1421,7 @@ describe("namesake cap", () => {
       const hit = (recordId: string, personaId: string, year: string | null) => ({
         recordId,
         primaryId: personaId,
-        gedcomx: { persons: [{ id: personaId, ark: recordId, facts: year === null ? [] : born(year) }] },
+        gedcomx: { persons: [{ id: personaId, ark: recordId, names: JOHN_SMITH, facts: year === null ? [] : born(year) }] },
       });
       const search = (...results: unknown[]) => [{ tool: "record_search", results }];
 
@@ -1358,10 +1434,10 @@ describe("namesake cap", () => {
 
       it("S2 stamps the birth year of a read household member found by her own ark", async () => {
         await sidecars([{ tool: "record_read", results: [{ recordId: ARK("XS3W-W3M"), gedcomx: { persons: [
-          { id: "p_1", ark: ARK("XS3W-W3M"), facts: born("1848") },
-          { id: "p_2", ark: ARK("XS3W-W39"), facts: born("1850") },
+          { id: "p_1", ark: ARK("XS3W-W3M"), names: [{ given: "Edwin", surname: "Earnest" }], facts: born("1848") },
+          { id: "p_2", ark: ARK("XS3W-W39"), names: [{ given: "Hannah", surname: "Earnest" }], facts: born("1850") },
         ] } }] }]);
-        const r = await appendRow({ record_ids: [ARK("XS3W-W39")], log_entry_ids: ["log_001"] });
+        const r = await appendRow({ name: "Hannah Earnest", record_ids: [ARK("XS3W-W39")], log_entry_ids: ["log_001"] });
         expect(r.ok, errs(r)).toBe(true);
         expect((await row()).birth_year).toBe(1850);
       });
@@ -1421,6 +1497,17 @@ describe("namesake cap", () => {
           expect(await row()).toEqual({ ...OLD_ROW, birth_year: 1873 });
         });
 
+        it("G7 fills in no year from a persona of another given name, so that 1880 link stays capped", async () => {
+          const edwin = hit(REC.voter, "p_555", "1873");
+          edwin.gedcomx.persons[0].names = [{ given: "Edwin", surname: "Earnest" }];
+          await sidecars(search(edwin), project([OLD_ROW]));
+          await attest(["a_001", P]);
+          const res = await call(link("a_001", P));
+          expect(res.ok).toBe(false);
+          expect(errs(res)).toContain("namesake(s) of");
+          expect((await row()).birth_year).toBeUndefined();
+        });
+
         it("S8 leaves a row's year as it was, and every other field of a row it fills", async () => {
           const dated = { ...OLD_ROW, birth_year: 1850, record_persona_ids: { [REC.voter]: "p_old" } };
           const undated = { ...OLD_ROW, id: "ns_002", record_persona_ids: { [REC.voter]: "p_old" } };
@@ -1446,7 +1533,9 @@ describe("namesake cap", () => {
         });
 
         it("S10 fills in only the rows of a person the call links", async () => {
-          const other = { ...OLD_ROW, id: "ns_002", person_id: N, name: "Peter Jones" };
+          // Named as OLD_ROW, so the persona's name would pass for it and only its
+          // person keeps it unfilled.
+          const other = { ...OLD_ROW, id: "ns_002", person_id: N };
           await sidecars(search(hit(REC.voter, "p_555", "1873")), project([OLD_ROW, other]));
           await attest(["a_001", P]);
           const res = await call(link("a_001", P));

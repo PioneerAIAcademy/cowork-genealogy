@@ -3178,6 +3178,30 @@ function ownGivenWords(given: unknown): string[] {
     .filter((w) => w !== "" && w !== "of" && /\p{L}/u.test(w) && !PLACEHOLDER_GIVEN.has(w));
 }
 
+/** A given name's words as the namesake persona lookup compares them:
+ *  `ownGivenWords`, hyphenated words split, accents folded and punctuation
+ *  trimmed from each end ("(Herman" is "herman"). */
+function foldedGivenWords(given: unknown): string[] {
+  return ownGivenWords(given)
+    .flatMap((w) => w.split("-"))
+    .map((w) => w.normalize("NFD").replace(/\p{M}/gu, "").replace(/^[^\p{L}]+|[^\p{L}]+$/gu, ""))
+    .filter((w) => w !== "");
+}
+
+/** The given words of a namesake row's `name`, a free string: its words less
+ *  name suffixes, and less the last, the surname, when two or more are left. */
+function rowGivenWords(name: unknown): ReadonlySet<string> {
+  const words = foldedGivenWords(name).filter((w) => !NAME_SUFFIXES.has(w));
+  return new Set(words.length > 1 ? words.slice(0, -1) : words);
+}
+
+/** Whether one of `person`'s names has a given word of the row's. */
+function sharesRowGivenName(person: any, rowWords: ReadonlySet<string>): boolean {
+  return ((Array.isArray(person?.names) ? person.names : []) as any[]).some((n) =>
+    foldedGivenWords(n?.given).some((w) => rowWords.has(w)),
+  );
+}
+
 /** Why a relative's names cannot separate namesakes, or null when one can. A
  *  relative separates them only through a given name of their own: not a
  *  placeholder, and not one that only repeats the given name of the relative's
@@ -4382,7 +4406,9 @@ function logIndex(research: any): Map<string, any> {
 /** What the persona lookup of item 10 finds for one row in its own search and
  *  read sidecars: each listed record id in the sidecar's form, the persona each
  *  found record names (a search hit's `primaryId`, else the person whose ark is
- *  the listed one), and those personas' own entries. */
+ *  the listed one) when one of its names shares a given word with the row's
+ *  `name` (chesworthrm, 2026-11-09), and those personas' own entries. A persona
+ *  with no entry, or with none of the row's given words, counts as none named. */
 async function lookUpNamesakePersonas(
   row: any,
   logById: ReadonlyMap<string, any>,
@@ -4390,6 +4416,7 @@ async function lookUpNamesakePersonas(
 ): Promise<{ recordIds: unknown[]; stamp: Record<string, string>; personas: any[] }> {
   const stamp: Record<string, string> = {};
   const personas: any[] = [];
+  const rowWords = rowGivenWords(row?.name);
   const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
     if (typeof id !== "string") return id;
     const bare = arkToBareId(id);
@@ -4417,9 +4444,11 @@ async function lookUpNamesakePersonas(
         form ??= person?.ark;
       }
       if (typeof form !== "string") continue;
-      if (isPersonaId(persona)) {
+      // Another person of the record, such as a household member listed by
+      // mistake, would corrupt item 10's count and give the row their birth year.
+      if (isPersonaId(persona) && sharesRowGivenName(person, rowWords)) {
         stamp[form] = persona;
-        if (person) personas.push(person);
+        personas.push(person);
         return form;
       }
       found ??= form;
@@ -4443,8 +4472,9 @@ function earliestPersonaBirthYear(personas: readonly any[]): number | null {
 
 /** Item 10 of #3363 (chesworthrm, 2026-10-24): stamps `record_persona_ids` on
  *  each row the call appended, or updated through `record_ids` or
- *  `log_entry_ids`, from the row's own search and read sidecars, so the first
- *  runs can count what a persona-keyed refusal would catch, and `birth_year`,
+ *  `log_entry_ids`, from the row's own search and read sidecars and only with a
+ *  persona of the row's given name, so the first runs can count what a
+ *  persona-keyed refusal would catch, and `birth_year`,
  *  the earliest birth year those personas state, which the age exemption reads.
  *  Overwrites whatever the caller supplied; an update cannot set either field
  *  (`updatableFields`). A found record id is stored in the sidecar's form, as an
