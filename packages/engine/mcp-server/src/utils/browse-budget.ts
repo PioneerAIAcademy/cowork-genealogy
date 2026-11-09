@@ -28,7 +28,26 @@
  * say which project it belongs to, so its check also counts every in-process
  * read of that group, and a call with one also counts the group's no-path reads.
  * Without that, a subagent called without `projectPath` would get a second 20.
+ *
+ * A connector call naming no project (self-hosted beta E1/E5, issue #3996) does
+ * NOT join that shared no-path bucket: `checkImageBrowseCap` takes the
+ * `Principal`, and when the STORE IS UNBOUND and it names a connector caller
+ * (`connectorUserId`, `utils/user-limits.ts`) the no-project scope is that
+ * caller's own id, so one connector user's unbound reads never advance another
+ * connector user's count, and a LOCAL/worker no-project read never advances a
+ * connector's either (`connectorScopedKeys` below). Gated on the store's own
+ * bound-ness, not on whether this call's `projectPath` argument happens to be
+ * undefined: a worker call always binds a project (`http-server.ts` from
+ * `X-Genealogy-Project-Id`), and a connector call that named a project normally
+ * does too — but `imageTranscribeMcpTool` strips `projectPath` for a brand-new,
+ * not-yet-created project while the door's store stays bound, so the
+ * `projectPath` argument alone cannot tell "no project at all" apart from
+ * "this project, before `project_create` ran". LOCAL and the file backend keep
+ * today's single shared bucket, because there is only ever one user in that
+ * process.
  */
+import type { Principal } from "../auth/principal.js";
+import { connectorUserId } from "./user-limits.js";
 import { getProjectStore } from "../store/project-store.js";
 import { classifyProjectPath } from "./project-io.js";
 import { projectScope } from "./image-store.js";
@@ -42,16 +61,24 @@ export type CapTool = "image_read" | "image_transcribe" | "volume_bisect";
 
 // Distinct imageIds per `${projectScope(projectPath)}\0${group}` — the scope is
 // the bound store's patron-isolating projectId on http (#2771), else the
-// normalized projectPath, else `<no-project>`.
+// normalized projectPath, else `<no-project>` (optionally `:${connectorUserId}`
+// suffixed — see `connectorScopedKeys` below).
 const seenInProcess = new Map<string, Set<string>>();
 // Keys recorded under a bound store (a `projectId`): a patron's own count, never
 // pooled into an unbound call's.
 const boundKeys = new Set<string>();
+// Keys recorded for a connector's own no-project reads (#3996): never pooled
+// into the general LOCAL/file-backend union below, the same way `boundKeys`
+// is excluded from it — a connector key happens to also end with `\0${group}`,
+// so without this exclusion a LOCAL (or any other no-project, non-connector)
+// call's broad union would inherit a connector user's count.
+const connectorScopedKeys = new Set<string>();
 
 /** Test-only reset of the in-process count (a restart, as far as the cap can tell). */
 export function __clearImageBrowseMemoryForTests(): void {
   seenInProcess.clear();
   boundKeys.clear();
+  connectorScopedKeys.clear();
 }
 
 export interface BrowseTicket {
@@ -61,18 +88,32 @@ export interface BrowseTicket {
   memKey: string;
   /** Checked under a bound store (`projectId` set). */
   bound: boolean;
+  /** A connector caller's own no-project scope (#3996) — never a bound store,
+   *  never LOCAL/the file backend. */
+  connectorScoped: boolean;
   /** The project to append to, when the call resolved to one. */
   persistPath?: string;
   /** Already in the persisted log — recording it again would be a duplicate line. */
   inLog: boolean;
 }
 
-function inProcessSeen(memKey: string, group: string, projectPath: string | undefined): string[] {
-  if (getProjectStore().projectId !== undefined) return [...(seenInProcess.get(memKey) ?? [])];
+function inProcessSeen(
+  memKey: string,
+  group: string,
+  projectPath: string | undefined,
+  connectorUser: string | undefined,
+): string[] {
+  // A bound store (`projectId` set) or a connector's own no-project scope is
+  // already exact-scoped by `memKey` — the bound projectId, or this
+  // connector's own id — so an exact lookup is enough for either; never run
+  // the broad union below for them.
+  if (getProjectStore().projectId !== undefined || connectorUser !== undefined) {
+    return [...(seenInProcess.get(memKey) ?? [])];
+  }
   const noPath = `${projectScope(undefined)}\0${group}`;
   const ids: string[] = [];
   for (const [key, set] of seenInProcess) {
-    if (boundKeys.has(key)) continue;
+    if (boundKeys.has(key) || connectorScopedKeys.has(key)) continue;
     const sameGroup = key.endsWith(`\0${group}`);
     if (key === memKey || (sameGroup && (projectPath === undefined || key === noPath))) ids.push(...set);
   }
@@ -135,11 +176,18 @@ export async function exhaustedImageGroups(
   return out.sort((a, b) => a.imageGroup.localeCompare(b.imageGroup));
 }
 
+/** `"project"`: the count came from the project's persisted log. `"connector"`:
+ *  no project, but a connector caller — scoped to that caller, never "this
+ *  server session" (misleading on a process a connector call shares with every
+ *  other user). `"session"`: no project and no connector caller (LOCAL/the file
+ *  backend) — the pre-#3996 shared-process wording. */
+type RefusalScope = "project" | "connector" | "session";
+
 function refusal(
   tool: CapTool,
   imageId: string,
   group: string,
-  inProject: boolean,
+  scope: RefusalScope,
   bracket?: string,
 ): Error {
   const link = imageViewerUrl({ imageId });
@@ -149,15 +197,19 @@ function refusal(
     tool === "volume_bisect"
       ? ` Report the bracket your readings reached so far as the browse's result${bracket ? ` (${bracket})` : ""}.`
       : " Reads in other films are not affected; to find one year's page in another browse-only volume, run volume_bisect first if you hold it, then read the narrowed range.";
-  const scope = inProject
-    ? `been read in this project, so ${imageId}${where} was not fetched. The cap is per film, per ` +
-      `project: every sub-volume of film ${group} shares it, and nothing resets it, not a new agent ` +
-      `and not a new session.`
-    : `been read in this server session, because this read named no project, so ` +
-      `${imageId}${where} was not fetched. A new agent does not reset it.`;
+  const scopeText =
+    scope === "project"
+      ? `been read in this project, so ${imageId}${where} was not fetched. The cap is per film, per ` +
+        `project: every sub-volume of film ${group} shares it, and nothing resets it, not a new agent ` +
+        `and not a new session.`
+      : scope === "connector"
+        ? `been read without a project under your account, so ${imageId}${where} was not fetched. ` +
+          `A new agent does not reset it.`
+        : `been read in this server session, because this read named no project, so ` +
+          `${imageId}${where} was not fetched. A new agent does not reset it.`;
   return new Error(
     `Image cap reached: ${IMAGE_BROWSE_CAP} distinct images from image group ${group} have already ` +
-      `${scope} Re-reading any of those ` +
+      `${scopeText} Re-reading any of those ` +
       `${IMAGE_BROWSE_CAP} still works.${bisect} Log this browse as partial with research_log_append ` +
       `(the group, the pages you read, what you were looking for), move to other routes ` +
       `(record_search, fulltext_search, other collections), and name the unfinished browse in your ` +
@@ -169,27 +221,51 @@ function refusal(
  * Refuse (throw) when `imageId` is new and its group already holds
  * `IMAGE_BROWSE_CAP` distinct images in this project. Returns the ticket to pass
  * to `recordImageBrowse` once the fetch succeeds, or `undefined` for an
- * uncounted call (no `imageId`). `bracket` is volume_bisect's bracket so far,
- * quoted in its refusal.
+ * uncounted call (no `imageId`). `principal` scopes a no-project connector call
+ * to its own caller (#3996, module docstring). `bracket` is volume_bisect's
+ * bracket so far, quoted in its refusal.
  */
 export async function checkImageBrowseCap(
   input: { imageId?: string; ark?: string },
   projectPath: string | undefined,
   tool: CapTool,
+  principal: Principal,
   bracket?: string,
 ): Promise<BrowseTicket | undefined> {
   const imageId = input.imageId || (input.ark ? dgsImageId(input.ark) : undefined);
   if (!imageId) return undefined;
   const group = imageId.split("_")[0];
-  const memKey = `${projectScope(projectPath)}\0${group}`;
+  // Gate on the STORE'S bound-ness, not on whether this call's own
+  // `projectPath` argument happens to be undefined: a connector call that
+  // named a project is normally routed to a *bound* store by http-server.ts
+  // before this ever runs, but `imageTranscribeMcpTool` strips `projectPath`
+  // for a brand-new, not-yet-created project (`classifyProjectPath` ===
+  // "no_project") while the door's store stays bound to that project's real
+  // `projectId` — so `projectPath === undefined` alone would wrongly apply the
+  // connector suffix to an already project-scoped key and split one project's
+  // count into two depending on whether it had been `project_create`d yet.
+  const bound = getProjectStore().projectId !== undefined;
+  const connectorUser = bound ? undefined : connectorUserId(principal);
+  const keyScope = projectScope(projectPath);
+  const memKey = connectorUser !== undefined ? `${keyScope}:${connectorUser}\0${group}` : `${keyScope}\0${group}`;
   const persistPath = await persistTarget(projectPath);
   const logged = persistPath ? await loggedIds(persistPath, group) : new Set<string>();
-  const seen = new Set([...inProcessSeen(memKey, group, projectPath), ...logged]);
+  const seen = new Set([...inProcessSeen(memKey, group, projectPath, connectorUser), ...logged]);
   if (!seen.has(imageId) && seen.size >= IMAGE_BROWSE_CAP) {
-    throw refusal(tool, imageId, group, persistPath !== undefined, bracket);
+    const refusalScope: RefusalScope =
+      persistPath !== undefined ? "project" : connectorUser !== undefined ? "connector" : "session";
+    throw refusal(tool, imageId, group, refusalScope, bracket);
   }
-  const bound = getProjectStore().projectId !== undefined;
-  return { imageId, group, tool, memKey, bound, persistPath, inLog: logged.has(imageId) };
+  return {
+    imageId,
+    group,
+    tool,
+    memKey,
+    bound,
+    connectorScoped: connectorUser !== undefined,
+    persistPath,
+    inLog: logged.has(imageId),
+  };
 }
 
 /** Count the image: in process always, and in the project's log when it is not there yet. */
@@ -202,6 +278,7 @@ export async function recordImageBrowse(ticket: BrowseTicket | undefined): Promi
   }
   seen.add(ticket.imageId);
   if (ticket.bound) boundKeys.add(ticket.memKey);
+  if (ticket.connectorScoped) connectorScopedKeys.add(ticket.memKey);
   if (!ticket.persistPath || ticket.inLog) return;
   const line = JSON.stringify({
     image_group: ticket.group,
