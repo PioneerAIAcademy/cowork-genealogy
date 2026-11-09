@@ -1,11 +1,11 @@
-# Mikkel Nielsen Blyeberg — father and father's death (Denmark, born 1779)
+# Mikkel Nielsen Blyeberg — father (Denmark, born 1779)
 
 **Source PID:** `PID-TODO`
 
 Mikkel Nielsen Blyeberg is deceased (born 20 August 1779).
 
 > Who was the father of Mikkel Nielsen Blyeberg, born 20 August 1779 in Stagstrup
-> Sogn, Thisted (Vestervig) Amt, Denmark, and when did his father die?
+> Sogn, Thisted (Vestervig) Amt, Denmark?
 
 ## What was removed from the starting tree
 
@@ -36,6 +36,16 @@ father's name written directly above the son's) and his death is bracketed by th
 parish burial (20 December 1802).
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4144).** The old question asked
+two independent facts (the father, and the father's death): "Who was the
+father of Mikkel Nielsen Blyeberg, born 20 August 1779 in Stagstrup Sogn,
+Thisted (Vestervig) Amt, Denmark, and when did his father die?" Reworded
+`researcher_question` to the father only; demoted `f2` (the father's burial)
+to `required: false`, so a run that recovers it anyway still gets credit. `f3`
+was already non-required. No finding wording changed. This fixture's one
+annotation carries no `findings_hash`, so it is grandfathered and needs no
+re-grading.
 
 Documented conclusion from the FamilySearch Wiki case study:
 

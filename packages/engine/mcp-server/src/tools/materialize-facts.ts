@@ -56,6 +56,7 @@ import type {
 import { validateIntroduced } from "../validation/introduced-errors.js";
 import { checkWarningGate } from "./tree-edit.js";
 import {
+  blankAddedPerson,
   mintedFromThisRecord,
   namesakeMergeRoute,
   namesakePairsText,
@@ -960,6 +961,21 @@ function linkGate(
   namesakeOpts: NamesakeGateOptions = {},
 ): LinkGate {
   if (!(tree.persons ?? []).some((p) => p?.id === personId)) return { refusal: null };
+  // A person this research added with no provenance at all carries nothing a
+  // record's facts could contradict. research_append refuses a probable link to
+  // one until it has been written onto (`blankAddedPerson`), so a live link of
+  // any confidence is enough here: a speculative link has already passed
+  // same_person's score gate, which keeps the identity check ahead of the write.
+  // Without that link, the write would make the person look minted from this
+  // record and the raise after it would need no score.
+  const blank = blankAddedPerson(personId, research, tree, startingPersonIds, namesakeTree);
+  if (
+    blank &&
+    ((research?.person_evidence ?? []) as any[]).some(
+      (e) => e && !e.superseded_by && e.person_id === personId && qualifying.has(e.assertion_id),
+    )
+  )
+    return { refusal: null };
   const trace = mintedFromThisRecord(personId, recordId, research, tree, startingPersonIds)
     ? partyTrace(tree, research, personId, recordId, party)
     : null;
@@ -973,10 +989,13 @@ function linkGate(
       qualifying.has(e.assertion_id),
   );
   if (strong.length === 0) {
-    const plain =
-      `'${personId}' was already in the tree, and no 'probable' or 'confident' person_evidence link ` +
-      `ties ${what} to them. Write that link with research_append first; a 'speculative' link ` +
-      "does not qualify.";
+    const plain = blank
+      ? `'${personId}' is a person this research added with no source ref, and no person_evidence ` +
+        `link ties ${what} to them. Write that link with research_append first: for this person a ` +
+        `'speculative' link carrying its same_person score is enough, and it is raised after this write.`
+      : `'${personId}' was already in the tree, and no 'probable' or 'confident' person_evidence link ` +
+        `ties ${what} to them. Write that link with research_append first; a 'speculative' link ` +
+        "does not qualify.";
     return { refusal: trace === null ? plain : `${notThisPartysStub(personId, recordId, trace)} ${plain}` };
   }
   const cap = namesakeVerdicts(personId, research, namesakeTree, {
@@ -986,11 +1005,14 @@ function linkGate(
   });
   if (cap === null || strong.some((e) => cap.verdicts.get(e.id)?.allowed === true)) return { refusal: null };
   const assertionOf = (id: string) => ((research?.assertions ?? []) as any[]).find((a) => a?.id === id);
+  // The rows that cap each link (the age exemption may lift some); a link the cap
+  // does not judge stands under all of them.
+  const cappingRows = (e: any) => cap.verdicts.get(e.id)?.rows ?? cap.rows;
   return {
-    refusal: namesakeCopyRefusal(personId, cap.rows, cap.verdicts, strong, cap.pairs),
+    refusal: namesakeCopyRefusal(personId, cappingRows, cap.verdicts, strong, cap.pairs),
     untied: strong,
     pairMember: cap.pairs.length > 0,
-    rowHolder: cap.rows.length > 0,
+    rowHolder: strong.some((e) => cappingRows(e).length > 0),
     partnerOpen:
       cap.pairs.length > 0 &&
       strong.some(
@@ -1053,14 +1075,21 @@ function notThisPartysStub(
         `'${trace.other.role}' party (${trace.other.evidence}), so it is not this party's stub.`;
 }
 
-function namesakeCopyRefusal(
+/** The copy gate's refusal for `strong`, the person's untied links from the
+ *  record. It names every row that caps one of them (`rowsOf`: a link's capping
+ *  rows, which the age exemption may narrow) and opens on a link one caps; when
+ *  no row caps any, only a namesake in the tree refuses them. Exported for its
+ *  test. */
+export function namesakeCopyRefusal(
   personId: string,
-  rows: any[],
+  rowsOf: (e: any) => any[],
   verdicts: ReadonlyMap<string, { reasons: string[]; source: string }>,
   strong: any[],
   pairs: readonly NamesakePartner[] = [],
 ): string {
-  const [first, ...rest] = strong;
+  const capped = strong.filter((e) => rowsOf(e).length > 0);
+  const rows = [...new Map(capped.flatMap(rowsOf).map((r: any) => [String(r?.id), r])).values()];
+  const [first, ...rest] = [...capped, ...strong.filter((e) => rowsOf(e).length === 0)];
   const verdict = verdicts.get(first.id);
   const reason = verdict?.reasons[0] ?? "its assertion records an absence, which ties nothing";
   const others =

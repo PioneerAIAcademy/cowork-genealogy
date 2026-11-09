@@ -106,6 +106,7 @@ const DEF_FOR: Record<string, string> = {
   evaluations: "evaluation_entry",
   localities: "locality",
   namesakes: "namesake",
+  hit_verdicts: "hit_verdict_entry",
 };
 
 /**
@@ -285,6 +286,27 @@ describe("research_append worked examples conform to the schema", () => {
       ).toEqual([]);
     });
   }
+});
+
+describe("the claims example", () => {
+  it("the claims example validates", () => {
+    // Evaluated as written: the example is a call, so the call is captured.
+    const text = exampleFor("proof_summaries", "append", ["claims"]);
+    const entry = new Function("research_append", `return ${text}`)((call: any) => call).entry;
+    const check = (obj: Record<string, unknown>, defName: string) => {
+      const def = schema.$defs[defName];
+      const allowed = new Set(Object.keys(def.properties ?? {}));
+      return {
+        unknown: Object.keys(obj).filter((k) => !allowed.has(k)),
+        missing: ((def.required ?? []) as string[]).filter((k) => !(k in obj) && k !== "id"),
+      };
+    };
+    expect(check(entry, "proof_summary")).toEqual({ unknown: [], missing: [] });
+    for (const claim of entry.claims) {
+      expect(check(claim, "proof_claim")).toEqual({ unknown: [], missing: [] });
+      expect(claim.shortfall, "a claim below the proof bar names its shortfall").toBe("gap");
+    }
+  });
 });
 
 describe("the minItems walk is not vacuous", () => {

@@ -262,6 +262,17 @@ const EXAMPLES: Record<string, string> = {
   "notes": "A different John Smith, a clerk, in the 1880 census of San Francisco",
   "created": "2026-10-16"
 }`,
+
+  // `hit_id` as the search returned it; the tool stores the sidecar's form.
+  hit_verdicts: `{
+  "log_id": "log_005",
+  "hit_id": "ark:/61903/3:1:3Q9M-CSK3-ZSLR",
+  "person_id": "I1",
+  "verdict": "match",
+  "new_vital_info": true,
+  "rationale": "The register names Patrick, son of Michael Flynn and Mary Doyle, baptised 12 May 1850 at Pottsville: name, parents and place fit the target, and the tree has no christening for him.",
+  "created": "2026-10-29"
+}`,
 };
 
 /** `project` is a singleton: update-only field writes, no `entry`. */
@@ -508,6 +519,7 @@ export function exampleFor(
     question_id: "q_002",
     tier: "probable",
     vehicle: "summary",
+    shortfall: "gap",
     supporting_assertion_ids: ["a_013", "a_025"],
     resolved_conflict_ids: [],
     exhaustive_search_summary: "Searched Schuylkill County civil death registers, Catholic parish registers for St. Patrick's, and the 1850-1880 federal censuses; no further records naming Patrick's parents surfaced.",
@@ -516,12 +528,14 @@ export function exampleFor(
       {
         claim: "paternity",
         proof_tier: "probable",
+        shortfall: "gap",
         supporting_assertion_ids: ["a_013"],
         relationship: { type: "ParentChild", parent: "I2", child: "I1" }
       },
       {
         claim: "maternity",
         proof_tier: "possible",
+        shortfall: "gap",
         supporting_assertion_ids: ["a_025"],
         relationship: { type: "ParentChild", parent: "I3", child: "I1" }
       }

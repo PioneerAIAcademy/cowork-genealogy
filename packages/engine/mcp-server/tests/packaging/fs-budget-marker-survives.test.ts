@@ -49,16 +49,22 @@ function stripComments(src: string): string {
 
 /** The rewrap sites: a `throw new Error(...)` naming a FamilySearch endpoint. */
 const REWRAP = /throw new Error\(\s*$|throw new Error\(/;
-const NAMES_FS = /Could not reach FamilySearch|FamilySearch session has expired/;
+// `record search did not complete` is record_search's wording, which this list
+// missed: it rewrapped the refusal as "network timeout or transient error" while
+// the per-user 429 pause (issue #3999) made that refusal routine for connectors.
+const NAMES_FS = /Could not reach FamilySearch|FamilySearch session has expired|FamilySearch record search did not complete/;
 
 describe("a FamilySearch rewrap lets the budget refusal past first", () => {
   it("every catch that rewraps a FamilySearch failure rethrows the refusal", () => {
     const offenders: string[] = [];
 
     for (const file of tsFiles(SRC)) {
+      // join() gives backslashes on Windows; compare paths in forward-slash form.
+      const posix = file.replace(/\\/g, "/");
       // fs-budget.ts defines the marker; it is not a call site.
-      if (file.endsWith("/fs-budget.ts")) continue;
-      if (EXEMPT_FILES.has(file.slice(SRC.length + 1))) continue;
+      if (posix.endsWith("/fs-budget.ts")) continue;
+      const rel = posix.slice(SRC.length + 1);
+      if (EXEMPT_FILES.has(rel)) continue;
       const lines = readFileSync(file, "utf-8").split("\n");
 
       for (let i = 0; i < lines.length; i++) {
@@ -82,7 +88,7 @@ describe("a FamilySearch rewrap lets the budget refusal past first", () => {
         // shape that makes a lint read as coverage while catching nothing.
         const between = stripComments(lines.slice(ci, i).join("\n"));
         if (!/isFsBudgetExhausted\s*\(/.test(between)) {
-          offenders.push(`${file.slice(SRC.length + 1)}:${i + 1} — ${lines[i].trim().slice(0, 70)}`);
+          offenders.push(`${rel}:${i + 1} — ${lines[i].trim().slice(0, 70)}`);
         }
       }
     }

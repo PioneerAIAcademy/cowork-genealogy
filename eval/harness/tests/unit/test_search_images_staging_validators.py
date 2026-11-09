@@ -50,9 +50,14 @@ LOGGED = (
     _state([]),
     _state([], log=[{"id": "log_006", "outcome": "partial"}]),
 )
+LINK = "https://www.familysearch.org/search/film/004452257?i=20"
 REFUSAL = (
     "Image cap reached: 20 distinct images from image group 004452257 have already been "
-    "read in this project. Link: https://www.familysearch.org/search/film/004452257?i=20"
+    f"read in this project. Link: {LINK}"
+)
+TAIL = (
+    "---\n\nThe burial register stopped before the page for 1882. You can finish "
+    f"the book by hand from {LINK}.\n\nNext, the burial will be looked for another way."
 )
 
 
@@ -61,14 +66,29 @@ REFUSAL = (
     f"- **Image attempted this invocation:** `{IMAGE_ID}` — **NOT READ** — session cap reached",
 ])
 def test_cap_refusal_accepts_either_spelling_of_the_not_read_line(line):
-    cap_validator(CALLS, f"{line}\n{REFUSAL}", CAP_TEST, *LOGGED)
+    cap_validator(CALLS, f"{line}\n{REFUSAL}\n{TAIL}", CAP_TEST, *LOGGED)
+
+
+def test_cap_refusal_ignores_a_fenced_rule_after_the_researcher_paragraph():
+    reply = f"NOT READ: {IMAGE_ID}\n{REFUSAL}\n{TAIL}\n```\n---\n```"
+    cap_validator(CALLS, reply, CAP_TEST, *LOGGED)
 
 
 @pytest.mark.parametrize("reply", [
-    f"Image {IMAGE_ID} could not be read.\n{REFUSAL}",
-    f"NOT READ: 004452257_00020\n{REFUSAL}",
-    f"NOT READ\n{IMAGE_ID}\n{REFUSAL}",
+    f"Image {IMAGE_ID} could not be read.\n{REFUSAL}\n{TAIL}",
+    f"NOT READ: 004452257_00020\n{REFUSAL}\n{TAIL}",
+    f"NOT READ\n{IMAGE_ID}\n{REFUSAL}\n{TAIL}",
 ])
 def test_cap_refusal_without_a_not_read_line_for_the_image_fails(reply):
     with pytest.raises(AssertionError, match="NOT READ"):
+        cap_validator(CALLS, reply, CAP_TEST, *LOGGED)
+
+
+@pytest.mark.parametrize("reply", [
+    f"NOT READ: {IMAGE_ID}\n{REFUSAL}",
+    f"NOT READ: {IMAGE_ID}\n{REFUSAL}\n---\n\nYou can finish the book by hand at the link above.",
+    f"NOT READ: {IMAGE_ID}\nImage cap reached.\n```\n{LINK}\n```\n---\n\nYou can finish the book by hand.",
+], ids=["no-rule", "link-only-above-the-rule", "link-only-in-a-fence-above-the-rule"])
+def test_cap_refusal_with_the_link_only_above_the_final_rule_fails(reply):
+    with pytest.raises(AssertionError, match="after the final"):
         cap_validator(CALLS, reply, CAP_TEST, *LOGGED)

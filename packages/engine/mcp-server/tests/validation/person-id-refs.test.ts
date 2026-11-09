@@ -32,13 +32,14 @@ describe("person-id-refs walker", () => {
         },
       ],
       namesakes: [{ id: "ns_001", person_id: "I10" }],
+      hit_verdicts: [{ id: "hv_001", log_id: "log_001", hit_id: "ark:/61903/3:1:ZSLR", person_id: "I11" }],
     };
   }
 
   it("yields every populated person-id reference, skipping a falsy person_evidence id", () => {
     const refs = [...iteratePersonIdRefs(researchWithAllFields())];
     expect(refs.map((r) => r.pid)).toEqual([
-      "I3", "I9", "I1", "I2", "I4", "I5", "I7", "I8", "I10",
+      "I3", "I9", "I1", "I2", "I4", "I5", "I7", "I8", "I10", "I11",
     ]);
   });
 
@@ -73,12 +74,54 @@ describe("person-id-refs walker", () => {
     });
   });
 
+  it("a merge remaps Couple, fact-subject, identity, same_as and name persons in claims", () => {
+    const research = {
+      proof_summaries: [
+        {
+          id: "ps_001",
+          claims: [
+            { claim: "marriage", relationship: { type: "Couple", person1: "I1", person2: "I2" } },
+            { claim: "birth", fact: { subject: "I1", fact_type: "Birth" } },
+            { claim: "marriage date", fact: { subject: { person1: "I1", person2: "I2" }, fact_type: "Marriage" } },
+            { claim: "census", identity: { record_id: "rec1", party: "p_1", person: "I1" } },
+            { claim: "one man", identity: { person: "I2", same_as: "I1" } },
+            { claim: "name", name: { person: "I1", given: "John" } },
+            { claim: "none", finding: { finding_type: "absence", statement: "x" } },
+          ],
+        },
+      ],
+    };
+    const refs = [...iteratePersonIdRefs(research)];
+    expect(refs.map((r) => r.pid)).toEqual(["I1", "I2", "I1", "I1", "I2", "I1", "I2", "I1", "I1"]);
+    for (const ref of refs) if (ref.pid === "I1") ref.set("I99");
+    const c = research.proof_summaries[0].claims as any[];
+    expect(c[0].relationship).toEqual({ type: "Couple", person1: "I99", person2: "I2" });
+    expect(c[1].fact.subject).toBe("I99");
+    expect(c[2].fact.subject).toEqual({ person1: "I99", person2: "I2" });
+    expect(c[3].identity.person).toBe("I99");
+    expect(c[4].identity).toEqual({ person: "I2", same_as: "I99" });
+    expect(c[5].name.person).toBe("I99");
+  });
+
   it("`set` re-keys a namesakes row onto the survivor in place", () => {
     const research = researchWithAllFields();
     for (const ref of iteratePersonIdRefs(research)) {
       if (ref.pid === "I10") ref.set("I99");
     }
     expect(research.namesakes[0].person_id).toBe("I99");
+  });
+
+  it("`set` re-keys a hit verdict's target onto the survivor in place", () => {
+    const research = researchWithAllFields();
+    for (const ref of iteratePersonIdRefs(research)) {
+      if (ref.pid === "I11") ref.set("I99");
+    }
+    expect(research.hit_verdicts[0].person_id).toBe("I99");
+  });
+
+  it("skips a malformed hit_verdicts row without throwing", () => {
+    const research = { hit_verdicts: [null, "hv_001", { person_id: null }, { person_id: "I9" }] };
+    expect([...iteratePersonIdRefs(research)].map((r) => r.pid)).toEqual(["I9"]);
   });
 
   it("skips a malformed namesakes row without throwing", () => {

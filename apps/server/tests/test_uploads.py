@@ -39,6 +39,40 @@ def test_upload_lands_in_uploads_dir_and_is_readable():
         assert raw == b"Ada Schuster, b. 1841"
 
 
+def test_upload_cleans_an_ancestry_filename_and_is_readable():
+    with TestClient(app) as client:
+        sid = _login_and_create(client)
+
+        r = client.post(
+            f"/api/sessions/{sid}/files",
+            files={"file": ("Ancestry Download - Massachusetts, U.S., Wills and Probate Records.pdf",
+                            b"%PDF-1.4 probate records", "application/pdf")},
+        )
+        assert r.status_code == 200, r.text
+        path = "uploads/Ancestry Download - Massachusetts_ U.S._ Wills and Probate Records.pdf"
+        assert r.json()["path"] == path
+
+        provider = app.state.provider
+        detail = client.get(f"/api/sessions/{sid}").json()
+        sandbox = _run(provider.get(detail["sandbox_id"]))
+        raw = _run(sandbox.read_file(f"{PROJECT_DIR}/{path}"))
+        assert raw == b"%PDF-1.4 probate records"
+
+
+def test_upload_rejects_names_with_no_alphanumeric_or_with_double_dots():
+    with TestClient(app) as client:
+        sid = _login_and_create(client)
+        for bad in (",,,", "a..pdf"):
+            r = client.post(
+                f"/api/sessions/{sid}/files",
+                files={"file": (bad, b"x", "text/plain")},
+            )
+            assert r.status_code == 400, f"{bad!r} was accepted: {r.text}"
+            assert r.json()["detail"] == (
+                "Invalid filename: it is empty, starts with a dot, contains '..', or has no letters or digits."
+            )
+
+
 def test_traversal_is_neutralized_not_honoured():
     # A path in the filename is reduced to its basename rather than rejected —
     # browsers legitimately send one for directory uploads. What matters is that

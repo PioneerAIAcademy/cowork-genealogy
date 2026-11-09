@@ -29,7 +29,7 @@ Did the skill present the converted date in a format suitable for genealogical r
 
 Score this dimension strictly on FORMAT and PRESERVATION: does the output preserve the original date as recorded in the source AND show the converted form in standard genealogical notation? Do NOT credit explanatory commentary, methodological guidance, or contextual teaching content as part of presentation quality. Those are valuable but belong outside this dimension.
 
-- **pass:** Output records both the original (as stated in the source) and the converted form in a notation a genealogist would recognize ("11 Mar 1752/3" for dual dating). Format is clean and consistent.
+- **pass:** Output records both the original (as stated in the source) and the converted form in a notation a genealogist would recognize ("15 Feb 1749/50" for dual dating). Format is clean and consistent.
 - **partial:** Both forms are recorded but the notation is non-standard, omits the dual-dating convention when relevant, or buries the original in surrounding prose rather than presenting it clearly.
 - **fail:** Only the converted form is preserved; the original is lost, OR the format is unusable as a genealogical record (e.g., dates only wrapped in prose with no clean date string).
 

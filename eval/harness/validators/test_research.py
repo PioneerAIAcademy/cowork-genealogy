@@ -19,7 +19,7 @@ import json
 
 import pytest
 
-from validators_lib import bare_tool_name
+from validators_lib import bare_ark_id, bare_tool_name
 from validators_lib import new_log_entries as _new_log_entries
 from validators_lib import check_no_gate_stop
 from validators_lib import existing_plan_changes, new_plan_ids
@@ -116,6 +116,60 @@ def test_creates_no_project_when_none_exists(before_state, after_state, test):
         "research scaffolded a project inline for a no-research-json request; "
         "creating the project is init-project's job. A research.json exists in "
         "the output where none did before — it must route to init-project."
+    )
+
+
+_NEW_PROJECT_CALLEES = ("init-project", "tree-survey")
+
+
+def test_no_init_project_on_existing_project(before_state, skills_invoked, builtin_tool_calls):
+    """Ungated: with a research.json already present, no hand-off may go to a
+    new-project callee (``init-project`` or ``tree-survey``).
+
+    SKILL.md's routing row for "No research.json at all" says "With one present,
+    do NOT invoke it". Checked over every hand-off rather than the first, and
+    regardless of whether ``project_context`` was called: in research v32 the
+    router spawned ``init-project`` on ``mid-research-flynn`` and only then read
+    the project (issue #3766), so a "did it read the project?" check passes that
+    run.
+    """
+    from harness.skill_runner import handoffs
+
+    if before_state.get("research_json") is None:
+        pytest.skip("no research.json before the run")
+    handed = handoffs(skills_invoked, builtin_tool_calls)
+    wrong = [s for s in handed if s in _NEW_PROJECT_CALLEES]
+    assert not wrong, (
+        f"research.json existed before the run, but the router handed off to {wrong}, "
+        f"which start a new project. handoffs={handed}"
+    )
+
+
+def test_reads_project_state_before_routing(before_state, tool_calls, test):
+    """Tag-gated (``reads-project-first``): with a research.json present, the run
+    calls ``project_context``.
+
+    Catches a router that decides without reading the project at all — research
+    v32's ut_research_004 asked for a FamilySearch person ID and stopped, with no
+    hand-off for ``test_no_init_project_on_existing_project`` to see (issue #3766).
+
+    Presence, not order: ``tool_calls`` carries no caller and is a separate list
+    from the spawns in ``builtin_tool_calls``, so the two cannot be ordered. Tag
+    only a test with no ``run_agents``: every spawn is then denied and any
+    ``project_context`` call is the router's. Not ungated, because a bounded
+    request legitimately skips the read (SKILL.md, "Bounded request or job").
+    """
+    if "reads-project-first" not in test.get("tags", []):
+        pytest.skip("not a reads-project-first test")
+    assert before_state.get("research_json") is not None, (
+        "a reads-project-first test needs a scenario with a research.json; this one "
+        "had none. Scenario drift — fix the fixture rather than the skill."
+    )
+    called = [c for c in tool_calls or [] if bare_tool_name(str(c.get("tool") or "")) == "project_context"]
+    assert called, (
+        "research.json existed before the run, but the router never called "
+        "project_context, so it routed or asked without reading the project. "
+        f"tools called: {[bare_tool_name(str(c.get('tool') or '')) for c in tool_calls or []]}"
     )
 
 
@@ -348,43 +402,6 @@ def test_hint_review_stops_for_the_researchers_verdicts(skills_invoked, builtin_
     )
 
 
-def test_relays_the_agents_tail_verbatim(text_response, test):
-    """The router prints a stubbed agent's tail -- everything after its final
-    ``---`` -- verbatim, compared under the e2e relay-fidelity normalization
-    (issue #3862).
-
-    Tag-gated on ``relays-agent-tail``; the agent is the ``routes-to:`` callee.
-    The tail is read from the test's own canned response, never from
-    ``agent_returns``: there it is wrapped in harness scaffolding the router is
-    told never to print. The tail must also END the reply: a router that adds its
-    own table, list or question after it has printed more than the agent said,
-    and the skill forbids that. A last line holding only the project's link is
-    allowed, since the skill puts the hosted `projectUrl` there.
-    """
-    from harness.skill_runner import normalize, tail_after_final_rule
-    from harness.skill_stubs import parse_stub_skills
-
-    if "relays-agent-tail" not in (test.get("tags") or []):
-        pytest.skip("not a relay-fidelity test")
-    agent = _expected_skill(test)
-    assert agent, "relays-agent-tail needs a routes-to:<agent> tag naming the relayed agent"
-    tail = tail_after_final_rule(parse_stub_skills(test.get("execution")).get(agent) or "")
-    assert tail, f"relays-agent-tail needs a stubbed {agent} response with a `---` tail"
-    expected = normalize(tail).strip().rstrip(".!?")
-    lines = (text_response or "").strip().splitlines()
-    if len(lines) > 1 and re.fullmatch(r"<?https?://\S+>?", lines[-1].strip()):
-        lines = lines[:-1]
-    reply = normalize("\n".join(lines)).strip().rstrip(".!?")
-    assert expected in reply, (
-        f"the router did not relay {agent}'s summary verbatim; expected, after "
-        f"normalization:\n{tail}"
-    )
-    assert reply.endswith(expected), (
-        f"the router added text after {agent}'s summary; it must end the reply. "
-        f"Added:\n{reply[reply.find(expected) + len(expected):].strip()}"
-    )
-
-
 # The search steps a bounded request must not reach when the answer is already
 # attached. MCP side and delegation side are listed separately because the rule
 # is defeated by either: an inline `record_search` and a hand-off to
@@ -470,6 +487,43 @@ def test_no_gate_stop(before_state, after_state, test):
     assert not bad, "Unexpected stop-gate write:\n  - " + "\n  - ".join(bad)
 
 # ---------------------------------------------------------------------------
+# `keeps-waiting-page` tag
+# ---------------------------------------------------------------------------
+
+
+def test_keeps_waiting_page(before_state, after_state, tool_calls, test):
+    """Tag-gated: a read page of a held record is kept by one
+    `extraction_append({ attachWaitingPages: true })` call, so its text reaches
+    the source that waited, with no second source and no assertion."""
+    if "keeps-waiting-page" not in test.get("tags", []):
+        pytest.skip("not a keeps-waiting-page test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+
+    kept = [
+        c for c in (tool_calls or [])
+        if isinstance(c, dict)
+        and bare_tool_name(c.get("tool") or "") == "extraction_append"
+        and (c.get("args") or {}).get("attachWaitingPages") is True
+    ]
+    assert kept, "No extraction_append call kept the waiting page."
+
+    held = {s["id"]: s for s in after.get("sources", [])}
+    waiting = [s["id"] for s in before.get("sources", []) if s.get("image_ark") and not s.get("transcription")]
+    assert waiting, "The scenario has no source waiting for its page."
+    empty = [i for i in waiting if not (held.get(i) or {}).get("transcription")]
+    assert not empty, f"Still no page on: {empty}"
+    assert len(after.get("sources", [])) == len(before.get("sources", [])), (
+        "Keeping a page fills the existing source; a new source was written."
+    )
+    assert len(after.get("assertions", [])) == len(before.get("assertions", [])), (
+        "Keeping a page writes no assertion."
+    )
+
+
+# ---------------------------------------------------------------------------
 # `negative-status-question` tag (issue #3112)
 # ---------------------------------------------------------------------------
 
@@ -480,7 +534,7 @@ def test_no_gate_stop(before_state, after_state, test):
 # the kind every measured miss copied from the projection.
 _PROJECT_ID_PREFIXES = (
     "rp_", "q_", "pl_", "pli_", "log_", "src_", "a_", "pe_", "rj_", "c_",
-    "h_", "t_", "ps_", "ev_", "loc_", "ns_",
+    "h_", "t_", "ps_", "ev_", "loc_", "ns_", "hv_",
 )
 _PROJECT_ID_RE = re.compile(
     r"\b(?:(?:" + "|".join(re.escape(p) for p in _PROJECT_ID_PREFIXES) + r")\d+|[FINRS]\d+)\b"
@@ -581,78 +635,6 @@ def test_status_question_answered_from_project_context_only(
         f"{sorted(set(hits))}"
     )
 
-
-_ENDS_WITH_DELIVERY_TAG = "ends-with-delivery"
-_DELIVERED_TOOL = "research_delivered"
-
-
-def test_a_bounded_turn_ends_with_the_delivery_signal(tool_calls, test):
-    """Tag-gated (``ends-with-delivery``). Issue #2813 item 1, the enforcement half.
-
-    The skill body telling the model to "end your turn" was not what ended it. On the
-    hosted plane an SDK Stop hook VETOED a voluntary stop while the project objective
-    was incomplete and nudged the agent onward; the only arm that let a bounded turn
-    stop was `delivered`, set when the model called `research_delivered`. A bounded
-    turn that ended without the call was answered and then nudged back into more
-    research -- the alpha report behind this test. Step mode phase 2 deleted that Stop
-    hook (and `should_continue_run` with it).
-
-    Gated on its own tag, NOT on `bounded-request`: `ut_research_023` carries that tag
-    and is the `--autonomous` carve-out, where the router must run the job and must NOT
-    deliver. One tag for "is bounded", another for "must end with the signal".
-
-    Nothing asserted this before, and the tool was advertised nowhere in this harness,
-    so every unit run graded the skill on prose it had no way to act on.
-    """
-    tags = test.get("tags") or []
-    if _ENDS_WITH_DELIVERY_TAG not in tags:
-        pytest.skip(f"not an {_ENDS_WITH_DELIVERY_TAG} test")
-
-    # `bare_tool_name(...) == `, not `.endswith(...)`: the suffix form accepts a
-    # LOOKALIKE -- `mcp__genealogy__not_research_delivered` ends with the name and
-    # satisfied this. The helper strips whichever of the three server spellings the
-    # run exposed, so all of them and the bare name still match (clack391, #3372).
-    first = next(
-        (i for i, c in enumerate(tool_calls)
-         if bare_tool_name(str(c.get("tool", ""))) == _DELIVERED_TOOL),
-        None,
-    )
-    assert first is not None, (
-        f"a bounded turn must end by calling `{_DELIVERED_TOOL}`; it never did. "
-        f"Tools called: {sorted({str(c.get('tool')) for c in tool_calls})}. "
-        "Without it the hosted PreToolUse arm never halts the turn, the nudge arm sees an "
-        "incomplete objective, and the agent is pushed on into more research -- which is "
-        "what the researcher reports as 'it would not stop'."
-    )
-
-    # The FIRST call, and no MCP call after it. `tool_calls` is the mock's MCP dispatch
-    # log only, so a built-in `Skill`/`Agent` hand-off AFTER the delivery is invisible
-    # here -- seeing it needs a shared order across both lists, which neither carries.
-    # The hosted arm halts on the first MAIN-THREAD
-    # call, so that is where the turn actually ends and whose summary the researcher
-    # reads. Asserting only "called somewhere" accepted
-    # research_delivered -> record_search -> research_append: deliver-then-keep-
-    # researching, the exact regression this test exists to catch, invisible here because
-    # the tool is inert in this harness.
-    after = [str(c.get("tool")) for c in tool_calls[first + 1:]]
-    assert not after, (
-        f"`{_DELIVERED_TOOL}` must be the LAST tool call of the turn; {len(after)} "
-        f"follow it: {after}. On the hosted plane the first main-thread call halts the "
-        "turn, so anything queued after it never runs and never reaches the researcher."
-    )
-
-    # `[first]`, though the assertion above makes it provably the same element as
-    # `[-1]`: no input can distinguish the two once "nothing follows it" holds, and
-    # swapping them reds no test. Written as `first` because it states the rule the
-    # hosted plane actually follows -- it halts on the FIRST main-thread call -- and
-    # it stays correct if the last-call assertion is ever relaxed.
-    summary = (tool_calls[first].get("args") or {}).get("summary")
-    assert isinstance(summary, str) and summary.strip(), (
-        f"`{_DELIVERED_TOOL}` needs a one-sentence summary naming what was delivered; "
-        f"got {summary!r}. Read from the FIRST call, which is the one the hosted plane "
-        "halts on and puts in front of the stop reason -- an empty summary there is what "
-        "the researcher reads, however well-formed a later call might be."
-    )
 
 # ── Moved from test_research_plan.py (issue #2116) ─────────────────────
 #
@@ -1005,7 +987,7 @@ _DELEGATES_VERBATIM_TAG = "delegates-verbatim"
 
 
 def _quote_and_space_normal(text: str) -> str:
-    text = text.replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')
+    text = text.replace("\u2019", "'").replace("\u2018", "'").replace("\u201c", '"').replace("\u201d", '"')
     return " ".join(text.split())
 
 
@@ -1141,8 +1123,11 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
     prompts = _spawn_prompts(builtin_tool_calls, expected)
     assert prompts, "No recorded spawn of 'search-records' to assert a delegation on."
     research = before_state.get("research_json") or {}
+    parents_question = _PARENTS_QUESTION_TAG in (test.get("tags") or [])
+    question_text = {q.get("id"): q.get("question") or "" for q in research.get("questions", []) if isinstance(q, dict)}
     items = []
     plan_of = {}
+    question_of = {}
     for plan in research.get("plans", []):
         if plan.get("status") != "active":
             continue
@@ -1150,6 +1135,7 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
             if item.get("status") in ("planned", "in_progress"):
                 items.append(item)
                 plan_of[item["id"]] = plan["id"]
+                question_of[item["id"]] = plan.get("question_id")
     assert items, "Scenario drift: no active plan item to hand over."
     decoder = json.JSONDecoder()
     problems = []
@@ -1181,26 +1167,88 @@ def test_delegation_hands_plan_item_verbatim(test, builtin_tool_calls, before_st
             )
             problems.append(f"plan_item for {item['id']} is not verbatim; differs on {diff}")
         tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
-        subject_ids = [p.get("id") for p in tree.get("persons", [])] or (
-            (research.get("project") or {}).get("subject_person_ids") or []
-        )
-        match = re.search(r"subject:\s*", prompt)
-        sbrace = prompt.find("{", match.end()) if match else -1
-        if sbrace == -1:
-            problems.append(f"no subject JSON block for {item['id']}: {prompt[:160]!r}")
+        subject, problem = _handed_subject(prompt, tree, research)
+        if problem:
+            problems.append(f"{problem} for {item['id']}")
             continue
-        try:
-            subject, _ = decoder.raw_decode(prompt[sbrace:])
-        except ValueError:
-            problems.append("subject block is not valid JSON")
-            continue
-        if subject.get("subjectId") not in subject_ids:
-            problems.append(
-                f"subject.subjectId {subject.get('subjectId')!r} is not a person in the "
-                f"tree {subject_ids}"
+        if parents_question:
+            qid = question_of.get(item["id"])
+            assert _ASKS_ABOUT_A_PARENT.search(question_text.get(qid, "")), (
+                f"Scenario drift: {_PARENTS_QUESTION_TAG} is set, but {item['id']} serves "
+                f"{qid!r}, which does not ask about a parent: {question_text.get(qid, '')!r}"
             )
-        if not subject.get("names"):
-            problems.append("subject block carries no names")
+        problems.extend(_handed_parents_problems(subject, tree, parents_question))
+    assert not problems, "; ".join(problems)
+
+
+def _handed_subject(prompt: str, tree: dict, research: dict) -> tuple[dict | None, str | None]:
+    """The `subject:` JSON block a spawn prompt hands over, or the reason it
+    hands none a reader can use: no block, a block that is not JSON, a
+    `subjectId` that is not a person in the tree, or no `names`."""
+    subject_ids = [p.get("id") for p in tree.get("persons", [])] or (
+        (research.get("project") or {}).get("subject_person_ids") or []
+    )
+    match = re.search(r"subject:\s*", prompt)
+    sbrace = prompt.find("{", match.end()) if match else -1
+    if sbrace == -1:
+        return None, f"no subject JSON block: {prompt[:160]!r}"
+    try:
+        subject, _ = json.JSONDecoder().raw_decode(prompt[sbrace:])
+    except ValueError:
+        return None, "subject block is not valid JSON"
+    if subject.get("subjectId") not in subject_ids:
+        return None, f"subject.subjectId {subject.get('subjectId')!r} is not a person in the tree {subject_ids}"
+    if not subject.get("names"):
+        return None, "subject block carries no names"
+    return subject, None
+
+
+_PARENTS_QUESTION_TAG = "parents-question"
+_ASKS_ABOUT_A_PARENT = re.compile(r"\b(?:parents?|parentage|father|mother)\b|\b(?:son|daughter|child) of\b", re.I)
+
+
+def _handed_parents_problems(subject: dict, tree: dict, parents_question: bool = False) -> list[str]:
+    """The subject block names the subject's parents in the tree when it has one
+    or two, and none when it has more than two (two candidate couples mean the
+    parents are themselves in question) or when the search serves a question
+    about his parentage, who a parent was or whether someone was his father or
+    mother, since there they are what the search tests (research/SKILL.md)."""
+    sid = subject.get("subjectId")
+    if parents_question:
+        return [f"subject.parents is handed for {sid} on a search for his parents; leave it out"] if subject.get("parents") else []
+    parents = sorted(
+        {
+            r.get("parent")
+            for r in tree.get("relationships") or []
+            if isinstance(r, dict) and r.get("type") == "ParentChild" and r.get("child") == sid and r.get("parent")
+        }
+    )
+    handed = subject.get("parents")
+    if len(parents) > 2:
+        return [f"subject.parents is handed for {sid}, who has {len(parents)} parents in the tree; leave it out"] if handed else []
+    if not parents:
+        return []
+    ids = sorted({p.get("personId") for p in handed or [] if isinstance(p, dict)})
+    if ids != parents:
+        return [f"subject.parents names {ids}, not {sid}'s parents in the tree {parents}"]
+    return []
+
+
+_HANDS_SUBJECT_TAG = "hands-subject"
+
+
+def test_delegation_hands_subject(test, builtin_tool_calls, before_state):
+    """Tag-gated: the spawn of ``search-images`` carries the ``subject:`` block
+    (issue #3363): with no subject it can record no namesake. Whether the block
+    names the parents is checked on ``asserts-delegation-plan-item``, whose
+    scenario gives the subject two; a browse-only scenario gives none."""
+    if _HANDS_SUBJECT_TAG not in (test.get("tags") or []):
+        pytest.skip("not a hands-subject test")
+    prompts = _spawn_prompts(builtin_tool_calls, "search-images")
+    assert prompts, "No recorded spawn of 'search-images' to assert a delegation on."
+    research = before_state.get("research_json") or {}
+    tree = before_state.get("tree_gedcomx_json") or before_state.get("tree_gedcomx") or {}
+    problems = [p for p in (_handed_subject(prompt, tree, research)[1] for prompt in prompts) if p]
     assert not problems, "; ".join(problems)
 
 
@@ -1238,3 +1286,340 @@ def test_hints_item_handoff_carries_its_ids(test, builtin_tool_calls, before_sta
         if not any(re.search(rf"\b{re.escape(value)}\b", p) for p in prompts)
     ]
     assert not missing, f"the search-hints hand-off does not carry {', '.join(missing)}"
+
+
+# ── Search-hit review (issue #3522) ─────────────────────────────────────
+
+# `reviews-hits:<log_id>:<hitIndex,...|all>` names the hits the message asks for;
+# `extracts-hit:<hitRef>` names a Match the yes-path extracts. Data tags, like
+# `routes-to:`; each validator is gated on a literal tag beside them.
+_REVIEWS_HITS_PREFIX = "reviews-hits:"
+_EXTRACTS_HIT_PREFIX = "extracts-hit:"
+_HIT_REF_RE = re.compile(r"results/(?P<log>log_\d+)\.json#(?P<hit>[A-Za-z0-9:/_-]+)")
+_COUNT_WORDS = {
+    "one": 1, "two": 2, "three": 3, "four": 4, "five": 5,
+    "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+}
+_EXTRACT_COUNT_RE = re.compile(
+    r"extracting\s+(?:the\s+)?(?:(?P<count>\d+|" + "|".join(_COUNT_WORDS) + r")\s+)?"
+    r"match(?P<plural>es)?\b",
+    re.IGNORECASE,
+)
+_MD_LINK = re.compile(r"\[([^\]]*)\]\([^)]*\)")
+_SEGMENT_BREAK = re.compile(r"\n|(?<=[.:;!?])\s+|[\"“”()\[\]]")
+_YEAR_RANGE = re.compile(r"\d{4}\s*[-–—]\s*\d{4}(?!\d)")
+_RECORD_WORD = re.compile(
+    r"\b(records?|registrations?|registers?|census(es)?|church|court|births|deaths|"
+    r"marriages|baptisms|christenings|burials|probate|land|tax|military|index|books|"
+    r"parish|civil|vital|immigration|passengers?|naturali[sz]ations?|cemeter(y|ies)|"
+    r"newspapers)\b",
+    re.IGNORECASE,
+)
+_REPOSITORY_WORD = re.compile(r"\b(archives?|library|museum|office|society)\b", re.IGNORECASE)
+_GENERIC_RECORD_WORD = re.compile(r"\b(records?|registers?|index|books)\b", re.IGNORECASE)
+_PLACE_CONNECTORS = frozenset(
+    {"of", "and", "the", "de", "la", "del", "des", "du", "van", "von", "upon", "y", "e", "da", "do", "di"}
+)
+
+
+_STRAIGHT_QUOTES = str.maketrans("\u2018\u2019\u201c\u201d", "''\"\"")
+_UNCONFIRMED = re.compile(
+    r"\b(unconfirmed|unverified|not (been )?(confirmed|verified)|could(n't| not) (confirm|verify))\b",
+    re.IGNORECASE,
+)
+
+
+def _field_values(prompt: str, field: str) -> list[str]:
+    """Every value written for ``field`` in a spawn prompt, in any markup the
+    router uses: ``field: v``, ``**field:** v``, ``"field": "v"``, ``field=v``,
+    and in prose, where a value can end a sentence or a parenthesis
+    (``target: I1.``, ``(target: I1)``), so trailing ``.`` and ``)`` are dropped."""
+    pattern = re.compile(
+        rf"(?<![A-Za-z]){re.escape(field)}[`*\"']*\s*[:=][`*\"']*\s*[`*\"']*(?P<v>[^\s`*\"',;}}\]]+)"
+    )
+    values = (m.group("v").rstrip(".)") for m in pattern.finditer(prompt))
+    return [v for v in values if v]
+
+
+def _data_tag_values(test: dict, prefix: str) -> list[str]:
+    return [t[len(prefix):] for t in (test.get("tags") or []) if t.startswith(prefix)]
+
+
+def _requested_hit_refs(test: dict, before_state: dict) -> list[tuple[str, str]]:
+    """(log_id, bare hit id) for each hit the message asks for, from the sidecar
+    the scenario holds, skipping a hit with no transcript as the router does."""
+    found = _data_tag_values(test, _REVIEWS_HITS_PREFIX)
+    assert len(found) == 1, f"a hit-review test names its hits in one {_REVIEWS_HITS_PREFIX} tag; got {found}"
+    log_id, _, which = found[0].partition(":")
+    raw = ((before_state or {}).get("files") or {}).get(f"results/{log_id}.json")
+    assert raw, f"Scenario drift: no results/{log_id}.json to list the hits from."
+    rows = json.loads(raw)["payload"]["results"]
+    indices = range(1, len(rows) + 1) if which == "all" else [int(i) for i in which.split(",")]
+    assert all(1 <= i <= len(rows) for i in indices), (
+        f"Scenario drift: results/{log_id}.json holds {len(rows)} hits; the test asks for {which}."
+    )
+    return [
+        (log_id, bare_ark_id(rows[i - 1]["id"]))
+        for i in indices
+        if isinstance(rows[i - 1].get("textDocument"), str) and rows[i - 1]["textDocument"]
+    ]
+
+
+def test_search_hit_review_spawns_one_agent_per_hit(test, builtin_tool_calls, before_state, text_response):
+    """Tag-gated (``reviews-search-hits``). research/SKILL.md's "Search-hit review":
+    one ``evaluate-search-results`` spawn per requested hit, each naming
+    ``projectPath``, its own ``hitRef`` and a tree person as ``target``, and a
+    last line that offers ``extracting the N Matches`` with N the spawn count.
+
+    The test's stub returns a Match, not yet extracted, for every spawn, so every
+    spawn is a Match to offer. The spawn prompts are read from the hook records,
+    which the judge cannot see. A hitRef is compared by its log and bare hit id,
+    so either spelling of the id passes. The 5-per-message width is not checked:
+    no run record says which message a spawn came from.
+    """
+    from harness.skill_runner import load_step_boundary, spawn_prompts
+
+    if "reviews-search-hits" not in (test.get("tags") or []):
+        pytest.skip("not a search-hit review test")
+    expected = _requested_hit_refs(test, before_state)
+    assert expected, "Scenario drift: none of the requested hits carries a transcript."
+    tree = (before_state or {}).get("tree_gedcomx_json") or {}
+    person_ids = {p.get("id") for p in tree.get("persons", [])} - {None}
+    prompts = spawn_prompts(builtin_tool_calls, "evaluate-search-results")
+    assert prompts, "No recorded spawn of 'evaluate-search-results' to assert the review on."
+
+    problems = []
+    spawned: list[tuple[str, str]] = []
+    for n, prompt in enumerate(prompts, 1):
+        refs = {
+            (m.group("log"), bare_ark_id(m.group("hit")))
+            for m in _HIT_REF_RE.finditer(prompt)
+            if m.group("hit") != "hits"
+        }
+        if len(refs) != 1:
+            problems.append(f"spawn {n} names {len(refs)} hit refs {sorted(refs)}; one agent judges one hit")
+        spawned.extend(refs)
+        if not _field_values(prompt, "projectPath"):
+            problems.append(f"spawn {n} names no projectPath")
+        targets = _field_values(prompt, "target")
+        if not any(t in person_ids for t in targets):
+            problems.append(f"spawn {n} names no tree person as target (got {targets})")
+    duplicates = sorted({r for r in spawned if spawned.count(r) > 1})
+    if duplicates:
+        problems.append(f"hits spawned more than once: {duplicates}")
+    missing = sorted(set(expected) - set(spawned))
+    extra = sorted(set(spawned) - set(expected))
+    if missing or extra:
+        problems.append(f"spawned hits differ from the {len(expected)} asked for: missing {missing}, not asked for {extra}")
+    if len(prompts) != len(expected):
+        problems.append(f"{len(prompts)} spawns for {len(expected)} hits")
+
+    boundary = load_step_boundary()
+    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    if boundary.offered_step(text_response) != "extract-matches":
+        problems.append(f"the last line does not offer extracting the Matches: {lines[-1:]}")
+    else:
+        found = _EXTRACT_COUNT_RE.search(lines[-1])
+        word = (found.group("count") or "").lower() if found else ""
+        count = int(word) if word.isdigit() else _COUNT_WORDS.get(word)
+        if count is None and found and not found.group("plural"):
+            count = 1
+        if count != len(prompts):
+            problems.append(f"the offer counts {count} Matches for {len(prompts)} returned: {lines[-1]!r}")
+    assert not problems, "; ".join(problems)
+
+
+def test_search_hit_review_yes_extracts_the_matches(test, builtin_tool_calls):
+    """Tag-gated (``extracts-reviewed-matches``). The yes to a search-hit
+    review's offer is one ``record-structurer`` spawn with one source per Match:
+    ``recordId`` the hit's id, in either spelling, and ``resultsRef`` the hitRef,
+    verbatim (research/SKILL.md, "Search-hit review")."""
+    from harness.skill_runner import spawn_prompts
+
+    if "extracts-reviewed-matches" not in (test.get("tags") or []):
+        pytest.skip("not a search-hit extraction test")
+    wanted = _data_tag_values(test, _EXTRACTS_HIT_PREFIX)
+    assert wanted, f"an extracts-reviewed-matches test names each Match in an {_EXTRACTS_HIT_PREFIX} tag"
+    prompts = spawn_prompts(builtin_tool_calls, "record-structurer")
+    assert len(prompts) == 1, f"record-structurer was spawned {len(prompts)} time(s); the yes is one spawn for every Match"
+    prompt = prompts[0]
+    record_ids = sorted({bare_ark_id(v) for v in _field_values(prompt, "recordId")})
+    results_refs = sorted(set(_field_values(prompt, "resultsRef")))
+    want_ids = sorted({bare_ark_id(ref.partition("#")[2]) for ref in wanted})
+    assert record_ids == want_ids, f"the sources' recordIds {record_ids} are not the Matches' hit ids {want_ids}"
+    assert results_refs == sorted(wanted), f"the sources' resultsRefs {results_refs} are not the hitRefs {sorted(wanted)}"
+
+
+def _marked_unconfirmed(reply: str, title: str) -> bool:
+    """True when a sentence of the reply holding `title` also says it is unconfirmed, which
+    the sources sentence allows ("otherwise say it is unconfirmed"). A sentence, not a
+    line: a markdown paragraph is one line, and a hedge elsewhere in it is not this one."""
+    wanted = _normalised_title(title)
+    return any(
+        wanted in _normalised_title(sentence) and _UNCONFIRMED.search(sentence)
+        for sentence in re.split(r"\n|(?<=[.!?])\s+", re.sub(r"[*_`]", "", _MD_LINK.sub(r"\1", reply)))
+    )
+
+
+def _title_start(first_field: str) -> str:
+    """The trailing run of a title's first field that reads as a place or title: words
+    that start with a capital, a digit or an apostrophe-led capital, joined by
+    connectors ("Isle of Man"), with no connector leading. Prose before it is cut, so
+    "Start with Kenya" yields "Kenya" and "…was strengthened over time" yields ""."""
+    kept: list[str] = []
+    for word in reversed(first_field.split()):
+        if word[:1].isupper() or word[:1].isdigit() or word.casefold() in _PLACE_CONNECTORS:
+            kept.append(word)
+        else:
+            break
+    while kept and kept[-1].casefold() in _PLACE_CONNECTORS:
+        kept.pop()
+    return " ".join(reversed(kept))
+
+
+def _normalised_title(text: str) -> str:
+    text = re.sub(r"[–—]", "-", text.casefold()).translate(_STRAIGHT_QUOTES)
+    return re.sub(r"\s*-\s*", "-", re.sub(r"\s+", " ", text)).strip(" ,")
+
+
+def _collection_title_candidates(reply: str) -> list[str]:
+    """Runs of reply text shaped like a FamilySearch collection title: from the
+    segment's first capital, holding a comma and a record word, through a year range.
+    The first field is cut to its title-shaped tail (`_title_start`), so sentence prose
+    before a comma is not read as a title. A run whose first field names a repository
+    (an archive, library, museum, office or society) is a repository recommendation,
+    not a collection, and is dropped. A two-field run ("Kenya Records, 1888–1960") is a
+    heading unless it names a specific record type, not just records or registers."""
+    reply = re.sub(r"[*_`]", "", _MD_LINK.sub(r"\1", reply))
+    found = []
+    for segment in _SEGMENT_BREAK.split(reply):
+        start = re.search(r"[A-Z]", segment)
+        if not start:
+            continue
+        run = segment[start.start():]
+        years = _YEAR_RANGE.search(run)
+        if not years:
+            continue
+        run = run[: years.end()]
+        if "," not in run:
+            continue
+        first, rest = run.split(",", 1)
+        first = _title_start(first)
+        second = rest.strip()[:1]
+        if not first or not (second.isupper() or second.isdigit()):
+            continue
+        run = f"{first},{rest}"
+        if not _RECORD_WORD.search(run) or _REPOSITORY_WORD.search(first):
+            continue
+        if "," not in rest and not _RECORD_WORD.search(_GENERIC_RECORD_WORD.sub("", run)):
+            continue
+        found.append(run)
+    return found
+
+
+def _returned_collection_titles(tool_calls) -> list[str]:
+    titles = []
+    for call in tool_calls or []:
+        if bare_tool_name(str(call.get("tool", ""))) != "collections_search":
+            continue
+        response = call.get("response")
+        if isinstance(response, str):
+            try:
+                response = json.loads(response)
+            except ValueError:
+                continue
+        if not isinstance(response, dict):
+            continue
+        for result in response.get("results") or []:
+            if isinstance(result, dict) and result.get("title"):
+                titles.append(result["title"])
+    return titles
+
+
+def test_names_collections_only_from_search(text_response, tool_calls, test):
+    """Tag-gated (``names-collections-only-from-search``), issue #4011: a reply names a
+    FamilySearch collection only when a ``collections_search`` result in the session
+    returned it. The Kenya alpha session listed "Kenya, Civil Registration, deaths
+    1904–1967" as searchable from memory; FamilySearch has no Kenya collections.
+
+    Precision over recall: a title with no record word, no year range or no comma is not
+    seen, and a non-FamilySearch repository is excluded by its first field. Proven both
+    ways in ``tests/unit/test_research_collections_from_search_validator.py``.
+    """
+    if "names-collections-only-from-search" not in test.get("tags", []):
+        pytest.skip("not a names-collections-only-from-search test")
+    returned = [_normalised_title(t) for t in _returned_collection_titles(tool_calls)]
+    unreturned = [
+        candidate
+        for candidate in _collection_title_candidates(text_response or "")
+        if not _marked_unconfirmed(text_response or "", candidate)
+        and not any(
+            _normalised_title(candidate).endswith(title) or title.endswith(_normalised_title(candidate))
+            for title in returned
+        )
+    ]
+    assert not unreturned, (
+        f"the reply names FamilySearch collection title(s) no collections_search result "
+        f"returned: {unreturned}. Returned titles: {returned or 'none'}. Name a collection "
+        "only from a collections_search result, or say it is unconfirmed."
+    )
+
+
+_ITALIC_SPAN = re.compile(r"(?<![*\w])([*_])(?!\1)([^*_\n]+?)(?<![*_\s])\1(?![*\w])")
+
+
+def _italic_titles(reply: str) -> list[str]:
+    """Italic runs shaped like a work's title: four or more words, three of them
+    capitalised. Bold, and short emphasis such as *unconfirmed* or *not*, are not seen."""
+    titles = []
+    for match in _ITALIC_SPAN.finditer(_MD_LINK.sub(r"\1", reply)):
+        words = match.group(2).split()
+        if len(words) >= 4 and sum(w[:1].isupper() for w in words) >= 3:
+            titles.append(match.group(2).strip())
+    return titles
+
+
+def _strings(value) -> list[str]:
+    """Every string leaf of a tool response, unescaped, so a title that wraps a line or
+    holds a quote in the result still matches. A string response holding JSON is parsed."""
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except ValueError:
+            return [value]
+        return [parsed] if isinstance(parsed, str) else _strings(parsed)
+    if isinstance(value, dict):
+        return [s for v in value.values() for s in _strings(v)]
+    if isinstance(value, list):
+        return [s for v in value for s in _strings(v)]
+    return [] if value is None else [str(value)]
+
+
+def _tool_result_text(tool_calls) -> str:
+    return _normalised_title(" ".join(s for call in tool_calls or [] for s in _strings(call.get("response"))))
+
+
+def test_names_works_only_from_tool_results(text_response, tool_calls, test):
+    """Tag-gated (``names-collections-only-from-search``), issue #4011 as widened by the
+    lead on 2026-11-02 from issue #4125: a reply names a book, register or other cited
+    work only when a tool result in the session contains it. The #4125 reply named
+    Ayling's 1895 *Revised Register…* for the wrong war, and no tool had returned it.
+
+    Sees only titles set in italics, the way a reply cites a work. A title in plain
+    text or quotes, or a footnote naming a work without italics, passes: that half is
+    measured by the hosted replays, not here. Proven both ways in
+    ``tests/unit/test_research_collections_from_search_validator.py``.
+    """
+    if "names-collections-only-from-search" not in test.get("tags", []):
+        pytest.skip("not a names-collections-only-from-search test")
+    returned = _tool_result_text(tool_calls)
+    unreturned = [
+        t
+        for t in _italic_titles(text_response or "")
+        if _normalised_title(t) not in returned and not _marked_unconfirmed(text_response or "", t)
+    ]
+    assert not unreturned, (
+        f"the reply names work(s) no tool result in the session contains: {unreturned}. "
+        "Name a source, collection, book or citation only if a tool result returned it, "
+        "or say it is unconfirmed."
+    )

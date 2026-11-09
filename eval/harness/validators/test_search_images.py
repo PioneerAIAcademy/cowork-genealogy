@@ -25,6 +25,10 @@ from pathlib import Path
 
 import pytest
 
+from validators_lib import as_mapping as _as_mapping
+from validators_lib import assert_namesake_rows_cite as _assert_namesake_rows_cite
+from validators_lib import assert_namesake_warning_handed_back as _assert_namesake_warning_handed_back
+from validators_lib import assert_no_namesake_row_without_subject as _assert_no_namesake_row_without_subject
 from validators_lib import new_log_entries as _new_log_entries
 
 
@@ -138,13 +142,15 @@ def test_cap_refusal_relayed_and_logged_partial(
 ):
     """Tag-gated: on the cap refusal (#3010) the agent makes one
     `image_transcribe` call, logs the browse `partial`, and returns NOT READ,
-    the refusal, its link and its route advice, inventing no page.
+    the refusal, its link and its route advice, inventing no page. The link
+    must also sit after the final `---` (#4256): the caller prints only that
+    tail to the researcher, so a link kept above it never reaches them.
 
     The expected text is read from the fixture, which
     `packages/engine/mcp-server/tests/packaging/image-cap-fixture.test.ts` pins
     to the refusal `browse-budget.ts` throws. Moved from the retired
     image-reader suite (#2490)."""
-    from harness.skill_runner import subject_reply_text
+    from harness.skill_runner import subject_reply_text, tail_after_final_rule
 
     if "cap-refusal" not in test.get("tags", []):
         pytest.skip("not an image-cap refusal test")
@@ -168,6 +174,9 @@ def test_cap_refusal_relayed_and_logged_partial(
     )
     assert "Image cap reached" in reply, "the return does not quote the cap refusal"
     assert link in reply, f"the return drops the refused image's link {link}"
+    assert link in tail_after_final_rule(reply), (
+        f"the refused image's link {link} is not after the final `---`, so the researcher never sees it"
+    )
     for label in ("**Transcription:**", "**Extracted facts:**"):
         assert label not in reply, f"the return presents a {label} section for an image that was never read"
 
@@ -249,6 +258,53 @@ def test_lookingfor_has_no_navigation_phrase(tool_calls, test):
         and _NAVIGATION_PHRASE.search(looking_for)
     ]
     assert not bad, f"lookingFor carries a navigation phrase: {bad}"
+
+
+# --- Namesake rows (issue #3363, PR 3) ---------------------------------------
+
+
+def _image_inputs(tool_calls) -> set[str]:
+    """Each `imageId` or `ark` this run passed to image_transcribe, as passed."""
+    out: set[str] = set()
+    for _, c in _calls_named(tool_calls, "image_transcribe"):
+        args = _as_mapping(c.get("input") or c.get("args"))
+        for key in ("imageId", "ark"):
+            value = args.get(key)
+            if isinstance(value, str) and value.strip():
+                out.add(value.strip())
+    return out
+
+
+def test_namesake_row_recorded(before_state, after_state, tool_calls, test):
+    """Tag-gated (namesake-row): a page that shows a same-named person the browse
+    rules out is recorded as a namesakes row on the subject (step 7b), listing
+    the page's `imageId` exactly as passed to image_transcribe (or its `ark`, if
+    read by `ark`) and citing the browse's `image_search` log. An `imageRef` or a
+    `staged.resultsRef` in `record_ids` names no page a reader can open again."""
+    if "namesake-row" not in test.get("tags", []):
+        pytest.skip("not a namesake-row scenario")
+    _assert_namesake_rows_cite(
+        before_state,
+        after_state,
+        log_tool="image_search",
+        ids_read=_image_inputs(tool_calls),
+        compare_bare=False,
+        what="an imageId or ark this run passed to image_transcribe",
+    )
+
+
+def test_no_namesake_row_without_subject(before_state, after_state, test):
+    """No `subject:` block in the delegation, no namesakes row (step 7b)."""
+    _assert_no_namesake_row_without_subject(before_state, after_state, test)
+
+
+def test_namesake_warning_handed_to_person_evidence(tool_calls, agent_returns, text_response, test):
+    """Tag-gated (namesake-warning): when the namesakes write warns that links to
+    the subject are untied, the return hands every listed `pe_` id to
+    person-evidence (the same line search-records owes)."""
+    if "namesake-warning" not in test.get("tags", []):
+        pytest.skip("not a namesake-warning scenario")
+    _assert_namesake_warning_handed_back(tool_calls, agent_returns, text_response, "search-images")
 
 
 # --- A browse log entry is never relabelled image_transcribe (#4012) ---------

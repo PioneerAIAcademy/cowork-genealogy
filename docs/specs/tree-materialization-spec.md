@@ -54,10 +54,10 @@ first-hand shows the report **measured the wrong thing**:
 | `research.json` assertions | **80/80 carry `source_id`**; 7/7 sources carry `gedcomx_source_description_id` **and** a `citation` |
 | tree facts | **0 of ~13 carry any source-ref** (`sources[]` empty on every fact) |
 | tree names | **0 of 19 carry a source-ref** |
-| tree S-entries | 7/8 have no ESM `citation` string — **working as specified** (omit during research; `simplified-gedcomx-spec.md` §4.3) |
+| tree S-entries | 7/8 have no ESM `citation` string — **working as specified** (omit until proof-conclusion writes the source entry; `simplified-gedcomx-spec.md` §4.3) |
 
 The defect is **not** absent ESM citation strings (those are deliberately
-deferred to upload). It is that **every fact and name on the tree is a
+left to proof-conclusion). It is that **every fact and name on the tree is a
 provenance orphan** — the `fact → source` pointer is dropped wholesale —
 *even though the complete chain
 (`assertion.source_id → research source → S-entry id → citation`) is intact
@@ -105,17 +105,13 @@ stays a separate, later act**. This is how competent genealogists actually
 work — attach evidence to a person as you find it, layer the conclusion on
 top — and it is the whole point of the GedcomX evidence/conclusion split.
 
-Two invariants keep the relaxation safe:
+One invariant keeps the relaxation safe:
 
 - **Conflicting values coexist; never suppress.** Agreeing values collapse
   to one fact accumulating multiple source-refs; disagreeing values coexist
   as separate facts. At materialization time you often do not yet know which
   value is wrong, and GPS *requires resolving* conflicts, which requires
   *keeping* them.
-- **Upload stays conclusion-gated (§7).** The working tree carries
-  evidence; only `primary`/proof-backed facts upload to FamilySearch. The
-  original doctrine's intent — FamilySearch receives conclusions, not raw
-  evidence — is preserved.
 
 ### 2.1 Belief lives where it already lives
 
@@ -126,8 +122,8 @@ needs (`simplified-gedcomx-spec.md` §4.2, §4.4):
   fact is already legal.
 - **`primary: true`** on a fact (and **`preferred: true`** on a name) marks
   "the concluded/preferred value of this type" — the concluded-value marker.
-- Belief **level** stays in **`proof_summaries.proof_tier`**
-  (`proved`/`probable`/`possible`/…).
+- Belief **level** stays in the **proof summary** (`tier`, and each claim's
+  `proof_tier` when claims are present: `proved`/`probable`/`possible`/…).
 
 A new belief-level enum or free-text field on the tree fact is **rejected**:
 it duplicates `proof_tier` and re-creates the very "confidence on
@@ -147,7 +143,7 @@ read as its confidence.
 | **extraction** — `extraction_append` *(assertion-only; replaced the record-extraction skill and record-extractor agent, since retired)* | Extract classified assertions onto `record_id`+`record_role` (personas), **including relationship-type assertions** (parent-child, spouse), with roles and classifications decided in code; create the per-record S-entry. FamilySearch records come in as `recordIds`; any other source is structured by the record-structurer agent and sent as `documents`. **Writes only the source S-entry** (through `researchAppend`'s composite `sourceDescription`); it writes no persons, facts, names, or relationships. | `extraction_append` (sources + assertions + composite `sourceDescription`; logs its own `record_read` entry per record) |
 | **person-evidence** *(grows — the fix)* | Decide identity (link persona→person, or mint a new person); **write the linked persona's assertions as sourced facts/names onto the tree person** via `materialize_facts`; own the **household skeleton** — mint each member (sibling stubs included) via `materialize_facts` create-or-enrich, and write parent-child + spouse-spouse **edges** via `tree_edit` `add_relationship`, each edge carrying a source-ref resolved from the relationship assertion's `source_id` (same resolver as `materialize_facts`). Match later personas to fact-less stubs to enrich them. Before committing a household's materialization, **dry-run `merge_warnings`** as a coherence gate (§9). **Never sets `primary`/`preferred`.** | **`materialize_facts`** (new), `research_append` (`pe_` links), `same_person`, `tree_edit` (`add_relationship`), `merge_warnings` |
 | **conflict-resolution** *(unchanged role, now fed by materialization)* | Resolve the coexisting-conflict facts materialization surfaces; write `conflicts`. | `research_append` (conflicts) |
-| **proof-conclusion** *(narrows)* | Weigh already-materialized evidence, set **`primary`/`preferred`** on the concluded value — via `tree_correct` `update_fact` when the value matches an existing evidence fact, or via `tree_edit` `add_fact` (`primary:true` + multi-refs) when the conclusion is **synthesized** and matches no single record (§7.1); write `proof_summary`+`proof_tier`; at upload copy ESM citations onto S-entries and gate upload to concluded facts; collapse duplicate tree persons. | `tree_correct` (`update_fact` → set `primary`), `tree_edit` (`add_fact`), `research_append` (`proof_summaries`), `merge_tree_persons`, `merge_warnings` |
+| **proof-conclusion** *(narrows)* | Weigh already-materialized evidence, set **`primary`/`preferred`** on the concluded value — via `tree_correct` `update_fact` when the value matches an existing evidence fact, or via `tree_edit` `add_fact` (`primary:true` + multi-refs) when the conclusion is **synthesized** and matches no single record (§7.1); write the `proof_summary`; copy ESM citations onto S-entries; collapse duplicate tree persons. | `tree_correct` (`update_fact` → set `primary`), `tree_edit` (`add_fact`), `research_append` (`proof_summaries`), `merge_tree_persons`, `merge_warnings` |
 
 The seam that makes this un-guessable is **substrate + operation**:
 
@@ -332,13 +328,19 @@ qualify.
   or lowers it to 'speculative' naming the namesake. When the project holds no
   such tie yet, person-evidence lowers it now: a party still to extract or a
   record still to find is not a tie, and the link can be raised once the tie
-  is made.", followed by the arm's own suffix. When `personId` is omitted, a person the lookup would
+  is made.", followed by the arm's own suffix. It names every row that still
+  caps one of the links and opens on a link one caps: a row the age exemption
+  (research-append-tool-spec §5) lifts for every link is not named, and links no
+  row caps, which only a namesake in the tree can still refuse, get the next
+  item's refusal. When `personId` is omitted, a person the lookup would
   otherwise reuse is skipped, and the op takes the next eligible person or
   mints one, with a warning: "persona '<role>' of record '<record>' would
   have reused '<id>', but '<id>' has a recorded namesake and its link '<pe>'
   from this record is not tied; '<new>' was created instead. Route '<pe>' to
   person-evidence to tie or lower it.", or "'<other>' was used instead" when
-  the lookup takes another eligible person. Measured at `20ad24872` by
+  the lookup takes another eligible person. It reads "a recorded namesake and a
+  namesake in the tree" when a pair stands beside a row that still caps one of
+  the links, and "a namesake in the tree" when only a pair does. Measured at `20ad24872` by
   `dev/measure-namesake-cap.ts` §5 over the committed runs' persona ops, on
   each run's final state: with rows on every person holding a live strong
   link, 162 of the 967 explicit ops onto a row holder admitted without the row
@@ -420,8 +422,18 @@ when `same_person` is called without `recordRole`:
   from the same record: the stub's name equals the father's, so it traces to
   the father's party, and nothing else on it tells them apart.
 
-Minting needs no link (the link to a new person is written after it exists),
-and neither does re-running a record onto the stub it minted
+Minting needs no link (the link to a new person is written after it exists).
+Writing onto a person the run added that carries no provenance at all
+(`blankAddedPerson`: not imported, no source ref on its node, names, facts
+or any relationship it is in, and no namesake, whose links the namesake cap
+decides as before) needs a live link of any confidence, a
+`speculative` one included: `research_append` refuses a `probable` or
+`confident` link to such a person until it has been written onto, and the
+`speculative` link has already passed `same_person`'s score gate. Requiring no
+link at all would skip that score: once the persona is written, every ref on
+the person reaches this one record, so it reads as minted from it and the link
+written after needs no score. The order is a scored `speculative` link, then
+`materialize_facts`, then raising the link. Nor does re-running a record onto the stub it minted
 (`mintedFromThisRecord`: a person the run added, not shaped like a FamilySearch
 id, whose refs reach only this record), judged against the write-once starting
 tree so that a person the project began with is never taken for a stub, even
@@ -667,7 +679,7 @@ deletes the fact's value; it is reported instead, and the fact is left alone.
 
 **A concluded fact is rewritten, loudly.** `primary` is not a detach trigger, so
 a fact proof-conclusion concluded keeps its backlink. The correction still has to
-reach it — a known-wrong concluded value on the upload target is worse than a
+reach it — a known-wrong concluded value on the deliverable is worse than a
 moved one — but it carries a warning naming the fact, because the proof summary
 citing it was written against the earlier reading.
 
@@ -770,7 +782,7 @@ caller, whose own zero is likewise green by construction until a run fires.
 **Who may perform this write.** No skill or agent is added
 to the `tree.gedcomx.json`/`persons` row's `callers`: a skill-granular grant
 would also authorize adding an unsourced person and setting `primary`, which that
-row's `failure` line ("this file is the upload target") is precisely about.
+row's `failure` line ("this file is the deliverable") is precisely about.
 `research_append`/`extraction_append` are authorized as **tools** instead, and
 only when the whole persons delta is this rewrite — mirrored attributes on facts
 that already carried the same backlink, nothing added or removed. Same shape as
@@ -1166,9 +1178,7 @@ Where the guard does **not** fire:
   mother was Mary Donovan"*, or a name added by hand — which legitimately have
   **no documentary source yet**. A name is not evidence that lost its source;
   it is a working conclusion whose source may not exist. Requiring a ref here
-  would forbid the "start from what the family told you" workflow, and it is
-  safe: **upload is conclusion-gated (§7)**, so a ref-less hypothesis name
-  never reaches FamilySearch until it is proof-backed.
+  would forbid the "start from what the family told you" workflow.
 
   **One class travelled this exemption without qualifying for it**, and the
   argument above is why it mattered: a person named inside another persona's
@@ -1177,7 +1187,7 @@ Where the guard does **not** fire:
   `materialize_facts`" was simply not true of her. §4.6 gives her one, and it
   enforces the ref.
 
-  **The exemption's safety argument is restored.** A record-derived person
+  **The exemption's argument is restored.** A record-derived person
   named inside another persona's assertion now has a ref-enforcing path, and
   `person-evidence` uses it: it mints such a party through `materialize_facts`
   (the persona form when that role has its own persona on the record, the
@@ -1210,7 +1220,7 @@ authors (its ad-hoc names are exempt above). `merge-tree-persons.test.ts` is
 **not** in either golden writer list — the Mode-2 fold authors nothing.
 
 **The ESM citation string is out of scope here.** The tree S-entry's
-`citation` stays populated by `proof-conclusion` at upload time (copied from
+`citation` stays populated by `proof-conclusion` (copied from
 `research.json` `sources[].citation`), per existing doctrine. This spec owns
 the **source-ref (pointer)**; the `citation` agent / proof-conclusion own the
 **ESM string**. The two must not be conflated (the §1.2 mis-framing).
@@ -1224,13 +1234,12 @@ the **source-ref (pointer)**; the `citation` agent / proof-conclusion own the
   churn that would arise if materialization guessed a preferred value and
   later facts forced a change.
 - **A person may legitimately carry facts with no `primary` yet** (before
-  proof runs). Defined fallback:
-  - **Viewer:** display the sole fact of a type; if several coexist and none
-    is `primary`, show them as un-ranked evidence (surface the conflict).
-  - **Upload:** send **only** `primary`/proof-backed facts. Un-concluded
-    evidence stays out of FamilySearch.
+  proof runs). The viewer displays the sole fact of a type; if several
+  coexist and none is `primary`, it shows them as un-ranked evidence
+  (surfacing the conflict).
 - A `primary` fact is a *concluded display value*, **not** a proof claim.
-  Strength always lives in the `proof_summary`'s `proof_tier`; a lone
+  Strength always lives in the proof summary (`tier`, and each claim's
+  `proof_tier` when claims are present); a lone
   `primary` fact from one source is `possible` at best.
 
 ### 7.1 Indirect evidence and synthesized conclusions
@@ -1395,7 +1404,7 @@ unintended; the full `vitest` suite and the manifest-drift test
 The core doctrine change is a rewrite of `research-schema-spec.md` §8 ("tree
 update timing") from *"tree updated only at proof ≥ probable"* to *"evidence
 facts materialize at identity-link time with provenance; `primary`/`preferred`
-+ `proof_tier` govern conclusion; upload is conclusion-gated."* This is
+govern conclusion."* This is
 **doctrine, not a new field or enum** — no closed-enum or tree-shape
 allow-list change is required (the schema already permits `sources[]` arrays
 and `primary`/`preferred`). Sites to touch:
@@ -1469,7 +1478,7 @@ down-rate it purely for the stub lacking vitals.** No new matching mechanism —
    gate before committing — Cluster D; §11 stub-match craft); proof-conclusion
    (set `primary` via `tree_correct`; **additive path** — `tree_edit` `add_fact`
    with `primary:true` + multi-refs for synthesized conclusions, §7.1 /
-   Cluster E; upload citation/gating); conflict-resolution (consume surfaced
+   Cluster E; citation); conflict-resolution (consume surfaced
    conflicts). Rewire `match-merge-workflow-spec.md` invocation owner to
    person-evidence. Update eval briefs/rubrics.
 4. **Doctrine edit** — `research-schema-spec.md` §8 + the sites in §10.

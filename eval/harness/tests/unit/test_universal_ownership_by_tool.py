@@ -345,3 +345,135 @@ def test_a_person_timeline_without_the_call_still_fails():
     after = research([SURVIVOR], timelines=[HYPOTHESIS, PERSON])
     with pytest.raises(AssertionError):
         check_research(before, after, RESEARCH_SKILL, POSITIVE, tool_calls=[])
+
+
+# ── `project.objective` is open to any skill (issue #3975) ─────────────────
+#
+# Not tool identity, but the same check: the main thread rewrites the objective
+# when the user asks, and `research` is a declared caller of no `project` field.
+# A subagent's objective write is the plugin hook's to deny, not this check's.
+
+RESEARCH = {"name": "research"}
+
+
+def _with_project(state, **fields):
+    state["research_json"]["project"].update(fields)
+    return state
+
+
+def test_an_objective_rewrite_by_a_non_owner_passes():
+    before = research([SURVIVOR])
+    after = _with_project(
+        research([SURVIVOR]), objective="Who were his parents?", updated="2026-11-03"
+    )
+    check_research(before, after, RESEARCH, POSITIVE, tool_calls=[])
+
+
+def test_a_title_rewrite_by_a_non_owner_still_fails():
+    """The other direction: only `objective` and `updated` were opened."""
+    before = _with_project(research([SURVIVOR]), title="Old")
+    after = _with_project(
+        research([SURVIVOR]), title="New", objective="Who were his parents?"
+    )
+    with pytest.raises(AssertionError) as e:
+        check_research(before, after, RESEARCH, POSITIVE, tool_calls=[])
+    assert "project" in str(e.value)
+
+
+# ── a namesake row's birth year, filled in when a call links its person (#3363)
+#
+# research_append fills in `birth_year` on a namesake row of a person a call
+# links, whichever skill writes the link, so a person-evidence run changes
+# `namesakes`, which only search-records owns. The path allows that change and
+# nothing beside it. `toolAuthorized` would grant the section to every caller of
+# research_append, which ownership-manifest.test.ts reads it as.
+
+PERSON_EVIDENCE = {"name": "person-evidence"}
+
+
+def namesake_row(row_id="ns_001", **extra):
+    row = {
+        "id": row_id,
+        "person_id": SURVIVOR,
+        "name": "Paul Raymond",
+        "place": "Bristol, Addison, Vermont, United States",
+        "record_ids": ["ark:/61903/1:1:MC2W-5TM"],
+        "log_entry_ids": ["log_045"],
+        "record_persona_ids": {"ark:/61903/1:1:MC2W-5TM": "p_235084380"},
+        "created": "2026-11-02",
+    }
+    row.update(extra)
+    return row
+
+
+def with_namesakes(rows):
+    state = research([SURVIVOR])
+    state["research_json"]["namesakes"] = [dict(r) for r in rows]
+    return state
+
+
+def link_call(tool="mcp__genealogy__research_append"):
+    return {
+        "tool": tool,
+        "args": {"projectPath": "/p", "section": "person_evidence", "op": "append"},
+        "matched": {},
+        "response_fixture": None,
+        "response": {"ok": True},
+    }
+
+
+def check_fill(before_rows, after_rows, tool_calls):
+    check_research(with_namesakes(before_rows), with_namesakes(after_rows), PERSON_EVIDENCE, POSITIVE, tool_calls)
+
+
+def test_h1_a_filled_in_birth_year_passes_under_both_tools_and_every_spelling():
+    before = [namesake_row(), namesake_row("ns_002", birth_year=1750)]
+    after = [namesake_row(birth_year=1796), namesake_row("ns_002", birth_year=1750)]
+    for tool in ("research_append", "extraction_append"):
+        for prefix in ("mcp__genealogy__", "mcp__remote-devices__Genealogy_Research__", "mcp__Genealogy_Research__"):
+            check_fill(before, after, [link_call(tool=prefix + tool)])
+
+
+def test_h2_the_same_fill_without_either_tool_fails():
+    before = [namesake_row()]
+    after = [namesake_row(birth_year=1796)]
+    for calls in ([], None, [merge_call()], [timeline_call()]):
+        with pytest.raises(AssertionError) as e:
+            check_fill(before, after, calls)
+        assert "namesakes" in str(e.value)
+
+
+@pytest.mark.parametrize(
+    "why, before, after",
+    [
+        ("h3 a year and a notes edit", [namesake_row()], [namesake_row(birth_year=1796, notes="moved")]),
+        ("h3 a year and a re-stamped persona", [namesake_row()],
+         [namesake_row(birth_year=1796, record_persona_ids={"ark:/61903/1:1:MC2W-5TM": "p_1"})]),
+        ("h4 a year changed", [namesake_row(birth_year=1750)], [namesake_row(birth_year=1796)]),
+        ("h4 a year dropped", [namesake_row(birth_year=1750)], [namesake_row()]),
+        ("h5 a row added", [namesake_row()], [namesake_row(birth_year=1796), namesake_row("ns_002")]),
+        ("h6 a row removed", [namesake_row(), namesake_row("ns_002")], [namesake_row(birth_year=1796)]),
+        ("h6 rows reordered", [namesake_row(), namesake_row("ns_002")],
+         [namesake_row("ns_002"), namesake_row(birth_year=1796)]),
+        ("h6 a row re-keyed", [namesake_row()], [namesake_row("ns_009", birth_year=1796)]),
+        ("h7 a string year", [namesake_row()], [namesake_row(birth_year="1796")]),
+        ("h7 a fractional year", [namesake_row()], [namesake_row(birth_year=1796.5)]),
+        ("h7 a boolean year", [namesake_row()], [namesake_row(birth_year=True)]),
+        ("h7 a null year", [namesake_row()], [namesake_row(birth_year=None)]),
+    ],
+)
+def test_h3_to_h7_anything_beside_a_fill_fails(why, before, after):
+    with pytest.raises(AssertionError) as e:
+        check_fill(before, after, [link_call()])
+    assert "namesakes" in str(e.value), why
+
+
+def test_search_records_still_writes_its_own_rows_without_the_path():
+    """The owner is unaffected: a new row from search-records passes as before."""
+    check_research(
+        with_namesakes([]),
+        with_namesakes([namesake_row(birth_year=1796)]),
+        {"name": "search-records"},
+        POSITIVE,
+        [],
+    )

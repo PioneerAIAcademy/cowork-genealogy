@@ -15,22 +15,24 @@ description: >-
   needed), date schema validation (use validate-schema), source conflicts
   where both records used the same calendar (use conflict-resolution), or
   explanations of why a calendar convention existed (use historical-context).
-model: claude-sonnet-4-6
-effort: high
+model: claude-sonnet-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
   # `Genealogy_Research` (bare display_name). See CLAUDE.md, "Dual-spelled tool names", for the
   # full rationale; guarded by tests/packaging/agent-tool-names.test.ts.
   #
-  # The grant is the one tool the folded skill declared, plus `Read` for the
-  # Narration line's read of research.json, and `research_log_append` (#3524):
+  # The grant is the one tool the folded skill declared, plus `project_context`
+  # for the Narration line, and `research_log_append` (#3524):
   # inside a project the result is logged as one `convert_dates` entry. No other
   # writer tool.
-  - Read
   - mcp__genealogy__convert_calendar
   - mcp__remote-devices__Genealogy_Research__convert_calendar
   - mcp__Genealogy_Research__convert_calendar
+  - mcp__genealogy__project_context
+  - mcp__remote-devices__Genealogy_Research__project_context
+  - mcp__Genealogy_Research__project_context
   - mcp__genealogy__research_log_append
   - mcp__remote-devices__Genealogy_Research__research_log_append
   - mcp__Genealogy_Research__research_log_append
@@ -38,7 +40,7 @@ tools:
 
 # Convert Dates
 
-**Narration:** Read `researcher_profile.narration_guidance` from `research.json` and apply it as your narration style for this invocation. If absent, default to a one-line preamble per action.
+**Narration:** When the delegation gave a `projectPath`, call `project_context({ projectPath })` and apply its `narrationGuidance` as your narration style for this invocation. If null, no `projectPath` was given, or the result is `reason: "no_project"`, default to a one-line preamble per action.
 
 Converts historical dates between calendar systems. Before the
 Gregorian calendar was universally adopted, different jurisdictions
@@ -148,6 +150,11 @@ julianToGregorianDay, = 20 June 1650 (Gregorian)". Take the offset from
 `applied[].offsetDays`, never from memory. When the tool returns a converted date,
 always preserve both the original and converted forms.
 
+State the original date and the converted date in a notation a genealogist
+would recognize (`15 Feb 1749/50`) — never only buried inside a sentence of
+explanation. On the rejection above, give the one labelled-Julian line in its
+place; never add a second, unconditional line calling it "Converted".
+
 ## Calendar regime
 
 `convert_calendar` holds the adoption table. Pass `jurisdiction` with the
@@ -180,15 +187,18 @@ Records often show both years: "6 January 1745/6" means 1745 Old Style but
 1746 New Style. Pass `date: { year: 1745, doubleYear: 6 }` — the tool returns
 the later (New Style) year. Double dates belong to the stretch between 1
 January and the old year-start only. On the year-start day itself the two
-years are the same, so a slash there is anomalous: flag it and check where the
-year turns over in the surrounding register entries. Do not resolve it to the
-later year.
+years are the same, so a slash there is anomalous: flag it, give both
+readings — the earlier year if the clerk was still writing the outgoing year,
+the later year if the register had already turned over — and say to check
+where the year turns over in the surrounding register entries to settle it.
+Do not resolve it to either year yourself.
 
 ### Quaker numbered months → `quakerMonth: { era }`
 
 Quaker registers number their months rather than naming them, and the
 numbering shifts at the year-start reform. Request `quakerMonth` with the era
-when the source is a Friends record; the tool holds the mapping.
+when the source is a Friends record; the tool holds the mapping. State which
+numbering era applies and that Quaker month numbering changed in 1752.
 
 ### French Republican calendar → `frenchRepublican: true`
 
@@ -201,9 +211,9 @@ do not combine it with any other correction.
 
 ## Log the result
 
-If the Narration read found no `research.json`, skip this step.
+If the delegation gave no `projectPath`, skip this step.
 
-Before you write your reply: one `research_log_append` call with `projectPath` (the absolute path of the current working directory when none was given) and one op: `tool: "convert_dates"`, `query: {dates, jurisdiction}`, `planItemId: null`, `outcome: "positive"`, `resultsExamined` (dates converted or compared), `notes` set to the **full** result exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
+Before you write your reply: one `research_log_append` call with the delegation's `projectPath` and one op: `tool: "convert_dates"`, `query: {dates, jurisdiction}`, `planItemId: null`, `outcome: "positive"`, `resultsExamined` (dates converted or compared), `notes` set to the **full** result exactly as you return it above the `---` line, never a summary. **You must actually call it — do not just describe it in your response.**
 
 - `reason: "no_project"` → stop; write nothing.
 - Refused with a rewrite instruction (e.g. a pre-1880 census hedge) → rewrite `notes` as instructed, use the same text in your return, and re-send. Never drop the entry.
@@ -217,7 +227,12 @@ A hand-back logs nothing.
 - **Answer only the calendar question asked.** Each correction
   (OS/NS year, Julian→Gregorian day, Quaker month, double-date) is a
   separate operation. Do not bundle corrections the user didn't
-  request — that is over-conversion.
+  request — that is over-conversion. A question asking only which year to
+  use on a double-dated record stays `doubleDatedYear` alone — never add
+  the day shift uninvited. Only when the request itself asks to convert to
+  the modern or Gregorian calendar does `julianToGregorianDay` apply too,
+  added alongside `doubleDatedYear` on a double-dated record, never in
+  place of resolving the year.
 - **Show original next to converted.** The original is what the record
   says; the conversion is interpretation. Keep them distinct.
 - **When in doubt, don't convert.** If the jurisdiction or calendar

@@ -12,15 +12,26 @@
  *
  * Never calls `refreshAccessToken` on a 401 — a refresh revokes every other
  * holder's token (measured in PR #2859). Issue #2887.
+ *
+ * For a connector caller, both honour that user's 429 pause
+ * (`user-limits.ts`, issue #3999): a 429 pauses the user, and every call these
+ * two make for a paused user waits the pause out within its time or is refused
+ * before any network I/O, except one marked `ignoreUserPause` (the switch back
+ * after `withSessionTree`).
  */
 
 import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
 import {
+  DEFAULT_FETCH_TIMEOUT_MS,
+  DEFAULT_RETRY_BUDGET_MS,
   fetchWithRetry,
   fetchWithTimeout,
+  pauseWaitAllowance,
+  retryAfterMs,
   type RetryBudgetOptions,
 } from "./http.js";
+import { awaitFsPause, connectorUserId, recordFsPause } from "./user-limits.js";
 
 function mergeAuth(
   token: string,
@@ -49,6 +60,80 @@ async function handle401(
 }
 
 /**
+ * Hand the FamilySearch status to the door's per-request recorder, if this
+ * principal carries one (E1 logs one line per call with it). Records the FINAL
+ * status, after any 401 re-read, because that is what the call actually got.
+ *
+ * Never throws: a recorder is a logging detail, and a tool call the caller was
+ * entitled to make must not fail because the door's logger did.
+ */
+function recordFamilySearchStatus(principal: Principal, response: Response): Response {
+  recordStatus(principal, response.status);
+  return response;
+}
+
+function recordStatus(principal: Principal, status: number): void {
+  if (principal.kind === "bearer" && principal.recordFamilySearchStatus) {
+    try {
+      principal.recordFamilySearchStatus(status);
+    } catch {
+      // Deliberately swallowed; see above.
+    }
+  }
+}
+
+/**
+ * The retry options with a connector user's 429 pause added: the observer sees
+ * a 429 even when `fetchWithRetry` then throws for a long `Retry-After`, and the
+ * gate runs before every attempt, retries included, since each is a
+ * FamilySearch call. Any hooks the caller passed still run. Unchanged for every
+ * other principal.
+ *
+ * What the pause does not cover: a call marked `ignoreUserPause` (the switch
+ * back after `withSessionTree`), which still records a 429 but never waits on
+ * the pause or is refused by it; and anonymous FamilySearch calls, which carry
+ * no principal and never come through here (place lookups, public memory
+ * artifacts and story text, external-links search), so they stay under the
+ * process-wide budget only. And "per user" assumes FamilySearch rate-limits per
+ * token, which is UNVERIFIED: if its 429s are per IP address, every connector
+ * user shares one address and this pause protects nobody else.
+ */
+function withUserPause(
+  principal: Principal,
+  fsOpts: FsFetchOptions | undefined,
+  seen: (status: number) => void,
+): RetryBudgetOptions | undefined {
+  const { ignoreUserPause, ...retryOpts } = fsOpts ?? {};
+  const userId = connectorUserId(principal);
+  if (userId === undefined) return fsOpts === undefined ? undefined : retryOpts;
+  return {
+    ...retryOpts,
+    onRetryableResponse: (status, retryAfter) => {
+      seen(status);
+      if (status === 429) recordFsPause(userId, retryAfter);
+      retryOpts.onRetryableResponse?.(status, retryAfter);
+    },
+    beforeAttempt: async (maxWaitMs) => {
+      if (!ignoreUserPause) await awaitFsPause(userId, maxWaitMs);
+      await retryOpts.beforeAttempt?.(maxWaitMs);
+    },
+  };
+}
+
+/** `fetchWithRetry`'s options, plus one that only `fsFetch` reads. */
+export interface FsFetchOptions extends RetryBudgetOptions {
+  /**
+   * Skip the user's 429 pause for this call: never wait on it, never be
+   * refused by it. Only for a call that undoes what this process already did to
+   * the user's FamilySearch session (`withSessionTree`'s switch back): refusing
+   * or holding it would leave the session, which the user's open browser tabs
+   * share, on another tree, with nothing left to try again. A 429 it gets still
+   * pauses the user.
+   */
+  ignoreUserPause?: boolean;
+}
+
+/**
  * Authenticated FamilySearch fetch with retry and 401 re-read.
  * Use for most FS endpoints. Delegates to `fetchWithRetry`.
  */
@@ -57,20 +142,31 @@ export async function fsFetch(
   url: string | URL,
   init: RequestInit = {},
   timeoutMs?: number,
-  retryOpts?: RetryBudgetOptions,
+  retryOpts?: FsFetchOptions,
 ): Promise<Response> {
   const token = await getValidToken(principal);
   const authedInit = mergeAuth(token, init);
+  let lastRetryable: number | undefined;
+  const opts = withUserPause(principal, retryOpts, (status) => {
+    lastRetryable = status;
+  });
 
-  const response = await fetchWithRetry(
-    url,
-    authedInit,
-    timeoutMs,
-    retryOpts,
-  );
+  let response: Response;
+  try {
+    response = await fetchWithRetry(url, authedInit, timeoutMs, opts);
+  } catch (err) {
+    // The loop saw a 429 or 5xx and then threw (a Retry-After past the budget,
+    // or this user's pause): FamilySearch still answered that status, and the
+    // door's log line is how an operator sees a user was throttled.
+    if (lastRetryable !== undefined) recordStatus(principal, lastRetryable);
+    throw err;
+  }
 
-  return handle401(principal, token, response, url, init, (u, i) =>
-    fetchWithRetry(u, i, timeoutMs, retryOpts),
+  return recordFamilySearchStatus(
+    principal,
+    await handle401(principal, token, response, url, init, (u, i) =>
+      fetchWithRetry(u, i, timeoutMs, opts),
+    ),
   );
 }
 
@@ -78,6 +174,12 @@ export async function fsFetch(
  * Authenticated FamilySearch fetch without retry, with 401 re-read.
  * Use for `match-engine.ts` and `fs-image-fetch.ts` which manage their own
  * retry or carry timeouts too long for the retry budget.
+ *
+ * With no retry loop of its own, a paused connector user waits at most the
+ * default retry budget, and only while the request keeps time to run
+ * (`pauseWaitAllowance`); the wait comes out of `timeoutMs`, so the call never
+ * runs longer than its caller sized it (volume_bisect's legs sum to fit
+ * Cowork's 60 s abort). Its own 429 records the pause.
  */
 export async function fsFetchWithTimeout(
   principal: Principal,
@@ -85,12 +187,24 @@ export async function fsFetchWithTimeout(
   init: RequestInit = {},
   timeoutMs?: number,
 ): Promise<Response> {
+  const userId = connectorUserId(principal);
+  let requestTimeoutMs = timeoutMs;
+  if (userId !== undefined) {
+    const limit = timeoutMs ?? DEFAULT_FETCH_TIMEOUT_MS;
+    const before = Date.now();
+    await awaitFsPause(userId, pauseWaitAllowance(limit, DEFAULT_RETRY_BUDGET_MS));
+    requestTimeoutMs = Math.max(0, limit - (Date.now() - before));
+  }
   const token = await getValidToken(principal);
   const authedInit = mergeAuth(token, init);
 
-  const response = await fetchWithTimeout(url, authedInit, timeoutMs);
+  const response = await fetchWithTimeout(url, authedInit, requestTimeoutMs);
+  if (userId !== undefined && response.status === 429) recordFsPause(userId, retryAfterMs(response));
 
-  return handle401(principal, token, response, url, init, (u, i) =>
-    fetchWithTimeout(u, i, timeoutMs),
+  return recordFamilySearchStatus(
+    principal,
+    await handle401(principal, token, response, url, init, (u, i) =>
+      fetchWithTimeout(u, i, timeoutMs),
+    ),
   );
 }

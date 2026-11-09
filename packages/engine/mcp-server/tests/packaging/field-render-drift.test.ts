@@ -72,6 +72,8 @@ const COMPONENTS = join(
 const NOT_RENDERED: Record<string, string> = {
   "conflict.weighed_log_entry_ids":
     "Bookkeeping for the ladder, not a finding: which of the question's log entries conflict-resolution has already weighed, so a second pass can tell new evidence from evidence it has seen. The researcher reads the analysis fields and the resolution, never this list of ids.",
+  "source.image_ark":
+    "A join key from a source to the page it sits on, read only by code; the viewer shows the page itself through image_filename.",
   "namesake.record_persona_ids":
     "Tool-stamped persona ids kept only to measure a later rule; meaningless to a researcher, and the raw-data view still shows them.",
   "researcher_profile.experience_level":
@@ -84,6 +86,8 @@ const NOT_RENDERED: Record<string, string> = {
     "Machine-resolved sidecar of `place`, which IS rendered. Showing both would double every row.",
   "assertion.standard_place":
     "Same sidecar relationship as timeline_event.standard_place — `place` is rendered.",
+  "assertion.record_document_id":
+    "Tool-stamped 1:2 record ARK that keeps two documents of one source apart for the namesake cap; the researcher reads the source and record, and the raw-data view still shows it.",
   "assertion.extracted_for_question_ids":
     "Provenance FK used by projections and the exhaustiveness check; the assertion is already shown under its question.",
   "search_stop.justification":

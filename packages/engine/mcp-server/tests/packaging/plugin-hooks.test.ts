@@ -54,6 +54,7 @@ function loadHooks(): Record<string, Matcher[]> {
  */
 function guardToolNames(): {
   fileWriteTools: string[];
+  fileReadTools: string[];
   deviceWriteTools: string[];
   delegationTools: string[];
   ownerRoutedTools: string[];
@@ -74,6 +75,7 @@ function guardToolNames(): {
   };
   return {
     fileWriteTools: tuple("FILE_WRITE_TOOLS"),
+    fileReadTools: tuple("FILE_READ_TOOLS"),
     deviceWriteTools: tuple("DEVICE_WRITE_TOOLS"),
     delegationTools: tuple("DELEGATION_TOOLS"),
     ownedSections: ownedSections(src),
@@ -523,12 +525,13 @@ describe("plugin hooks are packaged and wired", () => {
     // That shipped the device-bridge route open while the predicate, its three
     // copies, and their parity vectors all said it was closed.
     const matcher = loadHooks().PreToolUse[0].matcher ?? "";
-    const { fileWriteTools, deviceWriteTools, delegationTools, ownerRoutedTools } =
+    const { fileWriteTools, fileReadTools, deviceWriteTools, delegationTools, ownerRoutedTools } =
       guardToolNames();
 
     // The extraction is load-bearing: an empty list makes every assertion below
     // vacuously true, which is the same false green in a new costume.
     expect(fileWriteTools.length).toBeGreaterThan(0);
+    expect(fileReadTools.length).toBeGreaterThan(0);
     expect(deviceWriteTools.length).toBeGreaterThan(0);
     expect(delegationTools.length).toBeGreaterThan(0);
     expect(ownerRoutedTools.length).toBeGreaterThan(0);
@@ -538,7 +541,7 @@ describe("plugin hooks are packaged and wired", () => {
     // here proves it under either form (ADR-0005: "both matcher forms bind").
     const matches = (tool: string) => new RegExp(`^(${matcher})$`).test(tool);
 
-    for (const tool of fileWriteTools) {
+    for (const tool of [...fileWriteTools, ...fileReadTools]) {
       expect(matches(tool), `matcher does not cover ${tool}`).toBe(true);
     }
     for (const tool of delegationTools) {
@@ -660,7 +663,6 @@ describe("the guard script's decisions", () => {
   });
 
   it.each([
-    ["Read", { file_path: "/project/research.json" }],
     ["mcp__genealogy__research_append", { file_path: "/project/research.json" }],
     ["Bash", { command: "cat /project/research.json" }],
     ["Write", { file_path: "/project/results/log_001.json" }],
@@ -668,6 +670,60 @@ describe("the guard script's decisions", () => {
     ["Write", {}],
   ])("has no opinion on %s", (tool_name, tool_input) => {
     expect(runGuard({ tool_name, tool_input })).toEqual({});
+  });
+
+  // ── raw reads of the two files a tool serves (#3836) ──
+  //
+  // The folder is not readable from Cowork's VM (measured 2026-11-04: a Read of
+  // research.json returned "File does not exist" before and after an MCP write)
+  // and a hosted project has none, so a read is a miss and the reason names the
+  // tool that serves the same data.
+  it.each([
+    ["Read", { file_path: "/project/research.json" }, "research_query"],
+    ["Read", { file_path: "research.json" }, "project_context"],
+    ["Read", { file_path: "/mnt/user-data/uploads/tree.gedcomx.json" }, "tree_query"],
+    // Windows separators, as for the write arm.
+    ["Read", { file_path: "C:\\Users\\Dell\\project\\research.json" }, "research_query"],
+    ["Read", { file_path: "C:\\Users\\Dell\\project\\tree.gedcomx.json" }, "tree_query"],
+    ["Grep", { pattern: "plan", path: "/project/tree.gedcomx.json" }, "tree_query"],
+    ["Grep", { pattern: "plan", path: "/project", glob: "**/research.json" }, "research_query"],
+    ["Glob", { pattern: "**/research.json" }, "project_context"],
+    ["Glob", { pattern: "*.json", path: "/project/tree.gedcomx.json" }, "tree_query"],
+  ])("denies %s %j and names the tool that serves it", (tool_name, tool_input, route) => {
+    const out = runGuard({ tool_name, tool_input });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain(route);
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("projectPath");
+    // A denied read is recoverable: the turn continues so the model can call the tool.
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    // Another project file has no tool serving it, so a read of it stays allowed.
+    ["Read", { file_path: "/project/results/log_001.json" }],
+    ["Read", { file_path: "/project/images/page_1.png" }],
+    ["Read", { file_path: "/project/starting-tree.gedcomx.json" }],
+    // A different file that merely contains the name.
+    ["Read", { file_path: "/project/research.json.bak" }],
+    ["Read", { file_path: "/project/notes-on-research.json" }],
+    // A directory or a wildcard names no file: the hook cannot tell what it reaches.
+    ["Grep", { pattern: "research.json", path: "/project" }],
+    ["Grep", { pattern: "x", path: "/project", glob: "*.json" }],
+    ["Glob", { pattern: "**/*.json" }],
+    // Malformed inputs fall through to allow: the script must never raise.
+    ["Read", {}],
+    ["Read", { file_path: 123 }],
+    ["Read", { file_path: null }],
+    ["Grep", { path: ["research.json"] }],
+    // Shell reads are deliberately not covered (see the guardrail spec).
+    ["Bash", { command: "cat /project/tree.gedcomx.json" }],
+    ["mcp__remote-devices__device_bash", { command: "cat research.json" }],
+  ])("has no opinion on a read: %s %j", (tool_name, tool_input) => {
+    expect(runGuard({ tool_name, tool_input })).toEqual({});
+  });
+
+  it("has no opinion on a read when the payload has no tool_input", () => {
+    expect(runGuard({ tool_name: "Read" })).toEqual({});
   });
 
   it.each([
@@ -924,6 +980,36 @@ describe("the guard script's decisions", () => {
     expect(out).toEqual({});
   });
 
+  // The two co-writers (SECTION_CO_WRITERS): a page or a transcript hit can turn
+  // up a same-named person too. search-records stays the owner the deny names.
+  it.each([
+    ["search-images", "genealogy-research:search-images", { section: "namesakes", op: "append", entry: {} }],
+    ["search-full-text", "genealogy-research:search-full-text", { section: "namesakes", op: "append", entry: {} }],
+    [
+      "search-images, a row batched with its plan item's status",
+      "genealogy-research:search-images",
+      {
+        ops: [
+          { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_001", fields: { status: "completed" } },
+          { section: "namesakes", op: "append", entry: {} },
+        ],
+      },
+    ],
+  ])("permits a co-writer to record a namesake — %s", (_label, agent_type, tool_input) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, agent_id: "agent-1", agent_type });
+    expect(out).toEqual({});
+  });
+
+  it.each([
+    ["a search agent outside the table", "genealogy-research:search-external-sites"],
+    ["a co-writer's agent_type with no agent_id", "genealogy-research:search-images"],
+  ])("still denies namesakes to %s", (label, agent_type) => {
+    const caller = label.includes("no agent_id") ? { agent_type } : { agent_id: "a1", agent_type };
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input: { section: "namesakes", op: "append", entry: {} }, ...caller });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:search-records");
+  });
+
   // ── caller-routed sections: research_append + evaluations (issue #3191) ──
   //
   // Section-scoped like proof_summaries and person_evidence. What this route
@@ -1005,6 +1091,67 @@ describe("the guard script's decisions", () => {
     })).toEqual({});
   });
 
+  // ── caller-routed sections: research_append + hit_verdicts (issue #3522) ──
+  //
+  // Section-scoped like namesakes. The router spawns one evaluate-search-results
+  // agent per full-text hit; the main thread that ran the search, and the
+  // search-full-text agent that returned the hit list, must not label the hits.
+  const HV_OWNER = "genealogy-research:evaluate-search-results";
+  const HV_ENTRY = {
+    log_id: "log_017",
+    hit_id: "3Q9M-CSK3-ZSLR",
+    person_id: "I1",
+    verdict: "match",
+    new_vital_info: true,
+    rationale: "Names Iram Hyde in Jackson with his wife Mary and a daughter Christina.",
+  };
+
+  it.each([
+    ["append, no agent_id (main thread)", { section: "hit_verdicts", op: "append", entry: HV_ENTRY }, {}],
+    ["update in place, no agent_id", { section: "hit_verdicts", op: "update", entryId: "hv_001", fields: { verdict: "possible_match" } }, {}],
+    ["agent_type present but agent_id absent", { section: "hit_verdicts", op: "append", entry: HV_ENTRY }, { agent_type: HV_OWNER }],
+    ["a general-purpose stand-in", { section: "hit_verdicts", op: "append", entry: HV_ENTRY }, { agent_id: "a1", agent_type: "general-purpose" }],
+    ["the search-full-text agent", { section: "hit_verdicts", op: "append", entry: HV_ENTRY }, { agent_id: "a1", agent_type: "genealogy-research:search-full-text" }],
+    ["the gps-mentor agent", { section: "hit_verdicts", op: "append", entry: HV_ENTRY }, { agent_id: "a1", agent_type: GM_OWNER }],
+    ["batched with a legitimate plan_items update", { ops: [
+      { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_009", fields: { status: "completed" } },
+      { section: "hit_verdicts", op: "append", entry: HV_ENTRY },
+    ] }, {}],
+    ["stringified ops", { ops: JSON.stringify([{ section: "hit_verdicts", op: "append", entry: HV_ENTRY }]) }, {}],
+  ])("denies research_append on hit_verdicts — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:evaluate-search-results");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    ["namespaced agent_type, as production reports it", HV_OWNER, { section: "hit_verdicts", op: "append", entry: HV_ENTRY }],
+    ["bare agent_type", "evaluate-search-results", { section: "hit_verdicts", op: "append", entry: HV_ENTRY }],
+    ["an update of its own row", HV_OWNER, { section: "hit_verdicts", op: "update", entryId: "hv_001", fields: { verdict: "possible_match", new_vital_info: false } }],
+    ["the ops form", HV_OWNER, { ops: [{ section: "hit_verdicts", op: "append", entry: HV_ENTRY }] }],
+  ])("permits the evaluate-search-results agent — %s", (_label, agent_type, tool_input) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, agent_id: "agent-1", agent_type });
+    expect(out).toEqual({});
+  });
+
+  it.each([
+    ["a source for the Match it labelled", { section: "sources", op: "append", entry: {} }, "sources"],
+    ["the search's plan item status", { section: "plan_items", op: "update", planId: "pl_001", entryId: "pli_009", fields: { status: "completed" } }, "plan_items"],
+    ["a hypothesis", { section: "hypotheses", op: "append", entry: {} }, "hypotheses"],
+    [
+      "its verdict batched with a source",
+      { ops: [{ section: "hit_verdicts", op: "append", entry: HV_ENTRY }, { section: "sources", op: "append", entry: {} }] },
+      "sources",
+    ],
+  ])("denies the evaluate-search-results agent a section outside its own lane — %s", (_label, tool_input, section) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, agent_id: "agent-1", agent_type: HV_OWNER });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("outside your lane");
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain(`research.json's \`${section}\``);
+    expect(out.hookSpecificOutput.permissionDecisionReason).toContain("you may write `hit_verdicts` and nothing else");
+  });
+
   // ── caller-routed: evaluations via evaluation_append (issue #1491) ──
   //
   // The narrow `evaluation_append` (research_append scoped to `evaluations`) is
@@ -1029,7 +1176,7 @@ describe("the guard script's decisions", () => {
   // CLAIM-scoped over several fields, not section-scoped: six skills open a
   // conflict with only the schema's required fields, and proof-conclusion
   // re-opens one, so a section route would deny every one of them. The claim is
-  // the analytical product — a resolve, or any analysis field set truthy.
+  // the analytical product — a resolve or a moot, or any analysis field set truthy.
   const CR_OWNER = "genealogy-research:conflict-resolution";
   const SKELETON = {
     conflict_id: "c_001",
@@ -1064,6 +1211,9 @@ describe("the guard script's decisions", () => {
     // The only moot the tool accepts carries a rationale, so a moot is the
     // agent's too. Pinned so nobody "fixes" the hook to let one through.
     ["a moot, with the rationale the tool requires", { status: "moot", resolution_rationale: "a different Patrick" }],
+    // On a conflict that already carries its analyses, the status alone settles
+    // it, and a moot with both analyses lifts the core-identifier cap.
+    ["a status-only moot", { status: "moot" }],
   ])("denies the main thread a conflict claim — %s", (_label, fields) => {
     const out = runGuard({
       tool_name: "mcp__genealogy__research_append",
@@ -1168,12 +1318,15 @@ describe("the guard script's decisions", () => {
     expect(out.hookSpecificOutput.permissionDecisionReason).toContain("@plugin:proof-conclusion");
   });
 
+  // `title`, not `objective`: the objective is main-thread-only since issue
+  // #3975, even inside init-project's lane. A title rewrite is refused by the
+  // tool's set-once rule, not here.
   it.each([
-    ["project (its objective)", { section: "project", op: "update", fields: { objective: "x" } }],
+    ["project (its title)", { section: "project", op: "update", fields: { title: "x" } }],
     ["researcher_profile", { section: "researcher_profile", op: "update", fields: {} }],
     ["both in one batch", {
       ops: [
-        { section: "project", op: "update", fields: { objective: "x" } },
+        { section: "project", op: "update", fields: { title: "x" } },
         { section: "researcher_profile", op: "update", fields: {} },
       ],
     }],
@@ -1184,6 +1337,41 @@ describe("the guard script's decisions", () => {
       agent_id: "agent-1",
       agent_type: IP_AGENT,
     });
+    expect(out).toEqual({});
+  });
+
+  // project.objective is main-thread-only (MAIN_THREAD_FIELDS, issue #3975).
+  const OBJ = { section: "project", op: "update", fields: { objective: "x" } };
+  it.each([
+    ["init-project, namespaced", OBJ, { agent_id: "a1", agent_type: IP_AGENT }],
+    ["init-project, bare", OBJ, { agent_id: "a1", agent_type: "init-project" }],
+    ["proof-conclusion, whose lane holds project", OBJ, { agent_id: "a1", agent_type: OWNER }],
+    // `caller` is "" here, the same as the main thread: only `agent_id`
+    // membership tells them apart.
+    ["agent_id with a null agent_type", OBJ, { agent_id: "a1", agent_type: null }],
+    ["agent_id with no agent_type key", OBJ, { agent_id: "a1" }],
+    ["an agent the lane table does not know", OBJ, { agent_id: "a1", agent_type: "general-purpose" }],
+    // A known agent whose lane lacks `project`: pins the arm before the lane check.
+    ["gps-mentor, whose lane lacks project", OBJ, { agent_id: "a1", agent_type: "gps-mentor" }],
+    ["the ops[] form", { ops: [{ section: "project", op: "update", fields: { updated: "2026-11-03" } }, OBJ] }, { agent_id: "a1", agent_type: IP_AGENT }],
+    ["entry beside an empty fields", { section: "project", op: "update", fields: {}, entry: { objective: "x" } }, { agent_id: "a1", agent_type: IP_AGENT }],
+  ])("denies a subagent research_append on project.objective — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
+    expect(out.hookSpecificOutput.permissionDecision).toBe("deny");
+    const reason = out.hookSpecificOutput.permissionDecisionReason;
+    expect(reason).toContain("project.objective");
+    expect(reason).toContain("main conversation");
+    expect(reason).not.toContain("@plugin:");
+    expect(out.stopReason).toBeUndefined();
+  });
+
+  it.each([
+    ["the main thread", OBJ, {}],
+    ["the main thread, ops[] form", { ops: [OBJ, { section: "project", op: "update", fields: { updated: "2026-11-03" } }] }, {}],
+    ["a subagent's project write without objective", { section: "project", op: "update", fields: { updated: "2026-11-03" } }, { agent_id: "a1", agent_type: IP_AGENT }],
+    ["proof-conclusion setting status", { section: "project", op: "update", fields: { status: "completed" } }, { agent_id: "a1", agent_type: OWNER }],
+  ])("allows research_append on project.objective's neighbours — %s", (_label, tool_input, extra) => {
+    const out = runGuard({ tool_name: "mcp__genealogy__research_append", tool_input, ...extra });
     expect(out).toEqual({});
   });
 
@@ -1446,6 +1634,22 @@ describe("no_project_route.py (UserPromptSubmit, Cowork only)", () => {
     expect(out.hookSpecificOutput.hookEventName).toBe("UserPromptSubmit");
     expect(out.hookSpecificOutput.additionalContext).toMatch(/no project.*research skill/s);
     expect(out.hookSpecificOutput.additionalContext).toMatch(/In that case, if the message names more than one goal/);
+  });
+
+  it("adds the sources sentence to a researcher's message (#4011)", () => {
+    const out = runNoProjectRoute(JSON.stringify({ prompt: "What Kenyan records can I search for him?" }));
+    expect(out.hookSpecificOutput.additionalContext).toMatch(
+      /Name a source, collection, book or citation only if a tool result in this session returned it/,
+    );
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/FamilySearch collections come from collections_search, which locality-guide and research-plan run/);
+    expect(out.hookSpecificOutput.additionalContext).toMatch(/verbatim\.\n\nName a source/);
+  });
+
+  it("routes a no-project, no-PID ask for the names in a record set to search-images (#4136)", () => {
+    const out = runNoProjectRoute(JSON.stringify({ prompt: "Identify all soldiers in Captain Moses Dustin's Company." }));
+    expect(out.hookSpecificOutput.additionalContext).toMatch(
+      /no FamilySearch person ID, a request for the names and details\s+recorded in a record set .* goes to the\s+search-images agent with no projectPath/s,
+    );
   });
 
   it("stays silent on a subagent hand-back", () => {

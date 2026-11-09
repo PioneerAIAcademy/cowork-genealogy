@@ -1,4 +1,4 @@
-# Maria Vázsan — husband and daughter named on a 1900 Bojnice baptism
+# Maria Vázsan — husband named on a 1900 Bojnice baptism
 
 **Source PID:** `LJTH-GRX`
 **Maria Vázsan is deceased.** (FamilySearch ToS requires
@@ -6,7 +6,7 @@ all committed e2e fixtures to be about deceased persons.) Baptised 10 January 18
 
 ## Research question
 
-> Whom did Maria Vázsan, baptised 10 January 1853 at Bojnice (Bajmóc), Slovakia, daughter of Ignatius Vázsan and Anna Prividzer, marry, and what children did the marriage produce?
+> Whom did Maria Vázsan, baptised 10 January 1853 at Bojnice (Bajmóc), Slovakia, daughter of Ignatius Vázsan and Anna Prividzer, marry?
 
 ## What was removed from the starting tree
 
@@ -27,6 +27,20 @@ hard — see "Notes for reviewers" below for the reviewer's read on
 match strength.
 
 ## Notes for reviewers
+
+**2026-11-04 — re-scoped for step mode (issue #4144).** The old question asked
+two independent facts (her husband, and the marriage's children): "Whom did
+Maria Vázsan, baptised 10 January 1853 at Bojnice (Bajmóc), Slovakia, daughter
+of Ignatius Vázsan and Anna Prividzer, marry, and what children did the
+marriage produce?" Reworded `researcher_question` to the spouse only. `f1`
+(the avoid guard) and `f2` (the negative-conclusion documentation) both stay
+`required: true` unchanged — they are about the false spouse/child hint as one
+identity question, not a second fact, so nothing in `expected-findings.json`
+changed. Its one stamped annotation (`run-2026-10-30_13-39-29`) carries both
+`findings_hash` and `blind_bundle_digest`; `findings_hash` stays valid since
+`expected-findings.json` is untouched, but `blind_bundle_digest` fingerprints
+`fixture.json` too, so this annotation is re-graded below, per the spec's rule
+that any change to a graded file is always a re-grade, never a re-stamp.
 
 **Resolved: FALSE MATCH** (adjudicated 2026-10-27; reassessed 2026-10-28 after review. Index/tree-based; `image_basis` left unset — no register page image was read or calibrated in this resolution.)
 

@@ -56,7 +56,9 @@
 //   §7  item 10 (PR 2): each committed e2e final state carrying rows, read as
 //       written, no row planted: the personas `research_append` stamped, and
 //       what a refusal keyed on them would refuse and spare
-//       (dev/namesake-persona-counts.ts). Zero until runs write rows.
+//       (dev/namesake-persona-counts.ts). Zero until runs write rows. A run
+//       whose engine cannot stamp a read (before #4279), or whose engine commit
+//       is unknown here, is left out and named, not counted as zeros.
 //   §8  tree-derived namesake pairs (#3681): each committed e2e final state,
 //       every person with a same-named parent, child or sibling, no row
 //       planted: the links ties (a) and (b) refuse, how many the pair tests
@@ -1068,7 +1070,15 @@ function section8(states: FinalState[]): void {
               startingTree: startTree,
             })?.verdicts.get(id);
             if (VERBOSE && v?.allowed && !verdict.allowed && variant === "as committed") {
-              const ties = v.ties.map((t) => (t.kind === "a" ? `a:${t.relative}(${t.relation})` : t.kind === "b" ? `b:${t.field}` : `pair:${t.test}`));
+              const ties = v.ties.map((t) =>
+                t.kind === "a"
+                  ? `a:${t.relative}(${t.relation})`
+                  : t.kind === "b"
+                    ? `b:${t.field}`
+                    : t.kind === "age"
+                      ? `age:${t.row}(${t.age})`
+                      : `pair:${t.test}`,
+              );
               console.log(`    mix-up tied: ${s.slug} ${s.run} ${id} ${p} -> ${q} by ${ties.join(", ")}`);
             }
             return v?.allowed === true;
@@ -1433,31 +1443,92 @@ async function section3b(): Promise<void> {
 
 // ─── §7 item 10: the stamped namesake personas ──────────────────────────────
 
+const STAMPER = "packages/engine/mcp-server/src/tools/research-append.ts";
+
+/** A function's text in `source`, from `head` to the first line that closes a
+ *  top-level block, or null when the source has no such function. */
+function bodyOf(source: string, head: string): string | null {
+  const start = source.indexOf(head);
+  if (start < 0) return null;
+  const end = source.indexOf("\n}\n", start);
+  return source.slice(start, end < 0 ? undefined : end);
+}
+
+/** Whether an engine's `stampNamesakePersonas` takes a persona from a record's
+ *  own persons, which a read's sidecar needs (#4279): it calls `personaFor`,
+ *  itself or, since the age exemption (#3363), through `lookUpNamesakePersonas`. */
+function stampsReads(source: string): boolean {
+  const stamp = bodyOf(source, "export async function stampNamesakePersonas(");
+  if (stamp === null) return false;
+  if (stamp.includes("personaFor(")) return true;
+  const lookUp = bodyOf(source, "async function lookUpNamesakePersonas(");
+  return stamp.includes("lookUpNamesakePersonas(") && lookUp !== null && lookUp.includes("personaFor(");
+}
+
+/** The engine a final state's run used, from its run log's `git_sha`: "reads"
+ *  when it stamps reads, "before" when it cannot, "unknown" when the run
+ *  recorded no commit or this clone lacks it. */
+function stampEra(state: FinalState): "reads" | "before" | "unknown" {
+  const runLog = readRunLog(state.file.replace(/\.final-research\.json$/, ".json")) as any;
+  const commit = typeof runLog?.git_sha === "string" ? runLog.git_sha.trim() : "";
+  if (!/^[0-9a-f]{7,40}$/.test(commit)) return "unknown";
+  try {
+    const source = execFileSync("git", ["show", `${commit}:${STAMPER}`], {
+      cwd: repoRoot,
+      encoding: "utf-8",
+      stdio: ["ignore", "pipe", "ignore"],
+      maxBuffer: 64 * 1024 * 1024,
+    });
+    return stampsReads(source) ? "reads" : "before";
+  } catch {
+    return "unknown";
+  }
+}
+
 function section7(states: FinalState[]): void {
-  const sum = { listed: 0, stamped: 0, absent: 0, wouldRefuse: 0, spared: 0 };
+  const sum = { listed: 0, unstampable: 0, stamped: 0, absent: 0, wouldRefuse: 0, spared: 0 };
   const refusedByLabel: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
   let carrying = 0;
+  const leftOut: Record<"before" | "unknown", string[]> = { before: [], unknown: [] };
   for (const s of states) {
     if (!Array.isArray(s.research?.namesakes) || s.research.namesakes.length === 0) continue;
+    const era = stampEra(s);
+    if (era !== "reads") {
+      leftOut[era].push(`${s.slug} ${s.run}`);
+      continue;
+    }
     carrying += 1;
     const c = personaStampCounts(s.research);
     for (const k of Object.keys(sum) as Array<keyof typeof sum>) sum[k] += c[k];
     refusedByLabel[labelOf(s.slug)] += c.wouldRefuse;
   }
   console.log(
-    "\n§7  item 10 (PR 2): each committed e2e final state carrying rows, as written; the record_persona_ids " +
-      "research_append stamped and what a refusal keyed on them would do",
+    "\n§7  item 10 (PR 2): each committed e2e final state carrying rows, as written, whose engine stamps a read " +
+      "(#4279); the record_persona_ids research_append stamped and what a refusal keyed on them would do",
   );
+  const named = (runs: string[]) => (runs.length > 0 ? ` (${runs.join("; ")})` : "");
   console.log(`    final states carrying rows: ${carrying}`);
+  console.log(`    left out, engine before the read stamp: ${leftOut.before.length}${named(leftOut.before)}`);
+  console.log(
+    `    left out, engine commit not recorded or not in this clone: ${leftOut.unknown.length}${named(leftOut.unknown)}`,
+  );
   console.log(
     `    (c) listed records stamped: ${sum.stamped} of ${sum.listed}; ` +
       `(d) unstamped though their row cites a persona search with a sidecar: ${sum.absent}`,
   );
   console.log(
+    `    (e) ids on rows no persona search reaches (page image ids, full-text hit ids), outside (c): ${sum.unstampable}`,
+  );
+  console.log(
     `    (a) probable or confident links a persona rule would refuse: ${sum.wouldRefuse} ` +
       `(hint is a namesake's: ${refusedByLabel.false}; the subject's own: ${refusedByLabel.true}; unlabelled: ${refusedByLabel.unlabelled})`,
   );
-  console.log(`    (b) links on a listed record with another persona, which a record-id rule would refuse: ${sum.spared}`);
+  console.log(`    (b) links to another persona of a record the row stamped, which a rule keyed on the record would refuse: ${sum.spared}`);
+  floor(
+    stampsReads(readFileSync(join(repoRoot, STAMPER), "utf-8")),
+    "§7 finds no personaFor in this tree's stampNamesakePersonas, so it would leave every run out: update stampsReads",
+  );
+  floor(sum.listed === 0 || sum.stamped > 0, "§7 stamped none of the listed records on runs whose engine stamps a read");
 }
 
 // ─── main ───────────────────────────────────────────────────────────────────

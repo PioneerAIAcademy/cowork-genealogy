@@ -3072,7 +3072,20 @@ describe("Research closed shapes", () => {
           record_ids: ["ark:/61903/1:1:Q295-JLGZ"],
           log_entry_ids: ["log_001"],
           record_persona_ids: { "ark:/61903/1:1:Q295-JLGZ": "p_102104218570" },
+          birth_year: 1873,
           notes: "A different John Smith, a clerk, in the 1880 census.",
+          created: "2026-01-02",
+        },
+      ],
+      hit_verdicts: [
+        {
+          id: "hv_001",
+          log_id: "log_001",
+          hit_id: "ark:/61903/3:1:3Q9M-CSK3-ZSLR",
+          person_id: "I1",
+          verdict: "match",
+          new_vital_info: true,
+          rationale: "Names John Smith, son of Robert, christened 1850; the tree has no christening.",
           created: "2026-01-02",
         },
       ],
@@ -3298,6 +3311,7 @@ describe("Research closed shapes", () => {
     { site: "evaluations", plant: (r) => (r.evaluations[0].zz_extra = true) },
     { site: "localities", plant: (r) => (r.localities[0].zz_extra = true) },
     { site: "namesakes entries", plant: (r) => (r.namesakes[0].zz_extra = true) },
+    { site: "hit_verdicts entries", plant: (r) => (r.hit_verdicts[0].zz_extra = true) },
   ];
 
   // namesakes: required fields are never null, though the shared nullable set
@@ -3316,6 +3330,9 @@ describe("Research closed shapes", () => {
     { why: "a record_persona_ids array", plant: (r) => (r.namesakes[0].record_persona_ids = ["p_1"]), message: "record_persona_ids must be an object" },
     { why: "an empty stamped persona", plant: (r) => (r.namesakes[0].record_persona_ids = { "ark:/61903/1:1:Q295-JLGZ": "" }), message: "must be a non-empty string" },
     { why: "a stamp for an unlisted record", plant: (r) => (r.namesakes[0].record_persona_ids = { "ark:/61903/1:1:XXXX-YYY": "p_1" }), message: "keys a record not in record_ids" },
+    { why: "a string birth_year", plant: (r) => (r.namesakes[0].birth_year = "1873"), message: "birth_year must be an integer" },
+    { why: "a fractional birth_year", plant: (r) => (r.namesakes[0].birth_year = 1873.5), message: "birth_year must be an integer" },
+    { why: "a null birth_year", plant: (r) => (r.namesakes[0].birth_year = null), message: "birth_year must be an integer" },
   ];
   for (const v of namesakeRejections) {
     it(`rejects a namesakes entry with ${v.why}`, async () => {
@@ -3326,6 +3343,72 @@ describe("Research closed shapes", () => {
       expect(result.errors.some((e) => e.path.includes("namesakes") && e.message.includes(v.message)), JSON.stringify(result.errors)).toBe(true);
     });
   }
+
+  const hitVerdictRejections: Array<{ why: string; plant: (r: any) => void; message: string }> = [
+    { why: "a verdict outside the enum", plant: (r) => (r.hit_verdicts[0].verdict = "maybe"), message: "'maybe' is not a valid hit_verdict" },
+    { why: "a wrong id prefix", plant: (r) => (r.hit_verdicts[0].id = "hit_001"), message: "should start with 'hv_'" },
+    { why: "an unknown log id", plant: (r) => (r.hit_verdicts[0].log_id = "log_999"), message: "references log entry 'log_999'" },
+    { why: "a log_id that is not a log id", plant: (r) => (r.hit_verdicts[0].log_id = "q_001"), message: "should start with 'log_'" },
+    { why: "a string new_vital_info", plant: (r) => (r.hit_verdicts[0].new_vital_info = "true"), message: "'new_vital_info' must be true or false" },
+    { why: "a null new_vital_info", plant: (r) => (r.hit_verdicts[0].new_vital_info = null), message: "required field 'new_vital_info' is null" },
+    { why: "a blank rationale", plant: (r) => (r.hit_verdicts[0].rationale = "  "), message: "'rationale' must be a non-empty string" },
+    { why: "an empty hit_id", plant: (r) => (r.hit_verdicts[0].hit_id = ""), message: "'hit_id' must be a non-empty string" },
+    { why: "a missing person_id", plant: (r) => delete r.hit_verdicts[0].person_id, message: "missing required field 'person_id'" },
+    { why: "a target not in the tree", plant: (r) => (r.hit_verdicts[0].person_id = "I99"), message: "person_id 'I99' not found in tree.gedcomx.json persons" },
+    { why: "a malformed created date", plant: (r) => (r.hit_verdicts[0].created = "29 October 2026"), message: "must be an ISO date" },
+    { why: "a section that is not an array", plant: (r) => (r.hit_verdicts = { id: "hv_001" }), message: "hit_verdicts must be an array" },
+  ];
+  for (const v of hitVerdictRejections) {
+    it(`rejects a hit_verdicts entry with ${v.why}`, async () => {
+      const research = maximalResearch();
+      v.plant(research);
+      const result = await validateParsed(research, maximalTree);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.path.includes("hit_verdicts") && e.message.includes(v.message)), JSON.stringify(result.errors)).toBe(true);
+    });
+  }
+
+  it("accepts each hit_verdict value and a false flag", async () => {
+    for (const verdict of ["match", "possible_match", "not_a_match"]) {
+      const research = maximalResearch();
+      Object.assign(research.hit_verdicts[0], { verdict, new_vital_info: false });
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors, verdict).toEqual([]);
+    }
+  });
+
+  it("accepts a padded rationale and any hit_id spelling: the sidecar check is research_append's", async () => {
+    for (const hitId of ["3Q9M-CSK3-ZSLR", "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSK3-ZSLR"]) {
+      const research = maximalResearch();
+      Object.assign(research.hit_verdicts[0], { hit_id: hitId, rationale: "  Names John Smith.  " });
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors, hitId).toEqual([]);
+    }
+  });
+
+  it("rejects a second row on one hit and person, the hit compared by bare id", async () => {
+    for (const hitId of ["ark:/61903/3:1:3Q9M-CSK3-ZSLR", "3Q9M-CSK3-ZSLR", "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSK3-ZSLR"]) {
+      const research = maximalResearch();
+      research.hit_verdicts.push({ ...research.hit_verdicts[0], id: "hv_002", hit_id: hitId, verdict: "not_a_match", new_vital_info: false });
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors.map((e) => `${e.path}: ${e.message}`), hitId).toEqual([
+        "research.json/hit_verdicts[1]: hit verdict 'hv_002' judges the same hit of log_001 against the same person as " +
+          "'hv_001' — one row per (log_id, hit_id, person_id); an append for a judged hit updates its row",
+      ]);
+    }
+  });
+
+  it("accepts one hit judged against two persons, two hits against one, and one hit id in two searches", async () => {
+    const research = maximalResearch();
+    const first = research.hit_verdicts[0];
+    research.hit_verdicts.push(
+      { ...first, id: "hv_002", person_id: "I2", verdict: "not_a_match", new_vital_info: false },
+      { ...first, id: "hv_003", hit_id: "ark:/61903/3:1:3Q9M-CSK3-ZSH4" },
+      { ...first, id: "hv_004", log_id: "log_002" },
+    );
+    const result = await validateParsed(research, maximalTree);
+    expect(result.errors).toEqual([]);
+  });
 
   it("accepts a namesakes entry with only its required fields and null optional ones", async () => {
     const research = maximalResearch();
@@ -3440,7 +3523,7 @@ describe("Research closed shapes", () => {
           (e) =>
             e.path === "research.json/proof_summaries[0]" &&
             e.message.includes(
-              "tier 'proved' does not match the stronger of claims[].proof_tier ('probable')"
+              "tier 'proved' exceeds the strongest of claims[].proof_tier ('probable')"
             )
         )
       ).toBe(true);
@@ -3452,7 +3535,7 @@ describe("Research closed shapes", () => {
       // silently stopped running for the whole summary.
       expect(PROOF_TIER_RANK.get("constructor")).toBeUndefined();
       const research = maximalResearch();
-      research.proof_summaries[0].tier = "possible";
+      research.proof_summaries[0].tier = "proved";
       research.proof_summaries[0].claims = [
         {
           claim: "poison",
@@ -3471,7 +3554,7 @@ describe("Research closed shapes", () => {
       const result = await validateParsed(research, maximalTree);
       expect(
         result.errors.some((e) =>
-          e.message.includes("does not match the stronger of claims[].proof_tier")
+          e.message.includes("exceeds the strongest of claims[].proof_tier")
         )
       ).toBe(true);
     });
@@ -3496,16 +3579,16 @@ describe("Research closed shapes", () => {
       ).toBe(true);
     });
 
-    it("rejects a claims[].relationship.type other than 'ParentChild'", async () => {
+    it("rejects a claims[].relationship.type other than 'ParentChild' and 'Couple'", async () => {
       const research = maximalResearch();
-      research.proof_summaries[0].claims[0].relationship.type = "Couple";
+      research.proof_summaries[0].claims[0].relationship.type = "Sibling";
       const result = await validateParsed(research, maximalTree);
       expect(result.valid).toBe(false);
       expect(
         result.errors.some(
           (e) =>
             e.path === "research.json/proof_summaries[0]/claims[0]/relationship" &&
-            e.message.includes("relationship.type must be 'ParentChild'")
+            e.message.includes("relationship.type must be 'ParentChild' or 'Couple'")
         )
       ).toBe(true);
     });
@@ -3557,22 +3640,114 @@ describe("Research closed shapes", () => {
       ).toBe(true);
     });
 
-    // The scalar must carry the STRONGER per-claim tier (research-schema-spec
-    // §7) — this is the exact invariant the _018 review episode showed only
-    // living in agent prose, with nothing catching a scalar that disagrees
-    // with its own claims.
-    it("rejects a scalar tier that doesn't match the stronger per-claim tier", async () => {
+    // The scalar answers the question as a whole and may not EXCEED the
+    // strongest claim (Decision 29); a weaker scalar is the honest headline
+    // when one claim is stronger than the answer it serves.
+    it("accepts a scalar tier weaker than the strongest per-claim tier", async () => {
       const research = maximalResearch();
       research.proof_summaries[0].tier = "possible"; // claims[0] is "probable"
       const result = await validateParsed(research, maximalTree);
-      expect(result.valid).toBe(false);
-      expect(
-        result.errors.some(
-          (e) =>
-            e.path === "research.json/proof_summaries[0]" &&
-            e.message.includes("tier 'possible' does not match the stronger of claims[].proof_tier ('probable')")
-        )
-      ).toBe(true);
+      expect(result.errors).toEqual([]);
+    });
+
+    it("accepts scalar probable over claims proved and probable", async () => {
+      const research = maximalResearch();
+      research.proof_summaries[0].tier = "probable";
+      research.proof_summaries[0].claims = [
+        { claim: "paternity", proof_tier: "proved", shortfall: "none", supporting_assertion_ids: ["a_001"], relationship: { type: "ParentChild", parent: "I2", child: "I1" } },
+        { claim: "maternity", proof_tier: "probable", shortfall: "gap", supporting_assertion_ids: ["a_001"], relationship: { type: "ParentChild", parent: "I3", child: "I1" } },
+      ];
+      const result = await validateParsed(research, maximalTree);
+      expect(result.errors).toEqual([]);
+    });
+
+    const claimOf = (label: string, object: Record<string, unknown>, extra: Record<string, unknown> = {}) => ({
+      claim: label, proof_tier: "possible", shortfall: "gap", supporting_assertion_ids: ["a_001"], ...object, ...extra,
+    });
+    const errorsFor = async (claims: any[]) => {
+      const research = maximalResearch();
+      research.proof_summaries[0].tier = "possible";
+      research.proof_summaries[0].claims = claims;
+      return (await validateParsed(research, maximalTree)).errors;
+    };
+
+    it("accepts Couple, person-fact, couple-fact, record-identity, same_as, name and finding claims, and a finding citing a log entry", async () => {
+      const errors = await errorsFor([
+        claimOf("marriage", { relationship: { type: "Couple", person1: "I2", person2: "I3" } }),
+        claimOf("step-father", { relationship: { type: "ParentChild", parent: "I2", child: "I1", subtype: "Step" } }),
+        claimOf("birth", { fact: { subject: "I1", fact_type: "Birth", date: "1850", place: "Boston" } }),
+        claimOf("marriage date", { fact: { subject: { person1: "I2", person2: "I3" }, fact_type: "Marriage", date: "1845" } }),
+        claimOf("census entry", { identity: { record_id: "rec1", party: "p_1", person: "I1" } }),
+        claimOf("one man", { identity: { person: "I2", same_as: "I3" }, polarity: "denied" }),
+        claimOf("name", { name: { person: "I1", given: "John", surname: "Smith" } }),
+        claimOf("no baptism", { finding: { finding_type: "absence", statement: "No baptism found 1845-1855.", log_entry_ids: ["log_001"] } }),
+      ]);
+      expect(errors).toEqual([]);
+    });
+
+    it("accepts a same_as claim naming one person twice, as a merge of the pair leaves it", async () => {
+      const errors = await errorsFor([
+        claimOf("one man", { identity: { person: "I2", same_as: "I2" } }),
+      ]);
+      expect(errors).toEqual([]);
+    });
+
+    it("rejects a finding citing a log entry that does not exist", async () => {
+      const errors = await errorsFor([
+        claimOf("no baptism", { finding: { finding_type: "absence", statement: "None found.", log_entry_ids: ["log_999"] } }),
+      ]);
+      expect(errors.some((e) => e.message.includes("references log entry 'log_999' which does not exist"))).toBe(true);
+    });
+
+    it("rejects a claim that names no object", async () => {
+      const errors = await errorsFor([{ claim: "loose", proof_tier: "possible", shortfall: "gap", supporting_assertion_ids: [] }]);
+      expect(errors.some((e) => e.message.includes("a claim names exactly one object") && e.message.includes("names none"))).toBe(true);
+    });
+
+    it("rejects a claim naming two objects", async () => {
+      const errors = await errorsFor([
+        claimOf("both", { name: { person: "I1" }, fact: { subject: "I1", fact_type: "Birth" } }),
+      ]);
+      expect(errors.some((e) => e.message.includes("this one names 2: fact, name"))).toBe(true);
+    });
+
+    it("rejects a claim citing an assertion that does not exist", async () => {
+      const errors = await errorsFor([
+        claimOf("name", { name: { person: "I1" } }, { supporting_assertion_ids: ["a_999"] }),
+      ]);
+      expect(errors.some((e) => e.message.includes("references assertion 'a_999' which does not exist"))).toBe(true);
+    });
+
+    it("rejects a denied claim at proved, and polarity on a disproved claim", async () => {
+      const denied = await errorsFor([
+        claimOf("not him", { name: { person: "I1" } }, { proof_tier: "proved", shortfall: "none", polarity: "denied" }),
+      ]);
+      expect(denied.some((e) => e.message.includes("a denied claim stands only at probable or possible, got 'proved'"))).toBe(true);
+      const disproved = await errorsFor([
+        claimOf("ruled out", { name: { person: "I1" } }, { proof_tier: "disproved", shortfall: "none", polarity: "affirmed" }),
+      ]);
+      expect(disproved.some((e) => e.message.includes("a disproved claim carries no polarity"))).toBe(true);
+    });
+
+    it("rejects supporting_assertion_ids that is not an array of ids", async () => {
+      const notArray = await errorsFor([claimOf("name", { name: { person: "I1" } }, { supporting_assertion_ids: "a_001" })]);
+      expect(notArray.some((e) => e.message.includes("'supporting_assertion_ids' must be an array"))).toBe(true);
+      const notString = await errorsFor([claimOf("name", { name: { person: "I1" } }, { supporting_assertion_ids: [42] })]);
+      expect(notString.some((e) => e.message.includes("supporting_assertion_ids contains a non-string entry"))).toBe(true);
+    });
+
+    it("counts a null object key and a null polarity, as the schema does", async () => {
+      const both = await errorsFor([claimOf("birth", { relationship: null, fact: { subject: "I1", fact_type: "Birth" } })]);
+      expect(both.some((e) => e.message.includes("this one names 2"))).toBe(true);
+      const polarity = await errorsFor([claimOf("name", { name: { person: "I1" } }, { polarity: null })]);
+      expect(polarity.some((e) => e.message.includes("claim_polarity"))).toBe(true);
+    });
+
+    it("rejects an identity claim that mixes a record party with same_as", async () => {
+      const errors = await errorsFor([
+        claimOf("mixed", { identity: { record_id: "rec1", party: "p_1", person: "I1", same_as: "I2" } }),
+      ]);
+      expect(errors.some((e) => e.message.includes("not both"))).toBe(true);
     });
 
     it("accepts a scalar tier that correctly matches the stronger of two differing claims", async () => {
@@ -3634,10 +3809,16 @@ describe("Research closed shapes", () => {
       proof_summary: schema.$defs.proof_summary,
       proof_claim: schema.$defs.proof_claim,
       proof_claim_relationship: schema.$defs.proof_claim_relationship,
+      proof_claim_fact: schema.$defs.proof_claim_fact,
+      proof_claim_pair: schema.$defs.proof_claim_pair,
+      proof_claim_identity: schema.$defs.proof_claim_identity,
+      proof_claim_name: schema.$defs.proof_claim_name,
+      proof_claim_finding: schema.$defs.proof_claim_finding,
       evaluation_entry: schema.$defs.evaluation_entry,
       locality: schema.$defs.locality,
       warning_justification: schema.$defs.warning_justification,
       namesake: schema.$defs.namesake,
+      hit_verdict_entry: schema.$defs.hit_verdict_entry,
     };
 
     expect(Object.keys(defFor).sort()).toEqual(Object.keys(RESEARCH_SHAPES).sort());
@@ -3689,6 +3870,7 @@ describe("ID_PREFIXES mirrors research.schema.json id patterns", () => {
     evaluations: "evaluation_entry",
     localities: "locality",
     namesakes: "namesake",
+    hit_verdicts: "hit_verdict_entry",
   };
 
   /** Every `$def` in research.schema.json whose `id` carries a `pattern`. */
@@ -3770,7 +3952,7 @@ describe("a malformed element is reported, never thrown", () => {
   const ARRAYS = [
     "questions", "plans", "log", "sources", "assertions", "person_evidence",
     "conflicts", "hypotheses", "timelines", "proof_summaries", "evaluations",
-    "localities", "namesakes", "warning_justifications",
+    "localities", "namesakes", "warning_justifications", "hit_verdicts",
   ];
 
   for (const section of ARRAYS) {
@@ -4535,7 +4717,7 @@ describe("entry ids are unique within their section", () => {
     assertions: "assertion", person_evidence: "person_evidence",
     rejected_links: "rejected_links", conflicts: "conflict", hypotheses: "hypothesis",
     timelines: "timeline", proof_summaries: "proof summary", evaluations: "evaluation",
-    localities: "locality", namesakes: "namesake",
+    localities: "locality", namesakes: "namesake", hit_verdicts: "hit verdict",
   };
   const sections = Object.keys(ID_PREFIXES).filter((s) => s !== "project" && s !== "plan_items");
 

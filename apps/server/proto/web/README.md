@@ -21,7 +21,10 @@ bundle both set it.
 | `GET /api/projects/{id}/state` | Owner-checked `{label, research, gedcomx, sidecars: [], version}`; `ETag: "rN-tN"` from document versions, or an empty 304 when `If-None-Match` matches. |
 | `GET /api/projects/{id}/sidecar/{log_id}` | Owner-checked search-result body, `{raw, mtime}`; 404 when absent. |
 | `GET /api/projects/{id}/image?filename=` | Owner-checked persisted source page scan, `image/jpeg`; 404 when absent. |
-| `GET /auth/config`, `GET /auth/me`, `POST /auth/dev-login`, `POST /auth/logout`, `GET /auth/familysearch/login`, `GET /callback` | Patron sign-in (U2, below). Every `/api/sessions` and `/api/projects` route needs the session cookie. Session routes answer 404 for a session on a project the caller does not own. |
+| `POST /api/projects/{id}/files` | Owner-checked upload (#3987), 404 unless `UPLOADS_ENABLED=true`. Multipart `file` plus an optional plain `text` field, together at most 25 MB; the text is stored as `uploads/<name>.txt`, and a re-upload with no `text` drops the old one. 200 `{path, sizeBytes, textPath, contentType}`, the type sniffed from the bytes. 413 oversize; 415 TIFF or HEIC; 422 a multi-page PDF with no text; 429 `Retry-After: 5` with three in flight. |
+| `GET /api/projects/{id}/download` | Owner-checked zip of the project (#3987): every document and blob `feedback.project_files` walks, unredacted, built in a temp file under `/var/tmp` and streamed with `Content-Length`; an unreadable blob is named in `MISSING.txt`. 404 with no blob store; 429 `Retry-After: 5` while another download streams. |
+| `GET /auth/config`, `GET /auth/me`, `POST /auth/dev-login`, `POST /auth/logout`, `GET /auth/familysearch/login`, `GET /callback` (at `FS_REDIRECT_URI`'s path) | Patron sign-in (U2, below). Every `/api/sessions` and `/api/projects` route needs the session cookie. Session routes answer 404 for a session on a project the caller does not own. |
+| `GET /openrouter`, `GET /openrouter/link`, `GET /openrouter/callback`, `POST /openrouter/unlink` | The patron's own OpenRouter key (#3988), served only with `OPENROUTER_LINKING_ENABLED=true` (otherwise 404), each needing the session cookie (a blocked user gets 403). `GET /openrouter` is `{linked}`, never the key; linked means a stored key that decrypts under the current `FS_TOKEN_ENC_KEY`. `link` sets the `or_oauth` state cookie (uid, PKCE verifier, state; its own salt) and redirects to openrouter.ai with the state inside `callback_url`. The callback answers every outcome with a page and drops the state cookie: a refused session with its 401/403; a missing cookie, another user's cookie, a mismatched state or no code (cancelled) with 400; a failed exchange with 502 (outcome and status or exception class logged, never the body), under one 20 s deadline; a failed write with 503. When the code was spent but no key was stored, the page tells the patron to delete the possibly-created key at OpenRouter. Otherwise the key is stored encrypted under `FS_TOKEN_ENC_KEY` in `users.openrouter_key_enc`. `unlink` is POST only, sets the column to NULL and calls nothing at OpenRouter. |
 | `GET /api/sessions/{id}/sidecar/{log_id}`, `GET …/image`, `GET …/logs`, `POST …/files` | Sidecars return `{raw, mtime}` and images return the persisted scan (404 when absent); logs answer 501; file uploads are stored and return `{path, sizeBytes}`. |
 | `GET /`, each top-level file of the dist, `GET /assets/…` | The SPA, when `WEB_DIST_DIR` is set (below). `/docs`, `/redoc` and `/openapi.json` are off. |
 | `GET /api/feedback/context?sessionId=`, `POST /api/feedback` | The SPA's feedback dialog (U20, below): the files and transcript size a report would carry; then the zip, stored in S3 under `feedback/` and sent nowhere. 200 `{ok, filename}`. |
@@ -62,14 +65,24 @@ U2 in `docs/plan/familysearch-handoff.md`.
   either runs.
 - **Environment**: `PUBLIC_URL`, `WEB_ORIGIN`, `SESSION_SECRET`, `FS_TOKEN_ENC_KEY`,
   `ALLOWED_EMAILS` (ignored when `GENEALOGY_MAX_USERS` is set), `FAMILYSEARCH_WEB_ENABLED`,
-  `FAMILYSEARCH_CONFIG` (see the
+  `FAMILYSEARCH_CONFIG`, `FS_REDIRECT_URI` (unset: `<PUBLIC_URL>/callback`; the callback is
+  served at its path), `GENEALOGY_SIGNIN_CALLS_PER_MINUTE` (unset: no sign-in budget; at
+  least 2, since a sign-in takes the code exchange and the identity read) (see the
   `web/auth.py` docstring). `ALLOWED_EMAILS` is comma- or space-separated; write it
   space-separated on Beanstalk, whose environment values cannot carry a comma. On an https `PUBLIC_URL`, or with
   FamilySearch sign-in on at any scheme, the tier refuses to start with a default or empty
   secret.
+- **Chat off (#3992)**: the session cookie lasts 24 hours, not 30 days, and the signature
+  check ends it on the server too; sign-in asks FamilySearch for no `offline_access`; and
+  each sign-in writes a single-use `signin_states` record that the callback consumes, in one
+  atomic `UPDATE`, before it calls FamilySearch, so a replayed callback is refused.
+- **Users by FamilySearch id (#3992, chat on and off)**: sign-in finds the user by
+  FamilySearch id first, so a FamilySearch email change keeps the account and updates its
+  stored email; it is refused when another user holds the new email. Dev-login stays keyed
+  by email.
 - **Path prefix (U28)**: `PUBLIC_URL` may carry a path, the prefix an edge strips before
   the origin (`https://<host>/service/search/agent-tools/<name>`). The routes stay at `/…`;
-  the path scopes both cookies, the OAuth `redirect_uri` (`<PUBLIC_URL>/callback`), the
+  the path scopes both cookies, the default OAuth `redirect_uri` (`<PUBLIC_URL>/callback`), the
   callback's landing (`<prefix>/`) and the SPA's `<base href>`. A path outside unreserved
   segments, or any query or fragment, refuses to start. The first request whose
   `X-Orig-Base` differs logs `ev=prefix_mismatch`; `/api/health` reports `base_path`.
@@ -200,8 +213,9 @@ and drops the one the 202's `seq` names; everything else relays.
 
 With the chat on (`GENEALOGY_CHAT` unset or `true`), `QUEUE_URL` unset or empty refuses to
 start (a `RuntimeError` from the lifespan, U11): a tier with no queue records a turn and
-nothing ever runs it. With `GENEALOGY_CHAT=false` there is no queue, no grant refresher and
-no `/api/sessions` route; `/api/health` reports `"queue": null`. The driver's embedded tier is
+nothing ever runs it. With `GENEALOGY_CHAT=false` there is no queue, no grant refresher, no
+stored refresh token and no `/api/sessions` route; `/api/health` reports `"queue": null`. The
+driver's embedded tier is
 the one queue-less mode, and it passes `drive.py`'s own `NullQueue` to `create_app`: the
 turn is recorded (a `turns` row, a `user_msg` event) and never enqueued, and stays
 `turn_active` until the seeder closes it through `worker.complete()` itself.
@@ -209,7 +223,11 @@ turn is recorded (a `turns` row, a `user_msg` event) and never enqueued, and sta
 Env: `PG_DSN`, `QUEUE_URL` (a full queue URL, the shim's shape; required with the chat on),
 `GENEALOGY_CHAT` (unset: on; `false`: off; anything else refuses to start),
 `GENEALOGY_MAX_USERS` (a positive integer: sign-in admits by user cap, blocked users counted,
-and ignores `ALLOWED_EMAILS`; unset: the allowlist; anything else refuses to start), `POLL_S` (1),
+and ignores `ALLOWED_EMAILS`; unset: the allowlist; anything else refuses to start),
+`UPLOADS_ENABLED` (unset or `false`: `POST /api/projects/{id}/files` answers 404 and
+`/auth/config` has no `uploads` key; `true`: uploads on; anything else refuses to start),
+`OPENROUTER_LINKING_ENABLED` (unset or `false`: every `/openrouter` route answers 404 and
+`/auth/config` says `"openrouter": false`; `true`: linking on; anything else refuses to start), `POLL_S` (1),
 `SSE_PING_S` (15, capped at 15), `WEB_DIST_DIR` (unset: no SPA), `GENEALOGY_SQS_ACCESS_KEY` +
 `GENEALOGY_SQS_SECRET_KEY` (both or neither; neither signs with the default AWS chain, the
 instance profile on AWS; one alone refuses to start) and `GENEALOGY_SQS_REGION` (else the
@@ -223,6 +241,19 @@ refuses to start; SAS unreachable, or slower than 5 s, leaves the tier listening
 `PgCredentialsUnavailable`. An invalid password (28P01) re-reads the object, at most once
 every 30 s, and retries the connect once with the new password. The start line names
 `pg_credentials=SAS object <name>` or `environment DSN`, never a credential.
+
+`PG_POOL_MAX_SIZE` (#3980; unset: one connection per query, as before) turns on a
+`psycopg-pool` pool of at most that many query connections, checked as each is handed out,
+so one the server closed while idle is replaced rather than used; anything but a positive
+integer refuses to start. Pooled connects go through the same credentials (a rotation
+re-reads SAS as above). The pool opens after the inline startup steps, which connect on
+their own as without it, and never waits, so the tier listens at once with Postgres down.
+After that a borrow waits up to 10 s before failing: requests during an outage fail after
+10 s rather than at once, and the allowlist step's background retries, cut at 5 s, report
+`TimeoutError`. Readiness (`postgres`), the schema step and each grant refresh keep
+connections of their own and name the real cause. A connection Neon closed is skipped
+without the pool's own check backoff: every pooled connection dies together when Neon
+suspends an idle compute.
 
 ## The driver (`../drive.py`)
 
