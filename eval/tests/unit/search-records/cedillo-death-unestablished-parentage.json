@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_search_records_033",
+    "id": "ut_search_records_cdl",
     "skill": "search-records",
     "name": "Two same-named deaths, one matching only the husband's name: neither is ruled out until her parents are established",
     "type": "positive",

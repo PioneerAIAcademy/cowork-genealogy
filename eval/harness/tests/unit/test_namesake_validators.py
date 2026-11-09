@@ -516,7 +516,7 @@ def test_hands_subject_fails_when_search_images_was_never_spawned():
 
 # --- search-records: the Cedillo pool (issue #4042) -------------------------
 
-CEDILLO = {"id": "ut_search_records_033", "tags": ["cedillo-no-rule-out"]}
+CEDILLO = {"id": "ut_search_records_cdl", "tags": ["cedillo-no-rule-out"]}
 CEDILLO_POOL = row(
     name="Nicolasa Cedillo",
     log_entry_ids=["log_001"],
