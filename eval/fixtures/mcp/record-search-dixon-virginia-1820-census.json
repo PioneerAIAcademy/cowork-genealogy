@@ -32,7 +32,7 @@
         "events": [
           { "type": "Residence", "date": "1820", "place": "Rockingham, Virginia, United States" }
         ],
-        "collectionId": "1803958",
+        "collectionId": "1803955",
         "collectionTitle": "United States Census, 1820",
         "recordArk": "ark:/61903/1:2:XJQV-HH1820-A",
         "treeMatches": [],
@@ -62,7 +62,7 @@
         "events": [
           { "type": "Residence", "date": "1820", "place": "Augusta, Virginia, United States" }
         ],
-        "collectionId": "1803958",
+        "collectionId": "1803955",
         "collectionTitle": "United States Census, 1820",
         "recordArk": "ark:/61903/1:2:XJQV-HH1820-B",
         "treeMatches": [],
@@ -92,7 +92,7 @@
         "events": [
           { "type": "Residence", "date": "1820", "place": "Fairfax, Virginia, United States" }
         ],
-        "collectionId": "1803958",
+        "collectionId": "1803955",
         "collectionTitle": "United States Census, 1820",
         "recordArk": "ark:/61903/1:2:XJQV-HH1820-C",
         "treeMatches": [],

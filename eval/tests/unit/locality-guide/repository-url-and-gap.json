@@ -26,6 +26,7 @@
   },
   "judge_context": [
     "The tool result (Ireland Church Records) lists the Ulster Historical Foundation at ancestryireland.com. No tool result returns the URL ulsterancestry.com.",
+    "The same Ireland Church Records result also lists RootsIreland at http://www.rootsireland.ie/ (an index, fee-based), past the point where the judge's view of that page is truncated. Citing rootsireland.ie for RootsIreland is grounded in tool output; giving rootsireland.ie as the Ulster Historical Foundation's URL is not, because the tool lists the Foundation at ancestryireland.com.",
     "A repository URL the guide prints must be one the tools returned. Printing a URL no tool returned (e.g. ulsterancestry.com) is the first failure under test.",
     "When the guide states a record-availability gap and a tool result names an index/repository that bears on it, the guide should connect them rather than listing the repository as a generic fee-based service. Failing to connect a returned index to the stated gap is the second failure under test.",
     "Passing behavior: cite the returned URL (ancestryireland.com) and tie the Foundation (or an equivalent returned index) to the gap it addresses. Grade URL fidelity and gap-connection, not any exact coverage dates.",
@@ -33,8 +34,10 @@
   ],
   "mcp_fixtures": [
     "wiki-read-ireland-church-records",
+    "wiki-read-billy-antrim",
     "volume-search-billy-antrim",
     "wiki-search-billy-presbyterian",
+    "place-search-billy-antrim",
     "place-search-any",
     "place-search-all-any",
     "place-population-any",
