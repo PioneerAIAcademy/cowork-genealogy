@@ -1114,6 +1114,22 @@ describe("rank_search_matches", () => {
       expect(await rankFlag(solo([{ type: "Birth", date: "1910", place: "Italy" }]))).toBe(true);
     });
 
+    it("carries subjectTooThinNote with the flag and omits it without", async () => {
+      const rank = async (tree: unknown) => {
+        await writeTree(tree);
+        scorePairMock.mockResolvedValue(scoreResult(0.5));
+        const ref = await stage([candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", primaryId: "p1" })]);
+        return rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
+      };
+      const thin = await rank(solo([{ type: "Birth", date: "1910", place: "Italy" }]));
+      expect(thin.subjectTooThin).toBe(true);
+      expect(thin.subjectTooThinNote).toMatch(/^Nothing in the project separates this person from a namesake/);
+      expect(thin.subjectTooThinNote).toContain("`needs-review — possible namesake`");
+      const anchored = await rank(solo([{ type: "Birth", date: "12 Mar 1910", place: "Italy" }]));
+      expect("subjectTooThin" in anchored).toBe(false);
+      expect("subjectTooThinNote" in anchored).toBe(false);
+    });
+
     it.each([
       ["abt 1829"],
       ["Abt 1829"],
