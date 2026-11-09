@@ -1422,10 +1422,10 @@ function pageAssertion(r: ResolvedReading, doc: ExtractDocument, logEntryId: str
     record_role: role,
     fact_type: r.factType,
     value,
-    ...(r.reading.value !== undefined && r.reading.date !== undefined ? { date: r.reading.date } : {}),
-    ...((r.reading.value !== undefined || r.reading.date !== undefined) && r.reading.place !== undefined
-      ? { place: r.reading.place }
-      : {}),
+    // As extraction keeps them: `date` and `place` always ride beside the value, so
+    // a timeline and the year checks read them; the `[?]` stays in `value` only.
+    ...(r.reading.date !== undefined ? { date: r.reading.date } : {}),
+    ...(r.reading.place !== undefined ? { place: r.reading.place } : {}),
     information_quality: cls.information_quality,
     informant: cls.informant,
     informant_proximity: cls.informant_proximity,

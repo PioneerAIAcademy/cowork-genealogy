@@ -4751,13 +4751,27 @@ describe("research_append (Phase 3)", () => {
       expect((errorsOf(r) ?? []).join(" ")).toMatch(RULE);
     });
 
-    it("is settled by the researcher's own reading", async () => {
+    const withResearcherReading = () => {
       const r0 = disputed();
       r0.log.push({ id: "log_090", performed: "2026-01-02T00:00:00Z", tool: "user_provided", query: { recordId: "rec1" }, outcome: "positive", results_examined: 1, plan_item_id: null, external_site: null });
       r0.assertions.push({ ...validAssertion("a_051"), value: "1851", disputes_assertion_id: "a_001", log_entry_id: "log_090" });
-      await writeProject(r0);
+      return r0;
+    };
+
+    it("is settled for a proof that cites the researcher's own reading", async () => {
+      await writeProject(withResearcherReading());
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "append",
+        entry: { ...proof("John was born in 1851, as the researcher reads the page."), supporting_assertion_ids: ["a_051"] },
+      } as never);
+      expect((errorsOf(r) ?? []).join(" ")).not.toMatch(/reads differently/);
+    });
+
+    it("still refuses a proof that cites the value the researcher read differently", async () => {
+      await writeProject(withResearcherReading());
       const r = await appendProof("John was born in 1850, per the census index.");
-      expect((errorsOf(r) ?? []).join(" ")).not.toMatch(RULE);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/reads differently: the index reads "1850"/);
     });
 
     it("follows a re-extracted index assertion to its successor", async () => {

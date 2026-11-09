@@ -149,6 +149,30 @@ describe("extraction_append pageReadings", () => {
     expect((v.errors ?? []).filter((e: any) => /assertions/.test(e.path))).toEqual([]);
   });
 
+  it("a date-only dispute keeps its date, and a dated new fact keeps both date and place", async () => {
+    const doc = research({
+      assertions: [
+        indexAssertion("a_001", "name", "Harriet Curtis"),
+        { ...indexAssertion("a_002", "birth", "1866"), date: "1866" },
+      ],
+    });
+    await seed(doc);
+    await stagePage();
+    const r = await run({
+      pageReadings: [{
+        sourceId: "src_001",
+        readings: [
+          { disputesAssertionId: "a_002", type: "birth", date: "1865" },
+          { personAssertionId: "a_001", type: "death", date: "3 May 1901", place: "Troy" },
+        ],
+      }],
+    });
+    expect(r).toMatchObject({ ok: true, readings: 2 });
+    const after = await read();
+    expect(after.assertions.find((a: any) => a.disputes_assertion_id === "a_002")).toMatchObject({ value: "1865 [?]", date: "1865" });
+    expect(after.assertions.find((a: any) => a.fact_type === "death")).toMatchObject({ value: "3 May 1901", date: "3 May 1901", place: "Troy" });
+  });
+
   it("a new fact is classified by the real classifier, never copied from a sibling assertion", async () => {
     await stagePage();
     await run({ pageReadings: [{ sourceId: "src_001", readings: [{ personAssertionId: "a_001", type: "residence", place: "Ward 3, Troy" }] }] });

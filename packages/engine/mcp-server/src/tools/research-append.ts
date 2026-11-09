@@ -6222,7 +6222,8 @@ export function namesEveryReading(text: string, readings: readonly string[]): bo
  *  disputes names both readings. The check is literal: each reading's value, with
  *  `[?]` removed and case folded, appears as whole words in the narrative or a
  *  claim's text. A paraphrase ("the page gives another name") does not count. A
- *  group holding the researcher's own reading is settled and is not checked.
+ *  proof citing the researcher's own reading is settled and is not checked; one
+ *  citing the value they read differently still is.
  *  Runs on every write of the summary, not only one that touches the narrative,
  *  so a summary written before the page was read is caught on its next edit. */
 export function disputedValueNarrativeInvariants(entry: any, preCallResearch: any): string[] {
@@ -6247,7 +6248,9 @@ export function disputedValueNarrativeInvariants(entry: any, preCallResearch: an
   const seen = new Set<string>();
   for (const id of cited) {
     const a = byId.get(id);
-    if (!a) continue;
+    // Citing the researcher's own reading is what settles it; citing the value
+    // they read differently still names every reading.
+    if (!a || isResearcherReading(a, logById)) continue;
     const key =
       typeof a.disputes_assertion_id === "string"
         ? liveSuccessorId(a.disputes_assertion_id, byId)
@@ -6255,7 +6258,6 @@ export function disputedValueNarrativeInvariants(entry: any, preCallResearch: an
     const g = groups.get(key);
     if (!g || seen.has(key)) continue;
     seen.add(key);
-    if (g.disputers.some((d) => isResearcherReading(d, logById))) continue;
     const readings = [g.target, ...g.disputers].map((x) => String(x.value ?? ""));
     if (namesEveryReading(text, readings)) continue;
     errors.push(
