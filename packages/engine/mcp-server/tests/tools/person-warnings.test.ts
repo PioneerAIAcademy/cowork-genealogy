@@ -5974,6 +5974,24 @@ describe("hasInterleavedChildrenIgnoreSimilarSpouses", () => {
     expect(w[0].message).not.toContain("Arthur Ward");
   });
 
+  it("breaks ties by id, whatever the order the children are linked in", () => {
+    // Two inside children born on the same day, and two earlier siblings born
+    // on the same day: the lower id is cited either way round.
+    const persons = [
+      H, A, B,
+      kid("A1", "Albert", "3 Mar 1850"), kid("A1b", "Abner", "3 Mar 1850"), A2,
+      kid("X", "Xavier", "1 Jul 1855"), kid("Xa", "Xenos", "1 Jul 1855"),
+    ];
+    const couples = [couple("H", "A"), couple("H", "B")];
+    const forward = [...both("A1", "A"), ...both("A1b", "A"), ...both("A2", "A"), ...both("X", "B"), ...both("Xa", "B")];
+    const backward = [...both("Xa", "B"), ...both("X", "B"), ...both("A2", "A"), ...both("A1b", "A"), ...both("A1", "A")];
+    for (const kids of [forward, backward]) {
+      const w = hits(persons, [...couples, ...kids] as R);
+      expect(w).toHaveLength(1);
+      expect(w[0].facts?.map((f) => f.id).sort()).toEqual(["A1B", "A2B", "XB"]);
+    }
+  });
+
   it("reads a sibling's nearness from the end of its birth before x and the start of its birth after x", () => {
     // Before x (1855): "Bet 1840 and 1852" ends after an exact 1851, so it is nearer.
     // After x: "Bet 1858 and 1870" begins before an exact 1859, so it is nearer.

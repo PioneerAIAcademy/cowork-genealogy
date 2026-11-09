@@ -1047,7 +1047,7 @@ firing here as well would report one duplicate spouse twice. Hence the tag's
 `IgnoreSimilarSpouses` suffix, as `hasCloseChildBirthsIgnoreSimilarChildren`
 skips similar children. Each of those tags reports only the first similar pair of
 its kind (dates conflicting or not), so with three or more spouses a second pair of
-the same kind is not skipped here: no other tag would report it. Measured 2026-11-09 at ca2a92571 over the 236 committed
+the same kind is not skipped here: no other tag would report it. Measured 2026-11-09 at 7c17dbb9c over the 236 committed
 e2e final trees (`calculateWarnings` on every person with two or more Couple
 edges, and again with each spouse renamed so that no pair is similar): the rule
 without the skip fires on 3 anchors, `similarSpouses` already
@@ -1090,8 +1090,8 @@ the writer is making, not an import artefact, and the exempt class of
 implausibilities is the age priors, which this is not. A real plural marriage still
 writes, with a justification. In `merge_warnings` it is advisory, since only
 `contradiction` blocks there. Measured with `dev/measure-parentage-gate-rate.ts`
-on 2026-11-09 at ca2a92571, with and without the tag, over 236 trees and 2619
-ParentChild edges: refusals move from 106 to 118, the 12 added edges being the six witness edges (anchor and
+on 2026-11-09 over 236 trees and 2619 ParentChild edges: refusals move from 106
+(measured at ca2a92571, before this tag) to 118 (measured at 7c17dbb9c, with it), the 12 added edges being the six witness edges (anchor and
 spouse to each of the three children) of the two trees named above.
 
 **No `relatives*` twin.** A spouse-mob has no coparents and a parent-mob has no
@@ -1358,8 +1358,8 @@ Grep for `calculateWarnings` when sizing the blast radius.
   refusals from **101 to 104** edges (74 distinct warnings, was 51). All the new
   ones are in `elsa-heikkinen-birth`, and each links a mother who died in
   February 1826 to a child born 1827–1832. No child born in time is refused.
-  Re-measured 2026-11-09 at ca2a92571 with the tag added (236 trees, 2619
-  edges): `hasInterleavedChildrenIgnoreSimilarSpouses` moves refusals from **106 to 118**
+  Re-measured 2026-11-09 (236 trees, 2619 edges): `hasInterleavedChildrenIgnoreSimilarSpouses`
+  moves refusals from **106** (measured at ca2a92571) **to 118** (measured at 7c17dbb9c)
   edges, two distinct warnings, one each in `jimmie-jewel-neal` and
   `victoriano-macatangay-parents` (§ Interleaved children by two spouses).
 

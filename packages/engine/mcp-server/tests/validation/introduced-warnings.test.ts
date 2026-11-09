@@ -514,6 +514,41 @@ describe("introducedWarnings", () => {
       expect(introducesTag(pre, post)).toBe(true);
     });
 
+    it("re-keys when a merge replaces the inside child's first Birth fact", () => {
+      // Xs is a second record of the 1855 child dated Mar 1855. A merge keeps the
+      // survivor's fact and folds X's equivalent 1855 into it, so the cited fact
+      // becomes XsB, and the gate remaps person ids, not fact ids.
+      const pre = tree([...persons, kid("Xs", "Mar 1855")], after.relationships ?? []);
+      const merged = tree(
+        [...persons.filter((p) => p.id !== "X"), kid("Xs", "Mar 1855")],
+        (after.relationships ?? []).map((r: any) => (r.child === "X" ? { ...r, id: `${r.id}s`, child: "Xs" } : r)),
+      );
+      const r = introducedWarnings(pre, merged, computeTouchedPersonIds(pre, merged), undefined, new Map([["X", "Xs"]]));
+      expect(r.unjustified.map((w) => w.issueType)).toContain(TAG);
+    });
+
+    it("re-keys when a new child of Bertha turns the interleaving the other way", () => {
+      // Bertha's 1840 child puts Agnes's 1850 child inside Bertha's span, and
+      // 1850 is born before Bertha's 1855 child, so Agnes becomes the related spouse.
+      const pre = tree([...persons, kid("Y", "1840")], after.relationships ?? []);
+      const post = tree([...persons, kid("Y", "1840")], [...(after.relationships ?? []), pc("H", "Y"), pc("B", "Y")]);
+      const w = gate(pre, post).unjustified.filter((x) => x.issueType === TAG);
+      expect(w).toHaveLength(1);
+      expect(w[0].relatedPersonId).toBe("A");
+    });
+
+    it("re-keys when an undated child of Bertha is dated inside the span before the inside child", () => {
+      const pre = tree([...persons, kid("Y")], [...(after.relationships ?? []), pc("H", "Y"), pc("B", "Y")]);
+      const post = tree([...persons, kid("Y", "1852")], pre.relationships ?? []);
+      expect(introducesTag(pre, post)).toBe(true);
+    });
+
+    it("re-keys when an undated child of Agnes is dated between the inside child and its sibling", () => {
+      const pre = tree([...persons, kid("AM")], [...(after.relationships ?? []), pc("H", "AM"), pc("A", "AM")]);
+      const post = tree([...persons, kid("AM", "1853")], pre.relationships ?? []);
+      expect(introducesTag(pre, post)).toBe(true);
+    });
+
     it("re-keys when a new eldest child of Agnes brings an earlier child of Bertha inside the span", () => {
       const withY0 = [...persons, kid("Y0", "1845"), kid("A0", "1840")];
       const pre = tree(withY0, [...(after.relationships ?? []), pc("H", "Y0"), pc("B", "Y0")]);

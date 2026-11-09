@@ -467,7 +467,7 @@ treating as established.
 - `similarSpouses` -- two spouses look like the same individual recorded twice.
 - `similarSpousesConflictingDates` -- two spouses have similar names but conflicting dates; likely one spouse recorded twice.
 - `hasDissimilarSpousesWithSameMarriageYear` -- two spouses share a marriage year but have dissimilar names; possibly two marriage records conflated, or a mis-transcribed name.
-- `hasInterleavedChildrenIgnoreSimilarSpouses` -- a child of one spouse was born, on every reading of the Birth dates, between two children of another spouse (a pair `similarSpouses` or `similarSpousesConflictingDates` reports is left to that tag). Usually two people merged into one, a spouse attached to the wrong person, or a spouse's child by an earlier partner linked as this person's own (the link should be Step); a plural marriage can also cause it.
+- `hasInterleavedChildrenIgnoreSimilarSpouses` -- a child of one spouse was born between two children of another; usually one spouse recorded twice under different spellings, two people merged into one, a spouse attached to the wrong person, or a stepchild linked as biological; a plural marriage can also cause it.
 
 #### Event in another country
 - `hasEventInOtherCountry` -- an event other than a migration or a residence (on the person or on a couple relationship) is in a country that contradicts both the birth and the death country, when those two agree. Usually a record attached to the wrong person, or a mis-standardised place.
