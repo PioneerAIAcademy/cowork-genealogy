@@ -146,7 +146,7 @@ FTS and indexed search are completely different systems:
 - **Unique strength:** Finding non-principal mentions (witnesses, neighbors, heirs), and finding any person in a paragraph-style record that was never name-indexed, principal included.
 
 FTS results are derivative sources (original → image → AI transcript,
-~10% error rate). **Always verify against the original image.**
+~10% error rate). **Report a doubtful reading and link the page.**
 
 ## Steps
 
@@ -365,8 +365,8 @@ context. Triage from the stubs first:
 - **Right context, or a false positive?** Whether the name is a genuine mention
   (witness, will clause, deed party) versus a false positive (cross-column
   alignment, a place name matching a surname) cannot be judged from the stubs —
-  the terms are bare. Verify against the original image (see the verification
-  note above), or `Read` the single result you are chasing out of
+  the terms are bare. Report it as doubtful and link the page (see the
+  verification note above), or `Read` the single result you are chasing out of
   `staged.resultsRef`.
 
 **Attachment check:** After narrowing to promising results, call
@@ -1200,7 +1200,7 @@ are error profiles of the transcription, not palaeography:
   surname wrapping across a page boundary may not be findable as
   a whole token. Try both halves.
 - **~10% error rate** in user-perceived results (empirically
-  observed). Always verify against the original image.
+  observed). Report a doubtful reading and link the page.
 
 ### Coverage
 

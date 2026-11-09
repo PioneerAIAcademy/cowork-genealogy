@@ -1112,7 +1112,11 @@ When multiple candidates share the same name in the same area:
   chart in Step 2; the score modulates within that tier but cannot
   by itself drop a match below what the non-name identifiers
   support. Reclassify as Moderate or Strong, create the link, and
-  document the variant explanation in `rationale`.
+  document the variant explanation in `rationale`. A disputed reading
+  is not a variant: an assertion carrying `[?]`, or one the record's
+  own page reads differently, links at `probable` at most unless
+  another record ties the same person, and the `rationale` names both
+  readings.
 - **One pe_ entry per assertion-person pair.** Don't create duplicate
   links for the same assertion-person combination.
 - **Flag a sensitive discovery forward — don't let it surface silently.**
