@@ -1656,6 +1656,73 @@ export async function placeIdToRepIds(placeId: string): Promise<string[]> {
   return (await placeReps(placeId)).map((rep) => rep.placeRepId);
 }
 
+/** Most names `placeSearchNames` returns. Rieti, the most measured (issue
+ *  #4067), has 6 representations, plus the modern parent under `*PlaceExact`. */
+export const MAX_PLACE_SEARCH_NAMES = 8;
+
+/**
+ * The names `record_search` searches a typed place under: the typed text, then
+ * every full name the resolved place has had (issue #4067,
+ * record-search-tool-spec-v2.md "Life event fields"). FamilySearch matches a
+ * record by the name its index standardized the place to, not by the record's
+ * date, so no single name finds every record.
+ *
+ * Order, and so what a cap drops last: the typed text; the modern
+ * representation (open-ended, latest start year); with `exact`, the modern
+ * representation's parent, since an exact search of the modern town misses
+ * records indexed to its province (Orvieto: "Terni, Umbria, Italy"); then the
+ * remaining representations, most recent start year first. De-duplicated
+ * case-insensitively, capped at `MAX_PLACE_SEARCH_NAMES`.
+ *
+ * Null when there is nothing to expand: a country-only place, a place that does
+ * not resolve to exactly one placeId (ambiguous or unknown — the caller searches
+ * the typed text alone), or a lookup that failed. Throws only the FS budget
+ * refusal, like every resolver function. Every lookup is cached.
+ */
+export async function placeSearchNames(
+  place: string,
+  exact: boolean,
+): Promise<string[] | null> {
+  const segments = placeSegments(place);
+  if (segments.length === 0) return null;
+  if (segments.length === 1) {
+    const only = segments[0]!;
+    if (canonicalCountry(only) !== null || UK_CONSTITUENTS.has(foldPlaceName(only))) return null;
+  }
+  const resolution = await resolveStandardPlaceToPlaceId(place);
+  if (resolution.kind !== "resolved") return null;
+  const reps = await placeReps(resolution.placeId);
+  if (reps.length === 0) return null;
+
+  const dated = reps.map((rep) => ({ rep, years: repYears(rep.dateRange) }));
+  const modern = dated
+    .filter((d) => d.years !== null && d.years.to === Infinity)
+    .sort((a, b) => b.years!.from - a.years!.from)[0]?.rep;
+
+  const names: string[] = [place];
+  if (modern?.fullName) names.push(modern.fullName);
+  if (exact && modern) {
+    const parentRepId = (await getRepInfo(modern.placeRepId))?.parentRepId;
+    const parent = parentRepId ? await repIdToStandardPlace(parentRepId) : null;
+    if (parent) names.push(parent);
+  }
+  const rest = dated
+    .filter((d) => d.rep !== modern)
+    .sort((a, b) => (b.years?.from ?? -Infinity) - (a.years?.from ?? -Infinity));
+  for (const { rep } of rest) if (rep.fullName) names.push(rep.fullName);
+
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const name of names) {
+    const key = normalizeKey(name);
+    if (!key || seen.has(key)) continue;
+    seen.add(key);
+    out.push(name);
+    if (out.length === MAX_PLACE_SEARCH_NAMES) break;
+  }
+  return out.length > 1 ? out : null;
+}
+
 /** Every representation a placeId has had, with its name and range; empty on
  *  failure (not cached). */
 async function placeReps(placeId: string): Promise<PlaceRep[]> {
