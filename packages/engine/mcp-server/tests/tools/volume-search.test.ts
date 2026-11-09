@@ -25,6 +25,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import {
   volumeSearchTool,
+  volumeSearchSchema,
   fitToBudget,
   mergeCoverages,
   RESULT_CHAR_BUDGET,
@@ -801,6 +802,58 @@ describe("volumeSearchTool", () => {
     expect(err?.message).not.toContain("omitting pageToken");
   });
 
+  // Shaped like a real upstream 409 body: a JSON error envelope of about 10,000
+  // characters, almost all of it a Java stack trace, of which only `message` is
+  // any use. The trace's lines here are invented.
+  const PAGING_MESSAGE =
+    "Paging state mismatch: the token does not match this query. Retry the search without setting the nextPageToken";
+  const STACK =
+    "org.familysearch.rms.PagingStateException: " + PAGING_MESSAGE + "\n" +
+    "\tat org.familysearch.rms.group.GroupSearchService.search(GroupSearchService.java:211)\n".repeat(120);
+  const errorEnvelope = (fields: Record<string, unknown>) =>
+    JSON.stringify({ timestamp: "2026-10-30T14:02:11.000+00:00", status: 409, error: "Conflict", path: "/group/search", ...fields });
+
+  async function errorFor(status: number, statusText: string, body: string) {
+    mockFetch.mockResolvedValueOnce(makeErrorResponse(status, statusText, body));
+    return volumeSearchTool(
+      { standardPlace: "Pittsylvania, Virginia, United States", pageToken: "tok" },
+      LOCAL
+    ).then(
+      () => null,
+      (e: unknown) => e as Error
+    );
+  }
+
+  it("cuts a 409's upstream body to its message, keeping the recovery", async () => {
+    const body = errorEnvelope({ trace: STACK, message: PAGING_MESSAGE });
+    expect(body.length).toBeGreaterThan(9_000);
+
+    const err = await errorFor(409, "", body);
+
+    expect(err?.message).toContain(PAGING_MESSAGE);
+    expect(err?.message).toContain("re-issue this search from the first page");
+    expect(err?.message).not.toContain("GroupSearchService");
+    expect(err?.message).not.toContain('"timestamp"');
+    expect(err!.message.length).toBeLessThan(600);
+  });
+
+  it("falls back to the first line of the trace when the body has no message", async () => {
+    const err = await errorFor(409, "", errorEnvelope({ trace: STACK }));
+
+    expect(err?.message).toContain("PagingStateException");
+    expect(err?.message).not.toContain("GroupSearchService");
+    expect(err!.message.length).toBeLessThan(600);
+  });
+
+  it("cuts a long plain-text body on the generic arm to 200 characters", async () => {
+    const err = await errorFor(400, "Bad Request", `upstream exploded ${"x".repeat(5_000)}`);
+
+    expect(err?.message).toContain("FamilySearch volume search API error: 400 Bad Request. upstream exploded");
+    expect(err?.message).toMatch(/x…$/);
+    const detail = err!.message.slice("FamilySearch volume search API error: 400 Bad Request. ".length);
+    expect(detail).toHaveLength(200);
+  });
+
   it("throws when the standard place cannot be resolved", async () => {
     mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({ kind: "unresolved" });
 
@@ -932,13 +985,17 @@ describe("volumeSearchTool answer size", () => {
     expect(out).toEqual(triples(groups));
   });
 
-  it("keeps a full page of 100 under the limit by shortening coverages, never dropping a volume", async () => {
-    serveFreeborn(FREEBORN.response.groups!);
+  it("keeps a denser page of 50 under the limit by shortening coverages, never dropping a volume", async () => {
+    // Freeborn's volumes of 31 or more coverage rows, repeated to fill a
+    // 50-volume page: denser than any page measured.
+    const dense = FREEBORN.response.groups!.filter((g) => (g.coverages ?? []).length >= 31);
+    expect(dense.length).toBeGreaterThan(5);
+    serveFreeborn(Array.from({ length: 50 }, (_, i) => dense[i % dense.length]));
 
-    const result = await volumeSearchTool({ standardPlace: FREEBORN_P, pageSize: 100 }, LOCAL);
+    const result = await volumeSearchTool({ standardPlace: FREEBORN_P }, LOCAL);
 
-    expect(JSON.parse(mockFetch.mock.calls[0][1].body).pageSize).toBe(100);
-    expect(result.results).toHaveLength(100);
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body).pageSize).toBe(50);
+    expect(result.results).toHaveLength(50);
     expect(result.nextPageToken).toBe("tok");
     const size = JSON.stringify(result).length;
     expect(size).toBeLessThan(HARD_LIMIT);
@@ -1079,23 +1136,27 @@ describe("pageSize", () => {
     expect(result.query.pageSize).toBe(20);
   });
 
-  it.each([0, 101, 2.5, "50", -1, Number.NaN])("refuses pageSize %s before any request", async (pageSize) => {
+  it.each([0, 51, 100, 2.5, "50", -1, Number.NaN])("refuses pageSize %s before any request", async (pageSize) => {
     await expect(
       volumeSearchTool(
         { standardPlace: "Edensor, Derbyshire, England, United Kingdom", pageSize: pageSize as number },
         LOCAL
       )
-    ).rejects.toThrow("pageSize must be a whole number from 1 to 100.");
+    ).rejects.toThrow("pageSize must be a whole number from 1 to 50.");
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("accepts the bounds 1 and 100", async () => {
-    for (const pageSize of [1, 100]) {
+  it("accepts the bounds 1 and 50", async () => {
+    for (const pageSize of [1, 50]) {
       setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
       await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom", pageSize }, LOCAL);
     }
     expect(JSON.parse(mockFetch.mock.calls[0][1].body).pageSize).toBe(1);
-    expect(JSON.parse(mockFetch.mock.calls[2][1].body).pageSize).toBe(100);
+    expect(JSON.parse(mockFetch.mock.calls[2][1].body).pageSize).toBe(50);
+  });
+
+  it("advertises the same maximum it enforces", () => {
+    expect(volumeSearchSchema.inputSchema.properties.pageSize.maximum).toBe(50);
   });
 
   it("names pageSize in the 409 recovery instruction", async () => {
@@ -1151,6 +1212,23 @@ describe("volumeSearchTool — summary", () => {
     expect(result.summaryError).toMatch(/400.*pageSize too large/);
   });
 
+  it("defaults the page to 10 volumes with summary and echoes it", async () => {
+    routeFetch(() => makeOkResponse(makeSearchResponse([makeGroup()])));
+    const result = await volumeSearchTool({ standardPlace: "Edensor", summary: true }, LOCAL);
+    const pageSizes = mockFetch.mock.calls
+      .filter(([url]) => !String(url).includes("/fulltext/"))
+      .map(([, init]) => JSON.parse(init.body).pageSize);
+    expect(pageSizes).toContain(10);
+    expect(pageSizes).not.toContain(50);
+    expect(result.query.pageSize).toBe(10);
+  });
+
+  it("keeps a caller's pageSize with summary", async () => {
+    routeFetch(() => makeOkResponse(makeSearchResponse([makeGroup()])));
+    const result = await volumeSearchTool({ standardPlace: "Edensor", summary: true, pageSize: 30 }, LOCAL);
+    expect(result.query.pageSize).toBe(30);
+  });
+
   it("makes no rollup call when summary is not asked for", async () => {
     routeFetch(() => {
       throw new Error("rollup must not run");
@@ -1158,5 +1236,72 @@ describe("volumeSearchTool — summary", () => {
     const result = await volumeSearchTool({ standardPlace: "Edensor" }, LOCAL);
     expect(result.summary).toBeUndefined();
     expect(result.summaryError).toBeUndefined();
+  });
+});
+
+describe("coverage rows outside the requested years", () => {
+  const row = (place: string, recordTypeOrig: string, from?: number, to?: number) => ({
+    place,
+    recordTypeOrig,
+    ...(from != null ? { fromdateString: `${from}-01-01T00:00:00` } : {}),
+    ...(to != null ? { todateString: `${to}-12-31T23:59:59.999` } : {}),
+  });
+
+  async function search(coverages: ReturnType<typeof row>[], years: { startYear?: number; endYear?: number }) {
+    setupCalls([2968392], makeSearchResponse([makeGroup({ coverages })]), []);
+    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom", ...years }, LOCAL);
+    return result.results[0];
+  }
+
+  it("lists the rows that overlap the window and counts the rest", async () => {
+    const volume = await search(
+      [
+        row("A", "Burials", 1726, 1812),
+        row("A", "Baptisms", 1850, 1860),
+        row("A", "Marriages", 1835, 1845),
+        row("A", "Deaths", 1878, 1890),
+        row("A", "Taxes", 1881, 1890),
+        row("A", "Census", 1870),
+        row("A", "Court", undefined, 1830),
+        row("A", "Wills"),
+      ],
+      { startYear: 1840, endYear: 1880 }
+    );
+    expect(volume.coverages.map((c) => c.recordType)).toEqual(["Baptisms", "Marriages", "Deaths", "Census", "Wills"]);
+    expect(volume.coveragesOutsideYears).toBe(3);
+  });
+
+  it("counts outside rows after merging, as coverageCount counts listed ones", async () => {
+    const volume = await search(
+      [row("A", "Baptisms", 1850, 1860), row("A", "Burials", 1726, 1812), row("B", "Burials", 1726, 1812)],
+      { startYear: 1840, endYear: 1880 }
+    );
+    expect(volume.coverages).toHaveLength(1);
+    expect(volume.coveragesOutsideYears).toBe(1);
+  });
+
+  it("filters on one side when only one year is given", async () => {
+    const coverages = [row("A", "Burials", 1726, 1812), row("A", "Baptisms", 1850, 1860), row("A", "Taxes", 1900, 1910)];
+    const fromOnly = await search(coverages, { startYear: 1840 });
+    expect(fromOnly.coverages.map((c) => c.recordType)).toEqual(["Baptisms", "Taxes"]);
+    expect(fromOnly.coveragesOutsideYears).toBe(1);
+    const untilOnly = await search(coverages, { endYear: 1880 });
+    expect(untilOnly.coverages.map((c) => c.recordType)).toEqual(["Burials", "Baptisms"]);
+    expect(untilOnly.coveragesOutsideYears).toBe(1);
+  });
+
+  it("lists every row and counts none when no years are given", async () => {
+    const volume = await search([row("A", "Burials", 1726, 1812), row("A", "Baptisms", 1850, 1860)], {});
+    expect(volume.coverages).toHaveLength(2);
+    expect(volume).not.toHaveProperty("coveragesOutsideYears");
+  });
+
+  it("lists every row when none overlaps, rather than an empty volume", async () => {
+    const volume = await search([row("A", "Burials", 1726, 1812), row("A", "Taxes", 1900, 1910)], {
+      startYear: 1840,
+      endYear: 1880,
+    });
+    expect(volume.coverages).toHaveLength(2);
+    expect(volume).not.toHaveProperty("coveragesOutsideYears");
   });
 });

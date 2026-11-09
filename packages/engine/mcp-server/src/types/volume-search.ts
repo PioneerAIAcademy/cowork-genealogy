@@ -18,8 +18,8 @@ export interface VolumeSearchInput {
    */
   recordTypeGroups?: string[];
   /**
-   * Volumes per page, 1–100; defaults to 50. Part of the request body, so a
-   * pageToken is only valid alongside the same pageSize.
+   * Volumes per page, 1–50; defaults to 50, or 10 with `summary`. Part of the
+   * request body, so a pageToken is only valid alongside the same pageSize.
    */
   pageSize?: number;
   pageToken?: string;
@@ -132,6 +132,11 @@ export interface VolumeGroup {
   volumes?: string[];
   languages: string[];
   coverages: SimplifiedCoverage[];
+  /**
+   * Present only when the search gave years and some rows lie wholly outside
+   * them: the number of merged rows left out of `coverages`.
+   */
+  coveragesOutsideYears?: number;
   /**
    * Present only when `coverages` was shortened to keep the answer under the
    * character budget: the number of merged rows before shortening.

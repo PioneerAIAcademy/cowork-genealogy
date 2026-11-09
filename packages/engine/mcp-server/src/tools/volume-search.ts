@@ -50,10 +50,17 @@ const TITLE_PREFIX_RE = /^title:\s*/;
 
 // At 100 volumes a page, 10 of 33 hosted calls overflowed TOOL_RESULT_CHAR_BUDGET's
 // limit (issue #3611); Freeborn, Minnesota 1870–1900 reached 99,517. After merging
-// coverage rows, the worst 50-volume window measured on those bundles is 36,939,
-// so 50 fits with no truncation and fitToBudget is a backstop, not the normal path.
+// coverage rows, the worst 50-volume window measured on those bundles is 36,939.
+// The maximum is 50 too: at one coverage row per volume the densest hosted page
+// measured comes to about 23,000 characters at 50 and 45,000 at 100, so only at
+// 50 does fitToBudget's last cap fit.
 const DEFAULT_PAGE_SIZE = 50;
-const MAX_PAGE_SIZE = 100;
+const MAX_PAGE_SIZE = 50;
+// With `summary` the counts cover every volume, so the page is a sample.
+const SUMMARY_PAGE_SIZE = 10;
+// An upstream error body carries a Java stack trace (about 10,000 characters on
+// a real 409); its message is all a caller can act on.
+const UPSTREAM_DETAIL_MAX = 200;
 export const RESULT_CHAR_BUDGET = TOOL_RESULT_CHAR_BUDGET;
 // Coverage rows kept per volume, tried in order, only when a page is still over
 // budget after merging. Volumes are never dropped: the upstream cursor has
@@ -144,7 +151,7 @@ async function callGroupSearch(
     // nothing to act on. Read the body so the message carries whatever upstream
     // did say, and say nothing about WHY it said it: no 409 here is reproducible,
     // and a guessed upstream diagnosis is a claim we cannot defend.
-    const body = (await response.text().catch(() => "")).trim();
+    const body = upstreamDetail(await response.text().catch(() => ""));
     const detail = body ? ` ${body}` : "";
     if (response.status === 409) {
       throw new Error(
@@ -160,6 +167,30 @@ async function callGroupSearch(
   }
 
   return (await response.json()) as MetadataRmsSearchResponse;
+}
+
+/**
+ * The part of an upstream error body a caller can read: the JSON body's
+ * `message`, else the first line of its `trace`, else the text itself, with
+ * whitespace collapsed and cut to UPSTREAM_DETAIL_MAX characters.
+ */
+function upstreamDetail(text: string): string {
+  let detail = text.trim();
+  if (!detail) return "";
+  try {
+    const parsed: unknown = JSON.parse(detail);
+    if (parsed && typeof parsed === "object") {
+      const { message, trace } = parsed as Record<string, unknown>;
+      if (typeof message === "string" && message.trim()) detail = message;
+      else if (typeof trace === "string" && trace.trim()) detail = trace.trim().split("\n")[0];
+    }
+  } catch {
+    // Not JSON: the text is the detail.
+  }
+  detail = detail.replace(/\s+/g, " ").trim();
+  return detail.length > UPSTREAM_DETAIL_MAX
+    ? `${detail.slice(0, UPSTREAM_DETAIL_MAX - 1)}…`
+    : detail;
 }
 
 function computeRecordSearchablePercent(group: MetadataRmsGroup): number | null {
@@ -199,6 +230,24 @@ interface MappedCoverage {
   dateRange?: string;
   recordType?: string;
   recordTypeConceptId?: number;
+}
+
+/** The requested years; either side may be open. */
+interface YearWindow {
+  startYear?: number;
+  endYear?: number;
+}
+
+/**
+ * False only when the row's structured span lies wholly outside the window. A
+ * row with no structured years, or an open side, is never ruled out on that side.
+ */
+function overlapsWindow(entry: MetadataRmsCoverageEntry, window: YearWindow): boolean {
+  const from = leadingYear(entry.fromdateString);
+  const to = leadingYear(entry.todateString);
+  if (window.startYear != null && to != null && to < window.startYear) return false;
+  if (window.endYear != null && from != null && from > window.endYear) return false;
+  return true;
 }
 
 function mapCoverage(entry: MetadataRmsCoverageEntry): MappedCoverage {
@@ -278,7 +327,8 @@ export function mergeCoverages(rows: MappedCoverage[]): SimplifiedCoverage[] {
 
 function mapGroup(
   group: MetadataRmsGroup,
-  fulltextSet: Set<string> | null
+  fulltextSet: Set<string> | null,
+  window: YearWindow
 ): VolumeGroup {
   const imageGroupNumber = group.groupName;
   const imageCount = group.childCount ?? null;
@@ -286,15 +336,26 @@ function mapGroup(
   const fulltextSearchable =
     fulltextSet === null ? null : fulltextSet.has(imageGroupNumber);
 
+  // Upstream matches a volume on any one row, then returns all its rows. Rows
+  // wholly outside the requested years are counted, not listed. When no row
+  // overlaps, this parse disagrees with upstream's match, so every row is listed.
+  const entries = group.coverages ?? [];
+  const inWindow = entries.filter((e) => overlapsWindow(e, window));
+  const outside = inWindow.length > 0 ? entries.filter((e) => !overlapsWindow(e, window)) : [];
+  const listed = outside.length > 0 ? inWindow : entries;
+
   const result: VolumeGroup = {
     imageGroupNumber,
     imageCount,
     recordSearchablePercent,
     fulltextSearchable,
     languages: group.languages ?? [],
-    coverages: mergeCoverages((group.coverages ?? []).map(mapCoverage)),
+    coverages: mergeCoverages(listed.map(mapCoverage)),
   };
 
+  if (outside.length > 0) {
+    result.coveragesOutsideYears = mergeCoverages(outside.map(mapCoverage)).length;
+  }
   if (group.title != null) result.title = group.title;
   if (group.volumes != null) result.volumes = group.volumes;
 
@@ -382,7 +443,7 @@ export async function volumeSearchTool(
     ? conceptIdsForGroups(input.recordTypeGroups)
     : undefined;
 
-  const pageSize = input.pageSize ?? DEFAULT_PAGE_SIZE;
+  const pageSize = input.pageSize ?? (input.summary ? SUMMARY_PAGE_SIZE : DEFAULT_PAGE_SIZE);
 
   const body: MetadataRmsSearchRequest = {
     coverage: {
@@ -417,7 +478,8 @@ export async function volumeSearchTool(
     ? await fetchFulltextSearchable(groupNames, principal)
     : new Set<string>();
 
-  const results = groups.map((g) => mapGroup(g, fulltextSet));
+  const window: YearWindow = { startYear: input.startYear, endYear: input.endYear };
+  const results = groups.map((g) => mapGroup(g, fulltextSet, window));
 
   const query: VolumeSearchResult["query"] = { standardPlace: input.standardPlace, pageSize };
   if (input.startYear != null) query.startYear = input.startYear;
@@ -456,8 +518,10 @@ export const volumeSearchSchema = {
     "(fulltextSearchable). Use the returned imageGroupNumber with image_search to " +
     "list the volume's images, or with fulltext_search to search its text. " +
     "Each coverage row lists every place (`places`) that shares its date range and " +
-    "record type. " +
-    "Results are paginated, 50 volumes a page by default — pass back nextPageToken " +
+    "record type. With startYear or endYear, rows wholly outside those years are " +
+    "not listed; coveragesOutsideYears counts them. " +
+    "Results are paginated, 50 volumes a page by default and 10 with summary — " +
+    "pass back nextPageToken " +
     "(with the same standardPlace, years, record-type groups and pageSize) as " +
     "pageToken to get the next page. A volume carrying coverageCount had its " +
     "coverages shortened to fit the answer; call again with a smaller pageSize, " +
@@ -493,16 +557,16 @@ export const volumeSearchSchema = {
           "OR-ed. Selecting a group also returns the groups nested beneath it — " +
           "'Government' also returns Tax, Prison, Poor Law, Passports and more. " +
           "This filters volumes, not coverages: a matched volume is returned with " +
-          "all of its coverage rows, so some will carry other record types and " +
-          "years outside the requested range. Omit to search all record types.",
+          "its rows of other record types too. Omit to search all record types.",
       },
       pageSize: {
         type: "integer",
         minimum: 1,
-        maximum: 100,
+        maximum: 50,
         description:
-          "Volumes per page, 1–100. Defaults to 50. Every page of one search " +
-          "must use the same pageSize.",
+          "Volumes per page, 1–50. Defaults to 50, or 10 with summary. Every page " +
+          "of one search must use the same pageSize, so the page after a summary " +
+          "page sends pageSize 10.",
       },
       pageToken: {
         type: "string",
