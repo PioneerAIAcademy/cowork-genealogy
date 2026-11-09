@@ -586,7 +586,7 @@ This uses the same underlying name-variant tables as `get_name_variants`, withou
    `found` (§6.2). It runs on what is left of the OCR leg's single budget
    (§5.7) and is best-effort: a failure omits `found`, never fails the read.
    Skipped on a truncated read. It runs before staging, so the staged element
-   and the `digest` carry its verdict.
+   carries its verdict.
 6. **Stage** (with `projectPath`): the transcription is retained host-side through the
    search tools' channel (§5.5) and a `digest` is computed. Best-effort. For an `imageId`
    or `ark`, the staged source carries the image group's coverage place (§5.5.1), looked
