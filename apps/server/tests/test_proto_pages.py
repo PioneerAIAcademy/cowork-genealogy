@@ -139,9 +139,23 @@ async def test_a_refused_session_gets_no_account_page(how):
         r = await c.get("/")
     assert auth.deletion_code(USER_A.id) not in r.text
     if how == "blocked":
-        assert r.status_code == 403 and "Account blocked" in r.text
+        assert r.status_code == 403 and "This account is blocked. Ask the administrator." in r.text
+        assert "auth/logout" in r.text, "a way out: sign out and use another account"
     else:
         assert r.status_code == 200 and "Get started" in r.text
+
+
+async def test_an_account_off_the_allowlist_is_told_what_to_do(monkeypatch):
+    monkeypatch.setenv("FAMILYSEARCH_WEB_ENABLED", "true")
+    monkeypatch.setenv("WEB_ORIGIN", "http://t")
+    monkeypatch.setenv("SESSION_SECRET", "s" * 32)
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 32)
+    store = FakeStore()
+    store.allowed = set()
+    r = await _home(store)
+    assert r.status_code == 403
+    assert "This account is not on the allowlist. Ask the administrator to add this exact address" in r.text
+    assert auth.deletion_code(USER_A.id) not in r.text and "auth/logout" in r.text
 
 
 @pytest.mark.parametrize("path", ["/privacy", "/terms"])

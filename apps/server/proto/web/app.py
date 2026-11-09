@@ -3142,7 +3142,12 @@ def create_app(
             user = await current_user(request)
         except HTTPException as exc:
             if exc.status_code != 401:
-                return HTMLResponse(f"<p>{html.escape(str(exc.detail))}.</p>", status_code=exc.status_code)
+                # current_user raises the ADMISSION_REFUSALS detail; show that reason's patron
+                # wording, as the sign-in callback does, with a way to sign out.
+                page = next((p for _s, d, p in ADMISSION_REFUSALS.values() if d == exc.detail), None)
+                message = (page.format(who="This account", fail="Try again in a minute.") if page
+                           else f"{exc.detail}.")
+                return HTMLResponse(pages.refused_page(message), status_code=exc.status_code)
             sign_in = ("familysearch" if auth.familysearch_configured()
                        else "dev" if auth.dev_login_enabled() else None)
             return HTMLResponse(pages.signed_out_page(public_url=auth.public_url(), sign_in=sign_in))

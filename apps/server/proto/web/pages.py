@@ -147,6 +147,20 @@ Placeholder: the feedback address has not been supplied yet. Keep the deletion c
     )
 
 
+def refused_page(message: str) -> str:
+    """``/`` for a session the tier refuses (blocked, not on the allowlist, not ready):
+    the reason in plain text and a way out, never the account data. ``message`` is
+    escaped whole, so no caller can put markup in it."""
+    return (
+        _HEAD.format(title="Genealogy Research beta")
+        + f"""<h1>You can't use the beta with this account</h1>
+<p>{escape(message)}</p>
+<p><button type="button" onclick="postAndReload('auth/logout')">Sign out</button></p>
+{_POST_AND_RELOAD}"""
+        + _FOOT
+    )
+
+
 def _openrouter_section(linked: bool | None) -> str:
     if linked is None:
         return ""
