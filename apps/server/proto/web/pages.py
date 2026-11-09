@@ -80,17 +80,6 @@ Keep the name exactly <strong>{escape(CONNECTOR_NAME)}</strong>. The research to
 </ol>"""
 
 
-def _setup_steps(public_url: str, step2: str) -> str:
-    """The three setup steps, on both pages. ``step2`` is the sign-in step's HTML."""
-    return f"""<ol>
-<li><a href="{escape(connector_link(public_url))}">Add the custom connector in Claude</a>.
-Keep the name exactly <strong>{escape(CONNECTOR_NAME)}</strong>. The research tools only work under that name.</li>
-<li>{step2}</li>
-<li>Install the plugin once from Claude's Plugins page. It follows your Claude account.
-<span class="note">Placeholder: where the plugin comes from has not been decided yet.</span></li>
-</ol>"""
-
-
 def signed_out_page(*, public_url: str, sign_in: Literal["familysearch", "dev"] | None) -> str:
     """Onboarding, the plan's D4. ``sign_in`` picks the step-2 control: FamilySearch when it
     is configured, the dev-login button locally, or neither (a line saying sign-in is off)."""
