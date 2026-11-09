@@ -1,9 +1,9 @@
 {
-  "run_log": "v9_2026-10-30_15-27-44.json",
-  "annotator": "dallan@quass.org",
+  "run_log": "v9_2026-11-05_13-10-08.json",
+  "annotator": "florencemashipei4@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_person_evidence_015",
+      "test_id": "ut_person_evidence_026",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_015",
+      "test_id": "ut_person_evidence_026",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_015",
+      "test_id": "ut_person_evidence_026",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,15 +27,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_015",
+      "test_id": "ut_person_evidence_026",
       "dimension_source": "rubric",
       "dimension_name": "Confidence calibration",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_person_evidence_015",
+      "test_id": "ut_person_evidence_026",
       "dimension_source": "rubric",
       "dimension_name": "Rationale quality",
       "llm_score": 3,
@@ -43,71 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Person minting and connecting edges",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_015",
-      "dimension_source": "rubric",
-      "dimension_name": "Score discipline",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_024",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_024",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_024",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_024",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_024",
-      "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_024",
+      "test_id": "ut_person_evidence_026",
       "dimension_source": "rubric",
       "dimension_name": "Multi-person awareness",
       "llm_score": 3,
@@ -115,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_024",
+      "test_id": "ut_person_evidence_026",
       "dimension_source": "rubric",
       "dimension_name": "Person minting and connecting edges",
       "llm_score": 3,
@@ -123,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_024",
+      "test_id": "ut_person_evidence_026",
       "dimension_source": "rubric",
       "dimension_name": "Score discipline",
       "llm_score": 3,
@@ -131,63 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_k8d",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_k8d",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_k8d",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_k8d",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_k8d",
-      "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_k8d",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_k8d",
-      "dimension_source": "rubric",
-      "dimension_name": "Person minting and connecting edges",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_k8d",
+      "test_id": "ut_person_evidence_028",
       "dimension_source": "rubric",
       "dimension_name": "Score discipline",
       "llm_score": 3,
@@ -195,55 +75,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_wfh",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_wfh",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_wfh",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_wfh",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_wfh",
-      "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_wfh",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_wfh",
+      "test_id": "ut_person_evidence_028",
       "dimension_source": "rubric",
       "dimension_name": "Person minting and connecting edges",
       "llm_score": 3,
@@ -251,47 +83,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_wfh",
+      "test_id": "ut_person_evidence_028",
       "dimension_source": "rubric",
-      "dimension_name": "Score discipline",
+      "dimension_name": "Multi-person awareness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_012",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_012",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_012",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_012",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_012",
+      "test_id": "ut_person_evidence_028",
       "dimension_source": "rubric",
       "dimension_name": "Rationale quality",
       "llm_score": 3,
@@ -299,23 +99,87 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_012",
+      "test_id": "ut_person_evidence_028",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_028",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_028",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_028",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_021",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_021",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_021",
       "dimension_source": "rubric",
       "dimension_name": "Multi-person awareness",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_012",
+      "test_id": "ut_person_evidence_021",
       "dimension_source": "rubric",
       "dimension_name": "Person minting and connecting edges",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_012",
+      "test_id": "ut_person_evidence_021",
       "dimension_source": "rubric",
       "dimension_name": "Score discipline",
       "llm_score": 3,
@@ -357,17 +221,9 @@
     {
       "test_id": "ut_person_evidence_001",
       "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "rubric",
       "dimension_name": "Multi-person awareness",
-      "llm_score": null,
-      "corrected_score": null,
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
@@ -379,23 +235,103 @@
       "comment": null
     },
     {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the person was correctly linked with strong confidence, but the rationale inaccurately described the tree evidence by overlooking the documented Birth fact in Ireland."
+    },
+    {
+      "test_id": "ut_person_evidence_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "It inaccurately describes the tree evidence by overlooking I1's documented Birth fact in Ireland."
+    },
+    {
+      "test_id": "ut_person_evidence_021",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the rationale contains inconsistencies in recording the match scores and confidence evidence for Thomas (I2)."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the review identifies the rationale's weaknesses but incorrectly treats the resolved birthplace conflict as an open issue and makes the confident match conditional despite sufficient supporting evidence"
+    },
+    {
       "test_id": "ut_person_evidence_001",
       "dimension_source": "rubric",
       "dimension_name": "Score discipline",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "someone should look into this someday"
+      "comment": "It does not call same_person to complete the correlation check."
     },
     {
-      "test_id": "ut_person_evidence_002",
+      "test_id": "ut_person_evidence_r8t",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the naturalization rationale wrongly says no arrival date is established and overlooks the 1869 San Francisco residence, which explains the 1871 return trip"
     },
     {
-      "test_id": "ut_person_evidence_002",
+      "test_id": "ut_person_evidence_r8t",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -403,7 +339,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_002",
+      "test_id": "ut_person_evidence_r8t",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -411,23 +347,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_002",
+      "test_id": "ut_person_evidence_r8t",
       "dimension_source": "rubric",
       "dimension_name": "Confidence calibration",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the rationale for the 1871 arrival could more clearly explain that the 0.006 score supports keeping it separate or assigning only speculative confidence."
     },
     {
-      "test_id": "ut_person_evidence_002",
+      "test_id": "ut_person_evidence_r8t",
       "dimension_source": "rubric",
       "dimension_name": "Rationale quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the rationales omit the 1869 residence evidence needed to explain the naturalization period and provide insufficient justification for the stub links and competing identity possibilities."
     },
     {
-      "test_id": "ut_person_evidence_002",
+      "test_id": "ut_person_evidence_r8t",
       "dimension_source": "rubric",
       "dimension_name": "Multi-person awareness",
       "llm_score": 3,
@@ -435,7 +371,351 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_002",
+      "test_id": "ut_person_evidence_r8t",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_r8t",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_n5r",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the skill initially misapplied the rule by marking the links speculative and flagging a core identifier conflict, although it later corrected the final confidence to probable"
+    },
+    {
+      "test_id": "ut_person_evidence_n5r",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_n5r",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_n5r",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the skill initially treated the naturalization shortfall as an identity conflict and assigned speculative confidence, although it later corrected the tiers and rationales appropriately"
+    },
+    {
+      "test_id": "ut_person_evidence_n5r",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the rationales include the key dates and five-year requirement but do not consistently explain the shortfall and address the alternative explanations across all relevant entries."
+    },
+    {
+      "test_id": "ut_person_evidence_n5r",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_n5r",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_n5r",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_025",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_025",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_025",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_025",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_025",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the skill assigned confident to all three links based on one census record"
+    },
+    {
+      "test_id": "ut_person_evidence_025",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_025",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_025",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_027",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_027",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_027",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_027",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "the skill correctly linked James Flynn to a new person but overlooked the unlinked a_004 assertion, which should also have been linked to Patrick (I1)"
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_g7m",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_g7m",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_g7m",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_g7m",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_g7m",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_g7m",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_g7m",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_g7m",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_up1",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_up1",
       "dimension_source": "rubric",
       "dimension_name": "Person minting and connecting edges",
       "llm_score": null,
@@ -443,310 +723,6 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Score discipline",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Person minting and connecting edges",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Score discipline",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_020",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_020",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_020",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_020",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_020",
-      "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_020",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_020",
-      "dimension_source": "rubric",
-      "dimension_name": "Person minting and connecting edges",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_020",
-      "dimension_source": "rubric",
-      "dimension_name": "Score discipline",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_025",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_025",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_025",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_025",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_025",
-      "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_025",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_025",
-      "dimension_source": "rubric",
-      "dimension_name": "Person minting and connecting edges",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_025",
-      "dimension_source": "rubric",
-      "dimension_name": "Score discipline",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_027",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_027",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_027",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_027",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "someone should look into this someday"
-    },
-    {
-      "test_id": "ut_person_evidence_027",
-      "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_027",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_027",
-      "dimension_source": "rubric",
-      "dimension_name": "Person minting and connecting edges",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_027",
-      "dimension_source": "rubric",
-      "dimension_name": "Score discipline",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_up1",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_up1",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_up1",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_up1",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_up1",
-      "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
       "test_id": "ut_person_evidence_up1",
       "dimension_source": "rubric",
       "dimension_name": "Multi-person awareness",
@@ -757,15 +733,39 @@
     {
       "test_id": "ut_person_evidence_up1",
       "dimension_source": "rubric",
-      "dimension_name": "Person minting and connecting edges",
-      "llm_score": null,
-      "corrected_score": null,
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
       "comment": null
     },
     {
       "test_id": "ut_person_evidence_up1",
       "dimension_source": "rubric",
-      "dimension_name": "Score discipline",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_up1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_up1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_up1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
