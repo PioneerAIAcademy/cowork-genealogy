@@ -4684,6 +4684,127 @@ describe("research_append (Phase 3)", () => {
     });
   });
 
+  // Ruling 10 (#4286): a value the record's own page disputes counts as doubtful.
+  // a_001 (rec1, birth "1850") is the index; a_050 is the page's reading of it.
+  describe("a value its own page disputes (#4286, ruling 10)", () => {
+    const pageReading = (more: Record<string, unknown> = {}) => ({
+      ...validAssertion("a_050"),
+      value: "1851 [?]",
+      disputes_assertion_id: "a_001",
+      ...more,
+    });
+    const disputed = (more: Record<string, unknown> = {}) => {
+      const r = phase3Research();
+      r.assertions.push(pageReading(more));
+      return r;
+    };
+    const proof = (narrative: string, tier = "probable") => ({
+      question_id: "q_001",
+      tier,
+      vehicle: "summary",
+      shortfall: tier === "not_proved" ? "gap" : "gap",
+      supporting_assertion_ids: ["a_001"],
+      resolved_conflict_ids: [],
+      exhaustive_search_summary: "Searched census + vitals",
+      narrative_markdown: narrative,
+    });
+    const appendProof = (narrative: string, tier?: string) =>
+      researchAppend({ projectPath: dir, section: "proof_summaries", op: "append", entry: proof(narrative, tier) } as never);
+    const RULE = /reads differently: the index reads "1850", the page reads "1851"/;
+
+    it("refuses a proof citing it whose narrative names one reading", async () => {
+      await writeProject(disputed());
+      const r = await appendProof("John was born in 1850, per the census index.");
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(RULE);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/Either write both readings in, or stop citing it/);
+    });
+
+    it("accepts the same proof once the narrative names both readings", async () => {
+      await writeProject(disputed());
+      const r = await appendProof("The index gives 1850; the page itself reads 1851. John was born about 1850.");
+      expect((errorsOf(r) ?? []).join(" ")).not.toMatch(RULE);
+      expect(errorsOf(r) ?? []).toEqual([]);
+    });
+
+    it("accepts a proof that cites a value no page disputes", async () => {
+      await writeProject(phase3Research());
+      const r = await appendProof("John was born in 1850, per the census index.");
+      expect((errorsOf(r) ?? []).join(" ")).not.toMatch(/reads differently/);
+      expect(errorsOf(r) ?? []).toEqual([]);
+    });
+
+    it("leaves a not_proved summary alone", async () => {
+      await writeProject(disputed());
+      const r = await appendProof("Nothing settles the year.", "not_proved");
+      expect((errorsOf(r) ?? []).join(" ")).not.toMatch(RULE);
+    });
+
+    it("runs on any update to a summary written before the page was read", async () => {
+      const r0 = disputed();
+      r0.proof_summaries = [{ id: "ps_001", ...proof("John was born in 1850."), updated: "2026-01-01T00:00:00Z" }];
+      await writeProject(r0);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001", fields: { shortfall: "ceiling" },
+      } as never);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(RULE);
+    });
+
+    it("is settled by the researcher's own reading", async () => {
+      const r0 = disputed();
+      r0.log.push({ id: "log_090", performed: "2026-01-02T00:00:00Z", tool: "user_provided", query: { recordId: "rec1" }, outcome: "positive", results_examined: 1, plan_item_id: null, external_site: null });
+      r0.assertions.push({ ...validAssertion("a_051"), value: "1851", disputes_assertion_id: "a_001", log_entry_id: "log_090" });
+      await writeProject(r0);
+      const r = await appendProof("John was born in 1850, per the census index.");
+      expect((errorsOf(r) ?? []).join(" ")).not.toMatch(RULE);
+    });
+
+    it("follows a re-extracted index assertion to its successor", async () => {
+      const r0 = phase3Research();
+      r0.assertions[0] = { ...r0.assertions[0], superseded_by: "a_060" };
+      r0.assertions.push({ ...validAssertion("a_060"), value: "1850" }, pageReading());
+      r0.person_evidence = liveLinks("a_060");
+      await writeProject(r0);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "append", entry: { ...proof("Born 1850."), supporting_assertion_ids: ["a_060"] },
+      } as never);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(RULE);
+    });
+
+    it("refuses a confident link to it when no other record ties the person, naming both exits", async () => {
+      const r0 = disputed();
+      r0.person_evidence = [];
+      await writeProject(r0);
+      await attestEveryAssertion(dir);
+      const r = await researchAppend({
+        projectPath: dir, section: "person_evidence", op: "append",
+        entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "Names match.", match_score: null, created: "2026-07-18", superseded_by: null },
+      } as never);
+      expect(r.ok).toBe(false);
+      const msg = (errorsOf(r) ?? []).join(" ");
+      expect(msg).toMatch(/is disputed by its own page \(a_050 reads "1851 \[\?\]"\)/);
+      expect(msg).toMatch(/lower the link to 'probable'/);
+      expect(msg).toMatch(/stop citing this value/);
+    });
+
+    it("refuses a conflict that prefers it with no other record behind it", async () => {
+      const r0 = disputed();
+      r0.assertions.push({ ...validAssertion("a_002"), value: "1849" });
+      r0.conflicts = [{ ...validConflict(), id: "c_001", competing_assertion_ids: ["a_001", "a_002"] }];
+      await writeProject(r0);
+      const r = await researchAppend({
+        projectPath: dir, section: "conflicts", op: "update", entryId: "c_001",
+        fields: {
+          status: "resolved", independence_analysis: "independent", weighing_analysis: "index wins",
+          resolution_rationale: "the index is clearer", preferred_assertion_id: "a_001",
+        },
+      } as never);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join(" ")).toMatch(/'a_001' is disputed by its own page/);
+    });
+  });
+
   // A warning, never a refusal: the budgets are approximate, and a narrative over
   // one is not wrong enough to lose the write. Fixture words
   // are built as N copies of "w" so the count is known by construction, not read
