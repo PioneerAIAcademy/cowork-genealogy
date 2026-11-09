@@ -56,9 +56,11 @@ the agent reaches project state through MCP tools or not at all. Measured over
   `@plugin:gps-mentor` — every gated transition becomes a redundant paid
   delegation. **Unserved until this tool.**
 - `<project>/uploads/**` — researcher uploads, the only way bytes enter a
-  hosted session (`POST /api/sessions/{id}/files`). `image_read` and
-  `image_transcribe` take an `imageId`/`ark`, never a path, so a **text** upload
-  (a transcription, a CSV, a note) had no reader. **Unserved until this tool.**
+  hosted session (`POST /api/sessions/{id}/files`). `image_read` takes an
+  `imageId`/`ark`, never a path, and `image_transcribe({ file })` reads an
+  uploaded image or PDF but refuses text, so a **text** upload (a
+  transcription, a CSV, a note, an upload's `<name>.txt` text layer) had no
+  reader. **Unserved until this tool.**
 
 `sidecar_read` is scheduled, not contingent: it exists for the two unserved
 classes and the two `results/` texts nothing else reads back, and nothing else
@@ -241,10 +243,11 @@ The tool refuses non-text as `not_text` when either holds:
   sequence) in more than **max(1, 1%)** of the first 8,192 characters (a JPEG
   or PDF header hits this even where it carries no NUL).
 
-Message: "binary or non-UTF-8 text (a PDF, an image, or UTF-16 — re-save as
-UTF-8); `image_read`/`image_transcribe` read a FamilySearch scan by imageId or
-ark and take no path, so neither can read this file". The 1% sample rule,
-not a zero-tolerance one, so a UTF-8 file with one damaged byte still reads.
+Message, after the ref: "binary or non-UTF-8 text (a PDF, an image, or UTF-16
+— re-save as UTF-8); an uploaded image or PDF is read by
+`image_transcribe({ file: <this ref>, projectPath })`, which OCRs it host-side
+and returns text". The 1% sample rule, not a zero-tolerance one, so a UTF-8
+file with one damaged byte still reads.
 The floor of one is what makes that true below 100 characters, where 1% is
 under one: a single U+FFFD — one damaged byte in a short note, or the literal
 character (bytes `EF BF BD`) in valid UTF-8 — never trips the rule, whatever

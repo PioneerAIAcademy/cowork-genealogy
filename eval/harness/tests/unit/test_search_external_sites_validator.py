@@ -49,6 +49,7 @@ run, so a reader learns their true firing rate only here.
 
 from __future__ import annotations
 
+import re
 import sys
 from pathlib import Path
 
@@ -73,6 +74,12 @@ from test_search_external_sites import (  # noqa: E402
     test_writes_only_to_log_and_plans as check_v7b,
     test_fs_holdings_note_reaches_the_researcher as check_fs_holdings,
     test_plan_item_links_match_the_searched_repository as check_repo_link,
+    test_positive_appends_external_site_log_entry as check_positive_log,
+    test_capture_steps_name_the_upload_page_only_when_served as check_upload_wording,
+    test_no_transcription_of_an_upload_with_text as check_no_text_transcribe,
+    test_closing_capture_filename_is_the_upload as check_capture_filename,
+    test_hosted_upload_is_read_with_the_tools as check_upload_read,
+    test_refused_transcription_leaves_the_handoff_open as check_refused_open,
 )
 
 from tests.unit.skip_blind import expect_fires, expect_passes  # noqa: E402
@@ -835,3 +842,543 @@ def test_repo_link_still_fires_on_a_nonexistent_plan_item_with_aliases_present()
         lambda: check_repo_link(_link_before("NARA", "pli_006"), calls, LINK_TEST),
         "names no plan item",
     )
+
+
+# --- #3990: the upload page, and an upload read with the tools -----------
+#
+# Every check here takes its gate from the run's own documents and calls, so a
+# gate that over-matches would skip it silently; each is asserted both ways.
+# The folder-mode half the issue asks for ("every existing hand-off test runs
+# with no uploadUrl") is the corpus replay at the bottom of this block.
+
+PROJ = "/proj_7d4b2e91c6a05f38"
+UPLOAD_URL = "https://genealogy.example.org/#/p/proj_7d4b2e91c6a05f38/upload"
+STEM = "ma-1855-census-josiah-barnes"
+STAGED = "results/.staging/7f3e2a.json"
+TODAY = (
+    "Scroll to the bottom and back to the top, press Cmd+P (Mac) or Ctrl+P "
+    "(Windows), choose Save as PDF, and upload it here — log in first if the page asks."
+)
+REFUSED = {"type": "positive", "tags": ["transcribe-refused-stays-open"]}
+
+
+def _context(uploads=None, upload_url=UPLOAD_URL):
+    """A recorded `project_context` call, answered as the hosted mock answers it."""
+    response = {"ok": True, "objective": "Locate Josiah Barnes", "awaitingUser": []}
+    if uploads is not None:
+        response["uploads"] = uploads
+    if upload_url is not None:
+        response["uploadUrl"] = upload_url
+    return {"tool": "mcp__genealogy__project_context", "args": {"projectPath": PROJ}, "response": response}
+
+
+def _row(name, has_text=False):
+    return {"name": name, "uploaded": "2026-11-01T12:00:00.000Z", "hasText": has_text}
+
+
+def _asks(present="yes"):
+    """A hand-off test's input, with the delegation the harness threads in."""
+    return {
+        "type": "positive",
+        "tags": [],
+        "delegation": f"Search MyHeritage for Josiah Barnes.\n\nuserPresent: {present}\nprojectPath: {PROJ}",
+    }
+
+
+def _handoff_reply(*lines):
+    return "Invocation: hand-off.\n---\n" + "\n".join((URL,) + lines)
+
+
+def _wording(before, after, calls, reply, test):
+    """V1 on the direct arm, where the reply graded is the agent's own return."""
+    returns = [{"subagent_type": "search-external-sites", "text": reply}]
+    return check_upload_wording(before, after, calls, "Relayed.", test, agent_returns=returns)
+
+
+# --- V1: the capture steps name the upload page only when served ----------
+
+
+def test_upload_wording_passes_todays_folder_mode_wording():
+    before, after = _states(after_log=[_site_entry()])
+    calls = [_context(upload_url=None)]
+    expect_passes(lambda: _wording(before, after, calls, _handoff_reply(TODAY), _asks()))
+
+
+@pytest.mark.parametrize(
+    "planted",
+    [UPLOAD_URL, "https://genealogy.example.org/upload/proj_7d4b2e91c6a05f38"],
+    ids=["route_form", "plain_page_form"],
+)
+def test_upload_wording_fires_on_an_upload_link_in_folder_mode(planted):
+    """Both link forms: today's `/#/p/<id>/upload` and the plain page's
+    `/upload/<id>`, which the upload page will move to."""
+    before, after = _states(after_log=[_site_entry()])
+    reply = _handoff_reply(TODAY.replace("upload it here", f"upload it at {planted}"))
+    calls = [_context(upload_url=None)]
+    expect_fires(lambda: _wording(before, after, calls, reply, _asks()), "did not serve")
+
+
+def test_upload_wording_fires_when_folder_mode_stops_saying_upload():
+    before, after = _states(after_log=[_site_entry()])
+    reply = _handoff_reply("Save the page as a PDF and send it back to me.")
+    calls = [_context(upload_url=None)]
+    expect_fires(
+        lambda: _wording(before, after, calls, reply, _asks()), "no longer says to upload"
+    )
+
+
+def test_upload_wording_ignores_an_external_search_that_mentions_upload():
+    """A query string, or a path segment that only contains the word, is not an
+    upload page."""
+    before, after = _states(after_log=[_site_entry()])
+    reply = _handoff_reply(
+        "https://www.newspapers.com/search/results/?keyword=upload&region=us-pa",
+        "https://archive.org/details/uploads-1855-census",
+        TODAY,
+    )
+    expect_passes(lambda: _wording(before, after, [], reply, _asks()))
+
+
+def test_upload_wording_judges_a_user_reported_nil():
+    """A nil the user reports re-gives the capture steps (step 6), so its
+    `negative` entry is judged. v5's `ut_search_external_sites_008` gave none."""
+    before, after = _states(after_log=[_site_entry(outcome="negative")])
+    reply = _handoff_reply("Not yet conclusive; capture the empty page as a PDF to confirm it.")
+    expect_fires(
+        lambda: _wording(before, after, [], reply, _asks()), "no longer says to upload"
+    )
+
+
+def test_upload_wording_hosted_passes_with_the_served_url():
+    """Sentence punctuation after the link is not part of it."""
+    before, after = _states(after_log=[_site_entry()])
+    reply = _handoff_reply(TODAY.replace("upload it here", f"upload it at {UPLOAD_URL}."))
+    expect_passes(lambda: _wording(before, after, [_context()], reply, _asks()))
+
+
+def test_upload_wording_hosted_fires_when_the_served_url_is_missing():
+    before, after = _states(after_log=[_site_entry()])
+    expect_fires(
+        lambda: _wording(before, after, [_context()], _handoff_reply(TODAY), _asks()),
+        "never gives it",
+    )
+
+
+def test_upload_wording_hosted_fires_on_a_link_not_served():
+    """`uploadUrl` comes from `project_context`, never from the delegation."""
+    before, after = _states(after_log=[_site_entry()])
+    other = "https://genealogy.example.org/#/p/proj_0b5e3c8a19d27f64/upload"
+    reply = _handoff_reply(TODAY.replace("upload it here", f"upload it at {UPLOAD_URL} or {other}"))
+    expect_fires(lambda: _wording(before, after, [_context()], reply, _asks()), "did not serve")
+
+
+@pytest.mark.parametrize("present", ["no", "**no**"])
+def test_upload_wording_asks_no_capture_steps_of_an_autonomous_run(present):
+    """The deferral (`userPresent: no`) gives no capture steps, in either arm."""
+    before, after = _states(after_log=[_site_entry(outcome="negative")])
+    reply = _handoff_reply("Deferred: this search needs a capture, which cannot happen while the run works.")
+    for calls in ([_context(upload_url=None)], [_context()]):
+        expect_passes(lambda: _wording(before, after, calls, reply, _asks(present)))
+
+
+def test_upload_wording_still_fires_on_an_unserved_link_in_an_autonomous_run():
+    before, after = _states(after_log=[_site_entry(outcome="negative")])
+    reply = _handoff_reply(f"Deferred. The upload page is {UPLOAD_URL}")
+    calls = [_context(upload_url=None)]
+    expect_fires(lambda: _wording(before, after, calls, reply, _asks("no")), "did not serve")
+
+
+def test_upload_wording_skips_a_run_with_no_handoff():
+    """A triage closes its hand-off and gives no capture steps."""
+    entry = _site_entry(
+        outcome="positive",
+        external_site={"site": "ancestry", "url_generated": URL, "capture_received": True},
+    )
+    before, after = _states(after_log=[entry])
+    with pytest.raises(pytest.skip.Exception, match="no hand-off"):
+        _wording(before, after, [_context()], "Triaged four results.", _asks())
+
+
+# --- V2: no transcription of an upload that is text already --------------
+
+
+def _transcribe(file, response=None):
+    if response is None:
+        response = {"staged": {"resultsRef": STAGED}, "digest": {"id": "capture:x", "chars": 640, "excerpt": "1855"}}
+    return {
+        "tool": "mcp__genealogy__image_transcribe",
+        "args": {"projectPath": PROJ, "file": file},
+        "response": response,
+    }
+
+
+def test_no_text_transcribe_fires_on_a_txt_upload():
+    calls = [_context([_row(f"{STEM}.txt")]), _transcribe(f"uploads/{STEM}.txt")]
+    expect_fires(lambda: check_no_text_transcribe({}, calls), "a text upload")
+
+
+def test_no_text_transcribe_fires_on_an_upload_with_a_text_layer():
+    calls = [_context([_row(f"{STEM}.pdf", has_text=True)]), _transcribe(f"uploads/{STEM}.pdf")]
+    expect_fires(lambda: check_no_text_transcribe({}, calls), "text layer")
+
+
+def test_no_text_transcribe_reads_the_layer_off_the_scenario_without_project_context():
+    before = {"files": {f"uploads/{STEM}.pdf": "<binary>", f"uploads/{STEM}.pdf.txt": "1855 census"}}
+    expect_fires(
+        lambda: check_no_text_transcribe(before, [_transcribe(f"uploads/{STEM}.pdf")]), "text layer"
+    )
+
+
+def test_no_text_transcribe_passes_an_image_with_no_layer():
+    """A lone `.txt` beside it is an upload of its own, not the image's layer."""
+    before = {"files": {f"uploads/{STEM}.png": "<binary>", "uploads/notes.txt": "notes"}}
+    calls = [_context([_row(f"{STEM}.png"), _row("notes.txt")]), _transcribe(f"uploads/{STEM}.png")]
+    expect_passes(lambda: check_no_text_transcribe(before, calls))
+
+
+def test_no_text_transcribe_skips_a_run_that_transcribes_no_upload():
+    calls = [{"tool": "mcp__genealogy__image_transcribe", "args": {"imageId": "3:1:3Q9M-CSQ2"}, "response": {}}]
+    with pytest.raises(pytest.skip.Exception, match="no image_transcribe of an upload"):
+        check_no_text_transcribe({}, calls)
+
+
+# --- V3: a closing entry names the upload, never its text layer ----------
+
+
+def _closing(filename, entry_id="log_002"):
+    entry = _handoff(entry_id, "positive", OPEN_URL, True)
+    entry["external_site"]["capture_filename"] = filename
+    return entry
+
+
+@pytest.mark.parametrize("filename", [f"{STEM}.pdf.txt", f"uploads/{STEM}.pdf.txt"], ids=["name", "ref"])
+def test_capture_filename_fires_on_the_text_layer(filename):
+    before, after = _states(after_log=[_closing(filename)])
+    calls = [_context([_row(f"{STEM}.pdf", has_text=True)])]
+    expect_fires(lambda: check_capture_filename(before, after, calls), "text layer")
+
+
+def test_capture_filename_passes_a_lone_txt_upload():
+    """Form 2: the upload IS a `.txt`, so its own name is the right one."""
+    before, after = _states(after_log=[_closing(f"{STEM}.txt")])
+    calls = [_context([_row(f"{STEM}.txt")])]
+    expect_passes(lambda: check_capture_filename(before, after, calls))
+
+
+def test_capture_filename_skips_a_closing_entry_naming_the_original():
+    before, after = _states(after_log=[_closing(f"{STEM}.pdf")])
+    with pytest.raises(pytest.skip.Exception, match=r"no closing entry names a \.txt"):
+        check_capture_filename(before, after, [_context([_row(f"{STEM}.pdf", has_text=True)])])
+
+
+# --- V4: a hosted upload is read with the tools --------------------------
+
+
+def _triage_test(capture):
+    """A hosted triage's input: the plan item and the capture, as the router passes them."""
+    return {
+        "type": "positive",
+        "tags": ["triage-closes-handoff"],
+        "delegation": (
+            "The researcher uploaded the MyHeritage results page for plan item pli_001.\n\n"
+            f"capture: {capture}\nuserPresent: yes\nplanItemId: pli_001\nprojectPath: {PROJ}"
+        ),
+    }
+
+
+def _sidecar(ref=None, refs=None):
+    args = {"projectPath": PROJ}
+    if ref is not None:
+        args["ref"] = ref
+    if refs is not None:
+        args["refs"] = refs
+    return {"tool": "mcp__genealogy__sidecar_read", "args": args, "response": {"ok": True}}
+
+
+def _builtin(tool, **args):
+    return {"tool": tool, "args": args, "agent_id": "a41c07"}
+
+
+PDF_TEST = _triage_test(f"uploads/{STEM}.pdf")
+TXT_TEST = _triage_test(f"uploads/{STEM}.txt")
+PNG_TEST = _triage_test(f"uploads/{STEM}.png")
+
+
+def test_upload_read_passes_form_1_through_the_text_layer():
+    calls = [_context([_row(f"{STEM}.pdf", has_text=True)]), _sidecar(f"uploads/{STEM}.pdf.txt")]
+    expect_passes(lambda: check_upload_read({}, calls, [], PDF_TEST))
+
+
+def test_upload_read_fires_on_form_1_read_with_read():
+    """The harness's project folder holds the layer, so a relative `Read` works
+    there and nowhere hosted."""
+    calls = [_context([_row(f"{STEM}.pdf", has_text=True)])]
+    builtins = [_builtin("Read", file_path=f"uploads/{STEM}.pdf.txt")]
+    expect_fires(lambda: check_upload_read({}, calls, builtins, PDF_TEST), "no sidecar_read")
+    expect_fires(lambda: check_upload_read({}, calls, builtins, PDF_TEST), "reads an upload as a file")
+
+
+def test_upload_read_fires_on_form_1_transcribed_instead():
+    calls = [
+        _context([_row(f"{STEM}.pdf", has_text=True)]),
+        _transcribe(f"uploads/{STEM}.pdf"),
+        _sidecar(STAGED),
+    ]
+    expect_fires(lambda: check_upload_read({}, calls, [], PDF_TEST), rf"no sidecar_read of 'uploads/{STEM}\.pdf\.txt'")
+
+
+@pytest.mark.parametrize(
+    "read",
+    [_sidecar(f"uploads/{STEM}.txt"), _sidecar(refs=[f"uploads/{STEM}.txt"]), _sidecar(refs=json.dumps([f"uploads/{STEM}.txt"]))],
+    ids=["ref", "refs", "stringified_refs"],
+)
+def test_upload_read_passes_form_2(read):
+    calls = [_context([_row(f"{STEM}.txt")]), read]
+    expect_passes(lambda: check_upload_read({}, calls, [], TXT_TEST))
+
+
+def test_upload_read_fires_on_form_2_read_through_a_missing_layer():
+    calls = [_context([_row(f"{STEM}.txt")]), _sidecar(f"uploads/{STEM}.txt.txt")]
+    expect_fires(lambda: check_upload_read({}, calls, [], TXT_TEST), "no sidecar_read")
+
+
+def test_upload_read_passes_form_3_with_the_staged_page_read():
+    calls = [_context([_row(f"{STEM}.png")]), _transcribe(f"uploads/{STEM}.png"), _sidecar(STAGED)]
+    expect_passes(lambda: check_upload_read({}, calls, [], PNG_TEST))
+
+
+def test_upload_read_fires_on_form_3_when_the_staged_page_is_unread():
+    """The digest's excerpt is the first 300 characters, so the page itself is
+    read from the staged ref."""
+    calls = [_context([_row(f"{STEM}.png")]), _transcribe(f"uploads/{STEM}.png")]
+    expect_fires(lambda: check_upload_read({}, calls, [], PNG_TEST), "never read")
+
+
+def test_upload_read_fires_on_form_3_never_transcribed():
+    calls = [_context([_row(f"{STEM}.png")]), _sidecar(f"uploads/{STEM}.png")]
+    expect_fires(lambda: check_upload_read({}, calls, [], PNG_TEST), "no image_transcribe")
+
+
+def test_upload_read_passes_a_refused_transcription():
+    """A refusal stages nothing (the mock stages only a successful page), so no
+    `sidecar_read` is owed: the agent asks for the results text instead."""
+    refusal = {"error": "No OpenRouter API key is configured."}
+    calls = [_context([_row(f"{STEM}.png")]), _transcribe(f"uploads/{STEM}.png", refusal)]
+    expect_passes(lambda: check_upload_read({}, calls, [], PNG_TEST))
+
+
+def test_upload_read_follows_sidecar_read_when_no_row_names_the_upload():
+    test = _triage_test("uploads/census-page-2.pdf")
+    calls = [_context([_row(f"{STEM}.pdf", has_text=True)])]
+    expect_fires(lambda: check_upload_read({}, calls, [], test), "no sidecar_read of 'uploads/census-page-2.pdf'")
+    expect_passes(lambda: check_upload_read({}, calls + [_sidecar("uploads/census-page-2.pdf")], [], test))
+
+
+@pytest.mark.parametrize(
+    "builtin",
+    [
+        _builtin("Read", file_path="C:\\Temp\\eval-ul1\\uploads\\ma-1855-census-josiah-barnes.pdf.txt"),
+        _builtin("Glob", pattern="uploads/*"),
+        _builtin("Grep", pattern="Josiah", path="uploads/"),
+    ],
+    ids=["windows_read", "glob", "grep"],
+)
+def test_upload_read_fires_on_any_builtin_reach_into_uploads(builtin):
+    """Even beside the right `sidecar_read`: the file is not there hosted."""
+    calls = [_context([_row(f"{STEM}.pdf", has_text=True)]), _sidecar(f"uploads/{STEM}.pdf.txt")]
+    expect_fires(lambda: check_upload_read({}, calls, [builtin], PDF_TEST), "reads an upload as a file")
+
+
+def test_upload_read_ignores_a_grep_whose_pattern_names_uploads():
+    """A Grep `pattern` is what it searches for, not where."""
+    calls = [_context([_row(f"{STEM}.pdf", has_text=True)]), _sidecar(f"uploads/{STEM}.pdf.txt")]
+    builtins = [_builtin("Grep", pattern="uploads/", path="research.json")]
+    expect_passes(lambda: check_upload_read({}, calls, builtins, PDF_TEST))
+
+
+def test_upload_read_skips_folder_mode():
+    """No `uploadUrl`: the agent `Read`s the path, as on the desktop."""
+    calls = [_context([_row(f"{STEM}.pdf", has_text=True)], upload_url=None)]
+    builtins = [_builtin("Read", file_path=f"uploads/{STEM}.pdf")]
+    with pytest.raises(pytest.skip.Exception, match="no uploadUrl"):
+        check_upload_read({}, calls, builtins, PDF_TEST)
+
+
+def test_upload_read_skips_a_delegation_naming_no_upload():
+    with pytest.raises(pytest.skip.Exception, match="names no uploads"):
+        check_upload_read({}, [_context()], [], _asks())
+
+
+# --- V5: a refused transcription leaves the hand-off open ----------------
+
+
+def _open_log():
+    return [_handoff("log_001", "partial", OPEN_URL, False)]
+
+
+def test_refused_open_passes_when_nothing_is_logged():
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_passes(lambda: check_refused_open(before, after, REFUSED))
+
+
+def test_refused_open_fires_on_a_closing_entry():
+    before, after = _states(
+        before_log=_open_log(), after_log=_open_log() + [_handoff("log_002", "positive", OPEN_URL, True)]
+    )
+    expect_fires(lambda: check_refused_open(before, after, REFUSED), "capture as received")
+
+
+def test_refused_open_fires_on_a_nil_that_closes_the_row():
+    """A `negative` entry on the URL closes it in `awaitingUser` as surely."""
+    before, after = _states(
+        before_log=_open_log(), after_log=_open_log() + [_handoff("log_002", "negative", OPEN_URL, False)]
+    )
+    expect_fires(lambda: check_refused_open(before, after, REFUSED), "were closed")
+
+
+def test_refused_open_flags_a_scenario_with_no_open_handoff():
+    before, after = _states()
+    expect_fires(lambda: check_refused_open(before, after, REFUSED), "fixture defect")
+
+
+def test_refused_open_skips_untagged_tests():
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    with pytest.raises(pytest.skip.Exception, match="not a transcribe-refused-stays-open"):
+        check_refused_open(before, after, TRIAGE)
+
+
+def test_positive_log_check_skips_a_refused_transcription():
+    """V5 asserts the opposite there."""
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    with pytest.raises(pytest.skip.Exception, match="refused transcription"):
+        check_positive_log(before, after, REFUSED)
+
+
+def test_positive_log_check_still_fires_without_the_tag():
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_fires(lambda: check_positive_log(before, after, TRIAGE), "at least one new log entry")
+
+
+# --- V1-V3 replayed over the committed run logs ---------------------------
+
+_REPO = Path(__file__).resolve().parents[4]
+_SUITE = "search-external-sites"
+
+
+def _log_version(path):
+    match = re.match(r"v(\d+)", path.name)
+    return int(match.group(1)) if match else 0
+
+
+#: From v8, the first logs whose agent ends its return with the researcher's
+#: text after a final `---` (#4179): v1 and v2 have no tail at all, and v5's
+#: `ut_search_external_sites_008` gave a user-reported nil no capture steps and
+#: no link, a miss #1950 V4 grades the same way. Globbed, so rotation keeps it.
+_UPLOAD_CORPUS = sorted(
+    p for p in (_REPO / "eval/runlogs/unit" / _SUITE).glob("v*.json")
+    if not p.name.endswith(".ann.json") and _log_version(p) >= 8
+)
+
+
+def _replayed_runs():
+    """(label, before, after, output, test) per committed run.
+
+    The entries the run ADDED (`file_changes["research.json"].diff.log.added`)
+    against an empty prior log, as `replay_log_query_validators.py` replays them,
+    and the delegation and tags from the test JSON, which a run log keeps neither of.
+    """
+    specs = {}
+    for path in (_REPO / "eval/tests/unit" / _SUITE).glob("*.json"):
+        doc = json.loads(path.read_text(encoding="utf-8"))
+        specs[doc["test"]["id"]] = doc
+    for path in _UPLOAD_CORPUS:
+        log = json.loads(path.read_text(encoding="utf-8"))
+        for t in log.get("tests") or []:
+            spec = specs.get(t.get("test_id")) or {}
+            test = {
+                "type": t.get("test_type"),
+                "tags": (spec.get("test") or {}).get("tags") or [],
+                "delegation": (spec.get("input") or {}).get("delegation"),
+            }
+            for run in t.get("runs") or []:
+                out = run.get("output") or {}
+                change = (out.get("file_changes") or {}).get("research.json") or {}
+                added = ((change.get("diff") or {}).get("log") or {}).get("added") or []
+                yield (
+                    f"{path.name} {t.get('test_id')} run {run.get('run_index')}",
+                    {"research_json": {"log": []}},
+                    {"research_json": {"log": added}},
+                    out,
+                    test,
+                )
+
+
+def _replay_wording(before, after, out, test, tool_calls=None, reply=None):
+    returns = out.get("agent_returns") or []
+    if reply is not None:
+        returns = [dict(r, text=reply(r.get("text") or "")) if r.get("subagent_type") == _SUITE else r for r in returns]
+    return check_upload_wording(
+        before,
+        after,
+        (out.get("tool_calls") or []) if tool_calls is None else tool_calls,
+        reply(out.get("text_response") or "") if reply is not None else (out.get("text_response") or ""),
+        test,
+        agent_returns=returns,
+    )
+
+
+_REPLAYED = {
+    "V1": _replay_wording,
+    "V2": lambda before, after, out, test: check_no_text_transcribe(before, out.get("tool_calls") or []),
+    "V3": lambda before, after, out, test: check_capture_filename(before, after, out.get("tool_calls") or []),
+}
+
+
+@pytest.mark.skipif(not _UPLOAD_CORPUS, reason="no committed search-external-sites run log from v8 on")
+@pytest.mark.parametrize("check", sorted(_REPLAYED))
+def test_upload_checks_pass_every_committed_run(check):
+    """No committed run fires V1-V3. V1 is the folder-mode guard: every hand-off
+    and nil report in the corpus ran with no `uploadUrl`, so each must still say
+    "upload" and link no upload page — measured 60 judged runs, 0 fired, over the
+    three v8 logs (2026-11-08). V2 and V3 judge no v8 run (none read an upload)
+    and are replayed so a later log that does is held to them."""
+    judged, fired = 0, []
+    for label, before, after, out, test in _replayed_runs():
+        try:
+            _REPLAYED[check](before, after, out, test)
+        except pytest.skip.Exception:
+            continue
+        except AssertionError as e:
+            fired.append(f"{label}: {e}")
+        judged += 1
+    assert not fired, f"{check} fires on committed runs:\n" + "\n".join(fired)
+    if check == "V1":
+        assert judged >= 10, f"V1 judged only {judged} committed runs; its gate over-matches"
+
+
+@pytest.mark.skipif(not _UPLOAD_CORPUS, reason="no committed search-external-sites run log from v8 on")
+def test_upload_wording_fires_on_a_link_planted_in_a_committed_run():
+    """The other direction on real data: the first committed hand-off V1 passes,
+    with a researcher present and no `uploadUrl` served, fires once an upload
+    link is planted in its tail, fires once that link is served and the tail
+    left as it was, and passes with the link both served and given."""
+    from test_search_external_sites import _USER_ABSENT, _served_upload_urls
+
+    def _clean(run):
+        _, before, after, out, test = run
+        if _served_upload_urls(out.get("tool_calls")) or _USER_ABSENT.search(str(test.get("delegation") or "")):
+            return False
+        try:
+            _replay_wording(before, after, out, test)
+        except pytest.skip.Exception:
+            return False
+        return True
+
+    run = next((r for r in _replayed_runs() if _clean(r)), None)
+    assert run is not None, "no committed hand-off to plant in"
+    label, before, after, out, test = run
+    plant = lambda text: f"{text}\nOr upload it at {UPLOAD_URL}"  # noqa: E731
+    served = (out.get("tool_calls") or []) + [_context()]
+    expect_fires(lambda: _replay_wording(before, after, out, test, reply=plant), "did not serve")
+    expect_fires(lambda: _replay_wording(before, after, out, test, tool_calls=served), "never gives it")
+    expect_passes(lambda: _replay_wording(before, after, out, test, tool_calls=served, reply=plant))

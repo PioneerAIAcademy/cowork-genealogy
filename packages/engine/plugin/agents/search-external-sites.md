@@ -47,6 +47,12 @@ tools:
   - mcp__genealogy__build_external_search_url
   - mcp__remote-devices__Genealogy_Research__build_external_search_url
   - mcp__Genealogy_Research__build_external_search_url
+  - mcp__genealogy__sidecar_read
+  - mcp__remote-devices__Genealogy_Research__sidecar_read
+  - mcp__Genealogy_Research__sidecar_read
+  - mcp__genealogy__image_transcribe
+  - mcp__remote-devices__Genealogy_Research__image_transcribe
+  - mcp__Genealogy_Research__image_transcribe
 ---
 
 # Search External Sites
@@ -70,7 +76,7 @@ You are invoked with a delegation message naming the search:
 | `planItemId` | no | The `pli_` id this search executes. Absent for an ad-hoc search, and for a plan item whose `repository` is not the site you are calling — a similar item on a different repository is not this search. |
 | the request | yes | The site and who is being searched for, or the plan item that names them. |
 | `baseUrl` | no | A known page to start from — a curated collection link, or for `archion`/`matricula` the parish page. |
-| `capture` | triage only | The uploaded capture's file path (`Read` it), or the results text itself. |
+| `capture` | triage only | The uploaded capture's file path (read it as step 5 says), or the results text itself. |
 | `userPresent` | no | `yes` when the researcher asked for this search and is there to click the link; `no` for an autonomous run with nobody to capture. Absent means `yes`. |
 
 Read what you need from the project yourself — do not expect the caller to have
@@ -465,7 +471,10 @@ plain prose:
    entry, when you know them;
 4. one sentence of capture steps: scroll to the bottom of the page and back
    to the top, press Cmd+P (Mac) or Ctrl+P (Windows), choose "Save as PDF",
-   and upload it here — log in first if the page asks;
+   and upload it here — log in first if the page asks. When `project_context`
+   returned an `uploadUrl`, say to upload it at that URL instead of "here",
+   pasted whole as plain text. Take that URL only from `project_context`, never
+   from the delegation;
 5. any `notes` the tool returned alongside the `handoffLine` (an attribute it
    ignored, a caution about the site) — relay these here too, not only above
    the line (see "Every observation the tool makes" above).
@@ -493,11 +502,31 @@ the page asks.
 
 ### 5. Triage the results
 
-When a capture arrives — an uploaded PDF whose path the delegation gives
-(`Read` it), or the results-page content in the delegation — call
-`project_context` and find the `awaitingUser` row whose `urlGenerated` is the URL
-the capture came from. Then triage formally before any extraction. The steps
-below are the same either way:
+When a capture arrives — an uploaded file whose path the delegation gives, or
+the results-page content in the delegation — call `project_context` and find
+the `awaitingUser` row whose `urlGenerated` is the URL the capture came from.
+Read an uploaded file this way:
+
+- **No `uploadUrl` in `project_context`:** `Read` the path. If that fails and
+  the path is `uploads/<name>`, read it by the rules below.
+- **An `uploadUrl`, and the path is `uploads/<name>`:** find `<name>` in
+  `project_context`'s `uploads`:
+  - `hasText: true` → `sidecar_read({ projectPath, ref: "uploads/<name>.txt" })`,
+    paging with `offset` until you have the whole text. Never `image_transcribe`
+    it.
+  - `hasText: false` and the name ends in `.txt` →
+    `sidecar_read({ projectPath, ref: "uploads/<name>" })`.
+  - `hasText: false`, any other name →
+    `image_transcribe({ projectPath, file: "uploads/<name>" })`, then
+    `sidecar_read` on the `staged.resultsRef` it returns. If it refuses, ask the
+    researcher to paste the results text instead and log no closing entry: the
+    hand-off stays open.
+  - No row names it → `sidecar_read({ projectPath, ref: "uploads/<name>" })`,
+    and follow its answer.
+- **An `uploadUrl`, and any other path:** `Read` it.
+
+Then triage formally before any extraction. The steps below are the same
+either way:
 
 1. **List each result** with its key attributes — name, age/birth year,
    location, record type, any visible record ID.
@@ -524,7 +553,8 @@ below are the same either way:
    evidence (a headstone image) from contributor-entered text (dates,
    family links).
 5. **On selection, request the individual record.** "Click result #1 to
-   open the full record page, then save it as a PDF and upload it." That
+   open the full record page, then save it as a PDF and upload it." With an
+   `uploadUrl`, name it as step 4 says. That
    single-record PDF's text goes to the record-structurer agent as a source,
    with a `capture:<descriptive>` recordId. If the record page's content is
    **already in the delegation**, name it for the agent in your return and
@@ -541,8 +571,9 @@ comes back, append a **new** `research_log_append` entry (never edit the
 in-flight one from step 4) — same `query` params as step 4's call, the **same
 `urlGenerated` as the `awaitingUser` row** (that is what closes it), with
 `externalSite.captureReceived: true` and `externalSite.captureFilename` set to
-the uploaded PDF's filename when a capture arrived (`false` / `null` for a
-no-access wall where none did), and `outcome` chosen from your triage.
+the uploaded file's name when a capture arrived — for `uploads/<name>`, the
+`<name>` itself, never its `.txt` layer (`false` / `null` for a no-access wall
+where none did), and `outcome` chosen from your triage.
 Results you read **from the delegation** are a capture that arrived with no
 file: `captureReceived: true`, `captureFilename: null`. Never log one as
 `outcome: "partial"` — that outcome is the in-flight URL handoff of step 4,

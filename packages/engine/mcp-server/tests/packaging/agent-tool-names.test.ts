@@ -878,19 +878,23 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
 
   // The folded search-external-sites skill (issue #2802): its seven tools plus
   // `project_context`, which is how a triage invocation finds the open hand-off
-  // in `awaitingUser`. `Read` opens an uploaded capture. No wiki tools: the
-  // parish page arrives in the delegation as `baseUrl`.
+  // in `awaitingUser`. `Read` opens a capture in folder mode; with an
+  // `uploadUrl`, `sidecar_read` reads an upload's text and `image_transcribe` an
+  // upload with none (issue #3990). No wiki tools: the parish page arrives in the
+  // delegation as `baseUrl`.
   "search-external-sites.md": {
     tools: [
       "Read",
       "build_external_search_url",
       "collections_search",
       "external_links_search",
+      "image_transcribe",
       "place_search",
       "project_context",
       "research_append",
       "research_log_append",
       "research_query",
+      "sidecar_read",
     ],
     denies: [],
   },

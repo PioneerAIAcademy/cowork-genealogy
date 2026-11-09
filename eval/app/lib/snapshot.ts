@@ -64,6 +64,8 @@ const TEXT_EXTS = new Set([
   '.toml',
 ]);
 
+const STRICT_UTF8 = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true });
+
 function extOf(p: string): string {
   const dot = p.lastIndexOf('.');
   if (dot < 0) return '';
@@ -168,9 +170,15 @@ export function normalize(repoRelativePath: string, content: string | Buffer): s
     return normalizeText(content);
   }
 
-  // Unknown extension: try UTF-8 decode.
+  // Unknown extension: strict UTF-8 decode, else lowercase hex — Python's
+  // `content.decode("utf-8")` / `content.hex()`. `ignoreBOM` keeps a leading
+  // U+FEFF, as Python does; TextDecoder would strip it otherwise.
   if (typeof content === 'string') return content;
-  return content.toString('utf-8');
+  try {
+    return STRICT_UTF8.decode(content);
+  } catch {
+    return content.toString('hex');
+  }
 }
 
 /**
