@@ -1298,3 +1298,142 @@ describe("research_query — conflicts by their own id", () => {
     expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
   });
 });
+
+// --- Fields no caller reads -------------------------------------------------
+
+describe("research_query — fields no caller reads are left out", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "research-query-omit-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  async function writeResearch(research: any) {
+    await writeFile(join(dir, "research.json"), JSON.stringify(research, null, 2), "utf-8");
+  }
+
+  const PLANS = [
+    { id: "pl_001", question_id: "q_001", status: "superseded", items: [
+      { id: "pli_001", sequence: 1, record_type: "census", status: "planned", rationale: "R1" },
+      { id: "pli_002", sequence: 2, record_type: "vital_record", status: "completed", rationale: "R2" },
+    ] },
+    { id: "pl_002", question_id: "q_001", status: "active", items: [
+      { id: "pli_003", sequence: 1, record_type: "census", jurisdiction: "J", status: "completed", rationale: "R3" },
+      { id: "pli_004", sequence: 2, record_type: "church", status: "skipped", rationale: "R4",
+        skip_category: "no_coverage", skip_reason: "S4" },
+      { id: "pli_005", sequence: 3, record_type: "probate", status: "in_progress", rationale: "R5" },
+      { id: "pli_006", sequence: 4, record_type: "land", status: "planned", rationale: "R6", fallback_for: "pli_005" },
+    ] },
+    { id: "pl_003", question_id: "q_002", status: "completed", items: [
+      { id: "pli_007", sequence: 1, record_type: "census", status: "completed", rationale: "R7" },
+    ] },
+  ];
+
+  function rationaleById(items: any[]): Record<string, unknown> {
+    return Object.fromEntries(items.flatMap((p: any) => p.items.map((i: any) => [i.id, i.rationale])));
+  }
+
+  it("plans: only an open item of the active plan keeps its rationale", async () => {
+    await writeResearch({ plans: PLANS });
+    const r = await researchQuery({ projectPath: dir, section: "plans" });
+    if (!r.ok) throw new Error(r.errors.join(" "));
+    expect(rationaleById(r.items)).toEqual({
+      pli_001: undefined, // planned, but on a superseded plan
+      pli_002: undefined,
+      pli_003: undefined, // completed
+      pli_004: undefined, // skipped
+      pli_005: "R5",
+      pli_006: "R6",
+      pli_007: undefined, // on a completed plan
+    });
+    // Nothing else is dropped: not the item's other fields, not the skip reason.
+    const active = r.items.find((p: any) => p.id === "pl_002");
+    expect(active.items[0]).toEqual({ id: "pli_003", sequence: 1, record_type: "census", jurisdiction: "J", status: "completed" });
+    expect(active.items[1]).toEqual({ id: "pli_004", sequence: 2, record_type: "church", status: "skipped",
+      skip_category: "no_coverage", skip_reason: "S4" });
+    expect(active.items[2]).toEqual(PLANS[1].items[2]);
+    expect(active.items[3]).toEqual(PLANS[1].items[3]);
+    expect(r.items.map((p: any) => [p.id, p.question_id, p.status])).toEqual(
+      PLANS.map((p) => [p.id, p.question_id, p.status]),
+    );
+  });
+
+  it("plans: a plan with no status counts as active", async () => {
+    await writeResearch({ plans: [{ id: "pl_001", question_id: "q_001", items: [
+      { id: "pli_001", status: "completed", rationale: "R1" },
+      { id: "pli_002", status: "planned", rationale: "R2" },
+    ] }] });
+    const r = await researchQuery({ projectPath: dir, section: "plans" });
+    if (!r.ok) throw new Error(r.errors.join(" "));
+    expect(rationaleById(r.items)).toEqual({ pli_001: undefined, pli_002: "R2" });
+  });
+
+  it("plans: a filtered read leaves the same rationale out", async () => {
+    await writeResearch({ plans: PLANS });
+    const r = await researchQuery({ projectPath: dir, section: "plans", questionId: "q_001" });
+    if (!r.ok) throw new Error(r.errors.join(" "));
+    expect(rationaleById(r.items)).toEqual({
+      pli_001: undefined, pli_002: undefined, pli_003: undefined, pli_004: undefined,
+      pli_005: "R5", pli_006: "R6",
+    });
+  });
+
+  it("plans: the omission is in the answer only, never in research.json", async () => {
+    await writeResearch({ plans: PLANS });
+    await researchQuery({ projectPath: dir, section: "plans" });
+    const stored = JSON.parse(readFileSync(join(dir, "research.json"), "utf-8"));
+    expect(stored.plans).toEqual(PLANS);
+  });
+
+  it("log: an entry carries no staged_ref, and every other field as stored", async () => {
+    const unstaged = {
+      id: "log_001", tool: "record_search", query: { surname: "X" }, outcome: "positive",
+      plan_item_id: "pli_005", results_ref: "results/log_001.json", notes: "N",
+    };
+    const entry = { ...unstaged, staged_ref: "results/.staging/record_search-1.json" };
+    const bare = { id: "log_002", tool: "record_read", outcome: "negative", plan_item_id: "pli_005" };
+    await writeResearch({ plans: PLANS, log: [entry, bare] });
+    for (const args of [{}, { questionId: "q_001" }, { planItemId: "pli_005" }]) {
+      const r = await researchQuery({ projectPath: dir, section: "log", ...args });
+      if (!r.ok) throw new Error(r.errors.join(" "));
+      expect(r.items).toEqual([unstaged, bare]);
+    }
+  });
+
+  it("person_evidence orderBy review: reviewReasons covers the returned page's links only", async () => {
+    const links = [
+      ...Array.from({ length: 53 }, (_, k) => ({ id: `pe_c${k}`, assertion_id: `a_c${k}`, person_id: "I1", confidence: "confident" })),
+      ...Array.from({ length: 5 }, (_, k) => ({ id: `pe_s${k}`, assertion_id: `a_s${k}`, person_id: "I1", confidence: "confident", superseded_by: "pe_c0" })),
+      ...Array.from({ length: 2 }, (_, k) => ({ id: `pe_p${k}`, assertion_id: `a_p${k}`, person_id: "I1", confidence: "speculative" })),
+    ];
+    await writeResearch({ person_evidence: links });
+    const first = await researchQuery({ projectPath: dir, section: "person_evidence", orderBy: "review" });
+    const second = await researchQuery({ projectPath: dir, section: "person_evidence", orderBy: "review", offset: 50 });
+    if (!first.ok || !second.ok) throw new Error("failed");
+    expect(first.count).toBe(60);
+    // The speculative links rank first and the superseded ones last, so each
+    // page's reasons are its own links' reasons, unchanged.
+    expect(first.reviewReasons).toEqual({ pe_p0: ["speculative match"], pe_p1: ["speculative match"] });
+    expect(second.reviewReasons).toEqual(
+      Object.fromEntries(Array.from({ length: 5 }, (_, k) => [`pe_s${k}`, ["superseded"]])),
+    );
+    for (const page of [first, second]) {
+      const ids = new Set(page.items.map((i: any) => i.id));
+      expect(Object.keys(page.reviewReasons ?? {}).every((id) => ids.has(id))).toBe(true);
+    }
+  });
+
+  it("person_evidence orderBy review: a page whose links carry no reason has no reviewReasons", async () => {
+    const links = [
+      ...Array.from({ length: 55 }, (_, k) => ({ id: `pe_c${k}`, assertion_id: `a_c${k}`, person_id: "I1", confidence: "confident" })),
+      { id: "pe_s0", assertion_id: "a_s0", person_id: "I1", confidence: "confident", superseded_by: "pe_c0" },
+    ];
+    await writeResearch({ person_evidence: links });
+    const first = await researchQuery({ projectPath: dir, section: "person_evidence", orderBy: "review" });
+    if (!first.ok) throw new Error("failed");
+    expect(first.items).toHaveLength(50);
+    expect(first).not.toHaveProperty("reviewReasons");
+  });
+});
