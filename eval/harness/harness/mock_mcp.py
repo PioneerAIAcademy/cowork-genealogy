@@ -11,14 +11,12 @@ contract for tool results.
 ## Live tools
 
 Some MCP tools are deterministic functions of local workspace state — their
-return value depends on what the skill just wrote. `project_create` resolves
-places (every place the caller enters, and any place a staged read left without
-a `standard_place`) through the anonymous Places API; the mock gives the
-compiled resolver a table built from the test's own `place_search` fixtures for
-the places in the call's `tree` (`_place_table`), so it stays offline. A place
-not in the table resolves to null, which includes a staged read's unresolved
-place. Canning their response as a fixture would be dishonest: a fixture
-can't reflect the actual file content the skill produced.
+return value depends on what the skill just wrote. `project_create` retries,
+through the anonymous Places API, any place its read left without a
+`standard_place`; the mock gives the compiled resolver an empty table, so it
+stays offline and every such place resolves to null. Canning their response as
+a fixture would be dishonest: a fixture can't reflect the actual file content
+the skill produced.
 
 LIVE_TOOLS lists these by bare tool name. Each entry in LIVE_TOOLS is
 registered unconditionally (not gated on fixture presence) and its handler
@@ -1025,6 +1023,38 @@ def _stage_and_compact_search_results(
         return None, response, [], ranked
 
 
+BIRTH_RANGES_KEY = "birthRanges"
+
+_RECORD_EXTRACT_JS = _MCP_BUILD / "utils" / "record-extract.js"
+
+
+def _record_birth_ranges(response: dict[str, Any]) -> dict[str, str] | None:
+    """`birthRanges` for a canned record_read: persona id -> the birth range its
+    indexed age implies, from the compiled `birthRangesFor` (#4127) so the mock
+    cannot drift from production. None when no persona has one, the fixture
+    carries no `indexFields`, or node fails (with a warning)."""
+    index_fields = response.get("indexFields")
+    if not (isinstance(index_fields, dict) and index_fields) or not _RECORD_EXTRACT_JS.exists():
+        return None
+    gedcomx = {k: v for k, v in response.items() if k not in ("indexFields", "staged", "imageArk", BIRTH_RANGES_KEY)}
+    script = (
+        f"import {{ birthRangesFor }} from '{_node_module_url(_RECORD_EXTRACT_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify({ r: birthRangesFor(input.gedcomx, input.indexFields) ?? null }));"
+    )
+    try:
+        proc = _run_node_eval(
+            script,
+            json.dumps({"gedcomx": gedcomx, "indexFields": index_fields}),
+            timeout=NODE_EVAL_TIMEOUT_LONG,
+        )
+        return json.loads(proc.stdout.strip()).get("r")
+    except Exception as exc:  # noqa: BLE001 — a harness fault must not look like the model ignoring it
+        warnings.warn(f"mock record_read could not compute birthRanges ({exc})", stacklevel=2)
+        return None
+
+
 def _stage_record_read(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
 ) -> dict[str, Any]:
@@ -1040,7 +1070,7 @@ def _stage_record_read(
     and a `stagingError`, matching production's best-effort staging.
     """
     record_id = str(args.get("recordId") or "").strip()
-    gedcomx = {k: v for k, v in response.items() if k not in ("indexFields", "staged", "imageArk")}
+    gedcomx = {k: v for k, v in response.items() if k not in ("indexFields", "staged", "imageArk", BIRTH_RANGES_KEY)}
     element: dict[str, Any] = {"recordId": record_id, "gedcomx": gedcomx}
     index_fields = response.get("indexFields")
     if isinstance(index_fields, dict) and index_fields:
@@ -1665,6 +1695,15 @@ def create_mock_server(
             # record in the unit suite fell back to record-extractor, so no
             # committed run could exercise the code path. A read WITH `resultsRef`
             # is a sidecar read and stages nothing, exactly as production.
+            # Production returns `birthRanges` on every record_read (#4127). Computed
+            # by the compiled helper from the fixture's `indexFields`, never written
+            # into a fixture, and added before staging so the staged gedcomx stays
+            # without it.
+            if _name == "record_read" and "error" not in response and isinstance(response.get("persons"), list):
+                _ranges = _record_birth_ranges(response)
+                if _ranges:
+                    response = {**response, BIRTH_RANGES_KEY: _ranges}
+
             if (
                 _name == "record_read"
                 and _workspace is not None
@@ -1674,6 +1713,12 @@ def create_mock_server(
                 and isinstance(response.get("persons"), list)
             ):
                 response = _stage_record_read(_workspace, args, response)
+
+            # Production never returns `indexFields` inline: they ride only on the
+            # staged element. Stripped LAST, after `_record_birth_ranges` and
+            # `_stage_record_read`, which both read them (#4127).
+            if _name == "record_read" and isinstance(response, dict) and "indexFields" in response:
+                response = {k: v for k, v in response.items() if k != "indexFields"}
 
             # Production's image_transcribe stages the page and returns its ref,
             # not the text (#2490): `staged` + `digest`, `transcription` dropped.
@@ -1936,7 +1981,7 @@ def _make_live_handler(
     if tool_name == "extraction_append":
         return _make_extraction_append_handler(workspace, call_log, manifest or {})
     if tool_name == "project_create":
-        return _make_project_create_handler(workspace, call_log, manifest or {}, place_predicated or [])
+        return _make_project_create_handler(workspace, call_log, manifest or {})
     if tool_name == "validate_research_schema":
         return _make_validate_handler(workspace, call_log)
     if tool_name == "research_log_append":
@@ -1977,45 +2022,13 @@ def _hosted_store(manifest: dict[str, Any]) -> dict[str, str | None] | None:
     return paths or None
 
 
-def _place_table(place_predicated: list, args: dict[str, Any]) -> dict[str, str | None]:
-    """The place resolver's answers for one `project_create` call, from the test's
-    own `place_search` fixtures.
-
-    `project_create` standardizes every place the caller enters, and retries a
-    read's unresolved ones, through the anonymous Places API. The harness stays
-    offline, so the compiled resolver is given this table instead
-    (`__usePlaceTableForTests`): each place in the call's `tree` argument (a
-    staged read's places are not in it, so an unresolved one stays null), matched against
-    the fixtures with the same `matches` a `place_search` call is, answered with
-    the first result's `standardPlace`. A place no fixture matches resolves to
-    null, as an unknown place does in production.
-    """
-    tree = args.get("tree") if isinstance(args.get("tree"), dict) else {}
-    places: list[str] = []
-    for holder in [*(tree.get("persons") or []), *(tree.get("relationships") or [])]:
-        for fact in (holder.get("facts") if isinstance(holder, dict) else None) or []:
-            if isinstance(fact, dict) and isinstance(fact.get("place"), str) and fact["place"].strip():
-                places.append(fact["place"])
-    table: dict[str, str | None] = {}
-    for place in places:
-        hit = next(
-            (resp for (pred, resp, _src) in place_predicated if matches(pred, {"placeName": place})),
-            None,
-        )
-        results = (hit or {}).get("results") or []
-        first = results[0] if results and isinstance(results[0], dict) else {}
-        table[place] = first.get("standardPlace") if isinstance(first.get("standardPlace"), str) else None
-    return table
-
-
 def _timeline_place_tables(
     workspace: Path, place_predicated: list
 ) -> tuple[dict[str, str | None], dict[str, dict[str, float] | None]]:
     """`timeline_build`'s Places answers, from the test's own `place_search`
     fixtures: each assertion `place` matched as a `placeName` (the first
     result's `standardPlace`), and coordinates for every standard place a
-    fixture result names. `_place_table` cannot serve this — it reads places
-    from the call's `tree` argument, and this tool takes only a person id."""
+    fixture result names."""
     research_path = workspace / "research.json"
     try:
         research = json.loads(research_path.read_text(encoding="utf-8"))
@@ -2696,7 +2709,6 @@ def _make_project_create_handler(
     workspace: Path | None,
     call_log: list[dict[str, Any]],
     manifest: dict[str, Any],
-    place_predicated: list,
 ):
     """The live `project_create`, reading the person from the test's
     `person_read` fixtures instead of FamilySearch (#3384).
@@ -2707,7 +2719,7 @@ def _make_project_create_handler(
     subject, as `readPerson` guarantees), with `_mock_memory_kinds`. Every other
     step (the refusals, the build, the profile, the memory sources, the summary)
     is the compiled production code. An id with no fixture is a failed read,
-    never a request. The test's place table is installed, so no place lookup
+    never a request. An empty place table is installed, so no place lookup
     reaches the network. The call-log entry records the canned read as
     `served_read`, so a validator can grade what reached the project against
     what the read held. Principal is `LOCAL`: the harness is one user per process.
@@ -2735,7 +2747,7 @@ def _make_project_create_handler(
                     served = {"fixture": hit[1], "response": hit[0]}
             payload = {
                 "input": input_obj,
-                "placeTable": _place_table(place_predicated, args),
+                "placeTable": {},
                 "read": read,
                 "kinds": _mock_memory_kinds(read) if isinstance(read, dict) else {},
             }
