@@ -648,7 +648,7 @@ describe("research_append (Phase 1)", () => {
       // proof-conclusion lands the concluded value by setting `primary`, and
       // `primary` is not a detach trigger, so the backlink survives a
       // conclusion. The correction must still land — a known-wrong concluded
-      // value on the upload target is worse — but never quietly.
+      // value on the deliverable is worse — but never quietly.
       await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink({ primary: true }));
 
       const r = await researchAppend({
@@ -690,7 +690,7 @@ describe("research_append (Phase 1)", () => {
 
     it("(15) warns when a correction DELETES a fact field, blank string included", async () => {
       // A blank string withdraws a claim exactly as null does, and is the
-      // likelier typo. Either way it deleted data from the upload target, so it
+      // likelier typo. Either way it deleted data from the deliverable, so it
       // must not be silent — the shape the malformed branch was added for.
       for (const blank of ["", "   "]) {
         await writeProject(

@@ -8,7 +8,7 @@ This document defines the complete schema for `research.json`, the GPS audit tra
 
 A genealogy research project consists of two files:
 
-- **`tree.gedcomx.json`** — The deliverable. Contains resolved persons, relationships, facts, and source descriptions in simplified GedcomX format (defined in `docs/specs/simplified-gedcomx-spec.md`). This is what uploads to FamilySearch.
+- **`tree.gedcomx.json`** — The deliverable. Contains resolved persons, relationships, facts, and source descriptions in simplified GedcomX format (defined in `docs/specs/simplified-gedcomx-spec.md`).
 - **`research.json`** — The working artifact. Contains all analytical state: research questions, plans, search log, source metadata, assertions, person-to-record links, conflicts, hypotheses, timelines, and proof summaries. This is the GPS audit trail that proves the conclusions in the GedcomX file are sound.
 
 ### The two-file boundary
@@ -17,8 +17,6 @@ A genealogy research project consists of two files:
 
 1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, `timelines.person_ids`, every person a `proof_summaries.claims[]` entry names (a relationship's ends, a fact's subject or subject pair, an identity's `person` and `same_as`, a name's `person`), `namesakes.person_id`, and `hit_verdicts.person_id` reference person IDs in `tree.gedcomx.json`.
 2. **Source description IDs** — `sources.gedcomx_source_description_id` references source description IDs in `tree.gedcomx.json`.
-
-At upload time, resolved person identities flow into `tree.gedcomx.json` while the assertion-to-record-role linkages stay in `research.json` as the audit trail.
 
 ### Bootstrap sequence
 
@@ -486,7 +484,7 @@ Three sections (`persons`, `relationships`, `sources`) carry overlapping writer 
 
 | Section | Written by | Read by | Mutation rule |
 |---------|-----------|---------|---------------|
-| `persons` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal — uploaded to FamilySearch) | Mutable; preserve IDs |
+| `persons` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal — the deliverable) | Mutable; preserve IDs |
 | `relationships` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal) | Mutable; preserve IDs |
 | `sources` | init-project, tree-edit, proof-conclusion, `extraction_append` | (terminal) | Mutable; preserve IDs. **The person-evidence skill is not a writer here**: `materialize_facts` attaches a source *ref* to a person or a fact, it does not mint a source description. The person-evidence *agent* holds `tree_edit`, whose `add_source` does, so the manifest records it in this row's `agentCallers` |
 
@@ -703,7 +701,7 @@ A search that returns zero results writes **no** sidecar (`results_ref` is null)
 
 ### 5.5 `sources`
 
-Array of source objects. Sources in `research.json` carry analytical metadata (classification, structured citation detail). The source descriptions themselves also appear in `tree.gedcomx.json` in simplified GedcomX format for upload.
+Array of source objects. Sources in `research.json` carry analytical metadata (classification, structured citation detail). The source descriptions themselves also appear in `tree.gedcomx.json` in simplified GedcomX format.
 
 **1:many relationship with GedcomX:** Multiple research sources can reference the same `gedcomx_source_description_id`. This is the expected pattern when the same underlying record is accessed through different repositories — e.g., the 1850 census via FamilySearch (original image, `source_classification: "original"`) and via Ancestry (derivative index, `source_classification: "derivative"`). They are different sources of the same record, per GPS practice. The GedcomX source description represents the underlying record; the research sources represent distinct access paths with distinct classifications.
 
@@ -1004,7 +1002,7 @@ Array of proof summary objects. Each proof summary is a self-contained GPS concl
 
 **Timing:** Proof summaries may be written for questions at any status. A summary for an `in_progress` question represents a preliminary conclusion; its tier should reflect the incomplete state of research (typically `probable` or `possible`, not `proved`). Writing preliminary conclusions is encouraged — it forces the skill to articulate the current state of evidence and identify what's missing.
 
-The `narrative_markdown` is the authoritative GPS conclusion — the written proof per GPS Step 5. The structured fields (`tier`, `vehicle`, `supporting_assertion_ids`, `resolved_conflict_ids`) are metadata about it, not replacements for it. If the narrative and the structured fields disagree, the narrative governs; the skill should update the structured fields to match. The narrative must be readable as a standalone document without reference to the rest of the JSON, written in a form uploadable to FamilySearch as a Memory/Document. It includes inline citations, the evidence summary, conflict resolution rationale, and the confidence tier declaration. It cannot include images (it lives inside a JSON string field); image references should be described by citation.
+The `narrative_markdown` is the authoritative GPS conclusion — the written proof per GPS Step 5. The structured fields (`tier`, `vehicle`, `supporting_assertion_ids`, `resolved_conflict_ids`) are metadata about it, not replacements for it. If the narrative and the structured fields disagree, the narrative governs; the skill should update the structured fields to match. The narrative must be readable as a standalone document without reference to the rest of the JSON. It includes inline citations, the evidence summary, conflict resolution rationale, and the confidence tier declaration. It cannot include images (it lives inside a JSON string field); image references should be described by citation.
 
 **`claims` — per-claim tier breakdown.** A question like "who were the
 parents of X" can resolve into two claims (paternity, maternity) whose evidence
@@ -1486,11 +1484,9 @@ Users may manually edit `tree.gedcomx.json` — adding a person, correcting a fa
 
 **Layer 1 — evidence, materialized at identity-link time.** When person-evidence links a persona to a tree person, the evidence facts and names that persona asserts materialize onto the person via `materialize_facts`. Each materialized fact and name carries **provenance** — a non-null source reference back to the record it came from. This happens as soon as the identity link is made, **independent of any proof summary**. The tree therefore accumulates evidence facts as research proceeds, not only once a conclusion is reached; conflicting values of the same fact type **coexist as separate sourced facts** rather than being withheld until the conflict is resolved.
 
-**Layer 2 — conclusion, governed by `primary`/`preferred` + `proof_tier`.** Which materialized fact is the *concluded* value is expressed by the `primary`/`preferred` flags together with `proof_tier` — written by **proof-conclusion alone**. Materialization never sets `primary`/`preferred`; it only adds sourced evidence. When a proof summary concludes a value, proof-conclusion marks the matching evidence fact `primary` (or, for a synthesized conclusion that matches no single record, adds a `primary` fact carrying multiple source refs). If the summary is later revised — e.g. down to `not_proved` — the *conclusion* is retracted by clearing `primary`/`proof_tier`; the underlying evidence facts stay in the tree as evidence.
+**Layer 2 — conclusion, governed by `primary`/`preferred`.** Which materialized fact is the *concluded* value is expressed by the `primary`/`preferred` flags — written by **proof-conclusion alone**; its strength lives in the proof summary (`tier`, and each claim's `proof_tier` when claims are present). Materialization never sets `primary`/`preferred`; it only adds sourced evidence. When a proof summary concludes a value, proof-conclusion marks the matching evidence fact `primary` (or, for a synthesized conclusion that matches no single record, adds a `primary` fact carrying multiple source refs). If the summary is later revised — e.g. down to `not_proved` — the *conclusion* is retracted by clearing `primary`; the underlying evidence facts stay in the tree as evidence.
 
-**Upload is conclusion-gated.** Only `primary`/proof-backed persons, relationships, and facts are sent to FamilySearch at upload time; the tree may hold un-concluded evidence facts that never upload. Upload gating is proof-conclusion / upload-workflow logic, not a materialization concern.
-
-The worked example (§9) shows the evidence layer: the GedcomX birthplace "Ireland" is a materialized evidence fact sourced to the records that assert it, and the ParentChild relationship R1 records the parentage evidence. Their *concluded* status — that "Ireland" is the primary birthplace and R1 the concluded parentage — is carried by the `primary`/`proof_tier` markers that proof summary ps_001 (`probable`) sets, not by the facts' mere presence in the file. Were ps_001 revised to `not_proved`, R1 and the birthplace evidence would remain, but their `primary`/`proof_tier` conclusion markers would be cleared.
+The worked example (§9) shows the evidence layer: the GedcomX birthplace "Ireland" is a materialized evidence fact sourced to the records that assert it, and the ParentChild relationship R1 records the parentage evidence. Their *concluded* status — that "Ireland" is the primary birthplace and R1 the concluded parentage — is carried by the `primary` flag on the birthplace fact and by ps_001 (`probable`), not by the facts' mere presence in the file. Were ps_001 revised to `not_proved`, R1 and the birthplace evidence would remain, but the birthplace's `primary` flag would be cleared.
 
 **Two further evidence-layer writes during active research:**
 - **Source descriptions (`S` entries)** are created by `extraction_append` — via `research_append`'s composite `sourceDescription` (see `research-append-tool-spec.md` §3.4) — because `research.json` sources need `gedcomx_source_description_id` references to point at. An `S` entry means "this source was consulted," not "this source's conclusions are finalized."

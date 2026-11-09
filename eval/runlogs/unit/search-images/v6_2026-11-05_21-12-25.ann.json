@@ -1,6 +1,6 @@
 {
-  "run_log": "v1_2026-10-26_23-05-17.json",
-  "annotator": "Francisbucci2@gmail.com",
+  "run_log": "v6_2026-11-05_21-12-25.json",
+  "annotator": "raphaeldaveal@gmail.com",
   "corrections": [
     {
       "test_id": "ut_search_images_d6",
@@ -35,49 +35,9 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d6",
-      "dimension_source": "rubric",
-      "dimension_name": "Browse execution",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d6",
-      "dimension_source": "rubric",
-      "dimension_name": "Browse audit trail",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d4",
-      "dimension_source": "rubric",
-      "dimension_name": "Browse audit trail",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d4",
-      "dimension_source": "rubric",
-      "dimension_name": "Browse execution",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d4",
-      "dimension_source": "rubric",
-      "dimension_name": "Volume selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
       "test_id": "ut_search_images_d4",
       "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -93,37 +53,13 @@
     {
       "test_id": "ut_search_images_d4",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d1",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d1",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d1",
-      "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d1",
+      "test_id": "ut_search_images_d4",
       "dimension_source": "rubric",
       "dimension_name": "Volume selection",
       "llm_score": 3,
@@ -131,7 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d1",
+      "test_id": "ut_search_images_d4",
       "dimension_source": "rubric",
       "dimension_name": "Browse execution",
       "llm_score": 3,
@@ -139,7 +75,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d1",
+      "test_id": "ut_search_images_d4",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_002",
       "dimension_source": "rubric",
       "dimension_name": "Browse audit trail",
       "llm_score": 3,
@@ -147,15 +91,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d3",
-      "dimension_source": "rubric",
-      "dimension_name": "Browse audit trail",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_images_d3",
+      "test_id": "ut_search_images_002",
       "dimension_source": "rubric",
       "dimension_name": "Browse execution",
       "llm_score": 3,
@@ -163,7 +99,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d3",
+      "test_id": "ut_search_images_002",
       "dimension_source": "rubric",
       "dimension_name": "Volume selection",
       "llm_score": 3,
@@ -171,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d3",
+      "test_id": "ut_search_images_002",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -179,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d3",
+      "test_id": "ut_search_images_002",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -187,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d3",
+      "test_id": "ut_search_images_002",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -195,7 +131,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d2",
+      "test_id": "ut_search_images_013",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -203,7 +139,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d2",
+      "test_id": "ut_search_images_013",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -211,7 +147,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d2",
+      "test_id": "ut_search_images_013",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -219,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d2",
+      "test_id": "ut_search_images_013",
       "dimension_source": "rubric",
       "dimension_name": "Volume selection",
       "llm_score": 3,
@@ -227,7 +163,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d2",
+      "test_id": "ut_search_images_013",
       "dimension_source": "rubric",
       "dimension_name": "Browse execution",
       "llm_score": 3,
@@ -235,7 +171,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_d2",
+      "test_id": "ut_search_images_013",
       "dimension_source": "rubric",
       "dimension_name": "Browse audit trail",
       "llm_score": 3,
@@ -243,7 +179,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_012",
+      "test_id": "ut_search_images_np1",
       "dimension_source": "rubric",
       "dimension_name": "Browse audit trail",
       "llm_score": 3,
@@ -251,7 +187,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_012",
+      "test_id": "ut_search_images_np1",
       "dimension_source": "rubric",
       "dimension_name": "Browse execution",
       "llm_score": 3,
@@ -259,15 +195,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_012",
+      "test_id": "ut_search_images_np1",
       "dimension_source": "rubric",
       "dimension_name": "Volume selection",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct\n"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_search_images_012",
+      "test_id": "ut_search_images_np1",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -275,7 +211,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_012",
+      "test_id": "ut_search_images_np1",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -283,12 +219,60 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_images_012",
+      "test_id": "ut_search_images_np1",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Volume selection",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse execution",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_search_images_010",
+      "dimension_source": "rubric",
+      "dimension_name": "Browse audit trail",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     }
   ]
 }
