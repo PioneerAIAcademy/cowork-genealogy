@@ -3040,4 +3040,66 @@ describe("research_log_append — pinned zero-hit record_search names its unpinn
     expect(msg).toContain(`record_search(${JSON.stringify(UNPINNED)})`);
     expect(msg).not.toMatch(/"offset"|"count"/);
   });
+
+  it("allows an unpinned retry whose names differ only in Unicode form (NFC vs NFD)", async () => {
+    const nfc = "Heydöcker";
+    const nfd = "Heydöcker";
+    expect(nfc).not.toBe(nfd);
+    await writeProject(baseResearch([logEntry("log_001", { ...UNPINNED, surname: nfd })]));
+    const r = await researchLogAppend({ projectPath: dir, ...nil({ ...PINNED, surname: nfc }) } as any);
+    expect(r.ok).toBe(true);
+  });
+
+  it("still refuses when the Unicode-normalized names differ", async () => {
+    await writeProject(baseResearch([logEntry("log_001", { ...UNPINNED, surname: "Heydökker" })]));
+    const r = await researchLogAppend({ projectPath: dir, ...nil({ ...PINNED, surname: "Heydöcker" }) } as any);
+    expect(r.ok).toBe(false);
+  });
+
+  /** The file store, counting every readText of one ref. */
+  function readCountingStore(ref: string) {
+    const inner = backingStore();
+    let reads = 0;
+    const store = new Proxy(inner, {
+      get(target, prop, receiver) {
+        if (prop === "readText") {
+          return async (projectPath: string, r: string) => {
+            if (r === ref) reads++;
+            return target.readText(projectPath, r);
+          };
+        }
+        const v = Reflect.get(target, prop, receiver);
+        return typeof v === "function" ? v.bind(target) : v;
+      },
+    }) as unknown as ProjectStore;
+    return { store, reads: () => reads };
+  }
+
+  for (const form of ["single", "batch"] as const) {
+    it(`(${form}) the nil-retry check reuses the staged read the staged-ref check made`, async () => {
+      await writeProject(baseResearch());
+      const handle = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: UNPINNED, results: [{ recordId: "A" }] },
+      });
+      const ref = handle!.resultsRef;
+      const op = { tool: "record_search", outcome: "positive", resultsExamined: 1, stagedResultsRef: ref, planItemId: null };
+      const { store, reads } = readCountingStore(ref);
+      setProjectStore(store);
+      let r;
+      try {
+        r = await researchLogAppend(
+          (form === "single" ? { projectPath: dir, ...op } : { projectPath: dir, ops: [op] }) as any,
+        );
+      } finally {
+        setProjectStore(null);
+      }
+      expect(r.ok).toBe(true);
+      // preflightStagedRef, preflightCensusHedge's row read, and the write that
+      // finalizes it: three. The nil-retry check reuses the first (4 before #3854's
+      // review fix).
+      expect(reads()).toBe(3);
+    });
+  }
 });

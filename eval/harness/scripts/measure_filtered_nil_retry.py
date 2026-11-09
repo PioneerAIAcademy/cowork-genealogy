@@ -39,6 +39,7 @@ import argparse
 import collections
 import json
 import sys
+import unicodedata
 from pathlib import Path
 
 HARNESS = Path(__file__).resolve().parents[1]
@@ -125,14 +126,14 @@ def _alt_pair(q: dict) -> dict:
 
 
 def _names(query) -> dict:
-    """Name fields after auto-pairing, trimmed and lower-cased, empties dropped
-    (recordSearchNameFields)."""
+    """Name fields after auto-pairing, Unicode NFC, trimmed and lower-cased,
+    empties dropped (recordSearchNameFields / nameTerm)."""
     if not isinstance(query, dict):
         return {}
     out = {}
     for k, v in _alt_pair(query).items():
         if _is_name_key(k) and _has(v) and str(v).strip() != "":
-            out[k] = str(v).strip().lower()
+            out[k] = unicodedata.normalize("NFC", str(v)).strip().lower()
     return out
 
 
@@ -207,7 +208,11 @@ class Run:
             return self.ref_to_query.get(ref)
         return None
 
-    def _zero_hit(self, op: dict, call: dict, idx: int) -> bool:
+    def _zero_hit(
+        self, op: dict, call: dict, idx: int, unreadable_key: str = "ref_ops_count_unreadable"
+    ) -> bool:
+        # `unreadable_key` keeps each arm's unreadable-count tally apart: the
+        # record_search arm passes its own, so it never moves the fulltext figure.
         # An errored search (fixture_not_found, upstream error) is not a filtered
         # nil — the filter never ran, so there is nothing to retry — mirroring the
         # engine gate. This is why ut_search_full_text_014 leaves the row. #3592.
@@ -217,7 +222,7 @@ class Run:
         if isinstance(ref, str) and ref not in ("", "null"):
             rc = _returned_count(op, call, idx)
             if rc is None:
-                self.counts["ref_ops_count_unreadable"] += 1
+                self.counts[unreadable_key] += 1
                 return False
             return rc == 0
         examined = op.get("resultsExamined")
@@ -236,7 +241,7 @@ class Run:
             if op.get("tool") != "record_search":
                 continue
             q = self._effective_query(op)
-            resolved.append((op, q, self._zero_hit(op, call, idx)))
+            resolved.append((op, q, self._zero_hit(op, call, idx, "record_ref_ops_count_unreadable")))
         batch = [q for (o, q, _z) in resolved if isinstance(q, dict) and o.get("outcome") != "error"]
         for op, q, zero in resolved:
             self.counts["record_ops"] += 1

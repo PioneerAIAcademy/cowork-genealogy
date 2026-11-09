@@ -1724,10 +1724,12 @@ const isRecordSearchNameKey = (k: string): boolean =>
   k.endsWith("Surname");
 
 /**
- * A name value normalized for sibling comparison: trimmed and lower-cased (the
+ * A name value normalized for sibling comparison: Unicode NFC (so a precomposed
+ * `ö` and `o` + combining diaeresis are one name), trimmed and lower-cased (the
  * search ignores case), absent/empty → "".
  */
-const nameTerm = (v: unknown): string => (hasFilterValue(v) ? String(v).trim().toLowerCase() : "");
+const nameTerm = (v: unknown): string =>
+  hasFilterValue(v) ? String(v).normalize("NFC").trim().toLowerCase() : "";
 
 /**
  * A `record_search` query's name fields after the alternate-name auto-pairing the
@@ -1835,14 +1837,18 @@ export function pinnedNilRetryInvariants(
  * present (ground truth, §8.3), else the op's own `query`. Fully tolerant: any
  * resolution failure (bad ref, unparseable query) leaves the op unjudged here —
  * `preflightStagedRef`/`applyLogAppendOp` report those.
+ *
+ * `checked` holds the staged reads `preflightStagedRef` already made, by op
+ * index; an op found there is not read again.
  */
 async function preflightFilteredNilRetry(
   ops: ResearchLogAppendOp[],
   research: any,
   projectPath: string,
+  checked: ReadonlyMap<number, StagedCheck> = new Map(),
 ): Promise<Array<{ i: number; message: string }>> {
   const resolved = await Promise.all(
-    ops.map(async (op) => {
+    ops.map(async (op, i) => {
       try {
         if (op?.tool !== "fulltext_search" && op?.tool !== "record_search") return { tool: op?.tool };
         // An errored search (fixture_not_found, upstream error) that examined 0
@@ -1854,11 +1860,13 @@ async function preflightFilteredNilRetry(
         let query: unknown = coerceObjectArg(op.query, "query");
         let zeroHit: boolean;
         if (typeof ref === "string") {
-          const { envelope, returnedCount } = await checkStagedResults({
-            projectPath,
-            stagedResultsRef: ref,
-            expectedTool: op.tool,
-          });
+          const { envelope, returnedCount } =
+            checked.get(i) ??
+            (await checkStagedResults({
+              projectPath,
+              stagedResultsRef: ref,
+              expectedTool: op.tool,
+            }));
           zeroHit = returnedCount === 0;
           const staged = stripQueryPlumbing((envelope.payload as any)?.query);
           if (staged !== undefined) query = staged;
@@ -2024,11 +2032,14 @@ async function preflightRequiredFields(op: ResearchLogAppendOp, projectPath: str
  * results/.staging/ and its tool matches — so a bad ref in op[1] is refused
  * before op[0] writes anything. Finalize re-checks under the same lock.
  */
-async function preflightStagedRef(op: ResearchLogAppendOp, projectPath: string): Promise<void> {
+type StagedCheck = Awaited<ReturnType<typeof checkStagedResults>>;
+
+/** Returns the staged read it made, so the nil-retry preflight can reuse it. */
+async function preflightStagedRef(op: ResearchLogAppendOp, projectPath: string): Promise<StagedCheck | undefined> {
   const ref = asNull(op.stagedResultsRef);
-  if (typeof ref !== "string") return;
+  if (typeof ref !== "string") return undefined;
   try {
-    await checkStagedResults({ projectPath, stagedResultsRef: ref, expectedTool: op.tool });
+    return await checkStagedResults({ projectPath, stagedResultsRef: ref, expectedTool: op.tool });
   } catch (e) {
     throw new LogAppendError(e instanceof Error ? e.message : String(e));
   }
@@ -2575,6 +2586,7 @@ export async function researchLogAppend(
       // Every op is checked before any refusal, so one retry can fix them all;
       // the batch still writes all or nothing.
       const logged = new Map<number, Awaited<ReturnType<typeof findLoggedStagedRef>>>();
+      const stagedChecks = new Map<number, StagedCheck>();
       const preflightErrors: string[] = [];
       for (let i = 0; i < input.ops.length; i++) {
         try {
@@ -2584,7 +2596,8 @@ export async function researchLogAppend(
             continue;
           }
           await preflightRequiredFields(input.ops[i], projectPath);
-          await preflightStagedRef(input.ops[i], projectPath);
+          const staged = await preflightStagedRef(input.ops[i], projectPath);
+          if (staged) stagedChecks.set(i, staged);
           await preflightCensusHedge(input.ops[i], projectPath);
           await preflightQueryFilterClaims(input.ops[i], projectPath);
           await checkCollection(input.ops[i]);
@@ -2608,7 +2621,7 @@ export async function researchLogAppend(
       // Needs the whole resolved batch (an in-batch unfiltered sibling clears an
       // op), so it runs once over every op after the per-op preflights. Runs only
       // once there is a new op to write (idempotent re-logs short-circuit above).
-      const nilRetryErrors = await preflightFilteredNilRetry(input.ops, research, projectPath);
+      const nilRetryErrors = await preflightFilteredNilRetry(input.ops, research, projectPath, stagedChecks);
       if (nilRetryErrors.length > 0) {
         return { ok: false, errors: nilRetryErrors.map(({ i, message }) => `ops[${i}]: ${message}`) };
       }
@@ -2677,10 +2690,15 @@ export async function researchLogAppend(
       return { ok: true, ...prior, filesWritten: [], validation: { valid: true, warnings: opWarnings } };
     }
     await preflightRequiredFields(singleOp, projectPath);
-    await preflightStagedRef(singleOp, projectPath);
+    const singleStaged = await preflightStagedRef(singleOp, projectPath);
     await preflightCensusHedge(singleOp, projectPath);
     await preflightQueryFilterClaims(singleOp, projectPath);
-    const singleNilRetry = await preflightFilteredNilRetry([singleOp], research, projectPath);
+    const singleNilRetry = await preflightFilteredNilRetry(
+      [singleOp],
+      research,
+      projectPath,
+      singleStaged ? new Map([[0, singleStaged]]) : new Map(),
+    );
     if (singleNilRetry.length > 0) throw new LogAppendError(singleNilRetry[0].message);
     await checkCollection(singleOp);
     let result;
