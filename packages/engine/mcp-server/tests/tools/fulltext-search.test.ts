@@ -301,6 +301,11 @@ describe("fulltextSearchTool param mapping", () => {
     expect(url).toContain("offset=50");
   });
 
+  it("5b. count 50, the maximum, is sent as given", async () => {
+    const url = await urlFor({ keywords: "Flynn", count: 50 });
+    expect(url).toContain("count=50");
+  });
+
   it("6. includeFacets adds m.defaultFacets=on; default omits it", async () => {
     const withFacets = await urlFor({ keywords: "Flynn", includeFacets: true });
     expect(withFacets).toContain("m.defaultFacets=on");
@@ -330,16 +335,19 @@ describe("fulltextSearchTool input validation", () => {
     ).resolves.toBeDefined();
   });
 
-  it("10. throws when count is out of 1..100 or non-integer", async () => {
+  it("10. throws when count is out of 1..50 or non-integer", async () => {
     await expect(
       fulltextSearchTool({ keywords: "x", count: 0 }, LOCAL)
-    ).rejects.toThrow(/count must be between 1 and 100/);
+    ).rejects.toThrow(/count must be between 1 and 50\. For more results, page with offset/);
     await expect(
-      fulltextSearchTool({ keywords: "x", count: 101 }, LOCAL)
-    ).rejects.toThrow(/count must be between 1 and 100/);
+      fulltextSearchTool({ keywords: "x", count: 51 }, LOCAL)
+    ).rejects.toThrow(/count must be between 1 and 50\. For more results, page with offset/);
+    await expect(
+      fulltextSearchTool({ keywords: "x", count: 100 }, LOCAL)
+    ).rejects.toThrow(/count must be between 1 and 50/);
     await expect(
       fulltextSearchTool({ keywords: "x", count: 1.5 }, LOCAL)
-    ).rejects.toThrow(/count must be between 1 and 100/);
+    ).rejects.toThrow(/count must be between 1 and 50/);
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
@@ -528,22 +536,22 @@ describe("fulltextSearchTool response shaping", () => {
     mockFetch.mockResolvedValueOnce(
       makeOk({ results: 1, index: 0, entries: [flynnEntry()] })
     );
-    const r = (await fulltextSearchTool({ keywords: "Flynn" }, LOCAL)).results[0];
+    const result = await fulltextSearchTool({ keywords: "Flynn" }, LOCAL);
+    const r = result.results[0];
     expect(r.id).toBe("ark:/61903/3:1:3Q9M-CSNL-S98H-M");
     expect(r.names).toEqual(["Patrick Flynn", "Mary Flynn"]); // deduped, OTHER dropped
     expect(r.places).toEqual(["Tipperary"]);
     expect(r.dates).toEqual(["1849"]);
     expect(r.highlightTerms).toEqual(["Patrick", "Flynn", "Flynn Patrick"]);
-    expect(r.sourceUrl).toBe(
-      "https://www.familysearch.org/ark:/61903/3:1:3Q9M-CSNL-S98H-M"
-    );
+    // Exactly the FamilySearch origin plus the id, so it is dropped.
+    expect(r.sourceUrl).toBeUndefined();
     expect(r.collectionId).toBe("2221234");
-    expect(r.collectionTitle).toBe("Ireland Catholic Parish Registers");
+    expect(r.collectionTitle).toBeUndefined();
+    expect(result.collections).toEqual({ "2221234": "Ireland Catholic Parish Registers" });
     expect(r.title).toBe("Last Will and Testament of Patrick Flynn");
     expect(r.recordDate).toBe("1849");
     expect(r.recordType).toBe("Probate");
     expect(r.recordPlace).toBe("Tipperary, Ireland");
-    expect(r.textDocument).toBe("...full transcript text...");
   });
 
   it("24. normalizes a resolver-URL id to the bare ARK form", async () => {
@@ -768,13 +776,28 @@ describe("fulltextSearchTool result staging", () => {
     expect(result.results[0]?.recordType).toBe("Probate");
   });
 
-  it("34c. keeps inline textDocument when staging did not run", async () => {
-    mockFetch.mockResolvedValueOnce(
-      makeOk({ results: 1, index: 0, entries: [flynnEntry()] })
-    );
-    const result = await fulltextSearchTool({ keywords: "Flynn" }, LOCAL);
+  it("34c. compacts the answer when no projectPath was given", async () => {
+    // Two long deed transcripts with no project came to 51k live.
+    const entries = [0, 1].map((i) => {
+      const e = flynnEntry();
+      e.id = `3:1:LONG-DEED-${i}`;
+      e.content!.textDocument = "witness whereof ".repeat(2300);
+      e.content!.entities = Array.from({ length: 80 }, (_, k) => ({
+        type: "NAME",
+        value: `Given${k} Surname${k}`,
+      }));
+      return e;
+    });
+    mockFetch.mockResolvedValueOnce(makeOk({ results: 2, index: 0, entries }));
+    const result = await fulltextSearchTool({ keywords: "Flynn", count: 2 }, LOCAL);
+    expect(mockedStage).not.toHaveBeenCalled();
     expect(result.staged).toBeUndefined();
-    expect(result.results[0]?.textDocument).toBe("...full transcript text...");
+    for (const r of result.results) {
+      expect(r.textDocument).toBeUndefined();
+      expect(r.names).toHaveLength(60);
+      expect(r.namesCount).toBe(80);
+    }
+    expect(JSON.stringify(result).length).toBeLessThan(10_000);
   });
 
   it("35. never fails the search when staging throws", async () => {
@@ -789,6 +812,8 @@ describe("fulltextSearchTool result staging", () => {
     expect(result.staged).toBeNull();
     expect(result.stagingError).toBe("disk full");
     expect(result.results).toHaveLength(1); // search result is intact
+    expect(result.results[0].textDocument).toBeUndefined();
+    expect(result.results[0].names).toEqual(["Patrick Flynn", "Mary Flynn"]);
   });
 
   it("36. does not stage when projectPath is omitted", async () => {

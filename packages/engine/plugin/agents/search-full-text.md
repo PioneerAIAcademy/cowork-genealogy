@@ -305,10 +305,10 @@ fulltext_search({ keywords: "+Flynn +Patrick", collectionId: "<filterParam from 
 fulltext_search({ keywords: "+Naveda +Somarriba", projectPath })
 
 # Natural language search / tree person ID
-fulltext_search({ nlQuery: "KD96-TV2" })
+fulltext_search({ nlQuery: "KD96-TV2", projectPath })
 
 # Wildcard for HTR errors
-fulltext_search({ keywords: "+Fl?nn +Patrick" })
+fulltext_search({ keywords: "+Fl?nn +Patrick", projectPath })
 ```
 
 ### 5. Execute and iterate
@@ -316,8 +316,8 @@ fulltext_search({ keywords: "+Fl?nn +Patrick" })
 Call `fulltext_search` with the constructed query. This agent **logs
 every search**, so `projectPath` (the absolute path to the project
 folder) is **mandatory on every call** — never omit it. **Execute every
-planned search for the task before logging any results or calling
-`research_append`.** Do not stop after the first search if the plan
+planned search for the task before calling `research_append`.** Do not
+stop after the first search if the plan
 item or the user's message requires multiple queries (e.g., separate
 searches for two different people). When supplied,
 the host stages the raw results and the response gains a

@@ -79,6 +79,11 @@ export interface FulltextResult {
   names?: string[];
   places?: string[];
   dates?: string[];
+  // The full distinct count, set only when the list above was shortened
+  // (compactStagedFulltextSearch). The sidecar keeps every entry.
+  namesCount?: number;
+  placesCount?: number;
+  datesCount?: number;
   highlightTerms?: string[];
 }
 
@@ -108,6 +113,8 @@ export interface FulltextSearchResponse {
   notFulltextSearchable?: string;
   results: FulltextResult[];
   facets?: FulltextFacet[];
+  // collectionId -> collectionTitle, hoisted off the rows.
+  collections?: Record<string, string>;
   // Present only when `projectPath` was supplied — see RecordSearchToolResponse.
   staged?: { resultsRef: string; returnedCount: number } | null;
   stagingError?: string;
