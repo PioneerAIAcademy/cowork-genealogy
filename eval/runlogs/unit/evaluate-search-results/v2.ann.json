@@ -108,14 +108,6 @@
     },
     {
       "test_id": "ut_evaluate_search_results_c3n",
-      "dimension_source": "rubric",
-      "dimension_name": "New vital information",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_evaluate_search_results_c3n",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -225,14 +217,6 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
-    },
-    {
-      "test_id": "ut_evaluate_search_results_c3n",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The verdict and new_vital_info assessment are correct, but the rationale contains a source-reading error. It describes the child's surname as garbled when the hit reportedly identifies the child as Jane Eliza Selmon. The mistake does not change the overall match determination, but it is a factual error in the explanation."
     },
     {
       "test_id": "ut_evaluate_search_results_c3n",
@@ -241,6 +225,22 @@
       "llm_score": 2,
       "corrected_score": 2,
       "comment": "The rationale correctly explains why the record matches Iram Hyde and why the information is new. However, it inaccurately characterizes the child's name from the source, weakening the reliability of the evidence discussion. The deciding logic is sound, but the rationale does not fully and accurately describe all key facts from the hit."
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "It names Jane Eliza as the new child. She is on the neighbouring OCR line; the child with parents Mary Robertson and Hiram Hy is Chanty Hyde"
+    },
+    {
+      "test_id": "ut_evaluate_search_results_c3n",
+      "dimension_source": "rubric",
+      "dimension_name": "New vital information",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "Flag is right, but the rationale names the wrong child (Jane Eliza, not Chanty Hyde) as what is new."
     }
   ]
 }
