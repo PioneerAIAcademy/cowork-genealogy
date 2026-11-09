@@ -1,0 +1,211 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~XFXS-8D3"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_10581904261",
+        "ark": "ark:/61903/1:1:XFXS-8D9",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "511acc43-2877-4169-9093-1eb80436a9ad",
+            "type": "BirthName",
+            "given": "N. H.",
+            "surname": "Bissonette"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_10581904262",
+        "ark": "ark:/61903/1:1:XFXS-8DS",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "afe3b88c-9f94-4714-9d5b-c63174c6b910",
+            "type": "BirthName",
+            "given": "Fannie",
+            "surname": "Tolman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "08a89dcc-e293-438b-a8e5-903fcdd4704c",
+            "type": "Birth",
+            "date": "1867",
+            "standard_date": "1867",
+            "place": "Essex, New York"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_10581904263",
+        "ark": "ark:/61903/1:1:XFXS-8D3",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "023504e0-7974-46e9-b5ae-1d8efd0c074d",
+            "type": "BirthName",
+            "given": "Edward",
+            "surname": "Tolman"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_10581904264",
+        "ark": "ark:/61903/1:1:XFXS-8DQ",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "3a0963db-e6f8-4579-8136-0c7f6fcf825e",
+            "type": "BirthName",
+            "given": "Clara",
+            "surname": "Wade"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "fa5b9092-181c-458f-a0a2-5bee70f0ebec",
+        "type": "Couple",
+        "person1": "p_10581904261",
+        "person2": "p_10581904262",
+        "facts": [
+          {
+            "id": "19d32225-f2f9-4497-9866-0100ef99dea8",
+            "type": "Marriage",
+            "primary": true,
+            "date": "04 Jun 1890",
+            "standard_date": "4 Jun 1890",
+            "place": "Vermont, United States",
+            "standard_place": "Vermont, United States"
+          }
+        ]
+      },
+      {
+        "id": "56357d70-3390-4760-a713-a0061586fad2",
+        "type": "ParentChild",
+        "parent": "p_10581904264",
+        "child": "p_10581904262"
+      },
+      {
+        "id": "4a9c2045-c2a0-4ce1-8c6a-ce844c15fa73",
+        "type": "ParentChild",
+        "parent": "p_10581904263",
+        "child": "p_10581904262"
+      },
+      {
+        "id": "3a21b39d-a13f-4862-8e8a-0ff7e1e46538",
+        "type": "Couple",
+        "person1": "p_10581904263",
+        "person2": "p_10581904264"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_1103444317",
+        "resource_type": "Record",
+        "title": "Entry for N. H. Bissonette and Fannie Tolman, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-8D9 : Fri Mar 08 15:35:52 UTC 2024), Entry for N. H. Bissonette and Fannie Tolman, 04 Jun 1890.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9FDH-C44",
+        "coverage": {
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "sd_c_1784223",
+        "resource_type": "Collection",
+        "title": "Vermont, Vital Records, 1760-1954",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1760/1954",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6829-6DD",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "title:1871-1908",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_10581904261",
+        "resource_type": "Person",
+        "title": "N. H. Bissonette, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-8D9 : Fri Mar 08 15:35:52 UTC 2024), N. H. Bissonette and Fannie Tolman, 04 Jun 1890.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XFXS-8D9"
+      },
+      {
+        "id": "sd_p_10581904262",
+        "resource_type": "Person",
+        "title": "Fannie Tolman, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-8DS : Fri Mar 08 15:35:52 UTC 2024), N. H. Bissonette and Fannie Tolman, 04 Jun 1890.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XFXS-8DS"
+      },
+      {
+        "id": "sd_p_10581904263",
+        "resource_type": "Person",
+        "title": "Edward Tolman, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-8D3 : Fri Mar 08 15:35:52 UTC 2024), Edward Tolman in entry for N. H. Bissonette and Fannie Tolman, 04 Jun 1890.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XFXS-8D3"
+      },
+      {
+        "id": "sd_p_10581904264",
+        "resource_type": "Person",
+        "title": "Clara Wade, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XFXS-8DQ : Fri Mar 08 15:35:52 UTC 2024), Clara Wade in entry for N. H. Bissonette and Fannie Tolman, 04 Jun 1890.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XFXS-8DQ"
+      },
+      {
+        "id": "sd_auto_M9J1-78M",
+        "resource_type": "auto",
+        "title": "United States, Vermont, Births, from 0003 to 2009",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "+0003-01-01T00:00:00Z/+2009-12-31T23:59:59Z",
+          "standard_place": "Vermont, United States"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_361"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:S3HT-6829-6DD",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6829-6DD"
+  }
+}

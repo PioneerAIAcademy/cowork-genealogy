@@ -1,0 +1,261 @@
+{
+  "log_id": "log_012",
+  "tool": "record_search",
+  "retrieved": "2026-10-07T04:22:54.080Z",
+  "returned_count": 2,
+  "payload": {
+    "query": {
+      "projectPath": "C:\\Users\\User\\Documents\\GenealogyProjects\\p2593-gaetjen",
+      "subjectId": "I1",
+      "surname": "G*tj*n",
+      "collectionId": "1849982"
+    },
+    "totalMatches": 2,
+    "paginationCappedAt": 4999,
+    "returned": 2,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:K8C1-CHV",
+        "events": [
+          {
+            "type": "Immigration",
+            "date": "1857",
+            "place": "San Francisco, San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Claus Gotjen",
+        "score": 1.8118,
+        "confidence": 5,
+        "birthPlace": "Hanover, Prussia, Germany",
+        "collectionId": "1849982",
+        "collectionTitle": "California, Northern U.S. District Court Naturalization Index, 1852-1989",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1849982",
+        "recordTitle": "Entry for Claus Gotjen, \"California, Northern U.S. District Court Naturalization Index, 1852-1989\"",
+        "recordArk": "ark:/61903/1:2:9MJQ-R6RH",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14126381358",
+              "ark": "ark:/61903/1:1:K8C1-CHV",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Claus",
+                  "surname": "Gotjen"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Immigration",
+                  "primary": true,
+                  "date": "1857",
+                  "standard_date": "1857",
+                  "place": "San Francisco, San Francisco, California, United States",
+                  "standard_place": "San Francisco, San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "place": "Hanover",
+                  "standard_place": "Hanover, Prussia, Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22287027458",
+              "resource_type": "Record",
+              "title": "Entry for Claus Gotjen, \"California, Northern U.S. District Court Naturalization Index, 1852-1989\"",
+              "citation": "\"California, Northern U.S. District Court Naturalization Index, 1852-1989\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K8C1-CHV : Wed Apr 15 04:12:17 UTC 2026), Entry for Claus Gotjen, 1857.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9MJQ-R6RH",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_c_1849982",
+              "resource_type": "Collection",
+              "title": "California, Northern U.S. District Court Naturalization Index, 1852-1989",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1849982",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1852/1989",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939N-8PX7-9",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1860-1989",
+                "record_type": "NaturalizationRecordIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-Q9W",
+              "resource_type": "auto",
+              "title": "United States, California, Migrations, from 1829 to 2007",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "+1829-01-01T00:00:00Z/+2007-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_14126381358",
+              "resource_type": "Person",
+              "url": "#p_14126381358"
+            }
+          ],
+          "places": [
+            {
+              "id": "11927902",
+              "name": "San Francisco, San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            },
+            {
+              "id": "3246254",
+              "name": "Hanover, Prussia, Germany",
+              "latitude": 52.5,
+              "longitude": 9
+            }
+          ]
+        },
+        "primaryId": "p_14126381358",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:K8C1-CHK",
+        "events": [
+          {
+            "type": "Immigration",
+            "date": "1879",
+            "place": "San Francisco, San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Henry Gotjen",
+        "score": 1.8118,
+        "confidence": 5,
+        "birthPlace": "Germany",
+        "collectionId": "1849982",
+        "collectionTitle": "California, Northern U.S. District Court Naturalization Index, 1852-1989",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1849982",
+        "recordTitle": "Entry for Henry Gotjen, \"California, Northern U.S. District Court Naturalization Index, 1852-1989\"",
+        "recordArk": "ark:/61903/1:2:9MJQ-R6RC",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_14126381359",
+              "ark": "ark:/61903/1:1:K8C1-CHK",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gotjen",
+                  "given": "Henry"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Immigration",
+                  "primary": true,
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "San Francisco, San Francisco, California, United States",
+                  "standard_place": "San Francisco, San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_22287027459",
+              "resource_type": "Record",
+              "title": "Entry for Henry Gotjen, \"California, Northern U.S. District Court Naturalization Index, 1852-1989\"",
+              "citation": "\"California, Northern U.S. District Court Naturalization Index, 1852-1989\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:K8C1-CHK : Wed Apr 15 02:37:31 UTC 2026), Entry for Henry Gotjen, 1879.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:9MJQ-R6RC",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_c_1849982",
+              "resource_type": "Collection",
+              "title": "California, Northern U.S. District Court Naturalization Index, 1852-1989",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1849982",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1852/1989",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939N-8P6K-S",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "1860-1989",
+                "record_type": "NaturalizationRecordIndex"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-Q9W",
+              "resource_type": "auto",
+              "title": "United States, California, Migrations, from 1829 to 2007",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "+1829-01-01T00:00:00Z/+2007-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_14126381359",
+              "resource_type": "Person",
+              "url": "#p_14126381359"
+            }
+          ],
+          "places": [
+            {
+              "id": "11927902",
+              "name": "San Francisco, San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            },
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            }
+          ]
+        },
+        "primaryId": "p_14126381359",
+        "role": "Principal"
+      }
+    ]
+  }
+}
