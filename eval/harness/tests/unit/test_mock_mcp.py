@@ -2914,3 +2914,99 @@ def test_guard_fails_open_and_warns_when_the_build_is_missing(monkeypatch, tmp_p
 
     with pytest.warns(UserWarning, match="rebuild packages/engine/mcp-server"):
         assert mock_mcp._reject_unknown_args("record_search", {"q": "x"}) is None
+
+
+# ── birthRanges on record_read (issue #4127) ─────────────────────────────────
+# The mock calls the compiled `birthRangesFor`, so a fixture never carries one.
+
+_RECORD_EXTRACT_JS = REPO_ROOT / "packages/engine/mcp-server/build/utils/record-extract.js"
+
+
+def _tallman_census(birth, age, year):
+    return {
+        "persons": [
+            {
+                "id": "p1",
+                "names": [{"given": "Edward", "surname": "Tallman"}],
+                "facts": [
+                    {"type": "Birth", "date": birth},
+                    {"type": "Census", "date": year, "place": "Vermont, United States"},
+                ],
+            }
+        ],
+        "indexFields": {"p1": {"age": age}},
+    }
+
+
+def test_record_birth_ranges_comes_from_the_compiled_helper():
+    if not _RECORD_EXTRACT_JS.exists():
+        pytest.skip("compiled MCP build absent")
+    assert mock_mcp._record_birth_ranges(_tallman_census("1839", "11 years", "1850")) == {
+        "p1": "Bet 1838 and 1839"
+    }
+    assert mock_mcp._record_birth_ranges(_tallman_census("31 Jan 1839", "74", "1913")) is None
+    assert mock_mcp._record_birth_ranges({"persons": []}) is None
+
+
+def test_record_birth_ranges_degrades_with_a_warning_on_node_failure(monkeypatch):
+    if not _RECORD_EXTRACT_JS.exists():
+        pytest.skip("compiled MCP build absent")
+
+    def _boom(*a, **k):
+        raise TimeoutError("node did not return in time")
+
+    monkeypatch.setattr(mock_mcp.subprocess, "run", _boom, raising=False)
+    with pytest.warns(UserWarning, match="birthRanges"):
+        assert mock_mcp._record_birth_ranges(_tallman_census("1839", "11", "1850")) is None
+
+
+def _census_index_fixture(tmp_path):
+    fx = tmp_path / "fx"
+    fx.mkdir()
+    (fx / "record-read-tall.json").write_text(
+        json.dumps(
+            {
+                "tool": "record_read",
+                "args": {"recordId": "TALL-0001"},
+                "response": {
+                    "persons": [
+                        {
+                            "id": "p1",
+                            "names": [{"given": "Edward", "surname": "Tallman"}],
+                            "facts": [
+                                {"type": "Birth", "date": "1839"},
+                                {"type": "Census", "date": "1850", "place": "Vermont, United States"},
+                            ],
+                        }
+                    ],
+                    "indexFields": {"p1": {"age": "11"}},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return fx
+
+
+@pytest.mark.requires_engine_build
+def test_no_project_record_read_carries_birth_ranges_and_no_index_fields(tmp_path):
+    fx = _census_index_fixture(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(["record-read-tall"], fx, workspace=tmp_path)
+    body = _extract_response_dict(_invoke(tools_by_name, "record_read", {"recordId": "TALL-0001"}))
+    assert body["birthRanges"] == {"p1": "Bet 1838 and 1839"}
+    assert "indexFields" not in body
+
+
+@pytest.mark.requires_engine_build
+def test_staged_record_read_keeps_birth_ranges_out_of_the_staged_gedcomx(tmp_path):
+    (tmp_path / "research.json").write_text(json.dumps({"project": {"id": "rp_x"}, "questions": []}), encoding="utf-8")
+    fx = _census_index_fixture(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(["record-read-tall"], fx, workspace=tmp_path)
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "record_read", {"recordId": "TALL-0001", "projectPath": str(tmp_path)})
+    )
+    assert body["birthRanges"] == {"p1": "Bet 1838 and 1839"} and "indexFields" not in body
+    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    [element] = envelope["payload"]["results"]
+    assert "birthRanges" not in element["gedcomx"]
+    assert element["indexFields"] == {"p1": {"age": "11"}}
