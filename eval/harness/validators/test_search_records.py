@@ -320,13 +320,14 @@ def test_escalates_to_external_sites_after_fs_exhaustion(
 # Library only" is the #4130 wording; the rest are its common rewordings. The
 # first alternative stops at `,` and `;` so an unrelated "only" later in the
 # sentence ("held at the NYSL, and only 1855 onward is on FamilySearch") is not
-# read as part of the claim; "only in" is left out because "found only in the
+# read as part of the claim; "only at" before a year ("holdings begin only at
+# 1855") is a date, not a place; "only in" is left out because "found only in the
 # 1849 directory" reports a search result, not a holding.
 _SOLE_REPOSITORY_CLAIM = re.compile(
     r"\bheld at [^.,;\n|]{0,60}\bonly\b"
     r"|\b(?:held|available|found|kept|exists?) only (?:at|by)\b"
     r"|\bonly (?:held|available|found|kept) (?:at|by)\b"
-    r"|\bonly at\b"
+    r"|\bonly at\b(?! \d)"
     r"|\([^()\n]{0,60}(?:Library|Archives?|Society)[^()\n]{0,10}\bonly\)"
     r"|\bsole (?:repository|holder|source|custodian)\b"
     r"|\bnot available (?:elsewhere|anywhere else)\b"
@@ -358,17 +359,24 @@ def test_no_sole_repository_claim(agent_returns, text_response, test):
     )
 
 
-# A named outside site said to hold or index the set: "indexed on Ancestry.com",
-# "held at MyHeritage", or the site first, "Ancestry indexes the ... schedules".
-# Markdown emphasis may sit before the name ("indexed on **Ancestry.com**").
-# Offering a search URL for a site ("generate an Ancestry search URL") is not a
-# holding claim and does not match.
-_OUTSIDE_HOLDING = re.compile(
-    r"\b(?:indexed|held|available|digiti[sz]ed|hosted|kept|online)\b[^.\n]{0,40}?"
-    r"\b(?:on|at|by|in|through)\s+[*_\"']*(?:ancestry(?:\.com)?|myheritage|find ?my ?past)\b"
-    r"|\b(?:ancestry(?:\.com)?|myheritage|find ?my ?past)\s+(?:indexes|holds|hosts|has indexed)\b",
+# A sentence that names an outside site and says it holds, indexes or has the
+# set: "indexed on **Ancestry.com**", "Ancestry.com, which has indexed many of
+# them", "other genealogy sites index some of them". Matched per sentence, not
+# by word order, because the agent words the claim a new way each run. A
+# sentence offering a search link ("generate an Ancestry search URL") names no
+# holding and passes, and so does the hand-back's own "FamilySearch holds no
+# collection".
+_OUTSIDE_SITE = re.compile(
+    r"\b(?:ancestry(?:\.com)?|myheritage|find ?my ?past|other (?:genealogy )?sites?"
+    r"|another (?:genealogy )?site|other repositor(?:y|ies))\b",
     re.I,
 )
+_HOLDING_WORD = re.compile(
+    r"(?<!FamilySearch )\b(?:hold|holds|held|index|indexes|indexed|digiti[sz](?:e|es|ed)|hosts?|hosted"
+    r"|carr(?:y|ies)|available|surviv\w*|has (?:the )?(?:images|records|schedules|rolls))\b",
+    re.I,
+)
+_SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+|\n+")
 
 
 def test_names_no_outside_holding(agent_returns, text_response, test):
@@ -385,10 +393,12 @@ def test_names_no_outside_holding(agent_returns, text_response, test):
     if "no-sole-repository-claim" not in test.get("tags", []):
         pytest.skip("only the no-FamilySearch-collection test")
     reply = subject_reply_text(agent_returns, text_response, "search-records", test)
-    found = _OUTSIDE_HOLDING.search(reply)
-    assert found is None, (
-        f"named an outside holding no tool returned: {found.group(0)!r} in {reply[:600]!r}"
-    )
+    for sentence in _SENTENCE_BREAK.split(reply):
+        site, word = _OUTSIDE_SITE.search(sentence), _HOLDING_WORD.search(sentence)
+        assert not (site and word), (
+            f"named an outside holding no tool returned ({site.group(0)!r} with "
+            f"{word.group(0)!r}): {sentence[:300]!r}"
+        )
 
 
 def test_searched_before_no_collection_hand_back(tool_calls, test):

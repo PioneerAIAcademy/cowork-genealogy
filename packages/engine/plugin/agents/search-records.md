@@ -743,7 +743,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
    ❌ WRONG: "Log_001 found Patrick Flynn, so the current nil with the Flinn variant is not meaningful."
    ✅ CORRECT: "Log_001 found Patrick under 'Flynn'. The nil under 'Flinn' documents that FamilySearch does not alias Flynn→Flinn for this record — both findings stand as independent evidence."
 6. Check for fallback plan items (`fallback_for`). If none and the question remains open, suggest research-plan for re-planning.
-7. **Escalate to external sites — the final step after FamilySearch exhaustion.** FamilySearch's index-based search has no phonetic or partial-match fallback: once the indexer mis-transcribes a name (e.g. "Quass" indexed as "Ovass"), no FamilySearch variant will ever surface that record, while other sites *do* fuzzy-match. When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, log every nil search (Step 5), then **hand back to `search-external-sites`**: name it in the caller-facing lines of your return with the same person attributes, the plan item, and `userPresent` (`no` only when the delegation says research delegated this search as part of an autonomous run, otherwise `yes`) — never a value you expect it to find. You do not spawn it and you do not ask the user first; naming it in your return IS the escalation. **Do not wait until step 9.**
+7. **Escalate to external sites — the final step after FamilySearch exhaustion.** When an **important** plan item has returned nil across 3+ FamilySearch variants and the question is still open, log every nil search (Step 5), then **hand back to `search-external-sites`**: name it in the caller-facing lines of your return with the same person attributes, the plan item, and `userPresent` (`no` only when the delegation says research delegated this search as part of an autonomous run, otherwise `yes`) — never a value you expect it to find. You do not spawn it and you do not ask the user first; naming it in your return IS the escalation. **Do not wait until step 9.**
 
    **No plan item → no escalation**, however many variants came back nil; an ad-hoc search ends when you log it (Step 1).
 
@@ -804,7 +804,9 @@ Do not reproduce result lists or sidecar payloads.
 After the lines above, write a line containing only `---`, then exactly two paragraphs of plain prose with **no label, heading or field name**:
 
 1. One paragraph for someone who has never done genealogy: what was looked for, in which old records, and what turned up — in plain words. No identifiers, file names, tool names or field names. If nothing was found, say so plainly and say what was looked at, so the reader knows the search was real. If a match has a conflict that makes it probably someone else, say that plainly.
-2. One sentence: what happens next, in plain language.
+2. One sentence: what happens next, in plain language. After a `search-external-sites` hand-back, this sentence is exactly: "Next, other genealogy websites will be checked for these records."
+
+Neither paragraph names a site or archive outside FamilySearch.
 
 The caller prints everything after that `---` verbatim and nothing above it. No closing essay.
 

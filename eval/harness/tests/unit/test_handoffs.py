@@ -161,6 +161,7 @@ def test_sole_repository_claim_fails(text):
     "The originals are held at the New York State Library, and only 1855 onward is on FamilySearch.",
     "Originals held at the NYSL; only county lists survive.",
     "Hiram Tallman was found only in the 1849 directory.",
+    "FamilySearch's New York state census holdings begin only at 1855.",
     "| Essex | Keeseville directory (Clinton only) |",
 ])
 def test_sole_repository_claim_passes_a_legitimate_return(text):
@@ -189,6 +190,12 @@ def test_sole_repository_claim_is_tag_gated():
     "The originals are held by Ancestry.",
     "Ancestry.com holds the 1845 census.",
     "The surviving schedules are indexed on **Ancestry.com**, with originals held at the New York State Library.",
+    "The right next step is to check Ancestry.com, which has indexed many of the surviving New York state census years.",
+    "The next step is to check Ancestry.com, which holds indexed images of these years.",
+    "Search those earlier censuses through Ancestry (which has indexed them from microfilm).",
+    "FamilySearch lacks those years, and other genealogy sites index some of them.",
+    "The next step is to search through another site, such as Ancestry or the New York State Library, which holds surviving county schedules from those earlier state censuses.",
+    "Look through other repositories (such as Ancestry or the New York State Library), which hold surviving county copies.",
 ])
 def test_outside_holding_claim_fails(text):
     with pytest.raises(AssertionError):
@@ -201,6 +208,10 @@ def test_outside_holding_claim_fails(text):
     "Shall I generate Ancestry/MyHeritage URLs for it (search-external-sites)?",
     "Only 1855-1875 are indexed on FamilySearch.",
     "Hiram Tallman was found in the 1849 directory, held on FamilySearch.",
+    "search-external-sites can build an Ancestry search link, which has the counties prefilled.",
+    "Not on FamilySearch. search-external-sites can check other sites for these years.",
+    "Hand-back: search-external-sites — NY state censuses 1825/1835/1845, Tallman, Clinton and Essex; FamilySearch holds no collection for these years; check Ancestry",
+    "The New York State Library keeps a county list; FamilySearch holds no collection for these years.\nsearch-external-sites can check Ancestry.",
 ])
 def test_outside_holding_claim_passes_a_legitimate_return(text):
     _validators("test_search_records").test_names_no_outside_holding(_return(text), "", NO_SOLE)
