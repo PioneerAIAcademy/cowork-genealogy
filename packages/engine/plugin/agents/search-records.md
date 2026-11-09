@@ -703,7 +703,7 @@ Call `research_append` with `section: "plan_items"`, `op: "update"`, `planId`, `
 
 **Do not** set status to `completed` from this agent — that is set once extraction has created the assertions.
 
-**After this item's status update, go on to Step 7 and then Step 9; never return to Step 1 in this call,** even when the delegation asked for more items. Step 9's next-search offer carries the next item.
+**After this item's status update, finish Steps 6b, 7 and 9; never return to Step 1 in this call,** even when the delegation asked for more items. Step 9's next-search offer carries the next item.
 
 ### 6b. Record namesakes
 
