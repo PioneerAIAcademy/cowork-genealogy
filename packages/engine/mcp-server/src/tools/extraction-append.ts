@@ -2473,8 +2473,9 @@ export const extractionAppendSchema = {
     "attaches it as an UNVERIFIED candidate (`speculative`, no score). Checking " +
     "those links is a separate request.\n" +
     "- `attachWaitingPages: true` — keep the read pages `project_context` lists " +
-    "under `waitingPages`, each on the source that waited. It takes no refs, and " +
-    "writes no assertion and no log entry.\n" +
+    "under `waitingPages`, each on the source that waited. It takes no refs. With " +
+    "`pageReadings`, also write what each page adds to or reads differently from its " +
+    "record's index; without, it writes no assertion and no log entry.\n" +
     "\n" +
     "Returns one outcome per record, each with a code-written `summary`: relay " +
     "it verbatim, since you do not see the record yourself; `personId` also " +
@@ -2503,8 +2504,46 @@ export const extractionAppendSchema = {
       attachWaitingPages: {
         type: "boolean",
         description:
-          "KEEP READ PAGES. Send `true` alone when `project_context` lists `waitingPages`: code copies " +
-          "each page onto the source of the record it shows. No refs, no assertions.",
+          "KEEP READ PAGES. Send `true` when `project_context` lists `waitingPages`: code copies " +
+          "each page onto the source of the record it shows. No refs. Send `pageReadings` beside it.",
+      },
+      pageReadings: {
+        type: "array",
+        description:
+          "WHAT EACH KEPT PAGE SAYS, with `attachWaitingPages` only: one entry per waiting page, " +
+          "carrying only what the page adds to or reads differently from its record's index " +
+          "(`waitingPages[].index`). `readings: []` when the page confirms the index. A reading " +
+          "names an index assertion by id, never a role: `disputesAssertionId` when the page reads " +
+          "that assertion differently, `personAssertionId` (any assertion of the persona) for a fact " +
+          "the index lacks. Code classifies; send no classification. `researcherWords` (the " +
+          "researcher's own reading, verbatim) goes with `disputesAssertionId`, and is the only " +
+          "reading a page already kept takes.",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["sourceId", "readings"],
+          properties: {
+            sourceId: { type: "string" },
+            readings: {
+              type: "array",
+              items: {
+                type: "object",
+                additionalProperties: false,
+                required: ["type"],
+                properties: {
+                  disputesAssertionId: { type: "string" },
+                  personAssertionId: { type: "string" },
+                  type: { type: "string" },
+                  value: { type: "string" },
+                  date: { type: "string" },
+                  place: { type: "string" },
+                  note: { type: "string" },
+                  researcherWords: { type: "string" },
+                },
+              },
+            },
+          },
+        },
       },
       recordIds: {
         type: "array",

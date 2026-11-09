@@ -125,7 +125,7 @@ repo's identifier-casing rule):
   waitingPages?: [{                      // read pages of held records — §2.8; absent when none
     sourceId: string,
     ref: string,                         // the staged or logged page
-    index: [{                            // the record's index: the source's live assertions (#4286)
+    index: [{                            // the record's index: the source's live assertions
       assertionId: string, role: string, factType: string, value: string,
     }],
   }],
@@ -629,7 +629,7 @@ drops out. It reads every fresh staged file while any source waits, as
 - **No assertion bodies.** Per-assertion detail (values, classifications) is
   deliberately excluded — it is exactly the growing payload the diet
   removes. Refinement flows get the specific `a_` ids from the delegating
-  caller, who holds file access. **One exception (#4286):** `waitingPages[].index`
+  caller, who holds file access. **One exception (2026-11-09):** `waitingPages[].index`
   lists the id, role, fact type and value of a waiting page's own record. It is
   bounded (one record per page, present only while a page waits), carries no
   classification, and record-structurer has no other way to reach those ids — a
