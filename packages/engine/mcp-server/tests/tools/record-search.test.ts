@@ -2964,6 +2964,18 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
       expect(sidecar.payload.results).toHaveLength(300);
     });
 
+    it("refuses offset on a ranked expansion, which could skip a record between pages", async () => {
+      byPlace[PERIOD] = ids("PER", 60);
+      await expect(
+        recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, offset: 50, projectPath: dir, subjectId: "I1" }, LOCAL),
+      ).rejects.toThrow(/ranked search of every name of the place cannot page/);
+      expect(searchUrls).toHaveLength(0);
+      // Unranked paging, and a ranked first page, still run.
+      await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, offset: 50, projectPath: dir }, LOCAL);
+      await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, projectPath: dir, subjectId: "I1" }, LOCAL);
+      expect(searchUrls.length).toBeGreaterThan(0);
+    });
+
     it("still cuts to count, in merged order, when ranking fails", async () => {
       matcherSettingsMock.mockResolvedValue({ backend: "service", url: "http://matcher.test", apiKey: "k".repeat(32) });
       const base = mockFetch.getMockImplementation()!;

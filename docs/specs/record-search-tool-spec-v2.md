@@ -501,8 +501,10 @@ reads the record.
 never the individual searches. Each search is read from offset 0 to
 `offset + count`, in requests of at most 100 rows, and the merged list is cut to
 `[offset, offset + count)`. Interleaving a deeper read only appends to the list,
-so unranked pages concatenate to it with no gap and no repeat. Ranked pages are
-re-ranked over a deeper pool each time and do not partition it. Because each page
+so unranked pages concatenate to it with no gap and no repeat. A ranked expansion
+(one with a `subjectId`) refuses `offset` above 0, because each page would re-rank
+a deeper pool and could skip a record that outranks the rows already shown; raise
+`count` instead. Because each page
 re-reads from 0, a deep page costs more requests: when the searches times the
 pages per search would pass 24 requests, the call is refused with an error that
 says to narrow the query. It is refused rather than narrowed to the typed place,

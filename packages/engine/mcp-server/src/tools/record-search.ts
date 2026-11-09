@@ -1212,6 +1212,17 @@ export async function recordSearchTool(
     );
   }
 
+  // A ranked page re-ranks a deeper pool than the page before it, so a record
+  // only in the deeper part that outranks the rows already shown would fall in
+  // the cut-off ranks and never be shown at all. Refused, like a too-deep page.
+  if (plan !== null && input.projectPath && input.subjectId && offset > 0) {
+    throw new Error(
+      "A ranked search of every name of the place cannot page: each page re-ranks a deeper pool, " +
+        "so a later page could skip a record that outranks the ones already shown. Raise `count` " +
+        "(up to 100) instead of setting `offset`, or narrow the query.",
+    );
+  }
+
   let entries: FSSearchEntry[];
   let totalMatches: number;
   let responseOffset: number;
