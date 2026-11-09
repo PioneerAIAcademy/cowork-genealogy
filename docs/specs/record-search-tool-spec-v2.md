@@ -337,6 +337,52 @@ it the year also admits estimated dates from other eras.
 unqualified, whose sets run past the probe's read limit; the 5 Orvieto
 period-only records not checked by hand.
 
+**So the tool searches every name the place has had, and merges the records
+(lead's ruling, 2026-11-05).** Neither name alone is safe, so the
+choice is not the agent's to get right: the locality guide is right to hand it
+the period name, and a prompt rule to search the modern one instead would lose
+Orvieto's period-only records. A rewrite to the modern name fails the same way.
+The union is the only shape that lost no record either name found in the four
+cases above, and done in the tool it needs no agent rule.
+
+- **Which names.** The typed place is resolved once to its FamilySearch place
+  (`placeSearchNames`, `src/utils/place-resolver.ts`) and searched under the
+  typed text, the modern representation (open-ended, latest start year), with
+  `*PlaceExact` the modern representation's parent, and then every other
+  representation, most recent first. At most 8 names. The typed text is always
+  searched, so the merged set is never smaller than the old single search.
+  Under `*PlaceExact` the parent is there because the modern town can miss
+  records indexed to its province (Orvieto's three 1895 deaths are found exactly
+  only as "Terni, Umbria, Italy").
+- **When it does not expand.** A country-only place, a place whose name matches
+  more than one FamilySearch place (the resolver never picks among them), a
+  place with one name, and any failed lookup all search the typed text alone, as
+  before. FamilySearch search takes place text, not a place ID, so an expanded
+  name shared by another town ("Bela Vista") can still bring that town's records
+  in. They are candidates like any other hit, judged by ranking and the agent.
+- **Several place fields** search every combination of their names, at most 12
+  searches; past that the longest list loses names from its end.
+- **Merging.** The searches' rows are interleaved by each search's own rank,
+  typed search first in each round, and de-duplicated by record. A further
+  name's failed search is reported in `placeExpansion` and the merge goes on; the
+  typed search failing fails the call as before. Every place lookup goes through
+  the resolver's in-process caches, so a repeated place costs no lookup.
+- **Cost.** A place with N names is N searches (Rieti: 6). Measured live
+  2026-11-09: the Rieti, Orvieto and Denver calls below took 2 to 3 seconds
+  unranked, and the ranked Rieti call 6 seconds for an 81-record pool. On a
+  hosted server that sets `GENEALOGY_FS_CALLS_PER_MINUTE`, each search counts
+  against the budget.
+
+Verified live 2026-11-09 with `dev/try-record-search.ts --summary` (each probe
+row above measures FamilySearch itself, and the probe now passes
+`expandPlaces: false`, so it still does): the Rieti call with the period name
+returns `Q2HC-CWMP` (6 names; 33 under the period name, 443 under the modern);
+Orvieto with the period name and `--count 100` returns both `QP8Z-23J8` and
+`78VB-CYMM` (4 names, 122 records merged); Denver with the period name returns
+`KNQW-5GS`, and with `--marriage-place-exact` the parent "Colorado, United
+States" makes `totalMatches` 83, the statewide figure, against 26 for the modern
+town alone.
+
 ### Family member fields
 
 | Field | Type | Description |
@@ -439,7 +485,18 @@ reads the record.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `count` | number | Results per call. Max 100. **Default 50 when `subjectId` is supplied, 20 otherwise.** The default is coupled to ranking on purpose: a deep pool is worth fetching only because every row comes back scored and ordered. Fetching 50 without ranking hands the model 50 raw stubs to triage, which is the cost this default exists to avoid. Ranking does not CUT the pool host-side, so `count` is what bounds the response. |
+| `count` | number | Results per call. Max 100. **Default 50 when `subjectId` is supplied, 20 otherwise.** The default is coupled to ranking on purpose: a deep pool is worth fetching only because every row comes back scored and ordered. Fetching 50 without ranking hands the model 50 raw stubs to triage, which is the cost this default exists to avoid. Ranking does not CUT the pool host-side, so `count` is what bounds the response. Under a place expansion (see "Life event fields") ranking scores the whole merged pool and the response is then cut to `count` — the one case where the tool cuts after ranking. |
+
+**Paging a place expansion.** `count` and `offset` page the one merged list,
+never the individual searches. Each search is read from offset 0 to
+`offset + count`, in requests of at most 100 rows, and the merged list is cut to
+`[offset, offset + count)`. Interleaving a deeper read only appends to the list,
+so unranked pages concatenate to it with no gap and no repeat. Ranked pages are
+re-ranked over a deeper pool each time and do not partition it. Because each page
+re-reads from 0, a deep page costs more requests: when the searches times the
+pages per search would pass 24 requests, only the typed place is searched and
+`placeExpansion.skipped` says so. `survey-surname` (`count: 100`, stopping at 600
+matches) stays inside that for a place with up to 4 names.
 
 ### The response is re-ordered; the staged sidecar is not
 
@@ -469,6 +526,13 @@ best matches this subject".
 
 A row the ranker did not score keeps its search position, gains no score fields,
 and sorts after every scored row. It is never dropped.
+
+**Under a place expansion with a subject**, the sidecar holds the whole merged
+pool, in interleave order, because the ranker scores what is staged; the response
+is the best `count` rows of the ranked pool. So there an unscored row, sorting
+last, can fall past the page; it stays in the sidecar. The sidecar's `returned`
+is the page shown, which is what `research_log_append` fills `resultsExamined`
+from. Without a subject the sidecar holds the page shown, as before.
 
 | `offset` | number | Pagination offset. Default 0. The combined value `offset + count` must be at most 4999. |
 
@@ -541,15 +605,16 @@ Strict surname + birth-place match:
 | Field | Type | Description |
 |-------|------|-------------|
 | `query` | object | Echo of the input fields the caller supplied. |
-| `totalMatches` | number | Total records matching the query in the corpus. |
+| `totalMatches` | number | Total records matching the query in the corpus. Under a place expansion, the largest single search's total: a lower bound on the merged set, since the searches overlap and a sum would overcount. With `*PlaceExact` the modern parent's search can make it much wider than the town (Denver: 83 statewide against 26). |
 | `paginationCappedAt` | number | The hard limit on how many results are reachable through pagination (4999). When `totalMatches > paginationCappedAt`, the rest are unreachable — narrow the query. |
-| `returned` | number | Number of results in this response (≤ `count`). |
-| `offset` | number | Echo of the input offset (0 if not supplied). |
-| `hasMore` | boolean | `true` when more pages are available (the response includes a `links.next`). |
+| `returned` | number | Number of results in this response (≤ `count`). Under a place expansion it is the page shown even when the staged sidecar holds the larger ranked pool; `staged.returnedCount` says the same. |
+| `offset` | number | Echo of the input offset (0 if not supplied). Under a place expansion it is an offset into the merged list. |
+| `hasMore` | boolean | `true` when more pages are available (the response includes a `links.next`). Under a place expansion, when any search has rows past `offset + count` or the merged list runs past the page. |
+| `placeExpansion` | object \| undefined | Present **only** when a place field was searched under more than one name: `searches[]` (each search's `places`, `totalMatches`, rows `returned`, and an `error` if it failed), `mergedCount` (records in the merged list read), `truncated` when names were left out to stay within 12 searches, and a one-sentence `note`. Or `{ skipped: "offset too deep", note }` when only the typed place was searched. **Serialized before `results`**; staged with the response, since it records what was searched. See "Life event fields". |
 | `rankingSkipped` | string \| undefined | Present **only** when `projectPath` was supplied and `subjectId` was not. Names the two features that therefore did not run, and how to get them. **Serialized before `results`** — see below. |
 | `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses with no `research.json` log entry. Advisory — the search still succeeded and nothing is refused. **Serialized before `results`** — see below. |
 | `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied **and `totalMatches` is 0** — not merely when `results` is empty, which is the post-`mapEntry` set. A nil search stages no file, so `unloggedSearches` structurally cannot see it. **Serialized before `results`.** |
-| `results` | RecordSearchResult[] \| undefined | The results in FamilySearch's own search order. **Omitted when `ranked` carries the same rows in a usable form** — `ranked` then holds every scored candidate, ordered by match score and carrying the same triage fields, so shipping both was the same records twice. Present whenever ranking did not run, threw (`rankingError`), or returned a ranking the caller must not triage on (`subjectResolvable: false`, either branch). |
+| `results` | RecordSearchResult[] | Always present. FamilySearch's own search order (under a place expansion, the merged order), or best first with score fields when ranking ran — one row list, never two; see "The response is re-ordered; the staged sidecar is not". |
 | `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
 | `surnameVariantHints` | object \| undefined | Present **only** on a search that did not identify the subject where a surname field ends in `-datter` or `-dotter`. Lists the abbreviated forms the index may hold. A nil search needs neither `projectPath` nor `subjectId`; a search that returned rows fires only through ranking's `subjectResolvable: false`, which needs both. **Serialized before `results`**; never staged. See below. |
 
@@ -653,7 +718,8 @@ claiming ranking was skipped when it ran, or the reverse.
 
 #### Key order
 
-`rankingSkipped` is emitted **before `results`** in the response object. `results`
+`rankingSkipped` is emitted **before `results`** in the response object, and so
+are `unloggedSearches`, `nilSearchNeedsLog` and `placeExpansion`. `results`
 is by far the largest field, so anything serialized after it is the first thing any
 size bound drops. The motivating evidence: across the 46 `record_search` calls in
 `run-2026-07-31_13-02-13` the existing `ranked` **field** appears in the run log
@@ -1915,9 +1981,12 @@ For each `entry` in `response.entries`:
 
 ## Caching
 
-No caching. Search queries are query-specific and high-cardinality
-— caching wouldn't pay off and would risk staleness when new
-records are added.
+No caching of searches. Search queries are query-specific and
+high-cardinality — caching wouldn't pay off and would risk staleness
+when new records are added. The place lookups behind a place
+expansion are cached, in the resolver's in-process maps
+(`src/utils/place-resolver.ts`), so a place searched again costs no
+Places API request.
 
 ---
 
@@ -1950,8 +2019,10 @@ either and importing from the other would make the two mutually importing.
 ### `packages/engine/mcp-server/src/tools/record-search.ts`
 
 - `recordSearchToolSchema` — MCP tool schema (the JSON above).
-- `recordSearchTool(input)` — main entry point: validate, authenticate,
-  fetch, map, return.
+- `recordSearchTool(input, principal, opts?)` — main entry point: validate,
+  expand the place, fetch, merge, map, return. `opts.expandPlaces: false`
+  (internal, not on the MCP schema) searches the place as typed only; the
+  probes that measure FamilySearch's own place matching pass it.
 - `validateInput(input)` — anchor rule + per-field validation.
   Throws LLM-aimed errors.
 - `applyAltNameAutoPair(input)` — fills the missing alt half
@@ -2102,7 +2173,10 @@ Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests adde
 after this table was last extended. Cases 35–55 cover `relativeTerms`; 56–63
 cover `batchNumber`; 65–72 cover `surnameVariantHints`, whose rule is also
 unit-tested in `tests/utils/surname-variant-hints.test.ts`; 73–84 cover the
-Couple-relationship events.
+Couple-relationship events. The place expansion is the
+`searches every name of the place` describe block: it runs the real resolver
+against a fake FamilySearch that answers with Rieti's live representation listing.
+`placeSearchNames` itself is unit-tested in `tests/utils/place-search-names.test.ts`.
 
 ### Smoke-test script
 
@@ -2117,6 +2191,12 @@ npx tsx dev/try-record-search-film.ts Smith --film 004010852       # film-number
 npx tsx dev/try-record-search-film.ts Smith --film 004010852 --given John --birth-year 1850
 
 npx tsx dev/probe-batch-field.ts   # evidence trail behind `batchNumber`
+
+# Place expansion: the period name now finds the record indexed under the modern one
+npx tsx dev/try-record-search.ts Marchetti --collection 2146202 --type death --death-year 1913 \
+  --death-place "Rieti, Perugia, Umbria, Italy" --summary
+npx tsx dev/try-record-search.ts Marchetti --collection 2146202 --type death --death-year 1913 \
+  --death-place "Rieti, Perugia, Umbria, Italy" --summary --no-expand   # the old single search
 ```
 
 ---
