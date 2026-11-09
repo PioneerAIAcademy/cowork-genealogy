@@ -1,0 +1,54 @@
+{
+  "test": {
+    "id": "ut_research_plan_clc",
+    "skill": "research-plan",
+    "name": "First plan for q_001 plans from loc_001 counted collections without re-running collections_search",
+    "type": "positive",
+    "description": "Same state as ut_research_plan_005, but loc_001 carries the six Pennsylvania collections locality-guide saved, each with a person_count. research-plan must plan from those collections and make no collections_search call for Schuylkill or Pennsylvania (the call would return the same state-scoped set); the national United States call for the federal census stays allowed. Issue #3545 lead 3: in 6 of 10 post-#3860 e2e runs research-plan repeated locality-guide's collections_search on the place it had just surveyed.",
+    "tags": [
+      "planning",
+      "reads-localities-entry",
+      "first-plan",
+      "parentage",
+      "research-plan-new-plan-for-q-001",
+      "new-plan-items-planned-status",
+      "reuses-counted-locality",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Create a research plan for the parentage question.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-first-plan-counted-locality"
+  },
+  "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-pennsylvania",
+    "place-search-all-schuylkill",
+    "collections-search-schuylkill",
+    "collections-search-pennsylvania",
+    "collections-search-us-national",
+    "external-links-search-schuylkill",
+    "volume-search-schuylkill",
+    "wiki-read-ireland-military-records",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "volume-search-any",
+    "external-links-search-any",
+    "wiki-read-not-found-any",
+    "person-read-empty-any"
+  ],
+  "judge_context": [
+    "A `localities` entry (loc_001) for Schuylkill County / Pennsylvania is ALREADY in research.json — the orchestrator ran locality-guide before research-plan. The skill should READ that entry and use its facts/quirks; it should NOT call wiki_search / wiki_place_page / place_population (research-plan no longer holds those tools — the know-how comes from the localities entry). Do NOT fail it for not surveying.",
+    "The plan must show it READ loc_001, and the persisted `plan_items[].rationale` is the only place that counts — narration is not persisted and search-records never sees it, so a response text that names loc_001 while the rationales do not is a fail on this point. Read the persisted plan items, not the prose. What counts as evidence of reading: the `loc_001` id itself, or a fact distinctive to that entry — county formation in 1811, probate from 1811 at the county Register of Wills, Catholic parishes staying under Philadelphia until the Diocese of Allentown in 1961, or the browse-only anthracite-region films. Statewide PA vital registration from 1906 does NOT count: any model states it without opening the entry, so a plan that cites only that has not shown it read anything.",
+    "loc_001's `collections[]` carry person_count, and those counts are the availability source for Pennsylvania and Schuylkill collections: describe 1999196 (person_count 0) as browse-only, the others as name-searchable. A collections_search call on Schuylkill or Pennsylvania repeats locality-guide's survey and is a fail on this point (a deterministic validator also checks it); collections_search on \"United States\" for the federal census, volume_search, place_search, project_context and research_query (external_collections) are expected, not violations.",
+    "Plan items must include rationale explaining why each record type was chosen for the parentage question — generic rationale ('more records would help') is a fail.",
+    "At least one item should target a post-1850 census (1870, 1880, or 1900) to track Patrick into adulthood; the 1880 census relationship column is the best direct parentage indicator in the available fixtures."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 1200,
+    "max_turns": 30,
+    "sdk_message_silence_seconds": 360
+  }
+}

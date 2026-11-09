@@ -27,6 +27,13 @@
 // every project tool and answers `project_list` with `ownedProjects` plus one
 // fresh path.
 //
+// A connector caller's `tools/call` runs holding one of that user's
+// `USER_CALL_CAP` slots (self-hosted beta E4, per user; `utils/user-limits.ts`).
+// A call over the cap waits in FIFO order and is never refused; one whose client
+// hangs up while waiting leaves the queue without running, and one that waited
+// has its token looked up again before it runs. `initialize`, `tools/list` and
+// notifications never wait, and the worker path is not capped.
+//
 // The body is read ONCE for both paths, under `MAX_BODY_BYTES`, because a
 // JSON-RPC batch has to be refused before any tool runs; the parsed value is
 // handed to the transport, since a consumed stream cannot be read again.
@@ -46,6 +53,7 @@ import type { AppConfig } from "./types/auth.js";
 import { allToolSchemas } from "./tool-schemas.js";
 import { createServer } from "./server.js";
 import { PROJECT_ID_RE } from "./store/project-id.js";
+import { runWithUserCallSlot } from "./utils/user-limits.js";
 import {
   ownedProjectsStore,
   runWithProjectStore,
@@ -195,6 +203,13 @@ const AUTHORIZATION_UNAVAILABLE = {
 function sendJson(res: http.ServerResponse, status: number, body: unknown): void {
   res.writeHead(status, { "Content-Type": "application/json" });
   res.end(JSON.stringify(body));
+}
+
+/** A short label for a lookup that threw: its `code`, else its `name`, never
+ *  its message, which may carry a connection string or a token. */
+function errorLabel(error: unknown): string {
+  const err = error as { code?: unknown; name?: unknown };
+  return typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
 }
 
 /** What a project request presents to `authorize`: the project it names, its
@@ -482,6 +497,16 @@ export function connectorConfig(baseConfig: AppConfig, caller: ConnectorCaller):
   };
 }
 
+/** True for a `tools/call` REQUEST that names a tool: the only body that
+ *  takes a user's slot. A notification (no `id`) is never answered and a call
+ *  with no tool name runs no tool, so neither waits behind the user's calls. */
+function isToolsCall(body: unknown): boolean {
+  if (typeof body !== "object" || body === null) return false;
+  const msg = body as { method?: unknown; id?: unknown; params?: unknown };
+  if (msg.method !== "tools/call" || msg.id === undefined || msg.id === null) return false;
+  return typeof (msg.params as { name?: unknown } | null | undefined)?.name === "string";
+}
+
 /**
  * The tool a body names, for the log line only. `-` when it names none.
  *
@@ -589,9 +614,7 @@ async function handleMcpPost(
     try {
       verdict = await options.authorize({ projectId: projectId.id, fence, bearer: bearerFromHeaders(req.headers) });
     } catch (error) {
-      const err = error as { code?: unknown; name?: unknown };
-      const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
-      process.stderr.write(`ev=tool_authorize_failed error=${label} project_id=${projectId.id}\n`);
+      process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} project_id=${projectId.id}\n`);
       sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
       return;
     }
@@ -615,7 +638,14 @@ async function handleMcpPost(
   let principal: Principal;
   let store: ProjectStore;
   let logUserId = "-";
+  /** The connector caller whose slot a `tools/call` takes, and the sha256 its
+   *  token is looked up by again if the call waits; unset on the worker path. */
+  let capUserId: string | undefined;
+  let capTokenSha256 = "";
   let familySearchStatus: number | null = null;
+  const recordFamilySearchStatus = (status: number): void => {
+    familySearchStatus = keptFamilySearchStatus(familySearchStatus, status);
+  };
 
   if (isWorkerPath) {
     principal = principalFromHeaders(req.headers, options.baseConfig);
@@ -631,10 +661,8 @@ async function handleMcpPost(
       try {
         caller = await options.lookupConnector(sha256Hex(bearer));
       } catch (error) {
-        const err = error as { code?: unknown; name?: unknown };
-        const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
         // Never an admission, exactly as an `authorize` that throws is not.
-        process.stderr.write(`ev=tool_authorize_failed error=${label} surface=connector\n`);
+        process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
         sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
         return;
       }
@@ -647,6 +675,8 @@ async function handleMcpPost(
       return;
     }
     logUserId = caller.userId;
+    capUserId = caller.userId;
+    capTokenSha256 = sha256Hex(bearer);
 
     const named = connectorProjectPath(body.value);
     if (named.kind === "not_a_string") {
@@ -690,9 +720,7 @@ async function handleMcpPost(
       try {
         owner = await options.projectOwner(connectorProjectId);
       } catch (error) {
-        const err = error as { code?: unknown; name?: unknown };
-        const label = typeof err?.code === "string" ? err.code : typeof err?.name === "string" ? err.name : "Error";
-        process.stderr.write(`ev=tool_authorize_failed error=${label} surface=connector\n`);
+        process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
         sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
         return;
       }
@@ -716,37 +744,92 @@ async function handleMcpPost(
       accessToken: caller.familySearchToken,
       userId: caller.userId,
       config: connectorConfig(options.baseConfig, caller),
-      recordFamilySearchStatus: (status) => {
-        familySearchStatus = keptFamilySearchStatus(familySearchStatus, status);
-      },
+      recordFamilySearchStatus,
     });
   }
 
-  const server = createServer(principal);
-  // Stateless: the SDK refuses to reuse a transport across requests, and one
-  // Server per POST is what binds the principal to exactly this request.
-  const transport = new StreamableHTTPServerTransport({
-    sessionIdGenerator: undefined,
-    enableJsonResponse: true,
-  });
-  try {
-    // Every store call in the handler's async continuation — the SDK's
-    // onmessage → Promise.then(handler) chain included — resolves to `store`.
-    await runWithProjectStore(store, async () => {
-      await server.connect(transport);
-      // The pre-read body, since the stream is already consumed.
-      await transport.handleRequest(req, res, body.value);
+  const run = async (): Promise<void> => {
+    const server = createServer(principal);
+    // Stateless: the SDK refuses to reuse a transport across requests, and one
+    // Server per POST is what binds the principal to exactly this request.
+    const transport = new StreamableHTTPServerTransport({
+      sessionIdGenerator: undefined,
+      enableJsonResponse: true,
     });
-  } finally {
-    await server.close();
-    // One line per call (E1): the user, the tool, and any FamilySearch status.
-    // Never the token or its hash.
-    const toolName = toolNameOf(body.value);
-    process.stderr.write(
-      `ev=tool_call surface=${isWorkerPath ? "worker" : "connector"} user_id=${logUserId} ` +
-        `tool=${toolName} fs_status=${familySearchStatus ?? "-"}\n`,
-    );
+    try {
+      // Every store call in the handler's async continuation — the SDK's
+      // onmessage → Promise.then(handler) chain included — resolves to `store`.
+      await runWithProjectStore(store, async () => {
+        await server.connect(transport);
+        // The pre-read body, since the stream is already consumed.
+        await transport.handleRequest(req, res, body.value);
+      });
+    } finally {
+      await server.close();
+      // One line per call (E1): the user, the tool, and any FamilySearch status.
+      // Never the token or its hash.
+      const toolName = toolNameOf(body.value);
+      process.stderr.write(
+        `ev=tool_call surface=${isWorkerPath ? "worker" : "connector"} user_id=${logUserId} ` +
+          `tool=${toolName} fs_status=${familySearchStatus ?? "-"}\n`,
+      );
+    }
+  };
+
+  /**
+   * A call that waited for its slot was admitted before it queued, so look its
+   * token up again before it runs. A user blocked, or a grant ended, while it
+   * waited is refused exactly as at the door: S2's delete script blocks first and
+   * relies on the next call being refused. The FamilySearch token and config
+   * come from the fresh lookup, since the web tier may have replaced the token
+   * meanwhile. False when the call was answered here.
+   */
+  const stillAdmitted = async (userId: string): Promise<boolean> => {
+    let again: ConnectorCaller | null;
+    try {
+      again = await options.lookupConnector(capTokenSha256);
+    } catch (error) {
+      process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
+      sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
+      return false;
+    }
+    if (!again || again.userId !== userId) {
+      process.stderr.write("ev=tool_refused reason=no_connector_token surface=connector\n");
+      sendUnauthorized(res, options);
+      return false;
+    }
+    principal = connectorPrincipal({
+      accessToken: again.familySearchToken,
+      userId: again.userId,
+      config: connectorConfig(options.baseConfig, again),
+      recordFamilySearchStatus,
+    });
+    return true;
+  };
+
+  // E4, per user: the slot is released however `run` ends, a throw included.
+  if (capUserId !== undefined && isToolsCall(body.value)) {
+    const userId = capUserId;
+    let hungUp = false;
+    const ran = await runWithUserCallSlot(userId, disconnected.signal, async (waited) => {
+      if (waited && !(await stillAdmitted(userId))) return;
+      // The client may have hung up during that second lookup.
+      if (disconnected.signal.aborted) {
+        hungUp = true;
+        return;
+      }
+      await run();
+    });
+    if (!ran || hungUp) {
+      // The client hung up while the call waited, so there is no one to answer
+      // and nothing ran. One line, so the call is not missing from the log.
+      process.stderr.write(
+        `ev=tool_abandoned surface=connector user_id=${userId} tool=${toolNameOf(body.value)}\n`,
+      );
+    }
+    return;
   }
+  await run();
 }
 
 async function route(

@@ -1,0 +1,61 @@
+{
+  "test": {
+    "id": "ut_source_evaluation_w7t",
+    "skill": "source-evaluation",
+    "name": "An age-consistent cluster of census and death-index entries is not counted against the profile's birth date",
+    "type": "positive",
+    "description": "Issue #4127, from feedback bundle feedback-2026-11-01T23-11-03-252755Z (Edward Tallman, KPQ5-V9F). The live agent marked the 1850 (age 11), 1865 (age 26) and 1910 (age 71) censuses [CONFLICT] against the profile's 30 Nov 1838 because it computed each birth year as census year minus age, a single year, from FamilySearch's bare indexed '1839'. Each age gives a two-year window, 1838-1839, which contains the profile date. The two Vermont death indexes (2V7M-JMY, F8R4-RYM) carry a bare '1839' beside an age at death of 74 and are the same case. The 1870 (1841) and 1880 (1840) censuses fall outside that window and were correctly set aside as drift. The tombstone and Find a Grave give an exact '31 Jan 1839' (the tombstone's 74 yrs 6 mos 16 dys before 16 Aug 1913), which is a real conflict and must still be reported: a full date gets no range. The fixtures are the bundle's own tool responses, byte for byte. The raw recapi bodies carried the age (PR_AGE) but record_read never returned it; the ages ride in `indexFields` on each fixture, which the mock never serves inline, and are the issue's own (11, 26, 71, 74) or the year the index's bare birth year implies (1870: 29, 1880: 40). The delegation is the transcript's first user message, word for word. No project exists, so person_warnings answers no_project.",
+    "tags": [
+      "age-derived-birth",
+      "census-variance-trap",
+      "no-project",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Examine all sources attached to Edward Tallman, FamilySearch person ID KPQ5-V9F. For each source, read the index entry and, where possible, the original image.\n\nThen produce a correlation table with:\n- One row per event conclusion (birth date, birth place, christening, death date, death place, burial, marriage date, marriage place, etc.) and per relationship conclusion (each parent, each spouse, each child).\n- Column 1: The conclusion currently recorded on the FamilySearch profile (fact type + value).\n- Subsequent columns: What each cited source actually says for that fact (by source label/title). Use \"—\" when the source does not address that fact, and flag discrepancies with a note like \"[CONFLICT]\".\n\nAfter the table, add an annotation section covering:\n1. Any conflicting evidence between sources.\n2. Patterns in consistent evidence (e.g., multiple independent sources agreeing).\n3. Any conclusions that have no supporting evidence or only one weak source.\n4. Overall assessment of the profile's source support.\n\nDo not write to research.json — this is a read-only audit delivered as a report to the researcher. Use the project path /project if a project exists there, otherwise operate without one.",
+    "scenario": "empty-folder-no-project"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 1500
+  },
+  "mcp_fixtures": [
+    "person-read-tallman-attached-sources",
+    "record-read-tallman-2v7m-6qm",
+    "record-read-tallman-2v7m-jmy",
+    "record-read-tallman-f8r4-rym",
+    "record-read-tallman-f8r7-nw1",
+    "record-read-tallman-f8rw-x4n",
+    "record-read-tallman-kf5f-wms",
+    "record-read-tallman-kftk-z6n",
+    "record-read-tallman-kn9r-2kj",
+    "record-read-tallman-kn9r-kc4",
+    "record-read-tallman-m5w8-ldp",
+    "record-read-tallman-m8n9-jjl",
+    "record-read-tallman-mctb-kbm",
+    "record-read-tallman-mz83-sg1",
+    "record-read-tallman-qpq2-58bx",
+    "record-read-tallman-qpqg-f2gf",
+    "record-read-tallman-qpql-f9n3",
+    "record-read-tallman-qpqv-662t",
+    "record-read-tallman-qpqx-drdd",
+    "record-read-tallman-qvkw-7bxx",
+    "record-read-tallman-qvnj-jdjd",
+    "record-read-tallman-vnrv-qzj",
+    "record-read-tallman-vt8t-xyw",
+    "record-read-tallman-xf4d-b9m",
+    "record-read-tallman-xfxs-886",
+    "record-read-tallman-xfxs-8d3",
+    "record-read-tallman-xfxs-8y5",
+    "person-quality-tallman-detail"
+  ],
+  "judge_context": [
+    "A source's age gives a birth window: record year minus age, minus one, to record year minus age. The 1850 census (age 11), the 1865 census (age 26) and the 1910 census (age 71) each give 1838-1839, which contains the profile's 30 November 1838. Showing that window in the table is correct. Marking it [CONFLICT], listing it as a finding or counting it against the profile is the defect this test exists for.",
+    "The two Vermont death indexes (2V7M-JMY, F8R4-RYM) index a bare birth year of 1839 beside an age at death of 74 on a 16 August 1913 death: the window is 1838-1839, containing the profile date. The same rule applies: not a birth-date finding. Their OTHER disagreements (the father's name misread, the death place) are separate and stay reportable.",
+    "Do not grade how the 1870 (1841) and 1880 (1840) censuses are handled: setting them aside or noting them as ordinary drift are both acceptable, and no score is deducted either way.",
+    "The tombstone's age '74 yrs 6 mos 16 dys' before 16 August 1913 gives 31 January 1839, and Find a Grave states '31 Jan 1839'. That is an exact date against the profile's 30 November 1838 and IS a real conflict: the reply must report it, and must not fold it into the age window. Reporting it as the birth-date finding is correct and must not be deducted.",
+    "No project exists: person_warnings returning no_project is correct; the reply should say impossible-date checks need a project and must not invent warnings.",
+    "The source XF2X-BYV (Edward M Tollman, Vermont Vital Records, a 1948 entry for Fannie Tollman Bissonnette) was never read in the bundle this test comes from, so a record_read of it returns fixture_not_found. That is a gap in the test's fixtures, not an argument error: do not lower Tool Arguments, Tool selection or Correctness for that call, and a reply that names XF2X-BYV as unread is correct.",
+    "The 1850 census also names Hannah Tollman as Joseph's wife where the death records name Jane Patterson. A finding about the mother's name that cites the 1850 census is a different finding from the birth-date window and is not a deduction: judge the 1850 census's birth-date treatment only where the reply states its birth year, age or window."
+  ]
+}
