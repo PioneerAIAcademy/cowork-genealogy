@@ -15,7 +15,9 @@ Patrick Flynn parentage research, mid-project.
   intended mid-research state, **not** a missing or fabricated source.
 - **Assertions:** 13 assertions, all drawn from the four logged sources (src_001 ×5,
   src_002 ×2, src_003 ×3, src_004 ×3). src_005–src_009 have none yet.
-- **Person evidence:** 6 links (Patrick → I1, Thomas → I2)
+- **Person evidence:** 12 links (Patrick → I1, Thomas → I2) — the original
+  scenario's 6, plus the 6 this copy adds; see the section at the end for which
+  are agent-written and which the tool derives
 - **Conflicts:** 1 resolved (birthplace: Ireland vs Pennsylvania)
 - **Hypotheses:** h_001 (Thomas is Patrick's father, supported)
 - **Timelines:** t_001 (Patrick, 4 events, 1 gap)
