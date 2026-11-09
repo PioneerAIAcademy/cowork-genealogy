@@ -467,6 +467,7 @@ treating as established.
 - `similarSpouses` -- two spouses look like the same individual recorded twice.
 - `similarSpousesConflictingDates` -- two spouses have similar names but conflicting dates; likely one spouse recorded twice.
 - `hasDissimilarSpousesWithSameMarriageYear` -- two spouses share a marriage year but have dissimilar names; possibly two marriage records conflated, or a mis-transcribed name.
+- `hasInterleavedChildrenIgnoreSimilarSpouses` -- a child of one spouse was born, on every reading of the Birth dates, between two children of another spouse (similar-named spouses are left to `similarSpouses`). Usually two people merged into one, or a spouse attached to the wrong person; a plural marriage can also cause it.
 
 #### Event in another country
 - `hasEventInOtherCountry` -- an event other than a migration or a residence (on the person or on a couple relationship) is in a country that contradicts both the birth and the death country, when those two agree. Usually a record attached to the wrong person, or a mis-standardised place.

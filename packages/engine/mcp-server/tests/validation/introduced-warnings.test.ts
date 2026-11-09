@@ -18,6 +18,7 @@ import {
   staleJustifications,
   computeTouchedPersonIds,
   competingParentage,
+  GATE_EXEMPT_TYPES,
 } from "../../src/validation/introduced-warnings.js";
 import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
 
@@ -434,6 +435,64 @@ describe("introducedWarnings", () => {
         "D",
       );
       expect(r.unjustified).toHaveLength(0);
+    });
+  });
+
+  // Issue #4345: interleaved children by two spouses is a spouse-structure
+  // claim, so it gates like `similarSpouses` and
+  // `hasDissimilarSpousesWithSameMarriageYear`.
+  describe("(j) interleaved-children gate", () => {
+    const TAG = "hasInterleavedChildrenIgnoreSimilarSpouses";
+    const b = (id: string, date: string) => ({ id, type: "Birth", date, standard_date: date });
+    const pc = (p: string, c: string) => ({ id: `R${p}${c}`, type: "ParentChild", parent: p, child: c });
+    const couple = (x: string, y: string) => ({ id: `C${x}${y}`, type: "Couple", person1: x, person2: y });
+    const wife = (id: string, given: string, surname: string) => ({ ...person(id, given, surname), gender: "Female" });
+    const persons = [
+      person("H", "Henry", "Ward"),
+      wife("A", "Agnes", "Brown"),
+      wife("B", "Bertha", "Clark"),
+      person("A1", "Albert", "Ward", [b("A1B", "1850")]),
+      person("A2", "Arthur", "Ward", [b("A2B", "1860")]),
+      person("X", "Xavier", "Ward", [b("XB", "1855")]),
+    ];
+    const base = [couple("H", "A"), couple("H", "B"), pc("H", "A1"), pc("A", "A1"), pc("H", "A2"), pc("A", "A2")];
+    const before = tree(persons, [...base, pc("H", "X")]);
+    const after = tree(persons, [...base, pc("H", "X"), pc("B", "X")]);
+    const interleaved = tree(persons, [...base, pc("H", "X"), pc("B", "X")]);
+    const addChildOfAgnes = (id: string, date: string) => {
+      const kid = person(id, "Alfred", "Ward", [b(`${id}B`, date)]);
+      const pre = tree([...persons, kid], [...(interleaved.relationships ?? [])]);
+      const post = tree([...persons, kid], [...(interleaved.relationships ?? []), pc("H", id), pc("A", id)]);
+      return introducedWarnings(pre, post, computeTouchedPersonIds(pre, post));
+    };
+
+    it("is not gate-exempt", () => {
+      expect(GATE_EXEMPT_TYPES.has(TAG)).toBe(false);
+    });
+
+    it("refuses the write that makes Bertha the middle child's mother", () => {
+      const r = introducedWarnings(before, after, computeTouchedPersonIds(before, after));
+      expect(r.unjustified.map((w) => w.issueType)).toContain(TAG);
+    });
+
+    it("lets the same write land with a justification", () => {
+      const first = introducedWarnings(before, after, computeTouchedPersonIds(before, after));
+      const w = first.unjustified.find((x) => x.issueType === TAG);
+      expect(w).toBeDefined();
+      const r = introducedWarnings(before, after, computeTouchedPersonIds(before, after), [
+        { warningId: w!.warningId, justification: "Henry had two households at once; see the probate." },
+      ]);
+      expect(r.unjustified.map((x) => x.issueType)).not.toContain(TAG);
+    });
+
+    it("introduces nothing when a middle child of Agnes is added to a family that already interleaves", () => {
+      expect(addChildOfAgnes("AM", "1853").allIntroduced.map((w) => w.issueType)).not.toContain(TAG);
+    });
+
+    it("re-keys, and so asks again, when a new eldest child of Agnes is added", () => {
+      // The warning cites the eldest and youngest of Agnes's children, so a new
+      // eldest changes its id: the accepted cost of a gating tag keyed on facts.
+      expect(addChildOfAgnes("A0", "1848").unjustified.map((w) => w.issueType)).toContain(TAG);
     });
   });
 
