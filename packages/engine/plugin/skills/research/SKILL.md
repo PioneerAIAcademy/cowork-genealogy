@@ -299,6 +299,8 @@ message.
    state, and do not identify a person it names with anyone already in the
    project. A report that makes a hypothesis's identity impossible contradicts
    it: name that hypothesis id when you spawn `@plugin:hypothesis-tracking`.
+   A doubt or denial about a record already in the project is not such a report:
+   it goes to `@plugin:person-evidence` with the message copied verbatim.
    The record and each person it names are new leads: spawn
    `@plugin:research-plan` with `projectPath` and the question id to plan a
    search for each, or ask the researcher for the record's identifier, before
