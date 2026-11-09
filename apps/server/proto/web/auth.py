@@ -396,7 +396,7 @@ OR_OAUTH_SALT = "or-oauth"
 
 
 def _state_cookie(salt: str, payload: dict[str, Any], next_route: str | None) -> str:
-    """A flow's signed state cookie; ``next`` kept only when it is a safe SPA route."""
+    """A flow's signed state cookie; ``next`` kept only when ``SAFE_NEXT_RE`` admits it."""
     if next_route and SAFE_NEXT_RE.match(next_route):
         payload = {**payload, "next": next_route}
     return URLSafeTimedSerializer(session_secret(), salt=salt).dumps(payload)

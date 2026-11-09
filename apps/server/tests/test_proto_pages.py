@@ -7,7 +7,9 @@ is ``test_proto_admission.py``'s; the ``next`` shapes ``SAFE_NEXT_RE`` admits ar
 from __future__ import annotations
 
 import asyncio
+import json
 import pathlib
+from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
 import httpx
@@ -102,11 +104,13 @@ async def test_signed_in_names_the_account_and_lists_the_callers_projects():
     assert r.headers["cache-control"] == "private, no-store" and "cookie" in r.headers["vary"].lower()
 
 
-async def test_signed_in_points_back_to_the_setup_steps():
-    """Signed in before finishing setup, a patron no longer sees the steps; the page says
-    how to get them back."""
+async def test_signed_in_keeps_the_setup_steps_on_the_page():
+    """Signed in before finishing setup, a patron still has the steps, folded away. Never
+    "sign out to see them": once sign-out ends the connector's tokens too, that undoes step 1."""
     r = await _home(FakeStore())
-    assert "Sign out to see the setup steps" in r.text and "Get started" not in r.text
+    assert "<summary>Setup steps</summary>" in r.text and "Get started" not in r.text
+    assert "Add the custom connector in Claude" in r.text and "Install the plugin once" in r.text
+    assert "Sign out to see" not in r.text
 
 
 async def test_signed_in_with_no_projects_says_so():
@@ -129,6 +133,29 @@ async def test_the_email_and_familysearch_id_are_escaped():
     r = await _home(store)
     assert "<b>a</b>" not in r.text and "&lt;b&gt;a&lt;/b&gt;@example.org" in r.text
     assert "<i>FS</i>" not in r.text and "&lt;i&gt;FS&lt;/i&gt;" in r.text
+
+
+async def test_the_email_is_escaped_with_no_familysearch_id():
+    store = FakeStore()
+    store.users[USER_A.id] = store.users[USER_A.id].__class__(USER_A.id, "<b>a</b>@example.org")
+    r = await _home(store)
+    assert "<b>a</b>" not in r.text and "Signed in as &lt;b&gt;a&lt;/b&gt;@example.org." in r.text
+
+
+async def test_a_refused_page_escapes_the_email():
+    store = FakeStore()
+    store.users[USER_A.id] = store.users[USER_A.id].__class__(USER_A.id, "<b>a</b>@example.org")
+    store.block(USER_A.id)
+    r = await _home(store)
+    assert r.status_code == 403
+    assert "<b>a</b>" not in r.text and "&lt;b&gt;a&lt;/b&gt;@example.org" in r.text
+
+
+def test_the_connector_name_is_the_extensions_name():
+    """The agents list their tools under the extension's display_name, so the name the
+    page tells a patron to keep must be that one."""
+    manifest = Path(__file__).resolve().parents[3] / "packages" / "engine" / "mcp-server" / "manifest.json"
+    assert pages.CONNECTOR_NAME == json.loads(manifest.read_text(encoding="utf-8"))["display_name"]
 
 
 @pytest.mark.parametrize("how", ["blocked", "revoked"])
@@ -238,7 +265,8 @@ async def test_chat_off_serves_the_page_over_an_spa_build(monkeypatch, tmp_path)
     assert r.status_code == 200 and "Get started" in r.text and "SPA BUILD" not in r.text
     async with make_client(FakeStore(), None, user=None) as c:
         head = await c.head("/")
-    assert head.status_code == 200 and "no-store" in head.headers["cache-control"], "HEAD / is ours too"
+    # By length, not cache headers: the cache middleware marks any answer for / no-store.
+    assert head.status_code == 200 and head.headers["content-length"] == str(len(r.content)), "HEAD / is ours too"
 
 
 def _fs_on(monkeypatch, origin: str) -> None:

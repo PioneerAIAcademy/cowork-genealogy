@@ -2266,7 +2266,7 @@ def create_app(
         # #3987: only when UPLOADS_ENABLED is set, so an unset tier answers as it always did.
         if app.state.uploads is not None:
             config["uploads"] = app.state.uploads
-        # #3988: always sent, so the browser app (#4001) shows the OpenRouter page only on true.
+        # #3988: always sent, so a client can offer OpenRouter linking only on true.
         config["openrouter"] = app.state.openrouter
         return config
 
@@ -2439,7 +2439,7 @@ def create_app(
 
     @linking.get("/openrouter")
     async def openrouter_status(request: Request, response: Response, user: User = Depends(current_user)) -> dict:
-        """``{linked: bool}`` for the browser app's OpenRouter page (#4001). Never the key.
+        """``{linked: bool}``, whether the caller has a usable OpenRouter key. Never the key.
         Linked means a key that decrypts under the current FS_TOKEN_ENC_KEY: one written under
         another key is no key to the tool server either (#3984), so the page offers a relink."""
         response.headers["Cache-Control"] = "private, no-store"
@@ -3187,7 +3187,7 @@ def create_app(
             return HTMLResponse(pages.signed_out_page(public_url=auth.public_url(), sign_in=sign_in))
         linked = await _openrouter_linked(request, user.id) if app.state.openrouter else None
         return HTMLResponse(pages.signed_in_page(
-            email=user.email, familysearch_id=user.familysearch_id, account_id=user.id,
+            public_url=auth.public_url(), email=user.email, familysearch_id=user.familysearch_id, account_id=user.id,
             deletion_code=auth.deletion_code(user.id), projects=await _store(request).list_projects(user.id),
             openrouter_linked=linked, uploads=app.state.uploads is True,
         ))

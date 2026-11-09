@@ -48,7 +48,7 @@ const LABELS = {
   personNbr: ["SOURCE_PERSON_NBR_ORIG", "SOURCE_PERSON_NBR"],
   lineNbr: ["PR_EXT_LINE_NBR_ORIG", "PR_EXT_LINE_NBR"],
   householdId: ["SOURCE_HOUSEHOLD_ID_ORIG", "SOURCE_HOUSEHOLD_ID"],
-  age: ["PR_AGE", "PR_AGE_ORIG"],
+  age: ["PR_AGE", "PR_AGE_ORIG", "SP_AGE", "SP_AGE_ORIG"],
   fatherBirthPlace: ["PR_FTHR_BIR_PLACE", "PR_FTHR_BIR_PLACE_ORIG"],
   motherBirthPlace: ["PR_MTHR_BIR_PLACE", "PR_MTHR_BIR_PLACE_ORIG"],
 } as const;

@@ -75,6 +75,28 @@ def connector_link(public_url: str) -> str:
     )
 
 
+def _setup_steps(public_url: str, step2: str) -> str:
+    """The three setup steps, on both pages. ``step2`` is the sign-in step's HTML."""
+    return f"""<ol>
+<li><a href="{escape(connector_link(public_url))}">Add the custom connector in Claude</a>.
+Keep the name exactly <strong>{escape(CONNECTOR_NAME)}</strong>. The research tools only work under that name.</li>
+<li>{step2}</li>
+<li>Install the plugin once from Claude's Plugins page. It follows your Claude account.
+<span class="note">Placeholder: where the plugin comes from has not been decided yet.</span></li>
+</ol>"""
+
+
+def _setup_steps(public_url: str, step2: str) -> str:
+    """The three setup steps, on both pages. ``step2`` is the sign-in step's HTML."""
+    return f"""<ol>
+<li><a href="{escape(connector_link(public_url))}">Add the custom connector in Claude</a>.
+Keep the name exactly <strong>{escape(CONNECTOR_NAME)}</strong>. The research tools only work under that name.</li>
+<li>{step2}</li>
+<li>Install the plugin once from Claude's Plugins page. It follows your Claude account.
+<span class="note">Placeholder: where the plugin comes from has not been decided yet.</span></li>
+</ol>"""
+
+
 def signed_out_page(*, public_url: str, sign_in: Literal["familysearch", "dev"] | None) -> str:
     """Onboarding, the plan's D4. ``sign_in`` picks the step-2 control: FamilySearch when it
     is configured, the dev-login button locally, or neither (a line saying sign-in is off)."""
@@ -89,13 +111,7 @@ def signed_out_page(*, public_url: str, sign_in: Literal["familysearch", "dev"] 
         _HEAD.format(title="Genealogy Research beta")
         + f"""<h1>Genealogy Research beta</h1>
 <h2>Get started</h2>
-<ol>
-<li><a href="{escape(connector_link(public_url))}">Add the custom connector in Claude</a>.
-Keep the name exactly <strong>{escape(CONNECTOR_NAME)}</strong>. The research tools only work under that name.</li>
-<li>{step2}</li>
-<li>Install the plugin once from Claude's Plugins page. It follows your Claude account.
-<span class="note">Placeholder: where the plugin comes from has not been decided yet.</span></li>
-</ol>
+{_setup_steps(public_url, step2)}
 <h2>Before you start</h2>
 <ul>
 <li><strong>Where research runs.</strong> Placeholder: this waits on the Surface decision.</li>
@@ -117,6 +133,7 @@ conversations. Placeholder: the feedback address has not been supplied yet.</li>
 
 def signed_in_page(
     *,
+    public_url: str,
     email: str,
     familysearch_id: str | None,
     account_id: str,
@@ -127,7 +144,9 @@ def signed_in_page(
 ) -> str:
     """The signed-in ``/``. ``openrouter_linked`` None means linking is off, and the page
     shows no OpenRouter section at all. ``uploads`` (UPLOADS_ENABLED) adds each project's
-    Upload link; off, the page links nothing the upload route would refuse."""
+    Upload link; off, the page links nothing the upload route would refuse. The setup steps
+    stay on the page: once sign-out also ends the connector's tokens, "sign out to see them"
+    would undo step 1."""
     # A user with no FamilySearch id (dev-login) is not shown as a FamilySearch account.
     who = (f"Signed in with the FamilySearch account {escape(email)} "
            f"(FamilySearch id <code>{escape(familysearch_id)}</code>)." if familysearch_id
@@ -148,7 +167,8 @@ def signed_in_page(
         + f"""<h1>You're signed in</h1>
 <p>{who}</p>
 <p><strong>Go back to Claude and say "continue".</strong></p>
-<p class="note">Not set up yet? Sign out to see the setup steps.</p>
+<details><summary>Setup steps</summary>
+{_setup_steps(public_url, "Sign in. You have done this.")}</details>
 <h2>Your projects</h2>
 {project_list}
 {_openrouter_section(openrouter_linked)}<h2>Your account</h2>
