@@ -898,6 +898,10 @@ class SkillRunResult:
     subagents: list[dict[str, Any]] | None = None
     subagent_capture_status: str | None = None
     main_thread: dict[str, Any] | None = None
+    # MCP results the model received as Claude Code's "too large, saved to file"
+    # notice, as `{tool, tool_use_id, size, agent}`; read with the fields above.
+    # Feeds only the `oversize_tool_result` warning, never the judge (#4380).
+    oversize_tool_results: list[dict[str, Any]] = field(default_factory=list)
     # Raw Write/Edit/NotebookEdit calls to a protected project file
     # (research.json / tree.gedcomx.json) the main thread tried and was denied,
     # as {"tool", "args"} (see harness.context_policy.protected_file_denial).

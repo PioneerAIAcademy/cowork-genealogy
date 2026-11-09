@@ -228,7 +228,9 @@ def pair_tool_calls(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
     by_id: dict[str, dict[str, Any]] = {}
     ordered: list[dict[str, Any]] = []
     for rec in records:
-        if not isinstance(rec, dict):
+        # A request-blob copies a message already recorded; pairing it too
+        # appended every background call twice (#4380).
+        if not isinstance(rec, dict) or rec.get("type") == _REQUEST_BLOB:
             continue
         message = rec.get("message")
         if not isinstance(message, dict):
@@ -263,6 +265,61 @@ def pair_tool_calls(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
                     entry["content"] = block.get("content")
                     entry["is_error"] = block.get("is_error") is True
     return ordered
+
+
+#: The two phrases of the notice Claude Code puts in place of a tool result over
+#: its token cap. `wiki_failure_report` imports these, so the two cannot drift.
+OVERSIZE_NOTICE_PHRASES = ("exceeds maximum allowed tokens", "Output too large")
+
+# Anchored at the start: built-in `Read` says `File content (N tokens) exceeds
+# maximum allowed tokens (25000)` -- a result it can page past, not a lost one --
+# and a tool answer may merely quote either phrase. Shape 1 carries no preview
+# and a size in characters ("85,315 characters across 1 line", or with no line
+# count); shape 2 carries a 2 KB preview and a size in KB.
+_OVERSIZE_NOTICE = re.compile(
+    r"^(?:Error: result \(([^)]*)\) " + re.escape(OVERSIZE_NOTICE_PHRASES[0])
+    + r"|<persisted-output>\s*" + re.escape(OVERSIZE_NOTICE_PHRASES[1]) + r" \(([^)]*)\))"
+)
+
+
+def oversize_notice_size(content: Any) -> str | None:
+    """The size an oversize-result notice states, or None if `content` is not one.
+
+    `content` is a `tool_result` body (a string, or a list whose first text block
+    is read) or an e2e `response_summary`. Never raises.
+    """
+    text = content
+    if isinstance(content, list):
+        text = next(
+            (b.get("text") for b in content
+             if isinstance(b, dict) and b.get("type") == "text"),
+            None,
+        )
+    if not isinstance(text, str):
+        return None
+    m = _OVERSIZE_NOTICE.match(text)
+    return (m.group(1) or m.group(2)) if m else None
+
+
+def oversize_tool_results(records: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """`[{tool, tool_use_id, size}]` for each MCP result that reached the model as
+    the oversize notice, in transcript order. Never raises."""
+    try:
+        hits: list[dict[str, Any]] = []
+        seen: set[str] = set()
+        for call in pair_tool_calls(records):
+            if not call["tool"].startswith("mcp__"):
+                continue
+            size = oversize_notice_size(call["content"])
+            tuid = call["tool_use_id"]
+            if size is None or (isinstance(tuid, str) and tuid in seen):
+                continue
+            if isinstance(tuid, str):
+                seen.add(tuid)
+            hits.append({"tool": call["tool"], "tool_use_id": tuid, "size": size})
+        return hits
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        return []
 
 
 def _as_int(value: Any) -> int:
@@ -683,6 +740,42 @@ def collect_main_thread(workspace: Path) -> dict[str, Any] | None:
         }
     except Exception:  # noqa: BLE001 — a capture miss must never fail the run
         return None
+
+
+MAIN_THREAD_AGENT = "main thread"
+
+
+def collect_oversize_tool_results(workspace: Path) -> list[dict[str, Any]]:
+    """Every oversize-notice hit in this run, `agent` naming whose answer it was.
+
+    The main thread's own records (non-`isSidechain`, as `collect_main_thread`
+    reads them) are `MAIN_THREAD_AGENT`; each subagent's are its meta
+    `agentType`. Never raises.
+    """
+    hits: list[dict[str, Any]] = []
+    try:
+        cache = sdk_cache_dir(workspace)
+        if cache is None:
+            return hits
+        main = find_session_transcript(workspace, cache_dir=cache)
+        if main is not None:
+            records = [r for r in parse_jsonl(main, errors="replace")
+                       if r.get("isSidechain") is not True]
+            hits += [{**h, "agent": MAIN_THREAD_AGENT} for h in oversize_tool_results(records)]
+        for jsonl, meta_path in find_subagent_transcripts(workspace, cache_dir=cache):
+            agent = "unnamed agent"
+            if meta_path is not None:
+                try:
+                    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+                    meta = None
+                if isinstance(meta, dict) and isinstance(meta.get("agentType"), str):
+                    agent = meta["agentType"]
+            records = parse_jsonl(jsonl, errors="replace")
+            hits += [{**h, "agent": agent} for h in oversize_tool_results(records)]
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        return hits
+    return hits
 
 
 def collect_subagents(workspace: Path) -> tuple[list[dict[str, Any]], str]:

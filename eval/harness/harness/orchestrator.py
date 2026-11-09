@@ -978,6 +978,8 @@ async def _execute_single_run(
                     harness_observations=_harness_observation_pairs,
                     scenario_brief=scenario_brief,
                     pg_faults=getattr(result, "pg_store_faults", None),
+                    oversize_tool_results=getattr(result, "oversize_tool_results", None),
+                    test_id=spec.id,
                 ))
                 else {}
             ),
@@ -1047,7 +1049,11 @@ def _capture_context_meters(result, workspace: Path) -> None:
     can never stop the orchestrator loading.
     """
     try:
-        from e2e.subagent_capture import collect_main_thread, collect_subagents
+        from e2e.subagent_capture import (
+            collect_main_thread,
+            collect_oversize_tool_results,
+            collect_subagents,
+        )
 
         subagents, status = collect_subagents(workspace)
         result.subagents = [
@@ -1056,6 +1062,7 @@ def _capture_context_meters(result, workspace: Path) -> None:
         ]
         result.subagent_capture_status = status
         result.main_thread = collect_main_thread(workspace)
+        result.oversize_tool_results = collect_oversize_tool_results(workspace)
     except Exception:  # noqa: BLE001 — a capture miss must never fail the run
         result.subagents = []
         result.subagent_capture_status = "error"
@@ -1269,6 +1276,8 @@ def _build_warnings(
     harness_observations: list[tuple[str, str]] | None = None,
     scenario_brief: ScenarioBrief | None = None,
     pg_faults: list[dict[str, str]] | None = None,
+    oversize_tool_results: list[dict[str, Any]] | None = None,
+    test_id: str | None = None,
 ) -> list[dict[str, Any]]:
     """Surface run-time advisories the judge / reviewer should see.
 
@@ -1469,6 +1478,25 @@ def _build_warnings(
                 "recovery as a skill error."
             ),
             "faults": pg_faults[:20],
+        })
+
+    # An MCP result over Claude Code's token cap reaches the model as a notice
+    # with no data, so the agent never saw that answer (#4380).
+    for hit in oversize_tool_results or []:
+        tool = str(hit.get("tool") or "").split("__")[-1]
+        agent, size = hit.get("agent"), hit.get("size")
+        warnings.append({
+            "kind": "oversize_tool_result",
+            "advisory": (
+                f"{test_id or 'this test'}: the {tool} answer reached {agent} as "
+                f"Claude Code's 'too large, saved to file' notice ({size}). The "
+                "agent never saw that tool's answer; a grade on this run does not "
+                "show the skill handled it."
+            ),
+            "test_id": test_id,
+            "tool": tool,
+            "agent": agent,
+            "size": size,
         })
 
     # Single chokepoint: every output.warnings entry — this function's own, the
