@@ -67,6 +67,7 @@ import {
   buildFromStagedRead,
   buildTreeEvidence,
   displayName,
+  divisionMismatchesOf,
   factsOf,
   normalizeHandBuilt,
   retryUnresolvedPlaces,
@@ -538,6 +539,12 @@ export async function runProjectCreate(
     const unresolvedPlaces = unresolvedPlacesOf(factsOf(tree));
     if (unresolvedPlaces.length > 0) {
       refWarnings.push(`Places kept as written, with no standard place found: ${unresolvedPlaces.join("; ")}.`);
+    }
+    for (const m of divisionMismatchesOf(factsOf(tree))) {
+      refWarnings.push(
+        `Place '${m.place}' names one state or province but its standard place '${m.standardPlace}' lies in another ` +
+          "(FamilySearch's own value when it came with the tree read): check it before relying on it for a place search.",
+      );
     }
     // The fill can take seconds, so check again that no other create landed
     // while it ran: create never overwrites.

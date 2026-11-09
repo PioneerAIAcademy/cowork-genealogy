@@ -14,8 +14,8 @@ description: >-
   single person's impossible dates or relationships to check-warnings; route
   extracting a new record's contents into assertions to extraction_append (or
   the record-structurer agent for a non-FamilySearch source).
-model: claude-sonnet-4-6
-effort: high
+model: claude-haiku-5-5
+effort: low
 tools:
   - mcp__genealogy__person_read
   - mcp__remote-devices__Genealogy_Research__person_read

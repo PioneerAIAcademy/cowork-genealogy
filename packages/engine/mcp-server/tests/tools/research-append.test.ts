@@ -648,7 +648,7 @@ describe("research_append (Phase 1)", () => {
       // proof-conclusion lands the concluded value by setting `primary`, and
       // `primary` is not a detach trigger, so the backlink survives a
       // conclusion. The correction must still land — a known-wrong concluded
-      // value on the upload target is worse — but never quietly.
+      // value on the deliverable is worse — but never quietly.
       await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink({ primary: true }));
 
       const r = await researchAppend({
@@ -690,7 +690,7 @@ describe("research_append (Phase 1)", () => {
 
     it("(15) warns when a correction DELETES a fact field, blank string included", async () => {
       // A blank string withdraws a claim exactly as null does, and is the
-      // likelier typo. Either way it deleted data from the upload target, so it
+      // likelier typo. Either way it deleted data from the deliverable, so it
       // must not be silent — the shape the malformed branch was added for.
       for (const blank of ["", "   "]) {
         await writeProject(
@@ -13270,14 +13270,19 @@ describe("research_append — detected core-identifier contradiction", () => {
 
   // ut_person_evidence_001's shape: a conflict already resolved for the tree's
   // birthplace leaves the losing assertion a weighed, set-aside claim.
-  async function withConflict(conflict: Record<string, unknown>, stated: Record<string, unknown> = {}) {
-    await write(stated);
+  async function withConflict(
+    conflict: Record<string, unknown>,
+    stated: Record<string, unknown> = {},
+    treeBirth: Record<string, unknown> = {},
+    others: Record<string, unknown>[] = [],
+  ) {
+    await write(stated, treeBirth);
     const r = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
     r.conflicts = [{
       id: "c_001", conflict_type: "fact", description: "Birthplace: Ireland or Trier",
       disputed_attribute: "birth_place", competing_assertion_ids: ["a_001", "a_050"],
       blocks_question_ids: [], ...conflict,
-    }];
+    }, ...others];
     await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
   }
 
@@ -13326,6 +13331,164 @@ describe("research_append — detected core-identifier contradiction", () => {
   it("still caps when the conflict is moot", async () => {
     await withConflict({ status: "moot", preferred_assertion_id: "a_001" });
     expect((await researchAppend(link("confident"))).ok).toBe(false);
+  });
+
+  // Feedback #4208 (#4255): Benjamin Raymond, born 1774, baptized with his
+  // sister on 15 Mar 1786. conflict-resolution found a late group baptism and
+  // marked the conflict moot; the cap stayed on.
+  const lateBaptism = { fact_type: "christening", value: "Baptized 15 March 1786", date: "15 March 1786", place: null };
+  const bornIn1774 = { date: "1774" };
+  const bothAnalyses = {
+    independence_analysis: "The parish register and the family record were made independently.",
+    weighing_analysis: "The register baptizes two children of different ages on one day; the births stand.",
+    resolution_rationale: "A late group baptism, not a second birth date.",
+  };
+  const mootBirthDate = (fields: Record<string, unknown> = bothAnalyses) =>
+    ({ status: "moot", disputed_attribute: "birth_date", ...fields });
+  const identityConflict = (status: string, competing: string[], preferred: string | null = null) => ({
+    id: "c_002", conflict_type: "identity", description: "Same Benjamin?",
+    identity_question: "Is the Benjamin baptized in 1786 the tree's Benjamin?",
+    competing_assertion_ids: competing, preferred_assertion_id: preferred, blocks_question_ids: [], status,
+    ...(status === "unresolved" ? {} : bothAnalyses),
+  });
+  // The baptism's other entries -- the child's own name, which is what an
+  // identity conflict usually names, and his father's -- and another record's.
+  const childsName = { ...validAssertion("a_049"), record_id: "rec_bapt", fact_type: "name", value: "John Smith" };
+  const fathersName = {
+    ...validAssertion("a_052"), record_id: "rec_bapt", record_role: "father", fact_type: "name", value: "Thomas Smith",
+  };
+  const otherRecord = { ...validAssertion("a_051"), record_id: "rec_other" };
+  async function addAssertions(...extra: Record<string, unknown>[]) {
+    const r = JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
+    r.assertions.push(...extra);
+    await writeFile(join(dir, "research.json"), JSON.stringify(r, null, 2));
+  }
+  const refusedOnTheGap = async () => {
+    const r = await researchAppend(link("probable"));
+    expect(r.ok).toBe(false);
+    const errors = failure(r).errors?.join(" ");
+    expect(errors).toMatch(/christening in 1786/);
+    expect(errors).toMatch(/12-year gap/);
+  };
+  const accepted = async () => {
+    const r = await researchAppend(link("probable"));
+    expect(r.ok ? [] : failure(r).errors).toEqual([]);
+  };
+
+  it("caps a 12-year late baptism with no conflict", async () => {
+    await write(lateBaptism, bornIn1774);
+    await refusedOnTheGap();
+  });
+
+  it("still caps the late baptism while the birth-date conflict is unresolved", async () => {
+    await withConflict({ status: "unresolved", disputed_attribute: "birth_date" }, lateBaptism, bornIn1774);
+    await refusedOnTheGap();
+  });
+
+  // It is the moot status that settles, not the analyses being written.
+  it("still caps the late baptism while an unresolved conflict carries both analyses", async () => {
+    await withConflict({ status: "unresolved", disputed_attribute: "birth_date", ...bothAnalyses }, lateBaptism, bornIn1774);
+    await refusedOnTheGap();
+  });
+
+  it("does NOT cap the late baptism once a moot birth-date conflict carries both analyses", async () => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774);
+    await accepted();
+  });
+
+  // The refusal is where the agent learns what lifts the cap, so it must say a
+  // rationale-only moot does not, and who writes the conflict.
+  it("still caps the late baptism when the moot conflict carries only a resolution_rationale", async () => {
+    await withConflict(mootBirthDate({ resolution_rationale: bothAnalyses.resolution_rationale }), lateBaptism, bornIn1774);
+    await refusedOnTheGap();
+    const errors = failure(await researchAppend(link("probable"))).errors?.join(" ");
+    expect(errors).toMatch(/'moot' carrying independence_analysis and weighing_analysis/);
+    expect(errors).toMatch(/while any identity conflict names that record's person/);
+    expect(errors).toMatch(/conflict-resolution/);
+  });
+
+  it.each(["independence_analysis", "weighing_analysis"])(
+    "still caps the late baptism when the moot conflict's %s is blank",
+    async (field) => {
+      await withConflict(mootBirthDate({ ...bothAnalyses, [field]: "   " }), lateBaptism, bornIn1774);
+      await refusedOnTheGap();
+    },
+  );
+
+  it("still caps the late baptism when the moot conflict disputed another attribute", async () => {
+    await withConflict({ ...mootBirthDate(), disputed_attribute: "death_date" }, lateBaptism, bornIn1774);
+    await refusedOnTheGap();
+  });
+
+  // A birthplace dispute weighed the place, not the record's christening date.
+  it("still caps the christening date when the moot conflict disputed the birthplace", async () => {
+    await withConflict({ ...mootBirthDate(), disputed_attribute: "birth_place" }, lateBaptism, bornIn1774);
+    await refusedOnTheGap();
+  });
+
+  it("does NOT cap a birthplace once a moot birth-place conflict carries both analyses", async () => {
+    await withConflict({ status: "moot", ...bothAnalyses });
+    await accepted();
+  });
+
+  it("still caps the late baptism when the moot conflict is between other assertions", async () => {
+    await withConflict({ ...mootBirthDate(), competing_assertion_ids: ["a_001", "a_051"] }, lateBaptism, bornIn1774);
+    await addAssertions(otherRecord);
+    await refusedOnTheGap();
+  });
+
+  // As on the resolved arm, the preferred assertion is the one that stands.
+  it("still caps the assertion a moot conflict prefers", async () => {
+    await withConflict(mootBirthDate({ ...bothAnalyses, preferred_assertion_id: "a_050" }), lateBaptism, bornIn1774);
+    await refusedOnTheGap();
+  });
+
+  // `moot` is also how a fact conflict ends when its record turns out to be
+  // someone else; that must not lift the cap onto the wrong person.
+  it.each<[string, string, string[], string | null]>([
+    ["an unresolved identity conflict names the christening", "unresolved", ["a_050"], null],
+    ["a moot identity conflict names the christening", "moot", ["a_050"], null],
+    ["a resolved identity conflict prefers the other record", "resolved", ["a_001", "a_050"], "a_001"],
+    ["an identity conflict doubts the other competitor's person", "unresolved", ["a_001"], null],
+  ])("still caps the late baptism when %s", async (_doubt, status, competing, preferred) => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774, [identityConflict(status, competing, preferred)]);
+    await refusedOnTheGap();
+  });
+
+  // An identity conflict usually names the persona's name, not its christening.
+  it("still caps the late baptism when the identity conflict names the child's name", async () => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774, [identityConflict("unresolved", ["a_049"])]);
+    await addAssertions(childsName);
+    await refusedOnTheGap();
+  });
+
+  // A resolved identity conflict does not say which way it settled: one in the
+  // corpus prefers an assertion of the person its rationale rejects. So it
+  // keeps the cap whether it reads "same person" or "not this person".
+  it("still caps the late baptism once an identity conflict resolves the child as the same person", async () => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774, [identityConflict("resolved", ["a_049"], "a_049")]);
+    await addAssertions(childsName);
+    await refusedOnTheGap();
+  });
+
+  it("still caps when a resolved identity conflict rejected the child", async () => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774, [
+      { ...identityConflict("resolved", ["a_049"], "a_049"), resolution_rationale: "The baptized Benjamin is NOT the tree's Benjamin." },
+    ]);
+    await addAssertions(childsName);
+    await refusedOnTheGap();
+  });
+
+  it("does NOT let an identity conflict over another person on the baptism keep the cap", async () => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774, [identityConflict("unresolved", ["a_052"])]);
+    await addAssertions(fathersName);
+    await accepted();
+  });
+
+  it("does NOT let an identity conflict over another record's assertion keep the cap", async () => {
+    await withConflict(mootBirthDate(), lateBaptism, bornIn1774, [identityConflict("unresolved", ["a_051"])]);
+    await addAssertions(otherRecord);
+    await accepted();
   });
 });
 
