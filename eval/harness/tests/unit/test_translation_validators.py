@@ -63,6 +63,11 @@ def test_no_transcribe_fires():
         check_upload([_mcp("sidecar_read", ref="results/.staging/a.json")], [], _UPLOAD)
 
 
+def test_second_transcription_fires():
+    with pytest.raises(AssertionError, match="transcribed 2 times"):
+        check_upload([_TRANSCRIBE, _TRANSCRIBE, _mcp("sidecar_read", ref="results/.staging/a.json")], [], _UPLOAD)
+
+
 def test_agent_read_of_upload_fires():
     read = {"tool": "Read", "args": {"file_path": "/p/uploads/scan.jpg"}, "agent_id": "a1"}
     with pytest.raises(AssertionError, match="used Read"):

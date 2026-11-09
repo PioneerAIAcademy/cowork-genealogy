@@ -163,7 +163,7 @@ Before you write your reply: one `research_log_append` call with the delegation'
 
 Then return that same translation, in full, above the `---` line — never only a note that it was logged.
 
-A hand-off, or a return asking for the file path or a transcription, logs nothing.
+A hand-off, or a return asking for an upload or a transcription, logs nothing.
 
 ## Example
 

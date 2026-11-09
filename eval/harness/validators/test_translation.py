@@ -76,9 +76,11 @@ def test_upload_read_through_tools(tool_calls, builtin_tool_calls, test):
         for c in tool_calls or []
         if bare_tool_name(c.get("tool", "")) == "image_transcribe"
     ]
-    assert any(f.startswith("uploads/") for f in files), (
+    uploads = [f for f in files if f.startswith("uploads/")]
+    assert uploads, (
         f"the upload was never transcribed with image_transcribe(file: 'uploads/...'); file args: {files}"
     )
+    assert len(uploads) == 1, f"the upload was transcribed {len(uploads)} times; one OCR call reads it: {uploads}"
     refs = sidecar_read_refs(tool_calls)
     assert any(r.startswith("results/") for r in refs), (
         "the staged transcription was never read with sidecar_read; image_transcribe "
