@@ -153,9 +153,13 @@ BROWSER_USER_AGENT = (
 # engine's FS_ACCESS_TOKEN_LIFETIME_S.
 FS_ACCESS_TOKEN_LIFETIME_S = 8 * 60 * 60
 
-# Where the callback may send the browser afterwards: only a hash route of our own SPA.
-# The value rides a cookie the browser controls, so anything else is an open redirect.
-SAFE_NEXT_RE = re.compile(r"^#/[A-Za-z0-9/_-]{0,120}$")
+# Where the callback may send the browser afterwards: a hash route of our own SPA, or
+# exactly one chat-off upload page, ``upload/proj_<16 hex>`` (#4001), the one shape both the
+# web tier and the connector mint. ``redirect_target`` appends it to ``<origin>/``. The
+# value rides a cookie the browser controls, so anything else is an open redirect: no
+# leading ``/``, no ``\``, ``.``, ``?`` or scheme can match. ``\Z``, not ``$``, which also
+# matches before a trailing newline.
+SAFE_NEXT_RE = re.compile(r"^(?:#/[A-Za-z0-9/_-]{0,120}|upload/proj_[0-9a-f]{16})\Z")
 # PUBLIC_URL's path: unreserved segments only, since it is written into a cookie Path and
 # the SPA's HTML.
 BASE_PATH_RE = re.compile(r"^(/[A-Za-z0-9._~-]+)*$")
@@ -213,7 +217,8 @@ def deletion_code(user_id: str) -> str:
 
     Rotating ``SESSION_SECRET`` changes every code. That is harmless: rotation also signs
     everyone out, and the account menu shows the new code. Never log it, put it in a
-    feedback bundle, or return it from any route but ``GET /api/account``.
+    feedback bundle, or return it from any route but ``GET /api/account`` and the chat-off
+    signed-in page at ``GET /`` (#4001), both ``private, no-store``.
     """
     return hmac.new(session_secret().encode(), b"deletion-code:" + user_id.encode(), hashlib.sha256).hexdigest()[:20]
 

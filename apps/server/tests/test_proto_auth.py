@@ -183,6 +183,20 @@ async def test_second_sign_in_resets_granted_at_and_keeps_refresh_token_when_omi
     ("//evil.example", "http://spa.test/"),
     ("#/../../x?y", "http://spa.test/"),
     (None, "http://spa.test/"),
+    # #4001: exactly one chat-off upload page, and nothing that only starts like one.
+    ("upload/proj_0123456789abcdef", "http://spa.test/upload/proj_0123456789abcdef"),
+    ("/upload/proj_0123456789abcdef", "http://spa.test/"),
+    ("upload/proj_0123456789abcdef/x", "http://spa.test/"),
+    ("upload/proj_0123456789abcdef?x", "http://spa.test/"),
+    ("upload/proj_0123456789abcdef\n", "http://spa.test/"),
+    ("upload/proj_0123456789ABCDEF", "http://spa.test/"),
+    ("upload/proj_0123456789abcde", "http://spa.test/"),
+    ("upload/../proj_0123456789abcdef", "http://spa.test/"),
+    ("upload/proj_0123456789abc.ef", "http://spa.test/"),
+    ("upload\\proj_0123456789abcdef", "http://spa.test/"),
+    ("upload//evil.example", "http://spa.test/"),
+    ("https://evil.example/upload/proj_0123456789abcdef", "http://spa.test/"),
+    ("#/s/proj_1\n", "http://spa.test/"),
 ])
 def test_next_redirect_accepts_only_safe_hash_routes(fs_on, next_route, expected):
     assert auth.redirect_target(next_route) == expected
@@ -257,6 +271,7 @@ def test_a_bad_public_url_path_refuses_at_any_scheme(monkeypatch, url):
     ("#/s/proj_1", f"http://edge.test{PREFIX}/#/s/proj_1"),
     (None, f"http://edge.test{PREFIX}/"),
     ("//evil.example", f"http://edge.test{PREFIX}/"),
+    ("upload/proj_0123456789abcdef", f"http://edge.test{PREFIX}/upload/proj_0123456789abcdef"),
 ])
 def test_redirect_target_keeps_the_prefix_and_its_trailing_slash(prefixed, next_route, expected):
     assert auth.redirect_target(next_route) == expected

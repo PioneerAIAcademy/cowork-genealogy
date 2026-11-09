@@ -25,6 +25,7 @@ with the chat on (#3985, ``GENEALOGY_CHAT``):
                    served at FS_REDIRECT_URI's path, /callback by default, #3992)
   GET  /privacy, /terms (no sign-in), GET /api/account (the id and deletion code)
                                                 only with the chat off (#3993); 404 with it on
+  GET  /           onboarding signed out, account and projects signed in; chat off only (#4001)
   GET  /openrouter, /openrouter/link, /openrouter/callback, POST /openrouter/unlink
                                                 the patron's own OpenRouter key (#3988; served only
                                                 with OPENROUTER_LINKING_ENABLED=true; cookie needed)
@@ -149,6 +150,7 @@ from pg_credentials import PgCredentials  # noqa: E402
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 from web import blobstore  # noqa: E402  (U20: the S3 client, the engine's GENEALOGY_S3_* semantics)
 from web import feedback  # noqa: E402  (U20: the feedback bundle)
+from web import pages  # noqa: E402  (#4001: the chat-off tier's own pages)
 from web import policies  # noqa: E402  (#3993: the privacy and terms text)
 from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
 from web.job_state import job_state  # noqa: E402  (the four states the list shows)
@@ -2046,7 +2048,10 @@ def create_app(
 
     # Every route that returns one user's data goes here: it gets `private, no-store` and
     # `Vary: Cookie`, refusals included. A new per-user route outside these prefixes gets neither.
-    PER_USER_CACHE_PATHS = ("/api/account", "/api/projects")
+    # Chat off, "/" is the page that carries the deletion code (#4001), and "/upload" the
+    # upload page that follows it. Chat on, "/" is the SPA's index.html, which stays
+    # `no-cache`, so neither is added. The match is per path segment: "/" covers only "/".
+    PER_USER_CACHE_PATHS = ("/api/account", "/api/projects") + (() if app.state.chat else ("/", "/upload"))
 
     class ProjectCacheHeaders:
         def __init__(self, app: ASGIApp) -> None:
@@ -3126,6 +3131,30 @@ def create_app(
     # deliberately never included: it is a sink so the decorators below have somewhere to
     # register. Do not "fix" it by including it.
     beta = APIRouter() if app.state.chat else app
+
+    @beta.get("/")
+    async def home(request: Request) -> HTMLResponse:
+        """#4001: onboarding signed out, the account and projects signed in. Registered before
+        ``spa.mount_spa``, so with the chat off it wins over any SPA build. A refused session
+        (blocked, not allowed, not ready) gets its reason as a page, not the onboarding, so a
+        blocked patron is not sent round the sign-in again."""
+        try:
+            user = await current_user(request)
+        except HTTPException as exc:
+            if exc.status_code != 401:
+                return HTMLResponse(f"<p>{html.escape(str(exc.detail))}.</p>", status_code=exc.status_code)
+            sign_in = ("familysearch" if auth.familysearch_configured()
+                       else "dev" if auth.dev_login_enabled() else None)
+            return HTMLResponse(pages.signed_out_page(public_url=auth.public_url(), sign_in=sign_in))
+        store = _store(request)
+        linked = None
+        if app.state.openrouter:
+            linked = auth.decrypt(await store.openrouter_key_enc(user.id)) is not None
+        return HTMLResponse(pages.signed_in_page(
+            email=user.email, familysearch_id=user.familysearch_id, account_id=user.id,
+            deletion_code=auth.deletion_code(user.id), projects=await store.list_projects(user.id),
+            openrouter_linked=linked,
+        ))
 
     @beta.get("/privacy")
     async def privacy_page() -> HTMLResponse:
