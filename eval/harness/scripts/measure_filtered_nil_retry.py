@@ -98,12 +98,51 @@ def _ops(args: dict) -> list:
     return [args] if args.get("tool") or args.get("outcome") else []
 
 
+SEARCH_TOOLS = ("fulltext_search", "record_search")
+
+# The strict record_search filters issue #3854 measures alongside but does not
+# guard: a zero-hit op carrying one with no sibling lacking it.
+STRICT_RECORD_KEYS = ("imageGroupNumber", "batchNumber")
+
+
+def _is_name_key(k: str) -> bool:
+    """A record_search name field (research-log-append.ts isRecordSearchNameKey)."""
+    return (
+        k in ("givenName", "surname", "givenNameAlt", "surnameAlt")
+        or k.endswith("GivenName")
+        or k.endswith("Surname")
+    )
+
+
+def _alt_pair(q: dict) -> dict:
+    """record-search.ts applyAltNameAutoPair, which record_search applies on the wire."""
+    out = dict(q)
+    if out.get("surnameAlt") and not out.get("givenNameAlt") and out.get("givenName"):
+        out["givenNameAlt"] = out["givenName"]
+    if out.get("givenNameAlt") and not out.get("surnameAlt") and out.get("surname"):
+        out["surnameAlt"] = out["surname"]
+    return out
+
+
+def _names(query) -> dict:
+    """Name fields after auto-pairing, trimmed and lower-cased, empties dropped
+    (recordSearchNameFields)."""
+    if not isinstance(query, dict):
+        return {}
+    out = {}
+    for k, v in _alt_pair(query).items():
+        if _is_name_key(k) and _has(v) and str(v).strip() != "":
+            out[k] = str(v).strip().lower()
+    return out
+
+
 def _staged_ref_to_query(tool_calls: list) -> dict:
-    """Map each staged resultsRef to the fulltext_search call's echoed arguments,
-    so an op that omitted `query` (filled from the staged echo) can be read."""
+    """Map each staged resultsRef to the fulltext_search or record_search call's
+    echoed arguments, so an op that omitted `query` (filled from the staged echo)
+    can be read."""
     out: dict = {}
     for c in tool_calls:
-        if _bare(c.get("tool")) != "fulltext_search":
+        if _bare(c.get("tool")) not in SEARCH_TOOLS:
             continue
         resp = c.get("response")
         if not isinstance(resp, dict):
@@ -156,7 +195,8 @@ class Run:
         self.ref_to_query = _staged_ref_to_query(self.calls)
         self.counts = counts
         self.stripped = stripped
-        self.unresolved = 0
+        self.unresolved = 0  # fulltext ops whose query could not be resolved
+        self.record_unresolved = 0  # record_search ops, kept apart so neither arm degrades the other
 
     def _effective_query(self, op: dict):
         q = op.get("query")
@@ -187,9 +227,67 @@ class Run:
     def _is_fulltext(self, op: dict) -> bool:
         return op.get("tool") == "fulltext_search"
 
+    def _scan_record(self, call, ops, persisted, run_hits, strict_hits) -> None:
+        """Issue #3854's pinned-nil arm: replays pinnedNilRetryInvariants over
+        this call's record_search ops. An op logged `error` never ran, so it is no
+        sibling, in the batch or once persisted."""
+        resolved = []
+        for idx, op in enumerate(ops):
+            if op.get("tool") != "record_search":
+                continue
+            q = self._effective_query(op)
+            resolved.append((op, q, self._zero_hit(op, call, idx)))
+        batch = [q for (o, q, _z) in resolved if isinstance(q, dict) and o.get("outcome") != "error"]
+        for op, q, zero in resolved:
+            self.counts["record_ops"] += 1
+            if not isinstance(q, dict):
+                self.counts["record_ops_query_unresolved"] += 1
+                self.record_unresolved += 1
+                continue
+            siblings = [sq for sq in batch if sq is not q] + persisted
+            if zero:
+                for key in STRICT_RECORD_KEYS:
+                    if _has(q.get(key)) and not any(not _has(sq.get(key)) for sq in siblings):
+                        self.counts[f"strict_{key}_zero_hit_unretried"] += 1
+                        strict_hits.append({"run": self.label, "key": key, "query": q})
+            if not _has(q.get("collectionId")):
+                continue
+            self.counts["pinned_record_ops"] += 1
+            if not zero:
+                continue
+            names = _names(q)
+            if not names:
+                self.counts["pinned_zero_hit_no_name_exempt"] += 1
+                continue
+            self.counts["pinned_zero_hit_ops"] += 1
+            if any(not _has(sq.get("collectionId")) and _names(sq) == names for sq in siblings):
+                continue
+            run_hits.append(
+                {
+                    "run": self.label,
+                    "kind": "record_search",
+                    "collectionId": q.get("collectionId"),
+                    "names": names,
+                    "outcome": op.get("outcome"),
+                    "query": q,
+                }
+            )
+        persisted.extend(batch)
+
+    def _bucket(self, run_hits: list, name: str, hits: list) -> None:
+        degraded = self.stripped or self.record_unresolved > 0
+        self.counts[f"{name}_degraded" if degraded else name] += len(run_hits)
+        for h in run_hits:
+            h["degraded"] = degraded
+            h.setdefault("kind", name)
+            hits.append(h)
+
     def scan(self, hits: list) -> None:
         persisted: list[dict] = []  # fulltext {query} from earlier calls (log[])
+        record_persisted: list[dict] = []  # record_search {query} from earlier calls
         run_hits: list = []
+        run_record_hits: list = []
+        run_strict_hits: list = []
         for call in self.calls:
             if _bare(call.get("tool")) != "research_log_append":
                 continue
@@ -233,6 +331,9 @@ class Run:
                     {"run": self.label, "keywords": kw, "nlQuery": nl, "filters": sorted(filt)}
                 )
             persisted.extend(q for q in batch_queries if isinstance(q, dict))
+            self._scan_record(call, ops, record_persisted, run_record_hits, run_strict_hits)
+        self._bucket(run_record_hits, "record_refused", hits)
+        self._bucket(run_strict_hits, "strict_unretried", hits)
         # A run with stripped captures or any unresolved query cannot be trusted
         # to have surfaced every unfiltered-retry sibling, so its refusals are
         # bucketed as degraded rather than counted in the headline figure.
@@ -275,16 +376,87 @@ def measure() -> tuple[collections.Counter, list]:
     return counts, hits
 
 
+def _print_record_summary(counts, all_hits, fcounts) -> None:
+    rec = [h for h in all_hits if h.get("kind") == "record_search"]
+    zero_examined_positive = [h for h in rec if h.get("outcome") in ("positive", "partial")]
+    reliable = {h["run"].split("::")[0] for h in rec if not h["degraded"]}
+    print(
+        f"\nRECORD_SEARCH PINNED NIL (#3854) — REFUSED (reliable): {counts['record_refused']} of "
+        f"{counts['pinned_zero_hit_ops']} pinned zero-hit record_search ops with a name field, in "
+        f"{len(reliable)} run log(s); a further {counts['record_refused_degraded']} in degraded runs, "
+        f"not trusted. {counts['pinned_zero_hit_no_name_exempt']} exempt (no name field). Of all "
+        f"{len(rec)} refusals, {len(zero_examined_positive)} were logged positive/partial with 0 "
+        f"examined — read those first. ({counts['record_ops']} record_search ops examined, "
+        f"{counts['pinned_record_ops']} pinned.)"
+    )
+    for key in STRICT_RECORD_KEYS:
+        print(f"  measured alongside, no guard: {counts[f'strict_{key}_zero_hit_unretried']} zero-hit "
+              f"record_search ops with {key} and no sibling without it")
+    print(
+        f"FINAL-STATE CROSS-CHECK: {fcounts['final_pinned_nil_unretried']} pinned true-nil entries "
+        f"with no unpinned same-name sibling, in {fcounts['final_states_with_fire']} of "
+        f"{fcounts['final_states']} e2e final states ({fcounts['final_pinned_nil']} pinned nils with "
+        f"a name field; {fcounts['final_pinned_nil_no_name_exempt']} exempt). A lower bound: it also "
+        f"sees siblings logged in later calls."
+    )
+
+
+def measure_final_states() -> tuple[collections.Counter, list]:
+    """Cross-check for #3854: walk every e2e ``*.final-research.json`` ``log[]``
+    (the source of the issue's 195 / 68-of-229). It sees no batch boundaries and
+    also sees siblings logged in LATER calls, so it undercounts fires against the
+    write-time guard; read it as a lower bound, beside the replay above."""
+    counts: collections.Counter = collections.Counter()
+    hits: list = []
+    for path in sorted(E2E_RUNLOGS.glob("*/*.final-research.json")):
+        research = _load(path)
+        log = research.get("log") if isinstance(research, dict) else None
+        if not isinstance(log, list):
+            continue
+        counts["final_states"] += 1
+        entries = [e for e in log if isinstance(e, dict) and e.get("tool") == "record_search"]
+        queries = [e.get("query") for e in entries
+                   if isinstance(e.get("query"), dict) and e.get("outcome") != "error"]
+        fired_here = 0
+        for e in entries:
+            q = e.get("query")
+            if not isinstance(q, dict) or not _has(q.get("collectionId")):
+                continue
+            if e.get("outcome") == "error" or e.get("results_ref"):
+                continue
+            available = e.get("results_available")
+            if e.get("results_examined") != 0 or available not in (None, 0):
+                continue
+            names = _names(q)
+            if not names:
+                counts["final_pinned_nil_no_name_exempt"] += 1
+                continue
+            counts["final_pinned_nil"] += 1
+            if any(not _has(sq.get("collectionId")) and _names(sq) == names for sq in queries if sq is not q):
+                continue
+            fired_here += 1
+            hits.append({"final_state": f"{path.parent.name}/{path.name}", "log_id": e.get("id"),
+                         "outcome": e.get("outcome"), "names": names, "collectionId": q.get("collectionId")})
+        counts["final_pinned_nil_unretried"] += fired_here
+        if fired_here:
+            counts["final_states_with_fire"] += 1
+    return counts, hits
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--json", action="store_true", help="print every refused op")
     args = parser.parse_args(argv)
-    counts, hits = measure()
+    counts, all_hits = measure()
+    fcounts, fhits = measure_final_states()
+    hits = [h for h in all_hits if "kind" not in h]  # fulltext arm
     if args.json:
-        print(json.dumps({"counts": counts, "hits": hits}, indent=1))
+        print(json.dumps({"counts": counts, "hits": all_hits,
+                          "final_state_counts": fcounts, "final_state_hits": fhits}, indent=1))
         return 0
     for key in sorted(counts):
         print(f"{key:34} {counts[key]}")
+    _print_record_summary(counts, all_hits, fcounts)
     reliable_runs = {h["run"].split("::")[0] for h in hits if not h["degraded"]}
     print(
         f"\nREFUSED (reliable): {counts['refused']} of {counts['filtered_zero_hit_ops']} filtered "
