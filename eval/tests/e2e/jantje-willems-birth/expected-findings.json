@@ -4,7 +4,7 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Jantje Willems (PID K8C9-ZZC), wife of Jacob Jeltes, was the daughter of Willem Jans and Ikjen Jans. That parentage comes only from a 10 November 1748 Groningen baptism of a Jantjen Willemsen, and that child is very unlikely to be her: the 1772 Groningen banns of Jacob Jeltes and Jantje Willems call the bride the widow of Hindrik Harms Bos, and her first marriage, to Hindrik Harms (Bos) of Haren, was entered at Groningen on 28 April 1764 and solemnized at Haren on 27 May 1764, when a girl baptized in November 1748 would have been fifteen and a half. Pass = the final `tree.gedcomx.json` names no Willem Jans or Ikjen Jans as her parents. A rejected candidate may be documented in `research.json`; writing one into the tree \u2014 even annotated as rejected \u2014 fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
+      "description": "The agent must NOT assert that Jantje Willems (PID K8C9-ZZC), wife of Jacob Jeltes, was the daughter of Willem Jans and Ikjen Jans. That parentage comes only from a 10 November 1748 Groningen baptism of a Jantjen Willemsen, and that child is very unlikely to be her: the 1772 Groningen banns of Jacob Jeltes and Jantje Willems call the bride the widow of Hindrik Harms Bos, and her first marriage, to Hindrik Harms (Bos) of Haren, was entered at Groningen on 28 April 1764 and solemnized at Haren on 27 May 1764, when a girl baptized in November 1748 would have been fifteen and a half. Pass = the final `tree.gedcomx.json` names no Willem Jans or Ikjen Jans as her parents. A rejected candidate may be documented in `research.json`; writing one into the tree \u2014 even annotated as rejected \u2014 fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject, even where the Pass condition above names only a link; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Jantje Willems (K8C9-ZZC)",
         "relation": "parents",
@@ -18,6 +18,9 @@
             "ark:/61903/1:1:4G7B-5Y3Z",
             "ark:/61903/1:1:4G7B-5YMM",
             "ark:/61903/1:1:4G7B-5YW2",
+            "ark:/61903/1:1:4GW3-SX6Z",
+            "ark:/61903/1:1:4GW3-SXN2",
+            "ark:/61903/1:1:4GW3-SXZM",
             "ark:/61903/1:1:QLD5-F418",
             "ark:/61903/1:1:QLD5-F4BM",
             "ark:/61903/1:1:QLD5-YM62"

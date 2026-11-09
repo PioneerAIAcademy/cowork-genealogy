@@ -345,8 +345,9 @@ A wrong-person `avoid` finding (a `relationship` or `person` finding in a
 `hint.identity: "different"` fixture, plus swarbrick-christening f4) carries
 `details.wrong_candidate.records`: the sorted `ark:/61903/1:1:` ARK of every
 persona on every record of the rejected candidate, read live, leaving out any
-record the correct answer or the starting tree also cites; an empty list
-carries a `note` saying why. The guard above does not read it yet; the
+record a correct run's `tree.gedcomx.json` would cite or the starting tree
+already cites (a record the paired negative-conclusion finding cites in
+`research.json` stays listed); an empty list carries a `note` saying why. The guard above does not read it yet; the
 avoid-guard rebuild in issue #3032 does.
 
 An `avoid` finding may be `required: true`; it then gates the verdict
