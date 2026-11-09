@@ -38,10 +38,16 @@ code {{ background: #f2f2f2; padding: 0 .25rem; }}
 <body>
 """
 
-_FOOT = """<p class="note"><a href="privacy">Privacy</a> · <a href="terms">Terms</a></p>
+def _foot(up: str = "") -> str:
+    """The footer. ``up`` is the relative step back to the tier's root: "" on ``/``,
+    "../" on ``/upload/<id>``, so the links keep the prefix the edge strips."""
+    return f"""<p class="note"><a href="{up}privacy">Privacy</a> · <a href="{up}terms">Terms</a></p>
 </body>
 </html>
 """
+
+
+_FOOT = _foot()
 
 # POST from a page, then reload: a <form> would land the browser on the route's JSON.
 # Relative URLs, so the prefix the edge strips stays on.
@@ -117,9 +123,11 @@ def signed_in_page(
     deletion_code: str,
     projects: list[dict[str, Any]],
     openrouter_linked: bool | None,
+    uploads: bool = False,
 ) -> str:
     """The signed-in ``/``. ``openrouter_linked`` None means linking is off, and the page
-    shows no OpenRouter section at all."""
+    shows no OpenRouter section at all. ``uploads`` (UPLOADS_ENABLED) adds each project's
+    Upload link; off, the page links nothing the upload route would refuse."""
     # A user with no FamilySearch id (dev-login) is not shown as a FamilySearch account.
     who = (f"Signed in with the FamilySearch account {escape(email)} "
            f"(FamilySearch id <code>{escape(familysearch_id)}</code>)." if familysearch_id
@@ -130,7 +138,8 @@ def signed_in_page(
             pid = escape(str(p["id"]))
             label = p.get("label")
             name = escape(label) if isinstance(label, str) and label else "<em>Untitled project</em>"
-            items.append(f'<li>{name} — <a href="api/projects/{pid}/download">Download</a></li>')
+            upload = f'<a href="upload/{pid}">Upload a file</a> · ' if uploads else ""
+            items.append(f'<li>{name} — {upload}<a href="api/projects/{pid}/download">Download</a></li>')
         project_list = "<ul>\n" + "\n".join(items) + "\n</ul>"
     else:
         project_list = '<p class="note">No projects yet. Start one from Claude.</p>'
@@ -169,6 +178,147 @@ def refused_page(message: str, *, temporary: bool = False) -> str:
 <p><button type="button" onclick="postAndReload('auth/logout')">Sign out</button></p>
 {_POST_AND_RELOAD}"""
         + _FOOT
+    )
+
+
+def not_found_page() -> str:
+    """``/upload/<id>`` for a project that is missing or someone else's: one page for both,
+    so the answer does not confirm the id exists."""
+    return (_HEAD.format(title="Not found")
+            + '<h1>Project not found</h1>\n<p><a href="../">Back to your projects</a></p>\n' + _foot("../"))
+
+
+# The upload page's script. pdf.js reads the text layer in the browser; the file and its
+# text go to POST /api/projects/{id}/files in one request, with an upload progress bar.
+# Every message is set with textContent, never innerHTML.
+_UPLOAD_SCRIPT = r"""<script type="module">
+import * as pdfjsLib from "../static/pdfjs/pdf.min.mjs";
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("../static/pdfjs/pdf.worker.min.mjs", location.href).href;
+
+const form = document.getElementById("upload");
+const input = document.getElementById("file");
+const button = document.getElementById("send");
+const bar = document.getElementById("progress");
+const status = document.getElementById("status");
+const project = form.dataset.project;
+
+function say(text, error) {
+  status.textContent = text;
+  status.className = error ? "error" : "";
+}
+
+// The text layer, one block per page under a "--- Page N ---" marker, or "" when the PDF
+// has none (a scan). A file that is not a PDF has no text layer to read.
+async function textLayer(file) {
+  const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
+  if (!isPdf) return "";
+  // pdf.js 6 cleans up through the loading task: the document has no destroy().
+  const task = pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), verbosity: 0 });
+  try {
+    const doc = await task.promise;
+    const pages = [];
+    for (let n = 1; n <= doc.numPages; n++) {
+      say(`Reading the PDF's text: page ${n} of ${doc.numPages}…`);
+      const content = await (await doc.getPage(n)).getTextContent();
+      pages.push(content.items.map((item) => item.str).join(" ").trim());
+    }
+    if (!pages.some((page) => page)) return "";
+    return pages.map((page, i) => `--- Page ${i + 1} ---\n${page}`).join("\n\n");
+  } finally {
+    await task.destroy();
+  }
+}
+
+function send(file, text) {
+  return new Promise((resolve) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open("POST", `../api/projects/${project}/files`);
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        bar.value = Math.round((e.loaded / e.total) * 100);
+        say(`Uploading… ${bar.value}%`);
+      }
+    };
+    xhr.onload = () => resolve(xhr);
+    xhr.onerror = () => resolve(null);
+    const body = new FormData();
+    body.append("file", file);
+    if (text) body.append("text", text);
+    xhr.send(body);
+  });
+}
+
+// The upload route's refusals (POST /api/projects/{id}/files), in the patron's words.
+const REFUSED = {
+  401: "Your sign-in has ended. Reload this page to sign in again.",
+  404: "This project was not found, or uploads are turned off.",
+  413: "The file is too large. A file and its text together must be under 25 MB.",
+  415: "TIFF and HEIC images are not accepted. Save the page as JPEG or PNG and upload that.",
+  422: "This PDF has more than one page and no text in it, so it looks like a scan. Upload its pages one at a time, as separate files.",
+  503: "Uploads are not available right now. Try again later.",
+};
+
+form.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const file = input.files[0];
+  if (!file) { say("Choose a file first.", true); return; }
+  button.disabled = true;
+  let text = "";
+  try {
+    text = await textLayer(file);
+  } catch (err) {
+    // An unreadable PDF goes up with no text layer, and the route decides. Logged, so a
+    // failure here is not silent to whoever opens the console.
+    console.error("Reading the PDF's text failed:", err);
+    text = "";
+  }
+  bar.value = 0;
+  bar.hidden = false;
+  say("Uploading…");
+  const xhr = await send(file, text);
+  bar.hidden = true;
+  button.disabled = false;
+  if (xhr === null) { say("The upload did not reach the server. Check your connection and try again.", true); return; }
+  let body = {};
+  try { body = JSON.parse(xhr.responseText); } catch (err) { body = {}; }
+  if (xhr.status === 200) {
+    say(`Uploaded ${body.path}` + (body.textPath ? ", with its text layer." : ". No text layer was found in it."));
+    form.reset();
+  } else if (xhr.status === 429) {
+    const wait = xhr.getResponseHeader("Retry-After");
+    say(`Other uploads are in progress. Try again${wait ? ` in ${wait} seconds` : " shortly"}.`, true);
+  } else if (REFUSED[xhr.status]) {
+    say(REFUSED[xhr.status], true);
+  } else {
+    say(`The upload failed (${xhr.status}${body.detail ? `: ${body.detail}` : ""}).`, true);
+  }
+});
+</script>
+"""
+
+
+def upload_page(*, project_id: str, label: str | None) -> str:
+    """``/upload/<id>`` for the project's owner: choose a file, pdf.js reads a PDF's text
+    layer in the browser, and both go to the upload route with a progress bar. Served at
+    ``/upload/<id>`` (no trailing slash), so every link and import steps up with "../"."""
+    name = escape(label) if isinstance(label, str) and label else "<em>Untitled project</em>"
+    return (
+        _HEAD.format(title="Upload a file")
+        .replace("</style>", "progress { width: 100%; }\n.error { color: #b00020; }\n</style>")
+        + f"""<h1>Upload a file</h1>
+<p>To the project {name}.</p>
+<p class="note">A PDF's text is read here in your browser and saved beside the file, so the research agent can
+read it. A PDF of several pages with no text (a scan) is refused: upload its pages one at a time.
+JPEG and PNG images are accepted; TIFF and HEIC are not.</p>
+<form id="upload" data-project="{escape(project_id)}">
+<p><input type="file" id="file" name="file" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"></p>
+<p><button type="submit" id="send">Upload</button></p>
+<progress id="progress" max="100" value="0" hidden></progress>
+<p id="status" role="status" aria-live="polite"></p>
+</form>
+<p><a href="../">Back to your projects</a></p>
+{_UPLOAD_SCRIPT}"""
+        + _foot("../")
     )
 
 

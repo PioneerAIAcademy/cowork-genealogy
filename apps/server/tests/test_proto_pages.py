@@ -7,6 +7,7 @@ is ``test_proto_admission.py``'s; the ``next`` shapes ``SAFE_NEXT_RE`` admits ar
 from __future__ import annotations
 
 import asyncio
+import pathlib
 from urllib.parse import parse_qs, urlsplit
 
 import httpx
@@ -278,3 +279,105 @@ async def test_a_sign_in_from_the_landing_page_ends_on_it(monkeypatch):
         assert r.status_code in (302, 307) and urlsplit(r.headers["location"]).path == "/", r.text
         page = await c.get("/")
     assert page.status_code == 200 and "You're signed in" in page.text
+
+
+# ── the upload page and pdf.js (PR 2) ───────────────────────────────────────────
+
+PID = "proj_0123456789abcdef"
+PDFJS = pathlib.Path(__file__).resolve().parent.parent / "proto" / "web" / "static" / "pdfjs"
+
+
+@pytest.fixture
+def uploads_on(monkeypatch):
+    monkeypatch.setenv("UPLOADS_ENABLED", "true")
+
+
+async def test_uploads_off_hides_the_links_and_the_page():
+    store = _store_with({PID: {"title": "Ugo"}})
+    async with make_client(store, None) as c:
+        home = await c.get("/")
+        page = await c.get(f"/upload/{PID}")
+    assert "Upload a file" not in home.text and f"upload/{PID}" not in home.text
+    assert page.status_code == 404
+
+
+async def test_uploads_on_links_each_project_to_its_page(uploads_on):
+    store = _store_with({PID: {"title": "Ugo"}})
+    r = await _home(store)
+    assert f'href="upload/{PID}"' in r.text
+
+
+async def test_the_owner_gets_the_upload_page(uploads_on):
+    store = _store_with({PID: {"title": "<b>Ugo</b>"}})
+    async with make_client(store, None) as c:
+        r = await c.get(f"/upload/{PID}")
+    assert r.status_code == 200 and "Upload a file" in r.text
+    assert "&lt;b&gt;Ugo&lt;/b&gt;" in r.text and "<b>Ugo</b>" not in r.text
+    assert f'data-project="{PID}"' in r.text
+    assert 'from "../static/pdfjs/pdf.min.mjs"' in r.text and "../api/projects/${project}/files" in r.text
+    assert 'href="../privacy"' in r.text, "links step up from /upload/<id>"
+    assert r.headers["cache-control"] == "private, no-store" and "cookie" in r.headers["vary"].lower()
+    assert auth.deletion_code(USER_A.id) not in r.text
+
+
+async def test_a_missing_and_a_foreign_project_get_the_same_404(uploads_on):
+    store = FakeStore()
+    store.owners["proj_00000000000000bb"] = "usr_b"
+    async with make_client(store, None) as c:
+        foreign = await c.get("/upload/proj_00000000000000bb")
+        missing = await c.get("/upload/proj_00000000000000cc")
+    assert foreign.status_code == missing.status_code == 404
+    assert foreign.text == missing.text and "Project not found" in foreign.text
+
+
+@pytest.mark.parametrize("pid", ["proj_1", "PROJ_0123456789abcdef", "proj_0123456789ABCDEF", "x"])
+async def test_an_id_outside_the_minted_shape_is_a_404_before_any_cookie(uploads_on, pid):
+    async with make_client(FakeStore(), None, user=None) as c:
+        r = await c.get(f"/upload/{pid}")
+    assert r.status_code == 404 and "location" not in r.headers
+
+
+async def test_signed_out_goes_to_familysearch_and_returns_to_the_page(monkeypatch, uploads_on):
+    """Done-when: a signed-out browser on an upload link signs in and returns to it."""
+    _fs_on(monkeypatch, "http://t")
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    async with make_client(store, None, user=None) as c:
+        first = await c.get(f"/upload/{PID}")
+        assert first.status_code == 303
+        assert first.headers["location"] == f"/auth/familysearch/login?next=upload/{PID}"
+        r = await _sign_in(c, f"upload/{PID}")
+        assert r.status_code in (302, 307) and urlsplit(r.headers["location"]).path == f"/upload/{PID}", r.text
+        uid = next(u.id for u in store.users.values() if u.email == "a@example.org")
+        store.owners[PID] = uid
+        page = await c.get(f"/upload/{PID}")
+    assert page.status_code == 200 and "Upload a file" in page.text
+
+
+async def test_signed_out_with_no_familysearch_goes_to_the_landing_page(uploads_on):
+    async with make_client(FakeStore(), None, user=None) as c:
+        r = await c.get(f"/upload/{PID}")
+    assert r.status_code == 303 and r.headers["location"] == "/"
+
+
+async def test_a_blocked_user_gets_the_refusal_on_the_upload_page(uploads_on):
+    store = _store_with({PID: None})
+    store.block(USER_A.id)
+    async with make_client(store, None) as c:
+        r = await c.get(f"/upload/{PID}")
+    assert r.status_code == 403 and "is blocked" in r.text and "Upload a file" not in r.text
+
+
+@pytest.mark.parametrize("name", ["pdf.min.mjs", "pdf.worker.min.mjs"])
+async def test_pdfjs_is_served_from_the_tier(name):
+    async with make_client(FakeStore(), None, user=None) as c:
+        r = await c.get(f"/static/pdfjs/{name}")
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/javascript")
+    assert r.content == (PDFJS / name).read_bytes()
+
+
+@pytest.mark.parametrize("name", ["README.md", "LICENSE", "..%2Fapp.py", "pdf.mjs"])
+async def test_only_the_two_pdfjs_files_are_served(name):
+    async with make_client(FakeStore(), None, user=None) as c:
+        r = await c.get(f"/static/pdfjs/{name}")
+    assert r.status_code == 404
