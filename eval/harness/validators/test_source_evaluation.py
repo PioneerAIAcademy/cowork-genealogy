@@ -1348,6 +1348,9 @@ _AGE_FINDING_HEAD_RE = re.compile(r"^\W*finding\s+\d+", re.IGNORECASE)
 _AGE_ROW_RE = re.compile(r"^[^|\n]*\|[^|\n]*\||^[-:+ ]*[-:]+[+|][-:+| ]*$")
 
 
+_AGE_CONFLICT_TAG_RE = re.compile(r"\[\s*conf", re.IGNORECASE)
+
+
 def _age_flag_text(text: str) -> bool:
     """The text carries a conflict flag that is not denied in the same breath."""
     return bool(_AGE_CONFLICT_WORD_RE.search(text)) and not _AGE_DENIED_RE.search(text)
@@ -1433,7 +1436,8 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
         if not cells or not _AGE_BIRTH_ROW_LABEL_RE.search(cells[0]):
             continue
         for j, cell in enumerate(cells[1:], start=1):
-            if _age_flag_text(cell):
+            # A [CONFLICT] tag on a birth row is a flag whatever else the cell says.
+            if _AGE_CONFLICT_TAG_RE.search(cell) or _age_flag_text(cell):
                 label = header[j] if j < len(header) else ""
                 flagged += _age_source_hits(f"{label} {cell}", sources)
                 flagged += aliases.get(label.lower(), [])

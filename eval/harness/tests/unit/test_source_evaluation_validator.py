@@ -2196,3 +2196,20 @@ def test_a_census_flagged_inside_its_own_lettered_birth_item_is_still_a_flag():
             "The weakest areas are: (a) both marriages are unsourced, (b) the 1850 census birth year of 1839 "
             "conflicts with the profile's birth date, (c) the residences are unsourced." + _TAIL_CONFLICT
         )
+
+
+_TAG_HEADER = "Fact        | Profile Value | Cen-1850 | Cen-1865\n" "------------+---------------+----------+---------\n"
+
+
+def test_a_conflict_tag_on_a_birth_cell_counts_whatever_else_the_cell_says():
+    """The lead's shape: "1839 [CONFLICT] agrees with tombstone" carries a denial phrase and a tag."""
+    row = "Birth date  | 30 Nov 1838   | Indexed 1839 [CONFLICT] agrees with tombstone | Indexed 1839; range Bet 1838-1839\n"
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(_TAG_HEADER + row + _TAIL_CONFLICT)
+
+
+def test_a_denial_phrase_without_a_conflict_tag_is_still_not_a_flag():
+    """The other direction: the same wording with no tag is a denial, as before."""
+    row = "Birth date  | 30 Nov 1838   | Indexed 1839, consistent with the profile | Indexed 1839; range Bet 1838-1839\n"
+    _age_check(_TAG_HEADER + row + _TAIL_CONFLICT)
+
