@@ -84,37 +84,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The verdict (Match) is correct. The deed dated 31 December 1829 names 'Iram Hyde of the town of Jackson in the County of Washington and State of New York and Mary his wife,' which unambiguously ties the rare given name, the known wife Mary Robertson, and the established Jackson residence together. The new_vital_info flag (false) is correct: Mary is already on the Couple relationship, the deed provides no birth, death, or marriage date/place, and residences are not vital facts. All factual claims are supported by the hit content and tree state."
+            "rationale": "The skill correctly identified the deed as a Match for Iram Hyde (I1), citing the rare given name 'Iram Hyde,' the known wife Mary, and the established Jackson, Washington Co., NY residence. The verdict (match) and new_vital_info (false) align with the gold standard. The rationale accurately notes that Mary is already on the tree as a Couple partner and that the deed adds no birth, death, or marriage date/place. No fabricated claims are present; all assertions are grounded in the sidecar_read content and tree_query response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed everything required: it read the hit, queried the tree person and relationships, evaluated the match against the tree state, recorded the verdict with rationale, and appended the hit_verdicts row. The delegation asked for evaluation of one hit against one person, and all required work was completed."
+            "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1/I2/I3, appended a hit_verdicts row with the correct fields (log_id, hit_id, person_id, verdict, new_vital_info, rationale), and produced the four contract lines plus a plain summary after the '---'. Nothing required by the task was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments. project_context and tree_query took no expected_args (live calls). sidecar_read correctly referenced the hit by its full ref 'results/log_008.json#3QS7-99WC-KLYK'. research_append correctly appended a hit_verdicts entry with the right section, op, and entry structure including log_id, hit_id, person_id, verdict, new_vital_info, and rationale. No tool calls failed or returned fixture_not_found errors."
+            "rationale": "All tool calls used correct arguments: project_context used the correct projectPath, sidecar_read used the exact hitRef 'results/log_008.json#3QS7-99WC-KLYK', tree_query included all relevant person IDs [I1, I2, I3], and research_append used the correct section ('hit_verdicts'), op ('append'), and entry fields. No fixture_not_found errors occurred; all calls matched live fixtures successfully."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides. From the hit: the deed names 'Iram Hyde of the town of Jackson in the County of Washington and State of New York and Mary his wife' dated 1829. From the tree: Iram is in Jackson from 1850 onward, and his Couple is with Mary Robertson. The rationale correctly identifies that the rare given name, the known wife, and the established location tie them together unambiguously, making it a Match. The reasoning is concrete and grounded in both the hit and tree."
+            "rationale": "The rationale names the specific deciding facts from both the hit and the tree: the rare given name 'Iram Hyde,' the named wife 'Mary his wife' matching Mary Robertson already on the Couple edge, and the Jackson, Washington Co., NY location matching the tree's established residence. These three converging identifiers \u2014 rare name, known wife, known place \u2014 are precisely what makes this a Match rather than a Possible Match. The reasoning is specific and grounded in both the deed text and the tree state."
           },
           {
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "The flag (false) is correct and the rationale explains why. The deed names Mary as 'his wife' but provides no marriage date or place, so it does not date or place a marriage. Mary is already on the Couple relationship, so no new spouse is added. The deed establishes a residence in Jackson in 1829, but residences are not vital facts per the rules. The rationale correctly states 'Because Mary is already on the tree and the deed adds no birth, death, or marriage date or place, it brings no new vital information.'"
+            "rationale": "The flag is correctly set to false, and the rationale explains why: Mary is already on Iram's Couple edge (so she is not a new relative), the deed provides no birth, death, or marriage date or place (only an undated 'Mary his wife'), and a residence is not a vital fact under the rules. The rationale explicitly states 'No new birth, death, marriage date or place, or unrecorded relative is added,' which correctly applies the rules for what constitutes new vital information."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the '---' is one sentence and meets all criteria. It states what the record is ('A Washington County, New York deed dated 31 December 1829'), whether it is the person ('names \"Iram Hyde of the town of Jackson in the County of Washington and State of New York and Mary his wife,\" which ties the rare given name, the known wife, and the established Jackson residence together unambiguously \u2014 a clear match'), and whether it holds something new ('brings no new vital information'). It uses plain language with no labels, headings, or field names, and is accessible to a beginner."
+            "rationale": "The summary after the '---' is two plain sentences readable by a beginner: it identifies the record (a Washington County, New York deed dated 31 December 1829), names the identifying facts (rare given name, known wife Mary, established Jackson residence), states the verdict (clear match), and explains why there is no new vital information (Mary already on tree, no birth/death/marriage date or place added). No identifiers, field names, file names, or labels appear in the summary text."
           }
         ],
         "review_dimensions": [
@@ -122,37 +122,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The verdict (Match) is correct. The deed dated 31 December 1829 names 'Iram Hyde of the town of Jackson in the County of Washington and State of New York and Mary his wife,' which unambiguously ties the rare given name, the known wife Mary Robertson, and the established Jackson residence together. The new_vital_info flag (false) is correct: Mary is already on the Couple relationship, the deed provides no birth, death, or marriage date/place, and residences are not vital facts. All factual claims are supported by the hit content and tree state."
+            "rationale": "The skill correctly identified the deed as a Match for Iram Hyde (I1), citing the rare given name 'Iram Hyde,' the known wife Mary, and the established Jackson, Washington Co., NY residence. The verdict (match) and new_vital_info (false) align with the gold standard. The rationale accurately notes that Mary is already on the tree as a Couple partner and that the deed adds no birth, death, or marriage date/place. No fabricated claims are present; all assertions are grounded in the sidecar_read content and tree_query response."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed everything required: it read the hit, queried the tree person and relationships, evaluated the match against the tree state, recorded the verdict with rationale, and appended the hit_verdicts row. The delegation asked for evaluation of one hit against one person, and all required work was completed."
+            "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1/I2/I3, appended a hit_verdicts row with the correct fields (log_id, hit_id, person_id, verdict, new_vital_info, rationale), and produced the four contract lines plus a plain summary after the '---'. Nothing required by the task was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments. project_context and tree_query took no expected_args (live calls). sidecar_read correctly referenced the hit by its full ref 'results/log_008.json#3QS7-99WC-KLYK'. research_append correctly appended a hit_verdicts entry with the right section, op, and entry structure including log_id, hit_id, person_id, verdict, new_vital_info, and rationale. No tool calls failed or returned fixture_not_found errors."
+            "rationale": "All tool calls used correct arguments: project_context used the correct projectPath, sidecar_read used the exact hitRef 'results/log_008.json#3QS7-99WC-KLYK', tree_query included all relevant person IDs [I1, I2, I3], and research_append used the correct section ('hit_verdicts'), op ('append'), and entry fields. No fixture_not_found errors occurred; all calls matched live fixtures successfully."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides. From the hit: the deed names 'Iram Hyde of the town of Jackson in the County of Washington and State of New York and Mary his wife' dated 1829. From the tree: Iram is in Jackson from 1850 onward, and his Couple is with Mary Robertson. The rationale correctly identifies that the rare given name, the known wife, and the established location tie them together unambiguously, making it a Match. The reasoning is concrete and grounded in both the hit and tree."
+            "rationale": "The rationale names the specific deciding facts from both the hit and the tree: the rare given name 'Iram Hyde,' the named wife 'Mary his wife' matching Mary Robertson already on the Couple edge, and the Jackson, Washington Co., NY location matching the tree's established residence. These three converging identifiers \u2014 rare name, known wife, known place \u2014 are precisely what makes this a Match rather than a Possible Match. The reasoning is specific and grounded in both the deed text and the tree state."
           },
           {
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "The flag (false) is correct and the rationale explains why. The deed names Mary as 'his wife' but provides no marriage date or place, so it does not date or place a marriage. Mary is already on the Couple relationship, so no new spouse is added. The deed establishes a residence in Jackson in 1829, but residences are not vital facts per the rules. The rationale correctly states 'Because Mary is already on the tree and the deed adds no birth, death, or marriage date or place, it brings no new vital information.'"
+            "rationale": "The flag is correctly set to false, and the rationale explains why: Mary is already on Iram's Couple edge (so she is not a new relative), the deed provides no birth, death, or marriage date or place (only an undated 'Mary his wife'), and a residence is not a vital fact under the rules. The rationale explicitly states 'No new birth, death, marriage date or place, or unrecorded relative is added,' which correctly applies the rules for what constitutes new vital information."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the '---' is one sentence and meets all criteria. It states what the record is ('A Washington County, New York deed dated 31 December 1829'), whether it is the person ('names \"Iram Hyde of the town of Jackson in the County of Washington and State of New York and Mary his wife,\" which ties the rare given name, the known wife, and the established Jackson residence together unambiguously \u2014 a clear match'), and whether it holds something new ('brings no new vital information'). It uses plain language with no labels, headings, or field names, and is accessible to a beginner."
+            "rationale": "The summary after the '---' is two plain sentences readable by a beginner: it identifies the record (a Washington County, New York deed dated 31 December 1829), names the identifying facts (rare given name, known wife Mary, established Jackson residence), states the verdict (clear match), and explains why there is no new vital information (Mary already on tree, no birth/death/marriage date or place added). No identifiers, field names, file names, or labels appear in the summary text."
           }
         ]
       },
@@ -1042,45 +1042,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The verdict (Match) is correct. The deed dated 31 December 1829 names 'Iram Hyde of the town of Jackson in the County of Washington and State of New York and Mary his wife,' which unambiguously ties the rare given name, the known wife Mary Robertson, and the established Jackson residence together. The new_vital_info flag (false) is correct: Mary is already on the Couple relationship, the deed provides no birth, death, or marriage date/place, and residences are not vital facts. All factual claims are supported by the hit content and tree state."
+                "rationale": "The skill correctly identified the deed as a Match for Iram Hyde (I1), citing the rare given name 'Iram Hyde,' the known wife Mary, and the established Jackson, Washington Co., NY residence. The verdict (match) and new_vital_info (false) align with the gold standard. The rationale accurately notes that Mary is already on the tree as a Couple partner and that the deed adds no birth, death, or marriage date/place. No fabricated claims are present; all assertions are grounded in the sidecar_read content and tree_query response."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed everything required: it read the hit, queried the tree person and relationships, evaluated the match against the tree state, recorded the verdict with rationale, and appended the hit_verdicts row. The delegation asked for evaluation of one hit against one person, and all required work was completed."
+                "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1/I2/I3, appended a hit_verdicts row with the correct fields (log_id, hit_id, person_id, verdict, new_vital_info, rationale), and produced the four contract lines plus a plain summary after the '---'. Nothing required by the task was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All four MCP tool calls passed correct arguments. project_context and tree_query took no expected_args (live calls). sidecar_read correctly referenced the hit by its full ref 'results/log_008.json#3QS7-99WC-KLYK'. research_append correctly appended a hit_verdicts entry with the right section, op, and entry structure including log_id, hit_id, person_id, verdict, new_vital_info, and rationale. No tool calls failed or returned fixture_not_found errors."
+                "rationale": "All tool calls used correct arguments: project_context used the correct projectPath, sidecar_read used the exact hitRef 'results/log_008.json#3QS7-99WC-KLYK', tree_query included all relevant person IDs [I1, I2, I3], and research_append used the correct section ('hit_verdicts'), op ('append'), and entry fields. No fixture_not_found errors occurred; all calls matched live fixtures successfully."
               },
               {
                 "source": "rubric",
                 "name": "Verdict reasoning",
                 "score": 3,
-                "rationale": "The rationale names the deciding facts on both sides. From the hit: the deed names 'Iram Hyde of the town of Jackson in the County of Washington and State of New York and Mary his wife' dated 1829. From the tree: Iram is in Jackson from 1850 onward, and his Couple is with Mary Robertson. The rationale correctly identifies that the rare given name, the known wife, and the established location tie them together unambiguously, making it a Match. The reasoning is concrete and grounded in both the hit and tree."
+                "rationale": "The rationale names the specific deciding facts from both the hit and the tree: the rare given name 'Iram Hyde,' the named wife 'Mary his wife' matching Mary Robertson already on the Couple edge, and the Jackson, Washington Co., NY location matching the tree's established residence. These three converging identifiers \u2014 rare name, known wife, known place \u2014 are precisely what makes this a Match rather than a Possible Match. The reasoning is specific and grounded in both the deed text and the tree state."
               },
               {
                 "source": "rubric",
                 "name": "New vital information",
                 "score": 3,
-                "rationale": "The flag (false) is correct and the rationale explains why. The deed names Mary as 'his wife' but provides no marriage date or place, so it does not date or place a marriage. Mary is already on the Couple relationship, so no new spouse is added. The deed establishes a residence in Jackson in 1829, but residences are not vital facts per the rules. The rationale correctly states 'Because Mary is already on the tree and the deed adds no birth, death, or marriage date or place, it brings no new vital information.'"
+                "rationale": "The flag is correctly set to false, and the rationale explains why: Mary is already on Iram's Couple edge (so she is not a new relative), the deed provides no birth, death, or marriage date or place (only an undated 'Mary his wife'), and a residence is not a vital fact under the rules. The rationale explicitly states 'No new birth, death, marriage date or place, or unrecorded relative is added,' which correctly applies the rules for what constitutes new vital information."
               },
               {
                 "source": "rubric",
                 "name": "Summary for the user",
                 "score": 3,
-                "rationale": "The summary after the '---' is one sentence and meets all criteria. It states what the record is ('A Washington County, New York deed dated 31 December 1829'), whether it is the person ('names \"Iram Hyde of the town of Jackson in the County of Washington and State of New York and Mary his wife,\" which ties the rare given name, the known wife, and the established Jackson residence together unambiguously \u2014 a clear match'), and whether it holds something new ('brings no new vital information'). It uses plain language with no labels, headings, or field names, and is accessible to a beginner."
+                "rationale": "The summary after the '---' is two plain sentences readable by a beginner: it identifies the record (a Washington County, New York deed dated 31 December 1829), names the identifying facts (rare given name, known wife Mary, established Jackson residence), states the verdict (clear match), and explains why there is no new vital information (Mary already on tree, no birth/death/marriage date or place added). No identifiers, field names, file names, or labels appear in the summary text."
               }
             ],
-            "judge_cost_usd": 0.019223,
+            "judge_cost_usd": 0.057129,
             "duration_ms": 14473.169100000177,
             "error": null,
             "input_tokens": 14423,
             "cached_input_tokens": 0,
-            "output_tokens": 960
+            "output_tokens": 924
           },
           "started_at": 1793780355.1043625,
           "ended_at": 1793780498.0288534
@@ -1106,37 +1106,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified the hit as a Match. The church baptism register entry names 'Mary Robertson & Hiram Hy[de]' as parents, directly confirming Iram F. Hyde (I1) through his known spouse Mary Robertson (I2) and the variant spelling of his name. The verdict is factually sound: the wife's name matches exactly, the man's name is a standard variant, and they are in the same spousal relationship as recorded in the tree. Claude correctly flagged new_vital_info as false because the record is already extracted (S7/src_006), and correctly noted alreadyExtracted: true. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly identified the hit as a Match with no new vital information and alreadyExtracted: true. The hit content shows 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child in the 1834-36 Washington Co., NY church register. The tree confirms Iram Hyde's spouse is Mary Robertson (I2), and the church register is already on file as S7/src_006 with the record URL matching the hitRef. The verdict, flag, and alreadyExtracted status are all factually correct and supported by the tool responses."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed all required elements: evaluated the hit against the tree person (I1), rendered a verdict (Match), assessed the new vital information flag (false), noted the record was already extracted, and persisted the hit_verdicts row via research_append. The skill completed its full task without silent omissions."
+            "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1/I2/I3, recorded the verdict in hit_verdicts via research_append, and produced the four contract lines plus a plain summary after the `---`. No required step was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments. project_context received the correct projectPath; sidecar_read received the correct ref (results/log_017.json#3Q9M-CSK3-ZSLR) and projectPath; tree_query received the correct personIds [I1, I2, I3] and projectPath; research_append received correct section (hit_verdicts), op (append), and entry with log_id (log_017), hit_id (3Q9M-CSK3-ZSLR), person_id (I1), verdict (match), new_vital_info (false), and a detailed rationale. No critical identifiers were wrong, no calls landed in fixture_not_found, and no noisy extra args were added."
+            "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath. sidecar_read used the exact hitRef 'results/log_017.json#3Q9M-CSK3-ZSLR' as specified. tree_query queried personIds [I1, I2, I3] which is appropriate for the target and their relationships. research_append correctly wrote to hit_verdicts with the right log_id, hit_id, person_id, verdict, new_vital_info, and rationale. All calls matched live fixtures with no fixture_not_found errors."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "Claude's rationale names the deciding facts on both sides. From the hit: 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child. From the tree: Iram F. Hyde (I1) is married to Mary Robertson (I2) in the same spousal relationship. The rationale correctly identifies the name match (Mary Robertson exact, Hiram Hy a standard variant of Iram) and the relationship tie (both are parents in the same couple relationship), which is sufficient for a Match verdict. The facts are read from the hit and tree as required."
+            "rationale": "The rationale names the deciding facts on both sides: the hit lists 'Mary Robertson & Hiram Hy[de]' as parents, which directly pairs the target's known wife (I2, Mary Robertson) with 'Hiram Hyde' \u2014 a standard variant of Iram F. Hyde \u2014 in the same spousal relationship recorded in the tree. The rationale also notes the record is already extracted as S7/src_006, justifying alreadyExtracted: true. The Match verdict is grounded in the named relative (wife Mary Robertson) appearing in the same relationship as on the person's edges, which meets the pass criterion for a Match."
           },
           {
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "Claude correctly flagged new_vital_info as false and gave the correct reason: the record is already extracted as S7 (src_006). The rules state the flag is false for a hit already extracted, and Claude applied this rule correctly. The rationale explicitly states 'The record is already extracted as S7 (src_006), so new_vital_info is false,' which satisfies the requirement to say what makes it not new."
+            "rationale": "The flag is false and alreadyExtracted is true. The rationale correctly explains that the record is already extracted as S7 (src_006), which is confirmed by the tree_query showing S7 in the Couple relationship R1's sourceRefs and project_context listing the hitRef URL under src_006's recordIds. The rules state the flag is false for a hit already extracted, and the rationale names this specific reason."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the `---` is two plain sentences a beginner can read. It says what the record is (a Washington County, New York church baptism register entry, undated within 1834\u20131836), whether it is the person (yes, confirmed by wife's name and variant spelling of husband's name), the fact that decided it (the wife's name matches exactly), and whether it holds something new (no, already extracted). No labels, headings, field names, or identifiers appear in the summary itself; it is plain narrative."
+            "rationale": "The summary after the `---` is one sentence that identifies the record type (Washington County, NY church baptism register), the date range (1834-1836), the content (listing 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child), the identification basis (wife's name matches Iram Hyde's known spouse exactly), and the already-extracted status. It uses no identifiers, field names, or file names, and stays within two sentences. It is plain and readable for a beginner."
           }
         ],
         "review_dimensions": [
@@ -1144,37 +1144,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified the hit as a Match. The church baptism register entry names 'Mary Robertson & Hiram Hy[de]' as parents, directly confirming Iram F. Hyde (I1) through his known spouse Mary Robertson (I2) and the variant spelling of his name. The verdict is factually sound: the wife's name matches exactly, the man's name is a standard variant, and they are in the same spousal relationship as recorded in the tree. Claude correctly flagged new_vital_info as false because the record is already extracted (S7/src_006), and correctly noted alreadyExtracted: true. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly identified the hit as a Match with no new vital information and alreadyExtracted: true. The hit content shows 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child in the 1834-36 Washington Co., NY church register. The tree confirms Iram Hyde's spouse is Mary Robertson (I2), and the church register is already on file as S7/src_006 with the record URL matching the hitRef. The verdict, flag, and alreadyExtracted status are all factually correct and supported by the tool responses."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed all required elements: evaluated the hit against the tree person (I1), rendered a verdict (Match), assessed the new vital information flag (false), noted the record was already extracted, and persisted the hit_verdicts row via research_append. The skill completed its full task without silent omissions."
+            "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1/I2/I3, recorded the verdict in hit_verdicts via research_append, and produced the four contract lines plus a plain summary after the `---`. No required step was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments. project_context received the correct projectPath; sidecar_read received the correct ref (results/log_017.json#3Q9M-CSK3-ZSLR) and projectPath; tree_query received the correct personIds [I1, I2, I3] and projectPath; research_append received correct section (hit_verdicts), op (append), and entry with log_id (log_017), hit_id (3Q9M-CSK3-ZSLR), person_id (I1), verdict (match), new_vital_info (false), and a detailed rationale. No critical identifiers were wrong, no calls landed in fixture_not_found, and no noisy extra args were added."
+            "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath. sidecar_read used the exact hitRef 'results/log_017.json#3Q9M-CSK3-ZSLR' as specified. tree_query queried personIds [I1, I2, I3] which is appropriate for the target and their relationships. research_append correctly wrote to hit_verdicts with the right log_id, hit_id, person_id, verdict, new_vital_info, and rationale. All calls matched live fixtures with no fixture_not_found errors."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "Claude's rationale names the deciding facts on both sides. From the hit: 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child. From the tree: Iram F. Hyde (I1) is married to Mary Robertson (I2) in the same spousal relationship. The rationale correctly identifies the name match (Mary Robertson exact, Hiram Hy a standard variant of Iram) and the relationship tie (both are parents in the same couple relationship), which is sufficient for a Match verdict. The facts are read from the hit and tree as required."
+            "rationale": "The rationale names the deciding facts on both sides: the hit lists 'Mary Robertson & Hiram Hy[de]' as parents, which directly pairs the target's known wife (I2, Mary Robertson) with 'Hiram Hyde' \u2014 a standard variant of Iram F. Hyde \u2014 in the same spousal relationship recorded in the tree. The rationale also notes the record is already extracted as S7/src_006, justifying alreadyExtracted: true. The Match verdict is grounded in the named relative (wife Mary Robertson) appearing in the same relationship as on the person's edges, which meets the pass criterion for a Match."
           },
           {
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "Claude correctly flagged new_vital_info as false and gave the correct reason: the record is already extracted as S7 (src_006). The rules state the flag is false for a hit already extracted, and Claude applied this rule correctly. The rationale explicitly states 'The record is already extracted as S7 (src_006), so new_vital_info is false,' which satisfies the requirement to say what makes it not new."
+            "rationale": "The flag is false and alreadyExtracted is true. The rationale correctly explains that the record is already extracted as S7 (src_006), which is confirmed by the tree_query showing S7 in the Couple relationship R1's sourceRefs and project_context listing the hitRef URL under src_006's recordIds. The rules state the flag is false for a hit already extracted, and the rationale names this specific reason."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the `---` is two plain sentences a beginner can read. It says what the record is (a Washington County, New York church baptism register entry, undated within 1834\u20131836), whether it is the person (yes, confirmed by wife's name and variant spelling of husband's name), the fact that decided it (the wife's name matches exactly), and whether it holds something new (no, already extracted). No labels, headings, field names, or identifiers appear in the summary itself; it is plain narrative."
+            "rationale": "The summary after the `---` is one sentence that identifies the record type (Washington County, NY church baptism register), the date range (1834-1836), the content (listing 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child), the identification basis (wife's name matches Iram Hyde's known spouse exactly), and the already-extracted status. It uses no identifiers, field names, or file names, and stays within two sentences. It is plain and readable for a beginner."
           }
         ]
       },
@@ -2063,45 +2063,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified the hit as a Match. The church baptism register entry names 'Mary Robertson & Hiram Hy[de]' as parents, directly confirming Iram F. Hyde (I1) through his known spouse Mary Robertson (I2) and the variant spelling of his name. The verdict is factually sound: the wife's name matches exactly, the man's name is a standard variant, and they are in the same spousal relationship as recorded in the tree. Claude correctly flagged new_vital_info as false because the record is already extracted (S7/src_006), and correctly noted alreadyExtracted: true. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly identified the hit as a Match with no new vital information and alreadyExtracted: true. The hit content shows 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child in the 1834-36 Washington Co., NY church register. The tree confirms Iram Hyde's spouse is Mary Robertson (I2), and the church register is already on file as S7/src_006 with the record URL matching the hitRef. The verdict, flag, and alreadyExtracted status are all factually correct and supported by the tool responses."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: evaluated the hit against the tree person (I1), rendered a verdict (Match), assessed the new vital information flag (false), noted the record was already extracted, and persisted the hit_verdicts row via research_append. The skill completed its full task without silent omissions."
+                "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1/I2/I3, recorded the verdict in hit_verdicts via research_append, and produced the four contract lines plus a plain summary after the `---`. No required step was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All four MCP tool calls passed correct arguments. project_context received the correct projectPath; sidecar_read received the correct ref (results/log_017.json#3Q9M-CSK3-ZSLR) and projectPath; tree_query received the correct personIds [I1, I2, I3] and projectPath; research_append received correct section (hit_verdicts), op (append), and entry with log_id (log_017), hit_id (3Q9M-CSK3-ZSLR), person_id (I1), verdict (match), new_vital_info (false), and a detailed rationale. No critical identifiers were wrong, no calls landed in fixture_not_found, and no noisy extra args were added."
+                "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath. sidecar_read used the exact hitRef 'results/log_017.json#3Q9M-CSK3-ZSLR' as specified. tree_query queried personIds [I1, I2, I3] which is appropriate for the target and their relationships. research_append correctly wrote to hit_verdicts with the right log_id, hit_id, person_id, verdict, new_vital_info, and rationale. All calls matched live fixtures with no fixture_not_found errors."
               },
               {
                 "source": "rubric",
                 "name": "Verdict reasoning",
                 "score": 3,
-                "rationale": "Claude's rationale names the deciding facts on both sides. From the hit: 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child. From the tree: Iram F. Hyde (I1) is married to Mary Robertson (I2) in the same spousal relationship. The rationale correctly identifies the name match (Mary Robertson exact, Hiram Hy a standard variant of Iram) and the relationship tie (both are parents in the same couple relationship), which is sufficient for a Match verdict. The facts are read from the hit and tree as required."
+                "rationale": "The rationale names the deciding facts on both sides: the hit lists 'Mary Robertson & Hiram Hy[de]' as parents, which directly pairs the target's known wife (I2, Mary Robertson) with 'Hiram Hyde' \u2014 a standard variant of Iram F. Hyde \u2014 in the same spousal relationship recorded in the tree. The rationale also notes the record is already extracted as S7/src_006, justifying alreadyExtracted: true. The Match verdict is grounded in the named relative (wife Mary Robertson) appearing in the same relationship as on the person's edges, which meets the pass criterion for a Match."
               },
               {
                 "source": "rubric",
                 "name": "New vital information",
                 "score": 3,
-                "rationale": "Claude correctly flagged new_vital_info as false and gave the correct reason: the record is already extracted as S7 (src_006). The rules state the flag is false for a hit already extracted, and Claude applied this rule correctly. The rationale explicitly states 'The record is already extracted as S7 (src_006), so new_vital_info is false,' which satisfies the requirement to say what makes it not new."
+                "rationale": "The flag is false and alreadyExtracted is true. The rationale correctly explains that the record is already extracted as S7 (src_006), which is confirmed by the tree_query showing S7 in the Couple relationship R1's sourceRefs and project_context listing the hitRef URL under src_006's recordIds. The rules state the flag is false for a hit already extracted, and the rationale names this specific reason."
               },
               {
                 "source": "rubric",
                 "name": "Summary for the user",
                 "score": 3,
-                "rationale": "The summary after the `---` is two plain sentences a beginner can read. It says what the record is (a Washington County, New York church baptism register entry, undated within 1834\u20131836), whether it is the person (yes, confirmed by wife's name and variant spelling of husband's name), the fact that decided it (the wife's name matches exactly), and whether it holds something new (no, already extracted). No labels, headings, field names, or identifiers appear in the summary itself; it is plain narrative."
+                "rationale": "The summary after the `---` is one sentence that identifies the record type (Washington County, NY church baptism register), the date range (1834-1836), the content (listing 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child), the identification basis (wife's name matches Iram Hyde's known spouse exactly), and the already-extracted status. It uses no identifiers, field names, or file names, and stays within two sentences. It is plain and readable for a beginner."
               }
             ],
-            "judge_cost_usd": 0.02015,
+            "judge_cost_usd": 0.05982029999999999,
             "duration_ms": 11485.64449999958,
             "error": null,
             "input_tokens": 14741,
-            "cached_input_tokens": 4240,
-            "output_tokens": 997
+            "cached_input_tokens": 4241,
+            "output_tokens": 955
           },
           "started_at": 1793780590.2998917,
           "ended_at": 1793780686.0175667
@@ -2127,37 +2127,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The verdict (not_a_match) is correct: the hit describes an 'Iram Hyde of the City of Dublin, Gentleman' witnessing an Irish deed in 1815, while the target Iram F. Hyde was born ~1797 in New Hampshire and lived in Jackson, NY (1850-1860) and Indiana (1870-1873). The flag (new_vital_info: false) is correct per the rules\u2014a Not a Match carries no new vital information. All facts cited are supported by the hit content and tree data."
+            "rationale": "The skill correctly identified the hit as 'not_a_match' and set new_vital_info to false. The rationale accurately describes the hit as an Irish deed (1815) featuring 'Iram Hyde of the City of Dublin, Gentleman' as a subscribing witness, and correctly contrasts this with the target Iram F. Hyde whose entire documented life was in New Hampshire, New York, and Indiana. The mention of 'Frank Hyde' as a co-witness is supported by the hit content (the sidecar_read response). No fabricated material is present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: read the hit (sidecar_read), queried the tree (tree_query), evaluated the hit against the person, rendered the verdict with rationale, flagged new vital information, and persisted the result (research_append). No required work was omitted."
+            "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree, recorded a hit_verdicts row with the correct verdict and flag, and produced the four contract lines plus a plain summary after the '---'. Nothing required by the task was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP calls passed correct arguments: project_context with valid projectPath; sidecar_read with correct ref (results/log_008.json#3Q9M-CSH3-QSQ3-K); tree_query with personIds [I1, I2, I3] matching the tree; research_append with correct section, op, and entry structure. No fixture_not_found errors. Arguments match expected semantics."
+            "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath, sidecar_read used the exact hitRef from the delegation ('results/log_008.json#3Q9M-CSH3-QSQ3-K'), tree_query queried all three person IDs (I1, I2, I3), and research_append correctly appended to hit_verdicts with the right log_id, hit_id, person_id, verdict, and new_vital_info values. No fixture_not_found errors occurred; all calls matched 'live'."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides: the hit places 'Iram Hyde of the City of Dublin Gentn' witnessing an Irish deed in 1815; the tree shows the target Iram F. Hyde born in New Hampshire with residences in Jackson, NY (1850-1860) and Indiana (1870-1873), with no connection to Ireland. The co-witness 'Frank Hyde' further supports a separate Dublin family. These facts rule the person out clearly."
+            "rationale": "The rationale names the decisive facts on both sides: the hit places 'Iram Hyde of the City of Dublin Gentn' in Ireland in 1815 as a deed witness, while the target Iram F. Hyde was born in New Hampshire and all known residences are in New York (1850-1860) and Indiana (1870-1873) with no Irish connection. The mention of co-witness 'Frank Hyde' suggesting a separate Dublin-based Hyde family further supports the ruling-out. The rationale clearly names the geographic incompatibility that decides the Not a Match verdict."
           },
           {
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "The flag (false) is correct per the rules: a Not a Match carries no new vital information by definition. The rationale implicitly supports this by establishing the hit is not the person, making any facts in it irrelevant to the tree. The flag is properly justified."
+            "rationale": "The flag is correctly set to false. Per the rules, a Not a Match carries no new vital information, and the skill correctly applied this rule. The rationale implicitly supports this by establishing the hit is about a different person entirely, making any information in it irrelevant to the target."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the `---` is two plain sentences: 'This is an 1815 Irish deed of assignment from Dublin, Ireland, in which an \"Iram Hyde of the City of Dublin, Gentleman\" swears as a subscribing witness alongside a \"Frank Hyde\" \u2014 a Dublin-based Hyde family entirely separate from the target Iram F. Hyde of New Hampshire, whose entire documented life was spent in the northeastern United States and Indiana.' It names the record kind (Irish deed), date (1815), place (Dublin), verdict (not the person), deciding fact (separate Dublin family, target's US life), and contains no labels, field names, or identifiers beyond the necessary context."
+            "rationale": "The summary after '---' is one clear sentence that identifies the record (1815 Irish deed of assignment from Dublin, Ireland), names who appears in it ('Iram Hyde of the City of Dublin, Gentleman' as a subscribing witness alongside 'Frank Hyde'), states the verdict (a Dublin-based Hyde family entirely separate from the target), and explains the deciding fact (the target's entire documented life was in the northeastern United States and Indiana). No identifiers, field names, or file names appear in the summary. It is readable by a beginner."
           }
         ],
         "review_dimensions": [
@@ -2165,37 +2165,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The verdict (not_a_match) is correct: the hit describes an 'Iram Hyde of the City of Dublin, Gentleman' witnessing an Irish deed in 1815, while the target Iram F. Hyde was born ~1797 in New Hampshire and lived in Jackson, NY (1850-1860) and Indiana (1870-1873). The flag (new_vital_info: false) is correct per the rules\u2014a Not a Match carries no new vital information. All facts cited are supported by the hit content and tree data."
+            "rationale": "The skill correctly identified the hit as 'not_a_match' and set new_vital_info to false. The rationale accurately describes the hit as an Irish deed (1815) featuring 'Iram Hyde of the City of Dublin, Gentleman' as a subscribing witness, and correctly contrasts this with the target Iram F. Hyde whose entire documented life was in New Hampshire, New York, and Indiana. The mention of 'Frank Hyde' as a co-witness is supported by the hit content (the sidecar_read response). No fabricated material is present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: read the hit (sidecar_read), queried the tree (tree_query), evaluated the hit against the person, rendered the verdict with rationale, flagged new vital information, and persisted the result (research_append). No required work was omitted."
+            "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree, recorded a hit_verdicts row with the correct verdict and flag, and produced the four contract lines plus a plain summary after the '---'. Nothing required by the task was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP calls passed correct arguments: project_context with valid projectPath; sidecar_read with correct ref (results/log_008.json#3Q9M-CSH3-QSQ3-K); tree_query with personIds [I1, I2, I3] matching the tree; research_append with correct section, op, and entry structure. No fixture_not_found errors. Arguments match expected semantics."
+            "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath, sidecar_read used the exact hitRef from the delegation ('results/log_008.json#3Q9M-CSH3-QSQ3-K'), tree_query queried all three person IDs (I1, I2, I3), and research_append correctly appended to hit_verdicts with the right log_id, hit_id, person_id, verdict, and new_vital_info values. No fixture_not_found errors occurred; all calls matched 'live'."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides: the hit places 'Iram Hyde of the City of Dublin Gentn' witnessing an Irish deed in 1815; the tree shows the target Iram F. Hyde born in New Hampshire with residences in Jackson, NY (1850-1860) and Indiana (1870-1873), with no connection to Ireland. The co-witness 'Frank Hyde' further supports a separate Dublin family. These facts rule the person out clearly."
+            "rationale": "The rationale names the decisive facts on both sides: the hit places 'Iram Hyde of the City of Dublin Gentn' in Ireland in 1815 as a deed witness, while the target Iram F. Hyde was born in New Hampshire and all known residences are in New York (1850-1860) and Indiana (1870-1873) with no Irish connection. The mention of co-witness 'Frank Hyde' suggesting a separate Dublin-based Hyde family further supports the ruling-out. The rationale clearly names the geographic incompatibility that decides the Not a Match verdict."
           },
           {
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "The flag (false) is correct per the rules: a Not a Match carries no new vital information by definition. The rationale implicitly supports this by establishing the hit is not the person, making any facts in it irrelevant to the tree. The flag is properly justified."
+            "rationale": "The flag is correctly set to false. Per the rules, a Not a Match carries no new vital information, and the skill correctly applied this rule. The rationale implicitly supports this by establishing the hit is about a different person entirely, making any information in it irrelevant to the target."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the `---` is two plain sentences: 'This is an 1815 Irish deed of assignment from Dublin, Ireland, in which an \"Iram Hyde of the City of Dublin, Gentleman\" swears as a subscribing witness alongside a \"Frank Hyde\" \u2014 a Dublin-based Hyde family entirely separate from the target Iram F. Hyde of New Hampshire, whose entire documented life was spent in the northeastern United States and Indiana.' It names the record kind (Irish deed), date (1815), place (Dublin), verdict (not the person), deciding fact (separate Dublin family, target's US life), and contains no labels, field names, or identifiers beyond the necessary context."
+            "rationale": "The summary after '---' is one clear sentence that identifies the record (1815 Irish deed of assignment from Dublin, Ireland), names who appears in it ('Iram Hyde of the City of Dublin, Gentleman' as a subscribing witness alongside 'Frank Hyde'), states the verdict (a Dublin-based Hyde family entirely separate from the target), and explains the deciding fact (the target's entire documented life was in the northeastern United States and Indiana). No identifiers, field names, or file names appear in the summary. It is readable by a beginner."
           }
         ]
       },
@@ -3085,45 +3085,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The verdict (not_a_match) is correct: the hit describes an 'Iram Hyde of the City of Dublin, Gentleman' witnessing an Irish deed in 1815, while the target Iram F. Hyde was born ~1797 in New Hampshire and lived in Jackson, NY (1850-1860) and Indiana (1870-1873). The flag (new_vital_info: false) is correct per the rules\u2014a Not a Match carries no new vital information. All facts cited are supported by the hit content and tree data."
+                "rationale": "The skill correctly identified the hit as 'not_a_match' and set new_vital_info to false. The rationale accurately describes the hit as an Irish deed (1815) featuring 'Iram Hyde of the City of Dublin, Gentleman' as a subscribing witness, and correctly contrasts this with the target Iram F. Hyde whose entire documented life was in New Hampshire, New York, and Indiana. The mention of 'Frank Hyde' as a co-witness is supported by the hit content (the sidecar_read response). No fabricated material is present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: read the hit (sidecar_read), queried the tree (tree_query), evaluated the hit against the person, rendered the verdict with rationale, flagged new vital information, and persisted the result (research_append). No required work was omitted."
+                "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree, recorded a hit_verdicts row with the correct verdict and flag, and produced the four contract lines plus a plain summary after the '---'. Nothing required by the task was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All four MCP calls passed correct arguments: project_context with valid projectPath; sidecar_read with correct ref (results/log_008.json#3Q9M-CSH3-QSQ3-K); tree_query with personIds [I1, I2, I3] matching the tree; research_append with correct section, op, and entry structure. No fixture_not_found errors. Arguments match expected semantics."
+                "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath, sidecar_read used the exact hitRef from the delegation ('results/log_008.json#3Q9M-CSH3-QSQ3-K'), tree_query queried all three person IDs (I1, I2, I3), and research_append correctly appended to hit_verdicts with the right log_id, hit_id, person_id, verdict, and new_vital_info values. No fixture_not_found errors occurred; all calls matched 'live'."
               },
               {
                 "source": "rubric",
                 "name": "Verdict reasoning",
                 "score": 3,
-                "rationale": "The rationale names the deciding facts on both sides: the hit places 'Iram Hyde of the City of Dublin Gentn' witnessing an Irish deed in 1815; the tree shows the target Iram F. Hyde born in New Hampshire with residences in Jackson, NY (1850-1860) and Indiana (1870-1873), with no connection to Ireland. The co-witness 'Frank Hyde' further supports a separate Dublin family. These facts rule the person out clearly."
+                "rationale": "The rationale names the decisive facts on both sides: the hit places 'Iram Hyde of the City of Dublin Gentn' in Ireland in 1815 as a deed witness, while the target Iram F. Hyde was born in New Hampshire and all known residences are in New York (1850-1860) and Indiana (1870-1873) with no Irish connection. The mention of co-witness 'Frank Hyde' suggesting a separate Dublin-based Hyde family further supports the ruling-out. The rationale clearly names the geographic incompatibility that decides the Not a Match verdict."
               },
               {
                 "source": "rubric",
                 "name": "New vital information",
                 "score": 3,
-                "rationale": "The flag (false) is correct per the rules: a Not a Match carries no new vital information by definition. The rationale implicitly supports this by establishing the hit is not the person, making any facts in it irrelevant to the tree. The flag is properly justified."
+                "rationale": "The flag is correctly set to false. Per the rules, a Not a Match carries no new vital information, and the skill correctly applied this rule. The rationale implicitly supports this by establishing the hit is about a different person entirely, making any information in it irrelevant to the target."
               },
               {
                 "source": "rubric",
                 "name": "Summary for the user",
                 "score": 3,
-                "rationale": "The summary after the `---` is two plain sentences: 'This is an 1815 Irish deed of assignment from Dublin, Ireland, in which an \"Iram Hyde of the City of Dublin, Gentleman\" swears as a subscribing witness alongside a \"Frank Hyde\" \u2014 a Dublin-based Hyde family entirely separate from the target Iram F. Hyde of New Hampshire, whose entire documented life was spent in the northeastern United States and Indiana.' It names the record kind (Irish deed), date (1815), place (Dublin), verdict (not the person), deciding fact (separate Dublin family, target's US life), and contains no labels, field names, or identifiers beyond the necessary context."
+                "rationale": "The summary after '---' is one clear sentence that identifies the record (1815 Irish deed of assignment from Dublin, Ireland), names who appears in it ('Iram Hyde of the City of Dublin, Gentleman' as a subscribing witness alongside 'Frank Hyde'), states the verdict (a Dublin-based Hyde family entirely separate from the target), and explains the deciding fact (the target's entire documented life was in the northeastern United States and Indiana). No identifiers, field names, or file names appear in the summary. It is readable by a beginner."
               }
             ],
-            "judge_cost_usd": 0.019384000000000002,
+            "judge_cost_usd": 0.0586323,
             "duration_ms": 12605.450100000326,
             "error": null,
             "input_tokens": 14635,
-            "cached_input_tokens": 4240,
-            "output_tokens": 865
+            "cached_input_tokens": 4241,
+            "output_tokens": 897
           },
           "started_at": 1793780355.1077409,
           "ended_at": 1793780459.0284986
@@ -3149,37 +3149,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The verdict (not_a_match) is correct. The hit is a biographical sketch from an 1883 Medina County, Ohio history mentioning Iram Packard (different surname) and Henry Hyde's family (different family, different place and time). Iram F. Hyde lived in New Hampshire/Jackson NY/White County Indiana. The rationale correctly identifies the surname difference (Packard vs. Hyde) and the geographic/family separation. No fabricated material; all claims are supported by the hit content and tree data."
+            "rationale": "The skill correctly identified the hit as Not a Match. The hit is from a Medina County, Ohio biographical history; the 'Iram' on the page is Iram Packard (a different surname), and the Hyde family members mentioned are Henry Hyde (b. 1815, Cumberland Co., PA) and relatives in Montville/Medina County, Ohio \u2014 entirely different from Iram F. Hyde of New Hampshire/Washington Co., NY/White Co., Indiana. The verdict (not_a_match), the flag (new_vital_info: false), and the rationale are all factually correct and supported by the sidecar_read response. No fabricated material is present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed everything required: evaluated the hit against the tree person (I1), rendered a verdict with supporting rationale, assessed the new_vital_info flag (correctly false, since not_a_match holds no new facts), confirmed not already extracted, and provided a plain summary after the `---` line. All contract elements are present."
+            "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree via tree_query, recorded a hit_verdicts row via research_append, emitted all four contract lines (hitRef, verdict, newVitalInfo, alreadyExtracted), a separator line '---', and a plain summary. Nothing required by the task was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments: project_context with correct projectPath; sidecar_read with correct ref (results/log_003.json#3Q9M-CSZ6-J7JT); tree_query with correct personIds [I1, I2, I3]; research_append with correct section (hit_verdicts), op (append), and entry structure including log_id, hit_id, person_id, verdict, new_vital_info, and rationale. No fixture_not_found errors; all calls matched live."
+            "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath. sidecar_read used the exact hitRef 'results/log_003.json#3Q9M-CSZ6-J7JT' as specified in the delegation. tree_query queried personIds [I1, I2, I3], which is reasonable for evaluating I1 and its relatives. research_append used section 'hit_verdicts', op 'append', with correct log_id 'log_003', hit_id '3Q9M-CSZ6-J7JT', person_id 'I1', verdict 'not_a_match', and new_vital_info false. All calls matched live fixtures with no fixture_not_found errors."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides: the hit contains 'Iram Packard' (different surname from Iram F. Hyde), and the Hyde family members mentioned (Henry Hyde b. 1815 Cumberland Co., Pa., settled Medina County Ohio) are geographically and temporally distinct from Iram F. Hyde (b. ~1797 New Hampshire, d. 1873 White Co., Indiana). The surname difference and family separation rule out the match. The rationale correctly cites what the hit says and what the tree shows."
+            "rationale": "The rationale names the specific facts that decide the verdict on both sides: the 'Iram' in the hit is Iram Packard (different surname), and the Hyde family members in the hit are Henry Hyde (b. 1815, Cumberland Co., PA) with relatives in Medina County, Ohio \u2014 contrasted against Iram F. Hyde of New Hampshire/Washington Co., NY/White Co., Indiana. The surname mismatch (Packard vs. Hyde) and the entirely different geographic and family context are the ruling-out facts, clearly named."
           },
           {
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "The flag is correctly false. Per the rules, a Not a Match holds no new vital information by definition. The hit names a marriage (Cynthia married Iram Packard), but since this is not_a_match, the flag must be false. The rationale does not claim new vital info, consistent with the rules. research_append accepted the entry without refusal, confirming the flag state is valid."
+            "rationale": "The flag is correctly set to false. The per-test context confirms that a Not a Match holds no fact the person lacks, so the flag must be false. The skill correctly applied this rule. The rationale in the research_append entry implicitly supports this by establishing the record is about a different family entirely. The contract line 'newVitalInfo: false' is correct."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the `---` is two sentences, plain language, and says what the record is (1883 biographical history of Medina County, Ohio), whether it is the person (not a match), and the fact that decided it (Iram Packard is a different surname; Henry Hyde's family is a different family from a different place). No labels, field names, or identifiers appear in the summary. A beginner can read it."
+            "rationale": "The summary after '---' reads: 'This is an 1883 biographical history of Medina County, Ohio. The only \"Iram\" in the passage is Iram Packard (a different surname), and the Hyde family members mentioned are Henry Hyde born in 1815 in Cumberland County, Pennsylvania, and his relatives settled in Medina County, Ohio \u2014 an entirely different family from Iram F. Hyde of New Hampshire and White County, Indiana, so the record is ruled out.' It identifies the record type (biographical history), date (1883), place (Medina County, Ohio), states the verdict (ruled out), and names the deciding fact (different surname, different family). It is plain prose a beginner can read, contains no field names or identifiers, and fits within two sentences."
           }
         ],
         "review_dimensions": [
@@ -3187,37 +3187,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The verdict (not_a_match) is correct. The hit is a biographical sketch from an 1883 Medina County, Ohio history mentioning Iram Packard (different surname) and Henry Hyde's family (different family, different place and time). Iram F. Hyde lived in New Hampshire/Jackson NY/White County Indiana. The rationale correctly identifies the surname difference (Packard vs. Hyde) and the geographic/family separation. No fabricated material; all claims are supported by the hit content and tree data."
+            "rationale": "The skill correctly identified the hit as Not a Match. The hit is from a Medina County, Ohio biographical history; the 'Iram' on the page is Iram Packard (a different surname), and the Hyde family members mentioned are Henry Hyde (b. 1815, Cumberland Co., PA) and relatives in Montville/Medina County, Ohio \u2014 entirely different from Iram F. Hyde of New Hampshire/Washington Co., NY/White Co., Indiana. The verdict (not_a_match), the flag (new_vital_info: false), and the rationale are all factually correct and supported by the sidecar_read response. No fabricated material is present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed everything required: evaluated the hit against the tree person (I1), rendered a verdict with supporting rationale, assessed the new_vital_info flag (correctly false, since not_a_match holds no new facts), confirmed not already extracted, and provided a plain summary after the `---` line. All contract elements are present."
+            "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree via tree_query, recorded a hit_verdicts row via research_append, emitted all four contract lines (hitRef, verdict, newVitalInfo, alreadyExtracted), a separator line '---', and a plain summary. Nothing required by the task was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments: project_context with correct projectPath; sidecar_read with correct ref (results/log_003.json#3Q9M-CSZ6-J7JT); tree_query with correct personIds [I1, I2, I3]; research_append with correct section (hit_verdicts), op (append), and entry structure including log_id, hit_id, person_id, verdict, new_vital_info, and rationale. No fixture_not_found errors; all calls matched live."
+            "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath. sidecar_read used the exact hitRef 'results/log_003.json#3Q9M-CSZ6-J7JT' as specified in the delegation. tree_query queried personIds [I1, I2, I3], which is reasonable for evaluating I1 and its relatives. research_append used section 'hit_verdicts', op 'append', with correct log_id 'log_003', hit_id '3Q9M-CSZ6-J7JT', person_id 'I1', verdict 'not_a_match', and new_vital_info false. All calls matched live fixtures with no fixture_not_found errors."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides: the hit contains 'Iram Packard' (different surname from Iram F. Hyde), and the Hyde family members mentioned (Henry Hyde b. 1815 Cumberland Co., Pa., settled Medina County Ohio) are geographically and temporally distinct from Iram F. Hyde (b. ~1797 New Hampshire, d. 1873 White Co., Indiana). The surname difference and family separation rule out the match. The rationale correctly cites what the hit says and what the tree shows."
+            "rationale": "The rationale names the specific facts that decide the verdict on both sides: the 'Iram' in the hit is Iram Packard (different surname), and the Hyde family members in the hit are Henry Hyde (b. 1815, Cumberland Co., PA) with relatives in Medina County, Ohio \u2014 contrasted against Iram F. Hyde of New Hampshire/Washington Co., NY/White Co., Indiana. The surname mismatch (Packard vs. Hyde) and the entirely different geographic and family context are the ruling-out facts, clearly named."
           },
           {
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "The flag is correctly false. Per the rules, a Not a Match holds no new vital information by definition. The hit names a marriage (Cynthia married Iram Packard), but since this is not_a_match, the flag must be false. The rationale does not claim new vital info, consistent with the rules. research_append accepted the entry without refusal, confirming the flag state is valid."
+            "rationale": "The flag is correctly set to false. The per-test context confirms that a Not a Match holds no fact the person lacks, so the flag must be false. The skill correctly applied this rule. The rationale in the research_append entry implicitly supports this by establishing the record is about a different family entirely. The contract line 'newVitalInfo: false' is correct."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the `---` is two sentences, plain language, and says what the record is (1883 biographical history of Medina County, Ohio), whether it is the person (not a match), and the fact that decided it (Iram Packard is a different surname; Henry Hyde's family is a different family from a different place). No labels, field names, or identifiers appear in the summary. A beginner can read it."
+            "rationale": "The summary after '---' reads: 'This is an 1883 biographical history of Medina County, Ohio. The only \"Iram\" in the passage is Iram Packard (a different surname), and the Hyde family members mentioned are Henry Hyde born in 1815 in Cumberland County, Pennsylvania, and his relatives settled in Medina County, Ohio \u2014 an entirely different family from Iram F. Hyde of New Hampshire and White County, Indiana, so the record is ruled out.' It identifies the record type (biographical history), date (1883), place (Medina County, Ohio), states the verdict (ruled out), and names the deciding fact (different surname, different family). It is plain prose a beginner can read, contains no field names or identifiers, and fits within two sentences."
           }
         ]
       },
@@ -4107,45 +4107,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The verdict (not_a_match) is correct. The hit is a biographical sketch from an 1883 Medina County, Ohio history mentioning Iram Packard (different surname) and Henry Hyde's family (different family, different place and time). Iram F. Hyde lived in New Hampshire/Jackson NY/White County Indiana. The rationale correctly identifies the surname difference (Packard vs. Hyde) and the geographic/family separation. No fabricated material; all claims are supported by the hit content and tree data."
+                "rationale": "The skill correctly identified the hit as Not a Match. The hit is from a Medina County, Ohio biographical history; the 'Iram' on the page is Iram Packard (a different surname), and the Hyde family members mentioned are Henry Hyde (b. 1815, Cumberland Co., PA) and relatives in Montville/Medina County, Ohio \u2014 entirely different from Iram F. Hyde of New Hampshire/Washington Co., NY/White Co., Indiana. The verdict (not_a_match), the flag (new_vital_info: false), and the rationale are all factually correct and supported by the sidecar_read response. No fabricated material is present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed everything required: evaluated the hit against the tree person (I1), rendered a verdict with supporting rationale, assessed the new_vital_info flag (correctly false, since not_a_match holds no new facts), confirmed not already extracted, and provided a plain summary after the `---` line. All contract elements are present."
+                "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree via tree_query, recorded a hit_verdicts row via research_append, emitted all four contract lines (hitRef, verdict, newVitalInfo, alreadyExtracted), a separator line '---', and a plain summary. Nothing required by the task was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All four MCP tool calls passed correct arguments: project_context with correct projectPath; sidecar_read with correct ref (results/log_003.json#3Q9M-CSZ6-J7JT); tree_query with correct personIds [I1, I2, I3]; research_append with correct section (hit_verdicts), op (append), and entry structure including log_id, hit_id, person_id, verdict, new_vital_info, and rationale. No fixture_not_found errors; all calls matched live."
+                "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath. sidecar_read used the exact hitRef 'results/log_003.json#3Q9M-CSZ6-J7JT' as specified in the delegation. tree_query queried personIds [I1, I2, I3], which is reasonable for evaluating I1 and its relatives. research_append used section 'hit_verdicts', op 'append', with correct log_id 'log_003', hit_id '3Q9M-CSZ6-J7JT', person_id 'I1', verdict 'not_a_match', and new_vital_info false. All calls matched live fixtures with no fixture_not_found errors."
               },
               {
                 "source": "rubric",
                 "name": "Verdict reasoning",
                 "score": 3,
-                "rationale": "The rationale names the deciding facts on both sides: the hit contains 'Iram Packard' (different surname from Iram F. Hyde), and the Hyde family members mentioned (Henry Hyde b. 1815 Cumberland Co., Pa., settled Medina County Ohio) are geographically and temporally distinct from Iram F. Hyde (b. ~1797 New Hampshire, d. 1873 White Co., Indiana). The surname difference and family separation rule out the match. The rationale correctly cites what the hit says and what the tree shows."
+                "rationale": "The rationale names the specific facts that decide the verdict on both sides: the 'Iram' in the hit is Iram Packard (different surname), and the Hyde family members in the hit are Henry Hyde (b. 1815, Cumberland Co., PA) with relatives in Medina County, Ohio \u2014 contrasted against Iram F. Hyde of New Hampshire/Washington Co., NY/White Co., Indiana. The surname mismatch (Packard vs. Hyde) and the entirely different geographic and family context are the ruling-out facts, clearly named."
               },
               {
                 "source": "rubric",
                 "name": "New vital information",
                 "score": 3,
-                "rationale": "The flag is correctly false. Per the rules, a Not a Match holds no new vital information by definition. The hit names a marriage (Cynthia married Iram Packard), but since this is not_a_match, the flag must be false. The rationale does not claim new vital info, consistent with the rules. research_append accepted the entry without refusal, confirming the flag state is valid."
+                "rationale": "The flag is correctly set to false. The per-test context confirms that a Not a Match holds no fact the person lacks, so the flag must be false. The skill correctly applied this rule. The rationale in the research_append entry implicitly supports this by establishing the record is about a different family entirely. The contract line 'newVitalInfo: false' is correct."
               },
               {
                 "source": "rubric",
                 "name": "Summary for the user",
                 "score": 3,
-                "rationale": "The summary after the `---` is two sentences, plain language, and says what the record is (1883 biographical history of Medina County, Ohio), whether it is the person (not a match), and the fact that decided it (Iram Packard is a different surname; Henry Hyde's family is a different family from a different place). No labels, field names, or identifiers appear in the summary. A beginner can read it."
+                "rationale": "The summary after '---' reads: 'This is an 1883 biographical history of Medina County, Ohio. The only \"Iram\" in the passage is Iram Packard (a different surname), and the Hyde family members mentioned are Henry Hyde born in 1815 in Cumberland County, Pennsylvania, and his relatives settled in Medina County, Ohio \u2014 an entirely different family from Iram F. Hyde of New Hampshire and White County, Indiana, so the record is ruled out.' It identifies the record type (biographical history), date (1883), place (Medina County, Ohio), states the verdict (ruled out), and names the deciding fact (different surname, different family). It is plain prose a beginner can read, contains no field names or identifiers, and fits within two sentences."
               }
             ],
-            "judge_cost_usd": 0.019501,
+            "judge_cost_usd": 0.0610233,
             "duration_ms": 13804.041099999722,
             "error": null,
             "input_tokens": 14627,
-            "cached_input_tokens": 4240,
-            "output_tokens": 890
+            "cached_input_tokens": 4241,
+            "output_tokens": 1058
           },
           "started_at": 1793780640.6884081,
           "ended_at": 1793780729.2578833
@@ -4171,37 +4171,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified the hit as a possible_match based on the garbled transcription. The surname Hyde and bride's first name Mary match the target's marriage to Mary Robertson, but 'Fran' for 'Iram' and 'Albert' for 'Robertson' are unreadable, preventing a full match. The new_vital_info flag is correctly set to false because the source (S7, the church register) is already cited in the project (src_006 lists this record ID). The verdict aligns with the gold standard and the rationale accurately reflects the facts from both the hit and the tree."
+            "rationale": "All factual claims are supported by the tool responses. The hit text shows 'Fran Hyde To Mary Albert Jackson 20' \u2014 the skill correctly identifies the surname Hyde, the bride's first name Mary, and the garbled given name ('Fran' for 'Iram') and bride's surname ('Albert' for 'Robertson'). The verdict of possible_match is correct per the gold standard. The alreadyExtracted: true flag is correct because src_006 lists ark:/61903/3:1:3Q9M-CSK3-ZSH4 as one of its record IDs, and the tree_query confirms S7 is cited on the Couple relationship R1. The new_vital_info: false flag is correct. No fabricated material is present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: it evaluated the hit against the tree person (I1), rendered a verdict (possible_match), assessed the new vital information flag (false), persisted the result via research_append, and provided a summary. The hit_verdicts row was successfully appended to research.json. No required work was omitted."
+            "rationale": "The skill addressed all required elements: it read the hit via sidecar_read, queried the tree via tree_query, produced all four contract lines (hitRef, verdict, newVitalInfo, alreadyExtracted), wrote one hit_verdicts row via research_append, and provided a plain summary after the '---'. Nothing required by the delegation or the skill's contract was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments. project_context received the correct projectPath; sidecar_read received the correct ref (results/log_017.json#3Q9M-CSK3-ZSH4) and projectPath; tree_query received the correct personIds [I1, I2, I3] and projectPath; research_append received correct section, op, and entry fields with the verdict, flag, and rationale. No calls landed in fixture_not_found and all arguments matched the expected shape semantically."
+            "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath. sidecar_read used the exact hitRef 'results/log_017.json#3Q9M-CSK3-ZSH4' as specified. tree_query queried personIds [I1, I2, I3], which is appropriate for checking the person and their relatives. research_append used the correct section, op, log_id, hit_id, person_id, verdict, new_vital_info, and rationale. All calls matched live fixtures successfully (no fixture_not_found errors)."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Fran Hyde To Mary Albert Jackson' shows the surname Hyde (clear match) and bride's first name Mary (matches Mary Robertson), but 'Fran' is garbled for 'Iram' and 'Albert' is garbled for 'Robertson'. From the tree: Iram F. Hyde married Mary Robertson in Jackson. The rationale correctly explains why this is a possible_match rather than a match: the name and place are consistent, but the target's first name and bride's surname are unreadable, so a fully legible relative name is missing. This reasoning follows the rubric's pass criteria for a Possible Match."
+            "rationale": "The rationale names the deciding facts on both sides: the surname Hyde is clear and matches the target; the bride's first name Mary matches Mary Robertson (I2); but the given name is garbled as 'Fran' for 'Iram' and the bride's surname is garbled as 'Albert' for 'Robertson'. The skill correctly explains that without a fully legible relative name, the hit rises only to possible_match rather than a full Match. This satisfies the rubric's requirement that a Possible Match says what is consistent and what is missing or garbled."
           },
           {
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "The flag is correctly set to false. The rationale states 'this record image is already extracted as a cited source for the couple,' which is accurate: project_context shows src_006 (the church register) lists this record ID (3Q9M-CSK3-ZSH4) in its recordIds, and the tree_query response shows S7 (the church register) is already cited for the Couple relationship (R1). The rule that the flag is false for an already-extracted hit is correctly applied."
+            "rationale": "The flag is false and the rationale correctly states the reason: 'this record image is already extracted as a cited source for the couple.' The per-test context confirms assertion a_019 cites this hit and src_006 lists it under its record IDs. The skill correctly applied the rule that a hit already extracted does not count as new vital information, and named that specific reason in the rationale."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the `---` is one sentence and meets all pass criteria: it identifies the record kind (marriage register entry), date (around 1820), place (Jackson, Washington Co., NY church register), whether it is the person (possible match due to garbled names), the deciding fact (surname Hyde and bride's first name Mary fit, but first name and bride's surname are unreadable), and whether it holds something new (no, already extracted). It uses plain language without labels, field names, or identifiers, and is accessible to a beginner."
+            "rationale": "The summary after '---' is two plain sentences readable by a beginner: it identifies the record type (marriage register entry), the location (Jackson, Washington Co., NY church register), the approximate date (around 1820), the names involved ('Fran Hyde' marrying 'Mary [Albert]'), explains why it is only a possible match (garbled transcription of both the target's given name and the bride's surname), and notes that the image is already extracted as a cited source. No identifiers, field names, or file names appear in the summary text itself."
           }
         ],
         "review_dimensions": [
@@ -4209,37 +4209,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly identified the hit as a possible_match based on the garbled transcription. The surname Hyde and bride's first name Mary match the target's marriage to Mary Robertson, but 'Fran' for 'Iram' and 'Albert' for 'Robertson' are unreadable, preventing a full match. The new_vital_info flag is correctly set to false because the source (S7, the church register) is already cited in the project (src_006 lists this record ID). The verdict aligns with the gold standard and the rationale accurately reflects the facts from both the hit and the tree."
+            "rationale": "All factual claims are supported by the tool responses. The hit text shows 'Fran Hyde To Mary Albert Jackson 20' \u2014 the skill correctly identifies the surname Hyde, the bride's first name Mary, and the garbled given name ('Fran' for 'Iram') and bride's surname ('Albert' for 'Robertson'). The verdict of possible_match is correct per the gold standard. The alreadyExtracted: true flag is correct because src_006 lists ark:/61903/3:1:3Q9M-CSK3-ZSH4 as one of its record IDs, and the tree_query confirms S7 is cited on the Couple relationship R1. The new_vital_info: false flag is correct. No fabricated material is present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: it evaluated the hit against the tree person (I1), rendered a verdict (possible_match), assessed the new vital information flag (false), persisted the result via research_append, and provided a summary. The hit_verdicts row was successfully appended to research.json. No required work was omitted."
+            "rationale": "The skill addressed all required elements: it read the hit via sidecar_read, queried the tree via tree_query, produced all four contract lines (hitRef, verdict, newVitalInfo, alreadyExtracted), wrote one hit_verdicts row via research_append, and provided a plain summary after the '---'. Nothing required by the delegation or the skill's contract was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments. project_context received the correct projectPath; sidecar_read received the correct ref (results/log_017.json#3Q9M-CSK3-ZSH4) and projectPath; tree_query received the correct personIds [I1, I2, I3] and projectPath; research_append received correct section, op, and entry fields with the verdict, flag, and rationale. No calls landed in fixture_not_found and all arguments matched the expected shape semantically."
+            "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath. sidecar_read used the exact hitRef 'results/log_017.json#3Q9M-CSK3-ZSH4' as specified. tree_query queried personIds [I1, I2, I3], which is appropriate for checking the person and their relatives. research_append used the correct section, op, log_id, hit_id, person_id, verdict, new_vital_info, and rationale. All calls matched live fixtures successfully (no fixture_not_found errors)."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Fran Hyde To Mary Albert Jackson' shows the surname Hyde (clear match) and bride's first name Mary (matches Mary Robertson), but 'Fran' is garbled for 'Iram' and 'Albert' is garbled for 'Robertson'. From the tree: Iram F. Hyde married Mary Robertson in Jackson. The rationale correctly explains why this is a possible_match rather than a match: the name and place are consistent, but the target's first name and bride's surname are unreadable, so a fully legible relative name is missing. This reasoning follows the rubric's pass criteria for a Possible Match."
+            "rationale": "The rationale names the deciding facts on both sides: the surname Hyde is clear and matches the target; the bride's first name Mary matches Mary Robertson (I2); but the given name is garbled as 'Fran' for 'Iram' and the bride's surname is garbled as 'Albert' for 'Robertson'. The skill correctly explains that without a fully legible relative name, the hit rises only to possible_match rather than a full Match. This satisfies the rubric's requirement that a Possible Match says what is consistent and what is missing or garbled."
           },
           {
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "The flag is correctly set to false. The rationale states 'this record image is already extracted as a cited source for the couple,' which is accurate: project_context shows src_006 (the church register) lists this record ID (3Q9M-CSK3-ZSH4) in its recordIds, and the tree_query response shows S7 (the church register) is already cited for the Couple relationship (R1). The rule that the flag is false for an already-extracted hit is correctly applied."
+            "rationale": "The flag is false and the rationale correctly states the reason: 'this record image is already extracted as a cited source for the couple.' The per-test context confirms assertion a_019 cites this hit and src_006 lists it under its record IDs. The skill correctly applied the rule that a hit already extracted does not count as new vital information, and named that specific reason in the rationale."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the `---` is one sentence and meets all pass criteria: it identifies the record kind (marriage register entry), date (around 1820), place (Jackson, Washington Co., NY church register), whether it is the person (possible match due to garbled names), the deciding fact (surname Hyde and bride's first name Mary fit, but first name and bride's surname are unreadable), and whether it holds something new (no, already extracted). It uses plain language without labels, field names, or identifiers, and is accessible to a beginner."
+            "rationale": "The summary after '---' is two plain sentences readable by a beginner: it identifies the record type (marriage register entry), the location (Jackson, Washington Co., NY church register), the approximate date (around 1820), the names involved ('Fran Hyde' marrying 'Mary [Albert]'), explains why it is only a possible match (garbled transcription of both the target's given name and the bride's surname), and notes that the image is already extracted as a cited source. No identifiers, field names, or file names appear in the summary text itself."
           }
         ]
       },
@@ -5128,45 +5128,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly identified the hit as a possible_match based on the garbled transcription. The surname Hyde and bride's first name Mary match the target's marriage to Mary Robertson, but 'Fran' for 'Iram' and 'Albert' for 'Robertson' are unreadable, preventing a full match. The new_vital_info flag is correctly set to false because the source (S7, the church register) is already cited in the project (src_006 lists this record ID). The verdict aligns with the gold standard and the rationale accurately reflects the facts from both the hit and the tree."
+                "rationale": "All factual claims are supported by the tool responses. The hit text shows 'Fran Hyde To Mary Albert Jackson 20' \u2014 the skill correctly identifies the surname Hyde, the bride's first name Mary, and the garbled given name ('Fran' for 'Iram') and bride's surname ('Albert' for 'Robertson'). The verdict of possible_match is correct per the gold standard. The alreadyExtracted: true flag is correct because src_006 lists ark:/61903/3:1:3Q9M-CSK3-ZSH4 as one of its record IDs, and the tree_query confirms S7 is cited on the Couple relationship R1. The new_vital_info: false flag is correct. No fabricated material is present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: it evaluated the hit against the tree person (I1), rendered a verdict (possible_match), assessed the new vital information flag (false), persisted the result via research_append, and provided a summary. The hit_verdicts row was successfully appended to research.json. No required work was omitted."
+                "rationale": "The skill addressed all required elements: it read the hit via sidecar_read, queried the tree via tree_query, produced all four contract lines (hitRef, verdict, newVitalInfo, alreadyExtracted), wrote one hit_verdicts row via research_append, and provided a plain summary after the '---'. Nothing required by the delegation or the skill's contract was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All four MCP tool calls passed correct arguments. project_context received the correct projectPath; sidecar_read received the correct ref (results/log_017.json#3Q9M-CSK3-ZSH4) and projectPath; tree_query received the correct personIds [I1, I2, I3] and projectPath; research_append received correct section, op, and entry fields with the verdict, flag, and rationale. No calls landed in fixture_not_found and all arguments matched the expected shape semantically."
+                "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath. sidecar_read used the exact hitRef 'results/log_017.json#3Q9M-CSK3-ZSH4' as specified. tree_query queried personIds [I1, I2, I3], which is appropriate for checking the person and their relatives. research_append used the correct section, op, log_id, hit_id, person_id, verdict, new_vital_info, and rationale. All calls matched live fixtures successfully (no fixture_not_found errors)."
               },
               {
                 "source": "rubric",
                 "name": "Verdict reasoning",
                 "score": 3,
-                "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Fran Hyde To Mary Albert Jackson' shows the surname Hyde (clear match) and bride's first name Mary (matches Mary Robertson), but 'Fran' is garbled for 'Iram' and 'Albert' is garbled for 'Robertson'. From the tree: Iram F. Hyde married Mary Robertson in Jackson. The rationale correctly explains why this is a possible_match rather than a match: the name and place are consistent, but the target's first name and bride's surname are unreadable, so a fully legible relative name is missing. This reasoning follows the rubric's pass criteria for a Possible Match."
+                "rationale": "The rationale names the deciding facts on both sides: the surname Hyde is clear and matches the target; the bride's first name Mary matches Mary Robertson (I2); but the given name is garbled as 'Fran' for 'Iram' and the bride's surname is garbled as 'Albert' for 'Robertson'. The skill correctly explains that without a fully legible relative name, the hit rises only to possible_match rather than a full Match. This satisfies the rubric's requirement that a Possible Match says what is consistent and what is missing or garbled."
               },
               {
                 "source": "rubric",
                 "name": "New vital information",
                 "score": 3,
-                "rationale": "The flag is correctly set to false. The rationale states 'this record image is already extracted as a cited source for the couple,' which is accurate: project_context shows src_006 (the church register) lists this record ID (3Q9M-CSK3-ZSH4) in its recordIds, and the tree_query response shows S7 (the church register) is already cited for the Couple relationship (R1). The rule that the flag is false for an already-extracted hit is correctly applied."
+                "rationale": "The flag is false and the rationale correctly states the reason: 'this record image is already extracted as a cited source for the couple.' The per-test context confirms assertion a_019 cites this hit and src_006 lists it under its record IDs. The skill correctly applied the rule that a hit already extracted does not count as new vital information, and named that specific reason in the rationale."
               },
               {
                 "source": "rubric",
                 "name": "Summary for the user",
                 "score": 3,
-                "rationale": "The summary after the `---` is one sentence and meets all pass criteria: it identifies the record kind (marriage register entry), date (around 1820), place (Jackson, Washington Co., NY church register), whether it is the person (possible match due to garbled names), the deciding fact (surname Hyde and bride's first name Mary fit, but first name and bride's surname are unreadable), and whether it holds something new (no, already extracted). It uses plain language without labels, field names, or identifiers, and is accessible to a beginner."
+                "rationale": "The summary after '---' is two plain sentences readable by a beginner: it identifies the record type (marriage register entry), the location (Jackson, Washington Co., NY church register), the approximate date (around 1820), the names involved ('Fran Hyde' marrying 'Mary [Albert]'), explains why it is only a possible match (garbled transcription of both the target's given name and the bride's surname), and notes that the image is already extracted as a cited source. No identifiers, field names, or file names appear in the summary text itself."
               }
             ],
-            "judge_cost_usd": 0.019786,
+            "judge_cost_usd": 0.059553299999999997,
             "duration_ms": 12531.426300000021,
             "error": null,
             "input_tokens": 14452,
-            "cached_input_tokens": 4240,
-            "output_tokens": 982
+            "cached_input_tokens": 4241,
+            "output_tokens": 995
           },
           "started_at": 1793780355.1043625,
           "ended_at": 1793780466.5007205
@@ -5192,19 +5192,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "This is a negative test. The skill correctly declined to perform its own task and routed to record-structurer with an accurate one-line handoff. The response 'Hand-back: record-structurer \u2014 extract full-text search hit results/log_008.json#3QS7-99WC-KLYK and add it to the project as a source for person I1' correctly identifies the request and the appropriate routing. No substantive output was produced when decline was the correct behavior."
+            "rationale": "This is a negative test. The skill correctly declined to perform evaluate-search-results's own task and instead handed back to record-structurer with the appropriate one-line routing message: 'Hand-back: record-structurer \u2014 extract full-text search hit results/log_008.json#3QS7-99WC-KLYK and add it to the project as a source for person I1.' No verdict, no record reading, no source recording was performed \u2014 exactly the correct behavior."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "This is a negative test. Completeness is graded on the quality of the decline/routing decision, not on task output. The skill provided the required one-line handoff format with the request clearly stated in one clause, routing to the correct skill (record-structurer). The response is complete as a decline; not performing the full task is the correct outcome."
+            "rationale": "The skill completed the required negative-test behavior fully: it produced the correct one-line hand-back to record-structurer with the request summarized in one clause, and made no tool calls. The per-test notes specify brevity is correct and no verdict or summary is expected. Nothing required was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. The skill correctly declined and routed without invoking tools, which is the appropriate behavior for this negative test. N/A."
+            "rationale": "No MCP tool calls were made in this execution \u2014 the skill correctly routed without calling any tools, so this dimension is N/A."
           }
         ],
         "review_dimensions": [
@@ -5212,19 +5212,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "This is a negative test. The skill correctly declined to perform its own task and routed to record-structurer with an accurate one-line handoff. The response 'Hand-back: record-structurer \u2014 extract full-text search hit results/log_008.json#3QS7-99WC-KLYK and add it to the project as a source for person I1' correctly identifies the request and the appropriate routing. No substantive output was produced when decline was the correct behavior."
+            "rationale": "This is a negative test. The skill correctly declined to perform evaluate-search-results's own task and instead handed back to record-structurer with the appropriate one-line routing message: 'Hand-back: record-structurer \u2014 extract full-text search hit results/log_008.json#3QS7-99WC-KLYK and add it to the project as a source for person I1.' No verdict, no record reading, no source recording was performed \u2014 exactly the correct behavior."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "This is a negative test. Completeness is graded on the quality of the decline/routing decision, not on task output. The skill provided the required one-line handoff format with the request clearly stated in one clause, routing to the correct skill (record-structurer). The response is complete as a decline; not performing the full task is the correct outcome."
+            "rationale": "The skill completed the required negative-test behavior fully: it produced the correct one-line hand-back to record-structurer with the request summarized in one clause, and made no tool calls. The per-test notes specify brevity is correct and no verdict or summary is expected. Nothing required was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. The skill correctly declined and routed without invoking tools, which is the appropriate behavior for this negative test. N/A."
+            "rationale": "No MCP tool calls were made in this execution \u2014 the skill correctly routed without calling any tools, so this dimension is N/A."
           }
         ]
       },
@@ -5556,27 +5556,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "This is a negative test. The skill correctly declined to perform its own task and routed to record-structurer with an accurate one-line handoff. The response 'Hand-back: record-structurer \u2014 extract full-text search hit results/log_008.json#3QS7-99WC-KLYK and add it to the project as a source for person I1' correctly identifies the request and the appropriate routing. No substantive output was produced when decline was the correct behavior."
+                "rationale": "This is a negative test. The skill correctly declined to perform evaluate-search-results's own task and instead handed back to record-structurer with the appropriate one-line routing message: 'Hand-back: record-structurer \u2014 extract full-text search hit results/log_008.json#3QS7-99WC-KLYK and add it to the project as a source for person I1.' No verdict, no record reading, no source recording was performed \u2014 exactly the correct behavior."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "This is a negative test. Completeness is graded on the quality of the decline/routing decision, not on task output. The skill provided the required one-line handoff format with the request clearly stated in one clause, routing to the correct skill (record-structurer). The response is complete as a decline; not performing the full task is the correct outcome."
+                "rationale": "The skill completed the required negative-test behavior fully: it produced the correct one-line hand-back to record-structurer with the request summarized in one clause, and made no tool calls. The per-test notes specify brevity is correct and no verdict or summary is expected. Nothing required was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. The skill correctly declined and routed without invoking tools, which is the appropriate behavior for this negative test. N/A."
+                "rationale": "No MCP tool calls were made in this execution \u2014 the skill correctly routed without calling any tools, so this dimension is N/A."
               }
             ],
-            "judge_cost_usd": 0.014277999999999999,
+            "judge_cost_usd": 0.0337113,
             "duration_ms": 4736.830099999679,
             "error": null,
-            "input_tokens": 12443,
-            "cached_input_tokens": 0,
-            "output_tokens": 367
+            "input_tokens": 9153,
+            "cached_input_tokens": 3291,
+            "output_tokens": 351
           },
           "started_at": 1793780674.0972116,
           "ended_at": 1793780701.9659932
@@ -5602,19 +5602,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly declined to perform its task. The request asked for evaluation of all hits from log_017, which is out of scope\u2014the skill requires a single hit reference (results/log_017.json#<hit_id>). The response accurately identified this constraint with the hand-back message 'no hit ref \u2014 the request covers all hits of log_017 rather than a single hit of the form results/log_017.json#<hit id>.' No fabricated material, no tool calls, no incorrect assertions."
+            "rationale": "This is a negative test. The skill correctly declined with a single-line hand-back: 'Hand-back: no hit ref \u2014 the request covers all hits of log_017 rather than a single hit of the form results/log_017.json#<hit id>.' This accurately identifies why the request is out of scope (no specific hit reference provided), and the skill did not fabricate any verdicts or perform any task it should not have."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill fully addressed what was required for this negative test: a clear, accurate decline without performing its own task. The hand-back message concisely explains why the request is out of scope, naming the exact constraint (single hit reference required). No substantive output was produced, which is correct. The response is complete as a decline."
+            "rationale": "This is a negative test. The correct behavior is to decline without invoking any skill or listing hits. The skill did exactly that \u2014 one line, no tool calls, no verdicts, no summaries. The per-test context explicitly states brevity is correct and that listing hits or reading any of them is a fail. The skill fully met the expected decline behavior."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. The skill correctly declined without invoking any tools, which is the appropriate behavior for an out-of-scope request. N/A per the base rubric: Tool Arguments may be null only when no MCP tool calls happened."
+            "rationale": "No MCP tool calls were made \u2014 N/A per the base dimension rules."
           }
         ],
         "review_dimensions": [
@@ -5622,19 +5622,19 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly declined to perform its task. The request asked for evaluation of all hits from log_017, which is out of scope\u2014the skill requires a single hit reference (results/log_017.json#<hit_id>). The response accurately identified this constraint with the hand-back message 'no hit ref \u2014 the request covers all hits of log_017 rather than a single hit of the form results/log_017.json#<hit id>.' No fabricated material, no tool calls, no incorrect assertions."
+            "rationale": "This is a negative test. The skill correctly declined with a single-line hand-back: 'Hand-back: no hit ref \u2014 the request covers all hits of log_017 rather than a single hit of the form results/log_017.json#<hit id>.' This accurately identifies why the request is out of scope (no specific hit reference provided), and the skill did not fabricate any verdicts or perform any task it should not have."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill fully addressed what was required for this negative test: a clear, accurate decline without performing its own task. The hand-back message concisely explains why the request is out of scope, naming the exact constraint (single hit reference required). No substantive output was produced, which is correct. The response is complete as a decline."
+            "rationale": "This is a negative test. The correct behavior is to decline without invoking any skill or listing hits. The skill did exactly that \u2014 one line, no tool calls, no verdicts, no summaries. The per-test context explicitly states brevity is correct and that listing hits or reading any of them is a fail. The skill fully met the expected decline behavior."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": null,
-            "rationale": "No MCP tool calls were made. The skill correctly declined without invoking any tools, which is the appropriate behavior for an out-of-scope request. N/A per the base rubric: Tool Arguments may be null only when no MCP tool calls happened."
+            "rationale": "No MCP tool calls were made \u2014 N/A per the base dimension rules."
           }
         ]
       },
@@ -5962,27 +5962,27 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly declined to perform its task. The request asked for evaluation of all hits from log_017, which is out of scope\u2014the skill requires a single hit reference (results/log_017.json#<hit_id>). The response accurately identified this constraint with the hand-back message 'no hit ref \u2014 the request covers all hits of log_017 rather than a single hit of the form results/log_017.json#<hit id>.' No fabricated material, no tool calls, no incorrect assertions."
+                "rationale": "This is a negative test. The skill correctly declined with a single-line hand-back: 'Hand-back: no hit ref \u2014 the request covers all hits of log_017 rather than a single hit of the form results/log_017.json#<hit id>.' This accurately identifies why the request is out of scope (no specific hit reference provided), and the skill did not fabricate any verdicts or perform any task it should not have."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill fully addressed what was required for this negative test: a clear, accurate decline without performing its own task. The hand-back message concisely explains why the request is out of scope, naming the exact constraint (single hit reference required). No substantive output was produced, which is correct. The response is complete as a decline."
+                "rationale": "This is a negative test. The correct behavior is to decline without invoking any skill or listing hits. The skill did exactly that \u2014 one line, no tool calls, no verdicts, no summaries. The per-test context explicitly states brevity is correct and that listing hits or reading any of them is a fail. The skill fully met the expected decline behavior."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": null,
-                "rationale": "No MCP tool calls were made. The skill correctly declined without invoking any tools, which is the appropriate behavior for an out-of-scope request. N/A per the base rubric: Tool Arguments may be null only when no MCP tool calls happened."
+                "rationale": "No MCP tool calls were made \u2014 N/A per the base dimension rules."
               }
             ],
-            "judge_cost_usd": 0.01396,
+            "judge_cost_usd": 0.0322773,
             "duration_ms": 5859.256100000039,
             "error": null,
-            "input_tokens": 12030,
-            "cached_input_tokens": 0,
-            "output_tokens": 386
+            "input_tokens": 8740,
+            "cached_input_tokens": 3291,
+            "output_tokens": 338
           },
           "started_at": 1793780498.2141316,
           "ended_at": 1793780539.8461895
@@ -5997,48 +5997,48 @@
       "expected_outcome": "pass",
       "scenario": "g9gj-fulltext-hits-unextracted",
       "mcp_fixtures": [],
-      "outcome": "pass",
+      "outcome": "partial",
       "flaky": false,
       "outcome_summary": {
         "per_run_outcomes": [
-          "pass"
+          "partial"
         ],
         "aggregated_dimensions": [
           {
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified the hit as a match. The baptism record lists 'Mary Robertson & Hiram Hy[de]' as parents of a child in Washington County, New York circa 1834\u20131836. The spouse name matches exactly (Mary Robertson), the place matches Iram's known Jackson residences, and the child named ('Chanty, Hyde') is not Margaret E. Hyde (the only child currently on the tree). The verdict, flag, and rationale are all factually supported by the hit content and tree state."
+            "rationale": "The skill correctly identified the hit as a Match with new vital information. The hit content shows 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child ('Chanty, Hyde') in Washington County, NY, 1834-1836. The target I1 is Iram F. Hyde whose spouse is Mary Robertson (I2), and he lived in Jackson, Washington County, NY. The child named in the hit does not match I3 Margaret E. Hyde, so it is genuinely new. The verdict (match), flag (new_vital_info: true), and alreadyExtracted (false) are all factually correct. No fabricated material is present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed all required elements: evaluated the hit against the target person (I1), rendered a verdict (match), assessed whether the hit holds vital information (true), checked if already extracted (false), recorded the verdict in hit_verdicts via research_append, and provided a plain summary after the `---` line. No required work was omitted."
+            "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1/I2/I3, appended a hit_verdicts row with all required fields (log_id, hit_id, person_id, verdict, new_vital_info, rationale), and produced the four contract lines plus a plain summary after the '---'. Nothing required by the task was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments. project_context received the correct projectPath; sidecar_read received the correct ref (results/log_017.json#3Q9M-CSK3-ZSLR); tree_query received the correct personIds [I1, I2, I3]; research_append received correct section, op, and entry fields with proper verdict, new_vital_info, and rationale. No calls failed with fixture_not_found; all matched.kind == 'live'."
+            "rationale": "All four tool calls used correct arguments. sidecar_read used the exact hitRef 'results/log_017.json#3Q9M-CSK3-ZSLR' as specified. tree_query included I1, I2, and I3 \u2014 the relevant persons. research_append correctly targeted the hit_verdicts section with the right log_id, hit_id, person_id, verdict, and new_vital_info values. All calls matched live fixtures with no fixture_not_found errors."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Mary Robertson & Hiram Hy[de]' as parents in Washington County, New York circa 1834\u20131836. From the tree: Iram's spouse is Mary Robertson, he lived in Jackson, Washington County in 1850\u20131860. The spouse name and place together confirm identification. The rationale also notes the baptized child does not match Margaret E. Hyde (the only child on the tree), establishing that a new child is named. All facts that decide the Match verdict are explicitly stated."
+            "rationale": "The rationale names the deciding facts on both sides: the hit lists 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child; the target's wife is Mary Robertson (matching the spouse name exactly); the place is Washington County, NY, matching Iram's known Jackson, Washington County residences. It also notes that the baptized child's name does not match the only child on the tree (Margaret E. Hyde), which supports the Match verdict and the new vital info flag. The reasoning is grounded in specific facts from both the hit and the tree."
           },
           {
             "source": "rubric",
             "name": "New vital information",
-            "score": 3,
-            "rationale": "The flag is correctly set to true. The hit names a child ('Chanty, Hyde') of Iram and Mary Hyde who is not on any edge of Iram's tree record (his only child is Margaret E. Hyde). The rationale explicitly states 'the record names a child of Iram and Mary Hyde not yet in the tree,' identifying the specific fact (the child relationship) that makes the information new. The rule is satisfied: a relative (child) is new when no one on the person's edges matches by name."
+            "score": 2,
+            "rationale": "The flag is correctly set to true, and the rationale does note that the baptized child is not Margaret E. Hyde and is not on any edge of Iram's tree. However, the per-test context specifies that the rationale should name the child ('Chanty, Hyde') as what is new. The skill's rationale says 'the baptized child's name does not match the only child currently on the target's tree edges' but does not explicitly name 'Chanty, Hyde' as the new child. The flag is right but the rationale is slightly incomplete in not naming the specific child fact that makes it new."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the `---` is one sentence that clearly states: what the record is (a New York church baptism register from 1834\u20131836), whether it is the person (confirms via spouse name and place), the fact that decided it (wife's name matching exactly, same county), and what it holds that the tree lacks (a child of theirs not yet in the tree). No labels, field names, or identifiers appear; language is plain and accessible to a beginner."
+            "rationale": "The summary after '---' reads: 'This is a New York church baptism register from Washington County covering 1834\u20131836, listing \"Mary Robertson & Hiram Hy[de]\" as parents of a child being baptized \u2014 the wife's name matching the target's spouse exactly, in the same county where Iram F. Hyde is known to have lived, confirms this is the right family and the record names a child of theirs not yet in the tree.' It identifies the record type (church baptism register), date range (1834-1836), place (Washington County, NY), the deciding fact (spouse name match), and that it holds something new (a child not in the tree). It uses no field names, file names, or identifiers, and fits within two sentences. This is a clear, beginner-readable summary."
           }
         ],
         "review_dimensions": [
@@ -6046,37 +6046,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude correctly identified the hit as a match. The baptism record lists 'Mary Robertson & Hiram Hy[de]' as parents of a child in Washington County, New York circa 1834\u20131836. The spouse name matches exactly (Mary Robertson), the place matches Iram's known Jackson residences, and the child named ('Chanty, Hyde') is not Margaret E. Hyde (the only child currently on the tree). The verdict, flag, and rationale are all factually supported by the hit content and tree state."
+            "rationale": "The skill correctly identified the hit as a Match with new vital information. The hit content shows 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child ('Chanty, Hyde') in Washington County, NY, 1834-1836. The target I1 is Iram F. Hyde whose spouse is Mary Robertson (I2), and he lived in Jackson, Washington County, NY. The child named in the hit does not match I3 Margaret E. Hyde, so it is genuinely new. The verdict (match), flag (new_vital_info: true), and alreadyExtracted (false) are all factually correct. No fabricated material is present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed all required elements: evaluated the hit against the target person (I1), rendered a verdict (match), assessed whether the hit holds vital information (true), checked if already extracted (false), recorded the verdict in hit_verdicts via research_append, and provided a plain summary after the `---` line. No required work was omitted."
+            "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1/I2/I3, appended a hit_verdicts row with all required fields (log_id, hit_id, person_id, verdict, new_vital_info, rationale), and produced the four contract lines plus a plain summary after the '---'. Nothing required by the task was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments. project_context received the correct projectPath; sidecar_read received the correct ref (results/log_017.json#3Q9M-CSK3-ZSLR); tree_query received the correct personIds [I1, I2, I3]; research_append received correct section, op, and entry fields with proper verdict, new_vital_info, and rationale. No calls failed with fixture_not_found; all matched.kind == 'live'."
+            "rationale": "All four tool calls used correct arguments. sidecar_read used the exact hitRef 'results/log_017.json#3Q9M-CSK3-ZSLR' as specified. tree_query included I1, I2, and I3 \u2014 the relevant persons. research_append correctly targeted the hit_verdicts section with the right log_id, hit_id, person_id, verdict, and new_vital_info values. All calls matched live fixtures with no fixture_not_found errors."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Mary Robertson & Hiram Hy[de]' as parents in Washington County, New York circa 1834\u20131836. From the tree: Iram's spouse is Mary Robertson, he lived in Jackson, Washington County in 1850\u20131860. The spouse name and place together confirm identification. The rationale also notes the baptized child does not match Margaret E. Hyde (the only child on the tree), establishing that a new child is named. All facts that decide the Match verdict are explicitly stated."
+            "rationale": "The rationale names the deciding facts on both sides: the hit lists 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child; the target's wife is Mary Robertson (matching the spouse name exactly); the place is Washington County, NY, matching Iram's known Jackson, Washington County residences. It also notes that the baptized child's name does not match the only child on the tree (Margaret E. Hyde), which supports the Match verdict and the new vital info flag. The reasoning is grounded in specific facts from both the hit and the tree."
           },
           {
             "source": "rubric",
             "name": "New vital information",
-            "score": 3,
-            "rationale": "The flag is correctly set to true. The hit names a child ('Chanty, Hyde') of Iram and Mary Hyde who is not on any edge of Iram's tree record (his only child is Margaret E. Hyde). The rationale explicitly states 'the record names a child of Iram and Mary Hyde not yet in the tree,' identifying the specific fact (the child relationship) that makes the information new. The rule is satisfied: a relative (child) is new when no one on the person's edges matches by name."
+            "score": 2,
+            "rationale": "The flag is correctly set to true, and the rationale does note that the baptized child is not Margaret E. Hyde and is not on any edge of Iram's tree. However, the per-test context specifies that the rationale should name the child ('Chanty, Hyde') as what is new. The skill's rationale says 'the baptized child's name does not match the only child currently on the target's tree edges' but does not explicitly name 'Chanty, Hyde' as the new child. The flag is right but the rationale is slightly incomplete in not naming the specific child fact that makes it new."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the `---` is one sentence that clearly states: what the record is (a New York church baptism register from 1834\u20131836), whether it is the person (confirms via spouse name and place), the fact that decided it (wife's name matching exactly, same county), and what it holds that the tree lacks (a child of theirs not yet in the tree). No labels, field names, or identifiers appear; language is plain and accessible to a beginner."
+            "rationale": "The summary after '---' reads: 'This is a New York church baptism register from Washington County covering 1834\u20131836, listing \"Mary Robertson & Hiram Hy[de]\" as parents of a child being baptized \u2014 the wife's name matching the target's spouse exactly, in the same county where Iram F. Hyde is known to have lived, confirms this is the right family and the record names a child of theirs not yet in the tree.' It identifies the record type (church baptism register), date range (1834-1836), place (Washington County, NY), the deciding fact (spouse name match), and that it holds something new (a child not in the tree). It uses no field names, file names, or identifiers, and fits within two sentences. This is a clear, beginner-readable summary."
           }
         ]
       },
@@ -6101,7 +6101,7 @@
         {
           "run_index": 0,
           "run_id": "run_ut_evaluate_search_results_c3n_2026-11-04_08-19-11_0",
-          "outcome": "pass",
+          "outcome": "partial",
           "aborted_reason": null,
           "error": null,
           "duration_ms": 96949.4251000001,
@@ -6947,45 +6947,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude correctly identified the hit as a match. The baptism record lists 'Mary Robertson & Hiram Hy[de]' as parents of a child in Washington County, New York circa 1834\u20131836. The spouse name matches exactly (Mary Robertson), the place matches Iram's known Jackson residences, and the child named ('Chanty, Hyde') is not Margaret E. Hyde (the only child currently on the tree). The verdict, flag, and rationale are all factually supported by the hit content and tree state."
+                "rationale": "The skill correctly identified the hit as a Match with new vital information. The hit content shows 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child ('Chanty, Hyde') in Washington County, NY, 1834-1836. The target I1 is Iram F. Hyde whose spouse is Mary Robertson (I2), and he lived in Jackson, Washington County, NY. The child named in the hit does not match I3 Margaret E. Hyde, so it is genuinely new. The verdict (match), flag (new_vital_info: true), and alreadyExtracted (false) are all factually correct. No fabricated material is present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all required elements: evaluated the hit against the target person (I1), rendered a verdict (match), assessed whether the hit holds vital information (true), checked if already extracted (false), recorded the verdict in hit_verdicts via research_append, and provided a plain summary after the `---` line. No required work was omitted."
+                "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1/I2/I3, appended a hit_verdicts row with all required fields (log_id, hit_id, person_id, verdict, new_vital_info, rationale), and produced the four contract lines plus a plain summary after the '---'. Nothing required by the task was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All four MCP tool calls passed correct arguments. project_context received the correct projectPath; sidecar_read received the correct ref (results/log_017.json#3Q9M-CSK3-ZSLR); tree_query received the correct personIds [I1, I2, I3]; research_append received correct section, op, and entry fields with proper verdict, new_vital_info, and rationale. No calls failed with fixture_not_found; all matched.kind == 'live'."
+                "rationale": "All four tool calls used correct arguments. sidecar_read used the exact hitRef 'results/log_017.json#3Q9M-CSK3-ZSLR' as specified. tree_query included I1, I2, and I3 \u2014 the relevant persons. research_append correctly targeted the hit_verdicts section with the right log_id, hit_id, person_id, verdict, and new_vital_info values. All calls matched live fixtures with no fixture_not_found errors."
               },
               {
                 "source": "rubric",
                 "name": "Verdict reasoning",
                 "score": 3,
-                "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Mary Robertson & Hiram Hy[de]' as parents in Washington County, New York circa 1834\u20131836. From the tree: Iram's spouse is Mary Robertson, he lived in Jackson, Washington County in 1850\u20131860. The spouse name and place together confirm identification. The rationale also notes the baptized child does not match Margaret E. Hyde (the only child on the tree), establishing that a new child is named. All facts that decide the Match verdict are explicitly stated."
+                "rationale": "The rationale names the deciding facts on both sides: the hit lists 'Mary Robertson & Hiram Hy[de]' as parents of a baptized child; the target's wife is Mary Robertson (matching the spouse name exactly); the place is Washington County, NY, matching Iram's known Jackson, Washington County residences. It also notes that the baptized child's name does not match the only child on the tree (Margaret E. Hyde), which supports the Match verdict and the new vital info flag. The reasoning is grounded in specific facts from both the hit and the tree."
               },
               {
                 "source": "rubric",
                 "name": "New vital information",
-                "score": 3,
-                "rationale": "The flag is correctly set to true. The hit names a child ('Chanty, Hyde') of Iram and Mary Hyde who is not on any edge of Iram's tree record (his only child is Margaret E. Hyde). The rationale explicitly states 'the record names a child of Iram and Mary Hyde not yet in the tree,' identifying the specific fact (the child relationship) that makes the information new. The rule is satisfied: a relative (child) is new when no one on the person's edges matches by name."
+                "score": 2,
+                "rationale": "The flag is correctly set to true, and the rationale does note that the baptized child is not Margaret E. Hyde and is not on any edge of Iram's tree. However, the per-test context specifies that the rationale should name the child ('Chanty, Hyde') as what is new. The skill's rationale says 'the baptized child's name does not match the only child currently on the target's tree edges' but does not explicitly name 'Chanty, Hyde' as the new child. The flag is right but the rationale is slightly incomplete in not naming the specific child fact that makes it new."
               },
               {
                 "source": "rubric",
                 "name": "Summary for the user",
                 "score": 3,
-                "rationale": "The summary after the `---` is one sentence that clearly states: what the record is (a New York church baptism register from 1834\u20131836), whether it is the person (confirms via spouse name and place), the fact that decided it (wife's name matching exactly, same county), and what it holds that the tree lacks (a child of theirs not yet in the tree). No labels, field names, or identifiers appear; language is plain and accessible to a beginner."
+                "rationale": "The summary after '---' reads: 'This is a New York church baptism register from Washington County covering 1834\u20131836, listing \"Mary Robertson & Hiram Hy[de]\" as parents of a child being baptized \u2014 the wife's name matching the target's spouse exactly, in the same county where Iram F. Hyde is known to have lived, confirms this is the right family and the record names a child of theirs not yet in the tree.' It identifies the record type (church baptism register), date range (1834-1836), place (Washington County, NY), the deciding fact (spouse name match), and that it holds something new (a child not in the tree). It uses no field names, file names, or identifiers, and fits within two sentences. This is a clear, beginner-readable summary."
               }
             ],
-            "judge_cost_usd": 0.019116,
+            "judge_cost_usd": 0.0597333,
             "duration_ms": 12354.902799999763,
             "error": null,
             "input_tokens": 14102,
-            "cached_input_tokens": 4240,
-            "output_tokens": 918
+            "cached_input_tokens": 4241,
+            "output_tokens": 1077
           },
           "started_at": 1793780478.5446491,
           "ended_at": 1793780590.1069994
@@ -7011,37 +7011,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly evaluated the hit against the tree person. The verdict (Possible Match) is sound: 'Fran Hyde' and Jackson, NY match Iram's documented identity, the date ~1820 fits his birth year ~1797, but 'Mary Albert' does not match 'Mary Robertson' closely enough to confirm identity. The new_vital_info flag is correct: the hit dates and places a marriage, and Iram's Couple carries no Marriage fact. The rationale accurately names the deciding facts from both the hit and the tree. The summary is plain and accurate. All tool calls succeeded and returned expected data."
+            "rationale": "The skill correctly identified the hit as a Possible Match with new vital information. The rationale accurately reads the hit content ('Fran Hyde To Mary Albert Jackson' circa 1820), correctly notes the surname Hyde and Jackson location match Iram's documented residences, correctly identifies 'Fran' as a plausible garbling of 'Iram', and correctly notes the bride's surname 'Albert' does not match 'Robertson' closely enough to confirm identity. The tree_query confirmed the Couple R1 (Iram/Mary Robertson) carries no Marriage fact, making the marriage date/place genuinely new. No fabricated claims are present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed everything required. It read the hit (sidecar_read), queried the tree person and relationships (tree_query), evaluated the verdict and flag against the rubric rules, recorded the verdict in hit_verdicts (research_append), and provided a plain summary. No required steps were omitted."
+            "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1/I2/I3, recorded a hit_verdicts row with verdict=possible_match and new_vital_info=true, produced the four contract lines (hitRef, verdict, newVitalInfo, alreadyExtracted), a separator '---', and a plain summary. The file changes summary confirms one hit_verdicts row was added. Nothing required by the task was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments. project_context and sidecar_read received the projectPath and hitRef as expected. tree_query received the correct personIds (I1, I2, I3) to capture the person and spouse. research_append received the correct section, op, and entry with all required fields (log_id, hit_id, person_id, verdict, new_vital_info, rationale). No calls landed in fixture_not_found; all matched.kind == 'live'."
+            "rationale": "All four tool calls used correct arguments. sidecar_read used the exact hitRef 'results/log_017.json#3Q9M-CSK3-ZSH4' as specified. tree_query queried personIds [I1, I2, I3] which is appropriate for the target and related persons. research_append correctly targeted section 'hit_verdicts' with op 'append' and the correct log_id, hit_id, person_id, verdict, and new_vital_info values. All calls matched live fixtures successfully (no fixture_not_found errors)."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Fran Hyde' (plausible garbling of Iram), Jackson location, date ~1820, bride 'Mary Albert'. From the tree: Iram born ~1797 in New Hampshire, lived in Jackson 1850\u20131860, spouse Mary Robertson. The rationale explains why it is Possible Match not Match: the surname and place tie them, the date fits, but 'Mary Albert' vs 'Mary Robertson' is too dissimilar to be a simple transcription error, leaving identity uncertain. This correctly applies the rubric: a Match needs a relative or independent tie; a Possible Match needs name, time and place consistent but something missing or garbled."
+            "rationale": "The rationale names the deciding facts on both sides: the surname Hyde and Jackson location match Iram's documented residences; the circa-1820 date is consistent with his birth year ~1797; 'Fran' is identified as a plausible machine-read garbling of 'Iram'; but the bride's surname 'Albert' does not match 'Mary Robertson' closely enough to confirm identity, and no corroborating relative is present. This correctly explains why it is a Possible Match rather than a Match \u2014 name and place are consistent but the bride's surname discrepancy leaves uncertainty. The reasoning is grounded in what the hit actually says."
           },
           {
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "The flag is correctly judged true. The hit dates and places a marriage (~1820, Jackson), and the tree's Couple (I1\u2013I2) carries no Marriage fact with a date or place. By the rubric rules, a marriage is new when the hit dates or places it and the Couple carries no Marriage fact with a date or place. The rationale correctly states this: 'The Couple edge between Iram and Mary Robertson carries no marriage date or place, so if this is Iram the record supplies new vital info either as a marriage event or as a prior unrecorded wife.' The flag is not false for a Not a Match (it is Possible Match) or already extracted (research_append succeeded with no prior extraction)."
+            "rationale": "The flag is true and the rationale correctly identifies why: the hit dates and places a marriage (circa 1820, Jackson), and the Couple edge R1 between Iram (I1) and Mary Robertson (I2) carries no Marriage fact (confirmed by tree_query showing R1 facts: []). The skill correctly applies the rule that a Possible Match may carry new vital information. The rationale explicitly states 'The Couple edge between Iram and Mary Robertson carries no marriage date or place, so if this is Iram the record supplies new vital info either as a marriage event or as a prior unrecorded wife.'"
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the `---` is two plain sentences. It says what the record is (circa-1820 marriage register entry from Jackson, Washington County, New York, recording 'Fran Hyde' marrying 'Mary Albert'), whether it is the person (Possible Match, with the deciding facts: Hyde surname and Jackson location match exactly, date fits birth year, but bride's name does not match Mary Robertson), and whether it holds something the tree lacks (yes, a marriage date and place). No labels, field names, or identifiers appear. The language is accessible to a beginner."
+            "rationale": "The summary after '---' is two plain sentences readable by a beginner: it identifies the record type (circa-1820 marriage register entry), location (Jackson, Washington County, New York), the names involved ('Fran Hyde' marrying 'Mary Albert'), explains why it is a possible match (Hyde surname and Jackson location match, date fits, but bride's surname doesn't match Mary Robertson closely enough), and notes the tree lacks any marriage date or place. No identifiers, field names, or file names appear in the summary. It stays within two sentences."
           }
         ],
         "review_dimensions": [
@@ -7049,37 +7049,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly evaluated the hit against the tree person. The verdict (Possible Match) is sound: 'Fran Hyde' and Jackson, NY match Iram's documented identity, the date ~1820 fits his birth year ~1797, but 'Mary Albert' does not match 'Mary Robertson' closely enough to confirm identity. The new_vital_info flag is correct: the hit dates and places a marriage, and Iram's Couple carries no Marriage fact. The rationale accurately names the deciding facts from both the hit and the tree. The summary is plain and accurate. All tool calls succeeded and returned expected data."
+            "rationale": "The skill correctly identified the hit as a Possible Match with new vital information. The rationale accurately reads the hit content ('Fran Hyde To Mary Albert Jackson' circa 1820), correctly notes the surname Hyde and Jackson location match Iram's documented residences, correctly identifies 'Fran' as a plausible garbling of 'Iram', and correctly notes the bride's surname 'Albert' does not match 'Robertson' closely enough to confirm identity. The tree_query confirmed the Couple R1 (Iram/Mary Robertson) carries no Marriage fact, making the marriage date/place genuinely new. No fabricated claims are present."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed everything required. It read the hit (sidecar_read), queried the tree person and relationships (tree_query), evaluated the verdict and flag against the rubric rules, recorded the verdict in hit_verdicts (research_append), and provided a plain summary. No required steps were omitted."
+            "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1/I2/I3, recorded a hit_verdicts row with verdict=possible_match and new_vital_info=true, produced the four contract lines (hitRef, verdict, newVitalInfo, alreadyExtracted), a separator '---', and a plain summary. The file changes summary confirms one hit_verdicts row was added. Nothing required by the task was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments. project_context and sidecar_read received the projectPath and hitRef as expected. tree_query received the correct personIds (I1, I2, I3) to capture the person and spouse. research_append received the correct section, op, and entry with all required fields (log_id, hit_id, person_id, verdict, new_vital_info, rationale). No calls landed in fixture_not_found; all matched.kind == 'live'."
+            "rationale": "All four tool calls used correct arguments. sidecar_read used the exact hitRef 'results/log_017.json#3Q9M-CSK3-ZSH4' as specified. tree_query queried personIds [I1, I2, I3] which is appropriate for the target and related persons. research_append correctly targeted section 'hit_verdicts' with op 'append' and the correct log_id, hit_id, person_id, verdict, and new_vital_info values. All calls matched live fixtures successfully (no fixture_not_found errors)."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Fran Hyde' (plausible garbling of Iram), Jackson location, date ~1820, bride 'Mary Albert'. From the tree: Iram born ~1797 in New Hampshire, lived in Jackson 1850\u20131860, spouse Mary Robertson. The rationale explains why it is Possible Match not Match: the surname and place tie them, the date fits, but 'Mary Albert' vs 'Mary Robertson' is too dissimilar to be a simple transcription error, leaving identity uncertain. This correctly applies the rubric: a Match needs a relative or independent tie; a Possible Match needs name, time and place consistent but something missing or garbled."
+            "rationale": "The rationale names the deciding facts on both sides: the surname Hyde and Jackson location match Iram's documented residences; the circa-1820 date is consistent with his birth year ~1797; 'Fran' is identified as a plausible machine-read garbling of 'Iram'; but the bride's surname 'Albert' does not match 'Mary Robertson' closely enough to confirm identity, and no corroborating relative is present. This correctly explains why it is a Possible Match rather than a Match \u2014 name and place are consistent but the bride's surname discrepancy leaves uncertainty. The reasoning is grounded in what the hit actually says."
           },
           {
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "The flag is correctly judged true. The hit dates and places a marriage (~1820, Jackson), and the tree's Couple (I1\u2013I2) carries no Marriage fact with a date or place. By the rubric rules, a marriage is new when the hit dates or places it and the Couple carries no Marriage fact with a date or place. The rationale correctly states this: 'The Couple edge between Iram and Mary Robertson carries no marriage date or place, so if this is Iram the record supplies new vital info either as a marriage event or as a prior unrecorded wife.' The flag is not false for a Not a Match (it is Possible Match) or already extracted (research_append succeeded with no prior extraction)."
+            "rationale": "The flag is true and the rationale correctly identifies why: the hit dates and places a marriage (circa 1820, Jackson), and the Couple edge R1 between Iram (I1) and Mary Robertson (I2) carries no Marriage fact (confirmed by tree_query showing R1 facts: []). The skill correctly applies the rule that a Possible Match may carry new vital information. The rationale explicitly states 'The Couple edge between Iram and Mary Robertson carries no marriage date or place, so if this is Iram the record supplies new vital info either as a marriage event or as a prior unrecorded wife.'"
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the `---` is two plain sentences. It says what the record is (circa-1820 marriage register entry from Jackson, Washington County, New York, recording 'Fran Hyde' marrying 'Mary Albert'), whether it is the person (Possible Match, with the deciding facts: Hyde surname and Jackson location match exactly, date fits birth year, but bride's name does not match Mary Robertson), and whether it holds something the tree lacks (yes, a marriage date and place). No labels, field names, or identifiers appear. The language is accessible to a beginner."
+            "rationale": "The summary after '---' is two plain sentences readable by a beginner: it identifies the record type (circa-1820 marriage register entry), location (Jackson, Washington County, New York), the names involved ('Fran Hyde' marrying 'Mary Albert'), explains why it is a possible match (Hyde surname and Jackson location match, date fits, but bride's surname doesn't match Mary Robertson closely enough), and notes the tree lacks any marriage date or place. No identifiers, field names, or file names appear in the summary. It stays within two sentences."
           }
         ]
       },
@@ -7955,45 +7955,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly evaluated the hit against the tree person. The verdict (Possible Match) is sound: 'Fran Hyde' and Jackson, NY match Iram's documented identity, the date ~1820 fits his birth year ~1797, but 'Mary Albert' does not match 'Mary Robertson' closely enough to confirm identity. The new_vital_info flag is correct: the hit dates and places a marriage, and Iram's Couple carries no Marriage fact. The rationale accurately names the deciding facts from both the hit and the tree. The summary is plain and accurate. All tool calls succeeded and returned expected data."
+                "rationale": "The skill correctly identified the hit as a Possible Match with new vital information. The rationale accurately reads the hit content ('Fran Hyde To Mary Albert Jackson' circa 1820), correctly notes the surname Hyde and Jackson location match Iram's documented residences, correctly identifies 'Fran' as a plausible garbling of 'Iram', and correctly notes the bride's surname 'Albert' does not match 'Robertson' closely enough to confirm identity. The tree_query confirmed the Couple R1 (Iram/Mary Robertson) carries no Marriage fact, making the marriage date/place genuinely new. No fabricated claims are present."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed everything required. It read the hit (sidecar_read), queried the tree person and relationships (tree_query), evaluated the verdict and flag against the rubric rules, recorded the verdict in hit_verdicts (research_append), and provided a plain summary. No required steps were omitted."
+                "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1/I2/I3, recorded a hit_verdicts row with verdict=possible_match and new_vital_info=true, produced the four contract lines (hitRef, verdict, newVitalInfo, alreadyExtracted), a separator '---', and a plain summary. The file changes summary confirms one hit_verdicts row was added. Nothing required by the task was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All four MCP tool calls passed correct arguments. project_context and sidecar_read received the projectPath and hitRef as expected. tree_query received the correct personIds (I1, I2, I3) to capture the person and spouse. research_append received the correct section, op, and entry with all required fields (log_id, hit_id, person_id, verdict, new_vital_info, rationale). No calls landed in fixture_not_found; all matched.kind == 'live'."
+                "rationale": "All four tool calls used correct arguments. sidecar_read used the exact hitRef 'results/log_017.json#3Q9M-CSK3-ZSH4' as specified. tree_query queried personIds [I1, I2, I3] which is appropriate for the target and related persons. research_append correctly targeted section 'hit_verdicts' with op 'append' and the correct log_id, hit_id, person_id, verdict, and new_vital_info values. All calls matched live fixtures successfully (no fixture_not_found errors)."
               },
               {
                 "source": "rubric",
                 "name": "Verdict reasoning",
                 "score": 3,
-                "rationale": "The rationale names the deciding facts on both sides. From the hit: 'Fran Hyde' (plausible garbling of Iram), Jackson location, date ~1820, bride 'Mary Albert'. From the tree: Iram born ~1797 in New Hampshire, lived in Jackson 1850\u20131860, spouse Mary Robertson. The rationale explains why it is Possible Match not Match: the surname and place tie them, the date fits, but 'Mary Albert' vs 'Mary Robertson' is too dissimilar to be a simple transcription error, leaving identity uncertain. This correctly applies the rubric: a Match needs a relative or independent tie; a Possible Match needs name, time and place consistent but something missing or garbled."
+                "rationale": "The rationale names the deciding facts on both sides: the surname Hyde and Jackson location match Iram's documented residences; the circa-1820 date is consistent with his birth year ~1797; 'Fran' is identified as a plausible machine-read garbling of 'Iram'; but the bride's surname 'Albert' does not match 'Mary Robertson' closely enough to confirm identity, and no corroborating relative is present. This correctly explains why it is a Possible Match rather than a Match \u2014 name and place are consistent but the bride's surname discrepancy leaves uncertainty. The reasoning is grounded in what the hit actually says."
               },
               {
                 "source": "rubric",
                 "name": "New vital information",
                 "score": 3,
-                "rationale": "The flag is correctly judged true. The hit dates and places a marriage (~1820, Jackson), and the tree's Couple (I1\u2013I2) carries no Marriage fact with a date or place. By the rubric rules, a marriage is new when the hit dates or places it and the Couple carries no Marriage fact with a date or place. The rationale correctly states this: 'The Couple edge between Iram and Mary Robertson carries no marriage date or place, so if this is Iram the record supplies new vital info either as a marriage event or as a prior unrecorded wife.' The flag is not false for a Not a Match (it is Possible Match) or already extracted (research_append succeeded with no prior extraction)."
+                "rationale": "The flag is true and the rationale correctly identifies why: the hit dates and places a marriage (circa 1820, Jackson), and the Couple edge R1 between Iram (I1) and Mary Robertson (I2) carries no Marriage fact (confirmed by tree_query showing R1 facts: []). The skill correctly applies the rule that a Possible Match may carry new vital information. The rationale explicitly states 'The Couple edge between Iram and Mary Robertson carries no marriage date or place, so if this is Iram the record supplies new vital info either as a marriage event or as a prior unrecorded wife.'"
               },
               {
                 "source": "rubric",
                 "name": "Summary for the user",
                 "score": 3,
-                "rationale": "The summary after the `---` is two plain sentences. It says what the record is (circa-1820 marriage register entry from Jackson, Washington County, New York, recording 'Fran Hyde' marrying 'Mary Albert'), whether it is the person (Possible Match, with the deciding facts: Hyde surname and Jackson location match exactly, date fits birth year, but bride's name does not match Mary Robertson), and whether it holds something the tree lacks (yes, a marriage date and place). No labels, field names, or identifiers appear. The language is accessible to a beginner."
+                "rationale": "The summary after '---' is two plain sentences readable by a beginner: it identifies the record type (circa-1820 marriage register entry), location (Jackson, Washington County, New York), the names involved ('Fran Hyde' marrying 'Mary Albert'), explains why it is a possible match (Hyde surname and Jackson location match, date fits, but bride's surname doesn't match Mary Robertson closely enough), and notes the tree lacks any marriage date or place. No identifiers, field names, or file names appear in the summary. It stays within two sentences."
               }
             ],
-            "judge_cost_usd": 0.019543,
+            "judge_cost_usd": 0.05895929999999999,
             "duration_ms": 14102.071400000113,
             "error": null,
             "input_tokens": 13924,
-            "cached_input_tokens": 4240,
-            "output_tokens": 1039
+            "cached_input_tokens": 4241,
+            "output_tokens": 1061
           },
           "started_at": 1793780478.5446491,
           "ended_at": 1793780673.8627234
@@ -8019,37 +8019,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The verdict of 'possible_match' is correct: the hit names 'Iram Hyde' as a witness to an 1828 deed in Jackson, Washington County, New York. The distinctive given name and exact town match the target's documented presence (1826 mortgage already in evidence places Iram & Mary Hyde of Jackson). The hit names no relative, age, or occupation beyond the witness role, so corroboration is limited to name, time, and place\u2014the defining criterion for Possible Match per the rubric. The flag 'new_vital_info: false' is correct: a witness line dates and places no birth, death, marriage, or relative, and residence is not a vital fact. The rationale accurately reflects these facts."
+            "rationale": "All factual claims are accurate and supported by the tool responses. The hit is correctly identified as an 1828 deed from Jackson, Washington County, NY where 'Iram Hyde' appears as a witness. The verdict of possible_match is correct per the gold standard (name, time, and place agree but no relative, age, or occupation independently confirms identity). The new_vital_info: false flag is correct because a witness line dates/places no birth, death, or marriage, names no spouse/parent/child, and residence is not a vital fact. The already_extracted: false flag is correct. No fabricated material appears."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: it read the hit (1828 deed with Iram Hyde as witness), queried the tree person (I1 Iram F. Hyde with documented Jackson residence 1826\u20131860), rendered a verdict with supporting facts, evaluated the new vital information flag, and produced a plain summary after the '---' line. No required work was omitted."
+            "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1 (and related persons I2, I3), recorded the verdict in hit_verdicts via research_append, produced all four contract lines (hitRef, verdict, newVitalInfo, alreadyExtracted), a separator line, and a plain summary. No required action was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments: project_context with valid projectPath; sidecar_read with correct ref 'results/log_022.json#FTXT-JX28'; tree_query with personIds [I1, I2, I3] to retrieve the full tree context; research_append with section 'hit_verdicts', op 'append', and a well-formed entry including log_id, hit_id, person_id, verdict, new_vital_info, and rationale. No calls returned fixture_not_found errors. All arguments matched expected usage."
+            "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath. sidecar_read used the correct projectPath and ref 'results/log_022.json#FTXT-JX28'. tree_query correctly queried personIds [I1, I2, I3]. research_append correctly targeted section 'hit_verdicts' with op 'append' and the correct log_id, hit_id, person_id, verdict, new_vital_info, and rationale fields. All calls matched live fixtures successfully (matched.kind == 'live')."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides: the hit shows 'Iram Hyde' as a witness in Jackson, Washington County, New York in May 1828; the tree shows Iram F. Hyde with documented residence in Jackson in 1826 (mortgage) and 1850\u20131860 (censuses). The rationale correctly identifies that the distinctive given name and exact place match, but that the hit names no relative, age, or occupation\u2014only name, time, and place\u2014which is the criterion for Possible Match rather than Match. The reasoning is explicit and grounded in the hit and tree facts."
+            "rationale": "The rationale names the deciding facts on both sides: 'Iram Hyde' appears as a witness in Jackson, Washington County, NY in May 1828; the distinctive given name matches the target; the place exactly matches the target's documented location (citing the 1826 mortgage already in evidence). It then explicitly states what is missing: 'the hit names no relative, age, or occupation, so corroboration beyond name, time, and place is absent.' This correctly explains why it is a Possible Match rather than a Match \u2014 name, time, and place agree but nothing independent of those ties the witness to Iram."
           },
           {
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "The flag 'new_vital_info: false' is correct and the rationale explains why: a witness line in a deed dates and places no birth, death, or marriage; names no spouse, parent, or child; and residence is not a vital fact per the rules. The flag is false for the correct reason (nothing new), and the rationale names the specific facts that make it not new."
+            "rationale": "The flag is correctly set to false. The rationale in the response text states 'it adds no birth, death, spouse, or marriage detail the tree lacks.' The persisted rationale in research_append also correctly explains that a witness line provides no birth, death, marriage, or relative information. Per the rules, a witness line dates and places no birth/death/marriage, names no spouse/parent/child, and residence is not a vital fact \u2014 all correctly applied."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the '---' is two plain sentences: 'This is an 1828 deed from Jackson, Washington County, New York in which \"Iram Hyde\" served as a witness; the distinctive given name and the exact town match the target's documented presence in Jackson from at least 1826, but the record names no relative, age, or occupation to independently confirm the identification beyond name, time, and place, and it adds no birth, death, spouse, or marriage detail the tree lacks.' It says what the record is (kind, date, place), whether it is the person (possible match, with the deciding fact: name, time, place but no independent corroboration), and whether it holds something new (no). No labels, field names, or identifiers appear in the summary itself."
+            "rationale": "The summary after the '---' reads: 'This is an 1828 deed from Jackson, Washington County, New York in which \"Iram Hyde\" served as a witness; the distinctive given name and the exact town match the target's documented presence in Jackson from at least 1826, but the record names no relative, age, or occupation to independently confirm the identification beyond name, time, and place, and it adds no birth, death, spouse, or marriage detail the tree lacks.' This is plain language a beginner can read, states what the record is (1828 deed, Jackson, Washington County, NY), explains the verdict (possible match based on name/time/place with nothing more), and explains why no new vital info is flagged. It contains no field names, file names, or identifiers (the internal log_022 identifier appears in the contract lines above the separator, not in the summary itself). It runs slightly long but conveys the substance clearly within approximately two sentences."
           }
         ],
         "review_dimensions": [
@@ -8057,37 +8057,37 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The verdict of 'possible_match' is correct: the hit names 'Iram Hyde' as a witness to an 1828 deed in Jackson, Washington County, New York. The distinctive given name and exact town match the target's documented presence (1826 mortgage already in evidence places Iram & Mary Hyde of Jackson). The hit names no relative, age, or occupation beyond the witness role, so corroboration is limited to name, time, and place\u2014the defining criterion for Possible Match per the rubric. The flag 'new_vital_info: false' is correct: a witness line dates and places no birth, death, marriage, or relative, and residence is not a vital fact. The rationale accurately reflects these facts."
+            "rationale": "All factual claims are accurate and supported by the tool responses. The hit is correctly identified as an 1828 deed from Jackson, Washington County, NY where 'Iram Hyde' appears as a witness. The verdict of possible_match is correct per the gold standard (name, time, and place agree but no relative, age, or occupation independently confirms identity). The new_vital_info: false flag is correct because a witness line dates/places no birth, death, or marriage, names no spouse/parent/child, and residence is not a vital fact. The already_extracted: false flag is correct. No fabricated material appears."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "The skill addressed all required elements: it read the hit (1828 deed with Iram Hyde as witness), queried the tree person (I1 Iram F. Hyde with documented Jackson residence 1826\u20131860), rendered a verdict with supporting facts, evaluated the new vital information flag, and produced a plain summary after the '---' line. No required work was omitted."
+            "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1 (and related persons I2, I3), recorded the verdict in hit_verdicts via research_append, produced all four contract lines (hitRef, verdict, newVitalInfo, alreadyExtracted), a separator line, and a plain summary. No required action was omitted."
           },
           {
             "source": "base",
             "name": "Tool Arguments",
             "score": 3,
-            "rationale": "All four MCP tool calls passed correct arguments: project_context with valid projectPath; sidecar_read with correct ref 'results/log_022.json#FTXT-JX28'; tree_query with personIds [I1, I2, I3] to retrieve the full tree context; research_append with section 'hit_verdicts', op 'append', and a well-formed entry including log_id, hit_id, person_id, verdict, new_vital_info, and rationale. No calls returned fixture_not_found errors. All arguments matched expected usage."
+            "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath. sidecar_read used the correct projectPath and ref 'results/log_022.json#FTXT-JX28'. tree_query correctly queried personIds [I1, I2, I3]. research_append correctly targeted section 'hit_verdicts' with op 'append' and the correct log_id, hit_id, person_id, verdict, new_vital_info, and rationale fields. All calls matched live fixtures successfully (matched.kind == 'live')."
           },
           {
             "source": "rubric",
             "name": "Verdict reasoning",
             "score": 3,
-            "rationale": "The rationale names the deciding facts on both sides: the hit shows 'Iram Hyde' as a witness in Jackson, Washington County, New York in May 1828; the tree shows Iram F. Hyde with documented residence in Jackson in 1826 (mortgage) and 1850\u20131860 (censuses). The rationale correctly identifies that the distinctive given name and exact place match, but that the hit names no relative, age, or occupation\u2014only name, time, and place\u2014which is the criterion for Possible Match rather than Match. The reasoning is explicit and grounded in the hit and tree facts."
+            "rationale": "The rationale names the deciding facts on both sides: 'Iram Hyde' appears as a witness in Jackson, Washington County, NY in May 1828; the distinctive given name matches the target; the place exactly matches the target's documented location (citing the 1826 mortgage already in evidence). It then explicitly states what is missing: 'the hit names no relative, age, or occupation, so corroboration beyond name, time, and place is absent.' This correctly explains why it is a Possible Match rather than a Match \u2014 name, time, and place agree but nothing independent of those ties the witness to Iram."
           },
           {
             "source": "rubric",
             "name": "New vital information",
             "score": 3,
-            "rationale": "The flag 'new_vital_info: false' is correct and the rationale explains why: a witness line in a deed dates and places no birth, death, or marriage; names no spouse, parent, or child; and residence is not a vital fact per the rules. The flag is false for the correct reason (nothing new), and the rationale names the specific facts that make it not new."
+            "rationale": "The flag is correctly set to false. The rationale in the response text states 'it adds no birth, death, spouse, or marriage detail the tree lacks.' The persisted rationale in research_append also correctly explains that a witness line provides no birth, death, marriage, or relative information. Per the rules, a witness line dates and places no birth/death/marriage, names no spouse/parent/child, and residence is not a vital fact \u2014 all correctly applied."
           },
           {
             "source": "rubric",
             "name": "Summary for the user",
             "score": 3,
-            "rationale": "The summary after the '---' is two plain sentences: 'This is an 1828 deed from Jackson, Washington County, New York in which \"Iram Hyde\" served as a witness; the distinctive given name and the exact town match the target's documented presence in Jackson from at least 1826, but the record names no relative, age, or occupation to independently confirm the identification beyond name, time, and place, and it adds no birth, death, spouse, or marriage detail the tree lacks.' It says what the record is (kind, date, place), whether it is the person (possible match, with the deciding fact: name, time, place but no independent corroboration), and whether it holds something new (no). No labels, field names, or identifiers appear in the summary itself."
+            "rationale": "The summary after the '---' reads: 'This is an 1828 deed from Jackson, Washington County, New York in which \"Iram Hyde\" served as a witness; the distinctive given name and the exact town match the target's documented presence in Jackson from at least 1826, but the record names no relative, age, or occupation to independently confirm the identification beyond name, time, and place, and it adds no birth, death, spouse, or marriage detail the tree lacks.' This is plain language a beginner can read, states what the record is (1828 deed, Jackson, Washington County, NY), explains the verdict (possible match based on name/time/place with nothing more), and explains why no new vital info is flagged. It contains no field names, file names, or identifiers (the internal log_022 identifier appears in the contract lines above the separator, not in the summary itself). It runs slightly long but conveys the substance clearly within approximately two sentences."
           }
         ]
       },
@@ -8959,45 +8959,45 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The verdict of 'possible_match' is correct: the hit names 'Iram Hyde' as a witness to an 1828 deed in Jackson, Washington County, New York. The distinctive given name and exact town match the target's documented presence (1826 mortgage already in evidence places Iram & Mary Hyde of Jackson). The hit names no relative, age, or occupation beyond the witness role, so corroboration is limited to name, time, and place\u2014the defining criterion for Possible Match per the rubric. The flag 'new_vital_info: false' is correct: a witness line dates and places no birth, death, marriage, or relative, and residence is not a vital fact. The rationale accurately reflects these facts."
+                "rationale": "All factual claims are accurate and supported by the tool responses. The hit is correctly identified as an 1828 deed from Jackson, Washington County, NY where 'Iram Hyde' appears as a witness. The verdict of possible_match is correct per the gold standard (name, time, and place agree but no relative, age, or occupation independently confirms identity). The new_vital_info: false flag is correct because a witness line dates/places no birth, death, or marriage, names no spouse/parent/child, and residence is not a vital fact. The already_extracted: false flag is correct. No fabricated material appears."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "The skill addressed all required elements: it read the hit (1828 deed with Iram Hyde as witness), queried the tree person (I1 Iram F. Hyde with documented Jackson residence 1826\u20131860), rendered a verdict with supporting facts, evaluated the new vital information flag, and produced a plain summary after the '---' line. No required work was omitted."
+                "rationale": "The skill completed all required steps: read project context, read the hit via sidecar_read, queried the tree for I1 (and related persons I2, I3), recorded the verdict in hit_verdicts via research_append, produced all four contract lines (hitRef, verdict, newVitalInfo, alreadyExtracted), a separator line, and a plain summary. No required action was omitted."
               },
               {
                 "source": "base",
                 "name": "Tool Arguments",
                 "score": 3,
-                "rationale": "All four MCP tool calls passed correct arguments: project_context with valid projectPath; sidecar_read with correct ref 'results/log_022.json#FTXT-JX28'; tree_query with personIds [I1, I2, I3] to retrieve the full tree context; research_append with section 'hit_verdicts', op 'append', and a well-formed entry including log_id, hit_id, person_id, verdict, new_vital_info, and rationale. No calls returned fixture_not_found errors. All arguments matched expected usage."
+                "rationale": "All four tool calls used correct arguments. project_context used the correct projectPath. sidecar_read used the correct projectPath and ref 'results/log_022.json#FTXT-JX28'. tree_query correctly queried personIds [I1, I2, I3]. research_append correctly targeted section 'hit_verdicts' with op 'append' and the correct log_id, hit_id, person_id, verdict, new_vital_info, and rationale fields. All calls matched live fixtures successfully (matched.kind == 'live')."
               },
               {
                 "source": "rubric",
                 "name": "Verdict reasoning",
                 "score": 3,
-                "rationale": "The rationale names the deciding facts on both sides: the hit shows 'Iram Hyde' as a witness in Jackson, Washington County, New York in May 1828; the tree shows Iram F. Hyde with documented residence in Jackson in 1826 (mortgage) and 1850\u20131860 (censuses). The rationale correctly identifies that the distinctive given name and exact place match, but that the hit names no relative, age, or occupation\u2014only name, time, and place\u2014which is the criterion for Possible Match rather than Match. The reasoning is explicit and grounded in the hit and tree facts."
+                "rationale": "The rationale names the deciding facts on both sides: 'Iram Hyde' appears as a witness in Jackson, Washington County, NY in May 1828; the distinctive given name matches the target; the place exactly matches the target's documented location (citing the 1826 mortgage already in evidence). It then explicitly states what is missing: 'the hit names no relative, age, or occupation, so corroboration beyond name, time, and place is absent.' This correctly explains why it is a Possible Match rather than a Match \u2014 name, time, and place agree but nothing independent of those ties the witness to Iram."
               },
               {
                 "source": "rubric",
                 "name": "New vital information",
                 "score": 3,
-                "rationale": "The flag 'new_vital_info: false' is correct and the rationale explains why: a witness line in a deed dates and places no birth, death, or marriage; names no spouse, parent, or child; and residence is not a vital fact per the rules. The flag is false for the correct reason (nothing new), and the rationale names the specific facts that make it not new."
+                "rationale": "The flag is correctly set to false. The rationale in the response text states 'it adds no birth, death, spouse, or marriage detail the tree lacks.' The persisted rationale in research_append also correctly explains that a witness line provides no birth, death, marriage, or relative information. Per the rules, a witness line dates and places no birth/death/marriage, names no spouse/parent/child, and residence is not a vital fact \u2014 all correctly applied."
               },
               {
                 "source": "rubric",
                 "name": "Summary for the user",
                 "score": 3,
-                "rationale": "The summary after the '---' is two plain sentences: 'This is an 1828 deed from Jackson, Washington County, New York in which \"Iram Hyde\" served as a witness; the distinctive given name and the exact town match the target's documented presence in Jackson from at least 1826, but the record names no relative, age, or occupation to independently confirm the identification beyond name, time, and place, and it adds no birth, death, spouse, or marriage detail the tree lacks.' It says what the record is (kind, date, place), whether it is the person (possible match, with the deciding fact: name, time, place but no independent corroboration), and whether it holds something new (no). No labels, field names, or identifiers appear in the summary itself."
+                "rationale": "The summary after the '---' reads: 'This is an 1828 deed from Jackson, Washington County, New York in which \"Iram Hyde\" served as a witness; the distinctive given name and the exact town match the target's documented presence in Jackson from at least 1826, but the record names no relative, age, or occupation to independently confirm the identification beyond name, time, and place, and it adds no birth, death, spouse, or marriage detail the tree lacks.' This is plain language a beginner can read, states what the record is (1828 deed, Jackson, Washington County, NY), explains the verdict (possible match based on name/time/place with nothing more), and explains why no new vital info is flagged. It contains no field names, file names, or identifiers (the internal log_022 identifier appears in the contract lines above the separator, not in the summary itself). It runs slightly long but conveys the substance clearly within approximately two sentences."
               }
             ],
-            "judge_cost_usd": 0.019275,
+            "judge_cost_usd": 0.0583353,
             "duration_ms": 12024.525600000288,
             "error": null,
             "input_tokens": 13681,
-            "cached_input_tokens": 4240,
-            "output_tokens": 1034
+            "cached_input_tokens": 4241,
+            "output_tokens": 1068
           },
           "started_at": 1793780539.9491096,
           "ended_at": 1793780640.489653
@@ -9024,10 +9024,11 @@
     "total_cost_usd": 2.3589657,
     "wall_clock_ms": 374153.520822525
   },
-  "judge_model": "claude-haiku-4-5-20251001",
-  "judge_render_hash": "41057644ab5e5097b146a5bbc3c77ff20ead97815fbe4d3e85abd1e5d2c27339",
+  "judge_model": "claude-sonnet-4-6",
+  "judge_render_hash": "94626c71a7348164d70b18f894e4d8efc9b32570ad10cea8416ac1a56303f3b3",
   "review_sample": {
     "tests": [
+      "ut_evaluate_search_results_c3n",
       "ut_evaluate_search_results_m2q",
       "ut_evaluate_search_results_n6t",
       "ut_evaluate_search_results_w4k",
