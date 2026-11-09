@@ -327,12 +327,12 @@ never report a target as absent, and never state NOT FOUND, on a truncated read.
 the image cap, or no OpenRouter key): do **not** produce a transcription. Note
 `NOT READ: <imageId>` followed by the tool's error quoted verbatim and whole,
 from its first word to its last, link included, and move on. If it reported no OpenRouter key,
-say the key must be set in `~/.familysearch-mcp/config.json` (field
-`openRouterApiKey`) — never ask for it to be pasted into the chat, which would
-land it in the session transcript. Do not retry with a browser or a web fetch;
+relay where the tool's message says to set it — never ask for it to be pasted
+into the chat, which would land it in the session transcript. Do not retry with a browser or a web fetch;
 those are unavailable and waste turns. Never invent, infer, or guess a page's
 contents when the read failed. A browse stopped by the image cap is unfinished:
-in a project, log it `outcome: "partial"`, never `"error"`.
+in a project, log it `outcome: "partial"`, never `"error"`; either way, keep its
+`NOT READ` line and also give its link after the final `---`.
 
 **Listing a volume's images IS a completed browse — log it (step 6) before you
 present anything or defer reading.** The `image_search` call is the browse event
@@ -499,11 +499,15 @@ After the lines above, write a line containing only `---`, then exactly two
 paragraphs of plain prose with **no label, heading or field name**:
 
 1. One paragraph for someone who has never done genealogy: which set of old
-   records was looked through, roughly how much of it, and what turned up —
-   in plain words. No identifiers, file names, tool names or field names; a
-   volume is what it is ("the county's handwritten probate books from the
-   1890s"), a page is what it shows. If nothing was found, say so plainly and
-   say what was looked at, so the reader knows the search was real.
+   records was looked through, roughly how much of it, and what turned up — in
+   plain words. No identifiers, file names, tool names or field names, except a
+   link the researcher must open; a volume is what it is ("the county's
+   handwritten probate books from the 1890s"), a page is what it shows. If
+   nothing was found, say so plainly and say what was looked at, so the reader
+   knows the search was real. When a page came back NOT READ on the image cap,
+   name the unfinished book, give the link from the cap error, pasted whole and
+   unchanged, say the researcher can finish it by hand from there, and name any
+   other route you found (for example full-text search).
 2. One sentence: what happens next, in plain language.
 
 The caller prints everything after that `---` verbatim and nothing above it.
