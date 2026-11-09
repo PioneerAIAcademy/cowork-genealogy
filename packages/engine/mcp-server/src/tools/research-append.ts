@@ -3201,18 +3201,27 @@ const RELATIVE_OF = /\b(?:wife|husband|widow|widower|relict|son|daughter|child|m
 /** The given words of a namesake row's `name`, a free string: the words before
  *  any relative it names, read "Given Surname" (`surnameLast`), less name
  *  suffixes, and less the last word, the surname, when two or more are left. */
-function rowGivenWords(name: unknown): ReadonlySet<string> {
-  if (typeof name !== "string") return new Set();
+function rowGivenWords(name: unknown): RowGiven {
+  if (typeof name !== "string") return { words: new Set(), mrs: false };
   const relative = RELATIVE_OF.exec(name);
-  const own = relative ? name.slice(0, relative.index) : name;
-  const words = lookupNameWords(surnameLast(own)).filter((w) => !NAME_SUFFIXES.has(w));
-  return new Set(comparableWords(words.length > 1 ? words.slice(0, -1) : words));
+  const own = surnameLast(relative ? name.slice(0, relative.index) : name);
+  const words = lookupNameWords(own).filter((w) => !NAME_SUFFIXES.has(w));
+  return {
+    words: new Set(comparableWords(words.length > 1 ? words.slice(0, -1) : words)),
+    mrs: /^[^\p{L}]*mrs\b/iu.test(own.trim()),
+  };
 }
 
-/** Whether one of `person`'s names has a given word of the row's. */
-function sharesRowGivenName(person: any, rowWords: ReadonlySet<string>): boolean {
+/** A row's given words, and whether its name opens with "Mrs.", which may give
+ *  her husband's given name ("Mrs. Edwin Earnest"). */
+type RowGiven = { words: ReadonlySet<string>; mrs: boolean };
+
+/** Whether one of `person`'s names has a given word of the row's; a row named
+ *  "Mrs." never takes a persona recorded male, her husband. */
+function sharesRowGivenName(person: any, row: RowGiven): boolean {
+  if (row.mrs && String(person?.gender ?? "").toLowerCase() === "male") return false;
   return ((Array.isArray(person?.names) ? person.names : []) as any[]).some(
-    (n) => typeof n?.given === "string" && comparableWords(lookupNameWords(n.given)).some((w) => rowWords.has(w)),
+    (n) => typeof n?.given === "string" && comparableWords(lookupNameWords(n.given)).some((w) => row.words.has(w)),
   );
 }
 
@@ -4433,7 +4442,7 @@ async function lookUpNamesakePersonas(
 ): Promise<{ recordIds: unknown[]; stamp: Record<string, string>; personas: any[] }> {
   const stamp: Record<string, string> = {};
   const personas: any[] = [];
-  const rowWords = rowGivenWords(row?.name);
+  const rowGiven = rowGivenWords(row?.name);
   const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
     if (typeof id !== "string") return id;
     const bare = arkToBareId(id);
@@ -4463,7 +4472,7 @@ async function lookUpNamesakePersonas(
       if (typeof form !== "string") continue;
       // Another person of the record, such as a household member listed by
       // mistake, would corrupt item 10's count and give the row their birth year.
-      if (isPersonaId(persona) && sharesRowGivenName(person, rowWords)) {
+      if (isPersonaId(persona) && sharesRowGivenName(person, rowGiven)) {
         stamp[form] = persona;
         personas.push(person);
         return form;

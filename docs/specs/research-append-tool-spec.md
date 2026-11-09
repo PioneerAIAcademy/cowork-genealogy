@@ -1714,7 +1714,9 @@ is listed, and the name sentence only when a name is. It rides
   its name before any relative it names ("wife of Edwin Earnest"), read "Given
   Surname" when written "Surname, Given", less name suffixes, and less the last
   word, the surname, when two or more are left, taken before any hyphen in it is
-  split (`sharesRowGivenName`). A persona with no entry, or with no such word,
+  split (`sharesRowGivenName`). A row whose name opens with "Mrs." may give her
+  husband's given name ("Mrs. Edwin Earnest"), so it takes no persona recorded
+  male. A persona with no entry, or with no such word,
   counts as none named, so a household member listed by mistake (a husband's own
   record for his wife's namesake) is left unstamped and gives the row no year. A
   Latin given name for an English one (Maria for Mary), an abbreviation (Wm for

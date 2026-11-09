@@ -1478,6 +1478,26 @@ describe("namesake cap", () => {
           expect((await appendRow({ name: "Jean-Baptiste Martin", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
           expect((await row()).record_persona_ids).toEqual({ [jean.ark]: "p_2" });
         });
+
+        it('G14 takes no persona recorded male for a row named "Mrs." with her husband\'s given name', async () => {
+          const born1846 = [{ type: "Birth", date: "1846", standard_date: "1846" }];
+          const edwin = { ...EDWIN, gender: "Male", facts: born1846 };
+          for (const name of ["Mrs. Edwin Earnest", "Earnest, Mrs. Edwin", "(Mrs.) Edwin Earnest"]) {
+            await searchHit([edwin, HANNAH_QB], edwin);
+            expect((await appendRow({ name, record_ids: ["XS3W-W3M"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+            expect((await row()).record_persona_ids, name).toBeUndefined();
+            expect((await row()).birth_year, name).toBeUndefined();
+          }
+          // Her own persona, female, still stamps from a "Mrs." row of her own given name.
+          const hannah = { ...persona("p_1", "Hannah", "Earnest"), gender: "Female" };
+          await searchHit([hannah], hannah);
+          expect((await appendRow({ name: "Mrs. Hannah Earnest", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toEqual({ [hannah.ark]: "p_1" });
+          // A male persona of a row not named "Mrs." still stamps.
+          await searchHit([edwin, HANNAH_QB], edwin);
+          expect((await appendRow({ name: "Edwin Earnest", record_ids: ["XS3W-W3M"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toEqual({ [EDWIN.ark]: EDWIN.id });
+        });
       });
     });
 
