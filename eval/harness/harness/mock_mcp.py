@@ -706,8 +706,9 @@ def _place_before_results(response: dict[str, Any], key: str) -> dict[str, Any]:
     return reordered
 
 
-# Compaction the real search tool applies to its INLINE results once they are
-# staged, per tool. Both are exported from the compiled build so this harness
+# Compaction the real search tool applies to its INLINE results, per tool: on
+# every answer for a tool in COMPACTS_UNSTAGED, otherwise only once its results
+# are staged. Both are exported from the compiled build so this harness
 # runs the production function rather than a Python restatement of it: a mock
 # that hands the agent a field production strips grades tool-usage and triage
 # against a shape production never sends (#1826, #2009 — both now covered by
@@ -1659,10 +1660,11 @@ def create_mock_server(
             # Stage the canned payload for search tools so the live
             # research_log_append can finalize the sidecar (mirrors the real
             # tool returning staged.resultsRef), then apply the compaction the
-            # real tool applies to its inline results once staged — both by
-            # calling the compiled build, so the agent is graded on the shape
-            # production actually sends. Only when projectPath was passed and
-            # results came back; nil searches retain nothing and compact nothing.
+            # real tool applies to its inline results — both by calling the
+            # compiled build, so the agent is graded on the shape production
+            # actually sends. Staging needs projectPath and results; nil searches
+            # retain nothing. A tool in COMPACTS_UNSTAGED compacts every answer
+            # with results, staged or not; the others only once staged.
             # Resolved BEFORE staging so the single node process below can run
             # production's own `annotateResultsWithRanking` over the staged rows
             # in the same process. Only the match depends on `args`, so moving it

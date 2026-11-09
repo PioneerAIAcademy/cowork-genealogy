@@ -522,8 +522,8 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
   `manifest.json` (`tools[]`) — kept in sync by the manifest drift test
   (`tests/packaging/manifest.test.ts`).
 - `record_search` change: in the `record-search.ts` return path, **unconditionally
-  strip inline `results[].gedcomx` after `await stageSearchResults(...)` whenever
-  staging succeeded** — no opt-in flag (nothing needs inline gedcomx once staged,
+  strip inline `results[].gedcomx` on every answer (after `await
+  stageSearchResults(...)`, when it stages)** — no opt-in flag (nothing needs inline gedcomx once staged,
   so the overflow protection can't be forgotten by the caller). The staged file is
   already serialized to disk, so stripping cannot corrupt the sidecar. An un-staged
   (no `projectPath`) search is stripped too.

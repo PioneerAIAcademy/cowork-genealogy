@@ -1360,32 +1360,17 @@ Example:
         { "type": "Residence", "date": "1860", "place": "Springfield, Illinois" }
       ],
       "collectionId": "5000016",
-      "collectionTitle": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007",
-      "collectionUrl": "https://familysearch.org/collections/5000016",
       "recordTitle": "Entry for Abraham Lincoln, \"United States, Social Security...\"",
       "recordArk": "ark:/61903/1:2:HSJG-CLNF",
       "treeMatches": [
         { "treePersonId": "GQWZ-GPX", "stars": 5 }
       ],
-      "primaryId": "p_1",
-      "gedcomx": {
-        "persons": [
-          {
-            "id": "p_1",
-            "ark": "ark:/61903/1:1:QPRC-WPBZ",
-            "facts": [
-              { "type": "Birth", "date": "12 February 1809", "place": "Hardin, Kentucky, United States" },
-              { "type": "Residence", "date": "1860", "place": "Springfield, Illinois" }
-            ]
-          }
-        ],
-        "sources": [
-          { "title": "United States, Social Security...", "url": "https://familysearch.org/collections/5000016" },
-          { "title": "Entry for Abraham Lincoln, \"United States, Social Security...\"" }
-        ]
-      }
+      "primaryId": "p_1"
     }
-  ]
+  ],
+  "collections": {
+    "5000016": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007"
+  }
 }
 ```
 

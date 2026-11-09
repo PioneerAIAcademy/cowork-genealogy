@@ -137,7 +137,9 @@ fulltext_search({ /* …all existing params… */, projectPath?: string })
 
 Behavior:
 
-- **No `projectPath`** → identical to today. No staging, no `staged` field.
+- **No `projectPath`** → no staging, no `staged` field; the answer carries what the
+  tool's own contract says (§2, inline-payload strip: `record_search` compacts every
+  answer).
 - **`projectPath` present and `results.length > 0`** → after building the normal
   response, stage it (§5) and add a `staged` handle to the returned object:
 
@@ -380,7 +382,7 @@ same ground truth production does.
 
 | Condition | Behavior |
 |-----------|----------|
-| `projectPath` omitted | identical to today; no `staged` field; existing callers/tests unaffected |
+| `projectPath` omitted | no `staged` field; nothing is written |
 | Staging write fails (dir unwritable, disk error) | **the search still succeeds** — return the normal results with `staged: null` and a `stagingError` note. Retention falls back to the protocol's "results could not be retained" path; never fail a successful search over a retention problem |
 | Nil results with `projectPath` | `staged: null`, no file written |
 | `projectPath` does not exist / is not a directory | treat as a staging failure (above): results returned, `staged: null`, note |

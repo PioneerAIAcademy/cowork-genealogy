@@ -995,7 +995,7 @@ describe("recordSearchTool — User-Agent contract", () => {
   });
 });
 
-describe("recordSearchTool — inline gedcomx omission when staged", () => {
+describe("recordSearchTool — inline compaction", () => {
   let dir: string;
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "record-search-omit-"));
