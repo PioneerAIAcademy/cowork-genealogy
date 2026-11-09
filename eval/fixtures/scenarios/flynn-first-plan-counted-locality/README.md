@@ -1,0 +1,22 @@
+# flynn-first-plan-counted-locality
+
+Patrick Flynn parentage research — q_001 has NO plan yet. Only the 1850 census question (q_002) has been answered.
+
+- **Stored curated list:** `external-collections.json` holds what `external_links_search` stores for Schuylkill, Pennsylvania (Pennsylvania and Schuylkill entries), so every test on this scenario starts with it. Regenerate with `eval/harness/scripts/seed_external_collections.py` from `external-links-search-schuylkill-1870-census`, never by hand.
+- **Objective:** Identify the parents of Patrick Flynn (b. ~1845, d. 1908)
+- **Questions:** q_001 (parentage, in_progress, **no plan yet**), q_002 (1850 census placement, resolved + exhaustive)
+- **Plans:** pl_001 (1850 census search for q_002, completed) — q_001 has NO plan at all
+- **Log:** 3 entries — 1850 census on FamilySearch/Ancestry/MyHeritage (log_001–003)
+- **Sources:** src_001 (1850 census FamilySearch), src_002 (1850 census Ancestry)
+- **Assertions:** a_001–a_007 (from 1850 census sources only)
+- **Hypothesis:** h_001 (Thomas is Patrick's father, status: active — indirect co-enumeration only)
+- **Conflicts:** none (only one birthplace source so far)
+- **Proof summary:** ps_001 (q_001, tier: possible — 1850 co-residence only)
+- **GedcomX persons:** I1 (Patrick Flynn), I2 (Thomas Flynn)
+- **GedcomX relationships:** R1 (ParentChild, Thomas → Patrick)
+
+Use when: testing that research-plan creates the FIRST plan for a question (add-new mode), requiring a full locality survey before proposing what records to search.
+
+> **Surveyed variant.** Identical to `flynn-first-plan` but with a pre-seeded `localities` entry (Schuylkill County / PA), representing the state after the orchestrator ran `locality-guide`. Used by research-plan pure-consumer tests, which read the locality entry rather than surveying.
+
+> **Counted-locality variant (#3545).** Identical to `flynn-first-plan-surveyed`, except that `loc_001.collections` holds all 6 collections in `eval/fixtures/mcp/collections-search-pennsylvania.json` (ids, titles, date ranges, person and record counts copied verbatim; 1999196 has person_count 0, so it is browse-only), the shape locality-guide writes since #3860. Used by `ut_research_plan_clc`, which checks research-plan plans from these counts rather than re-running `collections_search` for Schuylkill or Pennsylvania.
