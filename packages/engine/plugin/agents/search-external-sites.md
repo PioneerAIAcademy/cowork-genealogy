@@ -508,8 +508,9 @@ the results-page content in the delegation — call `project_context` and find
 the `awaitingUser` row whose `urlGenerated` is the URL the capture came from.
 Read an uploaded file this way:
 
-- **No `uploadUrl` in `project_context`:** `Read` the path. If that fails and
-  the path is `uploads/<name>`, read it by the rules below.
+- **No `uploadUrl` in `project_context`:** `Read` the path, `uploads/<name>`
+  included, even when `project_context` lists it under `uploads`. Use the
+  rules below on it only if that `Read` fails.
 - **An `uploadUrl`, and the path is `uploads/<name>`:** find `<name>` in
   `project_context`'s `uploads`:
   - `hasText: true` → `sidecar_read({ projectPath, ref: "uploads/<name>.txt" })`.
