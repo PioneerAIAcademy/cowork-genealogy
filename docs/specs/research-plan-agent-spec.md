@@ -127,6 +127,18 @@ that would replace it (probed 2026-10-02, §5):
   search asserts nothing, so a search keyed on a surname from a single marriage
   record may be planned freely. The caution applies to what is written down: no
   rationale calls it her maiden name, and a companion item must test it.
+- **A pre-1850 US federal census names only the head (issue #4163).** The
+  federal schedules of 1790–1840 name the head of household and count everyone
+  else in age brackets; 1850–1870 name every member without stating a
+  relationship; 1880 adds relationship to the head; birthplace first appears in
+  1850. It is one national rule, not a jurisdiction fact, and the localities
+  entries the agent reads do not carry it. Before the rule, all three baseline
+  runs of `ut_research_plan_hoh` (2026-11-06) read an unnamed tally in Paul
+  Raymond Sr.'s 1790–1820 household as his son ("may show a young man of about
+  20 (I1) still in the household"), one invented a "16–26" bracket for 1790, and
+  one said the 1820 census records the head's state of birth. Every run put
+  probate ahead of census, so the rule is about what a census can show, not
+  where it sits in the order.
 
 **r3d deleted (lead, 2026-10-06).** `ut_research_plan_r3d` failed in every
 committed research-plan run, including a same-day run of the unchanged skill:

@@ -494,6 +494,12 @@ table and contextual factors checklist.
   the subject is their child — that link needs a record placing the
   child *with* the parents (see `research-exhaustiveness`). See
   Appendix B ("Identifying parents").
+- **A US federal census before 1850 names only the head of household.**
+  Everyone else is an unnamed tally in an age bracket (in 1790, free white
+  males only under 16 or 16 and over). Plan one to place a man in a town in a
+  year, never to show a child: no rationale reads a tally as the subject or
+  as evidence of parentage. Birthplace is first recorded in 1850, and
+  relationship to the head in 1880.
 - **When the target jurisdiction's boundaries changed within the date
   range** (a parish/county split, an absorption, a rename) — call
   `place_search_all` and plan a co-equal item for each successor
@@ -1127,7 +1133,7 @@ contextual factors that affect availability.
 
 | Goal | Primary record types | Secondary/fallback |
 |------|---------------------|-------------------|
-| Identify parents | Census (household), marriage (parents' marriage record), vital records (death/birth cert), probate (will), church (baptism), levy rolls (sons enrolled under their father, where the jurisdiction kept them) | Military pension, immigration, land deeds (witnesses) |
+| Identify parents | Census (household, 1850 onward), marriage (parents' marriage record), vital records (death/birth cert), probate (will), church (baptism), levy rolls (sons enrolled under their father, where the jurisdiction kept them) | Military pension, immigration, land deeds (witnesses) |
 | Confirm identity | Census (name/age/place across decades), vital records, church records | Newspaper, tax records, city directories |
 | Find birth date/place | Vital records (birth cert), census (age), church (baptism), death cert (secondary); the subject's own death, burial or marriage entry when the birth predates the register or the birth parish is unknown | Military records, immigration, delayed birth cert |
 | Find death date/place | Vital records (death cert), cemetery/FindAGrave, obituary, probate | Church burial, pension file, Social Security |
@@ -1160,7 +1166,7 @@ evidence (e.g., a death certificate or a single census co-residence).
 **Note the limit:** the couple's marriage proves *they* married and dates
 their union — it is **not**, by itself, evidence that *this* child is
 theirs. A parentage conclusion still needs a record that places the child
-*with* the parents (the child's own christening/birth, a census household,
+*with* the parents (the child's own christening/birth, an 1850-or-later census household,
 or a probate naming the child); the marriage record strengthens that case
 but cannot stand as its sole basis. This item belongs in essentially every
 parentage plan, even when a parent already appears in the tree from

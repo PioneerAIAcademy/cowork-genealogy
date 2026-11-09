@@ -1,0 +1,243 @@
+{
+  "tool": "collections_search",
+  "description": "collections_search for Berkshire County, Massachusetts, 1760-1860, captured live from FamilySearch on 2026-11-05 (issue #4163). Must precede collections-search-us-early-census in a test's mcp_fixtures. Two collections from the live list are left out (1469062, 2061550): older fixtures serve those ids under other titles, and the corpus check requires one set of attributes per id.",
+  "args": {
+    "standardPlace": "~Berkshire"
+  },
+  "response": {
+    "query": {
+      "standardPlace": "Berkshire, Massachusetts, United States",
+      "startYear": 1760,
+      "endYear": 1860
+    },
+    "scope": "Massachusetts",
+    "totalForPlace": 25,
+    "results": [
+      {
+        "id": "1463156",
+        "title": "Massachusetts Deaths, 1841-1915, 1921-1924",
+        "dateRange": "1841-1924",
+        "recordCount": 0,
+        "personCount": 0,
+        "imageCount": 830893,
+        "url": "https://www.familysearch.org/search/collection/1463156"
+      },
+      {
+        "id": "1675351",
+        "title": "Massachusetts Marriages, 1695-1910, 1921-1924",
+        "dateRange": "1695-1910",
+        "recordCount": 128728,
+        "personCount": 678298,
+        "imageCount": 1719,
+        "url": "https://www.familysearch.org/search/collection/1675351"
+      },
+      {
+        "id": "1675197",
+        "title": "Massachusetts, Births and Christenings, 1639-1915",
+        "dateRange": "1639-1915",
+        "recordCount": 2538593,
+        "personCount": 7151993,
+        "imageCount": 39630,
+        "url": "https://www.familysearch.org/search/collection/1675197"
+      },
+      {
+        "id": "2400643",
+        "title": "Massachusetts, Births, 1636-1924",
+        "dateRange": "1636-1924",
+        "recordCount": 24610,
+        "personCount": 72915,
+        "imageCount": 2901,
+        "url": "https://www.familysearch.org/search/collection/2400643"
+      },
+      {
+        "id": "2787822",
+        "title": "Massachusetts, Church Records, 1630-1943",
+        "dateRange": "1630-1943",
+        "recordCount": 9337,
+        "personCount": 21750,
+        "imageCount": 472,
+        "url": "https://www.familysearch.org/search/collection/2787822"
+      },
+      {
+        "id": "1675350",
+        "title": "Massachusetts, Deaths and Burials, 1795-1910",
+        "dateRange": "1795-1910",
+        "recordCount": 368497,
+        "personCount": 1152093,
+        "imageCount": 31212,
+        "url": "https://www.familysearch.org/search/collection/1675350"
+      },
+      {
+        "id": "2268583",
+        "title": "Massachusetts, Delayed and Corrected Vital Records, 1753-1900",
+        "dateRange": "1753-1900",
+        "recordCount": 0,
+        "personCount": 0,
+        "imageCount": 11788,
+        "url": "https://www.familysearch.org/search/collection/2268583"
+      },
+      {
+        "id": "2302948",
+        "title": "Massachusetts, Essex, Salem and Beverly Crew Lists and Shipping Articles, 1797-1934",
+        "dateRange": "1797-1934",
+        "recordCount": 215124,
+        "personCount": 215125,
+        "imageCount": 33017,
+        "url": "https://www.familysearch.org/search/collection/2302948"
+      },
+      {
+        "id": "1865477",
+        "title": "Massachusetts, Hampden, Springfield Vital Records, 1638-1887",
+        "dateRange": "1638-1887",
+        "recordCount": 0,
+        "personCount": 0,
+        "imageCount": 3331,
+        "url": "https://www.familysearch.org/search/collection/1865477"
+      },
+      {
+        "id": "2304666",
+        "title": "Massachusetts, Index to Boston Passenger Lists, 1848-1891",
+        "dateRange": "1848-1891",
+        "recordCount": 1139732,
+        "personCount": 1139764,
+        "imageCount": 1143577,
+        "url": "https://www.familysearch.org/search/collection/2304666"
+      },
+      {
+        "id": "2106411",
+        "title": "Massachusetts, Land Records, 1620-1986",
+        "dateRange": "1620-1986",
+        "recordCount": 0,
+        "personCount": 18,
+        "imageCount": 5766135,
+        "url": "https://www.familysearch.org/search/collection/2106411"
+      },
+      {
+        "id": "1918549",
+        "title": "Massachusetts, Plymouth County, Probate Estate Files, 1686-1915",
+        "dateRange": "1686-1915",
+        "recordCount": 61903,
+        "personCount": 61903,
+        "imageCount": 819700,
+        "url": "https://www.familysearch.org/search/collection/1918549"
+      },
+      {
+        "id": "2018320",
+        "title": "Massachusetts, Plymouth County, Probate Records, 1633-1967",
+        "dateRange": "1633-1967",
+        "recordCount": 0,
+        "personCount": 0,
+        "imageCount": 302640,
+        "url": "https://www.familysearch.org/search/collection/2018320"
+      },
+      {
+        "id": "1881492",
+        "title": "Massachusetts, Revolutionary War Bounty Land Applications, 1805-1845",
+        "dateRange": "1805-1845",
+        "recordCount": 616,
+        "personCount": 906,
+        "imageCount": 2522,
+        "url": "https://www.familysearch.org/search/collection/1881492"
+      },
+      {
+        "id": "2548057",
+        "title": "Massachusetts, Revolutionary War, Index Cards to Muster Rolls, 1775-1783",
+        "dateRange": "1775-1783",
+        "recordCount": 609039,
+        "personCount": 609052,
+        "imageCount": 641406,
+        "url": "https://www.familysearch.org/search/collection/2548057"
+      },
+      {
+        "id": "1459985",
+        "title": "Massachusetts, State Census, 1855",
+        "dateRange": "1855-1855",
+        "recordCount": 1202234,
+        "personCount": 1202234,
+        "imageCount": 15239,
+        "url": "https://www.familysearch.org/search/collection/1459985"
+      },
+      {
+        "id": "1928860",
+        "title": "Massachusetts, State Vital Records, 1638-1927",
+        "dateRange": "1638-1927",
+        "recordCount": 12026254,
+        "personCount": 52932310,
+        "imageCount": 742594,
+        "url": "https://www.familysearch.org/search/collection/1928860"
+      },
+      {
+        "id": "1860873",
+        "title": "Massachusetts, Suffolk, Boston Passenger Lists, 1820-1891",
+        "dateRange": "1820-1891",
+        "recordCount": 903407,
+        "personCount": 903417,
+        "imageCount": 80509,
+        "url": "https://www.familysearch.org/search/collection/1860873"
+      },
+      {
+        "id": "2125599",
+        "title": "Massachusetts, Suffolk, Boston Tax Records, 1822-1918",
+        "dateRange": "1822-1918",
+        "recordCount": 28651792,
+        "personCount": 28634333,
+        "imageCount": 586834,
+        "url": "https://www.familysearch.org/search/collection/2125599"
+      },
+      {
+        "id": "2216301",
+        "title": "Massachusetts, Suffolk, Boston, Crew Lists, 1811-1921",
+        "dateRange": "1811-1921",
+        "recordCount": 335821,
+        "personCount": 335823,
+        "imageCount": 34522,
+        "url": "https://www.familysearch.org/search/collection/2216301"
+      },
+      {
+        "id": "3159283",
+        "title": "Massachusetts, Suffolk, Boston, Voter Registers, 1857-1920",
+        "dateRange": "1857-1920",
+        "recordCount": 264513,
+        "personCount": 264531,
+        "imageCount": 23347,
+        "url": "https://www.familysearch.org/search/collection/3159283"
+      },
+      {
+        "id": "2285844",
+        "title": "Massachusetts, Town Records, ca. 1638-1961",
+        "dateRange": "1638-1961",
+        "recordCount": 0,
+        "personCount": 0,
+        "imageCount": 87781,
+        "url": "https://www.familysearch.org/search/collection/2285844"
+      },
+      {
+        "id": "2632082",
+        "title": "Massachusetts, United States Naturalization Records, 1790-1991",
+        "dateRange": "1790-1991",
+        "recordCount": 1325927,
+        "personCount": 1645959,
+        "imageCount": 1389230,
+        "url": "https://www.familysearch.org/search/collection/2632082"
+      },
+      {
+        "id": "3155889",
+        "title": "Massachusetts, Wills and Deeds, ca. 1700-2017",
+        "dateRange": "1700-2017",
+        "recordCount": 1,
+        "personCount": 81433,
+        "imageCount": 5601,
+        "url": "https://www.familysearch.org/search/collection/3155889"
+      },
+      {
+        "id": "2102083",
+        "title": "Massachusetts, Worcester County, Probate Files, 1731-1925",
+        "dateRange": "1731-1925",
+        "recordCount": 0,
+        "personCount": 0,
+        "imageCount": 513629,
+        "url": "https://www.familysearch.org/search/collection/2102083"
+      }
+    ]
+  }
+}
