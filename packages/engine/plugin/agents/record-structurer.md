@@ -16,10 +16,13 @@ effort: low
 tools:
   - mcp__genealogy__sidecar_read
   - mcp__genealogy__extraction_append
+  - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__sidecar_read
   - mcp__remote-devices__Genealogy_Research__extraction_append
+  - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__Genealogy_Research__sidecar_read
   - mcp__Genealogy_Research__extraction_append
+  - mcp__Genealogy_Research__project_context
 ---
 
 # Record Structurer
