@@ -15,7 +15,7 @@ from harness.orchestrator import (
     _negative_judge_context,
     _other_suite_names,
     _stop_at_stub,
-    _stopped_at_a_handoff,
+    _handed_off_to_a_stub,
     _routing_short_circuit_skills,
     apply_deterministic_deference,
     flag_routing_negative_judge_fail,
@@ -2441,18 +2441,26 @@ _ENTRY = {"tool": "Skill", "args": {"skill": "research"}}
 _SPAWN = {"tool": "Agent", "args": {"subagent_type": "question-selection"}}
 
 
-def test_stopped_at_a_handoff_needs_the_opt_in_and_a_stubbed_hand_off():
+def test_handed_off_to_a_stub_needs_a_stubbed_hand_off():
     stopping = _positive_spec_with(_STOPPING)
-    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY, _SPAWN)) is True
-    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY)) is False, (
+    assert _handed_off_to_a_stub(stopping, _run_with(_ENTRY, _SPAWN)) is True
+    assert _handed_off_to_a_stub(stopping, _run_with(_ENTRY)) is False, (
         "the skill's own entry is not a stubbed hand-off"
     )
     unstubbed = {"tool": "Agent", "args": {"subagent_type": "gps-mentor"}}
-    assert _stopped_at_a_handoff(stopping, _run_with(_ENTRY, unstubbed)) is False, (
-        "a hand-off to an unstubbed name is not what the stop ends at"
+    assert _handed_off_to_a_stub(stopping, _run_with(_ENTRY, unstubbed)) is False, (
+        "a hand-off to an unstubbed name is not a stubbed one"
     )
+
+
+def test_a_stubbed_hand_off_counts_on_a_test_that_keeps_going():
     plain = _positive_spec_with({"stub_skills": ["question-selection"]})
-    assert _stopped_at_a_handoff(plain, _run_with(_ENTRY, _SPAWN)) is False
+    assert _handed_off_to_a_stub(plain, _run_with(_ENTRY, _SPAWN)) is True
+
+
+def test_a_stubbed_hand_off_never_counts_on_a_negative_test():
+    negative = SimpleNamespace(type="negative", execution={"stub_skills": ["question-selection"]})
+    assert _handed_off_to_a_stub(negative, _run_with(_ENTRY, _SPAWN)) is False
 
 
 def test_a_run_stopped_at_its_first_hand_off_counts_as_activated(tmp_path, monkeypatch):

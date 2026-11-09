@@ -139,6 +139,45 @@ count, not time.
   `{ref: "S1", quality: 1}` (compiled, unverified tree data); person-level and
   relationship-level `sources` refs are re-pointed at their `S` ids.
 - **Relationships** get `R` ids, with every endpoint rewritten to `I` ids.
+- **Loops:** a ParentChild loop in the read (a person recorded as their own
+  ancestor, directly or through a chain) is a FamilySearch data error, and the
+  validator refuses any tree that holds one, so the build breaks it rather than
+  fail the create. **Dates decide first.** A loop edge is impossible by dates
+  when the parent's earliest birth-like year (`BIRTHLIKE_FACT_TYPES`: Birth,
+  Christening, Baptism and the rest) is after the child's latest; when the loop
+  holds one or more such edges, the one with the widest gap goes (latest in the
+  read's `relationships` order on a tie). Only when no loop edge is impossible
+  by dates — someone on the loop has no birth-like date, or the dates agree with
+  every edge — do generations decide. A tree can merge two people of one name,
+  so a generation read off it can be wrong where a date is not; that is why
+  dates come first (salvador-choc-daughter: R7 rests on a merged Salvador Choc).
+  For generations, each person gets one by a breadth-first walk
+  from the subject (0) over every relationship in the read's order except the
+  ParentChild edges that lie on a loop: a parent is its child's generation + 1,
+  a child its parent's − 1, a Couple partner the same, and the first value
+  assigned wins. Loop edges are left out of the walk so that the wrong edge
+  cannot set the generations it is then scored by; otherwise a subject who is
+  on the loop can reach the other loop person through the wrong edge first and
+  drop the right one. Then, while a loop remains, the loop
+  edge with the smallest `generation(parent) − generation(child)` is dropped;
+  when two or more loop edges share that smallest score, the one latest in the
+  read's `relationships` order goes, and when a person on the loop has no
+  generation (the subject cannot reach them off the loop), the loop edge latest
+  in that order goes. Both loops seen in real reads have a spouse and a child of
+  the subject each recorded as the other's parent. In salvador-choc-daughter the
+  dates decide: Petrona Ba (christened 1867) cannot be the parent of Catarina
+  Choc (born 1838), so Petrona as Catarina's parent is dropped. In
+  isabel-carvajal-daughter Emilio has no birth-like date, so generations decide
+  and drop Ramón, the child, as Emilio's parent. Each dropped edge is reported as one plain sentence, first in
+  the summary's `notes` and also in `validation.warnings`, worded by the loop's
+  size: a person recorded as their own parent; a pair ("FamilySearch records A
+  as B's parent and B as A's; the first link was left out of the tree, since a
+  person cannot be their own ancestor."); or a longer chain ("…records A as B's
+  parent, but also records B as A's ancestor; that link was left out…"). A
+  person with no name is named by FamilySearch ID ("the person with
+  FamilySearch ID …"), never by the tree's own `I` id. Only
+  this path heals: a hand-built `tree` holding a loop is refused, as every
+  writer refuses one.
 - **Places** a fact from the read carries with no `standard_place` go through
   the same resolver `person_read` uses, once more (`standardizePlaces`): the
   read leaves a place unresolved after a transient failure or past its
@@ -246,6 +285,16 @@ found: …`. A non-place phrase such as "Same House" (`isNonPlacePhrase`) has no
 standard form to miss and is left out. Both are absent when every place was
 standardized.
 
+**A state the text and the standard place disagree on is reported, never
+silent.** After the fill, each distinct `place` / `standard_place`
+pair on the tree's facts that `divisionContradiction` finds in conflict — the
+text ends with one US state, Puerto Rico or Canadian province and the standard
+place lies in another ("Washington County, Texas" with "Texas, Washington,
+Kentucky, United States", a FamilySearch `place.normalized` value) — is named in
+one `validation.warnings` line, `Place '…' names one state or province but its
+standard place '…' lies in another`. The value is kept as read, as the converter
+keeps every FamilySearch-supplied value; only the warning is new.
+
 **The result, with `personId`,** is a summary, never the tree, held under
 `SUMMARY_MAX_CHARS` (2,000 serialized characters): `subject` (`id`,
 `familySearchId`, `name`, and `birth` / `death` as "date, place" when the read
@@ -253,8 +302,9 @@ has them), `objective` and `title` as stored, `relatives` (each other person's `
 the subject — `spouse`; `father` / `mother` for a parent recorded Male / Female,
 `parent` when the sex is unknown; `child`, `sibling`, or `relative`), `counts` (`persons`,
 `relationships`, `sources`, `memorySources`), `memories` (the titles of the
-subject's memories that were and were not transcribed), the read's own `notes`,
-and `validation.warnings`. Over the cap, whole entries are dropped, the last
+subject's memories that were and were not transcribed), `notes` (a sentence per
+loop the build broke, first, then the read's own notes), and
+`validation.warnings`. Over the cap, whole entries are dropped, the last
 first, in this order: `warnings`, `notes`, the untranscribed titles, the
 transcribed titles, then relatives, and among relatives only a child, sibling or
 other relative. A parent or a spouse is never dropped, since those are the slots
@@ -272,16 +322,6 @@ and `statementSource` when one was created. It also carries `placesFilled`,
 none). One resolution is listed once, in the spelling first met, however else
 the same place was written (trimmed, case-folded, spaces collapsed), so the
 caller can tell the researcher which places it standardized without being asked.
-
-**`projectUrl`, on either success.** The project's page in the self-hosted
-beta's web app, `<webPublicUrl>/#/p/<projectId>`, present only when the per-user
-config has `webPublicUrl` and the bound store has a `projectId`
-(`projectLinks(principal)`, `src/utils/project-links.ts`; the same helper and
-rules as `project_context`'s, its spec §2.7). That id is the store's, so it is
-**not** the `projectId: "rp_001"` this result also carries, which is the
-research project's id inside `research.json`. On the `personId` summary it is
-built inside the 2,000-character cap. The desktop's file store has no id, so the
-desktop never gets one.
 
 **Naming the subject.** A caller that has only the FamilySearch ID writes the
 objective and title before the read, so it can name the subject only by that ID.
@@ -418,7 +458,11 @@ the write ahead of the validation and watching two cases go red.
 > only in the direction the read supports, a supplied `standard_date` the read
 > does not hold, a reworded marriage date, a merged person's ark, nothing staged,
 > a staged read past the TTL by write time never opened, and that a build with no
-> ark never lists staging).
+> ark never lists staging); and a read holding a ParentChild loop (the create
+> succeeds without the loop-closing edge, the loop sentence is first in `notes`
+> and in `validation.warnings`, a longer loop's wording claims no reciprocal
+> link, a loop-free read adds no note) while a hand-built tree with the same loop
+> is still refused.
 
 > `packages/engine/mcp-server/tests/tools/person-read.test.ts` — `readPerson`
 > behind `person_read`; a merged parent's redirect is not followed once the read's
@@ -431,7 +475,16 @@ the write ahead of the validation and watching two cases go red.
 
 > `packages/engine/mcp-server/tests/utils/person-read-tree.test.ts` — the place
 > retry, its no-op when nothing needs it, that a refusal never waits on it, that
-> it touches only the read's facts, and the access-date form.
+> it touches only the read's facts, and the access-date form; and the loop rule:
+> salvador-choc-daughter's real dates deciding in both orders, the fallback to
+> generations when a loop person is undated, when the dates rule out neither
+> edge, and when only a death date is held; the generation rule
+> on both fixture shapes without dates (salvador-choc-daughter, isabel-carvajal-daughter), the
+> same decision with the wrong edge listed first, the same decision seeded from
+> the child on the loop in both orders, a tie in both orders, a loop the subject
+> cannot reach, a three-person loop with and without an anchor off the loop, a
+> self-parent, and pedigree
+> collapse and a loop-free read left unchanged.
 
 > `eval/harness/tests/unit/test_init_project_provenance_validators.py` — the
 > compiled build's tree passes the init-project validators written to grade the

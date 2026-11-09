@@ -5,7 +5,9 @@ const HOUSE = "ark:/61903/1:1:HSE1-001";
 const OTHER = "ark:/61903/1:1:OTH2-002";
 const LOST = "ark:/61903/1:1:LST3-003";
 
-const assertion = (id: string, recordId: string, persona: string | null) => ({ id, record_id: recordId, record_persona_id: persona });
+const assertion = (id: string, recordId: string, persona: string | null, extra: Record<string, unknown> = {}) => ({
+  id, record_id: recordId, record_persona_id: persona, ...extra,
+});
 const link = (id: string, assertionId: string, confidence = "probable", extra = {}) => ({
   id, assertion_id: assertionId, person_id: "I1", confidence, superseded_by: null, ...extra,
 });
@@ -70,6 +72,29 @@ describe("personaStampCounts (item 10 of #3363)", () => {
   it("judges no link on a record with no stamp", () => {
     const c = personaStampCounts(research({ record_persona_ids: {} }));
     expect([c.stamped, c.wouldRefuse, c.spared]).toEqual([0, 0, 0]);
+  });
+
+  it("counts a link to the stamped persona read from another member's record id", () => {
+    // ns_001 of the hannah-earnest-children run: the row lists Hannah's ark, the
+    // assertion came from the read of her husband's, with her persona.
+    const r = research({});
+    r.assertions.push(assertion("a_005", "ark:/61903/1:1:HSE1-00H", "p_9"));
+    r.person_evidence.push(link("pe_007", "a_005"));
+    expect(personaStampCounts(r).wouldRefuse).toBe(3);
+  });
+
+  it("spares a link to another persona of the stamped record, read from another member's record id", () => {
+    // One source, one record id per persona: the namesake's under the head's id,
+    // the subject's own under a third member's. Neither id is listed.
+    const r = research({});
+    r.assertions.push(assertion("a_005", "ark:/61903/1:1:HSE1-00H", "p_9", { source_id: "src_002" }));
+    r.assertions.push(assertion("a_006", "ark:/61903/1:1:HSE1-00W", "p_1", { source_id: "src_002" }));
+    r.person_evidence.push(link("pe_007", "a_005"), link("pe_008", "a_006"));
+    const c = personaStampCounts(r);
+    expect([c.wouldRefuse, c.spared]).toEqual([3, 2]);
+    // A source holding none of the row's personas or listed records stays out.
+    r.assertions[4] = assertion("a_005", "ark:/61903/1:1:HSE1-00H", "p_8", { source_id: "src_002" });
+    expect(personaStampCounts(r).spared).toBe(1);
   });
 
   it("counts a link once when the person has two rows", () => {

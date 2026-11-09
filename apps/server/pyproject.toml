@@ -39,7 +39,8 @@ dev = [
     "botocore>=1.40",
     # tests/test_proto_fencing_pg.py (U6) calls the real tool server through the Python MCP
     # client. Already present transitively (claude-agent-sdk); declared because we import it.
-    "mcp>=1.28.1",
+    # <2: mcp 2.0 breaks claude-agent-sdk, the same break eval/harness/pyproject.toml caps against.
+    "mcp>=1.28.1,<2",
     # proto/web's optional connection pool (#3980, PG_POOL_MAX_SIZE). The web image installs it
     # from the proto-web export (below); here so the suite, which never installs the proto
     # groups, can import it.

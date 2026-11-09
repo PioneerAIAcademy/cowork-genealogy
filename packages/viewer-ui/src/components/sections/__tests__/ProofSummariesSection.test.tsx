@@ -67,6 +67,34 @@ describe('ProofSummariesSection', () => {
     expect(screen.queryByText('none')).toBeNull()
   })
 
+  it('renders fact, identity and finding claims', async () => {
+    const summary = {
+      ...patrickFlynnResearch.proof_summaries[0],
+      tier: 'possible',
+      shortfall: 'gap',
+      claims: [
+        { claim: 'birth', proof_tier: 'possible', shortfall: 'gap', supporting_assertion_ids: [], fact: { subject: 'I1', fact_type: 'Birth', date: '1850', place: 'Ireland' } },
+        { claim: 'marriage date', proof_tier: 'possible', shortfall: 'gap', supporting_assertion_ids: [], fact: { subject: { person1: 'I2', person2: 'I3' }, fact_type: 'Marriage', date: '1845' } },
+        { claim: 'census', proof_tier: 'possible', shortfall: 'gap', supporting_assertion_ids: [], identity: { record_id: 'rec1', party: 'p_1', person: 'I1' } },
+        { claim: 'one man', proof_tier: 'possible', shortfall: 'gap', polarity: 'denied', supporting_assertion_ids: [], identity: { person: 'I2', same_as: 'I4' } },
+        { claim: 'no baptism', proof_tier: 'possible', shortfall: 'gap', supporting_assertion_ids: [], finding: { finding_type: 'absence', statement: 'No baptism found.' } },
+        { claim: 'marriage', proof_tier: 'possible', shortfall: 'gap', supporting_assertion_ids: [], relationship: { type: 'Couple', person1: 'I2', person2: 'I3' } },
+        { claim: 'step-father', proof_tier: 'possible', shortfall: 'gap', supporting_assertion_ids: [], relationship: { type: 'ParentChild', parent: 'I5', child: 'I1', subtype: 'Step' } },
+      ]
+    } as unknown as ProofSummary
+    mockResearch({ proof_summaries: [summary] })
+    render(<ProofSummariesSection />)
+    await expandFirstCard()
+    expect(screen.getByText('Birth of I1: 1850, Ireland')).toBeInTheDocument()
+    expect(screen.getByText('Marriage of I2 & I3: 1845')).toBeInTheDocument()
+    expect(screen.getByText('rec1 p_1 is I1')).toBeInTheDocument()
+    expect(screen.getByText('I2 is I4')).toBeInTheDocument()
+    expect(screen.getByText('denied')).toBeInTheDocument()
+    expect(screen.getByText('absence: No baptism found.')).toBeInTheDocument()
+    expect(screen.getByText('Couple: I2 & I3')).toBeInTheDocument()
+    expect(screen.getByText('ParentChild (Step): I5 → I1')).toBeInTheDocument()
+  })
+
   it('renders a proof summary missing shortfall without crashing', () => {
     const oldShapeSummary = {
       id: 'ps_001',

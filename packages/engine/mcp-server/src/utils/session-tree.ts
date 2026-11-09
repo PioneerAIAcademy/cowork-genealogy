@@ -45,8 +45,25 @@ export async function getSessionTree(principal: Principal): Promise<string> {
   return body.treeId;
 }
 
-export async function setSessionTree(principal: Principal, treeId: string): Promise<void> {
-  const res = await fsFetch(principal, SESSION_TREE_URL, { method: "POST", headers: HEADERS, body: JSON.stringify({ treeId }) });
+/**
+ * `restoring` marks the switch back: it skips the user's 429 pause (issue
+ * #3999), which may have started during the call. After the call the restore
+ * record is dropped, so a switch back the pause refused or held would leave the
+ * session, which the user's open browser tabs share, on the other tree with
+ * nothing to retry it.
+ */
+export async function setSessionTree(
+  principal: Principal,
+  treeId: string,
+  opts: { restoring?: boolean } = {},
+): Promise<void> {
+  const res = await fsFetch(
+    principal,
+    SESSION_TREE_URL,
+    { method: "POST", headers: HEADERS, body: JSON.stringify({ treeId }) },
+    undefined,
+    opts.restoring ? { ignoreUserPause: true } : undefined,
+  );
   if (!res.ok) throw new Error(`Could not set the FamilySearch session's current tree to ${treeId}: ${res.status} ${res.statusText}.`);
 }
 
@@ -58,14 +75,15 @@ export async function withSessionTree<T>(principal: Principal, treeId: string, f
     const original = await getSessionTree(principal);
     if (original === treeId) return fn();
     await setSessionTree(principal, treeId);
-    switched.set(key, () => setSessionTree(principal, original));
+    const switchBack = () => setSessionTree(principal, original, { restoring: true });
+    switched.set(key, switchBack);
     let result: T;
     try {
       result = await fn();
     } catch (e) {
       switched.delete(key);
       try {
-        await setSessionTree(principal, original);
+        await switchBack();
       } catch (restore) {
         const msg = (x: unknown) => (x instanceof Error ? x.message : String(x));
         throw new Error(`${msg(e)} Restoring the session's current tree also failed: ${msg(restore)}`);
@@ -73,7 +91,7 @@ export async function withSessionTree<T>(principal: Principal, treeId: string, f
       throw e;
     }
     switched.delete(key);
-    await setSessionTree(principal, original);
+    await switchBack();
     return result;
   });
   locks.set(key, run);

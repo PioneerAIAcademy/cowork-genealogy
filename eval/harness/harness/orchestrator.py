@@ -446,13 +446,15 @@ def _stop_at_stub(spec: TestSpec) -> bool:
     return spec.type == "positive" and bool((spec.execution or {}).get("stop_at_stub"))
 
 
-def _stopped_at_a_handoff(spec: TestSpec, result: SkillRunResult) -> bool:
-    """Whether the `stop_at_stub` stop ended this run on a stubbed hand-off.
+def _handed_off_to_a_stub(spec: TestSpec, result: SkillRunResult) -> bool:
+    """Whether a positive test's run made a hand-off the test stubbed.
 
-    Such a run never reaches the skill's own summary, so the hand-off is its
-    activation evidence (`derive_activated`, unit-test-spec.md §6).
+    A stub does no work, so the skill has little to report and its reply can be
+    one short line naming the callee. The hand-off is then its activation
+    evidence (`derive_activated`, unit-test-spec.md §6). A negative test never
+    qualifies: its verdict is whether the skill did anything at all.
     """
-    if not _stop_at_stub(spec):
+    if spec.type != "positive":
         return False
     stubbed = parse_stub_skills(spec.execution)
     handed = handoffs(result.skills_invoked, result.builtin_tool_calls)
@@ -692,7 +694,7 @@ async def _execute_single_run(
         text_response=result.text_response,
         other_skill_names=other_skill_names,
         agents_spawned=agents_spawned if spec.is_direct else None,
-        handed_off=_stopped_at_a_handoff(spec, result),
+        handed_off=_handed_off_to_a_stub(spec, result),
     )
 
     # --- Extract usage early — validators may need num_turns / output_tokens
@@ -1879,7 +1881,9 @@ def _resolved_delegation(spec: TestSpec, workspace: Path | None) -> str:
     A production caller always sends a real absolute path. Left literal, the
     placeholder reads to the agent as "no project", and a Haiku agent hands back
     naming init-project instead of surveying (#3935). Forward slashes, as the
-    mock writes `projectPath`, so a Windows dispatcher relays no backslashes.
+    mock writes `projectPath`. A Windows dispatcher has been measured rewriting
+    some of them to `\\` anyway; the verbatim validator tolerates that inside the
+    `projectPath:` value only.
     """
     delegation = spec.delegation or ""
     if workspace is None:
