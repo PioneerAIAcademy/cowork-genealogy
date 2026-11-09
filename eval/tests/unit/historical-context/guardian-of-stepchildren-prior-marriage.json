@@ -23,6 +23,6 @@
     "Should suggest confirming the reading with the records that would establish it — the mother's prior marriage, the wards' deceased father's death or estate/probate file, and the marriage record linking Sarah Barlow to Josiah Meacham.",
     "Should give a direct, confident explanation of the stepfather pattern rather than burying it as one of several unweighted possibilities, while stopping short of asserting it as proven before the corroborating records are checked.",
     "Consistent with the complementary rule that a guardianship appointment alone is not evidence of orphanhood or non-relation: here the recent marriage makes a step-relationship the leading reading, under which the guardian would be related to the wards through that marriage rather than unrelated — framed as the likely inference, not asserted as settled before the corroborating records are checked.",
-    "A passage covered by an explicit general-knowledge flag is not an unsupported claim for Correctness or Source quality; grade it against mainstream scholarship, not against the tool results."
+    "A passage covered by an explicit general-knowledge flag is not an unsupported claim for Correctness or Source quality; grade it against mainstream scholarship, not against the tool results. A passage with no flag gets no such allowance."
   ]
 }

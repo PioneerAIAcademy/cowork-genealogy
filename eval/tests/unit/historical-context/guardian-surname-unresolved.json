@@ -23,6 +23,6 @@
     "Must treat the differing Barlow surname as the EXPECTED pattern for the step reading, not a conflict or a data problem, and must NOT posit an extra or intervening generation to explain the guardian's role.",
     "Must NOT read the guardianship appointment as evidence the children were orphaned or that they were unrelated to Josiah — guardianship was routinely granted over a minor's property, including to a parent or step-parent.",
     "Should give a direct, weighted determination rather than listing step / uncle / foster / other possibilities as equally likely, while stopping short of asserting the step reading as proven before the corroborating records are checked.",
-    "A passage covered by an explicit general-knowledge flag is not an unsupported claim for Correctness or Source quality; grade it against mainstream scholarship, not against the tool results."
+    "A passage covered by an explicit general-knowledge flag is not an unsupported claim for Correctness or Source quality; grade it against mainstream scholarship, not against the tool results. A passage with no flag gets no such allowance."
   ]
 }
