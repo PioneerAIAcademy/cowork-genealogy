@@ -438,32 +438,33 @@ describe("introducedWarnings", () => {
     });
   });
 
-  // Issue #4345: interleaved children by two spouses is a spouse-structure
-  // claim, so it gates like `similarSpouses` and
-  // `hasDissimilarSpousesWithSameMarriageYear`.
+  // Interleaved children by two spouses is a spouse-structure claim, so it gates
+  // like `similarSpouses` and `hasDissimilarSpousesWithSameMarriageYear`. The
+  // warning cites the inside child and its nearest siblings, so a write that
+  // adds no closer evidence keeps its id (person-warnings-tool-spec.md,
+  // "Interleaved children by two spouses").
   describe("(j) interleaved-children gate", () => {
     const TAG = "hasInterleavedChildrenIgnoreSimilarSpouses";
     const b = (id: string, date: string) => ({ id, type: "Birth", date, standard_date: date });
     const pc = (p: string, c: string) => ({ id: `R${p}${c}`, type: "ParentChild", parent: p, child: c });
     const couple = (x: string, y: string) => ({ id: `C${x}${y}`, type: "Couple", person1: x, person2: y });
     const wife = (id: string, given: string, surname: string) => ({ ...person(id, given, surname), gender: "Female" });
-    const persons = [
-      person("H", "Henry", "Ward"),
-      wife("A", "Agnes", "Brown"),
-      wife("B", "Bertha", "Clark"),
-      person("A1", "Albert", "Ward", [b("A1B", "1850")]),
-      person("A2", "Arthur", "Ward", [b("A2B", "1860")]),
-      person("X", "Xavier", "Ward", [b("XB", "1855")]),
-    ];
+    const kid = (id: string, date?: string, extra: any[] = []) =>
+      person(id, `Kid${id}`, "Ward", date ? [b(`${id}B`, date), ...extra] : extra);
+    const parents = [person("H", "Henry", "Ward"), wife("A", "Agnes", "Brown"), wife("B", "Bertha", "Clark")];
+    const persons = [...parents, kid("A1", "1850"), kid("A2", "1860"), kid("X", "1855")];
     const base = [couple("H", "A"), couple("H", "B"), pc("H", "A1"), pc("A", "A1"), pc("H", "A2"), pc("A", "A2")];
     const before = tree(persons, [...base, pc("H", "X")]);
     const after = tree(persons, [...base, pc("H", "X"), pc("B", "X")]);
-    const interleaved = tree(persons, [...base, pc("H", "X"), pc("B", "X")]);
-    const addChildOfAgnes = (id: string, date: string) => {
-      const kid = person(id, "Alfred", "Ward", [b(`${id}B`, date)]);
-      const pre = tree([...persons, kid], [...(interleaved.relationships ?? [])]);
-      const post = tree([...persons, kid], [...(interleaved.relationships ?? []), pc("H", id), pc("A", id)]);
-      return introducedWarnings(pre, post, computeTouchedPersonIds(pre, post));
+    const gate = (pre: SimplifiedGedcomX, post: SimplifiedGedcomX) =>
+      introducedWarnings(pre, post, computeTouchedPersonIds(pre, post));
+    const introducesTag = (pre: SimplifiedGedcomX, post: SimplifiedGedcomX) =>
+      gate(pre, post).allIntroduced.some((w) => w.issueType === TAG);
+    /** `after`, plus a new child of `mother` (H's child too), as the write. */
+    const addChild = (mother: string, id: string, date: string) => {
+      const pre = tree([...persons, kid(id, date)], after.relationships ?? []);
+      const post = tree([...persons, kid(id, date)], [...(after.relationships ?? []), pc("H", id), pc(mother, id)]);
+      return introducesTag(pre, post);
     };
 
     it("is not gate-exempt", () => {
@@ -471,13 +472,11 @@ describe("introducedWarnings", () => {
     });
 
     it("refuses the write that makes Bertha the middle child's mother", () => {
-      const r = introducedWarnings(before, after, computeTouchedPersonIds(before, after));
-      expect(r.unjustified.map((w) => w.issueType)).toContain(TAG);
+      expect(gate(before, after).unjustified.map((w) => w.issueType)).toContain(TAG);
     });
 
     it("lets the same write land with a justification", () => {
-      const first = introducedWarnings(before, after, computeTouchedPersonIds(before, after));
-      const w = first.unjustified.find((x) => x.issueType === TAG);
+      const w = gate(before, after).unjustified.find((x) => x.issueType === TAG);
       expect(w).toBeDefined();
       const r = introducedWarnings(before, after, computeTouchedPersonIds(before, after), [
         { warningId: w!.warningId, justification: "Henry had two households at once; see the probate." },
@@ -485,14 +484,55 @@ describe("introducedWarnings", () => {
       expect(r.unjustified.map((x) => x.issueType)).not.toContain(TAG);
     });
 
-    it("introduces nothing when a middle child of Agnes is added to a family that already interleaves", () => {
-      expect(addChildOfAgnes("AM", "1853").allIntroduced.map((w) => w.issueType)).not.toContain(TAG);
+    it("refuses dating the inside child into the span", () => {
+      const pre = tree([...parents, kid("A1", "1850"), kid("A2", "1860"), kid("X")], after.relationships ?? []);
+      expect(gate(pre, after).unjustified.map((w) => w.issueType)).toContain(TAG);
     });
 
-    it("re-keys, and so asks again, when a new eldest child of Agnes is added", () => {
-      // The warning cites the eldest and youngest of Agnes's children, so a new
-      // eldest changes its id: the accepted cost of a gating tag keyed on facts.
-      expect(addChildOfAgnes("A0", "1848").unjustified.map((w) => w.issueType)).toContain(TAG);
+    it("keeps the id when Agnes gains a new eldest or youngest child", () => {
+      expect(addChild("A", "A0", "1848")).toBe(false);
+      expect(addChild("A", "A9", "1865")).toBe(false);
+    });
+
+    /** `after` plus a child `id` of Agnes, then the write removes that child's two edges. */
+    const removeChild = (id: string, date: string) => {
+      const all = [...persons, kid(id, date)];
+      const pre = tree(all, [...(after.relationships ?? []), pc("H", id), pc("A", id)]);
+      return introducesTag(pre, tree(all, after.relationships ?? []));
+    };
+
+    it("keeps the id when a child of Agnes who is not cited is removed", () => {
+      // An eldest of three, and a same-day duplicate of the cited youngest.
+      expect(removeChild("A0", "1848")).toBe(false);
+      expect(removeChild("A2d", "1860")).toBe(false);
+    });
+
+    it("re-keys when a cited sibling is removed and another child of Agnes stands beyond it", () => {
+      const all = [...persons, kid("A0", "1848")];
+      const pre = tree(all, [...(after.relationships ?? []), pc("H", "A0"), pc("A", "A0")]);
+      const post = tree(all, (pre.relationships ?? []).filter((r: any) => !(r.child === "A1" && r.type === "ParentChild")));
+      expect(introducesTag(pre, post)).toBe(true);
+    });
+
+    it("re-keys when a new eldest child of Agnes brings an earlier child of Bertha inside the span", () => {
+      const withY0 = [...persons, kid("Y0", "1845"), kid("A0", "1840")];
+      const pre = tree(withY0, [...(after.relationships ?? []), pc("H", "Y0"), pc("B", "Y0")]);
+      const post = tree(withY0, [...(pre.relationships ?? []), pc("H", "A0"), pc("A", "A0")]);
+      expect(introducesTag(pre, post)).toBe(true);
+    });
+
+    it("keeps the id when a witness gains a second Birth fact", () => {
+      const more = persons.map((p) => (p.id === "A1" ? kid("A1", "1850", [b("A1B2", "Jun 1850")]) : p));
+      expect(introducesTag(after, tree(more, after.relationships ?? []))).toBe(false);
+    });
+
+    it("keeps the id when Bertha gains a later child inside the span", () => {
+      expect(addChild("B", "Y", "1857")).toBe(false);
+    });
+
+    it("re-keys, and so asks again, for closer evidence: a nearer sibling or an earlier inside child", () => {
+      expect(addChild("A", "AM", "1853")).toBe(true);
+      expect(addChild("B", "Y", "1852")).toBe(true);
     });
   });
 

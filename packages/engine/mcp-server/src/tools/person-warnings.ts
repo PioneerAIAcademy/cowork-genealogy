@@ -3081,7 +3081,7 @@ function checkHasDissimilarSpousesWithSameMarriageYear(mob: Mob): PersonWarning 
 
 interface DatedChild {
   person: SimplifiedPerson;
-  /** The union of the child's Birth facts, read generously (`factRange`). */
+  /** The union of the child's Birth facts, read generously (`birthReading`). */
   range: GenerousRange;
   /** The child's first dated Birth fact, the one a warning cites. */
   fact: SimplifiedFact;
@@ -3092,10 +3092,10 @@ function childId(c: DatedChild): string {
 }
 
 /**
- * The anchor's children by their one other parent, read from Birth facts only.
- * A child is listed under S only when its qualifying parents are the anchor and
- * exactly S; with no second parent, two, or a non-biological link from either
- * parent, it is listed under no one. Only a spouse's list is ever read.
+ * The anchor's children by their one other parent, read from Birth facts only
+ * (a birth estimated from a christening is not read). A child is listed under S
+ * only when its qualifying parents are the anchor and exactly S; with no second
+ * parent, or two, it is listed under no one. Only a spouse's list is ever read.
  */
 function datedChildrenBySpouse(mob: Mob): Map<string, DatedChild[]> {
   const out = new Map<string, DatedChild[]>();
@@ -3104,14 +3104,10 @@ function datedChildrenBySpouse(mob: Mob): Map<string, DatedChild[]> {
     const parents = qualifyingParentsOf(mob, child.id);
     if (!parents.delete(mob.anchorId) || parents.size !== 1) continue;
     const [coparentId] = parents;
-    const births = datedFacts(child.facts ?? [], BIRTH_ONLY_TYPES);
-    if (births.length === 0) continue;
-    const range = {
-      min: Math.min(...births.map((b) => b.range.min)),
-      max: Math.max(...births.map((b) => b.range.max)),
-    };
+    const birth = birthReading(child);
+    if (birth === null || birth.estimated) continue;
     const list = out.get(coparentId) ?? [];
-    list.push({ person: child, range, fact: births[0].fact });
+    list.push({ person: child, range: birth.range, fact: birth.facts[0] });
     out.set(coparentId, list);
   }
   return out;
@@ -3123,51 +3119,61 @@ interface Interleaving {
   after: DatedChild;
 }
 
-/**
- * A child of `inner` born, on every reading of the dates, after the earliest
- * and before the latest of `outer`'s children; the earliest-born such child.
- * `before` is the outer child whose birth ends first, `after` the one whose
- * birth begins last, so neither depends on which inner child is inside.
- */
-function interleaving(outer: readonly DatedChild[], inner: readonly DatedChild[]): Interleaving | null {
-  if (outer.length < 2 || inner.length === 0) return null;
-  let before = outer[0];
-  let after = outer[0];
-  for (const c of outer) {
-    if (c.range.max < before.range.max || (c.range.max === before.range.max && childId(c) < childId(before))) before = c;
-    if (c.range.min > after.range.min || (c.range.min === after.range.min && childId(c) < childId(after))) after = c;
-  }
-  let inside: DatedChild | null = null;
-  for (const c of inner) {
-    if (!(before.range.max < c.range.min && c.range.max < after.range.min)) continue;
-    if (inside === null || bornFirst(c, inside)) inside = c;
-  }
-  return inside === null ? null : { before, inside, after };
-}
-
 function bornFirst(a: DatedChild, b: DatedChild): boolean {
   return a.range.min < b.range.min || (a.range.min === b.range.min && childId(a) < childId(b));
 }
 
-export interface InterleavedChildrenHit extends Interleaving {
+/**
+ * The earliest-born child of `inner` that some child of `outer` is born before
+ * and another after, on every reading of the dates. `before` and `after` are its
+ * nearest such siblings: the outer child whose birth ends last before it, and
+ * the one whose birth begins first after it. Nearest, so that adding or removing
+ * an outer child elsewhere in the family keeps the warning's facts, and its id.
+ */
+function interleaving(outer: readonly DatedChild[], inner: readonly DatedChild[]): Interleaving | null {
+  let best: Interleaving | null = null;
+  for (const x of inner) {
+    let before: DatedChild | null = null;
+    let after: DatedChild | null = null;
+    for (const c of outer) {
+      if (c.range.max < x.range.min) {
+        if (before === null || c.range.max > before.range.max || (c.range.max === before.range.max && childId(c) < childId(before))) before = c;
+      } else if (x.range.max < c.range.min) {
+        if (after === null || c.range.min < after.range.min || (c.range.min === after.range.min && childId(c) < childId(after))) after = c;
+      }
+    }
+    if (before === null || after === null) continue;
+    if (best === null || bornFirst(x, best.inside)) best = { before, inside: x, after };
+  }
+  return best;
+}
+
+interface InterleavedChildrenHit extends Interleaving {
   /** The spouse whose children span the other's child. */
   outerSpouse: SimplifiedPerson;
   /** The spouse whose child is born inside that span. */
   innerSpouse: SimplifiedPerson;
 }
 
+function spousePairKey(a: string, b: string): string {
+  return a < b ? `${a}|${b}` : `${b}|${a}`;
+}
+
 /**
  * Spouse pairs whose children interleave: a child of one born between two
  * children of the other. One hit per unordered pair; when the children
- * interleave both ways, the one whose inside child is born first. A pair with
- * similar names is skipped: one spouse recorded twice is `similarSpouses`'s.
+ * interleave both ways, the one whose inside child is born first. The pair
+ * `similarSpouses` or `similarSpousesConflictingDates` reports is skipped: one
+ * spouse recorded twice is theirs to report.
  */
-export function interleavedChildren(mob: Mob): InterleavedChildrenHit[] {
+function interleavedChildren(mob: Mob): InterleavedChildrenHit[] {
   const spouses = otherSpouses(mob);
   if (spouses.length < 2) return [];
   const bySpouse = datedChildrenBySpouse(mob);
-  const similar = new Set(
-    getSimilarNamePairs(spouses, spouses, focalSpouseNoiseNames(mob), false).map(([a, b]) => `${a}|${b}`),
+  const reported = new Set(
+    [hasSimilarSpouses(mob), hasSimilarSpousesConflictingDates(mob)].flatMap((pair) =>
+      pair && pair[0].id && pair[1].id ? [spousePairKey(pair[0].id, pair[1].id)] : [],
+    ),
   );
   const out: InterleavedChildrenHit[] = [];
   for (let i = 0; i < spouses.length; i++) {
@@ -3176,7 +3182,7 @@ export function interleavedChildren(mob: Mob): InterleavedChildrenHit[] {
       const s2 = spouses[j];
       const id1 = s1.id as string;
       const id2 = s2.id as string;
-      if (similar.has(id1 < id2 ? `${id1}|${id2}` : `${id2}|${id1}`)) continue;
+      if (reported.has(spousePairKey(id1, id2))) continue;
       const k1 = bySpouse.get(id1) ?? [];
       const k2 = bySpouse.get(id2) ?? [];
       const inTwo = interleaving(k1, k2);
@@ -3204,7 +3210,8 @@ function checkInterleavedChildren(mob: Mob): PersonWarning[] {
       `${getPersonName(h.inside.person)}, this person's child with ${getPersonName(h.innerSpouse)}, ` +
       `was born between ${getPersonName(h.before.person)} and ${getPersonName(h.after.person)}, ` +
       `their children with ${getPersonName(h.outerSpouse)}, on every reading of the Birth dates. ` +
-      "Usually two people merged into one, or a spouse attached to the wrong person; a plural marriage can also explain it.",
+      "Usually two people merged into one, a spouse attached to the wrong person, or a spouse's child by an earlier " +
+      "partner linked as this person's own (a Step link); a plural marriage can also explain it.",
   }));
 }
 

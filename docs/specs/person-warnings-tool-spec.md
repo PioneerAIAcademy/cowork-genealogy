@@ -636,7 +636,7 @@ merged. Or the check sits in `calculateNonFinalWarnings`, which
 | `similarSpouses` | implausible | Two spouses look like the same individual recorded twice | One spouse duplicated |
 | `similarSpousesConflictingDates` | implausible | Two spouses have similar names but conflicting dates | Same spouse recorded twice with a date discrepancy |
 | `hasDissimilarSpousesWithSameMarriageYear` | implausible | Two spouses share a marriage year but have dissimilar names | Two marriage records conflated, or a mis-transcribed name |
-| `hasInterleavedChildrenIgnoreSimilarSpouses` | implausible | A child whose biological parents are this person and one spouse is born, on every reading of the Birth dates, between two children of this person and another spouse; spouses with similar names are skipped. One warning per spouse pair (§ Interleaved children by two spouses) | Two people merged into one, or a spouse attached to the wrong person; a plural marriage can also cause it |
+| `hasInterleavedChildrenIgnoreSimilarSpouses` | implausible | A child whose biological parents are this person and one spouse is born, on every reading of the Birth dates, between two children of this person and another spouse; a pair `similarSpouses` or `similarSpousesConflictingDates` reports is skipped. One warning per spouse pair (§ Interleaved children by two spouses) | Two people merged into one, a spouse attached to the wrong person, or a spouse's child by an earlier partner linked as this person's own; a plural marriage can also cause it |
 | `hasLateChristening18` | implausible | A Christening, Baptism or BaptismRegistration begins 18 or more years after the latest possible Birth | An adult baptism, or another date filed as a christening |
 | `hasEventsOutsideLifespanNear` | implausible | Merge-mode only: merging places an event slightly outside the other record's lifespan | A borderline mismatch worth checking before the merge |
 
@@ -1012,37 +1012,42 @@ of ashes is legitimate but rare, and a one-line justification records it.
 
 ### Interleaved children by two spouses
 
-`hasInterleavedChildrenIgnoreSimilarSpouses` (issue #4345) fires when a person
+`hasInterleavedChildrenIgnoreSimilarSpouses` fires when a person
 has children by two spouses and a child of one is born between two children of
-the other. That usually means two people merged into one, or a spouse attached
-to the wrong person; real plural marriages exist, so it is `implausible`.
+the other. That usually means two people merged into one, a spouse attached to
+the wrong person, or a spouse's child by an earlier partner linked as the
+anchor's own when the link should be `Step`; real plural marriages exist, so it
+is `implausible`.
 
 **Which spouse a child belongs to.** The anchor's Mob is built over the whole
 project tree, so a child's second ParentChild edge is there to read. A child
 counts for spouse S only when its qualifying parents (`isQualifyingParentChildEdge`:
 `Biological` or no subtype) are the anchor and exactly S, and S shares a Couple
-relationship with the anchor. A child with no second parent, with two, or with a
-`Step`, `Adoptive`, `Foster` or `Guardian` edge from either parent counts for no
-one. Counting a child under every spouse it links to was considered and rejected:
+relationship with the anchor. A `Step`, `Adoptive`, `Foster` or `Guardian` edge
+is not a qualifying one, so a child linked to the anchor or to S only that way,
+or with no second qualifying parent, or with two, counts for no one. Counting a child under every spouse it links to was considered and rejected:
 a child linked to both spouses would then stand inside one spouse's family while
 belonging to it, and `tooManyParents3` already reports a child with three parents.
 Over the corpus measured below, before the similar-spouse skip, that reading fires on
 5 anchors rather than 3.
 
-**Dates.** Birth facts only, through `factRange` (`utils/impossible-date-range.ts`),
-the union of each child's Birth facts. No christening proxy: a proxy reading would need its own
-`…Estimated` tag (one severity per tag). It fires when, for spouses A and B, some
+**Dates.** Birth facts only: `birthReading` (`utils/impossible-date-range.ts`)
+gives the union of each child's Birth facts, each read by `factRange`, and a
+reading it estimates from a christening is skipped. No christening proxy: a proxy
+reading would need its own `…Estimated` tag (one severity per tag). It fires when, for spouses A and B, some
 child x of B and two children a1, a2 of A satisfy `a1.latest < x.earliest` and
 `x.latest < a2.earliest`, so no reading of the three dates removes the overlap:
 a child dated `1850` against `1850` and `1852` does not fire, `1851` does, and
 `Bef 1855` never sits inside a span.
 
-**Similar spouses are skipped.** A pair whose names are similar, by the same
-`getSimilarNamePairs` call `similarSpouses` and `similarSpousesConflictingDates`
-make, is left to those tags: the two spouses are usually one person recorded
-twice, and firing here as well would report one duplicate spouse twice. Hence the
-tag's `IgnoreSimilarSpouses` suffix, as `hasCloseChildBirthsIgnoreSimilarChildren`
-skips similar children. Measured 2026-11-09 at ca2a92571 over the 236 committed
+**Similar spouses are skipped.** The pair `similarSpouses` reports, and the pair
+`similarSpousesConflictingDates` reports, are left to those tags (the check calls
+their own predicates): the two spouses are usually one person recorded twice, and
+firing here as well would report one duplicate spouse twice. Hence the tag's
+`IgnoreSimilarSpouses` suffix, as `hasCloseChildBirthsIgnoreSimilarChildren`
+skips similar children. Each of those tags reports only the first similar pair of
+its kind (dates conflicting or not), so with three or more spouses a second pair of
+the same kind is not skipped here: no other tag would report it. Measured 2026-11-09 at ca2a92571 over the 236 committed
 e2e final trees (`calculateWarnings` on every person with two or more Couple
 edges, and again with each spouse renamed so that no pair is similar): the rule
 without the skip fires on 3 anchors, `similarSpouses` already
@@ -1054,23 +1059,28 @@ wife recorded under two spellings the name matcher does not call similar
 **One warning per spouse pair, and which three children it names.**
 `relatedPersonId` is B, the spouse whose child falls inside the span; `facts` are
 three Birth facts, the first dated one of each of x, a1 and a2, and the message
-names both spouses and the three children. a1 is A's child whose birth ends first
-and a2 the one whose birth begins last, so the test reads as "after the earliest
-and before the latest", and x is B's earliest-born child between them. When the
-children interleave both ways, the direction whose x is born first is reported.
-One fact per child is enough evidence: when the rule fires, every Birth fact of a1
-ends before every Birth fact of x begins, and every Birth fact of x ends before
-every Birth fact of a2 begins.
+names both spouses and the three children. x is B's earliest-born child that some
+child of A is born before and another after; a1 is the child of A whose birth ends
+last before x, and a2 the one whose birth begins first after it: x's nearest
+siblings by A. When the children interleave both ways, the direction whose x is
+born first is reported. One fact per child is enough evidence: when the rule
+fires, every Birth fact of a1 ends before every Birth fact of x begins, and every
+Birth fact of x ends before every Birth fact of a2 begins.
 
 The write gate keys a warning on its facts, so these choices decide which writes
-read as introducing it. Adding a child of A in the middle of the family, or a
-second Birth fact to a witness child that leaves it the witness, keeps the key. These change it, and the gate asks
-for a justification again for an interleaving the tree already had: a new eldest
-or youngest child of A; dating an undated child so it becomes a new extreme or an
-earlier x; a merge that replaces a witness child's first Birth fact (the gate
-remaps person ids after a merge, not fact ids); and a reverse-direction hit with an
-earlier x, which also moves `relatedPersonId`. That is the cost of a gating tag
-keyed on three named children. In `merge_warnings`, which dedupes on
+read as introducing it. Nearest siblings rather than the eldest and youngest,
+because then a child of A added or removed away from x keeps the key: a new eldest
+or youngest child keeps it unless it brings an earlier child of B inside a span,
+and removing a child of A keeps it unless that child is one of the three cited. A
+second Birth fact on a witness that leaves it the witness, or a later child of B
+inside the span, keeps it too. These change it, and the gate asks for a
+justification again: a child of A born between x and a nearest sibling, or a child
+of B born inside a span before x (each closer evidence, however it arrives);
+removing a cited child while another child of A stands beyond it, since its fact
+leaves the key; dating an undated child into one of those places; a merge that
+replaces a witness child's first Birth fact (the gate remaps person ids after a
+merge, not fact ids); and a reverse-direction hit with an earlier x, which also
+moves `relatedPersonId`. In `merge_warnings`, which dedupes on
 `issueType|personId|relatedPersonId|severity`, two pairs that share the inside
 spouse show as one advisory.
 
@@ -1080,9 +1090,9 @@ the writer is making, not an import artefact, and the exempt class of
 implausibilities is the age priors, which this is not. A real plural marriage still
 writes, with a justification. In `merge_warnings` it is advisory, since only
 `contradiction` blocks there. Measured with `dev/measure-parentage-gate-rate.ts`
-on 2026-11-09 over 236 trees and 2619 ParentChild edges: refusals move from 106 to
-118, the 12 added edges being the six witness edges (anchor and spouse to each of
-the three children) of the two trees named above.
+on 2026-11-09 at ca2a92571, with and without the tag, over 236 trees and 2619
+ParentChild edges: refusals move from 106 to 118, the 12 added edges being the six witness edges (anchor and
+spouse to each of the three children) of the two trees named above.
 
 **No `relatives*` twin.** A spouse-mob has no coparents and a parent-mob has no
 spouses, so a relative form could never fire.
@@ -1348,8 +1358,8 @@ Grep for `calculateWarnings` when sizing the blast radius.
   refusals from **101 to 104** edges (74 distinct warnings, was 51). All the new
   ones are in `elsa-heikkinen-birth`, and each links a mother who died in
   February 1826 to a child born 1827–1832. No child born in time is refused.
-  Re-measured 2026-11-09 at ca2a92571 (236 trees, 2619 edges):
-  `hasInterleavedChildrenIgnoreSimilarSpouses` moves refusals from **106 to 118**
+  Re-measured 2026-11-09 at ca2a92571 with the tag added (236 trees, 2619
+  edges): `hasInterleavedChildrenIgnoreSimilarSpouses` moves refusals from **106 to 118**
   edges, two distinct warnings, one each in `jimmie-jewel-neal` and
   `victoriano-macatangay-parents` (§ Interleaved children by two spouses).
 
