@@ -350,6 +350,34 @@ def _compose_default(value: str) -> tuple[str | None, str]:
     return (match.group(1), match.group(2)) if match else (None, value.strip())
 
 
+def test_tools_carries_the_connector_door_settings():
+    """E1's two settings reach the tools tier, passed through from the shell.
+
+    Deliberately NOT in test_tools_and_worker_read_one_store's closed set: that
+    set is built from the GENEALOGY_-prefixed keys only, so these two can never
+    appear on its left-hand side and adding them to the expected literal would
+    make the equality FAIL. (#3979's two limits ARE prefixed, which is why that
+    precedent does not carry.) Nothing else asserts they are present, so without
+    this test their absence would be invisible.
+    """
+    compose = _load(COMPOSE)
+    tools = _env(_service(compose, "tools"))
+    # Empty by default: every tier falls back to grants.py's development key,
+    # so an unset value has to work on all of them or none.
+    assert tools["FS_TOKEN_ENC_KEY"] == "${FS_TOKEN_ENC_KEY:-}"
+    assert tools["OAUTH_ISSUER"] == "${OAUTH_ISSUER:-}"
+
+
+def test_the_tiers_share_one_fs_token_encryption_key():
+    """web, worker and tools must read the SAME variable: a tier on a different
+    key reads the others' tokens as undecryptable, which looks exactly like an
+    expired session with nothing naming the cause."""
+    compose = _load(COMPOSE)
+    for service in ("web", "worker", "tools"):
+        env = _env(_service(compose, service))
+        assert env.get("FS_TOKEN_ENC_KEY") == "${FS_TOKEN_ENC_KEY:-}", service
+
+
 def test_tools_carries_the_per_user_config_the_engine_reads():
     """The shared service is where image_transcribe's key has to be: the two headers it
     reads carry no config. The engine's PER_USER_ENV names the keys http.js reads from its
@@ -841,6 +869,14 @@ def test_018_adds_an_idempotent_spend_correction_column_that_reads_zero_and_its_
         "ALTER TABLE turns ADD COLUMN IF NOT EXISTS spend_correction_usd double precision NOT NULL DEFAULT 0",
         "CREATE INDEX IF NOT EXISTS sessions_sdk_session_idx ON sessions (sdk_session_id)",
     ], "the cap's per-tool-call join reaches turns through sessions.sdk_session_id: it needs the index"
+
+
+def test_019_adds_an_idempotent_index_for_the_signin_state_cleanup():
+    """#3992: each chat-off login deletes the expired signin_states rows by created_at, from an
+    unauthenticated route, so that DELETE needs an index rather than a scan."""
+    assert _statements(SQL_DIR / "019_signin_states_created_at.sql") == [
+        "CREATE INDEX IF NOT EXISTS signin_states_created_at_idx ON signin_states (created_at)",
+    ]
 
 
 # U9: a shipped file runs once and is never edited, so a later file may only add. Read off the

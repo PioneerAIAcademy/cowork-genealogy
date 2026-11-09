@@ -31,7 +31,7 @@ ENGINE_BUILD  := $(ENGINE_DIR)/build/index.js
 ENGINE_DEPS   := $(ENGINE_DIR)/node_modules/.make-installed
 JS_DEPS       := node_modules/.make-installed
 
-# Root pnpm workspace (web, electron, viewer-ui, schema, eval/app). Reinstall when the
+# Root pnpm workspace (web, electron, mcp-viewer, viewer-ui, schema, eval/app). Reinstall when the
 # root manifest, the lockfile, the member list, or ANY member's manifest
 # changes. A member's package.json is listed because it carries that member's
 # lifecycle scripts, which the root two do not see: #1271 added a `postinstall`
@@ -268,6 +268,20 @@ server-e2b: e2b-preflight ## E2B sandboxes + REAL agent + FamilySearch login, :1
 electron: $(JS_DEPS) ## Run the Electron viewer (consumes the shared viewer-ui)
 	pnpm --filter @genealogy/electron dev
 
+.PHONY: mcp-viewer-build
+mcp-viewer-build: $(JS_DEPS) ## Build the MCP App page and copy it to the viewer server
+	pnpm --filter mcp-viewer build
+	mkdir -p $(ENGINE_DIR)/viewer/page
+	cp apps/mcp-viewer/dist/index.html $(ENGINE_DIR)/viewer/page/viewer.html
+
+# `cd … && pwd` rather than abspath: Cowork project folders often hold spaces.
+.PHONY: viewer
+viewer: mcp-viewer-build $(ENGINE_DEPS) ## Open the MCP App viewer in a browser tab: make viewer PROJECT=<folder> [PORT=8090]
+	@test -n "$(PROJECT)" || { echo "usage: make viewer PROJECT=<folder> [PORT=8090]"; exit 2; }
+	@test -d "$(PROJECT)" || { echo "make viewer: no such folder: $(PROJECT)"; exit 2; }
+	root="$$(cd "$(PROJECT)" && pwd)" && cd $(ENGINE_DIR) && \
+	  npx tsx viewer/cli.ts --local --root "$$root" $(if $(PORT),--port $(PORT))
+
 # ── Quality / tests ──────────────────────────────────────────────
 .PHONY: typecheck
 typecheck: $(JS_DEPS) ## Typecheck the whole JS workspace (turbo)
@@ -302,7 +316,7 @@ test: ## Quick loop: JS workspace + server tests (a subset of test-all)
 	$(MAKE) server-test
 
 .PHONY: test-js
-test-js: $(JS_DEPS) ## JS workspace tests — web, electron, viewer-ui, schema, eval/app (turbo)
+test-js: $(JS_DEPS) ## JS workspace tests — web, electron, mcp-viewer, viewer-ui, schema, eval/app (turbo)
 	pnpm test
 
 .PHONY: server-test
@@ -415,10 +429,14 @@ hook-smoke: $(ENGINE_BUILD) ## Live probe: does the plugin's PreToolUse hook act
 	# which reaches the script only through the matcher's AGENT_ONLY_TOOLS
 	# alternative, and requires agent_only_reason's text. First run 2026-10-29
 	# (Claude Code 2.1.308, SDK 0.2.172): BOUND on all three cases.
+	# The read case (issue #3836) provokes a built-in Read of research.json and requires
+	# READ_REASON's text. First run 2026-11-05 (Claude Code 2.1.308, SDK 0.2.172, macOS): BOUND.
 	#
 	# A pass proves the HOSTED loader binds. Cowork is a different loader,
-	# reachable only by a human in a live session, so issue #1160 stays on the
-	# nothing-checks register either way. Hard-errors without a key rather than
+	# reachable only by a human in a live session, so the Cowork gap (docs/architecture.md
+	# §9.4 gap 1) stays on the nothing-checks register either way. A person saw the
+	# read case bind in Cowork on 2026-11-05 (one session, Windows); nothing re-runs it.
+	# Hard-errors without a key rather than
 	# skipping -- agent-smoke's exit-0 skip is how an unrunnable check reads as
 	# a passing one.
 	cd apps/server && \
@@ -817,6 +835,11 @@ SMOKE_STACK_DEP ?= proto-up-store
 SMOKE_PG_CONTAINER ?= proto-postgres
 SMOKE_OFFLINE_ONLY ?=
 smoke_offline_flag = $(if $(filter 1 true yes on,$(SMOKE_OFFLINE_ONLY)),--offline-only,)
+# The connector arm (self-hosted beta E1). On by default for a developer run --
+# it is what the card's done-when exercises -- and SMOKE_CONNECTOR=0 turns it
+# off for a tools tier with no encryption key. Same truthiness idiom.
+SMOKE_CONNECTOR ?= 1
+smoke_connector_flag = $(if $(filter 1 true yes on,$(SMOKE_CONNECTOR)),--connector,)
 # One fresh id per run unless SMOKE_PROJECT_ID names one. Shell, not $(shell): a make-time
 # uuid would be fixed for the whole invocation, including `make -n`.
 smoke_http_id = id="$(SMOKE_PROJECT_ID)"; [ -n "$$id" ] || id="smoke-$$(node -e 'console.log(crypto.randomUUID())')"; echo "SMOKE_PROJECT_ID=$$id"
@@ -838,7 +861,7 @@ smoke_http_pg_counts = { [ -n "$(SMOKE_PG_CONTAINER)" ] || { echo "engine-smoke-
 engine-smoke-http: $(ENGINE_BUILD) $(SMOKE_STACK_DEP) ## Drive the built engine over Streamable HTTP against the compose postgres + minio and call every tool but the three auth exclusions (BASE=http://127.0.0.1:8787 runs against the compose tools service; SMOKE_PROJECT_ID overrides the fresh id; SMOKE_OFFLINE_ONLY=1 runs only the rows needing no network or credentials, as CI does; SMOKE_STACK_DEP= skips proto-up-store for a caller bringing its own stack; SMOKE_PG_CONTAINER=<name> names that stack's postgres)
 ifdef BASE
 	@$(smoke_http_id); status=0; \
-	  ( cd $(ENGINE_DIR) && npx tsx dev/smoke-http.ts --base '$(BASE)' --project-id "$$id" --project-path /project $(smoke_offline_flag) --pg-dsn '$(or $(NODE_PG_DSN),$(PROTO_PG_DSN))' ) || status=$$?; \
+	  ( cd $(ENGINE_DIR) && npx tsx dev/smoke-http.ts --base '$(BASE)' --project-id "$$id" --project-path /project $(smoke_offline_flag) $(smoke_connector_flag) --pg-dsn '$(or $(NODE_PG_DSN),$(PROTO_PG_DSN))' ) || status=$$?; \
 	  $(smoke_http_pg_counts); \
 	  exit $$status
 else
@@ -846,13 +869,14 @@ else
 	  cd $(ENGINE_DIR) || exit 1; \
 	  port=$$(node -e 'const s=require("net").createServer().listen(0,"127.0.0.1",()=>{console.log(s.address().port);s.close()})'); \
 	  GENEALOGY_PG_DSN=$(PROTO_PG_DSN) GENEALOGY_S3_ENDPOINT=http://localhost:9000 \
+	    FS_TOKEN_ENC_KEY="$$FS_TOKEN_ENC_KEY" OAUTH_ISSUER="$$OAUTH_ISSUER" \
 	    GENEALOGY_S3_BUCKET=projects GENEALOGY_S3_ACCESS_KEY=proto GENEALOGY_S3_SECRET_KEY=protoproto \
 	    GENEALOGY_ANCHOR_PATH=/project \
 	    node build/http.js --host 127.0.0.1 --port $$port & pid=$$!; \
 	  trap 'kill $$pid 2>/dev/null; wait $$pid 2>/dev/null' EXIT; \
 	  for i in $$(seq 1 30); do kill -0 $$pid 2>/dev/null || break; curl -sf --max-time 0.5 "http://127.0.0.1:$$port/healthz" >/dev/null && break; sleep 0.5; done; \
 	  curl -sf --max-time 2 "http://127.0.0.1:$$port/healthz" >/dev/null || { echo "engine-smoke-http: build/http.js did not answer /healthz on :$$port within 30 s" >&2; exit 1; }; \
-	  npx tsx dev/smoke-http.ts --base "http://127.0.0.1:$$port" --project-id "$$id" --project-path /project --host-config $(smoke_offline_flag) --pg-dsn '$(PROTO_PG_DSN)' || status=$$?; \
+	  npx tsx dev/smoke-http.ts --base "http://127.0.0.1:$$port" --project-id "$$id" --project-path /project --host-config $(smoke_offline_flag) $(smoke_connector_flag) --pg-dsn '$(PROTO_PG_DSN)' || status=$$?; \
 	  $(smoke_http_pg_counts); \
 	  exit $$status
 endif
@@ -1056,6 +1080,73 @@ e2e-login: $(ENGINE_DEPS) ## Log in to FamilySearch (opens a browser; token last
 	# client ID, so you don't have to open a Claude session to log in.
 	# Login is host-global and ~24h-lived — a once-per-day act, not per run.
 	cd $(ENGINE_DIR) && npx tsx dev/e2e-login.ts
+
+# ── The malachi stack (apps/server/proto/malachi/) ──
+# Run on the host from a plain clone: no prerequisite here touches node or uv. README.md there
+# has the bring-up order. Make hands command-line variables to malachi.sh as environment.
+MALACHI_ENV ?= $(HOME)/.config/genealogy-beta/env
+MALACHI_PROJECT ?= genealogy-beta
+MALACHI := MALACHI_ENV="$(MALACHI_ENV)" MALACHI_PROJECT="$(MALACHI_PROJECT)" apps/server/proto/malachi/malachi.sh
+
+.PHONY: malachi-up
+malachi-up: ## Build and start the stack, the edge last; EDGE=off leaves port 8006 free
+	$(MALACHI) up
+
+.PHONY: malachi-check
+malachi-check: ## Health, routes, deployed sha, disk: [BASE_URL=] [EDGE=off] [PUBLIC=1] [REACH=1]
+	$(MALACHI) check
+
+.PHONY: malachi-logs
+malachi-logs: ## One service's recent log: SERVICE= [TAIL=200] [FOLLOW=1]
+	$(MALACHI) logs
+
+# A Make recipe, not a script function: the checkout replaces malachi.sh, and a running bash
+# reads its script as it goes. Each $(MAKE) reads the checked-out Makefile.
+.PHONY: malachi-deploy
+malachi-deploy: ## Deploy a commit: REF=<sha>, a clean tree, then up and check
+	@test -n "$(REF)" || { echo "malachi-deploy: REF=<sha> is required" >&2; exit 2; }
+	@printf '%s' "$(REF)" | grep -Eq '^[0-9a-f]{7,40}$$' || { echo "malachi-deploy: REF must be a sha; a branch name reads this clone's stale copy" >&2; exit 2; }
+	@test -z "$$(git status --porcelain)" || { echo "malachi-deploy: the tree is not clean" >&2; exit 1; }
+	git fetch origin
+	git checkout --detach "$(REF)"
+	$(MAKE) malachi-up
+	$(MAKE) malachi-check
+
+.PHONY: malachi-backup
+malachi-backup: ## Dump Postgres and mirror MinIO to DATA_DIR/backups/<UTC> [KEEP=14; under 14 needs CONFIRM=yes]
+	$(MALACHI) backup
+
+.PHONY: malachi-restore-check
+malachi-restore-check: ## Restore the newest backup into a scratch database and check its objects [BACKUP=<name>]
+	$(MALACHI) restore-check
+
+.PHONY: malachi-restore
+malachi-restore: ## Load a backup into a wiped stack: CONFIRM=yes [BACKUP=<name>], then malachi-up
+	$(MALACHI) restore
+
+.PHONY: malachi-export
+malachi-export: ## A project's files to DATA_DIR/exports/<id>/: EMAIL= or PROJECT=
+	$(MALACHI) export
+
+.PHONY: malachi-openrouter
+malachi-openrouter: ## Encrypt the env file's OPENROUTER_SEED_KEY onto one user's row: EMAIL=
+	$(MALACHI) openrouter
+
+.PHONY: malachi-prune
+malachi-prune: ## Free Docker's root: this stack's old images, and everyone's build cache older than a week
+	$(MALACHI) prune
+
+.PHONY: malachi-down
+malachi-down: ## Stop the stack; the data stays
+	$(MALACHI) down
+
+.PHONY: malachi-wipe
+malachi-wipe: ## Delete Postgres and MinIO data: CONFIRM=yes. Keeps backups and the env file
+	$(MALACHI) wipe
+
+.PHONY: malachi-rehearsal
+malachi-rehearsal: ## Bring the whole stack up, through every target but malachi-prune, on this Mac under its own name; cleans up after itself
+	apps/server/proto/malachi/rehearsal.sh
 
 # ── Source screen (issue #3408) ──
 # Every path is outside the repo: the truth set is restricted. Report counts only.
