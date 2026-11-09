@@ -85,8 +85,8 @@ would have been gated out). Verify all; let `matchScore` sort them.
 
 **Unconditionally** drop the inline `results[]` `gedcomx` (the size driver)
 **whenever staging succeeded** — no opt-in flag. Strip **after**
-`stageSearchResults` writes, so the on-disk staged file is intact. If `staged` is
-null (an un-staged exploratory search), keep gedcomx inline. Safe because nothing
+`stageSearchResults` writes, so the on-disk staged file is intact. An un-staged
+search is stripped too. Safe because nothing
 consumes inline gedcomx once staged (the review confirmed `person-evidence` /
 `record-extraction` read via `record_read`), so the overflow protection can't be
 forgotten by the caller and can't regress.

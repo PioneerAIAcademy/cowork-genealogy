@@ -717,6 +717,41 @@ _STAGED_COMPACTORS: dict[str, str] = {
     "fulltext_search": "compactStagedFulltextSearch",
 }
 
+#: Search tools whose compactor production runs on every answer, staged or not
+#: (record-search.ts), so an answer with no `projectPath` is compacted too.
+COMPACTS_UNSTAGED: frozenset[str] = frozenset({"record_search"})
+
+
+def _compact_unstaged_search(tool_name: str, response: dict[str, Any]) -> dict[str, Any]:
+    """Run the tool's compiled compactor on an answer that staged nothing.
+
+    Returns the response untouched, with a warning, when the build is absent or
+    node fails: the agent then sees the full fixture, which is a harness fault,
+    not a failed call.
+    """
+    compactor = _STAGED_COMPACTORS[tool_name]
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+    if not compactor_js.exists():
+        warnings.warn(f"mock {tool_name} compaction skipped: no engine build at {_MCP_BUILD}", stacklevel=2)
+        return response
+    script = (
+        f"import {{ {compactor} }} from '{_node_module_url(compactor_js)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const response = JSON.parse(readFileSync(0, 'utf-8'));"
+        f" {compactor}(response);"
+        " process.stdout.write(JSON.stringify(response));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(response), timeout=NODE_EVAL_TIMEOUT_LONG, store=False)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            warnings.warn(f"mock {tool_name} compaction printed nothing: {proc.stderr[:300]}", stacklevel=2)
+            return response
+        return json.loads(out)
+    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
+        warnings.warn(f"mock {tool_name} compaction failed in node ({exc})", stacklevel=2)
+        return response
+
 
 def _record_match_score(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
@@ -893,8 +928,7 @@ def _stage_and_compact_search_results(
 
     Returns `(staged_handle, response, unlogged_count)`. `staged_handle` is None on
     a nil search or a staging failure, and in that case `response` comes back
-    untouched — compaction is only ever correct once the sidecar holds the full
-    payload. The compaction functions are idempotent, so a fixture already written
+    untouched. The compaction functions are idempotent, so a fixture already written
     in the compacted shape passes through unchanged. The third element is the staged
     backlog read before this call staged anything — handles, not a count, because
     the note names the refs (empty when unavailable).
@@ -1658,6 +1692,8 @@ def create_mock_server(
                 )
                 if staged is not None:
                     response = {**response, "staged": staged}
+                elif _name in COMPACTS_UNSTAGED:
+                    response = _compact_unstaged_search(_name, response)
             elif (
                 _name in STAGING_SEARCH_TOOLS
                 and _workspace is not None
@@ -1676,6 +1712,14 @@ def create_mock_server(
                     response = {**response, SURNAME_VARIANT_HINTS_KEY: _surname_hint}
             else:
                 _unlogged_staged = []
+                if (
+                    _name in COMPACTS_UNSTAGED
+                    and isinstance(response, dict)
+                    and "error" not in response
+                    and isinstance(response.get("results"), list)
+                    and response.get("results")
+                ):
+                    response = _compact_unstaged_search(_name, response)
                 # A nil record_search with no projectPath spawns no process
                 # otherwise; it gets one only when there is a nil to hint on.
                 if (

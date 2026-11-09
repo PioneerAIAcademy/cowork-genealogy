@@ -83,9 +83,10 @@ has one definition.
 person_read's memories leg calls the function in-process, below the MCP boundary where the strip
 is applied, and keeps the text (`image-transcribe-tool-spec.md` §5.5).
 
-For the search tools the change is **purely additive and back-compatible**: no
-`projectPath` → they behave exactly as before. `image_transcribe` is the exception: it
-requires `projectPath` and refuses a call without one.
+For the search tools staging is **purely additive and back-compatible**: no
+`projectPath` → nothing is staged and no `staged` handle is returned. What the
+inline copy carries is each tool's own contract (below). `image_transcribe` is the
+exception: it requires `projectPath` and refuses a call without one.
 
 **Inline-payload strip (overflow protection).** Once a producer has staged its
 full payload, it drops the heavy per-result field from the *inline* copy so a
@@ -93,10 +94,13 @@ broad search can't overflow the model's token cap — the bulk lives in the
 sidecar, which `record_read` and `rank_search_matches` read host-side, and
 `sidecar_read` serves one full-text hit's `textDocument` from it
 (`results/<file>#<hit id>`). Each
-producer strips its own heavy field: `record_search` drops `gedcomx`,
-and `fulltext_search` drops `textDocument` (the AI-transcribed page). Both strips
-are unconditional once staged (so the protection can't be forgotten) and never
-run on an un-staged search (nothing was retained to re-read).
+producer strips its own heavy field. `record_search` compacts every answer,
+staged or not: it drops `gedcomx` (and the rest of `compactStagedRecordSearch`'s
+cuts), so an un-staged answer keeps no `gedcomx` anywhere and `record_read` gives
+one record's document (`record-search-tool-spec-v2.md`, the `gedcomx` row).
+`fulltext_search` drops `textDocument` (the AI-transcribed page), unconditionally
+once staged (so the protection can't be forgotten) and never on an un-staged
+search (nothing was retained to re-read).
 
 Out of scope: `research_log_append` itself (its spec), the other search tools
 (image/volume/collections/person — they don't write `results/` sidecars today), and
@@ -389,8 +393,9 @@ output change.
 
 ## 9. Test plan (vitest)
 
-- **No projectPath → no change** — response is byte-identical to the pre-change
-  output; no `results/.staging/` created.
+- **No projectPath → nothing staged** — no `results/.staging/` created and no
+  `staged` key; what the answer carries is each tool's own contract (§2,
+  inline-payload strip).
 - **Stage on hit** — with `projectPath`, a staged file appears at
   `results/.staging/<uuid>.json` with `{ tool, retrieved, returned_count, payload }`;
   `returned_count === payload.results.length`; response carries

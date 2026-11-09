@@ -525,8 +525,8 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
   strip inline `results[].gedcomx` after `await stageSearchResults(...)` whenever
   staging succeeded** — no opt-in flag (nothing needs inline gedcomx once staged,
   so the overflow protection can't be forgotten by the caller). The staged file is
-  already serialized to disk, so stripping cannot corrupt the sidecar; an un-staged
-  (no `projectPath`) search still returns full gedcomx inline.
+  already serialized to disk, so stripping cannot corrupt the sidecar. An un-staged
+  (no `projectPath`) search is stripped too.
 - **`packages/engine/plugin/agents/search-records.md` — required, not
   optional.** Add `rank_search_matches` to `tools:` and rewrite the triage
   step to the flow below. **Without this the tool is unreachable** — the
@@ -565,9 +565,8 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
 - A failing pair yields `matchScore: null` + `scoringErrors++`, never dropped.
 - Guard rejections (traversal, missing file, `subjectId` absent) error cleanly.
 - Read-only: the staged file still exists and is finalizable after the call.
-- `record_search` strips inline `results[].gedcomx` whenever staging succeeded
-  (unconditional); keeps it inline for an un-staged (no `projectPath`) search and
-  when `staged` is null.
+- `record_search` strips inline `results[].gedcomx` on every answer: staged, un-staged
+  (no `projectPath`) and when `staged` is null.
 
 Smoke: `dev/try-rank-search-matches.ts` runs a real `record_search` +
 `rank_search_matches` against live FS for a known subject.
