@@ -70,7 +70,7 @@
 # the one that deserves to be read.
 #
 # ── Pins that must NOT be floated ─────────────────────────────────────────────
-# Five pins are load-bearing and have explicit `ignore` rules below. They are
+# Four pins are load-bearing and have explicit `ignore` rules below. They are
 # correctness pins, not staleness:
 #
 #   mcp <2                mcp 2.0.0 removed/renamed Server.list_tools, which
@@ -93,12 +93,6 @@
 #                         6.10.2, all of which call it and all of which cap their
 #                         eslint peer at 9. Raise this only when those plugins
 #                         ship eslint-10-compatible releases.
-#   json-schema-to-zod    eval/app pins `zod ^3` and generates lib/schema/*.ts
-#         2.6.1           with this at postinstall (scripts/gen-zod.ts). 2.8.x
-#                         emits the zod-v4 API (`z.core.$ZodIssue`), which does
-#                         not typecheck against zod 3 — `npm run typecheck`
-#                         fails with 8 errors. Raise this only together with
-#                         moving eval/app to zod 4.
 #   @types/node <23       The runtime is Node 22 (.nvmrc, package.json engines,
 #                         all four CI workflows). Dependabot proposed 26.x twice
 #                         (PRs #4109 and #4110, both closed); types for a Node
@@ -106,32 +100,33 @@
 #                         this together with the runtime line (see the docker
 #                         entry below for what a runtime move involves).
 #
-# Of these six ignores, five are scoped to `version-update:*` update-types, so
+# Of these five ignores, four are scoped to `version-update:*` update-types, so
 # they suppress only routine version bumps rather than security advisories. The
 # @types/node one is a `versions: [">=23"]` range instead — deliberately: it
 # must also suppress a security-labelled bump onto a types line for a Node we
 # don't run (a @types package carries no runnable code to be vulnerable in).
 # (The docker entry below carries its own wildcard ignore, counted there.)
 #
-# The four update-types pins are live and doing work — each one is a thing that
+# The three update-types pins are live and doing work — each one is a thing that
 # has already broken this repo once. @types/node is noise suppression for the
 # two closed PRs above, not a past breakage. Do not "clean them up" because the
 # packages look stale.
 #
-# TWO OF THESE WERE ALREADY PINNED, AND THE BOT FLOATED THEM ANYWAY. That is the
-# pattern worth internalizing, because it recurs:
+# PINNED PACKAGES HAVE BEEN FLOATED BY THE BOT ANYWAY. That is the pattern worth
+# internalizing, because it recurs:
 #
 #   - eslint was documented in a comment at the top of eval/app/eslint.config.mjs
 #     naming the three plugins and `context.getFilename()` by name. #1043/#1047
 #     bumped the version and left the prose behind; both merged green and broke
 #     `npm run lint` in both trees (#1053 reverted them).
-#   - json-schema-to-zod was pinned EXACTLY — `"2.6.1"`, no caret, unlike its
-#     caret-ranged neighbours. #1042 proposed 2.8.1 regardless.
+#   - json-schema-to-zod was pinned EXACTLY at `"2.6.1"`, no caret, until issue
+#     #4190 moved eval/app to zod 4 and unpinned it. #1042 proposed 2.8.1
+#     regardless, which emitted the zod-4 API and broke the zod-3 typecheck.
 #
 # Dependabot does not read prose and does not treat an exact pin as intent. A pin
 # it can reach needs an `ignore` here, where it will actually be read.
 #
-# And note the update-type on this one: 2.6.1 -> 2.8.1 is semver-MINOR, so a
+# And note the update-type on that one: 2.6.1 -> 2.8.1 was semver-MINOR, so a
 # major-only ignore would not have caught it — the same trap as python
 # 3.12 -> 3.14 under the docker entry below. Match the ignore to how the version
 # actually moves, not to how breaking the change feels.
@@ -177,12 +172,6 @@ updates:
       - dependency-name: eslint
         update-types:
           - version-update:semver-major
-      # Minor as well as major: 2.6.1 -> 2.8.1 is a semver-MINOR bump that
-      # breaks the typecheck. See the note above.
-      - dependency-name: json-schema-to-zod
-        update-types:
-          - version-update:semver-major
-          - version-update:semver-minor
       # A versions range, not update-types — see "Pins that must NOT be
       # floated" above for why it also suppresses security-labelled bumps.
       - dependency-name: "@types/node"
