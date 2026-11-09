@@ -17,6 +17,7 @@
  * back exactly, every part is under that line and every chain ends; one line per part.
  * A default page that now fits whole also fails: it would pass every other check with
  * nothing walked, so the case needs a longer page. Pages you pass in are not held to that.
+ * A default run also fetches `SIDEBAR_SAMPLES` and fails any that loses nothing to the strip.
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -53,11 +54,18 @@ const PLACE_CASES = [
 ] as const;
 
 /**
- * Default pages that carry the wiki's sidebar. Each must lose characters to the strip: one that
- * loses none means the rule matched nothing, most likely because the wiki renamed the
- * `Wiki Topics` box, and the tools now serve the sidebar again while every other check passes.
+ * Pages that carry the wiki's sidebar, one per shape seen on the wiki. Each must lose characters
+ * to the strip: one that loses none means the rule matched nothing, most likely because the wiki
+ * renamed the `Wiki Topics` box or changed its template, and the tools now serve the sidebar again
+ * while every other check passes. Fetched once each, apart from the walks, on a default run.
  */
-const SIDEBAR_PAGES = new Set(["Pennsylvania_Church_Records", "Ireland_Online_Genealogy_Records", "Norway_Church_Records"]);
+const SIDEBAR_SAMPLES = [
+  "England_Census", // a one-column box opening the page, its row **[X Wiki Topics](url "title")**
+  "England_Genealogy", // the place's own page, its row **X Wiki Topics**
+  "Ohio_Vital_Records", // a state's page, its row [**X Wiki Topics**](url "title")
+  "Argentina_Online_Genealogy_Records", // the box lower on the page, under a table
+  "Saskatchewan,_Canada_Genealogy", // a two-column box
+];
 
 interface Part {
   result: WikiPageResult;
@@ -129,9 +137,6 @@ async function checkCase(
   const parts: Part[] = [await call(undefined)];
   const slug = slugFromUrl(parts[0].result);
   const { whole, removed } = await fetchWhole(slug);
-  if (mustBePaged && SIDEBAR_PAGES.has(slug) && removed === 0) {
-    problems.push("no sidebar was removed from a page that carries one: has the wiki renamed the `Wiki Topics` box?");
-  }
 
   // Every part is non-empty (`fitPage`), so each call starts at least one character past the
   // last one and a chain over `whole.length` characters cannot have more parts than that. A part
@@ -194,8 +199,26 @@ async function checkCase(
   }
   if (joined !== whole) {
     problems.push(`the parts do not join to the page: ${fmt(joined.length)} chars against ${fmt(whole.length)}, first difference at ${fmt(firstDifference(joined, whole))}`);
+    // The tools served the page with its sidebar: under --wire, a build older than src/.
+    if (removed > 0 && joined.length === whole.length + removed) {
+      problems.push("the parts are the page with its sidebar still in: is build/ older than src/? Run `npm run build`");
+    }
   }
   console.log(`  joined parts equal the whole page: ${joined === whole ? "yes" : "NO"}`);
+  return problems;
+}
+
+/** Each sample page must lose characters to the strip (see `SIDEBAR_SAMPLES`). */
+async function checkSidebarSamples(): Promise<string[]> {
+  const problems: string[] = [];
+  console.log("\nsidebar samples, each of which must lose its box:");
+  for (const slug of SIDEBAR_SAMPLES) {
+    const { whole, removed } = await fetchWhole(slug);
+    console.log(`  ${slug}: ${fmt(removed)} of ${fmt(whole.length + removed)} chars removed`);
+    if (removed === 0) {
+      problems.push(`${slug}: no sidebar was removed from a page that carries one: has the wiki renamed the \`Wiki Topics\` box, or changed its template?`);
+    }
+  }
   return problems;
 }
 
@@ -226,6 +249,7 @@ async function run(call: Call): Promise<number> {
         checkCase(`wiki_place_page ${JSON.stringify(c)}`, (offset) => call("wiki_place_page", { ...c, offset }), true),
       );
     }
+    await attempt("sidebar samples", checkSidebarSamples);
   }
 
   console.log("");

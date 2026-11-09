@@ -1,39 +1,43 @@
 // The wiki's navigation sidebar, removed from the page text `wiki_read` and `wiki_place_page`
-// return (docs/specs/wiki-page-tool-spec.md, "The sidebar"). Most wiki pages carry it: a
-// one-column table under an empty header, whose row naming `<place> Wiki Topics` heads rows of
-// links to the place's topic pages. The same box repeats on every page of a country or state,
-// so it costs an agent thousands of characters a page and says nothing about the page itself.
+// return. The rule, and the shapes it was checked on: docs/specs/wiki-page-tool-spec.md, "The sidebar".
 
 /** The words every spelling of the sidebar's row carries. */
 const SIDEBAR_ROW_WORDS = "Wiki Topics";
 
+/** A markdown table's separator row, in any number of columns: `| --- |`, `| --- | --- |`. */
+const SEPARATOR_ROW = /^\|(\s*:?-{3,}:?\s*\|)+\s*$/;
+
 const isTableLine = (line: string): boolean => line.startsWith("|");
 
 /**
- * `text` without its sidebar tables.
+ * `text` without its sidebar tables, each with the blank line after it.
  *
- * A sidebar row is a line that starts with `|` and contains `Wiki Topics`. The wiki spells the
- * row several ways (`[X Wiki Topics](url)`, `**X Wiki Topics**`, `[**X Wiki Topics**](url)`,
- * `**[X Wiki Topics](url "X Genealogy")**`), so the rule matches the words, never a spelling.
- * The table is the run of consecutive lines that start with `|` around that row: up through the
- * empty header and the separator above it, down to its last row. The run goes, and so does the
- * blank line after it, so the text on either side joins as it did around the table. Every such
- * table goes, wherever it sits on the page. Anything else, other tables included, stays, and a
- * text with no sidebar row comes back as the same string.
+ * A table is a run of consecutive lines that start with `|`. It is the sidebar when one of its
+ * lines contains `Wiki Topics` (the words, never one spelling of them) and it is one table, with
+ * a single separator row. A run holding two tables, one touching the box with no blank line
+ * between them, is left whole: keeping a box costs characters, cutting a table loses content.
+ * Everything else comes back as it was.
  */
 export function stripWikiSidebar(text: string): string {
   if (!text.includes(SIDEBAR_ROW_WORDS)) return text;
   const lines = text.split("\n");
-  const dropped = new Set<number>();
-  for (let i = 0; i < lines.length; i++) {
-    if (dropped.has(i) || !isTableLine(lines[i]) || !lines[i].includes(SIDEBAR_ROW_WORDS)) continue;
-    let first = i;
-    while (first > 0 && isTableLine(lines[first - 1])) first--;
-    let last = i;
-    while (last + 1 < lines.length && isTableLine(lines[last + 1])) last++;
-    if (last + 1 < lines.length && lines[last + 1].trim() === "") last++;
-    for (let j = first; j <= last; j++) dropped.add(j);
+  const kept: string[] = [];
+  let i = 0;
+  while (i < lines.length) {
+    if (!isTableLine(lines[i])) {
+      kept.push(lines[i++]);
+      continue;
+    }
+    let end = i + 1;
+    while (end < lines.length && isTableLine(lines[end])) end++;
+    const table = lines.slice(i, end);
+    const isSidebar =
+      table.some((line) => line.includes(SIDEBAR_ROW_WORDS)) &&
+      table.filter((line) => SEPARATOR_ROW.test(line)).length === 1;
+    // Row by row: spreading a table's rows into one push overflows the stack past ~10^5 rows.
+    if (!isSidebar) for (const line of table) kept.push(line);
+    else if (end < lines.length && lines[end].trim() === "") end++;
+    i = end;
   }
-  if (dropped.size === 0) return text;
-  return lines.filter((_, i) => !dropped.has(i)).join("\n");
+  return kept.join("\n");
 }

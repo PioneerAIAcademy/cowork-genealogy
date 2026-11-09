@@ -41,7 +41,7 @@ import { VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
 import { SHAPES, escapedBody, headingPage, walkParts } from "../helpers/wiki-pages.js";
-import { ENGLAND_HEAD, ENGLAND_STRIPPED } from "../helpers/wiki-sidebar-pages.js";
+import { ENGLAND_HEAD, ENGLAND_STRIPPED, LONG_PAGE, LONG_PAGE_STRIPPED } from "../helpers/wiki-sidebar-pages.js";
 
 const API_BASE = "http://localhost:8000";
 
@@ -915,8 +915,8 @@ describe("wikiPlacePageTool, the sidebar", () => {
   });
 
   it("removes it before the cut: the parts join to the page without it, and totalChars is that page's length", async () => {
-    servePortugal(ENGLAND_HEAD + headingPage());
-    const stripped = ENGLAND_STRIPPED + headingPage();
+    servePortugal(LONG_PAGE);
+    const stripped = LONG_PAGE_STRIPPED;
     const parts = await walkParts(readPortugal);
     expect(parts.length).toBeGreaterThan(1);
     expect(parts.map((p) => p.content).join("")).toBe(stripped);
@@ -927,8 +927,8 @@ describe("wikiPlacePageTool, the sidebar", () => {
   });
 
   it("counts a continuation's offset in the page without it", async () => {
-    servePortugal(ENGLAND_HEAD + headingPage());
-    const stripped = ENGLAND_STRIPPED + headingPage();
+    servePortugal(LONG_PAGE);
+    const stripped = LONG_PAGE_STRIPPED;
     const part = await readPortugal(10_000);
     expect(part.offset).toBe(10_000);
     expect(part.totalChars).toBe(stripped.length);
