@@ -1,0 +1,27 @@
+{
+  "tool": "wiki_search",
+  "description": "wiki_search – FamilySearch Wiki search for Christ Church Philadelphia records. No specific Christ Church page exists on the FS Wiki; the top result is the Pennsylvania Church Records article.",
+  "args": {
+    "query": "~christ church philadelphia"
+  },
+  "response": {
+    "query": "christ church philadelphia",
+    "total_chunks_searched": 500,
+    "results": [
+      {
+        "rank": 1,
+        "relevance_score": 0.71,
+        "chunk_text": "Pennsylvania has significant church records for many denominations dating to the colonial period. For Episcopal/Anglican churches, active congregations keep their own registers; the Diocese of Pennsylvania holds records for closed Episcopal churches in Philadelphia county. The Historical Society of Pennsylvania holds collections described as abstracts taken from various Pennsylvania church records.",
+        "page_title": "Pennsylvania Church Records",
+        "section_heading": "Episcopal/Anglican Records",
+        "source_url": "https://www.familysearch.org/en/wiki/Pennsylvania_Church_Records"
+      }
+    ],
+    "query_time_ms": 312,
+    "timing": {
+      "embed_ms": 38,
+      "search_ms": 220,
+      "rerank_ms": 54
+    }
+  }
+}
