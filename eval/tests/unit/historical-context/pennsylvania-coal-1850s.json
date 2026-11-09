@@ -12,6 +12,9 @@
     "scenario": null
   },
   "mcp_fixtures": [
+    "place-search-schuylkill-county",
+    "place-search-all-schuylkill",
+    "place-population-schuylkill",
     "wiki-search-schuylkill-coal-mining",
     "wikipedia-search-schuylkill-county",
     "wikipedia-search-coal-miners-wales-ireland",
