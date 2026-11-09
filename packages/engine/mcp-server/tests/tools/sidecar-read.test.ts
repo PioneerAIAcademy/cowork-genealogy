@@ -6,6 +6,7 @@ import { tmpdir } from "os";
 import {
   sidecarRead,
   fitPage,
+  SIDECAR_READ_BATCH_BUDGET,
   SIDECAR_READ_MAX_CHARS,
 } from "../../src/tools/sidecar-read.js";
 import { writerToolResult } from "../../src/tool-result.js";
@@ -13,6 +14,7 @@ import { setProjectStore, type ProjectStore } from "../../src/store/project-stor
 import { NO_PROJECT_MESSAGE_READ } from "../../src/utils/project-io.js";
 import { ON_PG, fileStoreOnly } from "../helpers/store-backend.js";
 import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
+import { escapedBody } from "../helpers/wiki-pages.js";
 
 /** A ProjectStore stub whose readText returns `text` and records its calls. */
 function storeReturning(text: string, calls: Array<[string, string]> = []): ProjectStore {
@@ -630,6 +632,70 @@ describe("sidecar_read: a staged transcription, and several refs", () => {
   it("refuses `ref` and `refs` together, and an empty `refs`", async () => {
     expect((await sidecarRead({ projectPath: dir, ref: "uploads/note.txt", refs: ["uploads/note.txt"] } as any)).ok).toBe(false);
     expect((await sidecarRead({ projectPath: dir, refs: [] })).ok).toBe(false);
+  });
+
+  // ─── one budget across a `refs` batch ──────────────────────────────────────
+
+  /** A padded register page with quotes and line breaks, so escaping counts. */
+  const registerPage = (chars: number, tag: string) => {
+    const line = `  "${tag}"  |  1850  |  "farmer"  |   \n`;
+    return line.repeat(Math.ceil(chars / line.length)).slice(0, chars);
+  };
+
+  it("holds three 19k pages and a note to one budget: the note whole, the pages sharing the rest", async () => {
+    const texts = ["a", "b", "c"].map((tag) => registerPage(19_000, tag));
+    const pages: string[] = [];
+    for (const t of texts) pages.push(await stageTranscription(t));
+    const r = await sidecarRead({ projectPath: dir, refs: [pages[0], "uploads/note.txt", pages[1], pages[2]] });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(writerToolResult(r).content[0].text.length).toBeLessThanOrEqual(SIDECAR_READ_BATCH_BUDGET);
+    expect(r.results[1]).toMatchObject({ ok: true, content: "a note", truncated: false });
+    for (const i of [0, 2, 3]) {
+      const x = r.results[i];
+      expect(x.ok && x.truncated).toBe(true);
+      if (!x.ok) return;
+      expect(x.nextOffset).toBe(x.content.length);
+      expect(escapedBody(x.content)).toBeGreaterThan(12_000);
+    }
+  });
+
+  it("continues each cut page of a batch by `ref` and `offset: nextOffset` to its exact text", async () => {
+    const texts = ["a", "b", "c"].map((tag) => registerPage(19_000, tag));
+    const pages: string[] = [];
+    for (const t of texts) pages.push(await stageTranscription(t));
+    const r = await sidecarRead({ projectPath: dir, refs: pages });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.results.every((x) => x.ok && x.truncated)).toBe(true);
+    for (const [i, first] of r.results.entries()) {
+      expect(first.ok).toBe(true);
+      if (!first.ok) return;
+      let text = first.content;
+      let at = first;
+      while (at.truncated) {
+        const next = await sidecarRead({ projectPath: dir, ref: pages[i], offset: at.nextOffset });
+        expect(next.ok).toBe(true);
+        if (!next.ok) return;
+        expect(next.offset).toBe(at.nextOffset);
+        text += next.content;
+        at = next;
+      }
+      expect(text).toBe(texts[i]);
+    }
+  });
+
+  it("leaves a batch that fits the budget as each ref alone would read it", async () => {
+    const texts = ["a", "b"].map((tag) => registerPage(14_000, tag));
+    const pages: string[] = [];
+    for (const t of texts) pages.push(await stageTranscription(t));
+    const r = await sidecarRead({ projectPath: dir, refs: pages });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    for (const [i, ref] of pages.entries()) {
+      expect(r.results[i]).toEqual(await sidecarRead({ projectPath: dir, ref }));
+      expect(r.results[i]).toMatchObject({ content: texts[i], truncated: false });
+    }
   });
 });
 

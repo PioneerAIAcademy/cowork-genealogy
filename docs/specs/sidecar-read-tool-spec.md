@@ -14,7 +14,7 @@ sidecar_read({ projectPath, ref, offset?, maxChars? })
    | { ok: false, reason: "no_project" | "invalid_ref" | "not_found" | "not_text", errors: string[] }
 
 sidecar_read({ projectPath, refs, maxChars? })
-  -> { ok: true, results: [ <one result above per ref> ] }
+  -> { ok: true, results: [ <one result above per ref> ] }   // the whole answer within 40,000
    | { ok: false, reason: "invalid_ref", errors: string[] }   // `ref` and `refs` together, or an empty or non-list `refs`
 ```
 
@@ -29,7 +29,8 @@ search sidecar, or a full-text sidecar with no `#` selector) is refused as
 `invalid_ref`, with a pointer (§6 has the selector errors). A staged ref whose file
 is gone reads through the log entry that consumed it, and is `not_found` when no
 entry did (§6). `refs` reads several refs in one call, each from
-its start; it is the agent's one "read all" turn. `ref` and `refs` together, or
+its start; it is the agent's one "read all" turn, and its whole answer shares one
+40,000-character budget ("A `refs` batch", under pagination). `ref` and `refs` together, or
 an empty `refs`, is refused.
 
 ---
@@ -70,7 +71,7 @@ classes and the two `results/` texts nothing else reads back, and nothing else
 sidecar_read({
   projectPath: string,   // required — the project directory
   ref?: string,          // project-relative POSIX path under evaluations/ or uploads/, or a results/ ref (§7)
-  refs?: string[],       // several refs in one call, each read from its start
+  refs?: string[],       // several refs in one call, each read from its start, sharing one budget ("A `refs` batch")
   offset?: number,       // UTF-16 code-unit offset, integer ≥ 0, default 0; applies to `ref` only
   maxChars?: number,     // page size, default 40,000, hard cap 40,000 (clamped); applies to every ref
 })
@@ -80,7 +81,9 @@ Send `ref` or `refs`, not both; the schema requires only `projectPath`. `refs`
 returns `{ ok: true, results }`, one §2.1 result per ref in the order given: a
 ref that fails is that entry's `{ ok: false, … }`, not the call's. `ref` and
 `refs` together, or a `refs` that is empty or not a list, is `{ ok: false,
-reason: "invalid_ref", errors }` for the whole call.
+reason: "invalid_ref", errors }` for the whole call. `maxChars` caps each ref's
+page, and the batch as a whole is held to one budget ("A `refs` batch", below), so a
+ref can come back cut shorter than `maxChars`.
 
 Read-only; writes nothing. No auth, no network, no `Principal` parameter —
 exactly the shape of `research_query`. Parameters are camelCase (the wire
@@ -222,6 +225,31 @@ each list several places (881 measured, the most on any committed full-text
 sidecar: `results/log_017.json#3Q9M-CSK3-ZSDZ` in the g9gj scenario), so the
 whole serialized result stays under ~41,000 and is never spillable. A caller
 pages by passing `nextOffset` back as `offset` until `truncated` is false.
+
+**A `refs` batch.** Each ref's page is bounded as above, but a batch of them is
+bounded too: its whole serialized answer, `{ ok: true, results }` with every
+envelope, is held to `SIDECAR_READ_BATCH_BUDGET` (40,000, the shared
+`TOOL_RESULT_CHAR_BUDGET`). Measured: three 19,000-character staged OCR pages
+with quotes and line breaks serialize to about 66,000 unbounded, past the 50,000
+spill, and the agents that call this tool hold no `Read`. The budget is shared like this:
+
+1. Each ref gets the page a lone `ref` read with the same `maxChars` would
+   return. Its claim is that page's escaped body.
+2. The answer is measured with every page emptied and every result counted as
+   truncated at `nextOffset: totalChars`, which no real result exceeds. That is
+   taken off the budget.
+3. What is left is shared smallest claim first (`shareBudget`,
+   `src/utils/share-budget.ts`): with `m` refs left, each is offered the rest
+   divided by `m`. A page that fits its offer comes back exactly as a lone read
+   returns it, and what it did not take goes to the refs after it. A larger
+   page is cut by `fitPage` to its offer, never below one unit, and carries
+   `truncated: true` and `nextOffset`.
+
+So small refs come back whole, and the large ones share the rest about equally.
+A cut ref continues the way any page does: `sidecar_read({ projectPath, ref,
+offset: nextOffset })`. A failed ref claims nothing. The answer can pass the
+budget only by the few units the one-unit floor and the surrogate step add per
+cut ref.
 
 `offset` is a UTF-16 code-unit index, the same unit `content.length` and
 `totalChars` are measured in, so `offset + content.length` is always the right
@@ -449,6 +477,7 @@ fixture, not a defect.
 | `src/utils/results-staging.ts` | `splitHitRef`, `HIT_INDEX_FRAGMENT`, `readResultsEnvelope`, `findFulltextHit`; the `#` guard in `resolveStagedRef`, `readStagedResults` and `checkStagedResults` (§7.1) |
 | `src/tools/extraction-append.ts` | documents mode takes a hit ref as `transcriptionRef` (`research-append-tool-spec.md` §11.7) |
 | `src/utils/text-page.ts` | `fitPage` (§4) and `requireWholeNumber`, shared with `wiki_read` and `wiki_place_page` |
+| `src/utils/share-budget.ts` | `shareBudget`, the smallest-first share of a `refs` batch's budget, shared with `catalog_search`'s film notes |
 | `src/store/fs-project-store.ts` | `readText` real-path containment check (§3, §8) |
 | `src/tool-schemas.ts` | `allToolSchemas` |
 | `src/server.ts` | dispatch arm via `writerToolResult` |
@@ -490,7 +519,14 @@ segment (`ENAMETOOLONG`) is `invalid_ref`; a bare `results/log_001.json` is
 A staged transcription, and `refs`: a staged transcription's text pages like a
 file; a staged record search is `invalid_ref` pointing at `record_read`; one
 `refs` call returns a transcription, an upload and a `not_found` in order;
-`ref` with `refs`, and an empty `refs`, are refused.
+`ref` with `refs`, and an empty `refs`, are refused. The batch budget ("A `refs` batch",
+written red-first): three 19,000-character staged pages with quotes and line
+breaks, and a short upload, serialize within `SIDECAR_READ_BATCH_BUDGET`
+through `writerToolResult`, the upload whole and each page cut to more than
+12,000 escaped characters; each cut page, read on by `ref` and `offset:
+nextOffset`, reassembles to its exact text; and two 14,000-character pages,
+which fit, come back exactly as each lone `ref` read returns them.
+`tests/utils/share-budget.test.ts` pins `shareBudget` itself.
 
 One full-text hit (§7.1), on the committed real sidecar
 `eval/fixtures/scenarios/g9gj-proof-update-after-later-search/results/log_003.json`,
