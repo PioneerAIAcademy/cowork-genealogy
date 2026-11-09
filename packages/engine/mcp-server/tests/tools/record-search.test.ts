@@ -2626,6 +2626,7 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
   let searchUrls: URL[];
   let placesCalls: number;
   let failPlace: string | undefined;
+  let rejectPlace: string | undefined;
 
   const ok = (body: unknown) => ({ ok: true, status: 200, statusText: "OK", json: async () => body, text: async () => JSON.stringify(body) });
 
@@ -2670,8 +2671,10 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
   function recordSearch(url: URL) {
     searchUrls.push(url);
     const place = url.searchParams.get("q.deathLikePlace") ?? "";
+    const birth = url.searchParams.get("q.birthLikePlace");
     if (place === failPlace) return { ok: false, status: 503, statusText: "Service Unavailable", json: async () => ({}) };
-    const rows = byPlace[place] ?? [];
+    if (place === rejectPlace) return { ok: false, status: 401, statusText: "Unauthorized", json: async () => ({}) };
+    const rows = byPlace[birth === null ? place : `${place} | ${birth}`] ?? byPlace[place] ?? [];
     const offset = Number(url.searchParams.get("offset") ?? 0);
     const count = Number(url.searchParams.get("count") ?? 20);
     const page = rows.slice(offset, offset + count);
@@ -2688,6 +2691,7 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
     searchUrls = [];
     placesCalls = 0;
     failPlace = undefined;
+    rejectPlace = undefined;
     const resolver = await vi.importActual<typeof import("../../src/utils/place-resolver.js")>("../../src/utils/place-resolver.js");
     resolver.__clearPlaceResolverCachesForTests();
     vi.mocked(placeSearchNames).mockImplementation(resolver.placeSearchNames);
@@ -2838,6 +2842,38 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
     const failed = out.placeExpansion!.searches
       .filter((s) => s.error !== undefined);
     expect(failed.map((s) => s.places.deathPlace)).toEqual(["Rieti, Umbria, Papal States"]);
+  });
+
+  it("fails the call when a further name's search is refused for the session (401)", async () => {
+    byPlace[PERIOD] = [TARGET];
+    rejectPlace = MODERN;
+    await expect(recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD }, LOCAL)).rejects.toThrow(/session not accepted/);
+  });
+
+  it("searches every combination of two expanded place fields", async () => {
+    byPlace[`${MODERN} | ${MODERN}`] = [TARGET];
+    const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, birthPlace: PERIOD }, LOCAL);
+    // 6 x 6 = 36 is past the 12-search cap: the longer list loses names from
+    // its end until the product fits (3 x 4 = 12), keeping typed and modern.
+    const pairs = searchUrls.map((u) => [u.searchParams.get("q.deathLikePlace"), u.searchParams.get("q.birthLikePlace")]);
+    expect(pairs).toHaveLength(12);
+    expect(new Set(pairs.map((p) => p.join(" | "))).size).toBe(12);
+    expect(pairs[0]).toEqual([PERIOD, PERIOD]);
+    expect(pairs).toContainEqual([MODERN, MODERN]);
+    const birthNames = new Set(pairs.map((p) => p[1]));
+    const deathNames = new Set(pairs.map((p) => p[0]));
+    expect(birthNames.size * deathNames.size).toBe(12);
+    expect(deathNames.has("Rieti, Umbria, Papal States") || birthNames.has("Rieti, Umbria, Papal States")).toBe(false);
+    expect(out.placeExpansion?.truncated).toBe(true);
+    expect(out.results.map((r) => r.recordId)).toContain(`ark:/61903/1:1:${TARGET}`);
+  });
+
+  it("searches the full product with no truncation when it fits", async () => {
+    const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, birthPlace: "Italy" }, LOCAL);
+    // A country-only birth place does not expand: 6 x 1 = 6 searches.
+    expect(searchUrls).toHaveLength(6);
+    expect(new Set(searchUrls.map((u) => u.searchParams.get("q.birthLikePlace")))).toEqual(new Set(["Italy"]));
+    expect(out.placeExpansion?.truncated).toBeUndefined();
   });
 
   it("fails the call as today when the typed place's own search fails", async () => {

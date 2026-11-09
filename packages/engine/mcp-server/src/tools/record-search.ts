@@ -977,6 +977,10 @@ export function mapEntry(
   return result;
 }
 
+/** A 401 from the search: the session is not accepted. Marked so a place
+ *  expansion fails the call on it from any name, not just the typed one. */
+class SearchSessionRejected extends Error {}
+
 /** One upstream search request, with every error mapped to the message the
  *  agent reads. Shared by the single search and each search of a place
  *  expansion (issue #4067). */
@@ -1016,7 +1020,7 @@ async function fetchSearchPage(
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
+      throw new SearchSessionRejected(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
     }
     if (response.status === 403) {
       throw new Error(
@@ -1086,7 +1090,7 @@ const UPSTREAM_PAGE_MAX = 100;
 const EXPANSION_CONCURRENCY = 3;
 
 const PLACE_EXPANSION_NOTE =
-  "The place was searched under every name FamilySearch has for it, and the records merged without duplicates: an index finds a record only under the name it standardized the place to, which need not be the name in force at the record's date. totalMatches is the largest single search's total; each search's own total is listed here.";
+  "The place was searched under every name FamilySearch has for it and the records merged without duplicates, because an index finds a record only under the name it standardized the place to; totalMatches is the largest single search's total, and each search's own is listed here.";
 
 type PlaceCombo = Partial<Record<PlaceField, string>>;
 
@@ -1242,8 +1246,9 @@ export async function recordSearchTool(
         } catch (err) {
           // The typed search (index 0) fails the call exactly as today; a further
           // name's failure is reported and the merge goes on, unless it is the
-          // shared FS budget refusing, which must reach the agent as itself.
-          if (index === 0 || isFsBudgetExhausted(err)) {
+          // shared FS budget refusing or the session rejected, which must reach
+          // the agent as themselves.
+          if (index === 0 || isFsBudgetExhausted(err) || err instanceof SearchSessionRejected) {
             failed = true;
             throw err;
           }
