@@ -49,6 +49,7 @@ import {
 } from "../utils/staged-compaction.js";
 import { readProjectJson } from "../utils/project-io.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import {
   isSubCountryPlace,
   marriageJurisdictionCandidates,
@@ -1006,6 +1007,10 @@ export async function recordSearchTool(
       SEARCH_TIMEOUT_MS,
     );
   } catch (err) {
+    // A local refusal (the shared budget, or this user's 429 pause) is not a
+    // network failure: rethrown marked, so the agent reads "try again in about
+    // N seconds" rather than a transient error that was never retried.
+    if (isFsBudgetExhausted(err)) throw err;
     const detail = err instanceof Error ? err.message : String(err);
     throw new Error(
       `FamilySearch record search did not complete after retries ` +

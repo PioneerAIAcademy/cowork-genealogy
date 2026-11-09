@@ -1,0 +1,379 @@
+{
+  "log_id": "log_015",
+  "tool": "record_read",
+  "retrieved": "2026-10-07T04:23:28.579Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:M95H-WKV"
+    },
+    "results": [
+      {
+        "recordId": "M95H-WKV",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_43961988",
+              "ark": "ark:/61903/1:1:M95H-WKV",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "c517ac2e-ca99-4cd1-8b67-185b40cb4bf7",
+                  "type": "BirthName",
+                  "surname": "Gaetzen",
+                  "given": "Amelia"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "12f3f77e-cbc6-4eee-89c8-de4b70fda30b",
+                  "type": "Immigration",
+                  "date": "1880",
+                  "standard_date": "1880"
+                },
+                {
+                  "id": "49fa2d5d-6a3c-4259-a66a-246de738cc54",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "San Francisco, California, United States"
+                },
+                {
+                  "id": "3ea2a0ee-33f0-4eef-843f-b6e06c5831ac",
+                  "type": "Birth",
+                  "date": "August 1858",
+                  "standard_date": "Aug 1858",
+                  "place": "Germany"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Widowed"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_43961989",
+              "ark": "ark:/61903/1:1:M95H-WKK",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "bf49bcd7-6487-4c31-a802-644d7244c9a5",
+                  "type": "BirthName",
+                  "surname": "Gaetzen",
+                  "given": "Henry"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "16b9de4c-deed-4d67-b908-7b0584d5efd2",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "San Francisco, California, United States"
+                },
+                {
+                  "id": "ba5fd9eb-3232-4b27-ad1b-46e2e8169af7",
+                  "type": "Birth",
+                  "date": "July 1877",
+                  "standard_date": "Jul 1877",
+                  "place": "California"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_43961990",
+              "ark": "ark:/61903/1:1:M95H-WK2",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "013ae609-c94e-44d6-96b2-d87748089699",
+                  "type": "BirthName",
+                  "surname": "Webber",
+                  "given": "Hannah"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "b2a14c3b-06c5-42b1-8291-b658e0165563",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "San Francisco, California, United States"
+                },
+                {
+                  "id": "430bfa3c-ad48-429d-8415-d1272f9b9c72",
+                  "type": "Birth",
+                  "date": "September 1865",
+                  "standard_date": "Sep 1865",
+                  "place": "Germany"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_43961991",
+              "ark": "ark:/61903/1:1:M95H-WKL",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "81284fa0-054c-44c1-aa3e-0d313f22b12f",
+                  "type": "BirthName",
+                  "surname": "Webber",
+                  "given": "Edmond"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "460b13dc-fd87-453c-809a-22c26cbe43b2",
+                  "type": "Birth",
+                  "date": "December 1897",
+                  "standard_date": "Dec 1897",
+                  "place": "California"
+                },
+                {
+                  "id": "3feac0d6-6bae-43c4-9e6e-2b11e6c09886",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_43961992",
+              "ark": "ark:/61903/1:1:M95H-WKG",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "0f5dba8e-dae4-4a36-be5c-d4868e61cbbd",
+                  "type": "BirthName",
+                  "surname": "Webber",
+                  "given": "Arthur"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "e6f2b077-97c0-42b6-9451-461c522f9aef",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "San Francisco, California, United States"
+                },
+                {
+                  "id": "52044edd-4d67-49ac-b325-1aa965485251",
+                  "type": "Birth",
+                  "date": "May 1900",
+                  "standard_date": "May 1900",
+                  "place": "California"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_299557384487",
+              "ark": "ark:/61903/1:1:62Y6-YBCJ",
+              "principal": true,
+              "gender": "Unknown",
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "8e75934a-48f5-45fd-8458-f02d0432ef19",
+              "type": "Couple",
+              "person1": "p_43961990",
+              "person2": "p_299557384487",
+              "facts": [
+                {
+                  "id": "54546be5-616b-4cb5-b1cb-1f1fa0e1264f",
+                  "type": "Marriage",
+                  "date": "1895",
+                  "standard_date": "1895"
+                }
+              ]
+            },
+            {
+              "id": "0fd22ee8-542a-483b-925b-4c52dd64cc8a",
+              "type": "ParentChild",
+              "parent": "p_43961988",
+              "child": "p_43961989"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_21792914014",
+              "resource_type": "Record",
+              "title": "Household of Amelia Gaetzen, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M95H-WKV : Mon Oct 20 05:49:12 UTC 2025), Entry for Amelia Gaetzen and Henry Gaetzen, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:1T55-BYQ",
+              "coverage": {
+                "place_rep_id": "3853449",
+                "date_range": "1900",
+                "record_type": "Census",
+                "standard_place": "San Francisco, California, United States"
+              }
+            },
+            {
+              "id": "sd_c_1325221",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1900",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1325221",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1900/1900",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6XB3-YH8",
+              "coverage": {
+                "place_rep_id": "3853449",
+                "date_range": "+1900-01-01T00:00:00Z/+1900-12-31T23:59:59Z",
+                "record_type": "Census",
+                "standard_place": "San Francisco, California, United States"
+              }
+            },
+            {
+              "id": "sd_da2",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6XB3-5J6"
+            },
+            {
+              "id": "sd_p_299557384487",
+              "resource_type": "Person",
+              "title": "<Unknown>, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M95H-WKV : Mon Oct 20 05:49:12 UTC 2025), Entry for Amelia Gaetzen and Henry Gaetzen, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:62Y6-YBCJ"
+            },
+            {
+              "id": "sd_p_43961988",
+              "resource_type": "Person",
+              "title": "Amelia Gaetzen, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M95H-WKV : Mon Oct 20 05:49:12 UTC 2025), Entry for Amelia Gaetzen and Henry Gaetzen, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M95H-WKV"
+            },
+            {
+              "id": "sd_p_43961992",
+              "resource_type": "Person",
+              "title": "Arthur Webber, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M95H-WKV : Mon Oct 20 05:49:12 UTC 2025), Entry for Amelia Gaetzen and Henry Gaetzen, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M95H-WKG"
+            },
+            {
+              "id": "sd_p_43961990",
+              "resource_type": "Person",
+              "title": "Hannah Webber, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M95H-WKV : Mon Oct 20 05:49:12 UTC 2025), Entry for Amelia Gaetzen and Henry Gaetzen, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M95H-WK2"
+            },
+            {
+              "id": "sd_p_43961991",
+              "resource_type": "Person",
+              "title": "Edmond Webber, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M95H-WKV : Mon Oct 20 05:49:12 UTC 2025), Entry for Amelia Gaetzen and Henry Gaetzen, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M95H-WKL"
+            },
+            {
+              "id": "sd_p_43961989",
+              "resource_type": "Person",
+              "title": "Henry Gaetzen, \"United States, Census, 1900\"",
+              "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M95H-WKV : Mon Oct 20 05:49:12 UTC 2025), Entry for Amelia Gaetzen and Henry Gaetzen, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:M95H-WKK"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            }
+          ],
+          "places": [
+            {
+              "id": "place_3853449"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
