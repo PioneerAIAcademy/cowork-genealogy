@@ -1131,9 +1131,13 @@ def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
 # Step mode (decision 25). `turns.step`/`turns.mode` are written the moment a turn's
 # FIRST step is allowed, not at complete(), because the seed exists for an attempt that
 # never reaches complete(): redelivery is what happens when one is interrupted mid-turn.
+# The one value a later write replaces is the boundary's `UNGROUPED_OPENER`: the step
+# after it fixes the turn's group, so it is what a redelivery must seed from.
 TURN_STEP_READ_SQL = "SELECT step, mode FROM turns WHERE turn_id = %s"
+UNGROUPED_OPENER = "init-project"
 TURN_STEP_WRITE_SQL = (
-    "UPDATE turns SET step = COALESCE(step, %s), mode = COALESCE(mode, %s) WHERE turn_id = %s"
+    "UPDATE turns SET step = CASE WHEN step IS NULL OR step = %s THEN %s ELSE step END, "
+    "mode = COALESCE(mode, %s) WHERE turn_id = %s"
 )
 
 
@@ -1149,10 +1153,10 @@ def read_turn_step(conn: psycopg.Connection, turn_id: str) -> tuple[str | None, 
 
 
 def record_turn_step(conn: psycopg.Connection, turn_id: str, step: str, mode: str) -> None:
-    """Stamp the turn's first step. COALESCE, so a redelivery cannot overwrite what the
-    first attempt recorded -- the turn opened with that step whatever happens next."""
+    """Stamp the turn's step. A redelivery cannot overwrite what the first attempt
+    recorded, except `UNGROUPED_OPENER`, which the group-fixing step after it replaces."""
     with conn.cursor() as cur:
-        cur.execute(TURN_STEP_WRITE_SQL, (step, mode, turn_id))
+        cur.execute(TURN_STEP_WRITE_SQL, (UNGROUPED_OPENER, step, mode, turn_id))
     conn.commit()
 
 

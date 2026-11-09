@@ -1102,6 +1102,43 @@ def test_bounded_transcription_is_delivered_in_place(
     )
 
 
+def test_bounded_first_message_runs_its_deliverable_after_init_project(
+    skills_invoked, builtin_tool_calls, agent_returns, text_response, test
+):
+    """Tag-gated (``bounded-after-init``). A bounded first message with a PID and no
+    project creates the project and runs its deliverable in the same turn (plan
+    section H, issue #2813): the hand-offs are init-project then search-records,
+    repeats allowed and nothing else, no step denial cut the search short, and the
+    reply ends on the search step's offer.
+
+    A gate denial and a stub's reply both come back as the spawn's result, so a
+    denial is told apart by its text, which carries the gate's own reason."""
+    from harness.skill_runner import handoffs, load_step_boundary
+
+    if "bounded-after-init" not in test.get("tags", []):
+        pytest.skip("not a bounded-first-message test")
+    skill_under_test = test.get("skill")
+    taken: list[str] = []
+    for name in handoffs(skills_invoked, builtin_tool_calls):
+        if name != skill_under_test and name not in taken:
+            taken.append(name)
+    assert taken == ["init-project", "search-records"], (
+        f"a bounded record ask with no project hands off to init-project, then "
+        f"search-records, and nothing else; got {taken}"
+    )
+    boundary = load_step_boundary()
+    denial = boundary._DENY_REASON.split("{", 1)[0].strip()
+    denied = [
+        r.get("subagent_type") for r in (agent_returns or [])
+        if denial in (r.get("text") or "")
+    ]
+    assert not denied, f"the step boundary denied {denied} in the turn that created the project"
+    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    assert boundary.offered_step(text_response) == "search", (
+        f"the reply does not end on the search step's offer: {lines[-1:]}"
+    )
+
+
 _HANDS_PLAN_ITEM_TAG = "asserts-delegation-plan-item"
 
 

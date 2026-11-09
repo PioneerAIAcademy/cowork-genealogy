@@ -4666,7 +4666,7 @@ def test_the_prompt_routes_a_first_message_with_no_project_and_names_no_deleted_
     """#3768's routing sentence lived in DELIVERY_GUIDANCE; it moved to the project note
     when `research_delivered` was deleted (step mode phase 2) rather than going with it."""
     prompt = _options(config_dir=str(tmp_path)).system_prompt["append"]
-    assert "a request to research a person is a research job, not a single lookup" in prompt
+    assert "a request about a person goes through the research skill" in prompt
     assert "research_delivered" not in prompt
 
 
@@ -6578,3 +6578,33 @@ def test_a_keep_going_turn_is_still_bounded_and_records_job(turn_env, monkeypatc
     assert gate.check("Task", {"subagent_type": "research-plan"}, subagent=False) is None
     assert recorded == [("research-plan", "job")], recorded
     assert gate.check("Task", {"subagent_type": "search-records"}, subagent=False)[0] == "deny"
+
+
+def test_the_turn_step_write_may_replace_only_the_ungrouped_opener():
+    """A turn init-project opens is grouped by the step after it (plan section H), so
+    that step replaces init-project in `turns.step`; nothing else is ever overwritten."""
+    assert worker.UNGROUPED_OPENER == worker.load_step_boundary().UNGROUPED_OPENER
+    executed: list[tuple] = []
+
+    class Cursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def execute(self, sql, params):
+            executed.append((sql, params))
+
+    class Conn:
+        def cursor(self):
+            return Cursor()
+
+        def commit(self):
+            pass
+
+    worker.record_turn_step(Conn(), "t1", "search-records", "step")
+    sql, params = executed[0]
+    assert "CASE WHEN step IS NULL OR step = %s THEN %s ELSE step END" in sql
+    assert "COALESCE(mode, %s)" in sql
+    assert params == ("init-project", "search-records", "step", "t1")

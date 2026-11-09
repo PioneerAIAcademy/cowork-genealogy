@@ -1,0 +1,67 @@
+{
+  "test": {
+    "id": "ut_research_b4w",
+    "skill": "research",
+    "name": "Under the step gate, a bounded first message with a PID runs its search in the turn that creates the project",
+    "type": "positive",
+    "description": "ut_research_b4i under execution.step_mode step, the prototype worker's gate. Before PR for issue #2813, a turn opened by init-project fixed the setup group and denied the search; the validator reads that denial off the search's returned text. Now the step after init-project fixes the group (plan section H).",
+    "tags": [
+      "routing",
+      "routes-to:init-project",
+      "bounded-request",
+      "bounded-after-init",
+      "step-mode"
+    ]
+  },
+  "input": {
+    "user_message": "/research Can you find records for Patrick Flynn, FamilySearch ID LZNY-BRF, that aren't attached to his FamilySearch record yet?",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "person-read-flynn"
+  ],
+  "judge_context": [
+    "A bounded first message (finding a record) with a FamilySearch ID and no project. The router creates the project with init-project, which runs for real here, and then runs the record search in the SAME turn: no question-selection, locality-guide or research-plan first (issue #2813, feedback #4237).",
+    "The hand-offs, the absence of a step denial, and the closing \"Continue with running the searches?\" line are checked deterministically by test_bounded_first_message_runs_its_deliverable_after_init_project. Do not re-grade them.",
+    "search-records is stubbed with a canned report that found nothing new. Grade the reply on relaying that honestly and on relaying only the first paragraph of init-project's report (that the project was made), not its sentence about a first research question.",
+    "Do not mark the reply down for not writing a research question, a plan or a locality survey: on a bounded ask those are the failure this test exists to catch."
+  ],
+  "execution": {
+    "max_turns": 40,
+    "max_wall_clock_seconds": 900,
+    "run_agents": [
+      "init-project"
+    ],
+    "stub_skills": [
+      {
+        "skill": "search-records",
+        "response": "Searched FamilySearch historical records for Patrick Flynn (LZNY-BRF): births, marriages, deaths and censuses for Pennsylvania, 1845-1908. No record turned up that names him and is not already on his FamilySearch profile. The searches are logged in the project as checked with nothing found.\n---\nI searched FamilySearch's records for Patrick Flynn, born about 1845 in Ireland and died 1908 in Schuylkill County, Pennsylvania. Nothing turned up beyond what his profile already holds, and each search is saved in the project's research log with what it covered."
+      },
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-hints",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "tree-survey",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "source-evaluation",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ],
+    "step_mode": "step"
+  }
+}

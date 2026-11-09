@@ -235,7 +235,9 @@ that apply:
     may follow it in a turn (section K). The router `research` is exempted by name. Prove it
     fails by adding an unlisted agent file.
   - **A step that opens a turn uses its home group:** research-plan → plan, locality-guide →
-    setup, init-project → setup, record-structurer → search. The overlaps only admit a
+    setup, record-structurer → search. **init-project fixes no group** (changed 2026-11-09 for
+    issue #2813, per section H): the step after it does, so a bounded first message runs its
+    deliverable in the turn that created the project, and a job keeps its setup chain. The overlaps only admit a
     follower:
     - **`locality-guide` after research-plan,** because research-plan stops for an unsurveyed
       place (`agents/research-plan.md:270-275`).
@@ -892,9 +894,10 @@ Step mode removes the runaway structurally:
 - **A compound one-shot ask** runs its first deliverable, and offers the second as the next
   step. That reverses `ut_research_c1k`, which required both in one turn; its `delivers:` tag
   and that tag's validator are deleted, since no test can carry one now.
-- **A one-shot ask with a PID on a new folder** needs the project first. Once issue #3384 makes
-  project creation a single `project_create` tool call, that runs inside the one-shot's turn.
-  Until then, it costs one extra prompt.
+- **A one-shot ask with a PID on a new folder** needs the project first. Since issue #3384 made
+  project creation a single `project_create` tool call, that runs inside the one-shot's turn:
+  init-project, then the deliverable's agent, then its offer (issue #2813; the step gate
+  groups an init-project turn by the step after it, section A).
 - **Cowork routing depends on the router being entered.** PR #3262 makes `research` the only
   front door.
 

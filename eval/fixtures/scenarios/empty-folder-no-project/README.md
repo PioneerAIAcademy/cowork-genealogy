@@ -13,3 +13,9 @@ fabricating a status.
 
 This folder is deliberately README-only. Do not add `research.json` or
 `tree.gedcomx.json` — their absence *is* the fixture.
+
+## Used by
+
+- `ut_research_b4i` and `ut_research_b4w`: a bounded first message with a
+  FamilySearch ID creates the project here with a live init-project, then runs
+  its record search in the same turn (issue #2813).

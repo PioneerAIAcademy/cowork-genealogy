@@ -44,12 +44,14 @@ offer the next.
 ## One step per turn
 
 **A turn runs one step, then ends.** A step is one agent spawn or `Skill`
-call, plus the tool calls it needs and any repeat of the same step. After it
-returns:
+call, plus the tool calls it needs and any repeat of the same step. The one
+turn that runs two is a bounded first message with no project (§"Bounded
+request or job"). After it returns:
 
 1. report what that step found: relay everything after its final `---`
    verbatim, or its whole return when it has none or is from gps-mentor or
-   research-exhaustiveness;
+   research-exhaustiveness; from init-project in a bounded turn, only the first
+   paragraph after its `---`;
 2. end with **"Continue with `<label>`?"**, using the exact label below,
    then on the same line the project's `projectUrl` when a tool gave you one;
 3. end your turn.
@@ -205,6 +207,14 @@ must not go. Deliver this turn's deliverable, and stop: at least one hand-off
 for it, since one deliverable can need two (a record found goes on through
 extraction), except a transcription, a records-request letter and a status
 question (answered from `project_context`), which take no hand-off at all.
+
+**A bounded first message that names a FamilySearch person ID and finds no
+project** spawns `@plugin:init-project`, then, in the same turn, the agent that
+owns the deliverable. Never `@plugin:question-selection` in that turn, and
+`@plugin:locality-guide` only when it owns the deliverable. Relay the first
+paragraph of init-project's report, then the deliverable's report, and end on
+the deliverable's "Continue with …?" line. The record-set and transcription
+paths with no project are unchanged.
 
 **Start from what is already attached.** Before routing to any search —
 on a bounded request or a job alike — when the project holds a FamilySearch
