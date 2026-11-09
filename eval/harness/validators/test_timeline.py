@@ -19,14 +19,7 @@ import re
 
 import pytest
 
-from validators_lib import assert_foreign_keys_valid
-
-# US federal decennial census years, per the agent body's own list. A non-US life
-# must expect its residence jurisdiction's schedule instead (issue #2261).
-US_FEDERAL_CENSUS_YEARS = frozenset({1850, 1860, 1870, 1880, 1900, 1910, 1920})
-_YEAR_RE = re.compile(r"(?<!\d)(1[89]\d\d)(?!\d)")
-_PAREN_RE = re.compile(r"\([^()]*\)")
-
+from validators_lib import assert_foreign_keys_valid, bare_tool_name
 
 # --- Helpers ----------------------------------------------------------
 
@@ -79,6 +72,8 @@ def test_positive_produces_timeline(before_state, after_state, test):
     that counts as produced."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests produce timelines")
+    if "no-project-write" in (test.get("tags") or []):
+        pytest.skip("a no-project-write test's correct outcome is no timeline")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
     new = _produced_timelines(before_state, after_state)
@@ -195,299 +190,177 @@ def test_no_rejected_assertion_in_events(before_state, after_state, test):
     )
 
 
-# --- Census years read from the wiki, not the US schedule (#2261) ------
+# --- The US 1890 census never fills a gap (ADR-0012, issue #2261) ---------
 
-def _wiki_read_calls(tool_calls) -> list[dict]:
-    """wiki_read tool calls this run, each carrying the response the mock
-    served (mock_mcp.py sets `entry["response"]`)."""
-    return [tc for tc in (tool_calls or []) if "wiki_read" in (tc.get("tool") or "")]
-
-
-def _census_country_of_url(url: str | None) -> str | None:
-    """`United_States` from `.../wiki/United_States_Census`; None when the URL is
-    not a `{Country}_Census` page."""
-    m = re.search(r"/wiki/([A-Za-z_]+)_Census\b", url or "")
-    return m.group(1) if m else None
-
-
-def _entry_names_country(text: str, country_slug: str) -> bool:
-    """True when an `expected_events` entry names the jurisdiction whose census
-    page is `country_slug` (`United_States` matches "united states" or
-    "united_states")."""
-    t = (text or "").lower()
-    return country_slug.lower() in t or country_slug.replace("_", " ").lower() in t
+# Python mirrors of `timelineCensus1890Invariants`'s attribution regexes
+# (`packages/engine/mcp-server/src/tools/research-append.ts`). The engine applies
+# them on every timeline write; this replays the same reading on the persisted
+# timeline, with one difference stated in the validator's docstring.
+_NAMES_US_RE = re.compile(r"united states|u\.s\.", re.IGNORECASE)
+_NAMES_US_ABBREV_RE = re.compile(r"\bUS\b|\bUSA\b")
+_VETERAN_RE = re.compile(r"veteran", re.IGNORECASE)
+_1890_RE = re.compile(r"(?<!\d)1890(?!\d)")
+_NAMES_OTHER_JURISDICTION_RE = re.compile(
+    r"\b(?!Census\b|Federal\b|United\b|States\b|Population\b|Decennial\b|Eleventh\b|County\b"
+    r"|The\b|A\b|An\b|This\b|That\b|These\b|Those\b)([A-Z][a-z]+)"
+    r"(?:\s(?:Population|Decennial|Eleventh|County))*\s[Cc]ensus\b"
+)
 
 
-def _year_on_page(year: int, content: str) -> bool:
-    """True when `year` appears on the page as a standalone token — not inside a
-    longer digit run — so a coincidental substring does not count as provenance."""
-    return re.search(rf"(?<!\d){year}(?!\d)", content or "") is not None
-
-
-def _census_year_of_entry(entry: str) -> int | None:
-    """The census year an `expected_events` entry refers to: the 18xx/19xx token
-    nearest an occurrence of the word `census`. A bounding year the entry also
-    mentions (e.g. "1861 England census enumeration (married 1859, died 1874)")
-    is not the census year and must not be counted (finding A). Returns None when
-    the entry names no `census` or carries no year."""
-    # Parenthesised years are DEPRIORITISED, not erased. A bounding year in a
-    # SHORT trailing parenthetical sits closer to the word `census` than the
-    # census year does — "1870 US federal census (b. 1861)" picks 1861 at
-    # distance 11 over 1870 at 16 — so nearest-token alone inverts on exactly
-    # the shape #2261 is about: a US federal year on a non-US life then passes
-    # a Tier-1 gate. The longer asides in the finding-A shapes hid this.
-    #
-    # Blanking the asides outright fixed that and broke the opposite shape: when
-    # the census year lives ONLY inside the parenthetical — "census (1861,
-    # England & Wales)", which names the very jurisdiction the provenance check
-    # below needs — nothing was left to find, the entry read as naming no census
-    # year, and a correct timeline failed the gate with "produced no census gap
-    # naming a year" (#2797). A flat penalty keeps both: any year outside the
-    # parens still beats any year inside them, and an inside year is still found
-    # when it is the only one there.
-    blanked = _PAREN_RE.sub(lambda m: " " * len(m.group(0)), entry)
-    census_at = [m.start() for m in re.finditer("census", blanked.lower())]
-    if not census_at:
-        return None
-    # A parenthetical names the census year unless it OPENS with a genealogy
-    # vital-event marker -- the complement of opening with a year. "(married
-    # 1859)", "(m. 1859)", "(bapt. 1859)", "(buried 1870)", "(widowed 1859)",
-    # "(emigrated 1859)" all open with a marker and must not be returned as
-    # the census year (finding #4). "(1861, England & Wales)" opens with the
-    # year itself. "(England & Wales, 1861)" opens with neither a year nor a
-    # marker -- it opens with a capitalized jurisdiction name -- so it still
-    # correctly names the census year.
-    #
-    # A round-5 review found a PRIOR version of this check too loose in one
-    # direction (a comma anywhere in the parenthetical, not just at its
-    # start, misread "(m. Margaret Hayes, 1849)" and "(bapt. Skibbereen,
-    # 1814)" -- a name/place separated from ITS OWN date, nothing to do with
-    # naming the census -- as the census year), and the fix that followed it
-    # too tight in the other: a hand-enumerated marker list ("married"/"m.",
-    # "bapt.", "born"/"b.", ...) stops working the moment a genealogist uses
-    # one it doesn't contain ("res.", "chr.", "nat.", "engaged" all misread
-    # their own date as the census year, reproducing finding #4's exact bug
-    # for a marker that wasn't on the list) -- the same closed-enumeration
-    # problem issue #2797 already solved once for the "does it open with a
-    # year" half of this same check, and ADR-0012 forbids for jurisdictions.
-    # The genuinely structural signal is capitalization, not vocabulary --
-    # but not "a vital-event marker is always lowercase": a round-6 review
-    # found capitalized markers in running prose throughout the corpus
-    # ("Married Sarah Millard" in a narrative sentence), so that claim is
-    # false as stated. A round-7 review found a cited corpus count for the
-    # narrower claim (how often a marker paired with its OWN date is
-    # capitalized) unreliable on re-measurement -- different scans of
-    # "every parenthetical with a year anywhere under eval/" returned
-    # different totals depending on scope (prose fields far from this
-    # function's own input skew the count, and a scan held to exactly the
-    # field this function reads -- `timelines[].gaps[].expected_events[]`
-    # entries -- finds no marker-plus-year parenthetical at all, in either
-    # case, across the whole tracked corpus). There is no committed instance
-    # to count either direction, so the claim rests on the structural
-    # argument alone, not a corpus count: a jurisdiction name is a proper
-    # noun and is always capitalized, with or without a date beside it; a
-    # vital-event marker is a common noun or verb, and this corpus's own
-    # genealogical shorthand for one paired with its own date ("m. 1859",
-    # "b. 1861") is conventionally lowercase-abbreviated. Checking the
-    # opening letter's case instead of matching it against either a comma or
-    # a word list needs no enumeration at all and closes every marker the
-    # hand-written list missed by construction, not by addition. The
-    # residual gap this leaves is named precisely: a capitalized marker
-    # immediately followed by a year -- "(Married 1859)", "(M. 1859)",
-    # "(Bapt. 1814)", "(Born 1861)" -- reads as naming the census year under
-    # this rule, same as "(England & Wales, 1861)" does. Nothing in the
-    # committed corpus writes a marker that way today, so nothing exercises
-    # this gap, but a future entry phrased that way would reopen finding #4.
-    def _names_census_year(paren_text: str) -> bool:
-        inner = paren_text[1:-1].lstrip()
-        if _YEAR_RE.match(inner) is not None:
-            return True
-        return inner[:1].isupper()
-
-    bounding_spans = [
-        m.span() for m in _PAREN_RE.finditer(entry) if not _names_census_year(m.group(0))
-    ]
-
-    def _in_bounding_span(pos: int) -> bool:
-        return any(start <= pos < end for start, end in bounding_spans)
-
-    # Wider than any entry, so the ordering is by in/out-of-parens first and
-    # distance only within a group.
-    _OUTSIDE_WINS = 10_000
-    years = [
-        (
-            m.start(),
-            int(m.group(1)),
-            _OUTSIDE_WINS if blanked[m.start() : m.end()].strip() == "" else 0,
-        )
-        for m in _YEAR_RE.finditer(entry)
-        if not _in_bounding_span(m.start())
-    ]
-    if not years:
-        return None
-    return min(years, key=lambda pyp: pyp[2] + min(abs(pyp[0] - c) for c in census_at))[1]
-
-
-def test_census_years_read_from_wiki(before_state, after_state, tool_calls, test):
-    """Tag-gated (`census-from-wiki`): the timeline must derive expected census
-    years from the residence jurisdiction's `{Country}_Census` wiki page
-    (ADR-0012, issue #2261), not from a hard-coded US federal schedule.
-
-    Two assertions:
-      1. A `wiki_read` call to a `{Country}_Census` page is *observed* in
-         `tool_calls` — ADR-0012 requires the fetch be observed, not merely
-         instructed (the `gps-mentor` skip pattern).
-      2. Every census year the timeline placed in a gap's `expected_events`
-         appears on the fetched census page for the jurisdiction it is
-         attributed to (not the concatenation of every fetched page), and at
-         least one is outside the US federal set — proving the years came from
-         the page, not the default.
-
-    Census years are collected from the individual `expected_events` entries
-    that name a census, never from the whole joined gap, so a marriage or birth
-    year sharing a gap with a census is not miscounted as a census year.
-    """
-    if "census-from-wiki" not in (test.get("tags") or []):
-        pytest.skip("not a census-from-wiki test")
-
-    census_reads = [
-        tc for tc in _wiki_read_calls(tool_calls)
-        if "_Census" in ((tc.get("args") or {}).get("url") or "")
-    ]
-    assert census_reads, (
-        "census-from-wiki test must call wiki_read for a {Country}_Census page; "
-        f"wiki_read urls seen: "
-        f"{[(tc.get('args') or {}).get('url') for tc in _wiki_read_calls(tool_calls)]}"
-    )
-
-    # Map each fetched {Country}_Census page to its jurisdiction, so a year's
-    # provenance is checked against the page for the jurisdiction it is
-    # attributed to — not the concatenation of every fetched page (finding #3).
-    pages: dict[str, str] = {}
-    for tc in census_reads:
-        country = _census_country_of_url((tc.get("args") or {}).get("url"))
-        if not country:
+def _us_place_words(timeline: dict) -> set[str]:
+    """Every word of a US-placed event's `place` and `standard_place`: a
+    "Pennsylvania census" on a Pennsylvania timeline names a US state."""
+    words: set[str] = set()
+    for e in timeline.get("events") or []:
+        sp = e.get("standard_place") if isinstance(e, dict) else None
+        if not isinstance(sp, str) or not sp.endswith("United States"):
             continue
-        content = ""
-        if isinstance(tc.get("response"), dict):
-            content = str((tc.get("response") or {}).get("content") or "")
-        pages[country] = pages.get(country, "") + "\n" + content
-
-    timelines = _produced_timelines(before_state, after_state)
-    if not timelines:
-        pytest.skip("no produced timeline (covered by test_positive_produces_timeline)")
-
-    # Collect census years from the individual expected_events entries that name
-    # a census — never from the whole joined gap (finding #2) — and within an
-    # entry take only the year nearest the word `census`, so a bounding
-    # birth/marriage/death year in the same entry is not miscounted (finding A).
-    census_years: set[int] = set()
-    absent: list[tuple[int, str]] = []
-    for tl in timelines:
-        for gap in (tl.get("gaps") or []):
-            if not isinstance(gap, dict):
-                continue
-            for item in (gap.get("expected_events") or []):
-                entry = str(item)
-                if "census" not in entry.lower():
-                    continue
-                year = _census_year_of_entry(entry)
-                if year is None:
-                    continue
-                census_years.add(year)
-                named = [c for c in pages if _entry_names_country(entry, c)]
-                if named:
-                    # Attributed to a jurisdiction whose page was fetched: the
-                    # year must appear on THAT page (finding #3), not on some
-                    # other country's page that was also fetched.
-                    if not any(_year_on_page(year, pages[c]) for c in named):
-                        absent.append((year, "/".join(named)))
-                elif not any(_year_on_page(year, txt) for txt in pages.values()):
-                    # Unattributed: provenance floor — on some fetched page.
-                    absent.append((year, "any fetched page"))
-
-    assert census_years, (
-        "census-from-wiki test produced no census gap naming a year in "
-        "expected_events; the timeline should expect the jurisdiction's "
-        "undocumented census years"
-    )
-
-    assert not absent, (
-        "expected census year(s) not found on the fetched census page for the "
-        f"jurisdiction they are attributed to: {absent} — a year the page does "
-        f"not list was not read from it (all expected census years: "
-        f"{sorted(census_years)})"
-    )
-
-    non_us = sorted(census_years - US_FEDERAL_CENSUS_YEARS)
-    assert non_us, (
-        f"every expected census year is a US federal year ({sorted(census_years)}); "
-        "a non-US life must expect its own jurisdiction's census years, not the "
-        "US schedule"
-    )
+        for src in (sp, e.get("place")):
+            if isinstance(src, str):
+                words.update(re.findall(r"[A-Za-z]+", src))
+    return words
 
 
-def test_us_1890_never_expected(before_state, after_state, tool_calls, test):
-    """Deterministic backstop for the single documented fact that the US 1890
-    federal census does not survive (ADR-0012, issue #2261): it can never fill a
-    gap, so 1890 must not appear as a US census `expected_event`.
+def test_us_1890_never_expected(before_state, after_state, test):
+    """Deterministic backstop for the one documented fact that the US 1890
+    federal census does not survive: it can never fill a gap, so no
+    `expected_events` entry may name it.
 
-    Scope is the US-1890 fact only. It encodes no census *schedule* — it asserts
-    nothing about which years the US did enumerate, and nothing about a non-US
-    1890 census (some jurisdictions did enumerate that year). A 1890 census entry
-    fires only when it is attributable to the United States: the entry names the
-    US, or it names no jurisdiction and a `United_States_Census` page was fetched
-    this run. An entry naming a non-US jurisdiction is left to that jurisdiction's
-    own provenance check.
+    An entry naming a census and the year 1890 is flagged unless it names a
+    jurisdiction outside the United States, read as the engine reads it: a
+    capitalized word before "census" that is not a word of the timeline's own
+    US-placed events ("Denmark census 1890" passes; "1890 Pennsylvania census"
+    on a Pennsylvania timeline does not). A veterans schedule is not the
+    population census and is left alone. Unlike the engine, an entry naming no
+    jurisdiction is flagged whether or not any event is in the United States: a
+    bare "1890 census" is the schedule-revert regression this guards.
 
-    The "no census page fetched at all" case fires too: an unattributed 1890
-    census with no fetched census evidence is never evidence-backed, and this is
-    exactly the schedule-revert regression the backstop guards — the model drops
-    the lookup and re-emits 1890 from memory (finding B). This stays scoped to
-    the 1890 fact; it validates no other year and no schedule.
-
-    Not tag-gated, so it also covers the US/Ireland positive tests that
-    `test_census_years_read_from_wiki` skips — the deterministic backstop those
-    tests otherwise lack (finding #7)."""
+    Scope is the 1890 fact only; it encodes no census schedule. Not tag-gated."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests produce timelines")
     timelines = _produced_timelines(before_state, after_state)
     if not timelines:
         pytest.skip("no produced timeline")
 
-    census_reads = [
-        tc for tc in _wiki_read_calls(tool_calls)
-        if "_Census" in ((tc.get("args") or {}).get("url") or "")
-    ]
-    fetched = {c for tc in census_reads
-               if (c := _census_country_of_url((tc.get("args") or {}).get("url")))}
-    us_involved = "United_States" in fetched
-
     offending: list[str] = []
     for tl in timelines:
+        us_words = _us_place_words(tl)
         for gap in (tl.get("gaps") or []):
             if not isinstance(gap, dict):
                 continue
             for item in (gap.get("expected_events") or []):
                 entry = str(item)
-                if "census" not in entry.lower():
+                if "census" not in entry.lower() or not _1890_RE.search(entry):
                     continue
-                if not re.search(r"(?<!\d)1890(?!\d)", entry):
+                if _VETERAN_RE.search(entry):
                     continue
-                names_us = (
-                    _entry_names_country(entry, "United_States")
-                    or "u.s." in entry.lower()
-                    or re.search(r"\bus\b", entry.lower()) is not None
-                )
-                names_other = any(
-                    c != "United_States" and _entry_names_country(entry, c)
-                    for c in fetched
-                )
-                if names_us or (not names_other and (us_involved or not fetched)):
-                    offending.append(entry)
+                names_us = bool(_NAMES_US_RE.search(entry) or _NAMES_US_ABBREV_RE.search(entry))
+                if not names_us:
+                    other = _NAMES_OTHER_JURISDICTION_RE.search(entry)
+                    if other and other.group(1) not in us_words:
+                        continue
+                offending.append(entry)
 
     assert not offending, (
         "the US 1890 federal census does not survive and can never fill a gap, "
         f"but 1890 appears as a US census expected_event: {offending} "
         "(ADR-0012, issue #2261)"
     )
+
+
+# --- The person timeline is timeline_build's (issue #3516) -------------------
+
+def _calls(tool_calls, name: str) -> list[tuple[int, dict]]:
+    """(position, call) for every call to `name`, under any server spelling."""
+    return [
+        (i, c) for i, c in enumerate(tool_calls or [])
+        if bare_tool_name(str(c.get("tool", ""))) == name
+    ]
+
+
+def _writes_timelines(call: dict) -> bool:
+    """A research_append call that writes the `timelines` section, in its
+    single-op form or as any op of the batched `ops` form."""
+    args = call.get("args") or {}
+    if args.get("section") == "timelines":
+        return True
+    ops = args.get("ops")
+    return isinstance(ops, list) and any(
+        isinstance(op, dict) and op.get("section") == "timelines" for op in ops
+    )
+
+
+def test_project_unchanged(before_state, after_state, test):
+    """Tag-gated (`no-project-write`): the run writes nothing to research.json.
+    For a run whose correct outcome is no timeline at all (nothing linked and
+    nothing to extract, or a hypothesis with no linked record)."""
+    if "no-project-write" not in (test.get("tags") or []):
+        pytest.skip("not a no-project-write test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    assert after == before, (
+        "research.json changed in a run that must write nothing; sections that differ: "
+        f"{sorted(k for k in set(before or {}) | set(after or {}) if (before or {}).get(k) != (after or {}).get(k))}"
+    )
+
+
+def test_no_extraction(tool_calls, test):
+    """Tag-gated (`extraction-calls-0`): no `extraction_append` call. Mode B
+    never extracts, and a person who already has live links is built at the
+    first `timeline_build` call."""
+    if "extraction-calls-0" not in (test.get("tags") or []):
+        pytest.skip("not an extraction-calls-0 test")
+    calls = _calls(tool_calls, "extraction_append")
+    assert not calls, (
+        f"expected no extraction_append call; got {len(calls)}: "
+        f"{[c.get('args') for _, c in calls]}"
+    )
+
+
+def test_one_extraction_between_builds(tool_calls, test):
+    """Tag-gated (`extraction-calls-1`): with nothing linked, the agent calls
+    `extraction_append({ personId })` exactly once, after a `timeline_build`
+    and before another one (lead, 2026-10-20)."""
+    if "extraction-calls-1" not in (test.get("tags") or []):
+        pytest.skip("not an extraction-calls-1 test")
+    calls = _calls(tool_calls, "extraction_append")
+    assert len(calls) == 1, (
+        f"expected exactly one extraction_append call; got {len(calls)}: "
+        f"{[c.get('args') for _, c in calls]}"
+    )
+    pos, call = calls[0]
+    args = call.get("args") or {}
+    assert isinstance(args.get("personId"), str) and args["personId"].strip(), (
+        f"the extraction_append call must carry personId (the attached-records mode); args: {args}"
+    )
+    builds = [i for i, _ in _calls(tool_calls, "timeline_build")]
+    assert any(i < pos for i in builds) and any(i > pos for i in builds), (
+        "the extraction_append call must fall between two timeline_build calls "
+        f"(build, extract once, build again); timeline_build at {builds}, extraction_append at {pos}"
+    )
+
+
+def test_person_timeline_in_code(before_state, after_state, tool_calls, test):
+    """Tag-gated (`person-timeline-in-code`): a person timeline is built by
+    `timeline_build`. The run calls it, never writes `timelines` through
+    `research_append`, and leaves every hypothesis timeline as it was. Catches a
+    Mode A delegation read as a regeneration of a hypothesis timeline that lists
+    the same person."""
+    if "person-timeline-in-code" not in (test.get("tags") or []):
+        pytest.skip("not a person-timeline-in-code test")
+    assert _calls(tool_calls, "timeline_build"), (
+        "a person timeline must be built by timeline_build; it was never called. "
+        f"Tools called: {sorted({str(c.get('tool')) for c in tool_calls or []})}"
+    )
+    hand_written = [c.get("args") for _, c in _calls(tool_calls, "research_append") if _writes_timelines(c)]
+    assert not hand_written, (
+        "the person timeline must not be written through research_append: "
+        f"{hand_written}"
+    )
+    before = {t.get("id"): t for t in (before_state.get("research_json") or {}).get("timelines", []) if isinstance(t, dict)}
+    after = {t.get("id"): t for t in (after_state.get("research_json") or {}).get("timelines", []) if isinstance(t, dict)}
+    changed = sorted(
+        tid for tid, t in before.items()
+        if t.get("hypothesis_id") and after.get(tid) != t
+    )
+    assert not changed, f"hypothesis timeline(s) changed by a person-timeline run: {changed}"

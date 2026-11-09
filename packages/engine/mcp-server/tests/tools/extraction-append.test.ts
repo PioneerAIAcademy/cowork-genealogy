@@ -1365,7 +1365,7 @@ describe("extraction_append: closes the plan item and claims re-found records", 
 // ─── personId: the baseline step (issue #3516 PR C) ─────────────────────────
 
 import { ATTACHMENT_LINK_RATIONALE, isAttachmentLink } from "../../src/utils/tree-person.js";
-import { errorsOf } from "../helpers/narrow.js";
+import { errorsOf, singleOk } from "../helpers/narrow.js";
 import { callTool } from "../helpers/call-tool.js";
 
 describe("extraction_append: personId extracts and links a person's attachments", () => {
@@ -1887,22 +1887,199 @@ describe("research_append: the attachment-link score exemption is code-only", ()
     expect(r.ok, JSON.stringify(r)).toBe(true);
   });
 
+  /** person-evidence's path: score the attachment link's pair with same_person and
+   *  append the scored link beside it. Returns the new link's id. */
+  const scoredReplacement = async (pe: any): Promise<string> => {
+    const scored = await scoredAppend(pe, "probable");
+    expect(scored.ok, JSON.stringify(scored)).toBe(true);
+    return singleOk(scored as any).entryId;
+  };
+  const scoredAppend = async (pe: any, confidence: string) => {
+    const a = (await research()).assertions.find((x: any) => x.id === pe.assertion_id);
+    await recordMatchScore(dir, {
+      record_id: a.record_id,
+      record_persona_id: a.record_persona_id ?? null,
+      record_role: a.record_role ?? "principal",
+      tree_person_id: "I1",
+      score: 0.9,
+      scorer: "familysearch",
+      model: null,
+      assertion_id: a.id,
+      record_source: "record_read",
+      computed: "2026-10-26T00:00:00Z",
+    });
+    return researchAppend({
+      projectPath: dir,
+      section: "person_evidence",
+      op: "append",
+      entry: { assertion_id: a.id, person_id: "I1", confidence, match_score: 0.9, rationale: "score 0.9; name, age and household fit" },
+    } as any);
+  };
+  /** A second source whose assertion carries a checked `probable` link to I1. */
+  const corroborateFromAnotherSource = async () => {
+    const doc = await research();
+    const src = { ...doc.sources[0], id: "src_900", gedcomx_source_description_id: "S900" };
+    const base = doc.assertions.find((a: any) => a.record_persona_id === "p_260900945");
+    const a = { ...base, id: "a_900", source_id: "src_900", record_id: "ark:/61903/1:1:ZZZZ-900" };
+    const pe = { ...doc.person_evidence[0], id: "pe_900", assertion_id: "a_900", confidence: "probable", match_score: 0.9, rationale: "score 0.9; name, age and residence fit" };
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify({ ...doc, sources: [...doc.sources, src], assertions: [...doc.assertions, a], person_evidence: [...doc.person_evidence, pe] }));
+    for (const name of ["tree.gedcomx.json", "starting-tree.gedcomx.json"]) {
+      const tree = JSON.parse(await readFile(join(dir, name), "utf8"));
+      tree.persons[0].sources = [...(tree.persons[0].sources ?? []), { ref: "S900" }];
+      tree.sources = [...tree.sources, { id: "S900", title: "1880", url: "https://familysearch.org/ark:/61903/1:1:ZZZZ-900" }];
+      await writeProjectFile(join(dir, name), JSON.stringify(tree));
+    }
+  };
+
+  it("refuses a confident link replacing an attachment link when it rests on one record", async () => {
+    const pe = (await research()).person_evidence[0];
+    const r = await scoredAppend(pe, "confident");
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)?.join(" ")).toMatch(/attachment links are not corroboration/);
+  });
+
+  it("does not count a checked link from the same record as corroboration", async () => {
+    const [first, second] = (await research()).person_evidence;
+    await scoredReplacement(first);
+    const r = await scoredAppend(second, "confident");
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)?.join(" ")).toMatch(/attachment links are not corroboration/);
+  });
+
+  it("accepts it at confident when a checked link from another source ties the same person", async () => {
+    await corroborateFromAnotherSource();
+    const pe = (await research()).person_evidence[0];
+    const r = await scoredAppend(pe, "confident");
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+  });
+
+  it("leaves a confident link alone when the assertion has no attachment link", async () => {
+    await corroborateFromAnotherSource();
+    const doc = await research();
+    const unlinked = { ...doc.assertions.find((a: any) => a.id === "a_900"), id: "a_901" };
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify({ ...doc, assertions: [...doc.assertions, unlinked] }));
+    const r = await scoredAppend({ assertion_id: "a_901" }, "confident");
+    expect(errorsOf(r)?.join(" ") ?? "").not.toMatch(/attachment links are not corroboration/);
+  });
+
   it("refuses raising an attachment link in place, and accepts superseding it", async () => {
     const pe = (await research()).person_evidence[0];
     const raise = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: pe.id, fields: { confidence: "probable" } } as any);
     expect(raise.ok).toBe(false);
     expect(errorsOf(raise)?.join(" ")).toMatch(/only ever superseded/);
-    const retire = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: pe.id, fields: { superseded_by: "pe_999" } } as any);
+    const retire = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: pe.id, fields: { superseded_by: await scoredReplacement(pe) } } as any);
     expect(retire.ok, JSON.stringify(retire)).toBe(true);
+  });
+
+  // person-evidence's path for a named assertion whose only live link is an
+  // attachment link: score it, append the scored link beside the live one, then
+  // supersede the attachment link with it.
+  it("accepts a scored link beside a live attachment link, then superseding the attachment link with it", async () => {
+    const pe = (await research()).person_evidence[0];
+    const freshId = await scoredReplacement(pe);
+    const fresh = (await research()).person_evidence.find((e: any) => e.id === freshId);
+    expect(fresh.assertion_id).toBe(pe.assertion_id);
+    expect(fresh.match_score).toBe(0.9);
+    const retire = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: pe.id, fields: { superseded_by: freshId } } as any);
+    expect(retire.ok, JSON.stringify(retire)).toBe(true);
+    const live = (await research()).person_evidence.filter((e: any) => e.assertion_id === pe.assertion_id && !e.superseded_by);
+    expect(live.map((e: any) => e.id)).toEqual([freshId]);
+    expect(isAttachmentLink(live[0])).toBe(false);
+  });
+
+  it("refuses superseding an attachment link with another assertion's link", async () => {
+    const links = (await research()).person_evidence;
+    const [first, second] = links;
+    const retire = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: first.id, fields: { superseded_by: second.id } } as any);
+    expect(retire.ok).toBe(false);
+    expect(errorsOf(retire)?.join(" ")).toMatch(/links a different assertion/);
   });
 
   it("refuses reviving a retired attachment link at a raised confidence", async () => {
     const pe = (await research()).person_evidence[0];
-    const retire = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: pe.id, fields: { superseded_by: "pe_999" } } as any);
+    const retire = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: pe.id, fields: { superseded_by: await scoredReplacement(pe) } } as any);
     expect(retire.ok, JSON.stringify(retire)).toBe(true);
     const revive = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: pe.id, fields: { superseded_by: null, confidence: "probable" } } as any);
     expect(revive.ok).toBe(false);
     expect(errorsOf(revive)?.join(" ")).toMatch(/only ever superseded/);
+  });
+
+  // The one-record cap holds on every route to `confident` once an assertion's
+  // link to this person began as an attachment link, not only on the append
+  // that first replaces it.
+  const replaceAndRetire = async (pe: any): Promise<string> => {
+    const freshId = await scoredReplacement(pe);
+    const retire = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: pe.id, fields: { superseded_by: freshId } } as any);
+    expect(retire.ok, JSON.stringify(retire)).toBe(true);
+    return freshId;
+  };
+  const raise = (entryId: string, fields: Record<string, unknown>) =>
+    researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId, fields } as any);
+  /** I1 also cites a second record nobody has checked, so #2943's subject gate
+   *  (every starting-tree source is this record) stays silent and only the
+   *  attachment rule can refuse. */
+  const citeAnUncheckedRecord = async () => {
+    for (const name of ["tree.gedcomx.json", "starting-tree.gedcomx.json"]) {
+      const tree = JSON.parse(await readFile(join(dir, name), "utf8"));
+      tree.persons[0].sources = [...(tree.persons[0].sources ?? []), { ref: "S800" }];
+      tree.sources = [...tree.sources, { id: "S800", title: "1880", url: "https://familysearch.org/ark:/61903/1:1:ZZZZ-800" }];
+      await writeProjectFile(join(dir, name), JSON.stringify(tree));
+    }
+  };
+
+  it("refuses raising the replacement to confident in place when it rests on one record", async () => {
+    await citeAnUncheckedRecord();
+    const freshId = await replaceAndRetire((await research()).person_evidence[0]);
+    const r = await raise(freshId, { confidence: "confident" });
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)?.join(" ")).toMatch(/attachment links are not corroboration/);
+  });
+
+  it("accepts that raise when a checked link from another source ties the same person", async () => {
+    await corroborateFromAnotherSource();
+    const freshId = await replaceAndRetire((await research()).person_evidence[0]);
+    const r = await raise(freshId, { confidence: "confident" });
+    expect(errorsOf(r)?.join(" ") ?? "").not.toMatch(/attachment links are not corroboration/);
+    expect(r.ok, JSON.stringify(r)).toBe(true);
+  });
+
+  it("refuses a confident correction appended after the attachment link was superseded", async () => {
+    await citeAnUncheckedRecord();
+    const pe = (await research()).person_evidence[0];
+    await replaceAndRetire(pe);
+    const r = await scoredAppend(pe, "confident");
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)?.join(" ")).toMatch(/attachment links are not corroboration/);
+  });
+
+  it("does not cap a confident link to a person the attachment link did not name", async () => {
+    const doc = await research();
+    const pe = doc.person_evidence[0];
+    const toI2 = doc.person_evidence.map((e: any) => (e.id === pe.id ? { ...e, person_id: "I2" } : e));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify({ ...doc, person_evidence: toI2 }));
+    for (const name of ["tree.gedcomx.json", "starting-tree.gedcomx.json"]) {
+      const tree = JSON.parse(await readFile(join(dir, name), "utf8"));
+      tree.persons = [...tree.persons, { id: "I2", gender: "Female", names: [{ id: "N2", given: "Anna", surname: "Boyer" }], sources: [{ ref: "S1" }] }];
+      await writeProjectFile(join(dir, name), JSON.stringify(tree));
+    }
+    const r = await scoredAppend(pe, "confident");
+    expect(errorsOf(r)?.join(" ") ?? "").not.toMatch(/attachment links are not corroboration/);
+  });
+
+  it("accepts an update that re-sends confident unchanged beside a rationale edit", async () => {
+    await corroborateFromAnotherSource();
+    const pe = (await research()).person_evidence[0];
+    const appended = await scoredAppend(pe, "confident");
+    expect(appended.ok, JSON.stringify(appended)).toBe(true);
+    const confidentId = singleOk(appended as any).entryId;
+    const retire = await raise(pe.id, { superseded_by: confidentId });
+    expect(retire.ok, JSON.stringify(retire)).toBe(true);
+    // The corroborating link is later retired outside this call.
+    const doc = await research();
+    const retired = doc.person_evidence.map((e: any) => (e.id === "pe_900" ? { ...e, superseded_by: confidentId } : e));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify({ ...doc, person_evidence: retired }));
+    const r = await raise(confidentId, { confidence: "confident", rationale: "score 0.9; name, age and household fit; reread" });
+    expect(errorsOf(r)?.join(" ") ?? "").not.toMatch(/attachment links are not corroboration/);
   });
 });
 

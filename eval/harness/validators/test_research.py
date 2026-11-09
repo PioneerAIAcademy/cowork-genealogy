@@ -1252,6 +1252,42 @@ def test_delegation_hands_subject(test, builtin_tool_calls, before_state):
     assert not problems, "; ".join(problems)
 
 
+_SETUP_ORDER_TAG = "attached-records-setup"
+
+
+def test_attached_records_setup_order(tool_calls, test):
+    """Tag-gated (``attached-records-setup``): the router runs the attached-
+    records step for a subject — ``extraction_append({ personId })``, then
+    ``timeline_build`` after it — on a job's "Objective but no questions" row and
+    on the bounded "a timeline for a person" ask (issue #3516 PR D).
+
+    Orders only the two MCP calls. ``tool_calls`` (the mock's MCP log) and
+    ``builtin_tool_calls`` (the hook's) share no ordering, so "both before the
+    first question-selection" is not checked here: on a job test it rests on
+    ``execution.stop_at_stub`` and ``routes-to:question-selection``.
+    """
+    if _SETUP_ORDER_TAG not in (test.get("tags") or []):
+        pytest.skip(f"not an {_SETUP_ORDER_TAG} test")
+    extracts = [
+        i for i, c in enumerate(tool_calls or [])
+        if bare_tool_name(str(c.get("tool", ""))) == "extraction_append"
+        and isinstance((c.get("args") or {}).get("personId"), str)
+        and (c.get("args") or {})["personId"].strip()
+    ]
+    assert extracts, (
+        "the attached-records step must call extraction_append with personId; it never did. "
+        f"extraction_append calls: {[c.get('args') for c in tool_calls or [] if bare_tool_name(str(c.get('tool', ''))) == 'extraction_append']}"
+    )
+    builds = [
+        i for i, c in enumerate(tool_calls or [])
+        if bare_tool_name(str(c.get("tool", ""))) == "timeline_build"
+    ]
+    assert any(b > extracts[0] for b in builds), (
+        "timeline_build must follow the extraction_append({ personId }) call; "
+        f"extraction_append(personId) at {extracts}, timeline_build at {builds}"
+    )
+
+
 _HINTS_HANDOFF_TAG = "asserts-hints-handoff"
 _HINTS_PID = re.compile(r"hints on (\S+) before")
 
