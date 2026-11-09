@@ -1025,8 +1025,8 @@ def main(argv: list[str] | None = None) -> int:
     # Judge model stamped at the envelope so judge-model bumps are dated and
     # comparable rather than silently invalidating historical scores (issue
     # #2479 PR 1). One value per run log — `judge.grade()` has no per-call
-    # override today, and `DEFAULT_JUDGE_MODEL` is already a dated id, not
-    # an alias.
+    # override today. `DEFAULT_JUDGE_MODEL` (`claude-sonnet-4-6`) has no date
+    # suffix, so this records the alias, not a dated snapshot id.
     from harness.judge import DEFAULT_JUDGE_MODEL as _DEFAULT_JUDGE_MODEL
     judge_model = _DEFAULT_JUDGE_MODEL
     snapshot_cache: dict[str, dict] = {}

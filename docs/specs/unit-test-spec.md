@@ -1426,7 +1426,7 @@ Three independent layers. Each feeds results into the run log. The layers do not
 | Layer | What | Model | Sees | Output |
 |-------|------|-------|------|--------|
 | Layer 1: Deterministic | Structural correctness | Python (no LLM) | Full before/after state + tool calls | Binary pass/fail per check |
-| Layer 2: LLM judge | Quality evaluation | Haiku | Scenario judge brief (README fallback) + before-state + diffs + text + tool calls + rubric + judge_context | Score + rationale per dimension |
+| Layer 2: LLM judge | Quality evaluation | Sonnet 4.6 | Scenario judge brief (README fallback) + before-state + diffs + text + tool calls + rubric + judge_context | Score + rationale per dimension |
 | Layer 3: Human | Verification | Junior + senior genealogists | Both Layer 1 and Layer 2 results | Agree/disagree per dimension |
 
 **Layer 2 runs on every non-aborted run, including one whose Layer 1 validators failed.** The failing validator names are handed to the judge, which grades the substantive dimensions and discounts the defect itself. The run's outcome is already `fail` (Section 7); grading it buys the per-dimension diagnosis. Only an abort skips Layer 2.
@@ -1995,7 +1995,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1), plu
 
   "harness_version": "string (semver of the harness package — e.g. 0.4.2)",
   "model": "string (pinned model version, e.g. claude-sonnet-4-6-20250514)",
-  "judge_model": "string (e.g. claude-haiku-4-5-20251001)",
+  "judge_model": "string (e.g. claude-sonnet-4-6)",
   "rubric_hash": "string (SHA-256 of eval/tests/unit/<skill>/rubric.md at run time)",
   "judge_prompt_hash": "string (SHA-256 of eval/harness/judge/prompt.md at run time)",
   "judge_render_hash": "string (optional: SHA-256 of the normalized AST of the code that renders the judge's input)",
@@ -2236,7 +2236,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1), plu
 |------|-------|-----------|
 | Main thread (a skill suite's skill, an agent-keyed suite's dispatcher or router) | `packages/engine/plugin/main-thread.json`'s model and effort, passed as `--model` / `--effort` | The one setting the hosted alpha and beta and both harnesses run. A skill cannot set its own model or effort. |
 | Agent-keyed suite: the agent | Its own `model:` / `effort:` frontmatter | Applied by the CLI to the subagent on every surface, Cowork included, and outranks the session's effort. |
-| LLM judge | Haiku | Grading against a structured rubric is a classification task, not a reasoning task. ~20x cheaper than Sonnet. Upgrade selectively if specific dimensions prove unreliable. |
+| LLM judge | Sonnet 4.6 | Sonnet 4.6 since 2026-11-06 (lead). Haiku misread a note it quoted on `ut_citation_007` (0/3 vs Sonnet 3/3, issue #4119), and per-misread judge lines did not converge. |
 
 **Alternative judge model:** Gemini 2.5 Flash (~$0.15/1M input, $0.60/1M output) is ~5x cheaper than Haiku for the judge role. If Google APIs are already in use, Flash is a viable option that reduces judge cost from ~$0.01 per test to ~$0.002. The harness should support configurable judge model selection so the cheapest adequate model can be used.
 
@@ -2764,7 +2764,7 @@ After the skill executes and output is captured:
      → Yes: record failures in the run log, pass their names to the judge, continue
      → No: continue
      ↓
-2. Run LLM judge (Haiku)
+2. Run LLM judge (Sonnet 4.6)
    Inputs: scenario judge brief (README fallback), before-state, user message, text output, diffs, tool calls, rubric, judge_context
    Output: score + rationale per dimension
      ↓
