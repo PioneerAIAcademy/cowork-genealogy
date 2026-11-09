@@ -37,16 +37,18 @@ const agentsRoot = join(pluginRoot, "agents");
 const READ_VERB =
   /\b(?:read|reads|reading|re-read|re-reads|open|opens|grep|glob|scan|scans|cat|load|loads|loading|parse|parses|parsing|look|looks|looking|check|checks|checking|inspect|inspects|inspecting|consult|consults|view|views)\b(?!-only)/gi;
 const PROJECT_FILE = /(?:research|tree)\.(?:gedcomx\.)?json|resultsRef|results\//;
-/** A backticked MCP tool name governs the read: "read the hit with `sidecar_read(…)`". */
-const WITH_TOOL = /\b(?:with|using|via|through)\s+`[a-z]+(?:_[a-z]+)+\b/;
+/** The MCP tools that read project state; only one of these can govern a read. */
+const PROJECT_READER = "(?:research_query|tree_query|project_context|sidecar_read|image_transcribe|person_warnings|census_children_gap)";
+/** A reading tool governs the read: "read the hit with `sidecar_read(…)`". */
+const WITH_TOOL = new RegExp(`\\b(?:with|using|via|through)\\s+\`${PROJECT_READER}\\b`);
 /** The same after the file: "…reads `tree.gedcomx.json` via `person_warnings`". */
-const VIA_TOOL_AFTER = /^[`"')\]>]*\s+(?:with|using|via|through)\s+`[a-z]+(?:_[a-z]+)+\b/;
+const VIA_TOOL_AFTER = new RegExp(`^[\`"')\\]>]*\\s+(?:with|using|via|through)\\s+\`${PROJECT_READER}\\b`);
 /** A negation between the verb and the file: "when you read pages, and never pass `x.resultsRef`". */
 const NEGATED = /\b(?:never|do not|does not|don't|must not)\b/i;
 /** "the scan", "a reading": an article before a lowercase verb makes it a noun. */
 const ARTICLE_BEFORE = /\b(?:the|a|an|each|this)\s+$/i;
-/** A tool-table row (`| \`sidecar_read\` | … |`) describes the tool, not an instruction. */
-const TOOL_ROW = /^\s*\|\s*`[a-z]+(?:_[a-z]+)+`\s*\|/;
+/** A reading tool's table row (`| \`sidecar_read\` | … |`) describes the tool, not an instruction. */
+const TOOL_ROW = new RegExp(`^\\s*\\|\\s*\`${PROJECT_READER}\`\\s*\\|`);
 /** A line that starts its own block: blank, list item, table row, heading, quote or fence. */
 const BLOCK_START = /^\s*(?:$|[-*+]\s|\d+\.\s|\||#|>|```)/;
 const NOUN_AMBIGUOUS = /^(?:check|checks|view|views|look|looks)$/i;
@@ -105,7 +107,7 @@ function directReadVerbAt(sentence: string): number {
     const between = window.slice(0, file.index);
     if (NEGATED.test(between) || WITH_TOOL.test(between)) continue;
     if (VIA_TOOL_AFTER.test(window.slice(file.index + file[0].length))) continue;
-    if (/^[a-z]/.test(m[0]) && ARTICLE_BEFORE.test(before) && !/^\s+tool\b/.test(after)) continue;
+    if (/^[a-z]/.test(m[0]) && ARTICLE_BEFORE.test(before) && !/^\s+(?:tool|of)\b/.test(after)) continue;
     // "…a well-formedness check ("is research.json valid?")": the noun, with the file inside a quoted example.
     if (NOUN_AMBIGUOUS.test(m[0]) && /^[*\s]*\(\s*["“]/.test(after)) continue;
     if (PROHIBITION.test(before) || TOOL_SUBJECT.test(before)) continue;
@@ -176,6 +178,10 @@ describe("plugin bodies never instruct a direct read of a project file", () => {
       expect(flagged("Use the read tool on `staged.resultsRef` to get the transcript.")).toBe(true);
       expect(flagged("Open `research.json` through `Bash` and check the plans.")).toBe(true);
       expect(flagged("Read `staged.resultsRef` via `Read` for the full page.")).toBe(true);
+      // From review on PR #4405: only a project-reading tool governs a read, and "a read of" is the verb.
+      expect(flagged("Do a read of research.json to find the plans.")).toBe(true);
+      expect(flagged("Read the plans from research.json with `research_append` afterwards.")).toBe(true);
+      expect(flagged("| `research_append` | Read research.json directly for the plans |")).toBe(true);
     });
 
     it("reads a sentence across soft-wrapped lines (#4311)", () => {
