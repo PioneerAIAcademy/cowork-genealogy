@@ -1,9 +1,9 @@
 {
-  "run_log": "v47_2026-11-05_17-08-06.json",
-  "annotator": "Francisbucci2@gmail.com",
+  "run_log": "v49_2026-11-09_19-42-37.json",
+  "annotator": "praisenato@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_research_cq7",
+      "test_id": "ut_research_rpn",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,39 +11,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_cq7",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_cq7",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_ken",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 2,
-      "comment": "Judge is wrong on both points. The agent named no FamilySearch collection title, which is the only thing the test forbids; pointing the user to search FamilySearch is not a collection claim. And the agent did hand off to locality-guide (the test blocks it on purpose), so saying the lookup returned nothing is accurate, not fabricated."
-    },
-    {
-      "test_id": "ut_research_ken",
+      "test_id": "ut_research_rpn",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 1,
-      "corrected_score": 2,
-      "comment": "Partly agree. The test accepts \"unconfirmed\", and the agent said that honestly with no collection names, so it is not a wrong-task failure. But it never reached the real answer (FamilySearch has no Kenya collections) and padded with general advice. 2, not 1."
+      "corrected_score": 1,
+      "comment": "c"
     },
     {
-      "test_id": "ut_research_ken",
+      "test_id": "ut_research_rpn",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -51,79 +27,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_016",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 1,
-      "corrected_score": 2,
-      "comment": "Too harsh. judge_context says answering directly is \"a routing imperfection worth noting, not an automatic Correctness=1.\" It did not browse or write anything (the real check passed). Not 3: it planned inline instead of handing off to research-plan, and stated unverified details (specific parishes \"mostly unindexed\") from memory."
-    },
-    {
-      "test_id": "ut_research_016",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 1,
-      "corrected_score": 2,
-      "comment": "It did not hand off to research-plan, so the routing was imperfect. But the test treats a direct answer as an imperfection, not a wrong-task failure, and the reply fully answered what was asked without browsing. 2, not 1."
-    },
-    {
-      "test_id": "ut_research_016",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_025",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_025",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_025",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_j1",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_j1",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_j1",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_026",
+      "test_id": "ut_research_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": null,
@@ -131,7 +35,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_026",
+      "test_id": "ut_research_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -139,7 +43,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_026",
+      "test_id": "ut_research_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -147,7 +51,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_c5r",
+      "test_id": "ut_research_si4",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -155,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_c5r",
+      "test_id": "ut_research_si4",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -163,7 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_c5r",
+      "test_id": "ut_research_si4",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -171,15 +75,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_pe7",
+      "test_id": "ut_research_si3",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
-      "test_id": "ut_research_pe7",
+      "test_id": "ut_research_si3",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -187,7 +91,55 @@
       "comment": null
     },
     {
-      "test_id": "ut_research_pe7",
+      "test_id": "ut_research_si3",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_szk",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_so2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_so2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_so2",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -200,7 +152,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "correct"
+      "comment": null
     },
     {
       "test_id": "ut_research_9k4",
@@ -221,18 +173,10 @@
     {
       "test_id": "ut_research_gm4",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct\n"
-    },
-    {
-      "test_id": "ut_research_gm4",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "correct"
+      "comment": "c"
     },
     {
       "test_id": "ut_research_gm4",
@@ -241,6 +185,14 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "c"
     }
   ]
 }
