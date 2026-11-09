@@ -1,6 +1,6 @@
 # Conclusion tree — one evidence/conclusion model for facts and relationships
 
-**Status:** Stage 1a under way: PRs #3398, #3400, #3453, #3457 and #3470 merged (2026-10-14/15); its avoid-guard item was redesigned per the lead's 2026-10-21 ruling (a provenance/edge/value guard plus a writer-tool removal rule — Decision 20, the minted-persons model, and the Stage 1a guard block below). The removal rule's trigger and site were decided on 2026-11-04 and it ships ahead of the guard (research-append-tool-spec §5.11); the guard is the item still to build. Stage 1b not started, except its Decision 13 merge refusal, which issue #3363's PR 1b ships ahead of that stage. `/critique-plan` closed after 17 rounds (2026-10-07).
+**Status:** Stage 1a under way: PRs #3398, #3400, #3453, #3457 and #3470 merged (2026-10-14/15); its avoid-guard item was redesigned per the lead's 2026-10-21 ruling (a provenance/edge/value guard plus a writer-tool removal rule — Decision 20, the minted-persons model, and the Stage 1a guard block below). The removal rule's trigger and site were decided on 2026-11-04 and it ships ahead of the guard (research-append-tool-spec §5.11); the claims expand (PR #4230), the removal rule (PR #4217) and the "Specs:" bullet's upload and `proof_tier`-marker deletions in the specs have landed, except the `ownership.json` persons `requires` line, which Stage 1b's Decision 34 rewrites (agent-body and harness upload wording waits for Stages 1b-3); the guard is the item still to build, with the e2e-test-spec avoid rule and the record lists it needs (issue #4305). Stage 1b not started, except its Decision 13 merge refusal, which issue #3363's PR 1b ships ahead of that stage. `/critique-plan` closed after 17 rounds (2026-10-07).
 
 **Decision record:** issue #3032. Its body is rewritten from this plan.
 
@@ -148,6 +148,7 @@ Order: 1a, 1b, 1c, 2, 2b, 3, 3b, 4.
   - `src/tools/project-context.ts`: `claimKinds`. `tests/tools/project-context.test.ts`'s "returns empty arrays for an empty project" compares the whole projection, so it gains `claimKinds`.
   - `src/validation/rule-modes.ts` (new): the mode of every rule that warns before it refuses. A rule in warn mode returns its message prefixed "Will be refused:" and names what it concerns, since `research_append`, `tree_edit` and `tree_correct` each return one flat warning list per call: the summary id for `research_append`; for the tree tools, the object's holder and id (`personId` or `relationshipId` plus `factId` for a fact, `personId` plus `nameId` for a name, an edge's `relationshipId`). A fact id alone is ambiguous: 65 of the 136 e2e starting trees put one fact id on two or more persons, up to 15.
   - `src/tools/research-append-examples.ts`: the claims example gains `shortfall`, so it validates verbatim.
+  - *Built (2026-11-04):* `ProofClaimRelationship` is one interface with optional ends, not a union: `schema-interface-drift.test.ts` requires an interface for every `$def`. The schema's `oneOf` and the validator still bind which ends go with which type.
   - `packages/viewer-ui/src/components/sections/ProofSummariesSection.tsx` renders every claim kind without assuming `relationship`.
 - **Specs:**
   - Delete the claims that `proof_tier` marks tree objects, and all upload language, from:
@@ -296,6 +297,7 @@ Order: 1a, 1b, 1c, 2, 2b, 3, 3b, 4.
     - a record that would only narrow a date range caps the scalar `tier`, not the claim: a bracket claim is tiered on the bracket's own support, and encoded at `probable` or better;
     - the identity precondition no longer stops the proof: an unlinked person's claim is written at `possible` with `shortfall: gap`, the question stays open, and the return routes to person-evidence;
     - a downgrade removes a tree object whose covering claim falls below `probable`, except an import, which is relabelled, and unless another live claim covers it;
+    - drop its FamilySearch upload wording ("uploadable to FamilySearch as a Memory/Document", "upload-time citation", "upload readiness"; Decision 16);
     - delete the "Optional `claims` field" paragraph, the multi-claim exception, the bounded carve-out (replaced by the bracket rule above), "Per-claim downgrade", and every `primary` instruction the `primary` rule replaces.
   - `packages/engine/plugin/agents/tree-edit.md`:
     - `primary` only on a claimed value; a retype names the covering claim; import removal with a justification;

@@ -11,8 +11,8 @@ description: >-
   with recordIds), to read a page scan (call image_transcribe first and pass its
   staged.resultsRef), to search for
   records, or to format citations.
-model: claude-sonnet-5
-effort: high
+model: claude-haiku-5-5
+effort: low
 tools:
   - mcp__genealogy__sidecar_read
   - mcp__genealogy__extraction_append

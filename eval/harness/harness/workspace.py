@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import json
 import shutil
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -124,6 +125,12 @@ def build_workspace(
         results_src = src / "results"
         if results_src.is_dir():
             shutil.copytree(results_src, target / "results", dirs_exist_ok=True)
+            # A staged page expires 24 hours after it is read. A committed one
+            # always has, so it reads as read just now.
+            for staged in sorted((target / "results" / ".staging").glob("*.json")):
+                envelope = json.loads(staged.read_text(encoding="utf-8"))
+                envelope["retrieved"] = datetime.now(timezone.utc).isoformat()
+                staged.write_text(json.dumps(envelope), encoding="utf-8")
         # The two sidecar classes `sidecar_read` serves — a verdict body under
         # `evaluations/` and a text upload under `uploads/` (mock_mcp.py's
         # LIVE_TOOLS note). Staged for the same reason as `results/`: the tool

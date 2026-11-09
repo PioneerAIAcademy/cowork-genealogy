@@ -833,7 +833,7 @@ export function createServer(principal: Principal): Server {
     }
     if (request.params.name === "project_list") {
       try {
-        const result = await projectList(principal);
+        const result = await projectList();
         return { content: [{ type: "text", text: JSON.stringify(result) }] };
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";

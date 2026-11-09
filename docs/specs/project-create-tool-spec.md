@@ -55,7 +55,7 @@ The usual objection to a separate tool — *"every caller has to remember to cal
 it"* — is about seeding for standalone work, where callers are many. Here there
 is one.
 
-## 3. Why it takes the tree
+## 3. Why it writes the tree
 
 `subject_person_ids` naming a person absent from `tree.gedcomx.json` is a **hard
 validator error**, and `research_append` validates both documents before
@@ -79,6 +79,17 @@ person through `readPerson` (`person-read-tool-spec.md`), the code behind
 `person_read`, and the read never passes through the model. The build is
 `src/utils/person-read-tree.ts` (§4).
 
+**A project always starts from a FamilySearch person** (lead, 2026-11-02).
+`personId` is required, and the `tree` input that once built a project with no
+person is gone. The rule had lived only in `init-project`'s prose, and two hosted
+sessions on 2026-11-02 created a project with nobody in it: one told
+`init-project` to create a project with no person ID, and one had a
+general-purpose agent call this tool with an empty `tree`. Enforcing it here
+closes every route at once. The only work that wanted a project with no person
+was a surname survey, which now runs with no project (`survey-surname-agent-spec.md`).
+`tree` is refused by name, like `personReadRef`, so a caller built against the
+old contract is told why.
+
 **Accepted cost:** the model no longer reviews the read field by field before it
 is written. An observed agent once caught FamilySearch auto-standardizing a
 "Central States" mission to *"Central, Morocco"* and dropped it; that review is
@@ -94,10 +105,10 @@ and in this build's place retry.
 | `projectPath` | yes | Absolute path to the project directory |
 | `objective` | yes | Non-empty after trimming. Stored trimmed. With `personId`, each mention of the subject by FamilySearch ID is stored as the subject's name ("Naming the subject" below) |
 | `title` | no | Omitted from the document when absent, never written empty. Named as `objective` is |
-| `personId` | no | A FamilySearch person ID, trimmed. When set, this tool reads the person (needs a FamilySearch login) and builds the starting tree from the read; `tree` is refused beside it |
-| `subjectPersonIds` | no | With `personId`: FamilySearch PIDs from the read (the requested id of a merged person included), mapped to tree ids; defaults to the person read. Without: local tree ids that must exist in `tree`; defaults to `[]` |
-| `tree` | no | Only without `personId`: the whole starting tree, simplified GedcomX. Defaults to `{persons: [], relationships: [], sources: []}` |
-| `personReadRef` | — | Removed. Refused by name, so a caller built against the old contract is told to pass `personId` rather than falling into the hand-built path |
+| `personId` | yes | A FamilySearch person ID, trimmed. This tool reads the person (needs a FamilySearch login) and builds the starting tree from the read |
+| `subjectPersonIds` | no | FamilySearch PIDs from the read (the requested id of a merged person included), mapped to tree ids; defaults to the person read |
+| `tree` | — | Removed 2026-11-02 (§3). Refused by name (`PROJECT_TREE_REMOVED`), with or without `personId` |
+| `personReadRef` | — | Removed. Refused by name, so a caller built against the old contract is told to pass `personId` |
 
 **Reading the person.** Every refusal that needs no network (below) runs first,
 so a refused call never spends the read, and a create aimed at an existing project
@@ -139,6 +150,44 @@ count, not time.
   `{ref: "S1", quality: 1}` (compiled, unverified tree data); person-level and
   relationship-level `sources` refs are re-pointed at their `S` ids.
 - **Relationships** get `R` ids, with every endpoint rewritten to `I` ids.
+- **Loops:** a ParentChild loop in the read (a person recorded as their own
+  ancestor, directly or through a chain) is a FamilySearch data error, and the
+  validator refuses any tree that holds one, so the build breaks it rather than
+  fail the create. **Dates decide first.** A loop edge is impossible by dates
+  when the parent's earliest birth-like year (`BIRTHLIKE_FACT_TYPES`: Birth,
+  Christening, Baptism and the rest) is after the child's latest; when the loop
+  holds one or more such edges, the one with the widest gap goes (latest in the
+  read's `relationships` order on a tie). Only when no loop edge is impossible
+  by dates — someone on the loop has no birth-like date, or the dates agree with
+  every edge — do generations decide. A tree can merge two people of one name,
+  so a generation read off it can be wrong where a date is not; that is why
+  dates come first (salvador-choc-daughter: R7 rests on a merged Salvador Choc).
+  For generations, each person gets one by a breadth-first walk
+  from the subject (0) over every relationship in the read's order except the
+  ParentChild edges that lie on a loop: a parent is its child's generation + 1,
+  a child its parent's − 1, a Couple partner the same, and the first value
+  assigned wins. Loop edges are left out of the walk so that the wrong edge
+  cannot set the generations it is then scored by; otherwise a subject who is
+  on the loop can reach the other loop person through the wrong edge first and
+  drop the right one. Then, while a loop remains, the loop
+  edge with the smallest `generation(parent) − generation(child)` is dropped;
+  when two or more loop edges share that smallest score, the one latest in the
+  read's `relationships` order goes, and when a person on the loop has no
+  generation (the subject cannot reach them off the loop), the loop edge latest
+  in that order goes. Both loops seen in real reads have a spouse and a child of
+  the subject each recorded as the other's parent. In salvador-choc-daughter the
+  dates decide: Petrona Ba (christened 1867) cannot be the parent of Catarina
+  Choc (born 1838), so Petrona as Catarina's parent is dropped. In
+  isabel-carvajal-daughter Emilio has no birth-like date, so generations decide
+  and drop Ramón, the child, as Emilio's parent. Each dropped edge is reported as one plain sentence, first in
+  the summary's `notes` and also in `validation.warnings`, worded by the loop's
+  size: a person recorded as their own parent; a pair ("FamilySearch records A
+  as B's parent and B as A's; the first link was left out of the tree, since a
+  person cannot be their own ancestor."); or a longer chain ("…records A as B's
+  parent, but also records B as A's ancestor; that link was left out…"). A
+  person with no name is named by FamilySearch ID ("the person with
+  FamilySearch ID …"), never by the tree's own `I` id. Only
+  the create heals a loop: every writer after it refuses one.
 - **Places** a fact from the read carries with no `standard_place` go through
   the same resolver `person_read` uses, once more (`standardizePlaces`): the
   read leaves a place unresolved after a transient failure or past its
@@ -150,8 +199,8 @@ count, not time.
   and after validation, just before the write, so a refused call never waits on
   the network. It only adds a `standard_place` string, which validation admits.
 
-**People the researcher names beside a read.** `tree` is refused beside
-`personId`. The caller never sees the read, so it cannot tell whether a person
+**People the researcher names beside a read.** There is no input for them.
+The caller never sees the read, so it cannot tell whether a person
 the researcher names (the parent a stated maiden name implies, say) is already in
 it, and a stub it wrote blind could duplicate a relative straight into the
 opening baseline. Such a person is added after the create, with `tree_edit`, by
@@ -173,88 +222,34 @@ relative it links to, as structure gained this session (`tree-diff.ts`,
 `personsWithNewStructure`), and that warning cannot fire for them. A `subjectPersonIds` PID is matched trimmed and case-insensitively, and the
 requested id of a merged person names the same person.
 
-**Without `personId`** (the objective-only build) the caller's ids are
-kept, since it names `subjectPersonIds` and later `relates_to_person_ids` by
-them. Only an absent id is minted (any other value is left for validation),
-skipping every id the tree defines **or references** (relationship endpoints,
-source refs, `subjectPersonIds`), so a minted id never turns a dangling
-reference into a valid one. Anything with no source is cited to the
-researcher's statement as above, unless a staged read holds it, when it is cited
-to a generic FamilySearch-tree source recorded as `idMap.familySearchTreeSource`.
-A `tree` that is not an object is refused.
-
-**Citing what a staged read holds.** A hand-built tree is often a
-retyping of a `person_read` (an agent that typed the read out by hand), and
-citing every unsourced fact on it to the researcher's statement credits the
-researcher with FamilySearch's claims. So a hand-entered fact or relationship with
-no source of its own is checked against every `person_read` staged in this project and inside the 24h
-TTL (`listStagedEnvelopes`):
-
-- **A fact** on a person whose `ark` names a FamilySearch person
-  (`treePidOfArk`) is cited to the Family Tree only if a staged read holds that
-  person **and** a fact on them with the same `type`, `date` (the read's `date`
-  or `standard_date`), `place` (`place` or `standard_place`) and `value`, each
-  compared trimmed, case-folded and with spaces collapsed; an absent field
-  matches only an absent one. A `standard_date` the caller supplied must equal
-  the read's own `standard_date`: this tool keeps a hand-entered one as given,
-  so a value the read does not hold would otherwise be written under
-  FamilySearch's name. The fact's own `standard_place`, which this tool clears
-  and re-resolves, never takes part.
-- **A relationship** whose two endpoints both carry such an `ark` is cited to the
-  Family Tree only if a staged read holds one that `relationshipMatches` it (same
-  type and endpoints, a Couple in either order) **and**, when the hand-entered
-  edge carries a subtype, the read's edge carries the same one. An untyped
-  hand-entered edge is a less specific statement of a typed one in the read and
-  matches it; a `Step` edge against an untyped one in the read claims more than
-  FamilySearch said and does not. Its own unsourced facts are then checked, as
-  above, against that relationship's facts in the read.
-- **Everything else** is the researcher's statement. A retyped fact whose date
-  was reworded fails to match and gets the statement: an under-claim, never an
-  over-claim. A person matching the read by a merged person's requested id is the
-  same person (the read's `query.personId` is an alias of its subject).
-
-The generic source is `{title: "FamilySearch Family Tree", citation:
-"FamilySearch Family Tree (https://www.familysearch.org/tree : accessed <date>).",
-url}`; it names no page, since each person's `ark` is the page. When anything was
-cited to it, `validation.warnings` says how many facts and relationships, so the
-caller can see the inference. The staging folder is listed only when a
-hand-entered person carries a FamilySearch `ark`; a hand-built tree with none
-(the objective-only build) never touches it. A staged file already past the TTL
-by its write time is never opened.
-
-**Hand-entered places** — every fact on the objective-only build — are the
-tool's to standardize, never the caller's. Every such fact, on a person or a relationship, has any
-caller-supplied `standard_place` cleared, including a fact with no `place`. Each
-one with a `place` is then resolved with the same resolver `person_read` and
-`tree_edit` use, after every refusal and validation, in the same call and budget
-as the read's retry. A person or fact entry that is not an object is skipped
-here and left for validation to refuse at its own index. A resolved value is
-reported in `placesFilled`. A caller-supplied value that the resolver replaced or
-could not confirm, or that sat on a fact with no `place`, is named in
-`validation.warnings`; one that did not resolve — no match, a failed lookup, or
-the budget running out — is left unset, never kept. The writers' rule for a
-supplied value (tree-edit-tool-spec §4.1.1) does not apply here: no production
-caller supplies one (`init-project` never passes `tree`).
-
 **A place left unstandardized is reported, never silent.** Once the fill has
 run, every fact in the tree that still has a `place` and no `standard_place` —
-a read place the retry could not fill, or a hand-entered one that did not
-resolve — is listed in `unresolvedPlaces: string[]`, once each in the spelling
-first met and keyed as `placesFilled` is, and named in one
-`validation.warnings` line, `Places kept as written, with no standard place
-found: …`. A non-place phrase such as "Same House" (`isNonPlacePhrase`) has no
-standard form to miss and is left out. Both are absent when every place was
-standardized.
+a read place the retry could not fill — is named, once each in the spelling
+first met, in one `validation.warnings` line, `Places kept as written, with no
+standard place found: …`. A non-place phrase such as "Same House"
+(`isNonPlacePhrase`) has no standard form to miss and is left out. The line is
+absent when every place was standardized.
 
-**The result, with `personId`,** is a summary, never the tree, held under
+**A state the text and the standard place disagree on is reported, never
+silent.** After the fill, each distinct `place` / `standard_place`
+pair on the tree's facts that `divisionContradiction` finds in conflict — the
+text ends with one US state, Puerto Rico or Canadian province and the standard
+place lies in another ("Washington County, Texas" with "Texas, Washington,
+Kentucky, United States", a FamilySearch `place.normalized` value) — is named in
+one `validation.warnings` line, `Place '…' names one state or province but its
+standard place '…' lies in another`. The value is kept as read, as the converter
+keeps every FamilySearch-supplied value; only the warning is new.
+
+**The result** is a summary, never the tree, held under
 `SUMMARY_MAX_CHARS` (2,000 serialized characters): `subject` (`id`,
 `familySearchId`, `name`, and `birth` / `death` as "date, place" when the read
 has them), `objective` and `title` as stored, `relatives` (each other person's `id`, `name`, and `relationship` to
 the subject — `spouse`; `father` / `mother` for a parent recorded Male / Female,
 `parent` when the sex is unknown; `child`, `sibling`, or `relative`), `counts` (`persons`,
 `relationships`, `sources`, `memorySources`), `memories` (the titles of the
-subject's memories that were and were not transcribed), the read's own `notes`,
-and `validation.warnings`. Over the cap, whole entries are dropped, the last
+subject's memories that were and were not transcribed), `notes` (a sentence per
+loop the build broke, first, then the read's own notes), and
+`validation.warnings`. Over the cap, whole entries are dropped, the last
 first, in this order: `warnings`, `notes`, the untranscribed titles, the
 transcribed titles, then relatives, and among relatives only a child, sibling or
 other relative. A parent or a spouse is never dropped, since those are the slots
@@ -264,24 +259,6 @@ and every person stays findable afterwards in the project tree.
 `idMap` is not returned: its `sources` map runs to hundreds of entries on a
 well-sourced profile, and a caller names people by the summary's tree ids.
 
-**The result, without `personId`,** carries `idMap`: `persons` (empty),
-`sources` (empty), `familySearchTreeSource` (the generic
-source, when something was cited to it — "Citing what a staged read holds"),
-and `statementSource` when one was created. It also carries `placesFilled`,
-`[{place, standardPlace}]`, for each place this create standardized (absent when
-none). One resolution is listed once, in the spelling first met, however else
-the same place was written (trimmed, case-folded, spaces collapsed), so the
-caller can tell the researcher which places it standardized without being asked.
-
-**`projectUrl`, on either success.** The project's page in the self-hosted
-beta's web app, `<webPublicUrl>/#/p/<projectId>`, present only when the per-user
-config has `webPublicUrl` and the bound store has a `projectId`
-(`projectLinks(principal)`, `src/utils/project-links.ts`; the same helper and
-rules as `project_context`'s, its spec §2.7). That id is the store's, so it is
-**not** the `projectId: "rp_001"` this result also carries, which is the
-research project's id inside `research.json`. On the `personId` summary it is
-built inside the 2,000-character cap. The desktop's file store has no id, so the
-desktop never gets one.
 
 **Naming the subject.** A caller that has only the FamilySearch ID writes the
 objective and title before the read, so it can name the subject only by that ID.
@@ -344,14 +321,14 @@ come from what the researcher actually said, and are written afterwards through
 | `objective` absent, empty, or whitespace | A project is the pursuit of a stated question, and every later step plans against it |
 | The pair fails validation | Including a `subjectPersonIds` entry the tree does not contain |
 | `projectPath` absent | — |
-| `personReadRef` passed, in any form | Removed; refused by name, telling the caller to pass `personId`. Over MCP `server.ts`'s unknown-argument guard sends this message before the handler runs (`PERSON_READ_REF_REMOVED`, `src/utils/tool-hint-messages.ts`); a direct call gets it from the handler. A caller built against the old contract would otherwise fall into the hand-built path with a FamilySearch PID as its subject |
-| `personId` present but not a non-empty string | — |
-| `tree` with any entry beside `personId` | "People the researcher names beside a read" above |
+| `personReadRef` passed, in any form | Removed; refused by name, telling the caller to pass `personId`. Over MCP `server.ts`'s unknown-argument guard sends this message before the handler runs (`PERSON_READ_REF_REMOVED`, `src/utils/tool-hint-messages.ts`); a direct call gets it from the handler |
+| `tree` passed, in any form, with or without `personId` | Removed (§3). The same two routes send `PROJECT_TREE_REMOVED`, which says a project starts from a FamilySearch person ID, to ask the researcher for one, and that a surname survey needs no project |
+| `personId` absent, `null`, empty or whitespace | `PERSON_ID_REQUIRED`: the same three points. Made before the read and before any file is looked at |
+| `personId` neither a string nor `null` | Says what an ID looks like, then the same advice |
 | The read fails (no login, a person FamilySearch does not hold, the read holds no person with the requested id) | The read's own message, which names the remedy (log in; check the ID) |
-| A `subjectPersonIds` entry, with `personId`, that names no person in the read | The tree's `I` ids are assigned here, so a caller names the read's people by FamilySearch PID |
-| A `tree` collection that is present but not an array of objects | Read as empty it would be dropped, and a dropped citation would silently re-cite the fact to the researcher's statement. A non-object entry and a citation in the wrong shape are left in place for validation to refuse at their own index; only an absent or empty `sources` is cited to the researcher's statement |
+| A `subjectPersonIds` entry that names no person in the read | The tree's `I` ids are assigned here, so a caller names the read's people by FamilySearch PID |
 | `research.json` or `tree.gedcomx.json` appears while the place fill runs | Checked again after the fill, which can take seconds: another create finished first, and create never overwrites |
-| An `assertion_id` on any fact | Stamped only by `materialize_facts`; a seeding tree has no assertions to point at |
+| An `assertion_id` on any fact of the read | Stamped only by `materialize_facts`; a seeding tree has no assertions to point at |
 
 **Ordering.** The pair is validated **before** either file is written, so a
 rejected create leaves nothing behind. This is load-bearing and tested by moving
@@ -401,9 +378,10 @@ the write ahead of the validation and watching two cases go red.
 
 ## 6. Enforcement
 
-> `packages/engine/mcp-server/tests/tools/project-create.test.ts` — the refusals,
-> the atomic no-write-on-failure property, the house profile on every create;
-> with `personId` (an injected reader serving
+> `packages/engine/mcp-server/tests/tools/project-create.test.ts` — the refusals
+> (a missing, `null`, empty or whitespace `personId`, and `tree` with or without
+> one, each before the reader is called), the atomic no-write-on-failure
+> property, the house profile on every create; with `personId` (an injected reader serving
 > `person-read-flynn-family.json`: a merged-person redirect, a memory with
 > `text`/`image_ref`/`artifact_url`, a top-level `notes`): the tree against a
 > committed literal, the memory source exactly, the summary and its 2,000-character
@@ -412,13 +390,14 @@ the write ahead of the validation and watching two cases go red.
 > `transcription_truncated` derived and not otherwise written, the place retry
 > given no time once the read spent the budget, `personReadRef` refused by name,
 > and every network-free refusal (an existing project, no objective, `tree` beside
-> `personId`, a blank `personId`) made before the reader is called; the
-> objective-only build's sourcing; and the Family Tree citations on evidence (a
-> copied fact, a researcher fact, a held and an unheld relationship, a subtype
-> only in the direction the read supports, a supplied `standard_date` the read
-> does not hold, a reworded marriage date, a merged person's ark, nothing staged,
-> a staged read past the TTL by write time never opened, and that a build with no
-> ark never lists staging).
+> `personId`, a blank `personId`) made before the reader is called; and a read
+> holding a ParentChild loop (the create succeeds without the loop-closing edge,
+> the loop sentence is first in `notes` and in `validation.warnings`, a longer
+> loop's wording claims no reciprocal link, a loop-free read adds no note).
+
+> `packages/engine/mcp-server/tests/utils/unknown-args.test.ts` — over MCP, `tree`
+> is refused with `PROJECT_TREE_REMOVED` with or without `personId`, alone or
+> beside `personReadRef`.
 
 > `packages/engine/mcp-server/tests/tools/person-read.test.ts` — `readPerson`
 > behind `person_read`; a merged parent's redirect is not followed once the read's
@@ -431,7 +410,16 @@ the write ahead of the validation and watching two cases go red.
 
 > `packages/engine/mcp-server/tests/utils/person-read-tree.test.ts` — the place
 > retry, its no-op when nothing needs it, that a refusal never waits on it, that
-> it touches only the read's facts, and the access-date form.
+> it touches only the read's facts, and the access-date form; and the loop rule:
+> salvador-choc-daughter's real dates deciding in both orders, the fallback to
+> generations when a loop person is undated, when the dates rule out neither
+> edge, and when only a death date is held; the generation rule
+> on both fixture shapes without dates (salvador-choc-daughter, isabel-carvajal-daughter), the
+> same decision with the wrong edge listed first, the same decision seeded from
+> the child on the loop in both orders, a tie in both orders, a loop the subject
+> cannot reach, a three-person loop with and without an anchor off the loop, a
+> self-parent, and pedigree
+> collapse and a loop-free read left unchanged.
 
 > `eval/harness/tests/unit/test_init_project_provenance_validators.py` — the
 > compiled build's tree passes the init-project validators written to grade the

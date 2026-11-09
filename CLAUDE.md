@@ -91,6 +91,9 @@ locked-out audience.
   `packages/engine/mcp-server/build/`. The `.mcpb` is built from this.
 - `packages/engine/plugin/` — The Cowork plugin folder. Packaged as a .zip directly,
   no compilation step.
+- `apps/mcp-viewer/` — the MCP App page: research cards drawn inside Claude. Its thin
+  server is `packages/engine/mcp-server/viewer/`, which ships in no artifact
+  (`docs/plan/mcp-app-viewer.md`).
 - `small-and-simple/` — single-purpose functions (a few FamilySearch calls and
   an LLM call each) for FamilySearch to run inside its own Node server.
   Independent of everything else here: own `package.json` and lockfile, imports
@@ -238,7 +241,8 @@ Skills live in `packages/engine/plugin/skills/<skill>/SKILL.md`. A project alway
 starts from a FamilySearch person ID: `init-project` never searches by name, and with
 no ID it creates nothing and asks for one (lead, 2026-10-15). `research` is the only
 front door — its routing table sends a first message with no project to `init-project`
-or `tree-survey`, so nothing prefixes an opener onto the user's first message.
+or `tree-survey` (or, for the names in a record set with no person ID, to
+`search-images`), so nothing prefixes an opener onto the user's first message.
 
 The host artifact is the `.mcpb` desktop extension, built from
 `packages/engine/mcp-server/` with the `@anthropic-ai/mcpb` CLI. Its `manifest.json` is the
@@ -348,7 +352,8 @@ which one it is** — the hook bound under both, which is the part that matters.
 
 A second plugin hook, `UserPromptSubmit` → `no_project_route.py`, adds two sentences
 to each Cowork researcher message: a conditional one (no project → a research request goes
-to the research skill) and one naming a source, collection, book or citation only from a
+to the research skill; a no-PID ask for the names in a record set goes to
+search-images) and one naming a source, collection, book or citation only from a
 tool result. It is silent under `GENEALOGY_HOSTED_PLANE`, which both hosted planes set in
 the SDK env, so the hosted planes keep their own text-only fix (`project_note`, with
 `continue_policy.SOURCES_GUIDANCE` and `continue_policy.NO_PROJECT_NOTE` appended beside it).
@@ -621,8 +626,8 @@ Currently recognized fields in `~/.familysearch-mcp/config.json` (per-user):
 | `hosted` | `login` and the auth errors | Set by the hosted control plane, not by the user | `true` marks a sandbox where the loopback OAuth flow cannot complete, so auth errors point at the web app's "Reconnect FamilySearch" button instead of the `login` tool. Absent on the desktop `.mcpb`. Written by `hosted_config()` in `apps/server/app/fs_oauth.py`. |
 | `openRouterApiKey` | `image_transcribe` | When transcribing images | OpenRouter API key for host-side VLM OCR. Read by `getOpenRouterApiKey(principal)` in `src/auth/config.ts` (config-only — never `process.env`). Set by the user in the `.mcpb` install dialog (layered over `config.json`, and winning over it) or directly in `config.json`. The e2e harness bridges it from `eval/.env`; the hosted server bridges it from its own env into the sandbox's config.json. Throws an LLM-instruction "no key" error when absent, naming both places to set it. |
 | `openRouterModel` | `image_transcribe` | Optional | Override the OCR model. Read by `getOpenRouterModel(principal)` in `src/auth/config.ts`; defaults to `DEFAULT_OPENROUTER_MODEL` (`google/gemini-3.7-flash`) when absent. |
-| `webPublicUrl` | `project_create`, `project_context` | Optional | The self-hosted beta web tier's public origin. Set, with a store that has a `projectId`, both tools return `projectUrl` (`src/utils/project-links.ts`). The hosted tool server reads it from `WEB_PUBLIC_URL` (`src/hosted-config-env.ts`), trimmed; one that is not a plain http(s) URL with no `#`, `?`, credentials, backslash, space or control character refuses start-up. |
-| `uploadsEnabled` | `project_context` | Optional | `true` adds `uploadUrl` beside `projectUrl`. From `UPLOADS_ENABLED`: `true`/`false` only, anything else refuses start-up. |
+| `webPublicUrl` | `project_context` | Optional | The self-hosted beta web tier's public origin. Set with `uploadsEnabled` and a store that has a `projectId`, it gives `uploadUrl` (`src/utils/project-links.ts`). The hosted tool server reads it from `WEB_PUBLIC_URL` (`src/hosted-config-env.ts`), trimmed; one that is not a plain http(s) URL with no `#`, `?`, credentials, backslash, space or control character refuses start-up. |
+| `uploadsEnabled` | `project_context` | Optional | `true` adds `uploadUrl`. From `UPLOADS_ENABLED`: `true`/`false` only, anything else refuses start-up. |
 | `transcriptionEnabled` | no reader yet | Optional | The beta's transcription switch; unset means as today. From `TRANSCRIPTION_ENABLED`, strict like `uploadsEnabled`. |
 | `matcher` | `same_person`, `rank_search_matches`, `record_search` when it ranks | Optional | `"familysearch"` (the default) or `"service"`. Read by `getMatcherSettings(principal)` in `src/auth/config.ts`. Any other value throws. No fallback between them. The alpha's control plane, and the beta's tool server, set it from `MATCHER_URL` and `MATCHER_API_KEY`; a developer sets it by hand. |
 | `matcherUrl` | as `matcher` | When `matcher` is `"service"` | Base URL of the matcher service (`POST /v1/score`). Trailing slash stripped. No default. |

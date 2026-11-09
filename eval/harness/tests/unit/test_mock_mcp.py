@@ -2652,29 +2652,49 @@ def test_image_transcribe_staged_ref_reads_back_through_live_sidecar_read(tmp_pa
     assert "In the name of God, Amen" in json.dumps(read)
 
 
-def test_image_transcribe_without_project_path_is_refused_not_served(tmp_path):
-    """Production refuses a call with no projectPath before any OCR, so the
-    fixture's page must not reach the agent either."""
+def test_image_transcribe_without_project_path_returns_the_page_inline(tmp_path):
+    """Production reads with no projectPath and returns the page inline, staging
+    nothing (#4136), so the fixture's page reaches the agent with no `staged`."""
     _copy_scenario(tmp_path)
     _s, _c, tools_by_name = create_mock_server(
         ["image-transcribe-schuylkill-probate-flynn-will"], FIXTURES_DIR, workspace=tmp_path
     )
     result = _invoke(tools_by_name, "image_transcribe", dict(_WILL_ARGS))
     body = _extract_response_dict(result)
-    assert result.get("is_error") is True, body
-    assert body == {"error": mock_mcp.IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE}
-    assert "In the name of God" not in json.dumps(body)
+    assert not result.get("is_error"), body
+    assert body["transcription"].startswith("Will Book G, page 112.")
+    for key in ("staged", "digest", "imageRef", "stagingError"):
+        assert key not in body
 
 
-def test_image_transcribe_needs_project_message_has_not_drifted_from_the_typescript_source():
-    src = (
-        REPO_ROOT / "packages/engine/mcp-server/src/tools/image-transcribe.ts"
-    ).read_text(encoding="utf-8")
-    decl = re.search(r"const IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE =(.*?);\n", src, re.DOTALL)
-    assert decl, "IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE is gone from image-transcribe.ts"
-    ts_msg = "".join(re.findall(r'"((?:[^"\\]|\\.)*)"', decl.group(1)))
-    assert ts_msg, "parsed an empty message — the declaration's shape changed"
-    assert ts_msg == mock_mcp.IMAGE_TRANSCRIBE_NEEDS_PROJECT_MESSAGE
+def test_image_transcribe_on_a_folder_that_is_not_a_project_stages_nothing(tmp_path):
+    """A projectPath naming an empty folder is no project: the page comes back
+    inline and no results/ is created there, as production writes nothing."""
+    _s, _c, tools_by_name = create_mock_server(
+        ["image-transcribe-schuylkill-probate-flynn-will"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(tools_by_name, "image_transcribe", {**_WILL_ARGS, "projectPath": str(tmp_path)})
+    body = _extract_response_dict(result)
+    assert not result.get("is_error"), body
+    assert body["transcription"].startswith("Will Book G, page 112.")
+    assert "staged" not in body
+    assert not (tmp_path / "results").exists()
+
+
+def test_image_transcribe_file_with_no_project_answers_no_project(tmp_path):
+    _s, _c, tools_by_name = create_mock_server(["image-transcribe-any"], FIXTURES_DIR, workspace=tmp_path)
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "image_transcribe", {"file": "uploads/scan.jpg", "projectPath": str(tmp_path)})
+    )
+    assert body == {"ok": False, "reason": "no_project", "errors": [mock_mcp.NO_PROJECT_MESSAGE_READ]}
+
+
+def test_no_project_read_message_has_not_drifted_from_the_typescript_source():
+    src = (REPO_ROOT / "packages/engine/mcp-server/src/utils/project-io.ts").read_text(encoding="utf-8")
+    base = src.split('const NO_PROJECT_BASE = "', 1)[1].split('";', 1)[0]
+    read = src.split("export const NO_PROJECT_MESSAGE_READ =", 1)[1].split("`;", 1)[0]
+    read = read.split("${NO_PROJECT_BASE} ", 1)[1]
+    assert f"{base} {read}" == mock_mcp.NO_PROJECT_MESSAGE_READ
 
 
 def test_image_transcribe_capture_id_for_a_file(tmp_path, monkeypatch):
@@ -2744,8 +2764,8 @@ def test_image_transcribe_stages_the_scan_ref_beside_the_text(tmp_path, monkeypa
 
 
 def test_principal_sets_match_each_compiled_tools_arity():
-    """The harness calls a compiled tool as `input`, `input, LOCAL` or `LOCAL`, then any
-    `_COMPILED_TOOL_EXTRA_ARGS`, from an f-string no typechecker sees. So each built
+    """The harness calls a compiled tool as `input`, `input, LOCAL`, `LOCAL` or with nothing,
+    then any `_COMPILED_TOOL_EXTRA_ARGS`, from an f-string no typechecker sees. So each built
     function's required-parameter count must equal what the harness passes before the
     extras: a tool that gains a `principal` without joining `_COMPILED_TOOLS_WITH_PRINCIPAL`
     runs with it undefined."""
@@ -2765,6 +2785,18 @@ def test_principal_sets_match_each_compiled_tools_arity():
         for tool in tools
     }
     assert json.loads(result.stdout) == passed
+
+
+@pytest.mark.requires_engine_build
+def test_project_list_runs_live_with_no_arguments(tmp_path):
+    """The arity test above pins the tables, not the call the f-string builds from them: a
+    call still naming `LOCAL` with no import breaks only here, at harness runtime."""
+    _server, _call_log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+
+    result = _invoke(tools_by_name, "project_list", {})
+
+    assert result.get("is_error") is not True
+    assert _extract_response_dict(result)["mode"] == "folder"
 
 
 # --- the unknown-argument guard (issue #3947) --------------------------------
@@ -2882,3 +2914,99 @@ def test_guard_fails_open_and_warns_when_the_build_is_missing(monkeypatch, tmp_p
 
     with pytest.warns(UserWarning, match="rebuild packages/engine/mcp-server"):
         assert mock_mcp._reject_unknown_args("record_search", {"q": "x"}) is None
+
+
+# ── birthRanges on record_read (issue #4127) ─────────────────────────────────
+# The mock calls the compiled `birthRangesFor`, so a fixture never carries one.
+
+_RECORD_EXTRACT_JS = REPO_ROOT / "packages/engine/mcp-server/build/utils/record-extract.js"
+
+
+def _tallman_census(birth, age, year):
+    return {
+        "persons": [
+            {
+                "id": "p1",
+                "names": [{"given": "Edward", "surname": "Tallman"}],
+                "facts": [
+                    {"type": "Birth", "date": birth},
+                    {"type": "Census", "date": year, "place": "Vermont, United States"},
+                ],
+            }
+        ],
+        "indexFields": {"p1": {"age": age}},
+    }
+
+
+def test_record_birth_ranges_comes_from_the_compiled_helper():
+    if not _RECORD_EXTRACT_JS.exists():
+        pytest.skip("compiled MCP build absent")
+    assert mock_mcp._record_birth_ranges(_tallman_census("1839", "11 years", "1850")) == {
+        "p1": "Bet 1838 and 1839"
+    }
+    assert mock_mcp._record_birth_ranges(_tallman_census("31 Jan 1839", "74", "1913")) is None
+    assert mock_mcp._record_birth_ranges({"persons": []}) is None
+
+
+def test_record_birth_ranges_degrades_with_a_warning_on_node_failure(monkeypatch):
+    if not _RECORD_EXTRACT_JS.exists():
+        pytest.skip("compiled MCP build absent")
+
+    def _boom(*a, **k):
+        raise TimeoutError("node did not return in time")
+
+    monkeypatch.setattr(mock_mcp.subprocess, "run", _boom, raising=False)
+    with pytest.warns(UserWarning, match="birthRanges"):
+        assert mock_mcp._record_birth_ranges(_tallman_census("1839", "11", "1850")) is None
+
+
+def _census_index_fixture(tmp_path):
+    fx = tmp_path / "fx"
+    fx.mkdir()
+    (fx / "record-read-tall.json").write_text(
+        json.dumps(
+            {
+                "tool": "record_read",
+                "args": {"recordId": "TALL-0001"},
+                "response": {
+                    "persons": [
+                        {
+                            "id": "p1",
+                            "names": [{"given": "Edward", "surname": "Tallman"}],
+                            "facts": [
+                                {"type": "Birth", "date": "1839"},
+                                {"type": "Census", "date": "1850", "place": "Vermont, United States"},
+                            ],
+                        }
+                    ],
+                    "indexFields": {"p1": {"age": "11"}},
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    return fx
+
+
+@pytest.mark.requires_engine_build
+def test_no_project_record_read_carries_birth_ranges_and_no_index_fields(tmp_path):
+    fx = _census_index_fixture(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(["record-read-tall"], fx, workspace=tmp_path)
+    body = _extract_response_dict(_invoke(tools_by_name, "record_read", {"recordId": "TALL-0001"}))
+    assert body["birthRanges"] == {"p1": "Bet 1838 and 1839"}
+    assert "indexFields" not in body
+
+
+@pytest.mark.requires_engine_build
+def test_staged_record_read_keeps_birth_ranges_out_of_the_staged_gedcomx(tmp_path):
+    (tmp_path / "research.json").write_text(json.dumps({"project": {"id": "rp_x"}, "questions": []}), encoding="utf-8")
+    fx = _census_index_fixture(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(["record-read-tall"], fx, workspace=tmp_path)
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "record_read", {"recordId": "TALL-0001", "projectPath": str(tmp_path)})
+    )
+    assert body["birthRanges"] == {"p1": "Bet 1838 and 1839"} and "indexFields" not in body
+    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    [element] = envelope["payload"]["results"]
+    assert "birthRanges" not in element["gedcomx"]
+    assert element["indexFields"] == {"p1": {"age": "11"}}

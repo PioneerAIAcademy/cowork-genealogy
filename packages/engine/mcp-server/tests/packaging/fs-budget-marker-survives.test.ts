@@ -49,7 +49,10 @@ function stripComments(src: string): string {
 
 /** The rewrap sites: a `throw new Error(...)` naming a FamilySearch endpoint. */
 const REWRAP = /throw new Error\(\s*$|throw new Error\(/;
-const NAMES_FS = /Could not reach FamilySearch|FamilySearch session has expired/;
+// `record search did not complete` is record_search's wording, which this list
+// missed: it rewrapped the refusal as "network timeout or transient error" while
+// the per-user 429 pause (issue #3999) made that refusal routine for connectors.
+const NAMES_FS = /Could not reach FamilySearch|FamilySearch session has expired|FamilySearch record search did not complete/;
 
 describe("a FamilySearch rewrap lets the budget refusal past first", () => {
   it("every catch that rewraps a FamilySearch failure rethrows the refusal", () => {

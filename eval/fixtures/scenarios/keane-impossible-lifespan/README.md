@@ -48,8 +48,8 @@ Every oddity here is load-bearing:
 - **Birth `~1785` with death `1908`** — the >120 span under test.
 - **Two deaths (`1908-03-12`, `1909-11-02`)** — `tooManyDeathDates2`.
 - **Residence `1925`, after both deaths** — `hasEventAfterDeath1`.
-- **Father born `~1818`, after his son** — carries
-  `relativesHasAgeRangeGreaterThan120` onto I2.
+- **Father born `~1818`, after his son** — with the death the mock gives him
+  (`1945`, `F5`; not in this tree), carries `relativesHasAgeRangeGreaterThan120` onto I2.
 
 Sources are deliberately weak (a census age, a Findagrave memorial) so the
 cluster reads as a plausible two-people-merged profile rather than a typo.
