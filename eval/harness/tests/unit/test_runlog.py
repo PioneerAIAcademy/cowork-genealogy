@@ -561,6 +561,25 @@ def test_activated_counts_the_hand_off_a_stop_at_stub_run_ended_on():
     assert derive_activated(**kwargs, handed_off=True) is True
 
 
+def test_a_short_correct_reply_naming_its_stubbed_callee_is_activated():
+    """ut_research_up1 failed two of four runs on this reply: 29 words, under the
+    30 that make a reply substantive, and it names the agent it rightly spawned."""
+    kwargs = dict(
+        skill="research",
+        skills_invoked=["research"],
+        file_changes=_NO_FILE_CHANGES,
+        files_created=[],
+        text_response=(
+            "The uploaded capture matches the MyHeritage hand-off that's been waiting. "
+            "Routing it to search-external-sites now.\n\nThe MyHeritage capture has been "
+            "handed off for processing.\n\nContinue with `running the searches`?"
+        ),
+        other_skill_names={"search-external-sites"},
+    )
+    assert derive_activated(**kwargs) is False
+    assert derive_activated(**kwargs, handed_off=True) is True
+
+
 def test_a_hand_off_does_not_activate_a_skill_that_never_ran():
     assert derive_activated(
         skill="research",

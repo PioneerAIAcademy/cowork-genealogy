@@ -487,6 +487,43 @@ def test_no_gate_stop(before_state, after_state, test):
     assert not bad, "Unexpected stop-gate write:\n  - " + "\n  - ".join(bad)
 
 # ---------------------------------------------------------------------------
+# `keeps-waiting-page` tag
+# ---------------------------------------------------------------------------
+
+
+def test_keeps_waiting_page(before_state, after_state, tool_calls, test):
+    """Tag-gated: a read page of a held record is kept by one
+    `extraction_append({ attachWaitingPages: true })` call, so its text reaches
+    the source that waited, with no second source and no assertion."""
+    if "keeps-waiting-page" not in test.get("tags", []):
+        pytest.skip("not a keeps-waiting-page test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+
+    kept = [
+        c for c in (tool_calls or [])
+        if isinstance(c, dict)
+        and bare_tool_name(c.get("tool") or "") == "extraction_append"
+        and (c.get("args") or {}).get("attachWaitingPages") is True
+    ]
+    assert kept, "No extraction_append call kept the waiting page."
+
+    held = {s["id"]: s for s in after.get("sources", [])}
+    waiting = [s["id"] for s in before.get("sources", []) if s.get("image_ark") and not s.get("transcription")]
+    assert waiting, "The scenario has no source waiting for its page."
+    empty = [i for i in waiting if not (held.get(i) or {}).get("transcription")]
+    assert not empty, f"Still no page on: {empty}"
+    assert len(after.get("sources", [])) == len(before.get("sources", [])), (
+        "Keeping a page fills the existing source; a new source was written."
+    )
+    assert len(after.get("assertions", [])) == len(before.get("assertions", [])), (
+        "Keeping a page writes no assertion."
+    )
+
+
+# ---------------------------------------------------------------------------
 # `negative-status-question` tag (issue #3112)
 # ---------------------------------------------------------------------------
 

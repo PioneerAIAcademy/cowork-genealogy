@@ -59,6 +59,37 @@ the `WWW-Authenticate: resource_metadata=` URL, never derived from the request's
 `Bearer`. One stderr line names both (`connector door: issuer=… fs-token-key=default|set`)
 and never the key itself.
 
+A connector call naming no project binds a store that refuses every project tool and
+answers `project_list` with the user's projects plus one fresh `/proj_` path, which reads
+as an empty project until its first write claims it.
+
+Each connector user runs at most **4** `tools/call` requests at a time (self-hosted beta
+E4, per user; a constant in `src/utils/user-limits.ts`, not a setting). A call over the
+cap waits its turn, oldest first, and is never refused; `initialize`, `tools/list`,
+notifications and a `tools/call` naming no tool never wait, and the worker path is not
+capped. A call that waited has its connector token looked up again before it runs, so a
+user blocked meanwhile is refused 401, and it runs with the FamilySearch token that
+lookup returns. A waiting call whose client hangs up never runs, and writes
+`ev=tool_abandoned surface=connector user_id=<id> tool=<name>` instead of an
+`ev=tool_call` line, as does one whose client hangs up during a second lookup that still
+admits it; a
+running call keeps its slot until it ends, even after its client hangs up. The cap bounds
+tool work only: every waiting call has already had its token looked up, its project
+checked when it names one, and its body (up to 1 MiB) read, and how many may wait is not
+bounded.
+
+When FamilySearch answers a connector user 429, that user's authenticated FamilySearch
+calls pause for its `Retry-After`, at most 15 minutes, or 30 s without one. A pause that
+ends while the call still has time for it is waited out: the wait stays inside the call's
+retry budget (10 s by default) and leaves the request at least 2 s, or half the time it
+has when that is shorter, and a request never runs longer than its own timeout
+(`pauseWaitAllowance` in `src/utils/http.ts`). A longer pause refuses at once with
+`FamilySearch asked this account to wait; try again in about N seconds.` A FamilySearch
+call that ends in a throw after a 429 or 5xx answer records that status for the call's
+`fs_status`. Anonymous FamilySearch calls (place lookups, public memory artifacts and
+story text) are not paused, and neither is switching a session's current tree back after
+a call that switched it (a 429 on it still pauses the user).
+
 The door reads each request body once, capped at **1 MiB**, and answers 413 past
 it. The cap binds the worker's writes too, because the body must be read to
 refuse a JSON-RPC batch before any tool runs; it is sized from the largest
@@ -77,11 +108,8 @@ missing a field; SAS unreachable through three tries at start exits 1. The JDBC 
 parameters are dropped, so TLS stays with `PGSSLMODE`. A new connection failing 28P01 re-reads
 the object (at most once per 30 s) and connects once more; 28000 never does. One stderr line
 names the mode (`pg credentials: SAS object <name>` or `environment DSN`). The projectPath every call passes
-is the anchor (`/project`). With the header **missing**, the request is bound to an
-`unboundProjectStore` whose every method rejects with an instruction naming the header:
-tools that take no `projectPath` (`convert_calendar`, the FamilySearch searches, …) still
-answer, and the project tools (`project_create`, `research_append`, …) return that
-instruction as an `isError` result. The process store is the same unbound store, so no
+is the anchor (`/project`). With the header **missing**, the request takes the connector
+door, above. The process store is an `unboundProjectStore` whose every method rejects, so no
 path — inside a request or outside one — ever reaches `FsProjectStore`. Malformed → `400`,
 above.
 
@@ -172,7 +200,9 @@ smoke names all three.
   Two clients. The first presents the connector token under `--connector`, otherwise the
   stamped turn's headers and bearer; it lists the tools. Every plan row runs through the
   stamped-turn client, and with `--connector` a second pass runs the plan's store rows
-  through the connector door on its own `/proj_<16 hex>` project.
+  through the connector door on its own `/proj_<16 hex>` project, then seeds the caller's
+  second project and another user's and requires `project_list` to name both of the
+  caller's, a fresh path, and not the other user's.
   The second runs every row that passes `--project-path` (the anchor,
   `/project`) as its `projectPath`: it sends `X-Genealogy-Project-Id: <--project-id>` — a
   fresh `smoke-<uuid>` by default, `SMOKE_PROJECT_ID=…` to override — and the fence of a

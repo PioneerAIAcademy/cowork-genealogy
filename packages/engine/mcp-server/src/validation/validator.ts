@@ -623,7 +623,8 @@ export const SETTLED_CONFLICT_STATUSES = new Set(["resolved", "moot"]);
  *  Use it wherever a gate asks "is this conflict settled?" — comparing `status`
  *  inline is how `disputedSourceIds` came to treat a `moot` conflict as still
  *  disputing its sources. Not every status read asks that question:
- *  `resolvedAgainstIds` deliberately exonerates on `resolved` alone, and
+ *  `resolvedAgainstIds` reads the two apart, exonerating on `resolved` and on a
+ *  `moot` only when it also carries both analyses, and
  *  `utils/question-state.ts` tests `status !== "unresolved"`, which agrees with
  *  this on any document the validator accepts. The harness keeps a Python copy,
  *  `is_settled_conflict` in `eval/harness/harness/skill_invocation.py`;
@@ -806,7 +807,7 @@ export const RESEARCH_SHAPES = {
     "id", "gedcomx_source_description_id", "citation", "citation_detail",
     "source_classification", "repository", "access_date", "url",
     "url_archived", "notes", "transcription", "transcription_truncated",
-    "image_filename", "log_entry_id",
+    "image_filename", "image_ark", "log_entry_id",
   ]),
   citation_detail: new Set([
     "who", "what", "when_created", "when_accessed", "where", "where_within",
@@ -891,7 +892,7 @@ export const RESEARCH_SHAPES = {
   ]),
   namesake: new Set([
     "id", "person_id", "name", "place", "time_period", "record_ids",
-    "log_entry_ids", "record_persona_ids", "notes", "created",
+    "log_entry_ids", "record_persona_ids", "birth_year", "notes", "created",
   ]),
   hit_verdict_entry: new Set([
     "id", "log_id", "hit_id", "person_id", "verdict", "new_vital_info",
@@ -1364,6 +1365,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // flag rather than the tool deriving it, and the tool never emits it (a
     // zero-content capped read throws instead of returning `truncated: true`,
     // image-transcribe.ts) — so the persisted writer rejects it too.
+    if ("image_ark" in src && typeof src.image_ark !== "string") {
+      addError(report, sp, "image_ark must be a string: the ARK of the page the record sits on.");
+    }
     if ("transcription_truncated" in src) {
       const flag = src.transcription_truncated;
       if (flag !== true) {
@@ -2187,6 +2191,9 @@ function validateNamesakes(data: any, ids: ResearchIds, path: string, report: Va
           if (!listed.has(rid)) addError(report, sp, "keys a record not in record_ids");
         }
       }
+    }
+    if ("birth_year" in ns && !Number.isInteger(ns.birth_year)) {
+      addError(report, np, "birth_year must be an integer");
     }
     checkIsoDate(ns, "created", np, report);
   }

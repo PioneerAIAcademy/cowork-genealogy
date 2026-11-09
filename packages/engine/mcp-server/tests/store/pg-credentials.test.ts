@@ -418,6 +418,9 @@ if (!LIVE_DSN) {
           new SasPgCredentials(client, "pgobj", { params: creds.params(), password: "new-pw" }),
           {},
         );
+        // As createPgS3Backend does: the cleanup's pg_terminate_backend can reach this pool's
+        // closing client, and a pool with no "error" listener throws it as uncaught (57P01).
+        rotating.on("error", () => {});
         expect((await rotating.query("SELECT current_user AS u")).rows[0].u).toBe(role);
         expect(client.clearCache).toHaveBeenCalledTimes(2);
         await rotating.end();
