@@ -381,6 +381,18 @@ ADMISSION_REFUSALS: dict[str, tuple[int, str, str]] = {
 }
 
 
+class SessionRefused(HTTPException):
+    """``current_user``'s refusal of a signed-in user (#4001): the API answer is unchanged,
+    an HTTPException with the reason's status and detail, but it carries the reason and the
+    account email, so a page can say what happened and to whom without matching text."""
+
+    def __init__(self, reason: str, email: str) -> None:
+        status, detail, _page = ADMISSION_REFUSALS[reason]
+        super().__init__(status_code=status, detail=detail)
+        self.reason = reason
+        self.email = email
+
+
 class AdmissionBusy(Exception):
     """A capped sign-in could not take the user's row (a returning user) or the admission
     lock (a new one) within ``grants.QUEUE_LOCK_TIMEOUT_S``, or a racing sign-in took the
@@ -2170,8 +2182,7 @@ def create_app(
         if auth.revoked(data.get("iat"), user.sessions_revoked_at):
             raise HTTPException(status_code=401, detail="Session revoked")
         if (reason := await _admission_refusal(request, user.email, user)) is not None:
-            status, detail, _page = ADMISSION_REFUSALS[reason]
-            raise HTTPException(status_code=status, detail=detail)
+            raise SessionRefused(reason, user.email)
         return user
 
     async def _session(request: Request, session_id: str, user: User) -> SessionRow:
@@ -2409,13 +2420,19 @@ def create_app(
         resp.delete_cookie(auth.OR_OAUTH_COOKIE, **auth.cookie_kwargs())
         return resp
 
+    async def _openrouter_linked(request: Request, user_id: str) -> bool:
+        """Linked means a key that decrypts under the current FS_TOKEN_ENC_KEY: one written
+        under another key is no key to the tool server either (#3984). GET /openrouter and
+        the landing page (#4001) both read it here."""
+        return auth.decrypt(await _store(request).openrouter_key_enc(user_id)) is not None
+
     @linking.get("/openrouter")
     async def openrouter_status(request: Request, response: Response, user: User = Depends(current_user)) -> dict:
         """``{linked: bool}`` for the browser app's OpenRouter page (#4001). Never the key.
         Linked means a key that decrypts under the current FS_TOKEN_ENC_KEY: one written under
         another key is no key to the tool server either (#3984), so the page offers a relink."""
         response.headers["Cache-Control"] = "private, no-store"
-        return {"linked": auth.decrypt(await _store(request).openrouter_key_enc(user.id)) is not None}
+        return {"linked": await _openrouter_linked(request, user.id)}
 
     @linking.get("/openrouter/link")
     async def openrouter_link(next: str | None = None, user: User = Depends(current_user)) -> Response:
@@ -3132,32 +3149,30 @@ def create_app(
     # register. Do not "fix" it by including it.
     beta = APIRouter() if app.state.chat else app
 
-    @beta.get("/")
+    @beta.api_route("/", methods=["GET", "HEAD"])
     async def home(request: Request) -> HTMLResponse:
         """#4001: onboarding signed out, the account and projects signed in. Registered before
-        ``spa.mount_spa``, so with the chat off it wins over any SPA build. A refused session
-        (blocked, not allowed, not ready) gets its reason as a page, not the onboarding, so a
-        blocked patron is not sent round the sign-in again."""
+        ``spa.mount_spa``, so with the chat off it wins over any SPA build, for HEAD too. A
+        refused session (blocked, not allowed, not ready) gets its reason's wording, naming
+        the account, instead of the onboarding, so a blocked patron is not sent round the
+        sign-in again."""
         try:
             user = await current_user(request)
+        except SessionRefused as exc:
+            _status, _detail, page = ADMISSION_REFUSALS[exc.reason]
+            message = page.format(who=f"The FamilySearch account {exc.email}", fail="Reload this page in a minute.")
+            return HTMLResponse(pages.refused_page(message, temporary=exc.reason == "not_ready"),
+                                status_code=exc.status_code)
         except HTTPException as exc:
             if exc.status_code != 401:
-                # current_user raises the ADMISSION_REFUSALS detail; show that reason's patron
-                # wording, as the sign-in callback does, with a way to sign out.
-                page = next((p for _s, d, p in ADMISSION_REFUSALS.values() if d == exc.detail), None)
-                message = (page.format(who="This account", fail="Try again in a minute.") if page
-                           else f"{exc.detail}.")
-                return HTMLResponse(pages.refused_page(message), status_code=exc.status_code)
+                raise
             sign_in = ("familysearch" if auth.familysearch_configured()
                        else "dev" if auth.dev_login_enabled() else None)
             return HTMLResponse(pages.signed_out_page(public_url=auth.public_url(), sign_in=sign_in))
-        store = _store(request)
-        linked = None
-        if app.state.openrouter:
-            linked = auth.decrypt(await store.openrouter_key_enc(user.id)) is not None
+        linked = await _openrouter_linked(request, user.id) if app.state.openrouter else None
         return HTMLResponse(pages.signed_in_page(
             email=user.email, familysearch_id=user.familysearch_id, account_id=user.id,
-            deletion_code=auth.deletion_code(user.id), projects=await store.list_projects(user.id),
+            deletion_code=auth.deletion_code(user.id), projects=await _store(request).list_projects(user.id),
             openrouter_linked=linked,
         ))
 

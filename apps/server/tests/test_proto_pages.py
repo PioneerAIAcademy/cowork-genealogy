@@ -9,11 +9,13 @@ from __future__ import annotations
 import asyncio
 from urllib.parse import parse_qs, urlsplit
 
+import httpx
 import pytest
 
 from tests.test_proto_auth import _fake_fs
 from tests.test_proto_web import AUTH_ENV, USER_A, FakeStore, make_client
 from web import auth, pages
+from web.app import create_app
 
 UPLOAD = "upload/proj_0123456789abcdef"
 
@@ -53,14 +55,15 @@ async def test_signed_out_is_the_onboarding_and_holds_no_account_data(monkeypatc
     assert r.headers["cache-control"] == "private, no-store" and "cookie" in r.headers["vary"].lower()
 
 
-def test_connector_link_names_the_server_and_points_at_this_tiers_mcp():
+def test_connector_link_names_the_server_and_points_at_the_hosts_mcp():
+    """The edge serves /mcp at the host root, so a PUBLIC_URL path prefix is dropped."""
     url = pages.connector_link("https://beta.example/gr/")
     parts = urlsplit(url)
     assert (parts.scheme, parts.netloc, parts.path) == ("https", "claude.ai", "/customize/connectors")
     assert parse_qs(parts.query) == {
         "modal": ["add-custom-connector"],
         "connectorName": ["Genealogy Research"],
-        "connectorUrl": ["https://beta.example/gr/mcp"],
+        "connectorUrl": ["https://beta.example/mcp"],
     }
 
 
@@ -89,7 +92,8 @@ async def test_signed_in_names_the_account_and_lists_the_callers_projects():
     store.owners["proj_other"] = "usr_b"
     r = await _home(store)
     assert r.status_code == 200
-    assert USER_A.email in r.text and 'say "continue"' in r.text
+    assert f"Signed in as {USER_A.email}." in r.text and 'say "continue"' in r.text
+    assert "FamilySearch account" not in r.text, "USER_A has no FamilySearch id (a dev-login user)"
     assert USER_A.id in r.text and auth.deletion_code(USER_A.id) in r.text
     assert "Ugo Stella" in r.text and 'href="api/projects/proj_title/download"' in r.text
     assert "Untitled project" in r.text and 'href="api/projects/proj_bare/download"' in r.text
@@ -139,7 +143,7 @@ async def test_a_refused_session_gets_no_account_page(how):
         r = await c.get("/")
     assert auth.deletion_code(USER_A.id) not in r.text
     if how == "blocked":
-        assert r.status_code == 403 and "This account is blocked. Ask the administrator." in r.text
+        assert r.status_code == 403 and "The FamilySearch account a@example.org is blocked. Ask the administrator." in r.text
         assert "auth/logout" in r.text, "a way out: sign out and use another account"
     else:
         assert r.status_code == 200 and "Get started" in r.text
@@ -154,8 +158,32 @@ async def test_an_account_off_the_allowlist_is_told_what_to_do(monkeypatch):
     store.allowed = set()
     r = await _home(store)
     assert r.status_code == 403
-    assert "This account is not on the allowlist. Ask the administrator to add this exact address" in r.text
+    assert "The FamilySearch account a@example.org is not on the allowlist. Ask the administrator to add this exact address" in r.text
     assert auth.deletion_code(USER_A.id) not in r.text and "auth/logout" in r.text
+
+
+async def test_not_ready_is_a_wait_not_a_refusal(monkeypatch):
+    """The allowlist has not loaded: a 503 that says to wait, with no Sign out, since
+    signing out revokes every session for a condition that clears in seconds."""
+    monkeypatch.setenv("FAMILYSEARCH_WEB_ENABLED", "true")
+    monkeypatch.setenv("WEB_ORIGIN", "http://t")
+    monkeypatch.setenv("SESSION_SECRET", "s" * 32)
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 32)
+    application = create_app(FakeStore(), None, poll_s=0.0, ping_s=0.0)
+    application.state.startup = {"schema": "ok", "allowlist": "pending"}
+    cookies = {auth.COOKIE_NAME: auth.session_cookie_value(USER_A.id)}
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t",
+                                 cookies=cookies) as c:
+        r = await c.get("/")
+    assert r.status_code == 503 and "isn't ready yet" in r.text and "Reload this page in a minute." in r.text
+    assert "auth/logout" not in r.text and auth.deletion_code(USER_A.id) not in r.text
+
+
+async def test_a_familysearch_user_is_named_as_one():
+    store = FakeStore()
+    store.users[USER_A.id] = store.users[USER_A.id].__class__(USER_A.id, USER_A.email, familysearch_id="MMSW-0001")
+    r = await _home(store)
+    assert f"Signed in with the FamilySearch account {USER_A.email} (FamilySearch id" in r.text
 
 
 @pytest.mark.parametrize("path", ["/privacy", "/terms"])
@@ -207,6 +235,9 @@ async def test_chat_off_serves_the_page_over_an_spa_build(monkeypatch, tmp_path)
     monkeypatch.setenv("WEB_DIST_DIR", str(tmp_path))
     r = await _home(FakeStore(), user=None)
     assert r.status_code == 200 and "Get started" in r.text and "SPA BUILD" not in r.text
+    async with make_client(FakeStore(), None, user=None) as c:
+        head = await c.head("/")
+    assert head.status_code == 200 and "no-store" in head.headers["cache-control"], "HEAD / is ours too"
 
 
 def _fs_on(monkeypatch, origin: str) -> None:

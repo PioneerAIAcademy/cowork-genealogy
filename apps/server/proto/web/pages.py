@@ -20,7 +20,7 @@ from __future__ import annotations
 
 from html import escape
 from typing import Any, Literal
-from urllib.parse import quote
+from urllib.parse import quote, urlsplit
 
 CONNECTOR_NAME = "Genealogy Research"
 OPENROUTER_KEYS_URL = "https://openrouter.ai/settings/keys"
@@ -57,12 +57,15 @@ async function postAndReload(path, body) {
 
 
 def connector_link(public_url: str) -> str:
-    """claude.ai's prefilled add-connector link for this tier's ``/mcp`` (same host, plan
-    § Architecture). The name must stay "Genealogy Research": the agents list their tools
-    under that server name."""
+    """claude.ai's prefilled add-connector link for the tool server's ``/mcp``. The edge
+    serves ``/mcp`` at the host root (plan § Architecture; malachi ``nginx.conf``
+    ``location = /mcp``), so only PUBLIC_URL's scheme and host are kept, never a path prefix.
+    The name must stay "Genealogy Research": the agents list their tools under that name."""
+    parts = urlsplit(public_url)
+    mcp = f"{parts.scheme}://{parts.netloc}/mcp"
     return (
         "https://claude.ai/customize/connectors?modal=add-custom-connector"
-        f"&connectorName={quote(CONNECTOR_NAME)}&connectorUrl={quote(public_url.rstrip('/') + '/mcp', safe='')}"
+        f"&connectorName={quote(CONNECTOR_NAME)}&connectorUrl={quote(mcp, safe='')}"
     )
 
 
@@ -117,7 +120,10 @@ def signed_in_page(
 ) -> str:
     """The signed-in ``/``. ``openrouter_linked`` None means linking is off, and the page
     shows no OpenRouter section at all."""
-    who = escape(email) + (f" (FamilySearch id <code>{escape(familysearch_id)}</code>)" if familysearch_id else "")
+    # A user with no FamilySearch id (dev-login) is not shown as a FamilySearch account.
+    who = (f"Signed in with the FamilySearch account {escape(email)} "
+           f"(FamilySearch id <code>{escape(familysearch_id)}</code>)." if familysearch_id
+           else f"Signed in as {escape(email)}.")
     if projects:
         items = []
         for p in projects:
@@ -131,7 +137,7 @@ def signed_in_page(
     return (
         _HEAD.format(title="Genealogy Research beta")
         + f"""<h1>You're signed in</h1>
-<p>Signed in with the FamilySearch account {who}.</p>
+<p>{who}</p>
 <p><strong>Go back to Claude and say "continue".</strong></p>
 <p class="note">Not set up yet? Sign out to see the setup steps.</p>
 <h2>Your projects</h2>
@@ -147,10 +153,15 @@ Placeholder: the feedback address has not been supplied yet. Keep the deletion c
     )
 
 
-def refused_page(message: str) -> str:
-    """``/`` for a session the tier refuses (blocked, not on the allowlist, not ready):
-    the reason in plain text and a way out, never the account data. ``message`` is
-    escaped whole, so no caller can put markup in it."""
+def refused_page(message: str, *, temporary: bool = False) -> str:
+    """``/`` for a session the tier refuses: the reason in plain text, never the account
+    data. ``message`` is escaped whole, so no caller can put markup in it.
+
+    ``temporary`` (the allowlist has not loaded yet) offers no Sign out: signing out
+    revokes every one of the user's sessions, a poor trade for a wait of seconds."""
+    if temporary:
+        return (_HEAD.format(title="Genealogy Research beta")
+                + f"<h1>The beta isn't ready yet</h1>\n<p>{escape(message)}</p>\n" + _FOOT)
     return (
         _HEAD.format(title="Genealogy Research beta")
         + f"""<h1>You can't use the beta with this account</h1>
