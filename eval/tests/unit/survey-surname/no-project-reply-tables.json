@@ -1,0 +1,36 @@
+{
+  "test": {
+    "id": "ut_survey_surname_d6",
+    "skill": "survey-surname",
+    "name": "No project: the tables come back in the reply, with the town and the household",
+    "type": "positive",
+    "description": "Issue #4130's survey: every Tollman household in Clinton County, New York, in the 1850 census, asked with no research project. The agent runs the same searches with no projectPath, logs nothing, and returns the tables in its reply. Each row names the place as indexed (Au Sable, not just Clinton), and Joseph Tollman's household is one row with him as head and his three household members in it.",
+    "tags": [
+      "survey",
+      "post-1850",
+      "no-project",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "List every Tollman household in Clinton County, New York, in the 1850 census. There is no research project.\n\nsurname: Tollman\nplace: Clinton County, New York\nyearSpan: 1850-1850"
+  },
+  "mcp_fixtures": [
+    "place-search-clinton-county-ny",
+    "record-search-tollman-clinton-1850-census"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the folder holds no research project. The delegation carries no projectPath.",
+    "With no project the agent must still survey: place_search for Clinton County, New York, then record_search for 1850 only, with recordCountry United States, recordSubdivision New York, residencePlace for Clinton County, and NO projectPath on any call.",
+    "It must make no research_log_append call and write nothing. It must not hand back to init-project or ask for a FamilySearch person ID: a surname survey needs no project.",
+    "totalMatches is 6 (under the 600 threshold), so one page holds every result.",
+    "Joseph Tollman (Principal, b. 1798, Vermont), Polly, Harvey and Lucinda Tollman share recordArk ark:/61903/1:2:XTLM-AS1850: one household row, Joseph as head with his own birth year and birthplace beside his name, the other three in its Members column with given name, birth year and birthplace. Nathan Tollman (Principal, b. 1824, New York) and Abigail Tollman (b. 1826, New York) share ark:/61903/1:2:XTLM-PE1850: a second row, Abigail's details in Members.",
+    "The place column must carry the town as indexed: 'Au Sable, Clinton' for Joseph's household and 'Peru, Clinton' for Nathan's. A column reading only 'Clinton' for both is the defect this test exists for.",
+    "The table columns are Census year, Place as indexed, Head of household, Members, Record ARK, Ruled out, and the table ends with the sentence 'Censuses before 1880 have no relationship column: the first person listed in a dwelling is shown as head, and relationships are not stated.'",
+    "Grade Table structure from the tables in the agent's reply, after the --- line, between the two summary paragraphs. With no project there is no log entry to grade, and returning the table in the reply is correct here.",
+    "The agent's return should end with the summary_for_user block."
+  ]
+}

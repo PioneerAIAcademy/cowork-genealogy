@@ -1,0 +1,621 @@
+{
+  "log_id": "log_003",
+  "tool": "record_search",
+  "retrieved": "2026-10-07T04:13:34.363Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "projectPath": "C:\\Users\\User\\Documents\\GenealogyProjects\\p2593-gaetjen",
+      "subjectId": "I1",
+      "surname": "G*tj*n",
+      "givenName": "Hermann",
+      "collectionId": "1417683",
+      "residencePlace": "California, United States"
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 4999,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:M6PF-M84",
+        "events": [
+          {
+            "type": "Census",
+            "date": "1880",
+            "place": "San Francisco, California, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Occupation",
+            "value": "Works In Fruit Cannery"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Herman Goetjen",
+        "score": 4.2028804,
+        "confidence": 4,
+        "sex": "Male",
+        "birthDate": "1862",
+        "birthPlace": "California, United States",
+        "collectionId": "1417683",
+        "collectionTitle": "United States, Census, 1880",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "recordTitle": "Household of Nicholas Goetjen, \"United States, Census, 1880\"",
+        "recordArk": "ark:/61903/1:2:MHFN-1ZZ",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_334935337",
+              "ark": "ark:/61903/1:1:M6PF-M84",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Goetjen",
+                  "given": "Herman"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1862",
+                  "standard_date": "1862",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                },
+                {
+                  "type": "Occupation",
+                  "value": "Works In Fruit Cannery"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Single"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334935335",
+              "ark": "ark:/61903/1:1:M6PF-M87",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Goetjen",
+                  "given": "Nicholas"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1828",
+                  "standard_date": "1828",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334935336",
+              "ark": "ark:/61903/1:1:M6PF-M8W",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Goetjen",
+                  "given": "Meta"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1837",
+                  "standard_date": "1837",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334935338",
+              "ark": "ark:/61903/1:1:M6PF-M8H",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Goetjen",
+                  "given": "Edward"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1864",
+                  "standard_date": "1864",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334935339",
+              "ark": "ark:/61903/1:1:M6PF-M8C",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Goetjen",
+                  "given": "Adolph"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1866",
+                  "standard_date": "1866",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334935340",
+              "ark": "ark:/61903/1:1:M6PF-M8Z",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Goetjen",
+                  "given": "Louis"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "1871",
+                  "standard_date": "1871",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            },
+            {
+              "id": "p_334935341",
+              "ark": "ark:/61903/1:1:M6PF-M88",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Goetjen",
+                  "given": "Emma"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1872",
+                  "standard_date": "1872",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_334935342",
+              "ark": "ark:/61903/1:1:M6PF-M8D",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Goetjen",
+                  "given": "Alfred"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1875",
+                  "standard_date": "1875",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_334935343",
+              "ark": "ark:/61903/1:1:M6PF-M86",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Goetjen",
+                  "given": "William"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1879",
+                  "standard_date": "1879",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_334935344",
+              "ark": "ark:/61903/1:1:M6PF-M8X",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Goetjen",
+                  "given": "Frank"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1877",
+                  "standard_date": "1877",
+                  "place": "California, United States",
+                  "standard_place": "California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            },
+            {
+              "id": "p_334935345",
+              "ark": "ark:/61903/1:1:M6PF-M8F",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Benning",
+                  "given": "Henrietta"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1880",
+                  "standard_date": "1880",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da2"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "type": "ParentChild",
+              "parent": "p_334935336",
+              "child": "p_334935340"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935335",
+              "child": "p_334935340"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935335",
+              "child": "p_334935343"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935336",
+              "child": "p_334935343"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935335",
+              "child": "p_334935341"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935335",
+              "child": "p_334935339"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935335",
+              "child": "p_334935342"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935335",
+              "child": "p_334935338"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935335",
+              "child": "p_334935344"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935335",
+              "child": "p_334935337"
+            },
+            {
+              "type": "Couple",
+              "person1": "p_334935335",
+              "person2": "p_334935336"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935336",
+              "child": "p_334935337"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935336",
+              "child": "p_334935341"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935336",
+              "child": "p_334935339"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935336",
+              "child": "p_334935342"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935336",
+              "child": "p_334935344"
+            },
+            {
+              "type": "ParentChild",
+              "parent": "p_334935336",
+              "child": "p_334935338"
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_207008410",
+              "resource_type": "Record",
+              "title": "Household of Nicholas Goetjen, \"United States, Census, 1880\"",
+              "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M6PF-M87 : Wed Sep 09 14:02:38 UTC 2026), Entry for Nicholas Goetjen and Meta Goetjen, 1880.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:MHFN-1ZZ",
+              "coverage": {
+                "place_rep_id": "3853449",
+                "date_range": "1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_c_1417683",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1880",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1880/1880",
+                "record_type": "Census"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YYY-9W1Q",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1880",
+                "record_type": "CensusIndex"
+              }
+            },
+            {
+              "id": "sd_da2",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9YYY-9WT8"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_334935337",
+              "resource_type": "Person",
+              "url": "#p_334935337"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "327",
+              "name": "California, United States",
+              "latitude": 37.25,
+              "longitude": -119.75
+            },
+            {
+              "id": "3853449",
+              "name": "San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            }
+          ]
+        },
+        "primaryId": "p_334935337",
+        "role": "Principal"
+      }
+    ]
+  }
+}
