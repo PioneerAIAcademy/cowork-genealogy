@@ -1,5 +1,5 @@
 {
-  "run_log": "v49_2026-11-09_19-42-37.json",
+  "run_log": "v49.json",
   "annotator": "praisenato@gmail.com",
   "corrections": [
     {
@@ -149,14 +149,6 @@
     {
       "test_id": "ut_research_9k4",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": null
-    },
-    {
-      "test_id": "ut_research_9k4",
-      "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
@@ -193,6 +185,14 @@
       "llm_score": 2,
       "corrected_score": 2,
       "comment": "c"
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "\"Routing is right; the reply says the hypothesis was 'handed off to be registered', and the judge marks that down because the stub saves nothing."
     }
   ]
 }
