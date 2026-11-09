@@ -56,7 +56,7 @@ import {
   marriageJurisdictionCandidates,
 } from "../utils/marriage-jurisdictions.js";
 import { searchFoundNobody, surnameVariantHints } from "../utils/surname-variant-hints.js";
-import { rankSearchMatches } from "./rank-search-matches.js";
+import { rankSearchMatches, buildRelativeTermNote, PAGE_DEEPER_ADVICE } from "./rank-search-matches.js";
 import { rejectedTokenMessage } from "../auth/config.js";
 import { mapWithConcurrency, placeSearchNames } from "../utils/place-resolver.js";
 
@@ -987,6 +987,7 @@ class SearchSessionRejected extends Error {}
 async function fetchSearchPage(
   url: string,
   principal: Principal,
+  timeoutMs: number = SEARCH_TIMEOUT_MS,
 ): Promise<FSSearchResponse> {
   // #1316 / #2054: fsFetch wraps fetchWithRetry with automatic retry
   // of transient failures (429/5xx, network errors, timeouts) and handles
@@ -1003,7 +1004,7 @@ async function fetchSearchPage(
           "User-Agent": BROWSER_USER_AGENT,
         },
       },
-      SEARCH_TIMEOUT_MS,
+      timeoutMs,
     );
   } catch (err) {
     // A local refusal (the shared budget, or this user's 429 pause) is not a
@@ -1085,6 +1086,8 @@ const RANKED_POOL_MAX = 300;
  *  is not run (reported as an error), so the call stays inside Cowork's 60s
  *  abort with ranking still to come. The typed search always runs. */
 const EXPANSION_DEADLINE_MS = 30_000;
+/** Below this much time left, a further name's next request is not started. */
+const MIN_REQUEST_MS = 3_000;
 /** Largest page FamilySearch serves, and the tool's own `count` maximum. */
 const UPSTREAM_PAGE_MAX = 100;
 const EXPANSION_CONCURRENCY = 3;
@@ -1143,13 +1146,27 @@ async function readExpandedSearch(
   places: PlaceCombo,
   depth: number,
   principal: Principal,
+  deadline?: number,
 ): Promise<ExpandedSearch> {
   const entries: FSSearchEntry[] = [];
   let totalMatches = 0;
   let more = false;
   for (let offset = 0; offset < depth; ) {
     const count = Math.min(UPSTREAM_PAGE_MAX, depth - offset);
-    const data = await fetchSearchPage(buildSearchUrl({ ...input, ...places, offset, count }), principal);
+    // A further name gets only the time left before the deadline, checked
+    // before every request and given as that request's timeout, so a slow
+    // FamilySearch cannot carry the fan-out past it.
+    let timeoutMs = SEARCH_TIMEOUT_MS;
+    if (deadline !== undefined) {
+      const left = deadline - Date.now();
+      if (left < MIN_REQUEST_MS) {
+        const error = "not searched: the time limit for this call ran out";
+        if (entries.length === 0) return { places, entries, totalMatches: 0, more: false, error };
+        return { places, entries, totalMatches, more: true, error: `${error} after ${entries.length} rows` };
+      }
+      timeoutMs = Math.min(SEARCH_TIMEOUT_MS, left);
+    }
+    const data = await fetchSearchPage(buildSearchUrl({ ...input, ...places, offset, count }), principal, timeoutMs);
     const page = data.entries ?? [];
     entries.push(...page);
     totalMatches = data.results ?? 0;
@@ -1253,7 +1270,10 @@ export async function recordSearchTool(
           return notRun(places, "not searched: the time limit for this call ran out");
         }
         try {
-          return await readExpandedSearch(paired, places, depth, principal);
+          return await readExpandedSearch(
+            paired, places, depth, principal,
+            index === 0 ? undefined : started + EXPANSION_DEADLINE_MS,
+          );
         } catch (err) {
           // The typed search (index 0) fails the call exactly as today; a further
           // name's failure is reported and the merge goes on, unless it is the
@@ -1312,8 +1332,12 @@ export async function recordSearchTool(
 
   // Standardize places across the whole response in one pass (dedup spans all
   // entries; the resolver caches identical strings). Best-effort — never throws.
+  // Under an unranked expansion only the page is shown or staged, and the
+  // standardizer resolves a capped number of distinct places, so it must not
+  // spend them on merged rows nobody sees.
+  const shownRows = expandedPool && !rankedPool ? results.slice(offset, offset + count) : results;
   await standardizePlaces(
-    results.flatMap((r) => (r.gedcomx ? collectFacts(r.gedcomx) : [])),
+    shownRows.flatMap((r) => (r.gedcomx ? collectFacts(r.gedcomx) : [])),
   );
 
   // The staged-search backlog, read BEFORE this call stages its own response — a
@@ -1481,6 +1505,23 @@ export async function recordSearchTool(
   // and the cut runs whether or not ranking did, so `results` never exceeds
   // `count` (issue #4067).
   if (expandedPool) out.results = out.results.slice(offset, offset + count);
+  // A ranked expansion cannot page (offset is refused above), and its ranking
+  // summary was computed over the whole pool: make both describe the page.
+  if (expandedPool && rankedPool) {
+    out.hasMore = false;
+    if (out.ranked) {
+      out.ranked.returnedCount = out.results.length;
+      const note = buildRelativeTermNote(out.results);
+      if (note) out.ranked.relativeTermNote = note;
+      else delete out.ranked.relativeTermNote;
+      if (out.ranked.diagnostic) {
+        out.ranked.diagnostic = out.ranked.diagnostic.replace(
+          PAGE_DEEPER_ADVICE,
+          "raise `count` (up to 100) or narrow the query",
+        );
+      }
+    }
+  }
 
   // A nil marriage search is a prompt, not a finding. Same reasoning as the
   // ranking contract above: the rule "when a marriage search comes back empty,

@@ -358,8 +358,9 @@ cases above, and done in the tool it needs no agent rule.
   only as "Terni, Umbria, Italy").
 - **When it does not expand.** A country-only place, a place whose name matches
   more than one FamilySearch place (the resolver never picks among them), a
-  place with one name, and any failed lookup all search the typed text alone, as
-  before. FamilySearch search takes place text, not a place ID, so an expanded
+  place with one name (however the typed text spells it; under `*PlaceExact` its
+  parent is still added), and any failed lookup all search the typed text alone,
+  as before. FamilySearch search takes place text, not a place ID, so an expanded
   name shared by another town ("Bela Vista") can still bring that town's records
   in. They are candidates like any other hit, judged by ranking and the agent.
 - **Several place fields** search every combination of their names, at most 12
@@ -370,9 +371,12 @@ cases above, and done in the tool it needs no agent rule.
   typed search failing fails the call as before. But when every name that was
   searched found nothing and some name could not be searched, the call fails as
   a transient error rather than reporting 0: the unsearched name could hold the
-  record, and a nil feeds a negative log entry. A further name not started within
-  30 seconds of the first search is not run (reported as an error), so the call
-  stays inside Cowork's 60-second abort. Every place lookup goes through
+  record, and a nil feeds a negative log entry. A further name's searches stop at
+  30 seconds after the first search began: no request starts with less than 3
+  seconds left, and each one is given only the time left as its timeout (its
+  retries can still run a little past). What a stopped name read is kept and the
+  stop is reported as its error. This keeps the fan-out well inside Cowork's
+  60-second abort with ranking still to come; nothing bounds a slow ranking. Every place lookup goes through
   the resolver's in-process caches, so a repeated place costs no lookup.
 - **Cost.** A place with N names is N searches (Rieti: 6). Measured live
   2026-11-09: the Rieti, Orvieto and Denver calls below took 2 to 3 seconds
@@ -504,13 +508,21 @@ never the individual searches. Each search is read from offset 0 to
 so unranked pages concatenate to it with no gap and no repeat. A ranked expansion
 (one with a `subjectId`) refuses `offset` above 0, because each page would re-rank
 a deeper pool and could skip a record that outranks the rows already shown; raise
-`count` instead. Because each page
+`count` instead. So its `hasMore` is always false, and its `ranked` summary is
+rewritten to describe the page shown: `returnedCount` and `relativeTermNote` count
+the rows shown, and the no-match advice says to raise `count` rather than page
+deeper. Because each page
 re-reads from 0, a deep page costs more requests: when the searches times the
 pages per search would pass 24 requests, the call is refused with an error that
 says to narrow the query. It is refused rather than narrowed to the typed place,
 because switching from the merged list to another ordering mid-paging would skip
-every record between the two. `survey-surname` (`count: 100`, stopping at 600
-matches) stays inside that for a place with up to 4 names.
+every record between the two. `survey-surname` (`count: 100`) stops when
+`totalMatches` passes 600, but under an expansion that is the largest single
+search's total while it pages the merged list, which can be longer: for a place
+with 4 names the page at offset 600 needs 28 requests and is refused partway
+through the survey, with the error telling it to narrow the query. The US
+places counted had 1 to 3 names (Shelby 1, Denver 2, Boston 3); with 3 the
+refusal comes once the merged list passes 800 rows, with 2 once it passes 1200.
 
 ### The response is re-ordered; the staged sidecar is not
 
@@ -546,7 +558,9 @@ pool, in interleave order, because the ranker scores what is staged; the respons
 is the best `count` rows of the ranked pool. So there an unscored row, sorting
 last, can fall past the page; it stays in the sidecar. The sidecar's `returned`
 is the page shown, which is what `research_log_append` fills `resultsExamined`
-from. Without a subject the sidecar holds the page shown, as before.
+from. Without a subject the sidecar holds the page shown, as before, and only
+the page is standardized: the standardizer resolves at most 100 distinct places
+per call, and must not spend them on merged rows nobody sees.
 
 | `offset` | number | Pagination offset. Default 0. The combined value `offset + count` must be at most 4999. |
 

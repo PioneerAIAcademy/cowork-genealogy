@@ -2607,7 +2607,7 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
               principal: true,
               id: `p_${id}`,
               display: { name: `${given} Marchetti`, gender: "Female", deathDate: "1913", role: "Principal" },
-              facts: [{ type: "http://gedcomx.org/Death", date: { original: "1913" }, place: { original: "Rieti" } }],
+              facts: [{ type: "http://gedcomx.org/Death", date: { original: "1913" }, place: { original: `Rieti ${id}` } }],
               identifiers: { "http://gedcomx.org/Persistent": [`https://familysearch.org/ark:/61903/1:1:${id}`] },
             },
           ],
@@ -2757,6 +2757,57 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
     expect(page1.hasMore).toBe(true);
     expect(page2.offset).toBe(10);
     expect(page3.hasMore).toBe(false);
+  });
+
+  it("stages exactly the page shown on an unranked expansion, starting at the merged offset", async () => {
+    byPlace[PERIOD] = ids("PER", 15);
+    byPlace[MODERN] = ids("MOD", 15);
+    const dir = await mkdtemp(join(tmpdir(), "record-search-expand-page-"));
+    try {
+      const all = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 30 }, LOCAL);
+      const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 10, offset: 10, projectPath: dir }, LOCAL);
+      const sidecar = JSON.parse(await readFile(join(dir, out.staged!.resultsRef), "utf-8"));
+      expect(sidecar.payload.results.map((r: { recordId: string }) => r.recordId)).toEqual(
+        all.results.slice(10, 20).map((r) => r.recordId),
+      );
+      expect(sidecar.payload.returned).toBe(10);
+    } finally {
+      await rm(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("standardizes only the rows shown on an unranked expansion", async () => {
+    byPlace[PERIOD] = ids("PER", 15);
+    byPlace[MODERN] = ids("MOD", 15);
+    const resolve = vi.mocked((await import("../../src/utils/place-resolver.js")).resolveStandardPlace);
+    resolve.mockClear();
+    const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 5, offset: 5 }, LOCAL);
+    const asked = new Set(resolve.mock.calls.map((c) => c[0]));
+    expect(asked).toEqual(new Set(out.results.map((r) => `Rieti ${r.recordId.split(":").pop()}`)));
+  });
+
+  it("stops a further name's reads at the time limit and gives each request only the time left", async () => {
+    byPlace[PERIOD] = [TARGET];
+    byPlace[MODERN] = ids("MOD", 150);
+    let now = 1_000_000;
+    // The typed search and the first page of the modern one run at t=0; the
+    // clock then jumps past the deadline before the modern search's second page.
+    const clock = vi.spyOn(Date, "now").mockImplementation(() => now);
+    const base = mockFetch.getMockImplementation()!;
+    mockFetch.mockImplementation(async (input: string | URL, init?: RequestInit) => {
+      const res = await base(input, init);
+      if (String(input).includes("personas") && String(input).includes(encodeURIComponent(MODERN))) now += 29_000;
+      return res;
+    });
+    try {
+      const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 100, offset: 50 }, LOCAL);
+      const modern = out.placeExpansion!.searches.find((s) => s.places.deathPlace === MODERN)!;
+      expect(modern.returned).toBe(100);
+      expect(modern.error).toMatch(/time limit for this call ran out after 100 rows/);
+      expect(searchUrls.filter((u) => u.searchParams.get("q.deathLikePlace") === MODERN)).toHaveLength(1);
+    } finally {
+      clock.mockRestore();
+    }
   });
 
   it("reads each search in pages of at most 100 when offset + count passes 100", async () => {
@@ -2962,6 +3013,22 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
       expect(out.results[0]!.recordId).toBe(`ark:/61903/1:1:${TARGET}`);
       const sidecar = JSON.parse(await readFile(join(dir, out.staged!.resultsRef), "utf-8"));
       expect(sidecar.payload.results).toHaveLength(300);
+    });
+
+    it("describes the page shown, not the pool, in the ranking summary", async () => {
+      byPlace[PERIOD] = ids("PER", 20);
+      byPlace[MODERN] = ids("MOD", 20);
+      const base = mockFetch.getMockImplementation()!;
+      mockFetch.mockImplementation(async (input: string | URL, init?: RequestInit) =>
+        String(input).includes("matchTwoExamples") ? matchResponse(0.001) : base(input, init));
+      const out = await recordSearchTool({ ...MARCHETTI, deathPlace: PERIOD, count: 10, projectPath: dir, subjectId: "I1" }, LOCAL);
+      expect(out.results).toHaveLength(10);
+      expect(out.ranked?.returnedCount).toBe(10);
+      expect(out.hasMore).toBe(false);
+      // Nobody scores above the floor here, so the no-match advice fires: it must
+      // not tell the agent to page with an offset the tool refuses.
+      expect(out.ranked?.diagnostic).toMatch(/raise `count` \(up to 100\) or narrow the query/);
+      expect(out.ranked?.diagnostic).not.toMatch(/page deeper/);
     });
 
     it("refuses offset on a ranked expansion, which could skip a record between pages", async () => {

@@ -169,6 +169,22 @@ describe("placeSearchNames", () => {
     expect(await placeSearchNames("Shelby, Ohio, United States", false)).toBeNull();
   });
 
+  it("returns null for a single-name place typed with another spelling", async () => {
+    mockSearchPlace.mockResolvedValue([entry("9", "P9", "Shelby, Ohio, United States")]);
+    mockGetPlaceReps.mockResolvedValue([rep("9", "Shelby, Ohio, United States")]);
+    expect(await placeSearchNames("Shelby, Ohio", false)).toBeNull();
+  });
+
+  it("still adds the exact parent to a single-name place", async () => {
+    mockSearchPlace.mockResolvedValue([entry("9", "P9", "Shelby, Ohio, United States")]);
+    mockGetPlaceReps.mockResolvedValue([rep("9", "Shelby, Ohio, United States")]);
+    mockGetPlaceById.mockImplementation(async (id: string) =>
+      id === "9"
+        ? ({ placeRepId: "9", placeId: "P9", fullName: "Shelby, Ohio, United States", name: "Shelby", type: "County", parentPlaceRepId: "8" } as Described)
+        : ({ placeRepId: "8", placeId: "P8", fullName: "Ohio, United States", name: "Ohio", type: "State" } as Described));
+    expect(await placeSearchNames("Shelby, Ohio, United States", true)).toEqual(["Shelby, Ohio, United States", "Ohio, United States"]);
+  });
+
   it("returns null, not a throw, when a lookup fails", async () => {
     mockSearchPlace.mockRejectedValue(new Error("FamilySearch API error: 503"));
     expect(await placeSearchNames(PERIOD, false)).toBeNull();

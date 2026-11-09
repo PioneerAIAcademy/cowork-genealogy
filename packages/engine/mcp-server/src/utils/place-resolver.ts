@@ -1694,6 +1694,8 @@ export async function placeSearchNames(
   if (resolution.kind !== "resolved") return null;
   const reps = await placeReps(resolution.placeId);
   if (reps.length === 0) return null;
+  // One name and no exact parent to add: searched as typed, whatever spelling.
+  if (reps.length < 2 && !exact) return null;
 
   const dated = reps.map((rep) => ({ rep, years: repYears(rep.dateRange) }));
   const modern = dated

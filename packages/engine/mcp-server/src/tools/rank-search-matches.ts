@@ -21,6 +21,10 @@ import type {
 } from "../types/rank-search-matches.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 
+/** The no-match advice. Exported so record_search can swap it on a place
+ *  expansion, which cannot page with offset. */
+export const PAGE_DEEPER_ADVICE = "page deeper (offset) or narrow the query";
+
 /** FamilySearch's match-score fan-out concurrency (deliberately higher than
  *  same_person's conservative PAIR_CONCURRENCY=5; confirmed with the
  *  matchTwoExamples dev). */
@@ -221,7 +225,7 @@ export async function rankSearchMatches(
       `Subject '${subjectId}' is scoreable (${subject.discriminatingFacts} ` +
       `dated/placed fact(s)), but no candidate in this pool scored above ` +
       `${realNegative}. Treat that as a real negative for this query — ` +
-      `page deeper (offset) or narrow the query; do not hand-triage the stubs.`;
+      `${PAGE_DEEPER_ADVICE}; do not hand-triage the stubs.`;
   } else if (noSignal) {
     // The candidates that went unscored might hold the match: no negative yet.
     out.diagnostic =
@@ -844,7 +848,9 @@ export async function buildSubjectDoc(
  * Counts only `absent`, never `unknown`: "we could not tell" is not a finding
  * to warn about, and warning on it would train the caller to ignore the note.
  */
-function buildRelativeTermNote(matches: RankedMatch[]): string | undefined {
+export function buildRelativeTermNote(
+  matches: ReadonlyArray<Pick<RankedMatch, "relativeTerms">>,
+): string | undefined {
   const absentByPrefix = new Map<string, number>();
   for (const m of matches) {
     for (const [prefix, finding] of Object.entries(m.relativeTerms ?? {})) {
