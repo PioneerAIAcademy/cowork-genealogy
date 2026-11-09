@@ -188,4 +188,5 @@ plain prose with **no label, heading or field name**:
 2. One sentence: what happens next, defining "objective" and "research
    question" as Step 4 says — never which step, skill or tool does it.
 
-The caller prints everything after that `---` verbatim and nothing above it.
+The caller prints everything after that `---` verbatim and nothing above it,
+except that a bounded first turn leaves out the sentence on what happens next.

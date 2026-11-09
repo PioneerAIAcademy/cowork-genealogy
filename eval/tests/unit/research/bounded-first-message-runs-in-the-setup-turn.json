@@ -21,8 +21,8 @@
   ],
   "judge_context": [
     "A bounded first message (finding a record) with a FamilySearch ID and no project. The router creates the project with init-project, which runs for real here, and then runs the record search in the SAME turn: no question-selection, locality-guide or research-plan first (issue #2813, feedback #4237).",
-    "The hand-offs, the absence of a step denial, and the closing \"Continue with running the searches?\" line are checked deterministically by test_bounded_first_message_runs_its_deliverable_after_init_project. Do not re-grade them.",
-    "search-records is stubbed with a canned report that found nothing new. Grade the reply on relaying that honestly and on relaying only the first paragraph of init-project's report (that the project was made), not its sentence about a first research question.",
+    "The reply must end on a \"Continue with …?\" offer; which step it offers is the router's call, and the offered step is not one the turn should have run. It must leave out init-project's sentence about a first research question. Both, with the hand-offs, the tree id handed as the search subject and the absence of a step denial, are checked deterministically by test_bounded_first_message_runs_its_deliverable_after_init_project. Do not re-grade them.",
+    "search-records is stubbed: the transcript shows no record_search calls because the stub returned a canned report that found nothing new, and relaying that report as the searches done is correct. Grade the reply on relaying that honestly and on saying the project was made. Mark it down for naming any site, archive or record set (Ancestry, newspapers) that no tool returned.",
     "Do not mark the reply down for not writing a research question, a plan or a locality survey: on a bounded ask those are the failure this test exists to catch."
   ],
   "execution": {

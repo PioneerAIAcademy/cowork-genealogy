@@ -296,7 +296,8 @@ def deny_reason(candidate: str, mode: str = "step", steps: list[str] | None = No
     taken = [s for s in (bare_name(s) for s in (steps or [])) if s and s != ROUTER]
     done = "proof-conclusion" in taken
     key = "wrap-up" if mode == "wrapup" and not done else (home_group(name) or name)
-    if mode != "wrapup" and name == "record-structurer" and taken[:1] == ["evaluate-search-results"]:
+    if mode != "wrapup" and name == "record-structurer" \
+            and opening_step(taken) == "evaluate-search-results":
         key = "extract-matches"
     return _DENY_REASON.format(label=STEP_LABELS.get(key, "the next step"))
 
@@ -709,8 +710,9 @@ class StepGate:
 
     @property
     def first_step(self) -> str | None:
-        """What `turns.step` stores: the step this turn opened with."""
-        return self.steps[0] if self.steps else None
+        """What `turns.step` stores: the step that fixed the turn's group, or
+        init-project while it has run alone."""
+        return self._b.opening_step(self.steps) or (self.steps[0] if self.steps else None)
 
     def check(self, tool_name: str, tool_input: Any, *, subagent: bool):
         """`(decision, reason)` to stop this call, or None to let it through.

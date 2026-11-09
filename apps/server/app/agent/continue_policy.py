@@ -56,10 +56,9 @@ TERMINAL_MCP_UNAVAILABLE = "mcp_unavailable"
 # in the deleted research_delivered guidance (step mode phase 2) and moved here rather
 # than going with it.
 NO_PROJECT_NOTE = (
-    "While no project exists yet (`project_context` returns `no_project`), a request "
-    "about a person goes through the research skill, which sets up the project first, "
-    "not a single lookup. Whether it is one ask or a research job is the research "
-    "skill's decision."
+    "While no project exists yet (`project_context` returns `no_project`), a request to "
+    "research a person is not a single lookup: follow the research skill, which sets up "
+    "the project first."
 )
 
 

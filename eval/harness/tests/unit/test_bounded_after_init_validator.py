@@ -23,25 +23,31 @@ from test_research import (  # noqa: E402
 )
 
 TEST = {"skill": "research", "tags": ["routing", "routes-to:init-project", "bounded-after-init"]}
-OFFER = "Nothing new turned up for Patrick Flynn.\n\nContinue with `running the searches`?"
+OFFER = "Nothing new turned up for Patrick Flynn.\n\nContinue with `setting up the project`?"
 DENIAL = (
     'Step complete. Give the researcher your report on the step that just finished, '
     'end with "Continue with running the searches?", and end your turn.'
 )
+SUBJECT = '{"subjectId": "I1", "names": ["Patrick Flynn"]}'
+AFTER = {
+    "research_json": {"project": {"subject_person_ids": ["I1"]}},
+    "tree_gedcomx_json": {"persons": [{"id": "I1"}]},
+}
 
 
-def _spawn(name):
-    return {"tool": "Agent", "args": {"subagent_type": name, "prompt": "x"}}
+def _spawn(name, subject=SUBJECT):
+    return {"tool": "Agent", "args": {"subagent_type": name, "prompt": f"projectPath: /p\nsubject: {subject}"}}
 
 
-def _run(names, *, returns=None, text=OFFER, test=TEST):
+def _run(names, *, returns=None, text=OFFER, test=TEST, after=AFTER, subject=SUBJECT):
     validator(
         skills_invoked=["research"],
-        builtin_tool_calls=[_spawn(n) for n in names],
+        builtin_tool_calls=[_spawn(n, subject) for n in names],
         agent_returns=returns if returns is not None else [
             {"subagent_type": n, "text": f"{n} report"} for n in names
         ],
         text_response=text,
+        after_state=after,
         test=test,
     )
 
@@ -55,14 +61,16 @@ def test_repeats_of_the_search_and_the_url_on_the_offer_line_pass():
          text=OFFER + " https://example.test/p/1")
 
 
-def test_a_hint_review_is_a_record_step_too():
-    _run(["init-project", "search-hints"],
-         text="Two hints are waiting.\n\nContinue with `running the searches`?")
+def test_a_hint_review_fails():
+    """A hint review stops for the researcher's verdict and writes no offer, so it
+    cannot pass this test's shape; a hint verdict is its own bounded ask."""
+    with pytest.raises(AssertionError, match="got \\['init-project', 'search-hints'\\]"):
+        _run(["init-project", "search-hints"])
 
 
 def test_the_next_offer_is_the_routers_call():
     _run(["init-project", "search-records"],
-         text="Nothing new turned up.\n\nContinue with `planning the searches`?")
+         text="Nothing new turned up.\n\nContinue with `running the searches`?")
 
 
 def test_two_record_steps_in_the_turn_fail():
@@ -71,8 +79,16 @@ def test_two_record_steps_in_the_turn_fail():
 
 
 def test_question_selection_after_init_project_fails():
-    with pytest.raises(AssertionError, match="got \\['init-project', 'question-selection'"):
-        _run(["init-project", "question-selection", "locality-guide"])
+    """The #4237 shape main produced, exactly: two hand-offs, so only the
+    record-step clause can catch it."""
+    with pytest.raises(AssertionError, match="got \\['init-project', 'question-selection'\\]"):
+        _run(["init-project", "question-selection"],
+             text="Project made.\n\nContinue with `planning the searches`?")
+
+
+def test_a_search_with_no_init_project_before_it_fails():
+    with pytest.raises(AssertionError, match="got \\['question-selection', 'search-records'\\]"):
+        _run(["question-selection", "search-records"])
 
 
 def test_init_project_alone_offering_setup_fails():
@@ -85,12 +101,29 @@ def test_a_plan_after_the_search_fails():
         _run(["init-project", "search-records", "research-plan"])
 
 
+def test_a_search_after_init_project_failed_fails():
+    with pytest.raises(AssertionError, match="made no project"):
+        _run(["init-project", "search-records"], after={"research_json": None})
+
+
+def test_the_familysearch_id_as_the_subject_fails():
+    with pytest.raises(AssertionError, match="'LZNY-BRF' is not a person in the tree"):
+        _run(["init-project", "search-records"],
+             subject='{"subjectId": "LZNY-BRF", "names": ["Patrick Flynn"]}')
+
+
 def test_a_search_the_gate_denied_fails():
     with pytest.raises(AssertionError, match="denied \\['search-records'\\]"):
         _run(["init-project", "search-records"], returns=[
             {"subagent_type": "init-project", "text": "init-project report"},
             {"subagent_type": "search-records", "text": DENIAL, "is_error": True},
         ])
+
+
+def test_relaying_the_next_step_sentence_fails():
+    with pytest.raises(AssertionError, match="next-step sentence"):
+        _run(["init-project", "search-records"],
+             text="The next step is the first research question: the single fact we go after first.\n\n" + OFFER)
 
 
 def test_no_offer_line_fails():

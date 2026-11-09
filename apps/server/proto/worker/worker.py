@@ -1134,7 +1134,6 @@ def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
 # The one value a later write replaces is the boundary's `UNGROUPED_OPENER`: the step
 # after it fixes the turn's group, so it is what a redelivery must seed from.
 TURN_STEP_READ_SQL = "SELECT step, mode FROM turns WHERE turn_id = %s"
-UNGROUPED_OPENER = "init-project"
 TURN_STEP_WRITE_SQL = (
     "UPDATE turns SET step = CASE WHEN step IS NULL OR step = %s THEN %s ELSE step END, "
     "mode = COALESCE(mode, %s) WHERE turn_id = %s"
@@ -1142,7 +1141,7 @@ TURN_STEP_WRITE_SQL = (
 
 
 def read_turn_step(conn: psycopg.Connection, turn_id: str) -> tuple[str | None, str | None]:
-    """What this turn already opened with, for a redelivered attempt to seed from."""
+    """The step that fixed this turn's group, for a redelivered attempt to seed from."""
     with conn.cursor() as cur:
         cur.execute(TURN_STEP_READ_SQL, (turn_id,))
         row = cur.fetchone()
@@ -1152,11 +1151,14 @@ def read_turn_step(conn: psycopg.Connection, turn_id: str) -> tuple[str | None, 
     return (step if isinstance(step, str) else None, mode if isinstance(mode, str) else None)
 
 
-def record_turn_step(conn: psycopg.Connection, turn_id: str, step: str, mode: str) -> None:
+def record_turn_step(
+    conn: psycopg.Connection, turn_id: str, step: str, mode: str, opener: str,
+) -> None:
     """Stamp the turn's step. A redelivery cannot overwrite what the first attempt
-    recorded, except `UNGROUPED_OPENER`, which the group-fixing step after it replaces."""
+    recorded, except `opener` (the boundary's `UNGROUPED_OPENER`), which the
+    group-fixing step after it replaces."""
     with conn.cursor() as cur:
-        cur.execute(TURN_STEP_WRITE_SQL, (UNGROUPED_OPENER, step, mode, turn_id))
+        cur.execute(TURN_STEP_WRITE_SQL, (opener, step, mode, turn_id))
     conn.commit()
 
 
@@ -1177,7 +1179,7 @@ AUTO_REPLY_WRITE_SQL = "UPDATE sessions SET auto_reply = %s WHERE session_id = %
 
 
 def read_prev_step(conn: psycopg.Connection, session_id: str, turn_id: str) -> str | None:
-    """The step the session's PREVIOUS step-running turn opened with."""
+    """The step that fixed the group of the session's PREVIOUS step-running turn."""
     with conn.cursor() as cur:
         cur.execute(PREV_STEP_SQL, (session_id, turn_id))
         row = cur.fetchone()
@@ -2879,7 +2881,8 @@ async def _run_turn(
                 log=log, turn_id=turn_id,
                 # The TURN's mode, not the gate's: a redelivered `job` turn must still
                 # read back as `job`, or the host's reply would be lost.
-                on_first_step=lambda step, _gate: record_turn_step(conn, turn_id, step, turn_mode),
+                on_first_step=lambda step, _gate: record_turn_step(
+                    conn, turn_id, step, turn_mode, boundary.UNGROUPED_OPENER),
             )
         except Exception as exc:  # noqa: BLE001 - a broken boundary must not deny the researcher their turn
             log(ev="step_gate_unavailable", turn_id=turn_id, session_id=session_id,

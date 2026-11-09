@@ -407,6 +407,14 @@ def test_after_init_project_the_group_fixing_step_is_persisted_too(boundary):
     g.check(*spawn("search-records"), subagent=False)
     g.check(*spawn("record-structurer"), subagent=False)
     assert seen == [("init-project", "step"), ("search-records", "step")]
+    assert g.first_step == "search-records"
+
+
+def test_init_project_alone_is_the_turns_first_step(boundary):
+    """What the e2e orchestrator records for a turn that only created the project."""
+    g = gate(boundary)
+    g.check(*spawn("init-project"), subagent=False)
+    assert g.first_step == "init-project"
 
 
 def test_a_gate_seeded_with_init_project_alone_still_persists_the_group_step(boundary):
