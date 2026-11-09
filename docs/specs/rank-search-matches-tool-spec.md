@@ -246,6 +246,7 @@ Sorted by `matchScore` descending; no gedcomx.
   "scoreLogError": null,      // present only if the calibration append failed
   "subjectTooThin": true,     // only when the subject lacks a narrow date AND a named relative
   "subjectTooThinNote": "…",  // present with subjectTooThin: how to report the rows
+  "surnameNote": "…",         // only when a returned row has surnameNotOnSubject: how to report it
   "matches": [
     {
       "matchRank": 1,
@@ -263,6 +264,8 @@ Sorted by `matchScore` descending; no gedcomx.
       "attachedToOther": true,
       "birthYearConflict": true,   // only when the birth years differ by more than 2
       "birthYearGap": -5,          // candidate year minus subject year; with the flag
+      "surnameNotOnSubject": true, // only when the surname is none the project gives the subject
+      "candidateSurname": "Quass", // the candidate's surname; with the flag
       "relativeTerms": {           // only when the search anchored on a relative
         "father": { "status": "absent" }
       },
@@ -350,6 +353,47 @@ It is advice, not a scoring change: `matchScore`, `matchRank` and the order are
 untouched, for the same reason `relativeTerms` is. The flag reaches the
 annotated `results` row as well as the stub (`record-search-tool-spec-v2.md` §
 "The response is re-ordered").
+
+### `surnameNotOnSubject`, `candidateSurname` and `surnameNote` — computed, advisory, never scored
+
+A hit found under a surname the subject never bears in the project — a married
+name the researcher only recalls is the case — scores on given name,
+date and place and reads as a clean match. The stub carries
+`surnameNotOnSubject: true` and `candidateSurname` when the candidate's surname
+is not a spelling of any surname the project gives the subject. Both are
+omitted otherwise, and always when the subject has no surname.
+
+The subject's surnames are the enriched subject's names (tree names plus linked
+`name` assertions) and the names of every tree person sharing a `Couple` or
+`ParentChild` relationship with the subject. A maiden-name record under a tree
+parent's surname, or a married-name record under a tree spouse's or child's, is
+therefore not flagged. The candidate's surname is the principal persona's
+preferred (else first) name in the staged row's `gedcomx`, else the last word of
+a multi-word `personName`.
+
+Two surnames are the same when any word of one is a spelling of any word of the
+other. Words are lower-cased, accent-free, split on spaces and hyphens, and
+words of three letters or fewer ("de", "van") are dropped while a longer word
+remains. Two words are spellings of one another at a Sorensen-Dice bigram
+similarity of 0.66 or more (the cutoff `person_warnings` uses) or a Levenshtein
+distance of 1 or less. So Kimbrel/Kimbrell, Flyn/Flynn and García/García López
+are not flagged; Fenstermaker against Kimbrell, and Van Buren against van Dyke,
+are.
+
+When at least one returned row carries the flag, the response carries
+`surnameNote` (`SURNAME_NOT_ON_SUBJECT_NOTE`): each such row is `needs-review`,
+reported as consistent with that name and never as a confirmed match, as cleared,
+or as ready to extract as the subject's record. That holds when the surname is
+the one the research is trying to establish: an agent shown an earlier wording was
+measured dismissing it on exactly that ground. The note asks for the record that
+would tie the subject to the surname. Like
+`relativeTermNote` it is built from the rows actually returned, so a withheld
+ranking carries none.
+
+Advice, not a scoring change: `matchScore`, `matchRank` and the order are
+untouched. The flag and surname reach the annotated `results` row as well as the
+stub, and the note stays on `ranked` (`record-search-tool-spec-v2.md` § "The
+response is re-ordered").
 
 ### `batchNumber` — carried, never scored and never annotated
 

@@ -210,6 +210,12 @@ export function annotateResultsWithRanking(
       row.birthYearConflict = stub.birthYearConflict;
     }
     if (stub.birthYearGap !== undefined) row.birthYearGap = stub.birthYearGap;
+    if (stub.surnameNotOnSubject !== undefined) {
+      row.surnameNotOnSubject = stub.surnameNotOnSubject;
+    }
+    if (stub.candidateSurname !== undefined) {
+      row.candidateSurname = stub.candidateSurname;
+    }
     if (stub.attachedToSubject !== undefined) {
       row.attachedToSubject = stub.attachedToSubject;
     }

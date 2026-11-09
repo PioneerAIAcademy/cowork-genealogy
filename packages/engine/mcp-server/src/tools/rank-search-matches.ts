@@ -14,6 +14,7 @@ import { gatherRelatives, hasRealGivenName, isRealGivenName } from "../utils/rel
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
 import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
+import { diceCoefficient, levenshteinDistance, normalizeString } from "../utils/string-similarity.js";
 import type {
   RankSearchMatchesInput,
   RankSearchMatchesResult,
@@ -34,6 +35,9 @@ const MATCHER_LABEL: Record<MatcherBackend, string> = {
  *  many years is flagged `birthYearConflict` — census ages and indexing slips
  *  account for a year or two, not five. */
 const BIRTH_YEAR_CONFLICT_YEARS = 2;
+/** Two surname words this similar (Sorensen-Dice over bigrams) are one surname
+ *  spelled two ways — the cutoff person_warnings uses for similar names. */
+const SURNAME_DICE_CUTOFF = 0.66;
 /** Append-only calibration log; a `.jsonl` name stays clear of the results
  *  orphan validator (which scans results/ non-recursively for top-level *.json). */
 const SCORE_LOG_REL = "results/match-scores.jsonl";
@@ -171,8 +175,8 @@ export async function rankSearchMatches(
   // `results`, which is never truncated.
   const matches: RankedMatch[] =
     input.top === undefined
-      ? scored.map((s, i) => toStub(s, i + 1, subject.birthYear))
-      : scored.slice(0, input.top).map((s, i) => toStub(s, i + 1, subject.birthYear));
+      ? scored.map((s, i) => toStub(s, i + 1, subject.birthYear, subject.surnames))
+      : scored.slice(0, input.top).map((s, i) => toStub(s, i + 1, subject.birthYear, subject.surnames));
 
   if (input.checkAttachments && matches.length > 0) {
     await applyAttachments(matches, subjectId, principal);
@@ -236,6 +240,10 @@ export async function rankSearchMatches(
   // so `returnedCount: 0` can never ship alongside "of the 2 matches returned".
   const relativeTermNote = buildRelativeTermNote(out.matches);
   if (relativeTermNote) out.relativeTermNote = relativeTermNote;
+  // Same placement, same reason: only about rows actually returned.
+  if (out.matches.some((m) => m.surnameNotOnSubject)) {
+    out.surnameNote = SURNAME_NOT_ON_SUBJECT_NOTE;
+  }
 
   return out;
 }
@@ -638,6 +646,86 @@ const SUBJECT_TOO_THIN_NOTE =
   "score and however well it agrees. Report no row's family as this person's. Name what would settle " +
   "identity (a precise date, or a named spouse, parent or child) and the record most likely to state it.";
 
+export const SURNAME_NOT_ON_SUBJECT_NOTE =
+  "Rows with `surnameNotOnSubject` carry a surname (`candidateSurname`) that this person bears nowhere " +
+  "in the project: not on the tree person, not in linked evidence, and not on a tree spouse, parent or " +
+  "child. The match score does not account for this. Each such row is `needs-review`: report it as " +
+  "consistent with that name, never as a confirmed match, as cleared, or as ready to extract as this " +
+  "person's record. That holds when the surname is the one the research is trying to establish: finding " +
+  "a same-named person under it is not evidence this person bore it. Name the record that would tie " +
+  "this person to that surname (a marriage, or a record giving both surnames for this person).";
+
+/** A surname's comparable words: lower-cased, accent-free, split on spaces and
+ *  hyphens, with particles of three letters or fewer ("de", "van") dropped while
+ *  a longer word remains — otherwise "van Dyke" would match "Van Buren". */
+function surnameTokens(surname: string): string[] {
+  const words = normalizeString(surname).split(/[\s-]+/).filter(Boolean);
+  const long = words.filter((w) => w.length > 3);
+  return long.length > 0 ? long : words;
+}
+
+/** Spelling variants (Kimbrel/Kimbrell, Flyn/Flynn) count as the same surname. */
+function similarSurnameToken(a: string, b: string): boolean {
+  return diceCoefficient(a, b) >= SURNAME_DICE_CUTOFF || levenshteinDistance(a, b) <= 1;
+}
+
+/** True when any word of `candidate` is a spelling of any word of any of the
+ *  subject's surnames. */
+function surnameOnSubject(candidate: string, subjectSurnames: string[]): boolean {
+  const cand = surnameTokens(candidate);
+  return subjectSurnames.some((s) =>
+    surnameTokens(s).some((t) => cand.some((c) => similarSurnameToken(c, t))),
+  );
+}
+
+/** Every surname the project gives the subject: the enriched subject's own names
+ *  (tree names plus linked `name` assertions) and the names of each tree person
+ *  sharing a Couple or ParentChild relationship with them, so a maiden name
+ *  borne by a parent, or a married name borne by a spouse or child, is hers. */
+function subjectSurnames(
+  enriched: { names?: any[] },
+  tree: SimplifiedGedcomX,
+  subjectId: string,
+): string[] {
+  const out = new Set<string>();
+  const add = (names: unknown) => {
+    for (const n of Array.isArray(names) ? names : []) {
+      const s = (n as any)?.surname;
+      if (typeof s === "string" && s.trim()) out.add(s.trim());
+    }
+  };
+  add(enriched.names);
+  const family = new Set<string>();
+  for (const r of tree.relationships ?? []) {
+    if (r.type !== "Couple" && r.type !== "ParentChild") continue;
+    const ends = relationshipEndpoints(r);
+    if (!ends.includes(subjectId)) continue;
+    for (const e of ends) if (e !== subjectId) family.add(e);
+  }
+  for (const p of tree.persons ?? []) {
+    if (p.id && family.has(p.id)) add(p.names);
+  }
+  return [...out];
+}
+
+/** The candidate's surname: the principal persona's preferred (else first) name
+ *  in the staged row's gedcomx, else the last word of a multi-word `personName`. */
+function candidateSurnameOf(r: RecordSearchResult): string | undefined {
+  const persons = (r.gedcomx as { persons?: any[] } | undefined)?.persons;
+  const persona =
+    Array.isArray(persons) && r.primaryId
+      ? persons.find((p) => p && p.id === r.primaryId)
+      : undefined;
+  if (persona) {
+    const names = Array.isArray(persona.names) ? persona.names : [];
+    const n = names.find((x: any) => x?.preferred) ?? names[0];
+    const s = n?.surname;
+    return typeof s === "string" && s.trim() ? s.trim() : undefined;
+  }
+  const words = typeof r.personName === "string" ? r.personName.trim().split(/\s+/) : [];
+  return words.length > 1 ? words[words.length - 1] : undefined;
+}
+
 /** The response's `subjectTooThin` fields: present only when true. */
 function tooThinField(subject: SubjectDoc): { subjectTooThin?: true; subjectTooThinNote?: string } {
   return subject.subjectTooThin ? { subjectTooThin: true, subjectTooThinNote: SUBJECT_TOO_THIN_NOTE } : {};
@@ -670,6 +758,8 @@ interface SubjectDoc {
    *  same-named individual. Independent of `discriminatingFacts` (a city-only
    *  residence has a place but no narrow date and no relative). */
   subjectTooThin: boolean;
+  /** Every surname the project gives the subject (see `subjectSurnames`). */
+  surnames: string[];
 }
 
 // Exported for dev/probe-rank-enrichment.ts, which A/Bs the enriched subject
@@ -811,6 +901,13 @@ export async function buildSubjectDoc(
     // An advisory flag never fails the ranking; unflagged is the prior behavior.
     tooThin = false;
   }
+  let surnames: string[];
+  try {
+    surnames = subjectSurnames(enriched, safeTree, subjectId);
+  } catch {
+    // Advisory, like `subjectTooThin`: no surnames means no row is flagged.
+    surnames = [];
+  }
 
   return {
     doc: { persons: [enriched] },
@@ -824,6 +921,7 @@ export async function buildSubjectDoc(
     enrichedNames: (enriched.names ?? []).length - namesBefore,
     enrichedGender: Boolean(enriched.gender) && !hadGender,
     subjectTooThin: tooThin,
+    surnames,
   };
 }
 
@@ -886,6 +984,7 @@ function toStub(
   s: ScoredCandidate,
   matchRank: number,
   subjectYear?: number,
+  subjectSurnameList: string[] = [],
 ): RankedMatch {
   const r = s.result;
   const stub: RankedMatch = {
@@ -945,6 +1044,18 @@ function toStub(
       stub.birthYearConflict = true;
       stub.birthYearGap = gap;
     }
+  }
+  // Deterministic, like the birth-year flag: a hit under a surname the project
+  // never gives the subject (a recalled married name, say) scores on given name,
+  // date and place, and reads as a clean match. Flag it in code.
+  const candSurname = candidateSurnameOf(r);
+  if (
+    candSurname &&
+    subjectSurnameList.length > 0 &&
+    !surnameOnSubject(candSurname, subjectSurnameList)
+  ) {
+    stub.surnameNotOnSubject = true;
+    stub.candidateSurname = candSurname;
   }
   return stub;
 }

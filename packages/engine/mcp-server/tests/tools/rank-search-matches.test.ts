@@ -26,7 +26,7 @@ vi.mock("../../src/auth/config.js", async (orig) => ({
   getMatcherSettings: matcherSettingsMock,
 }));
 
-import { rankSearchMatches } from "../../src/tools/rank-search-matches.js";
+import { rankSearchMatches, SURNAME_NOT_ON_SUBJECT_NOTE } from "../../src/tools/rank-search-matches.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { scorePair } from "../../src/utils/match-engine.js";
 import {
@@ -398,6 +398,135 @@ describe("rank_search_matches", () => {
       const m = byId(out, "ark:/61903/1:1:AAAA-AA1");
       expect(m.matchScore).toBe(0.86);
       expect(m.matchRank).toBe(1);
+    });
+  });
+
+  // ── Surname not on the subject (#2213 d33) ─────────────────────────────────
+
+  describe("surname-not-on-subject flag", () => {
+    const juanita = (extra: Record<string, unknown> = {}) => ({
+      id: "I1",
+      gender: "Female",
+      names: [{ preferred: true, given: "Juanita Ruth", surname: "Kimbrell" }],
+      facts: [{ type: "Birth", date: "1921" }],
+      ...extra,
+    });
+    const treeWith = (persons: unknown[], relationships: unknown[] = []) => ({
+      persons: [juanita(), ...persons],
+      relationships,
+      sources: [],
+    });
+    const hit = (recordId: string, surname: string, given = "Juanita") => {
+      const c = candidate({ recordId, primaryId: "p1", personName: `${given} ${surname}`, birthDate: "1921" });
+      (c as any).gedcomx.persons[0].names = [{ preferred: true, given, surname }];
+      return c;
+    };
+    const rank = async (candidates: unknown[], tree: unknown = treeWith([])) => {
+      await writeTree(tree);
+      scorePairMock.mockResolvedValue(scoreResult(0.71));
+      const ref = await stage(candidates);
+      return rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
+    };
+    const only = (out: { matches: unknown[] }) => out.matches[0] as Record<string, unknown>;
+
+    it("flags a hit under a surname the subject bears nowhere, and says so in a note", async () => {
+      const out = await rank([hit("ark:/61903/1:1:6XJ4-K2F", "Fenstermaker")]);
+      expect(only(out)).toMatchObject({ surnameNotOnSubject: true, candidateSurname: "Fenstermaker" });
+      expect(out.surnameNote).toBe(SURNAME_NOT_ON_SUBJECT_NOTE);
+    });
+
+    it("keeps the score and rank untouched: the flag is advice, not a scoring change", async () => {
+      const out = await rank([hit("ark:/61903/1:1:6XJ4-K2F", "Fenstermaker")]);
+      expect(only(out)).toMatchObject({ matchScore: 0.71, matchRank: 1 });
+    });
+
+    it("does not flag a spelling variant of her own surname", async () => {
+      const out = await rank([hit("ark:/61903/1:1:AAAA-AA1", "Kimbrel"), hit("ark:/61903/1:1:AAAA-AA2", "KIMBRELL")]);
+      for (const m of out.matches) expect(m).not.toHaveProperty("surnameNotOnSubject");
+      expect(out).not.toHaveProperty("surnameNote");
+    });
+
+    it("does not flag a one-letter variant (Flyn / Flynn)", async () => {
+      const flynn = { persons: [juanita({ names: [{ preferred: true, given: "Mary", surname: "Flynn" }] })], relationships: [], sources: [] };
+      const out = await rank([hit("ark:/61903/1:1:AAAA-AA1", "Flyn", "Mary")], flynn);
+      expect(only(out)).not.toHaveProperty("surnameNotOnSubject");
+    });
+
+    it("does not flag the surname of a tree spouse", async () => {
+      const tree = treeWith(
+        [{ id: "I4", names: [{ preferred: true, given: "Robert", surname: "Fenstermaker" }] }],
+        [{ id: "R9", type: "Couple", person1: "I1", person2: "I4" }],
+      );
+      const out = await rank([hit("ark:/61903/1:1:6XJ4-K2F", "Fenstermaker")], tree);
+      expect(only(out)).not.toHaveProperty("surnameNotOnSubject");
+    });
+
+    it("does not flag a maiden-name record when her parent carries that surname", async () => {
+      const tree = {
+        persons: [
+          juanita({ names: [{ preferred: true, given: "Mary", surname: "Jones" }] }),
+          { id: "I2", names: [{ preferred: true, given: "John", surname: "Smith" }] },
+        ],
+        relationships: [{ id: "R1", type: "ParentChild", parent: "I2", child: "I1" }],
+        sources: [],
+      };
+      const out = await rank([hit("ark:/61903/1:1:AAAA-AA1", "Smith", "Mary")], tree);
+      expect(only(out)).not.toHaveProperty("surnameNotOnSubject");
+    });
+
+    it("does not flag the surname of a tree child", async () => {
+      const tree = treeWith(
+        [{ id: "I5", names: [{ preferred: true, given: "Carol", surname: "Fenstermaker" }] }],
+        [{ id: "R1", type: "ParentChild", parent: "I1", child: "I5" }],
+      );
+      const out = await rank([hit("ark:/61903/1:1:6XJ4-K2F", "Fenstermaker")], tree);
+      expect(only(out)).not.toHaveProperty("surnameNotOnSubject");
+    });
+
+    it("does not flag a surname from a linked name assertion", async () => {
+      await writeResearch({
+        assertions: [
+          { id: "a_001", fact_type: "name", value: "Juanita Fenstermaker", structured_value: { given: "Juanita", surname: "Fenstermaker" } },
+        ],
+        person_evidence: [{ id: "pe_001", assertion_id: "a_001", person_id: "I1", confidence: "probable" }],
+      });
+      const out = await rank([hit("ark:/61903/1:1:6XJ4-K2F", "Fenstermaker")]);
+      expect(only(out)).not.toHaveProperty("surnameNotOnSubject");
+    });
+
+    it("compares compound surnames token by token", async () => {
+      const garcia = { persons: [juanita({ names: [{ preferred: true, given: "María", surname: "García López" }] })], relationships: [], sources: [] };
+      const out = await rank([hit("ark:/61903/1:1:AAAA-AA1", "García", "María")], garcia);
+      expect(only(out)).not.toHaveProperty("surnameNotOnSubject");
+    });
+
+    it("ignores a shared particle: van Dyke vs Van Buren is still flagged", async () => {
+      const vd = { persons: [juanita({ names: [{ preferred: true, given: "Anna", surname: "van Dyke" }] })], relationships: [], sources: [] };
+      const out = await rank([hit("ark:/61903/1:1:AAAA-AA1", "Van Buren", "Anna")], vd);
+      expect(only(out)).toMatchObject({ surnameNotOnSubject: true, candidateSurname: "Van Buren" });
+    });
+
+    it("falls back to the last word of personName when the row has no gedcomx", async () => {
+      const bare = candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", hasGedcomx: false, personName: "Juanita Fenstermaker" });
+      const out = await rank([bare]);
+      expect(only(out)).toMatchObject({ surnameNotOnSubject: true, candidateSurname: "Fenstermaker" });
+    });
+
+    it("never flags when the subject has no surname", async () => {
+      const noSurname = { persons: [juanita({ names: [{ preferred: true, given: "Juanita" }] })], relationships: [], sources: [] };
+      const out = await rank([hit("ark:/61903/1:1:6XJ4-K2F", "Fenstermaker")], noSurname);
+      expect(only(out)).not.toHaveProperty("surnameNotOnSubject");
+      expect(out).not.toHaveProperty("surnameNote");
+    });
+
+    it("emits no note when the ranking was withheld", async () => {
+      const starved = { persons: [{ id: "I1", names: [{ preferred: true, given: "Juanita", surname: "Kimbrell" }] }], relationships: [], sources: [] };
+      await writeTree(starved);
+      scorePairMock.mockResolvedValue(scoreResult(0.001));
+      const ref = await stage([hit("ark:/61903/1:1:6XJ4-K2F", "Fenstermaker")]);
+      const out = await rankSearchMatches({ projectPath: dir, stagedResultsRef: ref, subjectId: "I1" }, LOCAL);
+      expect(out.matches).toEqual([]);
+      expect(out).not.toHaveProperty("surnameNote");
     });
   });
 
