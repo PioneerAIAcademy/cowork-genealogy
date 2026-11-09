@@ -837,7 +837,8 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // The grant is derived from what the folded body actually calls: step 1 reads
   // research.json directly via Read (not project_context, which returns neither
   // plans nor log); the narration line reads researcher_profile.narration_guidance
-  // the same way; step 5 reads staged.resultsRef via Read; and wiki_search /
+  // the same way; step 6 reads one hit's transcript with sidecar_read (#4311 —
+  // a `Read` of the staged file finds nothing on a connector); and wiki_search /
   // wiki_read are called in the pre-work block of step 3.
   "search-full-text.md": {
     tools: [
@@ -848,6 +849,7 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
       "research_append",
       "research_log_append",
       "research_query",
+      "sidecar_read",
       "source_attachments",
       "wiki_read",
       "wiki_search",
@@ -992,14 +994,18 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
     denies: [],
   },
 
-  // translation holds `Read` for an image file and the Narration line, and
+  // translation holds `Read` for an image path outside the project and
   // `research_log_append` (#3524): inside a project it logs its translation as
-  // one `translation` entry. No other MCP tool.
+  // one `translation` entry. `image_transcribe` and `sidecar_read` read a
+  // project upload or staged transcription (#4311), which `Read` cannot reach on
+  // a connector.
   "translation.md": {
     tools: [
       "Read",
+      "image_transcribe",
       "project_context",
       "research_log_append",
+      "sidecar_read",
     ],
     denies: [],
   },
