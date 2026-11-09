@@ -162,22 +162,23 @@ Placeholder: the feedback address has not been supplied yet. Keep the deletion c
     )
 
 
-def refused_page(message: str, *, temporary: bool = False) -> str:
-    """``/`` for a session the tier refuses: the reason in plain text, never the account
-    data. ``message`` is escaped whole, so no caller can put markup in it.
+def refused_page(message: str, *, temporary: bool = False, up: str = "") -> str:
+    """A page for a session the tier refuses: the reason in plain text, never the account
+    data. ``message`` is escaped whole, so no caller can put markup in it. ``up`` as for
+    ``_foot``: "../" when served from ``/upload/<id>``, so Sign out and the footer resolve.
 
     ``temporary`` (the allowlist has not loaded yet) offers no Sign out: signing out
     revokes every one of the user's sessions, a poor trade for a wait of seconds."""
     if temporary:
         return (_HEAD.format(title="Genealogy Research beta")
-                + f"<h1>The beta isn't ready yet</h1>\n<p>{escape(message)}</p>\n" + _FOOT)
+                + f"<h1>The beta isn't ready yet</h1>\n<p>{escape(message)}</p>\n" + _foot(up))
     return (
         _HEAD.format(title="Genealogy Research beta")
         + f"""<h1>You can't use the beta with this account</h1>
 <p>{escape(message)}</p>
-<p><button type="button" onclick="postAndReload('auth/logout')">Sign out</button></p>
+<p><button type="button" onclick="postAndReload('{up}auth/logout')">Sign out</button></p>
 {_POST_AND_RELOAD}"""
-        + _FOOT
+        + _foot(up)
     )
 
 
@@ -192,9 +193,6 @@ def not_found_page() -> str:
 # text go to POST /api/projects/{id}/files in one request, with an upload progress bar.
 # Every message is set with textContent, never innerHTML.
 _UPLOAD_SCRIPT = r"""<script type="module">
-import * as pdfjsLib from "../static/pdfjs/pdf.min.mjs";
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL("../static/pdfjs/pdf.worker.min.mjs", location.href).href;
-
 const form = document.getElementById("upload");
 const input = document.getElementById("file");
 const button = document.getElementById("send");
@@ -207,20 +205,50 @@ function say(text, error) {
   status.className = error ? "error" : "";
 }
 
+// --- text layer: start (tests/test_pdfjs_vendored.py runs this block under Node) ---
+// The vendored version (static/pdfjs/README.md), in both URLs, so after an upgrade a
+// cached old file is never paired with a new one: pdf.js refuses a mismatched worker.
+const PDFJS_VERSION = "6.4.299";
+const PDFJS_DIR = new URL("../static/pdfjs/", location.href);
+let pdfjsLib = null;
+
+// Loaded on the first PDF only, so a pdf.js that fails to load never blocks an image.
+async function loadPdfjs() {
+  if (pdfjsLib === null) {
+    const lib = await import(new URL(`pdf.min.mjs?v=${PDFJS_VERSION}`, PDFJS_DIR).href);
+    lib.GlobalWorkerOptions.workerSrc = new URL(`pdf.worker.min.mjs?v=${PDFJS_VERSION}`, PDFJS_DIR).href;
+    pdfjsLib = lib;
+  }
+  return pdfjsLib;
+}
+
+// One line per pdf.js line (item.hasEOL), so a register's rows stay rows: name, age and
+// place keep to the line they share in the record.
+function pageText(items) {
+  return items
+    .map((item) => item.str + (item.hasEOL ? "\n" : " "))
+    .join("")
+    .split("\n")
+    .map((line) => line.replace(/\s+/g, " ").trim())
+    .filter((line) => line)
+    .join("\n");
+}
+
 // The text layer, one block per page under a "--- Page N ---" marker, or "" when the PDF
-// has none (a scan). A file that is not a PDF has no text layer to read.
+// has none (a scan). A file that is not a PDF has no text layer to read. Throws when
+// pdf.js cannot read the file; the caller decides what to tell the patron.
 async function textLayer(file) {
   const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
   if (!isPdf) return "";
+  const lib = await loadPdfjs();
   // pdf.js 6 cleans up through the loading task: the document has no destroy().
-  const task = pdfjsLib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), verbosity: 0 });
+  const task = lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), verbosity: 0 });
   try {
     const doc = await task.promise;
     const pages = [];
     for (let n = 1; n <= doc.numPages; n++) {
       say(`Reading the PDF's text: page ${n} of ${doc.numPages}…`);
-      const content = await (await doc.getPage(n)).getTextContent();
-      pages.push(content.items.map((item) => item.str).join(" ").trim());
+      pages.push(pageText((await (await doc.getPage(n)).getTextContent()).items));
     }
     if (!pages.some((page) => page)) return "";
     return pages.map((page, i) => `--- Page ${i + 1} ---\n${page}`).join("\n\n");
@@ -228,6 +256,10 @@ async function textLayer(file) {
     await task.destroy();
   }
 }
+// --- text layer: end ---
+
+// UPLOAD_MAX_BYTES in project_blobs.py: refused here before the file is read or sent.
+const MAX_BYTES = 26214400;
 
 function send(file, text) {
   return new Promise((resolve) => {
@@ -249,28 +281,33 @@ function send(file, text) {
 }
 
 // The upload route's refusals (POST /api/projects/{id}/files), in the patron's words.
+const TOO_BIG = "The file is too large. A file and its text together must be under 25 MB.";
 const REFUSED = {
   401: "Your sign-in has ended. Reload this page to sign in again.",
+  403: "This account can no longer use the beta. Reload this page to see why.",
   404: "This project was not found, or uploads are turned off.",
-  413: "The file is too large. A file and its text together must be under 25 MB.",
+  413: TOO_BIG,
   415: "TIFF and HEIC images are not accepted. Save the page as JPEG or PNG and upload that.",
   422: "This PDF has more than one page and no text in it, so it looks like a scan. Upload its pages one at a time, as separate files.",
   503: "Uploads are not available right now. Try again later.",
 };
+// A 422 after pdf.js could not read the file is not a scan: say what happened instead.
+const UNREADABLE = "This PDF's text could not be read here (it may be password-protected or damaged), and a PDF of several pages needs its text. Save it again as a PDF without a password, or upload its pages one at a time.";
 
 form.addEventListener("submit", async (event) => {
   event.preventDefault();
   const file = input.files[0];
   if (!file) { say("Choose a file first.", true); return; }
+  if (file.size > MAX_BYTES) { say(TOO_BIG, true); return; }
   button.disabled = true;
   let text = "";
+  let unreadable = false;
   try {
     text = await textLayer(file);
   } catch (err) {
-    // An unreadable PDF goes up with no text layer, and the route decides. Logged, so a
-    // failure here is not silent to whoever opens the console.
+    // Sent with no text layer, and the route decides. Logged, so it is not silent.
     console.error("Reading the PDF's text failed:", err);
-    text = "";
+    unreadable = true;
   }
   bar.value = 0;
   bar.hidden = false;
@@ -282,11 +319,14 @@ form.addEventListener("submit", async (event) => {
   let body = {};
   try { body = JSON.parse(xhr.responseText); } catch (err) { body = {}; }
   if (xhr.status === 200) {
-    say(`Uploaded ${body.path}` + (body.textPath ? ", with its text layer." : ". No text layer was found in it."));
+    say(`Uploaded ${body.path}` + (body.textPath ? ", with its text layer."
+      : unreadable ? ". Its text could not be read here, so no text layer was saved." : ". No text layer was found in it."));
     form.reset();
   } else if (xhr.status === 429) {
     const wait = xhr.getResponseHeader("Retry-After");
     say(`Other uploads are in progress. Try again${wait ? ` in ${wait} seconds` : " shortly"}.`, true);
+  } else if (xhr.status === 422 && unreadable) {
+    say(UNREADABLE, true);
   } else if (REFUSED[xhr.status]) {
     say(REFUSED[xhr.status], true);
   } else {

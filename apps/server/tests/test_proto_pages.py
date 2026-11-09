@@ -298,7 +298,7 @@ async def test_uploads_off_hides_the_links_and_the_page():
         home = await c.get("/")
         page = await c.get(f"/upload/{PID}")
     assert "Upload a file" not in home.text and f"upload/{PID}" not in home.text
-    assert page.status_code == 404
+    assert page.status_code == 404 and "Project not found" in page.text, "the HTML 404 page, not JSON"
 
 
 async def test_uploads_on_links_each_project_to_its_page(uploads_on):
@@ -314,7 +314,8 @@ async def test_the_owner_gets_the_upload_page(uploads_on):
     assert r.status_code == 200 and "Upload a file" in r.text
     assert "&lt;b&gt;Ugo&lt;/b&gt;" in r.text and "<b>Ugo</b>" not in r.text
     assert f'data-project="{PID}"' in r.text
-    assert 'from "../static/pdfjs/pdf.min.mjs"' in r.text and "../api/projects/${project}/files" in r.text
+    assert 'new URL("../static/pdfjs/", location.href)' in r.text and "../api/projects/${project}/files" in r.text
+    assert 'const PDFJS_VERSION = "6.4.299"' in r.text, "pdf.js is loaded by a versioned URL"
     assert 'href="../privacy"' in r.text, "links step up from /upload/<id>"
     assert r.headers["cache-control"] == "private, no-store" and "cookie" in r.headers["vary"].lower()
     assert auth.deletion_code(USER_A.id) not in r.text
@@ -366,12 +367,14 @@ async def test_a_blocked_user_gets_the_refusal_on_the_upload_page(uploads_on):
     async with make_client(store, None) as c:
         r = await c.get(f"/upload/{PID}")
     assert r.status_code == 403 and "is blocked" in r.text and "Upload a file" not in r.text
+    # Served from /upload/<id>: Sign out and the footer step up to the tier's root.
+    assert "postAndReload('../auth/logout')" in r.text and 'href="../privacy"' in r.text
 
 
 @pytest.mark.parametrize("name", ["pdf.min.mjs", "pdf.worker.min.mjs"])
 async def test_pdfjs_is_served_from_the_tier(name):
     async with make_client(FakeStore(), None, user=None) as c:
-        r = await c.get(f"/static/pdfjs/{name}")
+        r = await c.get(f"/static/pdfjs/{name}?v=6.4.299")
     assert r.status_code == 200 and r.headers["content-type"].startswith("text/javascript")
     assert r.content == (PDFJS / name).read_bytes()
 

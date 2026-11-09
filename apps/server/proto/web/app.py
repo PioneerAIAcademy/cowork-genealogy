@@ -3160,12 +3160,12 @@ def create_app(
     # register. Do not "fix" it by including it.
     beta = APIRouter() if app.state.chat else app
 
-    def _refused_page(exc: SessionRefused) -> HTMLResponse:
-        """A refused session's page on ``/`` and ``/upload/<id>``: its reason's wording,
-        naming the account, and never the account data."""
+    def _refused_page(exc: SessionRefused, up: str = "") -> HTMLResponse:
+        """A refused session's page on ``/`` and ``/upload/<id>`` (``up="../"``): its
+        reason's wording, naming the account, and never the account data."""
         _status, _detail, page = ADMISSION_REFUSALS[exc.reason]
         message = page.format(who=f"The FamilySearch account {exc.email}", fail="Reload this page in a minute.")
-        return HTMLResponse(pages.refused_page(message, temporary=exc.reason == "not_ready"),
+        return HTMLResponse(pages.refused_page(message, temporary=exc.reason == "not_ready", up=up),
                             status_code=exc.status_code)
 
     @beta.api_route("/", methods=["GET", "HEAD"])
@@ -3203,11 +3203,11 @@ def create_app(
         here (``auth.SAFE_NEXT_RE``); with FamilySearch off, to ``/``. A missing project and
         someone else's get the same 404 page."""
         if app.state.uploads is not True or not UPLOAD_PAGE_ID_RE.fullmatch(project_id):
-            raise HTTPException(status_code=404, detail="Not found")
+            return HTMLResponse(pages.not_found_page(), status_code=404)
         try:
             user = await current_user(request)
         except SessionRefused as exc:
-            return _refused_page(exc)
+            return _refused_page(exc, up="../")
         except HTTPException as exc:
             if exc.status_code != 401:
                 raise
@@ -3215,11 +3215,12 @@ def create_app(
             if auth.familysearch_configured():
                 return RedirectResponse(f"{base}/auth/familysearch/login?next=upload/{project_id}", status_code=303)
             return RedirectResponse(f"{base}/", status_code=303)
-        store = _store(request)
-        if await store.project_owner(project_id) != user.id:
+        # list_projects is the caller's own projects (owner_id = user.id), so one lookup is
+        # both the owner check and the label: missing, foreign and NULL-owner ids miss alike.
+        row = next((p for p in await _store(request).list_projects(user.id) if p["id"] == project_id), None)
+        if row is None:
             return HTMLResponse(pages.not_found_page(), status_code=404)
-        label = next((p.get("label") for p in await store.list_projects(user.id) if p["id"] == project_id), None)
-        return HTMLResponse(pages.upload_page(project_id=project_id, label=label))
+        return HTMLResponse(pages.upload_page(project_id=project_id, label=row.get("label")))
 
     @beta.get("/static/pdfjs/{name}")
     async def pdfjs_file(name: str) -> Response:
