@@ -1262,9 +1262,10 @@ describe("Project Validator", () => {
       // The `!== null` clause in the container guard. `checkRequired` already
       // rejects a null required field, so without it a null produces TWO errors
       // for one problem — and a duplicated diagnosis is what makes an agent
-      // repair the wrong thing. The sibling `claims` guard excludes null for
-      // the same reason. Removing the clause left the whole suite green until
-      // this test existed.
+      // repair the wrong thing. This holds for a REQUIRED field only: the
+      // optional `claims` refuses null itself, since checkRequired never sees
+      // it (#4366). Removing the clause left the whole suite green until this
+      // test existed.
       const research = withConflictAndSummary("resolved", null as never);
       const result = await validateParsed(research, minimalTree);
       expect(result.valid).toBe(false);
@@ -3775,52 +3776,52 @@ describe("Research closed shapes", () => {
     });
   });
 
+  const schemasDir = join(
+    dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "..",
+    "docs", "specs", "schemas",
+  );
+  const schema = JSON.parse(readFileSync(join(schemasDir, "research.schema.json"), "utf-8"));
+  const enumsSchema = JSON.parse(readFileSync(join(schemasDir, "enums.schema.json"), "utf-8"));
+
+  // Shape-set name → where its closed subschema lives in the schema file.
+  const defFor: Record<string, any> = {
+    document: schema,
+    project: schema.$defs.project,
+    researcher_profile: schema.$defs.researcher_profile,
+    question: schema.$defs.question,
+    search_stop: schema.$defs.search_stop,
+    not_reached_entry: schema.$defs.not_reached_entry,
+    stop_criteria: schema.$defs.stop_criteria,
+    plan: schema.$defs.plan,
+    plan_item: schema.$defs.plan_item,
+    log_entry: schema.$defs.log_entry,
+    external_site_detail: schema.$defs.external_site_detail,
+    source: schema.$defs.source,
+    citation_detail: schema.$defs.citation_detail,
+    assertion: schema.$defs.assertion,
+    person_evidence_entry: schema.$defs.person_evidence_entry,
+    rejected_link_entry: schema.$defs.rejected_link_entry,
+    conflict: schema.$defs.conflict,
+    hypothesis: schema.$defs.hypothesis,
+    timeline: schema.$defs.timeline,
+    timeline_event: schema.$defs.timeline_event,
+    timeline_gap: schema.$defs.timeline_gap,
+    proof_summary: schema.$defs.proof_summary,
+    proof_claim: schema.$defs.proof_claim,
+    proof_claim_relationship: schema.$defs.proof_claim_relationship,
+    proof_claim_fact: schema.$defs.proof_claim_fact,
+    proof_claim_pair: schema.$defs.proof_claim_pair,
+    proof_claim_identity: schema.$defs.proof_claim_identity,
+    proof_claim_name: schema.$defs.proof_claim_name,
+    proof_claim_finding: schema.$defs.proof_claim_finding,
+    evaluation_entry: schema.$defs.evaluation_entry,
+    locality: schema.$defs.locality,
+    warning_justification: schema.$defs.warning_justification,
+    namesake: schema.$defs.namesake,
+    hit_verdict_entry: schema.$defs.hit_verdict_entry,
+  };
+
   it("RESEARCH_SHAPES mirrors research.schema.json exactly (drift guard)", () => {
-    const here = dirname(fileURLToPath(import.meta.url));
-    const schemaPath = join(
-      here, "..", "..", "..", "..", "..",
-      "docs", "specs", "schemas", "research.schema.json",
-    );
-    const schema = JSON.parse(readFileSync(schemaPath, "utf-8"));
-
-    // Shape-set name → where its closed subschema lives in the schema file.
-    const defFor: Record<string, any> = {
-      document: schema,
-      project: schema.$defs.project,
-      researcher_profile: schema.$defs.researcher_profile,
-      question: schema.$defs.question,
-      search_stop: schema.$defs.search_stop,
-      not_reached_entry: schema.$defs.not_reached_entry,
-      stop_criteria: schema.$defs.stop_criteria,
-      plan: schema.$defs.plan,
-      plan_item: schema.$defs.plan_item,
-      log_entry: schema.$defs.log_entry,
-      external_site_detail: schema.$defs.external_site_detail,
-      source: schema.$defs.source,
-      citation_detail: schema.$defs.citation_detail,
-      assertion: schema.$defs.assertion,
-      person_evidence_entry: schema.$defs.person_evidence_entry,
-      rejected_link_entry: schema.$defs.rejected_link_entry,
-      conflict: schema.$defs.conflict,
-      hypothesis: schema.$defs.hypothesis,
-      timeline: schema.$defs.timeline,
-      timeline_event: schema.$defs.timeline_event,
-      timeline_gap: schema.$defs.timeline_gap,
-      proof_summary: schema.$defs.proof_summary,
-      proof_claim: schema.$defs.proof_claim,
-      proof_claim_relationship: schema.$defs.proof_claim_relationship,
-      proof_claim_fact: schema.$defs.proof_claim_fact,
-      proof_claim_pair: schema.$defs.proof_claim_pair,
-      proof_claim_identity: schema.$defs.proof_claim_identity,
-      proof_claim_name: schema.$defs.proof_claim_name,
-      proof_claim_finding: schema.$defs.proof_claim_finding,
-      evaluation_entry: schema.$defs.evaluation_entry,
-      locality: schema.$defs.locality,
-      warning_justification: schema.$defs.warning_justification,
-      namesake: schema.$defs.namesake,
-      hit_verdict_entry: schema.$defs.hit_verdict_entry,
-    };
-
     expect(Object.keys(defFor).sort()).toEqual(Object.keys(RESEARCH_SHAPES).sort());
     for (const [name, def] of Object.entries(defFor)) {
       expect(def.additionalProperties, `${name} must be closed in the schema`).toBe(false);
@@ -3828,6 +3829,156 @@ describe("Research closed shapes", () => {
         [...RESEARCH_SHAPES[name as keyof typeof RESEARCH_SHAPES]].sort(),
         `allow-list drift on ${name}`,
       ).toEqual(Object.keys(def.properties).sort());
+    }
+  });
+
+  // #4366: a property the schema leaves out of `required` and types without a
+  // null branch must be refused when null. checkRequired reports null on a
+  // required field; nothing did on an optional one, so research_append saved
+  // `claims: null` and the file failed its own schema. The cases are derived
+  // from the schema, so a field added later is covered without editing this.
+  describe("null on an optional, non-nullable property (#4366)", () => {
+    function deref(p: any): any {
+      if (!p || typeof p.$ref !== "string") return p;
+      const local = p.$ref.match(/^#\/\$defs\/(.+)$/);
+      if (local) return schema.$defs[local[1]];
+      const enums = p.$ref.match(/^enums\.schema\.json#\/\$defs\/(.+)$/);
+      if (enums) return enumsSchema.$defs[enums[1]];
+      throw new Error(`unresolved $ref ${p.$ref}`);
+    }
+
+    function isNullable(p: any): boolean {
+      const q = deref(p);
+      if (!q) return false;
+      const t = q.type;
+      if (t === "null" || (Array.isArray(t) && t.includes("null"))) return true;
+      if (Array.isArray(q.enum) && q.enum.includes(null)) return true;
+      if (q.const === null) return true;
+      return ["anyOf", "oneOf"].some((k) => Array.isArray(q[k]) && q[k].some(isNullable));
+    }
+
+    function conditionallyRequired(def: any): Set<string> {
+      const out = new Set<string>();
+      const walk = (node: any) => {
+        if (!node || typeof node !== "object") return;
+        for (const name of node.required ?? []) out.add(name);
+        for (const k of ["oneOf", "anyOf", "allOf"]) for (const b of node[k] ?? []) walk(b);
+        walk(node.then);
+        walk(node.else);
+      };
+      for (const k of ["oneOf", "anyOf", "allOf"]) for (const b of def[k] ?? []) walk(b);
+      return out;
+    }
+
+    function everyShape(): any {
+      const r = maximalResearch();
+      r.rejected_links = [{
+        id: "rj_001", assertion_id: "a_001", person_id: "I1", reason: null,
+        researcher_words: "That is not him.", created: "2026-01-02",
+      }];
+      r.warning_justifications = [{
+        warning_id: "w_1", justification: "Two records, one man.", person_ids: ["I1"],
+        tool: "person_warnings", recorded_at: "2026-01-02",
+      }];
+      const base = { proof_tier: "possible", shortfall: "gap", supporting_assertion_ids: ["a_001"] };
+      r.proof_summaries[0].claims.push(
+        { ...base, claim: "marriage", fact: {
+          subject: { person1: "I2", person2: "I3" }, fact_type: "Marriage",
+          date: "1845", place: "Pennsylvania", value: "married",
+        } },
+        { ...base, claim: "identity", identity: { record_id: "rec1", party: "head_of_household", person: "I1" } },
+        { ...base, claim: "name", name: { person: "I1", given: "John", surname: "Smith" } },
+        { ...base, claim: "absence", finding: {
+          finding_type: "absence", statement: "No 1840 entry", log_entry_ids: ["log_001"],
+        } },
+      );
+      return r;
+    }
+
+    const claim = (r: any, i: number) => r.proof_summaries[0].claims[i];
+    // null: every property of that shape is required, so it yields no case.
+    const instanceOf: Record<string, ((r: any) => any) | null> = {
+      document: (r) => r,
+      project: (r) => r.project,
+      researcher_profile: (r) => r.researcher_profile,
+      question: (r) => r.questions[0],
+      search_stop: (r) => r.questions[0].search_stop,
+      not_reached_entry: null,
+      stop_criteria: (r) => r.questions[0].search_stop.stop_criteria,
+      plan: (r) => r.plans[0],
+      plan_item: (r) => r.plans[0].items[0],
+      log_entry: (r) => r.log[0],
+      external_site_detail: (r) => r.log[1].external_site,
+      source: (r) => r.sources[0],
+      citation_detail: (r) => r.sources[0].citation_detail,
+      assertion: (r) => r.assertions[0],
+      person_evidence_entry: (r) => r.person_evidence[0],
+      rejected_link_entry: (r) => r.rejected_links[0],
+      conflict: (r) => r.conflicts[0],
+      hypothesis: (r) => r.hypotheses[0],
+      timeline: (r) => r.timelines[0],
+      timeline_event: (r) => r.timelines[0].events[0],
+      timeline_gap: (r) => r.timelines[0].gaps[0],
+      proof_summary: (r) => r.proof_summaries[0],
+      proof_claim: (r) => claim(r, 0),
+      proof_claim_relationship: (r) => claim(r, 0).relationship,
+      proof_claim_fact: (r) => claim(r, 1).fact,
+      proof_claim_pair: (r) => claim(r, 1).fact.subject,
+      proof_claim_identity: (r) => claim(r, 2).identity,
+      proof_claim_name: (r) => claim(r, 3).name,
+      proof_claim_finding: (r) => claim(r, 4).finding,
+      evaluation_entry: (r) => r.evaluations[0],
+      locality: (r) => r.localities[0],
+      warning_justification: (r) => r.warning_justifications[0],
+      namesake: (r) => r.namesakes[0],
+      hit_verdict_entry: (r) => r.hit_verdicts[0],
+    };
+
+    const cases: Array<[string, string]> = [];
+    for (const [shape, def] of Object.entries(defFor)) {
+      const required = new Set<string>(def.required ?? []);
+      for (const [prop, p] of Object.entries<any>(def.properties)) {
+        if (!required.has(prop) && !isNullable(p)) cases.push([shape, prop]);
+      }
+    }
+
+    const sample = everyShape();
+    const omittable = cases.filter(([shape, prop]) => {
+      const loc = instanceOf[shape];
+      return loc !== null && prop in loc(sample) && !conditionallyRequired(defFor[shape]).has(prop);
+    });
+    const unpopulated = cases.filter(([s, p]) => !omittable.some(([s2, p2]) => s === s2 && p === p2));
+
+    it("has an instance for every shape and a valid starting document", async () => {
+      expect(Object.keys(instanceOf).sort()).toEqual(Object.keys(defFor).sort());
+      for (const [shape] of cases) expect(instanceOf[shape], `no instance for ${shape}`).not.toBeNull();
+      const result = await validateParsed(everyShape(), maximalTree);
+      expect(result.errors).toEqual([]);
+    });
+
+    it.each(cases)("%s.%s: null is refused", async (shape, prop) => {
+      const r = everyShape();
+      instanceOf[shape]!(r)[prop] = null;
+      const result = await validateParsed(r, maximalTree);
+      expect(result.valid).toBe(false);
+      // The validator reports a field either at its own path or at its
+      // object's path with the field (or its enum, `proof_shortfall`) named.
+      const names = new RegExp(`(\\b|_)${prop}\\b`);
+      expect(
+        result.errors.some((e) => e.path.endsWith(`/${prop}`) || names.test(e.message)),
+        `no error names '${prop}': ${JSON.stringify(result.errors)}`,
+      ).toBe(true);
+    });
+
+    it.each(omittable)("%s.%s: leaving it out validates", async (shape, prop) => {
+      const r = everyShape();
+      delete instanceOf[shape]!(r)[prop];
+      const result = await validateParsed(r, maximalTree);
+      expect(result.errors).toEqual([]);
+    });
+
+    for (const [shape, prop] of unpopulated) {
+      it.todo(`${shape}.${prop}: leaving it out (not populated in the fixture, or required by a branch)`);
     }
   });
 });
