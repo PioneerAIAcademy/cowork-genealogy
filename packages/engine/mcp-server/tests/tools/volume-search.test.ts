@@ -955,6 +955,14 @@ function triples(groups: { coverages?: { place?: string; datesOrig?: string; rec
   );
 }
 
+function listedTriples(result: { results: { coverages: { places: string[]; dateRange?: string; recordType?: string }[] }[] }) {
+  return new Set(
+    result.results.flatMap((g) =>
+      g.coverages.flatMap((c) => c.places.map((p) => JSON.stringify([p, c.dateRange, c.recordType])))
+    )
+  );
+}
+
 describe("volumeSearchTool answer size", () => {
   it("fits the real first page under the budget with no coverage cut", async () => {
     // At the default pageSize of 50 the first page is volumes 0–49, which holds
@@ -977,12 +985,23 @@ describe("volumeSearchTool answer size", () => {
 
     const result = await volumeSearchTool({ standardPlace: FREEBORN_P }, LOCAL);
 
-    const out = new Set(
-      result.results.flatMap((g) =>
-        g.coverages.flatMap((c) => c.places.map((p) => JSON.stringify([p, c.dateRange, c.recordType])))
-      )
-    );
-    expect(out).toEqual(triples(groups));
+    expect(listedTriples(result)).toEqual(triples(groups));
+  });
+
+  it("lists a volume's rows wholly outside the requested years, so none of its record types is lost", async () => {
+    // search-images reads every record type a volume lists to tell a film of
+    // several record sets from a single-type one.
+    const groups = FREEBORN.response.groups!.slice(0, 50);
+    const outside = groups
+      .flatMap((g) => g.coverages ?? [])
+      .filter((c) => Number(c.todateString?.slice(0, 4)) < 1870 || Number(c.fromdateString?.slice(0, 4)) > 1900);
+    expect(outside.length).toBeGreaterThan(0);
+    serveFreeborn(groups);
+
+    const result = await volumeSearchTool({ standardPlace: FREEBORN_P, startYear: 1870, endYear: 1900 }, LOCAL);
+
+    expect(listedTriples(result)).toEqual(triples(groups));
+    for (const g of result.results) expect(g).not.toHaveProperty("coveragesOutsideYears");
   });
 
   it("keeps a denser page of 50 under the limit by shortening coverages, never dropping a volume", async () => {
@@ -1236,72 +1255,5 @@ describe("volumeSearchTool — summary", () => {
     const result = await volumeSearchTool({ standardPlace: "Edensor" }, LOCAL);
     expect(result.summary).toBeUndefined();
     expect(result.summaryError).toBeUndefined();
-  });
-});
-
-describe("coverage rows outside the requested years", () => {
-  const row = (place: string, recordTypeOrig: string, from?: number, to?: number) => ({
-    place,
-    recordTypeOrig,
-    ...(from != null ? { fromdateString: `${from}-01-01T00:00:00` } : {}),
-    ...(to != null ? { todateString: `${to}-12-31T23:59:59.999` } : {}),
-  });
-
-  async function search(coverages: ReturnType<typeof row>[], years: { startYear?: number; endYear?: number }) {
-    setupCalls([2968392], makeSearchResponse([makeGroup({ coverages })]), []);
-    const result = await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom", ...years }, LOCAL);
-    return result.results[0];
-  }
-
-  it("lists the rows that overlap the window and counts the rest", async () => {
-    const volume = await search(
-      [
-        row("A", "Burials", 1726, 1812),
-        row("A", "Baptisms", 1850, 1860),
-        row("A", "Marriages", 1835, 1845),
-        row("A", "Deaths", 1878, 1890),
-        row("A", "Taxes", 1881, 1890),
-        row("A", "Census", 1870),
-        row("A", "Court", undefined, 1830),
-        row("A", "Wills"),
-      ],
-      { startYear: 1840, endYear: 1880 }
-    );
-    expect(volume.coverages.map((c) => c.recordType)).toEqual(["Baptisms", "Marriages", "Deaths", "Census", "Wills"]);
-    expect(volume.coveragesOutsideYears).toBe(3);
-  });
-
-  it("counts outside rows after merging, as coverageCount counts listed ones", async () => {
-    const volume = await search(
-      [row("A", "Baptisms", 1850, 1860), row("A", "Burials", 1726, 1812), row("B", "Burials", 1726, 1812)],
-      { startYear: 1840, endYear: 1880 }
-    );
-    expect(volume.coverages).toHaveLength(1);
-    expect(volume.coveragesOutsideYears).toBe(1);
-  });
-
-  it("filters on one side when only one year is given", async () => {
-    const coverages = [row("A", "Burials", 1726, 1812), row("A", "Baptisms", 1850, 1860), row("A", "Taxes", 1900, 1910)];
-    const fromOnly = await search(coverages, { startYear: 1840 });
-    expect(fromOnly.coverages.map((c) => c.recordType)).toEqual(["Baptisms", "Taxes"]);
-    expect(fromOnly.coveragesOutsideYears).toBe(1);
-    const untilOnly = await search(coverages, { endYear: 1880 });
-    expect(untilOnly.coverages.map((c) => c.recordType)).toEqual(["Burials", "Baptisms"]);
-    expect(untilOnly.coveragesOutsideYears).toBe(1);
-  });
-
-  it("lists every row and counts none when no years are given", async () => {
-    const volume = await search([row("A", "Burials", 1726, 1812), row("A", "Baptisms", 1850, 1860)], {});
-    expect(volume.coverages).toHaveLength(2);
-    expect(volume).not.toHaveProperty("coveragesOutsideYears");
-  });
-
-  it("lists every row when none overlaps, rather than an empty volume", async () => {
-    const volume = await search([row("A", "Burials", 1726, 1812), row("A", "Taxes", 1900, 1910)], {
-      startYear: 1840,
-      endYear: 1880,
-    });
-    expect(volume.coverages).toHaveLength(2);
-    expect(volume).not.toHaveProperty("coveragesOutsideYears");
   });
 });

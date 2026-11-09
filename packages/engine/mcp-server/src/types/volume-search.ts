@@ -133,11 +133,6 @@ export interface VolumeGroup {
   languages: string[];
   coverages: SimplifiedCoverage[];
   /**
-   * Present only when the search gave years and some rows lie wholly outside
-   * them: the number of merged rows left out of `coverages`.
-   */
-  coveragesOutsideYears?: number;
-  /**
    * Present only when `coverages` was shortened to keep the answer under the
    * character budget: the number of merged rows before shortening.
    */

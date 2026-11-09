@@ -213,7 +213,7 @@ coverage: {
 | **OR across the array** | `[124410]`→4, `[123402]`→81, `[124410,123402]`→**85**. Intersection would return 0. | `or` |
 | **Unknown id contributes nothing** | Alone it returns `totalCount: 0` with status `200` — indistinguishable from "no such records here". Alongside a valid id it is silently dropped (`[124410,999999]`→4). | `or` |
 | **Filters groups, not coverages** | A matching group is returned with **all** its coverage rows, including types that did not match. Harjager filtered on `124410` returns 4 groups carrying 48 matching rows **and 48 non-matching** ones (`123363` Census — a different root). Consumers must not assume every returned `recordType` satisfies the filter. | `containment` |
-| **The date window filters groups too** | The same is true of `startYear`/`endYear`: a matched group carries coverage rows entirely outside the requested range. A Harjager query for 1650–1720 returns groups whose rows include 1846–1858. The tool lists only the rows that overlap the window and counts the rest (see [Rows outside the requested years](#rows-outside-the-requested-years)); a row with no structured years is listed whatever its `dateRange` says. | `containment` |
+| **The date window filters groups too** | The same is true of `startYear`/`endYear`: a matched group carries coverage rows entirely outside the requested range. A Harjager query for 1650–1720 returns groups whose rows include 1846–1858. Do not treat a returned `dateRange` as being within the requested window. The tool lists every row: search-images reads a volume's record types to tell a film of several record sets from a single-type one. | `containment` |
 
 Because containment is applied server-side, a group needs only its **anchor**
 concept id — not an enumeration of the types beneath it.
@@ -665,9 +665,8 @@ on the full `groupName` is exact — no prefix fallback is needed.
 | `title` | string? | Human-readable title, when present. |
 | `volumes` | string[]? | Volume identifiers (e.g., `["Libro 9"]`), when present. |
 | `languages` | string[] | Language codes (e.g., `["en", "la"]`); `[]` when absent. |
-| `coverages` | SimplifiedCoverage[] | What this volume covers, one row per distinct date range and record type (see [Merging coverage rows](#merging-coverage-rows)), less any rows wholly outside the requested years. |
-| `coveragesOutsideYears` | number? | Present only when the search gave `startYear` or `endYear` and some rows lie wholly outside them: the number of merged rows left out of `coverages` (see [Rows outside the requested years](#rows-outside-the-requested-years)). |
-| `coverageCount` | number? | Present only when the [answer-size budget](#answer-size) shortened `coverages`: the number of rows before shortening, which does not include `coveragesOutsideYears`. Absent on every volume of an answer that fit. |
+| `coverages` | SimplifiedCoverage[] | What this volume covers, one row per distinct date range and record type (see [Merging coverage rows](#merging-coverage-rows)). |
+| `coverageCount` | number? | Present only when the [answer-size budget](#answer-size) shortened `coverages`: the number of rows before shortening. Absent on every volume of an answer that fit. |
 
 **Each `SimplifiedCoverage`:**
 
@@ -749,22 +748,8 @@ each — and that repetition was most of an oversized page.
 - **Order:** rows in first-seen order; places within a row in first-seen order,
   each once.
 - **Lossless:** every `(place, dateRange, recordType)` triple upstream sent is
-  still in the answer — unless it lies wholly outside the requested years, which
-  `coveragesOutsideYears` counts, or the [answer-size budget](#answer-size)
-  shortened the volume, which it marks with `coverageCount`.
-
-### Rows outside the requested years
-
-Upstream returns every row of a matched volume, including rows wholly outside
-the requested years (see [Semantics](#semantics)). When the search gives
-`startYear` or `endYear`, a row is left out of `coverages` when its structured
-span (the leading years of `fromdateString`/`todateString`) ends before
-`startYear` or starts after `endYear`. A row with no structured year on a side is
-never ruled out on that side, so a row with neither is always listed. The left-out
-rows are merged as listed rows are and counted in `coveragesOutsideYears`.
-
-If no row of a volume overlaps the window, upstream matched it on something this
-parse does not see, so every row is listed and nothing is counted.
+  still in the answer — unless the [answer-size budget](#answer-size) shortened the
+  volume, which it marks with `coverageCount`.
 
 ### Output example
 
@@ -813,8 +798,7 @@ parse does not see, so every row is listed and nothing is counted.
     "(fulltextSearchable). Use the returned imageGroupNumber with image_search to " +
     "list the volume's images, or with fulltext_search to search its text. " +
     "Each coverage row lists every place (`places`) that shares its date range and " +
-    "record type. With startYear or endYear, rows wholly outside those years are " +
-    "not listed; coveragesOutsideYears counts them. " +
+    "record type. " +
     "Results are paginated, 50 volumes a page by default and 10 with summary — " +
     "pass back nextPageToken " +
     "(with the same standardPlace, years, record-type groups and pageSize) as " +
@@ -852,7 +836,8 @@ parse does not see, so every row is listed and nothing is counted.
           "OR-ed. Selecting a group also returns the groups nested beneath it — " +
           "'Government' also returns Tax, Prison, Poor Law, Passports and more. " +
           "This filters volumes, not coverages: a matched volume is returned with " +
-          "its rows of other record types too. Omit to search all record types.",
+          "all of its coverage rows, so some will carry other record types and " +
+          "years outside the requested range. Omit to search all record types.",
       },
       pageSize: {
         type: "integer",
@@ -999,10 +984,8 @@ For each group in `response.groups`:
      including when the years are equal, so `"1683-1683"` — `` `from ${startYear}` ``
      when only the start year is present, and `` `until ${endYear}` `` when only
      the end year is
-9. `coverages` ← those rows, less any [outside the requested years](#rows-outside-the-requested-years),
-   [merged](#merging-coverage-rows); a merged row carries `recordTypeConceptId`
-   only when it has no `recordType`
-10. `coveragesOutsideYears` ← the number of merged rows left out, when any were
+9. `coverages` ← those rows [merged](#merging-coverage-rows); a merged row carries
+   `recordTypeConceptId` only when it has no `recordType`
 
 ### Answer size
 
@@ -1033,10 +1016,7 @@ Measured on the hosted feedback bundles of 2026-10-05 to 2026-10-19, where 10 of
 
 Those four fit at the default page of 50 by merging alone, but the budget does
 fire there: of 43 hosted answers at the default page from 2026-10-29 to
-2026-11-08, 5 were shortened, with `coverageCount` on 15–42 volumes. Shortening
-keeps each volume's first rows whatever their years, which is why rows
-[outside the requested years](#rows-outside-the-requested-years) are left out
-before the budget is measured.
+2026-11-08, 5 were shortened, with `coverageCount` on 15–42 volumes.
 
 The page maximum is 50 so that the last cap fits on every measured page: at one row per volume
 the densest hosted page measured averages 454 characters a volume, about 23,000
@@ -1206,9 +1186,9 @@ images are digitized, indexed, or full-text processed.
 
 | File | Edit |
 |---|---|
-| `src/types/volume-search.ts` | `coveragesOutsideYears?` on `VolumeGroup` |
-| `src/tools/volume-search.ts` | Page maximum 50; page default 10 with `summary`; error bodies cut to their message; rows outside the requested years counted, not listed; the schema descriptions |
-| `tests/tools/volume-search.test.ts` | Cases 28, 31, 32 and 34–44 |
+| `src/types/volume-search.ts` | The `pageSize` comment |
+| `src/tools/volume-search.ts` | Page maximum 50; page default 10 with `summary`; error bodies cut to their message; the schema descriptions |
+| `tests/tools/volume-search.test.ts` | Cases 28, 31, 32 and 34–40 |
 | `docs/catalog.md` | `pageSize` 1–50 and the `summary` page default in the `volume_search` row |
 
 ---
@@ -1265,11 +1245,7 @@ images are digitized, indexed, or full-text processed.
 | 37 | The schema's `pageSize` maximum is the 50 the validator enforces | Page size |
 | 38 | `summary` with no `pageSize` sends and echoes `pageSize: 10` | Summary page |
 | 39 | `summary` with a `pageSize` keeps it | Summary page |
-| 40 | With a year window, rows ending before `startYear` or starting after `endYear` are left out and counted; overlapping, one-sided and yearless rows are listed | Rows outside the years |
-| 41 | `coveragesOutsideYears` counts merged rows, not upstream rows | Rows outside the years |
-| 42 | `startYear` alone or `endYear` alone filters on that side only | Rows outside the years |
-| 43 | With no years every row is listed and `coveragesOutsideYears` is absent | Rows outside the years |
-| 44 | When no row overlaps the window every row is listed and nothing is counted | Rows outside the years |
+| 40 | The real Freeborn first page searched 1870–1900 lists every upstream `(place, dateRange, recordType)` triple, including the rows wholly outside those years, and no volume carries `coveragesOutsideYears` | Every row listed |
 
 ### Smoke test
 

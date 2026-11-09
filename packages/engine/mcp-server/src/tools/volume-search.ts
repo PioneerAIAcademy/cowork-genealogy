@@ -232,24 +232,6 @@ interface MappedCoverage {
   recordTypeConceptId?: number;
 }
 
-/** The requested years; either side may be open. */
-interface YearWindow {
-  startYear?: number;
-  endYear?: number;
-}
-
-/**
- * False only when the row's structured span lies wholly outside the window. A
- * row with no structured years, or an open side, is never ruled out on that side.
- */
-function overlapsWindow(entry: MetadataRmsCoverageEntry, window: YearWindow): boolean {
-  const from = leadingYear(entry.fromdateString);
-  const to = leadingYear(entry.todateString);
-  if (window.startYear != null && to != null && to < window.startYear) return false;
-  if (window.endYear != null && from != null && from > window.endYear) return false;
-  return true;
-}
-
 function mapCoverage(entry: MetadataRmsCoverageEntry): MappedCoverage {
   const coverage: MappedCoverage = { place: entry.place ?? "" };
   const startYear = leadingYear(entry.fromdateString);
@@ -327,8 +309,7 @@ export function mergeCoverages(rows: MappedCoverage[]): SimplifiedCoverage[] {
 
 function mapGroup(
   group: MetadataRmsGroup,
-  fulltextSet: Set<string> | null,
-  window: YearWindow
+  fulltextSet: Set<string> | null
 ): VolumeGroup {
   const imageGroupNumber = group.groupName;
   const imageCount = group.childCount ?? null;
@@ -336,26 +317,15 @@ function mapGroup(
   const fulltextSearchable =
     fulltextSet === null ? null : fulltextSet.has(imageGroupNumber);
 
-  // Upstream matches a volume on any one row, then returns all its rows. Rows
-  // wholly outside the requested years are counted, not listed. When no row
-  // overlaps, this parse disagrees with upstream's match, so every row is listed.
-  const entries = group.coverages ?? [];
-  const inWindow = entries.filter((e) => overlapsWindow(e, window));
-  const outside = inWindow.length > 0 ? entries.filter((e) => !overlapsWindow(e, window)) : [];
-  const listed = outside.length > 0 ? inWindow : entries;
-
   const result: VolumeGroup = {
     imageGroupNumber,
     imageCount,
     recordSearchablePercent,
     fulltextSearchable,
     languages: group.languages ?? [],
-    coverages: mergeCoverages(listed.map(mapCoverage)),
+    coverages: mergeCoverages((group.coverages ?? []).map(mapCoverage)),
   };
 
-  if (outside.length > 0) {
-    result.coveragesOutsideYears = mergeCoverages(outside.map(mapCoverage)).length;
-  }
   if (group.title != null) result.title = group.title;
   if (group.volumes != null) result.volumes = group.volumes;
 
@@ -478,8 +448,7 @@ export async function volumeSearchTool(
     ? await fetchFulltextSearchable(groupNames, principal)
     : new Set<string>();
 
-  const window: YearWindow = { startYear: input.startYear, endYear: input.endYear };
-  const results = groups.map((g) => mapGroup(g, fulltextSet, window));
+  const results = groups.map((g) => mapGroup(g, fulltextSet));
 
   const query: VolumeSearchResult["query"] = { standardPlace: input.standardPlace, pageSize };
   if (input.startYear != null) query.startYear = input.startYear;
@@ -518,8 +487,7 @@ export const volumeSearchSchema = {
     "(fulltextSearchable). Use the returned imageGroupNumber with image_search to " +
     "list the volume's images, or with fulltext_search to search its text. " +
     "Each coverage row lists every place (`places`) that shares its date range and " +
-    "record type. With startYear or endYear, rows wholly outside those years are " +
-    "not listed; coveragesOutsideYears counts them. " +
+    "record type. " +
     "Results are paginated, 50 volumes a page by default and 10 with summary — " +
     "pass back nextPageToken " +
     "(with the same standardPlace, years, record-type groups and pageSize) as " +
@@ -557,7 +525,8 @@ export const volumeSearchSchema = {
           "OR-ed. Selecting a group also returns the groups nested beneath it — " +
           "'Government' also returns Tax, Prison, Poor Law, Passports and more. " +
           "This filters volumes, not coverages: a matched volume is returned with " +
-          "its rows of other record types too. Omit to search all record types.",
+          "all of its coverage rows, so some will carry other record types and " +
+          "years outside the requested range. Omit to search all record types.",
       },
       pageSize: {
         type: "integer",
