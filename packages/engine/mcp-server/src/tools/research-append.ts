@@ -3178,27 +3178,41 @@ function ownGivenWords(given: unknown): string[] {
     .filter((w) => w !== "" && w !== "of" && /\p{L}/u.test(w) && !PLACEHOLDER_GIVEN.has(w));
 }
 
-/** A given name's words as the namesake persona lookup compares them:
- *  `ownGivenWords`, hyphenated words split, accents folded and punctuation
- *  trimmed from each end ("(Herman" is "herman"). */
-function foldedGivenWords(given: unknown): string[] {
-  return ownGivenWords(given)
-    .flatMap((w) => w.split("-"))
-    .map((w) => w.normalize("NFD").replace(/\p{M}/gu, "").replace(/^[^\p{L}]+|[^\p{L}]+$/gu, ""))
-    .filter((w) => w !== "");
+/** A name's words as the namesake persona lookup reads them: every mark but a
+ *  letter, an apostrophe or a hyphen made a space first, so a bracketed
+ *  placeholder ("(Mrs.)") is still one, then `ownGivenWords`. */
+function lookupNameWords(text: string): string[] {
+  return ownGivenWords(text.replace(/[^\p{L}\p{M}\s'-]/gu, " "));
 }
 
-/** The given words of a namesake row's `name`, a free string: its words less
- *  name suffixes, and less the last, the surname, when two or more are left. */
+/** Words as the lookup compares them: hyphenated words split, accents folded,
+ *  apostrophes trimmed from each end, and initials dropped. */
+function comparableWords(words: readonly string[]): string[] {
+  return words
+    .flatMap((w) => w.split("-"))
+    .map((w) => w.normalize("NFD").replace(/\p{M}/gu, "").replace(/^'+|'+$/g, ""))
+    .filter((w) => w.length > 1);
+}
+
+/** A relative named inside a row's name ("Hannah Earnest (wife of Edwin
+ *  Earnest)"): the words from the relation on are the relative's. */
+const RELATIVE_OF = /\b(?:wife|husband|widow|widower|relict|son|daughter|child|mother|father|brother|sister)\s+of\b/i;
+
+/** The given words of a namesake row's `name`, a free string: the words before
+ *  any relative it names, read "Given Surname" (`surnameLast`), less name
+ *  suffixes, and less the last word, the surname, when two or more are left. */
 function rowGivenWords(name: unknown): ReadonlySet<string> {
-  const words = foldedGivenWords(name).filter((w) => !NAME_SUFFIXES.has(w));
-  return new Set(words.length > 1 ? words.slice(0, -1) : words);
+  if (typeof name !== "string") return new Set();
+  const relative = RELATIVE_OF.exec(name);
+  const own = relative ? name.slice(0, relative.index) : name;
+  const words = lookupNameWords(surnameLast(own)).filter((w) => !NAME_SUFFIXES.has(w));
+  return new Set(comparableWords(words.length > 1 ? words.slice(0, -1) : words));
 }
 
 /** Whether one of `person`'s names has a given word of the row's. */
 function sharesRowGivenName(person: any, rowWords: ReadonlySet<string>): boolean {
-  return ((Array.isArray(person?.names) ? person.names : []) as any[]).some((n) =>
-    foldedGivenWords(n?.given).some((w) => rowWords.has(w)),
+  return ((Array.isArray(person?.names) ? person.names : []) as any[]).some(
+    (n) => typeof n?.given === "string" && comparableWords(lookupNameWords(n.given)).some((w) => rowWords.has(w)),
   );
 }
 
@@ -3241,15 +3255,18 @@ const INVERSE_RELATION: ReadonlyMap<string, string> = new Map([
 ]);
 const NAME_SUFFIXES: ReadonlySet<string> = new Set(["jr", "sr", "ii", "iii", "iv", "junior", "senior"]);
 
+/** A name written "Surname, Given" as "Given Surname"; any other name as it is. */
+function surnameLast(v: string): string {
+  if (!v.includes(",")) return v;
+  const [surname, given] = v.split(",", 2);
+  return `${given} ${surname}`;
+}
+
 /** A name as the co-resident exclusion compares it: the first given name and
  *  the surname, lower case, a generational suffix dropped. */
 function nameKey(value: unknown): string | null {
   if (typeof value !== "string") return null;
-  let v = value.toLowerCase();
-  if (v.includes(",")) {
-    const [surname, given] = v.split(",", 2);
-    v = `${given} ${surname}`;
-  }
+  const v = surnameLast(value.toLowerCase());
   const words = v.replace(/[^\p{L}\s'-]/gu, " ").split(/\s+/).filter((w) => w && !NAME_SUFFIXES.has(w));
   if (words.length === 0) return null;
   return words.length === 1 ? words[0] : `${words[0]} ${words[words.length - 1]}`;
@@ -4470,9 +4487,13 @@ function earliestPersonaBirthYear(personas: readonly any[]): number | null {
   return out;
 }
 
+/** The row fields whose update restamps it: the stamp reads the listed records,
+ *  the logs that found them, and the name a persona must share. */
+const RESTAMPING_FIELDS = ["record_ids", "log_entry_ids", "name"] as const;
+
 /** Item 10 of #3363 (chesworthrm, 2026-10-24): stamps `record_persona_ids` on
- *  each row the call appended, or updated through `record_ids` or
- *  `log_entry_ids`, from the row's own search and read sidecars and only with a
+ *  each row the call appended, or updated through `record_ids`, `log_entry_ids`
+ *  or `name`, from the row's own search and read sidecars and only with a
  *  persona of the row's given name, so the first runs can count what a
  *  persona-keyed refusal would catch, and `birth_year`,
  *  the earliest birth year those personas state, which the age exemption reads.
@@ -4491,7 +4512,7 @@ export async function stampNamesakePersonas(
   for (const a of applied) {
     if (a.section !== "namesakes" || a.noop) continue;
     const fields = (ops[a.opIndex] as any)?.fields;
-    if (a.op === "update" && !("record_ids" in (fields ?? {})) && !("log_entry_ids" in (fields ?? {}))) continue;
+    if (a.op === "update" && !RESTAMPING_FIELDS.some((f) => f in (fields ?? {}))) continue;
     const row = rows.find((r) => r && r.id === a.entryId);
     if (!row) continue;
     const { recordIds, stamp, personas } = await lookUpNamesakePersonas(row, logById, readResults);

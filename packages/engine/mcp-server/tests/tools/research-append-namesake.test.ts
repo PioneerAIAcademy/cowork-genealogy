@@ -1411,6 +1411,72 @@ describe("namesake cap", () => {
           await searchHit([mrs], mrs);
           expect((await appendRow({ name: "Mrs. Hannah Earnest", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
           expect((await row()).record_persona_ids).toBeUndefined();
+          // A bracketed placeholder is still one, so the surname stays the last word.
+          const earnest = persona("p_3", "Earnest", "Smith");
+          await searchHit([earnest], earnest);
+          expect((await appendRow({ name: "Hannah Earnest (Mrs.)", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toBeUndefined();
+        });
+
+        it("G9 restamps a row whose name an update changes, either way", async () => {
+          const born1846 = [{ type: "Birth", date: "1846", standard_date: "1846" }];
+          await searchHit([{ ...EDWIN, facts: born1846 }, HANNAH_QB], EDWIN);
+          expect((await appendRow({ name: "Edwin Earnest", record_ids: ["XS3W-W3M"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toEqual({ [EDWIN.ark]: EDWIN.id });
+          expect((await row()).birth_year).toBe(1846);
+          const rename = (name: string) =>
+            researchAppend({ projectPath: dir, section: "namesakes", op: "update", entryId: "ns_001", fields: { name } } as any);
+          expect((await rename("Hannah Earnest")).ok).toBe(true);
+          expect((await row()).record_persona_ids).toBeUndefined();
+          expect((await row()).birth_year).toBeUndefined();
+          expect((await rename("Edwin Earnest")).ok).toBe(true);
+          expect((await row()).record_persona_ids).toEqual({ [EDWIN.ark]: EDWIN.id });
+          expect((await row()).birth_year).toBe(1846);
+        });
+
+        it("G10 does not read a relative named in the row's name as its given name", async () => {
+          for (const name of ["Hannah Earnest (wife of Edwin Earnest)", "Hannah Earnest, widow of Edwin Earnest"]) {
+            await searchHit([EDWIN, HANNAH_QB], EDWIN);
+            expect((await appendRow({ name, record_ids: ["XS3W-W3M"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+            expect((await row()).record_persona_ids, name).toBeUndefined();
+            await searchHit([EDWIN, HANNAH_QB], EDWIN);
+            expect((await appendRow({ name, record_ids: ["XS3W-W39"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+            expect((await row()).record_persona_ids, name).toEqual({ [HANNAH_QB.ark]: HANNAH_QB.id });
+          }
+        });
+
+        it("G11 counts no initial as a given word, on either side", async () => {
+          const h = persona("p_1", "H.", "Smith");
+          await searchHit([h], h);
+          expect((await appendRow({ name: "John H. Smith", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toBeUndefined();
+          const john = persona("p_2", "John", "Smith");
+          await searchHit([john], john);
+          expect((await appendRow({ name: "J. Smith", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toBeUndefined();
+          await searchHit([john], john);
+          expect((await appendRow({ name: "John H. Smith", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toEqual({ [john.ark]: "p_2" });
+        });
+
+        it('G12 reads a row written "Surname, Given"', async () => {
+          for (const [name, given] of [["Earnest, Hannah", "Hannah"], ["Smith, John A.", "John"], ["Smith, John, Jr.", "John"]]) {
+            const p = persona("p_1", given, "Smith");
+            await searchHit([p], p);
+            expect((await appendRow({ name, record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+            expect((await row()).record_persona_ids, name).toEqual({ [p.ark]: "p_1" });
+          }
+        });
+
+        it("G13 drops a hyphenated surname whole, and splits a hyphenated given name", async () => {
+          const smith = persona("p_1", "Smith", "Brown");
+          await searchHit([smith], smith);
+          expect((await appendRow({ name: "Mary Smith-Jones", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toBeUndefined();
+          const jean = persona("p_2", "Jean", "Martin");
+          await searchHit([jean], jean);
+          expect((await appendRow({ name: "Jean-Baptiste Martin", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toEqual({ [jean.ark]: "p_2" });
         });
       });
     });

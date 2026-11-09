@@ -1520,6 +1520,9 @@ function section7(states: FinalState[]): void {
   );
   const named = (runs: string[]) => (runs.length > 0 ? ` (${runs.join("; ")})` : "");
   console.log(`    final states carrying rows: ${carrying}`);
+  if (carrying === 0) {
+    console.log("    no run yet whose engine checks the given name: every count below is empty, not a finding of zero");
+  }
   console.log(`    left out, engine before the read stamp: ${leftOut.before.length}${named(leftOut.before)}`);
   console.log(
     `    left out, engine stamps without the given name check: ${leftOut.unchecked.length}${named(leftOut.unchecked)}`,
@@ -1530,7 +1533,7 @@ function section7(states: FinalState[]): void {
   console.log(
     `    (c) listed records stamped: ${sum.stamped} of ${sum.listed}; ` +
       `(d) unstamped though their row cites a persona search with a sidecar, a persona whose given name ` +
-      `is not the row's included (Latin, abbreviated and surname first forms): ${sum.absent}`,
+      `is not the row's included (Latin and abbreviated forms, initials, surname first without a comma): ${sum.absent}`,
   );
   console.log(
     `    (e) ids on rows no persona search reaches (page image ids, full-text hit ids), outside (c): ${sum.unstampable}`,

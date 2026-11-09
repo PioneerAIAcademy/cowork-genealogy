@@ -1247,14 +1247,14 @@ the ruling below rejected.
 the record id alone, since a household record gives every member one id, so
 `research_append` stamps the namesake's own persona per listed record, the way it
 fills an assertion's `record_persona_id`: on an append, and on an update that
-sets `record_ids` or `log_entry_ids`, overwriting whatever the caller sent. Each
+sets `record_ids`, `log_entry_ids` or `name`, overwriting whatever the caller sent. Each
 listed id found in the sidecar of a persona-bearing search or read the row cites,
 as a result or as a person of a result's record, is stored in that sidecar's form,
 as an assertion's is. Only a persona sharing a given word with the row's `name` is
 stamped (chesworthrm, 2026-11-09), since a household member listed by mistake
-would otherwise count as the namesake; a Latin, abbreviated or surname first form
-of the name loses its stamp too, the safe direction, and §7 says so beside its
-figures. A record found in no sidecar is left
+would otherwise count as the namesake; a Latin or abbreviated form, an initial, or a
+surname first name written without a comma loses its stamp too, the safe direction,
+and §7 says so beside its figures. A record found in no sidecar is left
 unstamped and the row is still written: unlike an assertion, whose persona is
 lost for good when its search staged no sidecar, a missing stamp costs a count,
 not an identity: a row with no persona has no `birth_year`, so it caps every link as a row always did. The first runs that write rows count, with
