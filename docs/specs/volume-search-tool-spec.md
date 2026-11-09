@@ -1038,7 +1038,7 @@ keeps each volume's first rows whatever their years, which is why rows
 [outside the requested years](#rows-outside-the-requested-years) are left out
 before the budget is measured.
 
-The page maximum is 50 so that the last cap always fits: at one row per volume
+The page maximum is 50 so that the last cap fits on every measured page: at one row per volume
 the densest hosted page measured averages 454 characters a volume, about 23,000
 characters at 50 volumes and 45,000 at 100.
 
