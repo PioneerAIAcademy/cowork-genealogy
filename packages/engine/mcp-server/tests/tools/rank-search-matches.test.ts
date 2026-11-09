@@ -512,7 +512,49 @@ describe("rank_search_matches", () => {
       expect(only(out)).toMatchObject({ surnameNotOnSubject: true, candidateSurname: "Fenstermaker" });
     });
 
-    it("never flags when the subject has no surname", async () => {
+    it("flags distinct surnames that share a suffix (Olson vs Nelson, Henderson vs Anderson)", async () => {
+      const nelson = { persons: [juanita({ names: [{ preferred: true, given: "Mary", surname: "Nelson" }] })], relationships: [], sources: [] };
+      const out = await rank([hit("ark:/61903/1:1:AAAA-AA1", "Olson", "Mary")], nelson);
+      expect(only(out)).toMatchObject({ surnameNotOnSubject: true, candidateSurname: "Olson" });
+      const anderson = { persons: [juanita({ names: [{ preferred: true, given: "Mary", surname: "Anderson" }] })], relationships: [], sources: [] };
+      const out2 = await rank([hit("ark:/61903/1:1:AAAA-AA2", "Henderson", "Mary")], anderson);
+      expect(only(out2)).toMatchObject({ surnameNotOnSubject: true, candidateSurname: "Henderson" });
+    });
+
+    it("does not flag a one-edit spelling (Smith / Smyth)", async () => {
+      const smith = { persons: [juanita({ names: [{ preferred: true, given: "Mary", surname: "Smith" }] })], relationships: [], sources: [] };
+      const out = await rank([hit("ark:/61903/1:1:AAAA-AA1", "Smyth", "Mary")], smith);
+      expect(only(out)).not.toHaveProperty("surnameNotOnSubject");
+    });
+
+    it("does not flag a record whose persona also carries her own surname", async () => {
+      const both = hit("ark:/61903/1:1:6XJ4-K2F", "Fenstermaker");
+      (both as any).gedcomx.persons[0].names.push({ given: "Juanita", surname: "Kimbrell", type: "BirthName" });
+      const out = await rank([both]);
+      expect(only(out)).not.toHaveProperty("surnameNotOnSubject");
+    });
+
+    it("skips a generational suffix in the personName fallback", async () => {
+      const smith = { persons: [juanita({ names: [{ preferred: true, given: "John", surname: "Smith" }] })], relationships: [], sources: [] };
+      const bare = candidate({ recordId: "ark:/61903/1:1:AAAA-AA1", hasGedcomx: false, personName: "John Smith Jr." });
+      const out = await rank([bare], smith);
+      expect(only(out)).not.toHaveProperty("surnameNotOnSubject");
+    });
+
+    it("flags against the tree family's surnames when the subject has a given name only", async () => {
+      const tree = {
+        persons: [
+          juanita({ names: [{ preferred: true, given: "Juanita" }] }),
+          { id: "I2", names: [{ preferred: true, given: "Oscar", surname: "Kimbrell" }] },
+        ],
+        relationships: [{ id: "R1", type: "ParentChild", parent: "I2", child: "I1" }],
+        sources: [],
+      };
+      const out = await rank([hit("ark:/61903/1:1:6XJ4-K2F", "Fenstermaker")], tree);
+      expect(only(out)).toMatchObject({ surnameNotOnSubject: true, candidateSurname: "Fenstermaker" });
+    });
+
+    it("never flags when neither the subject nor their tree family has a surname", async () => {
       const noSurname = { persons: [juanita({ names: [{ preferred: true, given: "Juanita" }] })], relationships: [], sources: [] };
       const out = await rank([hit("ark:/61903/1:1:6XJ4-K2F", "Fenstermaker")], noSurname);
       expect(only(out)).not.toHaveProperty("surnameNotOnSubject");

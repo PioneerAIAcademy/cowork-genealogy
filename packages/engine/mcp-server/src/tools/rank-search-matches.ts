@@ -14,7 +14,7 @@ import { gatherRelatives, hasRealGivenName, isRealGivenName } from "../utils/rel
 import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
 import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
-import { diceCoefficient, levenshteinDistance, normalizeString } from "../utils/string-similarity.js";
+import { levenshteinDistance, normalizeString } from "../utils/string-similarity.js";
 import type {
   RankSearchMatchesInput,
   RankSearchMatchesResult,
@@ -35,9 +35,6 @@ const MATCHER_LABEL: Record<MatcherBackend, string> = {
  *  many years is flagged `birthYearConflict` — census ages and indexing slips
  *  account for a year or two, not five. */
 const BIRTH_YEAR_CONFLICT_YEARS = 2;
-/** Two surname words this similar (Sorensen-Dice over bigrams) are one surname
- *  spelled two ways — the cutoff person_warnings uses for similar names. */
-const SURNAME_DICE_CUTOFF = 0.66;
 /** Append-only calibration log; a `.jsonl` name stays clear of the results
  *  orphan validator (which scans results/ non-recursively for top-level *.json). */
 const SCORE_LOG_REL = "results/match-scores.jsonl";
@@ -664,9 +661,12 @@ function surnameTokens(surname: string): string[] {
   return long.length > 0 ? long : words;
 }
 
-/** Spelling variants (Kimbrel/Kimbrell, Flyn/Flynn) count as the same surname. */
+/** Spelling variants one edit apart (Kimbrel/Kimbrell, Smith/Smyth, Reid/Reed)
+ *  count as the same surname. A looser match is not used: Dice treats
+ *  Nelson/Olson and Anderson/Henderson as one name, so the flag would never fire
+ *  on them. The cost is that Hall/Hill also count as one. */
 function similarSurnameToken(a: string, b: string): boolean {
-  return diceCoefficient(a, b) >= SURNAME_DICE_CUTOFF || levenshteinDistance(a, b) <= 1;
+  return levenshteinDistance(a, b) <= 1;
 }
 
 /** True when any word of `candidate` is a spelling of any word of any of the
@@ -708,22 +708,31 @@ function subjectSurnames(
   return [...out];
 }
 
-/** The candidate's surname: the principal persona's preferred (else first) name
- *  in the staged row's gedcomx, else the last word of a multi-word `personName`. */
-function candidateSurnameOf(r: RecordSearchResult): string | undefined {
+/** The candidate's surnames, preferred first: every name of the principal
+ *  persona in the staged row's gedcomx (a record giving a maiden name beside a
+ *  married one carries both), else — only when the row has no such persona — the
+ *  last word of a multi-word `personName` that is not a generational suffix. */
+function candidateSurnamesOf(r: RecordSearchResult): string[] {
   const persons = (r.gedcomx as { persons?: any[] } | undefined)?.persons;
   const persona =
     Array.isArray(persons) && r.primaryId
       ? persons.find((p) => p && p.id === r.primaryId)
       : undefined;
   if (persona) {
-    const names = Array.isArray(persona.names) ? persona.names : [];
-    const n = names.find((x: any) => x?.preferred) ?? names[0];
-    const s = n?.surname;
-    return typeof s === "string" && s.trim() ? s.trim() : undefined;
+    const names = Array.isArray(persona.names) ? [...persona.names] : [];
+    names.sort((a: any, b: any) => Number(Boolean(b?.preferred)) - Number(Boolean(a?.preferred)));
+    const out: string[] = [];
+    for (const n of names) {
+      const s = n?.surname;
+      if (typeof s === "string" && s.trim() && !out.includes(s.trim())) out.push(s.trim());
+    }
+    return out;
   }
   const words = typeof r.personName === "string" ? r.personName.trim().split(/\s+/) : [];
-  return words.length > 1 ? words[words.length - 1] : undefined;
+  while (words.length > 1 && GENERATIONAL_SUFFIXES.has(words[words.length - 1].toLowerCase().replace(/\./g, ""))) {
+    words.pop();
+  }
+  return words.length > 1 ? [words[words.length - 1]] : [];
 }
 
 /** The response's `subjectTooThin` fields: present only when true. */
@@ -1048,14 +1057,14 @@ function toStub(
   // Deterministic, like the birth-year flag: a hit under a surname the project
   // never gives the subject (a recalled married name, say) scores on given name,
   // date and place, and reads as a clean match. Flag it in code.
-  const candSurname = candidateSurnameOf(r);
+  const candSurnames = candidateSurnamesOf(r);
   if (
-    candSurname &&
+    candSurnames.length > 0 &&
     subjectSurnameList.length > 0 &&
-    !surnameOnSubject(candSurname, subjectSurnameList)
+    !candSurnames.some((c) => surnameOnSubject(c, subjectSurnameList))
   ) {
     stub.surnameNotOnSubject = true;
-    stub.candidateSurname = candSurname;
+    stub.candidateSurname = candSurnames[0];
   }
   return stub;
 }

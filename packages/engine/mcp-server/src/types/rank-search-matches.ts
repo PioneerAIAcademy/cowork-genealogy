@@ -67,9 +67,10 @@ export interface RankedMatch {
    *  project gives the subject — their own tree names, linked `name`
    *  assertions, and the names of tree spouses, parents and children. A hit
    *  under a recalled, unproven married name is the case (#2213 d33). Advisory:
-   *  the score is untouched. Absent when the subject has no surname. */
+   *  the score is untouched. Absent when neither the subject nor their tree
+   *  family has a surname, and when any name on the candidate's persona matches. */
   surnameNotOnSubject?: true;
-  /** The candidate's surname. Present exactly when `surnameNotOnSubject` is. */
+  /** The candidate's preferred surname. Present exactly when `surnameNotOnSubject` is. */
   candidateSurname?: string;
   /** 0-1 match score; null when scoring failed (never dropped). */
   matchScore: number | null;
