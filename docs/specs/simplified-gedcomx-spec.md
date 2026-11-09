@@ -18,7 +18,7 @@ gates' agreement. **Never use the JSON Schema alone as a validity gate.**
 
 ## 1. Overview
 
-`tree.gedcomx.json` contains persons, relationships, facts, and source descriptions in a simplified GedcomX format. It is the project's **working tree**: the place persons and relationships are held as research concludes them, including tentative conclusions and hypotheses that are not yet proven. It is therefore a **superset** of what could be uploaded to FamilySearch, not the upload payload itself — upload is conclusion-gated (see "Relationship to `research.json`" below), so only the concluded subset would ever leave it. MCP tools handle conversion between full GedcomX (from FamilySearch APIs) and this simplified format.
+`tree.gedcomx.json` contains persons, relationships, facts, and source descriptions in a simplified GedcomX format. It is the project's **working tree**: the place persons and relationships are held as research concludes them, including tentative conclusions and hypotheses that are not yet proven. MCP tools handle conversion between full GedcomX (from FamilySearch APIs) and this simplified format.
 
 ### Design goals
 
@@ -33,7 +33,7 @@ gates' agreement. **Never use the JSON Schema alone as a validity gate.**
 1. **Person IDs** — `project.subject_person_ids`, `person_evidence.person_id`, and `timelines.person_ids` reference `persons[].id`.
 2. **Source description IDs** — `sources[].gedcomx_source_description_id` in `research.json` references `sources[].id` here.
 
-`tree.gedcomx.json` is maintained under a two-layer rule: evidence facts and names materialize onto tree persons at identity-link time, each carrying provenance (a non-null source reference), while the `primary`/`preferred` flags plus `proof_tier` express which materialized value is *concluded*; upload to FamilySearch is conclusion-gated (see `research-schema-spec.md` Section 8, "tree.gedcomx.json update timing"). During early research, it contains stub persons with whatever is known at project initialization.
+`tree.gedcomx.json` is maintained under a two-layer rule: evidence facts and names materialize onto tree persons at identity-link time, each carrying provenance (a non-null source reference), while the `primary`/`preferred` flags express which materialized value is *concluded* (see `research-schema-spec.md` Section 8, "tree.gedcomx.json update timing"). During early research, it contains stub persons with whatever is known at project initialization.
 
 ### Top-level structure
 
@@ -218,7 +218,7 @@ Array of source description objects. These are the simplified equivalents of Ged
 | `id` | string | yes | Source ID. The FamilySearch PID when FS supplied one (`MS88-FLK`), otherwise synthesized (`S1`). See Section 3 |
 | `resource_type` | string | no — record-only, rejected on tree sources | The kind of digital artifact (e.g. `DigitalArtifact`). Stripped URI prefix from raw GedcomX's `resourceType`. Present only on record-derived sources; stripped by `sanitizeCandidate` before merge |
 | `title` | string | yes | Human-readable title of the source |
-| `citation` | string | no | Formatted citation string. Populated by the proof-conclusion workflow at upload time (copied from `research.json` `sources[].citation`). Omit during active research |
+| `citation` | string | no | Formatted citation string. Populated by the proof-conclusion workflow (copied from `research.json` `sources[].citation`). Omit during active research |
 | `author` | string | no | Creator, agency, or author |
 | `url` | string | no | URL to the digital source |
 | `coverage` | object | no — record-only, rejected on tree sources | Volume-level metadata from the digital artifact's first coverage entry (FamilySearch coverage is an array; only `coverage[0]` is taken — no probed record has returned more than one entry). Describes the scanned volume the image sits in, not the individual record's event. Present only on record-derived sources; stripped by `sanitizeCandidate` before merge. Fields: `standard_place` (the coverage place's name: the one the response's own `places[]` gives that id when it gives one — a search response does, so a `record_search` result and its sidecar carry it — else named by a live `record_read` by its id's own name, whatever the coverage's dates, when the coverage's reference resolves to a place description; a sidecar read returns what was staged and resolves nothing), `place_rep_id` (FamilySearch place description/rep id; absent when the coverage references a place the record identifies only by an authority place id, which is not a rep id), `date_range` (temporal coverage: `temporal.original` when present, else the GEDCOM formal `temporal.formal`), `record_type` (stripped URI prefix, e.g. `Census`) |
@@ -350,7 +350,7 @@ Section 4 call them.
 
 | Value | GedcomX URI | Notes |
 |-------|-------------|-------|
-| `Biological` | `http://gedcomx.org/BiologicalParent` | Standard GedcomX fact type emitted on the relationship's `facts[]` array at upload |
+| `Biological` | `http://gedcomx.org/BiologicalParent` | Standard GedcomX fact type emitted on the relationship's `facts[]` array on conversion to full GedcomX |
 | `Adoptive` | `http://gedcomx.org/AdoptiveParent` | |
 | `Step` | `http://gedcomx.org/StepParent` | |
 | `Foster` | `http://gedcomx.org/FosterParent` | |
@@ -373,7 +373,7 @@ The `Parent` suffix is dropped in the simplified format because the parent-child
 | `MarriageBanns` | yes | Couple relationship event. 0 person-level corpus occurrences as of 2026-08-20; swept by `tree_forget` `spouses-of` per the 2026-08-24 ruling. |
 | `Separation` | yes | Couple relationship event (GedcomX type). 0 person-level corpus occurrences as of 2026-08-20; swept by `tree_forget` `spouses-of` per the 2026-08-24 ruling. |
 | `Residence` | yes | |
-| `Census` | **no** | Extension. Standard GedcomX records census appearances as `Residence`. The conversion function maps `Census` → `Residence` with a qualifier at upload. Use `Census` in the simplified format for clarity |
+| `Census` | **no** | Extension. Standard GedcomX records census appearances as `Residence`. The conversion function maps `Census` → `Residence` with a qualifier. Use `Census` in the simplified format for clarity |
 | `Immigration` | yes | |
 | `Emigration` | yes | |
 | `Naturalization` | yes | GedcomX-only — no research.json equivalent (use `immigration` assertions) |
@@ -381,10 +381,10 @@ The `Parent` suffix is dropped in the simplified format because the parent-child
 | `Occupation` | yes | |
 | `Education` | yes | |
 | `Religion` | yes | |
-| `Property` | **no** | Extension. No standard GedcomX type. Conversion function uses a custom type URI. May not survive FamilySearch upload processing |
+| `Property` | **no** | Extension. No standard GedcomX type. Conversion function uses a custom type URI |
 | `Will` | **no** | Extension. No standard GedcomX type. Same caveat as Property |
 | `Probate` | **no** | Extension. No standard GedcomX type. Same caveat as Property |
-| `Parents` | **no** | Extension. A FamilySearch **person-level** documentary fact that transcribes the parents named in an indexed record; its `value` holds the parents' names (e.g. `"Geo[illegible] Wilcox - Caroline E Woodruff"`). Redundant with the `ParentChild` structure, so `tree_forget` `parents-of` sweeps it (§2.1.1); not emitted onto the tree by our own writers. No standard GedcomX person fact type — same upload caveat as Property |
+| `Parents` | **no** | Extension. A FamilySearch **person-level** documentary fact that transcribes the parents named in an indexed record; its `value` holds the parents' names (e.g. `"Geo[illegible] Wilcox - Caroline E Woodruff"`). Redundant with the `ParentChild` structure, so `tree_forget` `parents-of` sweeps it (§2.1.1); not emitted onto the tree by our own writers. No standard GedcomX person fact type |
 
 **Casing convention:** Fact and name types use PascalCase (matching GedcomX conventions with URI prefixes dropped). This contrasts with `research.json` which uses lowercase_with_underscores. When mapping between the two files, convert case: `birth` ↔ `Birth`, `military_service` ↔ `Military`, `residence` ↔ `Residence`. The research.json types `name`, `relationship`, and `other` are research-only and do not appear as GedcomX fact types.
 
@@ -450,7 +450,7 @@ The MCP server provides two conversion functions:
 
 1. **Full GedcomX → Simplified:** Called when MCP tools return data from FamilySearch APIs. Strips URI prefixes, flattens nested structures, maps person1/person2 to parent/child for ParentChild relationships.
 
-2. **Simplified → Full GedcomX:** Called when uploading to FamilySearch. Restores URI prefixes, wraps given/surname back into nameForms/parts, maps parent/child back to person1/person2.
+2. **Simplified → Full GedcomX:** Called when a full GedcomX document is needed. Restores URI prefixes, wraps given/surname back into nameForms/parts, maps parent/child back to person1/person2.
 
 ### Fields lost in round-trip
 
@@ -461,7 +461,7 @@ The following full GedcomX fields are not represented in the simplified format a
 - `date.formal` — only `date.original` is preserved as the flat `date` string (a canonical-form sidecar appears in `standard_date` when the converter can parse the original)
 - Source reference `qualifiers` beyond `CitationDetail` — only the citation detail qualifier maps to `page`
 - `contributors`, `attribution`, `analysis` on source descriptions
-- `confidence` on conclusions (use `research.json` proof tiers instead)
+- `confidence` on conclusions (use the `research.json` proof summary's `tier`, and its claims' `proof_tier`, instead)
 - `subject`, `lang`, and `attribution` on `Note` objects — only the `text` field is preserved as a flat string in the simplified `notes` array
 - `persons[].identifiers` entries other than `http://gedcomx.org/Persistent` (e.g. `Primary`, `Authority`) — only the first Persistent value is preserved (as `ark`). Additional Persistent values beyond the first are also dropped.
 
