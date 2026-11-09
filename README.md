@@ -193,9 +193,10 @@ or later from <https://nodejs.org>.
 Then install the two files from the `releases` folder as in steps 2–4.
 
 The downloaded Research Viewer works with files built from any branch. To run
-the Viewer from your checkout instead: on macOS/Linux, run `corepack enable`
-once, then `make electron`; on Windows, double-click `eval\Setup.bat` once, then
-`eval\Viewer.bat`.
+the Viewer from your checkout instead you need a newer Node.js: 22.22.2 or
+later on 22, 24.15 or later on 24, or 26 or later (23 and 25 are refused). Then
+on macOS/Linux, run `corepack enable` once, then `make electron`; on Windows,
+double-click `eval\Setup.bat` once, then `eval\Viewer.bat`.
 
 ## Using it
 

@@ -54,7 +54,7 @@ the e2e benchmark; see
 ## Prerequisites
 
 - **Python 3.12+** with [uv](https://github.com/astral-sh/uv) (`pip install uv` or `brew install uv`).
-- **Node.js 20+** with npm, plus **pnpm** — the CRUD UI installs from the repo-root
+- **Node.js 22.22.2+ on 22, 24.15+ on 24, or 26+** (23 and 25 are refused) with npm, plus **pnpm** — the CRUD UI installs from the repo-root
   pnpm workspace, and Node ships npm only:
   ```
   npm install -g pnpm@9.15.9
