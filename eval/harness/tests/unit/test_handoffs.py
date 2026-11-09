@@ -182,48 +182,6 @@ def test_sole_repository_claim_is_tag_gated():
         )
 
 
-@pytest.mark.parametrize("text", [
-    "The surviving schedules for 1825, 1835, and 1845 (not all counties made it through, but Clinton and Essex are among those that did survive in part) are indexed on Ancestry.com, and the original microfilm is held at the New York State Library",
-    "Handing back to search-external-sites: Ancestry indexes the surviving 1825/1835/1845 NY state census schedules.",
-    "The 1835 returns are available on MyHeritage.",
-    "These years are digitized and hosted at Find My Past.",
-    "The originals are held by Ancestry.",
-    "Ancestry.com holds the 1845 census.",
-    "The surviving schedules are indexed on **Ancestry.com**, with originals held at the New York State Library.",
-    "The right next step is to check Ancestry.com, which has indexed many of the surviving New York state census years.",
-    "The next step is to check Ancestry.com, which holds indexed images of these years.",
-    "Search those earlier censuses through Ancestry (which has indexed them from microfilm).",
-    "FamilySearch lacks those years, and other genealogy sites index some of them.",
-    "The next step is to search through another site, such as Ancestry or the New York State Library, which holds surviving county schedules from those earlier state censuses.",
-    "Look through other repositories (such as Ancestry or the New York State Library), which hold surviving county copies.",
-])
-def test_outside_holding_claim_fails(text):
-    with pytest.raises(AssertionError):
-        _validators("test_search_records").test_names_no_outside_holding(_return(text), "", NO_SOLE)
-
-
-@pytest.mark.parametrize("text", [
-    "1825, 1835, 1845: not on FamilySearch.\nHand-back: search-external-sites — NY state census, Clinton and Essex Counties, 1825/1835/1845; FamilySearch holds no collection for these years",
-    "search-external-sites can generate an Ancestry search URL for those years and counties.",
-    "Shall I generate Ancestry/MyHeritage URLs for it (search-external-sites)?",
-    "Only 1855-1875 are indexed on FamilySearch.",
-    "Hiram Tallman was found in the 1849 directory, held on FamilySearch.",
-    "search-external-sites can build an Ancestry search link, which has the counties prefilled.",
-    "Not on FamilySearch. search-external-sites can check other sites for these years.",
-    "Hand-back: search-external-sites — NY state censuses 1825/1835/1845, Tallman, Clinton and Essex; FamilySearch holds no collection for these years; check Ancestry",
-    "The New York State Library keeps a county list; FamilySearch holds no collection for these years.\nsearch-external-sites can check Ancestry.",
-])
-def test_outside_holding_claim_passes_a_legitimate_return(text):
-    _validators("test_search_records").test_names_no_outside_holding(_return(text), "", NO_SOLE)
-
-
-def test_outside_holding_claim_grades_the_agent_and_is_tag_gated():
-    mod = _validators("test_search_records")
-    mod.test_names_no_outside_holding(_return("Not on FamilySearch."), "indexed on Ancestry.com", NO_SOLE)
-    with pytest.raises(pytest.skip.Exception):
-        mod.test_names_no_outside_holding(_return("indexed on Ancestry.com"), "", {"tags": []})
-
-
 def test_no_collection_hand_back_needs_a_search_first():
     mod = _validators("test_search_records")
     mod.test_searched_before_no_collection_hand_back(

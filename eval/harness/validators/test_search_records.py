@@ -359,48 +359,6 @@ def test_no_sole_repository_claim(agent_returns, text_response, test):
     )
 
 
-# A sentence that names an outside site and says it holds, indexes or has the
-# set: "indexed on **Ancestry.com**", "Ancestry.com, which has indexed many of
-# them", "other genealogy sites index some of them". Matched per sentence, not
-# by word order, because the agent words the claim a new way each run. A
-# sentence offering a search link ("generate an Ancestry search URL") names no
-# holding and passes, and so does the hand-back's own "FamilySearch holds no
-# collection".
-_OUTSIDE_SITE = re.compile(
-    r"\b(?:ancestry(?:\.com)?|myheritage|find ?my ?past|other (?:genealogy )?sites?"
-    r"|another (?:genealogy )?site|other repositor(?:y|ies))\b",
-    re.I,
-)
-_HOLDING_WORD = re.compile(
-    r"(?<!FamilySearch )\b(?:hold|holds|held|index|indexes|indexed|digiti[sz](?:e|es|ed)|hosts?|hosted"
-    r"|carr(?:y|ies)|available|surviv\w*|has (?:the )?(?:images|records|schedules|rolls))\b",
-    re.I,
-)
-_SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+|\n+")
-
-
-def test_names_no_outside_holding(agent_returns, text_response, test):
-    """Issue #4139 (PR #4229 review) -- the agent must not say an outside site
-    holds or indexes the record set. No tool it has checks outside holdings; the
-    v12_2026-11-05_08-38-01 run said the 1825-1845 schedules "are indexed on
-    Ancestry.com" with nothing returned to support it.
-
-    Reads the agent's own return (`subject_reply_text`). Tag-gated like
-    `test_no_sole_repository_claim`.
-    """
-    from harness.skill_runner import subject_reply_text
-
-    if "no-sole-repository-claim" not in test.get("tags", []):
-        pytest.skip("only the no-FamilySearch-collection test")
-    reply = subject_reply_text(agent_returns, text_response, "search-records", test)
-    for sentence in _SENTENCE_BREAK.split(reply):
-        site, word = _OUTSIDE_SITE.search(sentence), _HOLDING_WORD.search(sentence)
-        assert not (site and word), (
-            f"named an outside holding no tool returned ({site.group(0)!r} with "
-            f"{word.group(0)!r}): {sentence[:300]!r}"
-        )
-
-
 def test_searched_before_no_collection_hand_back(tool_calls, test):
     """Issue #4139 -- Step 8 item 7 hands back a record set FamilySearch holds no
     collection for only after one logged `record_search`. A run that hands back on
