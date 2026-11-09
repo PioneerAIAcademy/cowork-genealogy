@@ -15,7 +15,7 @@ sidecar_read({ projectPath, ref, offset?, maxChars? })
 
 sidecar_read({ projectPath, refs, maxChars? })
   -> { ok: true, results: [ <one result above per ref> ] }   // the whole answer within 40,000
-   | { ok: false, reason: "invalid_ref", errors: string[] }   // `ref` and `refs` together, or an empty or non-list `refs`
+   | { ok: false, reason: "invalid_ref", errors: string[] }   // `ref` and `refs` together, an empty or non-list `refs`, or an `offset` other than 0
 ```
 
 **Added for the record-structurer agent** (lead, 2026-09-27 and 2026-09-29). A
@@ -30,8 +30,8 @@ search sidecar, or a full-text sidecar with no `#` selector) is refused as
 is gone reads through the log entry that consumed it, and is `not_found` when no
 entry did (§6). `refs` reads several refs in one call, each from
 its start; it is the agent's one "read all" turn, and its whole answer shares one
-40,000-character budget ("A `refs` batch", under pagination). `ref` and `refs` together, or
-an empty `refs`, is refused.
+40,000-character budget ("A `refs` batch", under pagination). `ref` and `refs` together,
+an empty `refs`, or `refs` with an `offset` other than 0, is refused.
 
 ---
 
@@ -72,7 +72,7 @@ sidecar_read({
   projectPath: string,   // required — the project directory
   ref?: string,          // project-relative POSIX path under evaluations/ or uploads/, or a results/ ref (§7)
   refs?: string[],       // several refs in one call, each read from its start, sharing one budget ("A `refs` batch")
-  offset?: number,       // UTF-16 code-unit offset, integer ≥ 0, default 0; applies to `ref` only
+  offset?: number,       // UTF-16 code-unit offset, integer ≥ 0, default 0; applies to `ref` only (refused with `refs` unless 0)
   maxChars?: number,     // page size, default 40,000, hard cap 40,000 (clamped); applies to every ref
 })
 ```
@@ -80,8 +80,11 @@ sidecar_read({
 Send `ref` or `refs`, not both; the schema requires only `projectPath`. `refs`
 returns `{ ok: true, results }`, one §2.1 result per ref in the order given: a
 ref that fails is that entry's `{ ok: false, … }`, not the call's. `ref` and
-`refs` together, or a `refs` that is empty or not a list, is `{ ok: false,
-reason: "invalid_ref", errors }` for the whole call. `maxChars` caps each ref's
+`refs` together, a `refs` that is empty or not a list, or `refs` with an
+`offset` other than 0, is `{ ok: false, reason: "invalid_ref", errors }` for
+the whole call: a batch reads every ref from its start, so an `offset` there
+would be dropped, and a caller continuing a cut ref that way would get the same
+cut page back each time. `maxChars` caps each ref's
 page, and the batch as a whole is held to one budget ("A `refs` batch", below), so a
 ref can come back cut shorter than `maxChars`.
 
@@ -247,9 +250,10 @@ spill, and the agents that call this tool hold no `Read`. The budget is shared l
 
 So small refs come back whole, and the large ones share the rest about equally.
 A cut ref continues the way any page does: `sidecar_read({ projectPath, ref,
-offset: nextOffset })`. A failed ref claims nothing. The answer can pass the
-budget only by the few units the one-unit floor and the surrogate step add per
-cut ref.
+offset: nextOffset })`; `refs` with that `offset` is refused (the Errors
+table). A failed ref claims nothing. The answer can pass the budget only by the
+few units the one-unit floor and the surrogate step add per cut ref, or when the
+envelopes alone pass it, which takes over a hundred refs of ordinary length.
 
 `offset` is a UTF-16 code-unit index, the same unit `content.length` and
 `totalChars` are measured in, so `offset + content.length` is always the right
@@ -290,6 +294,7 @@ the file's length. Two in a short file still do.
 | `maxChars` a finite whole number above 40,000 | clamped to 40,000, no error |
 | `ref` and `refs` both present | `{ ok: false, reason: "invalid_ref", errors: ["send \`ref\` or \`refs\`, not both"] }` for the whole call |
 | `refs` empty, or not a list | `{ ok: false, reason: "invalid_ref", errors: ["\`refs\` must be a non-empty list"] }` for the whole call |
+| `refs` with an `offset` other than `undefined` or `0` | `{ ok: false, reason: "invalid_ref", errors }` for the whole call — "\`offset\` applies to \`ref\` only", naming `sidecar_read({ projectPath, ref, offset: nextOffset })` (`BATCH_OFFSET_MESSAGE`) |
 | one entry of `refs` fails | that entry's `{ ok: false, reason, errors }` in `results`; the call is still `ok: true`. A throw (a bad `projectPath`, a bad `maxChars`) fails the whole call |
 | `ref` absent, empty or not a string, and no `refs` | `{ ok: false, reason: "invalid_ref", errors }` — "ref is required" |
 | `ref` fails §3 | `{ ok: false, reason: "invalid_ref", errors }` |
@@ -524,7 +529,9 @@ written red-first): three 19,000-character staged pages with quotes and line
 breaks, and a short upload, serialize within `SIDECAR_READ_BATCH_BUDGET`
 through `writerToolResult`, the upload whole and each page cut to more than
 12,000 escaped characters; each cut page, read on by `ref` and `offset:
-nextOffset`, reassembles to its exact text; and two 14,000-character pages,
+nextOffset`, reassembles to its exact text; `refs` with `offset: nextOffset`,
+one ref or all three, is refused with `BATCH_OFFSET_MESSAGE`, and `refs` with
+`offset: 0` reads as `refs` alone; and two 14,000-character pages,
 which fit, come back exactly as each lone `ref` read returns them.
 `tests/utils/share-budget.test.ts` pins `shareBudget` itself.
 

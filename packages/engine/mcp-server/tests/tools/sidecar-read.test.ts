@@ -6,6 +6,7 @@ import { tmpdir } from "os";
 import {
   sidecarRead,
   fitPage,
+  BATCH_OFFSET_MESSAGE,
   SIDECAR_READ_BATCH_BUDGET,
   SIDECAR_READ_MAX_CHARS,
 } from "../../src/tools/sidecar-read.js";
@@ -683,6 +684,25 @@ describe("sidecar_read: a staged transcription, and several refs", () => {
       }
       expect(text).toBe(texts[i]);
     }
+  });
+
+  it("refuses `refs` with `offset: nextOffset` rather than re-reading from 0, and still reads `offset: 0`", async () => {
+    const pages: string[] = [];
+    for (const tag of ["a", "b", "c"]) pages.push(await stageTranscription(registerPage(19_000, tag)));
+    const r = await sidecarRead({ projectPath: dir, refs: pages });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const first = r.results[0];
+    expect(first.ok && first.truncated).toBe(true);
+    if (!first.ok) return;
+    for (const refs of [[pages[0]], pages]) {
+      expect(await sidecarRead({ projectPath: dir, refs, offset: first.nextOffset })).toEqual({
+        ok: false,
+        reason: "invalid_ref",
+        errors: [BATCH_OFFSET_MESSAGE],
+      });
+    }
+    expect(await sidecarRead({ projectPath: dir, refs: pages, offset: 0 })).toEqual(r);
   });
 
   it("leaves a batch that fits the budget as each ref alone would read it", async () => {

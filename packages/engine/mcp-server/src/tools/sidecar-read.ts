@@ -69,7 +69,8 @@ export interface SidecarReadInput {
    *  `results/` ref holding a staged transcription. */
   ref?: string;
   /** Several refs in one call (the record-structurer agent's "read all" turn).
-   *  Each is read from its start, and all share one budget; `offset` applies to `ref` only. */
+   *  Each is read from its start, and all share one budget; `offset` applies to `ref` only,
+   *  and any but 0 with `refs` is refused. */
   refs?: string[];
   /** UTF-16 code-unit offset of the first character to return. Default 0. */
   offset?: number;
@@ -407,6 +408,11 @@ async function readBatch(projectPath: string, refs: string[], maxChars: number):
   return { ok: true, results };
 }
 
+/** A `refs` batch reads every ref from its start, so an `offset` there would be dropped:
+ *  the caller would get the same cut pages back and never get further. */
+export const BATCH_OFFSET_MESSAGE =
+  "`offset` applies to `ref` only: continue a cut ref with sidecar_read({ projectPath, ref, offset: nextOffset })";
+
 export function sidecarRead(input: SidecarReadInput & { refs: string[] }): Promise<SidecarReadBatchResult>;
 export function sidecarRead(input: SidecarReadInput): Promise<SidecarReadResult>;
 export async function sidecarRead(input: SidecarReadInput): Promise<SidecarReadResult | SidecarReadBatchResult> {
@@ -416,6 +422,9 @@ export async function sidecarRead(input: SidecarReadInput): Promise<SidecarReadR
     }
     if (!Array.isArray(input.refs) || input.refs.length === 0) {
       return { ok: false, reason: "invalid_ref", errors: ["`refs` must be a non-empty list"] };
+    }
+    if (input.offset !== undefined && input.offset !== 0) {
+      return { ok: false, reason: "invalid_ref", errors: [BATCH_OFFSET_MESSAGE] };
     }
     return readBatch(input.projectPath, input.refs, pageSize(input.maxChars));
   }
@@ -553,7 +562,8 @@ export const sidecarReadSchema = {
       offset: {
         type: "number",
         description:
-          "0-based character offset to start reading from. Default 0. When a result says " +
+          "0-based character offset to start reading from, with `ref` only (`refs` refuses any " +
+          "but 0). Default 0. When a result says " +
           "`truncated: true`, pass its `nextOffset` here to read the next page. Must be a " +
           "non-negative whole number.",
       },
