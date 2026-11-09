@@ -3947,7 +3947,6 @@ describe("Research closed shapes", () => {
       const loc = instanceOf[shape];
       return loc !== null && prop in loc(sample) && !conditionallyRequired(defFor[shape]).has(prop);
     });
-    const unpopulated = cases.filter(([s, p]) => !omittable.some(([s2, p2]) => s === s2 && p === p2));
 
     it("has an instance for every shape and a valid starting document", async () => {
       expect(Object.keys(instanceOf).sort()).toEqual(Object.keys(defFor).sort());
@@ -3976,10 +3975,6 @@ describe("Research closed shapes", () => {
       const result = await validateParsed(r, maximalTree);
       expect(result.errors).toEqual([]);
     });
-
-    for (const [shape, prop] of unpopulated) {
-      it.todo(`${shape}.${prop}: leaving it out (not populated in the fixture, or required by a branch)`);
-    }
   });
 });
 
