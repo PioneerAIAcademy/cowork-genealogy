@@ -272,7 +272,7 @@ Sorted by `matchScore` descending; no gedcomx.
       "collectionTitle": "Find A Grave Index",
       "recordArk": "ark:/61903/1:2:…",
       "matchScore": 0.99999,       // 0–1; null when scoring failed — never dropped
-      "attachedToSubject": false,  // only when checkAttachments
+      "attachedToSubject": false,  // only when checkAttachments and the subject has a FamilySearch id
       "attachedToOther": true,
       "birthYearConflict": true,   // only when the birth years differ by more than 2
       "birthYearGap": -5,          // candidate year minus subject year; with the flag
