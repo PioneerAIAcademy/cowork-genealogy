@@ -943,7 +943,7 @@ def agent_read_paths(builtin_tool_calls) -> list[str]:
     is where the agent under test runs on the direct arm.
     """
     return [
-        str((c.get("args") or {}).get("file_path") or "").replace("\\", "/")
+        str(as_mapping(c.get("args")).get("file_path") or "").replace("\\", "/")
         for c in builtin_tool_calls or []
         if c.get("tool") == "Read" and "agent_id" in c
     ]

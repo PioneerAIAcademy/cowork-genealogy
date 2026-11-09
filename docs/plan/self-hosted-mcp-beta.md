@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a limited beta
 
-**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2's first half (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget; PR #4292), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, E5's direct reads (issue #4311), the connector plugin build, the probe's reconnect flags, and D1's stack. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
+**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2's first half (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget; PR #4292), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, and D1's stack. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
 
 ## What this is
 
@@ -181,7 +181,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 - **`image_read`** is refused for connector callers, and `docs/specs/image-read-spec.md` says so.
 - **The image cap** is keyed per user, so a connector call that names no project cannot spend a film's cap for everyone.
 - **`TRANSCRIPTION_ENABLED` goes,** with its plumbing and its line in the handoff's step 9.
-- **Direct reads (issue #4311), shipped.** `search-full-text` reads one hit with `sidecar_read`, and `translation` reads an upload with `image_transcribe` and `sidecar_read`; `Read` stays only for a path outside the project. The direct-read lint now flags a read of a `results/` ref.
+- **Direct reads (issue #4311), merged; one live connector session still owed.** `search-full-text` reads one hit with `sidecar_read`, and `translation` reads an upload with `image_transcribe` and `sidecar_read`; `Read` stays only for a path outside the project. The direct-read lint now flags a read of a `results/` ref. CI cannot show the new grants bind, so issue #4311 stays open until a connector session shows each agent's new tool call return a `tool_result`.
 - **Done when:** tests pin the time budget, the refusal and the per-user cap, and `git grep -E 'TRANSCRIPTION_ENABLED|transcriptionEnabled' -- ':!docs/plan/self-hosted-mcp-beta.md'` returns nothing.
 
 ### The web tier (`apps/server/proto/web`)
@@ -345,7 +345,7 @@ The lead's two agents hold the first group. The team builds the rest; an issue l
 | G6 The router PR | issue #4297 | MCP App agent | Before launch |
 | W4 Plain pages (D4) | issue #4001 | team | 30 Nov |
 | E5 Fit for a connector | issue #3996 | team | The pin |
-| E5 Direct reads | issue #4311 | team, senior | Shipped |
+| E5 Direct reads | issue #4311 | team, senior | Merged; live connector check owed |
 | S2 Deleting and blocking one user | issue #4000 | team, senior | Before invited users |
 | G5 Capture wording | issue #3990 | team | Before invited users |
 
