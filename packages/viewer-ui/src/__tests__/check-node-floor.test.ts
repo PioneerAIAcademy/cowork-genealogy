@@ -162,7 +162,7 @@ describe('every reinstall path and eval\\Setup.bat check first', () => {
     for (let i = 0; i < lines.length - 1; i++) {
       const guard = lines[i + 1]
       if (call.test(lines[i]) && /^if errorlevel 1 /.test(guard)) {
-        let stops = /\bexit \/b [1-9]/.test(guard)
+        let stops = /^if errorlevel 1 exit \/b [1-9]/.test(guard)
         if (!stops && guard.trimEnd().endsWith('(')) {
           for (let j = i + 2; j < lines.length && !/^\s*\)\s*$/.test(lines[j]); j++) {
             if (/^\s*exit \/b [1-9]/.test(lines[j])) stops = true
@@ -197,7 +197,8 @@ describe('every reinstall path and eval\\Setup.bat check first', () => {
     expect(recipe).not.toBeNull()
     // A prerequisite runs before the recipe, so clean-deps there would delete first.
     expect(recipe![1].trim()).toBe('')
-    const steps = recipe![2].split('\n').map((line) => line.trim().replace(/^[@-]+/, ''))
+    // `@` only silences the echo; `-` would let make ignore a refusal and delete anyway.
+    const steps = recipe![2].split('\n').map((line) => line.trim().replace(/^@/, ''))
     expect(steps.slice(0, 3)).toEqual(['node scripts/check-node-floor.mjs', '$(MAKE) clean-deps', '$(MAKE) install'])
   })
 
