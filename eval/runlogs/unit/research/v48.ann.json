@@ -193,6 +193,78 @@
       "llm_score": 2,
       "corrected_score": 2,
       "comment": "Claude correctly identifies the reported death record's details and recognizes its potential relevance to the existing hypotheses. However, saying it fits Robert Jr.'s timeline precisely is an unsupported interpretation. His absence from records after 1860 was not established, and the record has not yet been independently examined. The possible connection between Robert, Polley, and James and Elizabeth Eastham remains unconfirmed."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_wu1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_pe7",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_pe7",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_pe7",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "judge is right "
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "Checked the run: no plan items written, no files changed; it says the question is concluded and offers research-exhaustiveness, which the test allows. It still drafts a deed-records plan item and gives planning advice the test does not ask for, so partial, not fail."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "It gives the status answer and offers the right next agent, which the test accepts. It goes past one plain paragraph into planning, so partial."
+    },
+    {
+      "test_id": "ut_research_wu1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": " Every step with work ran in one turn, in the right order. The empty steps were skipped, which the test context says is correct."
+    },
+    {
+      "test_id": "ut_research_wu1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 2,
+      "comment": "The judge charged skipped steps and missing MCP calls, which the test context says are correct and invisible. The run spawned research-plan, research-exhaustiveness and proof-conclusion, skipped the two empty steps with a reason, and ended with no \"Continue\" line. The only real slip: \"All five steps handed off\" when three were handed off and two skipped."
     }
   ]
 }
