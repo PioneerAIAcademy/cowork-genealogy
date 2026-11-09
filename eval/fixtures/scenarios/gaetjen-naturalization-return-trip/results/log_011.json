@@ -1,0 +1,1724 @@
+{
+  "log_id": "log_011",
+  "tool": "record_search",
+  "retrieved": "2026-10-07T04:22:52.241Z",
+  "returned_count": 15,
+  "payload": {
+    "query": {
+      "projectPath": "C:\\Users\\User\\Documents\\GenealogyProjects\\p2593-gaetjen",
+      "subjectId": "I1",
+      "surname": "G*tj*n",
+      "collectionId": "2125028"
+    },
+    "totalMatches": 15,
+    "paginationCappedAt": 4999,
+    "returned": 15,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:ZHR8-VSMM",
+        "events": [
+          {
+            "type": "Immigration",
+            "date": "1901",
+            "place": "San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Henry Gaetjen",
+        "score": 1.8118,
+        "confidence": 5,
+        "birthPlace": "Germany",
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Henry Gaetjen, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:W1CH-TFT2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_225148897800",
+              "ark": "ark:/61903/1:1:ZHR8-VSMM",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaetjen",
+                  "given": "Henry"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Immigration",
+                  "primary": true,
+                  "date": "1901",
+                  "standard_date": "1901",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_152586896300",
+              "resource_type": "Record",
+              "title": "Entry for Henry Gaetjen, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZHR8-VSMM : Thu Mar 07 22:31:19 UTC 2024), Entry for Henry Gaetjen, 1901.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:W1CH-TFT2",
+              "coverage": {
+                "place_rep_id": "3853449",
+                "date_range": "1901",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C911-H9DN-J",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1906",
+                "record_type": "Vote"
+              }
+            },
+            {
+              "id": "src_p_p_225148897800",
+              "resource_type": "Person",
+              "url": "#p_225148897800"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "3853449",
+              "name": "San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            }
+          ]
+        },
+        "primaryId": "p_225148897800",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:ZHR8-VS3Z",
+        "events": [
+          {
+            "type": "Immigration",
+            "date": "1900",
+            "place": "San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hermann Gaetjen",
+        "score": 1.8118,
+        "confidence": 5,
+        "birthPlace": "Germany",
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Hermann Gaetjen, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:W1CH-1XT2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_225148897900",
+              "ark": "ark:/61903/1:1:ZHR8-VS3Z",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaetjen",
+                  "given": "Hermann"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Immigration",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_152586976400",
+              "resource_type": "Record",
+              "title": "Entry for Hermann Gaetjen, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZHR8-VS3Z : Thu Mar 07 22:31:26 UTC 2024), Entry for Hermann Gaetjen, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:W1CH-1XT2",
+              "coverage": {
+                "place_rep_id": "3853449",
+                "date_range": "1900",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C911-H9DN-J",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1906",
+                "record_type": "Vote"
+              }
+            },
+            {
+              "id": "src_p_p_225148897900",
+              "resource_type": "Person",
+              "url": "#p_225148897900"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "3853449",
+              "name": "San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            }
+          ]
+        },
+        "primaryId": "p_225148897900",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QGG3-74CP",
+        "events": [
+          {
+            "type": "Naturalization",
+            "place": "San Francisco, San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hermann Gaetjen",
+        "score": 1.8118,
+        "confidence": 5,
+        "birthDate": "12 January 1900",
+        "birthPlace": "Germany",
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Hermann Gaetjen, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:QRZM-FJSG",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104055171593",
+              "ark": "ark:/61903/1:1:QGG3-74CP",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaetjen",
+                  "given": "Hermann"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "date": "12 January 1900",
+                  "standard_date": "12 Jan 1900",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Naturalization",
+                  "primary": true,
+                  "place": "San Francisco, San Francisco, California, United States",
+                  "standard_place": "San Francisco, San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_105948420382",
+              "resource_type": "Record",
+              "title": "Entry for Hermann Gaetjen, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGG3-74CP : Wed Jul 23 06:37:18 UTC 2025), Entry for Hermann Gaetjen.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRZM-FJSG",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "record_type": "Legal"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-956G-9VV3",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1923",
+                "record_type": "Naturalization"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-Q9W",
+              "resource_type": "auto",
+              "title": "United States, California, Migrations, from 1829 to 2007",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "+1829-01-01T00:00:00Z/+2007-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104055171593",
+              "resource_type": "Person",
+              "url": "#p_104055171593"
+            }
+          ],
+          "places": [
+            {
+              "id": "11927902",
+              "name": "San Francisco, San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            },
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            }
+          ]
+        },
+        "primaryId": "p_104055171593",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QGG3-RGB7",
+        "events": [
+          {
+            "type": "Naturalization",
+            "date": "1900",
+            "place": "San Francisco, San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hermann Gaetjen",
+        "score": 1.8118,
+        "confidence": 5,
+        "birthPlace": "Germany",
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Hermann Gaetjen, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:QRZM-559F",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104055725645",
+              "ark": "ark:/61903/1:1:QGG3-RGB7",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hermann",
+                  "surname": "Gaetjen"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Birth",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                },
+                {
+                  "type": "Naturalization",
+                  "primary": true,
+                  "date": "1900",
+                  "standard_date": "1900",
+                  "place": "San Francisco, San Francisco, California, United States",
+                  "standard_place": "San Francisco, San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_105948669645",
+              "resource_type": "Record",
+              "title": "Entry for Hermann Gaetjen, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGG3-RGB7 : Wed Jul 23 08:03:11 UTC 2025), Entry for Hermann Gaetjen, 1900.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRZM-559F",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1900",
+                "record_type": "Legal"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-956G-9JSP",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1923",
+                "record_type": "Naturalization"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-Q9W",
+              "resource_type": "auto",
+              "title": "United States, California, Migrations, from 1829 to 2007",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "+1829-01-01T00:00:00Z/+2007-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104055725645",
+              "resource_type": "Person",
+              "url": "#p_104055725645"
+            }
+          ],
+          "places": [
+            {
+              "id": "11927902",
+              "name": "San Francisco, San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            },
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            }
+          ]
+        },
+        "primaryId": "p_104055725645",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QGG3-27V9",
+        "events": [
+          {
+            "type": "Naturalization",
+            "date": "1901",
+            "place": "San Francisco, San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Henry Gaetjen",
+        "score": 1.8118,
+        "confidence": 5,
+        "birthPlace": "Germany",
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Henry Gaetjen, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:QRZM-TJVC",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104055575041",
+              "ark": "ark:/61903/1:1:QGG3-27V9",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Henry",
+                  "surname": "Gaetjen"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Naturalization",
+                  "primary": true,
+                  "date": "1901",
+                  "standard_date": "1901",
+                  "place": "San Francisco, San Francisco, California, United States",
+                  "standard_place": "San Francisco, San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_105948717849",
+              "resource_type": "Record",
+              "title": "Entry for Henry Gaetjen, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGG3-27V9 : Wed Jul 23 08:03:11 UTC 2025), Entry for Henry Gaetjen, 1901.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRZM-TJVC",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1901",
+                "record_type": "Legal"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-956G-9JSP",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1923",
+                "record_type": "Naturalization"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-Q9W",
+              "resource_type": "auto",
+              "title": "United States, California, Migrations, from 1829 to 2007",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "+1829-01-01T00:00:00Z/+2007-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104055575041",
+              "resource_type": "Person",
+              "url": "#p_104055575041"
+            }
+          ],
+          "places": [
+            {
+              "id": "11927902",
+              "name": "San Francisco, San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            },
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            }
+          ]
+        },
+        "primaryId": "p_104055575041",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QGG3-BKQX",
+        "events": [
+          {
+            "type": "Naturalization",
+            "place": "San Francisco, San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Henry Gaetjen",
+        "score": 1.8118,
+        "confidence": 5,
+        "birthDate": "26 April 1901",
+        "birthPlace": "Germany",
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Henry Gaetjen, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:QRZM-BDGB",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104055803234",
+              "ark": "ark:/61903/1:1:QGG3-BKQX",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Gaetjen",
+                  "given": "Henry"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Naturalization",
+                  "primary": true,
+                  "place": "San Francisco, San Francisco, California, United States",
+                  "standard_place": "San Francisco, San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "26 April 1901",
+                  "standard_date": "26 Apr 1901",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_105948767488",
+              "resource_type": "Record",
+              "title": "Entry for Henry Gaetjen, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGG3-BKQX : Wed Jul 23 06:37:17 UTC 2025), Entry for Henry Gaetjen.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRZM-BDGB",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "record_type": "Legal"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-956G-9VV3",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1923",
+                "record_type": "Naturalization"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-Q9W",
+              "resource_type": "auto",
+              "title": "United States, California, Migrations, from 1829 to 2007",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "+1829-01-01T00:00:00Z/+2007-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104055803234",
+              "resource_type": "Person",
+              "url": "#p_104055803234"
+            }
+          ],
+          "places": [
+            {
+              "id": "11927902",
+              "name": "San Francisco, San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            },
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            }
+          ]
+        },
+        "primaryId": "p_104055803234",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QGG3-V8CR",
+        "events": [
+          {
+            "type": "Naturalization",
+            "place": "San Francisco, San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Arond Frederick Goetjen",
+        "score": 1.8118,
+        "confidence": 5,
+        "birthDate": "August 1877",
+        "birthPlace": "Germany",
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Arond Frederick Goetjen, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:QRZM-ZM73",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104055526195",
+              "ark": "ark:/61903/1:1:QGG3-V8CR",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Goetjen",
+                  "given": "Arond Frederick"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Naturalization",
+                  "primary": true,
+                  "place": "San Francisco, San Francisco, California, United States",
+                  "standard_place": "San Francisco, San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "August 1877",
+                  "standard_date": "Aug 1877",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_105948270153",
+              "resource_type": "Record",
+              "title": "Entry for Arond Frederick Goetjen, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGG3-V8CR : Wed Jul 23 17:34:06 UTC 2025), Entry for Arond Frederick Goetjen.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRZM-ZM73",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "record_type": "Legal"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-G56G-9NQ9",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1923",
+                "record_type": "Naturalization"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-Q9W",
+              "resource_type": "auto",
+              "title": "United States, California, Migrations, from 1829 to 2007",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "+1829-01-01T00:00:00Z/+2007-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104055526195",
+              "resource_type": "Person",
+              "url": "#p_104055526195"
+            }
+          ],
+          "places": [
+            {
+              "id": "11927902",
+              "name": "San Francisco, San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            },
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            }
+          ]
+        },
+        "primaryId": "p_104055526195",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:ZZ4H-X3N2",
+        "events": [
+          {
+            "type": "Immigration",
+            "place": "San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Arond Frederick Goetjen",
+        "score": 1.8118,
+        "confidence": 5,
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Arond Frederick Goetjen, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:W1V4-TBN2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_226166961200",
+              "ark": "ark:/61903/1:1:ZZ4H-X3N2",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Goetjen",
+                  "given": "Arond Frederick"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Immigration",
+                  "primary": true,
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_152804797700",
+              "resource_type": "Record",
+              "title": "Entry for Arond Frederick Goetjen, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZZ4H-X3N2 : Thu Mar 07 17:52:19 UTC 2024), Entry for Arond Frederick Goetjen.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:W1V4-TBN2",
+              "coverage": {
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C911-H9DW-P",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1906",
+                "record_type": "Vote"
+              }
+            },
+            {
+              "id": "src_p_p_226166961200",
+              "resource_type": "Person",
+              "url": "#p_226166961200"
+            }
+          ],
+          "places": [
+            {
+              "id": "3853449",
+              "name": "San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            }
+          ]
+        },
+        "primaryId": "p_226166961200",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QGG3-RZ89",
+        "events": [
+          {
+            "type": "Naturalization",
+            "date": "71",
+            "place": "San Francisco, San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Henry Goetjen",
+        "score": 1.8118,
+        "confidence": 5,
+        "birthPlace": "Germany",
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Henry Goetjen, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:QRZM-8G83",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104055714331",
+              "ark": "ark:/61903/1:1:QGG3-RZ89",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Henry",
+                  "surname": "Goetjen"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Naturalization",
+                  "primary": true,
+                  "date": "71",
+                  "place": "San Francisco, San Francisco, California, United States",
+                  "standard_place": "San Francisco, San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_105948317133",
+              "resource_type": "Record",
+              "title": "Entry for Henry Goetjen, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGG3-RZ89 : Wed Jul 23 16:36:58 UTC 2025), Entry for Henry Goetjen, 71.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRZM-8G83",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1871",
+                "record_type": "Legal"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-G56G-9JBQ",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1923",
+                "record_type": "Naturalization"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-Q9W",
+              "resource_type": "auto",
+              "title": "United States, California, Migrations, from 1829 to 2007",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "+1829-01-01T00:00:00Z/+2007-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104055714331",
+              "resource_type": "Person",
+              "url": "#p_104055714331"
+            }
+          ],
+          "places": [
+            {
+              "id": "11927902",
+              "name": "San Francisco, San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            },
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            }
+          ]
+        },
+        "primaryId": "p_104055714331",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QGG3-L1RG",
+        "events": [
+          {
+            "type": "Naturalization",
+            "place": "San Francisco, San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Henry Goetjen",
+        "score": 1.8118,
+        "confidence": 5,
+        "birthDate": "5 September 1871",
+        "birthPlace": "Germany",
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Henry Goetjen, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:QRZM-F7T2",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104055623872",
+              "ark": "ark:/61903/1:1:QGG3-L1RG",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Goetjen",
+                  "given": "Henry"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Naturalization",
+                  "primary": true,
+                  "place": "San Francisco, San Francisco, California, United States",
+                  "standard_place": "San Francisco, San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "5 September 1871",
+                  "standard_date": "5 Sep 1871",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_105948410300",
+              "resource_type": "Record",
+              "title": "Entry for Henry Goetjen, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGG3-L1RG : Wed Jul 23 17:34:07 UTC 2025), Entry for Henry Goetjen.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRZM-F7T2",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "record_type": "Legal"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-G56G-9NQ9",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1923",
+                "record_type": "Naturalization"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-Q9W",
+              "resource_type": "auto",
+              "title": "United States, California, Migrations, from 1829 to 2007",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "+1829-01-01T00:00:00Z/+2007-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104055623872",
+              "resource_type": "Person",
+              "url": "#p_104055623872"
+            }
+          ],
+          "places": [
+            {
+              "id": "11927902",
+              "name": "San Francisco, San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            },
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            }
+          ]
+        },
+        "primaryId": "p_104055623872",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QGG3-8L99",
+        "events": [
+          {
+            "type": "Naturalization",
+            "date": "77",
+            "place": "San Francisco, San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Arond Frederick Goetjen",
+        "score": 1.8118,
+        "confidence": 5,
+        "birthPlace": "Germany",
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Arond Frederick Goetjen, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:QRZM-DWNW",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104055345931",
+              "ark": "ark:/61903/1:1:QGG3-8L99",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Arond Frederick",
+                  "surname": "Goetjen"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Naturalization",
+                  "primary": true,
+                  "date": "77",
+                  "place": "San Francisco, San Francisco, California, United States",
+                  "standard_place": "San Francisco, San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_105948329886",
+              "resource_type": "Record",
+              "title": "Entry for Arond Frederick Goetjen, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGG3-8L99 : Wed Jul 23 16:36:59 UTC 2025), Entry for Arond Frederick Goetjen, 77.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRZM-DWNW",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1877",
+                "record_type": "Legal"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-G56G-9JBQ",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1923",
+                "record_type": "Naturalization"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-Q9W",
+              "resource_type": "auto",
+              "title": "United States, California, Migrations, from 1829 to 2007",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "+1829-01-01T00:00:00Z/+2007-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104055345931",
+              "resource_type": "Person",
+              "url": "#p_104055345931"
+            }
+          ],
+          "places": [
+            {
+              "id": "11927902",
+              "name": "San Francisco, San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            },
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            }
+          ]
+        },
+        "primaryId": "p_104055345931",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:ZZ4H-X32M",
+        "events": [
+          {
+            "type": "Immigration",
+            "place": "San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Henry Goetjen",
+        "score": 1.8118,
+        "confidence": 5,
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Henry Goetjen, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:W1V4-TB2M",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_226166961300",
+              "ark": "ark:/61903/1:1:ZZ4H-X32M",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "surname": "Goetjen",
+                  "given": "Henry"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Immigration",
+                  "primary": true,
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_152804797800",
+              "resource_type": "Record",
+              "title": "Entry for Henry Goetjen, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:ZZ4H-X32M : Thu Mar 07 17:52:17 UTC 2024), Entry for Henry Goetjen.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:W1V4-TB2M",
+              "coverage": {
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C911-H9DW-P",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1906",
+                "record_type": "Vote"
+              }
+            },
+            {
+              "id": "src_p_p_226166961300",
+              "resource_type": "Person",
+              "url": "#p_226166961300"
+            }
+          ],
+          "places": [
+            {
+              "id": "3853449",
+              "name": "San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            }
+          ]
+        },
+        "primaryId": "p_226166961300",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QGG3-KFZ6",
+        "events": [
+          {
+            "type": "Naturalization",
+            "place": "San Francisco, San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Alma D Grotjahn",
+        "score": 1.8118,
+        "confidence": 5,
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Alma D Grotjahn, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:QRZM-VTD9",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104055556813",
+              "ark": "ark:/61903/1:1:QGG3-KFZ6",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Alma D",
+                  "surname": "Grotjahn"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Naturalization",
+                  "primary": true,
+                  "place": "San Francisco, San Francisco, California, United States",
+                  "standard_place": "San Francisco, San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_105948509761",
+              "resource_type": "Record",
+              "title": "Entry for Alma D Grotjahn, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGG3-KFZ6 : Wed Jul 23 04:23:48 UTC 2025), Entry for Alma D Grotjahn.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRZM-VTD9",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "record_type": "Legal"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-G56G-9JX4",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1923",
+                "record_type": "Naturalization"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-Q9W",
+              "resource_type": "auto",
+              "title": "United States, California, Migrations, from 1829 to 2007",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "+1829-01-01T00:00:00Z/+2007-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104055556813",
+              "resource_type": "Person",
+              "url": "#p_104055556813"
+            }
+          ],
+          "places": [
+            {
+              "id": "11927902",
+              "name": "San Francisco, San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            }
+          ]
+        },
+        "primaryId": "p_104055556813",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:QGG3-P1QC",
+        "events": [
+          {
+            "type": "Naturalization",
+            "date": "1921",
+            "place": "San Francisco, San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Alma D Grotjahn",
+        "score": 1.8118,
+        "confidence": 5,
+        "birthPlace": "Germany",
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Alma D Grotjahn, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:QRZM-L538",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_104055677229",
+              "ark": "ark:/61903/1:1:QGG3-P1QC",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Alma D",
+                  "surname": "Grotjahn"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Naturalization",
+                  "primary": true,
+                  "date": "1921",
+                  "standard_date": "1921",
+                  "place": "San Francisco, San Francisco, California, United States",
+                  "standard_place": "San Francisco, San Francisco, California, United States"
+                },
+                {
+                  "type": "Birth",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_105948588701",
+              "resource_type": "Record",
+              "title": "Entry for Alma D Grotjahn, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QGG3-P1QC : Wed Jul 23 12:21:45 UTC 2025), Entry for Alma D Grotjahn, 1921.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:QRZM-L538",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1921",
+                "record_type": "Legal"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-G56G-9JFM",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1923",
+                "record_type": "Naturalization"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-Q9W",
+              "resource_type": "auto",
+              "title": "United States, California, Migrations, from 1829 to 2007",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "+1829-01-01T00:00:00Z/+2007-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_104055677229",
+              "resource_type": "Person",
+              "url": "#p_104055677229"
+            }
+          ],
+          "places": [
+            {
+              "id": "11927902",
+              "name": "San Francisco, San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            },
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            }
+          ]
+        },
+        "primaryId": "p_104055677229",
+        "role": "Principal"
+      },
+      {
+        "recordId": "ark:/61903/1:1:Z4ND-6FT2",
+        "events": [
+          {
+            "type": "Immigration",
+            "date": "1921",
+            "place": "San Francisco, California, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Miss Alma D. Grotjahn",
+        "score": 1.8118,
+        "confidence": 5,
+        "collectionId": "2125028",
+        "collectionTitle": "California County Naturalizations, 1831-1985",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+        "recordTitle": "Entry for Miss Alma D. Grotjahn, \"California County Naturalizations, 1831-1985\"",
+        "recordArk": "ark:/61903/1:2:WBBK-SWZM",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_224201885300",
+              "ark": "ark:/61903/1:1:Z4ND-6FT2",
+              "principal": true,
+              "names": [
+                {
+                  "type": "BirthName",
+                  "prefix": "Miss",
+                  "surname": "Grotjahn",
+                  "given": "Alma D."
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Immigration",
+                  "primary": true,
+                  "date": "1921",
+                  "standard_date": "1921",
+                  "place": "San Francisco, California, United States",
+                  "standard_place": "San Francisco, California, United States"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_152327849700",
+              "resource_type": "Record",
+              "title": "Entry for Miss Alma D. Grotjahn, \"California County Naturalizations, 1831-1985\"",
+              "citation": "\"California County Naturalizations, 1831-1985\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:Z4ND-6FT2 : Sun Mar 10 02:44:55 UTC 2024), Entry for Miss Alma D. Grotjahn, 1921.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:WBBK-SWZM",
+              "coverage": {
+                "place_rep_id": "3853449",
+                "date_range": "1921",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_c_2125028",
+              "resource_type": "Collection",
+              "title": "California County Naturalizations, 1831-1985",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/2125028",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1831/1985",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:3Q9M-C911-H96M-K",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1906",
+                "record_type": "Vote"
+              }
+            },
+            {
+              "id": "src_p_p_224201885300",
+              "resource_type": "Person",
+              "url": "#p_224201885300"
+            }
+          ],
+          "places": [
+            {
+              "id": "3853449",
+              "name": "San Francisco, California, United States",
+              "latitude": 37.775,
+              "longitude": -122.418
+            }
+          ]
+        },
+        "primaryId": "p_224201885300",
+        "role": "Principal"
+      }
+    ]
+  }
+}

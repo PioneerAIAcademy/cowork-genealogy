@@ -1005,11 +1005,14 @@ function linkGate(
   });
   if (cap === null || strong.some((e) => cap.verdicts.get(e.id)?.allowed === true)) return { refusal: null };
   const assertionOf = (id: string) => ((research?.assertions ?? []) as any[]).find((a) => a?.id === id);
+  // The rows that cap each link (the age exemption may lift some); a link the cap
+  // does not judge stands under all of them.
+  const cappingRows = (e: any) => cap.verdicts.get(e.id)?.rows ?? cap.rows;
   return {
-    refusal: namesakeCopyRefusal(personId, cap.rows, cap.verdicts, strong, cap.pairs),
+    refusal: namesakeCopyRefusal(personId, cappingRows, cap.verdicts, strong, cap.pairs),
     untied: strong,
     pairMember: cap.pairs.length > 0,
-    rowHolder: cap.rows.length > 0,
+    rowHolder: strong.some((e) => cappingRows(e).length > 0),
     partnerOpen:
       cap.pairs.length > 0 &&
       strong.some(
@@ -1072,14 +1075,21 @@ function notThisPartysStub(
         `'${trace.other.role}' party (${trace.other.evidence}), so it is not this party's stub.`;
 }
 
-function namesakeCopyRefusal(
+/** The copy gate's refusal for `strong`, the person's untied links from the
+ *  record. It names every row that caps one of them (`rowsOf`: a link's capping
+ *  rows, which the age exemption may narrow) and opens on a link one caps; when
+ *  no row caps any, only a namesake in the tree refuses them. Exported for its
+ *  test. */
+export function namesakeCopyRefusal(
   personId: string,
-  rows: any[],
+  rowsOf: (e: any) => any[],
   verdicts: ReadonlyMap<string, { reasons: string[]; source: string }>,
   strong: any[],
   pairs: readonly NamesakePartner[] = [],
 ): string {
-  const [first, ...rest] = strong;
+  const capped = strong.filter((e) => rowsOf(e).length > 0);
+  const rows = [...new Map(capped.flatMap(rowsOf).map((r: any) => [String(r?.id), r])).values()];
+  const [first, ...rest] = [...capped, ...strong.filter((e) => rowsOf(e).length === 0)];
   const verdict = verdicts.get(first.id);
   const reason = verdict?.reasons[0] ?? "its assertion records an absence, which ties nothing";
   const others =
