@@ -1179,6 +1179,42 @@ describe("extraction_append: documents", () => {
       expect(await births("capture:obit-none")).toEqual([]);
       expect(await births("capture:obit-abs")).toEqual([]);
     });
+
+    const burial = (facts: Record<string, unknown>[]) => ({
+      recordType: "burial",
+      documentForm: "verbatim_transcript",
+      source: { title: "Burial register, Hilperton", repository: "Wiltshire Archives" },
+      persons: [{ id: "p1", principal: true, names: [{ given: "Albert", surname: "Schreiber" }], facts: [{ type: "age", value: "58" }, ...facts] }],
+    });
+    const marriage = (marriageDate: string) => ({
+      recordType: "marriage",
+      documentForm: "verbatim_transcript",
+      source: { title: "Marriage register, Ohio", repository: "County Clerk" },
+      persons: [
+        { id: "p1", principal: true, names: [{ given: "John", surname: "Hale" }], facts: [{ type: "age", value: "25" }, { type: "marriage", date: marriageDate }] },
+        { id: "p2", names: [{ given: "Mary", surname: "Cole" }], facts: [] },
+      ],
+    });
+
+    it("a burial record counts the age from its burial date", async () => {
+      await run([{ recordId: "capture:burial", document: burial([{ type: "burial", date: "17 March 1921" }]) }]);
+      expect((await births("capture:burial")).map((a: any) => a.date)).toEqual(["Bet 1862 and 1863"]);
+    });
+
+    it("a burial record with no burial date falls back to its death date", async () => {
+      await run([{ recordId: "capture:burial-death", document: burial([{ type: "death", date: "14 March 1921" }]) }]);
+      expect((await births("capture:burial-death")).map((a: any) => a.date)).toEqual(["Bet 1862 and 1863"]);
+    });
+
+    it("a burial record with neither a burial nor a death date gets no range", async () => {
+      await run([{ recordId: "capture:burial-none", document: burial([]) }]);
+      expect(await births("capture:burial-none")).toEqual([]);
+    });
+
+    it("a marriage record counts the age from its marriage date", async () => {
+      await run([{ recordId: "capture:marriage", document: marriage("1850") }]);
+      expect((await births("capture:marriage")).map((a: any) => a.date)).toEqual(["Bet 1824 and 1825"]);
+    });
   });
 
   describe("a computed entry written as a value (#3543)", () => {

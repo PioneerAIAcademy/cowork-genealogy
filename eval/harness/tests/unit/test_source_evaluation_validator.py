@@ -2213,3 +2213,49 @@ def test_a_denial_phrase_without_a_conflict_tag_is_still_not_a_flag():
     row = "Birth date  | 30 Nov 1838   | Indexed 1839, consistent with the profile | Indexed 1839; range Bet 1838-1839\n"
     _age_check(_TAG_HEADER + row + _TAIL_CONFLICT)
 
+
+
+def test_contradicts_and_inconsistent_are_conflict_words():
+    """Self-review finding: "contradicts the profile" carried no conflict word."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check("The 1850 census birth year contradicts the profile's birth date." + _TAIL_CONFLICT)
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check("The 1850 census birth year is inconsistent with the profile's birth date." + _TAIL_CONFLICT)
+
+
+def test_a_negated_contradiction_is_still_a_denial():
+    """The other direction: "does not contradict" and "no contradiction" are not flags."""
+    _age_check("The 1850 census birth year does not contradict the profile's birth date." + _TAIL_CONFLICT)
+    _age_check("The 1850 census birth year shows no contradiction with the profile's birth date." + _TAIL_CONFLICT)
+    _age_check("The 1850 census birth year is not inconsistent with the profile's birth date." + _TAIL_CONFLICT)
+
+
+def test_a_born_row_is_a_birth_row():
+    """Self-review finding: a row labelled "Born" was not read as a birth row."""
+    row = "Born        | 30 Nov 1838   | Indexed 1839 [CONFLICT] | Indexed 1839; range Bet 1838-1839\n"
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(_TAG_HEADER + row + _TAIL_CONFLICT)
+
+
+def test_a_birth_place_row_is_still_not_a_birth_date_row():
+    """The other direction: a birth-place row with a conflict tag is a different fact."""
+    row = "Birth place | Clinton, NY    | Peru, NY [CONFLICT] | Peru, NY [CONFLICT]\n"
+    _age_check(_TAG_HEADER + row + _TAIL_CONFLICT)
+
+
+def test_a_denial_after_the_conflict_word_does_not_clear_it():
+    """Self-review finding: "conflicts with the profile, which is consistent with the stone" denies
+    something other than the conflict."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(
+            "The 1850 census birth year conflicts with the profile's birth date, which is consistent "
+            "with the stone." + _TAIL_CONFLICT
+        )
+
+
+def test_a_denial_before_the_conflict_word_still_clears_it():
+    """The other direction: "consistent with the profile, no conflict" is a denial."""
+    _age_check(
+        "The 1850 census birth year is consistent with the profile's birth date, so there is no conflict."
+        + _TAIL_CONFLICT
+    )

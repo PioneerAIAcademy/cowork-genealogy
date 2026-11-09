@@ -1295,22 +1295,33 @@ _AGE_DERIVED_SOURCES = [
 ]
 _AGE_REQUIRED_CONFLICT = {"date": ["31 Jan", "31 January"], "also": ["30 Nov", "30 November"]}
 
-_AGE_BIRTH_ROW_LABEL_RE = re.compile(r"birth(?!\s*place)", re.IGNORECASE)
+_AGE_BIRTH_ROW_LABEL_RE = re.compile(r"birth(?!\s*place)|\bborn\b", re.IGNORECASE)
 _AGE_CONFLICT_WORD_RE = re.compile(
-    r"\[\s*conf\w*[^\]]*\]|conflict|disagree|discrepan|does not match|mismatch|\bdiffers?\b",
+    r"\[\s*conf\w*[^\]]*\]|conflict|disagree|discrepan|does not match|mismatch|\bdiffers?\b"
+    r"|contradict|inconsisten|incorrect|\bwrong\b",
     re.IGNORECASE,
 )
 # A conflict word that is being denied is not a flag: "not a conflict", "no
 # disagreement", "consistent with the profile", "within the 1838-1839 window".
 _AGE_DENIED_RE = re.compile(
     r"\b(?:not|no|never|neither|nor|without)\s+(?:a\s+|an\s+|any\s+)?(?:\w+\s+)?"
-    r"(?:conflicts?|findings?|disagreements?|discrepanc\w+|mismatch\w*)"
-    r"|does not (?:conflict|disagree|differ)"
+    r"(?:conflicts?|findings?|disagreements?|discrepanc\w+|mismatch\w*|contradict\w*|inconsisten\w*|incorrect|wrong)"
+    r"|does not (?:conflict|disagree|differ|contradict)"
     r"|\bconsistent with\b|\bagrees? with\b|\bagreeing\b"
     r"|\bwithin\b[^.|]*\b(?:window|range|variance|tolerance|1838)"
     r"|ordinary (?:census )?variance|\(cd\)|census drift",
     re.IGNORECASE,
 )
+
+
+def _age_denied(scope: str) -> bool:
+    """A denial clears a clause only when it comes at or before the conflict word: "no
+    conflict" and "consistent with the profile, no conflict" are denials, but "conflicts
+    with the profile, which is consistent with the stone" denies something else."""
+    first = _AGE_CONFLICT_WORD_RE.search(scope)
+    return any(
+        first is None or m.start() <= first.end() for m in _AGE_DENIED_RE.finditer(scope)
+    )
 # A prose clause that merely reports the age-derived range is not a flag.
 _AGE_RANGE_RE = re.compile(r"birth ?ranges?|bet(?:ween)? 1838|1838\s*[-–—]\s*1839", re.IGNORECASE)
 _AGE_BLOCK_WORDS = r"conflict|discrepan|error|finding|disagree|mismatch|inconsisten"
@@ -1478,7 +1489,7 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
                 scope = clause + " " + (clauses[ci + 1] if ci + 1 < len(clauses) else "")
                 if ci + 2 < len(clauses) and len(clauses[ci + 1]) <= 40:
                     scope += " " + clauses[ci + 2]
-                if not hits or _AGE_DENIED_RE.search(scope):
+                if not hits or _age_denied(scope):
                     continue
                 if _AGE_RANGE_RE.search(clause) and not re.search(r'\[\s*conf', clause, re.IGNORECASE):
                     continue
