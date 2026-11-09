@@ -11,6 +11,7 @@ import {
 } from "../utils/place-resolver.js";
 import { readStagedResults, stageSearchResults } from "../utils/results-staging.js";
 import { recordIndexFields } from "../utils/record-index-fields.js";
+import { birthRangesFor } from "../utils/record-extract.js";
 import { toArk, arkToBareId, isDocumentImageArk, imageViewerUrl } from "../utils/ark.js";
 import { extractImageContextQuery } from "../utils/fs-image-fetch.js";
 import type { GedcomX, SimplifiedFact, SimplifiedGedcomX } from "../types/gedcomx.js";
@@ -41,6 +42,14 @@ export const recordReadSchema = {
     "`imageArk` field (a 3:1:/3:2: document-image ARK) for use with " +
     "image_read or image_transcribe — do not construct an image ARK from " +
     "the record ARK. " +
+    "A top-level `birthRanges` maps a persona id to the birth years its " +
+    "stated age implies (\"Bet 1838 and 1839\"): the record's event year less " +
+    "the age, less one, to the event year less the age. FamilySearch's bare " +
+    "birth year is usually the age restated, so state the birth from the " +
+    "range. A persona has an entry only when the age is a whole number of " +
+    "years and the record has no full or month-and-year birth date; a bare " +
+    "year outside the range is kept and gets no entry. Absent when no " +
+    "persona has one. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -160,10 +169,14 @@ export async function recordReadTool(
   const viewerUrl = imageArk
     ? imageViewerUrl({ ark: imageArk }, extractImageContextQuery)
     : undefined;
+  // Off the RAW body's index fields, which carry the age `toSimplified` drops.
+  const indexFields = recordIndexFields(body);
+  const birthRanges = birthRangesFor(simplified, indexFields);
   const withImageArk: RecordReadResult = {
     ...simplified,
     ...(imageArk ? { imageArk } : {}),
     ...(viewerUrl ? { viewerUrl } : {}),
+    ...(birthRanges ? { birthRanges } : {}),
   };
 
   // Stage the fetched record when the caller named the project (issue #2048 /
@@ -172,10 +185,6 @@ export async function recordReadTool(
   // `{ recordId, gedcomx }` shape record_search stages, so `readFromSidecar`
   // above reads it back unchanged and `research_log_append` finalizes it with
   // `tool: "record_read"`. Best-effort: a staging failure never fails the read.
-  // Off the RAW body, not `simplified` — `toSimplified` has already dropped
-  // `fields[]` by this point.
-  const indexFields = recordIndexFields(body);
-
   if (typeof projectPath === "string" && projectPath.trim() !== "") {
     let staged: RecordReadResult["staged"];
     let stagingError: string | undefined;
@@ -352,10 +361,12 @@ async function readFromSidecar(
   const viewerUrl = imageArk
     ? imageViewerUrl({ ark: imageArk }, extractImageContextQuery)
     : undefined;
+  const birthRanges = birthRangesFor(staged, match.indexFields);
   return {
     ...staged,
     ...(imageArk ? { imageArk } : {}),
     ...(viewerUrl ? { viewerUrl } : {}),
+    ...(birthRanges ? { birthRanges } : {}),
   };
 }
 
