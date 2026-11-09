@@ -1400,6 +1400,18 @@ describe("namesake cap", () => {
           expect((await appendRow({ name: "John A. Smith Jr.", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
           expect((await row()).record_persona_ids).toEqual({ [john.ark]: "p_2" });
         });
+
+        it("G8 ignores a placeholder word in the row's name and in a persona's", async () => {
+          const hannah = persona("p_1", "Hannah", "Earnest");
+          await searchHit([hannah], hannah);
+          expect((await appendRow({ name: "Mrs. Hannah Earnest", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toEqual({ [hannah.ark]: "p_1" });
+          // An unnamed wife indexed as "Mrs." shares the row's placeholder, not a name.
+          const mrs = persona("p_2", "Mrs.", "Earnest");
+          await searchHit([mrs], mrs);
+          expect((await appendRow({ name: "Mrs. Hannah Earnest", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toBeUndefined();
+        });
       });
     });
 
