@@ -48,6 +48,7 @@ import {
 } from "../utils/record-extract.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import {
+  listStagedEnvelopes,
   checkStagedResults,
   findFulltextHit,
   locateStagedRef,
@@ -61,7 +62,7 @@ import {
 } from "../utils/results-staging.js";
 import { deedFormulaErrors } from "../utils/deed-formula.js";
 import { recordImageReadCap } from "../utils/image-store.js";
-import { waitingPages } from "../utils/waiting-pages.js";
+import { waitingPages, pageKey } from "../utils/waiting-pages.js";
 import { extractImageArk } from "./record-read.js";
 import { arkToBareId } from "../utils/ark.js";
 import { selectSubjectPersona } from "../utils/record-persona-select.js";
@@ -538,7 +539,22 @@ function reextractTarget(
         "a re-extraction retires only the assertions of the id it names.",
     };
   }
-  const ids = liveAssertionsOfRecord(research, bare, arkToBareId).map((a) => a.id as string);
+  // A page's own readings are left alone (#4286): they cite the page's
+  // image_transcribe entry, or the researcher's user_provided one, never their
+  // source's. A dispute of a retired index assertion follows its superseded_by.
+  const logTool = new Map<string, unknown>(
+    (Array.isArray(research?.log) ? research.log : []).map((e: any) => [e?.id, e?.tool]),
+  );
+  const sourceLog = new Map<string, unknown>(
+    (Array.isArray(research?.sources) ? research.sources : []).map((s: any) => [s?.id, s?.log_entry_id]),
+  );
+  const isPageReading = (a: any) =>
+    typeof a.log_entry_id === "string" &&
+    a.log_entry_id !== sourceLog.get(a.source_id) &&
+    (logTool.get(a.log_entry_id) === "image_transcribe" || logTool.get(a.log_entry_id) === "user_provided");
+  const ids = liveAssertionsOfRecord(research, bare, arkToBareId)
+    .filter((a) => !isPageReading(a))
+    .map((a) => a.id as string);
   const referrers = assertionReferrers(research, tree, new Set(ids));
   if (referrers.length > 0) return { refusal: `its assertions are still in use. ${referrers.join(" ")}` };
   return { ids };
@@ -1940,6 +1956,27 @@ async function citeFulltextHit(
  * `recordIds`: the resend skip, one log batch, and one research_append per
  * source.
  */
+/** The image ARK an `image_transcribe` read was made of, from its staged
+ *  payload or its log entry; undefined for any other ref (#4286). A page that
+ *  documents mode itself logged carries `query: { recordId }` and no ARK, and is
+ *  already its own source, so it is not found here. */
+async function pageArkOfRef(projectPath: string, log: any[], ref: string): Promise<string | undefined> {
+  if (splitHitRef(ref).hit !== undefined) return undefined;
+  const arkOf = (e: any) =>
+    e?.tool === "image_transcribe" ? (e.query?.ark ?? e.query?.imageArk) : undefined;
+  if (ref.startsWith(`${STAGING_SUBDIR}/`)) {
+    const at = await locateStagedRef(projectPath, ref);
+    if (at.state === "logged") return arkOf(log.find((e) => e?.id === at.logId));
+    if (at.state !== "live") return undefined;
+    const staged = await listStagedEnvelopes(projectPath, "image_transcribe");
+    const hit = staged.find((e) => e.ref === at.ref);
+    const ark = (hit?.envelope.payload as { query?: { ark?: unknown } } | undefined)?.query?.ark;
+    return typeof ark === "string" ? ark : undefined;
+  }
+  const ark = arkOf(log.find((e) => e?.results_ref === ref && e?.tool === "image_transcribe"));
+  return typeof ark === "string" ? ark : undefined;
+}
+
 async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBatchResult> {
   const docs = input.documents ?? [];
   const errors: string[] = [];
@@ -2027,6 +2064,41 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
       o.srcId = [...existing][0];
       o.summary = `${o.recordId}: already extracted as ${o.srcId}; nothing written.`;
       await tieOutcome(o, input.projectPath, research, input.questionIds);
+    }
+  }
+
+  // A page of a record already held is that record's page (#4286): it is kept on
+  // the record's source and what it says goes through `pageReadings`, so it never
+  // becomes a second source. Only a page `waitingPages` would join is refused: an
+  // ARK whose `i=` or `groupId` picks the image never joins, because a failed read
+  // falls back to the bare URL and can land on any image.
+  const heldPages = new Map<string, string>();
+  for (const s of Array.isArray(research.sources) ? research.sources : []) {
+    if (typeof s?.image_ark !== "string" || s.image_ark === "") continue;
+    const key = pageKey(s.image_ark);
+    if (key !== null && !heldPages.has(key)) heldPages.set(key, s.id);
+  }
+  if (heldPages.size > 0) {
+    const logEntries: any[] = Array.isArray(research.log) ? research.log : [];
+    for (const o of outcomes) {
+      const ref = o.d.transcriptionRef;
+      if (o.status !== "extracted" || !ref) continue;
+      let ark: string | undefined;
+      try {
+        ark = await pageArkOfRef(input.projectPath, logEntries, ref);
+      } catch {
+        ark = undefined;
+      }
+      const key = ark === undefined ? null : pageKey(ark);
+      const held = key === null ? undefined : heldPages.get(key);
+      if (held === undefined) continue;
+      const refusal =
+        `that page is the page of a record already held (${held}). Keep it with ` +
+        "`extraction_append({ projectPath, attachWaitingPages: true, pageReadings })`, sending only what the page " +
+        "adds to or reads differently from that record's index, so it never becomes a second source.";
+      o.status = "refused";
+      o.errors = [refusal];
+      o.summary = `${o.recordId}: not extracted: ${refusal}`;
     }
   }
 

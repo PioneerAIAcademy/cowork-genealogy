@@ -23,6 +23,8 @@ import { stageSearchResults } from "../../src/utils/results-staging.js";
 import { waitingPages } from "../../src/utils/waiting-pages.js";
 import { classifyReading } from "../../src/utils/record-extract.js";
 import { validateProject } from "../../src/validation/validator.js";
+import { researchLogAppend } from "../../src/tools/research-log-append.js";
+import { disputeGroups } from "../../src/utils/page-disputes.js";
 import { LOCAL } from "../../src/auth/principal.js";
 
 const ARK = "ark:/61903/3:1:33SQ-GRZ6-P95";
@@ -290,5 +292,112 @@ describe("research_append and disputes_assertion_id", () => {
     );
     expect(r.ok).toBe(false);
     expect(r.errors.join(" ")).toContain(DISPUTES_NOT_CALLERS);
+  });
+});
+
+describe("documents mode and a held record's page", () => {
+  let dir: string;
+  const read = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf8"));
+  const census = {
+    recordType: "census",
+    census: { jurisdiction: "United States", year: 1880 },
+    documentForm: "verbatim_transcript",
+    source: { title: "1880 census, Troy", repository: "FamilySearch" },
+    persons: [{ id: "c1", principal: true, gender: "female", names: [{ given: "Hattie", surname: "Curtis" }], facts: [] }],
+  };
+  const stageAt = async (ark: string) =>
+    (await stageSearchResults({
+      projectPath: dir,
+      tool: "image_transcribe",
+      response: {
+        query: { ark },
+        results: [{ id: "page", source: { ark }, content_type: "image/jpeg", size_bytes: 1, model: "m", transcription: "Curtis, Hattie 14 F", image_ref: "images/page.jpg" }],
+      },
+    }))!.resultsRef;
+  const extract = (ref: string) =>
+    runExtractionAppend(
+      { projectPath: dir, documents: [{ recordId: "capture:curtis-page", document: census, transcriptionRef: ref }] } as any,
+      noReader,
+      LOCAL,
+    ) as unknown as Promise<ExtractionBatchResult>;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "held-page-docs-test-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(research()), "utf8");
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify({ persons: [], relationships: [], sources: [] }), "utf8");
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("refuses a staged page of a held record, naming attachWaitingPages", async () => {
+    const r = await extract(await stageAt(ARK));
+    expect(r.records[0].status).toBe("refused");
+    expect(r.records[0].summary).toMatch(/record already held \(src_001\).*attachWaitingPages: true, pageReadings/);
+    expect((await read()).sources).toHaveLength(1);
+  });
+
+  it("refuses a logged page of a held record", async () => {
+    const staged = await stageAt(ARK);
+    const logged: any = await researchLogAppend({
+      projectPath: dir, tool: "image_transcribe", outcome: "positive", resultsExamined: 1, stagedResultsRef: staged,
+    } as any);
+    expect(logged.ok).toBe(true);
+    expect((await extract(logged.resultsRef)).records[0].status).toBe("refused");
+    expect((await extract(staged)).records[0].status).toBe("refused");
+  });
+
+  it("does not refuse a read whose i= picks the image, which never joins a held record", async () => {
+    const r = await extract(await stageAt(`${ARK}?i=15`));
+    expect(r.records[0].status).toBe("extracted");
+  });
+
+  it("does not refuse a page of an image no held record shows", async () => {
+    const r = await extract(await stageAt("ark:/61903/3:1:33S7-9YBC-V6L"));
+    expect(r.records[0].status).toBe("extracted");
+  });
+});
+
+describe("re-extracting a record whose page has spoken", () => {
+  let dir: string;
+  const read = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf8"));
+  const ROW = { ...INDEX_ROW, gedcomx: { ...INDEX_ROW.gedcomx, persons: [{ ...INDEX_ROW.gedcomx.persons[0], gender: "Male" }] } };
+  const reader = {
+    readRecord: async () => ({
+      staged: await stageSearchResults({ projectPath: dir, tool: "record_read", response: { results: [ROW] } }),
+    }),
+  } as any;
+
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "page-reextract-test-"));
+    const doc: any = research();
+    doc.log.push({
+      id: "log_002", performed: "2026-01-02T00:00:00Z", tool: "image_transcribe", query: { ark: ARK },
+      outcome: "positive", results_examined: 1,
+    });
+    doc.assertions.push({
+      ...indexAssertion("a_003", "sex", "Female [?]"), record_persona_id: undefined, log_entry_id: "log_002",
+      disputes_assertion_id: "a_002",
+    });
+    delete doc.assertions[2].record_persona_id;
+    await writeFile(join(dir, "research.json"), JSON.stringify(doc), "utf8");
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify({ persons: [], relationships: [], sources: [] }), "utf8");
+    await getProjectStore().writeJson(dir, "results/log_001.json", { payload: { results: [ROW] } });
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("retires the index assertions, leaves the page's reading live, and the dispute follows the successor", async () => {
+    const r = await runExtractionAppend({ projectPath: dir, recordIds: [RECORD], reextract: true } as any, reader, LOCAL);
+    expect(r.records[0]?.status, JSON.stringify(r)).toBe("extracted");
+    const after = await read();
+    const byId = new Map<string, any>(after.assertions.map((a: any) => [a.id, a]));
+    expect(byId.get("a_003").superseded_by ?? null).toBeNull();
+    expect(typeof byId.get("a_002").superseded_by).toBe("string");
+    const successor = byId.get("a_002").superseded_by;
+    expect(successor).toMatch(/^a_/);
+    const groups = disputeGroups(after);
+    expect(groups.get(successor)?.disputers.map((d: any) => d.id)).toEqual(["a_003"]);
   });
 });
