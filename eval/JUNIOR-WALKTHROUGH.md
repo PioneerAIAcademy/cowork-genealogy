@@ -12,7 +12,7 @@ You'll install three things outside the repo, then run a single batch file insid
 
    Optional but recommended for non-terminal users: also install **GitHub Desktop** from <https://desktop.github.com/>. It gives you a clickable interface for cloning, branches, commits, and pushes — no command-line typing for the daily flow.
 
-2. **Node.js LTS** — <https://nodejs.org/> (pick "LTS"). Accept defaults. After installing, open a new Command Prompt and run `node --version` — you should see a version like `v26.x.x`. `v24.15` or later on 24, or `v22.22.2` or later on 22, also works; 23 and 25 do not.
+2. **Node.js LTS** — <https://nodejs.org/> (pick "LTS"). Accept defaults. After installing, open a new Command Prompt and run `node --version` — you should see a version like `v26.x.x`. `v24.15` or later also works. If `Setup.bat` stops on the Node or npm version, it says what to install.
 
 3. **The repo itself — clone it to your computer.** Use **either** Option A (clickable) **or** Option B (terminal) — not both.
 

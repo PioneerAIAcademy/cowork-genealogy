@@ -173,7 +173,8 @@ or later from <https://nodejs.org>.
    `https://github.com/pioneeraiacademy/cowork-genealogy`, set **Local path**
    to `C:\src\cowork-genealogy`, and click **Clone**. Don't clone into
    Documents or Desktop: they sync to OneDrive, which breaks the build.
-2. **Get npm 11.12**, newer than the npm that comes with Node. Run this once.
+2. **Get npm 11.12**: the MCP server's build needs npm 11.12 or a later 11.x,
+   which older Node releases do not ship. Run this once.
    On Windows, run it in Command Prompt (Start → type `cmd`), not PowerShell.
    On macOS, put `sudo` in front if it fails with a permissions error.
 

@@ -18,8 +18,8 @@ No telemetry. No analytics. Offline-first.
 
 - Node.js 22.22.2+ on 22, 24.15+ on 24, or 26+ (23 and 25 are refused). Root
   `engines.node` says `>=22`, but the workspace's test tooling sets the real floor:
-  vitest 5 and jsdom 30 declare these ranges, and `.npmrc`'s `engine-strict=true`
-  refuses an install outside them.
+  jsdom 30 declares exactly this range, and `.npmrc`'s `engine-strict=true` refuses
+  an install outside it.
 - pnpm (run `corepack enable`) — this app is a member of the monorepo pnpm workspace
 
 ## Install
