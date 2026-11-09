@@ -835,9 +835,9 @@ export const researchQuerySchema = {
     "matches remain beyond the returned page, so advance `offset` by items.length " +
     "and call again until it is false. `items` is camelCase-untouched (the " +
     "section's native snake_case fields, verbatim) since this is a read " +
-    "projection, not a persisted document, with two omissions: a `plans` item " +
-    "carries no `rationale` when it is completed or skipped or its plan is not " +
-    "active, and a `log` entry carries no `staged_ref`.\n" +
+    "projection, not a persisted document, with two omissions: an item in a " +
+    "plan's `items` carries no `rationale` when it is completed or skipped or its " +
+    "plan is not active, and a `log` entry carries no `staged_ref`.\n" +
     "\n" +
     "`conflicts` also returns `unregisteredDisagreements` — `[{personId, fact, " +
     "assertionIds}]`, linked assertions that disagree on a birth or death place or " +
