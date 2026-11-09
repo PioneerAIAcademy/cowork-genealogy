@@ -172,6 +172,26 @@ function getCount(
   return entry?.count ?? 0;
 }
 
+/** One collection's indexed counts, as `collections_search` reports them. */
+export interface CollectionCounts {
+  personCount: number;
+  recordCount: number;
+}
+
+/** Every catalog collection's counts by id, derived as `toCollection` derives them. */
+export function collectionCountsById(data: FSCollectionsResponse): Map<string, CollectionCounts> {
+  const out = new Map<string, CollectionCounts>();
+  for (const entry of data.entries ?? []) {
+    const c = unwrapEntry(entry);
+    if (!c) continue;
+    out.set(String(c.id), {
+      personCount: getCount(c.content, "/Person"),
+      recordCount: getCount(c.content, "/Record"),
+    });
+  }
+  return out;
+}
+
 function toCollection(data: FSCollectionData): Collection {
   const meta = data.searchMetadata?.[0];
   const dateRange = formatYearRange(meta?.startYear, meta?.endYear);

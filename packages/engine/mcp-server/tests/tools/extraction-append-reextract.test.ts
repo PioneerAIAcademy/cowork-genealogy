@@ -307,7 +307,7 @@ describe("extraction_append: reextract", () => {
       section: "person_evidence",
       op: "append",
       entry: { assertion_id: old[0], person_id: "I1", confidence: "speculative", rationale: "x", match_score: null },
-    } as any);
+    } as any, LOCAL);
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors.join(" ")).toMatch(/cites a_\d+ \(superseded_by [^)]+\): a re-extraction retired it/);

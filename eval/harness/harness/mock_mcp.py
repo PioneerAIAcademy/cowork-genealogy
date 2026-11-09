@@ -2339,6 +2339,7 @@ def _make_live_append_handler(
     tool: str,
     module_file: str,
     export: str,
+    call_args: str = "input",
 ):
     """Build a live handler that runs a compiled research-writer tool.
 
@@ -2370,7 +2371,7 @@ def _make_live_append_handler(
                 f"import {{ {export} as run }} from '{append_url}';"
                 " import { readFileSync } from 'node:fs';"
                 " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-                " const r = await run(input);"
+                f" const r = await run({call_args});"
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
@@ -2403,11 +2404,18 @@ def _make_live_append_handler(
     return handler
 
 
+#: `researchAppendFromCaller(input, principal, loadCatalog)`: no principal, and a
+#: null catalog loader, so the locality collection-count stamp (#4385) never
+#: contacts FamilySearch here — the `person_warnings` precedent (#1962).
+RESEARCH_APPEND_CALL_ARGS = "input, undefined, null"
+
+
 def _make_research_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
     """The live handler for research_append."""
     return _make_live_append_handler(
         workspace, call_log,
         tool="research_append", module_file="research-append.js", export="researchAppendFromCaller",
+        call_args=RESEARCH_APPEND_CALL_ARGS,
     )
 
 

@@ -784,7 +784,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "research_append") {
       try {
         const args = request.params.arguments as unknown as ResearchAppendInput;
-        const result = await researchAppendFromCaller(args);
+        const result = await researchAppendFromCaller(args, principal);
         return writerToolResult(result);
       } catch (error) {
         const message = error instanceof Error ? error.message : "Unknown error";
