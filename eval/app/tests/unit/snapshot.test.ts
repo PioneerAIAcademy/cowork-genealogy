@@ -194,6 +194,16 @@ describe('normalize', () => {
     expect(hashContent(out)).toBe('7611e336d2b333aa772acee003373474c86cd9ce975c10d66a4b0156e8641dca');
   });
 
+  // Pinned: test_snapshot.py asserts the same text and digest for the same
+  // bytes (test_normalize_json_with_invalid_utf8_falls_back_to_text). 0xE9 is
+  // Latin-1 é, not valid UTF-8, so the file normalizes as text, never as JSON.
+  it('normalizes a .json file that is not valid UTF-8 as text', () => {
+    const raw = Buffer.concat([Buffer.from('{"b": 1,\r\n "a": "caf'), Buffer.from([0xe9]), Buffer.from('"}')]);
+    const out = normalize('eval/foo.json', raw);
+    expect(out).toBe('{"b": 1,\n "a": "caf\uFFFD"}\n');
+    expect(hashContent(out)).toBe('b2cbb5fc5697c5d9eab47f7863f37f2df5f16794555581dcc00d23db54d1eaa7');
+  });
+
   it('does NOT strip cosmetic fields outside eval/tests/unit/', () => {
     const raw = Buffer.from(JSON.stringify({ test: { id: 'x', name: 'kept here' } }));
     const out = normalize('packages/engine/plugin/skills/foo/SKILL.json', raw);

@@ -604,7 +604,8 @@ def _corpus_delegations():
 
 
 def _hosted_listing_paths(raw):
-    """The paths a test's hosted `project_list` fixtures list, `newProjectPath` included."""
+    """The project paths a test's hosted `project_list` fixtures list. Not `newProjectPath`:
+    the mock answers it as if it held the scenario's project, which production would not."""
     paths = set()
     for name in raw.get("mcp_fixtures") or []:
         try:
@@ -616,7 +617,6 @@ def _hosted_listing_paths(raw):
         response = fixture.get("response") if fixture.get("tool") == "project_list" else None
         if isinstance(response, dict) and response.get("mode") == "hosted":
             paths |= {p.get("projectPath") for p in response.get("projects") or [] if isinstance(p, dict)}
-            paths.add(response.get("newProjectPath"))
     return {p for p in paths if isinstance(p, str) and p}
 
 
@@ -696,23 +696,30 @@ def test_project_path_guard_flags_prose_and_malformed_fields(rel, delegation):
     assert violations, f"guard accepted {delegation!r}"
 
 
-HOSTED = {"suite/t.json": {"/proj_7d4b2e91c6a05f38", "/proj_0b5e3c8a19d27f64"}}
+HOSTED = {"suite/t.json": {"/proj_7d4b2e91c6a05f38"}}
 
 
 @pytest.mark.parametrize(
     "rel, delegation, ok",
     [
         ("suite/t.json", "Triage it.\nprojectPath: /proj_7d4b2e91c6a05f38", True),
-        ("suite/t.json", "Triage it.\nprojectPath: /proj_0b5e3c8a19d27f64", True),
         ("suite/t.json", "Triage it.\nprojectPath: /proj_ffffffffffffffff", False),
         ("other/t.json", "Triage it.\nprojectPath: /proj_7d4b2e91c6a05f38", False),
         ("suite/t.json", "Triage it.\nprojectPath: /proj_7d4b2e91c6a05f38 is the folder", False),
     ],
-    ids=["listed_path", "new_project_path", "unlisted_path", "no_hosted_listing", "trailing_text"],
+    ids=["listed_path", "unlisted_path", "no_hosted_listing", "trailing_text"],
 )
 def test_project_path_guard_accepts_only_the_tests_own_hosted_path(rel, delegation, ok):
     violations, _ = _project_path_violations({rel: delegation}, {}, HOSTED)
     assert (violations == []) is ok, violations
+
+
+def test_hosted_listing_paths_leave_out_the_new_project_path():
+    listing = REPO_ROOT / "eval" / "fixtures" / "mcp" / "project-list-hosted-barnes.json"
+    response = json.loads(listing.read_text(encoding="utf-8"))["response"]
+    paths = _hosted_listing_paths({"mcp_fixtures": ["project-list-hosted-barnes"]})
+    assert paths == {p["projectPath"] for p in response["projects"]}
+    assert response["newProjectPath"] not in paths
 
 
 def test_project_path_guard_flags_a_stale_allow_list_entry():

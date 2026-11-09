@@ -155,7 +155,9 @@ export function normalize(repoRelativePath: string, content: string | Buffer): s
   if (JSON_EXTS.has(ext)) {
     let parsed: unknown;
     try {
-      const text = typeof content === 'string' ? content : content.toString('utf-8');
+      // Strict, as Python's `content.decode("utf-8")`: invalid UTF-8 falls back
+      // to text rather than parsing a lossy decode.
+      const text = typeof content === 'string' ? content : STRICT_UTF8.decode(content);
       parsed = JSON.parse(text);
     } catch {
       return normalizeText(content);

@@ -4,7 +4,7 @@
     "skill": "search-external-sites",
     "name": "Hosted: an upload with a text layer is read with sidecar_read, never transcribed",
     "type": "positive",
-    "description": "Form 1 of the capture forms. The MyHeritage hand-off for pli_001 is open in awaitingUser, and the researcher uploaded the results page as a PDF; the web tier wrote its text layer beside it, so project_context lists the upload with hasText: true and returns an uploadUrl. The agent reads uploads/ma-1855-census-josiah-barnes.pdf.txt with sidecar_read, never calls image_transcribe (a paid call for text it already has; the catch-all image-transcribe-upload-any fixture registers the tool so the check is real), and closes the hand-off with captureFilename ma-1855-census-josiah-barnes.pdf, never the layer's name. Gated by test_triage_closes_its_open_handoff; test_no_transcription_of_an_upload_with_text, test_closing_capture_filename_is_the_upload and test_hosted_upload_is_read_with_the_tools run on it ungated.",
+    "description": "Form 1 of the capture forms. The MyHeritage hand-off for pli_001 is open in awaitingUser, and the researcher uploaded the results page as a PDF; the web tier wrote its text layer beside it, so project_context lists the upload with hasText: true and returns an uploadUrl. The agent reads uploads/ma-1855-census-josiah-barnes.pdf.txt with sidecar_read, never calls image_transcribe (a paid call for text it already has; image-transcribe-upload-barnes-pdf registers the tool, answering as production would, so the check is real), and closes the hand-off with captureFilename ma-1855-census-josiah-barnes.pdf, never the layer's name. Gated by test_triage_closes_its_open_handoff; test_no_transcription_of_an_upload_with_text, test_closing_capture_filename_is_the_upload and test_hosted_upload_is_read_with_the_tools run on it ungated.",
     "tags": [
       "myheritage",
       "external-site",
@@ -25,7 +25,7 @@
     "place-search-massachusetts",
     "external-links-search-massachusetts",
     "collections-search-massachusetts-census",
-    "image-transcribe-upload-any"
+    "image-transcribe-upload-barnes-pdf"
   ],
   "judge_context": [
     "This is a triage turn: the capture came back as an upload. Do not penalize the absence of a new URL, of capture instructions, or of a build_external_search_url call: the hand-off's URL is already open in awaitingUser.",

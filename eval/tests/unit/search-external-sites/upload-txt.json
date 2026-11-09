@@ -4,7 +4,7 @@
     "skill": "search-external-sites",
     "name": "Hosted: a plain-text upload is read with sidecar_read on its own ref",
     "type": "positive",
-    "description": "Form 2 of the capture forms. The MyHeritage hand-off for pli_001 is open in awaitingUser, and the researcher pasted the results page into the upload page as plain text, so the upload is a lone .txt: project_context lists it with hasText: false and returns an uploadUrl. The agent reads uploads/ma-1855-census-josiah-barnes.txt with sidecar_read, never sends it to image_transcribe (which refuses text; the catch-all image-transcribe-upload-any fixture registers the tool so the check is real), and closes the hand-off with captureFilename ma-1855-census-josiah-barnes.txt. Gated by test_triage_closes_its_open_handoff; test_no_transcription_of_an_upload_with_text and test_hosted_upload_is_read_with_the_tools run on it ungated.",
+    "description": "Form 2 of the capture forms. The MyHeritage hand-off for pli_001 is open in awaitingUser, and the researcher pasted the results page into the upload page as plain text, so the upload is a lone .txt: project_context lists it with hasText: false and returns an uploadUrl. The agent reads uploads/ma-1855-census-josiah-barnes.txt with sidecar_read, never sends it to image_transcribe (which refuses text; image-transcribe-upload-barnes-txt-refused registers the tool with production's refusal, so the check is real), and closes the hand-off with captureFilename ma-1855-census-josiah-barnes.txt. Gated by test_triage_closes_its_open_handoff; test_no_transcription_of_an_upload_with_text and test_hosted_upload_is_read_with_the_tools run on it ungated.",
     "tags": [
       "myheritage",
       "external-site",
@@ -25,7 +25,7 @@
     "place-search-massachusetts",
     "external-links-search-massachusetts",
     "collections-search-massachusetts-census",
-    "image-transcribe-upload-any"
+    "image-transcribe-upload-barnes-txt-refused"
   ],
   "judge_context": [
     "This is a triage turn: the capture came back as an upload. Do not penalize the absence of a new URL, of capture instructions, or of a build_external_search_url call: the hand-off's URL is already open in awaitingUser.",

@@ -168,6 +168,16 @@ def test_normalize_unknown_extension_keeps_a_leading_bom():
     assert hash_content(out) == "7611e336d2b333aa772acee003373474c86cd9ce975c10d66a4b0156e8641dca"
 
 
+def test_normalize_json_with_invalid_utf8_falls_back_to_text():
+    """Pinned: snapshot.test.ts asserts the same text and digest for the same
+    bytes. 0xE9 is Latin-1 é, not valid UTF-8, so the file normalizes as text,
+    never as JSON."""
+    raw = b'{"b": 1,\r\n "a": "caf\xe9"}'
+    out = normalize("eval/foo.json", raw)
+    assert out == '{"b": 1,\n "a": "caf\ufffd"}\n'
+    assert hash_content(out) == "b2cbb5fc5697c5d9eab47f7863f37f2df5f16794555581dcc00d23db54d1eaa7"
+
+
 def test_hash_content_is_sha256():
     h = hash_content("hello\n")
     # Sanity: 64 hex chars.

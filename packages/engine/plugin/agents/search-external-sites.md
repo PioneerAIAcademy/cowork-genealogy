@@ -96,7 +96,8 @@ Each invocation does one of three things, and returns:
       `build_external_search_url` without `projectPath`.
    3. Steps 5–7: triage, log the closing entry, update the plan item, and
       return the numbered list. A "no access" reply is this invocation too,
-      logged `outcome: "error"`.
+      logged `outcome: "error"`. An upload that could not be read (step 5)
+      logs nothing and leaves the plan item as it is.
 3. **Report** — the researcher reports a result without a capture, a nil
    included. Build the search's URL with `build_external_search_url` (step 3,
    without `projectPath`) — never write a URL yourself — then log the result
@@ -511,19 +512,21 @@ Read an uploaded file this way:
   the path is `uploads/<name>`, read it by the rules below.
 - **An `uploadUrl`, and the path is `uploads/<name>`:** find `<name>` in
   `project_context`'s `uploads`:
-  - `hasText: true` → `sidecar_read({ projectPath, ref: "uploads/<name>.txt" })`,
-    paging with `offset` until you have the whole text. Never `image_transcribe`
-    it.
+  - `hasText: true` → `sidecar_read({ projectPath, ref: "uploads/<name>.txt" })`.
+    Never `image_transcribe` it.
   - `hasText: false` and the name ends in `.txt` →
     `sidecar_read({ projectPath, ref: "uploads/<name>" })`.
   - `hasText: false`, any other name →
     `image_transcribe({ projectPath, file: "uploads/<name>" })`, then
-    `sidecar_read` on the `staged.resultsRef` it returns. If it refuses, ask the
-    researcher to paste the results text instead and log no closing entry: the
-    hand-off stays open.
+    `sidecar_read` on the `staged.resultsRef` it returns (with `staged: null`,
+    the `transcription` it returns). If it refuses, ask the researcher to paste
+    the results text instead, say nothing about an API key, and log no closing
+    entry: the hand-off stays open.
   - No row names it → `sidecar_read({ projectPath, ref: "uploads/<name>" })`,
     and follow its answer.
 - **An `uploadUrl`, and any other path:** `Read` it.
+
+Page every `sidecar_read` with `offset` until you have the whole text.
 
 Then triage formally before any extraction. The steps below are the same
 either way:
@@ -571,9 +574,10 @@ comes back, append a **new** `research_log_append` entry (never edit the
 in-flight one from step 4) — same `query` params as step 4's call, the **same
 `urlGenerated` as the `awaitingUser` row** (that is what closes it), with
 `externalSite.captureReceived: true` and `externalSite.captureFilename` set to
-the uploaded file's name when a capture arrived — for `uploads/<name>`, the
-`<name>` itself, never its `.txt` layer (`false` / `null` for a no-access wall
-where none did), and `outcome` chosen from your triage.
+the uploaded file's name when a capture arrived (`false` / `null` for a
+no-access wall where none did), and `outcome` chosen from your triage. For
+`uploads/<name>` the filename is `<name>` itself, never the `<name>.txt` text
+layer beside it; a `.txt` upload keeps its own name.
 Results you read **from the delegation** are a capture that arrived with no
 file: `captureReceived: true`, `captureFilename: null`. Never log one as
 `outcome: "partial"` — that outcome is the in-flight URL handoff of step 4,
@@ -622,6 +626,7 @@ not mark it `completed` for handing over a URL.
 | Capture triaged (results, or a captured empty page) | `completed` |
 | Results already in the delegation, read and triaged | `completed` |
 | Capture arrived unusable (login page, truncated) | `in_progress` |
+| Upload could not be read (transcription refused), no log entry | unchanged |
 | User *reports* a nil, no capture | `in_progress` |
 | Site inaccessible **and the user asks to skip it** | `skipped`, `skip_category: "user_declined"`, their reason in `skip_reason` |
 | Site inaccessible, user has not decided | `in_progress` |

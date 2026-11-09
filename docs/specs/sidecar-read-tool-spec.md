@@ -427,6 +427,14 @@ the §6 classification is unchanged.
   and `extraction_append` takes the same string as its `transcriptionRef`.
   `search-images`, `search-hints` and the `research` skill read a staged
   transcription.
+- **`search-external-sites`** reads a capture at `uploads/<name>` when
+  `project_context` returns an `uploadUrl`, by that upload's `uploads` row: the
+  `<name>.txt` text layer when `hasText` is true, a lone `.txt` upload itself,
+  and for any other upload the page `image_transcribe({ file: "uploads/<name>" })`
+  stages (its `staged.resultsRef`). An `uploads/<name>` no row names is read
+  by `sidecar_read` on that path. With no `uploadUrl` a capture is read by the
+  built-in `Read`, and reaches these reads only when that `Read` fails on an
+  `uploads/<name>` path.
 - No fixture under `eval/fixtures/mcp/` serves it and `check_tool_coverage.py`
   needs no entry: the unit harness runs it live (`LIVE_TOOLS`), and every live
   tool is exempt. A hit read in a unit run reads what the mock staged: the mock
@@ -464,7 +472,7 @@ fixture, not a defect.
 | `dev/try-sidecar-read.ts` | smoke script |
 | `dev/smoke-calls.ts` | the offline smoke rows, an evaluation file and one full-text hit (`make engine-smoke-stdio`, `make engine-smoke-http`) |
 | `docs/catalog.md` | catalog row; the tool count |
-| `packages/engine/plugin/agents/gps-mentor.md`, `docs/specs/gps-mentor-agent-spec.md`, `tests/packaging/agent-tool-names.test.ts` | the consumer (§9) |
+| `packages/engine/plugin/agents/gps-mentor.md`, `docs/specs/gps-mentor-agent-spec.md`, `packages/engine/plugin/agents/search-external-sites.md`, `tests/packaging/agent-tool-names.test.ts` | the consumers (§9) |
 
 ## 12. Tests
 
