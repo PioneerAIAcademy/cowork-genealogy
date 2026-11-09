@@ -840,6 +840,39 @@ def _explained_by_caller_assertion_update(before_section, after_section, updated
     return changed
 
 
+#: The tools whose person_evidence writes run research_append's namesake fill
+#: in: research_append itself, and extraction_append's attachment links, which
+#: it writes through research_append.
+_BIRTH_YEAR_FILL_TOOLS = frozenset({"research_append", "extraction_append"})
+
+
+def _explained_by_birth_year_fill(before_section, after_section) -> bool:
+    """True when the only change to `namesakes` is research_append's fill in
+    (#3363): the same rows in the same order, each changed row differing only by
+    a `birth_year` integer it did not have before. A row added, removed,
+    reordered or otherwise edited, or a year changed, fails closed.
+    """
+    if not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    if len(before_section) != len(after_section):
+        return False
+    changed = False
+    for old, new in zip(before_section, after_section):
+        if not isinstance(old, dict) or not isinstance(new, dict):
+            return False
+        if not isinstance(old.get("id"), str) or old.get("id") != new.get("id"):
+            return False
+        if old == new:
+            continue
+        year = new.get("birth_year")
+        if "birth_year" in old or isinstance(year, bool) or not isinstance(year, int):
+            return False
+        if {k: v for k, v in new.items() if k != "birth_year"} != old:
+            return False
+        changed = True
+    return changed
+
+
 def _explained_by_merge(before_section, after_section, remap: dict[str, str]) -> bool:
     """True when the section's whole delta is the merge's id permutation.
 
@@ -881,7 +914,11 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     (`_explained_by_plan_completion`) and for tying a re-found record's
     assertions to a question (`_explained_by_question_tie`). The third is
     `research_append`'s one caller write to `assertions`, an update of
-    `informant_bias_notes` alone (`_explained_by_caller_assertion_update`).
+    `informant_bias_notes` alone (`_explained_by_caller_assertion_update`). The
+    fourth is the birth year `research_append` fills in on a namesake row of a
+    person a call links, whichever tool wrote the link
+    (`_explained_by_birth_year_fill`): it is not `toolAuthorized`, which would
+    grant the section to every caller of the tool.
 
     The merge path is scoped to research.json. `test_tree_ownership_table` does
     NOT take it: the tree rows already list `merge_tree_persons` among their
@@ -994,6 +1031,13 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
             # caller-writable fields and nothing else.
             if section == "assertions" and _explained_by_caller_assertion_update(
                 before.get(section), after.get(section), _caller_notes_update_ids(tool_calls)
+            ):
+                continue
+            # research_append, and extraction_append through it: a call that
+            # links a person fills in the birth year of that person's namesake
+            # rows that have none (#3363), and changes nothing else there.
+            if section == "namesakes" and called & _BIRTH_YEAR_FILL_TOOLS and _explained_by_birth_year_fill(
+                before.get(section), after.get(section)
             ):
                 continue
             unauthorized.append(section)
