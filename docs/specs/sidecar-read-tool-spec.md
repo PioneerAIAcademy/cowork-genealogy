@@ -339,8 +339,8 @@ wrapper's exemption.
 
 **Ruling (lead, 2026-10-20):** "`sidecar_read` serves one
 full-text hit's `textDocument` per ref." `fulltext_search` drops `textDocument`
-from its response once staged (`fulltext-search-tool-spec.md`, "Result
-staging"), so the staged or finalized sidecar holds the only copy of a hit's
+from every response (`fulltext-search-tool-spec.md`, "Answer
+compaction"), so the staged or finalized sidecar holds the only copy of a hit's
 machine transcript, and the hosted path has no `Read` to reach it.
 
 - **The hit is addressed inside the ref:** `results/<file>#<hit id>`, where

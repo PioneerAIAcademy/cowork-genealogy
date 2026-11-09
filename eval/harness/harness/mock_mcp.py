@@ -732,6 +732,7 @@ def _compact_unstaged_search(tool_name: str, response: dict[str, Any]) -> dict[s
     compactor = _STAGED_COMPACTORS[tool_name]
     compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
     if not compactor_js.exists():
+        warnings.warn(f"mock {tool_name} compaction skipped: no engine build at {_MCP_BUILD}", stacklevel=2)
         return response
     script = (
         f"import {{ {compactor} }} from '{_node_module_url(compactor_js)}';"
