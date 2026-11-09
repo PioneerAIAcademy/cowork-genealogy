@@ -1,0 +1,137 @@
+{
+  "tool": "record_read",
+  "description": "Carved from feedback bundle feedback-2026-10-30T07-56-13-719275Z.zip (issue #4042), results/log_022.json: the 1943 death registration (b. 1868, spouse Santiago Cedillo, no status).",
+  "args": {
+    "recordId": "~X7FS-6T4L"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_310191494631",
+        "ark": "ark:/61903/1:1:X7FS-6T4L",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "836070cd-3e3f-4a83-a259-e1f8e3c48f23",
+            "type": "BirthName",
+            "surname": "Cedillo",
+            "given": "Ma Nicolasa"
+          }
+        ],
+        "facts": [
+          {
+            "id": "f593c5b4-40f9-465d-ab30-b55bc0d057f8",
+            "type": "Birth",
+            "date": "1868",
+            "standard_date": "1868"
+          },
+          {
+            "id": "ba61383f-772c-4d8e-9e7e-478afd192435",
+            "type": "Death",
+            "date": "22 de mayo de 1943",
+            "standard_date": "22 May 1943"
+          },
+          {
+            "id": "c83f4f1e-3595-4ca6-840e-00664a9ec3e1",
+            "type": "DeathRegistration",
+            "primary": true,
+            "date": "22 de mayo de 1943",
+            "standard_date": "22 May 1943",
+            "place": "Santa Lucía, Intibucá, Honduras"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_310191494634",
+        "ark": "ark:/61903/1:1:X7FS-6T45",
+        "names": [
+          {
+            "id": "55e07fa2-c16e-437d-8248-536c4fb2b685",
+            "type": "BirthName",
+            "surname": "Cedillo",
+            "given": "Santiago"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "12210fd6-5803-4c21-866c-0f91ab8886da",
+        "type": "Couple",
+        "person1": "p_310191494631",
+        "person2": "p_310191494634"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_182560836616",
+        "resource_type": "Record",
+        "title": "Registro para Ma Nicolasa Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+        "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7FS-6T4L : Thu Aug 06 07:42:23 UTC 2026), Entry for Ma Nicolasa Cedillo and Santiago Cedillo, 22 de mayo de 1943.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:HZDP-GXMN",
+        "coverage": {
+          "date_range": "22 de mayo de 1943",
+          "record_type": "Death"
+        }
+      },
+      {
+        "id": "sd_c_2135627",
+        "resource_type": "Collection",
+        "title": "Honduras, Registro Civil, 1841-1968",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/2135627",
+        "coverage": {
+          "place_rep_id": "173",
+          "date_range": "1841/1968",
+          "record_type": "Vital",
+          "standard_place": "Honduras"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3QHJ-Z7CY-XSSC-N",
+        "coverage": {
+          "place_rep_id": "441572",
+          "date_range": "+1942-09-01T00:00:00Z/+1944-06-30T23:59:59Z",
+          "record_type": "Death",
+          "standard_place": "Santa Lucía, Intibucá, Honduras"
+        }
+      },
+      {
+        "id": "sd_p_310191494631",
+        "resource_type": "Person",
+        "title": "Ma Nicolasa Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+        "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7FS-6T4L : Thu Aug 06 07:42:23 UTC 2026), Ma Nicolasa Cedillo, 22 de mayo de 1943.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X7FS-6T4L"
+      },
+      {
+        "id": "sd_p_310191494634",
+        "resource_type": "Person",
+        "title": "Santiago Cedillo, \"Honduras, Registro Civil, 1841-1968\"",
+        "citation": "\"Honduras, Registro Civil, 1841-1968\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:X7FS-6T45 : Thu Aug 06 07:42:23 UTC 2026), Santiago Cedillo in entry for Ma Nicolasa Cedillo, 22 de mayo de 1943.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:X7FS-6T45"
+      },
+      {
+        "id": "sd_auto_M9VM-SQG",
+        "resource_type": "auto",
+        "title": "Honduras, Intibucá, Deaths, from 1 June 1853 to 2023",
+        "coverage": {
+          "place_rep_id": "5270",
+          "date_range": "+1853-06-01T00:00:00Z/+2023-12-31T23:59:59Z",
+          "standard_place": "Intibucá, Honduras"
+        }
+      }
+    ]
+  }
+}

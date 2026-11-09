@@ -1018,6 +1018,13 @@ POOL_BAPTISM_IDS = ("Q7FB-T45", "Q7FB-M45")
 #: a son of Thomas, of the second a son of Michael.
 MARRIAGE_MATCHING_PARENTS_ID = "Q7FM-T70"
 MARRIAGE_OTHER_PARENTS_ID = "Q7FM-M70"
+#: Two Santa Lucía deaths of a Nicolasa Cedillo (record-search-cedillo-nicolasa-death,
+#: issue #4042): 1943, spouse Santiago with no status; 1945, parents Ventura
+#: Cedillo and María Jesús Amaya. The subject has no parents in the tree.
+CEDILLO_1943_IDS = ("X7FS-6T4L", "X7FM-RFHS", "X7KG-W4V1")
+CEDILLO_1945_IDS = ("X7FM-YRGN", "X7LQ-QZVH")
+#: Records naming her as Santiago's wife: his 1918 death and two children's.
+CEDILLO_FAMILY_IDS = ("X7LS-KMLK", "X7FS-X3LL", "X7LS-8L8G")
 
 
 def test_namesake_pool_row_recorded(before_state, after_state, test):
@@ -1072,3 +1079,25 @@ def test_namesake_other_parents_row(before_state, after_state, test):
     assert MARRIAGE_MATCHING_PARENTS_ID not in listed, (
         f"the row lists {MARRIAGE_MATCHING_PARENTS_ID}, whose groom's parents match the subject's: he may still be the subject"
     )
+
+
+def test_cedillo_pool_row(before_state, after_state, test):
+    """Tag-gated (cedillo-pool-row): neither Cedillo woman is ruled out, so no
+    row lists her records, Santiago's death or a child's; the two are one pool
+    row naming a 1943 and a 1945 record. A row for an unrelated namesake passes."""
+    if "cedillo-pool-row" not in test.get("tags", []):
+        pytest.skip("not a cedillo-pool-row scenario")
+    rows = _new_section_entries(before_state, after_state, "namesakes")
+    barred = set(CEDILLO_1943_IDS + CEDILLO_1945_IDS + CEDILLO_FAMILY_IDS)
+    listed = sorted(
+        {_namesake_bare_id(r) for row in rows for r in row.get("record_ids") or []} & barred
+    )
+    assert not listed, f"a namesakes row lists {listed}: neither woman, nor her husband or children, may be ruled out"
+    pools = [
+        row for row in rows
+        if row.get("record_ids") == [] and str(row.get("notes") or "").lstrip().startswith("pool:")
+    ]
+    assert pools, f"expected one pool row (record_ids empty, notes starting 'pool:') for the two women, got rows {rows}"
+    notes = " ".join(str(row.get("notes") or "") for row in pools)
+    assert any(rid in notes for rid in CEDILLO_1943_IDS), f"the pool row names no 1943 record {CEDILLO_1943_IDS}"
+    assert any(rid in notes for rid in CEDILLO_1945_IDS), f"the pool row names no 1945 record {CEDILLO_1945_IDS}"

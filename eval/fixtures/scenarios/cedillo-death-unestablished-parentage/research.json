@@ -1,0 +1,108 @@
+{
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "When and where did Nicolasa Cedillo, wife of Santiago Cedillo of Camasca and neighbouring parishes of southern Intibucá and Lempira, Honduras, die?",
+      "rationale": "This is the objective itself restated with identifying detail. Nicolasa is last attested alive in the baptismal record of her youngest child Elena in September 1914 (Camasca); her children's marriage records from 1919 onward may reveal her status. Parish death registers and civil registro records for Camasca and surrounding municipalities in Intibucá and Lempira are the primary record sets to search. No death date, place, or original-source citation exists for her yet — only a placeholder Death fact sourced to the compiled FamilySearch Family Tree.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": "question_answered",
+        "justification": "Searched civil registration (FamilySearch collection 2135627) and Catholic church records (collection 1823595) under all three surname variants (Cedillo, Cedillos, Sedillo) for Nicolasa Cedillo and her FAN (children's marriages, Santiago's death, Santiago's remarriage). The primary search (pli_001) returned the death record of Ma Nicolasa Cedillo, wife of Santiago Cedillo, dated 22 May 1943, Santa Lucía, Intibucá (src_003, ark:/61903/1:1:X7FS-6T4L). Subject I1 is linked to this record by seven confident person_evidence entries at score 0.87. Two independent marriage records (src_001: Feliciana 1919; src_002: Maria Eulogia 1927) confirm Nicolasa was alive as late as February 1927 and independently corroborate her identity and spousal connection to Santiago Cedillo. All seven stop criteria are met.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_017",
+          "log_018",
+          "log_019",
+          "log_022",
+          "log_023",
+          "log_024",
+          "log_025",
+          "log_027",
+          "log_028",
+          "log_029",
+          "log_030",
+          "log_031",
+          "log_032",
+          "log_033"
+        ],
+        "stop_criteria": {
+          "goal_alignment": "Met. src_003 (ark:/61903/1:1:X7FS-6T4L, civil Defunciones) directly records the death of Ma Nicolasa Cedillo, wife of Santiago Cedillo, on 22 May 1943 in Santa Lucía, Intibucá, Honduras — the precise answer to the question. Subject I1 is linked to this record at score 0.87 across seven confident person_evidence entries (pe_017 through pe_023).",
+          "repository_breadth": "Met. Civil registration (collection 2135627) searched for Nicolasa under all three surname variants (Cedillo, Cedillos, Sedillo) and for Santiago's death across the post-1943 indexed range. Catholic church records (collection 1823595) searched for five children's marriages (1919-1945) with a definitive mother-name sweep that returned only the two already-known marriages, and for Santiago's remarriage (1914-1945) under all three variants. FAN approach applied throughout. Fallback searches for undigitized Archivo Nacional volumes (pli_005) and Gracias Department records (pli_006) were correctly bypassed after the primary civil registration search returned a positive result.",
+          "original_substitution": "Met. src_003 is the original civil registration image for the 1943 Defunciones entry. src_001 and src_002 are original Catholic marriage records. No derivative or compiled index result was accepted in place of an accessible original.",
+          "independent_verification": "Met. Three records from independent informants and record-creation events: src_001 (1919 Feliciana marriage, bride as informant, names Nicolasa Cedillos as living mother and wife of Santiago Cedillos); src_002 (1927 Maria Eulogia marriage, bride as informant, names Nicolasa Cedillo as living mother and wife of Santiago Cedillo); src_003 (1943 civil Defunciones, certifying official as informant for the death date). The marriage records independently verify identity and spousal connection across two separate events 8 years apart; the death record is the authoritative source for date and place. All searches for additional corroborating sources (Santiago's death, Santiago's remarriage, remaining children's post-1943 marriages) were completed with documented negative results.",
+          "evidence_class": "Met. src_003 is an original civil Defunciones record. Assertion a_053 (death date 22 May 1943) carries information_quality 'primary' from the certifying official (informant_proximity: official_duty). Honduras civil registration began in 1881 per the FamilySearch Honduras Civil Registration wiki page; the 1943 event falls well within the civil registration era. An original record with primary information for the death event is present.",
+          "conflict_resolution": "Met. No registered conflicts and no unregistered disagreements exist for this question. The Santa Lucía registration place versus the family's documented Camasca base is not a conflict: the locality guide (loc_001) explicitly confirms that Santa Lucía is a municipality covered by the Camasca parish register. The inferred birth year (~1868 from age 75 at death) is consistent with a first child baptized in 1899 and contradicts no existing tree fact.",
+          "overturn_risk": "Low — met. The civil Defunciones entry names the subject and her surviving husband Santiago Cedillo (independently matching I9) and carries primary information for the death date from a certifying official. The parish death register for Camasca (film 636270) extends only to 1896 per the locality guide and contains no 1943 content. The undigitized civil Defunciones gap (approximately 1912–1926) predates the death date and cannot affect this result. No known available record type for Santa Lucía, Intibucá in 1943 remains unsearched."
+        },
+        "not_reached": []
+      },
+      "created": "2026-10-29"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-29",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "vital_record",
+          "jurisdiction": "Santa Lucía, Intibucá, Honduras",
+          "date_range": "1919-1968",
+          "repository": "FamilySearch",
+          "rationale": "Nicolasa, wife of Santiago Cedillo, is last attested alive at her daughters' marriages of 1919 and 1927. Honduras Civil Registration, 1841-1968 (collection 2135627) is name-searchable and holds the family's civil registrations at Santa Lucía, Intibucá; a death registration there would state her death date and place.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [],
+  "project": {
+    "id": "rp_001",
+    "objective": "When and where did Nicolasa Cedillo die? She was the wife of Santiago Cedillo, and their children were baptised between 1899 and 1914 in Camasca and neighbouring parishes of southern Intibucá and Lempira, Honduras.",
+    "title": "Nicolasa Cedillo's death",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-29",
+    "updated": "2026-10-29"
+  },
+  "researcher_profile": {
+    "experience_level": "novice",
+    "narration_guidance": "Plain language for someone who has never done genealogy. No identifiers, file names, tool names or field names. Never write GPS, proof, proved or exhaustive: say genealogy standards; call an answer a conclusion when it is well established and a finding otherwise; say what we searched and what we could not reach. Do not describe your own instructions or checks. Do not narrate between actions; report once when the step is done: what was found, in one paragraph, and what happens next in one sentence."
+  }
+}
