@@ -1033,7 +1033,10 @@ export function wholeYearsOfAge(age: unknown): number | null {
   if (text === "" || /\b(?:about|abt|approx\w*|circa|ca)\b|[~?]|\bc\./.test(text)) return null;
   if (/^\d{1,3}$/.test(text)) return Number(text);
   const parts = [...text.matchAll(/(\d+)\s*(years?|yrs?|y|months?|mos?|mo|weeks?|wks?|w|days?|dys?|d)\b/g)];
-  const leftover = text.replace(/(\d+)\s*(years?|yrs?|y|months?|mos?|mo|weeks?|wks?|w|days?|dys?|d)\b/g, "").replace(/[\s,.;and]+/g, "");
+  const leftover = text
+    .replace(/(\d+)\s*(years?|yrs?|y|months?|mos?|mo|weeks?|wks?|w|days?|dys?|d)\b/g, "")
+    .replace(/\b(?:and|old)\b/g, "")
+    .replace(/[\s,.;]+/g, "");
   if (parts.length === 0 || leftover !== "") return null;
   const years = parts.find((m) => /^y/.test(m[2]));
   return years ? Number(years[1]) : 0;
@@ -1067,7 +1070,11 @@ const EVENT_FACT: Record<string, RegExp> = {
 
 /** The date of the record's own event for one persona of an INDEXED record:
  *  census day, death, burial, marriage. The persona's facts first, then the
- *  couple's. */
+ *  couple's, then the principal's (a spouse on a death record is aged at the
+ *  principal's death, which sits on the principal). A record type that names
+ *  its event and has none gives no date: a spouse's age is never counted from
+ *  an unrelated couple fact. Dating the record for a citation is
+ *  `eventYear` in `extraction-append.ts`; keep the two fact lists in step. */
 function eventDateFor(
   person: SimplifiedPerson,
   recordType: RecordType,
@@ -1076,11 +1083,13 @@ function eventDateFor(
   const dated = (f: SimplifiedFact) => /\d{4}/.test(String(f.standard_date ?? f.date ?? ""));
   const own = (person.facts ?? []).filter(dated);
   const couple = (gx.relationships ?? []).flatMap((r) => r.facts ?? []).filter(dated);
+  const principal = (gx.persons ?? []).find((p) => p.principal === true);
+  const principalFacts = principal && principal !== person ? (principal.facts ?? []).filter(dated) : [];
   const wanted = EVENT_FACT[recordType];
   const pick =
-    (wanted && [...own, ...couple].find((f) => wanted.test(String(f.type ?? "")))) ??
+    (wanted && [...own, ...couple, ...principalFacts].find((f) => wanted.test(String(f.type ?? "")))) ??
     own.find((f) => !/birth|residence|age/i.test(String(f.type ?? ""))) ??
-    couple[0];
+    (wanted ? undefined : couple[0]);
   return pick ? String(pick.standard_date ?? pick.date) : undefined;
 }
 

@@ -24,6 +24,8 @@ import {
   normalizeFactType,
   censusKin,
   birthRangeFromAge,
+  birthRangesFor,
+  wholeYearsOfAge,
   EXTRACTED_SOURCE_CLASSIFICATION,
   burialSourceKind,
   type ExtractDocument,
@@ -1010,6 +1012,46 @@ describe("birthRangeFromAge (issue #4127)", () => {
     expect(birthRangeFromAge("6/12", "1850")).toBeNull();
     expect(birthRangeFromAge("11", undefined)).toBeNull();
     expect(birthRangeFromAge(undefined, "1850")).toBeNull();
+  });
+
+  it("reads 'and' and 'old' as words, not letters", () => {
+    expect(wholeYearsOfAge("58 years and 4 months")).toBe(58);
+    expect(wholeYearsOfAge("58 years old")).toBe(58);
+    expect(wholeYearsOfAge("58 years dan")).toBeNull();
+    expect(wholeYearsOfAge("58 years nad")).toBeNull();
+  });
+});
+
+describe("birthRangesFor: which event a persona's age is counted from (issue #4127)", () => {
+  const spouseDoc = (title: string, principalFacts: unknown[], coupleFacts: unknown[]) =>
+    ({
+      sources: [{ title }],
+      persons: [
+        { id: "p1", principal: true, names: [], facts: principalFacts },
+        { id: "p2", names: [], facts: [] },
+      ],
+      relationships: [{ type: "http://gedcomx.org/Couple", person1: "p1", person2: "p2", facts: coupleFacts }],
+    }) as any;
+
+  it("counts a spouse's age on a death record from the principal's death, not an unrelated couple fact", () => {
+    const gx = spouseDoc("Vermont Deaths", [{ type: "Death", date: "1910" }], [{ type: "Residence", date: "1860" }]);
+    expect(birthRangesFor(gx, { p1: { age: "74" }, p2: { age: "70" } })).toEqual({
+      p1: "Bet 1835 and 1836",
+      p2: "Bet 1839 and 1840",
+    });
+  });
+
+  it("gives a spouse on a death record no range when the record has no death date", () => {
+    const gx = spouseDoc("Vermont Deaths", [{ type: "Residence", date: "1900" }], [{ type: "Residence", date: "1860" }]);
+    expect(birthRangesFor(gx, { p2: { age: "70" } })).toBeUndefined();
+  });
+
+  it("still counts both parties' ages on a marriage record from the couple's marriage", () => {
+    const gx = spouseDoc("Ohio, County Marriages", [], [{ type: "Marriage", date: "1850" }]);
+    expect(birthRangesFor(gx, { p1: { age: "25" }, p2: { age: "22" } })).toEqual({
+      p1: "Bet 1824 and 1825",
+      p2: "Bet 1827 and 1828",
+    });
   });
 });
 
