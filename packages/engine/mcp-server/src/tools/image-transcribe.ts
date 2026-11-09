@@ -350,7 +350,10 @@ async function imageTranscribeToolInner(
 
   // One budget spans the OCR read AND the found check: the second call runs on
   // what the first leaves, so lookingFor never widens this leg's worst case.
-  const nominalOcrBudgetMs = Math.max(1, Math.min(opts.ocrTimeoutMs ?? OCR_TIMEOUT_MS, OCR_TIMEOUT_MS));
+  // Reuses clampToBudget for the same cap-at-OCR_TIMEOUT_MS shape the
+  // connector clamps below use; `opts.ocrTimeoutMs` is always a whole
+  // millisecond value, so clampToBudget's floor is a no-op here.
+  const nominalOcrBudgetMs = clampToBudget(opts.ocrTimeoutMs ?? OCR_TIMEOUT_MS, OCR_TIMEOUT_MS);
   // For a connector caller, additionally clamp to what the overall 180s budget
   // has left (minus a fixed margin for the staging write that runs after the
   // OCR returns) — whichever cap is tighter wins, so person_read's own ~40s

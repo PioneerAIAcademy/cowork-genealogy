@@ -180,4 +180,35 @@ describe("checkImageBrowseCap — a bound store's projectId, not the local proje
       await rm(root, { recursive: true, force: true });
     }
   });
+
+  it("names the account, not 'this server session', when the store is bound but the project has no persisted log yet", async () => {
+    // The refusal WORDING must ask "is this principal a connector" on its
+    // own terms, independent of `connectorUser` (the key-scoping variable,
+    // correctly forced undefined once the store is bound) — or a connector
+    // hitting a bound-but-not-yet-`project_create`d project falls through
+    // to the LOCAL/file-backend "this server session" wording, exactly the
+    // confusion #3996 exists to remove.
+    fileStoreOnly("ScopedFsStore simulates the pg-bound per-request store over the file backend");
+    const root = await mkdtemp(join(tmpdir(), "browse-cap-bound-wording-"));
+    try {
+      const store = new ScopedFsStore(root, "proj_wording1");
+      const userA = connector("user-a");
+
+      await runWithProjectStore(store, async () => {
+        await readImages(userA, Array.from({ length: IMAGE_BROWSE_CAP }, (_, i) => i + 1));
+        const err = await checkImageBrowseCap(
+          { imageId: img(IMAGE_BROWSE_CAP + 1) },
+          undefined,
+          "image_transcribe",
+          userA,
+        ).catch((e) => e);
+        expect((err as Error).message).toMatch(
+          /have already been read without a project under your account/,
+        );
+        expect((err as Error).message).not.toContain("server session");
+      });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
 });
