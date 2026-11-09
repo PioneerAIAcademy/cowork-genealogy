@@ -18,7 +18,7 @@ import pytest
 from tests.test_proto_auth import _callback, _fake_fs
 from web.app import AdmissionBusy
 from tests.test_proto_web import (
-    AUTH_ENV, USER_A, FakeQueue, FakeStore, RefreshingStore, _per_project_routes, _project_path, make_client,
+    AUTH_ENV, USER_A, USER_B, FakeQueue, FakeStore, RefreshingStore, _per_project_routes, _project_path, make_client,
 )
 from web import auth
 from web.app import create_app
@@ -253,6 +253,85 @@ async def test_chat_off_starts_with_no_queue_and_no_refresher(monkeypatch):
             health = (await c.get("/api/health")).json()
     assert store.due_calls == 0, "no refresher with the chat off"
     assert application.state.queue is None and health["queue"] is None
+
+
+_BETA_PATHS = {"/privacy", "/terms", "/api/account"}
+
+
+def test_chat_off_adds_the_policy_and_account_routes_and_chat_on_does_not(monkeypatch):
+    paths = {getattr(r, "path", "") for r in create_app(FakeStore(), FakeQueue()).routes}
+    assert not _BETA_PATHS & paths, "chat on serves none of them"
+    monkeypatch.setenv("GENEALOGY_CHAT", "false")
+    paths = {getattr(r, "path", "") for r in create_app(FakeStore(), None).routes}
+    assert _BETA_PATHS <= paths
+
+
+@pytest.mark.parametrize("path", ["/privacy", "/terms"])
+async def test_chat_off_serves_the_policy_pages_with_no_cookie(monkeypatch, path):
+    monkeypatch.setenv("GENEALOGY_CHAT", "false")
+    async with make_client(FakeStore(), None, user=None) as c:
+        r = await c.get(path)
+    assert r.status_code == 200 and r.headers["content-type"].startswith("text/html")
+    assert "Placeholder" in r.text
+
+
+@pytest.mark.parametrize("path", ["/privacy", "/terms", "/api/account"])
+async def test_chat_on_answers_404_for_the_policy_and_account_routes(path):
+    async with make_client(FakeStore(), FakeQueue()) as c:
+        assert (await c.get(path)).status_code == 404
+
+
+async def test_account_returns_the_callers_id_and_code_only(monkeypatch):
+    monkeypatch.setenv("GENEALOGY_CHAT", "false")
+    async with make_client(FakeStore(), None) as c:
+        r = await c.get("/api/account")
+    assert r.status_code == 200
+    assert r.headers["cache-control"] == "private, no-store"
+    assert r.json() == {"accountId": USER_A.id, "deletionCode": auth.deletion_code(USER_A.id)}
+    async with make_client(FakeStore(), None, user=USER_B.id) as c:
+        b = (await c.get("/api/account")).json()
+    assert b["accountId"] == USER_B.id and b["deletionCode"] != r.json()["deletionCode"]
+
+
+async def test_account_needs_a_session(monkeypatch):
+    monkeypatch.setenv("GENEALOGY_CHAT", "false")
+    async with make_client(FakeStore(), None, user=None) as c:
+        r = await c.get("/api/account")
+    assert r.status_code == 401
+    assert r.headers["cache-control"] == "private, no-store" and "cookie" in r.headers["vary"].lower()
+
+
+async def test_account_does_not_shadow_a_sibling_path(monkeypatch):
+    """The prefix match is on a path segment: /api/accountant is not an account route."""
+    monkeypatch.setenv("GENEALOGY_CHAT", "false")
+    async with make_client(FakeStore(), None) as c:
+        r = await c.get("/api/accountant")
+    assert "no-store" not in r.headers.get("cache-control", "")
+
+
+@pytest.mark.parametrize("how", ["blocked", "revoked"])
+async def test_account_refuses_a_blocked_or_revoked_session(monkeypatch, how):
+    monkeypatch.setenv("GENEALOGY_CHAT", "false")
+    store = FakeStore()
+    async with make_client(store, None) as c:
+        assert (await c.get("/api/account")).status_code == 200, "control"
+        if how == "blocked":
+            store.block(USER_A.id)
+        else:
+            await asyncio.sleep(1.1)  # the cookie's iat is whole seconds
+            await store.revoke_sessions(USER_A.id)
+        r = await c.get("/api/account")
+    assert r.status_code in (401, 403) and "deletionCode" not in r.text
+
+
+def test_deletion_code_is_stable_per_user_and_follows_the_secret(monkeypatch):
+    monkeypatch.setenv("SESSION_SECRET", "s" * 32)
+    code = auth.deletion_code("usr_a")
+    assert code == auth.deletion_code("usr_a")
+    assert re.fullmatch(r"[0-9a-f]{20}", code)
+    assert code != auth.deletion_code("usr_b")
+    monkeypatch.setenv("SESSION_SECRET", "t" * 32)
+    assert auth.deletion_code("usr_a") != code
 
 
 async def test_chat_on_still_needs_a_queue(monkeypatch):

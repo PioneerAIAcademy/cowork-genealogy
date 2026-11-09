@@ -22,10 +22,10 @@ import httpx
 import pytest
 
 from tests.test_proto_web import (  # noqa: F401  (refused_pg and silent_pg are fixtures)
-    AUTH_ENV, PROTO, USER_A, FakeQueue, FakeStore, make_client, refused_pg, silent_pg,
+    AUTH_ENV, PROTO, USER_A, USER_B, FakeQueue, FakeStore, make_client, refused_pg, silent_pg,
 )
 from web import app, auth
-from web.app import IdentityMismatch, ProjectNotOwned, create_app
+from web.app import EmailTaken, IdentityMismatch, ProjectNotOwned, create_app
 
 FS_ID = "MMMM-AAA"
 
@@ -147,6 +147,20 @@ async def test_callback_refuses_a_second_fs_account_for_an_existing_email(fs_on)
     assert auth.COOKIE_NAME not in r.cookies
 
 
+async def test_callback_with_the_chat_off_stores_no_refresh_token(fs_on):
+    """Nothing on a chat-off tier reads it, and it outlives the access token it came with."""
+    fs_on.setenv("GENEALOGY_CHAT", "false")
+    _fake_fs(fs_on, access="access-plain", refresh="refresh-plain")
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    store.signin_states[auth.state_sha256("st")] = None
+    r = await _callback(store)
+    assert r.status_code in (302, 307), r.text
+    grant = next(iter(store.grants.values()))
+    assert auth.decrypt(grant["access_token_enc"]) == "access-plain"
+    assert grant["refresh_token_enc"] is None
+
+
 async def test_second_sign_in_resets_granted_at_and_keeps_refresh_token_when_omitted(fs_on):
     store = FakeStore()
     store.allowed = {"a@example.org"}
@@ -228,6 +242,8 @@ def test_base_path_and_cookie_path_follow_public_url(monkeypatch):
     "http://edge.test/a b",
     "http://edge.test/a<b",
     'http://edge.test/a"b',
+    "http://edge.test/a/../b",
+    "http://edge.test/./a",
 ])
 def test_a_bad_public_url_path_refuses_at_any_scheme(monkeypatch, url):
     monkeypatch.setenv("PUBLIC_URL", url)
@@ -517,7 +533,7 @@ async def test_the_allowlist_gate_lifts_when_the_background_sync_succeeds(fs_on)
     fs_on.setenv("ALLOWED_EMAILS", "a@example.org")
     fs_on.setattr(app, "STARTUP_BACKOFF_FIRST_S", 0.0)
     store = FlakyStore()
-    fs_on.setattr(app, "PgStore", lambda dsn: store)
+    fs_on.setattr(app, "PgStore", lambda dsn, **kw: store)
     application = create_app(queue=FakeQueue())
     cookies = {auth.COOKIE_NAME: auth.session_cookie_value(USER_A.id)}
     async with application.router.lifespan_context(application):
@@ -932,14 +948,35 @@ async def test_token_calls_send_the_browser_user_agent(monkeypatch):
     assert agents == [auth.BROWSER_USER_AGENT] * 2
 
 
+def _user_rows(*rows: dict) -> Callable[[str], Any]:
+    """A scripted ``users`` table: each SELECT answers with the row its WHERE clause names,
+    so the id lookup and the email lookup are told apart (#3992)."""
+    def answer_for(conn: ScriptedConn) -> Callable[[str], Any]:
+        def answer(sql: str):
+            if not sql.startswith("SELECT id, email"):
+                return None
+            value = conn.params[-1][0]
+            key = "familysearch_id" if "WHERE familysearch_id" in sql else "email"
+            return next((r for r in rows if r[key] == value), None)
+        return answer
+    return answer_for
+
+
+def _row(email: str, fs_id: str | None, uid: str = "usr_a") -> dict:
+    return {"id": uid, "email": email, "familysearch_id": fs_id, "sessions_revoked_at": None, "blocked_at": None}
+
+
+def _scripted(*rows: dict) -> tuple[ScriptedConn, app.PgStore]:
+    conn = ScriptedConn()
+    conn.answer = _user_rows(*rows)(conn)
+    return conn, _store(conn)
+
+
 @pytest.mark.parametrize("stored, presented, raises", [
     (FS_ID, FS_ID, False), (None, FS_ID, False), (FS_ID, None, False), (FS_ID, "ZZZZ-999", True),
 ])
 async def test_pgstore_upsert_user_pins_the_familysearch_id(stored, presented, raises):
-    row = {"id": "usr_a", "email": "a@example.org", "familysearch_id": stored, "sessions_revoked_at": None,
-           "blocked_at": None}
-    conn = ScriptedConn(lambda sql: row if sql.startswith("SELECT id, email") else None)
-    store = _store(conn)
+    conn, store = _scripted(_row("a@example.org", stored))
     if raises:
         with pytest.raises(IdentityMismatch):
             await store.upsert_user("A@example.org", presented)
@@ -948,7 +985,80 @@ async def test_pgstore_upsert_user_pins_the_familysearch_id(stored, presented, r
     user = await store.upsert_user("A@example.org", presented)
     assert user.familysearch_id == (stored or presented)
     assert any(q.startswith("UPDATE users SET familysearch_id") for q in conn.sql) is (stored is None and presented is not None)
-    assert conn.params[0][1] == "a@example.org", "emails are stored lower-cased"
+    assert user.email == "a@example.org"
+    assert not any(q.startswith("UPDATE users SET email") for q in conn.sql), "emails compare lower-cased"
+
+
+async def test_pgstore_upsert_user_finds_the_user_by_id_and_updates_a_changed_email():
+    """#3992: FamilySearch reports a new email for a known id: same row, email replaced."""
+    conn, store = _scripted(_row("old@example.org", FS_ID))
+    user = await store.upsert_user("New@example.org", FS_ID)
+    assert (user.id, user.email, user.familysearch_id) == ("usr_a", "new@example.org", FS_ID)
+    assert ("UPDATE users SET email = %s WHERE id = %s", ("new@example.org", "usr_a")) in zip(conn.sql, conn.params)
+    assert not any(q.startswith("INSERT INTO users") for q in conn.sql)
+
+
+async def test_pgstore_upsert_user_refuses_a_new_email_another_user_holds():
+    conn, store = _scripted(_row("old@example.org", FS_ID), _row("b@example.org", None, uid="usr_b"))
+    with pytest.raises(EmailTaken):
+        await store.upsert_user("b@example.org", FS_ID)
+    assert not any(q.startswith(("UPDATE users", "INSERT INTO users")) for q in conn.sql)
+
+
+async def test_pgstore_upsert_user_keeps_a_blocked_users_email():
+    row = {**_row("old@example.org", FS_ID), "blocked_at": datetime(2026, 11, 1, tzinfo=timezone.utc)}
+    conn, store = _scripted(row)
+    user = await store.upsert_user("new@example.org", FS_ID)
+    assert user.email == "old@example.org" and user.blocked_at is not None
+    assert not any(q.startswith("UPDATE users") for q in conn.sql)
+
+
+async def test_pgstore_upsert_user_inserts_a_new_user_with_its_id():
+    conn, store = _scripted()
+    real_answer = conn.answer
+    inserted: list[dict] = []
+
+    def answer(sql: str):
+        if sql.startswith("INSERT INTO users"):
+            uid, email, fs_id = conn.params[-1]
+            inserted.append(_row(email, fs_id, uid))
+            return None
+        if sql.startswith("SELECT id, email") and inserted:
+            return _user_rows(*inserted)(conn)(sql)
+        return real_answer(sql)
+
+    conn.answer = answer
+    original_execute = conn.execute
+
+    async def execute(sql, params=()):
+        await original_execute(sql, params)
+        if conn.sql[-1].startswith("INSERT INTO users"):
+            conn.answer(conn.sql[-1])
+        return conn
+
+    conn.execute = execute  # type: ignore[method-assign]
+    user = await store.upsert_user("c@example.org", FS_ID)
+    assert (user.email, user.familysearch_id) == ("c@example.org", FS_ID)
+    insert = next(q for q in conn.sql if q.startswith("INSERT INTO users"))
+    assert "(id, email, familysearch_id)" in insert and "ON CONFLICT DO NOTHING" in insert
+
+
+async def test_pgstore_upsert_user_turns_a_unique_violation_into_busy():
+    """#3992: a racing sign-in took the email or id between the read and the write. The
+    callback answers 503 and a retry lands on the right branch, never a 500."""
+    from psycopg import errors
+
+    conn, store = _scripted(_row("a@example.org", None))
+    original_execute = conn.execute
+
+    async def execute(sql, params=()):
+        if " ".join(sql.split()).startswith("UPDATE users SET familysearch_id"):
+            raise errors.UniqueViolation("duplicate key value violates unique constraint")
+        return await original_execute(sql, params)
+
+    conn.execute = execute  # type: ignore[method-assign]
+    with pytest.raises(app.AdmissionBusy):
+        await store.upsert_user("a@example.org", FS_ID)
 
 
 def test_the_client_config_lookup_survives_the_image_layout():
@@ -998,6 +1108,450 @@ def test_grant_script_points_the_redirect_at_the_dev_keys_registration(monkeypat
 
     monkeypatch.setattr(grant, "serve_once", serve_once)
     monkeypatch.setattr(grant.webbrowser, "open", lambda url: seen.setdefault("url", url))
+    # #3992: a developer shell's redirect setting or chat switch must not reach the script.
+    monkeypatch.setenv("FS_REDIRECT_URI", "https://elsewhere.test/cb")
+    monkeypatch.setenv("GENEALOGY_CHAT", "false")
     assert grant.main(["--pg-dsn", "postgresql://unused"]) == 1
     assert seen["redirect"] == "http://127.0.0.1:1837/callback"
     assert "redirect_uri=http%3A%2F%2F127.0.0.1%3A1837%2Fcallback" in seen["url"]
+    assert "scope=offline_access" in seen["url"], "the grant is for the chat-on refresher"
+
+
+# ── #3992: sign-in with the chat off ────────────────────────────────────────────
+
+
+@pytest.fixture
+def chat_off(fs_on):
+    fs_on.setenv("GENEALOGY_CHAT", "false")
+    return fs_on
+
+
+async def _login(c: httpx.AsyncClient) -> tuple[str, str]:
+    """``/auth/familysearch/login`` -> (the state FamilySearch would echo, the state cookie)."""
+    r = await c.get("/auth/familysearch/login")
+    assert r.status_code in (302, 307), r.text
+    state = parse_qs(urlparse(r.headers["location"]).query)["state"][0]
+    return state, r.cookies[auth.FS_OAUTH_COOKIE]
+
+
+def _app_client(store: FakeStore) -> tuple[Any, httpx.AsyncClient]:
+    application = create_app(store, FakeQueue())
+    return application, httpx.AsyncClient(transport=httpx.ASGITransport(app=application), base_url="http://t")
+
+
+async def _sign_in(c: httpx.AsyncClient, state: str, oauth: str) -> httpx.Response:
+    c.cookies.set(auth.FS_OAUTH_COOKIE, oauth)
+    return await c.get("/callback", params={"code": "code-1", "state": state})
+
+
+def _signed_at(monkeypatch, uid: str, seconds_ago: float) -> str:
+    """A session cookie whose signature (the timestamp itsdangerous checks ``max_age``
+    against, not the payload's ``iat``) was made ``seconds_ago``."""
+    real = time.time
+    monkeypatch.setattr(time, "time", lambda: real() - seconds_ago)
+    try:
+        return auth.session_cookie_value(uid)
+    finally:
+        monkeypatch.setattr(time, "time", real)
+
+
+@pytest.mark.parametrize("chat, age, status", [
+    ("false", auth.SESSION_MAX_AGE_NO_CHAT_S - 60, 200),
+    ("false", auth.SESSION_MAX_AGE_NO_CHAT_S + 1, 401),
+    ("true", auth.SESSION_MAX_AGE_NO_CHAT_S + 1, 200),
+    ("true", auth.SESSION_MAX_AGE_CHAT_S + 1, 401),
+])
+async def test_the_session_ends_at_24_hours_with_the_chat_off_on_the_server(monkeypatch, chat, age, status):
+    """The signature check ends the session, so a captured cookie dies at 24 h whatever its
+    Max-Age said; with the chat on, 30 days as before."""
+    monkeypatch.setenv("GENEALOGY_CHAT", chat)
+    cookie = _signed_at(monkeypatch, USER_A.id, age)
+    async with httpx.AsyncClient(transport=httpx.ASGITransport(app=create_app(FakeStore(), FakeQueue())),
+                                 base_url="http://t", cookies={auth.COOKIE_NAME: cookie}) as c:
+        assert (await c.get("/auth/me")).status_code == status
+
+
+def _max_age(r: httpx.Response) -> int:
+    header = next(h for h in r.headers.get_list("set-cookie") if h.startswith(auth.COOKIE_NAME + "="))
+    return int(next(p.split("=", 1)[1] for p in header.split("; ") if p.lower().startswith("max-age=")))
+
+
+@pytest.mark.parametrize("chat, expected", [("false", auth.SESSION_MAX_AGE_NO_CHAT_S),
+                                            ("true", auth.SESSION_MAX_AGE_CHAT_S)])
+async def test_the_cookie_max_age_follows_the_chat_switch(monkeypatch, fs_on, chat, expected):
+    fs_on.setenv("GENEALOGY_CHAT", chat)
+    _fake_fs(fs_on)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    _app, c = _app_client(store)
+    async with c:
+        state, oauth = await _login(c)
+        r = await _sign_in(c, state, oauth)
+    assert r.status_code in (302, 307), r.text
+    assert _max_age(r) == expected
+
+
+@pytest.mark.parametrize("chat, expected", [("false", auth.SESSION_MAX_AGE_NO_CHAT_S),
+                                            ("true", auth.SESSION_MAX_AGE_CHAT_S)])
+async def test_dev_login_cookie_max_age_follows_the_chat_switch(monkeypatch, chat, expected):
+    monkeypatch.setenv("GENEALOGY_CHAT", chat)
+    async with _client(FakeStore()) as c:
+        r = await c.post("/auth/dev-login", json={"email": "dev@example.org"})
+    assert _max_age(r) == expected
+
+
+@pytest.mark.parametrize("chat, scope", [("false", None), ("true", ["offline_access"])])
+async def test_the_scope_carries_offline_access_only_with_the_chat_on(fs_on, chat, scope):
+    fs_on.setenv("GENEALOGY_CHAT", chat)
+    async with _client(FakeStore()) as c:
+        r = await c.get("/auth/familysearch/login")
+    assert parse_qs(urlparse(r.headers["location"]).query).get("scope") == scope
+
+
+async def test_chat_off_login_records_the_state_and_a_sign_in_consumes_it(chat_off):
+    calls = _fake_fs(chat_off)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    _app, c = _app_client(store)
+    async with c:
+        state, oauth = await _login(c)
+        assert store.signin_states == {auth.state_sha256(state): None}
+        r = await _sign_in(c, state, oauth)
+    assert r.status_code in (302, 307), r.text
+    assert store.signin_states[auth.state_sha256(state)] is not None, "the record is used"
+    assert len(calls) == 2
+
+
+async def test_chat_off_a_replayed_callback_is_refused_before_any_familysearch_call(chat_off):
+    calls = _fake_fs(chat_off)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    _app, c = _app_client(store)
+    async with c:
+        state, oauth = await _login(c)
+        assert (await _sign_in(c, state, oauth)).status_code in (302, 307)
+        grants_before = dict(store.grants)
+        calls.clear()
+        r = await _sign_in(c, state, oauth)
+    assert r.status_code == 400 and "already used" in r.text
+    assert calls == [], "a used state is refused before the code exchange"
+    assert store.grants == grants_before and auth.COOKIE_NAME not in r.cookies
+
+
+async def test_chat_off_a_state_with_no_record_is_refused(chat_off):
+    """A signed cookie alone is not enough with the chat off: the record must exist."""
+    calls = _fake_fs(chat_off)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    r = await _callback(store)
+    assert r.status_code == 400 and calls == [] and store.grants == {}
+
+
+async def test_chat_on_needs_no_state_record(fs_on):
+    _fake_fs(fs_on)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    assert (await _callback(store)).status_code in (302, 307)
+    assert store.signin_states == {}
+
+
+# -- the sign-in budget --
+
+
+def test_the_budget_takes_both_units_or_neither_in_a_sliding_minute():
+    now = [100.0]
+    budget = auth.SigninBudget(3, clock=lambda: now[0])
+    assert budget.try_take(2)
+    assert not budget.try_take(2), "two more would make four"
+    assert budget.try_take(1), "the refused take took nothing"
+    assert not budget.try_take(1)
+    now[0] += 59.9
+    assert not budget.try_take(1)
+    now[0] += 0.1
+    assert budget.try_take(2) and budget.try_take(1)
+
+
+@pytest.mark.parametrize("value", ["0", "1", "-2", "abc", "2.5", "1_000"])
+def test_preflight_refuses_a_bad_signin_budget(monkeypatch, value):
+    monkeypatch.setenv("GENEALOGY_SIGNIN_CALLS_PER_MINUTE", value)
+    with pytest.raises(RuntimeError, match="GENEALOGY_SIGNIN_CALLS_PER_MINUTE"):
+        auth.preflight()
+
+
+@pytest.mark.parametrize("value, limit", [("", None), ("2", 2), ("30", 30)])
+def test_the_signin_budget_is_off_unless_set(monkeypatch, value, limit):
+    monkeypatch.setenv("GENEALOGY_SIGNIN_CALLS_PER_MINUTE", value)
+    auth.preflight()
+    budget = create_app(FakeStore(), FakeQueue()).state.signin_budget
+    assert (budget.limit if budget else None) == limit
+
+
+@pytest.mark.parametrize("case", ["mismatch", "no-record", "used"])
+async def test_a_bad_state_leaves_the_budget_untouched(chat_off, case):
+    chat_off.setenv("GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "2")
+    calls = _fake_fs(chat_off)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    application, c = _app_client(store)
+    async with c:
+        state, oauth = await _login(c)
+        if case == "mismatch":
+            r = await _sign_in(c, "other-state", oauth)
+        elif case == "no-record":
+            store.signin_states.clear()
+            r = await _sign_in(c, state, oauth)
+        else:
+            store.signin_states[auth.state_sha256(state)] = datetime.now(tz=timezone.utc)
+            r = await _sign_in(c, state, oauth)
+        assert r.status_code == 400 and calls == []
+        assert len(application.state.signin_budget._taken) == 0, "the budget was touched"
+        if case == "mismatch":
+            assert (await _sign_in(c, state, oauth)).status_code in (302, 307), "both units are still there"
+
+
+@pytest.mark.parametrize("case", ["no-record", "used"])
+async def test_with_the_budget_spent_a_bad_state_answers_400_not_503(chat_off, case):
+    """The unused check runs before the budget: once the budget is spent, a used or missing
+    state still answers 400, not a 503 "try again" that no reload can fix."""
+    chat_off.setenv("GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "2")
+    calls = _fake_fs(chat_off)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    application, c = _app_client(store)
+    application.state.signin_budget._clock = lambda: 1000.0
+    async with c:
+        first, first_oauth = await _login(c)
+        assert (await _sign_in(c, first, first_oauth)).status_code in (302, 307)
+        assert not application.state.signin_budget.try_take(1), "the budget is spent"
+        second, second_oauth = await _login(c)
+        if case == "no-record":
+            store.signin_states.clear()
+        else:
+            store.signin_states[auth.state_sha256(second)] = datetime.now(tz=timezone.utc)
+        calls.clear()
+        r = await _sign_in(c, second, second_oauth)
+        assert r.status_code == 400 and "already used or has expired" in r.text
+        assert calls == []
+
+
+async def test_past_the_budget_the_callback_answers_503_and_keeps_the_state(chat_off):
+    chat_off.setenv("GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "2")
+    calls = _fake_fs(chat_off)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    application, c = _app_client(store)
+    now = [1000.0]
+    application.state.signin_budget._clock = lambda: now[0]
+    async with c:
+        first, first_oauth = await _login(c)
+        assert (await _sign_in(c, first, first_oauth)).status_code in (302, 307)
+        second, second_oauth = await _login(c)
+        calls.clear()
+        r = await _sign_in(c, second, second_oauth)
+        assert r.status_code == 503 and "busy" in r.text
+        assert calls == [], "no FamilySearch call past the budget"
+        assert store.signin_states[auth.state_sha256(second)] is None, "the state record is not consumed"
+        assert not any(h.startswith(auth.FS_OAUTH_COOKIE + "=") for h in r.headers.get_list("set-cookie")), \
+            "the fs_oauth cookie is not deleted, so a reload retries"
+        now[0] += 60
+        assert (await _sign_in(c, second, second_oauth)).status_code in (302, 307), "a reload retries"
+
+
+async def test_the_budget_applies_with_the_chat_on_too(fs_on):
+    fs_on.setenv("GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "2")
+    _fake_fs(fs_on)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    _app, c = _app_client(store)
+    async with c:
+        for expected in ((302, 307), (503,)):
+            state, oauth = await _login(c)
+            assert (await _sign_in(c, state, oauth)).status_code in expected
+
+
+# -- the redirect setting --
+
+
+def test_the_redirect_defaults_to_the_public_urls_callback(monkeypatch):
+    assert auth.redirect_uri() == "http://127.0.0.1:8085/callback"
+    assert auth.callback_path() == "/callback"
+
+
+async def test_the_redirect_setting_moves_the_request_and_the_route(fs_on):
+    fs_on.setenv("FS_REDIRECT_URI", "http://127.0.0.1:1837/fs/return")
+    calls = _fake_fs(fs_on)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    async with _client(store) as c:
+        r = await c.get("/auth/familysearch/login")
+        assert parse_qs(urlparse(r.headers["location"]).query)["redirect_uri"] == ["http://127.0.0.1:1837/fs/return"]
+        assert auth.redirect_uri() == "http://127.0.0.1:1837/fs/return", "exchange_code sends the same value"
+        c.cookies.set(auth.FS_OAUTH_COOKIE, auth.oauth_state_cookie("v", "st", None))
+        assert (await c.get("/callback", params={"code": "c", "state": "st"})).status_code == 404
+        assert (await c.get("/fs/return", params={"code": "c", "state": "st"})).status_code in (302, 307)
+    assert len(calls) == 2
+
+
+@pytest.mark.parametrize("public, redirect, path", [
+    ("https://edge.test/pf", "https://edge.test/pf/cb", "/cb"),
+    ("https://edge.test/pf", "http://127.0.0.1:1837/callback", "/callback"),
+    ("https://edge.test", "https://edge.test/a/b", "/a/b"),
+])
+def test_the_callback_path_strips_the_prefix_only_on_a_segment(monkeypatch, public, redirect, path):
+    monkeypatch.setenv("PUBLIC_URL", public)
+    monkeypatch.setenv("FS_REDIRECT_URI", redirect)
+    assert auth.callback_path() == path
+
+
+@pytest.mark.parametrize("redirect", [
+    "callback", "/callback", "ftp://edge.test/cb", "https://edge.test", "https://edge.test/",
+    "https://edge.test/cb?x=1", "https://edge.test/cb#f", "https:///cb",
+    "https://edge.test/cb/", "https://edge.test/fs%20return", "https://edge.test//cb",
+])
+def test_preflight_refuses_a_bad_redirect_setting(monkeypatch, redirect):
+    monkeypatch.setenv("FS_REDIRECT_URI", redirect)
+    with pytest.raises(RuntimeError, match="FS_REDIRECT_URI"):
+        auth.preflight()
+
+
+@pytest.mark.parametrize("redirect", [
+    "https://edge.test/pfx/cb", "https://EDGE.test/cb", "https://edge.test:443/cb", "https://edge.test./cb",
+])
+def test_preflight_refuses_a_redirect_on_the_public_host_outside_its_prefix(monkeypatch, redirect):
+    """Both cookies are scoped to the prefix, so a callback on the same host outside it never
+    gets the state cookie back. Another host (the loopback bounce, P0.4) stays allowed."""
+    monkeypatch.setenv("PUBLIC_URL", "https://edge.test/pf")
+    monkeypatch.setenv("SESSION_SECRET", "s" * 32)
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 32)
+    monkeypatch.setenv("FS_REDIRECT_URI", redirect)
+    with pytest.raises(RuntimeError, match="outside its path"):
+        auth.preflight()
+
+
+@pytest.mark.parametrize("redirect", [
+    "http://edge.test/pf/cb",          # the Secure state cookie is not sent over http
+    "https://user@edge.test/pf/cb",    # user info
+    "https://edge.test/pf/../cb",      # the browser sends /cb, outside the prefix
+    "https://edge.test/pf/./cb",       # the browser sends /pf/cb, not the route /./cb
+])
+def test_preflight_refuses_a_redirect_the_browser_would_not_bring_back(monkeypatch, redirect):
+    monkeypatch.setenv("PUBLIC_URL", "https://edge.test/pf")
+    monkeypatch.setenv("SESSION_SECRET", "s" * 32)
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 32)
+    monkeypatch.setenv("FS_REDIRECT_URI", redirect)
+    with pytest.raises(RuntimeError, match="FS_REDIRECT_URI"):
+        auth.preflight()
+
+
+def test_preflight_refuses_a_redirect_at_the_prefix_itself(monkeypatch):
+    """The edge strips the prefix, so a callback at the prefix would arrive at ``/``, the SPA."""
+    monkeypatch.setenv("PUBLIC_URL", "https://edge.test/pf")
+    monkeypatch.setenv("SESSION_SECRET", "s" * 32)
+    monkeypatch.setenv("FS_TOKEN_ENC_KEY", "k" * 32)
+    monkeypatch.setenv("FS_REDIRECT_URI", "https://edge.test/pf")
+    with pytest.raises(RuntimeError, match="FS_REDIRECT_URI"):
+        auth.preflight()
+
+
+# -- users keyed by FamilySearch id --
+
+
+async def test_a_returning_user_whose_email_changed_keeps_their_account(fs_on):
+    store = FakeStore()
+    store.allowed = {"a@example.org", "new@example.org"}
+    _fake_fs(fs_on, email="a@example.org")
+    assert (await _callback(store)).status_code in (302, 307)
+    user_id = next(u.id for u in store.users.values() if u.email == "a@example.org")
+    _fake_fs(fs_on, email="new@example.org")
+    r = await _callback(store)
+    assert r.status_code in (302, 307), r.text
+    assert auth.read_session_cookie(r.cookies.get(auth.COOKIE_NAME))["uid"] == user_id
+    assert store.users[user_id].email == "new@example.org"
+    assert not any(u.email == "a@example.org" for u in store.users.values())
+
+
+async def test_a_new_email_another_user_holds_is_refused_and_writes_nothing(fs_on):
+    store = FakeStore()
+    store.allowed = {"a@example.org", USER_B.email}
+    _fake_fs(fs_on, email="a@example.org")
+    assert (await _callback(store)).status_code in (302, 307)
+    users_before, grants_before = dict(store.users), dict(store.grants)
+    _fake_fs(fs_on, email=USER_B.email)
+    r = await _callback(store)
+    assert r.status_code == 403 and "already belongs to another user" in r.text
+    assert store.users == users_before and store.grants == grants_before
+    assert auth.COOKIE_NAME not in r.cookies
+
+
+async def test_an_identity_with_no_email_is_refused_and_writes_nothing(fs_on):
+    _fake_fs(fs_on, email="")
+    store = FakeStore()
+    users_before = dict(store.users)
+    r = await _callback(store)
+    assert r.status_code == 403 and "no email" in r.text
+    assert store.users == users_before and store.grants == {}
+
+
+async def test_the_app_keeps_the_chat_mode_it_was_built_with(chat_off):
+    """The routes, the scope, the state record and the session's life all follow the
+    ``GENEALOGY_CHAT`` value ``create_app`` read, even if the environment changes later."""
+    _fake_fs(chat_off)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    application, c = _app_client(store)
+    chat_off.setenv("GENEALOGY_CHAT", "true")
+    async with c:
+        r = await c.get("/auth/familysearch/login")
+        assert "scope" not in parse_qs(urlparse(r.headers["location"]).query)
+        state = parse_qs(urlparse(r.headers["location"]).query)["state"][0]
+        assert auth.state_sha256(state) in store.signin_states
+        r = await _sign_in(c, state, r.cookies[auth.FS_OAUTH_COOKIE])
+        assert _max_age(r) == auth.SESSION_MAX_AGE_NO_CHAT_S
+        c.cookies.set(auth.COOKIE_NAME, _signed_at(chat_off, USER_A.id, auth.SESSION_MAX_AGE_NO_CHAT_S + 1))
+        assert (await c.get("/auth/me")).status_code == 401
+
+
+def test_the_budget_gives_back_the_most_recent_units():
+    now = [0.0]
+    budget = auth.SigninBudget(2, clock=lambda: now[0])
+    assert budget.try_take(2) and not budget.try_take(2)
+    budget.give_back(2)
+    assert budget.try_take(2)
+
+
+async def test_a_callback_that_loses_the_consume_gives_its_units_back(chat_off):
+    """Two callbacks with one state: both pass the unused check and take the budget, one
+    consumes. The loser calls nothing, so it must not keep the next patron's units."""
+    chat_off.setenv("GENEALOGY_SIGNIN_CALLS_PER_MINUTE", "2")
+    calls = _fake_fs(chat_off)
+    store = FakeStore()
+    store.allowed = {"a@example.org"}
+    application, c = _app_client(store)
+
+    async def lost(state_sha256: str) -> bool:
+        return False
+
+    async with c:
+        state, oauth = await _login(c)
+        store.consume_signin_state = lost  # type: ignore[method-assign]
+        r = await _sign_in(c, state, oauth)
+        assert r.status_code == 400 and calls == []
+        assert len(application.state.signin_budget._taken) == 0
+
+
+async def test_pgstore_upsert_user_turns_a_deadlock_into_busy():
+    """Two users each reporting the other's email lock their own row, then the other's;
+    Postgres aborts one. The callback answers 503, never a 500."""
+    from psycopg import errors
+
+    conn, store = _scripted(_row("old@example.org", FS_ID), _row("b@example.org", "OTHER-ID", uid="usr_b"))
+    original_execute = conn.execute
+
+    async def execute(sql, params=()):
+        if "WHERE email = %s FOR UPDATE" in " ".join(sql.split()):
+            raise errors.DeadlockDetected("deadlock detected")
+        return await original_execute(sql, params)
+
+    conn.execute = execute  # type: ignore[method-assign]
+    with pytest.raises(app.AdmissionBusy):
+        await store.upsert_user("b@example.org", FS_ID)

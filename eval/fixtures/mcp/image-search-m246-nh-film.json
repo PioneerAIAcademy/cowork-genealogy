@@ -1,0 +1,31 @@
+{
+  "tool": "image_search",
+  "description": "SYNTHETIC (issue #4136): written by hand, not captured live — the FamilySearch session had expired. The NARA M246 title is real; the film note, image group 008246133, image ids and roll contents are invented for the no-project test. Lists image group 008246133 (M246, New Hampshire, Stark's Brigade). The Dustin company roll is on images 00412 and 00413.",
+  "args": {
+    "imageGroupNumber": "~008246133"
+  },
+  "response": {
+    "imageIds": [
+      "008246133_00401",
+      "008246133_00402",
+      "008246133_00403",
+      "008246133_00404",
+      "008246133_00405",
+      "008246133_00406",
+      "008246133_00407",
+      "008246133_00408",
+      "008246133_00409",
+      "008246133_00410",
+      "008246133_00411",
+      "008246133_00412",
+      "008246133_00413",
+      "008246133_00414",
+      "008246133_00415",
+      "008246133_00416",
+      "008246133_00417",
+      "008246133_00418",
+      "008246133_00419",
+      "008246133_00420"
+    ]
+  }
+}

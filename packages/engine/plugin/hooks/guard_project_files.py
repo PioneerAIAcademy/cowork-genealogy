@@ -51,11 +51,36 @@ import sys
 # starting-tree.gedcomx.json is the write-once baseline the tree-encoding gate
 # diffs against (issue #1490); a raw overwrite of it would defeat the gate the
 # same way a raw tree.gedcomx.json write defeats the write-boundary invariants.
+# Lowercase, and matched through `_protected_name`, which folds a name the way
+# Windows and macOS hosts resolve it (`Research.JSON` is `research.json` there).
 PROTECTED_PROJECT_FILES = ("research.json", "tree.gedcomx.json", "starting-tree.gedcomx.json", "external-collections.json")
 
 # The raw file-write tools. Their `file_path` is unambiguously a destination —
 # there is no reading of `Write(file_path=...)` where that file is an input.
 FILE_WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
+
+# The raw read tools, and the project files a read of is denied. In Cowork the
+# agent runs in a VM whose working directory holds none of the connected folder
+# (measured 2026-11-04: `Read` of research.json returned "File does not exist"
+# before and after an MCP write); a project served by a remote store has no
+# folder at all. So a read is a miss here, and a tool serves the same data.
+# Only the two files a tool serves are listed: a read of any other project file
+# (results/, images/) has no replacement and stays allowed. Matched on the
+# basename, since the hook cannot see a project root in Cowork. `Bash` and
+# `device_bash` are not covered, for the reason DEVICE_WRITE_TOOLS gives.
+FILE_READ_TOOLS = ("Read", "Grep", "Glob")
+READ_ROUTES = {
+    "research.json": (
+        "project_context (the overview, narrationGuidance and subscriptions) or "
+        "research_query (one section at a time)"
+    ),
+    "tree.gedcomx.json": (
+        "tree_query (persons, facts, relationships and cited sources) or "
+        "project_context (ids, names and one-hop family)"
+    ),
+}
+# The argument(s) each read tool names its target in.
+READ_TARGET_KEYS = {"Read": ("file_path", "path"), "Grep": ("path", "glob"), "Glob": ("pattern", "path")}
 
 # The device-bridge writer, matched on the BARE TAIL because Cowork namespaces
 # it (`mcp__remote-devices__device_commit_files`) and the plugin cannot control
@@ -106,7 +131,7 @@ FORK_SUBAGENT_TYPE = "fork"
 # Held in the hook because the hook runs in the VM with no access to the repo.
 AGENT_ONLY_TOOLS = {
     "build_external_search_url": ("search-external-sites", "where-else-to-search"),
-    "catalog_search": ("locality-guide", "search-records"),
+    "catalog_search": ("locality-guide", "search-images", "search-records"),
     "census_children_gap": ("check-warnings", "question-selection"),
     "collections_search": (
         "gps-mentor",
@@ -360,7 +385,7 @@ OWNED_APPENDS = {"questions": "question-selection"}
 
 # Claim-scoped routing over SEVERAL fields: section -> (the BARE agent name that
 # may make the claim, the fields whose truthy value is the claim, the status
-# value that is the claim). Fourth granularity, and why none of the three above
+# values that are the claim). Fourth granularity, and why none of the three above
 # holds it.
 #
 # `conflicts` cannot be a whole-section route: six skills legitimately OPEN a
@@ -368,10 +393,10 @@ OWNED_APPENDS = {"questions": "question-selection"}
 # every one (53 of 218 landed corpus `conflicts` ops). `OWNED_DECLARATIONS` keys
 # on one field set to one value; the conflict's analytical product is spread over
 # seven fields and a status. So the rule keys on the PRODUCT: an op that sets
-# `status: "resolved"`, or carries any analysis field truthy. A skeleton open, and
-# a re-open that sets `status: "unresolved"` and clears the analysis, claim
-# nothing and pass. `resolution_kind` and `resolved_value` are listed so a write
-# carrying only those cannot slip past as a non-claim.
+# `status: "resolved"` or `"moot"`, or carries any analysis field truthy. A
+# skeleton open, and a re-open that sets `status: "unresolved"` and clears the
+# analysis, claim nothing and pass. `resolution_kind` and `resolved_value` are
+# listed so a write carrying only those cannot slip past as a non-claim.
 OWNED_CLAIMS = {
     "conflicts": (
         "conflict-resolution",
@@ -387,7 +412,7 @@ OWNED_CLAIMS = {
             # an analysed conflict and end the research with no weighing.
             "weighed_log_entry_ids",
         ),
-        "resolved",
+        ("resolved", "moot"),
     ),
 }
 
@@ -558,7 +583,7 @@ MAIN_THREAD_FIELD_REASON = (
 
 CLAIM_REASON = (
     "Recording a conflict's analysis or resolution from here is disabled — "
-    "settling `{section}` (a `status: \"resolved\"`, or any of {fields}) is owned "
+    "settling `{section}` (a `status` of \"resolved\" or \"moot\", or any of {fields}) is owned "
     "by the {agent} agent, which weighs source independence and the "
     "preponderance of evidence before it decides. Delegate it: invoke "
     "`@plugin:{agent}` and let it make the research_append call. Only the "
@@ -585,6 +610,12 @@ REASON = (
     "(from the main session, invoke `@plugin:locality-guide`)."
 )
 
+READ_REASON = (
+    "{tool} on {name} is disabled — the project folder is not readable from here, and "
+    "{name} may come back empty or out of date. Read it with {route}, passing the "
+    "projectPath you were given."
+)
+
 FORK_REASON = (
     '{tool} with subagent_type "fork" is disabled in this plugin: a fork runs the step '
     "without the plugin agent's instructions and tool limits. Delegate to the named "
@@ -605,6 +636,26 @@ def _basename(value: str) -> str:
     the e2e copy of this rule a silent no-op on Windows, where the model composes
     `C:\\...\\research.json`."""
     return value.replace("\\", "/").rsplit("/", 1)[-1]
+
+
+def _protected_name(path: str) -> str | None:
+    """The protected file `path` names, as its canonical lowercase name, or None.
+
+    Folded the way a Windows or macOS host resolves a name: case is folded
+    (`casefold`, so a long-s spelling (U+017F) matches as APFS matches it), and a stream
+    suffix (`research.json::$DATA`) and trailing dots and spaces
+    (`research.json.`) are dropped, since Windows ignores both. An 8.3 short
+    name (`RESEAR~1.JSO`) is not matched: it cannot be told from a real file
+    by name alone. A suffix after `:` is a stream only when it holds no
+    whitespace, so one-line file content such as `research.json: notes` on the
+    device bridge is not read as a path.
+    """
+    name = _basename(path)
+    head, colon, stream = name.partition(":")
+    if colon and not any(c.isspace() for c in stream):
+        name = head
+    name = name.rstrip(". ").casefold()
+    return name if name in PROTECTED_PROJECT_FILES else None
 
 
 def _path_like_strings(value, depth: int = 0):
@@ -633,6 +684,23 @@ def _path_like_strings(value, depth: int = 0):
             yield from _path_like_strings(v, depth + 1)
 
 
+def read_target(tool_name: str, tool_input: dict) -> str | None:
+    """The served project file a Read/Grep/Glob call names, or None.
+
+    Matched on the basename of each target argument, under either separator, so
+    an absolute path, a relative one and a `**/research.json` glob are caught
+    alike. A directory or a wildcard (`*.json`) names no file and is allowed: the
+    hook cannot tell what it would reach, and a false deny of a legitimate read
+    is the worse failure."""
+    for key in READ_TARGET_KEYS.get(tool_name, ()):
+        value = tool_input.get(key)
+        if isinstance(value, str) and value and len(value) <= _MAX_PATH_LEN:
+            name = _basename(value)
+            if name in READ_ROUTES:
+                return name
+    return None
+
+
 def protected_target(tool_name: str, tool_input: dict) -> str | None:
     """The protected filename this call targets, or None.
 
@@ -655,13 +723,12 @@ def protected_target(tool_name: str, tool_input: dict) -> str | None:
     """
     if tool_name in FILE_WRITE_TOOLS:
         file_path = str((tool_input or {}).get("file_path") or "")
-        name = _basename(file_path)
-        return name if name in PROTECTED_PROJECT_FILES else None
+        return _protected_name(file_path)
 
     if _basename(tool_name.replace("__", "/")) in DEVICE_WRITE_TOOLS:
         for candidate in _path_like_strings(tool_input or {}):
-            name = _basename(candidate)
-            if name in PROTECTED_PROJECT_FILES:
+            name = _protected_name(candidate)
+            if name:
                 return name
         return None
 
@@ -723,8 +790,8 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
     `OWNED_SECTIONS` nor `AGENT_WRITABLE_SECTIONS`, so every consumer must
     branch on `rule` and never on the shape of the first element. A fifth,
     `claim`, returns the bare section of an `OWNED_CLAIMS` route: a conflict's
-    analytical product (a resolve, or any analysis field), reached by anyone
-    but its owning agent. A sixth, `owned_append`, returns the bare section of
+    analytical product (a resolve or a moot, or any analysis field), reached
+    by anyone but its owning agent. A sixth, `owned_append`, returns the bare section of
     an `OWNED_APPENDS` route: an `op: "append"` there, made by anyone but its
     owning agent. A seventh, `main_thread_field`, returns a dotted
     `section.field` from `MAIN_THREAD_FIELDS`: a field keyed on presence,
@@ -873,16 +940,18 @@ def owner_denied(tool_name: str, tool_input: dict, payload: dict) -> tuple | Non
         # owning agent. After the lane check, so an agent with no business in
         # the section at all is told that, not that the claim belongs
         # elsewhere. Both payload keys, for the same fail-open reason as the two
-        # loops above. A moot is claimed too: the tool refuses one without a
-        # `resolution_rationale`, which is a claim field.
+        # loops above. A moot is claimed by its status, not only by the
+        # `resolution_rationale` the tool requires with it: on a conflict that
+        # already carries its analyses, a bare `status: "moot"` writes no claim
+        # field, and such a moot lifts the core-identifier cap.
         claim = OWNED_CLAIMS.get(section)
         if claim is not None and caller != claim[0]:
-            _owner, claim_fields, claim_status = claim
+            _owner, claim_fields, claim_statuses = claim
             for key in ("fields", "entry"):
                 payload_obj = op.get(key)
                 if not isinstance(payload_obj, dict):
                     continue
-                if payload_obj.get("status") == claim_status or any(
+                if payload_obj.get("status") in claim_statuses or any(
                     payload_obj.get(f) for f in claim_fields
                 ):
                     return (section, "claim", caller)
@@ -938,7 +1007,7 @@ def deny_reason(denied: tuple) -> str:
             agent=OWNED_DECLARATIONS[(owned_section, field)],
         )
     elif rule == "claim":
-        owner, claim_fields, _status = OWNED_CLAIMS[section]
+        owner, claim_fields, _statuses = OWNED_CLAIMS[section]
         reason = CLAIM_REASON.format(
             section=section,
             fields=", ".join(f"`{f}`" for f in claim_fields),
@@ -993,6 +1062,18 @@ def decision(payload: dict) -> dict:
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
                 "permissionDecisionReason": reason,
+            },
+        }
+
+    read_name = read_target(tool_name, tool_input)
+    if read_name is not None:
+        return {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "permissionDecision": "deny",
+                "permissionDecisionReason": READ_REASON.format(
+                    tool=tool_name, name=read_name, route=READ_ROUTES[read_name]
+                ),
             },
         }
 

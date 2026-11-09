@@ -23,22 +23,26 @@ export interface ImageTranscribeInput {
    * transcription, and any assertion in it is ignored.
    */
   lookingFor?: string;
-  /** Absolute project-folder path. Required on the MCP schema (the page is
-   *  staged under it); optional only for person_read's in-process call. When
-   *  given, the fetched JPEG is saved under images/<key>.jpg and its
-   *  project-relative path returned as `imageRef` (§8.5). */
+  /** Absolute project-folder path. When it names a project, the page is
+   *  staged under it and the fetched JPEG saved under images/<key>.jpg, its
+   *  project-relative path returned as `imageRef` (§8.5). Absent, or a folder
+   *  that is not a project, the MCP call returns the text inline and saves
+   *  nothing (issue #4136); a `file` input needs a project. */
   projectPath?: string;
 }
 
 /**
- * What `image_transcribe` returns across the MCP boundary (issue #2490): the
- * page is staged and `transcription` is dropped, so it is present only when
- * `staged` is null. person_read's in-process call gets `ImageTranscribeResult`.
+ * What `image_transcribe` returns across the MCP boundary. In a project (issue
+ * #2490) the page is staged and `transcription` is dropped, so it is present
+ * only when `staged` is null. With no project (issue #4136) nothing is staged
+ * and `transcription` is always present. person_read's in-process call gets
+ * `ImageTranscribeResult`.
  */
 export interface ImageTranscribeToolResponse {
   /** Faithful full-page OCR. Never doctored: a truncation is signalled by the
    *  sibling `truncated`/`truncationNotice` fields, not by splicing prose into
-   *  this text. Across the MCP boundary, present only when staging failed. */
+   *  this text. Across the MCP boundary, present with no project, or in a
+   *  project only when staging failed. */
   transcription?: string;
   /** FamilySearch viewer URL for the image that was transcribed. Present for
    *  imageId and ark inputs; absent for file and memoryArtifactUrl (issue #2854). */

@@ -332,13 +332,19 @@ qualify.
   or lowers it to 'speculative' naming the namesake. When the project holds no
   such tie yet, person-evidence lowers it now: a party still to extract or a
   record still to find is not a tie, and the link can be raised once the tie
-  is made.", followed by the arm's own suffix. When `personId` is omitted, a person the lookup would
+  is made.", followed by the arm's own suffix. It names every row that still
+  caps one of the links and opens on a link one caps: a row the age exemption
+  (research-append-tool-spec §5) lifts for every link is not named, and links no
+  row caps, which only a namesake in the tree can still refuse, get the next
+  item's refusal. When `personId` is omitted, a person the lookup would
   otherwise reuse is skipped, and the op takes the next eligible person or
   mints one, with a warning: "persona '<role>' of record '<record>' would
   have reused '<id>', but '<id>' has a recorded namesake and its link '<pe>'
   from this record is not tied; '<new>' was created instead. Route '<pe>' to
   person-evidence to tie or lower it.", or "'<other>' was used instead" when
-  the lookup takes another eligible person. Measured at `20ad24872` by
+  the lookup takes another eligible person. It reads "a recorded namesake and a
+  namesake in the tree" when a pair stands beside a row that still caps one of
+  the links, and "a namesake in the tree" when only a pair does. Measured at `20ad24872` by
   `dev/measure-namesake-cap.ts` §5 over the committed runs' persona ops, on
   each run's final state: with rows on every person holding a live strong
   link, 162 of the 967 explicit ops onto a row holder admitted without the row
@@ -420,8 +426,18 @@ when `same_person` is called without `recordRole`:
   from the same record: the stub's name equals the father's, so it traces to
   the father's party, and nothing else on it tells them apart.
 
-Minting needs no link (the link to a new person is written after it exists),
-and neither does re-running a record onto the stub it minted
+Minting needs no link (the link to a new person is written after it exists).
+Writing onto a person the run added that carries no provenance at all
+(`blankAddedPerson`: not imported, no source ref on its node, names, facts
+or any relationship it is in, and no namesake, whose links the namesake cap
+decides as before) needs a live link of any confidence, a
+`speculative` one included: `research_append` refuses a `probable` or
+`confident` link to such a person until it has been written onto, and the
+`speculative` link has already passed `same_person`'s score gate. Requiring no
+link at all would skip that score: once the persona is written, every ref on
+the person reaches this one record, so it reads as minted from it and the link
+written after needs no score. The order is a scored `speculative` link, then
+`materialize_facts`, then raising the link. Nor does re-running a record onto the stub it minted
 (`mintedFromThisRecord`: a person the run added, not shaped like a FamilySearch
 id, whose refs reach only this record), judged against the write-once starting
 tree so that a person the project began with is never taken for a stub, even

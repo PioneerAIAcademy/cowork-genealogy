@@ -957,9 +957,9 @@ def test_namesake_row_recorded(before_state, after_state, test):
 
     A row names a subject of the project and cites a `record_search` log entry
     this run wrote. `research_append` stamps `record_persona_ids` only for a
-    record found in the cited search's own results, so a row with no stamp listed
-    an id the search never returned (a `recordArk`, a retyped id) or cited the
-    wrong log.
+    record found in the results of a search or read the row cites, as a result or
+    as a member of a result's record, so a row with no stamp listed an id no cited
+    log returned (a `recordArk`, a retyped id) or cited the wrong log.
     """
     if "namesake-row" not in test.get("tags", []):
         pytest.skip("not a namesake-row scenario")
@@ -982,7 +982,7 @@ def test_namesake_row_recorded(before_state, after_state, test):
         )
         assert row.get("record_persona_ids"), (
             f"row {row.get('id')} lists {row.get('record_ids')}, which research_append found in none of the "
-            "cited search's results: copy each recordId verbatim, never recordArk"
+            "cited logs' results or their records' persons: copy each recordId verbatim, never recordArk"
         )
 
 
@@ -1101,3 +1101,53 @@ def test_cedillo_pool_row(before_state, after_state, test):
     notes = " ".join(str(row.get("notes") or "") for row in pools)
     assert any(rid in notes for rid in CEDILLO_1943_IDS), f"the pool row names no 1943 record {CEDILLO_1943_IDS}"
     assert any(rid in notes for rid in CEDILLO_1945_IDS), f"the pool row names no 1945 record {CEDILLO_1945_IDS}"
+
+
+PARENT_NAME_FIELDS = ("fatherGivenName", "fatherSurname", "motherGivenName", "motherSurname")
+SOURCE_PIN_FIELDS = ("collectionId", "batchNumber")
+CHILD_PLACE_FIELDS = ("birthPlace", "residencePlace", "anyPlace")
+
+
+def _sent(args, fields):
+    return sorted({f"{f}={args[f]}" for f in fields if args.get(f)})
+
+
+def test_children_enumeration_unpinned(tool_calls, test):
+    """Tag-gated (children-enumeration-unpinned): issue #3948
+    (maria-stockburger-son) -- a children-enumeration plan item runs at least
+    one record_search that names a parent, is pinned to no single source
+    (`collectionId`, `batchNumber`) and carries no place.
+
+    Ground truth: feedback bundle 2026-10-28T11-47-20, build 8728d29f3 -- every
+    children search was pinned to collection 3015626 or 1395660, and the four
+    children indexed only in 1473000 never surfaced; Andreas is indexed under
+    "Sankt Georgen, Freiburg", so a Villingen place misses him as well. The
+    scenario's catch-all fixtures answer a pin to 1473000, a batch pin and a
+    place-anchored search alike, so the judge cannot tell them apart; this
+    check can.
+
+    A call the tool refused (`is_error`) does not count. A field whose value is
+    null or "" was not sent as a filter.
+    """
+    if "children-enumeration-unpinned" not in test.get("tags", []):
+        pytest.skip("not a children-enumeration-unpinned scenario")
+    parent_searches = [
+        _as_mapping(c.get("args"))
+        for c in (tool_calls or [])
+        if _bare_tool_name(c.get("tool", "")) == "record_search"
+        and c.get("is_error") is not True
+        and any(_as_mapping(c.get("args")).get(f) for f in PARENT_NAME_FIELDS)
+    ]
+    assert parent_searches, "no record_search named a parent: the children enumeration never ran"
+    unpinned = [a for a in parent_searches if not _sent(a, SOURCE_PIN_FIELDS)]
+    assert unpinned, (
+        "every record_search naming a parent was pinned to one source "
+        f"({sorted({s for a in parent_searches for s in _sent(a, SOURCE_PIN_FIELDS)})}); "
+        "a children enumeration needs one parent-name search with no collectionId or batchNumber"
+    )
+    place_free = [a for a in unpinned if not _sent(a, CHILD_PLACE_FIELDS)]
+    assert place_free, (
+        "every unpinned parent-name record_search still carried a place "
+        f"({sorted({s for a in unpinned for s in _sent(a, CHILD_PLACE_FIELDS)})}); "
+        "the children-enumeration search clears birthPlace, residencePlace and anyPlace"
+    )
