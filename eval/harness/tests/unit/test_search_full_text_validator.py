@@ -922,3 +922,55 @@ def test_plan_item_completion_fires_on_a_real_estate_deed_note():
         check_plan_item_completion(before, after)
     assert "pli_rt" in str(e.value)
     assert "probate" in str(e.value)
+
+
+# --- reads-hit-transcript (issue #4311): one hit's transcript is read with
+# `sidecar_read` on `<ref>#<hit id>`, never `Read`.
+
+from test_search_full_text import test_hit_transcript_read_through_sidecar as check_hit_read  # noqa: E402
+
+_TEST = {"type": "positive", "tags": ["reads-hit-transcript"]}
+_REF = "results/.staging/u1.json"
+_HIT = f"{_REF}#https://familysearch.org/ark:/61903/1:1:QV9N-YS37"
+
+
+def _read(**args):
+    return {"tool": "mcp__genealogy__sidecar_read", "args": {"projectPath": "/p", **args}}
+
+
+def test_hit_read_passes():
+    check_hit_read([_read(ref=_HIT)], [], _TEST)
+
+
+def test_hit_read_in_refs_list_passes():
+    check_hit_read([_read(refs=[_HIT])], [], _TEST)
+
+
+def test_hit_read_hits_list_only_fires():
+    with pytest.raises(AssertionError, match="no sidecar_read of one hit"):
+        check_hit_read([_read(ref=f"{_REF}#hits")], [], _TEST)
+
+
+def test_hit_read_no_read_fires():
+    with pytest.raises(AssertionError, match="no sidecar_read of one hit"):
+        check_hit_read([], [], _TEST)
+
+
+def test_hit_read_bare_ref_fires():
+    with pytest.raises(AssertionError, match="no hit selector"):
+        check_hit_read([_read(ref=_HIT), _read(ref=_REF)], [], _TEST)
+
+
+def test_hit_read_agent_read_of_staged_file_fires():
+    read = {"tool": "Read", "args": {"file_path": f"/p/{_REF}"}, "agent_id": "a1"}
+    with pytest.raises(AssertionError, match="used Read on staged results"):
+        check_hit_read([_read(ref=_HIT)], [read], _TEST)
+
+
+def test_hit_read_main_thread_read_is_not_the_agents():
+    check_hit_read([_read(ref=_HIT)], [{"tool": "Read", "args": {"file_path": f"/p/{_REF}"}}], _TEST)
+
+
+def test_hit_read_untagged_test_skips():
+    with pytest.raises(pytest.skip.Exception):
+        check_hit_read([], [], {"type": "positive", "tags": []})

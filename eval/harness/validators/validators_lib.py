@@ -896,3 +896,33 @@ def assert_namesake_warning_handed_back(
     )
     missing = sorted(p for p in warned if not re.search(rf"\b{re.escape(p)}\b", reply))
     assert not missing, f"the reply names person-evidence but omits warned links {missing}: {reply[:600]!r}"
+
+
+def sidecar_read_refs(tool_calls) -> list[str]:
+    """Every ref this run's `sidecar_read` calls named, from `ref` or `refs`."""
+    out: list[str] = []
+    for c in tool_calls or []:
+        if bare_tool_name(c.get("tool", "")) != "sidecar_read":
+            continue
+        args = as_mapping(c.get("args"))
+        refs = [args["ref"]] if isinstance(args.get("ref"), str) else args.get("refs")
+        if isinstance(refs, str):
+            try:
+                refs = json.loads(refs)
+            except ValueError:
+                refs = [refs]
+        out.extend(r for r in refs or [] if isinstance(r, str))
+    return out
+
+
+def agent_read_paths(builtin_tool_calls) -> list[str]:
+    """The `file_path` of every built-in `Read` the agent under test made.
+
+    A record carries `agent_id` only when the call ran inside a subagent, which
+    is where the agent under test runs on the direct arm.
+    """
+    return [
+        str((c.get("args") or {}).get("file_path") or "").replace("\\", "/")
+        for c in builtin_tool_calls or []
+        if c.get("tool") == "Read" and "agent_id" in c
+    ]

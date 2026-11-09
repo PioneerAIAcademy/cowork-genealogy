@@ -1,0 +1,37 @@
+{
+  "test": {
+    "id": "ut_search_full_text_022",
+    "skill": "search-full-text",
+    "name": "A hit's role, exact date and residence are read from its transcript with sidecar_read",
+    "type": "positive",
+    "description": "Issue #4311. The search returns one deed hit naming Thomas and Patrick Flynn, but its stubs give only the year 1878 and bare highlight terms. The delegation asks for what only the transcript says: the role each Flynn played, the exact date of the act, and where they lived. The agent reads that one hit with sidecar_read on `<staged.resultsRef>#<hit id>` — not a `Read` of the staged file, which a connector does not have, and not a bare ref, which the tool refuses.",
+    "tags": [
+      "fulltext",
+      "FAN",
+      "witnesses",
+      "reads-hit-transcript"
+    ]
+  },
+  "input": {
+    "delegation": "Run a full-text search for Flynn in Schuylkill County, Pennsylvania records. For any deed that names a Flynn, tell me from the record's own text what role each Flynn played, the exact date of the act, and where the Flynns were said to live.\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "fulltext-search-flynn-witnesses",
+    "fulltext-search-flynn-witnesses-by-name",
+    "fulltext-search-flynn-flinn-variant",
+    "fulltext-search-flynn-wildcard-variant",
+    "fulltext-search-flynn-prefix-wildcard-variant",
+    "wiki-read-any",
+    "wiki-search-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
+    "The one hit is a deed of conveyance, James Brennan to Michael Dougherty, Branch Township. Its transcript reads 'Signed sealed and delivered in the presence of Thomas Flynn and Patrick Flynn both of Branch Township Schuylkill County as witnesses to the deed of conveyance this fifteenth day of March in the year of our Lord one thousand eight hundred and seventy eight.'",
+    "So the answer is: both Flynns were witnesses, not parties; the act is dated 15 March 1878; both are described as of Branch Township, Schuylkill County. The search response's stubs give only '1878' and bare highlight terms, so the day, month and residence can come only from the transcript.",
+    "How the transcript was read (sidecar_read on the hit, no Read of a results/ file) is checked by a validator, not by you; do not grade it."
+  ]
+}
