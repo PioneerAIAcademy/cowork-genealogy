@@ -732,7 +732,9 @@ has that link.
 The researcher asks something rather than answering the offer — "why that
 census?", "who is this person again?". Answer it from what you hold, spawn
 **no** agent, and end with the **same** "Continue with …?" line the last turn
-offered. The turn ran no step, so nothing moves.
+offered. With no earlier offer in this conversation, use the label `project_context`'s
+`nextStep` maps to. When the question is about a record, read `research_query`
+`sources` too. The turn ran no step, so nothing moves.
 
 ## When to stop
 
