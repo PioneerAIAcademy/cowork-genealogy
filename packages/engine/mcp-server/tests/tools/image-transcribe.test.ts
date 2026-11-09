@@ -462,10 +462,10 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
     expect(result.found).toBeUndefined();
   });
 
-  it("withholds found from the staged element and the digest too on a truncated read (@yinkid28)", async () => {
+  it("withholds found from the staged element too on a truncated read, and the digest never carries it (@yinkid28)", async () => {
     // The NOT-FOUND suppression is the harm case, but the withhold must reach
-    // every surface a caller triages on — the staged element and the digest,
-    // not only the top-level field.
+    // every surface a caller triages on — the staged element, not only the
+    // top-level field. The digest carries no markers at all.
     mockOpenRouterOk("Row 1: Schreck family", "length");
     const dir = await mkdtemp(join(tmpdir(), "imgt-trunc-found-"));
     try {
@@ -478,7 +478,7 @@ describe("imageTranscribeTool — output-cap truncation (#1974, spec §6.2)", ()
       expect(result.found).toBeUndefined();
       expect(mockFetch).toHaveBeenCalledTimes(1);
       expect(result.digest).not.toHaveProperty("found");
-      expect(result.digest?.truncated).toBe(true);
+      expect(result.digest).not.toHaveProperty("truncated");
       const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
       expect(envelope.payload.results[0]).not.toHaveProperty("found");
       expect(envelope.payload.results[0].truncated).toBe(true);
@@ -1442,8 +1442,8 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
     expect(envelope.returned_count).toBe(1);
     expect(envelope.payload.query).toEqual({ file: "uploads/obit.jpg", lookingFor: "Mays" });
     expect(envelope.payload.results).toHaveLength(1);
-    // The staged element and the digest carry the second call's verdict — the
-    // transcription itself no longer ends in a FOUND/NOT FOUND line.
+    // The staged element carries the second call's verdict — the transcription
+    // itself no longer ends in a FOUND/NOT FOUND line.
     expect(envelope.payload.results[0]).toMatchObject({
       id: "capture:obit",
       source: { file: "uploads/obit.jpg" },
@@ -1460,8 +1460,8 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
       id: "capture:obit",
       chars: "Obituary text".length,
       excerpt: "Obituary text",
-      found: "FOUND",
     });
+    expect(result.found).toBe("FOUND");
   });
 
   it("stages a FamilySearch read too, keyed by its imageId, alongside the retained scan", async () => {
@@ -1479,12 +1479,13 @@ describe("imageTranscribeTool — staging producer (#2489 via #2048)", () => {
     expect(result.digest?.id).toBe("004884748_02613");
   });
 
-  it("bounds the digest excerpt and carries the truncation marker", async () => {
+  it("bounds the digest excerpt; the truncation marker rides the top level and the staged element", async () => {
     await writeFile(join(dir, "uploads", "long.jpg"), JPEG);
     const long = "x".repeat(1_000);
     mockOpenRouterOk(long, "length");
     const result = await transcribe({ file: "uploads/long.jpg", projectPath: dir }, LOCAL);
-    expect(result.digest).toEqual({ id: "capture:long", chars: 1_000, excerpt: "x".repeat(300), truncated: true });
+    expect(result.digest).toEqual({ id: "capture:long", chars: 1_000, excerpt: "x".repeat(300) });
+    expect(result.truncated).toBe(true);
     const envelope = JSON.parse(await readFile(join(dir, result.staged!.resultsRef), "utf8"));
     expect(envelope.payload.results[0].truncated).toBe(true);
   });
@@ -1696,6 +1697,69 @@ describe("imageTranscribeMcpTool — returns a ref in a project (#2490), the pag
     const r = await transcribe({ imageId: "004884748_02613", projectPath: dir }, LOCAL);
     expect(r.staged).not.toBeNull();
     expect(r.transcription).toBe("Memory text");
+  });
+
+  it("shapes the staged and the no-project answer with the one compactor: no metadata, no nameExpansion", async () => {
+    mockOpenRouterOk("Elizabeth Martin, spinster");
+    mockOpenRouterOk("FOUND");
+    const staged = await imageTranscribeMcpTool(
+      { imageId: "004884748_02613", projectPath: dir, lookingFor: "Elizabeth Martin" },
+      LOCAL,
+    );
+    mockOpenRouterOk("Elizabeth Martin, spinster");
+    mockOpenRouterOk("FOUND");
+    const inline = await imageTranscribeMcpTool(
+      { imageId: "004884748_02613", lookingFor: "Elizabeth Martin" },
+      LOCAL,
+    );
+    if ("ok" in staged || "ok" in inline) throw new Error("unexpected no-project answer");
+    expect(Object.keys(staged).sort()).toEqual(["digest", "found", "imageRef", "staged", "viewerUrl"]);
+    expect(Object.keys(inline).sort()).toEqual(["found", "transcription", "viewerUrl"]);
+  });
+
+  it("cuts a no-project page over the bound at a line boundary, saying so, keeping found and setting no truncated", async () => {
+    const rows: string[] = [];
+    for (let i = 1; rows.join("\n").length < 40_000; i++) {
+      rows.push(`Row ${i}:  Weber, Anna Maria    farmer's daughter    Alsweiler    3 Jan 1853`);
+    }
+    const page = rows.join("\n");
+    mockOpenRouterOk(page);
+    mockOpenRouterOk("FOUND");
+    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613", lookingFor: "Weber" }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    // The found check read the whole page, not the part returned.
+    const checkBody = JSON.parse((mockFetch.mock.calls[1] as [string, RequestInit])[1].body as string);
+    expect(checkBody.messages[0].content[0].text).toContain(rows[rows.length - 1]);
+    expect(page.startsWith(r.transcription!)).toBe(true);
+    expect(r.transcription!.length).toBeLessThan(page.length);
+    expect(r.found).toBe("FOUND");
+    expect(r).not.toHaveProperty("truncated");
+    expect(r.truncationNotice).toMatch(/^Only the first [\d,]+ of the page's [\d,]+ characters are shown here/);
+    expect(JSON.stringify(r).length).toBeLessThanOrEqual(37_000);
+  });
+
+  it("returns a no-project page under the bound whole, with no notice", async () => {
+    mockOpenRouterOk("Moses Dustin, Captain");
+    const r = await imageTranscribeMcpTool({ imageId: "004884748_02613" }, LOCAL);
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    expect(r.transcription).toBe("Moses Dustin, Captain");
+    expect(r).not.toHaveProperty("truncationNotice");
+  });
+
+  it("cleans the OCR layout before the found check and staging, and digests the cleaned text", async () => {
+    mockOpenRouterOk("Name      \r\nAnna Weber\t\n\n\n\n==========\nPeter Weber");
+    mockOpenRouterOk("FOUND");
+    const r = await imageTranscribeMcpTool(
+      { imageId: "004884748_02613", projectPath: dir, lookingFor: "Weber" },
+      LOCAL,
+    );
+    if ("ok" in r) throw new Error("unexpected no-project answer");
+    const cleaned = "Name\nAnna Weber\n\n===\nPeter Weber";
+    const checkBody = JSON.parse((mockFetch.mock.calls[1] as [string, RequestInit])[1].body as string);
+    expect(checkBody.messages[0].content[0].text).toContain(cleaned);
+    const envelope = JSON.parse(await readFile(join(dir, r.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0].transcription).toBe(cleaned);
+    expect(r.digest).toEqual({ id: "004884748_02613", chars: cleaned.length, excerpt: "Name\nAnna Weber\nPeter Weber" });
   });
 });
 
