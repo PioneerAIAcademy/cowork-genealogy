@@ -22,13 +22,19 @@
       "id": "f2",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Mary Dwyer's (PID MNFL-T24) father was Patrick Dwyer based on the Massachusetts marriage record (ark:/61903/1:1:FHHH-87K, 21 Apr 1854, Chicopee, Hampden, Massachusetts) naming a Michael Dwyer (son of John Dwyer, b. 1831, Ireland) and Mary Dwyer (daughter of Patrick Dwyer, b. 1832, Ireland). That record's marriage date/place and both spouses' birth years disagree with this couple's already-sourced tree data (their own attached marriage source, MWFQ-MFS, documents the marriage a day earlier in a different, non-neighboring county; both spouses are recorded as born several years later than the hint record's couple) — the signature of a distinct, same-named Michael/Mary Dwyer couple married in Chicopee, not this couple. Pass = the agent's final tree.gedcomx.json does not name Patrick Dwyer as Mary Dwyer's father and does not attach the Chicopee marriage record to her. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
+      "description": "The agent must NOT assert that Mary Dwyer's (PID MNFL-T24) father was Patrick Dwyer based on the Massachusetts marriage record (ark:/61903/1:1:FHHH-87K, 21 Apr 1854, Chicopee, Hampden, Massachusetts) naming a Michael Dwyer (son of John Dwyer, b. 1831, Ireland) and Mary Dwyer (daughter of Patrick Dwyer, b. 1832, Ireland). That record's marriage date/place and both spouses' birth years disagree with this couple's already-sourced tree data (their own attached marriage source, MWFQ-MFS, documents the marriage a day earlier in a different, non-neighboring county; both spouses are recorded as born several years later than the hint record's couple) — the signature of a distinct, same-named Michael/Mary Dwyer couple married in Chicopee, not this couple. Pass = the agent's final tree.gedcomx.json does not name Patrick Dwyer as Mary Dwyer's father and does not attach the Chicopee marriage record to her. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Mary Dwyer (PID MNFL-T24)",
         "relation": "parent",
         "wrong_candidate": {
           "name": "Patrick Dwyer (per the Chicopee, Hampden marriage record, ark:/61903/1:1:FHHH-87K)",
-          "note": "the record's marriage date/place and both spouses' birth years disagree with this Mary Dwyer's already-sourced tree data; a different Michael/Mary Dwyer couple married in Chicopee, Hampden is the more likely subject of that record"
+          "note": "the record's marriage date/place and both spouses' birth years disagree with this Mary Dwyer's already-sourced tree data; a different Michael/Mary Dwyer couple married in Chicopee, Hampden is the more likely subject of that record",
+          "records": [
+            "ark:/61903/1:1:FHHH-872",
+            "ark:/61903/1:1:FHHH-87G",
+            "ark:/61903/1:1:FHHH-87K",
+            "ark:/61903/1:1:FHHH-87L"
+          ]
         }
       },
       "supporting_sources": [

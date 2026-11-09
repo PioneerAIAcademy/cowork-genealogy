@@ -4,13 +4,42 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT conclude that Thomas Werdmüller (PID 9MF3-9S6, chr. 22 February 1657 Grossmünster, Zürich; d. 14 November 1704) had a son David by a Regula Steiner, and must NOT add Regula Steiner as his wife or partner. The 27 March 1698 Zürich baptism of David Werdmüller belongs to a different Thomas Werdmüller — the one married to Regula Steiner, who baptised nine children in the same Zürich parish between 4 August 1692 and 21 April 1712. That twenty-year run is a continuous marital family, not an isolated illegitimate baptism, and it continues seven and a half years past the subject's own death. The subject's wife Dorothea von Muralt, whom he married 2 March 1686, was buried at Zürich on 16 January 1735, so Regula Steiner cannot be a successor wife either. Pass = the final tree.gedcomx.json contains no Regula Steiner spouse for the subject, no David Werdmüller child, and no stub person for either.",
+      "description": "The agent must NOT conclude that Thomas Werdmüller (PID 9MF3-9S6, chr. 22 February 1657 Grossmünster, Zürich; d. 14 November 1704) had a son David by a Regula Steiner, and must NOT add Regula Steiner as his wife or partner. The 27 March 1698 Zürich baptism of David Werdmüller belongs to a different Thomas Werdmüller — the one married to Regula Steiner, who baptised nine children in the same Zürich parish between 4 August 1692 and 21 April 1712. That twenty-year run is a continuous marital family, not an isolated illegitimate baptism, and it continues seven and a half years past the subject's own death. The subject's wife Dorothea von Muralt, whom he married 2 March 1686, was buried at Zürich on 16 January 1735, so Regula Steiner cannot be a successor wife either. Pass = the final tree.gedcomx.json contains no Regula Steiner spouse for the subject, no David Werdmüller child, and no stub person for either. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Thomas Werdmüller (9MF3-9S6)",
         "relation": "spouse and child",
         "wrong_candidate": {
           "name": "Regula Steiner as a wife or partner, and David Werdmüller (baptised 27 March 1698, Zürich) as a son, also spelled David Werdmuller without the umlaut",
-          "note": "the 1698 baptism is one of nine by a single couple across 1692-1712; the last two postdate the subject's death, and the subject's own wife was buried in 1735, ruling out both a concurrent second marriage and a successor one"
+          "note": "the 1698 baptism is one of nine by a single couple across 1692-1712; the last two postdate the subject's death, and the subject's own wife was buried in 1735, ruling out both a concurrent second marriage and a successor one",
+          "records": [
+            "ark:/61903/1:1:66J5-RH82",
+            "ark:/61903/1:1:66J5-RH8N",
+            "ark:/61903/1:1:66J5-RH8V",
+            "ark:/61903/1:1:66JR-6N8J",
+            "ark:/61903/1:1:66JR-6N8K",
+            "ark:/61903/1:1:66JR-6N8V",
+            "ark:/61903/1:1:66JR-7TS5",
+            "ark:/61903/1:1:66JR-7TSH",
+            "ark:/61903/1:1:66JR-7TSJ",
+            "ark:/61903/1:1:66JR-8G4Q",
+            "ark:/61903/1:1:66JR-8G4W",
+            "ark:/61903/1:1:66JR-8GWB",
+            "ark:/61903/1:1:66JR-CYCD",
+            "ark:/61903/1:1:66JR-CYCF",
+            "ark:/61903/1:1:66JR-CYCJ",
+            "ark:/61903/1:1:66JR-FL15",
+            "ark:/61903/1:1:66JR-FL1K",
+            "ark:/61903/1:1:66JR-FL1L",
+            "ark:/61903/1:1:66JR-MQD3",
+            "ark:/61903/1:1:66JR-MQD4",
+            "ark:/61903/1:1:66JR-MQDM",
+            "ark:/61903/1:1:66JR-QXJ5",
+            "ark:/61903/1:1:66JR-QXJG",
+            "ark:/61903/1:1:66JR-QXJP",
+            "ark:/61903/1:1:66JR-ZV31",
+            "ark:/61903/1:1:66JR-ZV3G",
+            "ark:/61903/1:1:66JR-ZV3Y"
+          ]
         }
       },
       "supporting_sources": [

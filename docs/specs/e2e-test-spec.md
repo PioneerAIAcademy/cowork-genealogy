@@ -341,6 +341,14 @@ no `avoid` description may conflate the two stores as `tree/research`, and
 any that mentions rejection must name both `tree.gedcomx.json` and
 `research.json`.
 
+A wrong-person `avoid` finding (a `relationship` or `person` finding in a
+`hint.identity: "different"` fixture, plus swarbrick-christening f4) carries
+`details.wrong_candidate.records`: the sorted `ark:/61903/1:1:` ARK of every
+persona on every record of the rejected candidate, read live, leaving out any
+record the correct answer or the starting tree also cites; an empty list
+carries a `note` saying why. The guard above does not read it yet; the
+avoid-guard rebuild in issue #3032 does.
+
 An `avoid` finding may be `required: true`; it then gates the verdict
 exactly like a recover finding (`matched: "true"` = correctly
 avoided). Pair a required `avoid` guard with a required positive

@@ -57,13 +57,18 @@
       "id": "f4",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT attach this Robert Swarbrick (husband of Ellen Gardner, d. 1839 Hambleton) to the parents of the OTHER same-name Robert Swarbrick christened 11 June 1797 in the parish of Hambleton, son of William Swarbrick. The two Roberts were christened within months of each other in neighboring Lancashire parishes and are easily confused. Pass = the agent's final tree.gedcomx.json records John Swarbrick (not William Swarbrick) as the father, and asserts no parentage tracing back to a Hambleton-parish William Swarbrick christening for this Robert. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
+      "description": "The agent must NOT attach this Robert Swarbrick (husband of Ellen Gardner, d. 1839 Hambleton) to the parents of the OTHER same-name Robert Swarbrick christened 11 June 1797 in the parish of Hambleton, son of William Swarbrick. The two Roberts were christened within months of each other in neighboring Lancashire parishes and are easily confused. Pass = the agent's final tree.gedcomx.json records John Swarbrick (not William Swarbrick) as the father, and asserts no parentage tracing back to a Hambleton-parish William Swarbrick christening for this Robert. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Robert Swarbrick (PID MM4W-19N)",
         "relation": "father",
         "wrong_candidate": {
           "name": "William Swarbrick",
-          "note": "father of the OTHER Robert Swarbrick, christened 11 Jun 1797 in the parish of Hambleton, Lancashire — a different family, same name, same year, neighboring parish"
+          "note": "father of the OTHER Robert Swarbrick, christened 11 Jun 1797 in the parish of Hambleton, Lancashire — a different family, same name, same year, neighboring parish",
+          "records": [
+            "ark:/61903/1:1:V5GJ-FJ5",
+            "ark:/61903/1:1:V5GJ-FJG",
+            "ark:/61903/1:1:V5GJ-FJP"
+          ]
         }
       },
       "supporting_sources": [

@@ -4,13 +4,21 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Matilde Carmela Emanuela Cavagnaro (PID G4Z4-RJ1, b. 1866, daughter of Giuseppe Cavagnaro and Maddalena Boitano) married Pietro Dondero, or that Maria Clementina Angelica Gentile Dondero, born 30 August 1883 at Genova, was her daughter. The subject's own documented marriage is to Paolo Andrea Vaglio, 26 July 1900 at Bogliasco: that Genova civil registration names the bride Matilde Carmela Emanuela Cavagnaro, born 1866 at Lima, Maestra Elementare, daughter of Giuseppe and Maddalena Bitano — parents, birth year and birthplace all matching the tree person, which identifies her rather than a namesake. The Carmela Cavagnaro who bore Pietro Dondero's children is a different woman, documented with him at Genova in at least 1883 (the hint record) and 1891 (Attilio Omero Dondero, 31 May 1891). The hint record identifies its mother only indirectly — its index gives her no age, no patronymic and no birthplace — and the name recurs in the district. Note for graders: the 1900 marriage post-dates both Dondero births and the indexed record carries no stato civile, so it does not on its own exclude an earlier marriage; the rejection rests on the identification and on the Dondero household being separately documented. Pass = the agent's final tree.gedcomx.json contains no spouse Pietro Dondero and no daughter Maria Clementina Angelica Gentile Dondero for this subject. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
+      "description": "The agent must NOT assert that Matilde Carmela Emanuela Cavagnaro (PID G4Z4-RJ1, b. 1866, daughter of Giuseppe Cavagnaro and Maddalena Boitano) married Pietro Dondero, or that Maria Clementina Angelica Gentile Dondero, born 30 August 1883 at Genova, was her daughter. The subject's own documented marriage is to Paolo Andrea Vaglio, 26 July 1900 at Bogliasco: that Genova civil registration names the bride Matilde Carmela Emanuela Cavagnaro, born 1866 at Lima, Maestra Elementare, daughter of Giuseppe and Maddalena Bitano — parents, birth year and birthplace all matching the tree person, which identifies her rather than a namesake. The Carmela Cavagnaro who bore Pietro Dondero's children is a different woman, documented with him at Genova in at least 1883 (the hint record) and 1891 (Attilio Omero Dondero, 31 May 1891). The hint record identifies its mother only indirectly — its index gives her no age, no patronymic and no birthplace — and the name recurs in the district. Note for graders: the 1900 marriage post-dates both Dondero births and the indexed record carries no stato civile, so it does not on its own exclude an earlier marriage; the rejection rests on the identification and on the Dondero household being separately documented. Pass = the agent's final tree.gedcomx.json contains no spouse Pietro Dondero and no daughter Maria Clementina Angelica Gentile Dondero for this subject. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Matilde Carmela Emanuela Cavagnaro (G4Z4-RJ1)",
         "relation": "spouse",
         "wrong_candidate": {
           "name": "Pietro Dondero",
-          "note": "A different woman from the subject. The subject's documented marriage is to Paolo Andrea Vaglio, 26 Jul 1900 at Bogliasco, on a record naming her parents as Giuseppe and Maddalena Bitano and her birth as 1866 at Lima; the Dondero household is separately documented at Genova in at least 1883 and 1891."
+          "note": "A different woman from the subject. The subject's documented marriage is to Paolo Andrea Vaglio, 26 Jul 1900 at Bogliasco, on a record naming her parents as Giuseppe and Maddalena Bitano and her birth as 1866 at Lima; the Dondero household is separately documented at Genova in at least 1883 and 1891.",
+          "records": [
+            "ark:/61903/1:1:6BHW-1HG3",
+            "ark:/61903/1:1:6BHW-1HGM",
+            "ark:/61903/1:1:6BHW-1HLY",
+            "ark:/61903/1:1:X3TM-QP9L",
+            "ark:/61903/1:1:X3TM-QP9Y",
+            "ark:/61903/1:1:X3TM-QPSS"
+          ]
         },
         "wrong_child": {
           "name": "Maria Clementina Angelica Gentile Dondero, born 30 August 1883 at Genova",

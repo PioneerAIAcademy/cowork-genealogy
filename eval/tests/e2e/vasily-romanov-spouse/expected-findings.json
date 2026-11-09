@@ -4,13 +4,23 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Vasily Ignatiev Romanov (PID L8TL-4NY, son of Ignatiy Vasilyevich Romanov) had a wife named Klavdiya Dmitrieva or a daughter Raisa born 16 July 1911 at the Peter and Paul church, Samara. The 1911 birth entry names the father as Vasily ALEKSEEV Romanov, not Vasily Ignatiev — confirmed on the original register image (the handwritten entry reads 'Василий Алексѣевъ Романовъ', so the patronymic is genuine, not an indexing artifact). That Raisa belongs to a distinct Samara family: Vasily Alekseev Romanov (b. 1887) and Klavdiya Dmitrieva Zhiltsova, married 14 January 1909 at the same Peter and Paul church, whose son Nikolai was born 29 January 1913 to the same couple. The tree's Vasily Ignatiev married Alexandra Andreeva Popretkina in 1899; a Russian patronymic (Ignatiev, from his father Ignatiy Vasilyevich) is not a transcription variant of Alekseev. Pass = tree.gedcomx.json adds no wife Klavdiya Dmitrieva for L8TL-4NY, no daughter Raisa, and no 1911 birth fact tied to him. An explicitly rejected candidate belongs in the research log (research.json), NOT in the tree: the avoid guard force-fails on presence in the final tree however the person is annotated, so writing the rejected candidate into the tree scores a miss.",
+      "description": "The agent must NOT assert that Vasily Ignatiev Romanov (PID L8TL-4NY, son of Ignatiy Vasilyevich Romanov) had a wife named Klavdiya Dmitrieva or a daughter Raisa born 16 July 1911 at the Peter and Paul church, Samara. The 1911 birth entry names the father as Vasily ALEKSEEV Romanov, not Vasily Ignatiev — confirmed on the original register image (the handwritten entry reads 'Василий Алексѣевъ Романовъ', so the patronymic is genuine, not an indexing artifact). That Raisa belongs to a distinct Samara family: Vasily Alekseev Romanov (b. 1887) and Klavdiya Dmitrieva Zhiltsova, married 14 January 1909 at the same Peter and Paul church, whose son Nikolai was born 29 January 1913 to the same couple. The tree's Vasily Ignatiev married Alexandra Andreeva Popretkina in 1899; a Russian patronymic (Ignatiev, from his father Ignatiy Vasilyevich) is not a transcription variant of Alekseev. Pass = tree.gedcomx.json adds no wife Klavdiya Dmitrieva for L8TL-4NY, no daughter Raisa, and no 1911 birth fact tied to him. An explicitly rejected candidate belongs in the research log (research.json), NOT in the tree: the avoid guard force-fails on presence in the final tree however the person is annotated, so writing the rejected candidate into the tree scores a miss. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Vasily Ignatiev Romanov (PID L8TL-4NY)",
         "relation": "child",
         "wrong_candidate": {
           "name": "a wife Klavdiya Dmitrieva and a daughter Raisa (b. 16 July 1911, Peter and Paul church, Samara) for Vasily Ignatiev Romanov",
-          "note": "these belong to Vasily Alekseev Romanov (b. 1887) and Klavdiya Dmitrieva Zhiltsova, a distinct Samara family (married 14 Jan 1909); the tree person's patronymic is Ignatiev, not Alekseev"
+          "note": "these belong to Vasily Alekseev Romanov (b. 1887) and Klavdiya Dmitrieva Zhiltsova, a distinct Samara family (married 14 Jan 1909); the tree person's patronymic is Ignatiev, not Alekseev",
+          "records": [
+            "ark:/61903/1:1:KX4H-8N5",
+            "ark:/61903/1:1:KX4H-8NT",
+            "ark:/61903/1:1:KX4H-PK1",
+            "ark:/61903/1:1:KX4H-PKB",
+            "ark:/61903/1:1:KX4H-PKY",
+            "ark:/61903/1:1:KXTQ-X56",
+            "ark:/61903/1:1:KXTQ-X5D",
+            "ark:/61903/1:1:KXTQ-X5X"
+          ]
         }
       },
       "supporting_sources": [

@@ -4,13 +4,20 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Joseph Martassek (PID L8JK-KDK), husband of Maria Szuchony and father of children baptised at Krásno nad Kysucou 1878-1893, was the son of Joannes (János) Martassek and Maria Tizsinyák. Their son Josephus Martassek, baptised at Krásno nad Kysucou (Karásznó) in 1853, died aged five months on 9 October 1853 and was buried 11 October 1853 (Karásznó death register, entry No. 119), so he cannot be the adult who married and fathered children there a generation later. Pass = the final `tree.gedcomx.json` contains no parent-child relationship between Joseph Martassek (L8JK-KDK) and Joannes Martassek or Maria Tizsinyák, and no stub person for either attached as his parent. The rejected candidate may be documented in `research.json`; writing it into the tree — even annotated as rejected — fails this finding.",
+      "description": "The agent must NOT assert that Joseph Martassek (PID L8JK-KDK), husband of Maria Szuchony and father of children baptised at Krásno nad Kysucou 1878-1893, was the son of Joannes (János) Martassek and Maria Tizsinyák. Their son Josephus Martassek, baptised at Krásno nad Kysucou (Karásznó) in 1853, died aged five months on 9 October 1853 and was buried 11 October 1853 (Karásznó death register, entry No. 119), so he cannot be the adult who married and fathered children there a generation later. Pass = the final `tree.gedcomx.json` contains no parent-child relationship between Joseph Martassek (L8JK-KDK) and Joannes Martassek or Maria Tizsinyák, and no stub person for either attached as his parent. The rejected candidate may be documented in `research.json`; writing it into the tree — even annotated as rejected — fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Joseph Martassek (PID L8JK-KDK)",
         "relation": "parents",
         "wrong_candidate": {
           "name": "Joannes (János) Martassek",
-          "note": "named as father, with mother Maria Tizsinyák, of the infant Josephus Martassek baptised at Krásno nad Kysucou in 1853 (ark:/61903/1:1:V171-T6D), who died aged five months on 9 Oct 1853 (ark:/61903/1:1:6N98-SCLC). Only the father is under `name`: the mother's given name would pair with the surname and match the subject's daughter Maria Martassek (L8JK-HLP), force-failing this guard on every run; the judge still grades a Maria Tizsinyák parent link from the description."
+          "note": "named as father, with mother Maria Tizsinyák, of the infant Josephus Martassek baptised at Krásno nad Kysucou in 1853 (ark:/61903/1:1:V171-T6D), who died aged five months on 9 Oct 1853 (ark:/61903/1:1:6N98-SCLC). Only the father is under `name`: the mother's given name would pair with the surname and match the subject's daughter Maria Martassek (L8JK-HLP), force-failing this guard on every run; the judge still grades a Maria Tizsinyák parent link from the description.",
+          "records": [
+            "ark:/61903/1:1:6N98-SCL8",
+            "ark:/61903/1:1:6N98-SCLC",
+            "ark:/61903/1:1:V171-KT2",
+            "ark:/61903/1:1:V171-T68",
+            "ark:/61903/1:1:V171-T6D"
+          ]
         }
       },
       "supporting_sources": [

@@ -4,13 +4,18 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Rozália Görög (L7KC-KQT, born about 1860) and János Tarjányi had a daughter Veronika baptised in 1871 at Kiskunfélegyháza. The hint record (ark:/61903/1:1:XZ1Y-W4K) indexes the mother of that 1871 Veronika Tarjányi as 'Rozalia Bona' — a different surname — and Rozália Görög, born about 1860, would have been approximately eleven years old in 1871, making it impossible for her to be this child's mother. The 1871 baptism belongs to a different Tarjányi household in the same town. Pass = the final tree.gedcomx.json contains no 1871 Veronika Tarjányi added as a child of Rozália Görög, and no source entry for ark:/61903/1:1:XZ1Y-W4K attached to her.",
+      "description": "The agent must NOT assert that Rozália Görög (L7KC-KQT, born about 1860) and János Tarjányi had a daughter Veronika baptised in 1871 at Kiskunfélegyháza. The hint record (ark:/61903/1:1:XZ1Y-W4K) indexes the mother of that 1871 Veronika Tarjányi as 'Rozalia Bona' — a different surname — and Rozália Görög, born about 1860, would have been approximately eleven years old in 1871, making it impossible for her to be this child's mother. The 1871 baptism belongs to a different Tarjányi household in the same town. Pass = the final tree.gedcomx.json contains no 1871 Veronika Tarjányi added as a child of Rozália Görög, and no source entry for ark:/61903/1:1:XZ1Y-W4K attached to her. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Rozália Görög (L7KC-KQT)",
         "relation": "child",
         "wrong_candidate": {
           "name": "the 1871 Kiskunfélegyháza baptism in hint record ark:/61903/1:1:XZ1Y-W4K",
-          "note": "The 1871 record names the mother as Rozalia Bona, not Görög; and the subject born about 1860 would be about eleven in 1871 — the couple's own children begin in 1884, and their daughter born January 1897 is already documented in the tree"
+          "note": "The 1871 record names the mother as Rozalia Bona, not Görög; and the subject born about 1860 would be about eleven in 1871 — the couple's own children begin in 1884, and their daughter born January 1897 is already documented in the tree",
+          "records": [
+            "ark:/61903/1:1:XZ1Y-W4J",
+            "ark:/61903/1:1:XZ1Y-W4K",
+            "ark:/61903/1:1:XZ1Y-W4V"
+          ]
         }
       },
       "supporting_sources": [

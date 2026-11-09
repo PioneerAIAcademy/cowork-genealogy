@@ -4,13 +4,18 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Anna Macek (PID PW3W-LJN, b. 1851) and Václav Jičinský had a son named František, baptized 26 June 1867 in Rohovládova Bělá, Pardubice. Anna Macek's recorded birth year (1851) would make her only 16 at that baptism, and her recorded marriage to Václav Jičinský (7 February 1871) postdates the baptism by nearly four years — the child cannot belong to a marriage that had not yet occurred. Pass = the agent's final tree.gedcomx.json contains no František Jičinský child for Anna Macek, and no marriage-predating-birth inconsistency. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
+      "description": "The agent must NOT assert that Anna Macek (PID PW3W-LJN, b. 1851) and Václav Jičinský had a son named František, baptized 26 June 1867 in Rohovládova Bělá, Pardubice. Anna Macek's recorded birth year (1851) would make her only 16 at that baptism, and her recorded marriage to Václav Jičinský (7 February 1871) postdates the baptism by nearly four years — the child cannot belong to a marriage that had not yet occurred. Pass = the agent's final tree.gedcomx.json contains no František Jičinský child for Anna Macek, and no marriage-predating-birth inconsistency. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Anna Macek (PW3W-LJN)",
         "relation": "child",
         "wrong_candidate": {
           "name": "František Jičinský, baptized 26 June 1867, Rohovládova Bělá, Pardubice, Czechia",
-          "note": "the baptismal entry names only a bare forename mother (\"Anna\") and a common Czech husband-surname (\"Jičinský\") — consistent with a different Anna/Václav Jičinský couple in the same parish rather than this Anna Macek, whose own tree-recorded birth (1851) and marriage (7 Feb 1871) make her both too young and not yet married at the time of this baptism"
+          "note": "the baptismal entry names only a bare forename mother (\"Anna\") and a common Czech husband-surname (\"Jičinský\") — consistent with a different Anna/Václav Jičinský couple in the same parish rather than this Anna Macek, whose own tree-recorded birth (1851) and marriage (7 Feb 1871) make her both too young and not yet married at the time of this baptism",
+          "records": [
+            "ark:/61903/1:1:6PF8-X6G8",
+            "ark:/61903/1:1:6PF8-X6GC",
+            "ark:/61903/1:1:6PF8-X6GZ"
+          ]
         }
       },
       "supporting_sources": [
