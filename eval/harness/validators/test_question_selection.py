@@ -27,6 +27,11 @@ import re
 
 import pytest
 
+from harness.skill_runner import (
+    strip_agent_return_trailer,
+    subject_reply_text,
+    tail_after_final_rule,
+)
 from validators_lib import assert_no_section_deletions
 
 
@@ -107,6 +112,118 @@ def test_new_question_not_record_scoped(before_state, after_state, test):
     assert not offenders, (
         "question(s) scoped to a record rather than the fact sought — "
         "record choice belongs to research-plan:\n  - "
+        + "\n  - ".join(offenders)
+    )
+
+
+# --- The hand-back itself must not name a record target -----------------
+
+def _head_before_final_rule(text: str) -> str:
+    """Everything before the return's final `---` line. Mirrors
+    `tail_after_final_rule` (skill_runner.py) on the other side of the cut."""
+    stripped = strip_agent_return_trailer(text or "")
+    lines = stripped.splitlines()
+    last = None
+    in_fence = False
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith("```"):
+            in_fence = not in_fence
+            continue
+        if not in_fence and line.strip() == "---":
+            last = i
+    if last is None:
+        return stripped
+    return "\n".join(lines[:last])
+
+
+def _last_nonblank_line(text: str) -> str:
+    for line in reversed((text or "").splitlines()):
+        if line.strip():
+            return line.strip()
+    return ""
+
+
+_SENTENCE_ABBREVIATIONS = frozenset(
+    {"mr", "mrs", "ms", "dr", "sr", "jr", "st", "vs", "etc", "co", "no"}
+)
+
+
+def _last_sentence(text: str) -> str:
+    """The last sentence of `text`.
+
+    `summary_for_user` paragraph 2 is specified as exactly one sentence
+    (question-selection.md "Return contract"), so this is a tighter target
+    than the last blank-line-delimited paragraph: the model does not always
+    insert the blank line between its two paragraphs, which merges
+    paragraph 1's legitimately record-citing evidence explanation into what
+    a paragraph-split would call "the last paragraph" and false-positives
+    this validator on content paragraph 2 never contained.
+
+    A naive split on [.!?] plus whitespace breaks on genealogy's own
+    abbreviations ("Paul Sr. was his father" is not two sentences), so a
+    split right after one of `_SENTENCE_ABBREVIATIONS` is rejoined to the
+    previous piece instead of starting a new "sentence"."""
+    stripped = (text or "").strip()
+    if not stripped:
+        return ""
+    parts = re.split(r"(?<=[.!?])\s+", stripped)
+    sentences: list[str] = []
+    for part in parts:
+        if sentences:
+            last_word = re.search(r"(\w+)\.$", sentences[-1])
+            if last_word and last_word.group(1).lower() in _SENTENCE_ABBREVIATIONS:
+                sentences[-1] = sentences[-1] + " " + part
+                continue
+        sentences.append(part)
+    return sentences[-1].strip() if sentences else ""
+
+
+def _project_has_planned_item(before: dict) -> bool:
+    """True iff any plan item is already `planned` or `in_progress` --
+    i.e. already weighed by research-plan, so naming it is describing the
+    plan, not choosing a record (issue #4166's carve-out). Same two
+    statuses `test_research_exhaustiveness.py` treats as "still
+    outstanding" for the same reason."""
+    for plan in before.get("plans") or []:
+        for item in plan.get("items") or []:
+            if item.get("status") in ("planned", "in_progress"):
+                return True
+    return False
+
+
+def test_handback_not_record_scoped(before_state, text_response, test, agent_returns=None):
+    """The hand-back (caller lines + `summary_for_user`) must not name a
+    record type, collection, repository, jurisdiction-as-record-source or
+    census/record year. Choosing those is research-plan's job (SKILL.md
+    "Return contract"); naming one here is the same defect
+    `test_new_question_not_record_scoped` catches in the question text
+    itself, one layer further out — issue #4166.
+
+    Runs on every question-selection test, not tag-gated: the population is
+    suite-wide (issue #4166, "Measured"). The one exemption is a project
+    that already has a `planned` plan item — the record choice was already
+    weighed by research-plan, and `stay-inside-objective-scope.json` (plus
+    its `direct-` twin) expect the hand-back to describe that item as the
+    plan already states it.
+    """
+    before = before_state.get("research_json")
+    if before is None:
+        pytest.skip("missing research.json")
+    if _project_has_planned_item(before):
+        pytest.skip("a planned plan item already exists — naming it is expected")
+    reply = subject_reply_text(agent_returns, text_response, "question-selection", test)
+    if not reply:
+        pytest.skip("question-selection made no return")
+    caller_line = _last_nonblank_line(_head_before_final_rule(reply))
+    summary_tail = _last_sentence(tail_after_final_rule(reply))
+    offenders: list[str] = []
+    for label, snippet in (("next-step hint", caller_line), ("summary_for_user", summary_tail)):
+        for pattern in _RECORD_SCOPED_PATTERNS:
+            if re.search(pattern, snippet, re.IGNORECASE):
+                offenders.append(f"{label} names a record (matched /{pattern}/): {snippet!r}")
+                break
+    assert not offenders, (
+        "hand-back names a record target that only research-plan can weigh:\n  - "
         + "\n  - ".join(offenders)
     )
 
