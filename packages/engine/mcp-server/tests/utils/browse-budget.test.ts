@@ -69,9 +69,13 @@ describe("checkImageBrowseCap — per-user scope for a connector call naming no 
       checkImageBrowseCap({ imageId: img(21) }, undefined, "image_transcribe", userA),
     ).rejects.toThrow(/Image cap reached: 20 distinct images from image group 004884748/);
 
-    // user-b has read nothing yet: its own first read of the same group must
-    // still succeed — the refusal above must not have spent user-b's budget.
-    const ticket = await checkImageBrowseCap({ imageId: img(1) }, undefined, "image_transcribe", userB);
+    // user-b has read nothing yet: a NEW image (one userA never touched) must
+    // still succeed for user-b — if the cap were shared, userA's 21st-image
+    // refusal above would already have exhausted it. (A re-read of an image
+    // userA already counted, like img(1), would pass either way, since a
+    // re-read of an already-seen image never counts against the cap — it
+    // would not catch a shared bucket.)
+    const ticket = await checkImageBrowseCap({ imageId: img(21) }, undefined, "image_transcribe", userB);
     expect(ticket).toBeDefined();
   });
 

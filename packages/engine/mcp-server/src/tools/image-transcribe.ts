@@ -54,10 +54,6 @@ import type {
 // their import path after the extraction to src/utils/ (issue #2183).
 export { OCR_MAX_TOKENS, MAX_OCR_INPUT_BYTES };
 
-// The digest's bounded excerpt (issue #2489): enough for a caller to triage a
-// staged transcription without asking for the full text.
-const DIGEST_EXCERPT_CHARS = 300;
-
 // Connector time budget (self-hosted beta E5, issue #3996). Claude's per-call
 // timeout was measured at 230s (issue #3529 item 4, 2026-11-08); 180s leaves
 // room for the trip both ways and the staging write. The deadline starts when
