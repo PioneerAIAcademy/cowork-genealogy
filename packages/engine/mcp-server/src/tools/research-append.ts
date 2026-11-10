@@ -1274,6 +1274,118 @@ function rejectedLinkInvariants(
   ];
 }
 
+/** A `person_evidence` link is superseded by the link that replaces it: another
+ *  existing entry for the same assertion (§6: append the corrected link, then
+ *  point the old one at it). Checked only on the op that sets the pointer, so a
+ *  document written before this rule stays editable. A pointer at another
+ *  assertion's link retires valid evidence: a batch that guessed its own new
+ *  ids pointed six links at another record's live links, and every one of the
+ *  five cross-assertion pointers in the committed e2e corpus retired a valid
+ *  link. Ops apply in batch order, so a replacement appended earlier in the
+ *  same call counts. The target must itself be live, or two links could retire
+ *  each other and leave the assertion with none. A pointer the engine wrote at
+ *  a rejection (`retireRejectedLinks`) names that `rj_` entry: it is accepted
+ *  when the rejection is for the same pair, and an update re-sending the stored
+ *  pointer unchanged is not setting it. */
+function supersedeTargetInvariants(
+  op: any,
+  entry: any,
+  research: any,
+  priorPair?: { superseded_by: unknown },
+): string[] {
+  const set =
+    op.op === "append"
+      ? op.entry?.superseded_by
+      : Object.prototype.hasOwnProperty.call(op.fields ?? {}, "superseded_by")
+        ? op.fields.superseded_by
+        : undefined;
+  if (typeof set !== "string" || set === "") return [];
+  if (op.op === "update" && priorPair?.superseded_by === set) return [];
+  const how =
+    "Append the replacement link first, read its id from that call's `results[].entryId`, " +
+    "then update this one with only { superseded_by: \"<that id>\" }.";
+  if (set === entry.id) {
+    return [`person_evidence ${entry.id} cannot be superseded by itself. ${how}`];
+  }
+  const target = ((research?.person_evidence ?? []) as any[]).find((pe: any) => pe?.id === set);
+  if (!target) {
+    const rejection = ((research?.rejected_links ?? []) as any[]).find((rj: any) => rj?.id === set);
+    if (rejection && rejection.assertion_id === entry.assertion_id && rejection.person_id === entry.person_id) {
+      return [];
+    }
+    return [
+      `person_evidence ${entry.id}: superseded_by '${set}' names no person_evidence entry, and no ` +
+        `rejection of this assertion and person. ${how}`,
+    ];
+  }
+  if (target.assertion_id !== entry.assertion_id) {
+    return [
+      `person_evidence ${entry.id} (assertion '${entry.assertion_id}') cannot be superseded by '${set}', ` +
+        `which links a different assertion ('${target.assertion_id}'). A link is superseded only by the ` +
+        `link that replaces it for the same assertion. ${how}`,
+    ];
+  }
+  if (target.superseded_by) {
+    return [
+      `person_evidence ${entry.id} cannot be superseded by '${set}': '${set}' is itself superseded ` +
+        `(by '${target.superseded_by}'), so the assertion would be left with no live link. Point it at ` +
+        `the live link that replaces it.`,
+    ];
+  }
+  return [];
+}
+
+/** A link for an assertion whose link to the same tree person began as an
+ *  attachment link (live or superseded) replaces an unchecked candidate, and
+ *  other attachment links are not corroboration: it is `confident` only when a
+ *  checked link from another source ties that person. Checked on every route to
+ *  `confident`: every append (one arriving already superseded too, since a later
+ *  update could revive it), and every update leaving a live `confident` link
+ *  except an edit to a link that was already live and `confident` on the same
+ *  pair. So a `probable` replacement cannot be raised in place, followed by a
+ *  `confident` correction, moved onto the person, or revived, once the
+ *  attachment link is superseded. A link to a different person is not capped:
+ *  that is main's general doctrine. The person-evidence rule said so in prose,
+ *  and a unit run still wrote `confident` on one record three times in three. */
+function attachmentReplacementTierInvariants(
+  op: any,
+  entry: any,
+  research: any,
+  priorPair?: { assertion_id: unknown; person_id: unknown; superseded_by: unknown; confidence: unknown },
+): string[] {
+  if (entry?.confidence !== "confident") return [];
+  if (op.op === "update") {
+    if (entry.superseded_by) return [];
+    const samePair = priorPair?.assertion_id === entry.assertion_id && priorPair?.person_id === entry.person_id;
+    if (priorPair?.confidence === "confident" && samePair && !priorPair?.superseded_by) return [];
+  } else if (op.op !== "append") {
+    return [];
+  }
+  const all = ((research?.person_evidence ?? []) as any[]).filter((pe: any) => pe && pe.id !== entry.id);
+  const began = all.some(
+    (pe: any) => pe.assertion_id === entry.assertion_id && pe.person_id === entry.person_id && isAttachmentLink(pe),
+  );
+  if (!began) return [];
+  const links = all.filter((pe: any) => pe.superseded_by == null);
+  const assertions = new Map<string, any>(
+    ((research?.assertions ?? []) as any[]).filter((a: any) => typeof a?.id === "string").map((a: any) => [a.id, a]),
+  );
+  const source = capSource(assertions.get(entry.assertion_id));
+  const corroborated = links.some(
+    (pe: any) =>
+      pe.person_id === entry.person_id &&
+      !isAttachmentLink(pe) &&
+      pe.confidence !== "speculative" &&
+      capSource(assertions.get(pe.assertion_id)) !== source,
+  );
+  if (corroborated) return [];
+  return [
+    `person_evidence for '${entry.assertion_id}' replaces an unverified attachment link, and no checked ` +
+      `link from another source ties ${entry.person_id}: attachment links are not corroboration, so a ` +
+      `link resting on this one record is 'probable', not 'confident'. Write it with confidence: "probable".`,
+  ];
+}
+
 function personEvidenceInvariants(entry: any, research: any): string[] {
   if (entry.confidence !== "confident") return [];
   const assertions: any[] = research.assertions ?? [];
@@ -9427,6 +9539,8 @@ function applyOne(
         );
       }
     }
+    invariantErrors.push(...supersedeTargetInvariants(op, resultEntry, research, priorPair));
+    invariantErrors.push(...attachmentReplacementTierInvariants(op, resultEntry, research, priorPair));
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
     invariantErrors.push(...coreIdentifierConflictInvariants(resultEntry));
     // A REFUSAL, not a warning. The lead's standing ruling on issue #2272 is
@@ -9445,8 +9559,8 @@ function applyOne(
     // the trap the score gate avoids too. Keyed on the op, not the field: an
     // APPEND that arrives already carrying `superseded_by` is a new link, and
     // exempting it let any confident link on a contradicted persona through
-    // with an invented supersede pointer (the validator does not check that
-    // a person_evidence `superseded_by` names an existing entry).
+    // with an invented supersede pointer (the document validator does not check
+    // the pointer; `supersedeTargetInvariants` checks it only on the op that sets it).
     invariantErrors.push(
       ...(op.op === "update" && resultEntry.superseded_by
         ? []

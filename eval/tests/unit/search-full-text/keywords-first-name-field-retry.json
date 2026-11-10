@@ -15,6 +15,7 @@
     "fulltext-search-flynn-probate-empty",
     "fulltext-search-flynn-estate-by-name",
     "wiki-read-any",
+    "source-attachments-fts-name-field-retry",
     "wiki-search-any"
   ],
   "execution": {
