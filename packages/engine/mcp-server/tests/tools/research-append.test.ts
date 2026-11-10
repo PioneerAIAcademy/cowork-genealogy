@@ -648,7 +648,7 @@ describe("research_append (Phase 1)", () => {
       // proof-conclusion lands the concluded value by setting `primary`, and
       // `primary` is not a detach trigger, so the backlink survives a
       // conclusion. The correction must still land — a known-wrong concluded
-      // value on the upload target is worse — but never quietly.
+      // value on the deliverable is worse — but never quietly.
       await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink({ primary: true }));
 
       const r = await researchAppend({
@@ -690,7 +690,7 @@ describe("research_append (Phase 1)", () => {
 
     it("(15) warns when a correction DELETES a fact field, blank string included", async () => {
       // A blank string withdraws a claim exactly as null does, and is the
-      // likelier typo. Either way it deleted data from the upload target, so it
+      // likelier typo. Either way it deleted data from the deliverable, so it
       // must not be silent — the shape the malformed branch was added for.
       for (const blank of ["", "   "]) {
         await writeProject(
@@ -4350,6 +4350,60 @@ describe("research_append (Phase 3)", () => {
         fields: { tier: "possible", claims: [nameClaim("name", "possible", "gap")] },
       } as never);
       expect(errorsOf(withClaims) ?? []).toEqual([]);
+    });
+  });
+
+  // #4366: `claims` is optional and the schema types it as an array, so a
+  // null is refused rather than persisted into a file that fails its schema.
+  describe("claims: null is refused; omission and [] are the ways to say none", () => {
+    const nameClaim = { claim: "name", proof_tier: "possible", shortfall: "gap", supporting_assertion_ids: ["a_001"], name: { person: "I1", given: "John" } };
+    const summary = (extra: Record<string, unknown>) => ({
+      question_id: "q_001", tier: "possible", vehicle: "summary", shortfall: "gap",
+      supporting_assertion_ids: ["a_001"], resolved_conflict_ids: [],
+      exhaustive_search_summary: "Searched census + vitals", narrative_markdown: "## Conclusion\n...",
+      ...extra,
+    });
+    const linked = () => phase3Research();
+
+    it("an append with claims: null is refused, nothing is written, and the error says to omit it", async () => {
+      await writeProject(linked());
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "append", entry: summary({ claims: null }),
+      } as never);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toContain("'claims' is null — omit the field");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+
+      const omitted = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "append", entry: summary({}),
+      } as never);
+      expect(errorsOf(omitted) ?? []).toEqual([]);
+      expect(omitted.ok).toBe(true);
+    });
+
+    it("a project already holding claims: null still accepts an unrelated write", async () => {
+      const research = linked();
+      research.proof_summaries.push({ id: "ps_001", ...summary({ claims: null }) });
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir, section: "project", op: "update", fields: { title: "Smith origins" },
+      } as never);
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect((await readResearch()).project.title).toBe("Smith origins");
+    });
+
+    it("an update with claims: [] clears the claims of a summary that holds them", async () => {
+      const research = linked();
+      research.proof_summaries.push({ id: "ps_001", ...summary({ claims: [nameClaim] }) });
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001", fields: { claims: [] },
+      } as never);
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect((await readResearch()).proof_summaries[0].claims).toEqual([]);
     });
   });
 

@@ -1,0 +1,359 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~VT8T-XYW"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_13763425416",
+        "ark": "ark:/61903/1:1:VT8T-XYW",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "1a67e514-9b05-4049-98dc-0b36c75d5c4f",
+            "type": "BirthName",
+            "surname": "Tollman",
+            "given": "Edward"
+          }
+        ],
+        "facts": [
+          {
+            "id": "967d2356-f164-4974-9e5c-699853e77ea3",
+            "type": "Census",
+            "primary": true,
+            "date": "1875",
+            "standard_date": "1875",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_13763425417",
+        "ark": "ark:/61903/1:1:VT8T-XY4",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "c8dd6a7c-338d-4203-9851-9eae1ee7b425",
+            "type": "BirthName",
+            "surname": "Tollman",
+            "given": "Clarissa"
+          }
+        ],
+        "facts": [
+          {
+            "id": "9b9f646e-f4f1-4ec3-8635-1d4f0c2f1d04",
+            "type": "Census",
+            "primary": true,
+            "date": "1875",
+            "standard_date": "1875",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_13763425418",
+        "ark": "ark:/61903/1:1:VT8T-XYH",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "eea8ee64-94be-445f-8fbf-242fc033f4cd",
+            "type": "BirthName",
+            "surname": "Tollman",
+            "given": "Frances M"
+          }
+        ],
+        "facts": [
+          {
+            "id": "387166e6-e79e-4479-a2c2-a8205a297c1d",
+            "type": "Census",
+            "primary": true,
+            "date": "1875",
+            "standard_date": "1875",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_13763425419",
+        "ark": "ark:/61903/1:1:VT8T-XYC",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "3ff8172f-31a1-4c7c-b9a6-967c56496c35",
+            "type": "BirthName",
+            "surname": "Tollman",
+            "given": "Nellie L"
+          }
+        ],
+        "facts": [
+          {
+            "id": "4c30d6ef-c531-4203-99be-6f2d8c63c774",
+            "type": "Census",
+            "primary": true,
+            "date": "1875",
+            "standard_date": "1875",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_13763425420",
+        "ark": "ark:/61903/1:1:VT8T-XYZ",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "99394cbf-bf22-4de6-88a2-20d0199648a5",
+            "type": "BirthName",
+            "surname": "Tollman",
+            "given": "Phebe L"
+          }
+        ],
+        "facts": [
+          {
+            "id": "be465219-f913-41e1-bf62-8fef6eeb8c4b",
+            "type": "Census",
+            "primary": true,
+            "date": "1875",
+            "standard_date": "1875",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_13763425421",
+        "ark": "ark:/61903/1:1:VT8T-XY8",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "8dfa5574-b084-44b7-a172-09cc7cf7b11e",
+            "type": "BirthName",
+            "surname": "Tollman",
+            "given": "Blanch L"
+          }
+        ],
+        "facts": [
+          {
+            "id": "0952c58e-dd97-4812-a2c4-b596c300bf89",
+            "type": "Census",
+            "primary": true,
+            "date": "1875",
+            "standard_date": "1875",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_13763425422",
+        "ark": "ark:/61903/1:1:VT8T-XYD",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "9d523c3d-ff84-4248-ac56-3b385b9d5157",
+            "type": "BirthName",
+            "surname": "Tollman",
+            "given": "Theodore B"
+          }
+        ],
+        "facts": [
+          {
+            "id": "9ffc0ccd-f3bc-49f4-aedc-0978872d0fd1",
+            "type": "Census",
+            "primary": true,
+            "date": "1875",
+            "standard_date": "1875",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_13763425423",
+        "ark": "ark:/61903/1:1:VT8T-XY6",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "a36fb3ad-a9fb-4773-b995-6e2cbdf9c805",
+            "type": "BirthName",
+            "surname": "Bragg",
+            "given": "Ellis"
+          }
+        ],
+        "facts": [
+          {
+            "id": "25d11980-9c15-474e-b3f0-03e35ac9dead",
+            "type": "Census",
+            "primary": true,
+            "date": "1875",
+            "standard_date": "1875",
+            "place": "Essex, Essex, New York, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_22109732404",
+        "resource_type": "Record",
+        "title": "Household of Edward Tollman, \"New York, State Census, 1875\"",
+        "citation": "\"New York, State Census, 1875\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VT8T-XYW : Tue Jul 23 17:47:34 UTC 2024), Entry for Edward Tollman and Clarissa Tollman, 1875.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9MCR-B1ZQ",
+        "coverage": {
+          "record_type": "Census"
+        }
+      },
+      {
+        "id": "sd_c_1918735",
+        "resource_type": "Collection",
+        "title": "New York, State Census, 1875",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1918735",
+        "coverage": {
+          "place_rep_id": "339",
+          "date_range": "1875/1875",
+          "record_type": "Census",
+          "standard_place": "New York, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-G5MK-D8L",
+        "coverage": {
+          "place_rep_id": "393125",
+          "date_range": "1875",
+          "record_type": "Census",
+          "standard_place": "Essex, New York, United States"
+        }
+      },
+      {
+        "id": "sd_p_13763425417",
+        "resource_type": "Person",
+        "title": "Clarissa Tollman, \"New York, State Census, 1875\"",
+        "citation": "\"New York, State Census, 1875\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VT8T-XY4 : Tue Jul 23 17:47:34 UTC 2024), Clarissa Tollman in entry for Edward Tollman, 1875.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:VT8T-XY4"
+      },
+      {
+        "id": "sd_p_13763425423",
+        "resource_type": "Person",
+        "title": "Ellis Bragg, \"New York, State Census, 1875\"",
+        "citation": "\"New York, State Census, 1875\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VT8T-XY6 : Tue Jul 23 17:47:34 UTC 2024), Ellis Bragg in entry for Edward Tollman, 1875.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:VT8T-XY6"
+      },
+      {
+        "id": "sd_p_13763425416",
+        "resource_type": "Person",
+        "title": "Edward Tollman, \"New York, State Census, 1875\"",
+        "citation": "\"New York, State Census, 1875\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VT8T-XYW : Tue Jul 23 17:47:34 UTC 2024), Edward Tollman, 1875.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:VT8T-XYW"
+      },
+      {
+        "id": "sd_p_13763425418",
+        "resource_type": "Person",
+        "title": "Frances M Tollman, \"New York, State Census, 1875\"",
+        "citation": "\"New York, State Census, 1875\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VT8T-XYH : Tue Jul 23 17:47:34 UTC 2024), Frances M Tollman in entry for Edward Tollman, 1875.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:VT8T-XYH"
+      },
+      {
+        "id": "sd_p_13763425419",
+        "resource_type": "Person",
+        "title": "Nellie L Tollman, \"New York, State Census, 1875\"",
+        "citation": "\"New York, State Census, 1875\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VT8T-XYC : Tue Jul 23 17:47:34 UTC 2024), Nellie L Tollman in entry for Edward Tollman, 1875.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:VT8T-XYC"
+      },
+      {
+        "id": "sd_p_13763425422",
+        "resource_type": "Person",
+        "title": "Theodore B Tollman, \"New York, State Census, 1875\"",
+        "citation": "\"New York, State Census, 1875\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VT8T-XYD : Tue Jul 23 17:47:34 UTC 2024), Theodore B Tollman in entry for Edward Tollman, 1875.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:VT8T-XYD"
+      },
+      {
+        "id": "sd_p_13763425421",
+        "resource_type": "Person",
+        "title": "Blanch L Tollman, \"New York, State Census, 1875\"",
+        "citation": "\"New York, State Census, 1875\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VT8T-XY8 : Tue Jul 23 17:47:34 UTC 2024), Blanch L Tollman in entry for Edward Tollman, 1875.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:VT8T-XY8"
+      },
+      {
+        "id": "sd_p_13763425420",
+        "resource_type": "Person",
+        "title": "Phebe L Tollman, \"New York, State Census, 1875\"",
+        "citation": "\"New York, State Census, 1875\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VT8T-XYZ : Tue Jul 23 17:47:34 UTC 2024), Phebe L Tollman in entry for Edward Tollman, 1875.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:VT8T-XYZ"
+      },
+      {
+        "id": "sd_auto_M9JT-92D",
+        "resource_type": "auto",
+        "title": "United States, Residences, Census, from 1793 to 1964",
+        "coverage": {
+          "place_rep_id": "1",
+          "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+          "standard_place": "United States"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_4608625"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:33SQ-G5MK-D8L",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:33SQ-G5MK-D8L"
+  }
+}
