@@ -142,7 +142,7 @@ function normalizeKey(s: string): string {
 
 /** `normalizeKey` with diacritics folded: "Parácuaro" and "Paracuaro" compare
  *  equal. */
-function foldPlaceName(s: string): string {
+export function foldPlaceName(s: string): string {
   return normalizeKey(s).normalize("NFD").replace(/\p{Diacritic}/gu, "");
 }
 
