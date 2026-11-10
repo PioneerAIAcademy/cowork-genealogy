@@ -681,6 +681,19 @@ that apply:
     wrap-up leave it `in_progress`;
   - the router dispatches it after the step's first search-group spawn, because a turn that
     search-hints opens admits no search.
+- **An agent's `Hand-back:` line is routed by step group** (issue #4358, lead-accepted
+  2026-11-09). Measured on the 7 step-mode e2e logs: of 12 same-group hand-backs from
+  `search-records`, 3 were spawned in the step, 3 only in a later step and 6 never; none was
+  offered in the reply.
+  - Same group as the returning agent (`search-external-sites`, `record-structurer`,
+    `search-full-text`, `search-images` after `search-records`): `step_boundary.GROUPS` admits
+    it, so it joins the step's fan-out in the same turn.
+  - Another group (`research-plan`, `research-exhaustiveness`, `person-evidence`):
+    `step_allowed` refuses the spawn mid-turn, so the report names it and the
+    `project_context` ladder runs it next turn. Offering every hand-back as the next step
+    was rejected: it adds a turn the group rule does not require.
+  - Not a spawnable agent (`image-reader`, `extraction_append`, `image_transcribe`,
+    "to caller", "none"): ignored.
 
 ### E. One question per run
 - **One writer rule replaces the existing in-flight gate.** `newQuestionWhileSearchInFlightInvariants`

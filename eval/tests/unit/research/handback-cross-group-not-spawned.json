@@ -1,0 +1,69 @@
+{
+  "test": {
+    "id": "ut_research_hb2",
+    "skill": "research",
+    "name": "A cross-group Hand-back from search-records is named, not spawned",
+    "type": "positive",
+    "description": "Issue #4358, research/SKILL.md search step. search-records (stubbed) returns a Hand-back to research-plan, which is in another step group, so the router names it in the report and does not spawn it mid-turn. Asserted from the hook records by test_handback_routing_follows_the_step_group (handback-no-spawn:research-plan).",
+    "tags": [
+      "routing",
+      "routes-to:search-records",
+      "step-mode",
+      "handback-no-spawn:research-plan"
+    ]
+  },
+  "input": {
+    "user_message": "Research the next open question on this project — drive the workflow forward.",
+    "scenario": "anders-unna-marriage-search"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "question-selection",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "record-structurer",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "person-evidence",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-exhaustiveness",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "proof-conclusion",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "gps-mentor",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "research-plan",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state; write a one-line summary and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test of research/SKILL.md search step. Spawns are asserted deterministically from the hook records (test_routes_to_expected_skill, test_handback_routing_follows_the_step_group). You cannot see them; do not grade them.",
+    "Every callee is STUBBED, so no project state changes by construction. Do not mark Correctness or Completeness down for missing research.json changes, and do not penalize the router for not completing the research cycle. Grade only whether its narration is honest about what it delegated."
+  ]
+}

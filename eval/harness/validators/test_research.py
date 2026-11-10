@@ -1544,6 +1544,32 @@ def test_search_hit_review_yes_extracts_the_matches(test, builtin_tool_calls):
     assert results_refs == sorted(wanted), f"the sources' resultsRefs {results_refs} are not the hitRefs {sorted(wanted)}"
 
 
+_HANDBACK_SPAWNS_PREFIX = "handback-spawns:"
+_HANDBACK_NO_SPAWN_PREFIX = "handback-no-spawn:"
+
+
+def test_handback_routing_follows_the_step_group(test, builtin_tool_calls):
+    """Tag-gated (``handback-spawns:<agent>`` / ``handback-no-spawn:<agent>``).
+    research/SKILL.md's search step routes an agent return's ``Hand-back: <owner>``
+    line by step group (issue #4358): an owner in the returning agent's group is
+    spawned in the same turn; any other owner is named in the report and not
+    spawned. Read from the hook records, which the judge cannot see."""
+    from harness.skill_runner import spawn_prompts
+
+    spawns = _data_tag_values(test, _HANDBACK_SPAWNS_PREFIX)
+    refused = _data_tag_values(test, _HANDBACK_NO_SPAWN_PREFIX)
+    if not spawns and not refused:
+        pytest.skip("not a hand-back routing test")
+    problems = []
+    for agent in spawns:
+        if not spawn_prompts(builtin_tool_calls, agent):
+            problems.append(f"the Hand-back to {agent} was not spawned")
+    for agent in refused:
+        if spawn_prompts(builtin_tool_calls, agent):
+            problems.append(f"{agent} is in another step group and was spawned mid-turn")
+    assert not problems, "; ".join(problems)
+
+
 def _marked_unconfirmed(reply: str, title: str) -> bool:
     """True when a sentence of the reply holding `title` also says it is unconfirmed, which
     the sources sentence allows ("otherwise say it is unconfirmed"). A sentence, not a
