@@ -31,7 +31,7 @@ describe("project_context", () => {
     await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree, null, 2));
   }
 
-  it("projects a populated project: open questions, persons with sourceRefs, sources with recordIds", async () => {
+  it("projects a populated project: open questions, persons, sources with recordIds", async () => {
     await writeProject(
       {
         project: { id: "rp_001", objective: "Test", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -91,11 +91,10 @@ describe("project_context", () => {
       { id: "q_003", question: "Where was he in 1880?" },
       { id: "q_004", question: "Declared exhaustive" },
     ]);
-    const noFamily = { spouseIds: [], parentIds: [], childIds: [] };
     expect(r.persons).toEqual([
-      { id: "I1", name: "William Bottermiller", gender: "Male", sourceRefs: ["S1", "S2"], ...noFamily, diedByYear: 1929 },
-      { id: "I2", name: "Mary Bottermiller", gender: "Female", sourceRefs: [], ...noFamily, diedByYear: null },
-      { id: "I3", name: null, gender: "Male", sourceRefs: [], ...noFamily, diedByYear: null },
+      { id: "I1", name: "William Bottermiller", gender: "Male", diedByYear: 1929 },
+      { id: "I2", name: "Mary Bottermiller", gender: "Female" },
+      { id: "I3", gender: "Male" },
     ]);
     expect(r.sources).toEqual([
       {
@@ -112,7 +111,7 @@ describe("project_context", () => {
         recordIds: ["ancestry:coll:42"],
         assertionCount: 1,
       },
-      { id: "src_003", repository: "NARA", gedcomxSourceDescriptionId: "S2", recordIds: [], assertionCount: 0 },
+      { id: "src_003", repository: "NARA", gedcomxSourceDescriptionId: "S2", assertionCount: 0 },
     ]);
   });
 
@@ -142,12 +141,12 @@ describe("project_context", () => {
     const r = await projectContext({ projectPath: dir }, LOCAL);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    const byId = Object.fromEntries(r.persons.map((p) => [p.id, p]));
-    expect(byId.I1).toMatchObject({ spouseIds: ["I2", "I4"], parentIds: [], childIds: ["I3"], diedByYear: null });
-    expect(byId.I2).toMatchObject({ spouseIds: ["I1"], parentIds: [], childIds: ["I3"], diedByYear: 1858 });
-    expect(byId.I3).toMatchObject({ spouseIds: [], parentIds: ["I1", "I2"], childIds: [], diedByYear: null });
-    expect(byId.I4).toMatchObject({ spouseIds: ["I1"], diedByYear: null });
-    expect(byId.I5).toMatchObject({ spouseIds: [], parentIds: [], childIds: [], diedByYear: null });
+    const byId = Object.fromEntries((r.persons ?? []).map((p) => [p.id, p]));
+    expect(byId.I1).toEqual({ id: "I1", gender: "Male", spouseIds: ["I2", "I4"], childIds: ["I3"] });
+    expect(byId.I2).toEqual({ id: "I2", gender: "Female", spouseIds: ["I1"], childIds: ["I3"], diedByYear: 1858 });
+    expect(byId.I3).toEqual({ id: "I3", gender: "Male", parentIds: ["I1", "I2"] });
+    expect(byId.I4).toEqual({ id: "I4", gender: "Female", spouseIds: ["I1"] });
+    expect(byId.I5).toEqual({ id: "I5", gender: "Male" });
   });
 
   it("reads diedByYear as the year a person was certainly dead by (#2537)", async () => {
@@ -176,13 +175,13 @@ describe("project_context", () => {
     const r = await projectContext({ projectPath: dir }, LOCAL);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    const byId = Object.fromEntries(r.persons.map((p) => [p.id, p.diedByYear]));
+    const byId = Object.fromEntries((r.persons ?? []).map((p) => [p.id, p.diedByYear ?? null]));
     // the latest possible year, never the earliest: a death "Abt 1890" is not before 1891,
     // and one "Bef 1870" can fall in 1869, after an 1865 household
     expect(byId).toEqual({ I1: 1891, I2: 1870, I3: 1874, I4: null, I5: null, I6: null });
   });
 
-  it("returns the objective verbatim and untruncated, and null when absent (#3026)", async () => {
+  it("returns the objective verbatim and untruncated, and leaves it out when absent (#3026)", async () => {
     const objective =
       "Identify the parents of Rosalind Hartwell (b. ca. 1855, Ohio). Her recorded surname 'Hartwell' is " +
       "unverified — it may be her birth (maiden) name or the married name she took from her husband.";
@@ -199,10 +198,11 @@ describe("project_context", () => {
       { persons: [], relationships: [], sources: [] },
     );
     const bare = await projectContext({ projectPath: dir }, LOCAL);
-    expect(bare.ok && bare.objective).toBeNull();
+    expect(bare.ok).toBe(true);
+    expect(bare).not.toHaveProperty("objective");
   });
 
-  it("returns the project's subject person ids, and [] when absent (#3516)", async () => {
+  it("returns the project's subject person ids, and leaves them out when absent (#3516)", async () => {
     await writeProject(
       { project: { id: "rp_001", objective: "x", subject_person_ids: ["I1", "I2"], status: "active", created: "2026-01-01", updated: "2026-01-01" } },
       { persons: [], relationships: [], sources: [] },
@@ -214,7 +214,8 @@ describe("project_context", () => {
       { persons: [], relationships: [], sources: [] },
     );
     const bare = await projectContext({ projectPath: dir }, LOCAL);
-    expect(bare.ok && bare.subjectPersonIds).toEqual([]);
+    expect(bare.ok).toBe(true);
+    expect(bare).not.toHaveProperty("subjectPersonIds");
   });
 
   it("claimKinds lists every kind the engine accepts", async () => {
@@ -226,7 +227,7 @@ describe("project_context", () => {
     expect(r.ok && r.claimKinds).toEqual([...CLAIM_KINDS]);
   });
 
-  it("returns empty arrays for an empty project", async () => {
+  it("leaves every empty list out of an empty project", async () => {
     await writeProject(
       { project: { id: "rp_001", objective: "Fresh", status: "active", created: "2026-01-01", updated: "2026-01-01" } },
       { persons: [], relationships: [], sources: [] },
@@ -237,15 +238,6 @@ describe("project_context", () => {
       buildId: readBuildInfo().version,
       projectStatus: "active",
       objective: "Fresh",
-      subjectPersonIds: [],
-      narrationGuidance: null,
-      subscriptions: [],
-      openQuestions: [],
-      questionStatuses: [],
-      persons: [],
-      sources: [],
-      localities: [],
-      awaitingUser: [],
       // Absent here: an optional section counts 0, a required one is null
       // because research_query would refuse it.
       sectionCounts: Object.fromEntries(
@@ -255,8 +247,193 @@ describe("project_context", () => {
         ]),
       ),
       unregisteredDisagreementCount: 0,
-      exhaustedImageGroups: [],
       claimKinds: ["relationship", "fact", "identity", "name", "finding"],
+    });
+  });
+
+  describe("the answer's shape: absent means null or empty", () => {
+    /** Every path holding null, "" or []. A null nextStep and the sectionCounts
+     *  values are the two places a null is an answer, so they are skipped. */
+    function emptyPaths(value: unknown, path = "$"): string[] {
+      if (value === null || value === "" || (Array.isArray(value) && value.length === 0)) return [path];
+      if (Array.isArray(value)) return value.flatMap((v, i) => emptyPaths(v, `${path}[${i}]`));
+      if (value && typeof value === "object") {
+        return Object.entries(value).flatMap(([k, v]) =>
+          k === "sectionCounts" || (k === "nextStep" && v === null) ? [] : emptyPaths(v, `${path}.${k}`),
+        );
+      }
+      return [];
+    }
+    const keys = (o: unknown) => Object.keys(o as object).sort();
+    const PROJECT = { id: "rp_001", status: "active", created: "2026-01-01", updated: "2026-01-01" };
+    const URL_A = "https://www.archion.de/de/alle-archive/baden-wuerttemberg/x/baiersbronn";
+    const browse = (group: string, count: number) =>
+      getProjectStore().appendText(
+        dir,
+        "results/image-browse.jsonl",
+        Array.from({ length: count }, (_, i) =>
+          `${JSON.stringify({ image_group: group, image_id: `${group}_${String(i + 1).padStart(5, "0")}`, tool: "image_transcribe", at: "2026-10-14T00:00:00Z" })}\n`,
+        ).join(""),
+      );
+
+    it("carries every documented field that has a value, and never sourceRefs or pagesRead", async () => {
+      await writeProject(
+        {
+          project: { ...PROJECT, objective: "Find I1's parents", subject_person_ids: ["I1"] },
+          researcher_profile: { narration_guidance: "Plain words.", subscriptions: ["ancestry"] },
+          questions: [{ id: "q_001", question: "Who were I1's parents?", status: "in_progress" }],
+          plans: [
+            {
+              id: "pl_001",
+              question_id: "q_001",
+              status: "active",
+              created: "2026-10-14",
+              items: [{ id: "pli_001", sequence: 1, status: "planned" }],
+            },
+          ],
+          sources: [{ id: "src_001", repository: "FamilySearch", gedcomx_source_description_id: "S1" }],
+          // Two linked birthplaces that disagree, and no conflict naming the pair.
+          assertions: [
+            { id: "a_1", source_id: "src_001", record_id: "ark:/61903/1:1:AAAA-111", fact_type: "birthplace", place: "England", extracted_for_question_ids: ["q_001"] },
+            { id: "a_2", source_id: "src_001", record_id: "ark:/61903/1:1:BBBB-222", fact_type: "birthplace", place: "Alabama", extracted_for_question_ids: ["q_001"] },
+          ],
+          person_evidence: [
+            { id: "pe_1", assertion_id: "a_1", person_id: "I1" },
+            { id: "pe_2", assertion_id: "a_2", person_id: "I1" },
+          ],
+          conflicts: [{ id: "c_1", status: "unresolved", blocks_question_ids: ["q_001"], competing_assertion_ids: [] }],
+          localities: [
+            {
+              id: "loc_001",
+              place: "Norway",
+              for_place: "Ringebu, Oppland, Norway",
+              time_period: "1870-1880",
+              jurisdictions: [{ name: "Ringebu, Oppland, Norway", date_range: "1838-" }],
+              collections: [{ id: "4237104", title: "Norway, Church Books", date_range: "1797-1958", person_count: 5, record_count: 12 }],
+              quirks: ["Indexed only at county level."],
+              pages_read: [{ section: "home", url: "u1", found: true }],
+            },
+          ],
+          log: [
+            {
+              id: "log_001",
+              plan_item_id: "pli_001",
+              performed: "2026-09-21T00:00:00.000Z",
+              tool: "external_site",
+              query: {},
+              outcome: "partial",
+              results_examined: 0,
+              external_site: { site: "archion", url_generated: URL_A, capture_received: false },
+              results_ref: null,
+            },
+            { id: "log_002", plan_item_id: "pli_001", performed: "2026-10-14T00:00:00Z", tool: "image_search", query: { imageGroupNumber: "004452257" }, outcome: "partial" },
+          ],
+        },
+        {
+          persons: [
+            {
+              id: "I1",
+              gender: "Male",
+              names: [{ id: "N1", given: "Ann", surname: "Doe", preferred: true, sources: [{ ref: "S1" }] }],
+              facts: [{ id: "F1", type: "Death", date: "1900", sources: [{ ref: "S1" }] }],
+              sources: [{ ref: "S1" }],
+            },
+            ...["I2", "I3", "I4", "I5", "I6"].map((id) => ({ id, gender: "Female" })),
+          ],
+          // Three birth parents of the subject: competing parent sets.
+          relationships: [
+            ...["I2", "I3", "I4"].map((p, n) => ({ id: `R${n}`, type: "ParentChild", parent: p, child: "I1" })),
+            { id: "R5", type: "Couple", person1: "I1", person2: "I5" },
+            { id: "R6", type: "ParentChild", parent: "I1", child: "I6" },
+          ],
+          sources: [{ id: "S1", title: "1880 census" }],
+        },
+      );
+      await browse("004452257", 20);
+      await writeFile(join(dir, "external-collections.json"), JSON.stringify({ places: { "Ohio, United States": { rows: [{ record_types: ["Census"] }] } } }));
+      await mkdir(join(dir, "uploads"), { recursive: true });
+      await writeFile(join(dir, "uploads", "census.pdf"), "pdf");
+
+      const r = await projectContext({ projectPath: dir }, LOCAL);
+      if (!r.ok) throw new Error(r.errors.join("; "));
+      // waitingPages and uploadUrl need a staged page and a hosted store; their own tests show them.
+      expect(keys(r)).toEqual(
+        [
+          "ok", "buildId", "projectStatus", "objective", "subjectPersonIds", "narrationGuidance", "subscriptions",
+          "openQuestions", "questionStatuses", "persons", "sources", "localities", "awaitingUser",
+          "exhaustedImageGroups", "claimKinds", "externalCollections", "sectionCounts",
+          "unregisteredDisagreementCount", "uploads",
+        ].sort(),
+      );
+      expect(keys(r.openQuestions?.[0])).toEqual(["id", "question"]);
+      expect(keys(r.questionStatuses?.[0])).toEqual(
+        ["id", "question", "state", "nextStep", "openConflictIds", "storedStatus", "unregisteredDisagreements", "competingParentSets"].sort(),
+      );
+      expect(r.persons?.find((p) => p.id === "I1")).toEqual({
+        id: "I1",
+        name: "Ann Doe",
+        gender: "Male",
+        spouseIds: ["I5"],
+        parentIds: ["I2", "I3", "I4"],
+        childIds: ["I6"],
+        diedByYear: 1900,
+      });
+      expect(keys(r.sources?.[0])).toEqual(["assertionCount", "gedcomxSourceDescriptionId", "id", "recordIds", "repository"]);
+      expect(keys(r.localities?.[0])).toEqual(["collections", "forPlace", "id", "jurisdictions", "place", "quirks", "timePeriod"]);
+      expect(keys(r.localities?.[0].jurisdictions?.[0])).toEqual(["dateRange", "name"]);
+      expect(keys(r.localities?.[0].collections?.[0])).toEqual(["dateRange", "id", "personCount", "recordCount", "title"]);
+      expect(keys(r.awaitingUser?.[0])).toEqual(["logId", "performed", "planItemId", "site", "urlGenerated"]);
+      expect(r.exhaustedImageGroups).toEqual([{ imageGroup: "004452257", imagesRead: 20, planItemIds: ["pli_001"] }]);
+      expect(keys(r.uploads?.[0])).toEqual(["hasText", "name", "uploaded"]);
+      expect(emptyPaths(r)).toEqual([]);
+      expect(JSON.stringify(r)).not.toMatch(/sourceRefs|pagesRead/);
+    });
+
+    it("leaves out every null, \"\" and [] in rows that hold nothing, keeping a null nextStep and sectionCounts", async () => {
+      await writeProject(
+        {
+          // No objective, no researcher_profile, no conflicts section (so sectionCounts.conflicts is null).
+          project: PROJECT,
+          questions: [
+            { id: "q_001" },
+            { id: "q_002", question: "Settled", status: "resolved" },
+          ],
+          proof_summaries: [{ id: "ps_001", question_id: "q_002" }],
+          sources: [{ id: "src_001" }],
+          assertions: [],
+          localities: [{ id: "loc_001", jurisdictions: [{ name: "Ohio" }], collections: [{ id: "1" }] }],
+          log: [
+            {
+              id: "log_001",
+              plan_item_id: null,
+              tool: "external_site",
+              query: {},
+              outcome: "partial",
+              results_examined: 0,
+              external_site: { site: "archion", url_generated: URL_A, capture_received: false },
+              results_ref: null,
+            },
+          ],
+        },
+        { persons: [{ id: "I1" }], relationships: [], sources: [] },
+      );
+      await browse("008230326", 20);
+
+      const r = await projectContext({ projectPath: dir }, LOCAL);
+      if (!r.ok) throw new Error(r.errors.join("; "));
+      expect(emptyPaths(r)).toEqual([]);
+      expect(r.persons).toEqual([{ id: "I1" }]);
+      expect(r.sources).toEqual([{ id: "src_001", assertionCount: 0 }]);
+      expect(r.localities).toEqual([{ id: "loc_001", jurisdictions: [{ name: "Ohio" }], collections: [{ id: "1" }] }]);
+      expect(r.openQuestions).toEqual([{ id: "q_001" }]);
+      expect(r.awaitingUser).toEqual([{ logId: "log_001", site: "archion", urlGenerated: URL_A }]);
+      expect(r.exhaustedImageGroups).toEqual([{ imageGroup: "008230326", imagesRead: 20 }]);
+      expect(r).not.toHaveProperty("objective");
+      expect(r).not.toHaveProperty("narrationGuidance");
+      expect(r).not.toHaveProperty("subscriptions");
+      // The two nulls that are answers stay.
+      expect(r.questionStatuses?.find((q) => q.id === "q_002")).toHaveProperty("nextStep", null);
+      expect(r.sectionCounts.conflicts).toBeNull();
     });
   });
 
@@ -331,14 +508,15 @@ describe("project_context", () => {
       const nineteen = reads("004452257", 19);
       await browseLog([...nineteen, nineteen[0]]);
       const r = await projectContext({ projectPath: dir }, LOCAL);
-      expect(r.ok && r.exhaustedImageGroups).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect(r).not.toHaveProperty("exhaustedImageGroups");
     });
 
     it("skips a torn line, and lists a film with no browse logged against a plan item", async () => {
       await writeProject({ project: PROJECT }, { persons: [], relationships: [], sources: [] });
       await browseLog(["{not json", ...reads("008230326", 20)]);
       const r = await projectContext({ projectPath: dir }, LOCAL);
-      expect(r.ok && r.exhaustedImageGroups).toEqual([{ imageGroup: "008230326", imagesRead: 20, planItemIds: [] }]);
+      expect(r.ok && r.exhaustedImageGroups).toEqual([{ imageGroup: "008230326", imagesRead: 20 }]);
     });
   });
 
@@ -430,7 +608,7 @@ describe("project_context", () => {
       const r = await projectContext({ projectPath: dir }, LOCAL);
       expect(r.ok).toBe(true);
       if (!r.ok) throw new Error("project_context failed");
-      return r.awaitingUser;
+      return r.awaitingUser ?? [];
     }
 
     it("lists an open partial hand-off with its plan item and timestamp", async () => {
@@ -501,7 +679,7 @@ describe("project_context", () => {
     });
   });
 
-  it("projects localities: snake→camel, omits guide_markdown, pagesRead = found sections only", async () => {
+  it("projects localities: snake→camel, omits guide_markdown and pages_read", async () => {
     await writeProject(
       {
         project: { id: "rp_001", objective: "T", status: "active", created: "2026-01-01", updated: "2026-01-01" },
@@ -542,11 +720,10 @@ describe("project_context", () => {
         jurisdictions: [{ name: "Ringebu, Oppland, Norway", dateRange: "1838-" }],
         collections: [
           { id: "4237104", title: "Norway, Church Books", dateRange: "1797-1958", personCount: 0, recordCount: 12 },
-          { id: "1", title: "Uncounted", dateRange: null, personCount: null, recordCount: null },
-          { id: "2", title: "Bad count", dateRange: null, personCount: null, recordCount: null },
+          { id: "1", title: "Uncounted" },
+          { id: "2", title: "Bad count" },
         ],
         quirks: ["Indexed only at county level."],
-        pagesRead: ["home"],
       },
     ]);
     expect(JSON.stringify(r.localities)).not.toContain("long prose");
@@ -569,10 +746,11 @@ describe("project_context", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
     expect(r.projectStatus).toBe("paused");
-    expect(r.openQuestions[0].question).toHaveLength(140);
-    expect(r.openQuestions[0].question.endsWith("…")).toBe(true);
-    expect(r.openQuestions[0].question.startsWith("x".repeat(139))).toBe(true);
-    expect(r.openQuestions[1].question).toBe(exact);
+    const [first, second] = (r.openQuestions ?? []).map((q) => q.question ?? "");
+    expect(first).toHaveLength(140);
+    expect(first.endsWith("…")).toBe(true);
+    expect(first.startsWith("x".repeat(139))).toBe(true);
+    expect(second).toBe(exact);
   });
 
   it("errors when a project file is missing or unparseable — never throws", async () => {
@@ -631,13 +809,14 @@ describe("project_context", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
 
-    const q1 = r.questionStatuses.find((q) => q.id === "q_001");
+    const q1 = r.questionStatuses?.find((q) => q.id === "q_001");
     // Derived from the proof summary, while the question still says otherwise.
     expect(q1?.state).toBe("concluded");
     expect(q1?.storedStatus).toBe("in_progress");
 
-    const q2 = r.questionStatuses.find((q) => q.id === "q_002");
-    expect(q2?.storedStatus).toBeNull();
+    const q2 = r.questionStatuses?.find((q) => q.id === "q_002");
+    expect(q2).toBeDefined();
+    expect(q2).not.toHaveProperty("storedStatus");
   });
 
   // A resolved question is absent from openQuestions, so this is the only place its
@@ -660,12 +839,12 @@ describe("project_context", () => {
     expect(r.ok).toBe(true);
     if (!r.ok) return;
 
-    expect(r.openQuestions.map((q) => q.id)).not.toContain("q_001");
-    const byId = new Map(r.questionStatuses.map((q) => [q.id, q.question]));
-    expect(byId.get("q_001")).toBe("Where was Elizabeth born?");
-    expect(byId.get("q_002")).toBe(`${"W".repeat(139)}…`);
-    expect(byId.get("q_002")).toBe(r.openQuestions.find((q) => q.id === "q_002")?.question);
-    expect(byId.get("q_003")).toBe("");
+    expect((r.openQuestions ?? []).map((q) => q.id)).not.toContain("q_001");
+    const byId = new Map((r.questionStatuses ?? []).map((q) => [q.id, q]));
+    expect(byId.get("q_001")?.question).toBe("Where was Elizabeth born?");
+    expect(byId.get("q_002")?.question).toBe(`${"W".repeat(139)}…`);
+    expect(byId.get("q_002")?.question).toBe(r.openQuestions?.find((q) => q.id === "q_002")?.question);
+    expect(byId.get("q_003")).not.toHaveProperty("question");
   });
 });
 
