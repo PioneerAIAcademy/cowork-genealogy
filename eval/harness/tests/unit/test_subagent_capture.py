@@ -1373,8 +1373,8 @@ def test_capture_context_meters_puts_the_hits_on_the_result(shortspace: Path, mo
 
     result = SimpleNamespace()
     _capture_context_meters(result, workspace)
-    assert [(h["tool"], h["agent"]) for h in result.oversize_tool_results] == [
-        ("mcp__genealogy__person_read", "main thread")
+    assert [(h["tool"], h["agent"], h["can_read"]) for h in result.oversize_tool_results] == [
+        ("mcp__genealogy__person_read", "main thread", True)
     ]
     assert "oversize" not in json.dumps(result.main_thread or {})
 
@@ -1384,15 +1384,61 @@ def test_build_warnings_names_test_tool_agent_and_size():
 
     hits = [
         {"tool": "mcp__genealogy__person_read", "tool_use_id": "tu1",
-         "size": "162,835 characters across 1 line", "agent": "main thread"},
+         "size": "162,835 characters across 1 line", "agent": "source-evaluation",
+         "can_read": False},
         {"tool": "mcp__genealogy__wiki_read", "tool_use_id": "tu2",
-         "size": "58.2KB", "agent": "record-extractor"},
+         "size": "58.2KB", "agent": "main thread", "can_read": True},
+        {"tool": "mcp__genealogy__record_read", "tool_use_id": "tu3",
+         "size": "1KB", "agent": "unnamed agent", "can_read": None},
     ]
     out = [w for w in _build_warnings([], oversize_tool_results=hits, test_id="ut_x")
            if w["kind"] == "oversize_tool_result"]
-    assert [(w["test_id"], w["tool"], w["agent"], w["size"]) for w in out] == [
-        ("ut_x", "person_read", "main thread", "162,835 characters across 1 line"),
-        ("ut_x", "wiki_read", "record-extractor", "58.2KB"),
+    assert [(w["test_id"], w["tool"], w["agent"], w["size"], w["can_read"]) for w in out] == [
+        ("ut_x", "person_read", "source-evaluation", "162,835 characters across 1 line", False),
+        ("ut_x", "wiki_read", "main thread", "58.2KB", True),
+        ("ut_x", "record_read", "unnamed agent", "1KB", None),
     ]
     assert "ut_x" in out[0]["advisory"] and "never saw" in out[0]["advisory"]
+    assert "never saw" not in out[1]["advisory"] and "holds Read" in out[1]["advisory"]
+    assert "Could not tell" in out[2]["advisory"]
     assert _build_warnings([], oversize_tool_results=[], test_id="ut_x") == []
+
+
+def _stage_agent(workspace: Path, name: str, frontmatter: str) -> None:
+    agents = workspace / ".claude" / "agents"
+    agents.mkdir(parents=True, exist_ok=True)
+    (agents / f"{name}.md").write_text(f"---\n{frontmatter}\n---\nbody\n", encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "frontmatter,expected",
+    [("name: a\ntools:\n  - Read\n  - mcp__genealogy__record_read", True),
+     ("name: a\ntools:\n  - mcp__genealogy__record_read", False),
+     ("name: a\ntools: Glob, Read", True),
+     ("name: a\ntools: Glob, Grep", False),
+     ("name: a\ndescription: inherits every tool", True),
+     ("name: [unclosed", None)],
+)
+def test_agent_holds_read_reads_the_staged_tools_list(tmp_path: Path, frontmatter, expected):
+    from harness.orchestrator import _agent_holds_read
+
+    _stage_agent(tmp_path, "a", frontmatter)
+    assert _agent_holds_read("a", tmp_path) is expected
+
+
+def test_agent_holds_read_main_thread_and_missing_file(tmp_path: Path):
+    from harness.orchestrator import _agent_holds_read
+
+    assert _agent_holds_read("main thread", tmp_path) is True
+    assert _agent_holds_read("no-such-agent", tmp_path) is None
+
+
+def test_source_evaluation_holds_no_read_today(tmp_path: Path):
+    # The scratch-run case (#4380): its notice is a lost answer, not a recoverable one.
+    from harness.orchestrator import _agent_holds_read
+
+    real = Path(__file__).resolve().parents[4] / "packages/engine/plugin/agents/source-evaluation.md"
+    agents = tmp_path / ".claude" / "agents"
+    agents.mkdir(parents=True)
+    (agents / "source-evaluation.md").write_text(real.read_text(encoding="utf-8"), encoding="utf-8")
+    assert _agent_holds_read("source-evaluation", tmp_path) is False

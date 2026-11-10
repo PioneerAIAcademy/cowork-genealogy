@@ -220,7 +220,8 @@ def lost_tool_answers(log: dict[str, Any]) -> list[tuple[str, str, str]]:
             continue
         size = oversize_notice_size(call.get("response_summary"))
         if size is not None:
-            lost.append((call["tool"].split("__")[-1], call.get("agent_type") or "main researcher", size))
+            agent = call.get("agent_type") or ("unnamed helper" if call.get("agent_id") else "main researcher")
+            lost.append((call["tool"].split("__")[-1], agent, size))
     return lost
 
 

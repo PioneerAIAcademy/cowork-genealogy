@@ -352,6 +352,14 @@ def test_a_lost_tool_answer_is_listed_with_its_agent_and_size():
     assert re.search(r"volume_search\s+main researcher\s+69\.9KB", text)
 
 
+def test_a_helper_with_no_type_is_not_the_main_researcher():
+    log = _log(tool_calls=[{"tool": "mcp__genealogy__record_read", "agent_type": None,
+                            "agent_id": "a1", "response_summary": _NOTICE}])
+    text = render(log, "run-x.json", graded=False)
+    assert re.search(r"record_read\s+unnamed helper", text)
+    assert "main researcher  " not in text.split("SIZE CAP")[1].split("SUMMARY")[0]
+
+
 def test_no_lost_answer_section_without_a_notice():
     log = _log(tool_calls=[
         {"tool": "Read", "response_summary": _NOTICE},  # not an MCP tool

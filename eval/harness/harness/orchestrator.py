@@ -21,6 +21,7 @@ from harness.allowed_tools import (
     format_uncovered_callee_fixtures,
     uncovered_callee_fixtures,
     declared_skill_tools,
+    load_skill_frontmatter,
     load_suite_frontmatter,
 )
 from harness.auth import AuthConfig
@@ -1039,6 +1040,34 @@ def _is_zero_progress_timeout(result) -> bool:
 _UNIT_SUBAGENT_DROP = ("turns", "transcript")
 
 
+def _agent_holds_read(agent: str, workspace: Path) -> bool | None:
+    """Whether `agent` can `Read` the file an oversize notice points at.
+
+    The main thread always can. A subagent can when the `tools:` list of its
+    staged agent file names `Read`, or when the file has no `tools:` key (it
+    then inherits every tool). None when its file cannot be read. Never raises.
+    """
+    from e2e.subagent_capture import MAIN_THREAD_AGENT
+
+    if agent == MAIN_THREAD_AGENT:
+        return True
+    try:
+        path = workspace / ".claude" / "agents" / f"{agent}.md"
+        if not path.is_file():
+            return None
+        frontmatter = load_skill_frontmatter(path)
+        if not frontmatter:
+            return None
+        tools = frontmatter.get("tools")
+        if tools is None:
+            return True
+        if isinstance(tools, str):
+            tools = [t.strip() for t in tools.split(",")]
+        return isinstance(tools, list) and "Read" in tools
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        return None
+
+
 def _capture_context_meters(result, workspace: Path) -> None:
     """Attach the busiest-moment capture to `result`. Never raises.
 
@@ -1062,7 +1091,10 @@ def _capture_context_meters(result, workspace: Path) -> None:
         ]
         result.subagent_capture_status = status
         result.main_thread = collect_main_thread(workspace)
-        result.oversize_tool_results = collect_oversize_tool_results(workspace)
+        result.oversize_tool_results = [
+            {**hit, "can_read": _agent_holds_read(hit["agent"], workspace)}
+            for hit in collect_oversize_tool_results(workspace)
+        ]
     except Exception:  # noqa: BLE001 — a capture miss must never fail the run
         result.subagents = []
         result.subagent_capture_status = "error"
@@ -1484,19 +1516,26 @@ def _build_warnings(
     # with no data, so the agent never saw that answer (#4380).
     for hit in oversize_tool_results or []:
         tool = str(hit.get("tool") or "").split("__")[-1]
-        agent, size = hit.get("agent"), hit.get("size")
+        agent, size, can_read = hit.get("agent"), hit.get("size"), hit.get("can_read")
+        if can_read is False:
+            recovery = (f"{agent} holds no Read tool, so it never saw that tool's "
+                        "answer; a grade on this run does not show the skill handled it.")
+        elif can_read is True:
+            recovery = (f"{agent} holds Read, so it could open the saved file; check "
+                        "the transcript for whether it did.")
+        else:
+            recovery = f"Could not tell whether {agent} holds Read."
         warnings.append({
             "kind": "oversize_tool_result",
             "advisory": (
                 f"{test_id or 'this test'}: the {tool} answer reached {agent} as "
-                f"Claude Code's 'too large, saved to file' notice ({size}). The "
-                "agent never saw that tool's answer; a grade on this run does not "
-                "show the skill handled it."
+                f"Claude Code's 'too large, saved to file' notice ({size}). {recovery}"
             ),
             "test_id": test_id,
             "tool": tool,
             "agent": agent,
             "size": size,
+            "can_read": can_read,
         })
 
     # Single chokepoint: every output.warnings entry — this function's own, the

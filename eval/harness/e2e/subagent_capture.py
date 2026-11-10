@@ -306,17 +306,12 @@ def oversize_tool_results(records: list[dict[str, Any]]) -> list[dict[str, Any]]
     the oversize notice, in transcript order. Never raises."""
     try:
         hits: list[dict[str, Any]] = []
-        seen: set[str] = set()
         for call in pair_tool_calls(records):
             if not call["tool"].startswith("mcp__"):
                 continue
             size = oversize_notice_size(call["content"])
-            tuid = call["tool_use_id"]
-            if size is None or (isinstance(tuid, str) and tuid in seen):
-                continue
-            if isinstance(tuid, str):
-                seen.add(tuid)
-            hits.append({"tool": call["tool"], "tool_use_id": tuid, "size": size})
+            if size is not None:
+                hits.append({"tool": call["tool"], "tool_use_id": call["tool_use_id"], "size": size})
         return hits
     except Exception:  # noqa: BLE001 — a capture miss must never fail the run
         return []
