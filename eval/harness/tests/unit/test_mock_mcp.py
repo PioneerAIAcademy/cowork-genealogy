@@ -2181,8 +2181,42 @@ def test_live_record_read_stages_the_record_as_production_does(tmp_path):
     assert envelope["payload"]["query"] == {"recordId": "68Q9-K34P"}
     [element] = envelope["payload"]["results"]
     assert element["recordId"] == "68Q9-K34P"
-    assert element["gedcomx"]["persons"] == body["persons"]
+    # The sidecar keeps the full document; the inline answer is compacted (#4415).
+    assert [p["id"] for p in element["gedcomx"]["persons"]] == [p["id"] for p in body["persons"]]
+    assert element["gedcomx"]["sources"], "the staged record keeps its sources"
+    assert element["gedcomx"]["persons"][0]["names"][0]["id"] == "N1"
+    assert "sources" not in body
+    assert all("id" not in n for p in body["persons"] for n in p.get("names", []))
     assert "staged" not in element["gedcomx"]
+
+
+@pytest.mark.requires_engine_build
+def test_served_record_read_with_no_project_is_compacted(tmp_path):
+    """Production's server compacts every record_read answer (#4415)."""
+    _copy_scenario(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(
+        ["record-read-tallman-2v7m-6qm"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(_invoke(tools_by_name, "record_read", {"recordId": "2V7M-6QM"}))
+    assert "sources" not in body and "places" not in body
+    assert body["citation"]
+    assert body["recordUrl"] == "https://www.familysearch.org/ark:/61903/1:2:99FF-4NZ4"
+    assert {p["id"] for p in body["persons"]} == {"p_15021461819", "p_15021461820", "p_15021461821"}
+
+
+@pytest.mark.requires_engine_build
+def test_served_record_read_cites_the_persona_the_call_asked_for(tmp_path):
+    """The compactor gets the call's `recordId`, not the fixture's `~` predicate.
+    Edward is the record's second persona, so a lookup that found nobody would
+    fall back to the Record citation, which names Orrin first."""
+    _copy_scenario(tmp_path)
+    _s, _c, tools_by_name = create_mock_server(
+        ["record-read-tallman-2v7m-6qm"], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "record_read", {"recordId": "ark:/61903/1:1:2V7M-6QM"})
+    )
+    assert "Edward Tallman in entry for Orrin Tallman" in body["citation"], body["citation"]
 
 
 @pytest.mark.requires_engine_build

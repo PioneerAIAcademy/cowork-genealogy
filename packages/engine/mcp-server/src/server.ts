@@ -47,7 +47,7 @@ import {
 } from "./tools/person-ancestors.js";
 import { treeGapsTool } from "./tools/tree-gaps.js";
 import type { TreeGapsInput } from "./types/tree-gaps.js";
-import { recordReadTool, type RecordReadInput } from "./tools/record-read.js";
+import { recordReadMcpTool, type RecordReadInput } from "./tools/record-read.js";
 import { fulltextSearchTool } from "./tools/fulltext-search.js";
 import type { FulltextSearchInput } from "./types/fulltext-search.js";
 import { wikiReadTool, type WikiReadInput } from "./tools/wiki-read.js";
@@ -547,7 +547,7 @@ export function createServer(principal: Principal): Server {
     if (request.params.name === "record_read") {
       try {
         const args = request.params.arguments as unknown as RecordReadInput;
-        const result = await recordReadTool(args, principal);
+        const result = await recordReadMcpTool(args, principal);
         return {
           content: [{ type: "text", text: JSON.stringify(result) }]
         };

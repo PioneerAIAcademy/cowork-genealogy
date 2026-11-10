@@ -167,8 +167,9 @@ export const mergeWarningsSchema = {
       candidateGedcomx: {
         type: "object",
         description:
-          "The record being merged, as a simplified-GedcomX document — the " +
-          "`gedcomx` field of a `record_read` result, passed through verbatim.",
+          "The record being merged, as a simplified-GedcomX document — a " +
+          "`record_read` result, passed through verbatim (the whole answer; " +
+          "it has no `gedcomx` field).",
       },
       merges: {
         type: "array",
