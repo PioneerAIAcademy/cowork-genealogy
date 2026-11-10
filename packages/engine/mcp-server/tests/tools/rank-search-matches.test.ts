@@ -18,6 +18,9 @@ vi.mock("../../src/auth/refresh.js", () => ({
 vi.mock("../../src/utils/match-engine.js", () => ({
   scorePair: vi.fn(),
 }));
+vi.mock("../../src/tools/source-attachments.js", () => ({
+  sourceAttachmentsTool: vi.fn(),
+}));
 // FamilySearch's matcher unless a test names the service: LOCAL reads the
 // developer's own config.json, which may name the service.
 const matcherSettingsMock = vi.hoisted(() => vi.fn());
@@ -29,6 +32,7 @@ vi.mock("../../src/auth/config.js", async (orig) => ({
 import { rankSearchMatches } from "../../src/tools/rank-search-matches.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { scorePair } from "../../src/utils/match-engine.js";
+import { sourceAttachmentsTool } from "../../src/tools/source-attachments.js";
 import {
   stageSearchResults,
   finalizeStagedResults,
@@ -38,11 +42,13 @@ import type { FamilySearchMatch } from "../../src/types/same-person.js";
 
 const getValidTokenMock = vi.mocked(getValidToken);
 const scorePairMock = vi.mocked(scorePair);
+const sourceAttachmentsMock = vi.mocked(sourceAttachmentsTool);
 
 beforeEach(() => {
   getValidTokenMock.mockReset();
   getValidTokenMock.mockResolvedValue("test-token");
   scorePairMock.mockReset();
+  sourceAttachmentsMock.mockReset();
   matcherSettingsMock.mockReset();
   matcherSettingsMock.mockResolvedValue({ backend: "familysearch" });
 });
@@ -625,6 +631,87 @@ describe("rank_search_matches", () => {
     }, LOCAL);
 
     expect(out.subjectResolvable).toBeUndefined();
+  });
+
+  // ── Attachments: the subject's FamilySearch id, not its tree id ───────────
+
+  describe("checkAttachments", () => {
+    const ATTACHED = "ark:/61903/1:1:AAAA-AA1";
+    const ELSEWHERE = "ark:/61903/1:1:AAAA-AA2";
+
+    const treeOf = (person: Record<string, unknown>) => ({
+      persons: [
+        {
+          names: [{ preferred: true, given: "Kenneth Werner", surname: "Quass" }],
+          facts: [{ type: "Birth", date: "4 Dec 1917" }],
+          ...person,
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+
+    async function rankWithAttachments(
+      subjectId: string,
+    ): Promise<Awaited<ReturnType<typeof rankSearchMatches>>> {
+      const ref = await stage([
+        candidate({ recordId: ATTACHED, primaryId: "p1" }),
+        candidate({ recordId: ELSEWHERE, primaryId: "p2" }),
+      ]);
+      scorePairMock.mockResolvedValue(scoreResult(0.8));
+      sourceAttachmentsMock.mockResolvedValue({
+        attachments: {
+          [ATTACHED]: [{ personId: SUBJECT_ID, tags: [] }],
+          [ELSEWHERE]: [{ personId: "LZZZ-ZZZ", tags: [] }],
+        },
+        unattached: [],
+      });
+      return rankSearchMatches(
+        { projectPath: dir, stagedResultsRef: ref, subjectId, checkAttachments: true },
+        LOCAL,
+      );
+    }
+
+    const flags = (out: Awaited<ReturnType<typeof rankSearchMatches>>, id: string) => {
+      const m = out.matches.find((x) => x.recordId === id)!;
+      return { attachedToSubject: m.attachedToSubject, attachedToOther: m.attachedToOther };
+    };
+
+    it("reads an I-numbered subject's FamilySearch id from its ark", async () => {
+      await writeTree(treeOf({ id: "I1", ark: `ark:/61903/4:1:${SUBJECT_ID}` }));
+      const out = await rankWithAttachments("I1");
+
+      expect(flags(out, ATTACHED)).toEqual({ attachedToSubject: true, attachedToOther: false });
+      expect(flags(out, ELSEWHERE)).toEqual({ attachedToSubject: false, attachedToOther: true });
+    });
+
+    it("reads a resolver-URL ark in any case", async () => {
+      await writeTree(
+        treeOf({ id: "I1", ark: `https://familysearch.org/ark:/61903/4:1:${SUBJECT_ID.toLowerCase()}` }),
+      );
+      const out = await rankWithAttachments("I1");
+
+      expect(flags(out, ATTACHED)).toEqual({ attachedToSubject: true, attachedToOther: false });
+    });
+
+    it("falls back to a tree id shaped like a FamilySearch id when there is no ark", async () => {
+      await writeTree(treeOf({ id: SUBJECT_ID }));
+      const out = await rankWithAttachments(SUBJECT_ID);
+
+      expect(flags(out, ATTACHED)).toEqual({ attachedToSubject: true, attachedToOther: false });
+      expect(flags(out, ELSEWHERE)).toEqual({ attachedToSubject: false, attachedToOther: true });
+    });
+
+    it("leaves both flags unset, and asks nothing, when the subject has no FamilySearch id", async () => {
+      await writeTree(treeOf({ id: "I1" }));
+      const out = await rankWithAttachments("I1");
+
+      expect(sourceAttachmentsMock).not.toHaveBeenCalled();
+      for (const m of out.matches) {
+        expect(m).not.toHaveProperty("attachedToSubject");
+        expect(m).not.toHaveProperty("attachedToOther");
+      }
+    });
   });
 
   // ── Empty staged results (not an error) ────────────────────────────────────
