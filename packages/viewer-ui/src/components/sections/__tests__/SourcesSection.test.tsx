@@ -220,6 +220,22 @@ describe('SourcesSection — tree-only sources (#2661)', () => {
     expect(document.getElementById('S99')).toBeTruthy()
   })
 
+  it('tree source card shows its S id without expanding (#4024)', () => {
+    vi.mocked(useResearchData).mockReturnValue(
+      buildMockContext({
+        research: { ...patrickFlynnResearch, sources: [] },
+        gedcomx: {
+          ...patrickFlynnGedcomx,
+          sources: [{ id: 'S99', title: 'A Test Source' }]
+        },
+        activeSection: 'sources'
+      })
+    )
+    render(<SourcesSection />)
+    // Collapsed card: the researcher reads this id to name a source to forget.
+    expect(screen.getByText('GedcomX: S99')).toBeInTheDocument()
+  })
+
   it('tree source URL routes through openExternal', async () => {
     const opened = vi.fn()
     setOpenExternal(opened)

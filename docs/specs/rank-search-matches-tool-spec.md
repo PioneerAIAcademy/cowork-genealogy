@@ -175,10 +175,23 @@ snake_case envelope it reads.
    `matchRank`; carry each result's original staged position as `searchRank`.
 5. **Write the score log** (see next section) — **all** scored candidates, not
    just the returned top-`top`.
-6. **Attachments (optional).** If `checkAttachments`, one batch
-   `source_attachments({ uris: recordIds })`; map `attachedToSubject` /
-   `attachedToOther` onto the stubs. (Deriving `attachedToSubject` needs the
-   local-`subjectId`→FamilySearch-PID mapping — see Owner decisions.)
+6. **Attachments (optional; kept, lead, 2026-11-09).** If `checkAttachments`,
+   one batch `source_attachments({ uris: recordIds })`; map `attachedToSubject` /
+   `attachedToOther` onto the stubs. `source_attachments` names attached persons
+   by FamilySearch person id, while a project tree keys them `I1`, `I2`…
+   (`merge-gedcomx.ts`), so the subject is matched by its FamilySearch id, never
+   by `subjectId` as such:
+   - the PID in the tree person's `ark` (`treePidOfArk`: a `4:1:` ark in any
+     spelling, or a tree person URL);
+   - else `subjectId` itself when it is shaped like a FamilySearch person id
+     (`isFamilySearchPersonId`) — e2e and eval trees key persons that way, with
+     no `ark`.
+
+   Compared case-insensitively. A record attached to that id sets
+   `attachedToSubject`; one attached to any other id sets `attachedToOther`.
+   When neither rule yields an id, no attachments call is made and both flags
+   stay unset rather than asserting a wrong answer — as they do when the
+   attachments call fails.
 7. **Return** every scored stub (below), or the first `top` when the caller
    supplied one. Bulk gedcomx is never in the return.
 
@@ -259,7 +272,7 @@ Sorted by `matchScore` descending; no gedcomx.
       "collectionTitle": "Find A Grave Index",
       "recordArk": "ark:/61903/1:2:…",
       "matchScore": 0.99999,       // 0–1; null when scoring failed — never dropped
-      "attachedToSubject": false,  // only when checkAttachments
+      "attachedToSubject": false,  // only when checkAttachments and the subject has a FamilySearch id
       "attachedToOther": true,
       "birthYearConflict": true,   // only when the birth years differ by more than 2
       "birthYearGap": -5,          // candidate year minus subject year; with the flag
@@ -522,11 +535,11 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
   `manifest.json` (`tools[]`) — kept in sync by the manifest drift test
   (`tests/packaging/manifest.test.ts`).
 - `record_search` change: in the `record-search.ts` return path, **unconditionally
-  strip inline `results[].gedcomx` after `await stageSearchResults(...)` whenever
-  staging succeeded** — no opt-in flag (nothing needs inline gedcomx once staged,
+  strip inline `results[].gedcomx` on every answer (after `await
+  stageSearchResults(...)`, when it stages)** — no opt-in flag (nothing needs inline gedcomx once staged,
   so the overflow protection can't be forgotten by the caller). The staged file is
-  already serialized to disk, so stripping cannot corrupt the sidecar; an un-staged
-  (no `projectPath`) search still returns full gedcomx inline.
+  already serialized to disk, so stripping cannot corrupt the sidecar. An un-staged
+  (no `projectPath`) search is stripped too.
 - **`packages/engine/plugin/agents/search-records.md` — required, not
   optional.** Add `rank_search_matches` to `tools:` and rewrite the triage
   step to the flow below. **Without this the tool is unreachable** — the
@@ -565,9 +578,11 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
 - A failing pair yields `matchScore: null` + `scoringErrors++`, never dropped.
 - Guard rejections (traversal, missing file, `subjectId` absent) error cleanly.
 - Read-only: the staged file still exists and is finalizable after the call.
-- `record_search` strips inline `results[].gedcomx` whenever staging succeeded
-  (unconditional); keeps it inline for an un-staged (no `projectPath`) search and
-  when `staged` is null.
+- `checkAttachments` matches the subject by the FamilySearch id in its `ark`
+  on an `I1` tree, by a FamilySearch-shaped tree id with no `ark`, and with
+  neither leaves both flags unset and makes no attachments call.
+- `record_search` strips inline `results[].gedcomx` on every answer: staged, un-staged
+  (no `projectPath`) and when `staged` is null.
 
 Smoke: `dev/try-rank-search-matches.ts` runs a real `record_search` +
 `rank_search_matches` against live FS for a known subject.
@@ -598,10 +613,7 @@ Smoke: `dev/try-rank-search-matches.ts` runs a real `record_search` +
 1. **Threshold** — intentionally none, and no host-side cut either: every
    scored candidate is returned, ordered. Set a threshold later
    from `results/match-scores.jsonl`.
-2. **`checkAttachments` in v1** — needs a local-`subjectId`→FS-PID map
-   (`source_attachments` keys on entity PIDs). Build now or defer to the existing
-   separate `source_attachments` call.
-3. **Subject enrichment** — minimal (subject person only) vs. +1-hop relatives.
+2. **Subject enrichment** — minimal (subject person only) vs. +1-hop relatives.
    Minimal scored decisively in the probe; revisit if real cases need more.
-4. **Score-log path** — `results/match-scores.jsonl` proposed; confirm it stays
+3. **Score-log path** — `results/match-scores.jsonl` proposed; confirm it stays
    clear of the results-orphan validator.

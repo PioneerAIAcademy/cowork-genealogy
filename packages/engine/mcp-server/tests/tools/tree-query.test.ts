@@ -208,12 +208,12 @@ describe("project_context profile fields (#3836)", () => {
     expect(r.subscriptions).toEqual(["ancestry", "findmypast"]);
   });
 
-  it("falls back to null and [] when the profile is absent or malformed", async () => {
+  it("leaves both out when the profile is absent or malformed", async () => {
     const a = await ctx({ project: { id: "rp_001" } });
-    expect(a.narrationGuidance).toBeNull();
-    expect(a.subscriptions).toEqual([]);
+    expect(a).not.toHaveProperty("narrationGuidance");
+    expect(a).not.toHaveProperty("subscriptions");
     const b = await ctx({ project: { id: "rp_001" }, researcher_profile: { narration_guidance: null, subscriptions: "x" } });
-    expect(b.narrationGuidance).toBeNull();
-    expect(b.subscriptions).toEqual([]);
+    expect(b).not.toHaveProperty("narrationGuidance");
+    expect(b).not.toHaveProperty("subscriptions");
   });
 });

@@ -44,7 +44,7 @@ The MCP server exposes 57 tools.
 | `tree_gaps` | Survey a FamilySearch tree for holes it likely has records for (parents missing before a line ends, couples with no children, gaps between births, a wife with no surname, a person with no birth date or place, a deceased adult with no spouse or death date) across up to 8 generations of ancestors and 4 of descendants; returns the holes with a search year range, place, collection coverage (with census years and place level) and `pendingHints` (how many of FamilySearch's pending record hints are about the event the hole is missing, read from the collection title, with a census counted only if taken in the hole's window), holes with a fitting hint first, never the tree; living people never carry a hole | OAuth |
 | `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number; relationships are endpoint-closed, and `notes[]` reports any edge dropped for naming a person not returned | OAuth |
 | `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
-| `volume_search` | Search FamilySearch's Records Management Service for digitized volumes (image groups) by place and year range, optionally filtered to one or more `recordTypeGroups` (selecting a group also returns the groups nested beneath it) — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume, 50 volumes a page by default (`pageSize` 1–100). With `summary: true` on the first page it also counts every matching volume by record-type group (browse-only and full-text-only included) | OAuth |
+| `volume_search` | Search FamilySearch's Records Management Service for digitized volumes (image groups) by place and year range, optionally filtered to one or more `recordTypeGroups` (selecting a group also returns the groups nested beneath it) — returns coverage metadata, `recordSearchablePercent`, and `fulltextSearchable` per volume, 50 volumes a page by default (`pageSize` 1–50). With `summary: true` on the first page it also counts every matching volume by record-type group (browse-only and full-text-only included), and the page defaults to 10 volumes | OAuth |
 | `volume_bisect` | Bisect a browse-only image volume toward a target year — reads **one** page per call, folds its year into the bracket built from the readings so far, and returns the narrowed bracket plus the next image to probe. Refuses a bare image-group prefix (use `volume_search` to pick a sub-volume first) | OAuth + OpenRouter |
 | `external_links_search` | FS-curated third-party genealogy URLs by place; optional year filter | None |
 
@@ -98,7 +98,7 @@ way project state changes.
 | `person_warnings` | Flags impossible or unlikely facts (death before birth, event after death, implausibly young parent) for a person and their one-hop relatives. Reads tree.gedcomx.json from the local project; offline except one check that looks up place coordinates and is skipped when the lookup fails | None |
 | `validate_research_schema` | Validate research.json and tree.gedcomx.json against published schemas | None |
 | `tree_query` | Read-only filtered read of tree.gedcomx.json (persons with names, facts, ark; Couple and ParentChild edges with facts; cited sources with authors) — what agents call instead of opening the tree file | None |
-| `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with cited sources, sources with record ids) — the context call agents make instead of reading project files | None |
+| `project_context` | Read-only compact projection of research.json + tree.gedcomx.json (open questions, persons with their one-hop family, sources with record ids) — the context call agents make instead of reading project files | None |
 | `project_list` | Which projects this server keeps. On the desktop extension the task's working folder is the project; on a hosted server it lists the caller's newest 100 projects (objective, subjects, status), saying when there are more, and, when one can be started, the `newProjectPath` for it. The research router's first call when a conversation names no project | None |
 | `get_name_variants` | Look up a given name's alternate forms (nicknames, diminutives, formal forms) from a bundled bidirectional table. Given names only, no caller yet | None |
 
@@ -228,6 +228,10 @@ don't load it explicitly.
 
 ```
 1. init-project              Start with a FamilySearch person ID
+   attached records          Extract the person's attached FamilySearch records
+                             and build their timeline, in code
+                             (`extraction_append` with personId, then
+                             `timeline_build`); the links are unchecked
 2. question-selection (agent) "What should I research next?"
 3. research-plan (agent)     "How do I answer this question?"
 4. search-records            Execute indexed searches on FamilySearch
