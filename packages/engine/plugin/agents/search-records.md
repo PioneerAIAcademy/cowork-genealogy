@@ -587,13 +587,6 @@ candidates; you still confirm the top ones:
   Non-federal **state censuses** follow their own schedules and often carry
   fields the federal census of that decade lacks — read the collection
   description rather than assuming the federal pattern.
-- **Cite `matchScore`, never `results[].score` — they are different numbers.** A
-  raw search stub's `score` (and `confidence`) is FamilySearch's own *search
-  relevance*, the unreliable ordering the match-ranker exists to replace;
-  `matchScore` on a `ranked.matches[]` entry is the content match against your
-  subject. Quoting a stub's `score` as a match score is a reasoning error, not a
-  wording slip: the triage would rest on the ordering you were supposed to
-  discard. Before citing a number, check which array you read it from.
 - **Follow a returned `jurisdictionHints`.** When a `record_search` response
   carries a non-empty `jurisdictionHints`, the next 1–2 retries in this same
   plan-item search sequence must set `marriagePlace` or `residencePlace` to
