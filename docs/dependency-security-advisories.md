@@ -5,7 +5,13 @@ dependency trees (root pnpm workspace — which since #1488 includes `eval/app` 
 and `packages/engine/mcp-server` npm). Re-run the audits after any dependency
 bump and update this file.
 
-Last reviewed: **2026-11-09**.
+Last reviewed: **2026-11-09**, after issue #4189's toolchain major (vite 8,
+`@vitejs/plugin-react` 6, vitest 5, jsdom 30, electron-vite 6), measured on top of
+issue #4190's zod fix (Fixed, below). `pnpm audit` reports **17 findings (3 low /
+7 moderate / 7 high)** and `pnpm audit --prod` **14 (3 low / 4 moderate / 7 high)**:
+the same 16 advisories as before the bump, so it cleared nothing and added nothing.
+Every remaining row is under Deferred. The engine's npm tree is untouched by it
+(`npm audit --omit=dev` still 0).
 
 > **This file is the mechanism, by decision.** @DallanQ ruled on 2026-09-09 (#2352)
 > that no CI job will audit any dependency tree: failing the build, warning without
@@ -125,14 +131,15 @@ dependency of `apps/electron` — peer-depends on `electron`, which declares
   this PR changed.)
 
 - **vitest / @vitest/mocker** (MODERATE ×2) — root pnpm workspace, dev-only.
-  **Fixed 2026-11-04** by the sweep above: all four workspace members now
-  declare `^4.1.12` and the lockfile resolves vitest and `@vitest/mocker` at
-  4.1.12, outside the advisory range (`< 4.1.12`). The 2026-09-09 deferral
-  below is withdrawn — its "3 → 4 major across three packages" premise went
-  stale when the members moved to `^4.1.10`. The engine's own copy
-  (`packages/engine/mcp-server/package-lock.json`, a separate npm tree) carried
-  its own vitest/mocker alerts until issue #4186 cleared them on 2026-11-03 (the
-  entry below).
+  **Fixed 2026-11-04** by the sweep above: all four workspace members then
+  declared `^4.1.12` and the lockfile resolved vitest and `@vitest/mocker` at
+  4.1.12, outside the advisory range (`< 4.1.12`). Since issue #4189 all five
+  members declare `^5.1.0` and the lockfile resolves both at 5.1.0, also outside
+  it. The 2026-09-09 deferral below is withdrawn — its "3 → 4 major across
+  three packages" premise went stale when the members moved to `^4.1.10`. The
+  engine's own copy (`packages/engine/mcp-server/package-lock.json`, a separate
+  npm tree) carried its own vitest/mocker alerts until issue #4186 cleared them
+  on 2026-11-03 (the entry below).
 
 - **The engine's production tree, a second time** — `packages/engine/mcp-server`.
   **Fixed 2026-11-03.** It had regressed to **8 advisories on `npm audit --omit=dev`

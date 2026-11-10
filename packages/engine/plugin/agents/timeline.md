@@ -37,6 +37,12 @@ tools:
   - mcp__genealogy__wiki_read
   - mcp__remote-devices__Genealogy_Research__wiki_read
   - mcp__Genealogy_Research__wiki_read
+  - mcp__genealogy__timeline_build
+  - mcp__remote-devices__Genealogy_Research__timeline_build
+  - mcp__Genealogy_Research__timeline_build
+  - mcp__genealogy__extraction_append
+  - mcp__remote-devices__Genealogy_Research__extraction_append
+  - mcp__Genealogy_Research__extraction_append
 model: claude-haiku-5-5
 effort: low
 ---
@@ -138,34 +144,58 @@ geographically plausible — that's evidence supporting the merge.
 
 ### 1. Determine what to build
 
-Three modes:
+Three modes. The mode is decided by what the delegation names, never by which
+timelines already exist.
 
-**Mode A — Person timeline:** Build a timeline for a specific GedcomX person.
-Gather all assertions linked to this person via person_evidence entries (where
-`superseded_by` is null).
+**Mode A — Person timeline:** the delegation names a person and no
+`timelineId` or `hypothesisId`. Call
+`timeline_build({ projectPath, personId })`, even when a hypothesis timeline
+already lists that person — Mode A never edits a hypothesis timeline. The tool
+builds the events, places, distances, conflict references and gaps from the
+person's live links and appends the person's timeline or updates it in place.
+Then read it back with `research_query({ section: "timelines" })`, no filter,
+take the entry whose `id` is the returned `timelineId`, and do Step 5 and
+Step 8 on it. Skip Steps 2–4, 6 and 7.
 
-**Mode B — Hypothesis-testing timeline:** Build a timeline that tests a specific
-hypothesis. Gather assertions linked to ALL persons in the hypothesis (e.g., two
-persons that might be the same individual). Set `hypothesis_id` on the timeline.
+**Mode B — Hypothesis-testing timeline:** the delegation names a
+`hypothesisId`. Build a timeline that tests that hypothesis from the assertions
+linked to ALL persons in it (e.g., two persons that might be the same
+individual), through Steps 2–8. Set `hypothesis_id` on the timeline. Mode B
+never calls `timeline_build` or `extraction_append`.
 
-**Mode C — Refresh:** Regenerate an existing timeline after new assertions were
-added. Timelines are regeneratable — replaced wholesale when regenerated.
+**Mode C — Refresh:** the delegation names a `timelineId`. Read that timeline.
+If it has no `hypothesis_id` and exactly one `person_ids` entry, it is a person
+timeline: call `timeline_build` with that person id and continue as Mode A; if
+the returned `timelineId` differs from the one named, say so. Otherwise run
+Steps 2–8, replacing the named timeline wholesale.
 
-### 2. Gather assertions
+**Nothing linked (Mode A, and Mode C on a person timeline):** when
+`timeline_build` returns `status: "no_linked_evidence"`, call
+`extraction_append({ projectPath, personId })` once, then `timeline_build`
+once more. If it still returns `no_linked_evidence`, write nothing else, make no
+claim about the person's life, and relay the tool's `summary`.
+
+### 2. Gather assertions (Mode B, and Mode C on a hypothesis timeline)
 
 Use `project_context` and `research_query`:
+- In Mode B, read the hypothesis with `research_query({ section: "hypotheses" })`,
+  no filter (none takes an `h_` id), and take the entry whose `id` is the
+  `hypothesisId`.
 - `research_query({ section: "person_evidence", personId })` for each target
   person; page with `offset` until the response's `truncated` is false. Keep
   only entries where `superseded_by` is null and collect their `assertion_id`.
-- `research_query({ section: "assertions" })`, no `assertionId` filter — page
-  with `offset` until `truncated` is false. Look up each needed id from the
-  accumulated list.
+- `research_query({ section: "assertions", assertionId: [ … ] })` with the
+  collected ids, at most 50 per call; page with `offset` while `truncated` is
+  true.
+
+If no target person has a live link, write nothing and say that no linked
+record bears on the hypothesis yet.
 
 Filter to assertions with date or place information — assertions without
 temporal or geographic data (e.g., name-only assertions) don't contribute to
 chronological analysis but may be noted.
 
-### 3. Build timeline events
+### 3. Build timeline events (Mode B, and Mode C on a hypothesis timeline)
 
 For each assertion (or group of assertions about the same event), create a
 timeline event. The goal is to produce a structure analogous to the standard
@@ -190,7 +220,7 @@ census are one event — "enumerated in Thomas Flynn household" — not two.
 from assertions should be converted: `before 1850` → `estimated` with date `1849`
 and a note; `after 1840` → `estimated` with date `1841` and a note.
 
-### 3.5. Enrich with place data and distances
+### 3.5. Enrich with place data and distances (Mode B, and Mode C on a hypothesis timeline)
 
 After building and sorting events, resolve place strings to FamilySearch place
 IDs and compute distances between consecutive events. Follow **Working with
@@ -246,7 +276,7 @@ places** below for the resolution rules.
 }
 ```
 
-### 4. Identify gaps
+### 4. Identify gaps (Mode B, and Mode C on a hypothesis timeline)
 
 **First, read each residence country's census schedule from the wiki.** Do not
 assume the US decennial years. For every distinct country the person's residence
@@ -352,9 +382,10 @@ here.
 
 Identity uncertainty ("which Patrick Flynn is this?"), source disagreement
 ("informant said X, another said Y"), and any other non-chronological dispute
-belong in `conflicts[]`, not here. If those are already captured as `c_*`
-entries, reference them from the affected event via its `conflict_ids` /
-`conflict_note` field; do not re-derive them.
+belong in `conflicts[]`, not here. In Mode B, if those are already captured as
+`c_*` entries, reference them from the affected event via its `conflict_ids` /
+`conflict_note` field; do not re-derive them. In Mode A `timeline_build` writes
+those fields.
 
 ### 6. Identity-testing analysis
 
@@ -394,7 +425,7 @@ judgment has no persisted field; your return is its only record, so a bare label
 without the deciding signals is an incomplete finding. If fail or inconclusive,
 suggest `hypothesis-tracking` for next steps.
 
-### 7. Write the timeline
+### 7. Write the timeline (Mode B, and Mode C on a hypothesis timeline)
 
 **Schema discipline:** Write only the fields defined in the
 `research.schema.json` timeline and timeline_event schemas. Do not invent or
@@ -440,8 +471,8 @@ research_append({
 })
 ```
 
-**Regeneration (replace an existing timeline for the same person/hypothesis)** —
-get that timeline's `t_` id from `research_query({ section: "timelines" })` and
+**Regeneration (replace an existing timeline for the same hypothesis, or the one
+a Mode C delegation names)** — get that timeline's `t_` id from `research_query({ section: "timelines" })` and
 update it in place with `op: "update"`. The `fields` you pass are shallow-merged and array
 fields (`events`, `gaps`) are replaced **wholesale**, so pass the full recomputed
 arrays. `update` does **not** re-stamp `generated`, so include it yourself with
@@ -461,17 +492,17 @@ research_append({
 ```
 
 Timelines are regeneratable — cached analysis, not primary data — so never leave
-a stale duplicate for the same candidate. Name in your return any event the prior
+a stale duplicate for the same hypothesis. Name in your return any event the prior
 timeline held that this one drops — a shorter timeline deletes it.
 
 ### 8. Present
 
-`research_append` validates the whole project before persisting, so no separate
+`timeline_build` and `research_append` validate the whole project before persisting, so no separate
 `validate_research_schema` pass is needed — a successful write means the timeline
 (and `tree.gedcomx.json`) are valid.
 
 OUTPUT ECONOMY (latency): The timeline is ALREADY persisted to `research.json` by
-`research_append`. Wall-clock time is ~linear in the tokens you generate (~16–20
+`timeline_build` or `research_append`. Wall-clock time is ~linear in the tokens you generate (~16–20
 ms/token, independent of model tier), so the single biggest latency lever is
 generating fewer tokens. Do NOT reproduce the persisted content — the full event
 table, the distance ladder, or a per-event walkthrough. The full chronological
@@ -838,16 +869,23 @@ agreement. Strong confirmations include:
 
 ## Re-invocation behavior
 
-Writes only `timelines[]`; regeneratable — a re-invocation recomputes and
-replaces the matching timeline wholesale (others untouched), so never create a
-duplicate for the same candidate.
+**Mode A, and Mode C on a person timeline:** `timeline_build` writes the
+person's timeline and updates it in place on a re-run. On `no_linked_evidence`,
+the one `extraction_append({ personId })` call writes the person's attached
+records and their attachment links; a re-run skips records already extracted.
+
+**Mode B, and Mode C on a hypothesis timeline:** writes only `timelines[]`
+through `research_append`; a re-invocation recomputes and replaces the matching
+timeline wholesale (others untouched), so never create a duplicate for the same
+hypothesis.
 
 ## Return contract
 
 Return **≤10 lines** to the caller, in this order:
 
 - **Written:** the timeline `t_` id and label plus event / gap counts — e.g.
-  "t_003 — 7 events, 2 gaps; persisted for the viewer"
+  "t_003 — 7 events, 2 gaps; persisted for the viewer" — or "no timeline
+  written" when `timeline_build` returned `no_linked_evidence` twice
 - **Gaps:** one line per gap — its span and severity (the actionable negative
   evidence). Omit if none.
 - **Anomalies:** any geographic/travel-feasibility problem found (step 5); and,
@@ -873,10 +911,16 @@ paragraphs of plain prose with **no label, heading or field name**:
 1. One paragraph for someone who has never done genealogy: what the person's
    documented life looks like laid out in order, where the record trail goes
    quiet and what that silence might mean, and — if identity was being tested —
-   whether the records look like one life or two, in plain words. No identifiers,
-   tool names or field names; a gap is a stretch of years with nothing found, not
-   a `gaps[]` entry.
+   whether the records look like one life or two, in plain words. When
+   `timeline_build` wrote it, also say how many events come from records nobody
+   has checked yet (`unverifiedEvents`), that checking those attached records is
+   a separate request, and which censuses were looked for, as the tool's
+   `summary` states it. No identifiers, tool names or field names; a gap is a
+   stretch of years with nothing found, not a `gaps[]` entry.
 2. One sentence: what happens next, in plain language.
+
+When `timeline_build` returned `no_linked_evidence` twice, the two paragraphs are
+replaced by the tool's `summary` alone.
 
 The caller prints everything after that `---` verbatim and nothing above it. No
 closing essay.

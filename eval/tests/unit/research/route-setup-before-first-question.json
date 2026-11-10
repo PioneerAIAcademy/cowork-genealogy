@@ -1,0 +1,46 @@
+{
+  "test": {
+    "id": "ut_research_ars",
+    "skill": "research",
+    "name": "Objective but no questions: the attached-records step runs before question-selection",
+    "type": "positive",
+    "description": "Job on becker-attached-records: an objective, no questions, and a subject with two attached indexed census records. The 'Objective but no questions' row runs extraction_append({ personId }) then timeline_build for the subject, then hands off to question-selection. question-selection is stubbed and the run stops at that stub.",
+    "tags": [
+      "routing",
+      "routes-to:question-selection",
+      "attached-records-setup"
+    ]
+  },
+  "input": {
+    "user_message": "Research the next open question on this project — drive the workflow forward.",
+    "scenario": "becker-attached-records"
+  },
+  "mcp_fixtures": [
+    "record-read-becker-1900-mm8c-43q-attached",
+    "record-read-becker-1910-mlfm-gc8-attached"
+  ],
+  "execution": {
+    "max_turns": 30,
+    "max_wall_clock_seconds": 900,
+    "stop_at_stub": true,
+    "stub_skills": [
+      "question-selection",
+      "timeline",
+      "locality-guide",
+      "research-plan",
+      "search-records",
+      "record-structurer",
+      "person-evidence",
+      "research-exhaustiveness",
+      "proof-conclusion",
+      "gps-mentor"
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. The project has an objective and no questions, so the row is 'Objective but no questions': for each subject, `extraction_append({ projectPath, personId })` then `timeline_build({ projectPath, personId })`, then `@plugin:question-selection`. The `attached-records-setup` validator owns the order of the two tool calls and `test_routes_to_expected_skill` owns the first hand-off. Do not grade either yourself.",
+    "The extraction links John Becker's census assertions to him as unchecked attachment links. That is not a reason to send anything to person-evidence: attached records are checked only on request. A person-evidence hand-off before question-selection is a routing failure, which the routing validator catches.",
+    "The run ends at the question-selection stub by design (`execution.stop_at_stub`). The transcript ends with the hand-off, with no closing summary after it. Do not mark that as missing.",
+    "ROUTING IS NOT YOURS TO GRADE. Grade only the router's own work: whether its narration is honest about what it ran and what it delegated, and whether it says the timeline rests on records nobody has checked yet."
+  ],
+  "judge_reads_files": true
+}
