@@ -152,6 +152,32 @@ def test_normalize_unknown_extension_decodes_utf8():
     assert out == "plain text"
 
 
+def test_normalize_unknown_extension_hex_encodes_invalid_utf8():
+    """Pinned with the BOM vector below: snapshot.test.ts asserts the same
+    text and digest for the same bytes. If either changes, update both."""
+    raw = bytes([0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 0xFF])
+    out = normalize("x.png", raw)
+    assert out == "89504e470d0a1a0aff"
+    assert hash_content(out) == "f5bb6f6edddd22f9c4e13127c899665a913c0bfe978d8a449264ca6656d8e5fe"
+
+
+def test_normalize_unknown_extension_keeps_a_leading_bom():
+    raw = b"\xef\xbb\xbfhi"
+    out = normalize("x.bin", raw)
+    assert out == "﻿hi"
+    assert hash_content(out) == "7611e336d2b333aa772acee003373474c86cd9ce975c10d66a4b0156e8641dca"
+
+
+def test_normalize_json_with_invalid_utf8_falls_back_to_text():
+    """Pinned: snapshot.test.ts asserts the same text and digest for the same
+    bytes. 0xE9 is Latin-1 é, not valid UTF-8, so the file normalizes as text,
+    never as JSON."""
+    raw = b'{"b": 1,\r\n "a": "caf\xe9"}'
+    out = normalize("eval/foo.json", raw)
+    assert out == '{"b": 1,\n "a": "caf\ufffd"}\n'
+    assert hash_content(out) == "b2cbb5fc5697c5d9eab47f7863f37f2df5f16794555581dcc00d23db54d1eaa7"
+
+
 def test_hash_content_is_sha256():
     h = hash_content("hello\n")
     # Sanity: 64 hex chars.
