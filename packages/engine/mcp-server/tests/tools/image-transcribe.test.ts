@@ -637,7 +637,7 @@ describe("imageTranscribeTool — key / auth errors", () => {
     // The rejected key is replaced in the extension's settings or config.json,
     // so the instruction must name both and must not route a fresh key through
     // a tool call.
-    expect(message).toContain("Settings → Extensions → Genealogy Research");
+    expect(message).toContain("Desktop app → Extensions → Genealogy Research → Configure");
     expect(message).toContain("~/.familysearch-mcp/config.json");
     expect(message).not.toMatch(/configure_openrouter/i);
     expect(message).not.toMatch(/\b(?:ask|paste|send|share|enter)\b/i);
