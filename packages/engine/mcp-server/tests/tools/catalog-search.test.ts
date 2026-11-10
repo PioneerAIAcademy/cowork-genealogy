@@ -2978,12 +2978,11 @@ describe("catalog_search — the answer stays under the spill line", () => {
 // ─── The recorded eval fixtures ─────────────────────────────────────────────────
 //
 // `eval/fixtures/mcp/catalog-search-*.json` stand in for the tool in every unit
-// eval run, so the agent is graded on what they say. They were reshaped with the
-// tool's own `shapeAnswer` (`dev/reshape-catalog-fixtures.ts`), not edited by
-// hand, and this keeps them there: a change to the answer's shape that does not
-// reshape them fails here, instead of leaving the evals graded on an answer the
-// tool no longer gives. `mcp-fixture-shape.test.ts` checks keys one level down
-// from the response and does not see film notes.
+// eval run, so the agent is graded on what they say. This keeps them in the shape
+// the tool returns: a change to the answer's shape that does not reshape them
+// fails here, instead of leaving the evals graded on an answer the tool no longer
+// gives. `mcp-fixture-shape.test.ts` checks keys one level down from the response
+// and does not see film notes.
 
 /** What is wrong with the cut fields of a recorded answer, if anything. A cut list carries its total and its
  *  hint together, and the total is more than the entries it lists; an answer that left hits off carries its
