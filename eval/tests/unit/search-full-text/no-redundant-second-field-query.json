@@ -14,7 +14,6 @@
   "mcp_fixtures": [
     "fulltext-search-flynn-witnesses",
     "fulltext-search-flynn-witnesses-by-name",
-    "record-attachments-flynn-witnesses",
     "wiki-read-any",
     "record-attachments-flynn-witnesses",
     "wiki-search-any"
