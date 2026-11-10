@@ -8,11 +8,12 @@ description: >-
   (execution). Invoke when the user says "search for [person]", "find [person]
   in [record type]", "execute the plan", "run the next search", "search
   FamilySearch", or when a plan item targets a FamilySearch repository. Pass
-  projectPath, questionId and planItemId. Do NOT use when the target is
-  Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com (use
-  search-external-sites), when the user wants to plan what to search (use
-  research-plan), or to analyze a record already found (use extraction_append,
-  or the record-structurer agent).
+  projectPath, plus questionId and planItemId for a plan item; a search the
+  user named needs no question or plan, only projectPath and subject. Do NOT
+  use when the target is Ancestry, MyHeritage, FindMyPast, FindAGrave, or
+  Newspapers.com (use search-external-sites), when the user wants to plan
+  what to search (use research-plan), or to analyze a record already found
+  (use extraction_append, or the record-structurer agent).
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
@@ -586,13 +587,6 @@ candidates; you still confirm the top ones:
   Non-federal **state censuses** follow their own schedules and often carry
   fields the federal census of that decade lacks — read the collection
   description rather than assuming the federal pattern.
-- **Cite `matchScore`, never `results[].score` — they are different numbers.** A
-  raw search stub's `score` (and `confidence`) is FamilySearch's own *search
-  relevance*, the unreliable ordering the match-ranker exists to replace;
-  `matchScore` on a `ranked.matches[]` entry is the content match against your
-  subject. Quoting a stub's `score` as a match score is a reasoning error, not a
-  wording slip: the triage would rest on the ordering you were supposed to
-  discard. Before citing a number, check which array you read it from.
 - **Follow a returned `jurisdictionHints`.** When a `record_search` response
   carries a non-empty `jurisdictionHints`, the next 1–2 retries in this same
   plan-item search sequence must set `marriagePlace` or `residencePlace` to

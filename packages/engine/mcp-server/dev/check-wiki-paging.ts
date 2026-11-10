@@ -1,7 +1,7 @@
 /**
  * Live check for the paging of `wiki_read` and `wiki_place_page`: follow `nextOffset`
  * for each page, join the parts, and compare the join with the page fetched whole from
- * the wiki server.
+ * the wiki server, less the sidebar both tools remove.
  *
  *   npx tsx dev/check-wiki-paging.ts                 # the long pages, through wiki_read; some of
  *                                                    # them again through wiki_place_page
@@ -10,12 +10,14 @@
  *                                                    # stdio: what the CLI sees. `npm run build` first.
  *
  * The whole page comes straight from `GET {wikiApiUrl}/page/<slug>`, not through the tool,
- * so the comparison is against what the server holds. Every part is also measured the way
+ * and loses its sidebar to the function the tools call (`src/utils/wiki-sidebar.ts`), so the
+ * comparison is against what the server holds, less that table. Every part is also measured the way
  * the CLI sees it (the length of the serialized result), which must stay under the line
  * above which Claude Code saves a result to a file. Exit 0 only when every case joins
  * back exactly, every part is under that line and every chain ends; one line per part.
  * A default page that now fits whole also fails: it would pass every other check with
  * nothing walked, so the case needs a longer page. Pages you pass in are not held to that.
+ * A default run also fetches `SIDEBAR_SAMPLES` and fails any that loses nothing to the strip.
  */
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
@@ -24,6 +26,7 @@ import { LOCAL } from "../src/auth/principal.js";
 import { fetchPage, wikiPlacePageTool } from "../src/tools/wiki-place-page.js";
 import { wikiReadTool } from "../src/tools/wiki-read.js";
 import type { WikiPageResult } from "../src/types/wikiPage.js";
+import { stripWikiSidebar } from "../src/utils/wiki-sidebar.js";
 import { CLI_SPILL_CHARS } from "../tests/helpers/cli-spill.js";
 import { callViaClient } from "./smoke-calls.js";
 
@@ -49,6 +52,20 @@ const PLACE_CASES = [
   { standardPlace: "Schuylkill, Pennsylvania, United States", section: "home" },
   { standardPlace: "Cook, Illinois, United States", section: "home" },
 ] as const;
+
+/**
+ * Pages that carry the wiki's sidebar, one per shape seen on the wiki. Each must lose characters
+ * to the strip: one that loses none means the rule matched nothing, most likely because the wiki
+ * renamed the `Wiki Topics` box or changed its template, and the tools now serve the sidebar again
+ * while every other check passes. Fetched once each, apart from the walks, on a default run.
+ */
+const SIDEBAR_SAMPLES = [
+  "England_Census", // a one-column box opening the page, its row **[X Wiki Topics](url "title")**
+  "England_Genealogy", // the place's own page, its row **X Wiki Topics**
+  "Ohio_Vital_Records", // a state's page, its row [**X Wiki Topics**](url "title")
+  "Argentina_Online_Genealogy_Records", // the box lower on the page, under a table
+  "Saskatchewan,_Canada_Genealogy", // a two-column box
+];
 
 interface Part {
   result: WikiPageResult;
@@ -77,12 +94,16 @@ const overStdio =
     return { result: res.body as WikiPageResult, wireChars: res.text.length };
   };
 
-/** The page as the wiki server holds it, fetched without the tool. */
-async function fetchWhole(slug: string): Promise<string> {
+/**
+ * The page as the tools serve it: fetched from the wiki server without the tool, its sidebar
+ * removed. `removed` is how many characters the sidebar took with it.
+ */
+async function fetchWhole(slug: string): Promise<{ whole: string; removed: number }> {
   const page = await fetchPage(await getWikiApiUrl(LOCAL), slug);
   if (page === null) throw new Error(`GET /page/${slug} answered 404`);
   if (typeof page.content !== "string") throw new Error(`GET /page/${slug} carried no text`);
-  return page.content;
+  const whole = stripWikiSidebar(page.content);
+  return { whole, removed: page.content.length - whole.length };
 }
 
 const fmt = (n: number): string => n.toLocaleString("en-US");
@@ -115,7 +136,7 @@ async function checkCase(
   // page's slug from it. The whole page comes next: its length bounds the walk.
   const parts: Part[] = [await call(undefined)];
   const slug = slugFromUrl(parts[0].result);
-  const whole = await fetchWhole(slug);
+  const { whole, removed } = await fetchWhole(slug);
 
   // Every part is non-empty (`fitPage`), so each call starts at least one character past the
   // last one and a chain over `whole.length` characters cannot have more parts than that. A part
@@ -143,7 +164,8 @@ async function checkCase(
   }
 
   const joined = parts.map((p) => p.result.content).join("");
-  console.log(`\n${label}: ${parts.length} part${parts.length === 1 ? "" : "s"}, the page is ${fmt(whole.length)} chars (${slug})`);
+  const sidebar = removed > 0 ? `, ${fmt(removed)} of sidebar removed` : "";
+  console.log(`\n${label}: ${parts.length} part${parts.length === 1 ? "" : "s"}, the page is ${fmt(whole.length)} chars${sidebar} (${slug})`);
   let at = 0;
   parts.forEach((p, i) => {
     const r = p.result;
@@ -177,8 +199,26 @@ async function checkCase(
   }
   if (joined !== whole) {
     problems.push(`the parts do not join to the page: ${fmt(joined.length)} chars against ${fmt(whole.length)}, first difference at ${fmt(firstDifference(joined, whole))}`);
+    // The tools served the page with its sidebar: under --wire, a build older than src/.
+    if (removed > 0 && joined.length === whole.length + removed) {
+      problems.push("the parts are the page with its sidebar still in: is build/ older than src/? Run `npm run build`");
+    }
   }
   console.log(`  joined parts equal the whole page: ${joined === whole ? "yes" : "NO"}`);
+  return problems;
+}
+
+/** Each sample page must lose characters to the strip (see `SIDEBAR_SAMPLES`). */
+async function checkSidebarSamples(): Promise<string[]> {
+  const problems: string[] = [];
+  console.log("\nsidebar samples, each of which must lose its box:");
+  for (const slug of SIDEBAR_SAMPLES) {
+    const { whole, removed } = await fetchWhole(slug);
+    console.log(`  ${slug}: ${fmt(removed)} of ${fmt(whole.length + removed)} chars removed`);
+    if (removed === 0) {
+      problems.push(`${slug}: no sidebar was removed from a page that carries one: has the wiki renamed the \`Wiki Topics\` box, or changed its template?`);
+    }
+  }
   return problems;
 }
 
@@ -209,6 +249,7 @@ async function run(call: Call): Promise<number> {
         checkCase(`wiki_place_page ${JSON.stringify(c)}`, (offset) => call("wiki_place_page", { ...c, offset }), true),
       );
     }
+    await attempt("sidebar samples", checkSidebarSamples);
   }
 
   console.log("");

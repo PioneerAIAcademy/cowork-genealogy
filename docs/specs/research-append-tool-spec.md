@@ -1323,6 +1323,8 @@ audit's recommendation #5):
 | `proof_summaries` append, or update setting `tier`, at `proved`, `probable` or `possible` | **every parent side the summary cites has a cited parent-role assertion carrying a live, non-speculative `person_evidence` link** (`countsForProofGate`, as the zero-links row: an unchecked FamilySearch attachment is a candidate, not an identity), read from the **pre-call snapshot**. Cited ids are `supporting_assertion_ids` plus every `claims[].supporting_assertion_ids`. A role is a parent role when an underscore-delimited token of the lower-cased `record_role` is `father`, `mother` or `parent` (`record_role` is an open enum: `father_of_deceased`, `mother_of_child_1`, `groom_father`, …), excluding any role containing `grand`, `god` or `in_law` and the four `*_of_father`/`*_of_mother` grandparent roles. A side is cited by a parent-role assertion, or by an **unlinked** assertion whose `structured_value.related_person_role` is a parent role ("child of William Barker"), so dropping the parent's own assertions does not evade it. A linked "child of" assertion cites nothing: counting it refused 26 legitimate e2e proofs whose parent was identified on another record. **Per side, not per persona**, as proof-conclusion's gate is satisfied per person: the father linked as `father_of_bride` on the marriage satisfies his unlinked `father` persona on the baptism (creszentia-haas-birth). It is a side check, not a person check: any linked father-side assertion satisfies every cited father-side persona. A linked `parent` assertion satisfies either side, and either satisfies `parent`. `not_proved` and `disproved` pass: a disproof cites the parent it rules out. Measured with `dev/measure-unlinked-parent-proofs.ts` over 251 proofs above `not_proved` (e2e final documents and unit scenarios, re-counted 2026-10-21 after the speculative-link change), using the final document as the snapshot, so a lower bound: **5 refused**. katalin-horak-son and rozal-sarman-daughter are genuine new catches (an unlinked mother); victoriano-macatangay-parents ps_001/ps_002 are genuine and already refused by `unlinkedProofInvariants`; **elizabeth-geach-parents ps_001 is a known false refusal, accepted** — two in-laws' fathers (`father_of_deceased`) cited as negative evidence, which the rule cannot tell from the subject's father without a tree lookup. The refusal names the side and its ids, says removing those ids from the citation and resending does not fix it, and offers three ways out: person-evidence with the ids still cited, `not_proved` now, or — only when the question does not ask who the parents are — a conclusion that no longer states, relies on or encodes that parent. Its wording was hardened because the mined test ut_proof_conclusion_32f failed 3/3 with the agent dropping the parent ids and naming the parents in prose. Mined from a Cowork run on Family Tree MHGK-WT7: `probable` naming William Barker and Martha Edwards with every parent assertion unlinked | `unlinkedParentProofInvariants`; ADR-0011 |
 | `proof_summaries` append at `proved`, `probable` or `possible`, or update setting `tier`, `narrative_markdown` or `claims` | **the narrative and claims do not state as a finding that the subject is the child of a parent nobody identified.** The companion to the row above, which reads the citation: dropping the parent's assertions from it passes that row, and ut_proof_conclusion_32f failed 3/3 that way. The **subject** is the person most of the summary's cited, live, non-speculative-linked assertions are linked to; with no such link the rule does not apply (the zero-links row refuses that case). A parent is the subject's when its `fact_type: "name"` assertion has a parent `record_role` (the `parentSide` test above) on a record a cited assertion is on, and either the role names a party (`father_of_bride`, `groom_father`) whose assertion on that record is linked to the subject, or the role is bare (`father`, `mother_1`) and the subject is linked on that record. It is unidentified when that assertion is unlinked and no name assertion live-linked, not speculatively, to a person **other than the subject** anywhere in the **pre-call snapshot** carries the same given name (and surname, when both have one) — so a namesake son's own name does not identify his father. Refused when a parentage phrase (`[the] son/daughter/child of`, `his/her/their father/mother/parents was/were/is/are`, `born to`) is followed in its sentence by that given name. Not refused: quoted text (`"…"`, `“…”`, `'…'`, stripped first); a phrase whose sentence has, before it, a record noun (`register`, `index`, `entry`, `record`, `certificate`, `census`, …) as the subject of a reporting verb (`reads`, `records`, `showing`, `names`, `gives`, `lists`, …), as in "the index records Jonathan, son of William". The verb alone does not exempt: "the evidence shows", "given the correlation" and "United States" open findings; a phrase right after an indefinite name ("the christening of a Jonathan, son of William"); and a phrase followed by `a`/`an`/`another`/`some` ("the daughter of a different István"). An appositive with no reporting verb ("christened at St James, son of William Barker") is a finding and is refused. Also checked on a narrative or claims update that leaves `tier` alone, since a parentage can be added to a summary already at `probable`. Measured with `dev/measure-unlinked-parent-proofs.ts` over the same 251 proofs: **1 refused**, mcaloney-mother ps_001, whose subject is the mother and whose `proved` narrative states her own parents, both unlinked, as "biographical anchors" — in scope by this rule's definition, though an aside rather than the answer. Against the six 32f runs on 2026-10-21 it refuses the two whose saved conclusion states the parentage and passes the four that report the records only; earlier drafts refused rozal-sarman-daughter ("a different István"), a record description without a reporting verb, and the bride's parents on a mother's marriage record, which is why the subject and indefinite-name tests exist. The refusal names each given name and its ids, and offers person-evidence, `not_proved`, or removing the parentage from the conclusion | `unlinkedParentNarrativeInvariants`; ADR-0011 |
 | `person_evidence` update of an **attachment link**, live or retired, (`isAttachmentLink`: `ATTACHMENT_LINK_RATIONALE`, `speculative`, no `match_score`) setting anything but `superseded_by` | rejected. An attachment link is only ever superseded. Raising its confidence in place would skip `same_person`, because the score gate checks an update only when it writes `match_score`, `assertion_id` or `person_id`. The refusal names the route: score the pair with `same_person`, append a new link, then supersede this one; person-evidence's Step 6 sets only `superseded_by`, so it is unaffected. Retiring a wrong attachment with no correct replacement belongs to attachment verification, a separate request, not to this row | Refuses 0 committed links: none carries the rationale yet (2026-10-20) |
+| `person_evidence` append or update **setting `superseded_by`** | rejected unless it names another existing `person_evidence` entry for the **same assertion**: a link is superseded only by the link that replaces it (§6: append the corrected link, then point the old one at it, whether the correction is a new person or a scored link replacing an attachment link). Ops apply in batch order, so a replacement appended earlier in the same call counts; one placed after the update does not. The target must itself be live, so two links cannot retire each other and leave the assertion with none. A pointer naming a rejection (`rj_`, what `retireRejectedLinks` writes) is accepted when the rejection is for the same assertion and person. Checked only on the op that sets the pointer: an update re-sending the stored value unchanged is not checked, so a document written before this rule stays editable. The refusal names the route: append the replacement, read its id from `results[].entryId`, then set the pointer. Found by a person-evidence unit run that appended six scored links and, in the same batch, pointed six attachment links at guessed ids that belonged to another record's live links. `supersedeTargetInvariants` | Of 5 committed pointers (555 scenario, e2e starting and e2e final documents, 2026-10-26), all 5 name another assertion's link, and all 5 retired a valid marriage-record link in favour of a baptism-record one (creszentia-haas-birth, run 2026-09-11): true positives. None names a missing entry |
+| `person_evidence` append at **`confident`**, or update raising a link to `confident` from a lower tier, for an assertion whose link to the **same tree person** began as an **attachment link** (live or superseded) | rejected unless another live, checked link (not an attachment link, not `speculative`) ties that person to an assertion from a **different source** (`capSource`). The link replaces an unchecked candidate, and other attachment links are not corroboration, so one record makes it `probable`; the refusal says so. Every route to `confident` is checked: every append, one arriving already superseded included, and every update leaving a live `confident` link except an edit to a link that was already live and `confident` on the same pair. So a `probable` replacement cannot be raised in place, followed by a `confident` correction, moved onto the person or revived once the attachment link is superseded. A link to a different person than the attachment link named is not capped. Read off the working document at the op's place in the batch, so the attachment link is still live when its replacement is appended in the same call as the supersede. Found by a person-evidence unit run that wrote `confident` on one census three times in three, against a prose rule saying `probable`; the starting-tree confidence gate (every starting-tree source is this record) did not fire because the tree person also cites a second, unchecked record. `attachmentReplacementTierInvariants` | Of 588 scenario, e2e starting and e2e final documents (2026-11-02), 3 hold attachment links and none has a `confident` link replacing one |
 | `proof_summaries` append/update, **any tier** | when the summary's question carries a `search_stop.stop_criteria.conflict_resolution` claiming a conflict was resolved (positive resolution language; an honest "no conflicts" or a sentence opening by negating a resolution does not claim one), **`conflicts[]` must hold a record of it**: a settled (`resolved`/`moot`) conflict cited on this summary's `resolved_conflict_ids` or naming this question in `blocks_question_ids`; or the `c_` id the stop-criterion names, at any status; or, when it names none, any `conflicts[]` entry. Read from the **live** document, so a conflict recorded earlier in the same batch satisfies it, and scoped to the summary written, never the whole document. It asks whether the conflict was persisted, not whether it was resolved: a `not_proved` summary over a recorded, open conflict passes. The refusal names the question, quotes the stop-criterion and points at conflict-resolution, the sole writer of `conflicts[]`; it never suggests rewording the stop-criterion. Labelled cases, shared with the harness detector it graduated from: `packages/engine/mcp-server/tests/guard-cases/unpersisted-conflict-resolution.json` | `guardrail-enforcement-spec.md` §5; `unpersistedConflictResolutionInvariants` |
 | `proof_summaries` **update** setting `narrative_markdown` or `exhaustive_search_summary`, when a `log[]` entry for the summary's question was performed after its `updated` stamp | **must set both.** The two say what was searched and what could still resolve the question, so a later search that changes one changes the other. A log entry counts toward the question when its `plan_item_id` is an item of one of that question's plans (in section E's unsettled-conflict ending, `unsettledConflictEnding`, the upload that closes one of its hand-offs counts too, as it does for the ladder, so a refresh that ends the research covers it), and "later" compares its `performed` with the summary's `updated` as it stood before this op. The tool stamps `updated` (an `iso_datetime`) on every append of a summary and on every update that sets either text field, overwriting any value the caller passes. An update setting neither keeps the stamp it had, and drops a caller-supplied one, because it checked neither text against the log; moving the stamp there would hide the later search from the next one-field update. With no later search, a one-field update passes. So does a summary with no `updated`: every summary written before the stamp existed, which includes every eval fixture. Passing a field's current text again satisfies the rule, which asks only that the caller re-checked the field. An edit to either field through `edits` (§3.9) counts as setting it. An append already requires both, and an update setting neither (a tier or `shortfall` change) is untouched, except in that ending: there an update setting neither is refused when the summary is older than the question's latest owned entry (`staleEndingRefresh`), because its `updated` would never move and the ladder would send the question back to proof-conclusion forever. Observed 2026-10-09: after three more searches, one summary's `exhaustive_search_summary` was rewritten to report them while its narrative still recommended all three, and the other summary got the reverse. The refusal names the missing field and the later log ids, and its worked example shows both | `narrativeAndSearchSummaryTogether`. **Replayed over the committed run logs on 2026-10-20: 2 of 174 corpus updates refused**, in 2 of the 113 runs that make one, both e2e and before 2026-09-15. The unconditional form of the rule refused 104 of the same 174. Holding the stamp on an update that sets neither text field changes nothing in the corpus: of the 23 such updates, one followed a later search (`ruse-children` `run-2026-07-15_21-26-04`, a `supporting_assertion_ids` change) and no one-field update came after it. A summary's stamp is the call index of its last successful write in the run that appended it or set either text field, and a later search is a successful `research_log_append` for one of the question's plan items after that call. Ids are mapped through the scenario fixture, the e2e `.final-research.json` and the tool responses. Fixture summaries carry no stamp, so no unit update of a fixture summary can be refused. Both refusals are stale summaries. In `john-perry-witbeck-vitals` (`run-2026-07-24_23-52-08`), `ps_002`'s search summary was rewritten to add the 1830/1840 census searches and a Find a Grave death date, over a narrative still saying no exact date was recoverable. In `hannah-earnest-children` (`run-2026-07-22_10-51-46`), the narrative was rewritten to eliminate Emma Grice after `log_011`, and the search summary never mentions that read. The second is an omission rather than a contradiction. Re-derive before quoting |
 | `questions` append/update touching **either** `status` or `search_stop` | `status: "exhaustive_declared"` requires `search_stop.stopped_because` to be a stop-gate value (`question_answered`, `record_exhausted`, or `nothing_further_reachable`). Checked on the post-merge entry (**live**, not snapshotted): the declaration and the status are two halves of one author's own step, and 123 of 125 corpus ops set both in the same op. Gated on EITHER field, because the invariant couples two and an op touching one can break it without naming the other — the agent's own re-invocation path sets a non-gate `stopped_because` value and leaves `status` alone. Renamed from `exhaustive_declaration` (2026-10-07) | A zero-violation arm: **0 of 125** corpus ops refused. The converse (gate-value ⇒ status) has been asserted by the unit validator since it shipped and nothing asserted this direction, which is the one that leaves a question looking finished with no declaration behind it. ADR-0011 |
@@ -2099,6 +2101,69 @@ ended with every question resolved, and in 6 of them the rule removes 17
 persons. The only `research.json` entries naming those persons are 91
 `person_evidence` links.
 
+### 5.12 A caller's `localities` collection counts are stamped from the catalog
+
+On a `localities` append, and on an update whose `fields` sets `collections`,
+reached as an MCP caller (`researchAppendFromCaller`), each collection's
+`person_count` and `record_count` are set from FamilySearch's collection catalog
+(`fetchAllCollections`, the catalog `collections_search` reads, counted as it
+counts them: `collectionCountsById`). The write is never refused (decided at review-ready,
+2026-11-09). The wiring is `stampLocalityCollectionCounts` in
+`research-append.ts`, called from `prepareOps` after the `for_place` check (§5.8)
+and skipped when an earlier check has refused the batch.
+
+**Why.** research-plan plans from these counts without calling `collections_search`
+when every collection in a covering locality carries a `person_count`, and decides
+a name search vs an image browse on `person_count > 0`. In alpha feedback bundle
+`feedback-2026-11-05T18-50-09-991Z.zip` one locality stored `person_count: 0` on all 13 of its collections, and the second plan
+sent two indexed Illinois state censuses (1803969, 1803971; personCount 240,768 and
+380,262) to full-text search as browse-only. The agent cannot know a better count
+than the catalog, so a refusal would cost a turn and end in the same state.
+
+- **Ids.** A number id is stored as a string on every path below. A collection with
+  no id (absent, null, empty, or neither a string nor a number) cannot be checked: both counts become
+  `null`, with the warning
+  > `localities collections: a collection with no id cannot be checked; person_count and record_count set to null (unknown)`
+- **Found.** The id is in the catalog: both counts become the catalog's. A warning names each
+  value that changed:
+  > `localities collections '<id>': <count> <old> -> <new>[, <count> <old> -> <new>], set from FamilySearch's catalog`
+
+  `<count>` is `person_count` or `record_count`; only a count that changed is named,
+  `person_count` first. `<old>` is the JSON of the supplied value, or `absent`.
+- **Not found.** Both counts become `null`, which sends research-plan back to
+  `collections_search`:
+  > `localities collections '<id>' is not in FamilySearch's collection catalog; person_count and record_count set to null (unknown)`
+- **The catalog cannot be read** (no FamilySearch session, a network failure, a
+  non-200, or no answer within `CATALOG_READ_BUDGET_MS`, 20 seconds): every count in each such op becomes `null`, with one warning per op. The
+  underlying error, including the auth error's "Call the login tool", is not passed on:
+  > `localities collections: FamilySearch's collection catalog could not be read, so every person_count and record_count in this entry was set to null (unknown)`
+- **A spent FamilySearch request budget** (the process-wide limit or the per-user
+  429 pause, `isFsBudgetExhausted`) is a refusal, not a failed read: it is rethrown,
+  so the call fails with that error and nothing is written, as for an assertion's
+  geocode.
+- **When the catalog is read.** Once per call, in `researchAppendFromCaller`, before
+  the project lock, and only when the call carries a `localities` collection. A cold
+  read can run past 30 seconds (2 of 51 in the committed e2e run logs took 33 and 36,
+  collections-search-tool-spec "Timeout") and Cowork's bridge aborts a call at 60, so
+  the write waits at most 20 seconds; a read still running then goes on and fills
+  the cache. `fetchAllCollections` caches a successful read for an hour per token
+  (for the whole process when `GENEALOGY_SHARED_COLLECTIONS_CACHE` is `true`), so the
+  read is usually warm after locality-guide's own `collections_search`, but not after
+  a token refresh, or on a per-token hosted server where another patron's read has
+  since taken the cache's one slot.
+- **Whose session reads it.** The caller's: `server.ts` binds
+  `collectionCatalogLoader(principal)` and passes it to `researchAppendFromCaller`,
+  so `research-append.ts` imports no token code. That keeps every tool built on
+  `researchAppend` out of the hosted reauth alarm's set of tools that reach the token,
+  which they do not. `research_append` itself never passes on a sign-in instruction
+  (a failed read is the warning above), so it stays out of that set too.
+- **Who is stamped.** Only an MCP caller. The internal `researchAppend` callers are
+  not. The unit eval harness passes a null catalog loader, so it never contacts
+  FamilySearch and stores the counts as written (the `person_warnings`
+  precedent).
+- **Measured 2026-11-10** with a live session: the catalog held 3,638 collections
+  (the read asks for 5,000, so an id is not missed by truncation), every `id` a string.
+
 ## 6. Decisions recorded
 
 - **One tool with `section` + `op`, not per-section tools.** Same rationale as
@@ -2235,6 +2300,12 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   supplied persona rejected; absence never errors.
 - **joint-write atomicity** — a research-side validation failure after the
   in-memory `S` creation leaves **both** files byte-unchanged, no `.bak`.
+- **locality collection counts** (§5.12) — a wrong count replaced with a warning;
+  a correct one kept silently; an id the catalog lacks, and every id on a failed
+  read (an error, a non-200 or the 20-second budget), nulled with a warning and the
+  write kept; a collection with no id nulled; a number id stored as a string; a spent
+  FamilySearch budget rethrown; an update stamped like an append;
+  a null loader and an internal `researchAppend` write left unstamped.
 - **place levers** — sidecar copy preferred over geocoding; `resolvedPlaces`
   echo; country-contradiction rejected; `standard_place: null` opt-out honored;
   `opsReceived` echoed on batch failures.
@@ -3546,6 +3617,19 @@ there is no `same_person` gate. Checking the attachments is a separate request.
   tree persons, and no tree person to two personas of one record. Each count
   is per persona, however many routes contest it.
 
+  Why both rules withhold rather than guess (decided in implementation,
+  2026-11-04, applying the 2026-10-30 ruling's "an id two tree persons attach
+  links neither"): a person is one entry in one record, so a tree person
+  claiming two entries carries at least one wrong attachment and nothing says
+  which; and a tree person whose own refs already name an entry has said which
+  one is theirs, so a role pick could only repeat it or land a generation off
+  (when Cora and her daughter both attach Cora's baptism, Cora's pick would
+  otherwise land on Cora's own mother). A withheld link costs a fact the research finds and
+  checks later through a question; a wrong one puts another person's fact on
+  the timeline. Measured cost: 16 links on LL4N-82C, none on a run person
+  across the 186 e2e subjects. Reversing either is one branch in
+  `personIdMode`.
+
   Each claimed persona's assertions (`record_persona_id`) become
   `person_evidence` appends to their claimant with `confidence:
   "speculative"`, `match_score: null` and `ATTACHMENT_LINK_RATIONALE`
@@ -3584,6 +3668,39 @@ there is no `same_person` gate. Checking the attachments is a separate request.
   No record group is read twice: LL4N-82C's 22 attached records are 15
   extractions. Its `ambiguous: 2` is one tree person claiming two personas of
   one record, so neither is linked. 46 of 186 e2e subjects have at least one attached indexed record.
+
+#### Who calls it, and who checks the links
+
+Lead rulings, 2026-10-19, 2026-10-20 and 2026-10-30.
+
+- **The /research job**, once per subject (`project_context.subjectPersonIds`),
+  on its "Objective but no questions" row, before the first question-selection,
+  then `timeline_build`. **"A timeline for a person"** is a bounded ask that runs
+  the same two calls and stops.
+- **The timeline agent**, once, when `timeline_build` returns
+  `no_linked_evidence` for a person timeline (Mode A, or Mode C on a person
+  timeline). It then builds again and, if still nothing is linked, makes no claim
+  about the person and never hands back. Mode B never extracts.
+- **Attached records are checked only on request.** The links stay speculative
+  until something needs more:
+  - a question whose assertions have no other live link: `project_context`'s
+    `noneLinked` rung ignores attachment links (`countsForLinkedRung`), the
+    router's person-evidence row fires, and person-evidence treats each named
+    assertion whose only live link is an attachment link as unlinked: it scores
+    it with `same_person`, appends a scored link, and supersedes the attachment
+    link with it;
+  - a proof the unlinked-proof gate refuses because none of its supporting
+    assertions has a live link that is not speculative: the same route.
+
+  Otherwise a proof may cite them beside an assertion whose link is not
+  speculative. The rung ignores only attachment links, not every speculative
+  link, because person-evidence itself writes a speculative link when the
+  researcher confirms a weak match, and ignoring those would send the question
+  back to ask again; the unlinked-proof gate still ignores every speculative
+  link. The other personas of an attached record are linked at the same call:
+  each to the one tree person who attaches it, and on a relationship-level
+  record each party's own persona ("Links" above has the claim order). They
+  are attachment links too, and are checked by the same route.
 
 ### 11.9 Attaching waiting pages — a read page onto its record's source
 
