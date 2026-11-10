@@ -65,6 +65,9 @@ let refusalHitsThinner = 0, refusalHitsFuller = 0, refusalTie = 0;
 // do anything: a pair with a one-party trigger expands; a pair linked ONLY
 // through two-party assertions never triggers and stays partial forever.
 let partialWithTrigger = 0, partialTwoPartyOnly = 0, rowsStranded = 0;
+let secondPartyOnEntry = 0;
+const secondPartyRuns = new Set<string>();
+const unreachedRuns = new Set<string>();
 
 for (const slug of readdirSync(RUNS)) {
   const dir = join(RUNS, slug);
@@ -164,7 +167,24 @@ for (const slug of readdirSync(RUNS)) {
       );
       if (unlinkedOneParty.length > 0) {
         if (triggers.length > 0) partialWithTrigger++;
-        else { partialTwoPartyOnly++; rowsStranded += unlinkedOneParty.length; }
+        else {
+          // Split, per the lead's 2026-11-10 review. A two-party link is keyed
+          // to the entry its assertion is FILED on, which is usually the OTHER
+          // party's: Thomas linked through "Father: Thomas Flynn" on Patrick's
+          // death record keys to PATRICK's entry, so Patrick's own birth and
+          // death were counted as stranded FOR THOMAS while they are linked to
+          // Patrick. Counting those made UNREACHED read as a defect when it is
+          // the correct shape.
+          const heldByOther = [...(onePartyHolders.get(k) ?? [])].some((pp) => pp !== person);
+          if (heldByOther) {
+            secondPartyOnEntry++;
+            secondPartyRuns.add(slug);
+          } else {
+            partialTwoPartyOnly++;
+            rowsStranded += unlinkedOneParty.length;
+            unreachedRuns.add(slug);
+          }
+        }
       }
 
       if (triggers.length === 0) continue;
@@ -235,7 +255,8 @@ console.log(`  refused ONLY by the rejected reading           ${naiveOnly.length
 console.log("");
 console.log("DOES THE RULE REACH THE BUG? partially-linked (entry, person) pairs:");
 console.log(`  reachable  -- has a one-party trigger, expands    ${partialWithTrigger}`);
-console.log(`  UNREACHED  -- linked only via two-party links      ${partialTwoPartyOnly}`);
+console.log(`  second-party link, entry held by its own person  ${secondPartyOnEntry}  (${secondPartyRuns.size} runs) -- NOT stranded`);
+console.log(`  UNREACHED  -- two-party only AND nobody holds it   ${partialTwoPartyOnly}  (${unreachedRuns.size} runs)`);
 console.log(`     one-party facts left stranded in those          ${rowsStranded}`);
 console.log("");
 console.log("the refusal is order-dependent -- which side arrives second:");

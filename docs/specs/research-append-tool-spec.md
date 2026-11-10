@@ -2170,8 +2170,12 @@ supersede route is for a link already held.)
 
 **Scope.** The rule runs at write time, so a project written before it stays
 partly linked; nothing backfills. It reaches an entry only where one one-party
-fact is already linked. An entry reached solely through two-party links — the
-common shape — is not expanded, by the reasoning above.
+fact is already linked. An entry reached solely through two-party links is not
+expanded, by the reasoning above — a rare shape: across the committed e2e final
+states, 11 (entry, person) pairs in 6 runs, holding 41 one-party facts. A
+two-party link usually sits on an entry whose own person already holds it
+through a one-party link of their own, and there nothing is unreached: the
+facts belong to that person and are already linked to them.
 
 ## 6. Decisions recorded
 
