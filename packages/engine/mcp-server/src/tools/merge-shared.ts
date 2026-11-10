@@ -188,11 +188,13 @@ export type CandidateDocument = SimplifiedGedcomX & {
 const FS_RELATIONSHIP_TYPE_PREFIX = "http://familysearch.org/types/relationships/";
 const TREE_RELATIONSHIP_TYPES: ReadonlySet<string> = new Set(VALIDATOR_ENUMS.relationship_type);
 
-/** The first straight-ASCII double-quoted run of a citation: FamilySearch
- *  citations open with the quoted collection title. */
+/** The first straight-ASCII double-quoted run of a citation, less trailing
+ *  punctuation: FamilySearch citations open with the quoted collection title,
+ *  often with its comma inside the quotes (`"United States Census, 1860,"`). */
 function quotedTitle(citation: string): string | undefined {
   const m = /"([^"]+)"/.exec(citation);
-  return m ? m[1] : undefined;
+  const title = m ? m[1].replace(/[\s,.;:]+$/, "") : "";
+  return title !== "" ? title : undefined;
 }
 
 function nonEmpty(v: unknown): string | undefined {

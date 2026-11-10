@@ -147,6 +147,14 @@ describe("sanitizeCandidate — a compacted record_read answer (#4415)", () => {
     expect(warnings.some((w) => w.includes('gender "Unknown"'))).toBe(true);
   });
 
+  it("drops the comma FamilySearch puts inside the quoted title", () => {
+    const { candidate } = sanitizeCandidate({
+      persons: [],
+      citation: '"United States Census, 1860," database, FamilySearch, Schuylkill County.',
+    } as any);
+    expect(candidate.sources?.[0]?.title).toBe("United States Census, 1860");
+  });
+
   it("never writes a url key when the answer has no recordUrl", () => {
     const { candidate } = sanitizeCandidate({ persons: [], collectionTitle: "United States Census, 1860" } as any);
     expect(candidate.sources).toEqual([{ id: "S1", title: "United States Census, 1860" }]);

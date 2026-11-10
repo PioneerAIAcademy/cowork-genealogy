@@ -153,8 +153,9 @@ relationship ids, sets a missing `gender` to `Unknown` and a missing
 `given`/`surname` to `""`, drops titleless sources and relationships that are
 not ParentChild or Couple, and, when the candidate has no `sources`, builds
 one source `S1` from `citation`, `collectionTitle` and `recordUrl`. Its title
-is `collectionTitle`, else the first double-quoted run of `citation`, else the
-citation.
+is `collectionTitle`, else the first double-quoted run of `citation` with
+trailing punctuation removed (FamilySearch often quotes the title with its
+comma, `"United States Census, 1860,"`), else the citation.
 
 That rebuilt source is what keeps `hasSameCensus` working: a persona with no
 source refs reads every candidate source title. **Known limit:** a tree census
