@@ -134,12 +134,6 @@ be narrower than the issue stated.
 
 </details>
 
-<details><summary>Body text if B</summary>
-
-<the issue-body text option B produces>
-
-</details>
-
 *Prepared by review-ready YYYY-MM-DD.*
 ```
 
@@ -210,10 +204,10 @@ item. An answer heard and not applied is worse than one never asked for.
 gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \
   --body "**Ruling (<who>, <date>):** <his words, verbatim> — **Rests on:** <facts>"
 
-# 2. splice the chosen option's pre-written body text in, replacing the whole
-#    `## Decision needed` block, so the next reader gets the decision and not the
-#    open fork. Copy it — do not compose your own; you did not do the reading.
-#    Only when he picked the recommended option; any other goes back through a
+# 2. splice the recommended option's pre-written body text in, replacing the
+#    whole `## Decision needed` block, so the next reader gets the decision and
+#    not the open fork. Copy it — do not compose your own; you did not do the
+#    reading. Any other pick has no body text: it goes back through a
 #    `task-reviewer` first (§4), and you splice what it returns.
 #    An item you prepared yourself in §2 has no pre-written option text and no
 #    block to replace: write the decision and the alternative it beat into the
@@ -252,10 +246,9 @@ the current facts, not a request to reverse him. Say which fact changed.
 - **"Neither — the real question is X."** Rewrite the `## Decision needed` block
   with the corrected question and **leave the label on**. It comes back next run.
 - **He picked against the recommendation — any option but the recommended one.**
-  Do not splice — re-run one `task-reviewer` on that issue alone, telling it the
-  decision, and use what comes back. Only the recommended option was worked
-  through: the others' body text is a sketch, often with `<reason>` placeholders
-  and an open clause, and its site list was computed under a different assumption.
+  It has no body text to splice — re-run one `task-reviewer` on that issue alone,
+  telling it the decision, and use what comes back. Only the recommended option
+  was worked through.
 - **He answered something no option covered.** Same: re-run one agent with his
   answer rather than guessing at the body text.
 - **He answered with a question rather than a choice.** Answer it, then re-ask.
