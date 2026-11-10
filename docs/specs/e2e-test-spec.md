@@ -348,7 +348,7 @@ persona on every record of the rejected candidate, read live, leaving out any
 record a correct run's `tree.gedcomx.json` would cite or the starting tree
 already cites (a record the paired negative-conclusion finding cites in
 `research.json` stays listed); an empty list carries a `note` saying why. The guard above does not read it yet; the
-avoid-guard rebuild in issue #3032 does.
+provenance rebuild of `apply_avoid_guard` will.
 
 An `avoid` finding may be `required: true`; it then gates the verdict
 exactly like a recover finding (`matched: "true"` = correctly
