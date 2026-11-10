@@ -6,6 +6,23 @@ call "%~dp0_CheckSync.bat" || exit /b 1
 echo === Cowork Genealogy Eval Setup ===
 echo.
 
+echo Checking Node.js and npm versions...
+where node >nul 2>nul
+if errorlevel 1 (
+  echo.
+  echo ERROR: Node.js was not found on PATH. Install Node 26 LTS from https://nodejs.org
+  echo and run Setup.bat again.
+  pause
+  exit /b 1
+)
+call node "%~dp0..\scripts\check-node-floor.mjs"
+if errorlevel 1 (
+  echo.
+  echo Setup aborted.
+  pause
+  exit /b 1
+)
+
 echo Allowing local PowerShell scripts for the current user...
 powershell -NoProfile -Command "Set-ExecutionPolicy RemoteSigned -Scope CurrentUser -Force"
 if errorlevel 1 (
