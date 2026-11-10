@@ -635,9 +635,7 @@ was cut either way, so nothing is cut without saying so.
 ### Recorded answers
 
 The recorded answers in `eval/fixtures/mcp/catalog-search-*.json` stand in for
-the tool in the eval runs, so they are held in the shape the tool returns. They
-were reshaped by running each through `shapeAnswer`, with
-`packages/engine/mcp-server/dev/reshape-catalog-fixtures.ts`, not by hand, and a
+the tool in the eval runs, so they are held in the shape the tool returns. A
 test fails if shaping any of them would change it, if one carries a field the
 tool no longer returns (`shelf`, `imageStartNumber`, `url`, `authors`,
 `indexed`), or if one carries a total without its hint, a hint without its
