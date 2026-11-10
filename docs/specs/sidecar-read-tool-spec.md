@@ -424,6 +424,11 @@ the §6 classification is unchanged.
   and `extraction_append` takes the same string as its `transcriptionRef`.
   `search-images`, `search-hints` and the `research` skill read a staged
   transcription.
+- **`search-full-text`** reads one hit's transcript by
+  `<staged.resultsRef>#<hit id>` when the stubs cannot settle a hit's role or
+  date, and **`translation`** reads the page `image_transcribe` staged for a
+  project upload, or a staged transcription it is handed. Both
+  keep `Read` only for a path outside the project.
 - No fixture under `eval/fixtures/mcp/` serves it and `check_tool_coverage.py`
   needs no entry: the unit harness runs it live (`LIVE_TOOLS`), and every live
   tool is exempt. A hit read in a unit run reads what the mock staged: the mock

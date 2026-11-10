@@ -50,6 +50,9 @@ tools:
   - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__project_context
   - mcp__Genealogy_Research__project_context
+  - mcp__genealogy__sidecar_read
+  - mcp__remote-devices__Genealogy_Research__sidecar_read
+  - mcp__Genealogy_Research__sidecar_read
 ---
 
 # Search Full-Text
@@ -351,9 +354,8 @@ The transcription quirks and HTR error patterns are in the appendix
 ### 6. Triage results
 
 Each staged result carries only flat stub fields — the full transcript
-(`textDocument`) is dropped from the response. It is still on disk at
-`staged.resultsRef`, but reading it pulls the whole page (79–136 KB) back into
-context. Triage from the stubs first:
+(`textDocument`) is dropped from the response and kept in the staged sidecar.
+Triage from the stubs first:
 - **Did your terms hit?** `highlightTerms` lists the matched terms and phrases
   as bare strings (e.g. `["Patrick", "Flynn", "Flynn Patrick"]`) — they confirm
   which query terms appear in the transcript, not where or in what role.
@@ -366,8 +368,9 @@ context. Triage from the stubs first:
   (witness, will clause, deed party) versus a false positive (cross-column
   alignment, a place name matching a surname) cannot be judged from the stubs —
   the terms are bare. Verify against the original image (see the verification
-  note above), or `Read` the single result you are chasing out of
-  `staged.resultsRef`.
+  note above), or read the one hit you are chasing with
+  `sidecar_read({ projectPath, ref: "<staged.resultsRef>#<hit id>" })`; a ref
+  without `#<hit id>` is refused.
 
 **Attachment check:** After narrowing to promising results, call
 `source_attachments({ uris: [ark1, ark2, ...] })` to check whether
