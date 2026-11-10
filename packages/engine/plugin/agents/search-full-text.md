@@ -273,7 +273,8 @@ in the appendix ("Full-Text Search Query Syntax").
   for its response, (2) use a `filterParam` value from that response's
   `facets` array as the `collectionId` on the follow-up call. You MUST send
   `includeFacets: true`. Never submit the scoped
-  call in the same parallel batch as the `includeFacets: true` call.**
+  call in the same parallel batch as the `includeFacets: true` call.** Scope only when the hit-count rules call for narrowing (over 50
+  results); 1–50 results are reviewed as returned, with no scoped follow-up.
 - **Decompose a compound surname into co-occurrence, not a phrase.**
   For an Iberian / Latin-American name (`Given Paterno Materno`, e.g.
   "Francisco **Naveda Somarriba**"), require the two surnames as
