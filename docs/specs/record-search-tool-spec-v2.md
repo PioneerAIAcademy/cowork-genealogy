@@ -505,7 +505,11 @@ reads the record.
 never the individual searches. Each search is read from offset 0 to
 `offset + count`, in requests of at most 100 rows, and the merged list is cut to
 `[offset, offset + count)`. Interleaving a deeper read only appends to the list,
-so unranked pages concatenate to it with no gap and no repeat. A ranked expansion
+so unranked pages concatenate to it with no gap and no repeat — as long as every
+name reads the same rows on every page. If a name times out or fails on one page
+but not on the next, the merged list differs between the two pages, so a record
+can be skipped or repeated; `placeExpansion.searches[].error` shows when that
+happened. A ranked expansion
 (one with a `subjectId`) refuses `offset` above 0, because each page would re-rank
 a deeper pool and could skip a record that outranks the rows already shown; raise
 `count` instead. So its `hasMore` is always false, and its `ranked` summary is
