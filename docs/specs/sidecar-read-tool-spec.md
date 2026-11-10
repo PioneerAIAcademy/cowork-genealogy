@@ -14,8 +14,8 @@ sidecar_read({ projectPath, ref, offset?, maxChars? })
    | { ok: false, reason: "no_project" | "invalid_ref" | "not_found" | "not_text", errors: string[] }
 
 sidecar_read({ projectPath, refs, maxChars? })
-  -> { ok: true, results: [ <one result above per ref> ] }
-   | { ok: false, reason: "invalid_ref", errors: string[] }   // `ref` and `refs` together, or an empty or non-list `refs`
+  -> { ok: true, results: [ <one result above per ref> ] }   // the whole answer within 40,000
+   | { ok: false, reason: "invalid_ref", errors: string[] }   // `ref` and `refs` together, an empty or non-list `refs`, or an `offset` other than 0
 ```
 
 **Added for the record-structurer agent** (lead, 2026-09-27 and 2026-09-29). A
@@ -29,8 +29,10 @@ search sidecar, or a full-text sidecar with no `#` selector) is refused as
 `invalid_ref`, with a pointer (§6 has the selector errors). A staged ref whose file
 is gone reads through the log entry that consumed it, and is `not_found` when no
 entry did (§6). `refs` reads several refs in one call, each from
-its start; it is the agent's one "read all" turn. `ref` and `refs` together, or
-an empty `refs`, is refused.
+its start; it is the agent's one "read all" turn, and its whole answer fills one
+40,000-character budget with whole pages, smallest first ("A `refs` batch", under
+pagination). `ref` and `refs` together,
+an empty `refs`, or `refs` with an `offset` other than 0, is refused.
 
 ---
 
@@ -70,8 +72,8 @@ classes and the two `results/` texts nothing else reads back, and nothing else
 sidecar_read({
   projectPath: string,   // required — the project directory
   ref?: string,          // project-relative POSIX path under evaluations/ or uploads/, or a results/ ref (§7)
-  refs?: string[],       // several refs in one call, each read from its start
-  offset?: number,       // UTF-16 code-unit offset, integer ≥ 0, default 0; applies to `ref` only
+  refs?: string[],       // several refs in one call, each read from its start, filling one budget whole pages first ("A `refs` batch")
+  offset?: number,       // UTF-16 code-unit offset, integer ≥ 0, default 0; applies to `ref` only (refused with `refs` unless 0)
   maxChars?: number,     // page size, default 40,000, hard cap 40,000 (clamped); applies to every ref
 })
 ```
@@ -79,8 +81,13 @@ sidecar_read({
 Send `ref` or `refs`, not both; the schema requires only `projectPath`. `refs`
 returns `{ ok: true, results }`, one §2.1 result per ref in the order given: a
 ref that fails is that entry's `{ ok: false, … }`, not the call's. `ref` and
-`refs` together, or a `refs` that is empty or not a list, is `{ ok: false,
-reason: "invalid_ref", errors }` for the whole call.
+`refs` together, a `refs` that is empty or not a list, or `refs` with an
+`offset` other than 0, is `{ ok: false, reason: "invalid_ref", errors }` for
+the whole call: a batch reads every ref from its start, so an `offset` there
+would be dropped, and a caller continuing a cut ref that way would get the same
+cut page back each time. `maxChars` caps each ref's
+page, and the batch as a whole is held to one budget ("A `refs` batch", below), so a
+ref can come back cut shorter than `maxChars`, or empty.
 
 Read-only; writes nothing. No auth, no network, no `Principal` parameter —
 exactly the shape of `research_query`. Parameters are camelCase (the wire
@@ -223,6 +230,52 @@ sidecar: `results/log_017.json#3Q9M-CSK3-ZSDZ` in the g9gj scenario), so the
 whole serialized result stays under ~41,000 and is never spillable. A caller
 pages by passing `nextOffset` back as `offset` until `truncated` is false.
 
+**A `refs` batch.** Each ref's page is bounded as above, but a batch of them is
+bounded too: its whole serialized answer, `{ ok: true, results }` with every
+envelope, is held to `SIDECAR_READ_BATCH_BUDGET` (40,000, the shared
+`TOOL_RESULT_CHAR_BUDGET`). Measured: three 19,000-character staged OCR pages
+with quotes and line breaks serialize to about 66,000 unbounded, past the 50,000
+spill, and the agents that call this tool hold no `Read`. The budget is filled
+whole pages first (lead, 2026-11-10):
+
+1. Each ref gets the page a lone `ref` read with the same `maxChars` would
+   return. Its claim is that page's escaped body.
+2. The answer is measured with every page emptied and every result counted as
+   truncated at `nextOffset: totalChars`, which no real result exceeds. That is
+   taken off the budget.
+3. What is left is filled smallest claim first (`fillWholeFirst`,
+   `src/utils/share-budget.ts`; ties keep the caller's order). A page that fits
+   what is left comes back exactly as a lone read returns it. The first page
+   that does not fit is cut by `fitPage` to what is left and carries
+   `truncated: true` and `nextOffset`. Every page after it comes back empty:
+   `content: ""`, `offset: 0`, `truncated: true`, `nextOffset: 0`, the shape a
+   cut page has. A cut whose one unit escapes wider than what is left (a
+   control character, six escaped) comes back empty the same way.
+
+Results stay in the caller's order. A cut or empty ref continues the way any
+page does: `sidecar_read({ projectPath, ref, offset: nextOffset })`, so "follow
+`nextOffset` only for a ref that came back truncated" reads every ref whole;
+`refs` with that `offset` is refused (the Errors table). The invariant above
+holds for that `ref` read: an empty batch entry's `ref` read from 0 is
+non-empty. A failed ref claims nothing. The answer passes the budget only when
+the envelopes alone pass it, which takes over a hundred refs of ordinary
+length; then every page comes back empty.
+
+Why whole pages first: record-structurer is the only batch caller, it extracts
+from a page only once it holds the whole page, and every page cut in the batch
+costs it one more `ref` call. Sharing the budget equally among the pages cuts
+every page of a batch that does not fit. Measured through `writerToolResult` on
+padded register pages:
+
+| Batch | Shared equally | Whole pages first |
+|---|---|---|
+| twelve 4,300-character pages | 40,000 chars; 0 whole, 12 cut; 12 more calls | 39,869 chars; 7 whole, 1 cut, 4 empty; 5 more calls |
+| three 19,000-character pages and a short upload | 39,986 chars; upload whole, 3 cut; 3 more calls | 39,963 chars; upload and 1 page whole, 1 cut, 1 empty; 2 more calls |
+| two 14,000-character pages | 32,419 chars; both whole | 32,419 chars; both whole |
+
+`catalog_search` still shares its film-note room equally (`shareBudget`, the
+same file): a hit's film notes are useful in part, a register page is not.
+
 `offset` is a UTF-16 code-unit index, the same unit `content.length` and
 `totalChars` are measured in, so `offset + content.length` is always the right
 next page. The tool does not adjust the **start** of a page: a caller that
@@ -262,6 +315,7 @@ the file's length. Two in a short file still do.
 | `maxChars` a finite whole number above 40,000 | clamped to 40,000, no error |
 | `ref` and `refs` both present | `{ ok: false, reason: "invalid_ref", errors: ["send \`ref\` or \`refs\`, not both"] }` for the whole call |
 | `refs` empty, or not a list | `{ ok: false, reason: "invalid_ref", errors: ["\`refs\` must be a non-empty list"] }` for the whole call |
+| `refs` with an `offset` other than `undefined` or `0` | `{ ok: false, reason: "invalid_ref", errors }` for the whole call — "\`offset\` applies to \`ref\` only", naming `sidecar_read({ projectPath, ref, offset: nextOffset })` (`BATCH_OFFSET_MESSAGE`) |
 | one entry of `refs` fails | that entry's `{ ok: false, reason, errors }` in `results`; the call is still `ok: true`. A throw (a bad `projectPath`, a bad `maxChars`) fails the whole call |
 | `ref` absent, empty or not a string, and no `refs` | `{ ok: false, reason: "invalid_ref", errors }` — "ref is required" |
 | `ref` fails §3 | `{ ok: false, reason: "invalid_ref", errors }` |
@@ -424,6 +478,11 @@ the §6 classification is unchanged.
   and `extraction_append` takes the same string as its `transcriptionRef`.
   `search-images`, `search-hints` and the `research` skill read a staged
   transcription.
+- **`search-full-text`** reads one hit's transcript by
+  `<staged.resultsRef>#<hit id>` when the stubs cannot settle a hit's role or
+  date, and **`translation`** reads the page `image_transcribe` staged for a
+  project upload, or a staged transcription it is handed. Both
+  keep `Read` only for a path outside the project.
 - No fixture under `eval/fixtures/mcp/` serves it and `check_tool_coverage.py`
   needs no entry: the unit harness runs it live (`LIVE_TOOLS`), and every live
   tool is exempt. A hit read in a unit run reads what the mock staged: the mock
@@ -449,6 +508,7 @@ fixture, not a defect.
 | `src/utils/results-staging.ts` | `splitHitRef`, `HIT_INDEX_FRAGMENT`, `readResultsEnvelope`, `findFulltextHit`; the `#` guard in `resolveStagedRef`, `readStagedResults` and `checkStagedResults` (§7.1) |
 | `src/tools/extraction-append.ts` | documents mode takes a hit ref as `transcriptionRef` (`research-append-tool-spec.md` §11.7) |
 | `src/utils/text-page.ts` | `fitPage` (§4) and `requireWholeNumber`, shared with `wiki_read` and `wiki_place_page` |
+| `src/utils/share-budget.ts` | `fillWholeFirst`, the whole-pages-first fill of a `refs` batch's budget; beside `shareBudget`, `catalog_search`'s equal share of its film-note room |
 | `src/store/fs-project-store.ts` | `readText` real-path containment check (§3, §8) |
 | `src/tool-schemas.ts` | `allToolSchemas` |
 | `src/server.ts` | dispatch arm via `writerToolResult` |
@@ -490,7 +550,23 @@ segment (`ENAMETOOLONG`) is `invalid_ref`; a bare `results/log_001.json` is
 A staged transcription, and `refs`: a staged transcription's text pages like a
 file; a staged record search is `invalid_ref` pointing at `record_read`; one
 `refs` call returns a transcription, an upload and a `not_found` in order;
-`ref` with `refs`, and an empty `refs`, are refused.
+`ref` with `refs`, and an empty `refs`, are refused. The batch budget ("A `refs` batch",
+written red-first): twelve register pages of 4,300 to 4,410 characters, listed
+out of size order, serialize within `SIDECAR_READ_BATCH_BUDGET` through
+`writerToolResult` and within 1,000 of it, in the caller's order; the smallest
+seven or more come back exactly as each lone `ref` read returns them, the next
+is cut and would not have fit whole, the rest come back empty with `offset: 0`
+and `nextOffset: 0`, and every one reads on by `ref` to its exact text. Three
+19,000-character staged pages with quotes and line breaks, and a short upload,
+serialize within the budget, the upload and the first page whole, the second
+cut to more than 12,000 escaped characters, the third empty; each cut or empty
+page, read on by `ref` and `offset: nextOffset`, reassembles to its exact text;
+`refs` with `offset: nextOffset`, one ref or all three, is refused with
+`BATCH_OFFSET_MESSAGE`, and `refs` with `offset: 0` reads as `refs` alone; a
+page of control characters left three units comes back empty, not one unit
+over; and two 14,000-character pages, which fit, come back exactly as each lone
+`ref` read returns them. `tests/utils/share-budget.test.ts` pins
+`fillWholeFirst` and `shareBudget` themselves.
 
 One full-text hit (§7.1), on the committed real sidecar
 `eval/fixtures/scenarios/g9gj-proof-update-after-later-search/results/log_003.json`,

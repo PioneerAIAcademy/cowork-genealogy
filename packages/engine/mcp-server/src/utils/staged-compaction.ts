@@ -1,6 +1,6 @@
 /**
- * Inline-projection compaction, applied by a search tool once its results are
- * staged.
+ * Inline-projection compaction: record_search applies its compactor to every
+ * answer, fulltext_search once its results are staged.
  *
  * Lives here rather than inline in each tool for one reason: the eval harness
  * has to run the same code. `mock_mcp.py` serves a canned response and then
@@ -31,15 +31,20 @@ import { arkToBareId } from "./ark.js";
  * Slim `record_search`'s INLINE projection so a broad search can't overflow the
  * model's context — the bulk lives in the staged file, which rank_search_matches
  * (and record_read) read host-side, and the remaining flat stub fields still
- * carry names/dates/places for triage. Unconditional once staged (no opt-in
- * flag): nothing needs the dropped fields inline, so the overflow protection
- * can't be forgotten by the caller.
+ * carry names/dates/places for triage. Unconditional (no opt-in flag): nothing
+ * needs the dropped fields inline, so the overflow protection can't be
+ * forgotten by the caller.
  *
- * Safe because the staged file is already serialized to disk by the awaited
- * stageSearchResults, so mutating the inline copy cannot corrupt the sidecar —
- * the sidecar, the viewer's SidecarResultCard, and the eval fixtures all keep
- * full fidelity. The caller must never apply this when `staged` is null (an
- * un-staged exploratory search — nothing was retained to re-read from).
+ * Applied to EVERY answer, staged or not (lead, 2026-11-09, issue #4386). With
+ * no `projectPath` nothing is staged, so a row's `gedcomx` is kept nowhere;
+ * `record_read` on its `recordId` gives that record's document. Keeping it
+ * would put a 100-result page over Claude Code's ~50k-character cutoff (the
+ * Dixon fixture: about 62k characters, about 29k compacted).
+ *
+ * When the call stages, the caller applies this only after the awaited
+ * stageSearchResults has serialized the file to disk, so mutating the inline
+ * copy cannot corrupt the sidecar — the sidecar, the viewer's
+ * SidecarResultCard, and the eval fixtures all keep full fidelity.
  *
  * Measured against the 3,380 rows of a real 140-search session: gedcomx aside,
  * collectionUrl was 14.0% of row bytes, collectionTitle 9.4%, empty
@@ -48,10 +53,9 @@ import { arkToBareId } from "./ark.js";
  * silently disable the re-ranker.
  *
  * `batchNumber` is KEPT for the same class of reason (#1592): it is the only
- * route to a batch the agent can enumerate, and the staged case is the normal
- * one — dropping it here would leave the field working only in the exploratory
- * searches nobody logs. Being flat and top-level, it survives this function by
- * construction; the test that pins it is what stops a future `delete`.
+ * route to a batch the agent can enumerate. Being flat and top-level, it
+ * survives this function by construction; the test that pins it is what stops
+ * a future `delete`.
  *
  * It is not free on every call shape, and the cheap-looking dedupe is declined
  * deliberately. On an ordinary search most rows carry none. On a
@@ -120,9 +124,9 @@ export function compactStagedRecordSearch(
  * in one response, not access to any of them: triage from the stubs, then read
  * back only the hits worth reading. The
  * remaining flat fields (names/places/dates/highlightTerms/title/recordType) are
- * the triage stubs the agent works from. Mirrors record_search's inline-gedcomx
- * strip: unconditional once staged so the overflow protection can't be
- * forgotten, and safe because the staged file is already serialized to disk. The
+ * the triage stubs the agent works from. Unconditional once staged so the
+ * overflow protection can't be forgotten, and safe because the staged file is
+ * already serialized to disk. Unlike record_search's strip, the
  * caller must never apply this when `staged` is null (an un-staged exploratory
  * search — nothing was retained, and the transcript is the only copy).
  *

@@ -535,11 +535,11 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
   `manifest.json` (`tools[]`) — kept in sync by the manifest drift test
   (`tests/packaging/manifest.test.ts`).
 - `record_search` change: in the `record-search.ts` return path, **unconditionally
-  strip inline `results[].gedcomx` after `await stageSearchResults(...)` whenever
-  staging succeeded** — no opt-in flag (nothing needs inline gedcomx once staged,
+  strip inline `results[].gedcomx` on every answer (after `await
+  stageSearchResults(...)`, when it stages)** — no opt-in flag (nothing needs inline gedcomx once staged,
   so the overflow protection can't be forgotten by the caller). The staged file is
-  already serialized to disk, so stripping cannot corrupt the sidecar; an un-staged
-  (no `projectPath`) search still returns full gedcomx inline.
+  already serialized to disk, so stripping cannot corrupt the sidecar. An un-staged
+  (no `projectPath`) search is stripped too.
 - **`packages/engine/plugin/agents/search-records.md` — required, not
   optional.** Add `rank_search_matches` to `tools:` and rewrite the triage
   step to the flow below. **Without this the tool is unreachable** — the
@@ -581,9 +581,8 @@ plumbing; goes through `src/auth/` like every other authenticated tool. Sends
 - `checkAttachments` matches the subject by the FamilySearch id in its `ark`
   on an `I1` tree, by a FamilySearch-shaped tree id with no `ark`, and with
   neither leaves both flags unset and makes no attachments call.
-- `record_search` strips inline `results[].gedcomx` whenever staging succeeded
-  (unconditional); keeps it inline for an un-staged (no `projectPath`) search and
-  when `staged` is null.
+- `record_search` strips inline `results[].gedcomx` on every answer: staged, un-staged
+  (no `projectPath`) and when `staged` is null.
 
 Smoke: `dev/try-rank-search-matches.ts` runs a real `record_search` +
 `rank_search_matches` against live FS for a known subject.

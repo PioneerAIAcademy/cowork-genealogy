@@ -150,11 +150,17 @@ def owners(research: dict[str, Any]) -> dict[str, str]:
     return out
 
 
+#: Log-entry fields research_query leaves out of its answer.
+UNSERVED_LOG_FIELDS = frozenset({"staged_ref"})
+
+
 def oracle(research: dict[str, Any], question: str) -> list[dict[str, Any]]:
-    """Every log entry whose `plan_item_id` is an item of a plan for `question`."""
+    """Every log entry whose `plan_item_id` is an item of a plan for `question`,
+    as research_query serves it."""
     items = {i for i, q in owners(research).items() if q == question}
     return [
-        e for e in research.get("log") or []
+        {k: v for k, v in e.items() if k not in UNSERVED_LOG_FIELDS}
+        for e in research.get("log") or []
         if isinstance(e, dict) and e.get("plan_item_id") in items
     ]
 
