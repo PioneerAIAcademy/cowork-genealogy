@@ -24,7 +24,7 @@ If you get stuck mid-flow, ask for help.
 
 | Icon | Place | What it is | Used for |
 |---|---|---|---|
-| 🌐 | **The workbench** | <https://genealogy-workbench.fly.dev> in a browser, or **Cowork + the Research Viewer** side by side (Claude Desktop's Cowork tab for research, the Electron Viewer for watching and for Send Feedback). Where alpha testers research and submit — either surface, depending on which one that tester has. | *Noticing* the problem and *reporting* it. |
+| 🌐 | **The workbench** | <https://genealogy-workbench.fly.dev> in a browser, or **Cowork + the Research Viewer** side by side (Cowork in Claude Desktop for research, the Electron Viewer for watching and for Send Feedback). Where alpha testers research and submit — either surface, depending on which one that tester has. | *Noticing* the problem and *reporting* it. |
 | 🤖 | **Claude Code** | The **Code tab** of the Claude desktop app, or `claude` in a terminal — opened sometimes on your repo checkout, sometimes on the unpacked case folder (see below). The Code tab is the usual Windows path. | *Reproducing*, *classifying*, *capturing the test*, *improving the skill*. |
 | ⌨️ | **Terminal** | A plain shell for `make …` (Windows: the matching `.bat`). | *Unpacking* the case, *running tests*, *gating*. One `make` target opens a 🌐 browser tab — the grading UI. |
 
@@ -478,10 +478,9 @@ make plugin                              # Windows: eval\BuildPlugin.bat
 make mcpb                                # Windows: eval\BuildMcpb.bat
 ```
 
-Install the `.mcpb` in Claude Desktop → Settings → Extensions, remove the old
-plugin in Cowork → Customize, and upload the new `.zip` from the **Cowork** tab
-rather than the Code tab — they keep separate plugin lists. Then **fully quit
-and reopen Desktop**. Cowork runs the uploaded `.zip`, not your working tree —
+Install the `.mcpb` in Claude Desktop → Settings → Desktop app → Extensions
+(uninstall the old copy first), remove the old plugin in Customize → Plugins,
+and upload the new `.zip` there. Then **fully quit and reopen Desktop**. Cowork runs the uploaded `.zip`, not your working tree —
 skip this and the fix will look like it did nothing. (Canonical version of these
 rules, including what does *not* need reinstalling:
 [`skill-lifecycle.md`](skill-lifecycle.md#rebuilding-and-reinstalling).)

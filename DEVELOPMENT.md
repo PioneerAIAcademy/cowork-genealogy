@@ -650,17 +650,19 @@ restart. Order matters:
    scripts/build-mcpb.sh        # if MCP server code changed
    scripts/package-plugin.sh    # if packages/engine/plugin/skills/ changed
    ```
-5. **Re-install via the Cowork UI** (same path end users follow — see
+5. **Re-install in Claude Desktop** (same path end users follow — see
    `README.md` § "Install"):
-   - **MCP:** Claude Desktop → Settings → Extensions → Advanced Settings
-     → "Install extension" → pick the rebuilt
-     `releases/genealogy-mcp.mcpb`. Installs over the old copy; no
-     uninstall needed.
-   - **Plugin:** Claude Desktop → Cowork tab → Customize → **remove the
-     existing Genealogy Research plugin first**, then Add → Upload
-     Plugin → pick the rebuilt `releases/genealogy-plugin.zip`.
-     Uploading on top of the old plugin can leave the old skills in
-     place.
+   - **MCP:** Claude Desktop → Settings → Desktop app → **Manage** next
+     to Extensions → Advanced settings → "Install extension" → pick the
+     rebuilt `releases/genealogy-mcp.mcpb`. While the old copy is
+     installed, the window offers only **Uninstall**: uninstall it, then
+     **Install**. Uninstalling clears the OpenRouter key; paste it again
+     under **Configure**.
+   - **Plugin:** Claude Desktop → Customize → Plugins → **remove the
+     existing Genealogy Research plugin first** (**…** → **Remove**),
+     then **+ Add** → **Upload plugin** → pick the rebuilt
+     `releases/genealogy-plugin.zip`. Uploading on top of the old plugin
+     can leave the old skills in place.
 6. **Fully quit Claude Desktop.** The MCP server is only re-read on a
    real restart — closing the window is not enough:
    - **macOS:** ⌘Q, or right-click the Dock icon → Quit. From a terminal,

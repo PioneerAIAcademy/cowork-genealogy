@@ -460,7 +460,8 @@ see the troubleshooting note below.
 
 1. Find Claude Desktop's config file on the WINDOWS side:
 
-   Open Claude Desktop → **Settings → Developer → Edit Config**.
+   Open Claude Desktop → **Settings → Desktop app**, click **Manage** next
+   to **Extensions**, then **Edit config** under **Local MCP servers**.
 
 2. Get the full path to Node in WSL2:
 
@@ -544,7 +545,8 @@ Claude reports success, and `auth_status` shows `loggedIn: true`.
 
 If something fails, check server logs:
 
-1. Claude Desktop → **Settings → Developer → View Logs**.
+1. Claude Desktop → **Settings → Desktop app → Extensions** (**Manage**) →
+   under **Local MCP servers**, select the server → **View logs**.
 2. Look for entries tagged with `[genealogy-dev]`.
 
 ### When to move on
@@ -760,8 +762,8 @@ If the refresh call fails with a "re-authenticate" message or
 | Inspect config | `cat ~/.familysearch-mcp/config.json` |
 | Check file perms | `stat -c '%a %n' ~/.familysearch-mcp/*` |
 | Reconnect in Claude Code | `/mcp` |
-| Claude Desktop config | Settings → Developer → Edit Config |
-| Claude Desktop logs | Settings → Developer → View Logs |
+| Claude Desktop config | Settings → Desktop app → Extensions → Edit config |
+| Claude Desktop logs | Settings → Desktop app → Extensions → (server) → View logs |
 
 ---
 

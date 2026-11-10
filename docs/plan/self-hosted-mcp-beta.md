@@ -79,7 +79,7 @@ Funnel sends `https://malachi.taild68f1b.ts.net/` to 127.0.0.1:8006, where an ng
 - a FamilySearch call answers 401, and the tool returns a message with a sign-in link, over HTTP 200;
 - the user opens the link, signs in, and says "continue" in the same task. `store_grant` replaces the token, and the door reads it on the next call.
 
-A 401 from the door itself has no way back in the chat: the tools fail, then vanish, and the user reconnects under Settings → Connectors. So nothing answers 401 at the door because a FamilySearch session ended.
+A 401 from the door itself has no way back in the chat: the tools fail, then vanish, and the user reconnects under Customize → Connectors. So nothing answers 401 at the door because a FamilySearch session ended.
 
 **Data.**
 - **Postgres.** The web and tool tiers each use a DML-only role. `migrate` runs with the owner role and then grants that role its tables.
@@ -190,7 +190,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 
 **W2 Sign-in.**
 - **Users** are keyed by FamilySearch id, with a unique index. Email stays required and unique: an identity with no email, or with one another user has, is refused with a message.
-- **The browser session** stays the `wb_session` cookie. With chat off it lasts 24 hours; with chat on, 30 days, as today. `/auth/logout` ends it on the server, with every other session the user holds and their connector tokens, so signing out also disconnects Claude until the user reconnects under Settings → Connectors.
+- **The browser session** stays the `wb_session` cookie. With chat off it lasts 24 hours; with chat on, 30 days, as today. `/auth/logout` ends it on the server, with every other session the user holds and their connector tokens, so signing out also disconnects Claude until the user reconnects under Customize → Connectors.
 - **Requests:**
   - the consent POST needs a same-origin `Origin`, and a missing or null `Origin` is refused there;
   - `/token` takes no `Origin` check, because it carries no cookie and the code and the PKCE verifier authenticate it;
@@ -275,8 +275,8 @@ The page also says:
 - **A paid Claude plan:** plugins need one.
 - **Living people:** do not store information about living people.
 - **This is a beta:** nothing promises your work survives, so download what you want to keep.
-- **No desktop extension** on that Claude account: turn it off under Settings → Extensions on each computer, or use a second Claude account.
-- **Signing in again:** what to expect when FamilySearch ends a session, and when the connector token itself expires (reconnect under Settings → Connectors), written from the sittings.
+- **No desktop extension** on that Claude account: turn it off under Settings → Desktop app → Extensions on each computer, or use a second Claude account.
+- **Signing in again:** what to expect when FamilySearch ends a session, and when the connector token itself expires (reconnect under Customize → Connectors), written from the sittings.
 - **Feedback:** where to email it, with the conversation pasted in.
 - **Team and Enterprise plans:** an Owner adds the connector and makes the plugin available.
 

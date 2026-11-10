@@ -119,28 +119,34 @@ extension. **Prerequisite:** Claude Desktop installed (Windows or macOS).
 
 1. Copy `releases/genealogy-mcp.mcpb` to the machine running Claude Desktop
    (if you built in WSL2, copy it to the Windows side).
-2. Open Claude Desktop → **Settings → Extensions**.
-3. Click **Advanced Settings → Install extension** and select
-   `genealogy-mcp.mcpb`.
-4. Enter an OpenRouter key in the **OpenRouter API key** field Claude Desktop
-   shows for the extension, or leave it blank.
-5. Confirm **"Genealogy Research"** appears in the extensions list.
+2. Open Claude Desktop → **Settings → Desktop app**, and click **Manage** next
+   to **Extensions**.
+3. Click **Advanced settings → Install extension**, select
+   `genealogy-mcp.mcpb`, and click **Install**, then **Install** again to
+   confirm. If Genealogy Research is already installed, the window offers only
+   **Uninstall**: click it and confirm first, then click **Install**.
+4. Click **Configure** next to Genealogy Research. Enter an OpenRouter key in
+   the **OpenRouter API key** field and click **Save**, or leave it blank.
+5. Confirm **"Genealogy Research"** appears under **Installed on your
+   computer**, and shows **Running** under **Local MCP servers**.
 
 ### What success looks like
 
-- The extension installs without an error dialog. (Claude Desktop will
-  note it is **unsigned** — that is expected; we do not sign the bundle
-  yet. Approve/allow it.)
+- The extension installs without an error dialog. (Claude Desktop warns that
+  Anthropic has not verified it — that is expected; we do not sign the bundle
+  yet. Click **Install** to allow it.)
 - The **OpenRouter API key** field is masked, and leaving it blank does not
   stop the extension from enabling.
-- Expanding the extension shows its tools.
+- The extension's **Configure** page lists its tools under **Tool
+  permissions**.
 
 ### What failure looks like
 
 - "Invalid extension" → the manifest or archive layout is wrong; re-run
   Layers 1–3.
 - The extension installs but shows 0 tools → the server failed to start on
-  the host; check Claude Desktop's MCP logs.
+  the host; check its logs: on the Extensions page, under **Local MCP
+  servers**, select Genealogy Research → **View logs**.
 
 ---
 
@@ -179,7 +185,7 @@ host → VM → skill pipeline works end-to-end.
 
 A tool call returns structured JSON and (for the skill path) a file is
 written — proving host → MCP server → SDK bridge → VM → skill → file write.
-Step 3 is the only check that the install dialog's key reaches the server; no
+Step 3 is the only check that the key saved on the Configure page reaches the server; no
 CI job can run Claude Desktop.
 
 ---

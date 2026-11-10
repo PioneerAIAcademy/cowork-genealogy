@@ -273,13 +273,17 @@ Cowork plugin, and registers the agent in the Cowork plugin list.
 
 ### Steps
 
-1. Open **Claude Desktop → Settings → Extensions**.
-2. Click **Advanced Settings → Install extension** and select
-   `releases/genealogy-mcp.mcpb`.
-3. Confirm **"Genealogy Research"** appears with a green dot.
-4. Switch to the **Cowork tab** in Claude Desktop.
-5. Click **Customize → Add → Upload Plugin**.
-6. Select `releases/genealogy-plugin.zip`.
+1. Open **Claude Desktop → Settings → Desktop app**, and click **Manage** next
+   to **Extensions**.
+2. Click **Advanced settings → Install extension**, select
+   `releases/genealogy-mcp.mcpb`, and click **Install**, then **Install** again
+   to confirm. (If it is already installed, the window offers only
+   **Uninstall**: click it and confirm first.)
+3. Confirm **"Genealogy Research"** shows **Running** under **Local MCP
+   servers**.
+4. Close Settings and click **Customize** in the sidebar, then **Plugins**.
+5. Click **+ Add → Upload plugin**.
+6. Select `releases/genealogy-plugin.zip` and click **Upload**.
 7. Confirm **"Genealogy Research"** appears in the installed plugins
    list and that `gps-mentor` is one of the available agents.
 
@@ -321,8 +325,8 @@ the agent should create it.
 
 ### Start a Cowork session
 
-1. In Claude Desktop's Cowork tab, **start a new session** on
-   `~/cowork-test-mentor`.
+1. In Claude Desktop, click **New**, choose **Cowork** under the message box,
+   and attach `~/cowork-test-mentor` with **Project or folder → Add folder**.
 2. Confirm the genealogy plugin is loaded for the session.
 
 ### Test each trigger phrase

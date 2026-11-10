@@ -91,12 +91,13 @@ make plugin        # Windows: eval\BuildPlugin.bat   — if you changed a skill
 make mcpb          # Windows: eval\BuildMcpb.bat     — if you changed tool code
 ```
 
-- **Plugin:** Claude Desktop → **Cowork tab** → Customize → **remove the old
-  Genealogy Research plugin first**, then Add → Upload Plugin → the new `.zip`.
-  Upload from the Cowork tab, not the Code tab — they keep separate plugin
-  lists.
-- **MCP:** Claude Desktop → Settings → Extensions → Advanced Settings →
-  Install extension → the new `.mcpb`. It installs straight over the old copy.
+- **Plugin:** Claude Desktop → **Customize** → **Plugins** → **remove the old
+  Genealogy Research plugin first** (**…** → **Remove**), then **+ Add** →
+  **Upload plugin** → the new `.zip`.
+- **MCP:** Claude Desktop → Settings → Desktop app → Extensions → Advanced
+  settings → Install extension → the new `.mcpb`. While the old copy is
+  installed, the window offers only **Uninstall**: uninstall it, then
+  **Install**, and paste the OpenRouter key again under **Configure**.
 
 Then **fully quit and reopen Claude Desktop.** Cowork runs the uploaded `.zip`,
 not your working tree — skip the rebuild and your fix will look like it did

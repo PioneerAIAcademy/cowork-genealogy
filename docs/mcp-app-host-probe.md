@@ -103,7 +103,7 @@ granted. With no folder it is a chat, and no `claude-code` line appears.
 
    On the organization's connectors admin page, add a custom connector named exactly
    `Genealogy Viewer`, paste the URL, and set no sign-in. Then connect it on your own
-   account under Settings → Connectors. A connector can also go straight on a personal
+   account under Customize → Connectors. A connector can also go straight on a personal
    account; record which one was used in **Run**.
 
    Then fully quit and reopen Claude Desktop. Until then it does not list a connector
@@ -301,8 +301,9 @@ Open every task on `~/mcp-probe/mcandrew`, with the connector on.
 20. **Variant plugin.** It carries only the "where the project stands" line for M0.
     The plugin and the `.mcpb` are a pair. If the installed extension predates the
     viewer, also install `releases/genealogy-mcp.mcpb`, built by `make mcpb`, by the
-    click-path `make cowork-install` prints: Claude Desktop → Settings → Extensions →
-    Advanced Settings → Install extension.
+    click-path `make cowork-install` prints: Claude Desktop → Settings → Desktop app →
+    Extensions → Advanced settings → Install extension, uninstalling the old copy first
+    when the window offers only Uninstall.
 
     1. Make the branch once, in its own checkout. If it exists, rebase it onto
        `main` instead.
@@ -329,8 +330,8 @@ Open every task on `~/mcp-probe/mcandrew`, with the connector on.
        ```
 
     4. Install it by the click-path `make cowork-install` prints, without running the
-       target: Claude Desktop → Cowork tab → Customize or Plugins, remove any Genealogy Research
-       plugin, then Add → Upload Plugin → that zip. Fully quit and reopen Claude
+       target: Claude Desktop → Customize → Plugins, remove any Genealogy Research
+       plugin, then + Add → Upload plugin → that zip. Fully quit and reopen Claude
        Desktop.
 
     5. New task:

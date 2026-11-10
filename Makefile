@@ -1775,13 +1775,15 @@ cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-
 	# click-path is printed rather than automated: both installs are Claude
 	# Desktop UI actions with no CLI.
 	@printf '\n=== Built. Now install BOTH, then fully quit and reopen Claude Desktop ===\n\n'
-	@printf '1. MCP server (.mcpb):  Claude Desktop -> Settings -> Extensions ->\n'
-	@printf '   Advanced Settings -> Install extension -> releases/genealogy-mcp.mcpb\n'
-	@printf '   (install straight over the old copy -- no uninstall needed)\n\n'
-	@printf '2. Plugin (.zip):  Claude Desktop -> COWORK tab -> Customize ->\n'
-	@printf '   REMOVE any existing Genealogy Research plugin, then Add -> Upload\n'
-	@printf '   Plugin -> releases/genealogy-plugin.zip\n'
-	@printf '   (the Cowork tab and the Code tab keep separate plugin lists)\n\n'
+	@printf '1. MCP server (.mcpb):  Claude Desktop -> Settings -> Desktop app ->\n'
+	@printf '   Extensions: Manage -> Advanced settings -> Install extension ->\n'
+	@printf '   releases/genealogy-mcp.mcpb -> Install, then Install again.\n'
+	@printf '   Old copy installed? The window offers only Uninstall: click it,\n'
+	@printf '   confirm, then Install. That also removes the OpenRouter key; paste\n'
+	@printf '   it again under Configure.\n\n'
+	@printf '2. Plugin (.zip):  Claude Desktop -> Customize -> Plugins ->\n'
+	@printf '   REMOVE any existing Genealogy Research plugin (... -> Remove),\n'
+	@printf '   then + Add -> Upload plugin -> releases/genealogy-plugin.zip -> Upload\n\n'
 	@printf '3. Fully QUIT and reopen Claude Desktop.\n\n'
 	@ls -l releases/genealogy-mcp.mcpb releases/genealogy-plugin.zip 2>/dev/null || true
 
