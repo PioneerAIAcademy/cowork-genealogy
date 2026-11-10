@@ -1303,6 +1303,49 @@ def test_delegation_hands_subject(test, builtin_tool_calls, before_state):
     assert not problems, "; ".join(problems)
 
 
+_SETUP_ORDER_TAG = "attached-records-setup"
+
+
+def test_attached_records_setup_order(tool_calls, test):
+    """Tag-gated (``attached-records-setup``): the router runs the attached-
+    records step for a subject — ``extraction_append({ personId })``, then
+    ``timeline_build`` after it — on a job's "Objective but no questions" row and
+    on the bounded "a timeline for a person" ask (issue #3516 PR D).
+
+    Checked per subject: each person extracted is built after it, for the same
+    ``personId``. Orders only the two MCP calls. ``tool_calls`` (the mock's MCP
+    log) and ``builtin_tool_calls`` (the hook's) share no ordering, so "both
+    before the first question-selection" is not checked here: on a job test it
+    rests on ``execution.stop_at_stub`` and ``routes-to:question-selection``.
+    """
+    if _SETUP_ORDER_TAG not in (test.get("tags") or []):
+        pytest.skip(f"not an {_SETUP_ORDER_TAG} test")
+
+    def person(c):
+        pid = (c.get("args") or {}).get("personId")
+        return pid.strip() if isinstance(pid, str) else ""
+
+    first_extract: dict[str, int] = {}
+    builds: dict[str, list[int]] = {}
+    for i, c in enumerate(tool_calls or []):
+        name = bare_tool_name(str(c.get("tool", "")))
+        pid = person(c)
+        if name == "extraction_append" and pid:
+            first_extract.setdefault(pid, i)
+        elif name == "timeline_build" and pid:
+            builds.setdefault(pid, []).append(i)
+    assert first_extract, (
+        "the attached-records step must call extraction_append with personId; it never did. "
+        f"extraction_append calls: {[c.get('args') for c in tool_calls or [] if bare_tool_name(str(c.get('tool', ''))) == 'extraction_append']}"
+    )
+    unbuilt = {pid: at for pid, at in first_extract.items() if not any(b > at for b in builds.get(pid, []))}
+    assert not unbuilt, (
+        "each subject's timeline_build must follow its extraction_append({ personId }) for the same personId; "
+        f"no later timeline_build for {sorted(unbuilt)}. extraction_append(personId) at {first_extract}, "
+        f"timeline_build at {builds}"
+    )
+
+
 _HINTS_HANDOFF_TAG = "asserts-hints-handoff"
 _HINTS_PID = re.compile(r"hints on (\S+) before")
 

@@ -185,7 +185,7 @@ the replacement and the unsettled-conflict ending; their findings are folded in.
 
 | Step | Runs | Ends with |
 |---|---|---|
-| Setup: init-project (new project), the attached-records baseline for each subject (`extraction_append` with `personId`, then `timeline_build`: tool calls, not steps; `docs/plan/attached-records-baseline.md`), question selection, locality guide (if the place is unsurveyed) | always | what the attached records show (events, how many are unverified, the high gaps), then "Here's the question I'll research … Continue with planning the searches?" |
+| Setup: init-project (new project), the attached-records baseline for each subject (`extraction_append` with `personId`, then `timeline_build`: tool calls, not steps; `research-append-tool-spec.md` §11.8), question selection, locality guide (if the place is unsurveyed) | always | what the attached records show (events, how many are unverified, the high gaps), then "Here's the question I'll research … Continue with planning the searches?" |
 | Plan: research-plan | always | the plan, then "Continue with running the searches?" |
 | Search: every plan item in parallel, then extraction | always | what was found, any searches only the researcher can run (section I), then "Continue with linking the records?" |
 | Link: person-evidence | always | what attaches to whom |
@@ -281,7 +281,7 @@ that apply:
     prose says when a member is skipped:
     - person-evidence runs only for a question's assertions with no live link, or for a
       question whose `project_context` `nextStep` names person-evidence, as one resting on
-      attachment links does (`docs/plan/attached-records-baseline.md`, decision 17);
+      attachment links does (`research-append-tool-spec.md` §11.8, "Who calls it, and who checks the links");
     - conflict-resolution runs only when an unresolved conflict blocks the question.
   - **The worker and the alpha load `step_boundary.py` from the plugin directory** with
     `importlib.util.spec_from_file_location`, as `eval/harness/harness/context_policy.py`
@@ -508,7 +508,7 @@ that apply:
     could change the answer and why, with "wrap it up" named.
 - **Searched items close before a decline.** An item whose search ran is `completed`, even
   when every search found nothing. It is never `skipped`: `research_append` refuses that
-  (`docs/plan/attached-records-baseline.md`, decision 9).
+  (`research-append-tool-spec.md` §8, the searched-item skip row).
   - FamilySearch items with an extracted record complete in code (that plan's PR B, a
     prerequisite below).
   - The rest go through Dispose. After a refused declaration, the router's dispose row names
@@ -645,7 +645,7 @@ that apply:
   - **Then** one `extraction_append({ recordIds })` call covers the FamilySearch hits, and one
     record-structurer spawn covers other sources. That call completes every item whose search
     lists an extracted record, including a record two items both found
-    (`docs/plan/attached-records-baseline.md`, PR B).
+    (issue #3516's PR B, `research-append-tool-spec.md` §11.6).
 - **Handing each agent its state is half done.** Issue #3581 delivered the plan item (with
   its `planId`) and the subject (`subjectId`, names, birth, death) to `search-records`; the
   router's "read nothing beyond the ids you are passing" now allows exactly those two for
@@ -820,7 +820,7 @@ that apply:
   - delete or rewrite priorities 1, 3, 6 and 7 (the priority table and its detail paragraphs).
     Priority 3 (`timeline_gap`) becomes plan work: a `high` gap in the current question's
     subject's timeline is a search for research-plan to add. `timeline_build` writes that
-    timeline at setup (`docs/plan/attached-records-baseline.md`), and research-plan, which
+    timeline at setup (`research-append-tool-spec.md` §11.8), and research-plan, which
     reads no timeline today, gains that read in its prep PR;
   - delete or rewrite the conflict-unblocking question (`:95-101`) and the sub-question
     paragraph (`:155-160`);
@@ -857,7 +857,7 @@ that apply:
     p50/p90;
   - `e2e-test-spec.md` is updated;
   - two-question fixtures are re-scoped (genealogist work). maria-bracero-marriage's parents
-    finding is already non-required (`docs/plan/attached-records-baseline.md`, decision 13).
+    finding is already non-required (issue #3516; lead, 2026-10-20).
 - **A separate e2e arm** answers "Wrap it up." right after the search step, which exercises
   B2's link-then-conclude path. **Built** as `--wrap-up-after <step>`: an override of the
   REPLY, not a session mode, so `next_auto_reply` keeps no test-only branch. It swaps a reply
@@ -871,8 +871,8 @@ A free-text reply after the plan step is a plan edit. Today research-plan's revi
 modifying items, and it defaults to review whenever an active plan has open items
 (`agents/research-plan.md:219-227`, `:253-256`). So research-plan gains an **edit mode**:
 - a struck item → `skipped` with `user_declined` when no search has run for it, or when its latest
-  entry is an upload hand-off still waiting (the exemption to decision 9 of
-  `docs/plan/attached-records-baseline.md`); otherwise, one whose search ran → `completed` (B,
+  entry is an upload hand-off still waiting (the exemption in
+  `research-append-tool-spec.md` §8, the searched-item skip row); otherwise, one whose search ran → `completed` (B,
   "Searched items close before a decline");
 - an added item → a new plan item.
 
@@ -929,7 +929,7 @@ new spawn. That already fits step mode: the wait is a step boundary.
   (`agents/search-external-sites.md`, step 7's table). research-exhaustiveness refuses on them,
   and the dispose row leaves them to the researcher rather than to Dispose (B).
   search-external-sites keeps them open, and a received capture cannot be skipped
-  (`docs/plan/attached-records-baseline.md`, decision 9).
+  (`research-append-tool-spec.md` §8, the searched-item skip row).
 - **research-exhaustiveness** never declares exhaustive while an item waits. It declines, lists
   each waiting search under the existing `handed_to_user` kind with its URL, and says so: "2 searches are still waiting on
   your upload. Upload them, or conclude without them." Its refusal on `in_progress` items
@@ -1306,7 +1306,7 @@ in parallel with PR 2.
   - issue #2243 for the fan-out, and its handed-state follow-up for D's handed state;
   - prototype uploads (research-as-a-job's "let documents in") for external-site searches on
     the prototype (section I);
-  - **issue #3516's PR B** (`docs/plan/attached-records-baseline.md`): FamilySearch plan items
+  - **issue #3516's PR B** (`research-append-tool-spec.md` §8 and §11.6): FamilySearch plan items
     close in code, and a searched item cannot be skipped. B's choice, B2's dispose, E's rule
     and `step_ctx`'s `open_items` all count those items as open until they do. It lands before
     PR 2's paid research run.
@@ -1507,17 +1507,11 @@ in parallel with PR 2.
 - **Issue #1830:** plan-time breadth for completeness questions.
 - **Issue #2243 and its handed-state follow-up:** the parallel prerequisites.
 - **Issue #3384:** fast project creation, so a PID one-shot needs no extra prompt.
-- **Issue #3516 (`docs/plan/attached-records-baseline.md`):** its PR B is a prerequisite
+- **Issue #3516:** its PR B is a prerequisite
   (Phases). Its setup baseline is tool calls, so it adds no step boundary. It writes the
   subject's timeline that E's priority-3 rewrite and research-plan read.
-  - Its PR D edits `agents/timeline.md`, `person-evidence.md`, `question-selection.md` and
-    `research/SKILL.md`, bodies the prep PRs and PR 2 also edit, so whichever lands second
-    re-runs those four suites.
-  - Its PR D and PR 2 land in either order. If PR D is first, E's rewrite, which moves
-    Priority 3 to research-plan, also deletes PR D's Priority 3 gate and the timeline
-    sentence PR D adds to the "Fresh project" edge case, and keeps PR D's first-question
-    test passing. If PR 2 is first, PR D drops its question-selection.md edit, keeps the
-    test, and adds the setup report's attached-records line.
+  - PR 2 landed first, so its PR D left `question-selection.md` as PR 2 wrote it, kept the
+    first-question test, and added the setup report's attached-records line.
 - **PR #3583** (merged): added a "none linked → person-evidence" rung to the ladder. B's choice
   arm sits below it, so a declined question with unlinked evidence is linked first.
 - **Issue #3153:** the hints plan item, an errand in the search step (D). It creates the hints
