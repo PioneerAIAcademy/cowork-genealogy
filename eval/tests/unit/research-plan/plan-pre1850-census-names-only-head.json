@@ -23,7 +23,7 @@
   "judge_reads_files": true,
   "execution": {
     "sdk_message_silence_seconds": 360,
-    "max_wall_clock_seconds": 600,
+    "max_wall_clock_seconds": 900,
     "max_turns": 40
   },
   "mcp_fixtures": [
@@ -42,10 +42,10 @@
     "person-read-empty-any"
   ],
   "judge_context": [
-    "Background: a United States federal census from 1790 through 1840 names only the head of household and counts everyone else in age brackets. It can place a man in a town in a year, but it never names a child and never states a relationship. The 1850 to 1870 censuses name every household member without stating relationships; from 1880 the census states each member's relationship to the head.",
-    "FAIL Correctness if any plan item, or the plan's rationale, presents a 1790 to 1840 census as naming Paul Raymond as the son of Paul Raymond Sr., or as showing the son in his father's household as evidence of parentage.",
-    "A 1790 to 1840 census used only to place either man in a town in a given year, or described as merely consistent with the relationship, is acceptable in any position in the plan. Placing Paul Sr. in a town is a legitimate way to narrow the probate and land search.",
-    "The plan must include at least one record type that can name a child of Paul Raymond Sr.: his probate or estate file, a land record or deed, or town or church records. If it has none, reduce Completeness. If a census presented as parentage evidence comes before every such record, FAIL Correctness.",
+    "Background: a United States federal census from 1790 through 1840 names only the head of household and counts everyone else in age brackets. The 1850 to 1870 censuses name every household member without stating relationships; from 1880 the census states each member's relationship to the head.",
+    "FAIL Correctness only if a plan item, or the plan's rationale, states that a 1790 to 1840 census names Paul Raymond Jr., or states that it shows he is the son of Paul Raymond Sr.",
+    "Acceptable, and not a reason to reduce any score, wherever the item sits in the plan: a 1790 to 1840 census used to place either man in a town in a given year; a hedged tally reading, such as a male of the right age in Paul Sr.'s household being consistent with Paul Jr. living there, even when called corroborating; a household's size or make-up called consistent with a family; and Paul Jr.'s own age bracket as head of his own household from 1800 on.",
+    "Whether the plan has a record type that can name a child, sequenced ahead of every 1790 to 1840 census item, is checked by the deterministic validator test_pre1850_parentage_plan_puts_child_naming_record_first. If it is not listed among the failed validators, the plan met it; do not grade the plan's order against it.",
     "Do not reduce any score for an 1850 or later census that is used correctly for what it shows.",
     "Whether any new item was written with a status other than planned is checked by the deterministic validator test_new_plan_items_planned_status. If it fails, it is listed among the failed validators; if it is not listed, the plan met it.",
     "The repository is irrelevant, and an item may reach a record without naming a collection id."

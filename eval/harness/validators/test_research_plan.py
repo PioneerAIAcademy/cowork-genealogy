@@ -658,6 +658,71 @@ def test_enumerative_plan_accounts_for_five_events(before_state, after_state, te
                 for i in plan.get("items") or []
             )
         )
+
+
+# --- Tag-gated: a pre-1850 parentage plan reaches a child-naming record first -
+
+# Issue #4163. A US federal census before 1850 names only the head of
+# household, so a parentage plan needs a record that can name a child, planned
+# ahead of every census item from those years. Whether a rationale *frames* the
+# census as placement or as proof stays with the judge: a phrase match fails
+# sound rationales ("confirm I1's residence") as often as it catches a bad one.
+_CHILD_NAMING_RECORD_TYPES = re.compile(
+    r"probate|(?<!real[_ ])estate|\bwills?\b|land|deed|church|parish|vital|town",
+    re.IGNORECASE,
+)
+_FIRST_YEAR_RE = re.compile(r"\b(1[6-9]\d\d)\b")
+
+
+def _is_pre1850_census(item: dict) -> bool:
+    if not _CENSUS_RE.search(str(item.get("record_type") or "")):
+        return False
+    first = _FIRST_YEAR_RE.search(str(item.get("date_range") or ""))
+    return bool(first) and int(first.group(1)) < 1850
+
+
+def test_pre1850_parentage_plan_puts_child_naming_record_first(
+    before_state, after_state, test
+):
+    """Tag-gated: every new plan has an item of a record type that can name a
+    child, sequenced ahead of every census item whose date range starts before
+    1850."""
+    if "pre1850-census" not in (test.get("tags") or []):
+        pytest.skip("not a pre1850-census test")
+    before = before_state.get("research_json")
+    after = after_state.get("research_json")
+    if before is None or after is None:
+        pytest.skip("missing research.json for diff")
+    plans = _new_plans(before, after)
+    assert plans, "no new plan was written"
+
+    for plan in plans:
+        items = [i for i in plan.get("items") or [] if i.get("status") != "skipped"]
+        naming = [
+            i.get("sequence")
+            for i in items
+            if _CHILD_NAMING_RECORD_TYPES.search(str(i.get("record_type") or ""))
+            and isinstance(i.get("sequence"), int)
+        ]
+        census = [
+            i.get("sequence")
+            for i in items
+            if _is_pre1850_census(i) and isinstance(i.get("sequence"), int)
+        ]
+        listing = "; ".join(
+            f"{i.get('id')} seq {i.get('sequence')} {i.get('record_type')} {i.get('date_range')}"
+            for i in items
+        )
+        assert naming, (
+            f"{plan.get('id')} plans no record type that can name a child "
+            f"(probate, land or deeds, church, vital or town records). Items: {listing}"
+        )
+        if census:
+            assert min(naming) < min(census), (
+                f"{plan.get('id')} plans a pre-1850 census (sequence {min(census)}) "
+                f"ahead of every record that can name a child (first at sequence "
+                f"{min(naming)}). Items: {listing}"
+            )
 # ===========================================================================
 # Deterministic checks over newly written plans (issue #1866, research-plan
 # deep dive #1650). Unlike the tag-gated validators above these run on EVERY

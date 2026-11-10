@@ -138,7 +138,21 @@ that would replace it (probed 2026-10-02, §5):
   20 (I1) still in the household"), one invented a "16–26" bracket for 1790, and
   one said the 1820 census records the head's state of birth. Every run put
   probate ahead of census, so the rule is about what a census can show, not
-  where it sits in the order.
+  where it sits in the order. A hedged tally reading ("a male 16–25 in his
+  1790 household is consistent with the son") is standard tick-mark analysis
+  and is allowed; what the rule forbids is a rationale saying the census names
+  the child or shows the relationship (Benter, 2026-11-10, after a stricter
+  "not even as corroboration" wording failed 2 of 3 runs on exactly that
+  hedged sentence). The order is guarded by the validator
+  `test_pre1850_parentage_plan_puts_child_naming_record_first`; the framing
+  stays with the judge, since a phrase match over the 18 replayed runs flagged
+  sound placement lines ("confirm I1's residence") and caught no real claim.
+- **Any personCount above 0 is name-searchable (issue #4163).** Collection
+  2106411 (Massachusetts Land Records) returns personCount 18 beside 5.7
+  million images. In 3 of 9 runs the agent judged that effectively zero and
+  wrote `browse-only (personCount 0)`, a number the response never returned.
+  The rule now keeps it name-searchable however small the count, with the
+  image browse as its fallback.
 
 **r3d deleted (lead, 2026-10-06).** `ut_research_plan_r3d` failed in every
 committed research-plan run, including a same-day run of the unchanged skill:

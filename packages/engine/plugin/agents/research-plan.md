@@ -375,7 +375,9 @@ collection, not the exact-parish one.
 **Availability comes from the response, not from memory.** A collection's
 returned `personCount`, or its `personCount` in the `localities` entry,
 decides how you plan and describe it:
-- **Above 0:** name-searchable. Plan a name search.
+- **Above 0:** name-searchable, however small the count is beside its
+  images. Plan a name search; when the count is that small, add the image
+  browse as its fallback.
 - **0:** browse-only images. Plan an image browse, not a name search.
 
 Wherever a rationale names a collection, describe it with exactly one of
@@ -506,8 +508,10 @@ table and contextual factors checklist.
 - **A US federal census before 1850 names only the head of household.**
   Everyone else is an unnamed tally in an age bracket (in 1790, free white
   males only under 16 or 16 and over). Plan one to place a man in a town in a
-  year, never to show a child: no rationale reads a tally as the subject or
-  as evidence of parentage. Birthplace is first recorded in 1850, and
+  year. An age bracket in a father's household may be called consistent with
+  a son living there, but no rationale says the census names the child or
+  shows the relationship, or plans it in place of a record that can name the
+  child. Birthplace is first recorded in 1850, and
   relationship to the head in 1880.
 - **When the target jurisdiction's boundaries changed within the date
   range** (a parish/county split, an absorption, a rename) — call
