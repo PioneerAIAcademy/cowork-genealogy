@@ -915,7 +915,7 @@ There **is** an orchestrator, and it is a skill:
    person's timeline, built from those links), before `@plugin:question-selection`.
    Two main-thread tool calls per subject and no agent: 5.0–19.7 s cold to read,
    extract and link 5–20 attached records (live, 2026-11-04,
-   `docs/specs/research-append-tool-spec.md` §11.8) and 50 ms to 1.3 s for the
+   `docs/specs/research-append-tool-spec.md` §11.8) and 50 ms to 1.4 s for the
    timeline (`docs/specs/timeline-build-tool-spec.md` §8). "A timeline for a
    person" is a bounded ask that runs the same two calls and stops. Attachment
    links are checked only on request: person-evidence takes them up only for a

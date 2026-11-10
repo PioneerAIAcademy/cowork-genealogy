@@ -400,7 +400,7 @@ runlog summary plus a warn-only check makes every future PR's cost visible.
 - **Two planned changes shift the baseline a little, and are not cost levers.**
   - Issue #3516's setup baseline (`research-append-tool-spec.md` §11.8) adds two
     main-thread tool calls per subject to a job's first pass, plus `timeline_build`'s Places
-    lookups (up to 1.3 s cold; it reads no catalog). On a subject with attached records it
+    lookups (up to 1.4 s cold; it reads no catalog). On a subject with attached records it
     also adds record reads, extraction and links (5.0–19.7 s cold for 5–20 records) and the
     extraction summary in context.
   - Issue #3153's hints item adds a search-hints spawn on identity, parentage, birth, death and marriage questions (#3906 widened it).
