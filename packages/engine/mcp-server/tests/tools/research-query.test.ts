@@ -1317,7 +1317,10 @@ describe("research_query — fields no caller reads are left out", () => {
   const PLANS = [
     { id: "pl_001", question_id: "q_001", status: "superseded", items: [
       { id: "pli_001", sequence: 1, record_type: "census", status: "planned", rationale: "R1" },
-      { id: "pli_002", sequence: 2, record_type: "vital_record", status: "completed", rationale: "R2" },
+      { id: "pli_002", sequence: 2, record_type: "vital_record", jurisdiction: "J", status: "completed", rationale: "R2" },
+      { id: "pli_008", sequence: 3, record_type: "tax", status: "skipped", rationale: "R8" },
+      { id: "pli_009", sequence: 4, record_type: "court", status: "skipped", rationale: "R9",
+        skip_category: "out_of_scope", skip_reason: "S9" },
     ] },
     { id: "pl_002", question_id: "q_001", status: "active", items: [
       { id: "pli_003", sequence: 1, record_type: "census", jurisdiction: "J", status: "completed", rationale: "R3" },
@@ -1328,6 +1331,7 @@ describe("research_query — fields no caller reads are left out", () => {
     ] },
     { id: "pl_003", question_id: "q_002", status: "completed", items: [
       { id: "pli_007", sequence: 1, record_type: "census", status: "completed", rationale: "R7" },
+      { id: "pli_010", sequence: 2, record_type: "military", status: "skipped", rationale: "R10" },
     ] },
   ];
 
@@ -1335,39 +1339,55 @@ describe("research_query — fields no caller reads are left out", () => {
     return Object.fromEntries(items.flatMap((p: any) => p.items.map((i: any) => [i.id, i.rationale])));
   }
 
-  it("plans: only an open item of the active plan keeps its rationale", async () => {
+  it("plans: every item of the active plan keeps its rationale, completed and skipped included", async () => {
+    await writeResearch({ plans: PLANS });
+    const r = await researchQuery({ projectPath: dir, section: "plans" });
+    if (!r.ok) throw new Error(r.errors.join(" "));
+    expect(r.items.find((p: any) => p.id === "pl_002")).toEqual(PLANS[1]);
+  });
+
+  it("plans: an item of a plan that is not active carries no rationale, and every other field as stored", async () => {
     await writeResearch({ plans: PLANS });
     const r = await researchQuery({ projectPath: dir, section: "plans" });
     if (!r.ok) throw new Error(r.errors.join(" "));
     expect(rationaleById(r.items)).toEqual({
-      pli_001: undefined, // planned, but on a superseded plan
-      pli_002: undefined,
-      pli_003: undefined, // completed
-      pli_004: undefined, // skipped
+      pli_001: undefined, // planned, on a superseded plan
+      pli_002: undefined, // completed, on a superseded plan
+      pli_008: "R8", // skipped with no skip_category
+      pli_009: undefined, // skipped with a skip_category, on a superseded plan
+      pli_003: "R3",
+      pli_004: "R4",
       pli_005: "R5",
       pli_006: "R6",
       pli_007: undefined, // on a completed plan
+      pli_010: "R10", // skipped with no skip_category
     });
-    // Nothing else is dropped: not the item's other fields, not the skip reason.
-    const active = r.items.find((p: any) => p.id === "pl_002");
-    expect(active.items[0]).toEqual({ id: "pli_003", sequence: 1, record_type: "census", jurisdiction: "J", status: "completed" });
-    expect(active.items[1]).toEqual({ id: "pli_004", sequence: 2, record_type: "church", status: "skipped",
-      skip_category: "no_coverage", skip_reason: "S4" });
-    expect(active.items[2]).toEqual(PLANS[1].items[2]);
-    expect(active.items[3]).toEqual(PLANS[1].items[3]);
+    const superseded = r.items.find((p: any) => p.id === "pl_001");
+    expect(superseded.items[1]).toEqual({ id: "pli_002", sequence: 2, record_type: "vital_record", jurisdiction: "J", status: "completed" });
+    expect(superseded.items[3]).toEqual({ id: "pli_009", sequence: 4, record_type: "court", status: "skipped",
+      skip_category: "out_of_scope", skip_reason: "S9" });
     expect(r.items.map((p: any) => [p.id, p.question_id, p.status])).toEqual(
       PLANS.map((p) => [p.id, p.question_id, p.status]),
     );
   });
 
+  it("plans: a skipped item with no skip_category keeps its rationale on a superseded or completed plan", async () => {
+    await writeResearch({ plans: PLANS });
+    const r = await researchQuery({ projectPath: dir, section: "plans" });
+    if (!r.ok) throw new Error(r.errors.join(" "));
+    expect(r.items.find((p: any) => p.id === "pl_001").items[2]).toEqual(PLANS[0].items[2]);
+    expect(r.items.find((p: any) => p.id === "pl_003").items[1]).toEqual(PLANS[2].items[1]);
+  });
+
   it("plans: a plan with no status counts as active", async () => {
     await writeResearch({ plans: [{ id: "pl_001", question_id: "q_001", items: [
       { id: "pli_001", status: "completed", rationale: "R1" },
-      { id: "pli_002", status: "planned", rationale: "R2" },
+      { id: "pli_002", status: "skipped", rationale: "R2", skip_category: "answered", skip_reason: "S2" },
+      { id: "pli_003", status: "planned", rationale: "R3" },
     ] }] });
     const r = await researchQuery({ projectPath: dir, section: "plans" });
     if (!r.ok) throw new Error(r.errors.join(" "));
-    expect(rationaleById(r.items)).toEqual({ pli_001: undefined, pli_002: "R2" });
+    expect(rationaleById(r.items)).toEqual({ pli_001: "R1", pli_002: "R2", pli_003: "R3" });
   });
 
   it("plans: a filtered read leaves the same rationale out", async () => {
@@ -1375,8 +1395,8 @@ describe("research_query — fields no caller reads are left out", () => {
     const r = await researchQuery({ projectPath: dir, section: "plans", questionId: "q_001" });
     if (!r.ok) throw new Error(r.errors.join(" "));
     expect(rationaleById(r.items)).toEqual({
-      pli_001: undefined, pli_002: undefined, pli_003: undefined, pli_004: undefined,
-      pli_005: "R5", pli_006: "R6",
+      pli_001: undefined, pli_002: undefined, pli_008: "R8", pli_009: undefined,
+      pli_003: "R3", pli_004: "R4", pli_005: "R5", pli_006: "R6",
     });
   });
 

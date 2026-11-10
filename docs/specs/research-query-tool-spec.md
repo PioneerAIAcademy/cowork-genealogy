@@ -173,12 +173,14 @@ the principal personas of both records.
 // on failure: { ok: false, errors: string[] }
 ```
 
-**Two fields are left out of `items`.** An item in a plan's `items` carries no
-`rationale` when its `status` is `completed` or `skipped`, or when its plan is
-not active (a plan with no `status` counts as active, as in
-`question-state.ts`); its other fields, `skip_category` and `skip_reason`
-included, are as stored. A `log` entry carries no `staged_ref`. Both are left
-out of the answer only, never out of `research.json`.
+**Two fields are left out of `items`.** An item of a plan that is not active
+(`superseded` or `completed`) carries no `rationale`, except a `skipped` item
+with no `skip_category`. Every item of an active plan keeps its `rationale`,
+`completed` and `skipped` ones included, and a plan with no `status` counts as
+active, as in `question-state.ts`. Every other field of an item is as stored,
+`skip_category` and `skip_reason` included. A `log` entry carries no
+`staged_ref`. Both are left out of the answer only, never out of
+`research.json`.
 
 **A list call also returns `countById`:** for every requested id, zeros
 included, the number of matching items, counted over the whole match set — not
@@ -337,25 +339,29 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
   does research.json currently say," not requesting a designed output shape.
   Renaming per-section fields here would mean maintaining thirteen bespoke
   projections instead of one filter layer.
-- **No `rationale` on a plan item nothing will run, and no `staged_ref` on a
-  log entry (2026-11-09).** A plan's items nest inside it with their full
-  `rationale`, and a `questionId` read returns every plan the question ever
-  had, completed and superseded ones included. In the hosted sessions of
-  2026-10-15 to 2026-11-08, every `research_query` answer large enough to be
-  withheld from the model was that read, on a question with four plans; the
-  largest plans answer was 48.4k characters, and 13.1k without the closed
-  items' rationale. Over the repo's committed scenario and e2e `research.json`
-  files, plans answers shrink by 57% (largest 22.3k → 7.0k). The agents that
-  run an item read the open item they run, the router hands search-records an
-  open item of the active plan, and research-exhaustiveness reads a skipped
-  item's `skip_category` and `skip_reason`, which stay. The one reader that
-  loses something is research-plan's return in Review and Dispose modes: its
-  return contract lists every item of the plan with its rationale in one
-  clause, and on a part-run plan a completed or skipped item now has none to
-  quote. That loss is accepted; those items have already run or been set
-  aside, and the review's next-item narration reads an open item. `staged_ref`
-  is `research_log_append`'s own record of the staged file an entry came from,
-  and it reads it from `research.json` itself (`findLoggedStagedRef` in
+- **No `rationale` on an item of a plan that is not active, and no
+  `staged_ref` on a log entry (lead, 2026-11-10).** A plan's items nest inside
+  it with their full `rationale`, and a `questionId` read returns every plan
+  the question ever had, completed and superseded ones included. In the hosted
+  sessions of 2026-10-15 to 2026-11-08, every `research_query` answer large
+  enough to be withheld from the model was that read, on a question with four
+  plans. The largest one delivered was 48.4k characters and is 18.8k under
+  this rule. Two withheld ones, rebuilt from the same question's plans, were
+  54.8k and 58.9k and are 25.2k and 29.3k; the largest withheld one, 66.6k, is
+  at most 37.0k even if all its growth was on the active plan. Over the repo's
+  committed scenario and e2e `research.json` files, plans answers shrink by
+  11%, and the largest is 13.9k, an active plan's.
+  The active plan keeps every item's `rationale` because research-plan lists
+  each item of the plan it reviews, disposes, edits, writes or recaps with its
+  rationale in one clause, and that plan is the active one; the router and the
+  agents that run an item read an open item of it too. A `skipped` item with
+  no `skip_category` was written before that field existed, and its skip
+  reason is in `rationale`, which research-exhaustiveness reads as the
+  recorded reason; it keeps it on any plan. A skipped item that has a
+  `skip_category` keeps `skip_category` and `skip_reason`, which is what
+  research-exhaustiveness reads. `staged_ref` is `research_log_append`'s own
+  record of the staged file an entry came from, and it reads it from
+  `research.json` itself (`findLoggedStagedRef` in
   `utils/results-staging.ts`). There is no opt-in for either. `make
   replay-collapse`'s log oracle leaves `staged_ref` out the same way.
 - **No `tree.gedcomx.json` access.** The observed cost (§1) was

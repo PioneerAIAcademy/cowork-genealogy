@@ -382,26 +382,29 @@ function without(item: any, key: string): any {
   return rest;
 }
 
-/** A plan with no `rationale` on the items nothing will run again: every item
- *  of a plan that is not active, and a `completed` or `skipped` item of one
- *  that is. An open item on the active plan keeps it, because the agent that
- *  runs it reads it. A plan with no `status` counts as active, as in
- *  `question-state.ts`. */
-function withoutClosedRationale(plan: any): any {
+/** A skipped item written before `skip_category` existed: its skip reason is in
+ *  `rationale`, the only place it was written. */
+function isOldShapeSkip(item: any): boolean {
+  return item?.status === "skipped" && (item.skip_category === undefined || item.skip_category === null);
+}
+
+/** A plan that is not active (superseded or completed) with no `rationale` on
+ *  its items, but for an old-shape skip. Every item of the active plan keeps
+ *  it: research-plan lists each item of that plan with its rationale. A plan
+ *  with no `status` counts as active, as in `question-state.ts`. */
+function withoutInactiveRationale(plan: any): any {
   if (!plan || typeof plan !== "object" || !Array.isArray(plan.items)) return plan;
-  const active = plan.status === undefined || plan.status === "active";
+  if (plan.status === undefined || plan.status === "active") return plan;
   return {
     ...plan,
-    items: plan.items.map((item: any) =>
-      !active || item?.status === "completed" || item?.status === "skipped" ? without(item, "rationale") : item,
-    ),
+    items: plan.items.map((item: any) => (isOldShapeSkip(item) ? item : without(item, "rationale"))),
   };
 }
 
 /** The page's items as the tool returns them. A log entry's `staged_ref` is
  *  research_log_append's own bookkeeping, read from research.json directly. */
 function projectItems(section: ResearchQuerySection, items: any[]): any[] {
-  if (section === "plans") return items.map(withoutClosedRationale);
+  if (section === "plans") return items.map(withoutInactiveRationale);
   if (section === "log") return items.map((entry) => without(entry, "staged_ref"));
   return items;
 }
@@ -835,9 +838,11 @@ export const researchQuerySchema = {
     "matches remain beyond the returned page, so advance `offset` by items.length " +
     "and call again until it is false. `items` is camelCase-untouched (the " +
     "section's native snake_case fields, verbatim) since this is a read " +
-    "projection, not a persisted document, with two omissions: an item in a " +
-    "plan's `items` carries no `rationale` when it is completed or skipped or its " +
-    "plan is not active, and a `log` entry carries no `staged_ref`.\n" +
+    "projection, not a persisted document, with two omissions. An item of a plan " +
+    "that is not active (superseded or completed) carries no `rationale`, except " +
+    "a skipped item with no `skip_category`, whose `rationale` holds its skip " +
+    "reason for research-exhaustiveness; every item of the active plan keeps its " +
+    "`rationale`, which research-plan lists. A `log` entry carries no `staged_ref`.\n" +
     "\n" +
     "`conflicts` also returns `unregisteredDisagreements` — `[{personId, fact, " +
     "assertionIds}]`, linked assertions that disagree on a birth or death place or " +
