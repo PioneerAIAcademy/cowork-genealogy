@@ -385,6 +385,390 @@
       "llm_score": null,
       "corrected_score": null,
       "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly recognizes that “possible” is defensible and identifies the missing explanation for why the evidence does not support the adjacent “probable” tier. Because the per-test explicitly allows either tier, the issue is an incomplete justification rather than an incorrect tier selection."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies that the argument structure is coherent but overbuilt for a straightforward bounded conclusion. Given the relatively simple evidence and lack of competing candidates or major conflicts, summary would have been the more appropriate vehicle."
+    },
+    {
+      "test_id": "ut_proof_conclusion_018",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly recognizes that “statement” is defensible for a simple not_proved conclusion, but it also identifies the concrete issue that the 231-word narrative exceeds the 150-word budget and is more elaborate than necessary. This makes the form choice only partially successful."
+    },
+    {
+      "test_id": "ut_proof_conclusion_d5e",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The conclusion is not_proved, which is below the threshold requiring tree encoding, and no tree write was expected or performed under the rubric."
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill correctly changed the parenthetical in the 1860 census sentence from '(the relationship column was not introduced until 1880)' to '(the relationship-to-head column first appears in the 1880 census)' as required. However, the per-test context explicitly states that the copy of the old wording in the tier-justification paragraph ('relationships not stated — the relationship column was not introduced until 1880') must stay unchanged. Looking at the persisted narrative_markdown, the Assessment section still reads 'the relationship column was not introduced until 1880' — so that copy was correctly left alone. The one required change was made correctly. However, the skill's chat response says 'I didn't re-check the exhaustiveness summary, so q_001 remains open if it was open before' — this is a minor imprecision since q_001 was already in_progress and nothing about that changed. The core factual correctness of the edit is sound, but the response slightly mischaracterizes the scope of what was done.\n\n"
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_e1k",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "Tree encoding is explicitly N/A for this wording-only correction. The conclusion and pre-existing tree relationship were unchanged, so no tree write was required or expected."
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies that a_023 is relevant evidence discussed in the research record but missing from the formal supporting_assertion_ids and narrative citations. Because the finding is still mentioned in the exhaustive-search summary, this is a partial citation-completeness omission rather than a major failure."
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies the mismatch between the declared statement vehicle and the 432-word, multi-section narrative. A summary would better fit the evidence complexity and structure, so the form choice is only partially successful."
+    },
+    {
+      "test_id": "ut_proof_conclusion_g9j",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": "The per-test context explicitly makes tree encoding N/A for a not_proved conclusion, and no primary fact was encoded below the probable threshold."
+    },
+    {
+      "test_id": "ut_proof_conclusion_rt4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment is substantively accurate, but it does not fully account for the harness-detected proved issue in its overall evaluation. Even though “It is not proved” is semantically correct, the assessment should more explicitly recognize that the flagged term may still matter under the test’s lexical/validator constraint."
+    },
+    {
+      "test_id": "ut_proof_conclusion_rt4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_rt4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_rt4",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_rt4",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_rt4",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_rt4",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_rt4",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies the substantive tree-encoding failure: the relationships were updated to Biological, but the concluded parentage was not marked primary=true on the relevant facts or relationship. Since primary marking is explicitly required at the probable tier, this is an incomplete encoding rather than a full pass."
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Tree encoding",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Proof-conclusion fit",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Evidence completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Narrative standalone",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "rubric",
+      "dimension_name": "Tier justification",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly recognizes that the paternity tier is well-supported but identifies the maternity-tier error: the scenario requires possible, while the skill used not_proved. Since the narrative reasoning is otherwise sound, this is a substantive but limited tier-classification error."
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_proof_conclusion_022",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies the concrete persisted-artifact error: the maternity claim is recorded as not_proved when the per-test context requires possible. The paternity handling and tree encoding are otherwise correctly assessed, so this is a substantive but limited error."
     }
   ]
 }
