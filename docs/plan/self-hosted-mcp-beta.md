@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a limited beta
 
-**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2's first half (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget; PR #4292), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, and D1's stack. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
+**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2's first half (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget; PR #4292), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), and D1's stack. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
 
 ## What this is
 
@@ -241,7 +241,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 
 **G4 Hook-only rules.** The hook fires on connector calls in a Cowork task (issue #3529 item 3), so these rules hold there as they do on the desktop. Claude's docs say chat runs no hooks and no agents. Today the research skill says that without an `Agent` tool, research runs only in a Cowork task, and stops. The Surface decision settles that line.
 
-**G5 Capture wording (issue #3990).** `search-external-sites`' `capture` accepts three forms: an upload's `.txt`, read with `sidecar_read`; the upload itself, to be transcribed; or the text itself. The upload wording shows only when `project_context` returns an `uploadUrl`.
+**G5 Capture wording (issue #3990).** Shipped in PR #4387. `search-external-sites`' `capture` accepts three forms: an upload's `.txt`, read with `sidecar_read`; the upload itself, to be transcribed; or the text itself. The upload wording shows only when `project_context` returns an `uploadUrl`.
 
 **G6 The router PR (issue #4297).** Merges with the MCP App work before launch, in one paid `research` run: the card lines, removing `projectUrl`, showing `signInUrl`, logging an upload the main thread reads, an answer to "where is my report?", the agent lines that lean on the viewer, what `project_list`'s cut-short and error answers mean, and the no-`Agent` line the Surface decision sets. Until then the card lines exist only in a variant plugin, which the demo may run at a pinned commit. Invited users get the zip `make plugin-connector` builds.
 
@@ -347,7 +347,6 @@ The lead's two agents hold the first group. The team builds the rest; an issue l
 | E5 Fit for a connector | issue #3996 | team | The pin |
 | E5 Direct reads | issue #4311 | team, senior | Merged; live connector check owed |
 | S2 Deleting and blocking one user | issue #4000 | team, senior | Before invited users |
-| G5 Capture wording | issue #3990 | team | Before invited users |
 
 P0.2 is issue #3529. Issue #3994, the browser app, is in the icebox until cards pass the live test behind sign-in.
 

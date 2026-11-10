@@ -1,0 +1,16 @@
+{
+  "tool": "image_transcribe",
+  "description": "image_transcribe on the researcher's uploaded PDF of the MyHeritage results page, uploads/ma-1855-census-josiah-barnes.pdf in the ma-state-census-capture-text-layer scenario, answered as production answers it: the same results page as image-transcribe-upload-barnes-census, with `metadata` naming the file, the sniffed application/pdf and the scenario PDF's real size. Listed by ut_search_external_sites_ul1 only so image_transcribe exists in that session: the upload has a text layer, so any call to it is the failure, and a validator fails the run on the call itself. Without a fixture the tool would be absent and 'never calls image_transcribe' would hold whatever the agent did. The '~' predicate is a substring match, so it also answers a `file` production refuses before any OCR (a './' or project-path prefix: a bad shape, or no such file) and the layer's own name (production refuses the .pdf.txt as not an image); the call is the failure whatever this returns.",
+  "args": {
+    "file": "~uploads/ma-1855-census-josiah-barnes.pdf"
+  },
+  "response": {
+    "transcription": "MyHeritage search results, saved by the researcher\nCollection: 1855 Massachusetts State Census\nSearch: Josiah Barnes, born 1818\n\nResults 1-2 of 2\n\n1. Josiah Barnes\n   Birth: about 1818 - Massachusetts\n   Residence: 1855 - Lexington, Middlesex, Massachusetts\n   Household members: Lucy Barnes (about 1821), Henry Barnes (about 1844), Mary Barnes (about 1847)\n\n2. Josiah Barnes\n   Birth: about 1817 - New Hampshire\n   Residence: 1855 - Lowell, Middlesex, Massachusetts\n   Household members: (none listed)",
+    "metadata": {
+      "file": "uploads/ma-1855-census-josiah-barnes.pdf",
+      "contentType": "application/pdf",
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 898
+    }
+  }
+}
