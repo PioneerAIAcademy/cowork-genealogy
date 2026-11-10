@@ -18,8 +18,8 @@
     ]
   },
   "input": {
-    "delegation": "I'm researching ancestors in California during the 1850s Gold Rush. What records or repositories would help trace people who migrated there for mining or settlement?\n\nprojectPath: <workspace>",
-    "scenario": "empty-project-just-created",
+    "delegation": "I'm researching ancestors in California during the 1850s Gold Rush. What records or repositories would help trace people who migrated there for mining or settlement?",
+    "scenario": null,
     "scenario_notes": null
   },
   "execution": {

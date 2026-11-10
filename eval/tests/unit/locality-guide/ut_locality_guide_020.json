@@ -15,8 +15,8 @@
     ]
   },
   "input": {
-    "delegation": "I'm researching ancestors in Oklahoma during the Land Run of 1889. What records or repositories would help trace families?\n\nprojectPath: <workspace>",
-    "scenario": "empty-project-just-created",
+    "delegation": "I'm researching ancestors in Oklahoma during the Land Run of 1889. What records or repositories would help trace families?",
+    "scenario": null,
     "scenario_notes": null
   },
   "execution": {

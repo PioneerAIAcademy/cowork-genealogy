@@ -16,8 +16,8 @@
     ]
   },
   "input": {
-    "delegation": "I'm researching ancestors in Chicago during the Great Fire of 1871. What records or repositories would help trace families affected by the disaster?\n\nprojectPath: <workspace>",
-    "scenario": "empty-project-just-created",
+    "delegation": "I'm researching ancestors in Chicago during the Great Fire of 1871. What records or repositories would help trace families affected by the disaster?",
+    "scenario": null,
     "scenario_notes": null
   },
   "execution": {

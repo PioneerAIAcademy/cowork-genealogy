@@ -14,8 +14,8 @@
     ]
   },
   "input": {
-    "delegation": "What genealogical records are available for the Alabama region around 1800, before statehood? Please give me a locality research guide for that place and period - and I'm especially interested in whether there are any digitized, browsable record volumes for it, even if they're not name-indexed.\n\nprojectPath: <workspace>",
-    "scenario": "empty-project-just-created",
+    "delegation": "What genealogical records are available for the Alabama region around 1800, before statehood? Please give me a locality research guide for that place and period - and I'm especially interested in whether there are any digitized, browsable record volumes for it, even if they're not name-indexed.",
+    "scenario": null,
     "scenario_notes": null
   },
   "execution": {
