@@ -1140,10 +1140,10 @@ def test_record_search_response_is_compacted_once_staged(tmp_path):
     assert all(row.get("primaryId") for row in body["results"])
 
 
-def test_unstaged_record_search_is_not_compacted(tmp_path):
-    """The other half. Compaction is only correct once the sidecar holds the
-    full payload — an exploratory search with no `projectPath` retains nothing,
-    so stripping its inline results would destroy the only copy."""
+@pytest.mark.requires_engine_build
+def test_unstaged_record_search_is_compacted(tmp_path):
+    """No projectPath -> nothing staged, but record-search.ts compacts every
+    answer (issue #4386), so the mock hands the agent the same stubs."""
     server, call_log, tools_by_name = create_mock_server(
         ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path
     )
@@ -1152,9 +1152,56 @@ def test_unstaged_record_search_is_not_compacted(tmp_path):
     )
     body = _extract_response_dict(result)
     assert not body.get("staged")
-    assert any("gedcomx" in row for row in body["results"]), (
-        "an un-staged search keeps full fidelity inline"
+    for row in body["results"]:
+        assert "gedcomx" not in row
+        assert "collectionUrl" not in row
+        assert "collectionTitle" not in row
+    assert body["collections"]
+    assert all(row.get("primaryId") for row in body["results"])
+
+
+@pytest.mark.requires_engine_build
+def test_record_search_whose_staging_failed_is_compacted(tmp_path):
+    """A projectPath whose staging fails stages nothing; production compacts the
+    answer all the same, so the mock does too."""
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn"], FIXTURES_DIR, workspace=tmp_path / "missing"
     )
+    with pytest.warns(UserWarning, match="staging printed nothing"):
+        result = _invoke(
+            tools_by_name,
+            "record_search",
+            {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path / "missing")},
+        )
+    body = _extract_response_dict(result)
+    assert not body.get("staged")
+    assert all("gedcomx" not in row for row in body["results"])
+    assert body["collections"]
+
+
+@pytest.mark.requires_engine_build
+def test_unstaged_dixon_page_fits_the_tool_result_budget(tmp_path):
+    """The 100-row Dixon page with no projectPath, as server.ts serializes it
+    (compact JSON), stays under 40,000 characters (issue #4386)."""
+    fixture = json.loads(
+        (FIXTURES_DIR / "record-search-dixon-virginia-1840-census.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert len(json.dumps(fixture["response"], separators=(",", ":"))) > 50_000, (
+        "the fixture no longer overflows, so this test proves nothing"
+    )
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-dixon-virginia-1840-census"], FIXTURES_DIR, workspace=tmp_path
+    )
+    result = _invoke(
+        tools_by_name,
+        "record_search",
+        {"surname": "Dixon", "residenceYearFrom": 1840, "residenceYearTo": 1840, "count": 100},
+    )
+    body = _extract_response_dict(result)
+    assert len(body["results"]) == 100
+    assert len(json.dumps(body, separators=(",", ":"), ensure_ascii=False)) < 40_000
 
 
 def test_mapping_failure_response_does_not_get_the_negative_log_note(tmp_path):
