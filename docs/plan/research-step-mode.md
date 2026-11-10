@@ -235,7 +235,12 @@ that apply:
     may follow it in a turn (section K). The router `research` is exempted by name. Prove it
     fails by adding an unlisted agent file.
   - **A step that opens a turn uses its home group:** research-plan → plan, locality-guide →
-    setup, init-project → setup, record-structurer → search. The overlaps only admit a
+    setup, record-structurer → search. **init-project fixes no group** (changed 2026-11-09 for
+    issue #2813, per section H): the step after it does, so a bounded first message runs its
+    deliverable in the turn that created the project, and a job keeps its setup chain. The gate
+    keys this on spawn order, not on there being no project: after init-project any named step
+    may open the group, so a wasted init-project spawn on an existing project lets a second
+    group through. The overlaps only admit a
     follower:
     - **`locality-guide` after research-plan,** because research-plan stops for an unsurveyed
       place (`agents/research-plan.md:270-275`).
@@ -289,7 +294,7 @@ that apply:
 
   | Plane | Hook | Turn steps from | Notes |
   |---|---|---|---|
-  | Prototype worker | `PreToolUse` in `apps/server/proto/worker/options.py` (sees every call) | the claimed turn | The hook is rebuilt per attempt, and redelivery is the normal resume path. So the worker stores the turn's first step and mode in `turns.step` and `turns.mode`, and a redelivered attempt (`receive_count > 1`) seeds from them. The check sits in `_pretool` ahead of the `foreground_rewrite` return and only denies or halts, so an allowed step's `Agent` calls are still foregrounded (decision 26) |
+  | Prototype worker | `PreToolUse` in `apps/server/proto/worker/options.py` (sees every call) | the claimed turn | The hook is rebuilt per attempt, and redelivery is the normal resume path. So the worker stores the step that fixed the turn's group (its first, or the one after init-project) and the mode in `turns.step` and `turns.mode`, and a redelivered attempt (`receive_count > 1`) seeds from them. The check sits in `_pretool` ahead of the `foreground_rewrite` return and only denies or halts, so an allowed step's `Agent` calls are still foregrounded (decision 26) |
   | Alpha | `apps/server/app/agent/real_agent.py` | `handle_turn(text)`, reset in `_begin_turn_hook_state` | The main hook's matcher omits `Skill`. Put the step check in the `count_only` hook, or widen the matcher and update `test_write_lockdown.py`. No redelivery **SUPERSEDED by decision 25**. The alpha gets nothing under decision 25. |
   | Unit harness | `eval/harness/harness/skill_runner.py`'s `pretool_hook` | the one turn | Run the step check **before** the stub, so a stub's canned reply never replaces the step denial, and ahead of the `foreground_rewrite` return (decision 26) |
   | e2e harness | `eval/harness/e2e/orchestrator.py`'s `PreToolUse` | the user messages it sends (section F) | The resume-on-stall prompt is not a new turn. The check goes ahead of the non-MCP `foreground_rewrite` return (decision 26) |
@@ -892,9 +897,10 @@ Step mode removes the runaway structurally:
 - **A compound one-shot ask** runs its first deliverable, and offers the second as the next
   step. That reverses `ut_research_c1k`, which required both in one turn; its `delivers:` tag
   and that tag's validator are deleted, since no test can carry one now.
-- **A one-shot ask with a PID on a new folder** needs the project first. Once issue #3384 makes
-  project creation a single `project_create` tool call, that runs inside the one-shot's turn.
-  Until then, it costs one extra prompt.
+- **A one-shot ask with a PID on a new folder** needs the project first. Since issue #3384 made
+  project creation a single `project_create` tool call, that runs inside the one-shot's turn:
+  init-project, then the deliverable's agent, then its offer (issue #2813; the step gate
+  groups an init-project turn by the step after it, section A).
 - **Cowork routing depends on the router being entered.** PR #3262 makes `research` the only
   front door.
 
@@ -998,7 +1004,8 @@ records the measure.
   attempt. Either record a first-claim timestamp or leave redelivered turns out of run-time
   figures.
 - **Leave out of the per-step figures** wrap-up turns, which run several steps (`turns.mode`).
-  A host reply under "Keep going" is a one-step turn and counts.
+  A host reply under "Keep going" is a one-step turn and counts. A turn init-project opens is
+  filed under the step after it (section H), so that step's figures include project creation.
 - **To break it down by step,** PR 1 adds nullable `turns.step` and `turns.mode` columns, and the
   "Keep going" state on `sessions`, in a new migration, `apps/server/proto/sql/015_turn_step.sql`
   (014 went to #3794 while this was in flight). The worker fills them, and they also seed a redelivered attempt (section A). "p90

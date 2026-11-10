@@ -1102,6 +1102,57 @@ def test_bounded_transcription_is_delivered_in_place(
     )
 
 
+def test_bounded_first_message_runs_its_deliverable_after_init_project(
+    skills_invoked, builtin_tool_calls, agent_returns, text_response, after_state, test
+):
+    """Tag-gated (``bounded-after-init``). A bounded record ask with a PID and no
+    project creates the project and runs the search in the same turn (plan section
+    H, issue #2813): the hand-offs are init-project then search-records, repeats
+    allowed and nothing else; init-project made the project; the search is handed
+    the subject's tree id, not the FamilySearch ID; no step denial cut it short; the
+    reply drops init-project's next-step sentence; and it ends on an offer. Which
+    step it offers is the router's call: 2 of 6 scratch runs offered "setting up
+    the project" when the router was told to, so a fixed label is not pinned.
+
+    A gate denial and a stub's reply both come back as the spawn's result, so a
+    denial is told apart by its text, which carries the gate's own reason."""
+    from harness.skill_runner import handoffs, load_step_boundary
+
+    if "bounded-after-init" not in test.get("tags", []):
+        pytest.skip("not a bounded-first-message test")
+    skill_under_test = test.get("skill")
+    taken: list[str] = []
+    for name in handoffs(skills_invoked, builtin_tool_calls):
+        if name != skill_under_test and name not in taken:
+            taken.append(name)
+    assert taken == ["init-project", "search-records"], (
+        f"a bounded record ask with no project hands off to init-project, then "
+        f"search-records, and nothing else; got {taken}"
+    )
+    research = after_state.get("research_json")
+    tree = after_state.get("tree_gedcomx_json") or after_state.get("tree_gedcomx") or {}
+    assert research is not None, "init-project made no project, yet the turn went on to search"
+    problems = [
+        p for p in (_handed_subject(prompt, tree, research)[1]
+                    for prompt in _spawn_prompts(builtin_tool_calls, "search-records")) if p
+    ]
+    assert not problems, "; ".join(problems)
+    boundary = load_step_boundary()
+    denial = boundary._DENY_REASON.split("{", 1)[0].strip()
+    denied = [
+        r.get("subagent_type") for r in (agent_returns or [])
+        if denial in (r.get("text") or "")
+    ]
+    assert not denied, f"the step boundary denied {denied} in the turn that created the project"
+    assert "first research question" not in (text_response or ""), (
+        "the reply relays init-project's next-step sentence, which a bounded turn leaves out"
+    )
+    lines = [line.strip() for line in (text_response or "").splitlines() if line.strip()]
+    assert boundary.offered_step(text_response) is not None, (
+        f"the reply does not end on a \"Continue with …?\" offer: {lines[-1:]}"
+    )
+
+
 _HANDS_PLAN_ITEM_TAG = "asserts-delegation-plan-item"
 
 

@@ -8,11 +8,12 @@ description: >-
   (execution). Invoke when the user says "search for [person]", "find [person]
   in [record type]", "execute the plan", "run the next search", "search
   FamilySearch", or when a plan item targets a FamilySearch repository. Pass
-  projectPath, questionId and planItemId. Do NOT use when the target is
-  Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com (use
-  search-external-sites), when the user wants to plan what to search (use
-  research-plan), or to analyze a record already found (use extraction_append,
-  or the record-structurer agent).
+  projectPath, plus questionId and planItemId for a plan item; a search the
+  user named needs no question or plan, only projectPath and subject. Do NOT
+  use when the target is Ancestry, MyHeritage, FindMyPast, FindAGrave, or
+  Newspapers.com (use search-external-sites), when the user wants to plan
+  what to search (use research-plan), or to analyze a record already found
+  (use extraction_append, or the record-structurer agent).
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
