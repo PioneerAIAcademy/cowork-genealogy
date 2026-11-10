@@ -149,6 +149,26 @@ describe("research_append stamps locality collection counts from the catalog", (
     expect((await storedCollections())[0]).toMatchObject({ person_count: 240768, record_count: 60123 });
   });
 
+  it("stamps an update whose fields the caller sent as a JSON string", async () => {
+    await appendLocality([col("1803969", 240768, 60123)]);
+    const r = await researchAppendFromCaller(
+      {
+        projectPath: dir,
+        section: "localities",
+        op: "update",
+        entryId: "loc_001",
+        fields: JSON.stringify({ collections: [col("1803971", 0, 0)] }),
+      } as never,
+      collectionCatalogLoader(LOCAL),
+    );
+    expect(warningsOf(r)[0]).toContain("'1803971': person_count 0 -> 380262");
+    expect((await storedCollections())[0]).toMatchObject({ id: "1803971", person_count: 380262, record_count: 95456 });
+  });
+
+  it("does not throw on a collection item that is not an object", async () => {
+    await expect(appendLocality([null, col("1803969", 0, 0)])).resolves.toBeDefined();
+  });
+
   it("matches a numeric id and stores it as a string", async () => {
     const r = await appendLocality([col(1803969, 0, 0)]);
     warningsOf(r);

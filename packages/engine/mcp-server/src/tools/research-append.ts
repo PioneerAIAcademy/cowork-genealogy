@@ -11594,7 +11594,7 @@ function expandNarrativeEdits(
 const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
 
 /** How long a caller's write waits on the catalog before stamping null counts. A
- *  cold read has been measured at 33-36s, and Cowork's bridge aborts a call at 60s
+ *  cold read can run past 30s (2 of 51 in the committed e2e logs took 33s and 36s), and Cowork's bridge aborts a call at 60s
  *  (`COWORK_CALL_ABORT_MS`), which the write's own place lookups also spend. The
  *  read keeps running and fills the cache for the next write. */
 export const CATALOG_READ_BUDGET_MS = 20_000;
@@ -11659,7 +11659,7 @@ export async function researchAppendFromCaller(
   if (errors.length > 0) {
     return isBatch ? { ok: false, errors, opsReceived: ops.length } : { ok: false, errors };
   }
-  // Read before the project lock: a cold catalog fetch takes about 35s.
+  // Read before the project lock: a cold catalog fetch can run past 30s.
   const decodedEntry = decodeArg(input.entry);
   const writeOps = isBatch ? ops : [{ section: input.section, op: input.op, entry: decodedEntry, fields: decodedFields }];
   let collectionCatalog: CollectionCatalog | undefined;

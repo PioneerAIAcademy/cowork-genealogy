@@ -2143,7 +2143,8 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   geocode.
 - **When the catalog is read.** Once per call, in `researchAppendFromCaller`, before
   the project lock, and only when the call carries a `localities` collection. A cold
-  read has been measured at 33-36 seconds and Cowork's bridge aborts a call at 60, so
+  read can run past 30 seconds (2 of 51 in the committed e2e run logs took 33 and 36,
+  collections-search-tool-spec "Timeout") and Cowork's bridge aborts a call at 60, so
   the write waits at most 20 seconds; a read still running then goes on and fills
   the cache. `fetchAllCollections` caches a successful read for an hour per token
   (for the whole process when `GENEALOGY_SHARED_COLLECTIONS_CACHE` is `true`), so the
