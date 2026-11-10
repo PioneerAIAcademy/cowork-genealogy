@@ -954,6 +954,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   const projPath = `${path}/project`;
   checkRequired(p, ["id", "objective", "status", "created", "updated"], projPath, report, NULLABLE_FIELDS);
   checkAllowedKeys(p, RESEARCH_SHAPES.project, "project objects", projPath, report);
+  if ("title" in p && typeof p.title !== "string") {
+    addError(report, projPath, "'title' must be a string — omit it if there is none");
+  }
   if ("id" in p) {
     checkIdPrefix(p.id, ID_PREFIXES.project, projPath, report);
   }
@@ -965,7 +968,7 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
 
   // Researcher profile (optional)
   const rp = data.researcher_profile;
-  if (rp !== null && rp !== undefined) {
+  if (rp !== undefined) {
     const rpPath = `${path}/researcher_profile`;
     // `typeof rp !== "object"` catches a string or a number and MISSES `[]`,
     // which is the array arm `checkObjectField` exists to add — the class this
@@ -974,17 +977,19 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
       addError(
         report,
         rpPath,
-        `researcher_profile must be an object — got ${Array.isArray(rp) ? "array" : typeof rp}`,
+        rp === null
+          ? "researcher_profile must be an object — omit it if there is none"
+          : `researcher_profile must be an object — got ${Array.isArray(rp) ? "array" : typeof rp}`,
       );
     } else {
       checkAllowedKeys(rp, RESEARCH_SHAPES.researcher_profile, "researcher_profile objects", rpPath, report);
-      if ("experience_level" in rp && rp.experience_level !== null) {
+      if ("experience_level" in rp) {
         checkEnum(rp.experience_level, "experience_level", rpPath, report);
       }
       const subs = rp.subscriptions;
-      if (subs !== null && subs !== undefined) {
+      if (subs !== undefined) {
         if (!Array.isArray(subs)) {
-          addError(report, rpPath, "subscriptions must be an array");
+          addError(report, rpPath, "'subscriptions' must be an array — omit it if empty");
         } else {
           for (const s of subs) {
             if (!CLOSED_ENUMS.subscription.has(s)) {
@@ -1249,6 +1254,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
         if (typeof url !== "string" || url === "") {
           addError(report, ip, "collection_url must be a non-empty string (a url from external-collections.json), or omitted");
         }
+      }
+      if ("skip_reason" in item && typeof item.skip_reason !== "string") {
+        addError(report, ip, "'skip_reason' must be a string — omit it if there is none");
       }
     }
   }
@@ -1588,6 +1596,9 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
   // `{assertion_id: 42, reason: "", bogus: 1}` persisted clean. The rule it carries --
   // a rejection is kept so a later step cannot silently re-link the same pair -- is
   // only as good as the rows it is read back from.
+  if (data.rejected_links !== undefined && !Array.isArray(data.rejected_links)) {
+    addError(report, `${path}/rejected_links`, "rejected_links must be an array — omit it if empty");
+  }
   const rejectedLinks = Array.isArray(data.rejected_links) ? data.rejected_links : [];
   const rejectedIds = new Set<any>();
   for (let i = 0; i < rejectedLinks.length; i++) {
@@ -1928,13 +1939,10 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     //
     // It also breaks a downstream reader: `ProofSummariesSection.tsx` guards on
     // `.length > 0` and then calls `.map`, and a bare string has truthy length
-    // while `.map` throws. The sibling `claims` field is guarded the
-    // same way further down this same block (85 lines by `addError`), so this
-    // was a deviation from a local convention rather than a new idea. Two
-    // earlier versions of this sentence said 38 and then 1347 — the first
-    // matched no anchor, the second came from a shell variable that silently
-    // evaluated to empty. A line count is a poor thing to cite in a file this
-    // merge-prone; the field name is the durable half.
+    // while `.map` throws. The sibling `claims` field is type-checked further
+    // down this block too. It differs in one way: `claims` is optional, so
+    // checkRequired never sees it and it refuses null itself, where this
+    // required field leaves null to checkRequired (#4366).
     if (
       "resolved_conflict_ids" in ps &&
       ps.resolved_conflict_ids !== null &&
@@ -2008,7 +2016,16 @@ function validateResearch(data: any, report: ValidationReport): ResearchIds {
     // nested object inside proof_summary before this: without this loop an
     // arbitrary string in claims[].proof_tier would pass validation and the
     // tree-encoding gate would then read it.
-    if (ps.claims !== undefined && ps.claims !== null) {
+    // Optional, so null is refused here: checkRequired never sees this field.
+    // An update writes each field onto the stored entry and cannot delete one,
+    // so clearing claims on an update is `claims: []`, not omission.
+    if (ps.claims === null) {
+      addError(
+        report,
+        psp,
+        "'claims' is null — omit the field for a single-conclusion proof; on an update to a summary that holds claims, send claims: [] to clear them",
+      );
+    } else if (ps.claims !== undefined) {
       const claims = Array.isArray(ps.claims) ? ps.claims : [];
       if (!Array.isArray(ps.claims)) {
         addError(report, psp, "'claims' must be an array");
@@ -2339,6 +2356,9 @@ function validateLocalities(
   // jurisdictions / collections / pages_read items are closed in the schema but
   // their required and stray keys are not deep-checked here (same precedent as
   // structured_value).
+  if (data.localities !== undefined && !Array.isArray(data.localities)) {
+    addError(report, `${path}/localities`, "localities must be an array — omit it if empty");
+  }
   const localities = Array.isArray(data.localities) ? data.localities : [];
   const localityIds = new Set<any>();
   for (let i = 0; i < localities.length; i++) {
@@ -2358,7 +2378,23 @@ function validateLocalities(
       addUniqueId(localityIds, loc.id, "locality", lp, report);
     }
     if ("created" in loc) checkIsoDate(loc, "created", lp, report);
-    if ("updated" in loc && loc.updated != null) checkIsoDate(loc, "updated", lp, report);
+    // checkIsoDate passes null (some of its fields are nullable); this one is not.
+    if (loc.updated === null) {
+      addError(report, lp, "'updated' must be an ISO date (YYYY-MM-DD) — omit it if unknown");
+    } else if ("updated" in loc) {
+      checkIsoDate(loc, "updated", lp, report);
+    }
+    for (const field of ["jurisdictions", "collections", "quirks", "registration_start"]) {
+      if (field in loc && !Array.isArray(loc[field])) {
+        addError(report, lp, `'${field}' must be an array — omit it if empty`);
+      }
+    }
+    if (Array.isArray(loc.quirks) && loc.quirks.some((q: unknown) => typeof q !== "string")) {
+      addError(report, lp, "'quirks' must be an array of strings");
+    }
+    if ("volume_summary" in loc && (!isObject(loc.volume_summary) || Array.isArray(loc.volume_summary))) {
+      addError(report, lp, "'volume_summary' must be an object — omit it if unknown");
+    }
     const pages = Array.isArray(loc.pages_read) ? loc.pages_read : [];
     for (let j = 0; j < pages.length; j++) {
       const pr = pages[j];
@@ -2403,6 +2439,9 @@ function validateLocalities(
     }
   }
 
+  if (data.warning_justifications !== undefined && !Array.isArray(data.warning_justifications)) {
+    addError(report, `${path}/warning_justifications`, "warning_justifications must be an array — omit it if empty");
+  }
   const wjs = Array.isArray(data.warning_justifications) ? data.warning_justifications : [];
   for (let i = 0; i < wjs.length; i++) {
     const wj = wjs[i];

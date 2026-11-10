@@ -6,15 +6,13 @@ description: >-
   "page through", "look through the film/roll", "go through the unindexed
   records", or gives an image group number. Use when a record set is digitized
   but NOT indexed and NOT full-text searchable, so the only way in is to open the
-  volume and read images one at a time. volume_search finds which image groups
-  cover a place and date range, image_search lists the image IDs inside one
-  group, and image_transcribe reads a page host-side and stages it. FamilySearch
-  digitized images only. Do NOT use for indexed name/date/place search (use
+  volume and read images one at a time. FamilySearch digitized images only. Do NOT use for indexed name/date/place search (use
   search-records), full-text transcript search (use search-full-text), external
   repositories like Ancestry (use search-external-sites), planning what to browse
   (use research-plan), or extracting facts from an image already in hand (use
   the record-structurer agent). With no project, reads a record set and returns
-  its names, cited by image.
+  its names, cited by image, or finds the catalog item and DGS numbers for a
+  named title.
 model: claude-haiku-5-5
 effort: medium
 tools:

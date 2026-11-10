@@ -4353,6 +4353,60 @@ describe("research_append (Phase 3)", () => {
     });
   });
 
+  // #4366: `claims` is optional and the schema types it as an array, so a
+  // null is refused rather than persisted into a file that fails its schema.
+  describe("claims: null is refused; omission and [] are the ways to say none", () => {
+    const nameClaim = { claim: "name", proof_tier: "possible", shortfall: "gap", supporting_assertion_ids: ["a_001"], name: { person: "I1", given: "John" } };
+    const summary = (extra: Record<string, unknown>) => ({
+      question_id: "q_001", tier: "possible", vehicle: "summary", shortfall: "gap",
+      supporting_assertion_ids: ["a_001"], resolved_conflict_ids: [],
+      exhaustive_search_summary: "Searched census + vitals", narrative_markdown: "## Conclusion\n...",
+      ...extra,
+    });
+    const linked = () => phase3Research();
+
+    it("an append with claims: null is refused, nothing is written, and the error says to omit it", async () => {
+      await writeProject(linked());
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "append", entry: summary({ claims: null }),
+      } as never);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toContain("'claims' is null — omit the field");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+
+      const omitted = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "append", entry: summary({}),
+      } as never);
+      expect(errorsOf(omitted) ?? []).toEqual([]);
+      expect(omitted.ok).toBe(true);
+    });
+
+    it("a project already holding claims: null still accepts an unrelated write", async () => {
+      const research = linked();
+      research.proof_summaries.push({ id: "ps_001", ...summary({ claims: null }) });
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir, section: "project", op: "update", fields: { title: "Smith origins" },
+      } as never);
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect((await readResearch()).project.title).toBe("Smith origins");
+    });
+
+    it("an update with claims: [] clears the claims of a summary that holds them", async () => {
+      const research = linked();
+      research.proof_summaries.push({ id: "ps_001", ...summary({ claims: [nameClaim] }) });
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001", fields: { claims: [] },
+      } as never);
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect((await readResearch()).proof_summaries[0].claims).toEqual([]);
+    });
+  });
+
   // `shortfall` vs the tier is a single-object rule, so ADR-0011's first
   // question puts it at the write boundary rather than in prose. Until
   // 2026-09-21 it lived only in the agent body and the eval validator, and

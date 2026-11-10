@@ -1,0 +1,14 @@
+{
+  "tool": "image_transcribe",
+  "description": "Issue #4311. A researcher's own upload, uploads/st-wendel-taufen-1841.jpg: a page of a German Catholic baptism register, read through image_transcribe's `file` input. Invented text. Entries 5 and 6 fill the first 300 characters so the digest excerpt production returns holds none of entry 7, the one the test asks about — the agent must read the staged page with sidecar_read to see it.",
+  "args": {
+    "file": "~uploads/"
+  },
+  "response": {
+    "transcription": "Taufbuch der katholischen Pfarrei St. Wendel, 1841.\n\nNr. 5. Den 2ten März 1841 wurde getauft Johann Nicolaus, ehelicher Sohn des Mathias Recktenwald, Bergmann, und der Margaretha geb. Müller. Pathen: Nicolaus Müller und Elisabeth Recktenwald.\n\nNr. 6. Den 7ten März 1841 wurde getauft Jacob, ehelicher Sohn des Peter Becker, Schmied, und der Anna geb. Schäfer. Pathen: Jacob Schäfer und Maria Becker.\n\nNr. 7. Den 12ten März 1841 wurde getauft Anna Maria, geboren den 10ten dieses Monats, eheliche Tochter des Peter Schmitt, Ackerer allhier, und der Catharina geb. Klein. Pathen: Johann Klein, Großvater mütterlicherseits, und Anna Maria Becker, ledig, aus Urweiler. Pastor J. Hoffmann.",
+    "metadata": {
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 1702114
+    }
+  }
+}

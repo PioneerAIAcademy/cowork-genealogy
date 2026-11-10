@@ -1,9 +1,9 @@
 {
-  "run_log": "v2_2026-11-02_15-24-54.json",
-  "annotator": "raphaeldaveal@gmail.com",
+  "run_log": "v5_2026-11-09_10-46-07.json",
+  "annotator": "Francisbucci2@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_search_full_text_002",
+      "test_id": "ut_translation_011",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_002",
+      "test_id": "ut_translation_011",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,87 +19,103 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_002",
+      "test_id": "ut_translation_011",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_002",
+      "test_id": "ut_translation_011",
       "dimension_source": "rubric",
-      "dimension_name": "Query construction",
+      "dimension_name": "Accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_002",
+      "test_id": "ut_translation_011",
       "dimension_source": "rubric",
-      "dimension_name": "FAN awareness",
+      "dimension_name": "Notation of uncertainty",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_002",
+      "test_id": "ut_translation_011",
       "dimension_source": "rubric",
-      "dimension_name": "Negative result handling",
+      "dimension_name": "Genealogical context",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_002",
+      "test_id": "ut_translation_011",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Date formatting",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_020",
+      "test_id": "ut_translation_011",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "dimension_name": "Abbreviation expansion",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_020",
+      "test_id": "ut_translation_004",
       "dimension_source": "rubric",
-      "dimension_name": "Negative result handling",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "dimension_name": "Abbreviation expansion",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_020",
+      "test_id": "ut_translation_004",
       "dimension_source": "rubric",
-      "dimension_name": "FAN awareness",
+      "dimension_name": "Date formatting",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_020",
+      "test_id": "ut_translation_004",
       "dimension_source": "rubric",
-      "dimension_name": "Query construction",
+      "dimension_name": "Genealogical context",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_020",
+      "test_id": "ut_translation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_004",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_004",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_020",
+      "test_id": "ut_translation_004",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -107,7 +123,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_020",
+      "test_id": "ut_translation_004",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -115,7 +131,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_019",
+      "test_id": "ut_translation_001",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -123,7 +139,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_019",
+      "test_id": "ut_translation_001",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -131,87 +147,103 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_019",
+      "test_id": "ut_translation_001",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_019",
+      "test_id": "ut_translation_001",
       "dimension_source": "rubric",
-      "dimension_name": "Query construction",
+      "dimension_name": "Accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_019",
+      "test_id": "ut_translation_001",
       "dimension_source": "rubric",
-      "dimension_name": "FAN awareness",
+      "dimension_name": "Notation of uncertainty",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_019",
+      "test_id": "ut_translation_001",
       "dimension_source": "rubric",
-      "dimension_name": "Negative result handling",
+      "dimension_name": "Genealogical context",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_019",
+      "test_id": "ut_translation_001",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Date formatting",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_001",
+      "test_id": "ut_translation_001",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Abbreviation expansion",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_001",
+      "test_id": "ut_translation_002",
       "dimension_source": "rubric",
-      "dimension_name": "Negative result handling",
+      "dimension_name": "Abbreviation expansion",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_001",
+      "test_id": "ut_translation_002",
       "dimension_source": "rubric",
-      "dimension_name": "FAN awareness",
+      "dimension_name": "Date formatting",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_001",
+      "test_id": "ut_translation_002",
       "dimension_source": "rubric",
-      "dimension_name": "Query construction",
+      "dimension_name": "Genealogical context",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_001",
+      "test_id": "ut_translation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Notation of uncertainty",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_002",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_001",
+      "test_id": "ut_translation_002",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -219,7 +251,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_001",
+      "test_id": "ut_translation_002",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -227,7 +259,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_018",
+      "test_id": "ut_translation_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -235,7 +267,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_018",
+      "test_id": "ut_translation_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -243,43 +275,51 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_018",
+      "test_id": "ut_translation_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_translation_008",
+      "dimension_source": "rubric",
+      "dimension_name": "Accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_018",
+      "test_id": "ut_translation_008",
       "dimension_source": "rubric",
-      "dimension_name": "Query construction",
+      "dimension_name": "Notation of uncertainty",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_018",
+      "test_id": "ut_translation_008",
       "dimension_source": "rubric",
-      "dimension_name": "FAN awareness",
+      "dimension_name": "Genealogical context",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_018",
+      "test_id": "ut_translation_008",
       "dimension_source": "rubric",
-      "dimension_name": "Negative result handling",
+      "dimension_name": "Date formatting",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_full_text_018",
+      "test_id": "ut_translation_008",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
-      "llm_score": 3,
-      "corrected_score": 3,
+      "dimension_name": "Abbreviation expansion",
+      "llm_score": null,
+      "corrected_score": null,
       "comment": null
     }
   ]
