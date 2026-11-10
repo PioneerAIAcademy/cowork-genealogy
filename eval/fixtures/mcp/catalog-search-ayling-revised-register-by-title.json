@@ -21,14 +21,12 @@
           "HSB (Headquarters Storage Building)",
           "Online"
         ],
-        "url": "https://www.familysearch.org/service/search/catalog/item/koha:186990",
         "hydrated": true,
         "digitalLibraryUrl": "http://www.familysearch.org/library/books/idurl/1/283203",
         "notes": [
           "Also available on microfilm and digital images.",
           "Includes index of names."
         ],
-        "authors": [],
         "subjects": [
           "United States, New Hampshire - Military records - Civil War, 1861-1865"
         ],
@@ -48,7 +46,6 @@
           {
             "filmNumber": "2319539",
             "imageGroupNumber": "7499145",
-            "indexed": "Y",
             "copyLocation": "Granite Mountain Record Vault",
             "text": "Another filming (cont.), 2002"
           }
