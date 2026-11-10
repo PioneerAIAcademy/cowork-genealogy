@@ -158,9 +158,9 @@ export type ResearchQueryResult =
        *  these sat unregistered (ut_research_h22). */
       unregisteredDisagreements?: UnregisteredDisagreement[];
       /** Why a `person_evidence` link sits where it does in `items`, keyed by link id.
-       *  Present only for that section, and only for links carrying a reason — the
-       *  ordering is by consequence, and a rank with no reason is a number to
-       *  distrust. Absent where nothing stands out. */
+       *  Present only for that section, only for the links on this page, and only
+       *  for links carrying a reason — the ordering is by consequence, and a rank
+       *  with no reason is a number to distrust. Absent where nothing stands out. */
       reviewReasons?: Record<string, string[]>;
     }
   // `reason: "no_project"` marks the one ok:false that is an answer rather than
@@ -375,6 +375,39 @@ const ID_KIND: Record<string, string> = {
   ns: "a namesake",
   log: "a log entry",
 };
+
+function without(item: any, key: string): any {
+  if (!item || typeof item !== "object" || !(key in item)) return item;
+  const { [key]: _dropped, ...rest } = item;
+  return rest;
+}
+
+/** A skipped item written before `skip_category` existed: its skip reason is in
+ *  `rationale`, the only place it was written. */
+function isOldShapeSkip(item: any): boolean {
+  return item?.status === "skipped" && (item.skip_category === undefined || item.skip_category === null);
+}
+
+/** A plan that is not active (superseded or completed) with no `rationale` on
+ *  its items, but for an old-shape skip. Every item of the active plan keeps
+ *  it: research-plan lists each item of that plan with its rationale. A plan
+ *  with no `status` counts as active, as in `question-state.ts`. */
+function withoutInactiveRationale(plan: any): any {
+  if (!plan || typeof plan !== "object" || !Array.isArray(plan.items)) return plan;
+  if (plan.status === undefined || plan.status === "active") return plan;
+  return {
+    ...plan,
+    items: plan.items.map((item: any) => (isOldShapeSkip(item) ? item : without(item, "rationale"))),
+  };
+}
+
+/** The page's items as the tool returns them. A log entry's `staged_ref` is
+ *  research_log_append's own bookkeeping, read from research.json directly. */
+function projectItems(section: ResearchQuerySection, items: any[]): any[] {
+  if (section === "plans") return items.map(withoutInactiveRationale);
+  if (section === "log") return items.map((entry) => without(entry, "staged_ref"));
+  return items;
+}
 
 /** The first value that is a research.json id of another kind than `key` takes. */
 function wrongKindOfId(key: FilterKey, values: string[]): { value: string; prefix: string } | undefined {
@@ -712,14 +745,10 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
     // Reasons ride alongside rather than on the items: the item shape is a schema
     // contract, and a rank with no reason is a number to distrust.
     let ordered = filtered;
-    let reviewReasons: Record<string, string[]> | undefined;
+    let ranked: ReturnType<typeof rankForReview> | undefined;
     if (input.orderBy === "review" && section === "person_evidence" && filtered.length > 0) {
-      const ranked = rankForReview(filtered as ReviewLink[]);
+      ranked = rankForReview(filtered as ReviewLink[]);
       ordered = ranked.map((r) => r.link);
-      reviewReasons = Object.fromEntries(
-        ranked.filter((r) => r.reasons.length > 0).map((r) => [r.id, r.reasons]),
-      );
-      if (Object.keys(reviewReasons).length === 0) reviewReasons = undefined;
     }
 
     const start = input.offset ?? 0;
@@ -727,10 +756,17 @@ export async function researchQuery(input: ResearchQueryInput): Promise<Research
       ok: true as const,
       section,
       count: ordered.length,
-      items: ordered.slice(start, start + MAX_ITEMS),
+      items: projectItems(section, ordered.slice(start, start + MAX_ITEMS)),
       truncated: ordered.length > start + MAX_ITEMS,
     };
-    if (reviewReasons) page.reviewReasons = reviewReasons;
+    // Reasons for the links on this page only.
+    const reviewReasons = Object.fromEntries(
+      (ranked ?? [])
+        .slice(start, start + MAX_ITEMS)
+        .filter((r) => r.reasons.length > 0)
+        .map((r) => [r.id, r.reasons]),
+    );
+    if (Object.keys(reviewReasons).length > 0) page.reviewReasons = reviewReasons;
     // Per id over the whole match set, so a page answers "0 means none" for
     // every id it was asked about, not only for the ids its items carry.
     if (listFilter) {
@@ -802,7 +838,11 @@ export const researchQuerySchema = {
     "matches remain beyond the returned page, so advance `offset` by items.length " +
     "and call again until it is false. `items` is camelCase-untouched (the " +
     "section's native snake_case fields, verbatim) since this is a read " +
-    "projection, not a persisted document.\n" +
+    "projection, not a persisted document, with two omissions. An item of a plan " +
+    "that is not active (superseded or completed) carries no `rationale`, except " +
+    "a skipped item with no `skip_category`, whose `rationale` holds its skip " +
+    "reason for research-exhaustiveness; every item of the active plan keeps its " +
+    "`rationale`, which research-plan lists. A `log` entry carries no `staged_ref`.\n" +
     "\n" +
     "`conflicts` also returns `unregisteredDisagreements` — `[{personId, fact, " +
     "assertionIds}]`, linked assertions that disagree on a birth or death place or " +
@@ -889,7 +929,7 @@ export const researchQuerySchema = {
         enum: ["review"],
         description:
           "person_evidence only (not a filter): \"review\" orders the links by consequence " +
-          "and adds `reviewReasons`. Omit for stored order.",
+          "and adds `reviewReasons` for the links on the page. Omit for stored order.",
       },
       offset: {
         type: "number",

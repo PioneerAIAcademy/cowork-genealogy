@@ -30,6 +30,20 @@ export const PERSON_READ_REF_REMOVED =
   "and project_create reads the person and builds the starting tree itself. Do not " +
   "call person_read first.";
 
+/** `project_create` with no `personId`: a project always starts from one. */
+export const PERSON_ID_REQUIRED =
+  "personId is required: a project always starts from a FamilySearch person ID, such as " +
+  "\"KWCJ-RN4\". Ask the researcher for the FamilySearch ID of the person they are " +
+  "researching; with none, create no project. A surname survey needs no project: invoke " +
+  "the survey-surname agent with no projectPath.";
+
+/** `project_create`'s removed `tree`. */
+export const PROJECT_TREE_REMOVED =
+  "tree is no longer accepted: a project always starts from a FamilySearch person ID, and " +
+  "project_create builds the starting tree from FamilySearch. Pass personId alone; add a " +
+  "person who is not among the relatives it returns afterwards with tree-edit. " +
+  PERSON_ID_REQUIRED.slice(PERSON_ID_REQUIRED.indexOf("Ask the researcher"));
+
 /** The cross-tool redirects of `tree_edit` and `tree_correct`. */
 export const treeEditRejection = (operation: string): string =>
   `tree_edit only adds — '${operation}' is a correction/removal op; ` +
