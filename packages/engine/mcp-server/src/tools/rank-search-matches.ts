@@ -704,9 +704,10 @@ function soundex(word: string): string {
  *  fuzzy matching returns for one another. Soundex keeps the first letter, so
  *  Nelson/Olson and Anderson/Henderson stay distinct; a Sorensen-Dice cutoff did
  *  not. The cost is that distinct names coded alike (Hall/Hill, Kimbrell/Kemper)
- *  are not flagged. */
+ *  are not flagged. A word with no letter a–z has no code, so two non-Latin
+ *  surnames (Иванов/Петров) are compared by edits alone. */
 function similarSurnameToken(a: string, b: string): boolean {
-  return levenshteinDistance(a, b) <= 1 || soundex(a) === soundex(b);
+  return levenshteinDistance(a, b) <= 1 || (soundex(a) !== "" && soundex(a) === soundex(b));
 }
 
 /** True when any word of `candidate` is a spelling of any word of any of the

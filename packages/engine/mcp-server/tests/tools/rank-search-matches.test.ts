@@ -545,6 +545,12 @@ describe("rank_search_matches", () => {
       expect(out).not.toHaveProperty("surnameNote");
     });
 
+    it("flags a different non-Latin surname, which has no Soundex code (Иванов / Петров)", async () => {
+      const tree = { persons: [juanita({ names: [{ preferred: true, given: "Мария", surname: "Иванов" }] })], relationships: [], sources: [] };
+      const out = await rank([hit("ark:/61903/1:1:AAAA-AA1", "Петров", "Мария")], tree);
+      expect(only(out)).toMatchObject({ surnameNotOnSubject: true, candidateSurname: "Петров" });
+    });
+
     it("does not flag a record whose persona also carries her own surname", async () => {
       const both = hit("ark:/61903/1:1:6XJ4-K2F", "Fenstermaker");
       (both as any).gedcomx.persons[0].names.push({ given: "Juanita", surname: "Kimbrell", type: "BirthName" });
