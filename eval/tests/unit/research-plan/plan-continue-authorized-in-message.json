@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_research_plan_q7m",
     "skill": "research-plan",
-    "name": "Don't stop to ask 'start executing?' when the message already authorized it",
+    "name": "Offer to start executing, even when the message asks to execute",
     "type": "positive",
-    "description": "The user's message combines a plan request with an execute/continue-authorization phrase in the same turn ('...and go ahead and start executing it as soon as it's ready... I want this to be exhaustive'). research-plan must write the plan and hand execution back to its caller as already authorized, not end by asking 'Would you like me to start executing this plan?' when the user already answered that question. Mined from a real alpha feedback case (issue #1319): the tester had to prompt twice before the agent proceeded past presenting a plan she had already authorized executing. Since research-plan became an agent (issue #2116) it executes nothing itself: an agent cannot invoke a skill, and a request that belongs to another agent is handed back, never spawned. Its execution.stub_skills block was dropped in that conversion: on the direct arm no stub can fire, and a stub_skills block makes test_ownership_table skip the test.",
+    "description": "The user's message combines a plan request with an execute/continue phrase in the same turn ('...and go ahead and start executing it as soon as it's ready... I want this to be exhaustive'). Under step mode (docs/plan/research-step-mode.md, Phase 2) research-plan writes the plan and ends by offering to start the searches; the router runs the search step and the host's 'Keep going' carries the researcher's go-ahead. It must not hand execution back as already authorized. Originally mined from issue #1319, when the opposite was the rule; flipped in PR #4276. Since research-plan became an agent (issue #2116) it executes nothing itself, and a request that belongs to another agent is handed back, never spawned.",
     "tags": [
       "planning",
       "control-flow",
@@ -43,14 +43,12 @@
     "person-read-empty-any"
   ],
   "judge_context": [
-    "GENERAL RULE UNDER TEST: when the invoking message already carries an execute/continue-authorization phrase in the same turn as the plan request, research-plan must hand off toward execution without an additional round-trip. This is not specific to Bridget Halloran or this question -- the same rule applies to any first-plan request phrased as a compound 'plan AND execute/continue' instruction.",
-    "STEP MODE CONTEXT (docs/plan/research-step-mode.md, decision 25). Under step mode the plan step normally ENDS by asking 'Continue with running the searches?', so ending on a question is the default and correct behaviour in general. This test is the EXCEPTION, and it is the reason the exception has to exist: the invoking message already carries the authorisation ('don't stop to check in with me first'), which is a 'Keep going' in the researcher's own words. A boundary that re-asks something the researcher pre-answered is the #1319 failure this test was mined from. So: ask by default, do not ask when the message already answered it.",
-    "The user's message here is functionally equivalent to a user who, after being shown a plan, replies 'yes, start' -- it just arrived pre-emptively, in the same message as the plan request.",
+    "GENERAL RULE UNDER TEST: under step mode the plan step ends by offering the next step, even when the invoking message asks for the plan to be executed too. This is not specific to Bridget Halloran or this question -- the same rule applies to any 'plan AND execute' request.",
     "On the direct arm the research-plan agent cannot run a search itself: it executes nothing and hands execution back to its caller. Do not grade whether search-records or search-external-sites ran.",
-    "COMPLIANT: the agent writes the plan, then hands execution back as already authorized -- its return names the executing step (search-records for FamilySearch items, search-external-sites for the others) and says the researcher authorized it to run now, or otherwise states plainly that execution proceeds next -- rather than posing execution as an open question.",
-    "NON-COMPLIANT (the specific failure this test guards against): the skill writes the plan and ends its turn with an open question like 'Would you like me to start executing this plan?' -- re-asking something the invoking message already answered. Score Correctness low ONLY for this pattern.",
-    "This judges the CONTROL FLOW after the plan is written, not the plan's record-type content -- do not fail this dimension solely because the plan's breadth or record-type selection is imperfect (that is Record type selection's job); judge only whether the skill stopped to ask despite already having authorization, versus proceeding.",
-    "If the skill asks a genuinely different clarifying question (e.g., which of two ambiguous candidate jurisdictions to search first) that is not a re-ask of the already-answered 'should I start executing' question, that is acceptable and should not be penalized under this dimension."
+    "COMPLIANT: the agent writes the plan, then ends by offering to start the searches. Under step mode that offer is correct even though the message asked to execute.",
+    "NON-COMPLIANT: the return says execution was already authorized, or that the searches are running or will run now, instead of offering them. Score Correctness low ONLY for this pattern.",
+    "This judges the CONTROL FLOW after the plan is written, not the plan's record-type content -- do not fail this dimension solely because the plan's breadth or record-type selection is imperfect (that is Record type selection's job); judge only whether the agent ended on an offer versus declaring execution authorized.",
+    "If the agent asks a genuinely different clarifying question (e.g., which of two ambiguous candidate jurisdictions to search first) alongside or instead of the offer, that is acceptable and should not be penalized under this dimension."
   ],
   "judge_reads_files": true,
   "execution": {

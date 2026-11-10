@@ -26,6 +26,7 @@ import re
 import pytest
 
 from harness.skill_runner import agent_return_text
+from validators_lib import continue_offers
 
 
 # --- Tool allowlist ---
@@ -1091,7 +1092,6 @@ def test_unsettled_conflict_conclusion_offers_no_continue(text_response, test, a
     if _UNSETTLED_TAG not in (test.get("tags") or []):
         pytest.skip(f"not a {_UNSETTLED_TAG} test")
     from harness.skill_runner import subject_reply_text
-    from validators_lib import continue_offers
 
     reply = subject_reply_text(agent_returns, text_response, "proof-conclusion", test)
     assert reply.strip(), "proof-conclusion returned no reply"

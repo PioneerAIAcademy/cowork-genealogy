@@ -126,6 +126,11 @@ RULES: dict[str, tuple[Rule, ...]] = {
     # The image's /app shape, so auth's CLIENT_CONFIG_CANDIDATES[0] and SQL_DIR resolve.
     "web": (
         Rule(PROTO + "web/", "web/", top_py=True),
+        # #4001: the upload page's vendored pdf.js, file by file: its README.md stays in the
+        # checkout (verify.py refuses a README in tier code).
+        Rule(PROTO + "web/static/pdfjs/pdf.min.mjs", "web/static/pdfjs/pdf.min.mjs"),
+        Rule(PROTO + "web/static/pdfjs/pdf.worker.min.mjs", "web/static/pdfjs/pdf.worker.min.mjs"),
+        Rule(PROTO + "web/static/pdfjs/LICENSE", "web/static/pdfjs/LICENSE"),
         Rule(PROTO + "enqueue.py", "enqueue.py"),
         Rule(PROTO + "grants.py", "grants.py"),
         Rule(PROTO + "turn_message.py", "turn_message.py"),
