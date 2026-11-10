@@ -19,7 +19,8 @@ written: in a worktree the engine's node_modules is a symlink into the main chec
 the encoding lint walks releases/. The zips are written with Python's zipfile, which stores
 Unix modes (a .platform hook keeps its exec bit) and zip64.
 
-Needs git, node >= 22 with npm >= 11.12 < 12, pnpm with the JS workspace installed, and pip;
+Needs git, node >= 22 with npm >= 11.12 < 12, pnpm with the JS workspace installed (which takes
+Node 22.22.2+ on 22, 24.15+ on 24, or 26+), and pip;
 the network for PyPI, npm and the RDS truststore (--rds-ca FILE replaces the last).
 
 The two --fs-* flags add the SAS clients (U29), which only FamilySearch's registries serve,
