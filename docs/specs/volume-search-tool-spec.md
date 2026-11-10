@@ -874,9 +874,15 @@ each — and that repetition was most of an oversized page.
       omitSearchable: {
         type: "boolean",
         description:
-          "Set true to drop already-searchable volumes from results into " +
-          "one-line entries in searchableOmitted, so a browse-planning caller is not " +
-          "shown volumes it would only decline.",
+          "Set true to drop volumes that are already fulltextSearchable or at " +
+          "least 50% recordSearchablePercent out of results, replacing each with " +
+          "a one-line entry in searchableOmitted: " +
+          "`<indexed|full-text> | <recordType> | <dateRange> | <places>`. Runs on " +
+          "this page only, so results can be empty while nextPageToken is set — " +
+          "check both results and searchableOmitted, and page again, before " +
+          "concluding nothing was found. totalResults is unaffected. Use when " +
+          "the goal is to find a volume worth browsing image by image, not one " +
+          "already reachable by record_search or fulltext_search.",
       },
     },
     required: ["standardPlace"],
