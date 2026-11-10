@@ -16,7 +16,7 @@ import { describe, it, expect } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { filteredNilRetryInvariants } from "../../src/tools/research-log-append.js";
+import { filteredNilRetryInvariants, pinnedNilRetryInvariants } from "../../src/tools/research-log-append.js";
 
 const casesDir = join(dirname(fileURLToPath(import.meta.url)), "..", "guard-cases");
 const registry = JSON.parse(readFileSync(join(casesDir, "registry.json"), "utf-8"));
@@ -25,6 +25,7 @@ const registry = JSON.parse(readFileSync(join(casesDir, "registry.json"), "utf-8
  *  registry under this file with no binding here fails the first test below. */
 const WRITER_GUARDS: Record<string, (entry: any, research: any) => string[]> = {
   filteredNilRetryInvariants,
+  pinnedNilRetryInvariants,
 };
 
 const THIS_FILE = "/research-log-append.ts";
