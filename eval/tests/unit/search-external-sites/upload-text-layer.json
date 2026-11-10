@@ -1,0 +1,42 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_ul1",
+    "skill": "search-external-sites",
+    "name": "Hosted: an upload with a text layer is read with sidecar_read, never transcribed",
+    "type": "positive",
+    "description": "Form 1 of the capture forms. The MyHeritage hand-off for pli_001 is open in awaitingUser, and the researcher uploaded the results page as a PDF; the web tier wrote its text layer beside it, so project_context lists the upload with hasText: true and returns an uploadUrl. The agent reads uploads/ma-1855-census-josiah-barnes.pdf.txt with sidecar_read, never calls image_transcribe (a paid call for text it already has; image-transcribe-upload-barnes-pdf registers the tool, answering as production would, so the check is real), and closes the hand-off with captureFilename ma-1855-census-josiah-barnes.pdf, never the layer's name. Gated by test_triage_closes_its_open_handoff; test_no_transcription_of_an_upload_with_text, test_closing_capture_filename_is_the_upload and test_hosted_upload_is_read_with_the_tools run on it ungated.",
+    "tags": [
+      "myheritage",
+      "external-site",
+      "census",
+      "triage",
+      "triage-closes-handoff",
+      "upload-capture",
+      "hosted",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "The researcher brought back the capture for the MyHeritage search on plan item pli_001, the 1855 Massachusetts State Census for Josiah Barnes.\n\ncapture: uploads/ma-1855-census-josiah-barnes.pdf\nuserPresent: yes\nplanItemId: pli_001\nprojectPath: /proj_7d4b2e91c6a05f38",
+    "scenario": "ma-state-census-capture-text-layer"
+  },
+  "mcp_fixtures": [
+    "project-list-hosted-barnes",
+    "place-search-massachusetts",
+    "external-links-search-massachusetts",
+    "collections-search-massachusetts-census",
+    "image-transcribe-upload-barnes-pdf"
+  ],
+  "judge_context": [
+    "This is a triage turn: the capture came back as an upload. Do not penalize the absence of a new URL, of capture instructions, or of a build_external_search_url call: the hand-off's URL is already open in awaitingUser.",
+    "This test runs hosted: project_context returns uploadUrl https://genealogy.example.org/#/p/proj_7d4b2e91c6a05f38/upload, and the delegation names the project as projectPath /proj_7d4b2e91c6a05f38. That path is correct here; it is not a missing or invented project folder.",
+    "The capture is uploads/ma-1855-census-josiah-barnes.pdf, which project_context lists with hasText: true. The agent must read it with sidecar_read on uploads/ma-1855-census-josiah-barnes.pdf.txt, paging with offset if the answer says more remains. Calling image_transcribe on the PDF is a fail on Tool selection: the text layer already holds the page, and a transcription is a paid OpenRouter call. A built-in Read (or Grep or Glob) of the uploads/ path is wrong on a hosted store: production keeps no file at that path, so the capture is read only through the tools named here. Deterministic validators check the read; grade the tool flow as a whole.",
+    "Triage must be per-result with a stated reason, against the subject Josiah Barnes (b. c. 1818, Massachusetts; 1850 residence Middlesex County). Result 1 (born about 1818, Massachusetts; Lexington, Middlesex in 1855; household Lucy, Henry and Mary Barnes) is the strong match: birth year, birth state and county all agree. Result 2 (born about 1817, New Hampshire; Lowell, Middlesex; no household listed) is not a match, or at most a weak possible: its birth state contradicts the subject's Massachusetts birth, though the year and county fit. Do not require these exact labels, but a bulk accept or bulk reject with no per-record reasoning is a fail.",
+    "The closing log entry must be an external_site entry with capture_received TRUE, the same url_generated as the open log_001 hand-off (that is what closes it), and capture_filename 'ma-1855-census-josiah-barnes.pdf', the upload's own name. Naming the text layer (ma-1855-census-josiah-barnes.pdf.txt) is wrong: the researcher uploaded the PDF. outcome comes from the triage (positive: results were found), never partial.",
+    "pli_001 must end completed: the capture was read and triaged."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

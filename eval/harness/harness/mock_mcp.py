@@ -2090,24 +2090,31 @@ def _make_live_handler(
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 
-def _hosted_store(manifest: dict[str, Any]) -> dict[str, str | None] | None:
-    """The paths a hosted store answers for, each with its `projectUrl`, when the test
-    serves a hosted `project_list` answer; None for every other test.
+def _hosted_store(manifest: dict[str, Any]) -> dict[str, dict[str, str | None]] | None:
+    """The paths a hosted store answers for, each with its `projectUrl` and `uploadUrl`
+    (either may be None), when the test serves a hosted `project_list` answer; None for
+    every other test.
 
     A hosted store has no folder: it is bound to the projects it lists, refuses any
     other `projectPath` (`PgS3ProjectStore`, "is not this store's project"), and its
-    `project_context` carries the bound project's link (`utils/project-links.ts`). The
-    file store this harness runs does neither, so a hosted test emulates both.
+    `project_context` carries the bound project's `uploadUrl` (`utils/project-links.ts`).
+    The file store this harness runs does neither, so a hosted test emulates both,
+    taking each link from the listed project. `projectUrl` is the harness's own:
+    production's `project_context` no longer returns one, and it is kept for the
+    research suite's hosted tests.
     """
-    paths: dict[str, str | None] = {}
+    paths: dict[str, dict[str, str | None]] = {}
     for _args, listing, _src in (manifest.get("project_list") or {}).get("predicated") or []:
         if not isinstance(listing, dict) or listing.get("mode") != "hosted":
             continue
         for project in listing.get("projects") or []:
             if isinstance(project, dict) and isinstance(project.get("projectPath"), str):
-                paths[project["projectPath"]] = project.get("projectUrl")
+                paths[project["projectPath"]] = {
+                    "projectUrl": project.get("projectUrl"),
+                    "uploadUrl": project.get("uploadUrl"),
+                }
         if isinstance(listing.get("newProjectPath"), str):
-            paths.setdefault(listing["newProjectPath"], None)
+            paths.setdefault(listing["newProjectPath"], {"projectUrl": None, "uploadUrl": None})
     return paths or None
 
 
@@ -2529,7 +2536,7 @@ def _make_compiled_tool_handler(
     workspace: Path | None,
     call_log: list[dict[str, Any]],
     place_table=None,
-    hosted: dict[str, str | None] | None = None,
+    hosted: dict[str, dict[str, str | None]] | None = None,
 ):
     """Build the live handler for a compiled single-export tool — the tree
     writers (tree_edit / tree_correct) and the read-only project_context all
@@ -2626,9 +2633,14 @@ def _make_compiled_tool_handler(
                     "ok": False,
                     "errors": [f"{tool_name}: {e}"],
                 }
-            link = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
-            if tool_name == "project_context" and link and isinstance(response, dict) and response.get("objective"):
-                response = {**response, "projectUrl": link}
+            links = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
+            if tool_name == "project_context" and links and isinstance(response, dict):
+                if links["projectUrl"] and response.get("objective"):
+                    response = {**response, "projectUrl": links["projectUrl"]}
+                # Production spreads `uploadUrl` onto every answer that read the project,
+                # and returns an `ok: false` one before it.
+                if links["uploadUrl"] and response.get("ok") is True:
+                    response = {**response, "uploadUrl": links["uploadUrl"]}
 
         entry: dict[str, Any] = {
             "tool": f"mcp__genealogy__{tool_name}",

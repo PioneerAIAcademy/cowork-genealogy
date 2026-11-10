@@ -1,0 +1,25 @@
+{
+  "tool": "project_list",
+  "description": "Hosted listing for a signed-in user with one project, on Josiah Barnes in the 1855 Massachusetts State Census (the objective and subject of the ma-state-census-* scenarios), plus a fresh path for a new project. The entry carries `uploadUrl` and no `projectUrl`. Production's project_list returns neither: the harness reads the entry's `uploadUrl` and adds it to `project_context` for that path, as production's `project_context` does for a hosted store with uploads on (`utils/project-links.ts`). Listing this fixture is what makes a test hosted: the agent's tools answer only for the listed paths, so a delegation names `/proj_7d4b2e91c6a05f38` literally.",
+  "args": {},
+  "response": {
+    "mode": "hosted",
+    "projects": [
+      {
+        "projectPath": "/proj_7d4b2e91c6a05f38",
+        "objective": "Locate Josiah Barnes (b. c. 1818, Massachusetts) and his household in the 1855 Massachusetts State Census",
+        "subjects": [
+          {
+            "id": "I1",
+            "name": "Josiah Barnes"
+          }
+        ],
+        "status": "active",
+        "updated": "2026-11-01",
+        "uploadUrl": "https://genealogy.example.org/#/p/proj_7d4b2e91c6a05f38/upload"
+      }
+    ],
+    "newProjectPath": "/proj_0b5e3c8a19d27f64",
+    "message": "Pass a listed project's projectPath to continue it. To start a project for a person none of them is about, pass newProjectPath as projectPath."
+  }
+}
