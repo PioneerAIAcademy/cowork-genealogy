@@ -1312,6 +1312,50 @@ def _staged_ref_error(workspace: Path, tool: str, args: dict[str, Any]) -> str |
     return str(out.get("message") or f"{field} could not be read")
 
 
+def _trim_person_read(response: dict[str, Any]) -> dict[str, Any]:
+    """Trim a canned full `person_read` to the model-facing answer (#4384).
+
+    Runs the COMPILED `trimPersonReadForModel`, so every fixture is cut exactly
+    as production cuts its answer. Returns the response untrimmed, with a
+    warning, when node or the build is unavailable: a harness fault, never a
+    production shape.
+    """
+    person_read_js = _MCP_BUILD / "tools" / "person-read.js"
+    if not person_read_js.exists():
+        _warn_untrimmed(f"no engine build at {person_read_js}")
+        return response
+    url = _node_module_url(person_read_js)
+    script = (
+        f"import {{ trimPersonReadForModel }} from '{url}';"
+        " import { readFileSync } from 'node:fs';"
+        " const r = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify(trimPersonReadForModel(r)));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(response), timeout=NODE_EVAL_TIMEOUT_LONG)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            _warn_untrimmed(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
+            return response
+        parsed = json.loads(out)
+        if not isinstance(parsed, dict) or not isinstance(parsed.get("persons"), list):
+            _warn_untrimmed("the trim returned no `persons`")
+            return response
+        return parsed
+    except Exception as e:
+        _warn_untrimmed(f"{type(e).__name__}: {e}")
+        return response
+
+
+def _warn_untrimmed(why: str) -> None:
+    warnings.warn(
+        f"mock person_read could not be trimmed ({why}); the response goes back in the "
+        "full shape production no longer returns, so results for this call are not "
+        "comparable to production",
+        stacklevel=2,
+    )
+
+
 def _stage_person_read(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
 ) -> dict[str, Any]:
@@ -1583,6 +1627,16 @@ def create_mock_server(
                 response = _store_external_collections(
                     _workspace, args, response, _stored_rows.get(source_name)
                 )
+
+            # Production's person_read answers, and stages, the model-facing trim
+            # of the full read (#4384). A fixture holds the full read, which
+            # project_create's stand-in keeps reading from the manifest.
+            if (
+                _name == "person_read"
+                and "error" not in response
+                and isinstance(response.get("persons"), list)
+            ):
+                response = _trim_person_read(response)
 
             # Production's person_read stages its result whenever it is given a
             # projectPath (#2944), with the same trimmed gate.

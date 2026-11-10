@@ -2215,6 +2215,24 @@ def test_a_denial_phrase_without_a_conflict_tag_is_still_not_a_flag():
 
 
 
+def test_not_recorded_as_conflicts_is_a_denial():
+    """The live Tallman run the agent wrote right ("Not recorded as conflicts (census
+    variance)") and the guard flagged: the denial allowed one word, not three."""
+    cell = "Agrees: [1850], [1865], [1910] each give 1838-1839. Not recorded as conflicts (census variance): [1870] 1840-1841."
+    row = "Birth date  | 30 Nov 1838   | " + cell + " | Indexed 1839; range Bet 1838-1839\n"
+    _age_check(_TAG_HEADER + row + _TAIL_CONFLICT)
+    _age_check("The 1850 census birth year was never flagged as a disagreement with the profile's birth date." + _TAIL_CONFLICT)
+
+
+def test_recorded_as_a_conflict_is_still_a_flag():
+    """The other direction: the same verbs with no negation, or a tag, still flag."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check("The 1850 census birth year is recorded as a conflict with the profile's birth date." + _TAIL_CONFLICT)
+    row = "Birth date  | 30 Nov 1838   | Not recorded as conflicts: 1839 [CONFLICT] | Indexed 1839; range Bet 1838-1839\n"
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(_TAG_HEADER + row + _TAIL_CONFLICT)
+
+
 def test_contradicts_and_inconsistent_are_conflict_words():
     """Self-review finding: "contradicts the profile" carried no conflict word."""
     with pytest.raises(AssertionError, match="1850 census"):

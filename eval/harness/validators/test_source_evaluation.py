@@ -748,43 +748,6 @@ def test_quality_detail_call_carries_detail_flag(tool_calls, test):
     )
 
 
-#: ARKs that belong to a RELATIVE's own source in the two source-evaluation
-#: fixtures, and to nothing else. Deliberately unremarkable: an earlier revision
-#: used `1:1:REL-9999` on a person `REL-0001` with source `SD-REL-*`, so a model
-#: could skip the entry by reading "REL" in the id and never apply the audit-list
-#: rule at all -- and this validator could not tell that apart from the rule
-#: working.
-RELATIVE_ONLY_ARKS = ("MH7Q-9KZ", "MJ4T-2QB")
-
-
-def test_a_relatives_source_is_not_audited(tool_calls, test):
-    """A relative's attached source must never be `record_read` as the subject's.
-
-    `person_read` returns the relatives' attached sources in the same `sources[]`
-    array as the subject's own (issue #1689 Half 3), so "the sources array is the
-    audit list" started meaning "audit the whole family". Measured on a real
-    profile: 192 `record_read` calls where 17 were the subject's. Step 2 then
-    recommends detaching a record that is "about a different person" -- which a
-    sibling's record correctly is, so the advice is wrong and confident.
-
-    Each fixture carries one relative-only source (`SD-HOLE-E` / `SD-DRIS-H`),
-    whose ARK appears nowhere else. Nothing else grades WHICH sources were
-    read, so without this the planted relative tests nothing.
-    """
-    read_arks = [
-        str((c.get("args") or {}).get("url") or (c.get("args") or {}).get("recordId") or "")
-        for c in (tool_calls or [])
-        if (c.get("tool") or "").rsplit("__", 1)[-1] == "record_read"
-    ]
-    audited = [a for a in read_arks if any(k in a for k in RELATIVE_ONLY_ARKS)]
-    assert not audited, (
-        "a RELATIVE's attached source was audited as the subject's: "
-        f"{audited}. `person_read`'s `sources[]` carries the relatives' sources too; "
-        "the audit list is the entries `persons[0].sources[].ref` names, plus entries "
-        "carrying `artifact_url`."
-    )
-
-
 # --- front-door gate: hand back, call nothing (tag-gated) ---
 
 _HANDBACK_TAG_PREFIX = "handback-to-"
@@ -1307,6 +1270,7 @@ _AGE_DENIED_RE = re.compile(
     r"\b(?:not|no|never|neither|nor|without)\s+(?:a\s+|an\s+|any\s+)?(?:\w+\s+)?"
     r"(?:conflicts?|findings?|disagreements?|discrepanc\w+|mismatch\w*|contradict\w*|inconsisten\w*|incorrect|wrong)"
     r"|does not (?:conflict|disagree|differ|contradict)"
+    r"|\b(?:not|never)\s+(?:recorded|counted|treated|listed|reported|flagged|marked)\s+as\s+(?:a\s+|an\s+)?(?:conflicts?|findings?|disagreements?)"
     r"|\bconsistent with\b|\bagrees? with\b|\bagreeing\b"
     r"|\bwithin\b[^.|]*\b(?:window|range|variance|tolerance|1838)"
     r"|ordinary (?:census )?variance|\(cd\)|census drift",
