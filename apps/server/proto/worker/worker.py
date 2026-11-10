@@ -1229,7 +1229,7 @@ def completed_already_labelled(conn: psycopg.Connection, project_id: str, turn_i
     project's status at the turn's START, a read every turn would pay and a down
     store must not be asked twice.
 
-    Two consequences, both recorded in docs/plan/research-step-mode.md. When the
+    Two consequences, both recorded in docs/specs/research-step-mode-spec.md. When the
     completing turn closed `stopped` or `budget`, the NEXT ordinary
     turn carries the label -- which is right, since the project is complete and
     the researcher should be told. And a project completed a SECOND time is labelled

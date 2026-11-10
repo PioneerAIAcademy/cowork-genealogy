@@ -2,7 +2,7 @@
 
 **Status:** PR C has merged in two parts: C1 (PR #3670), everything in § PR C except `timeline_build`, and C2 (PR #3777), `timeline_build` and the census table, whose deviations are recorded under § The census table and § `timeline_build`. PR D is not started. It now also carries household linking by attachment and relationship-level attachments (decisions 11 and 17, amended 2026-10-30); the relationship-level engine work may be its own free-tier PR, before or beside PR D. They build on PR A (PR #3616) and PR B (PR #3613), whose checklists live on those PRs. Work order: issue #3516, which absorbs issue #3525 and issue #3585. Each PR says "Part of issue #3516"; only PR D closes it. Delete this file when PR D merges.
 
-**Priority:** quality, and a prerequisite of step mode, not Beta's speed critical path (lead, 2026-10-20). PR B comes first, because step mode's "not exhaustive" choice, its wrap-up and its one-question rule all need searched plan items closed (`docs/plan/research-step-mode.md`, prerequisites).
+**Priority:** quality, and a prerequisite of step mode, not Beta's speed critical path (lead, 2026-10-20). PR B comes first, because step mode's "not exhaustive" choice, its wrap-up and its one-question rule all need searched plan items closed (`docs/specs/research-step-mode-spec.md`, prerequisites).
 
 ## What this builds
 
@@ -414,7 +414,7 @@ Before PR D merges, comment each item below on the open `nothing-checks` issue t
   - `catalog.md`, `skill-dataflow.md` and `agent-tool-names.test.ts`;
   - `question-state.ts`, where PR C edits the `noneLinked` rung.
 - **Issue #3568:** its opt-in edits stale the research suite. Whichever of it and PR D lands second re-runs research.
-- **Step mode** (`docs/plan/research-step-mode.md`): PR B is a prerequisite. Completing items whose searches all found nothing, routing a refused declaration's `in_progress` items to Dispose, and research-plan's Termination are in its research-plan prep PR and PR 2.
+- **Step mode** (`docs/specs/research-step-mode-spec.md`): PR B is a prerequisite. Completing items whose searches all found nothing, routing a refused declaration's `in_progress` items to Dispose, and research-plan's Termination are in its research-plan prep PR and PR 2.
   - One of step mode's prep PRs edits `agents/timeline.md`, and its PR 2 edits `person-evidence.md`, `question-selection.md` and `research/SKILL.md`. So all four of PR D's suites overlap, and whichever lands second re-runs them.
   - PR D and step mode's PR 2 land in either order; of this plan's PRs, only PR B gates PR 2. If PR D lands first, PR 2's Priority 3 rewrite deletes PR D's gate and the "Fresh project" timeline sentence PR D adds, and keeps PR D's first-question test passing. If PR 2 lands first, PR D drops its `agents/question-selection.md` edit, because Priority 3 is already gone, and keeps the test. It also adds to the router's setup-step report what the attached records show (events, how many are unverified, the high gaps), which step mode's "What the researcher sees" names and PR 2 had nothing to report from.
 - **Issue #3504** (the read-only attachment check) is blocked on decision 11's relationship-level extraction for its relationship checks. Issue #3584 is closed.

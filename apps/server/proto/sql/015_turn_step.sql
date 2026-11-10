@@ -1,4 +1,4 @@
--- Step mode (decision 25, docs/plan/research-step-mode.md): what a turn is DOING.
+-- Step mode (decision 25, docs/specs/research-step-mode-spec.md): what a turn is DOING.
 --
 -- The worker's PreToolUse enforces one step per turn, and its hook is rebuilt on every
 -- attempt. Redelivery is the normal resume path, so without these two columns a

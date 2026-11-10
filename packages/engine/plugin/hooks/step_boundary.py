@@ -28,8 +28,8 @@ ROUTER = "research"
 
 # A turn's first step fixes the group; the rest of that group may follow it.
 # Every agent and skill the router can spawn is in exactly one group here, or in
-# a one-member group below -- `test_step_boundary_covers_every_agent` fails when
-# one is in none, so a new agent cannot ship without a decision about what may
+# a one-member group below -- `test_every_shipped_agent_and_skill_has_a_group`
+# (`eval/harness/tests/unit/test_step_boundary.py`) fails when one is in none, so a new agent cannot ship without a decision about what may
 # follow it in a turn.
 GROUPS: dict[str, tuple[str, ...]] = {
     "setup": ("init-project", "question-selection", "locality-guide"),

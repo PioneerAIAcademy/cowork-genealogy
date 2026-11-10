@@ -1,7 +1,7 @@
 """Step mode phase 2: neither hosted plane vetoes a stop or halts on `research_delivered`.
 
 A step-mode turn ends at its boundary on purpose, and "Keep going" is the host's reply,
-not a veto (docs/plan/research-step-mode.md, section A2 and Phase 2). A one-off ask ends
+not a veto (docs/specs/research-step-mode-spec.md, section A2 and Phase 2). A one-off ask ends
 on the model's own end of turn, so the delivered halt went too. The worker half is in
 test_proto_worker.py, next to the fixture it drives.
 """

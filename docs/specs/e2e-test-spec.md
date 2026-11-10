@@ -884,7 +884,7 @@ the `max_cost_usd` note in §6 step 5.
    **No continue-nudge (step mode phase 2).** A run is a step-mode run (`--step-mode
    job` is the default) and nothing vetoes a stop: a step turn ends at its boundary on
    purpose, and the host's reply, `next_auto_reply`, continues the run (section F of
-   `docs/plan/research-step-mode.md`). No Stop hook is bound, and a run writes neither
+   `docs/specs/research-step-mode-spec.md`). No Stop hook is bound, and a run writes neither
    `usage.continue_nudges` nor `usage.hand_back_classes`; `make e2e-nudges` leaves such
    a run out and says how many it left out. `test_e2e_step_mode_stop.py` fails if any
    harness module binds a Stop hook again. The hosted planes' completion halt is NOT
@@ -2727,7 +2727,7 @@ There is no `expected-findings.json` and no judge.
   provided-documents suffix. The system prompt is the autonomous mode's.
 - **No continue nudges.** No harness run binds a Stop hook (step mode phase 2), and
   there is no stall resume (it sends a second message). This matches Cowork today and step
-  mode's cap 0 (`docs/plan/research-step-mode.md`, decision 1).
+  mode's cap 0 (`docs/specs/research-step-mode-spec.md`, decision 1).
 - **No live-tree block.** §6.1 exists to hide an answer key; a single-ask fixture
   has none, and asks like "review the sources attached to <PID>" need
   `person_read`. The fixture's own `blocked_tools` still applies.

@@ -3442,7 +3442,7 @@ async def run_single_ask_turn(
     """Send ONE ordinary user turn into a built workspace and return its record.
 
     Spec §16. A function of one message on purpose: under step mode
-    (docs/plan/research-step-mode.md §F) a single ask is one step turn. No stall
+    (docs/specs/research-step-mode-spec.md §F) a single ask is one step turn. No stall
     resume — that sends a second message. Subagent capture runs here, while
     ``workspace`` exists, because the real work of a single ask is usually in a
     subagent and the main-thread usage alone leaves most of the spend out.
