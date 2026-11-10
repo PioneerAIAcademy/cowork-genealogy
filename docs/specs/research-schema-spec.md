@@ -486,7 +486,7 @@ Three sections (`persons`, `relationships`, `sources`) carry overlapping writer 
 |---------|-----------|---------|---------------|
 | `persons` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal — the deliverable) | Mutable; preserve IDs |
 | `relationships` | init-project, tree-edit, proof-conclusion, person-evidence, forget-and-rederive | (terminal) | Mutable; preserve IDs |
-| `sources` | init-project, tree-edit, proof-conclusion, `extraction_append` | (terminal) | Mutable; preserve IDs. **The person-evidence skill is not a writer here**: `materialize_facts` attaches a source *ref* to a person or a fact, it does not mint a source description. The person-evidence *agent* holds `tree_edit`, whose `add_source` does, so the manifest records it in this row's `agentCallers` |
+| `sources` | init-project, tree-edit, proof-conclusion, `extraction_append`, forget-and-rederive (removal only) | (terminal) | Mutable; preserve IDs. **The person-evidence skill is not a writer here**: `materialize_facts` attaches a source *ref* to a person or a fact, it does not mint a source description. The person-evidence *agent* holds `tree_edit`, whose `add_source` does, so the manifest records it in this row's `agentCallers` |
 
 `init-project` writes the initial stub persons at project creation;
 `tree-edit` applies user-directed changes; `proof-conclusion` lands the
@@ -514,8 +514,9 @@ currently no path to correct an assertion's value; a disputed reading
 goes in a conflict.
 `forget-and-rederive` is the fifth writer of `persons` and `relationships` and
 the only **subtractive** one: `tree_forget` removes a slice of the tree so it can
-be re-derived from records as a practice run. It mints nothing, sources nothing,
-and writes no other section. The harness's
+be re-derived from records as a practice run. It mints nothing. In `sources` it
+only removes: the `source` selector removes a description the researcher names,
+with every citation of it. The harness's
 `test_tree_ownership_table` universal validator enforces this ownership, reading
 the same `docs/specs/schemas/ownership.json` as the research.json half — and only
 inside a paid per-skill eval run, which is the whole of this rule's enforcement

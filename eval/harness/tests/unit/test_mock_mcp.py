@@ -618,6 +618,35 @@ def test_no_log_note_without_a_project_path(tmp_path):
     assert "unloggedSearches" not in body
 
 
+@pytest.mark.requires_engine_build
+def test_unlogged_note_lists_only_the_calling_tools_searches(tmp_path):
+    """A search-records agent is never told to log a search a parallel
+    search-full-text agent made (issue #4386): the backlog is scoped to the
+    calling tool, in production and so in the mock."""
+    (tmp_path / "research.json").write_text(json.dumps({"log": []}), encoding="utf-8")
+    server, call_log, tools_by_name = create_mock_server(
+        ["record-search-1850-census-flynn", "fulltext-search-flynn-witnesses"],
+        FIXTURES_DIR,
+        workspace=tmp_path,
+    )
+    fulltext_args = {"keywords": "+Flynn", "projectPath": str(tmp_path)}
+    first = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", fulltext_args))
+    assert first.get("staged"), "test assumes staging succeeded — check the build"
+
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "record_search",
+            {"surname": "Flynn", "givenName": "Patrick", "projectPath": str(tmp_path)},
+        )
+    )
+    assert "unloggedSearches" not in body
+
+    # The fulltext caller is still told about its own.
+    again = _extract_response_dict(_invoke(tools_by_name, "fulltext_search", fulltext_args))
+    assert first["staged"]["resultsRef"] in again["unloggedSearches"]
+
+
 def test_record_search_omits_ranked_when_test_declares_no_rank_fixture(tmp_path):
     """A fabricated ranking would be worse than none — the absence is honest."""
     server, call_log, tools_by_name = create_mock_server(
@@ -1138,9 +1167,13 @@ def test_record_search_response_is_compacted_once_staged(tmp_path):
         assert "collectionUrl" not in row
         assert "collectionTitle" not in row, "hoisted into response-level collections"
         assert row.get("treeMatches") != [], "empty treeMatches is dropped"
-    # The hoist landed, and the field the re-ranker needs survived.
+    # The hoist landed. primaryId goes: the re-ranker reads it from the staged
+    # file, not the answer (issue #4386).
     assert body["collections"], "per-row titles hoist into one response-level map"
-    assert all(row.get("primaryId") for row in body["results"])
+    assert all("primaryId" not in row for row in body["results"])
+    # The staged file keeps the query, so the answer drops its echo.
+    assert "query" not in body
+    assert "paginationCappedAt" not in body
 
 
 @pytest.mark.requires_engine_build
@@ -1160,7 +1193,9 @@ def test_unstaged_record_search_is_compacted(tmp_path):
         assert "collectionUrl" not in row
         assert "collectionTitle" not in row
     assert body["collections"]
-    assert all(row.get("primaryId") for row in body["results"])
+    assert all("primaryId" not in row for row in body["results"])
+    # Nothing staged: the echo is the query's only copy.
+    assert body["query"]
 
 
 @pytest.mark.requires_engine_build
@@ -2612,7 +2647,7 @@ def test_surname_hint_degrades_with_a_warning_on_node_failure(tmp_path, monkeypa
 
     with pytest.warns(UserWarning, match="nil-search node call failed"):
         unlogged, hint = mock_mcp._unlogged_staged_handles(
-            tmp_path, args={"surname": "Halsteinsdatter"}, response={"totalMatches": 0}
+            tmp_path, "record_search", args={"surname": "Halsteinsdatter"}, response={"totalMatches": 0}
         )
     assert (unlogged, hint) == ([], None)
 
