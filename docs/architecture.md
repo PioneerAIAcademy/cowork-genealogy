@@ -907,6 +907,20 @@ There **is** an orchestrator, and it is a skill:
    status.
 5. **Stop conditions:** `project.status == "completed"`, an explicit user halt,
    or a genuine logged blocker. These describe the *job*, not the turn.
+6. **The attached-records step runs in code, before the first question.** The
+   "Objective but no questions" row calls, for each `subjectPersonIds` entry,
+   `extraction_append({ projectPath, personId })` (extract every indexed record
+   FamilySearch has attached to the person and link each as an unchecked
+   attachment link) and then `timeline_build({ projectPath, personId })` (the
+   person's timeline, built from those links), before `@plugin:question-selection`.
+   Two main-thread tool calls per subject and no agent: 5.0–19.7 s cold to read,
+   extract and link 5–20 attached records (live, 2026-11-04,
+   `docs/specs/research-append-tool-spec.md` §11.8) and 50 ms to 1.4 s for the
+   timeline (`docs/specs/timeline-build-tool-spec.md` §8). "A timeline for a
+   person" is a bounded ask that runs the same two calls and stops. Attachment
+   links are checked only on request: person-evidence takes them up only for a
+   question whose assertions have no other live link
+   (`docs/specs/research-append-tool-spec.md` §11.8).
 
    **A turn runs ONE step** (step mode, decision 25,
    `docs/plan/research-step-mode.md`): it reports the step and ends with

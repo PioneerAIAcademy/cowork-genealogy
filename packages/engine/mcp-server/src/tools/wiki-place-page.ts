@@ -8,6 +8,7 @@ import type { WikiSearchAPIResponse } from "../types/wiki-search.js";
 import { getWikiApiUrl } from "../auth/config.js";
 import { describeFetchError, fetchWithRetry } from "../utils/http.js";
 import { pageText, requireWholeNumber } from "../utils/text-page.js";
+import { stripWikiSidebar } from "../utils/wiki-sidebar.js";
 import { VALIDATOR_ENUMS } from "../validation/validator.js";
 import {
   WIKI_OFFSET_PROPERTY,
@@ -361,9 +362,10 @@ export async function wikiPlacePageTool(
   );
   // The page is cut once, after the place is resolved, so every way a place resolves (the
   // leaf grammar, a title found by search, an alternate name) is paged the same. A body
-  // with no text passes through as it always did: there is nothing to cut.
+  // with no text passes through as it always did: there is nothing to cut. The sidebar goes
+  // before the cut, so `totalChars` and `offset` count the text the caller reads.
   if (typeof hit.content !== "string") return hit;
-  const { content, paging } = pageText(hit.content, offset, WIKI_PAGE_MAX_CHARS);
+  const { content, paging } = pageText(stripWikiSidebar(hit.content), offset, WIKI_PAGE_MAX_CHARS);
   return { ...hit, content, ...paging };
 }
 

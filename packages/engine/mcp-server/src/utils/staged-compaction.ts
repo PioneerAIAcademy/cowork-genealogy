@@ -50,9 +50,17 @@ import { pageText } from "./text-page.js";
  *
  * Measured against the 3,380 rows of a real 140-search session: gedcomx aside,
  * collectionUrl was 14.0% of row bytes, collectionTitle 9.4%, empty
- * treeMatches 2.9%. primaryId (4.6%) is deliberately KEPT — rank_search_matches
- * skips any candidate lacking it (rank-search-matches.ts), so dropping it would
- * silently disable the re-ranker.
+ * treeMatches 2.9%.
+ *
+ * `primaryId`, `score` and `confidence` go too: no caller reads them off the
+ * answer. rank_search_matches needs `primaryId`, but it reads the staged file,
+ * which record_search writes before it compacts; `score` and `confidence` are
+ * FamilySearch's search relevance, which ranking replaces. An empty `events`
+ * says nothing. `recordTitle` goes when it is exactly `Entry for <personName>,
+ * "<collection title>"`; otherwise only its trailing `, "<collection title>"`
+ * goes, which the `collections` map already holds. `paginationCappedAt` (always
+ * 4,999; the `offset` description states the limit) always goes, and `query`
+ * goes on a staged answer, whose file keeps it for research_log_append.
  *
  * `batchNumber` is KEPT for the same class of reason (#1592): it is the only
  * route to a batch the agent can enumerate. Being flat and top-level, it
@@ -70,17 +78,37 @@ import { pageText } from "./text-page.js";
  * copy. A field whose meaning is stable is worth more here than 2.5 KB on the
  * one call shape where the caller demonstrably already knows the value.
  *
+ * `opts.staged` says the answer was staged; it defaults to `out.staged` being
+ * set. The eval mock compacts before it attaches `staged`, so it passes it.
+ *
  * Mutates and returns `out`.
  */
 export function compactStagedRecordSearch(
   out: RecordSearchToolResponse,
+  opts: { staged?: boolean } = {},
 ): RecordSearchToolResponse {
   const collections: Record<string, string> = {};
   for (const r of out.results ?? []) {
     delete r.gedcomx;
+    delete r.primaryId;
+    delete r.score;
+    delete r.confidence;
 
     // Derivable from collectionId; nothing reads it off the inline stub.
     delete r.collectionUrl;
+
+    // Read before the hoist below deletes the row's own copy; from the map on
+    // a second pass.
+    const title = r.collectionTitle ?? (r.collectionId ? out.collections?.[r.collectionId] : undefined);
+    if (r.recordTitle && title) {
+      const suffix = `, "${title}"`;
+      if (r.recordTitle === `Entry for ${r.personName ?? ""}${suffix}`) delete r.recordTitle;
+      else if (r.recordTitle.endsWith(suffix)) r.recordTitle = r.recordTitle.slice(0, -suffix.length);
+    }
+
+    if (Array.isArray(r.events) && r.events.length === 0) {
+      delete (r as Partial<RecordSearchResult>).events;
+    }
 
     // Hoist the repeated per-row title into one response-level map.
     if (r.collectionId && r.collectionTitle) {
@@ -110,6 +138,8 @@ export function compactStagedRecordSearch(
   // earlier pass: on already-compacted input no row carries `collectionTitle`,
   // so the local map is empty and the existing one is left alone.
   if (Object.keys(collections).length > 0) out.collections = collections;
+  delete out.paginationCappedAt;
+  if (opts.staged ?? out.staged != null) delete out.query;
   return out;
 }
 
