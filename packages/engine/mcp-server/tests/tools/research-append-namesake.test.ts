@@ -1402,7 +1402,7 @@ describe("namesake cap", () => {
         });
 
         it("G8 ignores a placeholder word in the row's name and in a persona's", async () => {
-          const hannah = persona("p_1", "Hannah", "Earnest");
+          const hannah = { ...persona("p_1", "Hannah", "Earnest"), gender: "Female" };
           await searchHit([hannah], hannah);
           expect((await appendRow({ name: "Mrs. Hannah Earnest", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
           expect((await row()).record_persona_ids).toEqual({ [hannah.ark]: "p_1" });
@@ -1479,24 +1479,55 @@ describe("namesake cap", () => {
           expect((await row()).record_persona_ids).toEqual({ [jean.ark]: "p_2" });
         });
 
-        it('G14 takes no persona recorded male for a row named "Mrs." with her husband\'s given name', async () => {
+        it('G14 takes no persona not recorded female for a row named "Mrs." with her husband\'s given name', async () => {
           const born1846 = [{ type: "Birth", date: "1846", standard_date: "1846" }];
           const edwin = { ...EDWIN, gender: "Male", facts: born1846 };
-          for (const name of ["Mrs. Edwin Earnest", "Earnest, Mrs. Edwin", "(Mrs.) Edwin Earnest", "Hannah Earnest (Mrs. Edwin Earnest)"]) {
+          for (const name of ["Mrs. Edwin Earnest", "Earnest, Mrs. Edwin", "(Mrs.) Edwin Earnest", "Hannah Earnest (Mrs. Edwin Earnest)", "Earnest, Edwin, Mrs."]) {
             await searchHit([edwin, HANNAH_QB], edwin);
             expect((await appendRow({ name, record_ids: ["XS3W-W3M"], log_entry_ids: ["log_001"] })).ok).toBe(true);
             expect((await row()).record_persona_ids, name).toBeUndefined();
             expect((await row()).birth_year, name).toBeUndefined();
           }
+          // An Edwin whose sex is not recorded, or recorded unknown, is refused too.
+          for (const sexless of [{ ...EDWIN, facts: born1846 }, { ...EDWIN, gender: "Unknown", facts: born1846 }]) {
+            await searchHit([sexless, HANNAH_QB], sexless);
+            expect((await appendRow({ name: "Mrs. Edwin Earnest", record_ids: ["XS3W-W3M"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+            expect((await row()).record_persona_ids, String(sexless.gender)).toBeUndefined();
+            expect((await row()).birth_year, String(sexless.gender)).toBeUndefined();
+          }
           // Her own persona, female, still stamps from a "Mrs." row of her own given name.
           const hannah = { ...persona("p_1", "Hannah", "Earnest"), gender: "Female" };
-          await searchHit([hannah], hannah);
-          expect((await appendRow({ name: "Mrs. Hannah Earnest", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
-          expect((await row()).record_persona_ids).toEqual({ [hannah.ark]: "p_1" });
-          // A male persona of a row not named "Mrs." still stamps.
-          await searchHit([edwin, HANNAH_QB], edwin);
-          expect((await appendRow({ name: "Edwin Earnest", record_ids: ["XS3W-W3M"], log_entry_ids: ["log_001"] })).ok).toBe(true);
-          expect((await row()).record_persona_ids).toEqual({ [EDWIN.ark]: EDWIN.id });
+          for (const name of ["Mrs. Hannah Earnest", "Earnest, Hannah, Mrs."]) {
+            await searchHit([hannah], hannah);
+            expect((await appendRow({ name, record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+            expect((await row()).record_persona_ids, name).toEqual({ [hannah.ark]: "p_1" });
+          }
+          // A male persona of a row whose own name has no "Mrs." still stamps, even when
+          // the relative it names does.
+          for (const name of ["Edwin Earnest", "Edwin Earnest, husband of Mrs. Hannah Earnest"]) {
+            await searchHit([edwin, HANNAH_QB], edwin);
+            expect((await appendRow({ name, record_ids: ["XS3W-W3M"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+            expect((await row()).record_persona_ids, name).toEqual({ [EDWIN.ark]: EDWIN.id });
+          }
+        });
+
+        it("G15 counts no particle (de, da, do, dos, das) as a given word", async () => {
+          const maria = persona("p_1", "Maria de Jesus", "Souza");
+          await searchHit([maria], maria);
+          expect((await appendRow({ name: "João Gomes de Souza", record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+          expect((await row()).record_persona_ids).toBeUndefined();
+          for (const [name, given] of [
+            ["João Gomes de Souza", "João"],
+            ["Maria de Jesus Silva", "Maria de Jesus"],
+            ["Della Smith", "Della"],
+            ["Del Smith", "Del"],
+            ["Di Smith", "Di"],
+          ]) {
+            const p = persona("p_2", given, "Smith");
+            await searchHit([p], p);
+            expect((await appendRow({ name, record_ids: ["XS75-FJM"], log_entry_ids: ["log_001"] })).ok).toBe(true);
+            expect((await row()).record_persona_ids, name).toEqual({ [p.ark]: "p_2" });
+          }
         });
       });
     });

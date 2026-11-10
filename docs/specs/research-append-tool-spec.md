@@ -1712,14 +1712,15 @@ is listed, and the name sentence only when a name is. It rides
   shares a given word with the row's `name`** (chesworthrm, 2026-11-09). Words come
   from `ownGivenWords` once every mark but a letter, an apostrophe or a hyphen is a
   space, so a bracketed placeholder ("(Mrs.)") is still dropped; then hyphenated
-  words are split, accents folded and initials dropped. The row's are the words of
+  words are split, accents folded, and initials and particles (de, da, do, dos,
+  das) dropped. The row's are the words of
   its name before any relative it names ("wife of Edwin Earnest"), read "Given
   Surname" when written "Surname, Given", less name suffixes, and less the last
   word, the surname, when two or more are left, taken before any hyphen in it is
-  split (`sharesRowGivenName`). A row whose name has "Mrs." anywhere in it may
-  give her husband's given name ("Mrs. Edwin Earnest", "Hannah Earnest (Mrs.
-  Edwin Earnest)"), so it takes no persona recorded
-  male. A persona with no entry, or with no such word,
+  split (`sharesRowGivenName`). A row whose name has "Mrs." anywhere before any
+  relative it names may give her husband's given name ("Mrs. Edwin Earnest",
+  "Hannah Earnest (Mrs. Edwin Earnest)", "Earnest, Edwin, Mrs."), so it takes no
+  persona not recorded female. A persona with no entry, or with no such word,
   counts as none named, so a household member listed by mistake (a husband's own
   record for his wife's namesake) is left unstamped and gives the row no year. A
   Latin given name for an English one (Maria for Mary), an abbreviation (Wm for

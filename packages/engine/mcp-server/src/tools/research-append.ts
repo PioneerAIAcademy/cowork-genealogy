@@ -3299,13 +3299,16 @@ function lookupNameWords(text: string): string[] {
 }
 
 /** Words as the lookup compares them: hyphenated words split, accents folded,
- *  apostrophes trimmed from each end, and initials dropped. */
+ *  apostrophes trimmed from each end, and initials and particles dropped. */
 function comparableWords(words: readonly string[]): string[] {
   return words
     .flatMap((w) => w.split("-"))
     .map((w) => w.normalize("NFD").replace(/\p{M}/gu, "").replace(/^'+|'+$/g, ""))
-    .filter((w) => w.length > 1);
+    .filter((w) => w.length > 1 && !NAME_PARTICLES.has(w));
 }
+
+/** Particles a given name can carry ("Maria de Jesus"), which name no one. */
+const NAME_PARTICLES: ReadonlySet<string> = new Set(["de", "da", "do", "dos", "das"]);
 
 /** A relative named inside a row's name ("Hannah Earnest (wife of Edwin
  *  Earnest)"): the words from the relation on are the relative's. */
@@ -3317,22 +3320,24 @@ const RELATIVE_OF = /\b(?:wife|husband|widow|widower|relict|son|daughter|child|m
 function rowGivenWords(name: unknown): RowGiven {
   if (typeof name !== "string") return { words: new Set(), mrs: false };
   const relative = RELATIVE_OF.exec(name);
-  const own = surnameLast(relative ? name.slice(0, relative.index) : name);
+  const before = relative ? name.slice(0, relative.index) : name;
+  const own = surnameLast(before);
   const words = lookupNameWords(own).filter((w) => !NAME_SUFFIXES.has(w));
   return {
     words: new Set(comparableWords(words.length > 1 ? words.slice(0, -1) : words)),
-    mrs: /\bmrs\b/i.test(own),
+    mrs: /\bmrs\b/i.test(before),
   };
 }
 
-/** A row's given words, and whether its name has "Mrs." anywhere in it, which
- *  may give her husband's given name ("Mrs. Edwin Earnest"). */
+/** A row's given words, and whether its name has "Mrs." anywhere before any
+ *  relative it names, which may give her husband's given name ("Mrs. Edwin
+ *  Earnest"). */
 type RowGiven = { words: ReadonlySet<string>; mrs: boolean };
 
 /** Whether one of `person`'s names has a given word of the row's; a row named
- *  "Mrs." never takes a persona recorded male, her husband. */
+ *  "Mrs." never takes a persona not recorded female, who may be her husband. */
 function sharesRowGivenName(person: any, row: RowGiven): boolean {
-  if (row.mrs && knownSex(person) === "male") return false;
+  if (row.mrs && knownSex(person) !== "female") return false;
   return ((Array.isArray(person?.names) ? person.names : []) as any[]).some(
     (n) => typeof n?.given === "string" && comparableWords(lookupNameWords(n.given)).some((w) => row.words.has(w)),
   );
