@@ -15,6 +15,8 @@ import type { SimplifiedGedcomX, SimplifiedPerson } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
 import { relationshipEndpoints } from "../utils/relationship-endpoints.js";
 import { levenshteinDistance, normalizeString } from "../utils/string-similarity.js";
+import { treePidOfArk } from "../utils/ark.js";
+import { isFamilySearchPersonId } from "../utils/fs-id.js";
 import type {
   RankSearchMatchesInput,
   RankSearchMatchesResult,
@@ -175,8 +177,8 @@ export async function rankSearchMatches(
       ? scored.map((s, i) => toStub(s, i + 1, subject.birthYear, subject.surnames))
       : scored.slice(0, input.top).map((s, i) => toStub(s, i + 1, subject.birthYear, subject.surnames));
 
-  if (input.checkAttachments && matches.length > 0) {
-    await applyAttachments(matches, subjectId, principal);
+  if (input.checkAttachments && matches.length > 0 && subject.familySearchId) {
+    await applyAttachments(matches, subject.familySearchId, principal);
   }
 
   const out: RankSearchMatchesResult = {
@@ -769,6 +771,20 @@ interface SubjectDoc {
   subjectTooThin: boolean;
   /** Every surname the project gives the subject (see `subjectSurnames`). */
   surnames: string[];
+  /** The FamilySearch person id the subject is attached under, upper-cased:
+   *  what `source_attachments` reports. Undefined when the tree names none. */
+  familySearchId?: string;
+}
+
+/** The PID in the tree person's `ark`, else its tree id when that is shaped
+ *  like a FamilySearch person id. A project tree keys persons `I1`, `I2`…
+ *  (merge-gedcomx.ts) and keeps the FamilySearch id in `ark`; e2e and eval
+ *  trees key persons by the FamilySearch id, mostly with no `ark`. */
+function subjectFamilySearchId(person: SimplifiedPerson): string | undefined {
+  const linked = treePidOfArk(person.ark);
+  if (linked) return linked.toUpperCase();
+  const id = person.id ?? "";
+  return isFamilySearchPersonId(id) ? id.toUpperCase() : undefined;
 }
 
 // Exported for dev/probe-rank-enrichment.ts, which A/Bs the enriched subject
@@ -931,6 +947,7 @@ export async function buildSubjectDoc(
     enrichedGender: Boolean(enriched.gender) && !hadGender,
     subjectTooThin: tooThin,
     surnames,
+    familySearchId: subjectFamilySearchId(subject),
   };
 }
 
@@ -1117,18 +1134,18 @@ async function appendScoreLog(
 
 async function applyAttachments(
   matches: RankedMatch[],
-  subjectId: string,
+  familySearchId: string,
   principal: Principal,
 ): Promise<void> {
   const uris = matches.map((m) => m.recordId);
+  const isSubject = (p: { personId: string }) =>
+    p.personId?.toUpperCase() === familySearchId;
   try {
     const att = await sourceAttachmentsTool({ uris }, principal);
     for (const stub of matches) {
       const persons = att.attachments[stub.recordId] ?? [];
-      // subjectId is the tree person's FamilySearch PID; source_attachments
-      // keys attached persons by entity PID, so match on it directly.
-      stub.attachedToSubject = persons.some((p) => p.personId === subjectId);
-      stub.attachedToOther = persons.some((p) => p.personId !== subjectId);
+      stub.attachedToSubject = persons.some(isSubject);
+      stub.attachedToOther = persons.some((p) => !isSubject(p));
     }
   } catch (err) {
     if (isFsBudgetExhausted(err)) throw err;

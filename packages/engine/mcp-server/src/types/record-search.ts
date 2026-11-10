@@ -127,13 +127,13 @@ export type RecordType =
 
 export interface RecordSearchInput {
   // When set, the tool stages its verbatim response to results/.staging/ and
-  // returns a `staged` handle (search-result-staging-spec.md). Purely additive:
-  // omitting it leaves behavior identical to before.
-  // When set, results are staged host-side AND the inline per-result `gedcomx`
-  // is dropped (unconditionally) so a broad search can't overflow the model's
-  // context — the staged file (read by rank_search_matches / research_log_append)
-  // carries the full gedcomx; the inline stubs keep the flat fields. An
-  // un-staged (no projectPath) search returns full gedcomx inline as before.
+  // returns a `staged` handle (search-result-staging-spec.md). Omitting it
+  // stages nothing.
+  // When set, results are staged host-side: the staged file (read by
+  // rank_search_matches / research_log_append) carries the full gedcomx. The
+  // inline per-result `gedcomx` is dropped either way, so a broad search can't
+  // overflow the model's context; the inline stubs keep the flat fields. An
+  // un-staged (no projectPath) search keeps it nowhere (issue #4386).
   projectPath?: string;
   // A `persons[].id` in the project's tree.gedcomx.json. When supplied together
   // with `projectPath`, the tool ranks the staged candidates against that
@@ -308,15 +308,16 @@ export interface RecordSearchResult {
   recordArk?: string;
   treeMatches: TreeMatch[];
   // Simplified-GedcomX document for this entry, derived from the raw
-  // GedcomX FamilySearch returned. Pass it straight to `same_person`
-  // as gedcomx1/gedcomx2 — no hand-reconstruction needed.
+  // GedcomX FamilySearch returned. Only in the staged file: the answer drops
+  // it, staged or not (compactStagedRecordSearch). `record_read` on `recordId`
+  // returns the record's document.
   gedcomx?: SimplifiedGedcomX;
   // The `id` of the focus person inside `gedcomx.persons[]`. Pass it to
   // `same_person` as primaryId1/primaryId2.
   primaryId?: string;
   // Whether the relative(s) the caller anchored the search on are actually
   // named on this record. Present only when a relative NAME was supplied.
-  // Survives the staged slim block that strips `gedcomx`, which is the point:
+  // Survives the slim block that strips `gedcomx`, which is the point:
   // without it a father-anchored hit that names no father is indistinguishable
   // from one that confirms him (#1324).
   relativeTerms?: RelativeTerms;
@@ -326,7 +327,7 @@ export interface RecordSearchResult {
   // executable on none until this field existed (#1592).
   //
   // Flat and top-level rather than left inside `gedcomx`, for the same reason as
-  // `relativeTerms` above: the staged slim block strips `gedcomx`, and a batch
+  // `relativeTerms` above: the slim block strips `gedcomx`, and a batch
   // number the model cannot see in the staged (i.e. normal) case is the one case
   // that matters.
   //
@@ -336,7 +337,7 @@ export interface RecordSearchResult {
   batchNumber?: string;
   // FamilySearch's own label for the represented persona's role on this record
   // ("Principal", "Father", "Mother", "Spouse", "Other"). Flat and top-level
-  // for the same reason as relativeTerms and batchNumber: the staged slim block
+  // for the same reason as relativeTerms and batchNumber: the slim block
   // strips gedcomx, and a role the model cannot see in the staged case is the
   // one case that matters. This is FamilySearch's vocabulary, not a
   // research.json record_role value — an absent role means unknown, never
@@ -360,9 +361,10 @@ export interface RecordSearchToolResponse {
   // shapes in step, and both are gone with it.
   results: RecordSearchResult[];
   // collectionId → collectionTitle for every collection in `results`, present
-  // only on a STAGED response. The per-result `collectionTitle` repeats one of a
-  // handful of strings on every row (9.4% of inline row bytes, measured); hoisting
-  // it here says the same thing once. The staged sidecar keeps the per-row copy.
+  // whenever a row carries a title. The per-result `collectionTitle` repeats one
+  // of a handful of strings on every row (9.4% of inline row bytes, measured);
+  // hoisting it here says the same thing once. The staged sidecar keeps the
+  // per-row copy.
   collections?: Record<string, string>;
   // Present only when `subjectId` was supplied and ranking succeeded. Carries
   // METADATA ONLY — `scoredCount`, `returnedCount`, the subject and the

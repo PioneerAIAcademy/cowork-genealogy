@@ -74,7 +74,8 @@ export interface RankedMatch {
   candidateSurname?: string;
   /** 0-1 match score; null when scoring failed (never dropped). */
   matchScore: number | null;
-  /** Only set when `checkAttachments` and the batch call succeeded. */
+  /** Only set when `checkAttachments`, the subject has a FamilySearch id (its
+   *  `ark`, or a tree id shaped like one), and the batch call succeeded. */
   attachedToSubject?: boolean;
   attachedToOther?: boolean;
   /** Carried verbatim from the staged row. The ranker neither computes nor
