@@ -107,6 +107,7 @@ place fetchers all hit anonymous endpoints.
 | `pageSize` | integer | No | Volumes per page, 1–50. Defaults to **50**, or **10** when `summary` is set (see [Answer size](#answer-size) and [Summary](#summary-record-type-rollup)). Sent as the request body's `pageSize`, so it is part of what a `pageToken` is bound to: the next page sends the `query.pageSize` the previous page echoed. |
 | `pageToken` | string | No | Opaque pagination cursor. Pass back the `nextPageToken` from a previous response to fetch the next page. **Must be sent together with the same `standardPlace`/`startYear`/`endYear`/`recordTypeGroups`/`pageSize`** that produced it (see [Pagination](#pagination)). |
 | `summary` | boolean | No | First page only (refused with `pageToken`). Adds `summary`: every matching volume, not just this page, counted by record-type group. See [Summary](#summary-record-type-rollup). |
+| `omitSearchable` | boolean | No | Drop already-searchable volumes (`fulltextSearchable: true`, or `recordSearchablePercent` ≥ 50) out of `results`, replacing each with a one-line entry in `searchableOmitted`. See [Omitting already-searchable volumes](#omitting-already-searchable-volumes). Ignored by `summary`, which still counts every volume. |
 
 ### Fixed fields (always sent in the group-search request body)
 
@@ -650,9 +651,10 @@ on the full `groupName` is exact — no prefix fallback is needed.
 | Field | Type | Description |
 |-------|------|-------------|
 | `query` | object | Echo of input (`standardPlace`, `startYear?`, `endYear?`, `recordTypeGroups?`) plus the effective `pageSize`, always present, so a follow-up page can repeat it |
-| `totalResults` | number | `totalCount` from the API (across all pages) |
+| `totalResults` | number | `totalCount` from the API (across all pages) — unaffected by `omitSearchable` |
 | `nextPageToken` | string? | Present only when more pages remain; pass back as `pageToken` |
-| `results` | VolumeGroup[] | The matched image groups (this page) |
+| `results` | VolumeGroup[] | The matched image groups (this page), minus any `omitSearchable` moved to `searchableOmitted` |
+| `searchableOmitted` | string[]? | Present only when `omitSearchable` was set. See [Omitting already-searchable volumes](#omitting-already-searchable-volumes) |
 
 **Each `VolumeGroup`:**
 
@@ -806,6 +808,9 @@ each — and that repetition was most of an oversized page.
     "coverages shortened to fit the answer; call again with a smaller pageSize, " +
     "starting from the first page, to see them all. " +
     "Optionally narrow to record-type groups with recordTypeGroups. " +
+    "Set omitSearchable to drop already-searchable volumes from results into " +
+    "one-line entries in searchableOmitted, so a browse-planning caller is not " +
+    "shown volumes it would only decline. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -865,6 +870,13 @@ each — and that repetition was most of an oversized page.
           "coverages reach, parents included. First page only — not with pageToken. " +
           "Slower: it reads all matching volumes. If it cannot be computed, the page " +
           "still returns, with `summaryError` saying why.",
+      },
+      omitSearchable: {
+        type: "boolean",
+        description:
+          "Set true to drop already-searchable volumes from results into " +
+          "one-line entries in searchableOmitted, so a browse-planning caller is not " +
+          "shown volumes it would only decline.",
       },
     },
     required: ["standardPlace"],
@@ -1026,6 +1038,46 @@ A page size alone could not have fixed Freeborn: its first seven volumes are
 statewide muster rolls of ~5,400 characters each, and only 12 volumes fit in 40,000 unmerged. The
 Freeborn page is pinned as `tests/fixtures/volume-search/freeborn-1870-1900.json`.
 
+### Omitting already-searchable volumes
+
+`omitSearchable: true` runs **after** mapping and **before** the answer-size
+budget above, so its lines count toward `RESULT_CHAR_BUDGET` — measure the
+whole answer, lines included; the budget's `COVERAGE_CAPS` shortening still
+only ever cuts `coverages` on a volume still in `results`.
+
+A volume is omitted when either *known* signal qualifies: `fulltextSearchable
+=== true`, or `recordSearchablePercent >= 50`. A `null` keeps a volume only
+when *no* known signal qualifies it — a volume at 95% `recordSearchablePercent`
+with `fulltextSearchable: null` is still omitted. The other reading (any
+`null` keeps the volume) would disable the filter on every page where the
+full-text sub-fetch fails, since that sets `fulltextSearchable: null` on every
+volume in the batch (see [the full-text sub-fetch](#full-text-searchability-sub-fetch)).
+
+A volume that clears the bar is dropped from `results` and replaced by one
+line per distinct `<indexed|full-text> | <recordType> | <dateRange> |
+<places>` in `searchableOmitted` — distinct across the whole page, so two
+volumes that print identically collapse to one line, exactly as
+[merging coverage rows](#merging-coverage-rows) collapses places that share a
+date range and record type. A volume at or above 50%
+`recordSearchablePercent` is labelled `indexed` regardless of its
+`fulltextSearchable` value — search-images routes an indexed volume to
+`record_search` first; everything else that clears the bar is `full-text`.
+`recordType` falls back to `concept-id:<recordTypeConceptId>` in that slot
+exactly as a `SimplifiedCoverage` row does, so two different untyped sets do
+not collapse into one line. `places` are joined with `; ` rather than `, `,
+since a place name is itself comma-separated. A volume with no coverage rows
+still contributes one line (with its three other slots empty), so it is not
+silently dropped from the answer.
+
+`searchableOmitted` is always an array (possibly empty) when the flag was
+set, never absent, so a caller can treat "both `results` and
+`searchableOmitted` are empty, with no `nextPageToken`" as the one true nil —
+see [Pagination](#pagination). `totalResults` is upstream's count and is
+unaffected; the filter runs on this page's already-fetched volumes only.
+`summary` ignores the flag entirely: the rollup counts every matching volume
+regardless, since a place survey needs the true count of what exists, not what
+this page chose to summarize.
+
 ---
 
 ## Pagination
@@ -1065,6 +1117,12 @@ The tool returns **one page per call** — `pageSize` groups, 50 by default (10 
 pages — that would walk every page (and full-text batch) for what is
 usually just a scoping question. `totalResults` tells the caller how many
 groups exist in total.
+
+With `omitSearchable`, `results` can be `[]` on a page that still carries
+`nextPageToken` — every volume this page fetched was already searchable, and
+more pages remain. A caller must check `results`, `searchableOmitted` **and**
+`nextPageToken` together before concluding nothing is left to browse: an empty
+`results` with a `nextPageToken` present is "page again," not "nothing here."
 
 ---
 
@@ -1192,6 +1250,19 @@ images are digitized, indexed, or full-text processed.
 | `tests/tools/volume-search.test.ts` | Cases 28, 31, 32 and 34–40 |
 | `docs/catalog.md` | `pageSize` 1–50 and the `summary` page default in the `volume_search` row |
 
+### Edits for `omitSearchable`
+
+| File | Edit |
+|---|---|
+| `src/types/volume-search.ts` | `omitSearchable?` on `VolumeSearchInput`; `searchableOmitted?` on `VolumeSearchResult` |
+| `src/tools/volume-search.ts` | `filterSearchableVolumes` (exported pure function), called before `fitToBudget`; the `omitSearchable` schema property and description clause |
+| `tests/tools/volume-search.test.ts` | Cases 41–44 |
+| `docs/catalog.md` | Name `omitSearchable` in the `volume_search` row |
+| `eval/harness/harness/mock_mcp.py` | A post-processing branch (beside the `includeFacets` gate) that calls the compiled `filterSearchableVolumes` on a canned fixture when the call's own `args.omitSearchable` is true |
+| `eval/harness/tests/unit/test_mock_mcp.py` | A test serving a `volume_search` fixture with `omitSearchable: true`, asserting the searchable volumes left `results`, and that the same fixture without the flag is unchanged |
+| `packages/engine/plugin/agents/search-images.md` | Pass `omitSearchable: true` in step 2 and in "No project"; a target in `searchableOmitted` is declined like one found in `results`; the nil check requires both lists empty and no `nextPageToken`; page again on an empty `results` with `nextPageToken` set |
+| `eval/tests/unit/search-images/direct-boundary-indexed-volume.json` | Reword `judge_context` to grade the decline on the `searchableOmitted` line rather than citing `recordSearchablePercent` directly |
+
 ---
 
 ## Testing
@@ -1247,6 +1318,10 @@ images are digitized, indexed, or full-text processed.
 | 38 | `summary` with no `pageSize` sends and echoes `pageSize: 10` | Summary page |
 | 39 | `summary` with a `pageSize` keeps it | Summary page |
 | 40 | The real Freeborn first page searched 1870–1900 lists every upstream `(place, dateRange, recordType)` triple, including the rows wholly outside those years, and no volume carries `coveragesOutsideYears` | Every row listed |
+| 41 | A 50-volume page with 40 searchable volumes (`fulltextSearchable` or ≥50% `recordSearchablePercent`) returns 10 in `results` and the 40 as lines in `searchableOmitted`, at under half the flag-off size; `totalResults` is unaffected | `omitSearchable` collapse |
+| 42 | A volume whose signals are both `null` stays in `results`; a volume at or above the bar with `fulltextSearchable: null` (a failed full-text sub-fetch) is still omitted | `omitSearchable` null handling |
+| 43 | With the flag false or absent, the answer carries no `searchableOmitted` and is byte-identical to today's | `omitSearchable` off |
+| 44 | `filterSearchableVolumes`: labels a ≥50%-indexed-and-fulltext volume `indexed`; a sub-50% fulltext-only volume `full-text`; falls back to `concept-id:<id>` when `recordType` is absent; joins `places` with `; `; dedupes identical lines across volumes; still emits one line for a volume with no coverage rows | Pure-function rules |
 
 ### Smoke test
 

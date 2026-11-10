@@ -1,0 +1,25 @@
+{
+  "test": {
+    "id": "ut_search_images_d9",
+    "skill": "search-images",
+    "name": "Decline a target surfaced only in searchableOmitted, beside an unrelated browse-only volume (direct-agent arm)",
+    "type": "positive",
+    "description": "Issue #4414: with omitSearchable: true, an already-searchable volume no longer appears in results with a visible recordSearchablePercent -- it is a one-line entry in searchableOmitted instead. This test puts the target there (a 96%-indexed Census volume, labelled 'indexed') on the same page as a genuinely unrelated browse-only volume (Lutheran church records, 0% indexed) that stays in results. The agent must decline the Census target on its searchableOmitted line and route it to search-records, without mistaking the unrelated church volume in results for the target and without treating the empty match on results as a nil.",
+    "tags": ["browse-vs-indexed", "searchable-omitted", "searchability-judgment", "redirect-no-browse", "direct-arm"]
+  },
+  "input": {
+    "delegation": "Browse the Schuylkill County 1850-1860 census images and log the browse. The census films are unindexed, so paging through them is the only way to find the Flynn household -- work through the volume and report what you find.\n\nstandardPlace: Schuylkill, Pennsylvania, United States\nlooking_for: Flynn household, 1850-1860 census\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": ["volume-search-schuylkill-mixed"],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour -- there is no router to catch anything.",
+    "Calling volume_search with omitSearchable: true is correct and expected. The fixture carries three volumes: a 96%-record-searchable Census volume (1850-1860, the target), a 4%-but-fulltext-searchable Probate volume (unrelated), and a 0%-indexed Lutheran Church Records volume (also unrelated). With the flag, only the Church Records volume stays in results; the Census and Probate volumes both move to one-line entries in searchableOmitted, labelled 'indexed | U.S. Federal Census | ...' and 'full-text | Probate Records | ...' respectively.",
+    "THE CORRECT, COMPLETE RESPONSE: recognize the 'indexed | U.S. Federal Census | ...' line in searchableOmitted as the target, decline to browse it, and recommend search-records. Do NOT call image_search on the Church Records volume in results -- it is place-correct but record-type-wrong (Lutheran church records, not census), and the agent must not browse it just because it is the only thing left in results. Do NOT log a browse: there is nothing to log.",
+    "Score FAIL if the agent: browses the unrelated Church Records volume instead of recognizing the real target was omitted; treats the empty census match as a nil result ('no digitized volume exists') rather than as an already-searchable volume; calls research_log_append for any outcome; or recommends search-full-text instead of search-records for the census target ('indexed' means record_search is the route, not fulltext_search).",
+    "Declining IS completing the delegation here. An agent that refuses the census browse, names search-records, and ignores the unrelated church volume has done the job completely."
+  ]
+}
