@@ -1,5 +1,5 @@
-// The censuses `timeline_build` expects a person to appear in (issue #3516,
-// decision 14). A census gap means FamilySearch likely holds a record that could
+// The censuses `timeline_build` expects a person to appear in (issue #3516;
+// lead, 2026-10-21). A census gap means FamilySearch likely holds a record that could
 // be attached and is not, and a false `high` gap is worse than a missed one, so a
 // row exists only where both hold:
 //

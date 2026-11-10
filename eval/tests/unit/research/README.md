@@ -286,6 +286,32 @@ offered … Continue." shape, `stop_at_stub` on `record-structurer`; its
 single source carries the hit's id and the ref verbatim. The width of five spawns
 per message is not checked: no run record says which message a spawn came from.
 
+## Attached records (issue #3516)
+
+The "Objective but no questions" row runs `extraction_append({ personId })` then
+`timeline_build` for each subject before `@plugin:question-selection`, and "a timeline
+for a person" is a bounded ask that runs the same two calls and stops. Both run on
+`becker-attached-records`, whose subject has two attached indexed census records, and
+both load the two `-attached` Becker `record_read` fixtures (the mock serves
+`extraction_append` only from loaded fixtures).
+
+- `ut_research_ars` (`route-setup-before-first-question.json`): the job.
+  `routes-to:question-selection` with `execution.stop_at_stub`, so a person-evidence
+  spawn before question-selection (attachment links are checked only on request) fails
+  `test_routes_to_expected_skill`.
+- `ut_research_tlb` (`bounded-timeline-for-a-person.json`): the bounded ask.
+  `routes-to:stop`, its first user, with question-selection and the timeline agent both
+  stubbed, so a hand-off to either is recorded and fails the stop.
+
+Both carry `attached-records-setup`, which gates `test_attached_records_setup_order`: an
+`extraction_append` call with `personId`, then a `timeline_build` call after it. It orders
+only those two MCP calls; `tool_calls` and `builtin_tool_calls` share no ordering, so
+"before question-selection" rests on `stop_at_stub` and the `routes-to:` tag.
+
+Every other test on `empty-project-just-created` and `driscoll-source-audit` that reaches
+the row runs the two calls too. Neither subject has an indexed attachment, so both write
+nothing.
+
 ## Moved negatives (issue #2268)
 
 `ut_research_016` (negative-research-plan.json) and `ut_research_017`

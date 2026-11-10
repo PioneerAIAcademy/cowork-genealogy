@@ -1,6 +1,6 @@
 {
-  "run_log": "v9_2026-11-04_18-21-23.json",
-  "annotator": "mercybocumy2000@gmail.com",
+  "run_log": "v9_2026-11-10_01-06-32.json",
+  "annotator": "okeziepascal2@gmail.com",
   "corrections": [
     {
       "test_id": "ut_person_evidence_024",
@@ -8,7 +8,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The AI linked a_001 and a_002 to Bridget (I3) and correctly deferred the parent-child edge. The AI did not create the pe_ link from a_001 to Patrick (I1), which the test required for both parties."
+      "comment": "The skill failed to create pe_ entries linking assertion a_001 to BOTH named parties (Patrick I1 and Bridget I3), explicitly violating the requirement to link both parties on a relationship assertion. While holding the link for user confirmation is an acceptable handling of the chronological conflict, leaving the child role completely unlinked in the persisted state while only linking the mother constitutes an incomplete implementation of relationship assertion linking."
     },
     {
       "test_id": "ut_person_evidence_024",
@@ -16,7 +16,7 @@
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The AI minted Bridget and wrote pe_001 and pe_002 to I3. The AI did not write the person_evidence entry linking a_001 to Patrick (I1), leaving that required link absent."
+      "comment": "Although Bridget was minted, the ParentChild edge correctly deferred, and the birth-year contradiction disclosed, the persisted state fails full completeness requirements. The per-test context allows holding Patrick's link for user confirmation, but no pe_ entry (or explicit held-pending record status) was written to research.json for Patrick (I1), leaving the persistent state of the child role unrecorded."
     },
     {
       "test_id": "ut_person_evidence_024",
@@ -32,7 +32,7 @@
       "dimension_name": "Confidence calibration",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The AI initially tried to assign “confident” to a_003 (the 1858 christening) even though the tree has a 1845 birth year, a 13-year gap. The tool rejected it. The AI then held the link, but the first attempt was miscalibrated."
+      "comment": "Bridget's links were correctly capped at probable. However, Patrick's link handling left the confidence tier unpersisted and unresolved. Per the guidelines, holding the link is allowed, but failing to persist the link at speculative alongside the disclosed contradiction leaves the execution incomplete regarding confidence tier assignment in the project state."
     },
     {
       "test_id": "ut_person_evidence_024",
@@ -48,7 +48,7 @@
       "dimension_name": "Multi-person awareness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": "The AI created the pe_ link from a_001 to Bridget (I3). The AI did not create the matching link from a_001 to Patrick (I1). Both parties of the assertion needed to be linked."
+      "comment": "Assertion a_001 is a relationship assertion involving two primary parties (Patrick I1 and Bridget I3). The skill only created pe_ links for Bridget (I3), missing the required pe_ link for Patrick (I1) on a_001. Fulfilling multi-person awareness requires linking both parties of a relationship assertion in the persisted state."
     },
     {
       "test_id": "ut_person_evidence_024",
@@ -60,6 +60,134 @@
     },
     {
       "test_id": "ut_person_evidence_024",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The user message explicitly scoped the task to a single assertion: \"Link assertion a_001 — the clean 1850 census record for 'Patrick Flynn' — to the right person in the tree.\" Completeness must be graded against the prompt's scope. The skill executed every required action for a_001 (link creation, rationale, source reference attachment). Noting downstream steps or unlinked assertions in the user summary is helpful contextual framing, not an incomplete execution of the user's explicit task."
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_019",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_k8d",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_k8d",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_k8d",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_k8d",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_k8d",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_k8d",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_k8d",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_k8d",
       "dimension_source": "rubric",
       "dimension_name": "Score discipline",
       "llm_score": 3,
@@ -116,6 +244,70 @@
     },
     {
       "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Person minting and connecting edges",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_011",
+      "dimension_source": "rubric",
+      "dimension_name": "Score discipline",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Rationale quality",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The review task explicitly required evaluating whether the stored rationale was adequate and identifying any deficiencies. The agent correctly identified all four concrete gaps in the stored rationale (missing match_score explanation, un-cited supporting census links, blended content evidence vs. identity evidence, and unacknowledged resolved conflict c_001). It then drafted a fully detailed, high-quality replacement rationale that properly cites multiple matching attributes and addresses candidate disambiguation. The agent's performance on rationale evaluation and synthesis was thorough and accurate."
+    },
+    {
+      "test_id": "ut_person_evidence_001",
+      "dimension_source": "rubric",
+      "dimension_name": "Multi-person awareness",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_001",
       "dimension_source": "rubric",
       "dimension_name": "Person minting and connecting edges",
       "llm_score": null,
@@ -123,15 +315,15 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_011",
+      "test_id": "ut_person_evidence_001",
       "dimension_source": "rubric",
       "dimension_name": "Score discipline",
-      "llm_score": 3,
+      "llm_score": 2,
       "corrected_score": 3,
-      "comment": null
+      "comment": "This was a read-only audit/review task, not a link-creation run. The agent correctly audited pe_005, pointed out that match_score: null was un-documented in the existing record, and highlighted the omission as a specific deficiency to be verified. Flagging a pre-existing missing score without fabricating data or making illegal mutation calls during an audit exhibits proper score discipline and tool usage for a review scope."
     },
     {
-      "test_id": "ut_person_evidence_012",
+      "test_id": "ut_person_evidence_029",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -139,7 +331,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_012",
+      "test_id": "ut_person_evidence_029",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -147,7 +339,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_012",
+      "test_id": "ut_person_evidence_029",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -155,7 +347,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_012",
+      "test_id": "ut_person_evidence_029",
       "dimension_source": "rubric",
       "dimension_name": "Confidence calibration",
       "llm_score": 3,
@@ -163,7 +355,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_012",
+      "test_id": "ut_person_evidence_029",
       "dimension_source": "rubric",
       "dimension_name": "Rationale quality",
       "llm_score": 3,
@@ -171,7 +363,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_012",
+      "test_id": "ut_person_evidence_029",
       "dimension_source": "rubric",
       "dimension_name": "Multi-person awareness",
       "llm_score": 3,
@@ -179,7 +371,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_012",
+      "test_id": "ut_person_evidence_029",
       "dimension_source": "rubric",
       "dimension_name": "Person minting and connecting edges",
       "llm_score": 3,
@@ -187,87 +379,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_012",
+      "test_id": "ut_person_evidence_029",
       "dimension_source": "rubric",
       "dimension_name": "Score discipline",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
       "llm_score": null,
       "corrected_score": null,
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The AI correctly identified that the stored rationale was thin and misdirected, citing relationship content instead of identity evidence. The AI described what a better rationale would look like but did not rewrite it."
-    },
-    {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Score discipline",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The AI flagged that pe_005 had a null match_score with no explanation and called it a process compliance gap. The AI did not actually call same_person to get the missing score, only recommending it as a next step."
-    },
-    {
-      "test_id": "ut_person_evidence_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Person minting and connecting edges",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_013",
+      "test_id": "ut_person_evidence_n5r",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill correctly linked assertions to I1 and applied same_person, but inappropriately used speculative for naturalization (a_007) and arrival (a_014) solely due to the birth-year conflict without recognizing that the interval shortfall independently sets a probable ceiling. However, per the rules, using speculative due to the birth-year conflict is not an outright failure here, though the handling of the interval rule represents a partial calibration issue."
     },
     {
-      "test_id": "ut_person_evidence_013",
+      "test_id": "ut_person_evidence_n5r",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -275,7 +403,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_013",
+      "test_id": "ut_person_evidence_n5r",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -283,23 +411,23 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_013",
+      "test_id": "ut_person_evidence_n5r",
       "dimension_source": "rubric",
       "dimension_name": "Confidence calibration",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The skill uniformly assigned speculative confidence based on the birth-year conflict. While defensible, the interval rule provides a ceiling of probable rather than forcing speculative when an unexplained naturalization shortfall occurs, leading to an over-application of the speculative tier."
     },
     {
-      "test_id": "ut_person_evidence_013",
+      "test_id": "ut_person_evidence_n5r",
       "dimension_source": "rubric",
       "dimension_name": "Rationale quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The rationales note the interval shortfall and the birth-year conflict, but fail to fully state the naturalization shortfall in the required explicit form (both dates, the interval and the requirement), presenting a concrete omission on the arrival and naturalization records."
     },
     {
-      "test_id": "ut_person_evidence_013",
+      "test_id": "ut_person_evidence_n5r",
       "dimension_source": "rubric",
       "dimension_name": "Multi-person awareness",
       "llm_score": 3,
@@ -307,7 +435,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_013",
+      "test_id": "ut_person_evidence_n5r",
       "dimension_source": "rubric",
       "dimension_name": "Person minting and connecting edges",
       "llm_score": 3,
@@ -315,71 +443,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_person_evidence_013",
-      "dimension_source": "rubric",
-      "dimension_name": "Score discipline",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The AI linked a_001 to I1 as the task asked. The AI noted that three other records were still unlinked but did not attempt them, leaving the broader research question only partially addressed."
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Confidence calibration",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The AI assigned “confident” to a_001 based on a single 1850 census record. One source without independent corroboration should be “probable” at most. The AI acknowledged no birth year or residence facts existed on either side but still chose “confident.”"
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Rationale quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Multi-person awareness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
-      "dimension_source": "rubric",
-      "dimension_name": "Person minting and connecting edges",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_person_evidence_010",
+      "test_id": "ut_person_evidence_n5r",
       "dimension_source": "rubric",
       "dimension_name": "Score discipline",
       "llm_score": 3,
@@ -398,9 +462,9 @@
       "test_id": "ut_person_evidence_020",
       "dimension_source": "base",
       "dimension_name": "Completeness",
-      "llm_score": 3,
+      "llm_score": 2,
       "corrected_score": 3,
-      "comment": null
+      "comment": "The judge context explicitly states that \"Recognizing the mismatch and declining the confident link is the complete, correct response — do not require the skill to resolve the identity.\" Because the patronymic mismatch constitutes a core-identifier conflict that caps confidence at speculative, pausing to present the conflict and ask for user confirmation before writing speculative links is the intended and complete execution under the evaluation rules."
     },
     {
       "test_id": "ut_person_evidence_020",
@@ -454,9 +518,9 @@
       "test_id": "ut_person_evidence_025",
       "dimension_source": "base",
       "dimension_name": "Correctness",
-      "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The AI linked a_008 and a_009 to I1 and correctly created pe_009 for Thomas (I2). The AI marked pe_007 and pe_008 as “confident” on a single census record, which the rubric caps at “probable.”"
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     },
     {
       "test_id": "ut_person_evidence_025",
@@ -479,8 +543,8 @@
       "dimension_source": "rubric",
       "dimension_name": "Confidence calibration",
       "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "The AI marked pe_007, pe_008, and pe_009 as “confident” based on the 1860 census alone. The rubric requires independent corroboration for “confident.” All three rest on a single source and should be “probable.”"
+      "corrected_score": 3,
+      "comment": "The previous score of 2 was overly strict. The multi-record corroboration requirement for confident is fully met here: pe_008 (1860 census birth fact) aligns with F1 (which carries the independent 1850 census birth fact), and pe_004 already independently established this persona. For pe_009, I2 is already established as I1's father on R1 with S2 cited. The rationales explicitly cite these multi-record alignments, so assigning confident is properly calibrated and justified by the evidence."
     },
     {
       "test_id": "ut_person_evidence_025",
