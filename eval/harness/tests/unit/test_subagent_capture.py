@@ -1431,6 +1431,37 @@ def test_agent_holds_read_main_thread_and_missing_file(tmp_path: Path):
 
     assert _agent_holds_read("main thread", tmp_path) is True
     assert _agent_holds_read("no-such-agent", tmp_path) is None
+    assert _agent_holds_read("general-purpose", tmp_path) is True  # built-in, no staged file
+
+
+def test_capture_context_meters_runs_the_oversize_capture_after_an_earlier_failure(
+    shortspace: Path, monkeypatch
+):
+    from types import SimpleNamespace
+
+    import e2e.subagent_capture as capture
+    from harness.orchestrator import _capture_context_meters
+
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-guard-abc123"
+    slug_dir = home / ".claude" / "projects" / _key(workspace)
+    slug_dir.mkdir(parents=True)
+    (slug_dir / "s.jsonl").write_text(
+        "\n".join(json.dumps(r) for r in
+                  _call("tu1", "mcp__genealogy__person_read", _str_result("tu1", _SHAPE1))),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    def _boom(workspace):
+        raise RuntimeError("earlier capture failed")
+
+    monkeypatch.setattr(capture, "collect_main_thread", _boom)
+    result = SimpleNamespace()
+    _capture_context_meters(result, workspace)
+    assert result.subagent_capture_status == "error"
+    assert [h["tool"] for h in result.oversize_tool_results] == ["mcp__genealogy__person_read"]
 
 
 def test_source_evaluation_holds_no_read_today(tmp_path: Path):

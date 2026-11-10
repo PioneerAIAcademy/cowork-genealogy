@@ -899,7 +899,7 @@ class SkillRunResult:
     subagent_capture_status: str | None = None
     main_thread: dict[str, Any] | None = None
     # MCP results the model received as Claude Code's "too large, saved to file"
-    # notice, as `{tool, tool_use_id, size, agent}`; read with the fields above.
+    # notice, as `{tool, tool_use_id, size, agent, can_read}`; read with the fields above.
     # Feeds only the `oversize_tool_result` warning, never the judge (#4380).
     oversize_tool_results: list[dict[str, Any]] = field(default_factory=list)
     # Raw Write/Edit/NotebookEdit calls to a protected project file

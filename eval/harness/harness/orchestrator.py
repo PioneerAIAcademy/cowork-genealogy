@@ -1040,12 +1040,17 @@ def _is_zero_progress_timeout(result) -> bool:
 _UNIT_SUBAGENT_DROP = ("turns", "transcript")
 
 
+#: Claude Code's built-in agent types, which have no staged file and all hold Read.
+_BUILTIN_AGENTS_WITH_READ = frozenset({"general-purpose", "Explore", "Plan"})
+
+
 def _agent_holds_read(agent: str, workspace: Path) -> bool | None:
     """Whether `agent` can `Read` the file an oversize notice points at.
 
     The main thread always can. A subagent can when the `tools:` list of its
     staged agent file names `Read`, or when the file has no `tools:` key (it
-    then inherits every tool). None when its file cannot be read. Never raises.
+    then inherits every tool). A Claude Code built-in agent with no staged file
+    holds Read. None when its file cannot be read. Never raises.
     """
     from e2e.subagent_capture import MAIN_THREAD_AGENT
 
@@ -1054,7 +1059,7 @@ def _agent_holds_read(agent: str, workspace: Path) -> bool | None:
     try:
         path = workspace / ".claude" / "agents" / f"{agent}.md"
         if not path.is_file():
-            return None
+            return True if agent in _BUILTIN_AGENTS_WITH_READ else None
         frontmatter = load_skill_frontmatter(path)
         if not frontmatter:
             return None
@@ -1078,11 +1083,7 @@ def _capture_context_meters(result, workspace: Path) -> None:
     can never stop the orchestrator loading.
     """
     try:
-        from e2e.subagent_capture import (
-            collect_main_thread,
-            collect_oversize_tool_results,
-            collect_subagents,
-        )
+        from e2e.subagent_capture import collect_main_thread, collect_subagents
 
         subagents, status = collect_subagents(workspace)
         result.subagents = [
@@ -1091,13 +1092,20 @@ def _capture_context_meters(result, workspace: Path) -> None:
         ]
         result.subagent_capture_status = status
         result.main_thread = collect_main_thread(workspace)
+    except Exception:  # noqa: BLE001 — a capture miss must never fail the run
+        result.subagents = []
+        result.subagent_capture_status = "error"
+    # Its own guard, so a failure above cannot silently skip it: an empty list
+    # here reads as "no answer was lost".
+    try:
+        from e2e.subagent_capture import collect_oversize_tool_results
+
         result.oversize_tool_results = [
             {**hit, "can_read": _agent_holds_read(hit["agent"], workspace)}
             for hit in collect_oversize_tool_results(workspace)
         ]
     except Exception:  # noqa: BLE001 — a capture miss must never fail the run
-        result.subagents = []
-        result.subagent_capture_status = "error"
+        result.oversize_tool_results = []
 
 
 def _is_retryable_abort(result) -> bool:
