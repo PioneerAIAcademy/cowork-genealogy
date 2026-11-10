@@ -1278,13 +1278,20 @@ _AGE_DENIED_RE = re.compile(
 )
 
 
+# A real `[CONFLICT]` tag after a denial is still a flag: a clause that disclaims one thing
+# and flags another is not cleared by the disclaimer.
+_AGE_FLAG_TAG_RE = re.compile(r"\[\s*conflict", re.IGNORECASE)
+
+
 def _age_denied(scope: str) -> bool:
     """A denial clears a clause only when it comes at or before the conflict word: "no
     conflict" and "consistent with the profile, no conflict" are denials, but "conflicts
     with the profile, which is consistent with the stone" denies something else."""
     first = _AGE_CONFLICT_WORD_RE.search(scope)
     return any(
-        first is None or m.start() <= first.end() for m in _AGE_DENIED_RE.finditer(scope)
+        (first is None or m.start() <= first.end())
+        and not _AGE_FLAG_TAG_RE.search(scope, m.end())
+        for m in _AGE_DENIED_RE.finditer(scope)
     )
 # A prose clause that merely reports the age-derived range is not a flag.
 _AGE_RANGE_RE = re.compile(r"birth ?ranges?|bet(?:ween)? 1838|1838\s*[-–—]\s*1839", re.IGNORECASE)
@@ -1411,11 +1418,13 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
         if not cells or not _AGE_BIRTH_ROW_LABEL_RE.search(cells[0]):
             continue
         for j, cell in enumerate(cells[1:], start=1):
-            # A [CONFLICT] tag on a birth row is a flag whatever else the cell says.
-            if _AGE_CONFLICT_TAG_RE.search(cell) or _age_flag_text(cell):
-                label = header[j] if j < len(header) else ""
-                flagged += _age_source_hits(f"{label} {cell}", sources)
-                flagged += aliases.get(label.lower(), [])
+            # A [CONFLICT] tag on a birth row is a flag on the sentence that carries it:
+            # "Exact dates: FG [CONFLICT]. Age ranges, all agree: 1850 census" flags no census.
+            label = header[j] if j < len(header) else ""
+            for seg in re.split(r"(?<=[.;])\s+", cell):
+                if _AGE_CONFLICT_TAG_RE.search(seg) or _age_flag_text(seg):
+                    flagged += _age_source_hits(f"{label} {seg}", sources)
+                    flagged += aliases.get(label.lower(), [])
 
     in_birth_block = False
     prev_blank = True
@@ -1430,9 +1439,13 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
         raw = raw_lines[li] if len(raw_lines) == len(lines) else ""
         bold_heading = bool(re.fullmatch(r"\s*\*\*[^*]+\*\*\s*", raw))
         if _AGE_FINDING_HEAD_RE.match(line) or (prev_blank and (_age_is_heading(stripped) or bold_heading)):
+            # The topic of a bold lead-in is the lead-in: a finding about the father's name
+            # whose paragraph mentions "birth range" is not a birth finding.
+            lead = re.match(r"\s*\*\*(.+?)\*\*\s*\S", raw)
+            heading = lead.group(1) if lead else stripped
             in_birth_block = bool(
-                re.search(r"\bbirth\b", stripped, re.IGNORECASE)
-                and re.search(_AGE_BLOCK_WORDS, stripped, re.IGNORECASE)
+                re.search(r"\bbirth\b", heading, re.IGNORECASE)
+                and re.search(_AGE_BLOCK_WORDS, heading, re.IGNORECASE)
             )
         elif re.match(r"^\W*(?:#{1,6}\s|[-*_]{3,}\s*$)", line):
             in_birth_block = False

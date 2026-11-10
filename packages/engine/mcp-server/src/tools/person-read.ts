@@ -65,7 +65,7 @@ export const personReadToolSchema = {
     "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources): the person, " +
     "their parents, siblings, spouses and children, and the sources attached " +
-    "to the subject (`persons[0]`) and to the subject's relationships, each linked from " +
+    "to the subject (`persons[0]`) and to the relationships, each linked from " +
     "the subject's or a relationship's own `sources` refs. Relatives carry no " +
     "sources, and a source with a record link carries a title and link but no " +
     "citation — `record_read` returns the citation. For a " +
@@ -148,8 +148,8 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
  * - every person but `persons[0]` (the subject) loses its `sources` refs;
  * - a source no remaining ref points at, and that is not a memory (`artifact_url`, `text` or
  *   `image_ref`), is dropped;
- * - a relationship that does not name the subject loses its `sources` refs, so a source
- *   cited only on a parent's or a sibling's edge goes too;
+ * - relationships keep their `sources` refs (issue #3229); source-evaluation's audit-list
+ *   rule leaves the ones that are not the subject's out, and issue #4420 owns trimming them;
  * - `citation` goes from every source whose `url` carries a record-persona ARK
  *   (`record_read` returns it); a source with no `1:1:` ARK keeps its own, the only
  *   description of it an agent has;
@@ -170,13 +170,9 @@ export function trimPersonReadForModel(result: PersonReadResult): PersonReadResu
     if (p.facts) kept.facts = p.facts.map(trimFact);
     return kept;
   });
-  const subjectId = result.persons[0]?.id;
-  const relationships = result.relationships.map((r) => {
-    const { sources: _sources, ...rest } = r;
-    const kept: TreeRelationship = r.facts ? { ...rest, facts: r.facts.map(trimFact) } : { ...rest };
-    if (r.sources && edgeNames(r, subjectId)) kept.sources = r.sources;
-    return kept;
-  });
+  const relationships = result.relationships.map((r) =>
+    r.facts ? { ...r, facts: r.facts.map(trimFact) } : r,
+  );
   const pointedAt = new Set<string>();
   for (const holder of [...persons, ...relationships]) {
     for (const { ref } of holder.sources ?? []) pointedAt.add(ref);
@@ -192,11 +188,6 @@ export function trimPersonReadForModel(result: PersonReadResult): PersonReadResu
 }
 
 const RECORD_ARK = /1:1:/;
-
-/** Whether an edge names this person at either end. */
-function edgeNames(r: TreeRelationship, personId: string | undefined): boolean {
-  return personId !== undefined && [r.parent, r.child, r.person1, r.person2].includes(personId);
-}
 
 /** What a memory is, for a caller that classifies it: a `story` carries its own
  *  words, a `document` is a scan (an image or a PDF). */
@@ -287,7 +278,7 @@ export async function readPerson(
   // Issue #3229: the descriptions behind the refs on the EDGES, which the body does not
   // hold either. Started beside `relativesPending` for the same reason, on the same
   // deadline, and with the same load-bearing `.catch`.
-  const edgeDescriptionIds = unresolvedEdgeRefs(result, relativeSources ? undefined : resolvedId);
+  const edgeDescriptionIds = unresolvedEdgeRefs(result);
   const edgeDescriptionsPending: Promise<RelativeSourcesResult> =
     edgeDescriptionIds.length > 0
       ? fetchSourceDescriptions(edgeDescriptionIds, principal, deadline).catch(() => ({
@@ -719,11 +710,10 @@ function mergeDescriptions(
  * an `SD_*` id, which `shapeSources` filters out so the ref could never resolve, and the
  * empty ref `toTreeSourceRef` writes for an upstream ref that names no description.
  */
-function unresolvedEdgeRefs(result: PersonReadResult, onlyEdgesNaming?: string): string[] {
+function unresolvedEdgeRefs(result: PersonReadResult): string[] {
   const have = new Set(result.sources.map((s) => s.id));
   const ids = new Set<string>();
   for (const rel of result.relationships) {
-    if (onlyEdgesNaming !== undefined && !edgeNames(rel, onlyEdgesNaming)) continue;
     for (const { ref } of rel.sources ?? []) {
       if (ref !== "" && !have.has(ref) && !isMetadataSource(ref)) ids.add(ref);
     }

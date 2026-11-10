@@ -25,7 +25,7 @@ import type { FSTreeResponse, PersonReadResult } from "../../src/types/person-re
 
 // The whole read, untrimmed: what `project_create` receives. The shaping tests assert on it;
 // `person_read`'s own answer is `trimPersonReadForModel` of it.
-async function readFull(input: { personId: string }, principal: typeof LOCAL) {
+async function readFull(input: Parameters<typeof personReadTool>[0], principal: typeof LOCAL) {
   return (await readPerson(input.personId, {}, principal)).result;
 }
 
@@ -2472,11 +2472,11 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
   const edgesTo = (out: Awaited<ReturnType<typeof personReadTool>>, child: string) =>
     out.relationships.filter((r) => r.type === "ParentChild" && r.child === child);
 
-  it("person_read answers with only the subject's own edges' sources, and reads no other edge's", async () => {
+  it("person_read keeps every edge's sources, the subject's and the others', and reads each description", async () => {
     route(
       {
         [SUBJECT]: {
-          persons: [person(SUBJECT), person("CO-1"), person("KID-1"), person("CO-2")],
+          persons: [person(SUBJECT), person("CO-1"), person("KID-1"), person("CO-2"), person("KID-2")],
           relationships: [],
           childAndParentsRelationships: [
             capr("CAPR-1", "KID-1", "CO-1", SUBJECT, [ref("SRC-OWN")]),
@@ -2487,9 +2487,10 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
       { "SRC-OWN": "ok", "SRC-OTHER": "ok" },
     );
     const model = await personReadTool({ personId: SUBJECT }, LOCAL);
-    expect(model.sources.map((s) => s.id)).toEqual(["SRC-OWN"]);
-    expect(model.relationships.filter((r) => r.sources).every((r) => [r.parent, r.child].includes(SUBJECT))).toBe(true);
-    expect(descriptionReads()).toEqual([`${DESCRIPTIONS}/SRC-OWN`]);
+    expect(model.sources.map((s) => s.id).sort()).toEqual(["SRC-OTHER", "SRC-OWN"]);
+    // Each child-and-parents group is two parent edges.
+    expect(model.relationships.filter((r) => r.sources)).toHaveLength(4);
+    expect(descriptionReads().sort()).toEqual([`${DESCRIPTIONS}/SRC-OTHER`, `${DESCRIPTIONS}/SRC-OWN`]);
   });
 
   it("keeps a Couple's ref, and reads its description by id into sources[]", async () => {
@@ -2503,7 +2504,7 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
       },
       { "SRC-M": "ok" },
     );
-    const out = await readFull({ personId: SUBJECT }, LOCAL);
+    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
 
     expect(out.relationships.find((r) => r.type === "Couple")!.sources).toEqual([{ ref: "SRC-M" }]);
     const src = out.sources.find((s) => s.id === "SRC-M");
@@ -2531,7 +2532,7 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
       },
       { "SRC-C": "ok" },
     );
-    const out = await readFull({ personId: SUBJECT }, LOCAL);
+    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
 
     const edges = edgesTo(out, "KID-1");
     expect(edges.map((e) => e.parent).sort()).toEqual(["CO-1", SUBJECT]);
@@ -2560,7 +2561,7 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
       },
       { "SRC-P": "ok" },
     );
-    const out = await readFull({ personId: SUBJECT }, LOCAL);
+    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
 
     expect(out.relationships.find((r) => r.type === "Couple")!.sources).toEqual([{ ref: "SRC-P" }]);
     expect(out.sources.map((s) => s.id)).toEqual(["SRC-P"]);
@@ -2593,7 +2594,7 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
       },
       { "SRC-SIB": "ok" },
     );
-    const out = await readFull({ personId: SUBJECT }, LOCAL);
+    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
 
     const edges = edgesTo(out, SIB);
     expect(edges.map((e) => e.parent).sort()).toEqual([DAD, MUM]);
@@ -2622,7 +2623,7 @@ describe("personReadTool — relationship sources on the edges (#3229)", () => {
       },
       { "SRC-H": "ok" },
     );
-    const out = await readFull({ personId: SUBJECT }, LOCAL);
+    const out = await personReadTool({ personId: SUBJECT }, LOCAL);
 
     const edges = edgesTo(out, HALF);
     expect(edges.map((e) => e.parent)).toEqual([DAD]);
@@ -2869,13 +2870,13 @@ describe("person_read's answer is trimmed for the model (#4384)", () => {
     const before = JSON.stringify(input);
     const out = trimPersonReadForModel(input);
     expect(JSON.stringify(input)).toBe(before);
-    expect(out.sources.map((s) => s.id)).toEqual(["S1", "M1", "M2", "S3", "S5"]);
+    expect(out.sources.map((s) => s.id)).toEqual(["S1", "M1", "M2", "S3", "S4", "S5"]);
     // `citation` goes where the url carries a 1:1 ARK (`record_read` returns it) and stays
     // where it does not: it is all an agent has of a source it cannot read.
-    expect(out.sources.map((s) => "citation" in s)).toEqual([false, false, false, false, true]);
+    expect(out.sources.map((s) => "citation" in s)).toEqual([false, false, false, false, true, true]);
     expect(out.relationships[0].sources).toEqual([{ ref: "S3" }]);
-    // An edge that does not name the subject (here B->C) keeps no refs, and its source goes.
-    expect(out.relationships[1].sources).toBeUndefined();
+    // Every edge keeps its refs (issue #3229), the subject's or not; issue #4420 owns trimming them.
+    expect(out.relationships[1].sources).toEqual([{ ref: "S4" }]);
   });
 
   // The captured live read of Edward Tallman (KPQ5-V9F): 21 people, 320 sources, ~163k
@@ -2901,7 +2902,6 @@ describe("person_read's answer is trimmed for the model (#4384)", () => {
       expect(arks.length).toBeGreaterThan(0);
       expect(arks.every((s) => !("citation" in s))).toBe(true);
       expect(out.sources.some((s) => !s.url?.includes("1:1:") && "citation" in s)).toBe(true);
-      expect(out.sources.some((s) => /^sd_/i.test(s.id))).toBe(false);
     });
 
     it("keeps every source link the subject's refs point at", () => {

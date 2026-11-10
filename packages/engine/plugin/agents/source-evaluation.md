@@ -70,7 +70,12 @@ Call `person_read({ personId })`. Entries whose id starts with `SD_` never appea
 
 If the delegation gives a name rather than an id, call `project_context({ projectPath })` and match on its `persons[*].name`. If more than one person matches, read nothing more: return each candidate's name, life dates and id, and stop. Never pick one. If the delegation names no person at all, call no tool and return `Hand-back: no person named — <the request in one clause>` — **but only when the request is in scope**. A request that is one of the three above is handed back to ITS destination even though it names no person: the scope check is the earlier question, and answering `no person named` to a conflict question sends it nowhere. Decide scope first, identity second.
 
-The subject is `persons[0]`. The audit list is every entry in `sources[]`. An empty audit list is a finished audit with one finding: nothing is attached to this person. Say so and stop.
+**The audit list is not the whole `sources[]` array.** **The subject is `persons[0]`.** The audit list is:
+
+- every entry whose `id` appears in `persons[0].sources[].ref`, plus
+- every entry carrying an `artifact_url`.
+
+Audit no other entry. An empty audit list is a finished audit with one finding: nothing is attached to this person. Say so and stop.
 
 When the `personId` is a FamilySearch ID — four characters, a hyphen, three characters — also call `person_quality({ personId, detail: true })` **once, for the person named in the request only**. Never for a person you read at step 4(b) to check where else an ARK is attached. Its `detail.conflicts[]` is FamilySearch's own answer to “which two attached sources disagree, and about what”, which step 3's sweep would otherwise find by hand; its `issues[]` are the profile checklist step 5 reports separately. Skip the call for a synthetic id and say nothing about skipping it.
 

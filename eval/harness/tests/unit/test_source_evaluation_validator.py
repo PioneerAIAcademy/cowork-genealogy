@@ -2233,6 +2233,63 @@ def test_recorded_as_a_conflict_is_still_a_flag():
         _age_check(_TAG_HEADER + row + _TAIL_CONFLICT)
 
 
+def test_a_denial_does_not_clear_a_real_conflict_tag_in_the_same_clause():
+    """Review finding on PR 4465: a clause that disclaims one thing and flags another was
+    cleared whole, because the denial itself carries the conflict word."""
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check("The 1850 census birth year is not recorded as conflicts but [CONFLICT] with 1838." + _TAIL_CONFLICT)
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check("The 1850 census birth year was never treated as findings: [CONFLICT]." + _TAIL_CONFLICT)
+    # The other direction: the denial alone, and a tag that comes before it, are unchanged.
+    _age_check("The 1850 census birth year is not recorded as conflicts (census variance)." + _TAIL_CONFLICT)
+
+
+_THREE_COLUMN_HEADER = "| Conclusion | What the sources say | Status |\n|---|---|---|\n"
+
+
+def test_a_conflict_tag_flags_the_sentence_that_carries_it_not_the_whole_cell():
+    """Live Tallman run: "Exact-date sources: FG [CONFLICT]. Age-derived ranges, all agree:
+    1850 census 1838-1839" flagged the 1850 census because one cell held both."""
+    cell = (
+        "Exact-date sources: Find a Grave gives 31 Jan 1839 [CONFLICT]. "
+        "Age-derived ranges, all agree: 1850 census 1838-1839; 1865 NY census 1838-1839."
+    )
+    row = f"| Birth date: 30 Nov 1838 | {cell} | Conflicts with exact-date sources |\n"
+    _age_check(_THREE_COLUMN_HEADER + row + _TAIL_CONFLICT)
+
+
+def test_a_conflict_tag_on_an_age_derived_sentence_still_flags_even_beside_another():
+    """The other direction: the tag on the census's own sentence, or the same sentence, flags."""
+    own = "Find a Grave gives 31 Jan 1839 [CONFLICT]. The 1850 census gives 1840 [CONFLICT]."
+    same = "Find a Grave gives 31 Jan 1839 [CONFLICT]. The 1850 census 1838-1839 [CONFLICT]."
+    for cell in (own, same):
+        row = f"| Birth date: 30 Nov 1838 | {cell} | Conflict |\n"
+        with pytest.raises(AssertionError, match="1850 census"):
+            _age_check(_THREE_COLUMN_HEADER + row + _TAIL_CONFLICT)
+
+
+def test_a_finding_about_the_fathers_name_is_not_a_birth_finding():
+    """Live Tallman run: the finding's paragraph said "same birth range" and "disagreement", so the
+    validator read the 1850 household in it as a birth flag. The topic is the heading."""
+    reply = (
+        "**Finding 2: Father's first name in the 1913 death records (source against source).** "
+        "Three index entries describe one death, with the same birth range and mother. They name the "
+        "father differently. The profile says Joseph Tallman, which matches the 1850 census household. "
+        "The disagreement is between these records."
+    )
+    _age_check(reply + _TAIL_CONFLICT)
+
+
+def test_a_finding_headed_as_a_birth_conflict_still_flags_a_census_year():
+    """The other direction: a bold lead-in about the birth conflict still scopes its paragraph."""
+    reply = (
+        "**Finding 1: Birth date disagreement.** The 1850 census gives 1840 for his birth year, "
+        "which differs from the profile."
+    )
+    with pytest.raises(AssertionError, match="1850 census"):
+        _age_check(reply + _TAIL_CONFLICT)
+
+
 def test_contradicts_and_inconsistent_are_conflict_words():
     """Self-review finding: "contradicts the profile" carried no conflict word."""
     with pytest.raises(AssertionError, match="1850 census"):

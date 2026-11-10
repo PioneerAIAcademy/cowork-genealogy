@@ -20,10 +20,10 @@ non-living subject the read also pages that person's source-style memories.
 
 **The answer is trimmed for the model.** The full read is large: Edward Tallman's (KPQ5-V9F; 21 people, 320 sources) was ~163k characters, past Claude Code's ~50k cutoff, so the agent received a "too large, saved to file" error and none of the profile. `personReadTool` therefore returns `trimPersonReadForModel(readPerson(id, { relativeSources: false }))`, and stages the same trimmed value, so the staged copy equals the answer:
 
-- Relatives carry no `sources` refs, and their attached descriptions are **not fetched** (no request, and no "relatives' attached sources could not be read" note). Only `persons[0]`'s refs, the refs of a relationship that names the subject, and memory sources (`artifact_url`) leave an entry in `sources[]`; any other entry is dropped. A relationship that does not name the subject (a parent's Couple, a sibling's edge) keeps no refs, and its descriptions are not read, so a source cited only there never reaches the answer.
+- Relatives carry no `sources` refs, and their attached descriptions are **not fetched** (no request, and no "relatives' attached sources could not be read" note). Only `persons[0]`'s refs, the refs of every relationship (fetched as before), and memory sources (`artifact_url`) leave an entry in `sources[]`; any other entry is dropped. The edges' sources stay in the answer; source-evaluation's audit-list rule leaves the ones that are not the subject's out.
 - A source whose `url` carries a record-persona ARK (`1:1:`) has no `citation`; `record_read` returns it for any source an agent reads. A source with no such ARK (an upload, an external link, a memory) keeps its own, the only description of it an agent has.
 - No fact (person or couple) or name carries `id`; a fact's `place` is dropped when it equals its `standard_place`.
-- Kept: person ids, source ids, source `url`s and titles, the `ark`, and the refs of the subject's relationships.
+- Kept: person ids, source ids, source `url`s and titles, the `ark`, and the refs of every relationship.
 
 `project_create` is unaffected: it calls `readPerson` without `relativeSources: false` (default `true`), so the starting tree still imports the relatives' sources with citations and ids. Tallman's trimmed answer is ~38k characters (pinned under 40,000 by a test over the captured fixture).
 
@@ -349,7 +349,7 @@ fetched for the id the redirect landed on, not the id the caller passed.
   description: "Read person data from the FamilySearch Family Tree. " +
     "Returns simplified GEDCOMX (persons, relationships, sources): the person, " +
     "their parents, siblings, spouses and children, and the sources attached " +
-    "to the subject (`persons[0]`) and to the subject's relationships, each linked from the subject's or a relationship's own `sources` refs. Relatives carry no sources, and a source with a record link carries a title and link but no citation — `record_read` returns the citation. For a " +
+    "to the subject (`persons[0]`) and to the relationships, each linked from the subject's or a relationship's own `sources` refs. Relatives carry no sources, and a source with a record link carries a title and link but no citation — `record_read` returns the citation. For a " +
     "non-living subject it also returns source-style memories (scanned " +
     "wills, certificates, obituaries), transcribed where the " +
     "read's time budget allowed. " +
@@ -1162,7 +1162,7 @@ Registered following the existing tool pattern (import, ListTools, CallTool).
 | 31 | The living 204 stub carries no `sources` key | Living person |
 | 32 | `readPerson`'s default read fetches a relative's attached descriptions and KEEPS the ref that would otherwise dangle (`project_create`'s read) | Relatives' sources |
 | 33 | Top level stays exactly `{persons, relationships, sources}` with relatives' sources merged | No discriminator |
-| 33a | `relativeSources: false` makes no relative fetch and adds no skipped-relatives note; `person_read`'s answer has no relative `sources`, no `citation` on a `1:1:` source (one with no such ARK keeps it), no fact or name `id`, no `place` equal to `standard_place`, and no refs or descriptions from a relationship that does not name the subject; a lowercase `sd_` entry is dropped like `SD_` | Answer trim |
+| 33a | `relativeSources: false` makes no relative fetch and adds no skipped-relatives note; `person_read`'s answer has no relative `sources`, no `citation` on a `1:1:` source (one with no such ARK keeps it), no fact or name `id`, no `place` equal to `standard_place`; a lowercase `sd_` entry is dropped like `SD_` | Answer trim |
 | 33b | The captured Tallman read trims from ~163k to under 40,000 characters | Answer size pin |
 | 34 | A failed relative read returns the tree read with the subject's own sources intact, and does not throw | Fail-soft |
 | 35 | A relative with no attached refs costs no call | No speculative reads |
