@@ -817,6 +817,54 @@
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Jurisdiction accuracy",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "The assessment correctly identifies the substantive omission: the guide lacks specific county formation and boundary details needed to direct predecessor-county research. The general discussion is useful, but it does not fully satisfy the more actionable locality guidance expected."
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Record availability",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_locality_guide_013",
+      "dimension_source": "rubric",
+      "dimension_name": "Research strategy",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
     }
   ]
 }
