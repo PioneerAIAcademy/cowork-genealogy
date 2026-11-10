@@ -3210,8 +3210,10 @@ function checkInterleavedChildren(mob: Mob): PersonWarning[] {
       `${getPersonName(h.inside.person)}, this person's child with ${getPersonName(h.innerSpouse)}, ` +
       `was born between ${getPersonName(h.before.person)} and ${getPersonName(h.after.person)}, ` +
       `their children with ${getPersonName(h.outerSpouse)}, on every reading of the Birth dates. ` +
-      "Usually two people merged into one, a spouse attached to the wrong person, or a spouse's child by an earlier " +
-      "partner linked as this person's own (a Step link); a plural marriage can also explain it.",
+      "Usually one spouse recorded twice in a pair neither similar-spouse warning reports (a nickname, a maiden " +
+      "and a married surname, a distant spelling, or a similar-named pair after the first of its kind), two " +
+      "people merged into one, a spouse attached to the wrong person, or a spouse's child by an earlier partner " +
+      "linked as this person's own (a Step link); a plural marriage can also explain it.",
   }));
 }
 

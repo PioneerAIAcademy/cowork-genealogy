@@ -20,6 +20,9 @@ import {
   competingParentage,
   GATE_EXEMPT_TYPES,
 } from "../../src/validation/introduced-warnings.js";
+import { mergeGedcomx } from "../../src/utils/merge-gedcomx.js";
+import { calculateWarnings } from "../../src/tools/person-warnings.js";
+import { Mob } from "../../src/utils/mob.js";
 import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
 
 function person(id: string, given: string, surname: string, facts: any[] = []) {
@@ -515,16 +518,27 @@ describe("introducedWarnings", () => {
     });
 
     it("re-keys when a merge replaces the inside child's first Birth fact", () => {
-      // Xs is a second record of the 1855 child dated Mar 1855. A merge keeps the
-      // survivor's fact and folds X's equivalent 1855 into it, so the cited fact
-      // becomes XsB, and the gate remaps person ids, not fact ids.
+      // Xs is a second record of the 1855 child dated Mar 1855. The merge keeps the
+      // survivor's fact and folds the other's equivalent 1855 into it, and the gate
+      // remaps person ids, not fact ids, so the cited fact decides the outcome.
       const pre = tree([...persons, kid("Xs", "Mar 1855")], after.relationships ?? []);
-      const merged = tree(
-        [...persons.filter((p) => p.id !== "X"), kid("Xs", "Mar 1855")],
-        (after.relationships ?? []).map((r: any) => (r.child === "X" ? { ...r, id: `${r.id}s`, child: "Xs" } : r)),
-      );
-      const r = introducedWarnings(pre, merged, computeTouchedPersonIds(pre, merged), undefined, new Map([["X", "Xs"]]));
-      expect(r.unjustified.map((w) => w.issueType)).toContain(TAG);
+      const gateMerge = (survivor: string, collapsed: string) => {
+        const merged = mergeGedcomx(pre, null, [[survivor, collapsed]]);
+        const gate = introducedWarnings(pre, merged, computeTouchedPersonIds(pre, merged), undefined, new Map([[collapsed, survivor]]));
+        const mob = new Mob(merged, "H");
+        const cited = calculateWarnings(mob, mob, mob, true)
+          .filter((w) => w.issueType === TAG)
+          .map((w) => (w.facts ?? []).map((f) => f.id).sort());
+        return { gate, cited };
+      };
+      // Xs survives: the cited fact becomes XsB, a new key.
+      const xs = gateMerge("Xs", "X");
+      expect(xs.cited).toEqual([["A1B", "A2B", "XsB"]]);
+      expect(xs.gate.unjustified.map((w) => w.issueType)).toContain(TAG);
+      // X survives: the warning still stands on XB, the same key, so nothing is introduced.
+      const x = gateMerge("X", "Xs");
+      expect(x.cited).toEqual([["A1B", "A2B", "XB"]]);
+      expect(x.gate.allIntroduced.map((w) => w.issueType)).not.toContain(TAG);
     });
 
     it("re-keys when a new child of Bertha turns the interleaving the other way", () => {

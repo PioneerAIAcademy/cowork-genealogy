@@ -636,7 +636,7 @@ merged. Or the check sits in `calculateNonFinalWarnings`, which
 | `similarSpouses` | implausible | Two spouses look like the same individual recorded twice | One spouse duplicated |
 | `similarSpousesConflictingDates` | implausible | Two spouses have similar names but conflicting dates | Same spouse recorded twice with a date discrepancy |
 | `hasDissimilarSpousesWithSameMarriageYear` | implausible | Two spouses share a marriage year but have dissimilar names | Two marriage records conflated, or a mis-transcribed name |
-| `hasInterleavedChildrenIgnoreSimilarSpouses` | implausible | A child whose biological parents are this person and one spouse is born, on every reading of the Birth dates, between two children of this person and another spouse; a pair `similarSpouses` or `similarSpousesConflictingDates` reports is skipped. One warning per spouse pair (§ Interleaved children by two spouses) | Two people merged into one, a spouse attached to the wrong person, or a spouse's child by an earlier partner linked as this person's own; a plural marriage can also cause it |
+| `hasInterleavedChildrenIgnoreSimilarSpouses` | implausible | A child whose biological parents are this person and one spouse is born, on every reading of the Birth dates, between two children of this person and another spouse; a pair `similarSpouses` or `similarSpousesConflictingDates` reports is skipped. One warning per spouse pair (§ Interleaved children by two spouses) | One spouse recorded twice in a pair neither similar-spouse tag reports (a nickname, a maiden and a married surname, a distant spelling, or a similar-named pair after the first of its kind), two people merged into one, a spouse attached to the wrong person, or a spouse's child by an earlier partner linked as this person's own; a plural marriage can also cause it |
 | `hasLateChristening18` | implausible | A Christening, Baptism or BaptismRegistration begins 18 or more years after the latest possible Birth | An adult baptism, or another date filed as a christening |
 | `hasEventsOutsideLifespanNear` | implausible | Merge-mode only: merging places an event slightly outside the other record's lifespan | A borderline mismatch worth checking before the merge |
 
@@ -1014,10 +1014,12 @@ of ashes is legitimate but rare, and a one-line justification records it.
 
 `hasInterleavedChildrenIgnoreSimilarSpouses` fires when a person
 has children by two spouses and a child of one is born between two children of
-the other. That usually means two people merged into one, a spouse attached to
-the wrong person, or a spouse's child by an earlier partner linked as the
-anchor's own when the link should be `Step`; real plural marriages exist, so it
-is `implausible`.
+the other. That usually means one spouse recorded twice in a pair neither
+similar-spouse tag reports (a nickname, a maiden and a married surname, a distant
+spelling, or a similar-named pair after the first of its kind), two people merged
+into one, a spouse attached to the wrong person, or a spouse's child by an
+earlier partner linked as the anchor's own when the link should be `Step`; real
+plural marriages exist, so it is `implausible`.
 
 **Which spouse a child belongs to.** The anchor's Mob is built over the whole
 project tree, so a child's second ParentChild edge is there to read. A child
