@@ -9,7 +9,7 @@ import type { SimplifiedGedcomX, SimplifiedPerson, SimplifiedSourceReference } f
 import type { ConflictSurfaced } from "../types/materialize-facts.js";
 import type { WarningGateRefusal } from "./tree-edit.js";
 import { TREE_SOURCE_REF_FIELDS } from "../validation/tree-shape.js";
-import { validateGedcomx } from "../validation/validator.js";
+import { validateGedcomx, VALIDATOR_ENUMS } from "../validation/validator.js";
 import { createReport, isValid } from "../validation/types.js";
 import { iteratePersonIdRefs } from "../validation/person-id-refs.js";
 import {
@@ -186,7 +186,7 @@ export type CandidateDocument = SimplifiedGedcomX & {
 };
 
 const FS_RELATIONSHIP_TYPE_PREFIX = "http://familysearch.org/types/relationships/";
-const TREE_RELATIONSHIP_TYPES: ReadonlySet<string> = new Set(["ParentChild", "Couple"]);
+const TREE_RELATIONSHIP_TYPES: ReadonlySet<string> = new Set(VALIDATOR_ENUMS.relationship_type);
 
 /** The first straight-ASCII double-quoted run of a citation: FamilySearch
  *  citations open with the quoted collection title. */
