@@ -201,7 +201,7 @@ export async function placeSearch(
   // ("sounds like") query, built from the leaf — the first comma segment of
   // the SANITIZED name — and only when that leaf is a single token: unquoted
   // multi-token fuzzy is an OR of tokens (the measured hazard in
-  // place-api.ts's caller contract). A thrown search error still propagates.
+  // place-api.ts's caller contract). A thrown exact search still propagates.
   // Two triggers:
   //  - zero exact hits;
   //  - a comma-qualified name whose exact query matched only a qualifier
@@ -229,7 +229,8 @@ export async function placeSearch(
     exactQueryMatchedOnlyQualifier(entries, segments)
   ) {
     const qualifier = foldPlaceName(segments[1]);
-    const fuzzyEntries = await searchPlace(leaf, { fuzzy: true });
+    // The exact answer is already in hand; a failed fuzzy retry keeps it.
+    const fuzzyEntries = await searchPlace(leaf, { fuzzy: true }).catch(() => []);
     if (fuzzyEntries.some((e) => liesInQualifier(e, qualifier))) {
       entries = fuzzyEntries;
       matchType = "fuzzy";

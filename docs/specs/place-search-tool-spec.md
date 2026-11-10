@@ -443,7 +443,7 @@ ignore it for `wikipediaUrl`.)
 | Condition | Behavior |
 |-----------|----------|
 | Exact search returns no results (empty body or empty entries) | Single-token leaf: retry once with the [fuzzy query](#fuzzy-query-the-fallback); hits are returned with `matchType: "fuzzy"`. Multi-word leaf, or the fuzzy query also empty: return `{ results: [], verdict }` with no flag |
-| Exact search matched only a qualifier (first entry's name equals a segment after the leaf, not the leaf) | Single-token leaf: retry once with the fuzzy query; use its hits, flagged `matchType: "fuzzy"`, only when one has a whole `fullName` segment equal to the first qualifier. Otherwise, or for a multi-word leaf, return the exact hits with no flag |
+| Exact search matched only a qualifier (first entry's name equals a segment after the leaf, not the leaf) | Single-token leaf: retry once with the fuzzy query; use its hits, flagged `matchType: "fuzzy"`, only when one has a whole `fullName` segment equal to the first qualifier. Otherwise, or for a multi-word leaf, or when the fuzzy query throws, return the exact hits with no flag |
 | A description lookup 404s | Fall back to the search-entry data; do not drop the place |
 | FamilySearch search/description returns other non-OK status | Throw `"FamilySearch API error: {status} {statusText}"` |
 | Wikipedia API fails (any status or network error) | Omit Wikipedia fields (graceful degradation) |

@@ -1017,6 +1017,19 @@ describe("fuzzy fallback when the exact query matched only a qualifier", () => {
     expect(fuzzyFetches()).toBe(1);
   });
 
+  it("keeps the exact entries when the fuzzy query fails", async () => {
+    routeByUrl([
+      { match: "name:Sierkopas~", ok: false, status: 400 },
+      ...qualifierRoutes("%22Sierkopas%2C%20Germany%22", germanyOnly),
+    ]);
+
+    const result = await placeSearch("Sierkopas, Germany");
+
+    expect("matchType" in result).toBe(false);
+    expect(result.results[0].fullName).toBe("Germany");
+    expect(fuzzyFetches()).toBe(1);
+  });
+
   it("the in-context check ignores an explicit contextName", async () => {
     routeByUrl(
       qualifierRoutes(
