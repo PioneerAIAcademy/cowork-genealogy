@@ -70,9 +70,14 @@ function normalizeImageRef(ref: string): string {
  *  projectId is undefined (not a throw), so scope falls back to the anchor
  *  projectPath; for the cap that fallback is never reached (the unbound store's I/O
  *  throws before any cap is recorded or read), but the image cap falls back to
- *  its in-process count when the unbound store refuses, so two header-less patrons
- *  share the fallback bucket — the accepted
- *  known limitation in image-transcribe-tool-spec §5.8. On the file backend
+ *  its in-process count when the unbound store refuses. `sourceImageCaps` here
+ *  (OCR-truncation tracking, a lower-stakes cache than the browse cap) still pools
+ *  every such request under this shared scope string, unchanged. The browse cap
+ *  (`checkImageBrowseCap`, utils/browse-budget.ts) no longer does, as of issue
+ *  #3996: it additionally scopes a connector caller's no-project reads by
+ *  `connectorUserId(principal)` on TOP of this function's return value, so two
+ *  connector patrons calling with no project no longer share a count — see that
+ *  module's docstring and image-transcribe-tool-spec §5.8. On the file backend
  *  projectId is undefined — one process serves one project — so fall back to the
  *  normalized projectPath. When even that is absent (image_transcribe's own
  *  `projectPath` is optional), fall back to the `<no-project>` sentinel so a bare
