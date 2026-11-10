@@ -198,7 +198,7 @@ def test_dispose_named_items(before_state, after_state, test):
                 if not now.get("skip_category"):
                     errors.append(f"{iid}: skipped with no skip_category")
                 # A search that RAN is never `skipped`: `research_append` refuses it
-                # (decision 9 of docs/plan/attached-records-baseline.md), because a
+                # (research-append-tool-spec.md §8, the searched-item skip row), because a
                 # skip says nothing was searched and research-exhaustiveness reads a
                 # disposed item as settled.
                 if iid in logged:

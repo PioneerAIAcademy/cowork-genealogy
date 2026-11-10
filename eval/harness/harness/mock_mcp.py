@@ -424,9 +424,8 @@ def echo_query(args: dict[str, Any]) -> dict[str, Any]:
 # so grep RANKING_SKIPPED_NOTE to find both copies when editing either.
 RANKING_SKIPPED_NOTE = (
     "No `subjectId`, so match-score ranking and marriage jurisdiction hints did "
-    "not run. Pass the tree person this search is about as `subjectId` to enable "
-    "both. Omit it only when the search is not about a specific tree person — a "
-    "broad survey, or a person not yet in the tree."
+    "not run. Pass the searched tree person as `subjectId`. Omit it only for a "
+    "broad survey or a person not yet in the tree."
 )
 
 # Verbatim copies of UNLOGGED_SEARCHES_NOTE and NIL_SEARCH_NEEDS_LOG_NOTE in
@@ -437,12 +436,9 @@ RANKING_SKIPPED_NOTE = (
 # restatement of the pairing rule is a second implementation the drift test
 # cannot see.
 UNLOGGED_SEARCHES_NOTE = (
-    "{n} earlier staged search response(s) in this project have no research.json log "
-    "entry: {refs}. Call `research_log_append` for each, passing that ref as "
-    "`stagedResultsRef` — the staged file holds the search's own query, so the entry "
-    "is filled in host-side and needs no reconstruction from memory. Log each as you "
-    "go rather than batching them at the end. A search with no log entry is a search "
-    "that did not happen, and the staged response is deleted 24h after it was made."
+    "{n} earlier staged search(es) have no log entry: {refs}. Log each now: "
+    "`research_log_append` with that ref as `stagedResultsRef`. An unlogged staged "
+    "search is deleted 24h after it ran."
 )
 
 #: Verbatim copy of NO_PROJECT_MESSAGE_READ in
@@ -706,8 +702,9 @@ def _place_before_results(response: dict[str, Any], key: str) -> dict[str, Any]:
     return reordered
 
 
-# Compaction the real search tool applies to its INLINE results once they are
-# staged, per tool. Both are exported from the compiled build so this harness
+# Compaction the real search tool applies to its INLINE results, per tool: on
+# every answer for a tool in COMPACTS_UNSTAGED, otherwise only once its results
+# are staged. Both are exported from the compiled build so this harness
 # runs the production function rather than a Python restatement of it: a mock
 # that hands the agent a field production strips grades tool-usage and triage
 # against a shape production never sends (#1826, #2009 — both now covered by
@@ -716,6 +713,42 @@ _STAGED_COMPACTORS: dict[str, str] = {
     "record_search": "compactStagedRecordSearch",
     "fulltext_search": "compactStagedFulltextSearch",
 }
+
+#: Search tools whose compactor production runs on every answer, staged or not
+#: (record-search.ts, fulltext-search.ts), so an answer with no `projectPath` is
+#: compacted too.
+COMPACTS_UNSTAGED: frozenset[str] = frozenset({"record_search", "fulltext_search"})
+
+
+def _compact_unstaged_search(tool_name: str, response: dict[str, Any]) -> dict[str, Any]:
+    """Run the tool's compiled compactor on an answer that staged nothing.
+
+    Returns the response untouched, with a warning, when the build is absent or
+    node fails: the agent then sees the full fixture, which is a harness fault,
+    not a failed call.
+    """
+    compactor = _STAGED_COMPACTORS[tool_name]
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+    if not compactor_js.exists():
+        warnings.warn(f"mock {tool_name} compaction skipped: no engine build at {_MCP_BUILD}", stacklevel=2)
+        return response
+    script = (
+        f"import {{ {compactor} }} from '{_node_module_url(compactor_js)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const response = JSON.parse(readFileSync(0, 'utf-8'));"
+        f" {compactor}(response);"
+        " process.stdout.write(JSON.stringify(response));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(response), timeout=NODE_EVAL_TIMEOUT_LONG, store=False)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            warnings.warn(f"mock {tool_name} compaction printed nothing: {proc.stderr[:300]}", stacklevel=2)
+            return response
+        return json.loads(out)
+    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
+        warnings.warn(f"mock {tool_name} compaction failed in node ({exc})", stacklevel=2)
+        return response
 
 
 def _record_match_score(
@@ -893,8 +926,7 @@ def _stage_and_compact_search_results(
 
     Returns `(staged_handle, response, unlogged_count)`. `staged_handle` is None on
     a nil search or a staging failure, and in that case `response` comes back
-    untouched — compaction is only ever correct once the sidecar holds the full
-    payload. The compaction functions are idempotent, so a fixture already written
+    untouched. The compaction functions are idempotent, so a fixture already written
     in the compacted shape passes through unchanged. The third element is the staged
     backlog read before this call staged anything — handles, not a count, because
     the note names the refs (empty when unavailable).
@@ -928,7 +960,9 @@ def _stage_and_compact_search_results(
     compactor = _STAGED_COMPACTORS.get(tool_name)
     if compactor and compactor_js.exists():
         compact_import = f"import {{ {compactor} }} from '{_url(compactor_js)}';"
-        compact_call = f" if (r) {compactor}(input.response);"
+        # `staged` is attached by the caller after this returns, so the compactor
+        # is told the answer staged: record_search then drops its query echo.
+        compact_call = f" if (r) {compactor}(input.response, {{ staged: true }});"
     else:
         compact_import = ""
         compact_call = ""
@@ -980,7 +1014,7 @@ def _stage_and_compact_search_results(
         " const input = JSON.parse(readFileSync(0, 'utf-8'));"
         # Counted BEFORE staging, exactly as the real tools order it: a count taken
         # after would include the call being answered and fire on every first search.
-        " const unlogged = await unloggedStagedSearches(input.projectPath);"
+        " const unlogged = await unloggedStagedSearches(input.projectPath, input.tool);"
         " const r = await stageSearchResults(input);"
         f"{compact_call}"
         # Production's own annotation, run on a throwaway copy carrying the
@@ -1085,11 +1119,15 @@ def _stage_record_read(
     return {**inline, "staged": staged}
 
 
-#: The compiled function that drops `image_transcribe`'s inline text once the
-#: page is staged. Not in `_STAGED_COMPACTORS`: it takes the whole response,
-#: where those take the `{results}` payload `_stage_and_compact_search_results`
-#: hands them.
-_IMAGE_TRANSCRIBE_COMPACTOR = "compactStagedImageTranscribe"
+#: The compiled functions that shape `image_transcribe`'s answer: the lossless
+#: layout cleanup production runs on the OCR text, the digest, and the compactor
+#: every leg goes through (the staged text dropped, an inline one bounded,
+#: `metadata` and `nameExpansion` dropped). Not in `_STAGED_COMPACTORS`: the
+#: compactor takes the whole response, where those take the `{results}` payload
+#: `_stage_and_compact_search_results` hands them.
+_IMAGE_TRANSCRIBE_COMPACTOR = "compactImageTranscribeAnswer"
+_IMAGE_TRANSCRIBE_NORMALIZER = "normalizeTranscription"
+_IMAGE_TRANSCRIBE_DIGEST = "transcriptionDigest"
 
 #: The `image_transcribe` arguments production stages as the element's `source`.
 _IMAGE_TRANSCRIBE_SOURCE_KEYS = ("imageId", "ark", "memoryArtifactUrl", "file")
@@ -1104,11 +1142,12 @@ def _stage_image_transcribe(
 
     The payload is production's one-element `{ query, results }` under tool
     `image_transcribe`; the element's `id` is the `capture:<basename>` of a
-    `file`, else the image the caller named. Staging, the digest excerpt and the
-    strip all run in ONE node process, through the compiled `stageSearchResults`
-    and `compactStagedImageTranscribe`, so the strip has one definition. A
-    staging throw keeps the text inline with `staged: null` and `stagingError`,
-    as production does; a node failure returns the same shape, with a warning.
+    `file`, else the image the caller named. The layout cleanup, staging, the
+    digest and the strip all run in ONE node process, through the compiled
+    `normalizeTranscription`, `stageSearchResults`, `transcriptionDigest` and
+    `compactImageTranscribeAnswer`, so each has one definition. A staging throw
+    keeps the text inline with `staged: null` and `stagingError`, as production
+    does; a node failure returns the same shape, with a warning.
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
     compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
@@ -1151,20 +1190,19 @@ def _stage_image_transcribe(
 
     script = (
         f"import {{ stageSearchResults }} from '{_node_module_url(stager_js)}';"
-        f" import {{ {_IMAGE_TRANSCRIBE_COMPACTOR} }} from '{_node_module_url(compactor_js)}';"
+        f" import {{ {_IMAGE_TRANSCRIBE_COMPACTOR}, {_IMAGE_TRANSCRIBE_NORMALIZER},"
+        f" {_IMAGE_TRANSCRIBE_DIGEST} }} from '{_node_module_url(compactor_js)}';"
         " import { readFileSync } from 'node:fs';"
         " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-        " const el = input.element;"
+        " const el = { ...input.element,"
+        f" transcription: {_IMAGE_TRANSCRIBE_NORMALIZER}(input.element.transcription) }};"
         " let staged; let stagingError;"
         " try { staged = await stageSearchResults({ projectPath: input.projectPath,"
         " tool: 'image_transcribe', response: { query: input.query, results: [el] } }); }"
         " catch (e) { staged = null; stagingError = String(e?.message ?? e); }"
-        " const digest = { id: el.id, chars: el.transcription.length,"
-        " excerpt: el.transcription.slice(0, 300),"
-        " ...(el.found ? { found: el.found } : {}), ...(el.truncated ? { truncated: true } : {}) };"
-        " const { metadata, ...rest } = input.response;"
-        " const out = { ...rest, staged, ...(stagingError !== undefined ? { stagingError } : {}),"
-        " digest, ...(metadata !== undefined ? { metadata } : {}) };"
+        " const out = { ...input.response, transcription: el.transcription, staged,"
+        " ...(stagingError !== undefined ? { stagingError } : {}),"
+        f" digest: {_IMAGE_TRANSCRIBE_DIGEST}(el.id, el.transcription) }};"
         f" {_IMAGE_TRANSCRIBE_COMPACTOR}(out);"
         " process.stdout.write(JSON.stringify(out));"
     )
@@ -1187,8 +1225,46 @@ def _stage_image_transcribe(
         return _unstaged(f"{type(exc).__name__}: {exc}")
 
 
+def _inline_image_transcribe(response: dict[str, Any]) -> dict[str, Any]:
+    """A canned `image_transcribe` page as production answers with no project
+    (#4136): nothing staged or saved, the text cleaned and bounded, and
+    `metadata` and `nameExpansion` dropped, through the compiled
+    `normalizeTranscription` and `compactImageTranscribeAnswer`. A node failure
+    returns the page with only the project keys removed, with a warning.
+    """
+    inline = {k: v for k, v in response.items() if k not in _IMAGE_TRANSCRIBE_PROJECT_ONLY_KEYS}
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+
+    def _fallback(why: str) -> dict[str, Any]:
+        warnings.warn(f"mock image_transcribe could not be compacted ({why})", stacklevel=3)
+        return inline
+
+    if not compactor_js.exists():
+        return _fallback(f"no engine build at {_MCP_BUILD}")
+    script = (
+        f"import {{ {_IMAGE_TRANSCRIBE_COMPACTOR}, {_IMAGE_TRANSCRIBE_NORMALIZER} }}"
+        f" from '{_node_module_url(compactor_js)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const out = JSON.parse(readFileSync(0, 'utf-8'));"
+        " if (typeof out.transcription === 'string')"
+        f" out.transcription = {_IMAGE_TRANSCRIBE_NORMALIZER}(out.transcription);"
+        f" {_IMAGE_TRANSCRIBE_COMPACTOR}(out);"
+        " process.stdout.write(JSON.stringify(out));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(inline), timeout=NODE_EVAL_TIMEOUT_LONG, store=False)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            return _fallback(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
+        parsed = json.loads(out)
+        return parsed if isinstance(parsed, dict) else _fallback("the node script returned no object")
+    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
+        return _fallback(f"{type(exc).__name__}: {exc}")
+
+
 def _unlogged_staged_handles(
     workspace: Path,
+    tool_name: str,
     *,
     args: dict[str, Any] | None = None,
     response: dict[str, Any] | None = None,
@@ -1217,7 +1293,7 @@ def _unlogged_staged_handles(
         + " import { readFileSync } from 'node:fs';"
         " const input = JSON.parse(readFileSync(0, 'utf-8'));"
         " process.stdout.write(JSON.stringify({"
-        " unlogged: await unloggedStagedSearches(input.projectPath),"
+        " unlogged: await unloggedStagedSearches(input.projectPath, input.tool),"
         + (
             " surnameHint: surnameVariantHints(input.args, input.response) ?? null"
             if with_hint
@@ -1230,6 +1306,7 @@ def _unlogged_staged_handles(
             script,
             json.dumps({
                 "projectPath": str(workspace).replace("\\", "/"),
+                "tool": tool_name,
                 "args": args,
                 "response": response or {},
             }),
@@ -1679,10 +1756,11 @@ def create_mock_server(
             # Stage the canned payload for search tools so the live
             # research_log_append can finalize the sidecar (mirrors the real
             # tool returning staged.resultsRef), then apply the compaction the
-            # real tool applies to its inline results once staged — both by
-            # calling the compiled build, so the agent is graded on the shape
-            # production actually sends. Only when projectPath was passed and
-            # results came back; nil searches retain nothing and compact nothing.
+            # real tool applies to its inline results — both by calling the
+            # compiled build, so the agent is graded on the shape production
+            # actually sends. Staging needs projectPath and results; nil searches
+            # retain nothing. A tool in COMPACTS_UNSTAGED compacts every answer
+            # with results, staged or not; the others only once staged.
             # Resolved BEFORE staging so the single node process below can run
             # production's own `annotateResultsWithRanking` over the staged rows
             # in the same process. Only the match depends on `args`, so moving it
@@ -1712,6 +1790,8 @@ def create_mock_server(
                 )
                 if staged is not None:
                     response = {**response, "staged": staged}
+                elif _name in COMPACTS_UNSTAGED:
+                    response = _compact_unstaged_search(_name, response)
             elif (
                 _name in STAGING_SEARCH_TOOLS
                 and _workspace is not None
@@ -1723,6 +1803,7 @@ def create_mock_server(
                 # The same process computes record_search's surnameVariantHints.
                 _unlogged_staged, _surname_hint = _unlogged_staged_handles(
                     _workspace,
+                    _name,
                     args=dict(args) if _name == "record_search" else None,
                     response=response,
                 )
@@ -1730,6 +1811,14 @@ def create_mock_server(
                     response = {**response, SURNAME_VARIANT_HINTS_KEY: _surname_hint}
             else:
                 _unlogged_staged = []
+                if (
+                    _name in COMPACTS_UNSTAGED
+                    and isinstance(response, dict)
+                    and "error" not in response
+                    and isinstance(response.get("results"), list)
+                    and response.get("results")
+                ):
+                    response = _compact_unstaged_search(_name, response)
                 # A nil record_search with no projectPath spawns no process
                 # otherwise; it gets one only when there is a nil to hint on.
                 if (
@@ -1788,7 +1877,7 @@ def create_mock_server(
             if _no_project_read and args.get("file") is not None:
                 response = {"ok": False, "reason": "no_project", "errors": [NO_PROJECT_MESSAGE_READ]}
             elif _no_project_read and "error" not in response:
-                response = {k: v for k, v in response.items() if k not in _IMAGE_TRANSCRIBE_PROJECT_ONLY_KEYS}
+                response = _inline_image_transcribe(response)
             elif (
                 _name == "image_transcribe"
                 and _workspace is not None

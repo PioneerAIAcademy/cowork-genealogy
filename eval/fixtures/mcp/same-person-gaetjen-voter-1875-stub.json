@@ -1,0 +1,22 @@
+{
+  "tool": "same_person",
+  "description": "same_person for the 1875 San Francisco Great Register persona (Hermann Gatjen, 21, b. Germany, naturalized 13 Aug 1875) against stub I5, minted from the Germans to America index persona by materialize_facts on the gaetjen-namesake-confident-link scenario, at the live score measured on 2026-11-03: no match, 0.0043.",
+  "args": {
+    "assertionId": "~a_00",
+    "treePersonId": "~I5"
+  },
+  "response": {
+    "score": 0.004316813,
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "p_13765161406",
+      "name": "Hermann Gatjen",
+      "role": "registrant"
+    },
+    "treePerson": {
+      "id": "I5",
+      "name": "Herm Gaetjen"
+    }
+  }
+}

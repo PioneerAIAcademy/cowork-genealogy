@@ -26,6 +26,8 @@ import {
   withTranscriptionSlot,
 } from "../utils/ocr.js";
 import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.js";
+import { connectorUserId } from "../utils/user-limits.js";
+import { monotonicNow } from "../utils/fs-budget.js";
 import { getProjectStore } from "../store/project-store.js";
 import {
   classifyProjectPath,
@@ -35,7 +37,11 @@ import {
   type NoProjectResult,
 } from "../utils/project-io.js";
 import { stageSearchResults, type StagedHandle } from "../utils/results-staging.js";
-import { compactStagedImageTranscribe } from "../utils/staged-compaction.js";
+import {
+  compactImageTranscribeAnswer,
+  normalizeTranscription,
+  transcriptionDigest,
+} from "../utils/staged-compaction.js";
 import type {
   ImageTranscribeInput,
   ImageTranscribeResult,
@@ -48,9 +54,37 @@ import type {
 // their import path after the extraction to src/utils/ (issue #2183).
 export { OCR_MAX_TOKENS, MAX_OCR_INPUT_BYTES };
 
-// The digest's bounded excerpt (issue #2489): enough for a caller to triage a
-// staged transcription without asking for the full text.
-const DIGEST_EXCERPT_CHARS = 300;
+// Connector time budget (self-hosted beta E5, issue #3996). Claude's per-call
+// timeout was measured at 230s (issue #3529 item 4, 2026-11-08); 180s leaves
+// room for the trip both ways and the staging write. The deadline starts when
+// the tool is entered (`enteredAt` below), so the Memories lookup, the fetch
+// and the OCR all spend from it. Applies only to a connector-surface caller
+// (`connectorUserId(principal) !== undefined`); LOCAL and the worker keep
+// today's unbudgeted behavior (the 90s fetch + its fallback, the full 180s
+// `OCR_TIMEOUT_MS`).
+const CONNECTOR_TRANSCRIBE_BUDGET_MS = 180_000;
+
+// Well under the budget: the download leg measures p50 1.9s / max 8.0s
+// (fs-image-fetch.ts's IMAGE_FETCH_TIMEOUT_MS comment). One attempt only for a
+// connector caller — no fallback-URL retry — so this is also the whole fetch
+// leg's worst case, not a per-attempt figure multiplied by two.
+const CONNECTOR_FETCH_TIMEOUT_MS = 30_000;
+
+// Reserved off the OCR budget for what runs after the OCR returns and before
+// the call ends: saveSourceImage's write and stageSearchResults's write.
+const CONNECTOR_STAGING_MARGIN_MS = 5_000;
+
+/** Whichever is tighter wins: `capMs`, or what `remainingMs` leaves after
+ *  `marginMs` — floored to a whole millisecond at least 1, never zero or
+ *  negative. `remainingMs` comes from `monotonicNow()` (`performance.now()`),
+ *  which is fractional, unlike `Date.now()`; passing a non-integer through to
+ *  `fetchWithTimeout`/`AbortSignal.timeout` throws `ERR_OUT_OF_RANGE` (Node
+ *  requires an integer there), so this is the one place that must round.
+ *  Shared by the connector fetch-leg and OCR-leg clamps below; `marginMs`
+ *  defaults to 0 for the fetch leg, which reserves nothing past it. */
+function clampToBudget(remainingMs: number, capMs: number, marginMs = 0): number {
+  return Math.max(1, Math.floor(Math.min(capMs, remainingMs - marginMs)));
+}
 
 /**
  * The content type an uploaded file actually IS, decided by its magic bytes and
@@ -174,6 +208,15 @@ async function imageTranscribeToolInner(
    */
   opts: { ocrTimeoutMs?: number; imageKey?: string } = {},
 ): Promise<ImageTranscribeResult | NoProjectResult> {
+  // The connector time budget (#3996) starts HERE, at entry — before the
+  // Memories lookup, the fetch and the OCR all have a chance to spend from it.
+  // monotonicNow() (utils/fs-budget.ts), not Date.now(): a wall-clock step
+  // (an NTP correction, a host suspend/resume) must never hand a connector
+  // call MORE time than the budget actually allows.
+  const enteredAt = monotonicNow();
+  const isConnector = connectorUserId(principal) !== undefined;
+  const remainingBudgetMs = (): number => CONNECTOR_TRANSCRIBE_BUDGET_MS - (monotonicNow() - enteredAt);
+
   input = foldImageArkInput(input, "image_transcribe");
   assertOneImageForm(input);
 
@@ -259,7 +302,7 @@ async function imageTranscribeToolInner(
     label = resolved.label;
 
     // The hard image cap (§5.8): refuse before the fetch and the OCR.
-    const browse = await checkImageBrowseCap(input, input.projectPath, "image_transcribe");
+    const browse = await checkImageBrowseCap(input, input.projectPath, "image_transcribe", principal);
 
     // Resolve credentials/config before FETCHING the image: a missing key should
     // fail fast and never leave a fetched scan unused. It sits below the input
@@ -276,11 +319,18 @@ async function imageTranscribeToolInner(
       groupPlace = imageGroupPlace({ imageId: input.imageId, ark: input.ark }, principal);
     }
 
+    // One download attempt for a connector caller — no fallback-URL retry —
+    // with a per-attempt timeout well under the connector budget (#3996).
+    // clampToBudget floors at 1ms: a memoryArtifactUrl fetch hands this value
+    // straight to AbortSignal.timeout() (fetchFsImageBytes sends no principal
+    // for that shape), which throws on a negative number rather than failing
+    // cleanly, if the Memories lookup above already spent the whole budget.
     const fetched = await fetchFsImageBytes(
       resolved.url,
-      resolved.fallbackUrl,
+      isConnector ? undefined : resolved.fallbackUrl,
       principal,
       resolved.memoryShape,
+      isConnector ? { timeoutMs: clampToBudget(remainingBudgetMs(), CONNECTOR_FETCH_TIMEOUT_MS) } : {},
     );
     await recordImageBrowse(browse);
     bytes = fetched.bytes;
@@ -300,7 +350,19 @@ async function imageTranscribeToolInner(
 
   // One budget spans the OCR read AND the found check: the second call runs on
   // what the first leaves, so lookingFor never widens this leg's worst case.
-  const ocrBudgetMs = Math.max(1, Math.min(opts.ocrTimeoutMs ?? OCR_TIMEOUT_MS, OCR_TIMEOUT_MS));
+  // Reuses clampToBudget for the same cap-at-OCR_TIMEOUT_MS shape the
+  // connector clamps below use; `opts.ocrTimeoutMs` is always a whole
+  // millisecond value, so clampToBudget's floor is a no-op here.
+  const nominalOcrBudgetMs = clampToBudget(opts.ocrTimeoutMs ?? OCR_TIMEOUT_MS, OCR_TIMEOUT_MS);
+  // For a connector caller, additionally clamp to what the overall 180s budget
+  // has left (minus a fixed margin for the staging write that runs after the
+  // OCR returns) — whichever cap is tighter wins, so person_read's own ~40s
+  // memories-phase budget (`opts.ocrTimeoutMs`) still applies even here.
+  // runOcr/runFoundCheck stay principal-free (#3996); this is computed here,
+  // not passed down.
+  const ocrBudgetMs = isConnector
+    ? clampToBudget(remainingBudgetMs(), nominalOcrBudgetMs, CONNECTOR_STAGING_MARGIN_MS)
+    : nominalOcrBudgetMs;
   const ocrStartedAt = Date.now();
 
   // The transport, the size refusal, the single transport retry, the status
@@ -316,7 +378,7 @@ async function imageTranscribeToolInner(
     timeoutMs: ocrBudgetMs,
     maxTokens: OCR_MAX_TOKENS,
   });
-  const transcription = ocr.text;
+  const transcription = normalizeTranscription(ocr.text);
   const truncated = ocr.truncated;
   const truncationNotice = ocr.truncationNotice;
 
@@ -366,7 +428,7 @@ async function imageTranscribeToolInner(
   // read: a target may sit below the cut, so a half-read page must never yield
   // a clean NOT FOUND negative (#1974). Best-effort — any failure omits `found`
   // (the transcription is the primary payload) — and it runs BEFORE staging so
-  // the staged element and the digest carry it.
+  // the staged element carries it.
   const key = input.lookingFor?.trim();
   let found: "FOUND" | "NOT FOUND" | undefined;
   if (key && !truncated) {
@@ -424,13 +486,7 @@ async function imageTranscribeToolInner(
       staged = null;
       stagingError = error instanceof Error ? error.message : String(error);
     }
-    digest = {
-      id,
-      chars: transcription.length,
-      excerpt: transcription.slice(0, DIGEST_EXCERPT_CHARS),
-      ...(found ? { found } : {}),
-      ...(truncated ? { truncated: true as const } : {}),
-    };
+    digest = transcriptionDigest(id, transcription);
   }
 
   const viewerUrl = imageViewerUrl(
@@ -476,7 +532,7 @@ async function imageTranscribeToolInner(
  * The MCP entry point. In a project (issue #2490, lead ruling 2026-10-16) the
  * page is staged and the inline `transcription` dropped, so the caller gets
  * `staged.resultsRef`, `digest` and `found`; the text comes back inline only
- * when staging failed.
+ * when staging failed. Every leg goes through `compactImageTranscribeAnswer`.
  *
  * With no project — no `projectPath`, or a folder holding neither project file —
  * a FamilySearch scan or memory is read with `projectPath` removed, so nothing
@@ -496,7 +552,7 @@ export async function imageTranscribeMcpTool(
   if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
   if (cls === "missing_arg" || cls === "no_project") {
     const { projectPath: _dropped, ...unsaved } = input;
-    return imageTranscribeTool(unsaved, principal);
+    return compactOrPass(await imageTranscribeTool(unsaved, principal));
   }
   return compactOrPass(await imageTranscribeTool(input, principal));
 }
@@ -505,7 +561,7 @@ function compactOrPass(
   out: ImageTranscribeResult | NoProjectResult,
 ): ImageTranscribeToolResponse | NoProjectResult {
   if ("ok" in out) return out;
-  return compactStagedImageTranscribe<ImageTranscribeToolResponse>(out);
+  return compactImageTranscribeAnswer(out);
 }
 
 export const imageTranscribeToolSchema = {

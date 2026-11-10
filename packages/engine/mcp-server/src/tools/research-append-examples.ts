@@ -248,8 +248,7 @@ const EXAMPLES: Record<string, string> = {
     "untyped": { "volumes": 1, "browse_only": 1, "fulltext_only": 0 }
   },
   "source": "locality-guide",
-  "created": "2026-07-18",
-  "updated": null
+  "created": "2026-07-18"
 }`,
 
   namesakes: `{

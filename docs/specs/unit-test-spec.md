@@ -139,6 +139,14 @@ and a regrade prints the same count. Removing the fallback is the last step of
 the brief sweep. A scenario name must match its directory exactly; a mis-cased
 name raises `InvalidScenarioError` rather than rendering `(stateless test)`.
 
+An `oversize_tool_result` entry in `output.warnings` (a harness advisory) means
+an MCP tool's answer was over Claude Code's token cap and reached the agent named
+in the entry only as a "too large, saved to file" notice. Its `can_read` says
+whether that agent holds `Read` (from its agent file's `tools:`; the main thread
+always does): `false` means the agent never saw that tool's answer, `true` means it
+could have opened the saved file. It is read from the run's transcripts, not the
+fixture's size, and is not shown to the judge.
+
 **How scenarios reach Claude:** The harness creates a temp directory per test, copies scenario files into it, and sets it as the `cwd` for the Claude Agent SDK session. Skills read `research.json` and `tree.gedcomx.json` with the `Read` tool exactly as they do in Cowork — no mocking of file I/O. See Section 15 for full details.
 
 The README.md describes the scenario in terms genealogists understand:
@@ -976,7 +984,7 @@ Optional object overriding the harness's default execution limits. All fields ar
 | `run_skills` | array | `[]` | **Positive tests only.** Sub-skills this test expects to EXECUTE for real — see below |
 | `stub_skills` | array | `[]` | **Positive tests only.** Sub-skills this test does not want executed — see below |
 | `stop_at_stub` | boolean | `false` | **Positive tests only.** The first hand-off to a stubbed name ends the run instead of continuing — see below. Requires a non-empty `stub_skills` |
-| `step_mode` | string | omitted | The step boundary this test's turn runs under (`step` / `job` / `wrapup`; decision 25, `docs/plan/research-step-mode.md`). Omitted means no boundary, which is what every committed test runs under |
+| `step_mode` | string | omitted | The step boundary this test's turn runs under (`step` / `job` / `wrapup`; decision 25, `docs/plan/research-step-mode.md`). Omitted means no boundary, which is what every committed test runs under except the few `test_step_mode_wiring.DECLARING_TESTS` lists |
 
 **`stub_skills` — stubbing a sub-skill the test isn't testing.** When the skill
 under test delegates via `Skill(...)`, the callee runs inside the caller's turn
