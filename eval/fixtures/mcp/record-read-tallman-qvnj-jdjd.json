@@ -1,0 +1,209 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age. The raw recapi body carried the age (PR_AGE 26), which record_read never returned, so it rides in `indexFields`, where a captured sidecar keeps it; the mock never serves it inline and computes `birthRanges` from it. The age is not in the bundle: it is the age the issue gives (1850: 11, 1865: 26, 1910: 71, and the death indexes 74) or the year the index's bare birth year implies (1870: 29, 1880: 40).",
+  "args": {
+    "recordId": "~QVNJ-JDJD"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_101005040322",
+        "ark": "ark:/61903/1:1:QVNJ-JDJD",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "d5d44d84-7473-4d4c-97bd-55b39084abf4",
+            "type": "BirthName",
+            "given": "Edward",
+            "surname": "Tallman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "80898d63-b266-44db-b9ce-95d039446083",
+            "type": "Birth",
+            "date": "1839",
+            "standard_date": "1839"
+          },
+          {
+            "id": "096119ad-8e1e-4191-aece-d33e2721a198",
+            "type": "Census",
+            "primary": true,
+            "date": "1865",
+            "standard_date": "1865",
+            "place": ", Essex, Essex, New York, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_101005040323",
+        "ark": "ark:/61903/1:1:QVNJ-JDJ6",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "45ba8025-02a7-4769-83c1-a4df75c38daf",
+            "type": "BirthName",
+            "given": "Mary",
+            "surname": "Tallman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "c6ff9f95-686b-4d3e-ae7d-553f78083d54",
+            "type": "Census",
+            "primary": true,
+            "date": "1865",
+            "standard_date": "1865",
+            "place": ", Essex, Essex, New York, United States"
+          },
+          {
+            "id": "364884e8-bd15-457a-aa2a-f902c2494b05",
+            "type": "Birth",
+            "date": "1841",
+            "standard_date": "1841"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_101005040324",
+        "ark": "ark:/61903/1:1:QVNJ-JDJX",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "a092892f-40f9-48a1-8647-5163c5d86578",
+            "type": "BirthName",
+            "given": "Lilly",
+            "surname": "Tallman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "283d4fb8-0d53-40bf-b1ec-3bd72b4675d1",
+            "type": "Census",
+            "primary": true,
+            "date": "1865",
+            "standard_date": "1865",
+            "place": ", Essex, Essex, New York, United States"
+          },
+          {
+            "id": "741aa2b7-17c8-4373-86f9-8c2f646038c1",
+            "type": "Birth",
+            "date": "1865",
+            "standard_date": "1865"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "f8ff8bc5-fc92-466a-8340-035f89ba48e7",
+        "type": "ParentChild",
+        "parent": "p_101005040323",
+        "child": "p_101005040324"
+      },
+      {
+        "id": "ea1963a4-ab44-4f81-9535-f7ce50cf5358",
+        "type": "Couple",
+        "person1": "p_101005040322",
+        "person2": "p_101005040323"
+      },
+      {
+        "id": "e11e2011-0d99-4a5d-8f74-06dbd923ce78",
+        "type": "ParentChild",
+        "parent": "p_101005040322",
+        "child": "p_101005040324"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_102051415822",
+        "resource_type": "Record",
+        "title": "Household of Edward Tallman, \"New York, State Census, 1865\"",
+        "citation": "\"New York, State Census, 1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNJ-JDJD : Mon Jan 20 18:56:55 UTC 2025), Entry for Edward Tallman and Mary Tallman, 1865.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:QK1K-DSMG",
+        "coverage": {
+          "record_type": "Census"
+        }
+      },
+      {
+        "id": "sd_c_1491284",
+        "resource_type": "Collection",
+        "title": "New York, State Census, 1865",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1491284",
+        "coverage": {
+          "place_rep_id": "339",
+          "date_range": "1865/1865",
+          "record_type": "Census",
+          "standard_place": "New York, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6WVJ-1",
+        "coverage": {
+          "place_rep_id": "393125",
+          "date_range": "1865",
+          "record_type": "Census",
+          "standard_place": "Essex, New York, United States"
+        }
+      },
+      {
+        "id": "sd_p_101005040323",
+        "resource_type": "Person",
+        "title": "Mary Tallman, \"New York, State Census, 1865\"",
+        "citation": "\"New York, State Census, 1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNJ-JDJ6 : Mon Jan 20 18:56:55 UTC 2025), Mary Tallman in entry for Edward Tallman, 1865.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QVNJ-JDJ6"
+      },
+      {
+        "id": "sd_p_101005040324",
+        "resource_type": "Person",
+        "title": "Lilly Tallman, \"New York, State Census, 1865\"",
+        "citation": "\"New York, State Census, 1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNJ-JDJX : Mon Jan 20 18:56:55 UTC 2025), Lilly Tallman in entry for Edward Tallman, 1865.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QVNJ-JDJX"
+      },
+      {
+        "id": "sd_p_101005040322",
+        "resource_type": "Person",
+        "title": "Edward Tallman, \"New York, State Census, 1865\"",
+        "citation": "\"New York, State Census, 1865\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVNJ-JDJD : Mon Jan 20 18:56:55 UTC 2025), Edward Tallman, 1865.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QVNJ-JDJD"
+      },
+      {
+        "id": "sd_auto_M9JT-92D",
+        "resource_type": "auto",
+        "title": "United States, Residences, Census, from 1793 to 1964",
+        "coverage": {
+          "place_rep_id": "1",
+          "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+          "standard_place": "United States"
+        }
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:S3HY-6WVJ-1",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:S3HY-6WVJ-1",
+    "indexFields": {
+      "p_101005040322": {
+        "age": "26"
+      }
+    }
+  }
+}

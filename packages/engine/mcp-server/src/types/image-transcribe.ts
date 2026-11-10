@@ -32,17 +32,20 @@ export interface ImageTranscribeInput {
 }
 
 /**
- * What `image_transcribe` returns across the MCP boundary. In a project (issue
- * #2490) the page is staged and `transcription` is dropped, so it is present
- * only when `staged` is null. With no project (issue #4136) nothing is staged
- * and `transcription` is always present. person_read's in-process call gets
- * `ImageTranscribeResult`.
+ * What `image_transcribe` returns across the MCP boundary, shaped by
+ * `compactImageTranscribeAnswer`. In a project (issue #2490) the page is staged
+ * and `transcription` is dropped, so it is present only when `staged` is null.
+ * With no project (issue #4136) nothing is staged and `transcription` is always
+ * present, cut at `INLINE_TRANSCRIPTION_MAX_CHARS`. person_read's in-process
+ * call gets `ImageTranscribeResult`.
  */
 export interface ImageTranscribeToolResponse {
-  /** Faithful full-page OCR. Never doctored: a truncation is signalled by the
-   *  sibling `truncated`/`truncationNotice` fields, not by splicing prose into
-   *  this text. Across the MCP boundary, present with no project, or in a
-   *  project only when staging failed. */
+  /** Faithful full-page OCR. Never doctored: its layout is cleaned losslessly
+   *  (`normalizeTranscription`), and a truncation is signalled by the sibling
+   *  `truncated`/`truncationNotice` fields, not by splicing prose into this
+   *  text. Across the MCP boundary, present with no project, or in a project
+   *  only when staging failed; inline, it is cut at
+   *  `INLINE_TRANSCRIPTION_MAX_CHARS` and `truncationNotice` says so. */
   transcription?: string;
   /** FamilySearch viewer URL for the image that was transcribed. Present for
    *  imageId and ark inputs; absent for file and memoryArtifactUrl (issue #2854). */
@@ -52,8 +55,9 @@ export interface ImageTranscribeToolResponse {
    *  transcription above is PARTIAL and the rest of the page is unread, not
    *  empty. Absent on a complete read. */
   truncated?: true;
-  /** Tool-voiced, human-readable companion to `truncated` — a plain sentence
-   *  the caller can surface without improvising. Present iff `truncated`. */
+  /** Tool-voiced, human-readable sentences the caller can surface without
+   *  improvising. Present when `truncated`, and when the inline `transcription`
+   *  was cut for delivery; that cut sets no `truncated`. */
   truncationNotice?: string;
   /** Present only when `lookingFor` was provided — decided by a second,
    *  text-only call over the transcription (`runFoundCheck`), never by the OCR
@@ -64,14 +68,6 @@ export interface ImageTranscribeToolResponse {
   /** Project-relative path of the saved scan (images/<key>.jpg), present only
    *  when projectPath was supplied and the save succeeded (§8.5). */
   imageRef?: string;
-  /** Present when `lookingFor` contained a recognized given name and expansion
-   *  fired. `expanded` is the rewritten `lookingFor` the found check saw — the
-   *  OCR prompt carries no names (issue #3718). */
-  nameExpansion?: {
-    original: string;
-    expanded: string;
-    expansions: Record<string, string[]>;
-  };
   /**
    * The staging handle (search-result-staging-spec.md), present iff
    * `projectPath` was given: the transcription is retained host-side as a
@@ -83,16 +79,34 @@ export interface ImageTranscribeToolResponse {
   /** Why `staged` is null — staging is best-effort and never fails the read. */
   stagingError?: string;
   /**
-   * What a caller triages on without the full text (issue #2489): the id the
-   * staged element carries, the transcription's length, a bounded excerpt, and
-   * the `found` / `truncated` markers. Present iff `projectPath` was given.
+   * What a caller triages on without the full text (issue #2489), built by
+   * `transcriptionDigest`: the id the staged element carries, the staged
+   * transcription's length, and a bounded excerpt of its opening words.
+   * Present iff `projectPath` was given.
    */
   digest?: {
     id: string;
     chars: number;
     excerpt: string;
-    found?: "FOUND" | "NOT FOUND";
-    truncated?: true;
+  };
+  /** Present across the MCP boundary only when a Memories *page* URL was
+   *  resolved: the artifact URL it resolved to, so a later read can pass it
+   *  directly and skip the lookup. */
+  metadata?: {
+    memoryArtifactUrl?: string;
+  };
+}
+
+/** `imageTranscribeTool`'s own return, which always carries the text. */
+export interface ImageTranscribeResult extends ImageTranscribeToolResponse {
+  transcription: string;
+  /** Present when `lookingFor` contained a recognized given name and expansion
+   *  fired. `expanded` is the rewritten `lookingFor` the found check saw — the
+   *  OCR prompt carries no names (issue #3718). Not in the MCP answer. */
+  nameExpansion?: {
+    original: string;
+    expanded: string;
+    expansions: Record<string, string[]>;
   };
   metadata: {
     imageId?: string;
@@ -110,11 +124,6 @@ export interface ImageTranscribeToolResponse {
     /** Raw input size in bytes (sent to OCR as-is; no pre-processing). */
     sizeBytes: number;
   };
-}
-
-/** `imageTranscribeTool`'s own return, which always carries the text. */
-export interface ImageTranscribeResult extends ImageTranscribeToolResponse {
-  transcription: string;
 }
 
 /** The element `image_transcribe` stages (snake_case: persisted project state). */

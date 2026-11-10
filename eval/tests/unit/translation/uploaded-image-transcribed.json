@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_translation_016",
+    "skill": "translation",
+    "name": "A project upload is read through image_transcribe and sidecar_read, then translated",
+    "type": "positive",
+    "description": "Issue #4311. The delegation names a scan the researcher uploaded to the project, uploads/st-wendel-taufen-1841.jpg. On a connector that file is in the tool server's store, not the VM, so the agent transcribes it with image_transcribe({ file }) and reads the full staged page with sidecar_read — the response holds only a 300-character digest, which does not reach entry 7. It translates entry 7 and says the transcription is the tool's OCR.",
+    "tags": [
+      "german",
+      "baptism",
+      "parentage",
+      "direct-arm",
+      "reads-upload"
+    ]
+  },
+  "input": {
+    "delegation": "I uploaded a page from the St. Wendel baptism register to the project: uploads/st-wendel-taufen-1841.jpg. Translate entry Nr. 7 for me.\n\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "image-transcribe-uploaded-st-wendel-baptisms-1841"
+  ],
+  "judge_context": [
+    "This is the direct-agent arm: no routing skill is staged, and the delegation above is relayed verbatim into the agent. Grade the agent's own behaviour — there is no router to catch anything.",
+    "The project's research subject (the Flynn family) has nothing to do with this request; the researcher asked for a translation of an uploaded German page. Do not mark the agent down for not relating the entry to the project.",
+    "Entry Nr. 7 reads: 'Den 12ten März 1841 wurde getauft Anna Maria, geboren den 10ten dieses Monats, eheliche Tochter des Peter Schmitt, Ackerer allhier, und der Catharina geb. Klein. Pathen: Johann Klein, Großvater mütterlicherseits, und Anna Maria Becker, ledig, aus Urweiler. Pastor J. Hoffmann.'",
+    "Should translate it: on 12 March 1841 Anna Maria was baptized, born the 10th of this month (10 March 1841), legitimate daughter of Peter Schmitt, farmer of this place, and Catharina née Klein; godparents Johann Klein, maternal grandfather, and Anna Maria Becker, single, of Urweiler; Pastor J. Hoffmann. Should explain `ehelich` (legitimate), `geb.` (née), `Ackerer` (farmer), `allhier` (of this place), `Pathen` (godparents), `ledig` (single), and note that the godfather's stated relationship makes him a source for the mother's father.",
+    "Should say the original text is the tool's OCR transcription, not the agent's own paleographic reading of the image. The transcript is the original text here; translating entries 5 or 6 instead of 7 is a failure.",
+    "How the image was read (image_transcribe on the upload, sidecar_read on the staged page, no Read) and the one research_log_append call are checked by validators, not by you; do not grade them."
+  ]
+}
