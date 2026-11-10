@@ -3220,12 +3220,13 @@ def create_app(
             if auth.familysearch_configured():
                 return RedirectResponse(f"{base}/auth/familysearch/login?next=upload/{project_id}", status_code=303)
             return RedirectResponse(f"{base}/", status_code=303)
-        # list_projects is the caller's own projects (owner_id = user.id), so one lookup is
-        # both the owner check and the label: missing, foreign and NULL-owner ids miss alike.
-        row = next((p for p in await _store(request).list_projects(user.id) if p["id"] == project_id), None)
-        if row is None:
+        # One project's owner, then its research.json for the label: missing, foreign and
+        # NULL-owner ids miss alike, without listing every project the user has.
+        store = _store(request)
+        if await store.project_owner(project_id) != user.id:
             return HTMLResponse(pages.not_found_page(), status_code=404)
-        return HTMLResponse(pages.upload_page(project_id=project_id, label=row.get("label")))
+        research = (await store.documents(project_id, ("research.json",))).get("research.json", (0, None))[1]
+        return HTMLResponse(pages.upload_page(project_id=project_id, label=project_label(research)))
 
     @beta.api_route("/pdfjs/{name}", methods=["GET", "HEAD"])
     async def pdfjs_file(name: str) -> Response:
