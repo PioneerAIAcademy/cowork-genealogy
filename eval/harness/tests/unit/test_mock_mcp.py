@@ -2655,9 +2655,16 @@ def test_image_transcribe_stages_the_page_and_drops_the_inline_text(tmp_path):
     assert body.get("staged"), body.get("stagingError")
     assert "transcription" not in body, "the page went back inline although it was staged"
     assert body["digest"]["chars"] == len(full)
-    assert body["digest"]["excerpt"] == full[:300]
+    # The compiled `transcriptionDigest`, not a raw prefix: the blank line goes.
+    excerpt = body["digest"]["excerpt"]
+    assert len(excerpt) <= 300
+    assert excerpt.startswith("Will Book G, page 112. Schuylkill County, Pennsylvania.\nIn the name of God, Amen.")
     assert body["digest"]["id"] == "007936749_00008"
-    assert body["metadata"]["model"]
+    assert set(body["digest"]) == {"id", "chars", "excerpt"}
+    # Production's compactor drops what no caller reads; the staged element
+    # keeps the model and the size.
+    assert "metadata" not in body
+    assert "nameExpansion" not in body
     envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
     assert envelope["tool"] == "image_transcribe"
     assert envelope["payload"]["query"] == _WILL_ARGS
@@ -2712,6 +2719,60 @@ def test_image_transcribe_without_project_path_returns_the_page_inline(tmp_path)
     assert body["transcription"].startswith("Will Book G, page 112.")
     for key in ("staged", "digest", "imageRef", "stagingError"):
         assert key not in body
+
+
+def _messy_page_server(tmp_path, transcription):
+    """A mock server over one canned page carrying production's in-process
+    extras (`metadata`, `nameExpansion`), with the workspace at `tmp_path`."""
+    fixtures = tmp_path / "fixtures"
+    fixtures.mkdir()
+    (fixtures / "page.json").write_text(json.dumps({
+        "tool": "image_transcribe",
+        "args": {"imageId": "~"},
+        "response": {
+            "transcription": transcription,
+            "found": "FOUND",
+            "nameExpansion": {"original": "Anna", "expanded": "Anna (also known as Ann)", "expansions": {"Anna": ["Ann"]}},
+            "metadata": {"imageId": "004884748_02613", "contentType": "image/jpeg", "model": "m", "sizeBytes": 3},
+        },
+    }), encoding="utf-8")
+    _s, _c, tools_by_name = create_mock_server(["page"], fixtures, workspace=tmp_path)
+    return tools_by_name
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_staged_page_is_cleaned_before_staging_and_digested_by_the_build(tmp_path):
+    """Production cleans the OCR layout before staging and digests the cleaned
+    text; the mock runs the same compiled functions, so `digest.chars` matches
+    the staged element the e2e orchestrator joins on."""
+    _copy_scenario(tmp_path)
+    tools_by_name = _messy_page_server(tmp_path, "Name      \r\nAnna Weber\t\n\n\n\n==========\nPeter Weber")
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "image_transcribe", {"imageId": "004884748_02613", "projectPath": str(tmp_path)})
+    )
+    assert body.get("staged"), body.get("stagingError")
+    cleaned = "Name\nAnna Weber\n\n===\nPeter Weber"
+    envelope = json.loads((tmp_path / body["staged"]["resultsRef"]).read_text(encoding="utf-8"))
+    assert envelope["payload"]["results"][0]["transcription"] == cleaned
+    assert body["digest"] == {"id": "004884748_02613", "chars": len(cleaned), "excerpt": "Name\nAnna Weber\nPeter Weber"}
+    assert sorted(body) == ["digest", "found", "staged"]
+
+
+@pytest.mark.requires_engine_build
+def test_image_transcribe_without_a_project_runs_the_compiled_compactor(tmp_path):
+    """The no-project answer goes through production's compactor too: the text
+    cleaned and cut at the inline bound with a notice, `found` kept, no
+    `truncated`, and `metadata` and `nameExpansion` dropped."""
+    rows = [f"Row {i}:  Weber, Anna Maria    farmer's daughter    Alsweiler   " for i in range(1, 700)]
+    tools_by_name = _messy_page_server(tmp_path, "\n".join(rows))
+    result = _invoke(tools_by_name, "image_transcribe", {"imageId": "004884748_02613"})
+    body = _extract_response_dict(result)
+    assert not result.get("is_error"), body
+    assert sorted(body) == ["found", "transcription", "truncationNotice"]
+    assert body["found"] == "FOUND"
+    assert body["transcription"].startswith("Row 1:  Weber, Anna Maria    farmer's daughter    Alsweiler\nRow 2:")
+    assert len(json.dumps(body["transcription"], ensure_ascii=False)) - 2 <= 36_000
+    assert body["truncationNotice"].startswith("Only the first ")
 
 
 def test_image_transcribe_on_a_folder_that_is_not_a_project_stages_nothing(tmp_path):

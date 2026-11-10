@@ -17,9 +17,15 @@ import {
   compactStagedRecordSearch,
   compactStagedFulltextSearch,
   annotateResultsWithRanking,
+  compactImageTranscribeAnswer,
+  normalizeTranscription,
+  transcriptionDigest,
+  DIGEST_EXCERPT_CHARS,
+  INLINE_TRANSCRIPTION_MAX_CHARS,
 } from "../../src/utils/staged-compaction.js";
 import type { RecordSearchToolResponse } from "../../src/types/record-search.js";
 import type { FulltextSearchResponse } from "../../src/types/fulltext-search.js";
+import type { ImageTranscribeResult } from "../../src/types/image-transcribe.js";
 
 function fullRecordSearchResponse(): RecordSearchToolResponse {
   return {
@@ -369,6 +375,232 @@ describe("#1212 payload", () => {
     const bare = JSON.stringify(row(0)).length;
     const withScore = JSON.stringify(annotated(0)).length;
     expect(withScore - bare).toBeLessThan(bare * 0.25);
+  });
+});
+
+// ─── image_transcribe ──────────────────────────────────────────────
+
+// A register page the way the OCR draws one: a fixed-width table in a fence, a
+// rule row under its header, space padding at line ends, a CRLF, a run of blank
+// lines, a markdown table, and three lines that look like rules but are not only
+// rules, or are too short to shorten.
+const PADDED_PAGE = [
+  "Register of Births, 1853   ",
+  "",
+  "```",
+  "No.  Name                 Father               Born        ",
+  "==================================================================",
+  "1    Anna Weber           Peter Weber          3 Jan       ",
+  "2    Johann Klein         Jakob Klein          9 Jan\t",
+  "```",
+  "",
+  "   ",
+  "",
+  "",
+  "| Col          | Value      |",
+  "|:-------------|-----------:|",
+  "| a            | b          |",
+  "Signature: ____________",
+  "____________",
+  "---",
+  "- - - -",
+].join("\r\n");
+
+const PADDED_PAGE_NORMALIZED = [
+  "Register of Births, 1853",
+  "",
+  "```",
+  "No.  Name                 Father               Born",
+  "===",
+  "1    Anna Weber           Peter Weber          3 Jan",
+  "2    Johann Klein         Jakob Klein          9 Jan",
+  "```",
+  "",
+  "| Col          | Value      |",
+  "|:---|---:|",
+  "| a            | b          |",
+  "Signature: ____________",
+  "___",
+  "---",
+  "- - - -",
+].join("\n");
+
+/** Every line that says something, with its trailing whitespace dropped. */
+function meaningfulLines(text: string): string[] {
+  return text
+    .split(/\r?\n/)
+    .map((l) => l.replace(/\s+$/, ""))
+    .filter((l) => l !== "" && !/^[-=_|:+\s]+$/.test(l));
+}
+
+describe("normalizeTranscription", () => {
+  it("strips trailing whitespace, shortens rule runs on rule-only lines, and collapses blank-line runs", () => {
+    expect(normalizeTranscription(PADDED_PAGE)).toBe(PADDED_PAGE_NORMALIZED);
+  });
+
+  it("is lossless on meaningful text: every line with words survives, byte for byte, in order", () => {
+    const out = normalizeTranscription(PADDED_PAGE);
+    expect(meaningfulLines(out)).toEqual(meaningfulLines(PADDED_PAGE));
+    // The inner column padding is what places a value in its column, so it stays.
+    expect(out).toContain("1    Anna Weber           Peter Weber          3 Jan");
+    // No rule-only line is removed, only shortened.
+    const lineCount = (t: string) => t.split(/\r?\n/).filter((l) => l.trim() !== "").length;
+    expect(lineCount(out)).toBe(lineCount(PADDED_PAGE));
+  });
+
+  it("leaves an ordinary page byte-identical", () => {
+    const page = "Johann Schreck, b. 1801, Bayern\nAnna Schreck\n\nWitnesses: Peter Klein, Jakob Weber";
+    expect(normalizeTranscription(page)).toBe(page);
+  });
+
+  it("leaves a row of column rulings as it is, so each ruling stays under its column", () => {
+    const page = [
+      "Name        No   Residence",
+      "--------    --   --------",
+      "Anna Weber  12   Alsweiler",
+      "",
+      "Born    Died    Buried",
+      "====    =====   ======",
+      "1801    1867    1867",
+    ].join("\n");
+    expect(normalizeTranscription(page)).toBe(page);
+    // A single rule, and a markdown delimiter row, are still shortened.
+    expect(normalizeTranscription("    ------------")).toBe("    ---");
+    expect(normalizeTranscription("| ------- | ------- |")).toBe("| --- | --- |");
+  });
+
+  it("is linear: a line of 64k spaces before a letter takes well under 100 ms", () => {
+    for (const line of [" ".repeat(65_536) + "x", "-" + " ".repeat(65_536) + "x", " \t".repeat(32_768) + "-x"]) {
+      const start = performance.now();
+      const out = normalizeTranscription(line);
+      const ms = performance.now() - start;
+      expect(out).toBe(line);
+      expect(ms).toBeLessThan(100);
+    }
+  });
+
+  it("is idempotent", () => {
+    const once = normalizeTranscription(PADDED_PAGE);
+    expect(normalizeTranscription(once)).toBe(once);
+  });
+});
+
+describe("transcriptionDigest", () => {
+  it("counts the text it was given and shows the page's words, not its padding, fences or rules", () => {
+    const text = normalizeTranscription(PADDED_PAGE);
+    const d = transcriptionDigest("004884748_02613", text);
+    expect(d.id).toBe("004884748_02613");
+    expect(d.chars).toBe(text.length);
+    expect(d.excerpt.startsWith(
+      "Register of Births, 1853\nNo. Name Father Born\n1 Anna Weber Peter Weber 3 Jan\n",
+    )).toBe(true);
+    expect(d.excerpt).not.toMatch(/ {2}|```|===|:---/);
+    expect(Object.keys(d).sort()).toEqual(["chars", "excerpt", "id"]);
+  });
+
+  it("bounds the excerpt at DIGEST_EXCERPT_CHARS", () => {
+    const d = transcriptionDigest("x", "Weber Anna farmer\n".repeat(100));
+    expect(DIGEST_EXCERPT_CHARS).toBe(300);
+    expect(d.excerpt.length).toBe(300);
+  });
+
+  it("never ends the excerpt on half of a surrogate pair", () => {
+    const d = transcriptionDigest("x", "a" + "\u{1F600}".repeat(200));
+    expect(d.excerpt.length).toBe(299);
+    const last = d.excerpt.charCodeAt(d.excerpt.length - 1);
+    expect(last >= 0xdc00 && last <= 0xdfff).toBe(true);
+  });
+});
+
+/** A page of `chars` or more characters: register rows, one per line. */
+function longPage(chars: number): string {
+  const rows: string[] = [];
+  let length = 0;
+  for (let i = 1; length < chars; i++) {
+    const row = `${String(i).padStart(4)}  Weber, Anna Maria    farmer's daughter    Alsweiler    3 Jan 1853`;
+    rows.push(row);
+    length += row.length + 1;
+  }
+  return rows.join("\n");
+}
+
+function inlineAnswer(transcription: string, extra: Partial<ImageTranscribeResult> = {}): ImageTranscribeResult {
+  return {
+    transcription,
+    viewerUrl: "https://www.familysearch.org/search/film/004884748?i=2612",
+    nameExpansion: { original: "Anna Weber", expanded: "Anna Weber (also known as Ann)", expansions: { Anna: ["Ann"] } },
+    metadata: { imageId: "004884748_02613", contentType: "image/jpeg", model: "google/gemini-3.7-flash", sizeBytes: 3 },
+    ...extra,
+  };
+}
+
+describe("compactImageTranscribeAnswer", () => {
+  it("staged: drops the text, nameExpansion and metadata; keeps the ref, digest, found, imageRef and viewerUrl", () => {
+    const out = compactImageTranscribeAnswer(inlineAnswer("Anna Weber", {
+      found: "FOUND",
+      imageRef: "images/004884748_02613.jpg",
+      staged: { resultsRef: "results/.staging/abc.json", returnedCount: 1 },
+      digest: transcriptionDigest("004884748_02613", "Anna Weber"),
+    }));
+    expect(Object.keys(out).sort()).toEqual(["digest", "found", "imageRef", "staged", "viewerUrl"]);
+  });
+
+  it("keeps only a resolved Memories artifact url from metadata", () => {
+    const url = "https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/x/dist.jpg";
+    const answer = inlineAnswer("a memory");
+    answer.metadata.memoryArtifactUrl = url;
+    expect(compactImageTranscribeAnswer(answer).metadata).toEqual({ memoryArtifactUrl: url });
+  });
+
+  it("inline under the bound: the text is returned whole, with no notice", () => {
+    const out = compactImageTranscribeAnswer(inlineAnswer("Anna Weber", { staged: null, stagingError: "EACCES" }));
+    expect(out.transcription).toBe("Anna Weber");
+    expect(out).not.toHaveProperty("truncationNotice");
+    expect(out).not.toHaveProperty("metadata");
+    expect(out).not.toHaveProperty("nameExpansion");
+  });
+
+  it("inline over the bound: cuts at a line boundary, says so, keeps found, and sets no truncated", () => {
+    const page = longPage(40_000);
+    const out = compactImageTranscribeAnswer(inlineAnswer(page, { found: "FOUND" }));
+    const text = out.transcription!;
+    expect(page.startsWith(text)).toBe(true);
+    expect(text.endsWith("\n")).toBe(true);
+    const escaped = JSON.stringify(text).length - 2;
+    expect(escaped).toBeLessThanOrEqual(INLINE_TRANSCRIPTION_MAX_CHARS);
+    expect(escaped).toBeGreaterThan(INLINE_TRANSCRIPTION_MAX_CHARS - 200);
+    expect(out.truncated).toBeUndefined();
+    expect(out.found).toBe("FOUND");
+    expect(out.truncationNotice).toContain(
+      `Only the first ${text.length.toLocaleString("en-US")} of the page's ${page.length.toLocaleString("en-US")} characters`,
+    );
+    expect(out.truncationNotice).toContain("`found` covers the whole page");
+    expect(out.truncationNotice).toContain("projectPath");
+    expect(JSON.stringify(out).length).toBeLessThanOrEqual(37_000);
+  });
+
+  it("adds the cut to the OCR's own truncation notice rather than replacing it", () => {
+    const ocrNotice = "The OCR stopped at its output limit: this transcription is partial.";
+    const out = compactImageTranscribeAnswer(inlineAnswer(longPage(40_000), {
+      truncated: true,
+      truncationNotice: ocrNotice,
+    }));
+    expect(out.truncated).toBe(true);
+    expect(out.truncationNotice!.startsWith(`${ocrNotice} Only the first `)).toBe(true);
+    expect(out.truncationNotice).not.toContain("`found`");
+  });
+
+  it("is idempotent on every leg", () => {
+    const legs = [
+      inlineAnswer(longPage(40_000), { found: "NOT FOUND" }),
+      inlineAnswer("short", { staged: null, stagingError: "EACCES" }),
+      inlineAnswer("staged", { staged: { resultsRef: "results/.staging/a.json", returnedCount: 1 } }),
+    ];
+    for (const leg of legs) {
+      const once = compactImageTranscribeAnswer(leg);
+      const snapshot = JSON.stringify(once);
+      expect(JSON.stringify(compactImageTranscribeAnswer(once))).toBe(snapshot);
+    }
   });
 });
 
