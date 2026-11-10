@@ -26,9 +26,8 @@ has moved into the writer tools (source-reuse detection into
 context** facts:
 
 - which questions are open (to fill `extracted_for_question_ids`);
-- which tree persons exist, their preferred names/genders, and which `S`
-  entries they already cite (the alternate-name rule: a record persona that
-  IS an existing tree person under a variant spelling);
+- which tree persons exist, with their preferred names, genders and one-hop
+  family (the `S` entries each one cites come from `tree_query`);
 - which sources exist, per repository, covering which `record_id`s (to
   narrate reuse and route refinement requests);
 - the project status.
@@ -50,77 +49,91 @@ error); `validate_research_schema` remains the diagnosis tool.
 ### 2.1 Return value
 
 Wire-side **camelCase** (a tool output, not a persisted document — the
-repo's identifier-casing rule):
+repo's identifier-casing rule).
+
+**Absent means null or empty.** A key whose value would be `null`, `""` or `[]`
+is left out, at every level of the answer. Two nulls are answers and stay:
+`questionStatuses[].nextStep` (nothing outstanding) and a `sectionCounts` value
+(`research_query` would refuse the section). Every `?` below is a key this rule
+can drop:
 
 ```typescript
 {
   ok: true,
   buildId: string,                       // engine build stamp, e.g. "0.1.0+2026-09-17.abc12345"
-  projectStatus: string | null,          // research.project.status
-  objective: string | null,              // research.project.objective, verbatim
-  subjectPersonIds: string[],            // research.project.subject_person_ids; [] when absent
-  narrationGuidance: string | null,      // researcher_profile.narration_guidance, verbatim
-  subscriptions: string[],               // researcher_profile.subscriptions; [] when absent
-  openQuestions: [{
+  projectStatus?: string,                // research.project.status
+  objective?: string,                    // research.project.objective, verbatim
+  subjectPersonIds?: string[],           // research.project.subject_person_ids
+  narrationGuidance?: string,            // researcher_profile.narration_guidance, verbatim
+  subscriptions?: string[],              // researcher_profile.subscriptions
+  openQuestions?: [{
     id: string,                          // q_*
-    question: string,                    // truncated to ≤140 chars (139 + "…")
+    question?: string,                   // truncated to ≤140 chars (139 + "…")
   }],
-  questionStatuses: [{                   // ADVISORY — see below. One per question,
+  questionStatuses?: [{                  // ADVISORY — see below. One per question,
     id: string,                          //   including resolved ones.
-    question: string,                    // truncated as in openQuestions; "" when absent.
+    question?: string,                   // truncated as in openQuestions.
                                          //   The one place a resolved question's
                                          //   text appears, so the objective can be
                                          //   read against every question.
     state: "framed" | "planned" | "searching"
          | "evidence-gathered" | "concluded" | "critiqued",
-    nextStep: string | null,             // null = nothing outstanding
-    openConflictIds: string[],           // unresolved conflicts bearing on it
-    storedStatus: string | null,         // questions[].status verbatim; null when
-                                         //   absent or not a string. DERIVED vs
-                                         //   REPORTED — see §2.2.
-    unregisteredDisagreements: [{        // linked vital-fact assertions that
+    nextStep: string | null,             // null = nothing outstanding; always present
+    openConflictIds?: string[],          // unresolved conflicts bearing on it
+    storedStatus?: string,               // questions[].status verbatim when a string.
+                                         //   DERIVED vs REPORTED — see §2.2.
+    unregisteredDisagreements?: [{       // linked vital-fact assertions that
       personId: string,                  //   disagree with no conflict naming
       fact: string,                      //   the pair — see §2.2.
       assertionIds: string[],
     }],
-    competingParentSets: [{              // in-scope tree persons with >2 birth parents
+    competingParentSets?: [{             // in-scope tree persons with >2 birth parents
       personId: string,                  //   and <2 hypotheses on the question
       parentIds: string[],
     }],
   }],
-  persons: [{
+  persons?: [{
     id: string,                          // I id (or FS id)
-    name: string | null,                 // preferred names entry, "Given Surname"
-    gender: string | null,
-    sourceRefs: string[],                // distinct S ids cited anywhere on the person
-    spouseIds: string[],                 // I ids joined by a Couple edge
-    parentIds: string[],                 // I ids that are this person's ParentChild parent
-    childIds: string[],                  // I ids that are this person's ParentChild child
-    diedByYear: number | null,           // year certainly dead by, from dated Death/Burial facts
+    name?: string,                       // preferred names entry, "Given Surname"
+    gender?: string,
+    spouseIds?: string[],                // I ids joined by a Couple edge
+    parentIds?: string[],                // I ids that are this person's ParentChild parent
+    childIds?: string[],                 // I ids that are this person's ParentChild child
+    diedByYear?: number,                 // year certainly dead by, from dated Death/Burial facts
   }],
-  sources: [{
+  sources?: [{
     id: string,                          // src_*
-    repository: string | null,
-    gedcomxSourceDescriptionId: string | null,
-    recordIds: string[],                 // distinct record_id values across its assertions
+    repository?: string,
+    gedcomxSourceDescriptionId?: string,
+    recordIds?: string[],                // distinct record_id values across its assertions
     assertionCount: number,              // assertions with source_id = this id
   }],
-  localities: [...],                     // place/locale projection for research-plan; each
-                                         //   collection carries {id, title, dateRange, personCount,
-                                         //   recordCount}, counts null when the entry has none —
-                                         //   research-plan plans from them without re-running
-                                         //   collections_search
-  awaitingUser: [{                       // open external-site hand-offs — §2.3
+  localities?: [{                        // place/locale projection for research-plan
+    id: string,                          // loc_*
+    place?: string,
+    forPlace?: string,
+    timePeriod?: string,
+    jurisdictions?: [{ name: string, dateRange?: string }],
+    collections?: [{                     // research-plan plans from the counts without
+      id: string,                        //   re-running collections_search
+      title?: string,
+      dateRange?: string,
+      personCount?: number,
+      recordCount?: number,
+    }],
+    quirks?: string[],
+  }],
+  awaitingUser?: [{                      // open external-site hand-offs — §2.3
     logId: string,                       // log_* of the in-flight entry
     site: string,                        // external_site.site
     urlGenerated: string,                // the URL the user was sent
-    planItemId: string | null,
-    performed: string | null,
+    planItemId?: string,
+    performed?: string,
   }],
-  exhaustedImageGroups: [{               // films whose browse cap is spent — §2.5
+  exhaustedImageGroups?: [{              // films whose browse cap is spent — §2.5
     imageGroup: string,                  // film number, e.g. "008230326"
     imagesRead: number,                  // distinct images counted, >= 20
-    planItemIds: string[],               // open plan items with an image_search log entry on it
+    planItemIds?: string[],              // open plan items with an image_search log entry on it
   }],
   waitingPages?: [{                      // read pages of held records — §2.8; absent when none
     sourceId: string,
@@ -157,10 +170,9 @@ Projection rules:
   `…` (the id is the handle; the text is a reminder, not the record).
 - **`persons`** — every `tree.persons[]` entry, in array order. `name` is
   the `preferred: true` names entry (first names entry when none is
-  flagged), rendered `given surname` (whichever parts exist; `null` when the
-  person has no names). `sourceRefs` collects the distinct `ref` values of
-  every source reference on the person — person-level `sources`, each
-  fact's `sources`, and each name's `sources` — in first-seen order.
+  flagged), rendered `given surname` (whichever parts exist; absent when the
+  person has no names). The `S` ids a person cites are not here: `tree_query`
+  returns them per person, fact and name.
   `spouseIds`, `parentIds` and `childIds` are the person's one-hop family
   from `tree.relationships`: a `Couple` edge lists each side as the other's
   spouse, a `ParentChild` edge lists the parent and child on each other. The
@@ -168,7 +180,7 @@ Projection rules:
   `http://gedcomx.org/` URI both count; an edge missing either end is
   skipped; ids are distinct, in edge order. `diedByYear` is the earliest of
   the latest possible years of the person's dated `Death` and `Burial` facts
-  (`Abt 1890` gives 1891, `Bef 1870` gives 1870), or null when none is dated;
+  (`Abt 1890` gives 1891, `Bef 1870` gives 1870), absent when none is dated;
   a date with no upper bound (`Aft 1850`) gives no year.
   The latest year, so a person is read as dead before a record only when they
   certainly were: a wife who died after an 1860 census is still expected in
@@ -179,18 +191,21 @@ Projection rules:
   `recordIds` are the distinct `record_id` values (verbatim, first-seen
   order) across `research.assertions[]` entries whose `source_id` is this
   source's id; `assertionCount` counts those assertions.
-- **`projectStatus`** — `research.project.status`, `null` when absent.
-- **`objective`** — `research.project.objective`, verbatim and untruncated, `null` when absent. It is the
+- **`localities`** — every `research.localities[]` entry, renamed to camelCase. `guide_markdown`
+  and `pages_read` are left out; `research_query` serves the whole entry. A collection count
+  that is not an integer is left out.
+- **`projectStatus`** — `research.project.status`.
+- **`objective`** — `research.project.objective`, verbatim and untruncated. It is the
   only surface that returns the objective: `research_query` serves array sections only, so without it a
   cold-started agent sees the objective — and any doubt it states about its own premise — only by reading
   `research.json` whole.
 - **`narrationGuidance`** / **`subscriptions`** — `researcher_profile.narration_guidance`
-  (verbatim; `null` when absent or not a string) and `researcher_profile.subscriptions` (strings
-  only; `[]` when absent). Every skill's Narration line and `search-external-sites` read these;
+  (verbatim, when a string) and `researcher_profile.subscriptions` (strings
+  only). Every skill's Narration line and `search-external-sites` read these;
   no other tool returns them, and Cowork's VM cannot `Read` `research.json`. Tree
   facts are not here: `tree_query` serves them, so this projection does not grow for callers
   that never need them.
-- **`subjectPersonIds`** — `research.project.subject_person_ids`, strings only, `[]` when absent. The
+- **`subjectPersonIds`** — `research.project.subject_person_ids`, strings only. The
   router has no other way to see who the research is about, which the baseline step (extract and link
   each subject's attached records before the first question) needs.
 
@@ -391,7 +406,7 @@ Both fields stay advisory: nothing refuses a write because of them.
 
 **`storedStatus` is reported, `state` is derived, and they are allowed to
 disagree.** `state` is this tool's reading of the documents by the ladder above;
-`storedStatus` is `questions[].status` copied verbatim, `null` when the field is
+`storedStatus` is `questions[].status` copied verbatim, absent when the field is
 absent or not a string. It is never re-mapped or re-validated against the
 `question_status` enum — §2's "not a validator" rule applies, and a malformed
 entry is skipped rather than reported.
@@ -400,9 +415,9 @@ The two carry different claims, so a disagreement is information rather than a
 contradiction. A question with a proof summary reads `state: "concluded"` on the
 strength of that artifact while its own `status` may still be `in_progress`;
 both are correct, and a reader given only `state` reports the question as settled
-when the project does not say so. The field is present on every entry, resolved
-questions included, because `questionStates` maps all questions rather than only
-open ones.
+when the project does not say so. The field is on every entry whose question has
+a status, resolved questions included, because `questionStates` maps all questions
+rather than only open ones.
 
 Neither field gates anything. Adding `storedStatus` moves no rung and changes no
 `state`, `nextStep` or `openConflictIds` value.
@@ -529,7 +544,7 @@ image group). Only `image_search` entries count: that is the tool `search-images
 logs a browse under, and a `fulltext_search` entry scoped to the same film is not a
 browse. Only items still `planned` or `in_progress` on an `active` plan are listed:
 once `research-plan` disposes of an item it drops off, so the router does not send it
-back on the next pass; the film itself stays listed while its cap is spent. `[]` when
+back on the next pass; the film itself stays listed while its cap is spent. Absent when
 no film is spent, and when the log is absent or unreadable — like
 the cap itself, the field never fails a call. Reads that named no project are
 counted in memory only and are not visible here.
@@ -569,7 +584,7 @@ parallel, so the counts save tokens and calls more than wall-clock time.
 
 ```typescript
 uploads?: [{ name: string, uploaded: string /* ISO, from the store's mtime */, hasText: boolean }]
-uploadUrl?: string    // `${webPublicUrl}/#/p/${projectId}/upload`
+uploadUrl?: string    // `${webPublicUrl}/upload/${projectId}`
 ```
 
 `uploads` lists the store's `uploads/` entries, newest first, ties by name. An
@@ -586,7 +601,10 @@ The link comes from `projectLinks(principal)` (`src/utils/project-links.ts`):
 stripped) **and** `uploadsEnabled` is `true` **and** the bound store has a
 `projectId`. The id is the store's, never derived from `projectPath`: on the
 worker path every project arrives under the same anchor path, `/project`. The
-file store has no id, so the desktop gets no link. No project tool returns a link
+file store has no id, so the desktop gets no link. The link is the web tier's
+chat-off upload page, `/upload/<id>`, which serves only the `proj_<16 hex>`
+ids the connector and the web tier mint; it replaced the SPA's `#/p/<id>/upload`
+route, which has no reader with the chat off. No project tool returns a link
 to a viewer page. On the hosted tool server the settings arrive as `WEB_PUBLIC_URL` and
 `UPLOADS_ENABLED` (`src/hosted-config-env.ts`); a switch other than
 `true`/`false`, or a `WEB_PUBLIC_URL` that is not a plain http(s) URL with no
@@ -617,7 +635,7 @@ drops out. It reads every fresh staged file while any source waits, as
 
 - **A projection, not a query language.** One fixed shape, no field
   selectors — the consumer is one agent prompt, and a stable shape is what
-  lets that prompt say "check `persons[].sourceRefs`". *Rejected:* jq-style
+  lets that prompt say "check `persons[].parentIds`". *Rejected:* jq-style
   path parameters (open-ended context cost, un-promptable).
 - **No assertion bodies.** Per-assertion detail (values, classifications) is
   deliberately excluded — it is exactly the growing payload the diet
@@ -697,18 +715,21 @@ untouched.
 |-----------|----------|
 | `projectPath` is a real directory holding **neither** project file | `{ ok: false, reason: "no_project", errors, buildId }` — the user is not in a research project, so this is an answer rather than a failure and is **not** marked `isError`. One of the two reads that owed this. See the write-boundary invariants in `guardrail-enforcement-spec.md` |
 | Exactly one of `research.json` / `tree.gedcomx.json` present, or either invalid JSON — a *broken* project | `{ ok: false, errors, buildId }`, loud |
-| empty project (no questions/persons/sources) | `ok: true` with empty arrays |
+| empty project (no questions/persons/sources) | `ok: true`, with those keys left out |
 | question with a >140-char text | truncated to 139 chars + `…` |
-| person with no names / no preferred flag | `name` falls back to the first names entry, else `null` |
+| person with no names / no preferred flag | `name` falls back to the first names entry, else absent |
 | assertions whose `source_id` matches no source | ignored (the validator reports dangling refs, not this tool) |
 
 ## 5. Test plan (vitest)
 
 - **populated project** — projection correctness: open-vs-resolved question
-  filtering; preferred-name rendering; `sourceRefs` unioned (distinct) across
-  person/fact/name references; per-source `recordIds` (distinct, verbatim)
+  filtering; preferred-name rendering; per-source `recordIds` (distinct, verbatim)
   and `assertionCount`; `projectStatus` echoed.
-- **empty project** — empty arrays, every `sectionCounts` value 0, `ok: true`.
+- **empty project** — the empty lists left out, `ok: true`.
+- **shape** — a project where every field has a value carries every documented
+  key at every level; a project whose rows hold nothing carries no `null`, `""`
+  or `[]` anywhere except a null `nextStep` and the `sectionCounts` values;
+  neither carries `sourceRefs` or `pagesRead`.
 - **`sectionCounts`** — for every section, equal to the unfiltered
   `research_query` `count`; `unregisteredDisagreementCount` equal to that
   query's `conflicts` `unregisteredDisagreements` length, including on a project
@@ -740,8 +761,8 @@ untouched.
 - **`exhaustedImageGroups`** — a film at 20 distinct images lists with the plan
   items of its `image_search` entries, across sub-volumes of the film, and not those
   of a `fulltext_search` entry on it; 19 images plus a re-read does not list; a torn
-  log line is skipped; a spent film with no `image_search` entry lists with
-  `planItemIds: []`; an empty project gives `[]`; a `completed` or `skipped` item,
+  log line is skipped; a spent film with no `image_search` entry lists with no
+  `planItemIds`; an empty project leaves the key out; a `completed` or `skipped` item,
   and an item on a `superseded` plan, drop off while `planned` and `in_progress`
   items on the active plan stay.
 

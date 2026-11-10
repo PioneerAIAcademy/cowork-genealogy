@@ -203,6 +203,17 @@ grade it (`docs/architecture.md` §9.4).
 
 Fetching requires a valid FamilySearch bearer token.
 
+## Connector callers (self-hosted beta E5)
+
+`image_read` is refused for a connector caller (`principal.kind === "bearer" &&
+principal.surface === "connector"`), thrown before `foldImageArkInput`, the
+image cap check, or any fetch: "image_read is not available on this
+connection. Use image_transcribe instead — it reads the scan host-side and
+returns text, with no size limit." The tool stays advertised on the schema —
+only the implementation refuses, per-call — so a connector caller still learns
+of it and is pointed at the replacement. A LOCAL or worker-surface `bearer`
+principal is unaffected.
+
 ## Output
 
 The tool returns two content blocks:

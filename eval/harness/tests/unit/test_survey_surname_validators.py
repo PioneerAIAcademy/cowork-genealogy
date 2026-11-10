@@ -24,6 +24,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_survey_surname import (  # noqa: E402
     HEDGE,
     test_household_grouping_and_slave_schedule as check_grouping,
+    test_no_project_returns_the_tables_in_its_reply as check_no_project,
     test_negative_makes_no_write as check_negative,
     test_one_log_entry_appended as check_one_entry,
     test_table_has_rubric_columns as check_columns,
@@ -33,10 +34,10 @@ _TABLE_1850 = """# Dixon households, Virginia, 1850
 
 ## 1850 - United States Census, 1850
 
-| Census Year | County | Head of Household | Other Dixon Members | Record ARK | Ruled Out |
+| Census Year | Place as Indexed | Head of Household | Members | Record ARK | Ruled Out |
 |---|---|---|---|---|---|
-| 1850 | Ohio | Edmund Dixon | Mary Dixon (b. 1805) | ark:/61903/1:1:XJQV-1850-A | |
-| 1850 | Rockingham | William Dixon | | ark:/61903/1:1:XJQV-1850-C | |
+| 1850 | Wheeling, Ohio | Edmund Dixon, 1810, Virginia | Mary, 1805, Virginia | ark:/61903/1:1:XJQV-1850-A | |
+| 1850 | Rockingham | William Dixon, 1820, Virginia | | ark:/61903/1:1:XJQV-1850-C | |
 
 ## 1850 - United States Census (Slave Schedule), 1850
 
@@ -198,6 +199,13 @@ def test_columns_fail_without_ruled_out():
                     after_state=_state([_entry(notes=bad)]), test=POSITIVE)
 
 
+def test_columns_fail_on_the_retired_county_header():
+    """The column is the place as indexed, so the town survives (issue #4130)."""
+    bad = _NOTES.replace("| Place as Indexed |", "| County |").replace("| Members |", "| Other Dixon Members |")
+    _expect_failure(check_columns, "'place'", before_state=EMPTY,
+                    after_state=_state([_entry(notes=bad)]), test=POSITIVE)
+
+
 def _pipeless(notes):
     """The same tables in GFM's other spelling, with no outer pipes."""
     return "\n".join(
@@ -240,3 +248,42 @@ def test_grouping_fails_on_a_split_household_under_plain_headings():
     )
     _expect_failure(check_grouping, "one household row", before_state=EMPTY,
                     after_state=_state([_entry(notes=split)]), test=POSITIVE)
+
+
+# --- no project (issue #4130): the tables are the agent's reply ---------
+
+NO_PROJECT = {"type": "positive", "tags": ["survey", "no-project"], "skill": "survey-surname"}
+_REPLY = """Surveyed Clinton County, New York, 1850.
+---
+I searched the 1850 census for Clinton County and found two Tollman families.
+
+### 1850 - United States Census, 1850
+| Census year | Place as indexed | Head of household | Members | Record ARK | Ruled out |
+|---|---|---|---|---|---|
+| 1850 | Au Sable, Clinton | Joseph Tollman, 1798, Vermont | Polly, 1802, Vermont; Harvey, 1829, New York; Lucinda, 1834, New York | ark:/61903/1:2:XTLM-AS1850 | |
+| 1850 | Peru, Clinton | Nathan Tollman, 1824, New York | Abigail, 1826, New York | ark:/61903/1:2:XTLM-PE1850 | |
+
+Next you can choose which family to follow."""
+_SEARCH = [{"tool": "mcp__genealogy__record_search", "args": {"surname": "Tollman"}}]
+
+
+def test_no_project_reply_passes():
+    assert _run(check_no_project, tool_calls=_SEARCH, test=NO_PROJECT, text_response=_REPLY) == "passed"
+    assert _run(check_columns, before_state=EMPTY, after_state=EMPTY, test=NO_PROJECT, text_response=_REPLY) == "passed"
+    assert _run(check_one_entry, before_state=EMPTY, after_state=EMPTY, test=NO_PROJECT) == "skipped"
+
+
+_SPLIT = _REPLY.replace(
+    "| Polly, 1802, Vermont; Harvey, 1829, New York; Lucinda, 1834, New York |", "| |"
+) + "\n| 1850 | Au Sable, Clinton | Polly Tollman | | ark:/61903/1:2:XTLM-AS1850 | |"
+
+
+@pytest.mark.parametrize("calls,reply,match", [
+    (_SEARCH, _SPLIT, "only in Joseph's row"),
+    (_SEARCH, _REPLY.replace("Au Sable, Clinton", "Clinton"), "Au Sable"),
+    (_SEARCH + [{"tool": "mcp__genealogy__research_log_append", "args": {}}], _REPLY, "research_log_append"),
+    ([{"tool": "mcp__genealogy__record_search", "args": {"projectPath": "/p"}}], _REPLY, "passed projectPath"),
+    ([], _REPLY, "no record_search"),
+], ids=["household-split", "county-only", "logged", "staged", "no-search"])
+def test_no_project_reply_fails(calls, reply, match):
+    _expect_failure(check_no_project, match, tool_calls=calls, test=NO_PROJECT, text_response=reply)

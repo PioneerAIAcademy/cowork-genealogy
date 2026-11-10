@@ -28,6 +28,7 @@ import type {
   RecordSearchEvent,
   TreeMatch,
   RecordSearchToolResponse,
+  PlaceField,
 } from "../types/record-search.js";
 import {
   isFourDigitYear,
@@ -55,8 +56,9 @@ import {
   marriageJurisdictionCandidates,
 } from "../utils/marriage-jurisdictions.js";
 import { searchFoundNobody, surnameVariantHints } from "../utils/surname-variant-hints.js";
-import { rankSearchMatches } from "./rank-search-matches.js";
+import { rankSearchMatches, buildRelativeTermNote, PAGE_DEEPER_ADVICE } from "./rank-search-matches.js";
 import { rejectedTokenMessage } from "../auth/config.js";
+import { mapWithConcurrency, placeSearchNames } from "../utils/place-resolver.js";
 
 // Re-exported so existing importers (and tests) keep resolving it here.
 export { parseUpstreamErrorBody };
@@ -87,9 +89,8 @@ const MAX_JURISDICTION_HINTS = 8;
  */
 const RANKING_SKIPPED_NOTE =
   "No `subjectId`, so match-score ranking and marriage jurisdiction hints did " +
-  "not run. Pass the tree person this search is about as `subjectId` to enable " +
-  "both. Omit it only when the search is not about a specific tree person — a " +
-  "broad survey, or a person not yet in the tree.";
+  "not run. Pass the searched tree person as `subjectId`. Omit it only for a " +
+  "broad survey or a person not yet in the tree.";
 const PERSISTENT_ID_URI = "http://gedcomx.org/Persistent";
 const COLLECTION_RESOURCE_TYPE = "http://gedcomx.org/Collection";
 
@@ -941,8 +942,9 @@ export function mapEntry(
   if (recordTitle) result.recordTitle = recordTitle;
   if (recordSourceArkUrl) result.recordArk = toArk(recordSourceArkUrl);
 
-  // Carry the simplified GedcomX so downstream tools (same_person)
-  // get the real records, not a hand-rebuilt approximation. The FS search
+  // Carry the simplified GedcomX so the staged file holds the real record,
+  // not a hand-rebuilt approximation (rank_search_matches and record_read read
+  // it there; the slim block drops it from the answer). The FS search
   // payload is full GedcomX at runtime; FSGedcomx is just a narrower
   // declaration of the fields mapEntry reads, hence the cast.
   const rawGedcomx = entry.content?.gedcomx;
@@ -953,14 +955,14 @@ export function mapEntry(
 
   // Read off the RAW gedcomx, not `result.gedcomx`: `toSimplified` does not
   // carry the root `fields[]` into the simplified document, and — like
-  // `relativeTerms` below — this has to be resolved before the staged slim block
+  // `relativeTerms` below — this has to be resolved before the slim block
   // deletes `result.gedcomx` anyway.
   const batchNumber = extractBatchNumber(rawGedcomx);
   if (batchNumber) result.batchNumber = batchNumber;
 
   if (display?.role) result.role = display.role;
 
-  // Resolved HERE, before the staged slim block deletes `result.gedcomx`, so the
+  // Resolved HERE, before the slim block deletes `result.gedcomx`, so the
   // finding survives into both the inline response and the staged sidecar
   // (#1324). Resolving it downstream of the slim would be resolving against
   // nothing.
@@ -975,20 +977,18 @@ export function mapEntry(
   return result;
 }
 
-export async function recordSearchTool(
-  input: RecordSearchInput,
-  principal: Principal
-): Promise<RecordSearchToolResponse> {
-  validateInput(input);
+/** A 401 from the search: the session is not accepted. Marked so a place
+ *  expansion fails the call on it from any name, not just the typed one. */
+class SearchSessionRejected extends Error {}
 
-  const normalizedInput: RecordSearchInput = { ...input };
-  if (normalizedInput.sex) {
-    normalizedInput.sex = normalizeSex(normalizedInput.sex) ?? normalizedInput.sex;
-  }
-  const paired = applyAltNameAutoPair(normalizedInput);
-
-  const url = buildSearchUrl(paired);
-
+/** One upstream search request, with every error mapped to the message the
+ *  agent reads. Shared by the single search and each search of a place
+ *  expansion (issue #4067). */
+async function fetchSearchPage(
+  url: string,
+  principal: Principal,
+  timeoutMs: number = SEARCH_TIMEOUT_MS,
+): Promise<FSSearchResponse> {
   // #1316 / #2054: fsFetch wraps fetchWithRetry with automatic retry
   // of transient failures (429/5xx, network errors, timeouts) and handles
   // Authorization internally. On a 401 under LOCAL it re-reads tokens.json once.
@@ -1004,7 +1004,7 @@ export async function recordSearchTool(
           "User-Agent": BROWSER_USER_AGENT,
         },
       },
-      SEARCH_TIMEOUT_MS,
+      timeoutMs,
     );
   } catch (err) {
     // A local refusal (the shared budget, or this user's 429 pause) is not a
@@ -1021,7 +1021,7 @@ export async function recordSearchTool(
 
   if (!response.ok) {
     if (response.status === 401) {
-      throw new Error(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
+      throw new SearchSessionRejected(await rejectedTokenMessage(principal, "FamilySearch session not accepted; call the login tool to re-authenticate."));
     }
     if (response.status === 403) {
       throw new Error(
@@ -1061,18 +1061,283 @@ export async function recordSearchTool(
     );
   }
 
-  const data: FSSearchResponse = await response.json();
-  const entries = data.entries ?? [];
+  return (await response.json()) as FSSearchResponse;
+}
+
+/** Internal options, never on the MCP schema. */
+export interface RecordSearchOptions {
+  /** Search every name the typed place has had and merge (issue #4067).
+   *  Default true. Scripts that measure FamilySearch's own place matching pass
+   *  false, since the union would hide the very difference they measure. */
+  expandPlaces?: boolean;
+}
+
+const PLACE_FIELDS: readonly PlaceField[] = EVENT_GROUPS.map((g) => `${g.prefix}Place` as PlaceField);
+/** Most searches one call fans out to (the product over its place fields). */
+const MAX_PLACE_SEARCHES = 12;
+/** Most upstream requests an expansion may make; a deeper page is refused. */
+const MAX_EXPANSION_REQUESTS = 24;
+/** Most merged rows staged and ranked under a subject. Ranking costs one
+ *  FamilySearch match call per row plus an attachment check; an 81-row Rieti
+ *  pool ranked in about 6 seconds live, so this stays well inside Cowork's 60s
+ *  abort. Taken in interleave order, so every name's best rows are kept. */
+const RANKED_POOL_MAX = 300;
+/** A further name's search not started by this many ms after the fan-out began
+ *  is not run (reported as an error), so the call stays inside Cowork's 60s
+ *  abort with ranking still to come. The typed search always runs. */
+const EXPANSION_DEADLINE_MS = 30_000;
+/** Below this much time left, a further name's next request is not started. */
+const MIN_REQUEST_MS = 3_000;
+/** Largest page FamilySearch serves, and the tool's own `count` maximum. */
+const UPSTREAM_PAGE_MAX = 100;
+const EXPANSION_CONCURRENCY = 3;
+
+const PLACE_EXPANSION_NOTE =
+  "The place was searched under every name FamilySearch has for it and the records merged without duplicates, because an index finds a record only under the name it standardized the place to; totalMatches is the largest single search's total, and each search's own is listed here.";
+
+type PlaceCombo = Partial<Record<PlaceField, string>>;
+
+/**
+ * The searches one call fans out to: every combination of the names each place
+ * field expands to (`placeSearchNames`), typed text first. Null when no field
+ * expands. Over `MAX_PLACE_SEARCHES`, the longest list loses names from its end,
+ * where `placeSearchNames` puts the least-proven ones.
+ */
+async function planPlaceSearches(
+  input: RecordSearchInput,
+): Promise<{ combos: PlaceCombo[]; truncated: boolean } | null> {
+  const lists: Array<[PlaceField, string[]]> = await Promise.all(
+    PLACE_FIELDS.filter((field) => input[field]).map(async (field): Promise<[PlaceField, string[]]> => {
+      const place = input[field] as string;
+      const exact = input[`${field}Exact` as keyof RecordSearchInput] === true;
+      return [field, (await placeSearchNames(place, exact)) ?? [place]];
+    }),
+  );
+  if (!lists.some(([, names]) => names.length > 1)) return null;
+
+  let truncated = false;
+  const size = () => lists.reduce((n, [, names]) => n * names.length, 1);
+  while (size() > MAX_PLACE_SEARCHES) {
+    const longest = lists.reduce((a, b) => (b[1].length > a[1].length ? b : a));
+    longest[1] = longest[1].slice(0, -1);
+    truncated = true;
+  }
+
+  let combos: PlaceCombo[] = [{}];
+  for (const [field, names] of lists) {
+    combos = combos.flatMap((combo) => names.map((name) => ({ ...combo, [field]: name })));
+  }
+  return { combos, truncated };
+}
+
+interface ExpandedSearch {
+  places: PlaceCombo;
+  entries: FSSearchEntry[];
+  totalMatches: number;
+  /** FamilySearch holds rows past the depth read. */
+  more: boolean;
+  error?: string;
+}
+
+/** One search of an expansion, read from offset 0 to `depth` in pages of at
+ *  most `UPSTREAM_PAGE_MAX`, stopping when FamilySearch has no more. */
+async function readExpandedSearch(
+  input: RecordSearchInput,
+  places: PlaceCombo,
+  depth: number,
+  principal: Principal,
+  deadline?: number,
+): Promise<ExpandedSearch> {
+  const entries: FSSearchEntry[] = [];
+  let totalMatches = 0;
+  let more = false;
+  for (let offset = 0; offset < depth; ) {
+    const count = Math.min(UPSTREAM_PAGE_MAX, depth - offset);
+    // A further name gets only the time left before the deadline, checked
+    // before every request and given as that request's timeout, so a slow
+    // FamilySearch cannot carry the fan-out past it.
+    let timeoutMs = SEARCH_TIMEOUT_MS;
+    if (deadline !== undefined) {
+      const left = deadline - Date.now();
+      if (left < MIN_REQUEST_MS) {
+        const error = "not searched: the time limit for this call ran out";
+        if (entries.length === 0) return { places, entries, totalMatches: 0, more: false, error };
+        return { places, entries, totalMatches, more: true, error: `${error} after ${entries.length} rows` };
+      }
+      timeoutMs = Math.min(SEARCH_TIMEOUT_MS, left);
+    }
+    const data = await fetchSearchPage(buildSearchUrl({ ...input, ...places, offset, count }), principal, timeoutMs);
+    const page = data.entries ?? [];
+    entries.push(...page);
+    totalMatches = data.results ?? 0;
+    more = data.links?.next?.href != null;
+    offset += count;
+    if (!more || page.length < count) break;
+  }
+  return { places, entries, totalMatches, more: more && entries.length >= depth };
+}
+
+/** Round-robin by each search's own rank, typed search first in every round,
+ *  keeping the first copy of each record. Interleaving over a deeper read only
+ *  appends, so pages taken from it never skip or repeat a record. */
+function interleaveEntries(searches: ExpandedSearch[]): FSSearchEntry[] {
+  const out: FSSearchEntry[] = [];
+  const seen = new Set<string>();
+  const depth = Math.max(0, ...searches.map((s) => s.entries.length));
+  for (let rank = 0; rank < depth; rank++) {
+    for (const search of searches) {
+      const entry = search.entries[rank];
+      if (!entry) continue;
+      const key = entry.id ?? `#${out.length}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(entry);
+    }
+  }
+  return out;
+}
+
+export async function recordSearchTool(
+  input: RecordSearchInput,
+  principal: Principal,
+  opts: RecordSearchOptions = {},
+): Promise<RecordSearchToolResponse> {
+  validateInput(input);
+
+  const normalizedInput: RecordSearchInput = { ...input };
+  if (normalizedInput.sex) {
+    normalizedInput.sex = normalizeSex(normalizedInput.sex) ?? normalizedInput.sex;
+  }
+  const paired = applyAltNameAutoPair(normalizedInput);
+
+  const count = paired.count ?? defaultCount(paired);
+  const offset = paired.offset ?? 0;
+
+  // Issue #4067: search every name the typed place has had and merge them.
+  // `count` and `offset` then page the one merged list, never the searches.
+  const plan = opts.expandPlaces === false ? null : await planPlaceSearches(paired);
+  const depth = offset + count;
+  const requestsPerSearch = Math.ceil(depth / UPSTREAM_PAGE_MAX);
+  // Refused, not narrowed to the typed place: switching orderings mid-paging
+  // would silently skip every record between the two.
+  if (plan !== null && plan.combos.length * requestsPerSearch > MAX_EXPANSION_REQUESTS) {
+    throw new Error(
+      `This page is too deep to search every name of the place: ${plan.combos.length} names, ` +
+        `each read from the start to offset + count = ${depth}, would take more than ` +
+        `${MAX_EXPANSION_REQUESTS} requests. Narrow the query (a surname, a year range, ` +
+        "a collectionId) so the records fit in fewer pages, rather than paging deeper.",
+    );
+  }
+
+  // A ranked page re-ranks a deeper pool than the page before it, so a record
+  // only in the deeper part that outranks the rows already shown would fall in
+  // the cut-off ranks and never be shown at all. Refused, like a too-deep page.
+  if (plan !== null && input.projectPath && input.subjectId && offset > 0) {
+    throw new Error(
+      "A ranked search of every name of the place cannot page: each page re-ranks a deeper pool, " +
+        "so a later page could skip a record that outranks the ones already shown. Raise `count` " +
+        "(up to 100) instead of setting `offset`, or narrow the query.",
+    );
+  }
+
+  let entries: FSSearchEntry[];
+  let totalMatches: number;
+  let responseOffset: number;
+  let hasMore: boolean;
+  let placeExpansion: RecordSearchToolResponse["placeExpansion"];
+  let expandedPool = false;
+  const rankedPool = Boolean(input.projectPath && input.subjectId);
+  let searchesHaveMore = false;
+  if (plan === null) {
+    const data = await fetchSearchPage(buildSearchUrl(paired), principal);
+    entries = data.entries ?? [];
+    totalMatches = data.results ?? 0;
+    responseOffset = data.index ?? input.offset ?? 0;
+    hasMore = data.links?.next?.href != null;
+  } else {
+    const started = Date.now();
+    let failed = false;
+    const notRun = (places: PlaceCombo, error: string): ExpandedSearch =>
+      ({ places, entries: [], totalMatches: 0, more: false, error });
+    const settled = await mapWithConcurrency(
+      plan.combos,
+      EXPANSION_CONCURRENCY,
+      async (places, index): Promise<ExpandedSearch> => {
+        // Once the call has failed nothing will read the rest; past the deadline
+        // a further name is not worth Cowork's 60s abort.
+        if (failed) return notRun(places, "not searched: the call failed");
+        if (index > 0 && Date.now() - started > EXPANSION_DEADLINE_MS) {
+          return notRun(places, "not searched: the time limit for this call ran out");
+        }
+        try {
+          return await readExpandedSearch(
+            paired, places, depth, principal,
+            index === 0 ? undefined : started + EXPANSION_DEADLINE_MS,
+          );
+        } catch (err) {
+          // The typed search (index 0) fails the call exactly as today; a further
+          // name's failure is reported and the merge goes on, unless it is the
+          // shared FS budget refusing or the session rejected, which must reach
+          // the agent as themselves.
+          if (index === 0 || isFsBudgetExhausted(err) || err instanceof SearchSessionRejected) {
+            failed = true;
+            throw err;
+          }
+          return notRun(places, err instanceof Error ? err.message : String(err));
+        }
+      },
+    );
+    entries = interleaveEntries(settled);
+    totalMatches = Math.max(0, ...settled.map((s) => s.totalMatches));
+    // A name that was not searched could hold the record: no total of 0 may
+    // stand for "found nothing" then, or the log would take a false negative.
+    const unsearched = settled.filter((s) => s.error !== undefined);
+    if (totalMatches === 0 && unsearched.length > 0) {
+      throw new Error(
+        "FamilySearch record search did not complete for every name of the place " +
+          `(${unsearched.map((s) => Object.values(s.places).join(" / ")).join("; ")}: ` +
+          `${unsearched[0]!.error}). The names that were searched found nothing. ` +
+          "This is a transient failure, NOT an empty result — coverage is unknown.",
+      );
+    }
+    responseOffset = offset;
+    searchesHaveMore = settled.some((s) => s.more);
+    hasMore = searchesHaveMore;
+    expandedPool = true;
+    placeExpansion = {
+      searches: settled.map((s) => ({
+        places: s.places,
+        totalMatches: s.totalMatches,
+        returned: s.entries.length,
+        ...(s.error !== undefined ? { error: s.error } : {}),
+      })),
+      mergedCount: entries.length,
+      ...(plan.truncated ? { truncated: true } : {}),
+      note: PLACE_EXPANSION_NOTE,
+    };
+  }
   // Not point-free: `.map(mapEntry)` would pass the array index as `terms`.
   const kinTerms = suppliedKinTerms(input);
-  const results = entries
+  const mapped = entries
     .map((entry) => mapEntry(entry, kinTerms))
     .filter((r): r is RecordSearchResult => r !== null);
+  // Under an expansion, the merged rows past the page decide `hasMore` (after
+  // mapping, which can drop rows), and a ranked pool is capped.
+  if (expandedPool) hasMore = searchesHaveMore || mapped.length > depth;
+  const poolCap = Math.max(depth, RANKED_POOL_MAX);
+  const results = expandedPool && rankedPool && mapped.length > poolCap ? mapped.slice(0, poolCap) : mapped;
+  if (results !== mapped && placeExpansion && "searches" in placeExpansion) {
+    placeExpansion.rankedPoolCapped = true;
+  }
 
   // Standardize places across the whole response in one pass (dedup spans all
   // entries; the resolver caches identical strings). Best-effort — never throws.
+  // Under an unranked expansion only the page is shown or staged, and the
+  // standardizer resolves a capped number of distinct places, so it must not
+  // spend them on merged rows nobody sees.
+  const shownRows = expandedPool && !rankedPool ? results.slice(offset, offset + count) : results;
   await standardizePlaces(
-    results.flatMap((r) => (r.gedcomx ? collectFacts(r.gedcomx) : [])),
+    shownRows.flatMap((r) => (r.gedcomx ? collectFacts(r.gedcomx) : [])),
   );
 
   // The staged-search backlog, read BEFORE this call stages its own response — a
@@ -1081,16 +1346,16 @@ export async function recordSearchTool(
   // failure, and refuses nothing.
   const unloggedStaged =
     input.projectPath !== undefined
-      ? await unloggedStagedSearches(input.projectPath)
+      ? await unloggedStagedSearches(input.projectPath, "record_search")
       : [];
 
   const out: RecordSearchToolResponse = {
     query: echoQuery(input),
-    totalMatches: data.results ?? 0,
+    totalMatches,
     paginationCappedAt: PAGINATION_CAP,
-    returned: results.length,
-    offset: data.index ?? input.offset ?? 0,
-    hasMore: data.links?.next?.href != null,
+    returned: expandedPool ? Math.min(count, Math.max(0, results.length - offset)) : results.length,
+    offset: responseOffset,
+    hasMore,
     // Placed before `results` because the run-log capture bounds response size
     // and `results` is the largest field, so a trailing field is what gets
     // dropped first. Belt and braces with the capture fix in
@@ -1142,9 +1407,10 @@ export async function recordSearchTool(
     // total, which is what "the search found nothing" actually means. Ordering a
     // `negative` log entry for a query that has matches is the asymmetric error:
     // the log is append-only, and later reasoning leans hardest on negatives.
-    ...(input.projectPath !== undefined && results.length === 0 && (data.results ?? 0) === 0
+    ...(input.projectPath !== undefined && results.length === 0 && totalMatches === 0
       ? { nilSearchNeedsLog: NIL_SEARCH_NEEDS_LOG_NOTE }
       : {}),
+    ...(placeExpansion !== undefined ? { placeExpansion } : {}),
     results,
   };
 
@@ -1171,25 +1437,34 @@ export async function recordSearchTool(
         nilSearchNeedsLog: _nilNote,
         ...persistable
       } = out;
+      // Under a place expansion the sidecar holds what the ranker must score: the
+      // whole merged pool when a subject was named, else the page shown. Its
+      // `returned` is always the page shown, which is what
+      // research_log_append's `resultsExamined` means (issue #4067).
+      const staged =
+        expandedPool && !rankedPool
+          ? { ...persistable, results: persistable.results.slice(offset, offset + count) }
+          : persistable;
       out.staged = await stageSearchResults({
         projectPath: input.projectPath,
         tool: "record_search",
-        response: persistable,
+        response: staged,
       });
+      if (expandedPool && out.staged) out.staged.returnedCount = out.returned;
     } catch (error) {
       out.staged = null;
       out.stagingError = error instanceof Error ? error.message : String(error);
     }
   }
 
-  // Whenever results were staged, slim the INLINE projection so a broad search
-  // can't overflow the model's context. What is dropped and why — including the
-  // fields deliberately KEPT — is documented on `compactStagedRecordSearch`.
-  // It lives in `utils/` because the eval harness runs the same function on its
-  // canned responses; mirroring it in Python would make the copy that drifts.
-  if (out.staged) {
-    compactStagedRecordSearch(out);
-  }
+  // Slim EVERY answer, staged or not, so a broad search can't overflow the
+  // model's context: a 100-result page with no project is over Claude Code's
+  // ~50k cutoff with `gedcomx` (issue #4386). Runs after staging, so the staged
+  // file keeps the full rows. What is dropped and why — including the fields
+  // deliberately KEPT — is documented on `compactStagedRecordSearch`. It lives in
+  // `utils/` because the eval harness runs the same function on its canned
+  // responses; mirroring it in Python would make the copy that drifts.
+  compactStagedRecordSearch(out);
 
   // Rank host-side when the caller named a subject. This is the "always call
   // rank_search_matches" rule turned into a tool contract — a documented step
@@ -1224,6 +1499,28 @@ export async function recordSearchTool(
     // and `out.ranked` is simply never assigned when ranking threw, so this
     // no-ops there regardless of where it sits.
     annotateResultsWithRanking(out);
+  }
+
+  // The page of a place expansion, cut only now: ranking scored the whole pool,
+  // and the cut runs whether or not ranking did, so `results` never exceeds
+  // `count` (issue #4067).
+  if (expandedPool) out.results = out.results.slice(offset, offset + count);
+  // A ranked expansion cannot page (offset is refused above), and its ranking
+  // summary was computed over the whole pool: make both describe the page.
+  if (expandedPool && rankedPool) {
+    out.hasMore = false;
+    if (out.ranked) {
+      out.ranked.returnedCount = out.results.length;
+      const note = buildRelativeTermNote(out.results);
+      if (note) out.ranked.relativeTermNote = note;
+      else delete out.ranked.relativeTermNote;
+      if (out.ranked.diagnostic) {
+        out.ranked.diagnostic = out.ranked.diagnostic.replace(
+          PAGE_DEEPER_ADVICE,
+          "raise `count` (up to 100) or narrow the query",
+        );
+      }
+    }
   }
 
   // A nil marriage search is a prompt, not a finding. Same reasoning as the
@@ -1494,7 +1791,7 @@ export const recordSearchToolSchema = {
       count: { type: "number", description: "Number of results per page. Max 100. Default 50 when `subjectId` is supplied — every row comes back scored and ordered, so fetching a deep pool is worth it — and 20 otherwise, since an unranked deep pool is just more stubs for you to read. Override only for a deliberate reason." },
       offset: { type: "number", description: "Pagination offset. Default 0. The combined value `offset + count` must be at most 4999 (FamilySearch's hard search-depth limit)." },
 
-      projectPath: { type: "string", description: "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle. The inline results come back as compact stubs — no per-result `gedcomx`, no `collectionUrl` (derive it from `collectionId`), no `treeMatches` key when there are none, and no per-row `collectionTitle`: those are hoisted into a single response-level `collections` map of `collectionId` → title. Stubs DO keep `relativeTerms` when you searched on a relative's name: it reports, per result, whether that relative is actually named on the record (`present`, with their name), definitely not on it (`absent`), or undetermined (`unknown`). Check it before writing that a record confirms a relationship — `absent` means the record is merely consistent with that relative, not evidence for them. The full-fidelity rows live in the staged file, so a broad search can't overflow the context. Pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them (that also lets you omit `query` — the staged payload already carries it). Only omit `projectPath` for a throwaway exploratory search you are certain you will not log: results come back inline at full fidelity but nothing reaches disk, and logging such a search anyway leaves a log entry whose raw response is gone for good (`research_log_append` warns when that happens)." },
+      projectPath: { type: "string", description: "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle. Either way the results come back as compact stubs — no per-result `gedcomx`, no `collectionUrl` (derive it from `collectionId`), no `treeMatches` key when there are none, and no per-row `collectionTitle`: those are hoisted into a single response-level `collections` map of `collectionId` → title. Stubs DO keep `relativeTerms` when you searched on a relative's name: it reports, per result, whether that relative is actually named on the record (`present`, with their name), definitely not on it (`absent`), or undetermined (`unknown`). Check it before writing that a record confirms a relationship — `absent` means the record is merely consistent with that relative, not evidence for them. The full rows live only in the staged file (`record_read` gives one record's), so a broad search can't overflow the context. Pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them (that also lets you omit `query` — the staged payload already carries it). Only omit `projectPath` for a throwaway exploratory search you are certain you will not log: nothing reaches disk, and logging such a search anyway leaves a log entry whose raw response is gone for good (`research_log_append` warns when that happens)." },
     },
   },
 };
