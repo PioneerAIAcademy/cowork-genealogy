@@ -337,10 +337,13 @@ is idempotent: a second pass changes nothing.
    then the rest in page order. The kept entries stay in page order.
    `namesCount`, `placesCount` and `datesCount` give the full distinct count,
    written only when absent: a count already present is the true one.
-4. **The page is fitted to `TOOL_RESULT_CHAR_BUDGET` (40k characters).** While the
-   answer is over it, rows are shortened longest first through caps of
-   20/10/5, then 10/5/3, then 5/3/0, then 0/0/0. A row is never dropped; a list
-   cut to 0 is removed and keeps its count.
+4. **The page is shrunk toward `TOOL_RESULT_CHAR_BUDGET` (40k characters).**
+   While the answer is over it, rows are shortened longest first through caps
+   of 20/10/5, then 10/5/3, then 5/3/0, then 0/0/0. A row is never dropped; a
+   list cut to 0 is removed and keeps its count. Only `names`, `places` and
+   `dates` are cut. `title`, `recordPlace` and the other row fields never are,
+   so a page of long titles and places can still be over the budget after the
+   last step.
 5. **`sourceUrl` is dropped where it is exactly
    `"https://www.familysearch.org/" + id`**, and kept otherwise.
 6. **`collectionTitle` moves into `collections`**, keyed by `collectionId`.

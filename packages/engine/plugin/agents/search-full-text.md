@@ -360,8 +360,9 @@ Triage from the stubs first:
   as bare strings (e.g. `["Patrick", "Flynn", "Flynn Patrick"]`) — they confirm
   which query terms appear in the transcript, not where or in what role.
 - **Who and what?** `names` lists the persons the transcript mentions (the FAN
-  net — witnesses, neighbors, heirs); `title` and `recordType` give the
-  document kind.
+  net — witnesses, neighbors, heirs), capped when `namesCount` is present, so
+  read the hit with `sidecar_read` before calling anyone absent from it;
+  `title` and `recordType` give the document kind.
 - **Where and when?** Check `recordPlace`/`places` and `recordDate`/`dates` —
   is the place and approximate date consistent with your person?
 - **Right context, or a false positive?** Whether the name is a genuine mention

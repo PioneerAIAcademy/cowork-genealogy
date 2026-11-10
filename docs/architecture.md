@@ -1566,9 +1566,9 @@ finalizes. The reduction differs by tool: `record_search` drops `gedcomx`,
 `collectionUrl`, and empty `treeMatches`, hoists `collectionTitle` into a
 response-level map, and de-duplicates `events`; `fulltext_search`, on every
 answer whether staged or not, drops `textDocument`, caps its `names`, `places`
-and `dates` lists and records their full counts, fits the page to
-`TOOL_RESULT_CHAR_BUDGET`, and hoists `collectionTitle` into a `collections` map
-(`fulltext-search-tool-spec.md`, "Answer compaction"); both leave
+and `dates` lists and records their full counts, cuts them further while the
+page is over `TOOL_RESULT_CHAR_BUDGET`, and hoists `collectionTitle` into a
+`collections` map (`fulltext-search-tool-spec.md`, "Answer compaction"); both leave
 name/date/place stubs for triage. `external_links_search` stages nothing since
 2026-10: its durable copy is `external-collections.json` (above). **The full payload travels
 search tool → disk → log-append and never round-trips through the model**

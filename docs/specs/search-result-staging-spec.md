@@ -98,9 +98,9 @@ producer strips its own heavy field. `record_search` drops `gedcomx`,
 unconditionally once staged (so the protection can't be forgotten) and never on
 an un-staged search (nothing was retained to re-read). `fulltext_search` compacts
 every answer, staged or not: it drops `textDocument` (the AI-transcribed page),
-caps and counts its entity lists and fits the page to a character budget
-(`fulltext-search-tool-spec.md`, "Answer compaction"). An un-staged full-text
-answer therefore keeps no transcript anywhere.
+caps and counts its entity lists and cuts them further while the page is over a
+character budget (`fulltext-search-tool-spec.md`, "Answer compaction"). An
+un-staged full-text answer therefore keeps no transcript anywhere.
 
 Out of scope: `research_log_append` itself (its spec), the other search tools
 (image/volume/collections/person — they don't write `results/` sidecars today), and

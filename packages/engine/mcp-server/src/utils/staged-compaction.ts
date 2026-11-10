@@ -204,9 +204,11 @@ function capEntityList(row: FulltextResult, key: FulltextEntityKey, cap: number)
 
 /**
  * Walk FULLTEXT_BUDGET_LADDER, longest row first, until the serialized answer
- * fits `budget`. Never drops a row. The `volume_search` fitToBudget pattern:
- * compact JSON serializes each row on its own, so a row's change in length is
- * the answer's.
+ * fits `budget` or the last rung has cut every row's lists to none. Never drops
+ * a row, and cuts only `names`, `places` and `dates`: `title`, `recordPlace` and
+ * the other row fields stay whole, so a page of long titles and places can end
+ * over `budget`. The `volume_search` fitToBudget pattern: compact JSON
+ * serializes each row on its own, so a row's change in length is the answer's.
  */
 function fitFulltextToBudget(out: FulltextSearchResponse, budget: number): void {
   let size = JSON.stringify(out).length;
@@ -226,8 +228,8 @@ function fitFulltextToBudget(out: FulltextSearchResponse, budget: number): void 
 }
 
 /**
- * Shape every `fulltext_search` answer, staged or not, so one page cannot
- * overflow the model's context. A transcript alone runs to 37k characters, and
+ * Shape every `fulltext_search` answer, staged or not, to shrink one page toward
+ * TOOL_RESULT_CHAR_BUDGET. A transcript alone runs to 37k characters, and
  * a newspaper page's entity lists to 11k, so neither the unstaged answer nor a
  * staged page of long rows was safe.
  *
@@ -239,8 +241,9 @@ function fitFulltextToBudget(out: FulltextSearchResponse, budget: number): void 
  * - `names`, `places` and `dates` are normalized, then capped at
  *   FULLTEXT_ENTITY_CAPS by `keepNearestMatches`, with `namesCount`,
  *   `placesCount` and `datesCount` giving the full count when a list was
- *   shortened; then FULLTEXT_BUDGET_LADDER keeps the page under
- *   TOOL_RESULT_CHAR_BUDGET.
+ *   shortened; then, while the page is over TOOL_RESULT_CHAR_BUDGET,
+ *   FULLTEXT_BUDGET_LADDER shortens them further, down to none. `title` and
+ *   `recordPlace` are never cut, so the page is not guaranteed to fit.
  * - `sourceUrl` goes only when it is exactly the FamilySearch origin plus `id`.
  * - `collectionTitle` moves into one response-level `collections` map.
  *
