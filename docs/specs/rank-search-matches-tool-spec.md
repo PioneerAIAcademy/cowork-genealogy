@@ -391,11 +391,15 @@ Two surnames are the same when any word of one is a spelling of any word of the
 other. Words are lower-cased, accent-free, split on spaces and hyphens, and
 words of three letters or fewer ("de", "van") are dropped while a longer word
 remains. Two words are spellings of one another at a Levenshtein distance of 1
-or less. So Kimbrel/Kimbrell, Smith/Smyth and García/García López are not
-flagged; Fenstermaker against Kimbrell, Olson against Nelson, and Van Buren
-against van Dyke, are. A looser match is not used: a Sorensen-Dice cutoff of
-0.66 treats Nelson/Olson and Anderson/Henderson as one name. The cost is that
-two distinct short surnames one letter apart (Hall/Hill) are not flagged.
+or less, or when they share an American Soundex code: `record_search` matches
+fuzzily, so it returns variants more than one edit apart for one another. So
+Kimbrel/Kimbrell, Smith/Smyth, García/García López, Stephens/Stevens,
+Reilly/Riley, Christensen/Christiansen and Johansson/Johnson are not flagged;
+Fenstermaker against Kimbrell, Olson against Nelson, Henderson against
+Anderson, and Van Buren against van Dyke, are (Soundex keeps the first letter).
+A Sorensen-Dice cutoff of 0.66 is not used: it treats Nelson/Olson and
+Anderson/Henderson as one name. The cost is that distinct surnames coded alike
+(Hall/Hill, Kimbrell/Kemper) are not flagged.
 
 When at least one returned row carries the flag, the response carries
 `surnameNote` (`SURNAME_NOT_ON_SUBJECT_NOTE`): each such row is `needs-review`,

@@ -533,6 +533,18 @@ describe("rank_search_matches", () => {
       expect(only(out)).not.toHaveProperty("surnameNotOnSubject");
     });
 
+    it.each([
+      ["Stephens", "Stevens"],
+      ["Reilly", "Riley"],
+      ["Christensen", "Christiansen"],
+      ["Johansson", "Johnson"],
+    ])("does not flag a fuzzy-search variant more than one edit apart (%s / %s)", async (own, indexed) => {
+      const tree = { persons: [juanita({ names: [{ preferred: true, given: "Mary", surname: own }] })], relationships: [], sources: [] };
+      const out = await rank([hit("ark:/61903/1:1:AAAA-AA1", indexed, "Mary")], tree);
+      expect(only(out)).not.toHaveProperty("surnameNotOnSubject");
+      expect(out).not.toHaveProperty("surnameNote");
+    });
+
     it("does not flag a record whose persona also carries her own surname", async () => {
       const both = hit("ark:/61903/1:1:6XJ4-K2F", "Fenstermaker");
       (both as any).gedcomx.persons[0].names.push({ given: "Juanita", surname: "Kimbrell", type: "BirthName" });

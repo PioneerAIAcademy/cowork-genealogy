@@ -663,12 +663,46 @@ function surnameTokens(surname: string): string[] {
   return long.length > 0 ? long : words;
 }
 
-/** Spelling variants one edit apart (Kimbrel/Kimbrell, Smith/Smyth, Reid/Reed)
- *  count as the same surname. A looser match is not used: Dice treats
- *  Nelson/Olson and Anderson/Henderson as one name, so the flag would never fire
- *  on them. The cost is that Hall/Hill also count as one. */
+const SOUNDEX_CODES: Record<string, string> = {
+  b: "1", f: "1", p: "1", v: "1",
+  c: "2", g: "2", j: "2", k: "2", q: "2", s: "2", x: "2", z: "2",
+  d: "3", t: "3",
+  l: "4",
+  m: "5", n: "5",
+  r: "6",
+};
+
+/** American Soundex: the first letter, then up to three digits for the
+ *  consonants after it. Letters coded alike and adjacent, or separated only by
+ *  `h` or `w`, give one digit; a vowel between them gives two. "" for a word
+ *  with no letter a–z. */
+function soundex(word: string): string {
+  const letters = word.toLowerCase().replace(/[^a-z]/g, "");
+  if (!letters) return "";
+  let out = letters[0].toUpperCase();
+  let last = SOUNDEX_CODES[letters[0]] ?? "";
+  for (const ch of letters.slice(1)) {
+    const code = SOUNDEX_CODES[ch];
+    if (code) {
+      if (code !== last) out += code;
+      if (out.length === 4) break;
+      last = code;
+    } else if (ch !== "h" && ch !== "w") {
+      last = "";
+    }
+  }
+  return out.padEnd(4, "0");
+}
+
+/** Two surname words are one name when they are one edit apart
+ *  (Kimbrel/Kimbrell, Smith/Smyth) or share a Soundex code (Stephens/Stevens,
+ *  Reilly/Riley, Christensen/Christiansen, Johansson/Johnson), which `record_search`'s
+ *  fuzzy matching returns for one another. Soundex keeps the first letter, so
+ *  Nelson/Olson and Anderson/Henderson stay distinct; a Sorensen-Dice cutoff did
+ *  not. The cost is that distinct names coded alike (Hall/Hill, Kimbrell/Kemper)
+ *  are not flagged. */
 function similarSurnameToken(a: string, b: string): boolean {
-  return levenshteinDistance(a, b) <= 1;
+  return levenshteinDistance(a, b) <= 1 || soundex(a) === soundex(b);
 }
 
 /** True when any word of `candidate` is a spelling of any word of any of the
