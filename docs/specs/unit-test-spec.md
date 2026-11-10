@@ -2236,7 +2236,7 @@ A run log represents N runs of one test (N from `runs_per_test`, default 1), plu
 |------|-------|-----------|
 | Main thread (a skill suite's skill, an agent-keyed suite's dispatcher or router) | `packages/engine/plugin/main-thread.json`'s model and effort, passed as `--model` / `--effort` | The one setting the hosted alpha and beta and both harnesses run. A skill cannot set its own model or effort. |
 | Agent-keyed suite: the agent | Its own `model:` / `effort:` frontmatter | Applied by the CLI to the subagent on every surface, Cowork included, and outranks the session's effort. |
-| LLM judge | Sonnet 4.6 | Sonnet 4.6 since 2026-11-06 (lead). Haiku misread a note it quoted on `ut_citation_007` (0/3 vs Sonnet 3/3, issue #4119), and per-misread judge lines did not converge. |
+| LLM judge | Sonnet 4.6 | Sonnet 4.6 since 2026-11-06 (lead). Haiku misread a note it quoted on `ut_citation_007` (0/3 vs Sonnet 3/3), and per-misread judge lines did not converge. |
 
 **Alternative judge model:** Gemini 2.5 Flash (~$0.15/1M input, $0.60/1M output) is ~5x cheaper than Haiku for the judge role. If Google APIs are already in use, Flash is a viable option that reduces judge cost from ~$0.01 per test to ~$0.002. The harness should support configurable judge model selection so the cheapest adequate model can be used.
 

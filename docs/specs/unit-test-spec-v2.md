@@ -431,8 +431,8 @@ flapping test is a defect to fix.
 
 ### 4. Gemini Flash judge option
 
-**Cut:** Anthropic models only. The unit judge is Sonnet 4.6 since 2026-11-06
-(#4330); Haiku 4.5 and Opus 4.7 are priced in `JUDGE_PRICING` too, but the SDK
+**Cut:** Anthropic models only. The unit judge is Sonnet 4.6 since 2026-11-06;
+Haiku 4.5 and Opus 4.7 are priced in `JUDGE_PRICING` too, but the SDK
 client is hardcoded to Anthropic.
 
 **Integration point:** `eval/harness/harness/judge.py::_make_client` —
