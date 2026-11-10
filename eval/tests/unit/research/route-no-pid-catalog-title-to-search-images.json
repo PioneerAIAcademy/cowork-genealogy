@@ -1,0 +1,56 @@
+{
+  "test": {
+    "id": "ut_research_np2",
+    "skill": "research",
+    "name": "Routes a no-project, no-PID ask for a named title's DGS numbers to search-images, not tree-survey or a hand-back",
+    "type": "positive",
+    "description": "Issue #4135. Empty folder; the user asks which DGS numbers hold a named title (the tester's second message from issue #4125). The main thread cannot call catalog_search (hook deny), so the ask must go to @plugin:search-images with no projectPath, and the router relays everything after its final `---`. It must not tell the researcher to search the FamilySearch Catalog themselves, spawn tree-survey or init-project, or create a project.",
+    "tags": [
+      "routing",
+      "routes-to:search-images",
+      "no-project"
+    ]
+  },
+  "input": {
+    "user_message": "/research Which DGS numbers on FamilySearch correspond to the digitized images of Ayling's Revised Register?",
+    "scenario": "empty-folder-no-project"
+  },
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      {
+        "skill": "search-images",
+        "response": "Catalog item: koha:186990, Revised register of the soldiers and sailors of New Hampshire in the War of the Rebellion, 1861-1866 (Augustus D. Ayling). No pages read. Nothing logged: no project.\n---\nAyling's Revised Register (koha:186990, War of the Rebellion, 1861-1866) is digitized on three image groups:\n- film 1697872: DGS 7561840\n- film 2317643: DGS 8650414\n- film 2319539: DGS 7499145"
+      },
+      {
+        "skill": "init-project",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "tree-survey",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-records",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "locality-guide",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      },
+      {
+        "skill": "search-familysearch-wiki",
+        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+      }
+    ]
+  },
+  "judge_context": [
+    "This is a ROUTING test. Whether @plugin:search-images is the first hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records — do not grade the routing decision yourself.",
+    "The folder is empty and the message names no FamilySearch person ID. It asks which DGS numbers hold a named title, a catalog lookup, so no project is created: a tree-survey or init-project spawn, or a project_create call, is wrong here.",
+    "search-images is stubbed, and the spawn is an Agent call, not an MCP tool call, so it may not appear in the tool-call list you see. Its return ends with a `---` line followed by the title and three DGS numbers: 7561840, 8650414 and 7499145. Those numbers exist only in the stub's return: a reply that carries all three came from the delegation, not from memory. The router must relay that block with all three DGS numbers tied to the Ayling item; dropping a number or rewriting the block into advice is a fault, but laying the same numbers out as a table is not.",
+    "Telling the researcher to search the FamilySearch Catalog themselves, or answering from memory instead of delegating, is a fail.",
+    "Grade only the router's own work: that it delegated and relayed the block."
+  ],
+  "judge_reads_files": true
+}

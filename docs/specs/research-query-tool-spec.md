@@ -158,10 +158,11 @@ the principal personas of both records.
   ok: true,
   section: string,
   count: number,      // total matches, BEFORE the 50-item page cap and any offset
-  items: any[],        // the section's native snake_case fields, verbatim — a
-                        // read projection, not a persisted document, so no
-                        // camelCase rename (contrast project_context, whose
-                        // fixed shape IS a wire surface)
+  items: any[],        // the section's native snake_case fields, verbatim but
+                        // for the two omissions below — a read projection, not
+                        // a persisted document, so no camelCase rename
+                        // (contrast project_context, whose fixed shape IS a
+                        // wire surface)
   truncated: boolean,  // true when matches remain beyond this page
                         // (count > offset + items.length)
   countById?: { [id: string]: number },
@@ -171,6 +172,15 @@ the principal personas of both records.
 }
 // on failure: { ok: false, errors: string[] }
 ```
+
+**Two fields are left out of `items`.** An item of a plan that is not active
+(`superseded` or `completed`) carries no `rationale`, except a `skipped` item
+with no `skip_category`. Every item of an active plan keeps its `rationale`,
+`completed` and `skipped` ones included, and a plan with no `status` counts as
+active, as in `question-state.ts`. Every other field of an item is as stored,
+`skip_category` and `skip_reason` included. A `log` entry carries no
+`staged_ref`. Both are left out of the answer only, never out of
+`research.json`.
 
 **A list call also returns `countById`:** for every requested id, zeros
 included, the number of matching items, counted over the whole match set — not
@@ -246,9 +256,10 @@ a recorded `core_identifier_conflict` first, then `speculative` over `probable` 
 that wrote 311 links shows 50 at a time, so the ordering decides which links a
 reviewer ever sees.
 
-The response then carries `reviewReasons`, keyed by link id, naming why each ranked
-link sits where it does — a rank with no reason is a number to distrust. Links with
-nothing notable carry no entry, and the key is absent when none do.
+The response then carries `reviewReasons`, keyed by link id, naming why each link
+on the returned page sits where it does — a rank with no reason is a number to
+distrust. Links with nothing notable carry no entry, and the key is absent when none
+on the page do. A link on another page has its reason on that page.
 
 Ignored for every other section: a plan's items are sequenced, and reordering them
 would destroy meaning rather than add it.
@@ -324,10 +335,35 @@ it scopes `unregisteredDisagreements` to the named conflicts' competing assertio
 - **Verbatim snake_case `items`, not a camelCase projection.** Unlike
   `project_context`'s curated fields (which ARE a wire surface, so camelCase
   per the repo's casing rule), this tool returns the underlying section
-  entries as-is — the caller is asking "what does research.json currently
-  say," not requesting a designed output shape. Renaming per-section fields
-  here would mean maintaining thirteen bespoke projections instead of one
-  filter layer.
+  entries as-is, but for the two omissions under "Return value" — the caller is asking "what
+  does research.json currently say," not requesting a designed output shape.
+  Renaming per-section fields here would mean maintaining thirteen bespoke
+  projections instead of one filter layer.
+- **No `rationale` on an item of a plan that is not active, and no
+  `staged_ref` on a log entry (lead, 2026-11-10).** A plan's items nest inside
+  it with their full `rationale`, and a `questionId` read returns every plan
+  the question ever had, completed and superseded ones included. In the hosted
+  sessions of 2026-10-15 to 2026-11-08, every `research_query` answer large
+  enough to be withheld from the model was that read, on a question with four
+  plans. The largest one delivered was 48.4k characters and is 18.8k under
+  this rule. Two withheld ones, rebuilt from the same question's plans, were
+  54.8k and 58.9k and are 25.2k and 29.3k; the largest withheld one, 66.6k, is
+  at most 37.0k even if all its growth was on the active plan. Over the repo's
+  committed scenario and e2e `research.json` files, plans answers shrink by
+  11%, and the largest is 13.9k, an active plan's.
+  The active plan keeps every item's `rationale` because research-plan lists
+  each item of the plan it reviews, disposes, edits, writes or recaps with its
+  rationale in one clause, and that plan is the active one; the router and the
+  agents that run an item read an open item of it too. A `skipped` item with
+  no `skip_category` was written before that field existed, and its skip
+  reason is in `rationale`, which research-exhaustiveness reads as the
+  recorded reason; it keeps it on any plan. A skipped item that has a
+  `skip_category` keeps `skip_category` and `skip_reason`, which is what
+  research-exhaustiveness reads. `staged_ref` is `research_log_append`'s own
+  record of the staged file an entry came from, and it reads it from
+  `research.json` itself (`findLoggedStagedRef` in
+  `utils/results-staging.ts`). There is no opt-in for either. `make
+  replay-collapse`'s log oracle leaves `staged_ref` out the same way.
 - **No `tree.gedcomx.json` access.** The observed cost (§1) was
   `research.json` re-reads specifically; tree re-reads were an order of
   magnitude lower in the same runs. Out of scope until evidence says

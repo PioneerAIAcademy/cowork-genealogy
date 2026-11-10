@@ -26,9 +26,9 @@ naturally after `record_search`:
 ```
 search(name, place, year)                                    // find candidates
    ↓
-LLM holds simplified-GedcomX of each candidate in its memory
-   ↓
 (user picks two and asks: "are result 1 and result 10 the same person?")
+   ↓
+record_read(recordId) for each of the two                    // their documents
    ↓
 LLM calls same_person(gedcomx1, primaryId1, gedcomx2, primaryId2)
 ```
@@ -292,7 +292,7 @@ has neither a project nor a record identity to key an attestation on.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `gedcomx1` | `SimplifiedGedcomX` | yes | First record's full simplified-GedcomX document — exactly as the LLM received it from a prior tool call (typically `record_search`). May contain multiple persons (focus + parents + relatives). Sent as `entries[0]` to the FS API. |
+| `gedcomx1` | `SimplifiedGedcomX` | yes | First record's full simplified-GedcomX document — exactly as the LLM received it from a prior tool call (typically `record_read`; a `record_search` answer carries no `gedcomx`). May contain multiple persons (focus + parents + relatives). Sent as `entries[0]` to the FS API. |
 | `primaryId1` | string | yes | The in-document `id` of the person in `gedcomx1` to match against (e.g. `"I1"`, `"primaryPerson"`). Must match a `persons[].id` in `gedcomx1`. |
 | `gedcomx2` | `SimplifiedGedcomX` | yes | Second record's full simplified-GedcomX document. Sent as `entries[1]`. |
 | `primaryId2` | string | yes | The in-document `id` of the focus person in `gedcomx2`. Must match a `persons[].id` in `gedcomx2`. |
@@ -989,7 +989,7 @@ export const samePersonSchema = {
         type: "object",
         description:
           "First record's full simplified-GedcomX document. Pass it exactly " +
-          "as received from a prior tool call (e.g. `record_search`)."
+          "as received from a prior tool call (e.g. `record_read`)."
       },
       primaryId1: {
         type: "string",
