@@ -54,6 +54,28 @@ def test_fires(calls):
         check(calls, TAGGED)
 
 
+def _pair(pid):
+    return (_call("extraction_append", projectPath="/p", personId=pid),
+            _call("timeline_build", projectPath="/p", personId=pid))
+
+
+@pytest.mark.parametrize("order", ["interleaved", "parallel"])
+def test_passes_two_subjects_each_set_up(order):
+    (e1, b1), (e2, b2) = _pair("I1"), _pair("I2")
+    calls = [e1, b1, e2, b2] if order == "interleaved" else [e1, e2, b1, b2]
+    check([CONTEXT, *calls], TAGGED)
+
+
+@pytest.mark.parametrize("calls", [
+    [_pair("I1")[0], _pair("I2")[0], _pair("I1")[1]],
+    [_pair("I1")[0], _pair("I2")[1]],
+    [_pair("I1")[0], _pair("I1")[1], _pair("I2")[1], _pair("I2")[0]],
+], ids=["second-subject-never-built", "build-names-another-person", "second-subject-built-before-extract"])
+def test_fires_per_subject(calls):
+    with pytest.raises(AssertionError):
+        check([CONTEXT, *calls], TAGGED)
+
+
 def test_skips_untagged():
     with pytest.raises(pytest.skip.Exception):
         check([], {"tags": ["routing"]})

@@ -2066,6 +2066,94 @@ describe("research_append: the attachment-link score exemption is code-only", ()
     expect(errorsOf(r)?.join(" ") ?? "").not.toMatch(/attachment links are not corroboration/);
   });
 
+  it("refuses a confident append that arrives already superseded", async () => {
+    await citeAnUncheckedRecord();
+    const pe = (await research()).person_evidence[0];
+    const freshId = await replaceAndRetire(pe);
+    const a = (await research()).assertions.find((x: any) => x.id === pe.assertion_id);
+    await recordMatchScore(dir, {
+      record_id: a.record_id, record_persona_id: a.record_persona_id ?? null, record_role: a.record_role ?? "principal",
+      tree_person_id: "I1", score: 0.9, scorer: "familysearch", model: null, assertion_id: a.id,
+      record_source: "record_read", computed: "2026-10-26T00:00:00Z",
+    });
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "append",
+      entry: { assertion_id: a.id, person_id: "I1", confidence: "confident", match_score: 0.9, rationale: "score 0.9", superseded_by: freshId },
+    } as any);
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)?.join(" ")).toMatch(/attachment links are not corroboration/);
+  });
+
+  it("refuses reviving a retired confident link once its corroboration is gone", async () => {
+    await citeAnUncheckedRecord();
+    await corroborateFromAnotherSource();
+    const pe = (await research()).person_evidence[0];
+    const appended = await scoredAppend(pe, "confident");
+    expect(appended.ok, JSON.stringify(appended)).toBe(true);
+    const confidentId = singleOk(appended as any).entryId;
+    expect((await raise(pe.id, { superseded_by: confidentId })).ok).toBe(true);
+    const probable = await scoredAppend(pe, "probable");
+    expect(probable.ok, JSON.stringify(probable)).toBe(true);
+    const retire = await raise(confidentId, { superseded_by: singleOk(probable as any).entryId });
+    expect(retire.ok, JSON.stringify(retire)).toBe(true);
+    const doc = await research();
+    const gone = doc.person_evidence.map((e: any) => (e.id === "pe_900" ? { ...e, superseded_by: confidentId } : e));
+    await writeProjectFile(join(dir, "research.json"), JSON.stringify({ ...doc, person_evidence: gone }));
+    const r = await raise(confidentId, { superseded_by: null });
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)?.join(" ")).toMatch(/attachment links are not corroboration/);
+  });
+
+  it("refuses superseding a link with one that is itself retired", async () => {
+    const pe = (await research()).person_evidence[0];
+    const freshId = await replaceAndRetire(pe);
+    const r = await raise(freshId, { superseded_by: pe.id });
+    expect(r.ok).toBe(false);
+    expect(errorsOf(r)?.join(" ")).toMatch(/is itself superseded/);
+  });
+
+  it("accepts re-sending a rejection's superseded_by unchanged, and refuses a rejection for another pair", async () => {
+    const pe = (await research()).person_evidence[0];
+    const freshId = await replaceAndRetire(pe);
+    const rejected = await researchAppend({
+      projectPath: dir, section: "rejected_links", op: "append",
+      entry: { assertion_id: pe.assertion_id, person_id: "I1", reason: "different man", researcher_words: "not him" },
+    } as any);
+    expect(rejected.ok, JSON.stringify(rejected)).toBe(true);
+    const rjId = singleOk(rejected as any).entryId;
+    const retiredTo = (await research()).person_evidence.find((e: any) => e.id === freshId).superseded_by;
+    expect(retiredTo).toBe(rjId);
+    const resend = await raise(freshId, { superseded_by: rjId });
+    expect(errorsOf(resend)?.join(" ") ?? "").not.toMatch(/names no person_evidence entry/);
+    expect(resend.ok, JSON.stringify(resend)).toBe(true);
+    const other = (await research()).person_evidence.find((e: any) => e.assertion_id !== pe.assertion_id && !e.superseded_by);
+    const wrong = await raise(other.id, { superseded_by: rjId });
+    expect(wrong.ok).toBe(false);
+  });
+
+  it("accepts re-sending a pointer unchanged after its target was itself superseded", async () => {
+    const pe = (await research()).person_evidence[0];
+    const firstId = await replaceAndRetire(pe);
+    const second = await scoredReplacement(pe);
+    expect((await raise(firstId, { superseded_by: second })).ok).toBe(true);
+    const resend = await raise(pe.id, { superseded_by: firstId });
+    expect(resend.ok, JSON.stringify(resend)).toBe(true);
+  });
+
+  it("accepts pointing a retired link at a rejection of the same pair", async () => {
+    const pe = (await research()).person_evidence[0];
+    const freshId = await replaceAndRetire(pe);
+    const rejected = await researchAppend({
+      projectPath: dir, section: "rejected_links", op: "append",
+      entry: { assertion_id: pe.assertion_id, person_id: "I1", reason: "different man", researcher_words: "not him" },
+    } as any);
+    expect(rejected.ok, JSON.stringify(rejected)).toBe(true);
+    const rjId = singleOk(rejected as any).entryId;
+    expect((await research()).person_evidence.find((e: any) => e.id === pe.id).superseded_by).toBe(freshId);
+    const repoint = await raise(pe.id, { superseded_by: rjId });
+    expect(repoint.ok, JSON.stringify(repoint)).toBe(true);
+  });
+
   it("accepts an update that re-sends confident unchanged beside a rationale edit", async () => {
     await corroborateFromAnotherSource();
     const pe = (await research()).person_evidence[0];

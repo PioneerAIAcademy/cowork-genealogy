@@ -260,6 +260,7 @@ time read from the session transcript:
 | Fixture (subjects) | `extraction_append({ personId })` | `timeline_build` | Written |
 |---|---|---|---|
 | thomas-hanrahan-marriage (KHGX-XWG, KC1J-LVB), 2026-11-09 | 6.4 s and 5.5 s, in parallel; 5 attached records each (Johanna's already extracted through Thomas's), 81 attachment links | 1.4 s and 0.8 s | 2 events each, all unverified; 2 and 1 `high` gaps |
+| joao-sousa-death (GLRZ-VRK), 2026-11-09 | 15.3 s; 17 attached records, 214 attachment links | 0.1 s | 6 events, all unverified; no `high` gap |
 
 ## 9. Files
 

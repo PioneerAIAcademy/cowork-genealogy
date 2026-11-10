@@ -233,7 +233,10 @@ def test_us_1890_never_expected(before_state, after_state, test):
     on a Pennsylvania timeline does not). A veterans schedule is not the
     population census and is left alone. Unlike the engine, an entry naming no
     jurisdiction is flagged whether or not any event is in the United States: a
-    bare "1890 census" is the schedule-revert regression this guards.
+    bare "1890 census" is the schedule-revert regression this guards. Also unlike
+    the engine, a year span ("1880–1900 censuses") is not read as covering 1890:
+    only an entry naming the year itself is checked here. The regexes are pinned
+    to the engine's by `tests/unit/test_timeline_1890_pattern_drift.py`.
 
     Scope is the 1890 fact only; it encodes no census schedule. Not tag-gated."""
     if test.get("type") != "positive":

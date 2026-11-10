@@ -24,6 +24,7 @@ import pytest
 
 
 from harness.record_basis import record_basis_of
+from harness.skill_invocation import is_attachment_link
 from validators_lib import (
     as_mapping,
     assert_foreign_keys_valid,
@@ -1992,21 +1993,6 @@ def test_identity_links_follow_their_persona(before_state, after_state, tool_cal
 
 # --- Attachment links on named assertions are superseded, the rest left alone ---
 
-_ATTACHMENT_LINK_RATIONALE = (
-    "Linked because FamilySearch has this record attached to this person; not verified."
-)
-
-
-def _is_attachment_link(pe: dict) -> bool:
-    """`isAttachmentLink` (`src/utils/tree-person.ts`): the fixed rationale,
-    `speculative`, and no score."""
-    return (
-        pe.get("rationale") == _ATTACHMENT_LINK_RATIONALE
-        and pe.get("confidence") == "speculative"
-        and pe.get("match_score") is None
-    )
-
-
 def test_supersedes_named_attachment_links(before_state, after_state, test):
     """Tag-gated (``supersedes-named-attachment-links``, issue #3516 PR D).
 
@@ -2027,7 +2013,7 @@ def test_supersedes_named_attachment_links(before_state, after_state, test):
     }
     old_links = [
         pe for pe in before.get("person_evidence", [])
-        if isinstance(pe, dict) and not pe.get("superseded_by") and _is_attachment_link(pe)
+        if isinstance(pe, dict) and not pe.get("superseded_by") and is_attachment_link(pe)
     ]
     assert old_links and named, (
         "scenario drift: expected live attachment links and question-tied assertions before the run"
