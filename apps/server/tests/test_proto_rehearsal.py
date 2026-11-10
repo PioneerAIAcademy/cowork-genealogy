@@ -24,6 +24,7 @@ A fake ``aws`` runner stands in for the CLI: no network, no AWS. Plan: the U13 P
 from __future__ import annotations
 
 import datetime as dt
+import hashlib
 import importlib.util
 import json
 import re
@@ -2665,6 +2666,27 @@ def account_ids(text: str) -> list[str]:
     return [m for m in TWELVE.findall(text) if m not in ALLOWED_IDS]
 
 
+# Vendored third-party files, pinned by sha256 in their README. Minified pdf.js carries
+# 12-digit runs inside its encoded data tables (pdf.worker.min.mjs has one), so a pinned file
+# is skipped only while its bytes are exactly the pinned release: an edit, or another
+# file under the same name, changes the hash and is scanned like everything else.
+VENDOR_README = REPO / "apps" / "server" / "proto" / "web" / "static" / "pdfjs" / "README.md"
+
+
+def pinned_vendor_files() -> dict[str, str]:
+    rows = re.findall(r"^\s*\| `([^`]+)` \| `([0-9a-f]{64})` \|\s*$", VENDOR_README.read_text(encoding="utf-8"), re.M)
+    return {f"apps/server/proto/web/static/pdfjs/{name}": digest for name, digest in rows}
+
+
+def test_the_vendored_pdfjs_files_match_their_pinned_hashes():
+    """The pin the scan below trusts: both files, each at the README's sha256."""
+    pinned = pinned_vendor_files()
+    assert set(pinned) == {"apps/server/proto/web/static/pdfjs/pdf.min.mjs",
+                           "apps/server/proto/web/static/pdfjs/pdf.worker.min.mjs"}
+    for rel, digest in pinned.items():
+        assert hashlib.sha256((REPO / rel).read_bytes()).hexdigest() == digest, rel
+
+
 def test_account_id_pattern_variants():
     planted = "2109" + "87654321"
     assert account_ids(f"fixture {planted}\n") == [planted]
@@ -2682,8 +2704,11 @@ def test_no_account_id_in_the_rehearsal_files():
                             cwd=REPO, capture_output=True, text=True, encoding="utf-8", check=True).stdout.split()
     assert "apps/server/proto/eb-rehearsal/rehearse.py" in listed
     hits = {}
+    pinned = pinned_vendor_files()
     for rel in listed:
         path = REPO / rel
+        if rel in pinned and path.is_file() and hashlib.sha256(path.read_bytes()).hexdigest() == pinned[rel]:
+            continue
         if path.is_file():
             found = account_ids(path.read_text(encoding="utf-8", errors="replace"))
             if found:

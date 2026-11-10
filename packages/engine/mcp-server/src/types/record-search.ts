@@ -341,6 +341,37 @@ export interface RecordSearchResult {
   role?: string;
 }
 
+/** The input fields a place expansion searches under other names. */
+export type PlaceField = "birthPlace" | "deathPlace" | "marriagePlace" | "residencePlace" | "anyPlace";
+
+/** One search of a place expansion: the place field(s) it used and what it found. */
+export interface PlaceExpansionSearch {
+  places: Partial<Record<PlaceField, string>>;
+  totalMatches: number;
+  /** Rows read from this search (offset 0 to `offset + count`). */
+  returned: number;
+  /** Set when this further name was not searched or its search failed; the
+   *  merge went on without it. */
+  error?: string;
+}
+
+/**
+ * Present when a place field expanded to more than one name (issue #4067):
+ * every name the typed place has had was searched and the records merged.
+ * Serialized before `results` (spec § Key order).
+ */
+export interface PlaceExpansion {
+  searches: PlaceExpansionSearch[];
+  /** Unique records in the merged list read for this page. */
+  mergedCount: number;
+  /** Some names were left out to stay within the search cap. */
+  truncated?: true;
+  /** The merged list was longer than the ranked pool, so only its first rows
+   *  (every name's best, in interleave order) were staged and ranked. */
+  rankedPoolCapped?: true;
+  note: string;
+}
+
 export interface RecordSearchToolResponse {
   query: Partial<RecordSearchInput>;
   totalMatches: number;
@@ -398,6 +429,7 @@ export interface RecordSearchToolResponse {
   // emptied by a page that fails mapping while matches exist. A nil search stages
   // no file, so `unloggedSearches` structurally cannot see it.
   nilSearchNeedsLog?: string;
+  placeExpansion?: PlaceExpansion;
   // Present only when `projectPath` was supplied. The host-staged handle to pass
   // to research_log_append as `stagedResultsRef`; null for a nil search or when
   // staging failed (see `stagingError`).

@@ -221,14 +221,15 @@ reformatting. The caller serializes it as a `## Decision needed` block:
   marked `(recommended)`. Each option's description is **the consequence that
   decides it** — a cost, a count, a failure mode, what it forecloses. Never a
   restatement of the label.
-- **For every option, the issue-body text that option produces**, in a fenced
-  block. **Not only the recommended one.**
+- **For the recommended option only, the issue-body text it produces**, in a
+  fenced block. Write none for the others; a pick of any other comes back to a
+  fresh `task-reviewer`.
 
-That last item is the point of the section: the answer comes back "B", and
+That last item is the point of the section: the answer comes back "A", and
 applying it is a splice by someone who did not do the reading — because by then
 you are gone, and so is the caller.
 
-Each option's body text records **the decision, the alternative it beat, and the
+The body text records **the decision, the alternative it beat, and the
 one or two facts it rests on**, in one clause, as `Decided (<who>, <date>)`, where
 <who> is filled in by whoever records the answer — this repo keeps three "do not re-derive" ledgers because settled
 questions get re-opened, and a body stating only the winner invites it again.
@@ -237,9 +238,6 @@ questions get re-opened, and a body stating only the winner invites it again.
 — `docs/specs/<tool>-tool-spec.md` §N, or a comment at the site it constrains —
 and make writing it there **part of the task**, so the junior's PR carries it to
 where the next person will be standing.
-
-If an option would change the blast radius you computed in Pass B #5, say so on
-that option. It is the signal that picking it needs a second look, not a splice.
 
 ## Hard rules
 

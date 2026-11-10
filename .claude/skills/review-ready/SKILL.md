@@ -206,19 +206,13 @@ Write each surviving question into the issue **body**, above the reviewed marker
 
 </details>
 
-<details><summary>Body text if B</summary>
-
-<the issue-body text option B produces>
-
-</details>
-
 *Prepared by review-ready YYYY-MM-DD.*
 ```
 
-**Carry every option's pre-written body text, not just the recommended one.** The
-agent wrote one block per option precisely so that applying the answer is a
-mechanical splice by someone who did not do the reading. Drop them and the
-splice becomes a rewrite, and `/fill-ready` skips its gate on text nobody vetted.
+**Carry the recommended option's pre-written body text.** It is what makes
+applying that answer a mechanical splice by someone who did not do the reading.
+Drop it and the splice becomes a rewrite, and `/fill-ready` skips its gate on text
+nobody vetted.
 
 **Apply `needs-decision` in the same write.** A block without the label is
 invisible to every query in the loop. `reviewed` goes on after, once the block

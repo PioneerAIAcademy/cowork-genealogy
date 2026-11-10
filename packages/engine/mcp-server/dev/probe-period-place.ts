@@ -158,7 +158,7 @@ interface Row {
 
 /** One page, retried: the tool throws on a timeout, which is not an empty result. */
 function page(input: RecordSearchInput) {
-  return withRetry(() => recordSearchTool(input, LOCAL), { attempts: 3, baseMs: 5000 });
+  return withRetry(() => recordSearchTool(input, LOCAL, { expandPlaces: false }), { attempts: 3, baseMs: 5000 });
 }
 
 function args(): { ids: string[]; max: number } {

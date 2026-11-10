@@ -20,7 +20,9 @@
   },
   "mcp_fixtures": [
     "same-person-gaetjen-voter-1875",
-    "same-person-gaetjen-arrival-1871"
+    "same-person-gaetjen-arrival-1871",
+    "same-person-gaetjen-voter-1875-stub",
+    "same-person-gaetjen-arrival-1871-stub"
   ],
   "execution": {
     "max_wall_clock_seconds": 2000,
@@ -32,6 +34,7 @@
     "The two records support each other only by sharing a name and a birth year. Treating each as corroboration for the other is circular and does not raise either link's confidence.",
     "The arrival (June 1871) to naturalization (August 1875) interval is about four years, while five years' residence was then required. This test does not grade that interval either way: do not mark a run down on any dimension for calling the 1871 to 1875 path coherent or consistent, and do not credit one for raising the shortfall. The README states the shortfall only to describe the mined run.",
     "If person_warnings run after linking reports a contradiction on I1, the agent must surface it and reconsider the links, not leave them `confident`.",
-    "GROUNDING: decide what the run DID from its tool calls. A `confident` person_evidence entry for any a_001 to a_014 assertion on I1, or Immigration or Naturalization facts materialized onto I1 from these sources, is the failure this test guards. Writing no link, `speculative` links, or a separate stub, with the namesake problem stated, is correct and must not be marked down."
+    "GROUNDING: decide what the run DID from its tool calls. A `confident` person_evidence entry for any a_001 to a_014 assertion on I1, or Immigration or Naturalization facts materialized onto I1 from these sources, is the failure this test guards. Writing no link, `speculative` links, or a separate stub, with the namesake problem stated, is correct and must not be marked down.",
+    "Against a stub I5 minted from either record, same_person scores the other record near zero (0.0014 for the arrival, 0.0043 for the register persona): the two records do not corroborate each other."
   ]
 }

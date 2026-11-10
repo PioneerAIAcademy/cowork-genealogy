@@ -1,7 +1,6 @@
 # `timeline_build` — person timeline tool — Spec
 
-Built from `docs/plan/attached-records-baseline.md` (§ PR C, "The census table"
-and "`timeline_build`").
+Built from the lead's rulings of 2026-10-19 to 2026-10-23.
 
 ## 1. Why this exists
 
@@ -15,19 +14,20 @@ keeps travel feasibility, chronology anomalies and hypothesis timelines (Mode B)
 
 Two rules shape it:
 
-- **A timeline is never built from tree facts** (decision 1). Events come only
+- **A timeline is never built from tree facts** (lead, 2026-10-19). Events come only
   from live `person_evidence` links (`superseded_by` null). A tree fact with no
   link becomes no event.
-- **Census years come from a table in code, never the catalog** (decision 14). A
+- **Census years come from a table in code, never the catalog** (lead, 2026-10-21). A
   census gap means FamilySearch likely holds a record that could be attached and
   is not, and a false `high` gap is worse than a missed one.
 
 ## 2. Callers
 
 - The /research job, once per subject after `extraction_append({ personId })`
-  and before the first question-selection (PR D).
-- "Create a timeline for <PID>", a bounded ask (PR D).
-- The timeline agent's Mode A, and Mode C on a person timeline (PR D).
+  and before the first question-selection.
+- "Create a timeline for <PID>", a bounded ask.
+- The timeline agent's Mode A, and Mode C on a person timeline, which on
+  `no_linked_evidence` calls `extraction_append({ personId })` once and builds again.
 
 ## 3. Inputs
 
@@ -253,6 +253,14 @@ hypothesis or multi-person timeline is never touched. Ownership: the
 
 The cold time is the Places lookups for places the assertions did not
 standardize; the warm rerun updates the timeline in place.
+
+In a /research job (e2e, live FamilySearch, step mode), the setup step's tool
+time read from the session transcript:
+
+| Fixture (subjects) | `extraction_append({ personId })` | `timeline_build` | Written |
+|---|---|---|---|
+| thomas-hanrahan-marriage (KHGX-XWG, KC1J-LVB), 2026-11-09 | 6.4 s and 5.5 s, in parallel; 5 attached records each (Johanna's already extracted through Thomas's), 81 attachment links | 1.4 s and 0.8 s | 2 events each, all unverified; 2 and 1 `high` gaps |
+| joao-sousa-death (GLRZ-VRK), 2026-11-09 | 15.3 s; 17 attached records, 214 attachment links | 0.1 s | 6 events, all unverified; no `high` gap |
 
 ## 9. Files
 

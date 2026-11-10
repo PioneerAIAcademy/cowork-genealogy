@@ -369,9 +369,10 @@ no unit suite, so no graded run reads this writer set.
 **Two declared contradictions that turn out not to be defects**, recorded rather
 than repaired:
 
-- `hypotheses` and `timelines` name skills the e2e corpus routes to **zero**
-  times. The rows stay enforced because the unit corpus does exercise both — 14
-  tests and 10 respectively.
+- `hypotheses` names a skill the e2e corpus routes to **zero** times, and
+  `timelines` had no e2e writer until the setup step's `timeline_build` (2026-11).
+  The rows stay enforced because the unit corpus exercises both — 14 tests and 10
+  respectively when this was recorded.
 - `citation` is allowed on research `sources` and forbidden on tree `sources`,
   while `research_append` mints a tree source in the same call, so **`citation`
   can never create a source**. Read as a structural impossibility when it was

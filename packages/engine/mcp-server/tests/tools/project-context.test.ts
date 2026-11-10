@@ -952,7 +952,7 @@ describe("project_context and project_create links", () => {
       webPublicUrl: "https://beta.example/",
       uploadsEnabled: true,
     });
-    expect(r.uploadUrl).toBe("https://beta.example/#/p/p-42/upload");
+    expect(r.uploadUrl).toBe("https://beta.example/upload/p-42");
     expect("projectUrl" in r).toBe(false);
   });
 

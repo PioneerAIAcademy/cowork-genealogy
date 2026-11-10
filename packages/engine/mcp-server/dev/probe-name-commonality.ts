@@ -161,7 +161,7 @@ async function search(leg: Leg, flags: FlagSetting): Promise<Cell> {
     ...(flags.birthPlaceExact ? { birthPlaceExact: true } : {}),
   };
   try {
-    const out = await recordSearchTool(input, LOCAL);
+    const out = await recordSearchTool(input, LOCAL, { expandPlaces: false });
     return { total: out.totalMatches };
   } catch (err) {
     return { total: null, note: err instanceof Error ? err.message : String(err) };

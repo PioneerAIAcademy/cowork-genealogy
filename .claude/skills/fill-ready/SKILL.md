@@ -953,8 +953,8 @@ already carries the `reviewed` label from a previous pass **and** has had no
 substantive body edit since.
 
 **A recorded ruling is not a substantive edit.** What `/make-decisions` splices
-in is `review-ready`'s own pre-written option text, vetted by the review that
-asked the question, so a `**Ruling:**` comment and its splice leave `reviewed`
+in is a `task-reviewer`'s text — the review that asked the question for the
+recommended option, a fresh one for any other pick — so a `**Ruling:**` comment and its splice leave `reviewed`
 intact — and an item whose only change is the answer it was waiting for must not
 buy a second ~110k-token read. Do not test `updatedAt` against the marker date
 for this: a ruling makes three writes, and any later comment by anyone pushes

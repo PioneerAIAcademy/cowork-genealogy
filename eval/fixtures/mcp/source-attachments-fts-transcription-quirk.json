@@ -1,0 +1,29 @@
+{
+  "tool": "source_attachments",
+  "description": "Attachment check for the transcription-quirk variant searches (ut_search_full_text_008): every hit those searches return comes back unattached. Stocked so a run that does search-full-text's attachment check is answered; no test grades attachment status.",
+  "args": {
+    "uris": "~"
+  },
+  "input_schema": {
+    "type": "object",
+    "properties": {
+      "uris": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        },
+        "description": "List of historical record persona ARK URLs to check. These come from the arkUrl or id field of search results."
+      }
+    },
+    "required": [
+      "uris"
+    ]
+  },
+  "response": {
+    "attachments": {},
+    "unattached": [
+      "https://familysearch.org/ark:/61903/1:1:N8R3-MK5J",
+      "https://familysearch.org/ark:/61903/1:1:QV9N-YS37"
+    ]
+  }
+}

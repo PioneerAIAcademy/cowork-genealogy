@@ -2029,6 +2029,54 @@ describe("research_append (Phase 1)", () => {
     expect(pe.person_evidence.find((e: any) => e.id === "pe_001").superseded_by).toBe("pe_002");
   });
 
+  describe("superseded_by names the link that replaces it", () => {
+    const link = (id: string, assertion_id: string, superseded_by: string | null = null) => ({
+      id, assertion_id, person_id: "I1", confidence: "probable", rationale: "match", created: "2026-01-01", superseded_by,
+    });
+    async function project(personEvidence: Record<string, unknown>[]) {
+      const research = baseResearch();
+      research.assertions = [validAssertion("a_001"), validAssertion("a_002")];
+      research.person_evidence = personEvidence;
+      await writeProject(research);
+    }
+    const retire = (entryId: string, superseded_by: string) =>
+      researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId, fields: { superseded_by } });
+
+    it("refuses a link for another assertion, and writes nothing", async () => {
+      await project([link("pe_001", "a_001"), link("pe_002", "a_002")]);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await retire("pe_001", "pe_002");
+      expect(r.ok).toBe(false);
+      expect(errorsOf(r)?.join(" ")).toMatch(/links a different assertion \('a_002'\)/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("refuses an id that names no entry, and itself", async () => {
+      await project([link("pe_001", "a_001")]);
+      expect(errorsOf(await retire("pe_001", "pe_999"))?.join(" ")).toMatch(/names no person_evidence entry/);
+      expect(errorsOf(await retire("pe_001", "pe_001"))?.join(" ")).toMatch(/cannot be superseded by itself/);
+    });
+
+    it("accepts a replacement appended earlier in the same batch, and refuses the update placed before it", async () => {
+      await project([link("pe_001", "a_001"), link("pe_002", "a_002")]);
+      await attestPairing(dir);
+      const append = { section: "person_evidence", op: "append", entry: { assertion_id: "a_001", person_id: "I1", confidence: "probable", match_score: 0.9, rationale: "score 0.9", superseded_by: null } };
+      const update = { section: "person_evidence", op: "update", entryId: "pe_001", fields: { superseded_by: "pe_003" } };
+      const wrongOrder = await researchAppend({ projectPath: dir, ops: [update, append] } as any);
+      expect(wrongOrder.ok).toBe(false);
+      expect(errorsOf(wrongOrder)?.join(" ")).toMatch(/names no person_evidence entry/);
+      const ok = await researchAppend({ projectPath: dir, ops: [append, update] } as any);
+      expect(ok.ok, JSON.stringify(ok)).toBe(true);
+      expect((await readResearch()).person_evidence.find((e: any) => e.id === "pe_001").superseded_by).toBe("pe_003");
+    });
+
+    it("leaves a pointer written before this rule editable", async () => {
+      await project([link("pe_001", "a_001", "pe_002"), link("pe_002", "a_002")]);
+      const r = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: "pe_001", fields: { rationale: "corrected note" } });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+    });
+  });
+
   it("rejects update of a non-existent id and writes nothing", async () => {
     await writeProject();
     const before = await readFile(join(dir, "research.json"), "utf-8");
@@ -13675,11 +13723,13 @@ describe("research_append — detected contradiction, two-party assertions", () 
   });
 
   it("does NOT pair with a one-party link the same call supersedes", async () => {
-    await write([{ id: "pe_900", ...entry("a_061", "I1", "speculative") }]);
+    // pe_901 is the link that replaces pe_900 for the same assertion (a
+    // superseded_by must name one).
+    await write([{ id: "pe_900", ...entry("a_061", "I1", "speculative") }, { id: "pe_901", ...entry("a_061", "I2", "speculative") }]);
     const r = await researchAppend({
       projectPath: dir,
       ops: [
-        { section: "person_evidence", op: "update", entryId: "pe_900", fields: { superseded_by: "pe_999" } },
+        { section: "person_evidence", op: "update", entryId: "pe_900", fields: { superseded_by: "pe_901" } },
         { section: "person_evidence", op: "append", entry: entry("a_060", "I1", "confident") },
       ],
     } as any);

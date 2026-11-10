@@ -18,6 +18,11 @@ function usage(): never {
   console.error("  --marriage-year <fromY> <toY>");
   console.error("  --residence-year <fromY> <toY>");
   console.error("  --any-year <fromY> <toY>");
+  console.error("  --marriage-place <name> / --residence-place <name> / --any-place <name>");
+  console.error("  --<birth|death|marriage|residence|any>-place-exact   *PlaceExact for that place");
+  console.error("  --no-expand               Search the place as typed only (no place expansion, #4067)");
+  console.error("  --subject <id> --project <path>   Rank against a tree person (subjectId + projectPath)");
+  console.error("  --summary                 Print totals, placeExpansion and record ids, not the full JSON");
   console.error("  --alt <surnameAlt>        Alternate surname (auto-pairs givenNameAlt)");
   console.error("  --sex <Male|Female|Unknown>");
   console.error("  --principal               isPrincipal=true");
@@ -52,10 +57,12 @@ function takeKinNames(argv: string[], i: number): [string, string | undefined, n
   return [given, undefined, i];
 }
 
-function parseArgs(argv: string[]): { input: RecordSearchInput; termsOnly: boolean } {
+function parseArgs(argv: string[]): { input: RecordSearchInput; termsOnly: boolean; summary: boolean; expandPlaces: boolean } {
   const input: RecordSearchInput = {};
   const positional: string[] = [];
   let termsOnly = false;
+  let summary = false;
+  let expandPlaces = true;
 
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -76,6 +83,36 @@ function parseArgs(argv: string[]): { input: RecordSearchInput; termsOnly: boole
       case "--terms":
         termsOnly = true;
         break;
+      case "--summary":
+        summary = true;
+        break;
+      case "--no-expand":
+        expandPlaces = false;
+        break;
+      case "--subject":
+        input.subjectId = argv[++i];
+        break;
+      case "--project":
+        input.projectPath = argv[++i];
+        break;
+      case "--marriage-place":
+        input.marriagePlace = argv[++i];
+        break;
+      case "--residence-place":
+        input.residencePlace = argv[++i];
+        break;
+      case "--any-place":
+        input.anyPlace = argv[++i];
+        break;
+      case "--birth-place-exact":
+      case "--death-place-exact":
+      case "--marriage-place-exact":
+      case "--residence-place-exact":
+      case "--any-place-exact": {
+        const prefix = a.slice(2, a.indexOf("-place"));
+        (input as unknown as Record<string, boolean>)[`${prefix}PlaceExact`] = true;
+        break;
+      }
       case "--given":
         input.givenName = argv[++i];
         break;
@@ -156,14 +193,16 @@ function parseArgs(argv: string[]): { input: RecordSearchInput; termsOnly: boole
   if (positional[0]) input.surname = positional[0];
   if (positional[1] && !input.givenName) input.givenName = positional[1];
 
-  return { input, termsOnly };
+  return { input, termsOnly, summary, expandPlaces };
 }
 
 const argv = process.argv.slice(2);
 if (argv.length === 0) usage();
 
-const { input, termsOnly } = parseArgs(argv);
-const result = await recordSearchTool(input, LOCAL);
+const { input, termsOnly, summary, expandPlaces } = parseArgs(argv);
+const started = Date.now();
+const result = await recordSearchTool(input, LOCAL, { expandPlaces });
+console.error(`wall-clock: ${Date.now() - started} ms`);
 
 if (termsOnly) {
   // The distribution `record-search-tool-spec-v2.md` § relativeTerms cannot get
@@ -186,6 +225,13 @@ if (termsOnly) {
   }
   if (Object.keys(tally).length === 0) {
     console.log("  (no relative anchor supplied — pass --father/--mother/--parent/--spouse)");
+  }
+} else if (summary) {
+  const { totalMatches, returned, offset, hasMore, placeExpansion, rankingError } = result;
+  console.log(JSON.stringify({ totalMatches, returned, offset, hasMore, placeExpansion, rankingError }, null, 2));
+  for (const r of result.results ?? []) {
+    const score = r.matchScore !== undefined ? `  match ${r.matchScore}` : "";
+    console.log(`  ${r.recordId}  ${r.personName ?? ""}  ${r.deathPlace ?? r.birthPlace ?? ""}${score}`);
   }
 } else {
   console.log(JSON.stringify(result, null, 2));

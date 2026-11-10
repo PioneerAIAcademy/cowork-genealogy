@@ -1,0 +1,22 @@
+{
+  "tool": "same_person",
+  "description": "same_person for the Germans to America index persona (Herm Gaetjen, b. 1854 Prussia, arrived New York 2 Jun 1871) against stub I5, minted from the 1875 San Francisco Great Register persona by materialize_facts on the gaetjen-namesake-confident-link scenario, at the live score measured on 2026-11-03: no match, 0.0014.",
+  "args": {
+    "assertionId": "~a_01",
+    "treePersonId": "~I5"
+  },
+  "response": {
+    "score": 0.0014349376,
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "p_14145591975",
+      "name": "Herm Gaetjen",
+      "role": "passenger_1"
+    },
+    "treePerson": {
+      "id": "I5",
+      "name": "Hermann Gatjen"
+    }
+  }
+}

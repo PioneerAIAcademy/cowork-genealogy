@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_timeline_008",
+    "skill": "timeline",
+    "name": "Nothing linked, records attached: extract once, then build from the attachment links",
+    "type": "positive",
+    "description": "Mode A on becker-attached-records. John Becker (I1) has two indexed census records attached on FamilySearch and nothing linked yet, so timeline_build returns no_linked_evidence. The agent calls extraction_append({ personId }) once, then timeline_build again, which writes a person timeline whose events all come from unchecked attachment links. The reply says how many events nobody has checked and that checking them is a separate request.",
+    "tags": [
+      "timeline",
+      "attached-records",
+      "extraction-calls-1",
+      "person-timeline-in-code",
+      "I1",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Build the timeline for John Becker (person I1).\n\nprojectPath: <workspace>",
+    "scenario": "becker-attached-records"
+  },
+  "mcp_fixtures": [
+    "record-read-becker-1900-mm8c-43q-attached",
+    "record-read-becker-1910-mlfm-gc8-attached"
+  ],
+  "judge_context": [
+    "Nothing is linked to I1 at the start, so the first `timeline_build` returns `no_linked_evidence`. The expected path is exactly one `extraction_append({ projectPath, personId })` call, then `timeline_build` again; the `extraction-calls-1` validator owns the count and the order. The agent never hands back for the missing links.",
+    "The extraction writes the two census households and links John Becker's assertions in both to I1 as unchecked attachment links. The timeline it then writes, `t_001`, holds four events (a ~1845 birth from the 1910 census, the January 1845 birth from the 1900 census, the 1900 census and the 1910 census), every one starting \"Unverified attachment:\". Its gaps are both `high`: 1845-01 to 1900 naming the 1850, 1860, 1870 and 1880 United States censuses, then residence; and 1845-01 to 1900 naming marriage (his 1900 household lists children and no marriage is linked).",
+    "The reply's plain-language paragraph must say that the events come from records nobody has checked yet (all four here) and that checking those attached records is a separate request. Presenting the attachment-linked events as established facts about John Becker is a Correctness fault.",
+    "In Mode A `timeline_build` resolves every place and computes every `distance_from_previous_km` itself, in code, so the agent makes no `place_search` or `place_distance` call and none is expected. Do not mark Tool usage or Tool Arguments down for their absence. `distance_from_previous_km` is `null` where either place has no coordinates, which is the case for most of these events in this test.",
+    "Geographic feasibility is N/A: no two events are close in time and far in place. Identity coherence is N/A: there is no hypothesis. Deferral of logical-impossibility detection is N/A: nothing falls outside his lifespan."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

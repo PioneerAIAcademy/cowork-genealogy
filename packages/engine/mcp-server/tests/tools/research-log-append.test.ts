@@ -191,6 +191,21 @@ describe("research_log_append", () => {
       expect((await validateProject(dir)).valid).toBe(true);
     });
 
+    // A place expansion with a named subject stages the whole merged pool for
+    // ranking and shows one page; what was examined is the page (issue #4067).
+    it("fills resultsExamined from the staged `returned`, not the pool's row count", async () => {
+      await writeProject(baseResearch());
+      const handle = await stageSearchResults({
+        projectPath: dir,
+        tool: "record_search",
+        response: { query: { surname: "Byrne" }, totalMatches: 412, returned: 1, results: [{ recordId: "A" }, { recordId: "B" }, { recordId: "C" }] },
+      });
+      const result = await researchLogAppend({ projectPath: dir, planItemId: "pli_001", stagedResultsRef: handle!.resultsRef } as any);
+
+      expect(result.ok).toBe(true);
+      expect((await readJson("research.json")).log[0].results_examined).toBe(1);
+    });
+
     it("fills them per op in a batch", async () => {
       await writeProject(baseResearch());
       const handle = await stage();

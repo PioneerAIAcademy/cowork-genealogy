@@ -424,10 +424,16 @@ export async function readStagedEnvelopeQuery(
     if (typeof envelope?.tool !== "string") return undefined;
     const results = envelope.payload?.results;
     const total = envelope.payload?.totalMatches;
+    // `returned` is the rows the agent was shown. It equals `results.length`
+    // except under a record_search place expansion with a named subject, which
+    // stages the whole merged pool for ranking and shows one page (issue #4067).
+    const shown = envelope.payload?.returned;
     return {
       tool: envelope.tool,
       query: stripQueryPlumbing(envelope.payload?.query),
-      returnedCount: Array.isArray(results) ? results.length : 0,
+      returnedCount: Number.isInteger(shown) && shown >= 0
+        ? shown
+        : Array.isArray(results) ? results.length : 0,
       totalMatches: Number.isInteger(total) && total >= 0 ? total : undefined,
     };
   } catch {

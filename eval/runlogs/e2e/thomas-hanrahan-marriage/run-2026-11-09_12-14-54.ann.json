@@ -1,0 +1,13 @@
+{
+  "per_finding": {
+    "f1": "false",
+    "f2": "false"
+  },
+  "proof_quality_score": 1,
+  "notes": {
+    "f1": "The final tree carries a Marriage fact, 1 February 1868, Ballylooby, County Tipperary, Ireland, on the KHGX-XWG / KC1J-LVB couple relationship: the over-claim this finding exists to catch.",
+    "f2": "ps_001 (probable) concludes the 1 Feb 1868 Ballylooby marriage instead of rejecting it; it does not weigh the 1880 census giving every child, Mary 1865 included, as New York-born, and it presents Ryan as Johanna's surname."
+  },
+  "findings_hash": "799a66512b93b1154bc48991f1dfefa68e5b0c3a1e4dc6a9c8a2ec4a79a81105",
+  "blind_bundle_digest": "2f596c7e5aecd45c98d2e926ba1f467c7bcace60982d35c7d10b07d505965042"
+}
