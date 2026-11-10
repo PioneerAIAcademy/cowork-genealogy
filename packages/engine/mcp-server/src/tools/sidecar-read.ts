@@ -14,8 +14,8 @@
 // and control character, and the CLI spills any result above 50,000 characters
 // to a file the model must Read back (which, on a resumed turn, is deleted at
 // turn end). So the page is shrunk until its JSON-escaped text fits in `maxChars`
-// (40,000 at most), whatever the raw text looks like, and a `refs` batch shares one
-// 40,000-character budget among its pages.
+// (40,000 at most), whatever the raw text looks like, and a `refs` batch fills one
+// 40,000-character budget with whole pages, smallest first.
 
 import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { getProjectStore } from "../store/project-store.js";
@@ -32,7 +32,7 @@ import {
 } from "../utils/results-staging.js";
 import { arkToBareId } from "../utils/ark.js";
 import { fitPage, requireWholeNumber } from "../utils/text-page.js";
-import { shareBudget } from "../utils/share-budget.js";
+import { fillWholeFirst } from "../utils/share-budget.js";
 import {
   classifyProjectPath,
   MISSING_PROJECT_PATH_MESSAGE,
@@ -69,7 +69,7 @@ export interface SidecarReadInput {
    *  `results/` ref holding a staged transcription. */
   ref?: string;
   /** Several refs in one call (the record-structurer agent's "read all" turn).
-   *  Each is read from its start, and all share one budget; `offset` applies to `ref` only,
+   *  Each is read from its start, into one budget filled whole pages first; `offset` applies to `ref` only,
    *  and any but 0 with `refs` is refused. */
   refs?: string[];
   /** UTF-16 code-unit offset of the first character to return. Default 0. */
@@ -382,10 +382,10 @@ function pageResult(
  * A `refs` batch, held to SIDECAR_READ_BATCH_BUDGET as a whole. Each ref first gets the
  * page a lone `ref` read would return. What the answer costs with every page emptied,
  * and every result counted as truncated at its longest `nextOffset`, is taken off the
- * budget, and the rest is shared among the pages by `shareBudget`: a page
- * that fits its share comes back as it is, and a larger one is cut to its share and
- * carries `truncated` and `nextOffset`, which a `ref` read with that `offset` continues.
- * A cut page keeps at least one unit, so `nextOffset` always advances.
+ * budget, and the rest is filled with whole pages, smallest first, by `fillWholeFirst`:
+ * the first page that does not fit is cut to what is left, and every page after it
+ * comes back empty, `truncated` with `nextOffset: 0`. A cut or empty page is continued
+ * by a `ref` read with `offset: nextOffset`. Results keep the caller's order.
  */
 async function readBatch(projectPath: string, refs: string[], maxChars: number): Promise<SidecarReadBatchResult> {
   const reads: RefText[] = [];
@@ -395,12 +395,14 @@ async function readBatch(projectPath: string, refs: string[], maxChars: number):
     ok: true,
     results: results.map((x) => (x.ok ? { ...x, content: "", truncated: true, nextOffset: x.totalChars } : x)),
   }).length;
-  shareBudget(
+  fillWholeFirst(
     results.map((x) => (x.ok ? escapedLength(x.content) : 0)),
     SIDECAR_READ_BATCH_BUDGET - fixed,
     (i, offer) => {
       const read = reads[i] as { text: string; hit?: HitFields };
-      const page = fitPage(read.text, 0, Math.max(1, offer));
+      // fitPage never cuts below one unit, which can escape past a small offer.
+      const cut = offer > 0 ? fitPage(read.text, 0, offer) : "";
+      const page = escapedLength(cut) <= offer ? cut : "";
       results[i] = pageResult(refs[i], read, 0, page);
       return escapedLength(page);
     },
@@ -529,10 +531,11 @@ export const sidecarReadSchema = {
     "A hit read adds `hitId`, `hitIndex` (1-based) and `logId` to the result, plus the hit's " +
     "`title`, `recordDate` and `recordPlace` when it has them. Returns " +
     "`{ ref, totalChars, offset, content, truncated, nextOffset? }`: `content` is at most " +
-    "40,000 characters, less when the text is heavy with quotes or backslashes, and a " +
-    "`refs` answer shares one 40,000-character budget among its refs, so a small ref comes " +
-    "back whole and a large one may come back cut. When `truncated` is true, call again with that `ref` and " +
-    "`offset: nextOffset` until it is false. A missing file is `reason: \"not_found\"` " +
+    "40,000 characters, less when the text is heavy with quotes or backslashes. A `refs` " +
+    "answer lists its refs in your order and fills one 40,000-character budget with whole " +
+    "refs, smallest first: the first ref that does not fit comes back cut, and any larger " +
+    "come back empty with `truncated: true` and `nextOffset: 0`. When `truncated` is true, call again " +
+    "with that `ref` and `offset: nextOffset` until it is false. A missing file is `reason: \"not_found\"` " +
     "(this tool does not list directories — a ref is something you already hold); a " +
     "binary or UTF-16 file is `reason: \"not_text\"`.",
   inputSchema: {
@@ -556,8 +559,8 @@ export const sidecarReadSchema = {
         type: "array",
         items: { type: "string" },
         description:
-          "Several refs in one call, each read from its start, sharing one 40,000-character " +
-          "answer. Send `ref` or `refs`, not both.",
+          "Several refs in one call, each read from its start, filling one 40,000-character " +
+          "answer with whole refs, smallest first. Send `ref` or `refs`, not both.",
       },
       offset: {
         type: "number",
