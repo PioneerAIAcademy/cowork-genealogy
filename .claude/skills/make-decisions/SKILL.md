@@ -214,7 +214,8 @@ gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \
 #    `## Decision needed` block, so the next reader gets the decision and not the
 #    open fork. Copy it — do not compose your own; you did not do the reading.
 #    Only when he picked the recommended option; any other goes back through a
-#    `task-reviewer` first (§4), and you splice what it returns. An item you prepared yourself in §2 has no pre-written option text and no
+#    `task-reviewer` first (§4), and you splice what it returns.
+#    An item you prepared yourself in §2 has no pre-written option text and no
 #    block to replace: write the decision and the alternative it beat into the
 #    body directly. You did the reading this run, so you are the one who can.
 #    Edit body.md with `python3 - <<'PY'` (the body carries backticks and
