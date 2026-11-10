@@ -24,6 +24,7 @@
     "fulltext-search-flynn-wildcard-variant",
     "fulltext-search-flynn-prefix-wildcard-variant",
     "wiki-read-any",
+    "record-attachments-flynn-witnesses",
     "wiki-search-any"
   ],
   "execution": {
