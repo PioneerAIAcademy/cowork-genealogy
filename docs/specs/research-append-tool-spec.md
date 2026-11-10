@@ -2119,6 +2119,69 @@ ended with every question resolved, and in 6 of them the rule removes 17
 persons. The only `research.json` entries naming those persons are 91
 `person_evidence` links.
 
+### 5.12 A caller's `localities` collection counts are stamped from the catalog
+
+On a `localities` append, and on an update whose `fields` sets `collections`,
+reached as an MCP caller (`researchAppendFromCaller`), each collection's
+`person_count` and `record_count` are set from FamilySearch's collection catalog
+(`fetchAllCollections`, the catalog `collections_search` reads, counted as it
+counts them: `collectionCountsById`). The write is never refused (decided at review-ready,
+2026-11-09). The wiring is `stampLocalityCollectionCounts` in
+`research-append.ts`, called from `prepareOps` after the `for_place` check (§5.8)
+and skipped when an earlier check has refused the batch.
+
+**Why.** research-plan plans from these counts without calling `collections_search`
+when every collection in a covering locality carries a `person_count`, and decides
+a name search vs an image browse on `person_count > 0`. In alpha feedback bundle
+`feedback-2026-11-05T18-50-09-991Z.zip` one locality stored `person_count: 0` on all 13 of its collections, and the second plan
+sent two indexed Illinois state censuses (1803969, 1803971; personCount 240,768 and
+380,262) to full-text search as browse-only. The agent cannot know a better count
+than the catalog, so a refusal would cost a turn and end in the same state.
+
+- **Ids.** A number id is stored as a string on every path below. A collection with
+  no id (absent, null, empty, or neither a string nor a number) cannot be checked: both counts become
+  `null`, with the warning
+  > `localities collections: a collection with no id cannot be checked; person_count and record_count set to null (unknown)`
+- **Found.** The id is in the catalog: both counts become the catalog's. A warning names each
+  value that changed:
+  > `localities collections '<id>': <count> <old> -> <new>[, <count> <old> -> <new>], set from FamilySearch's catalog`
+
+  `<count>` is `person_count` or `record_count`; only a count that changed is named,
+  `person_count` first. `<old>` is the JSON of the supplied value, or `absent`.
+- **Not found.** Both counts become `null`, which sends research-plan back to
+  `collections_search`:
+  > `localities collections '<id>' is not in FamilySearch's collection catalog; person_count and record_count set to null (unknown)`
+- **The catalog cannot be read** (no FamilySearch session, a network failure, a
+  non-200, or no answer within `CATALOG_READ_BUDGET_MS`, 20 seconds): every count in each such op becomes `null`, with one warning per op. The
+  underlying error, including the auth error's "Call the login tool", is not passed on:
+  > `localities collections: FamilySearch's collection catalog could not be read, so every person_count and record_count in this entry was set to null (unknown)`
+- **A spent FamilySearch request budget** (the process-wide limit or the per-user
+  429 pause, `isFsBudgetExhausted`) is a refusal, not a failed read: it is rethrown,
+  so the call fails with that error and nothing is written, as for an assertion's
+  geocode.
+- **When the catalog is read.** Once per call, in `researchAppendFromCaller`, before
+  the project lock, and only when the call carries a `localities` collection. A cold
+  read can run past 30 seconds (2 of 51 in the committed e2e run logs took 33 and 36,
+  collections-search-tool-spec "Timeout") and Cowork's bridge aborts a call at 60, so
+  the write waits at most 20 seconds; a read still running then goes on and fills
+  the cache. `fetchAllCollections` caches a successful read for an hour per token
+  (for the whole process when `GENEALOGY_SHARED_COLLECTIONS_CACHE` is `true`), so the
+  read is usually warm after locality-guide's own `collections_search`, but not after
+  a token refresh, or on a per-token hosted server where another patron's read has
+  since taken the cache's one slot.
+- **Whose session reads it.** The caller's: `server.ts` binds
+  `collectionCatalogLoader(principal)` and passes it to `researchAppendFromCaller`,
+  so `research-append.ts` imports no token code. That keeps every tool built on
+  `researchAppend` out of the hosted reauth alarm's set of tools that reach the token,
+  which they do not. `research_append` itself never passes on a sign-in instruction
+  (a failed read is the warning above), so it stays out of that set too.
+- **Who is stamped.** Only an MCP caller. The internal `researchAppend` callers are
+  not. The unit eval harness passes a null catalog loader, so it never contacts
+  FamilySearch and stores the counts as written (the `person_warnings`
+  precedent).
+- **Measured 2026-11-10** with a live session: the catalog held 3,638 collections
+  (the read asks for 5,000, so an id is not missed by truncation), every `id` a string.
+
 ## 6. Decisions recorded
 
 - **One tool with `section` + `op`, not per-section tools.** Same rationale as
@@ -2255,6 +2318,12 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   supplied persona rejected; absence never errors.
 - **joint-write atomicity** — a research-side validation failure after the
   in-memory `S` creation leaves **both** files byte-unchanged, no `.bak`.
+- **locality collection counts** (§5.12) — a wrong count replaced with a warning;
+  a correct one kept silently; an id the catalog lacks, and every id on a failed
+  read (an error, a non-200 or the 20-second budget), nulled with a warning and the
+  write kept; a collection with no id nulled; a number id stored as a string; a spent
+  FamilySearch budget rethrown; an update stamped like an append;
+  a null loader and an internal `researchAppend` write left unstamped.
 - **place levers** — sidecar copy preferred over geocoding; `resolvedPlaces`
   echo; country-contradiction rejected; `standard_place: null` opt-out honored;
   `opsReceived` echoed on batch failures.
