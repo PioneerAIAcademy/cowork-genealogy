@@ -198,8 +198,6 @@ interface FulltextResult {
    *  the answer when it is exactly "https://www.familysearch.org/" + `id`. */
   sourceUrl?: string;
   collectionId?: string;
-  /** In the sidecar only: the answer hoists it into `collections`. A row with
-   *  no `collectionId` keeps it. */
   collectionTitle?: string;
   /** Record title (upstream `content.title`). */
   title?: string;
@@ -276,9 +274,6 @@ interface FulltextSearchResponse {
   notFulltextSearchable?: string;
   results: FulltextResult[];
   facets?: FulltextFacet[];
-  /** collectionId -> collectionTitle, hoisted off the rows. Absent when no row
-   *  carries both. */
-  collections?: Record<string, string>;
   /** Present only when `projectPath` was supplied. `null` if staging failed.
    *  See "Result staging" below for the strip/reachability contract. */
   staged?: { resultsRef: string; returnedCount: number } | null;
@@ -346,7 +341,10 @@ is idempotent: a second pass changes nothing.
    last step.
 5. **`sourceUrl` is dropped where it is exactly
    `"https://www.familysearch.org/" + id`**, and kept otherwise.
-6. **`collectionTitle` moves into `collections`**, keyed by `collectionId`.
+6. **`collectionTitle` stays on each row.** A response-level map of collection
+   ids was tried and dropped: it saved under 2.5% of an answer, and with it the
+   agent scoped a repeat search to a collection id the rules forbid it to borrow
+   (`ut_search_full_text_009`, 2 of 2 runs).
 
 Measured 2026-11-09 on seven hosted answers, all staged: the largest, 20 rows
 at 47.8k characters, comes to 21.5k; three count-5 newspaper and directory

@@ -546,8 +546,8 @@ describe("fulltextSearchTool response shaping", () => {
     // Exactly the FamilySearch origin plus the id, so it is dropped.
     expect(r.sourceUrl).toBeUndefined();
     expect(r.collectionId).toBe("2221234");
-    expect(r.collectionTitle).toBeUndefined();
-    expect(result.collections).toEqual({ "2221234": "Ireland Catholic Parish Registers" });
+    expect(r.collectionTitle).toBe("Ireland Catholic Parish Registers");
+    expect("collections" in result).toBe(false);
     expect(r.title).toBe("Last Will and Testament of Patrick Flynn");
     expect(r.recordDate).toBe("1849");
     expect(r.recordType).toBe("Probate");

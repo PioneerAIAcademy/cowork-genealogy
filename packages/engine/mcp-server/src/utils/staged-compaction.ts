@@ -251,27 +251,22 @@ function fitFulltextToBudget(out: FulltextSearchResponse, budget: number): void 
  *   FULLTEXT_BUDGET_LADDER shortens them further, down to none. `title` and
  *   `recordPlace` are never cut, so the page is not guaranteed to fit.
  * - `sourceUrl` goes only when it is exactly the FamilySearch origin plus `id`.
- * - `collectionTitle` moves into one response-level `collections` map.
+ * - `collectionTitle` stays on each row. A response-level map of collection ids
+ *   led the agent to scope a repeat search to a collection id (2 of 2 runs of
+ *   ut_search_full_text_009), and it saved under 2.5% of an answer.
  *
  * The sidecar keeps every field and every entry. Idempotent: a second pass
- * finds every list within its cap, every count already written, and no title
- * left to hoist.
+ * finds every list within its cap and every count already written.
  *
  * Mutates and returns `out`.
  */
 export function compactStagedFulltextSearch(
   out: FulltextSearchResponse,
 ): FulltextSearchResponse {
-  const collections: Record<string, string> = {};
   for (const r of out.results) {
     delete r.textDocument;
 
     if (r.sourceUrl === FAMILYSEARCH_ORIGIN + r.id) delete r.sourceUrl;
-
-    if (r.collectionId && r.collectionTitle) {
-      collections[r.collectionId] = r.collectionTitle;
-      delete r.collectionTitle;
-    }
 
     for (const key of FULLTEXT_ENTITY_KEYS) {
       const values = r[key];
@@ -281,9 +276,6 @@ export function compactStagedFulltextSearch(
       else delete r[key];
       capEntityList(r, key, FULLTEXT_ENTITY_CAPS[key]);
     }
-  }
-  if (Object.keys(collections).length > 0) {
-    out.collections = { ...out.collections, ...collections };
   }
   fitFulltextToBudget(out, TOOL_RESULT_CHAR_BUDGET);
   return out;

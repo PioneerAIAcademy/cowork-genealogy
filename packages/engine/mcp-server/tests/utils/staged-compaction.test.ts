@@ -234,7 +234,7 @@ describe("compactStagedFulltextSearch", () => {
     expect(out.results[1].sourceUrl).toBe("https://www.familysearch.org/ark:/61903/3:1:BBBB?lang=es");
   });
 
-  it("hoists collectionTitle into one collections map", () => {
+  it("keeps collectionTitle on each row and adds no collections map", () => {
     const out = compactStagedFulltextSearch(
       page([
         { id: "ark:/61903/3:1:A", collectionId: "111", collectionTitle: "Deeds" },
@@ -243,9 +243,8 @@ describe("compactStagedFulltextSearch", () => {
         { id: "ark:/61903/3:1:D", collectionTitle: "No id" },
       ]),
     );
-    expect(out.collections).toEqual({ "111": "Deeds", "222": "Wills" });
-    expect(out.results.slice(0, 3).every((r) => r.collectionTitle === undefined)).toBe(true);
-    expect(out.results[3].collectionTitle).toBe("No id");
+    expect("collections" in out).toBe(false);
+    expect(out.results.map((r) => r.collectionTitle)).toEqual(["Deeds", "Deeds", "Wills", "No id"]);
   });
 
   it("keeps a 50-row page of long newspaper rows under 40,000 characters", () => {

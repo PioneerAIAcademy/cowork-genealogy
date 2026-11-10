@@ -113,8 +113,6 @@ export interface FulltextSearchResponse {
   notFulltextSearchable?: string;
   results: FulltextResult[];
   facets?: FulltextFacet[];
-  // collectionId -> collectionTitle, hoisted off the rows.
-  collections?: Record<string, string>;
   // Present only when `projectPath` was supplied — see RecordSearchToolResponse.
   staged?: { resultsRef: string; returnedCount: number } | null;
   stagingError?: string;
