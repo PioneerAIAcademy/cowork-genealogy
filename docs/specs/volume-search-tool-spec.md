@@ -1077,7 +1077,8 @@ volumes, a 90th percentile of 700–1,000 and a maximum of 4,261, so a 10-row
 volume list would have been complete in about 1 survey in 7. The counts are
 always complete, so with `summary` the page defaults to 10 volumes, a sample
 beside them. `summary` is refused with `pageToken`, so a later page defaults to
-50 and must send `pageSize: 10` to match the token. research-plan's calls are not
+50 and must send the `query.pageSize` the previous page echoed to match the
+token. research-plan's calls are not
 narrow — hosted ones from 2026-10-15 to 2026-11-08 matched up to 8,276 volumes,
 and three answers reached about 39,000 characters — but it rarely asks for
 `summary`.
