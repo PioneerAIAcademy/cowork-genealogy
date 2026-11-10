@@ -195,6 +195,239 @@ def test_no_collection_hand_back_needs_a_search_first():
         mod.test_searched_before_no_collection_hand_back([], {"tags": []})
 
 
+# --- outside holdings grounded per (site, year) in tool responses (issue #4352) ---
+
+HOLDING = {"tags": ["outside-holding-claim"], "delegation": "Find every Tallman family."}
+
+
+def _fixture_call(fixture: str) -> dict:
+    # The test builds the call the mock would have logged; the validator itself
+    # never reads fixture files.
+    path = REPO_ROOT / "eval" / "fixtures" / "mcp" / f"{fixture}.json"
+    data = json.loads(path.read_text(encoding="utf-8"))
+    return {"tool": f"mcp__genealogy__{data['tool']}", "args": data["args"], "response": data["response"]}
+
+
+NY_WIKI = _fixture_call("wiki-read-new-york-census")
+US_WIKI = _fixture_call("wiki-read-united-states-census")
+
+
+def _links(*results) -> dict:
+    return {"tool": "mcp__genealogy__external_links_search", "args": {}, "response": {"results": list(results)}}
+
+
+def _holding(text, calls=(), test=HOLDING):
+    _validators("test_search_records").report_names_no_ungrounded_outside_holding(
+        list(calls), _return(text), "", test
+    )
+
+
+def _with_delegation(delegation):
+    return {"tags": ["outside-holding-claim"], "delegation": delegation}
+
+
+# The 13 claims PR #4229's strict check failed (commit 7319cd9d6). With no tool
+# response, none is grounded.
+@pytest.mark.parametrize("text", [
+    "The surviving schedules for 1825, 1835, and 1845 (not all counties made it through, but Clinton and Essex are among those that did survive in part) are indexed on Ancestry.com, and the original microfilm is held at the New York State Library",
+    "Handing back to search-external-sites: Ancestry indexes the surviving 1825/1835/1845 NY state census schedules.",
+    "The 1835 returns are available on MyHeritage.",
+    "These years are digitized and hosted at Find My Past.",
+    "The originals are held by Ancestry.",
+    "Ancestry.com holds the 1845 census.",
+    "The surviving schedules are indexed on **Ancestry.com**, with originals held at the New York State Library.",
+    "The right next step is to check Ancestry.com, which has indexed many of the surviving New York state census years.",
+    "The next step is to check Ancestry.com, which holds indexed images of these years.",
+    "Search those earlier censuses through Ancestry (which has indexed them from microfilm).",
+    "FamilySearch lacks those years, and other genealogy sites index some of them.",
+    "The next step is to search through another site, such as Ancestry or the New York State Library, which holds surviving county schedules from those earlier state censuses.",
+    "Look through other repositories (such as Ancestry or the New York State Library), which hold surviving county copies.",
+])
+def test_outside_holding_with_no_tool_response_is_reported(text):
+    with pytest.raises(AssertionError):
+        _holding(text)
+
+
+# The 9 legitimate returns the strict check passed: none makes a holding claim.
+@pytest.mark.parametrize("text", [
+    "1825, 1835, 1845: not on FamilySearch.\nHand-back: search-external-sites — NY state census, Clinton and Essex Counties, 1825/1835/1845; FamilySearch holds no collection for these years",
+    "search-external-sites can generate an Ancestry search URL for those years and counties.",
+    "Shall I generate Ancestry/MyHeritage URLs for it (search-external-sites)?",
+    "Only 1855-1875 are indexed on FamilySearch.",
+    "Hiram Tallman was found in the 1849 directory, held on FamilySearch.",
+    "search-external-sites can build an Ancestry search link, which has the counties prefilled.",
+    "Not on FamilySearch. search-external-sites can check other sites for these years.",
+    "Hand-back: search-external-sites — NY state censuses 1825/1835/1845, Tallman, Clinton and Essex; FamilySearch holds no collection for these years; check Ancestry",
+    "The New York State Library keeps a county list; FamilySearch holds no collection for these years.\nsearch-external-sites can check Ancestry.",
+])
+def test_a_reply_with_no_holding_claim_is_not_reported(text):
+    _holding(text)
+
+
+def test_issue_case_a_wiki_does_not_tie_ancestry_to_1825_1845():
+    with pytest.raises(AssertionError, match="ancestry 1825"):
+        _holding("the 1825, 1835 and 1845 schedules are indexed on Ancestry.com", [NY_WIKI])
+
+
+@pytest.mark.parametrize("text", [
+    "the 1855 state census is on Ancestry.com",
+    "The 1855 state census is indexed on Ancestry.com.",
+])
+def test_issue_case_b_wiki_row_ties_ancestry_to_1855(text):
+    _holding(text, [NY_WIKI])
+
+
+def test_is_on_a_site_is_a_holding_claim():
+    # Without "is on" in the holding words, case (b) would pass unexamined.
+    with pytest.raises(AssertionError):
+        _holding("The 1825 state census is on Ancestry.com.", [NY_WIKI])
+
+
+def test_issue_case_c_no_tool_calls():
+    with pytest.raises(AssertionError):
+        _holding("the 1825, 1835 and 1845 schedules are indexed on Ancestry.com")
+
+
+@pytest.mark.parametrize("calls", [[], [NY_WIKI]])
+def test_issue_case_d_no_site_named(calls):
+    _holding("The 1825, 1835 and 1845 schedules are held at the New York State Library.", calls)
+
+
+def test_wiki_grid_ties_a_site_to_the_year_column_above_it():
+    # 1820 is linked to Ancestry only in the federal grid (a year row, then a link row).
+    _holding("Ancestry.com indexes the 1820 census.", [NY_WIKI])
+    with pytest.raises(AssertionError):
+        _holding("Ancestry.com indexes the 1825 census.", [NY_WIKI])
+
+
+def test_wiki_list_line_ties_a_site_to_the_year_it_opens_on():
+    _holding("Ancestry's independently indexed 1870 census holds records FamilySearch may miss.", [US_WIKI])
+    with pytest.raises(AssertionError):
+        _holding("Ancestry's independently indexed 1875 census holds records FamilySearch may miss.", [US_WIKI])
+
+
+def test_a_vital_year_is_not_the_record_sets_year():
+    _holding(
+        "Search Ancestry's independently-indexed 1870 US Federal Census for Patrick Flynn, "
+        "born ca. 1845, Schuylkill County, which holds records FamilySearch may miss.",
+        [US_WIKI],
+    )
+    with pytest.raises(AssertionError):
+        _holding("Ancestry indexes the 1845 census.", [US_WIKI])
+
+
+def test_an_abbreviation_does_not_end_the_sentence():
+    # Split at "St.", the claim half names no year and would fall back to 1855.
+    with pytest.raises(AssertionError):
+        _holding(
+            "Ancestry.com indexes the St. Lawrence County 1825 census.",
+            [NY_WIKI],
+            _with_delegation("Find the Tallmans in the 1855 New York state census."),
+        )
+
+
+def test_external_links_year_range_grounds_a_claim():
+    federal = {"url": "https://www.ancestry.com/search/collections/7163/", "linkText": "1870 census", "startYear": 1860, "endYear": 1880}
+    _holding("Ancestry indexes the 1870 census.", [_links(federal)])
+    with pytest.raises(AssertionError):
+        _holding("Ancestry indexes the 1850 census.", [_links(federal)])
+    tax = {"url": "https://www.ancestry.com/search/collections/7667/", "linkText": "Pennsylvania, U.S., Tax and Exoneration Lists, 1768-1801"}
+    _holding("Ancestry holds the 1790 tax lists.", [_links(tax)])
+    with pytest.raises(AssertionError):
+        _holding("MyHeritage holds the 1790 tax lists.", [_links(tax)])
+
+
+def test_a_yearless_claim_takes_the_delegations_years():
+    _holding("Ancestry indexes these schedules.", [NY_WIKI], _with_delegation("Search the 1855 NY state census."))
+    with pytest.raises(AssertionError):
+        _holding("Ancestry indexes these schedules.", [NY_WIKI], _with_delegation("Search the 1825 NY state census."))
+    with pytest.raises(AssertionError, match="no year"):
+        _holding("Ancestry indexes these schedules.", [NY_WIKI])
+
+
+def test_a_yearless_claim_reads_only_the_delegations_first_paragraph():
+    # ut_search_records_018's delegation: "…in the 1850 US census.", then a plan
+    # item whose subject is born ~1845.
+    test_file = REPO_ROOT / "eval" / "tests" / "unit" / "search-records" / "escalate-to-external-after-fs-exhaustion.json"
+    delegation = json.loads(test_file.read_text(encoding="utf-8"))["input"]["delegation"]
+    assert "1845" in delegation
+    _holding("Ancestry indexes these schedules.", [US_WIKI], _with_delegation(delegation))
+
+
+def test_other_sites_are_never_grounded():
+    with pytest.raises(AssertionError, match="other sites"):
+        _holding("Other sites hold the 1855 census.", [NY_WIKI])
+
+
+@pytest.mark.parametrize("calls", [
+    [{"tool": "mcp__genealogy__wiki_read", "response": None}],
+    [{"tool": "mcp__genealogy__wiki_read", "response": "| 1855 | at [Ancestry](https://www.ancestry.com/x) |"}],
+    [{"tool": "mcp__genealogy__external_links_search", "response": {"results": None}}],
+    [{"tool": "mcp__genealogy__external_links_search", "response": {"results": [None, "x", {"url": None}]}}],
+    [{"tool": "mcp__genealogy__external_links_search", "response": {"results": [{"url": "https://www.ancestry.com/a", "startYear": "abc"}]}}],
+    [None, "not a call"],
+])
+def test_malformed_tool_responses_do_not_crash(calls):
+    _holding("The 1855 state census is held by NYSL.", calls)
+    with pytest.raises(AssertionError):
+        _holding("Ancestry holds the 1825 census.", calls)
+
+
+def test_a_string_response_with_a_table_still_grounds():
+    _holding("Ancestry holds the 1855 census.", [{"tool": "mcp__genealogy__wiki_read", "response": "| 1855 | at [Ancestry](https://www.ancestry.com/x) |"}])
+
+
+@pytest.mark.parametrize("text", [
+    "FamilySearch does not hold these years; search-external-sites can check Ancestry.",
+    "Ancestry does not hold the 1825 census.",
+    "These years aren't indexed on FamilySearch; search-external-sites can check MyHeritage.",
+    "An Ancestry search link is available through search-external-sites.",
+    "The surviving 1825 schedules are not on FamilySearch; search-external-sites can check other sites.",
+])
+def test_a_negated_holding_or_a_link_offer_is_not_a_claim(text):
+    _holding(text, [NY_WIKI])
+
+
+def test_a_negation_elsewhere_does_not_hide_a_claim():
+    with pytest.raises(AssertionError, match="ancestry 1825"):
+        _holding("FamilySearch does not hold them, but Ancestry holds the 1825 census.", [NY_WIKI])
+
+
+@pytest.mark.parametrize("text", [
+    "Ancestry indexes the U.S. 1825 census.",
+    "Ancestry holds the N.Y. 1825 state census.",
+])
+def test_an_initialism_does_not_end_the_sentence(text):
+    with pytest.raises(AssertionError, match="ancestry 1825"):
+        _holding(text, [NY_WIKI], _with_delegation("Search the 1855 NY census."))
+
+
+@pytest.mark.parametrize("text", [
+    "Search Ancestry's 1870 census for Patrick, born in 1845, which holds records FamilySearch may miss.",
+    "Search Ancestry's 1870 census for Patrick Flynn (1845–1910), which holds records FamilySearch may miss.",
+])
+def test_born_in_and_a_lifespan_are_vital_years(text):
+    _holding(text, [US_WIKI])
+
+
+def test_link_text_naming_separate_years_grounds_only_those_years():
+    link = {"url": "https://www.ancestry.com/search/collections/1/", "linkText": "New York State Census, 1855, 1875"}
+    _holding("Ancestry holds the 1875 census.", [_links(link)])
+    with pytest.raises(AssertionError, match="ancestry 1865"):
+        _holding("Ancestry holds the 1865 census.", [_links(link)])
+
+
+def test_outside_holding_report_grades_the_agent_and_is_tag_gated():
+    # The dispatcher's relay is not the agent's return on a direct test.
+    _validators("test_search_records").report_names_no_ungrounded_outside_holding(
+        [], _return("Not on FamilySearch."), "Ancestry.com holds the 1845 census.", HOLDING
+    )
+    with pytest.raises(pytest.skip.Exception):
+        _holding("Ancestry.com holds the 1845 census.", test={"tags": []})
+    with pytest.raises(pytest.skip.Exception):
+        _holding("Ancestry.com holds the 1845 census.", test={**HOLDING, "type": "negative"})
+
+
 # --- Warning gate (issue #2840): replaced check-warnings hand-off tests --------
 # The engine gate now refuses unjustified warnings at write time, so the
 # validators no longer check for check-warnings hand-offs. No eval validator

@@ -376,6 +376,260 @@ def test_searched_before_no_collection_hand_back(tool_calls, test):
     )
 
 
+# --- Outside holdings must come from a tool response (issue #4352) -----------
+
+# A sentence that names an outside site and says it holds, indexes or has the
+# set: "indexed on **Ancestry.com**", "Ancestry.com, which has indexed many of
+# them", "the 1855 state census is on Ancestry.com". Matched per sentence, not by
+# word order, because the agent words the claim a new way each run. A sentence
+# offering a search link ("generate an Ancestry search URL") names no holding, and
+# neither does the hand-back's own "FamilySearch holds no collection", nor a
+# negated one ("FamilySearch does not hold these"). Taken from PR #4229's strict
+# check (commit 7319cd9d6), plus "is/are on|at", minus "surviving", which
+# describes the records rather than who holds them.
+_OUTSIDE_SITE = re.compile(
+    r"\b(?:ancestry(?:\.com)?|myheritage|find ?my ?past|other (?:genealogy )?sites?"
+    r"|another (?:genealogy )?site|other repositor(?:y|ies))\b",
+    re.I,
+)
+_HOLDING_WORD = re.compile(
+    r"(?<!FamilySearch )\b(?:hold|holds|held|index|indexes|indexed|digiti[sz](?:e|es|ed)|hosts?|hosted"
+    r"|carr(?:y|ies)|available|has (?:the )?(?:images|records|schedules|rolls)"
+    r"|(?:is|are|was|were) (?:now )?(?:on|at))\b",
+    re.I,
+)
+_NEGATED = re.compile(r"\b(?:not|never|no longer)\s+(?:\w+\s+)?$|n't\s+(?:\w+\s+)?$", re.I)
+# "an Ancestry search link", "Ancestry search URLs": an offer, not a holding.
+_SEARCH_LINK_OFFER = re.compile(
+    r"\b(?:ancestry(?:\.com)?|myheritage|find ?my ?past)(?:'s)? search (?:links?|urls?|pages?)\b", re.I
+)
+# A break needs a capital (or markup) after it, so "U.S. 1825" and "ca. 1845"
+# stay whole; the same rule as test_research_plan's _SENTENCE_SPLIT_RE.
+_SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+(?=[A-Z*\"\u201c(\[])")
+# A fragment ending in one of these stopped at an abbreviation, not a sentence
+# end: "born ca. 1845", "St. Lawrence County".
+_ABBREVIATION_END = re.compile(r"\b(?:ca|c|b|d|st|co|mr|mrs|abt)\.$", re.I)
+_YEAR = re.compile(r"\b(?:1[5-9]\d\d|20\d\d)\b")
+_BARE_YEAR = re.compile(r"(?:\*\*)?(1[5-9]\d\d|20\d\d)(?:\*\*)?")
+# A year right after one of these is a person's vital year ("born ca. 1845",
+# "born in 1845"), and so is a lifespan "(1845-1910)": not the year of the record
+# set the sentence is about.
+_VITAL_BEFORE_YEAR = re.compile(
+    r"\b(?:born|b|ca|c|circa|d|died|aged|abt|about)\.?"
+    r"(?:\s+(?:in|on|about|around|abt\.?|ca\.?|c\.))?\s*~?$",
+    re.I,
+)
+_LIFESPAN = re.compile(r"\(\s*~?\d{4}\s*[-\u2013\u2014]\s*~?\d{4}\s*\)")
+_YEAR_RANGE = re.compile(r"\b(\d{4})\s*[-\u2013\u2014]\s*(\d{4})\b")
+_SITE_HOST = re.compile(
+    r"https?://(?:[\w-]+\.)*(ancestry|myheritage|findmypast)\.[a-z.]+", re.I
+)
+# A list line that opens on a year and links a site later on the same line:
+# `* **1870** [United States, Census, 1870](…) … *Also at: [Ancestry](…)*`.
+_LIST_LINE_YEAR = re.compile(r"\s*(?:[*+-]\s+)?(?:\*\*)?(1[5-9]\d\d|20\d\d)\b")
+
+
+def _claim_sentences(text: str) -> list[str]:
+    sentences: list[str] = []
+    for line in re.split(r"\n+", text or ""):
+        pending = ""
+        for part in _SENTENCE_BREAK.split(line):
+            pending = f"{pending} {part}" if pending else part
+            if _ABBREVIATION_END.search(pending):
+                continue
+            sentences.append(pending)
+            pending = ""
+        if pending:
+            sentences.append(pending)
+    return sentences
+
+
+def _record_years(text: str) -> set[int]:
+    text = _LIFESPAN.sub(" ", text or "")
+    return {
+        int(m.group(0))
+        for m in _YEAR.finditer(text)
+        if not _VITAL_BEFORE_YEAR.search(text[: m.start()])
+    }
+
+
+def _asserts_holding(sentence: str) -> bool:
+    return any(
+        not _NEGATED.search(sentence[: m.start()]) for m in _HOLDING_WORD.finditer(sentence)
+    )
+
+
+def _site_key(name: str) -> str | None:
+    """`ancestry` / `myheritage` / `findmypast`; None for "other sites", which no
+    tool response can ground."""
+    flat = name.lower().replace(" ", "")
+    for key in ("ancestry", "myheritage", "findmypast"):
+        if flat.startswith(key):
+            return key
+    return None
+
+
+def _linked_sites(text: str) -> set[str]:
+    return {m.group(1).lower() for m in _SITE_HOST.finditer(text or "")}
+
+
+def _markdown_groundings(text: str) -> set[tuple[str, int]]:
+    """(site, year) pairs a wiki page ties together. Three shapes: a table row
+    with a bare-year cell and a cell linking the site (`| 1855 | … | at
+    [Ancestry](…) |`); a table cell linking the site under a year in the nearest
+    earlier all-year row (the federal grid); a list line opening on a year."""
+    pairs: set[tuple[str, int]] = set()
+    year_row: list[str] | None = None
+    for line in (text or "").split("\n"):
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            year_row = None
+            m = _LIST_LINE_YEAR.match(line)
+            if m:
+                pairs |= {(site, int(m.group(1))) for site in _linked_sites(line[m.end():])}
+            continue
+        cells = [c.strip() for c in stripped.strip("|").split("|")]
+        filled = [c for c in cells if c]
+        if filled and all(_BARE_YEAR.fullmatch(c) for c in filled):
+            year_row = cells
+            continue
+        row_year = next(
+            (int(m.group(1)) for c in cells if (m := _BARE_YEAR.fullmatch(c))), None
+        )
+        for j, cell in enumerate(cells):
+            sites = _linked_sites(cell)
+            if not sites:
+                continue
+            year = row_year
+            if year is None and year_row is not None and j < len(year_row):
+                m = _BARE_YEAR.fullmatch(year_row[j])
+                year = int(m.group(1)) if m else None
+            if year is not None:
+                pairs |= {(site, year) for site in sites}
+    return pairs
+
+
+def _response_strings(value, depth: int = 0):
+    if depth > 8:
+        return
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for v in value.values():
+            yield from _response_strings(v, depth + 1)
+    elif isinstance(value, list):
+        for v in value:
+            yield from _response_strings(v, depth + 1)
+
+
+def _as_year(value) -> int | None:
+    try:
+        year = int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+    return year if 1500 <= year <= 2099 else None
+
+
+def _external_link_groundings(response) -> set[tuple[str, int]]:
+    """(site, year) for each `external_links_search` link: its `startYear` ..
+    `endYear` when the tool set them, else the years its `linkText` names -- a
+    written range ("1768-1801") in full, other years one by one."""
+    pairs: set[tuple[str, int]] = set()
+    results = response.get("results") if isinstance(response, dict) else None
+    for link in results if isinstance(results, list) else []:
+        if not isinstance(link, dict):
+            continue
+        sites = _linked_sites(str(link.get("url") or ""))
+        if not sites:
+            continue
+        start, end = _as_year(link.get("startYear")), _as_year(link.get("endYear"))
+        if start is None and end is None:
+            text = str(link.get("linkText") or "")
+            years = {int(y) for y in _YEAR.findall(text)}
+            for lo, hi in _YEAR_RANGE.findall(text):
+                if int(lo) <= int(hi):
+                    years |= set(range(int(lo), int(hi) + 1))
+            pairs |= {(site, year) for site in sites for year in years}
+            continue
+        if start is None or end is None:
+            start = end = start if start is not None else end
+        if start is None or end < start:
+            continue
+        pairs |= {(site, year) for site in sites for year in range(start, end + 1)}
+    return pairs
+
+
+def _tool_groundings(tool_calls) -> set[tuple[str, int]]:
+    pairs: set[tuple[str, int]] = set()
+    for call in tool_calls or []:
+        if not isinstance(call, dict):
+            continue
+        response = call.get("response")
+        if _bare_tool_name(call.get("tool")) == "external_links_search":
+            pairs |= _external_link_groundings(response)
+        for text in _response_strings(response):
+            pairs |= _markdown_groundings(text)
+    return pairs
+
+
+def report_names_no_ungrounded_outside_holding(tool_calls, agent_returns, text_response, test):
+    """Issue #4352 -- a sentence saying an outside site holds a record set must be
+    backed by a tool response this run received that ties that site to that year:
+    an `external_links_search` link whose years cover it, or a wiki table cell or
+    list line linking the site under that year. Grounded per (site, year), not per
+    site: the New York census wiki links Ancestry for 1855 onward, which must not
+    back a claim about 1825-1845. A sentence naming no year takes the years of the
+    delegation's first paragraph; with none there either it is ungrounded. "Other
+    sites" is never grounded.
+
+    Tier 2 -- reports, never gates (decided on the issue, 2026-11-09): at the
+    measured rates a gate would red evals at random.
+
+    Reads `tool_calls[].response`, what `mock_mcp.py` returned; never re-reads
+    fixture files (see `test_check_warnings.report_unsourced_year_in_response`).
+    Reads the agent's own return (`subject_reply_text`).
+    """
+    from harness.skill_runner import subject_reply_text
+
+    if "outside-holding-claim" not in test.get("tags", []):
+        pytest.skip("only the outside-holding measurement tests")
+    if test.get("type") == "negative":
+        pytest.skip("negative test -- the agent body does not run")
+    reply = subject_reply_text(agent_returns, text_response, "search-records", test)
+    if not reply.strip():
+        pytest.skip("no reply to check")
+
+    stated = str(test.get("delegation") or test.get("user_message") or "")
+    fallback_years = _record_years(re.split(r"\n\s*\n", stated, maxsplit=1)[0])
+    grounded: set[tuple[str, int]] | None = None
+    problems: list[str] = []
+    for sentence in _claim_sentences(reply):
+        offered = _SEARCH_LINK_OFFER.sub(" ", sentence)
+        named = [_site_key(m.group(0)) for m in _OUTSIDE_SITE.finditer(offered)]
+        if not named or not _asserts_holding(sentence):
+            continue
+        if grounded is None:
+            grounded = _tool_groundings(tool_calls)
+        years = _record_years(sentence) or fallback_years
+        sites = sorted({s or "other sites" for s in named})
+        if not years:
+            missing = [f"{site} (no year)" for site in sites]
+        else:
+            missing = [
+                f"{site} {year}"
+                for site in sites
+                for year in sorted(years)
+                if site == "other sites" or (site, year) not in grounded
+            ]
+        if missing:
+            problems.append(f"{sentence.strip()[:300]!r} [no tool response ties: {', '.join(missing)}]")
+    if problems:
+        raise AssertionError(
+            "the reply says an outside site holds a record set, and no tool response "
+            "this run received ties that site to that year: " + " | ".join(problems)
+        )
+
+
 def test_capture_pending_item_not_terminal(before_state, after_state, test):
     """Issue #1226 — a plan item awaiting an external-site capture must not be
     `completed`/`skipped`. Shared with the other suite that can reach this
