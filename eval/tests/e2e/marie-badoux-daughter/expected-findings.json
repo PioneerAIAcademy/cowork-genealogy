@@ -10,7 +10,7 @@
         "relation": "child",
         "wrong_candidate": {
           "name": "Claudine Thénot, baptised 12 October 1781 at Romenay, Saône-et-Loire",
-          "note": "the baptismal entry names her parents as Philipe Tenot and Marie Joly; the mother's surname matches neither Marie Badoux nor Marie Claudine Bourgeois, and Marie Joly stands as a separate person on the live FamilySearch tree (2S86-XWP), though she does not appear in this fixture's committed snapshot. No `records`: her one rejected record, the 12 October 1781 Romenay baptism (ark:/61903/1:1:W5XL-MGT2), is the record a correct run cites when it attaches Claudine to her real parents, which this finding's description says must not be penalised.",
+          "note": "the baptismal entry names her parents as Philipe Tenot and Marie Joly; the mother's surname matches neither Marie Badoux nor Marie Claudine Bourgeois, and Marie Joly stands as a separate person on the live FamilySearch tree (2S86-XWP), though she does not appear in this fixture's committed snapshot. No `records`: her one rejected record, the 12 October 1781 Romenay baptism (ark:/61903/1:1:W5XL-MP3Z, Marie Joly's persona; Claudine's own is W5XL-MGT2), is the record a correct run cites when it attaches Claudine to her real parents, which this finding's description says must not be penalised.",
           "records": []
         }
       },
