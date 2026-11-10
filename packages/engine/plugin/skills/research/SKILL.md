@@ -138,7 +138,7 @@ destination: take it through "Hint review" below.
 - `mode: "hosted"`, and the message names a person no listed project is about, or none is listed: `newProjectPath`. It holds no `research.json` yet.
 - Otherwise: list each project's subjects, objective and `projectUrl`, ask which one to continue, and stop.
 
-**When `project_context` answers `no_project`, ask the researcher nothing.** With no person and question in the message, spawn `@plugin:tree-survey`. With one, spawn `@plugin:init-project`. The routing table's first two rows give the details.
+**When `project_context` answers `no_project`, ask the researcher nothing.** With no person and question in the message, spawn `@plugin:tree-survey`. With one, spawn `@plugin:init-project`. A record set's names, or a named title's DGS numbers, with no person ID, go to `@plugin:search-images`. The routing table's first three rows give the details.
 
 **If `project_list` is not among your tools, even through tool search,** say the genealogy tools are not connected: start or update the Genealogy Research desktop extension, or reconnect the genealogy connector. Then stop.
 
@@ -158,7 +158,7 @@ finding a record; reviewing the sources already attached to a person; whether
 two people are the same, or should be merged; a verdict on a hint; a
 transcription; where the records are for a place and period; a research plan;
 a records-request letter; whether a person's children or siblings are complete;
-with no project and no FamilySearch person ID, the names and details recorded in a record set (a roll, register, muster list or volume) rather than research on one person;
+with no project and no FamilySearch person ID, the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, rather than research on one person;
 where the project stands (answer from `project_context` in one plain paragraph — no bold, lists, or headers).
 Two or more of them in one message is still bounded: deliver the first this
 turn, name the others, and offer the next, ending on its "Continue with …?" line
@@ -188,7 +188,7 @@ only when the user's message itself states a mother's 1900 or 1910 US census
 children-born and children-living counts — "are any missing?" with no counts is
 `@plugin:search-records` alone. A merge goes to `@plugin:tree-edit` only when the message instructs a merge
 of two persons already confirmed identical; a "should these be merged?" never goes
-to `@plugin:tree-edit`. The names and details in a record set, with no project and no FamilySearch
+to `@plugin:tree-edit`. The names and details in a record set, or a named title's catalog item or DGS numbers, with no project and no FamilySearch
 person ID, go to `@plugin:search-images` with the message copied verbatim and no
 `projectPath`, even when the message names no images; relay everything after
 its final `---` verbatim, and never `@plugin:init-project`. A records-request letter you write yourself in this turn,
@@ -321,7 +321,7 @@ message.
    | If research.json has... | Invoke |
    |-------------------------|--------|
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states **no objective** — no FamilySearch person ID and no specific research question. An expression of intent without a person ("Let's start a new research project.", "I want to start researching", "begin a new project") is **no objective**: do not answer the user directly, always invoke `@plugin:tree-survey` | `@plugin:tree-survey`, passing the FamilySearch id if one was given and no `projectPath`. Relay everything after its final `---` verbatim, or its whole return when it has none, and stop for the researcher's pick; then `@plugin:init-project` with that person and question as the objective |
-   | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume) rather than research on one person | `@plugin:search-images` with the message verbatim and no `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
+   | **No project** (`project_context` returns `reason: "no_project"`), no FamilySearch person ID, and the message asks for the names and details recorded in a record set (a roll, register, muster list or volume), or a named title's catalog item or DGS numbers, rather than research on one person | `@plugin:search-images` with the message verbatim and no `projectPath`; relay everything after its final `---` verbatim. Never `@plugin:init-project` |
    | **No project** (`project_context` returns `reason: "no_project"`), and the message states a person or objective | `@plugin:init-project`. With one present, do NOT invoke it: the project exists and the delegation is wasted |
    | `project_context` lists **`waitingPages`** | `extraction_append({ projectPath, attachWaitingPages: true })`: one call, no hand-off. Then route again. |
    | Objective but no questions | `@plugin:question-selection`. **Even when the message already states the question**, it is not a question until question-selection WRITES it: planning may not write `questions`, and a plan referencing an unregistered one is refused by the validator. Registration, not derivation |
@@ -780,7 +780,7 @@ and offers to extract the Matches.
 - It does not interview the user for project setup. If
   `project_context` returns `no_project` and the message states an objective, route to
   `@plugin:init-project` first (except an ask for the names and details in a
-  record set with no FamilySearch person ID, which goes to `@plugin:search-images`), passing the researcher's own words verbatim, plus
+  record set, or a named title's DGS numbers, with no FamilySearch person ID, which goes to `@plugin:search-images`), passing the researcher's own words verbatim, plus
   `projectPath`, and nothing else. With no objective stated, spawn
   `@plugin:tree-survey` (the table's first row); do not ask the researcher for a
   person or objective first.
