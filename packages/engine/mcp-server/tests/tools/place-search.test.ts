@@ -935,6 +935,224 @@ describe("fuzzy fallback", () => {
 });
 
 // ---------------------------------------------------------------------------
+// Fuzzy fallback when the exact query matched only a qualifier (#4315).
+// "Sierkopas, Germany" gets exact hits — the phrase query matches "Germany" —
+// so the zero-hit trigger never ran. Shapes from the live probe,
+// dev/probe-place-fuzzy-trigger.ts.
+// ---------------------------------------------------------------------------
+
+/** A search response whose entries are [id, name, fullName]. */
+function searchEntries(rows: Array<[string, string, string]>): FSPlaceSearchResponse {
+  return {
+    entries: rows.map(([id, name, fullName], i) => ({
+      id,
+      score: 100 - i,
+      content: { gedcomx: { places: [{ id, display: { name, fullName, type: "Place" } }] } },
+    })),
+  };
+}
+
+/** Exact route, optional fuzzy route, and 404s for the per-entry fetches. */
+function qualifierRoutes(
+  exactMatch: string,
+  exact: FSPlaceSearchResponse,
+  fuzzyMatch?: string,
+  fuzzy?: FSPlaceSearchResponse,
+): Route[] {
+  return [
+    ...(fuzzyMatch ? [{ match: fuzzyMatch, json: fuzzy ?? { entries: [] } }] : []),
+    { match: exactMatch, json: exact },
+    { match: "description/", ok: false, status: 404 },
+    { match: "attributes", ok: false, status: 404 },
+  ];
+}
+
+const fuzzyFetches = () =>
+  mockFetch.mock.calls.filter(([url]) => String(url).includes("~")).length;
+
+const germanyOnly = searchEntries([
+  ["10", "Germany", "Germany"],
+  ["11", "Europe", "Europe"],
+  ["12", "Germany", "Germany, Pruzhany, Grodno, Russian Empire"],
+]);
+
+describe("fuzzy fallback when the exact query matched only a qualifier", () => {
+  it("falls back to fuzzy when the exact query only matched the context segment", async () => {
+    routeByUrl(
+      qualifierRoutes("%22Sierkopas%2C%20Germany%22", germanyOnly, "name:Sierkopas~", sierkopasFuzzyResponse),
+    );
+
+    const result = await placeSearch("Sierkopas, Germany");
+
+    expect(result.matchType).toBe("fuzzy");
+    expect(result.results[0].fullName).toBe("Sierokopaß, Neidenburg, East Prussia, Prussia, Germany");
+  });
+
+  it("does not fall back when no fuzzy entry is in the context", async () => {
+    routeByUrl(
+      qualifierRoutes(
+        "%22Hospital%2C%20Cincinnati%2C%20Ohio%22",
+        searchEntries([["20", "Cincinnati", "Cincinnati, Hamilton, Ohio, United States"]]),
+        "name:Hospital~",
+        searchEntries([["21", "Hospital", "Hospital, Cape Province, South Africa"]]),
+      ),
+    );
+
+    const result = await placeSearch("Hospital, Cincinnati, Ohio");
+
+    expect("matchType" in result).toBe(false);
+    expect(result.results.map((r) => r.fullName)).toEqual(["Cincinnati, Hamilton, Ohio, United States"]);
+    expect(fuzzyFetches()).toBe(1);
+  });
+
+  it("keeps the exact entries when the fuzzy query finds nothing", async () => {
+    routeByUrl(
+      qualifierRoutes("%22Xqzwvillage%2C%20Germany%22", germanyOnly, "name:Xqzwvillage~", { entries: [] }),
+    );
+
+    const result = await placeSearch("Xqzwvillage, Germany");
+
+    expect("matchType" in result).toBe(false);
+    expect(result.results[0].fullName).toBe("Germany");
+    expect(fuzzyFetches()).toBe(1);
+  });
+
+  it("the in-context check ignores an explicit contextName", async () => {
+    routeByUrl(
+      qualifierRoutes(
+        "%22Hospital%2C%20Cincinnati%22",
+        searchEntries([["30", "Cincinnati", "Cincinnati, Hamilton, Ohio, United States"]]),
+        "name:Hospital~",
+        searchEntries([["31", "Hospital", "Hospital, Shelby, Ohio, United States"]]),
+      ),
+    );
+
+    const result = await placeSearch("Hospital, Cincinnati", "Ohio");
+
+    expect("matchType" in result).toBe(false);
+    expect(result.results.map((r) => r.fullName)).toEqual(["Cincinnati, Hamilton, Ohio, United States"]);
+  });
+
+  it("checks the first qualifier, not a later one", async () => {
+    // In Ohio but not in Cincinnati: the check reads segment 1, "Cincinnati".
+    routeByUrl(
+      qualifierRoutes(
+        "%22Hospital%2C%20Cincinnati%2C%20Ohio%22",
+        searchEntries([["80", "Cincinnati", "Cincinnati, Hamilton, Ohio, United States"]]),
+        "name:Hospital~",
+        searchEntries([["81", "Hospital", "Hospital, Shelby, Ohio, United States"]]),
+      ),
+    );
+
+    const result = await placeSearch("Hospital, Cincinnati, Ohio");
+
+    expect("matchType" in result).toBe(false);
+    expect(result.results[0].fullName).toBe("Cincinnati, Hamilton, Ohio, United States");
+  });
+
+  it("does not count a qualifier that is only part of another place's name", async () => {
+    // "india" is a substring of "Indiana"; only a whole segment counts.
+    routeByUrl(
+      qualifierRoutes(
+        "%22Hospital%2C%20India%22",
+        searchEntries([["50", "India", "India"]]),
+        "name:Hospital~",
+        searchEntries([["51", "Roudebush VA Medical Center", "Roudebush VA Medical Center, Indianapolis, Marion, Indiana, United States"]]),
+      ),
+    );
+
+    const result = await placeSearch("Hospital, India");
+
+    expect("matchType" in result).toBe(false);
+    expect(result.results[0].fullName).toBe("India");
+  });
+
+  it("keeps an exact hit named after the leaf even when a qualifier ranks first", async () => {
+    routeByUrl(
+      qualifierRoutes(
+        "%22Rehrersburg%2C%20Pennsylvania%22",
+        searchEntries([
+          ["60", "Pennsylvania", "Pennsylvania, United States"],
+          ["61", "Rehrersburg", "Rehrersburg, Tulpehocken Township, Berks, Pennsylvania, United States"],
+        ]),
+      ),
+    );
+
+    const result = await placeSearch("Rehrersburg, Pennsylvania");
+
+    expect("matchType" in result).toBe(false);
+    expect(fuzzyFetches()).toBe(0);
+  });
+
+  it("sends no fuzzy query for a multi-word leaf", async () => {
+    routeByUrl(qualifierRoutes("%22Klein%20Kozlau%2C%20Germany%22", germanyOnly));
+
+    const result = await placeSearch("Klein Kozlau, Germany");
+
+    expect("matchType" in result).toBe(false);
+    expect(fuzzyFetches()).toBe(0);
+  });
+
+  it("fires when the top hit is a later qualifier, checking the first one", async () => {
+    // First hit "Pennsylvania" is segment 2; the in-context check reads "Berks".
+    routeByUrl(
+      qualifierRoutes(
+        "%22Tulpehockan%2C%20Berks%2C%20Pennsylvania%22",
+        searchEntries([["70", "Pennsylvania", "Pennsylvania, United States"]]),
+        "name:Tulpehockan~",
+        searchEntries([
+          ["71", "Tulpohocken", "Tulpohocken, Philadelphia, Pennsylvania, United States"],
+          ["72", "Tulpehocken Township", "Tulpehocken Township, Berks, Pennsylvania, United States"],
+        ]),
+      ),
+    );
+
+    const result = await placeSearch("Tulpehockan, Berks, Pennsylvania");
+
+    expect(result.matchType).toBe("fuzzy");
+    expect(result.results.map((r) => r.fullName)).toEqual([
+      "Tulpehocken Township, Berks, Pennsylvania, United States",
+    ]);
+  });
+
+  it("carries the qualifier-trigger flag through place_search_all", async () => {
+    routeByUrl([
+      { match: "%22Sierkopas%2C%20Germany%22", json: germanyOnly },
+      ...sierkopasRoutes().filter((r) => !r.match.startsWith("search?q=name:%22")),
+      { match: "places/8500", json: { places: [{ id: "8500" }, { id: "500", place: { resourceId: "8500" } }] } },
+      { match: "places/8600", json: { places: [{ id: "8600" }, { id: "600", place: { resourceId: "8600" } }] } },
+    ]);
+
+    const result = await placeSearchAllTool({ placeName: "Sierkopas, Germany" });
+
+    expect(result.matchType).toBe("fuzzy");
+    expect(result.results.map((r) => r.standardPlace)).toContain(
+      "Sierokopaß, Neidenburg, East Prussia, Prussia, Germany",
+    );
+  });
+
+  it.each([
+    ["a renamed place", "Pressburg, Hungary", "%22Pressburg%2C%20Hungary%22", [["40", "Pozsony", "Pozsony, Hungary"]]],
+    ["a city/county homonym", "Cork, Cork, Ireland", "%22Cork%2C%20Cork%2C%20Ireland%22", [["41", "Cork", "Cork, County Cork, Ireland"]]],
+    ["the leaf being the jurisdiction itself", "Berks, Pennsylvania", "%22Berks%2C%20Pennsylvania%22", [["42", "Berks", "Berks, Pennsylvania, United States"]]],
+    ["an accented qualifier hit named like the leaf", "Munchen, Germany", "%22Munchen%2C%20Germany%22", [["43", "München", "München, Bavaria, Germany"]]],
+  ] as Array<[string, string, string, Array<[string, string, string]>]>)(
+    "does not fall back on %s",
+    async (_label, query, exactMatch, rows) => {
+      // No fuzzy route: routeByUrl throws on any unrouted fetch, so a fuzzy
+      // request would fail the test as well as the count below.
+      routeByUrl(qualifierRoutes(exactMatch, searchEntries(rows)));
+
+      const result = await placeSearch(query);
+
+      expect("matchType" in result).toBe(false);
+      expect(result.results[0].fullName).toBe(rows[0][2]);
+      expect(fuzzyFetches()).toBe(0);
+    },
+  );
+});
+
+// ---------------------------------------------------------------------------
 // place_search tool — simplified, ID-free output
 // ---------------------------------------------------------------------------
 

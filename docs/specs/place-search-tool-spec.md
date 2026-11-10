@@ -81,19 +81,40 @@ Steps:
    and the measured evidence for each character are in
    [FamilySearch API Reference](#places_search_resource) below; a `placeName`
    that sanitizes to the empty string returns `[]` without a call.
-   **Fuzzy fallback:** when the exact query returns zero entries — an empty
-   *success*; a thrown error still propagates — **and** the leaf (the first
-   comma segment of the *sanitized* name) is a single token, re-query once as
-   `q=name:{leaf}~`, **unquoted**, the `~` appended after sanitization. The
-   query is built from that leaf, never from the whole comma string. Entries
-   from the fallback mark the outcome `matchType: "fuzzy"`; a fallback that
-   also returns nothing yields `[]` with no flag. The trigger's two limits are
-   measured scope, not caution (evidence in the
-   [fuzzy query section](#fuzzy-query-the-fallback) below): a multi-word leaf
-   gets no fallback because unquoted multi-token fuzzy is an OR of tokens, and
-   comma-qualified input effectively never triggers because its exact query
-   matches the qualifier and is not empty. A broader trigger needs a ranking
-   rule nobody has specified — the same reason the `&` dual query is not built.
+   **Fuzzy fallback:** when the leaf (the first comma segment of the
+   *sanitized* name) is a single token, re-query once as `q=name:{leaf}~`,
+   **unquoted**, the `~` appended after sanitization, built from that leaf,
+   never from the whole comma string. It runs on either of two triggers; a
+   thrown search error still propagates.
+   - **Zero exact entries** (an empty *success*). Fallback entries replace the
+     empty set and mark the outcome `matchType: "fuzzy"`; a fallback that also
+     returns nothing yields `[]` with no flag.
+   - **The exact query matched only a qualifier.** The `placeName` is
+     comma-qualified, the first exact entry's `name` equals one of the segments
+     after the leaf, and no exact entry's `name` equals the leaf (names compared
+     case- and accent-folded): `"Sierkopas, Germany"`, whose phrase query
+     matches "Germany". The fallback entries are used, flagged
+     `matchType: "fuzzy"`, only when at least one entry's `fullName` has a whole
+     comma segment equal to the **first qualifier of `placeName`** (segment 1,
+     the same segment step 2 derives; an explicit `contextName` is not consulted
+     here). A whole segment, not a substring: "India" does not match "Indiana".
+     Otherwise the exact entries are kept, unflagged — so a leaf that is not a
+     place (`"Hospital, Cincinnati, Ohio"`, whose fuzzy query returns a Hospital
+     in South Africa; `"Hospital, India"`, whose fuzzy hits are in Indiana) keeps
+     its exact answer.
+   The second trigger does not fire for a renamed place (`"Pressburg, Hungary"`
+   → Pozsony), a homonym (`"Cork, Cork, Ireland"` → Cork) or a jurisdiction leaf
+   (`"Berks, Pennsylvania"` → Berks). Measured live by
+   `dev/probe-place-fuzzy-trigger.ts`: 13 of 17 queries needing fuzzy
+   caught, 0 of 38 correct exact answers changed, read off the shipped
+   `placeSearch`. The four it misses return the
+   exact answer as before: no fuzzy match at all (`"Xqzwvillage, Germany"`); a
+   qualifier written `"Berks County"` or `"Berks Co."`, which neither equals the
+   first hit's name ("Berks") nor appears in any fuzzy `fullName`; and an exonym
+   qualifier (`"Sierkopas, Deutschland"`, first hit "Germany"). A multi-word leaf
+   gets no fallback on either trigger, because unquoted multi-token fuzzy is an
+   OR of tokens (evidence in the [fuzzy query section](#fuzzy-query-the-fallback)
+   below).
 2. **Filter by context** — determine an effective context: the explicit
    `contextName` if given, otherwise one **derived** from a comma-qualified
    `placeName` — the leaf's immediate parent locality (segment index 1), e.g.
@@ -165,7 +186,9 @@ Steps:
 
 `{ results: SimplifiedPlaceResult[], matchType?: "fuzzy", verdict }`. The **top-level**
 `matchType` is present only when the results came from the fuzzy fallback; on
-an exact hit the field is absent. It is top-level rather than per-result because
+an exact hit the field is absent. The `verdict` comes from `resolveStandardPlace`
+and is independent of the fallback: for `"Sierkopas, Germany"` the results are the
+fuzzy Sierokopaß while the verdict names the context, Germany. It is top-level rather than per-result because
 every result in one response comes from one query. It must stay **optional** — the
 packaging fixture-shape test fails a new required field across the recorded
 `eval/fixtures/mcp/` responses.
@@ -245,8 +268,8 @@ object is present — those exist only on the internal `PlaceResult`.
     "includes the standardized place name (standardPlace), place type, date " +
     "range, coordinates, a FamilySearch link, and (when available) a " +
     "Wikipedia link. " +
-    'If the response carries matchType: "fuzzy", the name you sent matched ' +
-    "nothing exactly and these are sounds-alike corrections. Confirm one " +
+    'If the response carries matchType: "fuzzy", the place you named had no ' +
+    "exact match and these are sounds-alike corrections. Confirm one " +
     "before using it. " +
     "Use place_search_all instead when you need every historical jurisdiction " +
     "a place has belonged to over time.",
@@ -368,7 +391,7 @@ Sierokopaß, Kreis Neidenburg, East Prussia):
 | `name:Sierkopas~` (the fallback) | 5 hits; Sierokopaß, Neidenburg, East Prussia 3rd — and Scherokopaß, Culm, West Prussia also matches under a Germany context, so the fallback flags rather than picks |
 | `name:"Sierkopas, Germany"~` (quoted) | phrase-proximity, not fuzzy: "Germany" at 90, no Sierokopaß |
 | `name:Klein~ Kozlau~` (multi-token) | OR of tokens: 349 hits led by "Klin, Croatia" |
-| `name:"Sierkopas, Germany"` (comma-qualified exact) | 15 "Germany…" hits — not empty, so the fallback never fires for it |
+| `name:"Sierkopas, Germany"` (comma-qualified exact) | 15 "Germany…" hits, led by "Germany" — not empty, so only the qualifier trigger reaches the fallback |
 
 The `fuzzy` option lives on `searchPlace` (`src/utils/place-api.ts`), opt-in
 and applied **after** `sanitizeForNameQuery`, the same way `date` is. The
@@ -420,6 +443,7 @@ ignore it for `wikipediaUrl`.)
 | Condition | Behavior |
 |-----------|----------|
 | Exact search returns no results (empty body or empty entries) | Single-token leaf: retry once with the [fuzzy query](#fuzzy-query-the-fallback); hits are returned with `matchType: "fuzzy"`. Multi-word leaf, or the fuzzy query also empty: return `{ results: [], verdict }` with no flag |
+| Exact search matched only a qualifier (first entry's name equals a segment after the leaf, not the leaf) | Single-token leaf: retry once with the fuzzy query; use its hits, flagged `matchType: "fuzzy"`, only when one has a whole `fullName` segment equal to the first qualifier. Otherwise, or for a multi-word leaf, return the exact hits with no flag |
 | A description lookup 404s | Fall back to the search-entry data; do not drop the place |
 | FamilySearch search/description returns other non-OK status | Throw `"FamilySearch API error: {status} {statusText}"` |
 | Wikipedia API fails (any status or network error) | Omit Wikipedia fields (graceful degradation) |
@@ -451,6 +475,8 @@ npx tsx dev/try-place-search.ts Paris           # all Paris matches, unfiltered
 npx tsx dev/try-place-search.ts Sierkopas Germany  # fuzzy fallback: Sierokopaß, Neidenburg present, matchType "fuzzy"
 npx tsx dev/try-place-search.ts Helvesieck Germany # fuzzy fallback: Helvesiek, Rotenburg, Lower Saxony, matchType "fuzzy" (one-edit misspelling)
 npx tsx dev/try-place-search.ts Brixtol            # fuzzy + no context: capped at 10 results, returns in seconds
+npx tsx dev/try-place-search.ts "Sierkopas, Germany"          # qualifier trigger: Sierokopaß first, matchType "fuzzy"
+npx tsx dev/try-place-search.ts "Hospital, Cincinnati, Ohio"  # qualifier trigger, nothing in context: Cincinnati, no matchType
 ```
 
 Confirm no result object contains `placeId`, `placeRepId`, `score`, `name`, or

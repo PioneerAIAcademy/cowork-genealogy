@@ -15,7 +15,13 @@ import {
   type SearchPlaceResult,
   type GetPlaceResult,
 } from "../utils/place-api.js";
-import { deriveContextName, mapWithConcurrency, resolveStandardPlace } from "../utils/place-resolver.js";
+import {
+  deriveContextName,
+  foldPlaceName,
+  mapWithConcurrency,
+  placeSegments,
+  resolveStandardPlace,
+} from "../utils/place-resolver.js";
 import { placeAnswer } from "../utils/place-verdict.js";
 
 // Re-export the low-level FamilySearch places fetchers so existing tool/test
@@ -95,8 +101,8 @@ export function simplifyPlaceResult(r: PlaceResult): SimplifiedPlaceResult {
 
 /**
  * What the internal placeSearch returns. `matchType` is present only when the
- * results came from the fuzzy "sounds like" fallback after the exact query
- * matched nothing; on an exact hit the field is absent. Top-level rather than
+ * results came from the fuzzy "sounds like" fallback because the exact query
+ * did not match the place itself; on an exact hit the field is absent. Top-level rather than
  * per-result because every result in one outcome comes from one query.
  */
 export interface PlaceSearchOutcome {
@@ -119,6 +125,27 @@ const placeSearchCache = new Map<string, PlaceSearchOutcome>();
 
 function placeSearchCacheKey(placeName: string, contextName?: string): string {
   return `${placeName.trim().toLowerCase()} ${(contextName ?? "").trim().toLowerCase()}`;
+}
+
+/**
+ * True when the exact query matched only a qualifier: the top hit is named
+ * after a segment after the leaf ("Sierkopas, Germany" -> "Germany") and no
+ * exact hit is named after the leaf. False for a renamed place (Pressburg ->
+ * Pozsony), a homonym (Cork, Cork, Ireland -> Cork) and a jurisdiction leaf
+ * (Berks, Pennsylvania -> Berks).
+ */
+function exactQueryMatchedOnlyQualifier(entries: SearchPlaceResult[], segments: string[]): boolean {
+  if (segments.length < 2 || entries.length === 0) return false;
+  const leaf = foldPlaceName(segments[0]);
+  if (entries.some((e) => foldPlaceName(e.name) === leaf)) return false;
+  const first = foldPlaceName(entries[0].name);
+  return segments.slice(1).some((s) => foldPlaceName(s) === first);
+}
+
+/** A whole comma segment of `fullName` is the qualifier: "India" matches
+ *  "Delhi, India" but not "Indianapolis, Marion, Indiana, United States". */
+function liesInQualifier(entry: SearchPlaceResult, qualifier: string): boolean {
+  return placeSegments(entry.fullName).some((s) => foldPlaceName(s) === qualifier);
 }
 
 /** Test-only: empty the in-memory cache so cases don't bleed into each other. */
@@ -149,7 +176,8 @@ async function buildPlaceResult(
  *                    (e.g. "Idaho" or "France"); matched as a case-insensitive
  *                    substring of each candidate's full jurisdictional name
  *
- * Steps: search (with a fuzzy fallback on zero exact hits) -> filter by
+ * Steps: search (with a fuzzy fallback on zero exact hits, or when the exact
+ * query matched only a qualifier) -> filter by
  * context (keep unfiltered if nothing matches) -> fetch a description per
  * surviving rep ID -> enrich with Wikipedia -> build the outcome. Outcomes
  * are cached by (placeName, contextName), match type included.
@@ -168,21 +196,43 @@ export async function placeSearch(
   let entries = await searchPlace(placeName);
   let matchType: "fuzzy" | undefined;
 
-  // A misspelled place returns zero exact hits and the agent has no other
-  // automated way to identify it. Retry once with the Places API's fuzzy
+  // A misspelled or missing place has no exact match and the agent has no
+  // other automated way to identify it. Retry once with the Places API's fuzzy
   // ("sounds like") query, built from the leaf — the first comma segment of
   // the SANITIZED name — and only when that leaf is a single token: unquoted
   // multi-token fuzzy is an OR of tokens (the measured hazard in
-  // place-api.ts's caller contract). Only an empty SUCCESS triggers it;
-  // a thrown search error still propagates.
+  // place-api.ts's caller contract). A thrown search error still propagates.
+  // Two triggers:
+  //  - zero exact hits;
+  //  - a comma-qualified name whose exact query matched only a qualifier
+  //    ("Sierkopas, Germany" -> Germany). Then the fuzzy set is used only when
+  //    one of its entries lies in the qualifier, so a leaf that is not a place
+  //    ("Hospital, Cincinnati, Ohio") keeps its exact answer. Measured by
+  //    dev/probe-place-fuzzy-trigger.ts (#4315).
+  const sanitized = sanitizeForNameQuery(placeName);
+  const leaf = sanitized.split(",")[0].trim();
+  const fuzzyAllowed = !!leaf && !leaf.includes(" ");
+  // One segment list for the trigger and the in-context check, so both read
+  // the same qualifier (segment 1, as step 2's derived context does).
+  const segments = placeSegments(sanitized);
   if (entries.length === 0) {
-    const leaf = sanitizeForNameQuery(placeName).split(",")[0].trim();
-    if (leaf && !leaf.includes(" ")) {
+    if (fuzzyAllowed) {
       const fuzzyEntries = await searchPlace(leaf, { fuzzy: true });
       if (fuzzyEntries.length > 0) {
         entries = fuzzyEntries;
         matchType = "fuzzy";
       }
+    }
+  } else if (
+    fuzzyAllowed &&
+    segments[0] === leaf &&
+    exactQueryMatchedOnlyQualifier(entries, segments)
+  ) {
+    const qualifier = foldPlaceName(segments[1]);
+    const fuzzyEntries = await searchPlace(leaf, { fuzzy: true });
+    if (fuzzyEntries.some((e) => liesInQualifier(e, qualifier))) {
+      entries = fuzzyEntries;
+      matchType = "fuzzy";
     }
   }
 
@@ -306,8 +356,8 @@ export const placeSearchToolSchema = {
     "Paris in Idaho, while contextName 'France' returns Paris in France. " +
     "Each result includes the standardized place name (standardPlace), place type, date range," +
     "coordinates, a FamilySearch link, and (when available) a Wikipedia link. " +
-    'If the response carries matchType: "fuzzy", the name you sent matched ' +
-    "nothing exactly and these are sounds-alike corrections. Confirm one " +
+    'If the response carries matchType: "fuzzy", the place you named had no ' +
+    "exact match and these are sounds-alike corrections. Confirm one " +
     "before using it. " +
     "Use place_search_all instead when you need every historical jurisdiction a " +
     "place has belonged to over time.",
@@ -345,8 +395,8 @@ export const placeSearchAllToolSchema = {
     "changed across the time period you're researching. Each result includes the " +
     "standardized place name (standardPlace), place type, date range, coordinates, a " +
     "FamilySearch link, and (when available) a Wikipedia link. " +
-    'If the response carries matchType: "fuzzy", the name you sent matched ' +
-    "nothing exactly and these are sounds-alike corrections. Confirm one " +
+    'If the response carries matchType: "fuzzy", the place you named had no ' +
+    "exact match and these are sounds-alike corrections. Confirm one " +
     "before using it.",
   inputSchema: {
     type: "object",
