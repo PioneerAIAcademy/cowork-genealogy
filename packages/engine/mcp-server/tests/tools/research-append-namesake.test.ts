@@ -1489,11 +1489,16 @@ describe("namesake cap", () => {
             expect((await row()).birth_year, name).toBeUndefined();
           }
           // An Edwin whose sex is not recorded, or recorded unknown, is refused too.
-          for (const sexless of [{ ...EDWIN, facts: born1846 }, { ...EDWIN, gender: "Unknown", facts: born1846 }]) {
+          const sexlessEdwins: Array<typeof EDWIN & { gender?: string; facts: unknown[] }> = [
+            { ...EDWIN, facts: born1846 },
+            { ...EDWIN, gender: "Unknown", facts: born1846 },
+          ];
+          for (const sexless of sexlessEdwins) {
+            const label = sexless.gender ?? "no sex";
             await searchHit([sexless, HANNAH_QB], sexless);
             expect((await appendRow({ name: "Mrs. Edwin Earnest", record_ids: ["XS3W-W3M"], log_entry_ids: ["log_001"] })).ok).toBe(true);
-            expect((await row()).record_persona_ids, String(sexless.gender)).toBeUndefined();
-            expect((await row()).birth_year, String(sexless.gender)).toBeUndefined();
+            expect((await row()).record_persona_ids, label).toBeUndefined();
+            expect((await row()).birth_year, label).toBeUndefined();
           }
           // Her own persona, female, still stamps from a "Mrs." row of her own given name.
           const hannah = { ...persona("p_1", "Hannah", "Earnest"), gender: "Female" };
