@@ -122,6 +122,7 @@ import { recordBasisOf } from "../utils/record-basis.js";
 import { countsForProofGate, isAttachmentLink } from "../utils/tree-person.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
+import type { CollectionCatalogLoader, CollectionCounts } from "../types/collection.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -10301,8 +10302,7 @@ async function checkLocalityFirstPlaces(
 ): Promise<void> {
   if (errors.length > 0) return;
   for (const [i, op] of ops.entries()) {
-    if (op.section !== "localities") continue;
-    const body = op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
+    const body = localityBody(op);
     if (!body || typeof body !== "object" || !Object.hasOwn(body, "for_place")) continue;
     const forPlace = (body as Record<string, unknown>).for_place;
     if (!isCheckablePlaceList(forPlace)) continue;
@@ -10327,6 +10327,101 @@ async function checkLocalityFirstPlaces(
             "write this entry: return to your caller saying the place did not resolve.",
         ),
       );
+    }
+  }
+}
+
+/** What a `localities` op writes: an append's `entry`, an update's `fields`. */
+function localityBody(op: any): unknown {
+  if (!op || op.section !== "localities") return undefined;
+  return op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
+}
+
+/** The `collections` lists of a batch's `localities` writes, by op index: an
+ *  append's `entry.collections`, an update's `fields.collections`. */
+function localityCollectionLists(ops: readonly unknown[]): Array<[number, Record<string, unknown>[]]> {
+  const out: Array<[number, Record<string, unknown>[]]> = [];
+  ops.forEach((op: any, i) => {
+    const body = localityBody(op);
+    const list = body && typeof body === "object" ? (body as { collections?: unknown }).collections : undefined;
+    if (!Array.isArray(list)) return;
+    const items = list.filter((c): c is Record<string, unknown> => !!c && typeof c === "object" && !Array.isArray(c));
+    if (items.length > 0) out.push([i, items]);
+  });
+  return out;
+}
+
+/** FamilySearch's collection catalog as `researchAppendFromCaller` read it before
+ *  the lock, or `"unavailable"` when that read failed. */
+export type CollectionCatalog = ReadonlyMap<string, CollectionCounts> | "unavailable";
+
+/**
+ * Stamp each `localities` collection's `person_count` / `record_count` from
+ * FamilySearch's catalog (issue #4385): research-plan decides a name search vs an
+ * image browse on them. An id the catalog lacks, or every id when the catalog
+ * could not be read, gets null counts, which send research-plan back to
+ * collections_search. A warning names each change; the write is never refused.
+ */
+function stampLocalityCollectionCounts(
+  ops: ResearchAppendOp[],
+  catalog: CollectionCatalog | undefined,
+  warnings: string[],
+  fmt: (i: number, msg: string) => string,
+): void {
+  if (catalog === undefined) return;
+  for (const [i, items] of localityCollectionLists(ops)) {
+    for (const c of items) if (typeof c.id === "number") c.id = String(c.id);
+    if (catalog === "unavailable") {
+      for (const c of items) {
+        c.person_count = null;
+        c.record_count = null;
+      }
+      warnings.push(
+        fmt(
+          i,
+          "localities collections: FamilySearch's collection catalog could not be read, so every " +
+            "person_count and record_count in this entry was set to null (unknown)",
+        ),
+      );
+      continue;
+    }
+    for (const c of items) {
+      if (typeof c.id !== "string" || c.id === "") {
+        c.person_count = null;
+        c.record_count = null;
+        warnings.push(
+          fmt(i, "localities collections: a collection with no id cannot be checked; person_count and record_count set to null (unknown)"),
+        );
+        continue;
+      }
+      const id = c.id;
+      const counts = catalog.get(id);
+      if (!counts) {
+        c.person_count = null;
+        c.record_count = null;
+        warnings.push(
+          fmt(
+            i,
+            `localities collections '${id}' is not in FamilySearch's collection catalog; ` +
+              "person_count and record_count set to null (unknown)",
+          ),
+        );
+        continue;
+      }
+      const changes: string[] = [];
+      for (const [key, value] of [
+        ["person_count", counts.personCount],
+        ["record_count", counts.recordCount],
+      ] as const) {
+        const was = Object.hasOwn(c, key) ? JSON.stringify(c[key]) : "absent";
+        if (c[key] !== value) changes.push(`${key} ${was} -> ${value}`);
+        c[key] = value;
+      }
+      if (changes.length > 0) {
+        warnings.push(
+          fmt(i, `localities collections '${id}': ${changes.join(", ")}, set from FamilySearch's catalog`),
+        );
+      }
     }
   }
 }
@@ -11274,6 +11369,7 @@ async function prepareOps(
   errors.push(...retiredAssertionCitations(ops, research, fmt));
 
   await checkLocalityFirstPlaces(ops, errors, warnings, fmt);
+  if (errors.length === 0) stampLocalityCollectionCounts(ops, options.collectionCatalog, warnings, fmt);
   if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, recordStandards, warnings, fmt);
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
@@ -11326,6 +11422,9 @@ export interface ResearchAppendOptions {
    *  is the caller's own, so it is judged (`judgeTimelinePlaces`). A tool builds
    *  its timeline from the project's own standard places. */
   judgeSuppliedPlaces?: boolean;
+  /** Set only by `researchAppendFromCaller`: the catalog `localities` collection
+   *  counts are stamped from (`stampLocalityCollectionCounts`). Omitted = not stamped. */
+  collectionCatalog?: CollectionCatalog;
   /** extraction_append's re-extraction (#3678): retire these assertions of
    *  `recordId` against the batch's appends, in the same write (`planRetirement`).
    *  Never set by a tool caller. */
@@ -11494,14 +11593,42 @@ function expandNarrativeEdits(
 /** The one field a direct `research_append` call may change on an assertion. */
 const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
 
+/** How long a caller's write waits on the catalog before stamping null counts. A
+ *  cold read can run past 30s (2 of 51 in the committed e2e logs took 33s and 36s), and Cowork's bridge aborts a call at 60s
+ *  (`COWORK_CALL_ABORT_MS`), which the write's own place lookups also spend. The
+ *  read keeps running and fills the cache for the next write. */
+export const CATALOG_READ_BUDGET_MS = 20_000;
+
+/** `loadCatalog`, or `"unavailable"` when it fails or outlasts the budget. A spent
+ *  FamilySearch budget is a refusal, not a failed read, and is rethrown. */
+async function readCatalog(loadCatalog: CollectionCatalogLoader): Promise<CollectionCatalog> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<"unavailable">((done) => {
+    timer = setTimeout(() => done("unavailable"), CATALOG_READ_BUDGET_MS);
+  });
+  const read = loadCatalog().catch((err: unknown) => {
+    if (isFsBudgetExhausted(err)) throw err;
+    return "unavailable" as const;
+  });
+  try {
+    return await Promise.race([read, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** `research_append` as an MCP caller reaches it. Assertions are written only by
  *  `extraction_append`, which calls `researchAppend` directly and so never meets
  *  this check. A caller may update one existing assertion's
  *  `informant_bias_notes`, to record a re-reading or a doubt; any other
  *  `assertions` write is refused, whole call, before anything is read
- *  (genealogist ruling 2026-10-05, option B). */
+ *  (genealogist ruling 2026-10-05, option B). `loadCatalog` reads FamilySearch's
+ *  collection catalog through the caller's session (`collectionCatalogLoader`,
+ *  bound in `server.ts`); null skips the collection-count stamp: the unit eval
+ *  harness, which never contacts FamilySearch. */
 export async function researchAppendFromCaller(
   input: ResearchAppendInput,
+  loadCatalog: CollectionCatalogLoader | null,
 ): Promise<ResearchAppendResult> {
   // Judged on the decode `researchAppend` will make, and made in the one place it is
   // made (`decodeArg`). The decoded value is NOT written back: `researchAppend` decodes
@@ -11532,7 +11659,14 @@ export async function researchAppendFromCaller(
   if (errors.length > 0) {
     return isBatch ? { ok: false, errors, opsReceived: ops.length } : { ok: false, errors };
   }
-  return researchAppend(input, { judgeSuppliedPlaces: true });
+  // Read before the project lock: a cold catalog fetch can run past 30s.
+  const decodedEntry = decodeArg(input.entry);
+  const writeOps = isBatch ? ops : [{ section: input.section, op: input.op, entry: decodedEntry, fields: decodedFields }];
+  let collectionCatalog: CollectionCatalog | undefined;
+  if (loadCatalog && localityCollectionLists(writeOps).length > 0) {
+    collectionCatalog = await readCatalog(loadCatalog);
+  }
+  return researchAppend(input, { judgeSuppliedPlaces: true, collectionCatalog });
 }
 
 export async function researchAppend(

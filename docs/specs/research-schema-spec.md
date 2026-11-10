@@ -682,7 +682,7 @@ Not every site here is commercial. `chronicling_america`, `digital_newspaper_arc
 | `site` | string | yes | `ancestry`, `myheritage`, `findmypast`, `findagrave`, `newspapers`, `familysearch_web`, `chronicling_america`, `digital_newspaper_archive`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `library_archives_canada`, `american_ancestors`, `italian_genealogy`, `archion`, `matricula`, or `openarch`. `digital_newspaper_archive` is the bucket for state and regional free archives (Utah Digital Newspapers, California Digital Newspaper Collection, …) — which one is identified by `url_generated`, not by a per-state enum value. `ancestry` and `findmypast` also cover their UK-locale domains (`ancestry.co.uk`, `findmypast.co.uk`) via a `locale` argument on the tool, not a separate enum value |
 | `url_generated` | string | yes | The search URL presented to the user |
 | `capture_received` | boolean | yes | Whether the results reached the agent. A capture need not be a file: page content already present in the conversation is a capture that arrived without one, and is recorded `true` with `capture_filename` null |
-| `capture_filename` | string or null | no | Filename of the returned capture; null when the capture arrived as conversation content rather than a file |
+| `capture_filename` | string or null | no | Filename of the returned capture; null when the capture arrived as conversation content rather than a file. For a project upload it is the upload's name — the original, never its `<name>.txt` text layer, even when the agent read the layer |
 
 ### 5.4.1 Sidecar result files
 
@@ -1103,7 +1103,7 @@ first place FamilySearch's place standard does not have (`research-append-tool-s
 | `for_place` | string or null | no | The specific place of interest that prompted it, when narrower than `place` |
 | `time_period` | string or null | no | Era the guide was scoped to |
 | `jurisdictions` | array | no | Border/name succession from `place_search_all`: `{ name, date_range? }` |
-| `collections` | array | no | Record sets covering the place from `collections_search`: `{ id, title, date_range?, person_count?, record_count? }`. The counts are `collections_search`'s `personCount` / `recordCount` (integer or null); research-plan decides a name search vs an image browse on `person_count > 0` |
+| `collections` | array | no | Record sets covering the place from `collections_search`: `{ id, title, date_range?, person_count?, record_count? }`. The counts are `collections_search`'s `personCount` / `recordCount` (integer or null); `research_append` stamps them from FamilySearch's collection catalog, and sets them null when the id is not in the catalog or the catalog could not be read (research-append-tool-spec §5.12); research-plan decides a name search vs an image browse on `person_count > 0` |
 | `quirks` | string[] | no | Short, actionable gotchas (e.g. "indexed only at county level") |
 | `guide_markdown` | string or null | no | The distilled research guide (from the wiki place pages) — what the viewer renders |
 | `pages_read` | array | yes | Provenance: which wiki sections were fetched — `{ section, url?, found, outcome? }`, `section` ∈ `home` / `getting_started` / `online_records` / `research_tips` (the `locality_page_section` enum). `outcome: "unreachable"` (the `locality_page_outcome` enum) marks a `found: false` caused by a wiki outage rather than a missing page. Makes read-coverage checkable |
