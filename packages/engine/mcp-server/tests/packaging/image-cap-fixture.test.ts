@@ -4,6 +4,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
+import { LOCAL } from "../../src/auth/principal.js";
 import {
   IMAGE_BROWSE_CAP,
   __clearImageBrowseMemoryForTests,
@@ -41,9 +42,9 @@ describe("image-transcribe-cap-reached fixture", () => {
     for (let i = 1; i <= IMAGE_BROWSE_CAP; i++) {
       const id = `${group}_${String(i).padStart(5, "0")}`;
       expect(id).not.toBe(imageId);
-      await recordImageBrowse(await checkImageBrowseCap({ imageId: id }, project, "image_transcribe"));
+      await recordImageBrowse(await checkImageBrowseCap({ imageId: id }, project, "image_transcribe", LOCAL));
     }
-    const err = await checkImageBrowseCap({ imageId }, project, "image_transcribe").catch((e) => e);
+    const err = await checkImageBrowseCap({ imageId }, project, "image_transcribe", LOCAL).catch((e) => e);
     expect(err).toBeInstanceOf(Error);
     expect(fixture.is_error).toBe(true);
     expect(fixture.response).toEqual({ error: (err as Error).message });

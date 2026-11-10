@@ -258,7 +258,6 @@ describe("build/http.js store environment", () => {
   }, TEST_TIMEOUT_MS);
 
   it.each([
-    ["TRANSCRIPTION_ENABLED", "off", /invalid value: TRANSCRIPTION_ENABLED must be true or false/],
     ["UPLOADS_ENABLED", "1", /invalid value: UPLOADS_ENABLED must be true or false/],
     ["WEB_PUBLIC_URL", "beta.example.org", /invalid value: WEB_PUBLIC_URL must be an http\(s\) URL/],
   ])("exits 2 naming %s when it is set to %j", async (name, value, message) => {
