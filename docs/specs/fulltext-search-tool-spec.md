@@ -121,7 +121,7 @@ Arabic and Hebrew, and Eastern European records.
     },
     "count": {
       "type": "number",
-      "description": "Number of results to return. Default 5, max 100."
+      "description": "Number of results to return. Default 5, max 50."
     },
     "offset": {
       "type": "number",
@@ -133,7 +133,7 @@ Arabic and Hebrew, and Eastern European records.
     },
     "projectPath": {
       "type": "string",
-      "description": "Absolute path to the active project. When supplied, the tool stages its verbatim response host-side and returns a `staged` handle (see Result staging below); pass `staged.resultsRef` to `research_log_append`. Omit only for a throwaway exploratory search that will not be logged."
+      "description": "Absolute path to the active project. When supplied, the tool stages its verbatim response host-side and returns a `staged` handle (see Result staging below); pass `staged.resultsRef` to `research_log_append`. Without it no transcript is kept. Omit only for a throwaway exploratory search that will not be logged."
     }
   },
   "required": []
@@ -141,6 +141,11 @@ Arabic and Hebrew, and Eastern European records.
 ```
 
 At least one of `keywords`, `name`, `place`, `nlQuery`, or `imageGroupNumber` must be provided (`validateInput`).
+
+`count` must be a whole number from 1 to 50. Anything else is refused with
+"count must be between 1 and 50. For more results, page with offset." It is
+never clamped. At 100, fitting a page of short deed rows to the answer budget
+left about half its rows with no names (see Answer compaction).
 
 Each `recordPlaceN` must match `^\d+(,[^,]+){N}$` — a leading numeric segment
 followed by exactly N non-empty comma-separated segments. Plain text is refused
@@ -189,7 +194,8 @@ interface FulltextResult {
   /** The record's ARK in canonical form (a 3:1: or 3:2: entry, e.g.
    *  "ark:/61903/3:1:3Q9M-CSNL-S98H-M"). Feed to source_attachments' uris. */
   id: string;
-  /** URL to the record on familysearch.org (upstream `sourceUrl`). */
+  /** URL to the record on familysearch.org (upstream `sourceUrl`). Left out of
+   *  the answer when it is exactly "https://www.familysearch.org/" + `id`. */
   sourceUrl?: string;
   collectionId?: string;
   collectionTitle?: string;
@@ -198,17 +204,20 @@ interface FulltextResult {
   recordDate?: string;
   recordType?: string;
   recordPlace?: string;
-  /** The full AI-transcribed page. Present whenever nothing was staged —
-   *  either `projectPath` was not supplied, or staging failed (`staged: null`
-   *  with `stagingError` set). Once staged, it is stripped unconditionally
-   *  from every result (see Result staging below for the strip/reachability
-   *  contract) — it lives in the sidecar. */
+  /** The full AI-transcribed page. In the sidecar only: it never reaches the
+   *  answer (see Answer compaction). */
   textDocument?: string;
   /** Names / places / dates extracted from the transcript (upstream
-   *  `content.entities`, bucketed by type). */
+   *  `content.entities`, bucketed by type), in reading order. The answer
+   *  normalizes and caps them (see Answer compaction). */
   names?: string[];
   places?: string[];
   dates?: string[];
+  /** The full distinct count, present only when the list above was
+   *  shortened. */
+  namesCount?: number;
+  placesCount?: number;
+  datesCount?: number;
   /** The upstream `content.highlightTexts`: the matched terms and phrases,
    *  as BARE strings (e.g. ["Patrick", "Flynn", "Flynn Patrick"] — confirmed
    *  live 2026-08-27), NOT marked-up snippets. They confirm which query terms
@@ -290,25 +299,60 @@ returns a `staged` handle, per
 purely additive and best-effort: a staging failure never fails a successful
 search (it sets `staged: null` and `stagingError`).
 
-Once staged, the heavy inline `textDocument` is **dropped from every result**
-— unconditionally, so the overflow protection cannot be forgotten (the full
-text is already serialized in the sidecar). The remaining flat fields
-(`names`, `places`, `dates`, `highlightTerms`, `title`, `recordType`,
-`recordPlace`, `recordDate`) are the triage stubs the agent works from. Note
-`record_read` cannot re-read a fulltext sidecar (it matches on `recordId` +
-`gedcomx`, which a fulltext result has neither of). `sidecar_read` reads the
-transcript back one hit at a time, from the staged or the finalized sidecar
-(staging serializes the response before the strip runs): `<resultsRef>#hits`
-lists the hits as JSON Lines (`hitIndex`, `hitId`, `title`, `recordDate`,
-`recordPlace`, `hasTranscript`, `ref`), with no transcript text, and
-`<resultsRef>#<hit id>` returns that hit's `textDocument`, paged. A bare
-fulltext ref is refused (`sidecar-read-tool-spec.md`). A broad result set's response
-ran 79–136 KB before the strip, which is the reason to triage from the stubs and read only the hits worth
-extracting. `extraction_append` extracts a hit from the same `textDocument`,
-cited to the logged `fulltext_search` entry (`research-append-tool-spec.md`
-§11.7).
+The sidecar is the full response: every `textDocument`, every entity, every
+field. Staging serializes it before Answer compaction runs, so nothing below
+reaches it. Note `record_read` cannot re-read a fulltext sidecar (it matches on
+`recordId` + `gedcomx`, which a fulltext result has neither of). `sidecar_read`
+reads the transcript back one hit at a time, from the staged or the finalized
+sidecar: `<resultsRef>#hits` lists the hits as JSON Lines (`hitIndex`, `hitId`,
+`title`, `recordDate`, `recordPlace`, `hasTranscript`, `ref`), with no
+transcript text, and `<resultsRef>#<hit id>` returns that hit's `textDocument`,
+paged. A bare fulltext ref is refused (`sidecar-read-tool-spec.md`).
+`extraction_append` extracts a hit from the same `textDocument`, cited to the
+logged `fulltext_search` entry (`research-append-tool-spec.md` §11.7).
 
 `projectPath` is not forwarded to the upstream API; it only drives staging.
+
+## Answer compaction
+
+Every answer, staged or not, goes through `compactStagedFulltextSearch`
+(`src/utils/staged-compaction.ts`), after staging. The eval mock runs the same
+compiled function on its canned responses, with or without `projectPath`. It
+is idempotent: a second pass changes nothing.
+
+1. **`textDocument` is dropped from every result.** One deed transcript alone
+   ran to 36.7k characters, and an unstaged count-2 page came to 51k. Without
+   `projectPath` no transcript is kept anywhere; the caller re-runs with it.
+2. **`names`, `places` and `dates` are normalized**: trimmed, inner whitespace
+   collapsed, and case-insensitive repeats dropped, keeping the first spelling.
+3. **Each list is capped**: 60 names, 15 places, 10 dates. A shortened list
+   keeps the entries sharing the most distinct words with the row's
+   `highlightTerms`, then those nearest such an entry in the list (entities
+   come in reading order, so this keeps the deed or article around the hit),
+   then the rest in page order. The kept entries stay in page order.
+   `namesCount`, `placesCount` and `datesCount` give the full distinct count,
+   written only when absent: a count already present is the true one.
+4. **The page is shrunk toward `TOOL_RESULT_CHAR_BUDGET` (40k characters).**
+   While the answer is over it, rows are shortened longest first through caps
+   of 20/10/5, then 10/5/3, then 5/3/0, then 0/0/0. A row is never dropped; a
+   list cut to 0 is removed and keeps its count. Only `names`, `places` and
+   `dates` are cut. `title`, `recordPlace` and the other row fields never are,
+   so a page of long titles and places can still be over the budget after the
+   last step.
+5. **`sourceUrl` is dropped where it is exactly
+   `"https://www.familysearch.org/" + id`**, and kept otherwise.
+6. **`collectionTitle` stays on each row.** A response-level map of collection
+   ids was tried and dropped: it saved under 2.5% of an answer, and with it the
+   agent scoped a repeat search to a collection id the rules forbid it to borrow
+   (`ut_search_full_text_009`, 2 of 2 runs).
+
+Measured 2026-11-09 on seven hosted answers, all staged: the largest, 20 rows
+at 47.8k characters, comes to 21.5k; three count-5 newspaper and directory
+pages of 37.7k–46.9k come to 8.3k–8.7k; a typical 5-row deed page goes from
+5.6k to 5.0k. A synthetic 50-row page built from the sampled newspaper rows goes
+from 344k to 39.8k, keeping at least 10 names a row; 50 sampled deed rows go
+from 51.8k to 40.0k. On the 32 sampled rows over the names cap, every name
+sharing the most highlight words was kept.
 
 ## Error handling
 
@@ -345,8 +389,8 @@ query shape.
 
 2. **Matched terms, not snippets**: the upstream `content.highlightTexts`
    are bare matched terms/phrases (`highlightTerms`), not marked-up snippets
-   with surrounding context. The full transcript is `textDocument`, which is
-   stripped once staged. There is no context-bearing snippet field; do not
+   with surrounding context. The full transcript is `textDocument`, which
+   never reaches the answer. There is no context-bearing snippet field; do not
    document one.
 
 3. **Facets**: When `includeFacets` is true, send `m.defaultFacets=on`
@@ -408,6 +452,7 @@ query shape.
 | `tests/tools/fulltext-search.test.ts` | Create — unit tests |
 | `src/utils/fulltext-searchable.ts` | Create — the group searchability lookup, shared with `volume_search` |
 | `src/utils/results-staging.ts` | Modify — `NOT_FULLTEXT_SEARCHABLE_NOTE`, beside the tool's other model-facing notes |
+| `src/utils/staged-compaction.ts` | Modify — `compactStagedFulltextSearch`, the Answer compaction steps |
 
 ## Testing
 

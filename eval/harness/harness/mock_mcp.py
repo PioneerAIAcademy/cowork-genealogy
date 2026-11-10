@@ -719,8 +719,9 @@ _STAGED_COMPACTORS: dict[str, str] = {
 }
 
 #: Search tools whose compactor production runs on every answer, staged or not
-#: (record-search.ts), so an answer with no `projectPath` is compacted too.
-COMPACTS_UNSTAGED: frozenset[str] = frozenset({"record_search"})
+#: (record-search.ts, fulltext-search.ts), so an answer with no `projectPath` is
+#: compacted too.
+COMPACTS_UNSTAGED: frozenset[str] = frozenset({"record_search", "fulltext_search"})
 
 
 def _compact_unstaged_search(tool_name: str, response: dict[str, Any]) -> dict[str, Any]:

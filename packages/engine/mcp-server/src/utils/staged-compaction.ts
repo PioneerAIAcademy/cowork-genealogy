@@ -1,6 +1,6 @@
 /**
- * Inline-projection compaction: record_search applies its compactor to every
- * answer, fulltext_search once its results are staged.
+ * Inline-projection compaction: record_search and fulltext_search apply their
+ * compactors to every answer, staged or not.
  *
  * Lives here rather than inline in each tool for one reason: the eval harness
  * has to run the same code. `mock_mcp.py` serves a canned response and then
@@ -11,10 +11,9 @@
  * field production strips, and every eval graded against it would be scored on
  * a shape production never sends.
  *
- * Both functions are **idempotent**: every step either deletes a key or fills
- * one that is only written when non-empty, so applying them to an
- * already-compacted response is a no-op. The harness depends on that — its
- * fixtures carry both shapes.
+ * Both functions are **idempotent**: applying them to an already-compacted
+ * response is a no-op. The harness depends on that — its fixtures carry both
+ * shapes.
  *
  * These modules must stay free of side effects at import: the harness imports
  * the compiled output in a bare `node --input-type=module` process with no
@@ -23,10 +22,11 @@
  */
 
 import type { RecordSearchResult, RecordSearchToolResponse } from "../types/record-search.js";
-import type { FulltextSearchResponse } from "../types/fulltext-search.js";
+import type { FulltextResult, FulltextSearchResponse } from "../types/fulltext-search.js";
 import type { RankSearchMatchesResult } from "../types/rank-search-matches.js";
 import type { ImageTranscribeToolResponse } from "../types/image-transcribe.js";
 import { arkToBareId } from "./ark.js";
+import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { pageText } from "./text-page.js";
 
 /**
@@ -113,24 +113,150 @@ export function compactStagedRecordSearch(
   return out;
 }
 
+type FulltextEntityKey = "names" | "places" | "dates";
+type FulltextEntityCaps = Record<FulltextEntityKey, number>;
+
+const FULLTEXT_ENTITY_KEYS: readonly FulltextEntityKey[] = ["names", "places", "dates"];
+
+const FULLTEXT_COUNT_KEY = {
+  names: "namesCount",
+  places: "placesCount",
+  dates: "datesCount",
+} as const;
+
+/** The most entries a fulltext row's names, places and dates lists keep inline. */
+const FULLTEXT_ENTITY_CAPS: FulltextEntityCaps = { names: 60, places: 15, dates: 10 };
+
 /**
- * Drop `fulltext_search`'s heavy inline `textDocument` (the full AI-transcribed
- * page, 79–136 KB across a result set — the overflow driver). The full text
- * lives in the staged sidecar: staging serializes the response before this
- * strip runs, so every transcript is on disk at `staged.resultsRef`.
- * `sidecar_read` reads ONE hit's transcript back, paged, via
- * `results/<file>#<hit id>` (staged or finalized), and lists the hits via
- * `results/<file>#hits`; record_read does not serve it (it matches on
- * recordId + gedcomx — `readFromSidecar` in record-read.ts — which a fulltext
- * result has neither of). What the strip saves is the cost of every hit's page
- * in one response, not access to any of them: triage from the stubs, then read
- * back only the hits worth reading. The
- * remaining flat fields (names/places/dates/highlightTerms/title/recordType) are
- * the triage stubs the agent works from. Unconditional once staged so the
- * overflow protection can't be forgotten, and safe because the staged file is
- * already serialized to disk. Unlike record_search's strip, the
- * caller must never apply this when `staged` is null (an un-staged exploratory
- * search — nothing was retained, and the transcript is the only copy).
+ * Shorter caps, tried in turn on the longest rows first, while a page is still
+ * over `TOOL_RESULT_CHAR_BUDGET` after the caps above. A newspaper or directory
+ * page carries 143–567 names, so 50 such rows still come to ~79k at 60/15/10.
+ */
+const FULLTEXT_BUDGET_LADDER: readonly FulltextEntityCaps[] = [
+  { names: 20, places: 10, dates: 5 },
+  { names: 10, places: 5, dates: 3 },
+  { names: 5, places: 3, dates: 0 },
+  { names: 0, places: 0, dates: 0 },
+];
+
+const FAMILYSEARCH_ORIGIN = "https://www.familysearch.org/";
+
+function entityWords(value: string): string[] {
+  return value.toLowerCase().split(/[^\p{L}\p{N}]+/u).filter(Boolean);
+}
+
+/** Trim, collapse inner whitespace and drop case-insensitive repeats, keeping the first spelling. */
+function normalizeEntities(values: string[]): string[] {
+  const seen = new Set<string>();
+  const out: string[] = [];
+  for (const raw of values) {
+    const value = raw.replace(/\s+/g, " ").trim();
+    const key = value.toLowerCase();
+    if (!value || seen.has(key)) continue;
+    seen.add(key);
+    out.push(value);
+  }
+  return out;
+}
+
+/**
+ * The `cap` entries worth keeping, returned in page order: first those sharing
+ * the most distinct words with the row's `highlightTerms`, then those nearest
+ * such an entry in the list (entities come in reading order, so this keeps the
+ * deed or article around the hit rather than the top of the page), then page
+ * order. Ranking by how many highlight words an entry shares, not by whether it
+ * shares one, is what keeps "Patrick Flynn" ahead of the ninety other Flynns on
+ * a directory page.
+ */
+function keepNearestMatches(values: string[], cap: number, highlightWords: Set<string>): string[] {
+  const overlap = values.map(
+    (v) => new Set(entityWords(v).filter((w) => highlightWords.has(w))).size,
+  );
+  const far = values.length;
+  const distance = values.map(() => far);
+  let last = -far;
+  for (let i = 0; i < values.length; i++) {
+    if (overlap[i] > 0) last = i;
+    distance[i] = Math.min(distance[i], i - last);
+  }
+  let next = 2 * far;
+  for (let i = values.length - 1; i >= 0; i--) {
+    if (overlap[i] > 0) next = i;
+    distance[i] = Math.min(distance[i], next - i);
+  }
+  return values
+    .map((_, i) => i)
+    .sort((a, b) => overlap[b] - overlap[a] || distance[a] - distance[b] || a - b)
+    .slice(0, cap)
+    .sort((a, b) => a - b)
+    .map((i) => values[i]);
+}
+
+/**
+ * Shorten one list to `cap`, recording its full length in `<list>Count`. A
+ * count already present is final: it was taken from the full list by an
+ * earlier pass, and this list may be that pass's shortened copy.
+ */
+function capEntityList(row: FulltextResult, key: FulltextEntityKey, cap: number): void {
+  const values = row[key];
+  if (!values || values.length <= cap) return;
+  const countKey = FULLTEXT_COUNT_KEY[key];
+  if (row[countKey] === undefined) row[countKey] = values.length;
+  const highlightWords = new Set((row.highlightTerms ?? []).flatMap(entityWords));
+  const kept = keepNearestMatches(values, cap, highlightWords);
+  if (kept.length > 0) row[key] = kept;
+  else delete row[key];
+}
+
+/**
+ * Walk FULLTEXT_BUDGET_LADDER, longest row first, until the serialized answer
+ * fits `budget` or the last rung has cut every row's lists to none. Never drops
+ * a row, and cuts only `names`, `places` and `dates`: `title`, `recordPlace` and
+ * the other row fields stay whole, so a page of long titles and places can end
+ * over `budget`. The `volume_search` fitToBudget pattern: compact JSON
+ * serializes each row on its own, so a row's change in length is the answer's.
+ */
+function fitFulltextToBudget(out: FulltextSearchResponse, budget: number): void {
+  let size = JSON.stringify(out).length;
+  if (size <= budget) return;
+  const rows = out.results;
+  const lengths = rows.map((r) => JSON.stringify(r).length);
+  const longestFirst = rows.map((_, i) => i).sort((a, b) => lengths[b] - lengths[a]);
+  for (const caps of FULLTEXT_BUDGET_LADDER) {
+    for (const i of longestFirst) {
+      for (const key of FULLTEXT_ENTITY_KEYS) capEntityList(rows[i], key, caps[key]);
+      const length = JSON.stringify(rows[i]).length;
+      size += length - lengths[i];
+      lengths[i] = length;
+      if (size <= budget) return;
+    }
+  }
+}
+
+/**
+ * Shape every `fulltext_search` answer, staged or not, to shrink one page toward
+ * TOOL_RESULT_CHAR_BUDGET. A transcript alone runs to 37k characters, and
+ * a newspaper page's entity lists to 11k, so neither the unstaged answer nor a
+ * staged page of long rows was safe.
+ *
+ * - `textDocument` goes. With a project it is in the sidecar, which staging
+ *   wrote before this runs: `sidecar_read` `<resultsRef>#<hit id>` reads one
+ *   hit's page back and `#hits` lists them. Without one, the caller re-runs
+ *   with `projectPath` to keep it. record_read does not serve it (it matches on
+ *   recordId + gedcomx, which a fulltext result has neither of).
+ * - `names`, `places` and `dates` are normalized, then capped at
+ *   FULLTEXT_ENTITY_CAPS by `keepNearestMatches`, with `namesCount`,
+ *   `placesCount` and `datesCount` giving the full count when a list was
+ *   shortened; then, while the page is over TOOL_RESULT_CHAR_BUDGET,
+ *   FULLTEXT_BUDGET_LADDER shortens them further, down to none. `title` and
+ *   `recordPlace` are never cut, so the page is not guaranteed to fit.
+ * - `sourceUrl` goes only when it is exactly the FamilySearch origin plus `id`.
+ * - `collectionTitle` stays on each row. A response-level map of collection ids
+ *   led the agent to scope a repeat search to a collection id (2 of 2 runs of
+ *   ut_search_full_text_009), and it saved under 2.5% of an answer.
+ *
+ * The sidecar keeps every field and every entry. Idempotent: a second pass
+ * finds every list within its cap and every count already written.
  *
  * Mutates and returns `out`.
  */
@@ -139,7 +265,19 @@ export function compactStagedFulltextSearch(
 ): FulltextSearchResponse {
   for (const r of out.results) {
     delete r.textDocument;
+
+    if (r.sourceUrl === FAMILYSEARCH_ORIGIN + r.id) delete r.sourceUrl;
+
+    for (const key of FULLTEXT_ENTITY_KEYS) {
+      const values = r[key];
+      if (!values) continue;
+      const normalized = normalizeEntities(values);
+      if (normalized.length > 0) r[key] = normalized;
+      else delete r[key];
+      capEntityList(r, key, FULLTEXT_ENTITY_CAPS[key]);
+    }
   }
+  fitFulltextToBudget(out, TOOL_RESULT_CHAR_BUDGET);
   return out;
 }
 

@@ -664,16 +664,19 @@ def test_fulltext_search_strips_textDocument_once_staged(tmp_path):
     assert body["results"][0].get("highlightTerms")
 
 
-def test_fulltext_search_keeps_textDocument_when_not_staged(tmp_path):
-    """No projectPath -> nothing staged -> nothing to strip (matches the real
-    tool's `if (out.staged)` guard — never strips an un-staged search)."""
+@pytest.mark.requires_engine_build
+def test_fulltext_search_compacts_the_answer_when_not_staged(tmp_path):
+    """No projectPath -> nothing staged, but fulltext-search.ts compacts every
+    answer, so the transcript still does not reach the agent."""
     server, call_log, tools_by_name = create_mock_server(
         ["fulltext-search-flynn-witnesses"], FIXTURES_DIR, workspace=tmp_path
     )
     result = _invoke(tools_by_name, "fulltext_search", {"keywords": "+Flynn"})
     body = _extract_response_dict(result)
     assert "staged" not in body
-    assert "textDocument" in body["results"][0]
+    assert "textDocument" not in body["results"][0]
+    assert body["results"][0].get("names")
+    assert body["results"][0].get("highlightTerms")
 
 
 # --- fulltext_search serves facets only on includeFacets (#3973) ---------------
