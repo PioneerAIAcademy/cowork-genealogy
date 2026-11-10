@@ -24,6 +24,7 @@ import pytest
 
 
 from harness.record_basis import record_basis_of
+from harness.skill_invocation import is_attachment_link
 from validators_lib import (
     as_mapping,
     assert_foreign_keys_valid,
@@ -1987,4 +1988,59 @@ def test_identity_links_follow_their_persona(before_state, after_state, tool_cal
         "a persona's own facts (name, birth, death, ...) must be linked to the one "
         "person that persona is -- check the list answers for a mixed-up id:\n  "
         + "\n  ".join(problems)
+    )
+
+
+# --- Attachment links on named assertions are superseded, the rest left alone ---
+
+def test_supersedes_named_attachment_links(before_state, after_state, test):
+    """Tag-gated (``supersedes-named-attachment-links``, issue #3516 PR D).
+
+    In the scenario, the assertions the delegation names are exactly those
+    carrying a question id, and each has only a live attachment link. For each
+    one, a new `pe_` to the same person with a non-null `match_score` is written
+    and the attachment link's `superseded_by` names it. Every other live
+    attachment link (an assertion with no question id) is unchanged, and its
+    assertion-person pair gains no new `pe_`.
+    """
+    if "supersedes-named-attachment-links" not in (test.get("tags") or []):
+        pytest.skip("not a supersedes-named-attachment-links test")
+    before = before_state.get("research_json") or {}
+    after = after_state.get("research_json") or {}
+    named = {
+        a["id"] for a in before.get("assertions", [])
+        if isinstance(a, dict) and a.get("extracted_for_question_ids")
+    }
+    old_links = [
+        pe for pe in before.get("person_evidence", [])
+        if isinstance(pe, dict) and not pe.get("superseded_by") and is_attachment_link(pe)
+    ]
+    assert old_links and named, (
+        "scenario drift: expected live attachment links and question-tied assertions before the run"
+    )
+    after_by_id = {pe.get("id"): pe for pe in after.get("person_evidence", []) if isinstance(pe, dict)}
+    old_ids = {pe["id"] for pe in before.get("person_evidence", []) if isinstance(pe, dict)}
+    new_links = [pe for pid, pe in after_by_id.items() if pid not in old_ids]
+
+    problems: list[str] = []
+    for old in old_links:
+        aid, person = old.get("assertion_id"), old.get("person_id")
+        now = after_by_id.get(old["id"]) or {}
+        fresh = [pe for pe in new_links if pe.get("assertion_id") == aid and pe.get("person_id") == person]
+        if aid in named:
+            target = after_by_id.get(now.get("superseded_by") or "")
+            if not target:
+                problems.append(f"{old['id']} ({aid}, named) is still live or superseded by a missing entry")
+            elif target.get("assertion_id") != aid or target.get("person_id") != person:
+                problems.append(f"{old['id']} ({aid}) is superseded by {target.get('id')}, a link for another pair")
+            elif target.get("match_score") is None:
+                problems.append(f"{target.get('id')} superseding {old['id']} ({aid}) carries no match_score")
+        else:
+            if now.get("superseded_by"):
+                problems.append(f"{old['id']} ({aid}, not named) was superseded by {now.get('superseded_by')}")
+            if fresh:
+                problems.append(f"{aid} (not named) gained {[pe.get('id') for pe in fresh]}")
+    assert not problems, (
+        "named assertions' attachment links must be superseded by a scored link, "
+        "and every other attachment link left alone:\n  - " + "\n  - ".join(problems)
     )
