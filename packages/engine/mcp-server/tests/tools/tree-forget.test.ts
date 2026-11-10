@@ -1042,6 +1042,197 @@ describe("tree_forget", () => {
     expect(await exists("starting-tree.gedcomx.json")).toBe(false);
   });
 
+  // ─── #4024: the `source` selector ────────────────────────────────────────────
+
+  /** family() plus two source descriptions. S9 holds the answer in its
+   *  citation and is cited from all five places a citation can sit; S10 is an
+   *  unrelated source cited beside it on I1, which must survive. */
+  const familyWithSources = () => {
+    const tree: any = family();
+    tree.sources = [
+      {
+        id: "S9",
+        title: "Patrick Ryan, Ireland Marriages",
+        citation: "Patrick Ryan and Ellen Walsh, Cork, 25 June 1876.",
+        author: "FamilySearch",
+        url: "https://www.familysearch.org/ark:/61903/1:1:NW44-PM2",
+      },
+      { id: "S10", title: "Ireland Census", citation: "Census entry" },
+    ];
+    const i1 = tree.persons[0];
+    i1.sources = [{ ref: "S9" }, { ref: "S10" }];
+    i1.names[0].sources = [{ ref: "S9" }];
+    i1.facts[0].sources = [{ ref: "S9" }];
+    const r6 = tree.relationships.find((r: any) => r.id === "R6");
+    r6.sources = [{ ref: "S9" }];
+    const r5 = tree.relationships.find((r: any) => r.id === "R5");
+    r5.facts[0].sources = [{ ref: "S9" }];
+    return tree;
+  };
+
+  it("source removes the description and its citations from all five holders", async () => {
+    await writeProject(familyWithSources());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "source", sourceId: "S9" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+
+    expect(r.removed).toEqual({
+      persons: 0,
+      relationships: 0,
+      relationshipsCascaded: 0,
+      factsByType: {},
+      sources: 1,
+    });
+    const tree = await readTree();
+    expect(tree.sources.map((s: any) => s.id)).toEqual(["S10"]);
+    expect(JSON.stringify(tree)).not.toContain('"S9"');
+    const i1 = tree.persons.find((p: any) => p.id === "I1");
+    // The unrelated citation beside it survives; emptied lists are dropped.
+    expect(i1.sources).toEqual([{ ref: "S10" }]);
+    expect(i1.names[0].sources).toBeUndefined();
+    expect(i1.facts[0].sources).toBeUndefined();
+    const rels = Object.fromEntries(tree.relationships.map((x: any) => [x.id, x]));
+    expect(rels.R6.sources).toBeUndefined();
+    expect(rels.R5.facts[0].sources).toBeUndefined();
+    // Nothing else went.
+    expect(tree.persons).toHaveLength(6);
+    expect(tree.relationships).toHaveLength(7);
+  });
+
+  it("source dry run reports removed.sources and writes nothing", async () => {
+    await writeProject(familyWithSources());
+    const before = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+    const dry = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "source", sourceId: "S9" }],
+      dryRun: true,
+    });
+    expect(dry.ok).toBe(true);
+    if (!dry.ok) return;
+    expect(dry.removed.sources).toBe(1);
+    expect(dry.filesWritten).toEqual([]);
+    expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(before);
+    expect(await exists(RESTORE_FILE)).toBe(false);
+  });
+
+  it("source never quotes a source's title, citation, author or url", async () => {
+    await writeProject(familyWithSources());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "source", sourceId: "S9" }, { selector: "spouses-of", personId: "I1" }],
+      dryRun: true,
+    });
+    expect(r.ok).toBe(true);
+    const serialized = JSON.stringify(r);
+    for (const value of ["Ireland Marriages", "25 June 1876", "Cork", "FamilySearch", "NW44-PM2"]) {
+      expect(serialized).not.toContain(value);
+    }
+  });
+
+  it("an unknown sourceId is a 'matched nothing' error, not a no-op", async () => {
+    await writeProject(familyWithSources());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "source", sourceId: "S99" }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/'source' matched nothing/);
+    expect(r.errors[0]).toContain("S99");
+  });
+
+  it("source without sourceId is an error", async () => {
+    await writeProject(familyWithSources());
+    const r = await treeForget({ projectPath: dir, forget: [{ selector: "source" }] });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors[0]).toMatch(/requires sourceId/);
+  });
+
+  it("refuses when a research.json source points at the removed S id", async () => {
+    const research = {
+      ...minimalResearch,
+      sources: [
+        {
+          id: "src_001",
+          gedcomx_source_description_id: "S9",
+          citation: "Patrick Ryan and Ellen Walsh, Cork, 25 June 1876.",
+          citation_detail: {
+            who: "", what: "", when_created: "", when_accessed: "", where: "", where_within: "",
+          },
+          source_classification: "original",
+          repository: "FamilySearch",
+          access_date: "2026-01-01",
+        },
+      ],
+    };
+    await writeProject(familyWithSources(), research);
+    const before = await readFile(join(dir, "tree.gedcomx.json"), "utf-8");
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "source", sourceId: "S9" }],
+    });
+    expect(r.ok).toBe(false);
+    if (r.ok) return;
+    expect(r.errors.join(" ")).toMatch(/gedcomx_source_description_id 'S9'/);
+    expect(r.errors.join(" ")).not.toContain("25 June 1876");
+    expect(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).toBe(before);
+  });
+
+  it("source also removes the S entry from the starting-tree baseline", async () => {
+    await writeProject(familyWithSources());
+    await writeFile(
+      join(dir, "starting-tree.gedcomx.json"),
+      JSON.stringify(familyWithSources(), null, 2),
+      "utf-8",
+    );
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "source", sourceId: "S9" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.filesWritten).toContain("starting-tree.gedcomx.json");
+    const baseline = await readFile(join(dir, "starting-tree.gedcomx.json"), "utf-8");
+    expect(baseline).not.toContain('"S9"');
+    expect(baseline).not.toContain("25 June 1876");
+  });
+
+  it("source tolerates a pre-existing dangling ref that slides down beside it", async () => {
+    // F1 cites S9 then a source that does not exist. Removing S9's ref moves
+    // the dangling one from sources[1] to sources[0]; keyed by index the old
+    // error would read as call-introduced and refuse the forget.
+    const tree = familyWithSources();
+    tree.persons[0].facts[0].sources = [{ ref: "S9" }, { ref: "Sgone" }];
+    await writeProject(tree);
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [{ selector: "source", sourceId: "S9" }],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.validation.warnings.join(" ")).toMatch(/pre-existing/);
+  });
+
+  it("source combines with spouses-of: the marriage and its record both go", async () => {
+    await writeProject(familyWithSources());
+    const r = await treeForget({
+      projectPath: dir,
+      forget: [
+        { selector: "spouses-of", personId: "I1" },
+        { selector: "source", sourceId: "S9" },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.removed.persons).toBe(1);
+    expect(r.removed.sources).toBe(1);
+    expect(JSON.stringify(await readTree())).not.toContain('"S9"');
+  });
+
   // ─── redaction ─────────────────────────────────────────────────────────────
 
   it("leaks no name, date, or place into the result", async () => {

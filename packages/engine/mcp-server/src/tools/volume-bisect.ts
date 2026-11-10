@@ -383,6 +383,7 @@ async function volumeBisectToolInner(
     { imageId },
     input.projectPath,
     "volume_bisect",
+    principal,
     `positions ${bracketBefore.lowPosition}..${bracketBefore.highPosition}, ` +
       `years ${bracketBefore.lowYear ?? "unknown"}..${bracketBefore.highYear ?? "unknown"}`,
   );

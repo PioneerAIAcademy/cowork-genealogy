@@ -360,10 +360,10 @@ questions reached `resolved` across 154 runs from 11 different skill contexts.
 The prose table, the write-boundary gate's remedy text, and the batches that
 write a summary and its resolve together all name `proof-conclusion`. A widening
 cannot newly fail a test; the matching skill-body edit is a separate change,
-gated on that skill's paid run. And tree `persons` and `relationships` gain
-`forget-and-rederive` (`TREE_WIDENED` in `test_ownership_manifest.py`): it holds
-`tree_forget` and both rows list that tool, so it was a writer of both sections
-that no row named — found by the actual-writer guard. The skill has
+gated on that skill's paid run. And tree `persons`, `relationships` and `sources`
+gain `forget-and-rederive` (`TREE_WIDENED` in `test_ownership_manifest.py`): it
+holds `tree_forget` and all three rows list that tool (`sources` since its
+`source` selector), so it was a writer of those sections that no row named — found by the actual-writer guard. The skill has
 no unit suite, so no graded run reads this writer set.
 
 **Two declared contradictions that turn out not to be defects**, recorded rather
