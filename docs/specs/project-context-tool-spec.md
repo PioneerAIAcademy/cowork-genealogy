@@ -584,7 +584,7 @@ parallel, so the counts save tokens and calls more than wall-clock time.
 
 ```typescript
 uploads?: [{ name: string, uploaded: string /* ISO, from the store's mtime */, hasText: boolean }]
-uploadUrl?: string    // `${webPublicUrl}/#/p/${projectId}/upload`
+uploadUrl?: string    // `${webPublicUrl}/upload/${projectId}`
 ```
 
 `uploads` lists the store's `uploads/` entries, newest first, ties by name. An
@@ -601,7 +601,10 @@ The link comes from `projectLinks(principal)` (`src/utils/project-links.ts`):
 stripped) **and** `uploadsEnabled` is `true` **and** the bound store has a
 `projectId`. The id is the store's, never derived from `projectPath`: on the
 worker path every project arrives under the same anchor path, `/project`. The
-file store has no id, so the desktop gets no link. No project tool returns a link
+file store has no id, so the desktop gets no link. The link is the web tier's
+chat-off upload page, `/upload/<id>`, which serves only the `proj_<16 hex>`
+ids the connector and the web tier mint; it replaced the SPA's `#/p/<id>/upload`
+route, which has no reader with the chat off. No project tool returns a link
 to a viewer page. On the hosted tool server the settings arrive as `WEB_PUBLIC_URL` and
 `UPLOADS_ENABLED` (`src/hosted-config-env.ts`); a switch other than
 `true`/`false`, or a `WEB_PUBLIC_URL` that is not a plain http(s) URL with no
