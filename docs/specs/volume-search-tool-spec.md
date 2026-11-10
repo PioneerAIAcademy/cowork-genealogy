@@ -104,7 +104,7 @@ place fetchers all hit anonymous endpoints.
 | `startYear` | integer | No | Earliest year of interest, inclusive (e.g., `1730`). Omit for all periods. |
 | `endYear` | integer | No | Latest year of interest, inclusive (e.g., `1810`). Must be ≥ `startYear`. Omit for all periods. |
 | `recordTypeGroups` | string[] | No | One or more record-type group names from the closed vocabulary in [Record-type filtering](#record-type-filtering). Results are restricted to volumes carrying at least one matching coverage. Multiple groups are **OR**-ed. Omit to search all record types. |
-| `pageSize` | integer | No | Volumes per page, 1–50. Defaults to **50**, or **10** when `summary` is set (see [Answer size](#answer-size) and [Summary](#summary-record-type-rollup)). Sent as the request body's `pageSize`, so it is part of what a `pageToken` is bound to: the page after a `summary` page sends `pageSize: 10`. |
+| `pageSize` | integer | No | Volumes per page, 1–50. Defaults to **50**, or **10** when `summary` is set (see [Answer size](#answer-size) and [Summary](#summary-record-type-rollup)). Sent as the request body's `pageSize`, so it is part of what a `pageToken` is bound to: the next page sends the `query.pageSize` the previous page echoed. |
 | `pageToken` | string | No | Opaque pagination cursor. Pass back the `nextPageToken` from a previous response to fetch the next page. **Must be sent together with the same `standardPlace`/`startYear`/`endYear`/`recordTypeGroups`/`pageSize`** that produced it (see [Pagination](#pagination)). |
 | `summary` | boolean | No | First page only (refused with `pageToken`). Adds `summary`: every matching volume, not just this page, counted by record-type group. See [Summary](#summary-record-type-rollup). |
 
@@ -845,8 +845,8 @@ each — and that repetition was most of an oversized page.
         maximum: 50,
         description:
           "Volumes per page, 1–50. Defaults to 50, or 10 with summary. Every page " +
-          "of one search must use the same pageSize, so the page after a summary " +
-          "page sends pageSize 10.",
+          "of one search must use the same pageSize, so the next page sends the " +
+          "query.pageSize the previous page echoed.",
       },
       pageToken: {
         type: "string",

@@ -534,8 +534,8 @@ export const volumeSearchSchema = {
         maximum: 50,
         description:
           "Volumes per page, 1–50. Defaults to 50, or 10 with summary. Every page " +
-          "of one search must use the same pageSize, so the page after a summary " +
-          "page sends pageSize 10.",
+          "of one search must use the same pageSize, so the next page sends the " +
+          "query.pageSize the previous page echoed.",
       },
       pageToken: {
         type: "string",
