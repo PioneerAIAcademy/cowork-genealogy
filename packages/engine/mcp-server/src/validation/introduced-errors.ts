@@ -25,10 +25,13 @@
  * "Keep it simple" (Dallan, 2026-08-14): array elements with no `.id` keep
  * their raw index. A pre-existing id-less error at an UNCHANGED index still
  * matches across before/after and is demoted (tolerated); only an id-less
- * element that *reindexes* reads as introduced and would block. None of the nine
- * writer tools reindex an id-less array, and all six known drift keys sit on
- * id-bearing objects, so that residual false-block is theoretical — the
- * tolerance is real for the cases that occur.
+ * element that *reindexes* reads as introduced and would block. One id-less
+ * array does reindex: holder source refs (`sources[{ref}]`), from which
+ * tree_forget's `source` selector (#4024) removes a sibling ref. Those are
+ * keyed by `ref` instead (see normalizePath). No other writer tool reindexes
+ * an id-less array, and all six known drift keys sit on id-bearing objects,
+ * so the residual false-block is theoretical — the tolerance is real for the
+ * cases that occur.
  *
  * VALIDATES THE SERIALIZED FORM, not the in-memory object. The store persists
  * `JSON.stringify(obj)` (`fs-project-store.ts`), which DROPS a key whose value
@@ -67,7 +70,9 @@ export interface ProjectState {
  * Rewrite an error `path` so it is stable across array reindexing: each
  * `key[index]` segment becomes `key[id=<element.id>]` when the element at that
  * index carries a string `.id`, walking `doc` alongside the path so nested
- * arrays resolve too. Segments without a resolvable id keep their raw index.
+ * arrays resolve too. A source reference (`sources[i]` holding `{ref}`) becomes
+ * `sources[ref=<ref>#<n>]`, n counting earlier siblings with the same ref.
+ * Other segments without a resolvable id keep their raw index.
  */
 function normalizePath(path: string, research: unknown, tree: unknown): string {
   const segments = path.split("/");
@@ -88,8 +93,13 @@ function normalizePath(path: string, research: unknown, tree: unknown): string {
       } else if (key === "sources" && el && typeof el === "object" && typeof el.ref === "string") {
         // A source reference has no id of its own; its `ref` is the stable
         // key, so removing a sibling ref (tree_forget's `source`) does not
-        // make a pre-existing error on the next ref read as new.
-        out.push(`${key}[ref=${el.ref}]`);
+        // make a pre-existing error on the next ref read as new. Same-ref
+        // siblings are numbered, so a second copy of an existing ref is a new
+        // key and still blocks.
+        const nth = arr
+          .slice(0, idx)
+          .filter((r: any) => r && typeof r === "object" && r.ref === el.ref).length;
+        out.push(`${key}[ref=${el.ref}#${nth}]`);
       } else {
         out.push(seg);
       }

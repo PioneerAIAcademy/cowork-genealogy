@@ -1133,7 +1133,8 @@ export const treeForgetSchema = {
     "Validates the whole project before writing; on failure nothing is written " +
     "and `{ok: false, errors}` comes back — most often because research.json " +
     "still references a person being removed. A selector that matches nothing " +
-    "is an error, not a no-op: read it as 'this was already forgotten'. " +
+    "is an error, not a no-op: read it as 'this was already forgotten' — " +
+    "except after `source`, where the researcher should first check the S id. " +
     "Writes tree.gedcomx.json plus a dot-prefixed restore file; NEVER read " +
     "that file — it still contains everything that was removed.",
   inputSchema: {

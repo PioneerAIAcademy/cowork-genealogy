@@ -162,20 +162,21 @@ Re-run the same call without `dryRun`. Then:
   tree. **Never read that file.** It still contains everything that was removed.
   On a connector, undoing a forget means starting a new project.
 
-If the call comes back `{ ok: false, errors }`, nothing was written. Two errors
+If the call comes back `{ ok: false, errors }`, nothing was written. Three errors
 are worth reading carefully rather than routing around:
 
 - **"matched nothing"** — the target is already gone. Read it as "this was
-  already forgotten," not as a problem to fix.
+  already forgotten," not as a problem to fix. After a `source` selector, first
+  ask the researcher to check the S id against the viewer's Sources section.
+- **"gedcomx_source_description_id '…' not found"** after a `source` selector —
+  `research.json` records that source, so it cannot be forgotten in this
+  project. Tell the researcher; the remedy is a new project.
 - **A validation error naming `research.json` paths** — the researcher has
   assertions, person-evidence entries or a timeline that still reference a person
   you are about to remove. `tree_forget` does not touch `research.json`, so tell
   them what is blocking it and let them choose: clear those entries, or forget a
   narrower slice with a fact-level selector. Say plainly that entries which
   *state* the answer compromise the exercise anyway.
-- **"gedcomx_source_description_id '…' not found"** after a `source` selector —
-  `research.json` records that source, so it cannot be forgotten in this
-  project. Tell the researcher; the remedy is a new project.
 
 ### 4. Research it
 
