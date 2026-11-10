@@ -3320,18 +3320,18 @@ function rowGivenWords(name: unknown): RowGiven {
   const words = lookupNameWords(own).filter((w) => !NAME_SUFFIXES.has(w));
   return {
     words: new Set(comparableWords(words.length > 1 ? words.slice(0, -1) : words)),
-    mrs: /^[^\p{L}]*mrs\b/iu.test(own.trim()),
+    mrs: /\bmrs\b/i.test(own),
   };
 }
 
-/** A row's given words, and whether its name opens with "Mrs.", which may give
- *  her husband's given name ("Mrs. Edwin Earnest"). */
+/** A row's given words, and whether its name has "Mrs." anywhere in it, which
+ *  may give her husband's given name ("Mrs. Edwin Earnest"). */
 type RowGiven = { words: ReadonlySet<string>; mrs: boolean };
 
 /** Whether one of `person`'s names has a given word of the row's; a row named
  *  "Mrs." never takes a persona recorded male, her husband. */
 function sharesRowGivenName(person: any, row: RowGiven): boolean {
-  if (row.mrs && String(person?.gender ?? "").toLowerCase() === "male") return false;
+  if (row.mrs && knownSex(person) === "male") return false;
   return ((Array.isArray(person?.names) ? person.names : []) as any[]).some(
     (n) => typeof n?.given === "string" && comparableWords(lookupNameWords(n.given)).some((w) => row.words.has(w)),
   );

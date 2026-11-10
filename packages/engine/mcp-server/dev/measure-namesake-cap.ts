@@ -57,8 +57,9 @@
 //       written, no row planted: the personas `research_append` stamped, and
 //       what a refusal keyed on them would refuse and spare
 //       (dev/namesake-persona-counts.ts). Zero until runs write rows. A run
-//       whose engine cannot stamp a read (before #4279), or whose engine commit
-//       is unknown here, is left out and named, not counted as zeros.
+//       whose engine cannot stamp a read (before #4279), stamps without the
+//       given name check, or whose engine commit is unknown here, is left out
+//       and named, not counted as zeros.
 //   §8  tree-derived namesake pairs (#3681): each committed e2e final state,
 //       every person with a same-named parent, child or sibling, no row
 //       planted: the links ties (a) and (b) refuse, how many the pair tests

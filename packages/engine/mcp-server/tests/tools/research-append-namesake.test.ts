@@ -1482,7 +1482,7 @@ describe("namesake cap", () => {
         it('G14 takes no persona recorded male for a row named "Mrs." with her husband\'s given name', async () => {
           const born1846 = [{ type: "Birth", date: "1846", standard_date: "1846" }];
           const edwin = { ...EDWIN, gender: "Male", facts: born1846 };
-          for (const name of ["Mrs. Edwin Earnest", "Earnest, Mrs. Edwin", "(Mrs.) Edwin Earnest"]) {
+          for (const name of ["Mrs. Edwin Earnest", "Earnest, Mrs. Edwin", "(Mrs.) Edwin Earnest", "Hannah Earnest (Mrs. Edwin Earnest)"]) {
             await searchHit([edwin, HANNAH_QB], edwin);
             expect((await appendRow({ name, record_ids: ["XS3W-W3M"], log_entry_ids: ["log_001"] })).ok).toBe(true);
             expect((await row()).record_persona_ids, name).toBeUndefined();
