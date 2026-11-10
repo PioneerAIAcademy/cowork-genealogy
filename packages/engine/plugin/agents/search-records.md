@@ -8,11 +8,12 @@ description: >-
   (execution). Invoke when the user says "search for [person]", "find [person]
   in [record type]", "execute the plan", "run the next search", "search
   FamilySearch", or when a plan item targets a FamilySearch repository. Pass
-  projectPath, questionId and planItemId. Do NOT use when the target is
-  Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com (use
-  search-external-sites), when the user wants to plan what to search (use
-  research-plan), or to analyze a record already found (use extraction_append,
-  or the record-structurer agent).
+  projectPath, plus questionId and planItemId for a plan item; a search the
+  user named needs no question or plan, only projectPath and subject. Do NOT
+  use when the target is Ancestry, MyHeritage, FindMyPast, FindAGrave, or
+  Newspapers.com (use search-external-sites), when the user wants to plan
+  what to search (use research-plan), or to analyze a record already found
+  (use extraction_append, or the record-structurer agent).
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and
@@ -763,17 +764,16 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 - List records passed to extraction (or explain why none) — and if none, say plainly that no `sources` or `assertions` exist yet for these findings
 - Show plan progress: "3 of 5 plan items completed"
 - Suggest next steps:
-  - **If the invoking message already authorized continuing** (e.g. "...and continue with exhaustive research," "...don't stop to check in with me between searches") → execute the next `planned` item in the same turn instead of asking. That item is already part of the plan the user asked you to run — it is not a self-initiated idea (see Step 1's ad-hoc/planned distinction), so it does not need a fresh yes. Re-asking a question the message already answered is the defect this guards against, not a safety margin.
   - Top match clears `needs-review` (Step 4) → "I found N promising record(s) for <person> — want me to extract them now into sourced, GPS-classified assertions?" Do not present these results as already persisted beyond the search log.
   - Top match is `needs-review` → do not call it promising and do not offer extraction. State the concern plainly, name the anchor that would confirm identity, and propose that narrower search as the next step instead (Step 4).
   - Collection mismatch confirmed (Step 5) → State the mismatch plainly and point to a different source or collection filter. Step 5's ban on variant-spelling escalation covers this summary, not just the tool calls you make: do not float a variant spelling as a possible explanation for the gap, or as one option among several next steps, even hedged — that reintroduces the escalation the mismatch protocol forbids, in the one place the user actually reads a recommendation.
-  - More plan items, no prior authorization to continue → "Shall I continue with the next search?"
+  - More plan items → "Shall I continue with the next search?"
   - All done → "All planned searches are complete. Would you like me to evaluate whether the research is exhaustive?" (research-exhaustiveness)
   - No results, outside Step 8 item 7 → "FamilySearch is exhausted for this search — shall I generate Ancestry/MyHeritage URLs for it (search-external-sites), or re-plan with different parameters or adjacent jurisdictions (research-plan)?"
 
 ## Searching multiple repositories
 
-Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com go to `search-external-sites`: hand them back, never execute them. If the user says "search all repositories," execute the FamilySearch items then suggest: "The FamilySearch searches are complete. The plan also includes searches on [Ancestry/etc.] — would you like me to generate search URLs for those?" (naming search-external-sites in the caller-facing lines).
+Plan items targeting Ancestry, MyHeritage, FindMyPast, FindAGrave, or Newspapers.com go to `search-external-sites`: hand them back, never execute them. If the user says "search all repositories," run this FamilySearch item, then suggest: "This FamilySearch search is complete. The plan also includes searches on [Ancestry/etc.] — would you like me to generate search URLs for those?" (naming search-external-sites in the caller-facing lines).
 
 ## Important rules
 

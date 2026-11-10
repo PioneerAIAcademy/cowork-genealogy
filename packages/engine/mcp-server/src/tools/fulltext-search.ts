@@ -29,6 +29,10 @@ export type { FulltextSearchInput } from "../types/fulltext-search.js";
 const FS_FULLTEXT_URL =
   "https://www.familysearch.org/service/search/fulltext/search";
 
+// Refused above, never clamped. At 100, fitting a page of short deed rows to
+// TOOL_RESULT_CHAR_BUDGET left about half its rows with no names.
+const MAX_COUNT = 50;
+
 const RECORD_PLACE_EXAMPLES: Record<string, string> = {
   recordPlace0: '"10"',
   recordPlace1: '"10,Alabama"',
@@ -59,8 +63,10 @@ function validateInput(input: FulltextSearchInput): void {
     );
   }
   if (input.count !== undefined) {
-    if (!Number.isInteger(input.count) || input.count < 1 || input.count > 100) {
-      throw new Error("count must be between 1 and 100.");
+    if (!Number.isInteger(input.count) || input.count < 1 || input.count > MAX_COUNT) {
+      throw new Error(
+        `count must be between 1 and ${MAX_COUNT}. For more results, page with offset.`
+      );
     }
   }
   if (input.offset !== undefined) {
@@ -359,14 +365,13 @@ export async function fulltextSearchTool(
     }
   }
 
-  // Whenever results were staged, drop the heavy inline `textDocument`. What is
-  // dropped and why is documented on `compactStagedFulltextSearch`. It lives in
-  // `utils/` because the eval harness runs the same function on its canned
-  // responses; mirroring it in Python would make the copy that drifts — and did:
-  // `search-full-text` was left triaging on a field production strips (#1826).
-  if (out.staged) {
-    compactStagedFulltextSearch(out);
-  }
+  // Every answer, staged or not: an unstaged count-2 page with its transcripts
+  // came to 51k. What is cut and why is documented on
+  // `compactStagedFulltextSearch`. It lives in `utils/` because the eval harness
+  // runs the same function on its canned responses; mirroring it in Python would
+  // make the copy that drifts — and did: `search-full-text` was left triaging on
+  // a field production strips (#1826).
+  compactStagedFulltextSearch(out);
 
   return out;
 }
@@ -383,6 +388,9 @@ export const fulltextSearchToolSchema = {
     "weighted toward English-language records from the Americas, the UK and Australasia, " +
     "and weaker on non-Latin scripts and continental Europe. Verify coverage before reading " +
     "a nil result as absence: the document may be unsearchable rather than missing. " +
+    "Each result is a triage stub with no transcript (with projectPath the transcripts are staged at staged.resultsRef). " +
+    "A long names, places or dates list keeps the entries sharing the most words with highlightTerms, then those nearest them, " +
+    "and namesCount, placesCount or datesCount gives the full count. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -456,7 +464,7 @@ export const fulltextSearchToolSchema = {
       },
       count: {
         type: "number",
-        description: "Number of results to return. Default 5, max 100.",
+        description: "Number of results to return. Default 5, max 50.",
       },
       offset: {
         type: "number",
@@ -470,7 +478,7 @@ export const fulltextSearchToolSchema = {
       projectPath: {
         type: "string",
         description:
-          "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle; pass that to `research_log_append` as `stagedResultsRef` so the results are retained without you re-serializing them. Only omit it for a throwaway exploratory search you are certain you will not log.",
+          "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle; pass that to `research_log_append` as `stagedResultsRef` so the results are retained without you re-serializing them. Without it no transcript is kept. Only omit it for a throwaway exploratory search you are certain you will not log.",
       },
     },
   },
