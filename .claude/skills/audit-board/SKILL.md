@@ -46,7 +46,7 @@ while appearing to succeed.
 Repo `PioneerAIAcademy/cowork-genealogy`, project **1**.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 3000 > /tmp/board.json
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 400 \
   --json number,title,body,labels,assignees,createdAt,updatedAt,comments > /tmp/issues.json
 ```

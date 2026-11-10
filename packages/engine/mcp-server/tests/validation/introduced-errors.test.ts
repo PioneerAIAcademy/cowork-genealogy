@@ -551,3 +551,35 @@ describe("validateIntroduced — duplicate entry ids", () => {
     expect(res.errors.map((e) => e.message).join(" | ")).toContain("duplicate hypothesis id 'h_001'");
   });
 });
+
+describe("validateIntroduced — holder source refs (#4024)", () => {
+  // A person whose birth fact cites the given refs; only S1 exists in the tree.
+  const citing = (refs: string[]) => ({
+    persons: [
+      {
+        ...validPerson("I1", "Ann", "Smith"),
+        facts: [{ id: "F1", type: "Birth", sources: refs.map((ref) => ({ ref })) }],
+      },
+    ],
+    relationships: [],
+    sources: [{ id: "S1", titles: [{ value: "A record" }] }],
+  });
+
+  it("tolerates a dangling ref that shifts when a sibling ref is removed", async () => {
+    const result = await validateIntroduced(
+      { research: minimalResearch, tree: citing(["S1", "Sgone"]) },
+      { research: minimalResearch, tree: citing(["Sgone"]) },
+    );
+    expect(result.errors).toEqual([]);
+    expect(result.valid).toBe(true);
+  });
+
+  it("blocks a second copy of an already-dangling ref", async () => {
+    const result = await validateIntroduced(
+      { research: minimalResearch, tree: citing(["Sgone"]) },
+      { research: minimalResearch, tree: citing(["Sgone", "Sgone"]) },
+    );
+    expect(result.valid).toBe(false);
+    expect(result.errors.map((e) => e.message).join(" | ")).toMatch(/Sgone/);
+  });
+});

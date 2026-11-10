@@ -331,7 +331,7 @@ describe("tool server over Streamable HTTP", () => {
         textOf(await client.callTool({ name: "project_context", arguments: { projectPath: SCOPED_ANCHOR } })),
       );
       expect("projectUrl" in ctx).toBe(false);
-      expect(ctx.uploadUrl).toBe(`https://beta.example/#/p/${id}/upload`);
+      expect(ctx.uploadUrl).toBe(`https://beta.example/upload/${id}`);
     } finally {
       linked.closeAllConnections();
       await new Promise<void>((resolve) => linked.close(() => resolve()));
