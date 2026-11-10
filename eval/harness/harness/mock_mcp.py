@@ -706,8 +706,9 @@ def _place_before_results(response: dict[str, Any], key: str) -> dict[str, Any]:
     return reordered
 
 
-# Compaction the real search tool applies to its INLINE results once they are
-# staged, per tool. Both are exported from the compiled build so this harness
+# Compaction the real search tool applies to its INLINE results, per tool: on
+# every answer for a tool in COMPACTS_UNSTAGED, otherwise only once its results
+# are staged. Both are exported from the compiled build so this harness
 # runs the production function rather than a Python restatement of it: a mock
 # that hands the agent a field production strips grades tool-usage and triage
 # against a shape production never sends (#1826, #2009 — both now covered by
@@ -718,8 +719,9 @@ _STAGED_COMPACTORS: dict[str, str] = {
 }
 
 #: Search tools whose compactor production runs on every answer, staged or not
-#: (fulltext-search.ts), so an answer with no `projectPath` is compacted too.
-COMPACTS_UNSTAGED: frozenset[str] = frozenset({"fulltext_search"})
+#: (record-search.ts, fulltext-search.ts), so an answer with no `projectPath` is
+#: compacted too.
+COMPACTS_UNSTAGED: frozenset[str] = frozenset({"record_search", "fulltext_search"})
 
 
 def _compact_unstaged_search(tool_name: str, response: dict[str, Any]) -> dict[str, Any]:
@@ -1119,11 +1121,15 @@ def _stage_record_read(
     return {**inline, "staged": staged}
 
 
-#: The compiled function that drops `image_transcribe`'s inline text once the
-#: page is staged. Not in `_STAGED_COMPACTORS`: it takes the whole response,
-#: where those take the `{results}` payload `_stage_and_compact_search_results`
-#: hands them.
-_IMAGE_TRANSCRIBE_COMPACTOR = "compactStagedImageTranscribe"
+#: The compiled functions that shape `image_transcribe`'s answer: the lossless
+#: layout cleanup production runs on the OCR text, the digest, and the compactor
+#: every leg goes through (the staged text dropped, an inline one bounded,
+#: `metadata` and `nameExpansion` dropped). Not in `_STAGED_COMPACTORS`: the
+#: compactor takes the whole response, where those take the `{results}` payload
+#: `_stage_and_compact_search_results` hands them.
+_IMAGE_TRANSCRIBE_COMPACTOR = "compactImageTranscribeAnswer"
+_IMAGE_TRANSCRIBE_NORMALIZER = "normalizeTranscription"
+_IMAGE_TRANSCRIBE_DIGEST = "transcriptionDigest"
 
 #: The `image_transcribe` arguments production stages as the element's `source`.
 _IMAGE_TRANSCRIBE_SOURCE_KEYS = ("imageId", "ark", "memoryArtifactUrl", "file")
@@ -1138,11 +1144,12 @@ def _stage_image_transcribe(
 
     The payload is production's one-element `{ query, results }` under tool
     `image_transcribe`; the element's `id` is the `capture:<basename>` of a
-    `file`, else the image the caller named. Staging, the digest excerpt and the
-    strip all run in ONE node process, through the compiled `stageSearchResults`
-    and `compactStagedImageTranscribe`, so the strip has one definition. A
-    staging throw keeps the text inline with `staged: null` and `stagingError`,
-    as production does; a node failure returns the same shape, with a warning.
+    `file`, else the image the caller named. The layout cleanup, staging, the
+    digest and the strip all run in ONE node process, through the compiled
+    `normalizeTranscription`, `stageSearchResults`, `transcriptionDigest` and
+    `compactImageTranscribeAnswer`, so each has one definition. A staging throw
+    keeps the text inline with `staged: null` and `stagingError`, as production
+    does; a node failure returns the same shape, with a warning.
     """
     stager_js = _MCP_BUILD / "utils" / "results-staging.js"
     compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
@@ -1185,20 +1192,19 @@ def _stage_image_transcribe(
 
     script = (
         f"import {{ stageSearchResults }} from '{_node_module_url(stager_js)}';"
-        f" import {{ {_IMAGE_TRANSCRIBE_COMPACTOR} }} from '{_node_module_url(compactor_js)}';"
+        f" import {{ {_IMAGE_TRANSCRIBE_COMPACTOR}, {_IMAGE_TRANSCRIBE_NORMALIZER},"
+        f" {_IMAGE_TRANSCRIBE_DIGEST} }} from '{_node_module_url(compactor_js)}';"
         " import { readFileSync } from 'node:fs';"
         " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-        " const el = input.element;"
+        " const el = { ...input.element,"
+        f" transcription: {_IMAGE_TRANSCRIBE_NORMALIZER}(input.element.transcription) }};"
         " let staged; let stagingError;"
         " try { staged = await stageSearchResults({ projectPath: input.projectPath,"
         " tool: 'image_transcribe', response: { query: input.query, results: [el] } }); }"
         " catch (e) { staged = null; stagingError = String(e?.message ?? e); }"
-        " const digest = { id: el.id, chars: el.transcription.length,"
-        " excerpt: el.transcription.slice(0, 300),"
-        " ...(el.found ? { found: el.found } : {}), ...(el.truncated ? { truncated: true } : {}) };"
-        " const { metadata, ...rest } = input.response;"
-        " const out = { ...rest, staged, ...(stagingError !== undefined ? { stagingError } : {}),"
-        " digest, ...(metadata !== undefined ? { metadata } : {}) };"
+        " const out = { ...input.response, transcription: el.transcription, staged,"
+        " ...(stagingError !== undefined ? { stagingError } : {}),"
+        f" digest: {_IMAGE_TRANSCRIBE_DIGEST}(el.id, el.transcription) }};"
         f" {_IMAGE_TRANSCRIBE_COMPACTOR}(out);"
         " process.stdout.write(JSON.stringify(out));"
     )
@@ -1219,6 +1225,43 @@ def _stage_image_transcribe(
         return parsed
     except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
         return _unstaged(f"{type(exc).__name__}: {exc}")
+
+
+def _inline_image_transcribe(response: dict[str, Any]) -> dict[str, Any]:
+    """A canned `image_transcribe` page as production answers with no project
+    (#4136): nothing staged or saved, the text cleaned and bounded, and
+    `metadata` and `nameExpansion` dropped, through the compiled
+    `normalizeTranscription` and `compactImageTranscribeAnswer`. A node failure
+    returns the page with only the project keys removed, with a warning.
+    """
+    inline = {k: v for k, v in response.items() if k not in _IMAGE_TRANSCRIBE_PROJECT_ONLY_KEYS}
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+
+    def _fallback(why: str) -> dict[str, Any]:
+        warnings.warn(f"mock image_transcribe could not be compacted ({why})", stacklevel=3)
+        return inline
+
+    if not compactor_js.exists():
+        return _fallback(f"no engine build at {_MCP_BUILD}")
+    script = (
+        f"import {{ {_IMAGE_TRANSCRIBE_COMPACTOR}, {_IMAGE_TRANSCRIBE_NORMALIZER} }}"
+        f" from '{_node_module_url(compactor_js)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const out = JSON.parse(readFileSync(0, 'utf-8'));"
+        " if (typeof out.transcription === 'string')"
+        f" out.transcription = {_IMAGE_TRANSCRIBE_NORMALIZER}(out.transcription);"
+        f" {_IMAGE_TRANSCRIBE_COMPACTOR}(out);"
+        " process.stdout.write(JSON.stringify(out));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(inline), timeout=NODE_EVAL_TIMEOUT_LONG, store=False)
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            return _fallback(f"node exited {proc.returncode}: {proc.stderr.strip()[:200]}")
+        parsed = json.loads(out)
+        return parsed if isinstance(parsed, dict) else _fallback("the node script returned no object")
+    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
+        return _fallback(f"{type(exc).__name__}: {exc}")
 
 
 def _unlogged_staged_handles(
@@ -1659,10 +1702,11 @@ def create_mock_server(
             # Stage the canned payload for search tools so the live
             # research_log_append can finalize the sidecar (mirrors the real
             # tool returning staged.resultsRef), then apply the compaction the
-            # real tool applies to its inline results once staged — both by
-            # calling the compiled build, so the agent is graded on the shape
-            # production actually sends. Only when projectPath was passed and
-            # results came back; nil searches retain nothing and compact nothing.
+            # real tool applies to its inline results — both by calling the
+            # compiled build, so the agent is graded on the shape production
+            # actually sends. Staging needs projectPath and results; nil searches
+            # retain nothing. A tool in COMPACTS_UNSTAGED compacts every answer
+            # with results, staged or not; the others only once staged.
             # Resolved BEFORE staging so the single node process below can run
             # production's own `annotateResultsWithRanking` over the staged rows
             # in the same process. Only the match depends on `args`, so moving it
@@ -1692,6 +1736,8 @@ def create_mock_server(
                 )
                 if staged is not None:
                     response = {**response, "staged": staged}
+                elif _name in COMPACTS_UNSTAGED:
+                    response = _compact_unstaged_search(_name, response)
             elif (
                 _name in STAGING_SEARCH_TOOLS
                 and _workspace is not None
@@ -1776,7 +1822,7 @@ def create_mock_server(
             if _no_project_read and args.get("file") is not None:
                 response = {"ok": False, "reason": "no_project", "errors": [NO_PROJECT_MESSAGE_READ]}
             elif _no_project_read and "error" not in response:
-                response = {k: v for k, v in response.items() if k not in _IMAGE_TRANSCRIBE_PROJECT_ONLY_KEYS}
+                response = _inline_image_transcribe(response)
             elif (
                 _name == "image_transcribe"
                 and _workspace is not None

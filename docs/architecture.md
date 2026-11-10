@@ -1623,7 +1623,7 @@ edit and re-emit.**
 > **14 of the 17** `research.json` sections — missing `project`,
 > `researcher_profile`, and `warning_justifications`. On the tree side,
 > `project_context` returns a fixed projection of tree persons (id, name, gender,
-> sourceRefs), but there is **no query surface over `tree.gedcomx.json`** the way
+> one-hop family), but there is **no query surface over `tree.gedcomx.json`** the way
 > `research_query` gives one over `research.json`.
 >
 > **That gap is not why `Read` cannot be revoked, and the arithmetic matters

@@ -18,12 +18,10 @@
           "Online",
           "FamilySearch Library"
         ],
-        "url": "https://www.familysearch.org/service/search/catalog/item/olib:1880942",
         "hydrated": true,
         "notes": [
           "Digital images of originals housed at the Division of Archives and Records Management, Concord, New Hampshire."
         ],
-        "authors": [],
         "subjects": [
           "United States, New Hampshire - Military history - Civil War, 1861-1865"
         ],
@@ -912,14 +910,12 @@
           "HSB (Headquarters Storage Building)",
           "Online"
         ],
-        "url": "https://www.familysearch.org/service/search/catalog/item/koha:186990",
         "hydrated": true,
         "digitalLibraryUrl": "http://www.familysearch.org/library/books/idurl/1/283203",
         "notes": [
           "Also available on microfilm and digital images.",
           "Includes index of names."
         ],
-        "authors": [],
         "subjects": [
           "United States, New Hampshire - Military records - Civil War, 1861-1865"
         ],
@@ -939,7 +935,6 @@
           {
             "filmNumber": "2319539",
             "imageGroupNumber": "7499145",
-            "indexed": "Y",
             "copyLocation": "Granite Mountain Record Vault",
             "text": "Another filming (cont.), 2002"
           }
@@ -953,7 +948,6 @@
           "FamilySearch Library",
           "Online"
         ],
-        "url": "https://www.familysearch.org/service/search/catalog/item/koha:1216109",
         "hydrated": true,
         "notes": [
           "Title from title screen.",
@@ -961,7 +955,6 @@
           "System requirements: Pentium I or higher processor: Windows 95, 98, NT 4.0 or 2000 operating system; 28 mb hard disk space minimum (32MB recommended); 32MB RAM minimum; VGA or higher resolution video adapter for monitor (SVGA monitor 256 color or higher recommended.",
           "If you are using a computer in the Family History Library in Salt Lake City, you may use this database by clicking here. (run:C:/Locks/2527.bat)"
         ],
-        "authors": [],
         "subjects": [
           "United States, New Hampshire - Military records - Revolution, 1775-1783",
           "United States, New Hampshire - Military records",
