@@ -91,7 +91,7 @@ make plugin        # Windows: eval\BuildPlugin.bat   — if you changed a skill
 make mcpb          # Windows: eval\BuildMcpb.bat     — if you changed tool code
 ```
 
-- **Plugin:** Claude Desktop → **Customize** → **Plugins** → **remove the old
+- **Plugin:** Claude Desktop → **Customize** → **Plugins** → **Yours** → **remove the old
   Genealogy Research plugin first** (**…** → **Remove**), then **+ Add** →
   **Upload plugin** → the new `.zip`.
 - **MCP:** Claude Desktop → Settings → Desktop app → Extensions → Advanced

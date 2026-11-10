@@ -479,7 +479,7 @@ make mcpb                                # Windows: eval\BuildMcpb.bat
 ```
 
 Install the `.mcpb` in Claude Desktop → Settings → Desktop app → Extensions
-(uninstall the old copy first), remove the old plugin in Customize → Plugins,
+(uninstall the old copy first), remove the old plugin in Customize → Plugins → Yours,
 and upload the new `.zip` there. Then **fully quit and reopen Desktop**. Cowork runs the uploaded `.zip`, not your working tree —
 skip this and the fix will look like it did nothing. (Canonical version of these
 rules, including what does *not* need reinstalling:

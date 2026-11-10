@@ -133,7 +133,9 @@ Claude Desktop → **Customize** (in the sidebar) → **Plugins** → **+ Add** 
 
 ### 4. Restart Claude Desktop
 
-Quit Claude Desktop completely and reopen it. Closing the window isn't enough.
+Quit Claude Desktop completely and reopen it. Closing the window isn't enough. On
+Windows, right-click its icon in the system tray and choose **Exit**; on a Mac,
+press ⌘Q.
 
 ### 5. Install the Research Viewer
 
@@ -156,7 +158,7 @@ Download the files again and install them. For the MCP server, follow step 2.
 While the old copy is installed, Claude Desktop offers only **Uninstall**:
 click it, confirm, then click **Install**. Uninstalling also removes your
 OpenRouter key, so paste it in again under **Configure**. For the plugin,
-remove the old one first (Customize → Plugins → **…** next to it → **Remove**),
+remove the old one first (Customize → Plugins → **Yours** → **…** next to it → **Remove**),
 then upload the new zip; uploading on top of the old one can leave old skills
 behind. Then restart Claude Desktop. Install the new Research Viewer over the
 old one; on a Mac, run the Terminal command again.

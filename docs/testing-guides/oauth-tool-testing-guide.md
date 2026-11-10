@@ -506,7 +506,7 @@ see the troubleshooting note below.
 
 4. FULLY restart Claude Desktop:
    - Find the Claude icon in the Windows system tray (bottom-right).
-   - Right-click → **Quit**.
+   - Right-click → **Exit**.
    - Reopen Claude Desktop from the Start menu.
 
 5. Open a Cowork session pointed at any folder.

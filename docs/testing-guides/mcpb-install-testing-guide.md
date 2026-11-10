@@ -207,7 +207,7 @@ FamilySearch clientId covers the authenticated tools; `wiki_search` and
 
 **Changes don't take effect after re-installing.** The MCP server is a
 *built* artifact. Rebuild (`./scripts/build-mcpb.sh`), then **fully quit
-Claude Desktop** (system tray → right-click → Quit; closing the window is
+Claude Desktop** (Windows: system tray → right-click → Exit; Mac: ⌘Q; closing the window is
 not enough) before re-installing. See
 [DEVELOPMENT.md](../../DEVELOPMENT.md) → "Deploying a code change to Claude
 Desktop".

@@ -658,7 +658,7 @@ restart. Order matters:
      installed, the window offers only **Uninstall**: uninstall it, then
      **Install**. Uninstalling clears the OpenRouter key; paste it again
      under **Configure**.
-   - **Plugin:** Claude Desktop → Customize → Plugins → **remove the
+   - **Plugin:** Claude Desktop → Customize → Plugins → Yours → **remove the
      existing Genealogy Research plugin first** (**…** → **Remove**),
      then **+ Add** → **Upload plugin** → pick the rebuilt
      `releases/genealogy-plugin.zip`. Uploading on top of the old plugin
@@ -667,8 +667,9 @@ restart. Order matters:
    real restart — closing the window is not enough:
    - **macOS:** ⌘Q, or right-click the Dock icon → Quit. From a terminal,
      `pgrep -f Claude` should return nothing afterward.
-   - **Windows:** system-tray icon → right-click → Quit. In Task
+   - **Windows:** system-tray icon → right-click → Exit. In Task
      Manager, confirm no `Claude.exe` process remains.
+   - **Linux:** ≡ → File → Quit (Ctrl+Q).
 7. **Reopen Claude Desktop.**
 
 To confirm the build picked up your change, grep the built file for a

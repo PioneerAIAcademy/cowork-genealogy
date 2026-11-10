@@ -281,7 +281,8 @@ Cowork plugin, and registers the agent in the Cowork plugin list.
    **Uninstall**: click it and confirm first.)
 3. Confirm **"Genealogy Research"** shows **Running** under **Local MCP
    servers**.
-4. Close Settings and click **Customize** in the sidebar, then **Plugins**.
+4. Close Settings and click **Customize** in the sidebar, then **Plugins** →
+   **Yours**.
 5. Click **+ Add → Upload plugin**.
 6. Select `releases/genealogy-plugin.zip` and click **Upload**.
 7. Confirm **"Genealogy Research"** appears in the installed plugins

@@ -330,7 +330,7 @@ Open every task on `~/mcp-probe/mcandrew`, with the connector on.
        ```
 
     4. Install it by the click-path `make cowork-install` prints, without running the
-       target: Claude Desktop → Customize → Plugins, remove any Genealogy Research
+       target: Claude Desktop → Customize → Plugins → Yours, remove any Genealogy Research
        plugin, then + Add → Upload plugin → that zip. Fully quit and reopen Claude
        Desktop.
 

@@ -48,17 +48,18 @@ if errorlevel 1 (
 echo.
 echo === Built. Now install BOTH, then fully quit and reopen Claude Desktop ===
 echo.
-echo 1. MCP server ^(.mcpb^): Claude Desktop -^> Settings -^> Desktop app -^>
-echo    Extensions: Manage -^> Advanced settings -^> Install extension -^>
-echo    releases\genealogy-mcp.mcpb -^> Install, then Install again.
-echo    Old copy installed? The window offers only Uninstall: click it,
-echo    confirm, then Install. That also removes the OpenRouter key; paste
-echo    it again under Configure.
+echo 1. MCP server ^(.mcpb^): Claude Desktop -^> Settings ^(Ctrl+,^) -^>
+echo    Desktop app -^> Extensions: Manage -^> Advanced settings -^>
+echo    Install extension -^> releases\genealogy-mcp.mcpb -^> Install, then
+echo    Install again. Old copy installed? The window offers only Uninstall:
+echo    click it, confirm, then Install. That also removes the OpenRouter
+echo    key; paste it again under Configure.
 echo.
-echo 2. Plugin ^(.zip^): Claude Desktop -^> Customize -^> Plugins -^>
+echo 2. Plugin ^(.zip^): Claude Desktop -^> Customize -^> Plugins -^> Yours -^>
 echo    REMOVE any existing Genealogy Research plugin ^(... -^> Remove^),
 echo    then + Add -^> Upload plugin -^> releases\genealogy-plugin.zip -^> Upload
 echo.
-echo 3. Fully QUIT and reopen Claude Desktop.
+echo 3. Fully QUIT Claude Desktop ^(right-click its tray icon -^> Exit^), then
+echo    reopen it.
 echo.
 pause

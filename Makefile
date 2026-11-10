@@ -1775,16 +1775,17 @@ cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-
 	# click-path is printed rather than automated: both installs are Claude
 	# Desktop UI actions with no CLI.
 	@printf '\n=== Built. Now install BOTH, then fully quit and reopen Claude Desktop ===\n\n'
-	@printf '1. MCP server (.mcpb):  Claude Desktop -> Settings -> Desktop app ->\n'
-	@printf '   Extensions: Manage -> Advanced settings -> Install extension ->\n'
-	@printf '   releases/genealogy-mcp.mcpb -> Install, then Install again.\n'
-	@printf '   Old copy installed? The window offers only Uninstall: click it,\n'
-	@printf '   confirm, then Install. That also removes the OpenRouter key; paste\n'
-	@printf '   it again under Configure.\n\n'
-	@printf '2. Plugin (.zip):  Claude Desktop -> Customize -> Plugins ->\n'
+	@printf '1. MCP server (.mcpb):  Claude Desktop -> Settings (Cmd+, or Ctrl+,) ->\n'
+	@printf '   Desktop app -> Extensions: Manage -> Advanced settings ->\n'
+	@printf '   Install extension -> releases/genealogy-mcp.mcpb -> Install, then\n'
+	@printf '   Install again. Old copy installed? The window offers only Uninstall:\n'
+	@printf '   click it, confirm, then Install. That also removes the OpenRouter\n'
+	@printf '   key; paste it again under Configure.\n\n'
+	@printf '2. Plugin (.zip):  Claude Desktop -> Customize -> Plugins -> Yours ->\n'
 	@printf '   REMOVE any existing Genealogy Research plugin (... -> Remove),\n'
 	@printf '   then + Add -> Upload plugin -> releases/genealogy-plugin.zip -> Upload\n\n'
-	@printf '3. Fully QUIT and reopen Claude Desktop.\n\n'
+	@printf '3. Fully QUIT Claude Desktop (Cmd+Q on a Mac, Ctrl+Q on Linux), then\n'
+	@printf '   reopen it.\n\n'
 	@ls -l releases/genealogy-mcp.mcpb releases/genealogy-plugin.zip 2>/dev/null || true
 
 # The prototype's three Elastic Beanstalk source bundles (U12, docs/plan/familysearch-handoff.md),

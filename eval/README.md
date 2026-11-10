@@ -417,7 +417,7 @@ the measured median).
 and prints where each one goes — install the `.mcpb` in Claude Desktop →
 Settings → Desktop app → Extensions → Advanced settings → Install extension
 (while an old copy is installed it offers only Uninstall: uninstall, then
-install), and the `.zip` in Customize → Plugins, **removing any existing
+install), and the `.zip` in Customize → Plugins → Yours, **removing any existing
 Genealogy Research plugin first**, via + Add → Upload plugin. **Fully quit and
 reopen** Claude Desktop after installing. The headless
 `RunE2E.bat` path doesn't use these (it runs the compiled engine directly), so

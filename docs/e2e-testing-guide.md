@@ -421,7 +421,7 @@ what you see, and save the headless run for the verdict.
    It builds both and prints where to install each: the `.mcpb` in Claude
    Desktop → Settings → Desktop app → Extensions → Advanced settings → Install
    extension (while an old copy is installed it offers only Uninstall:
-   uninstall, then install), and the `.zip` in Customize → Plugins, **removing
+   uninstall, then install), and the `.zip` in Customize → Plugins → Yours, **removing
    any existing Genealogy Research plugin first**, via + Add → Upload plugin.
    Then **fully quit and reopen** Claude Desktop. Redo this after any MCP-server or skill change; without it
    `/research` degrades to guessing, which is a missing install, not a

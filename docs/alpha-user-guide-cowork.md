@@ -214,7 +214,7 @@ Being straight with you, so you don't waste time:
 | What you see | What's happening |
 |---|---|
 | Your Mac says the Research Viewer is damaged, or can't be checked for malware | It isn't signed yet. Run the Terminal command in step 5 of the README's [Install](../README.md#install), then open it again. Run it again after every update. |
-| Plugin doesn't appear after uploading the `.zip` | Check **Customize → Plugins** in Claude Desktop: Genealogy Research should be listed there. Fully quit and reopen Claude Desktop after installing. |
+| Plugin doesn't appear after uploading the `.zip` | Check **Customize → Plugins → Yours** in Claude Desktop: Genealogy Research should be listed there. Fully quit and reopen Claude Desktop after installing. |
 | The agent says it can't reach FamilySearch | Ask it to log in again ("log me in to FamilySearch") — tokens may have expired or never been created on this machine. |
 | The Research Viewer won't open your project folder | It needs a `research.json` in the folder to recognize it as a project — make sure the agent has run at least once (it creates this on your first message). |
 | It stops mid-research | Say "continue". If it stalls again, that's worth reporting. |

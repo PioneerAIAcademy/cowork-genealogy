@@ -1461,7 +1461,7 @@ enforcing-vs-shadow status.
   spawn check, which can make the runtime refuse the agent — see §5.2.
 - **Rebuild only where it matters.** The unit harness and Claude Code read your
   working tree — no rebuild. Cowork runs the uploaded `.zip`: `make plugin`, then
-  **remove the old plugin before uploading the new one** (Customize → Plugins),
+  **remove the old plugin before uploading the new one** (Customize → Plugins → Yours),
   then fully quit and reopen Claude Desktop.
   Full table: `docs/skill-lifecycle.md` → "Rebuilding and reinstalling", which
   opens by calling this "the single most common way to spend an hour testing a
