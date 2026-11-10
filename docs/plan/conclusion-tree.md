@@ -252,7 +252,7 @@ Order: 1a, 1b, 1c, 2, 2b, 3, 3b, 4.
     - `docs/specs/research-schema-spec.md`: the per-row check paragraph ("a tree row only through the one section that writes it"), its first per-row bullet ("on tree `persons`, which they reach only through the assertion-backlink fact rewrite"), and the "one derived exception" sentence under "Ownership for `tree.gedcomx.json`";
     - `docs/specs/guardrail-enforcement-spec.md`: the "Fact rewrite authorized by tool identity" row ("only when the whole persons delta is mirrored attributes on facts that already carried the same backlink"), which describes the check this stage widens;
     - `docs/specs/schemas/ownership.json`: the top-level `$comment` ("a tree row only through the one section that writes it — tree `persons` via `assertions`") and `hookRouting`'s `$comment` ("maps each tree.gedcomx.json row that tool writes").
-- **Owed findings: `src/utils/owed-findings.ts` (new)**, served as `project_context.owedFindings`; "returns empty arrays for an empty project" (`tests/tools/project-context.test.ts`) gains it.
+- **Owed findings: `src/utils/owed-findings.ts` (new)**, served as `project_context.owedFindings`, left out when empty like every other list there, which "leaves every empty list out of an empty project" (`tests/tools/project-context.test.ts`) pins.
   - Each item is `{kind, ref, personIds, nextStep, blocksCompletion}`, in this order:
     - `extract`: a positive log entry on a question's plan item while that question has no assertion;
     - `conclude`: a question with an assertion tied to it (the per-question filter in `questionStatus`, `src/utils/question-state.ts`) and no proof summary;
