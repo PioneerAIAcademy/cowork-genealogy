@@ -336,7 +336,7 @@
       "dimension_name": "Nil escalation",
       "llm_score": null,
       "corrected_score": null,
-      "comment": "**`ut_search_records_cdl`** — `rubric` / `Log quality`\nLLM: 3 → Junior: 3\n\n> The log entry (log_001) contains accurate authored fields: the query reproduces the search parameters sent (givenName, surname, deathYearFrom/To, deathPlace, collectionId, recordCountry); results_examined is exact (14); outcome is 'positive' (correct for a search returning results); and notes are specific and actionable ('14 results. Ranking withheld — subject I1 has no dated or placed facts. Manual triage: Group A...Group B...Both groups are right place/name/sex, within the 1919-1968 window...Neither can be confirmed as the subject without her birth year; both are needs-review pending record_read to check spouse name'). A future reader could act on this entry.\n\nJunior: (N/A: The log entry is complete, accurate, and actionable, but this criterion is not being evaluated in this scenario. The relevant assessment concerns search triage and ranking behavior, not log quality, so the dimension is not applicable here.)"
+      "comment": "**`ut_search_records_cdl`** — `rubric` / `Nil escalation`\nLLM: N/A → Junior: N/A\n\n> The search returned 14 results, so the nil-escalation dimension does not apply. No nil result occurred to trigger variant attempts or exhaustion assessment.\n\nJunior: (N/A — the search returned 14 results, so there was no nil to escalate.)"
     }
   ]
 }
