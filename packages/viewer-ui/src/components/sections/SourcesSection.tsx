@@ -71,6 +71,10 @@ function TreeSourceCard({ source }: { source: GedcomxSource }): React.JSX.Elemen
     <Card
       id={source.id}
       title={source.title}
+      // Shown in the header, not the expand-only footer: a researcher names
+      // this id to tree_forget's `source` selector, so it must be readable
+      // while scanning the list (#4024).
+      badges={<span className={styles.treeSourceId}>{`GedcomX: ${source.id}`}</span>}
       summary={source.citation ? truncate(source.citation, 200) : undefined}
       rawData={source}
     >

@@ -116,7 +116,7 @@ any validator rule change.
 |------|--------|
 | `record_search` returns `{ query, totalMatches, returned, offset, hasMore, results[] }`; each result has `recordId`, `primaryId`, `gedcomx` | `src/tools/record-search.ts`, the `out: RecordSearchToolResponse` return (`totalMatches: data.results`) |
 | `fulltext_search` returns `{ query, totalResults, returned, offset, hasMore, results[] }` | `src/tools/fulltext-search.ts`, the `out: FulltextSearchResponse` return (`totalResults: data.results`) |
-| For both, `returned === results.length` — i.e. the sidecar `returned_count` invariant | record-search.ts:515, fulltext-search.ts:209 |
+| For both, `returned === results.length` — i.e. the sidecar `returned_count` invariant — **except** a `record_search` place expansion with a `subjectId`: it stages the whole merged pool for ranking and shows one page, so `payload.returned` is the page shown and `results.length` the pool. `returned_count` stays the row count of the file; `resultsExamined` is filled from `payload.returned` (see §4, the handle) | record-search.ts, fulltext-search.ts |
 | No search tool takes a `projectPath` or writes to the project folder today | `grep writeFile\|mkdir src/tools` → none |
 | `validateSidecars` orphan check reads `results/` **non-recursively** and flags only top-level `*.json` not referenced by a log entry | `validateSidecars`, the `"orphan sidecar — no log entry references it"` check |
 | Existing path-traversal guard pattern for project-relative refs | `validateSidecars`, the `isInsideProject` guard (`"escapes the project directory"`) |
@@ -185,7 +185,10 @@ both producers call one code path.
   project state.
 
 The handle returned to the model is just `{ resultsRef, returnedCount }` (enough
-for narration like "retained 12 results"); the payload itself is not echoed back as
+for narration like "retained 12 results"; under a `record_search` place expansion
+`returnedCount` is the page shown, not the larger pool staged for ranking, and
+`research_log_append` fills an omitted `resultsExamined` from the staged
+`payload.returned`, falling back to `results.length`); the payload itself is not echoed back as
 part of `staged`.
 
 **Single-document producers** use the same envelope with a one-element
@@ -344,8 +347,9 @@ same ground truth production does.
   consuming skills should document that fallback. Raising the TTL trades disk for
   fewer misses; 24h fits genealogy research cadence and is the v1 default.
 - **The un-finalized set is also a signal, not only garbage.** `stageSearchResults`
-  prunes it; `unloggedStagedSearches(projectPath)` *reads* its search files, and both staging
-  search tools surface what it returns as an advisory note (contract in
+  prunes it; `unloggedStagedSearches(projectPath, tool)` *reads* the calling tool's search
+  files, never another tool's, and both staging search tools surface what it returns as an
+  advisory note (contract in
   `record-search-tool-spec-v2.md`). What makes it a signal rather than a file count is
   the pairing rule: `research_log_append` only WARNS when a staging search tool logs
   `results_available > 0` with no `stagedResultsRef` (§6), so that entry's staged file

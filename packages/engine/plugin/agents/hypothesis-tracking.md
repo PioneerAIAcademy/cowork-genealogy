@@ -213,7 +213,10 @@ When multiple hypotheses compete for the same conclusion (e.g., two
 candidate fathers): create one hypothesis per candidate, share
 `related_question_ids`, and note that the same assertion may support
 one and contradict another. Rule out candidates as evidence
-accumulates — the GPS process of elimination.
+accumulates — the GPS process of elimination. A new candidate
+hypothesis starts with both `supporting_assertion_ids` and
+`contradicting_assertion_ids` empty; link an assertion against it only
+once that assertion has been reviewed specifically against that candidate.
 
 ## Example: Tracking the elimination process
 

@@ -672,15 +672,19 @@ const AGENT_PERMISSIONS: Record<string, { tools: string[]; denies: string[] }> =
   // geographic-feasibility check that is this agent's own (check-warnings
   // does not do geography), `wiki_read` fetches each residence country's
   // census schedule, and `research_append` persists the one `timelines`
-  // entry the hook lane allows it.
+  // entry the hook lane allows it. Issue #3516 PR D: a person timeline is
+  // `timeline_build`'s, built in code, and with nothing linked the agent runs
+  // `extraction_append({ personId })` once before building again (lead, 2026-10-20).
   "timeline.md": {
     tools: [
+      "extraction_append",
       "place_distance",
       "place_search",
       "place_search_all",
       "project_context",
       "research_append",
       "research_query",
+      "timeline_build",
       "wiki_read",
     ],
     denies: [],

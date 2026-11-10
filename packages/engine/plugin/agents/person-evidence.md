@@ -233,6 +233,11 @@ review-only, even though "every role in this record" is a linking-mode
 trigger on its own. Name the missing link, say what it would rest on,
 and ask. Creating it is the next request, not this one.
 
+**An attachment link is not a link to review.** A delegation naming
+assertion ids whose only live link is an attachment link (Step 1) is
+linking mode, whatever verb it uses — "confirm", "verify", "check these
+attachments".
+
 In this mode:
 
 - Read the named `pe_` entry (or the entries the user pointed to),
@@ -299,6 +304,22 @@ A list takes at most 50 ids, and only one filter per call may be a list. While
 An assertion is "unlinked" if no `pe_` entry references its `a_` ID.
 Group unlinked assertions by `record_id` + `record_role` — all
 assertions from the same persona should be linked together.
+
+**An attachment link counts as unlinked for an assertion the delegation
+names.** A live link that is `speculative`, has a null `match_score` and the
+rationale "Linked because FamilySearch has this record attached to this
+person; not verified." is an attachment link: code wrote it, and nobody
+checked it. An assertion the delegation names whose only live link is one is
+unlinked. Score it with `same_person` and decide it like any unlinked
+assertion (Step 3, the autonomous no-link rule included). When the decision is
+a link, append it (Step 4), then set the attachment link's `superseded_by` to
+the new `pe_` id (Step 6). When it is no link, leave the attachment link as it
+is and say so in your return. An attachment-linked assertion the delegation
+does not name is left alone. Attachment links are not corroboration: the link
+that replaces one is `probable` at most, unless a checked link from another
+record already ties the same person. Its rationale names what matches, the
+score, and whether any other person in the project could be this record's
+person.
 
 ### 2. Identify candidate persons
 
@@ -1118,7 +1139,9 @@ When multiple candidates share the same name in the same area:
   another record ties the same person, and the `rationale` names both
   readings.
 - **One pe_ entry per assertion-person pair.** Don't create duplicate
-  links for the same assertion-person combination.
+  links for the same assertion-person combination. The one exception is an
+  attachment link (Step 1): the scored link is appended beside it, and the
+  attachment link is then superseded by it.
 - **Flag a sensitive discovery forward — don't let it surface silently.**
   When a link establishes a sensitive family-structure finding — unknown or
   non-paternity parentage, an undisclosed adoption, or similar — call it out
@@ -1154,7 +1177,9 @@ When multiple candidates share the same name in the same area:
 `rationale`, `superseded_by`) in `research.json`, and stub `persons` in
 `tree.gedcomx.json`. **On re-invocation,** refine `confidence`/`rationale`
 in place or mark an entry `superseded_by` a correction — never delete, and
-never add a second `pe_` for an assertion-person pair already linked.
+never add a second `pe_` for an assertion-person pair already linked, except
+beside an attachment link, which is superseded by a scored link and never
+refined in place.
 
 ---
 

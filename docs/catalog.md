@@ -228,6 +228,10 @@ don't load it explicitly.
 
 ```
 1. init-project              Start with a FamilySearch person ID
+   attached records          Extract the person's attached FamilySearch records
+                             and build their timeline, in code
+                             (`extraction_append` with personId, then
+                             `timeline_build`); the links are unchecked
 2. question-selection (agent) "What should I research next?"
 3. research-plan (agent)     "How do I answer this question?"
 4. search-records            Execute indexed searches on FamilySearch
