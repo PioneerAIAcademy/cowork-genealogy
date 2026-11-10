@@ -124,6 +124,7 @@ import {
   isAttachmentLink,
   isDerivedEntryLink,
   derivedEntryLinkRationale,
+  DERIVED_ENTRY_LINK_PREFIX,
 } from "../utils/tree-person.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
@@ -11473,6 +11474,26 @@ export function planEntryLinkExpansion(
   const derived: ResearchAppendOp[] = [];
   const refusals: string[] = [];
 
+  // The two call-level post-checks below -- `circularCorroborationCallCheck`
+  // and `namesakeCallCheck` -- skip a row carrying this rationale, because a
+  // derived row's finding is always a second copy of its trigger's. They read
+  // the FINISHED document, which cannot tell who wrote a row, so a caller that
+  // writes the prefix itself skips both gates. Refuse it at the boundary: the
+  // prefix is the tool's, and the gates' skip is sound only while that holds.
+  for (const [i, op] of ops.entries()) {
+    if (op.section !== "person_evidence") continue;
+    const rationale =
+      op.op === "append" ? (op.entry as any)?.rationale : (op.fields as any)?.rationale;
+    if (isDerivedEntryLink({ rationale })) {
+      refusals.push(
+        `ops[${i}]: a person_evidence rationale starting "${DERIVED_ENTRY_LINK_PREFIX}" is ` +
+          `written only by research_append, for the rows it derives when a one-party link ` +
+          `claims its record entry. Write your own rationale for the link you are making.`,
+      );
+    }
+  }
+  if (refusals.length > 0) return { derived, refusals };
+
   const live = new Map<string, any>();
   for (const [id, a] of batchAssertionsById(research, ops)) {
     if (isLiveAssertion(a)) live.set(id, { ...a, id });
@@ -11515,8 +11536,27 @@ export function planEntryLinkExpansion(
       oneParty: !isTwoParty(a.fact_type),
     });
   };
+  // A link this call is retiring is not a holder. Without this the refusal
+  // below names a link the same call removes, so correcting a wrong link takes
+  // two calls -- and the refusal's own advice ("supersede the existing link,
+  // record a rejected_links entry") does not work when followed in one.
+  const retiring = new Set<string>();
+  const rejectedNow = new Set<string>();
+  for (const op of ops) {
+    if (op.section === "person_evidence" && op.op === "update") {
+      const by = (op.fields as any)?.superseded_by;
+      if (by != null && String(by) !== "") retiring.add(String(op.entryId));
+    } else if (op.section === "rejected_links" && op.op === "append") {
+      const e = op.entry as any;
+      if (e && typeof e === "object") {
+        rejectedNow.add(`${String(e.assertion_id)}\u0000${String(e.person_id)}`);
+      }
+    }
+  }
   for (const pe of (research?.person_evidence ?? []) as any[]) {
     if (pe?.superseded_by != null) continue;
+    if (retiring.has(String(pe?.id))) continue;
+    if (rejectedNow.has(`${String(pe?.assertion_id)}\u0000${String(pe?.person_id)}`)) continue;
     note(pe?.person_id, pe?.assertion_id);
   }
   for (const op of ops) {
@@ -11563,8 +11603,10 @@ export function planEntryLinkExpansion(
         `person_evidence for '${person}' links ${trigger.id}, but that record entry ` +
           `(${k}) is already this project's entry for ${others.join(", ")}, via ${theirs.join(", ")}. ` +
           `A record entry is one person: linking a one-party fact of it claims the whole entry. ` +
-          `Either supersede the existing link, record a rejected_links entry for the pairing you ` +
-          `are ruling out, or link an assertion of the party you actually mean.`,
+          `In THIS SAME call, either append a rejected_links entry for the pairing you are ruling ` +
+          `out (which retires the existing link for you), or update that link with ` +
+          `{ superseded_by } if it is superseded by a link you already have. Otherwise link an ` +
+          `assertion of the party you actually mean.`,
       );
       continue;
     }

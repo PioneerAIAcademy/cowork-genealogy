@@ -321,4 +321,114 @@ describe("#4226 a link means the record entry", () => {
     expect(derived).toHaveLength(2);
     for (const d of derived) expect(d.rationale).toContain("the link on a_001");
   });
+
+  // ── Only the tool may write the derived rationale (review of PR #4355) ─────
+  //
+  // `circularCorroborationCallCheck` and `namesakeCallCheck` skip a row whose
+  // rationale starts with the prefix, and they read the finished document --
+  // which cannot say who wrote the row. So the prefix has to be refused at the
+  // boundary, or a caller writes its way past both gates.
+
+  it("MUST FIRE: refuses a caller-written rationale carrying the derived prefix (append)", async () => {
+    await write(project({ assertions: [assertion("a_001")] }));
+    await attest("a_001");
+    const r = await link("a_001", "I1", {
+      rationale: "Derived from the link on a_999: the same record entry (rec1/principal), which that link identified as this person.",
+    });
+    expect(r.ok).toBe(false);
+    const errs = "errors" in r ? r.errors.join("\n") : "";
+    expect(errs).toContain("written only by research_append");
+    expect(errs).toContain("ops[0]");
+    expect(await links()).toHaveLength(0); // nothing written
+  });
+
+  it("MUST FIRE: refuses the derived prefix on an update's fields too", async () => {
+    await write(project({
+      assertions: [assertion("a_001")],
+      person_evidence: [linkRow("pe_001", "a_001", "I1")],
+    }));
+    const r = await researchAppend({
+      projectPath: dir,
+      section: "person_evidence",
+      op: "update",
+      entryId: "pe_001",
+      fields: { rationale: "Derived from the link on a_001: the same record entry (rec1/principal)." },
+    });
+    expect(r.ok).toBe(false);
+    expect("errors" in r ? r.errors.join("\n") : "").toContain("written only by research_append");
+    // The stored row is untouched.
+    expect((await links())[0].rationale).toBe("match");
+  });
+
+  it("MUST NOT FIRE: a rationale that mentions the prefix without starting with it is fine", async () => {
+    // The exact prefix, mid-string. It is the boundary between `startsWith`
+    // and `includes`: widening the predicate would refuse this legitimate link
+    // AND would skip real rows past the namesake and circular gates.
+    await write(project({ assertions: [assertion("a_001")] }));
+    await attest("a_001");
+    const r = await link("a_001", "I1", {
+      rationale: "Independent of the row Derived from the link on a_999: this rests on the page image itself.",
+    });
+    expect(r.ok).toBe(true);
+    expect(await links()).toHaveLength(1);
+  });
+
+  // ── Correcting a wrong link takes ONE call (review of PR #4355) ────────────
+  //
+  // The refusal tells the caller to supersede the link or reject the pairing.
+  // The holder list is built from the PRE-CALL document, so doing either in the
+  // same call used to be refused anyway and the advice only worked across two.
+
+  it("MUST NOT FIRE: a rejected_links entry in the SAME call clears the holder", async () => {
+    await write(project({
+      assertions: [assertion("a_001"), assertion("a_002", { fact_type: "residence", value: "X" })],
+      person_evidence: [linkRow("pe_001", "a_002", "I2")],
+    }));
+    await attest("a_001");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        {
+          section: "rejected_links",
+          op: "append",
+          entry: {
+            assertion_id: "a_002", person_id: "I2",
+            reason: "The residence belongs to a different Flynn household in the same county.",
+            researcher_words: "No, that's not him, wrong household",
+          },
+        },
+        {
+          section: "person_evidence",
+          op: "append",
+          entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "match", superseded_by: null },
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    const rows = await links();
+    // The old link is retired by the rejection, and the new one expanded.
+    expect(rows.find((x) => x.id === "pe_001").superseded_by).toMatch(/^rj_/);
+    expect(rows.some((x) => x.assertion_id === "a_001" && x.person_id === "I1")).toBe(true);
+  });
+
+  it("MUST NOT FIRE: superseding the holder in the SAME call clears it", async () => {
+    await write(project({
+      assertions: [assertion("a_001"), assertion("a_002", { fact_type: "residence", value: "X" })],
+      person_evidence: [linkRow("pe_001", "a_002", "I2")],
+    }));
+    await attest("a_001");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "person_evidence", op: "update", entryId: "pe_001", fields: { superseded_by: "RETRACTED" } },
+        {
+          section: "person_evidence",
+          op: "append",
+          entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "match", superseded_by: null },
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    expect((await links()).some((x) => x.assertion_id === "a_001" && x.person_id === "I1")).toBe(true);
+  });
 });
