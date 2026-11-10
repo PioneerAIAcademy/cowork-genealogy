@@ -234,7 +234,7 @@ the absorbed person's id in every section that holds person ids.
 | | `warning_justifications` | none — appended by the warning gate as a side effect of a justified tree write | — | `tree_edit`, `tree_correct`, `merge_tree_persons`, `materialize_facts` | **nothing** |
 | `tree.gedcomx.json` | `persons` | none by design — co-equal writers | `init-project`, `person-evidence`, `tree-edit`, `proof-conclusion`, `forget-and-rederive` | `project_create`, `tree_edit`, `tree_correct`, `materialize_facts`, `merge_tree_persons`, `tree_forget`, plus `research_append`/`extraction_append` for the assertion-backlink fact rewrite only (authorized by tool identity, not by adding a caller — `tree-materialization-spec.md` §4.4) | unit |
 | | `relationships` | none by design — same writers | same writers | same, less `materialize_facts` and the two append tools | unit |
-| | `sources` | none — `extraction_append` mints each source description in code | `init-project`, `tree-edit`, `proof-conclusion`, `person-evidence`, `citation` | `project_create`, `research_append`, `extraction_append`, `tree_edit`, `tree_correct` | unit |
+| | `sources` | none — `extraction_append` mints each source description in code | `init-project`, `tree-edit`, `proof-conclusion`, `person-evidence`, `citation`, `forget-and-rederive` | `project_create`, `research_append`, `extraction_append`, `tree_edit`, `tree_correct`, `tree_forget` | unit |
 
 Three consequences worth holding onto:
 
