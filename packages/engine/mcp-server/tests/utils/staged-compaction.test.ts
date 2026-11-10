@@ -453,6 +453,32 @@ describe("normalizeTranscription", () => {
     expect(normalizeTranscription(page)).toBe(page);
   });
 
+  it("leaves a row of column rulings as it is, so each ruling stays under its column", () => {
+    const page = [
+      "Name        No   Residence",
+      "--------    --   --------",
+      "Anna Weber  12   Alsweiler",
+      "",
+      "Born    Died    Buried",
+      "====    =====   ======",
+      "1801    1867    1867",
+    ].join("\n");
+    expect(normalizeTranscription(page)).toBe(page);
+    // A single rule, and a markdown delimiter row, are still shortened.
+    expect(normalizeTranscription("    ------------")).toBe("    ---");
+    expect(normalizeTranscription("| ------- | ------- |")).toBe("| --- | --- |");
+  });
+
+  it("is linear: a line of 64k spaces before a letter takes well under 100 ms", () => {
+    for (const line of [" ".repeat(65_536) + "x", "-" + " ".repeat(65_536) + "x", " \t".repeat(32_768) + "-x"]) {
+      const start = performance.now();
+      const out = normalizeTranscription(line);
+      const ms = performance.now() - start;
+      expect(out).toBe(line);
+      expect(ms).toBeLessThan(100);
+    }
+  });
+
   it("is idempotent", () => {
     const once = normalizeTranscription(PADDED_PAGE);
     expect(normalizeTranscription(once)).toBe(once);

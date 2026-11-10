@@ -153,6 +153,9 @@ export const INLINE_TRANSCRIPTION_MAX_CHARS = 36_000;
 // under a fixed-width table's heading.
 const RULE_LINE = /^(?=.*[-=_─━═])[-=_─━═|:+\s]+$/;
 const RULE_RUN = /([-=_─━═])\1{3,}/g;
+// Two rule characters with only spaces between them: a fixed-width table's column
+// rulings (`--------    --   --------`), whose run lengths are the column widths.
+const COLUMN_RULING = /[-=_─━═]\s+[-=_─━═]/;
 const FENCE_LINE = /^\s*(```|~~~)/;
 
 /**
@@ -163,16 +166,21 @@ const FENCE_LINE = /^\s*(```|~~~)/;
  *  - trailing whitespace on every line goes (a CRLF becomes LF);
  *  - on a line made only of rule characters, every run of four or more of one
  *    rule character becomes three (`|:------|` → `|:---|`), so a markdown table
- *    keeps its delimiter row and a form's blank line keeps its `___`;
+ *    keeps its delimiter row and a form's blank line keeps its `___`. A line of
+ *    column rulings, runs with only spaces between them, is left as it is,
+ *    because shortening a run moves every ruling after it out from under its
+ *    column;
  *  - three or more line breaks in a row become two.
  *
- * Idempotent.
+ * Linear in the length of the text. Idempotent.
  */
 export function normalizeTranscription(text: string): string {
   return text
-    .replace(/[^\S\n]+$/gm, "")
     .split("\n")
-    .map((line) => (RULE_LINE.test(line) ? line.replace(RULE_RUN, "$1$1$1") : line))
+    .map((raw) => {
+      const line = raw.trimEnd();
+      return RULE_LINE.test(line) && !COLUMN_RULING.test(line) ? line.replace(RULE_RUN, "$1$1$1") : line;
+    })
     .join("\n")
     .replace(/\n{3,}/g, "\n\n");
 }

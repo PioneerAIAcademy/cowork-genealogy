@@ -572,7 +572,10 @@ This uses the same underlying name-variant tables as `get_name_variants`, withou
    `src/utils/staged-compaction.ts`): trailing whitespace goes from every line; on a
    line made only of rule characters (`-`, `=`, `_`, box-drawing rules, with any
    `|`, `:`, `+` and spaces), every run of four or more of one rule character becomes
-   three; three or more line breaks become two. No character of what the page says
+   three, except on a line of column rulings (runs with only spaces between them,
+   `--------    --   --------`), which stays as it is because each run's length is
+   its column's width; three or more line breaks become two. It runs in time linear
+   in the page's length. No character of what the page says
    changes, and the inner column padding of a fixed-width table stays, because it is
    what places a value in its column. On wide registers the OCR pads every line to
    the table's width and draws a page-wide `====` row under the header: on the
