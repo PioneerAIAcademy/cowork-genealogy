@@ -1,6 +1,6 @@
 /**
  * Probe — the evidence behind `timeline_build`'s census years (issue #3516,
- * PR C, `docs/plan/attached-records-baseline.md` Fix 1 and Fix 3).
+ * PR C; `docs/specs/timeline-build-tool-spec.md` §4.5).
  *
  *   A. Do `searchMetadata.placeIds` in the collections catalog match the place
  *      ids `standardPlaceToPlaceId` returns? Checked for Alabama, Ohio, New
