@@ -107,6 +107,17 @@ build_external_search_url({
   // Country-domain variant for `ancestry`/`findmypast` only (§3.9).
   locale?: "us" | "uk",
 
+  // MCP tool only (§6): the project to log the hand-off in, and the plan item.
+  projectPath?: string,
+  planItemId?: string,
+
+  // MCP tool only: the place the search is about, as `external_links_search`
+  // takes it. REQUIRED for a site-wide build (no `baseUrl`) when `projectPath`
+  // is a project, which is refused until that place or one containing it is
+  // stored (§3.12). Not in the schema's `required` list: every call without a
+  // project, and every build with a `baseUrl`, omits it.
+  standardPlace?: string,
+
   attributes: {
     givenName?: string,
     surname?: string,
@@ -294,10 +305,12 @@ arguments; the tool still fetches nothing (§9).
 **For the two browse sites, `baseUrl` is the parish page and is returned
 unchanged.** Decided by the lead 2026-09-29: Archion and
 Matricula take the parish URL from the caller's `baseUrl`, not from a
-`standardPlace` lookup. It beat a tool-side place-to-parish table because the
+place-to-parish table in the tool. It beat that table because the
 FamilySearch Wiki pages the agent already reads carry Archion and Matricula
-parish links, while nothing in the repo sources such a table and the tool has
-no `standardPlace` input. The full behaviour is in §3.11.
+parish links, while nothing in the repo sources such a table. That ruling still
+holds. The tool did not then take a `standardPlace`; it does now (§3.12), but
+only to check that the place was looked up, and it maps no place to a parish.
+The full behaviour is in §3.11.
 
 ### 3.3 `digital_newspaper_archive` requires `baseUrl`
 
@@ -483,6 +496,42 @@ the right parish; the URL is the caller's own.
 
 ---
 
+### 3.12 A site-wide build inside a project needs a looked-up place
+
+**Decided by the lead 2026-11-10.** The search-external-sites
+agent's step 2 says to look up any place missing from `project_context`'s
+`externalCollections` with `external_links_search` before building a URL. It
+often skipped that: on `ut_search_external_sites_002`, `_004`, `_uhh` and
+`_fhk`, which annotators scored a pass. On `_uhh` the lookup would have returned
+MyHeritage's 1855 Massachusetts State Census collection, and the researcher got
+a site-wide search instead. ADR-0011 holds that a precondition beats an advisory,
+so the MCP tool now refuses the build:
+
+- **When.** `projectPath` is given, `classifyProjectPath(projectPath)` is
+  `"project"`, and the build is site-wide: `baseUrl` is absent or blank after
+  trimming, on every site. The archion/matricula site-root fallback counts as
+  site-wide.
+- **What it needs.** `standardPlace`, the place the search is about. Missing,
+  blank or not a string is refused, since an optional input would let an agent
+  that skips the lookup skip the input too.
+- **Match.** A key of `external-collections.json`'s `places` matches when it
+  equals `standardPlace`, or the last 1..n comma-separated segments of it, each
+  segment trimmed and compared case-insensitively. "Massachusetts, United
+  States" covers "Hampshire, Massachusetts, United States"; "Pennsylvania,
+  United States" does not cover "New Pennsylvania, United States". No place
+  resolution and no network.
+- **Always satisfiable in one call.** `recordExternalCollections` stores the
+  queried place with `rows: []` when nothing matched, so a place like Ireland is
+  looked up once and never refused again. There is no second write path.
+- **Refusal.** `{ ok: false, reason: "place_not_fetched" }`, before the log
+  write, beside the `baseUrl` collection check (§9.1). The error names
+  `external_links_search({ standardPlace, projectPath })` as the next call. An
+  unreadable `external-collections.json` refuses too, as the `baseUrl` check
+  does.
+- **What it leaves alone.** The agent still chooses between a curated link and
+  a site-wide search. A build with a `baseUrl`, and any build outside a project,
+  is not checked. Its limit is in §9.2.
+
 ## 4. Per-site parameter tables (the ported prose)
 
 Each site's table below is a straight port of the site-wide templates this
@@ -613,6 +662,9 @@ nil.
 | `archion`/`matricula` with `attributes: {}` | succeeds — a browse site appends nothing, so it is exempt from `no_attributes` (§3.11) |
 | `archion`/`matricula` with no `baseUrl` | succeeds with the site root; `notes` asks for the parish page |
 | MCP tool, `projectPath` is a project, and `baseUrl` names a collection (an Ancestry collection id, a MyHeritage collection page) that `external-collections.json` does not hold, compared by collection key (`ancestry:<id>`) | `{ ok: false, reason: "invalid_base_url" }`, and nothing is logged. The message offers both ways forward: omit `baseUrl` for a site-wide search, or use a stored url from `research_query({section: "external_collections"})`; with nothing stored, it names `external_links_search` first. A `baseUrl` that names no collection is not checked (§9.1) |
+| MCP tool, `projectPath` is a project, no `baseUrl` (or a blank one), and `standardPlace` missing, blank or not a string | `{ ok: false, reason: "place_not_fetched" }`, and nothing is logged. The message says `standardPlace` is required and names `external_links_search` (§3.12) |
+| MCP tool, `projectPath` is a project, no `baseUrl`, and `external-collections.json` has no entry for `standardPlace` or a place containing it (or no file at all) | `{ ok: false, reason: "place_not_fetched" }`, and nothing is logged. The message names `external_links_search({standardPlace, projectPath})` as the next call. A stored `rows: []` entry counts as looked up (§3.12) |
+| MCP tool, `projectPath` is a project, no `baseUrl`, and `external-collections.json` cannot be read | `{ ok: false, reason: "place_not_fetched" }` naming the read error, as the `baseUrl` check does |
 | MCP tool, `projectPath` given, folder holds neither project file | succeeds with the URL and no `logId`; the log tool's no-project sentence rides in `notes` — a standalone search outside a project still gets its link |
 | MCP tool, `projectPath` given, the log write refused (a `planItemId` that is not a `pli_` id, a missing folder, half a project) | `{ ok: false, reason: "log_write_failed", errors }` with the log tool's own errors and **no URL**: a hand-off nobody logged is the failure §6 exists to remove |
 | MCP tool, `planItemId` given without `projectPath` | succeeds; nothing is logged and `notes` says `planItemId` had no effect |
@@ -699,7 +751,17 @@ nil.
   a failed build writes nothing; a bad `planItemId` is `log_write_failed`
   with the log untouched. `tests/tools/no-project.test.ts` carries the three
   path states: no project (URL, no `logId`), a missing folder and half a
-  project (loud).
+  project (loud: a site `baseUrl` gets the log write's error, and a site-wide
+  build is refused by §3.12's gate, which counts half a project as a project).
+- **The looked-up-place gate (§3.12), both directions.** Refused, logging
+  nothing: an unfetched place; nothing stored at all; a missing, blank or
+  non-string `standardPlace`; a blank `baseUrl` and the archion root fallback
+  (both site-wide); an unreadable `external-collections.json`; a place that
+  only shares a tail with a stored one. Allowed: a fetched place (trimmed, any
+  case), a place inside a fetched one, a `rows: []` entry written by
+  `recordExternalCollections` itself, a build with `baseUrl`, a folder that is
+  not a project, and a call with no `projectPath`. A build error still wins
+  over the gate, and `standardPlace` stays out of the schema's `required`.
 - **`no_attributes`** — a site with every one of its own parameters absent
   (or present only as empty strings) is rejected rather than returning a
   bare site URL.
@@ -960,6 +1022,22 @@ id in a run recorded after 2026-10-28 is either a write path the guards miss or 
 url the log already held, which the guard lets through so its hand-off can still
 be closed and its capture logged. On
 2026-10-28 one run carried the field, with one collection-scoped entry, backed.
+
+### 9.2 The looked-up-place gate sees only builds with a `projectPath`
+
+§3.12's gate fires only "inside a project", by the ruling's own words: a build
+with a `projectPath` that is a project. `search-external-sites` calls the
+builder **without** `projectPath` on three paths: triage with no matching
+hand-off, a reported result, and the no-user deferral
+(`search-external-sites.md`, its triage and deferral steps). Those builds are
+not checked, and nothing else checks them.
+
+Not widened, on purpose. Refusing a build without `projectPath`, or gating
+`research_log_append`, would change another tool's contract, and nobody has
+ruled on that. The measured skips (`_002`, `_004`, `_uhh`, `_fhk`) were all on
+the hand-off path, which does pass `projectPath`. `where-else-to-search` never
+passes `projectPath` and always passes `baseUrl`, so the gate never fires for
+it either.
 
 ## 10. Live checks for the eight launch-scope sites and the FindAGrave fix (2026-09-11)
 

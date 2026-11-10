@@ -5,7 +5,9 @@
  *
  * Host-written only: `external_links_search` writes it, `research_query` and
  * `project_context` read it, `research_append`, `build_external_search_url` and
- * `research_log_append` refuse a collection it does not hold, and the raw-write
+ * `research_log_append` refuse a collection it does not hold,
+ * `build_external_search_url` refuses a site-wide build for a place it has no
+ * entry for (issue #4410), and the raw-write
  * deny protects it. It is not a
  * `research.json` section and is not schema-validated — the rows are API data.
  *
@@ -215,6 +217,47 @@ export type StoredCollectionUrls = { keys: ReadonlySet<string> } | { error: stri
 export async function loadStoredCollectionUrls(projectPath: string): Promise<StoredCollectionUrls> {
   try {
     return { keys: storedCollectionKeys(await readExternalCollections(projectPath)) };
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : String(e) };
+  }
+}
+
+/** A place name compared as `build_external_search_url`'s place gate compares it:
+ *  comma-separated segments, each trimmed, empty ones dropped, lower-cased. */
+function placeSegments(place: string): string[] {
+  return place
+    .split(",")
+    .map((s) => s.trim().toLowerCase())
+    .filter((s) => s !== "");
+}
+
+/**
+ * Whether `standardPlace`, or a place containing it, has an entry — an entry
+ * with `rows: []` counts, since `recordExternalCollections` stores the queried
+ * place even when nothing matched (issue #4410). A stored key matches when it
+ * equals `standardPlace` or its last 1..n comma-separated segments, compared
+ * trimmed and case-insensitively: "Massachusetts, United States" covers
+ * "Hampshire, Massachusetts, United States". No place resolution, no network.
+ */
+export function placeIsStored(places: Iterable<string>, standardPlace: string): boolean {
+  const target = placeSegments(standardPlace);
+  if (target.length === 0) return false;
+  const suffixes = new Set<string>();
+  for (let i = 0; i < target.length; i++) suffixes.add(target.slice(i).join(", "));
+  for (const key of places) {
+    const stored = placeSegments(key);
+    if (stored.length > 0 && suffixes.has(stored.join(", "))) return true;
+  }
+  return false;
+}
+
+/** The stored entries' place keys, or why the file could not be read. */
+export type StoredPlaces = { places: ReadonlySet<string> } | { error: string };
+
+export async function loadStoredPlaces(projectPath: string): Promise<StoredPlaces> {
+  try {
+    const doc = await readExternalCollections(projectPath);
+    return { places: new Set(Object.keys(doc?.places ?? {})) };
   } catch (e) {
     return { error: e instanceof Error ? e.message : String(e) };
   }
