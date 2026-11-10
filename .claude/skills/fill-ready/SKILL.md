@@ -28,7 +28,7 @@ PROJ_ID="PVT_kwDOC-DkVc4BUEYb"
 STATUS_FIELD="PVTSSF_lADOC-DkVc4BUEYbzhBPBf8"
 # Backlog 0207fe08 / Ready f75ad846 / In Progress 47fc9ee4 / Review 4dc1cd86
 # Done 98236657 / Not planned c44314b0 — both terminal, closed issues only; never promote out of one
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 3000
 ```
 
 Each item carries `id` (the item id you need to move it), `content.number`,
@@ -47,7 +47,7 @@ them too. **Feedback is none of the three** — it is an untriaged inbox that
 **Verify the items you are about to move, immediately before you move them.**
 The lead edits the board while you work, so a snapshot taken at the start of a
 long analysis is stale by the end of it. That means re-reading *those items* —
-not re-listing all ~1200. Check each one with a single-node query, which is
+not re-listing all ~2000. Check each one with a single-node query, which is
 cheap and, unlike `item-list`, keeps working when the ProjectsV2 quota is
 exhausted:
 
@@ -66,14 +66,14 @@ it is the most common mid-run change on this board. A Status-only check cannot
 see it, where the full re-list this replaces could.
 
 **Budget full `item-list` passes to two per run** — one to rank, one before the
-first write. One pass reads ~1200 items and costs ~1,300 points of a 5,000/hour
+first write. One pass reads ~2000 items and costs ~1,300 points of a 5,000/hour
 GraphQL budget, so the fourth is already over the line and six in one run
 exhausted it mid-apply. Take the first at the top of § 1 "Measure Ready depth"
 and cache it — every board read in that section, in § 3 "The four gates" and in
 § 6 "Above the junior pools" comes out of this file, not a fresh call:
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 3000 > /tmp/board.json
 ```
 
 Take the second when you rebuild the snapshot map before the first write (Gate 4),
@@ -194,7 +194,7 @@ the ranking. Report the mix; do not swap a card out to hit a number.
 ```sh
 # The first of the two budgeted `item-list` passes (§ 0 "Board facts"). Everything
 # downstream reads this file; do not fetch the board again until the rebuild.
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 3000 > /tmp/board.json
 jq -r '[ .items[] | select(.status=="Ready" and (.assignees|length)==0 and ((.labels|index("contributor"))|not)) | .labels ]
     | { developer: { total: map(select(index("developer")))|length,
                      senior: map(select((index("developer")) and index("senior")))|length,
@@ -383,7 +383,7 @@ every week is inflated. Pull the dates once and bucket them locally with a
 half-open range instead:
 
 ```sh
-gh issue list --repo PioneerAIAcademy/cowork-genealogy --state all --limit 2000 \
+gh issue list --repo PioneerAIAcademy/cowork-genealogy --state all --limit 3000 \
   --json number,createdAt,closedAt,state > /tmp/all-issues.json
 python3 - <<'PY'
 import json, datetime
@@ -733,7 +733,7 @@ line of every open issue in **Ready, In Progress or Review** — not Review and 
 ```sh
 # Ranking pass: reuse /tmp/board.json from § 1 "Measure Ready depth".
 # Pre-write rebuild: refresh it first — that is the second budgeted pass.
-#   gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+#   gh project item-list 1 --owner PioneerAIAcademy --format json --limit 3000 > /tmp/board.json
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 300 \
   --json number,title,body > /tmp/open.json
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
