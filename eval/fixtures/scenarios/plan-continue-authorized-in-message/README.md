@@ -34,7 +34,7 @@ decade-level dates only. The plan-content specifics (which record types a
 sound first plan should include) are **not** the point of this scenario —
 see `flynn-first-plan-surveyed` and its sibling tests for that. This
 scenario exists to test what happens **after** the plan is written, when
-the invoking message already authorized execution.
+the invoking message also asks for execution.
 
 **First-cut caveat — verify before committing:** confirm the three log
 entries plausibly justify writing a first plan for q_001 without also
@@ -53,10 +53,15 @@ workaround: `Skill('search-records')` is stubbed to a canned confirmation that
 execution proceeded, removing the harness artifact from the transcript
 entirely rather than asking the judge to reason around it.
 
+**Flipped under step mode (PR #4276):** the rule this scenario was carved to
+test reversed. Under step mode the plan step ends by offering the searches, even
+when the message asks to execute, and the host's "Keep going" carries the go-ahead
+(`docs/plan/research-step-mode.md`, Phase 2).
+
 ## Used by
 
 - `research-plan` tests where the invoking message combines a plan request
-  with an execute/continue-authorization phrase in the same turn (e.g. "...
-  and start executing it as soon as it's ready", "... and continue with
-  exhaustive research") — the skill must hand off to execution rather than
-  stopping to ask "Would you like me to start executing this plan?"
+  with an execute/continue phrase in the same turn (e.g. "... and start
+  executing it as soon as it's ready", "... and continue with exhaustive
+  research") — the agent writes the plan and ends by offering to start the
+  searches, and must not hand execution back as already authorized.

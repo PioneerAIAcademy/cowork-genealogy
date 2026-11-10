@@ -1,0 +1,48 @@
+{
+  "test": {
+    "id": "ut_locality_guide_n8p",
+    "skill": "locality-guide",
+    "name": "Reports the Kolonica Greek Catholic registers' 1824 start date and catalog entry exactly as catalog_search returns them",
+    "type": "positive",
+    "description": "From issue #3178 row 2273. Live catalog_search (measured 2026-11-04) returns one catalog entry for Kolonica, Slovakia: koha:727653, 'Cirkevná matrika, 1824-1924', the Greek Catholic parish registers, whose notes say the originals were microfilmed at the State Regional Archive in Levoča. The test checks that the guide reports that start date and entry as returned, names the archive the notes name, and does not supply earlier coverage or a different archive from memory.",
+    "tags": [
+      "from-cowork",
+      "kolonica-greek-catholic-earliest",
+      "re-invoke-safe",
+      "catalog-start-date",
+      "slovakia"
+    ]
+  },
+  "input": {
+    "delegation": "Build a locality guide for Kolonica, Slovakia. I'm researching ancestors there from the 1700s through the 1890s. I need to know what church records exist and how far back they go.\n\nprojectPath: <workspace>",
+    "scenario": "kolonica-greek-catholic-earliest"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 360
+  },
+  "mcp_fixtures": [
+    "catalog-search-kolonica",
+    "catalog-search-kolonica-keywords",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty",
+    "place-search-kolonica",
+    "place-search-any",
+    "place-search-all-any",
+    "collections-search-any",
+    "wiki-search-any",
+    "wiki-read-any",
+    "wikipedia-search-any",
+    "external-links-search-any",
+    "volume-search-any",
+    "place-population-any",
+    "wiki-place-page-any"
+  ],
+  "judge_context": [
+    "The catalog_search fixture returns one entry for the Kolonica parish registers: koha:727653, 'Cirkevná matrika, 1824-1924'. The guide must give 1824 as the start of the Greek Catholic registers FamilySearch holds. Claiming registers that start earlier (for example in the 1700s) is a failure: no tool result places any Kolonica register before 1824. Saying that earlier records may exist elsewhere is acceptable only when worded as unconfirmed.",
+    "The entry's title reads 1824-1924, but its film notes show a gap: film 1792766 holds baptisms 1824-1833, marriages 1825-1833 and deaths 1824-1833, and then baptisms from 1890; film 1792767 continues with baptisms 1922-1924 and marriages and deaths 1890-1924. No film covers 1834 to 1889. The guide must report that 1834-1889 gap. A guide that describes the registers as continuous coverage from 1824 to 1924, or gives the 1824-1924 span without noting the gap, fails, because the researcher asked how far back the records go for a period running through the 1890s.",
+    "The guide should name catalog entry 727653 (koha:727653) when it cites the registers. A guide that describes Greek Catholic records in general terms without the entry number has not used the tool response.",
+    "The hit's notes say the original registers were microfilmed at the Štátny oblastný archív v Levoči (State Regional Archive in Levoča), and that the registers are in Latin and Hungarian. Naming a different archive, such as the State Archive in Prešov, as the holder of the originals is a failure. So is stating a records language the notes do not give.",
+    "The hit's creator is the Greek Catholic parish office of Kolonica (Snina). Calling the parish Roman Catholic is a failure."
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify every Tallman/Tollman household in Clinton and Essex Counties, New York, in the federal and New York state censuses, 1825-1892",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-11-02",
+    "updated": "2026-11-02"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -1,0 +1,130 @@
+{
+  "log_id": "log_017",
+  "tool": "record_read",
+  "retrieved": "2026-10-07T04:23:30.112Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "recordId": "ark:/61903/1:1:MHWP-VWR"
+    },
+    "results": [
+      {
+        "recordId": "MHWP-VWR",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_199897405",
+              "ark": "ark:/61903/1:1:MHWP-VWR",
+              "principal": true,
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "552ee0ed-2cc1-4a23-9318-01bce2a28d44",
+                  "type": "BirthName",
+                  "given": "Amelia",
+                  "surname": "Gaetgen"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "0fad2424-41f0-4d41-9b0c-4534a2e542ee",
+                  "type": "Immigration",
+                  "date": "1872",
+                  "standard_date": "1872"
+                },
+                {
+                  "id": "8129c651-30da-4f60-8c9d-bbbf9a4536ea",
+                  "type": "Census",
+                  "primary": true,
+                  "date": "1920",
+                  "standard_date": "1920",
+                  "place": "San Francisco, San Francisco, California, United States"
+                },
+                {
+                  "id": "9be8ad85-5b64-49c7-b186-13abae87eb41",
+                  "type": "Birth",
+                  "date": "1860",
+                  "standard_date": "1860",
+                  "place": "Germany"
+                },
+                {
+                  "type": "MaritalStatus",
+                  "value": "Married"
+                },
+                {
+                  "type": "Race",
+                  "value": "White"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_280982857",
+              "resource_type": "Record",
+              "title": "Household of Amelia Gaetgen, \"United States, Census, 1920\"",
+              "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHWP-VWR : Tue Oct 06 08:56:16 UTC 2026), Entry for Amelia Gaetgen, 1920.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:M8NT-P74",
+              "coverage": {
+                "place_rep_id": "11927902",
+                "date_range": "1920",
+                "record_type": "Census",
+                "standard_place": "San Francisco, San Francisco, California, United States"
+              }
+            },
+            {
+              "id": "sd_c_1488411",
+              "resource_type": "Collection",
+              "title": "United States, Census, 1920",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1488411",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "1920/1920",
+                "record_type": "Census",
+                "standard_place": "United States"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-9R6C-W77",
+              "coverage": {
+                "place_rep_id": "327",
+                "date_range": "1920",
+                "record_type": "Census",
+                "standard_place": "California, United States"
+              }
+            },
+            {
+              "id": "sd_p_199897405",
+              "resource_type": "Person",
+              "title": "Amelia Gaetgen, \"United States, Census, 1920\"",
+              "citation": "\"United States, Census, 1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MHWP-VWR : Tue Oct 06 08:56:16 UTC 2026), Entry for Amelia Gaetgen, 1920.",
+              "url": "https://www.familysearch.org/ark:/61903/1:1:MHWP-VWR"
+            },
+            {
+              "id": "sd_auto_M9JT-92D",
+              "resource_type": "auto",
+              "title": "United States, Residences, Census, from 1793 to 1964",
+              "coverage": {
+                "place_rep_id": "1",
+                "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+                "standard_place": "United States"
+              }
+            }
+          ],
+          "places": [
+            {
+              "id": "place_11927902"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

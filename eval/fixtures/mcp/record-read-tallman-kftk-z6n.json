@@ -1,0 +1,178 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~KFTK-Z6N"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_14237082405",
+        "ark": "ark:/61903/1:1:KFTK-Z6F",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "a7d9cb7d-7879-414d-906f-53178361b523",
+            "type": "BirthName",
+            "surname": "Mcintosh",
+            "given": "Helen L"
+          }
+        ],
+        "facts": [
+          {
+            "id": "91638949-10df-4522-a8f7-e0e9a276c95a",
+            "type": "Birth",
+            "date": "10 Jul 1868",
+            "standard_date": "10 Jul 1868",
+            "place": "Peru"
+          },
+          {
+            "id": "906695dd-f3e4-492f-b792-6ecd693b8d3a",
+            "type": "Residence",
+            "place": "Burlington"
+          },
+          {
+            "id": "181f83fb-7d98-4e31-8c85-cf86620df359",
+            "type": "Death",
+            "primary": true,
+            "date": "19 Apr 1943",
+            "standard_date": "19 Apr 1943",
+            "place": "Burlington, Chittenden, Vermont, United States"
+          }
+        ]
+      },
+      {
+        "id": "p_14237082406",
+        "ark": "ark:/61903/1:1:KFTK-Z6N",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "f0a1dba6-3a91-4ae1-88ac-34583b7d2d74",
+            "type": "BirthName",
+            "surname": "Tallman",
+            "given": "Edward"
+          }
+        ]
+      },
+      {
+        "id": "p_14237082407",
+        "ark": "ark:/61903/1:1:KFTK-Z6J",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "307f8d88-b44c-4351-92ef-ebbf14359f79",
+            "type": "BirthName",
+            "surname": "Wade"
+          },
+          {
+            "id": "4148b743-fbff-4a3b-930e-db4f7b1cae06",
+            "type": "BirthName",
+            "given": "Clacissa"
+          }
+        ]
+      },
+      {
+        "id": "p_14237082408",
+        "ark": "ark:/61903/1:1:KFTK-Z6V",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "328756cd-a1ac-4b51-bee9-3c64d86e01d7",
+            "type": "BirthName",
+            "surname": "Mcintosh",
+            "given": "H M"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "156aeadd-6414-48bc-a47e-62dc2e5445a8",
+        "type": "Couple",
+        "person1": "p_14237082406",
+        "person2": "p_14237082407"
+      },
+      {
+        "id": "1da19300-dfde-40f5-b043-0b73351bdafa",
+        "type": "ParentChild",
+        "parent": "p_14237082406",
+        "child": "p_14237082405"
+      },
+      {
+        "id": "8ef7a551-9ea1-4dff-93f0-dbb10c88833d",
+        "type": "ParentChild",
+        "parent": "p_14237082407",
+        "child": "p_14237082405"
+      },
+      {
+        "id": "10b7df37-3e74-416a-9ea5-ccdc84355fd1",
+        "type": "Couple",
+        "person1": "p_14237082408",
+        "person2": "p_14237082405"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_22342298802",
+        "resource_type": "Record",
+        "title": "Entry for Helen L Mcintosh, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KFTK-Z6F : Thu Feb 20 22:06:16 UTC 2025), Entry for Helen L Mcintosh and Edward Tallman, 19 Apr 1943.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9MK6-SN6D",
+        "coverage": {
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "sd_c_2075288",
+        "resource_type": "Collection",
+        "title": "Vermont, Vital Records, 1760-2008",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/2075288",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1760/2003",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_14237082406",
+        "resource_type": "Person",
+        "title": "Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KFTK-Z6N : Thu Feb 20 22:06:16 UTC 2025), Edward Tallman in entry for Helen L Mcintosh, 19 Apr 1943.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KFTK-Z6N"
+      },
+      {
+        "id": "sd_p_14237082407",
+        "resource_type": "Person",
+        "title": "Wade, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KFTK-Z6J : Thu Feb 20 22:06:16 UTC 2025), Wade in entry for Helen L Mcintosh, 19 Apr 1943.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KFTK-Z6J"
+      },
+      {
+        "id": "sd_p_14237082408",
+        "resource_type": "Person",
+        "title": "H M Mcintosh, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KFTK-Z6V : Thu Feb 20 22:06:16 UTC 2025), H M Mcintosh in entry for Helen L Mcintosh, 19 Apr 1943.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KFTK-Z6V"
+      },
+      {
+        "id": "sd_p_14237082405",
+        "resource_type": "Person",
+        "title": "Helen L Mcintosh, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KFTK-Z6F : Thu Feb 20 22:06:16 UTC 2025), Helen L Mcintosh, 19 Apr 1943.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KFTK-Z6F"
+      },
+      {
+        "id": "sd_auto_M9LW-DW2",
+        "resource_type": "auto",
+        "title": "British Colonial America, New Hampshire Grants, Births, from 0001 to 2008",
+        "coverage": {
+          "place_rep_id": "12029673",
+          "date_range": "+0001-01-01T00:00:00Z/+2008-12-31T23:59:59Z",
+          "standard_place": "New Hampshire Grants, British Colonial America"
+        }
+      }
+    ]
+  }
+}

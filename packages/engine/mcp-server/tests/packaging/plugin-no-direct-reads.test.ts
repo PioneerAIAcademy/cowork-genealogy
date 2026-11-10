@@ -2,14 +2,19 @@
  * No plugin agent or skill body may instruct a direct read of a project file.
  *
  * Cowork's VM cannot see the connected folder, and a project served by a remote
- * MCP server has no folder at all, so a `Read` of `research.json` or
- * `tree.gedcomx.json` returns a stale copy or nothing. Every project read goes
- * through `project_context`, `research_query` or `tree_query`. A prohibition
- * ("Do not read research.json") is fine; an instruction is not.
+ * MCP server has no folder at all, so a `Read` of `research.json`,
+ * `tree.gedcomx.json` or a staged `results/` file returns a stale copy or
+ * nothing. Every project read goes through `project_context`, `research_query`,
+ * `tree_query`, `sidecar_read` or `image_transcribe`. A prohibition ("Do not
+ * read research.json") is fine; an instruction is not.
  *
- * Three things are flagged, per body line (frontmatter is out of scope):
- *   - a read verb followed, in the same sentence, by `research.json` or
- *     `tree.gedcomx.json`, unless a prohibition word precedes the verb;
+ * Three things are flagged (frontmatter is out of scope):
+ *   - a read verb followed, in the same sentence, by `research.json`,
+ *     `tree.gedcomx.json`, `resultsRef` or `results/`, unless a prohibition word
+ *     precedes the verb or a backticked MCP tool governs the read ("with
+ *     `sidecar_read`", "via `person_warnings`").
+ *     Sentences are read across soft-wrapped lines (a paragraph or one list
+ *     item), so a sentence wrapped mid-way is still one sentence (#4311);
  *   - the snake_case `narration_guidance` (the tool's field is
  *     `narrationGuidance`) on a line that does not name `project_context`;
  *   - "working directory" (projectPath is only what the caller gave).
@@ -31,7 +36,21 @@ const agentsRoot = join(pluginRoot, "agents");
 
 const READ_VERB =
   /\b(?:read|reads|reading|re-read|re-reads|open|opens|grep|glob|scan|scans|cat|load|loads|loading|parse|parses|parsing|look|looks|looking|check|checks|checking|inspect|inspects|inspecting|consult|consults|view|views)\b(?!-only)/gi;
-const PROJECT_FILE = /(?:research|tree)\.(?:gedcomx\.)?json/;
+const PROJECT_FILE = /(?:research|tree)\.(?:gedcomx\.)?json|resultsRef|results\//;
+/** The MCP tools that read project state; only one of these can govern a read. */
+const PROJECT_READER = "(?:research_query|tree_query|project_context|sidecar_read|image_transcribe|person_warnings|census_children_gap)";
+/** A reading tool governs the read: "read the hit with `sidecar_read(…)`". */
+const WITH_TOOL = new RegExp(`\\b(?:with|using|via|through)\\s+\`${PROJECT_READER}\\b`);
+/** The same after the file: "…reads `tree.gedcomx.json` via `person_warnings`". */
+const VIA_TOOL_AFTER = new RegExp(`^[\`"')\\]>]*\\s+(?:with|using|via|through)\\s+\`${PROJECT_READER}\\b`);
+/** A negation between the verb and the file: "when you read pages, and never pass `x.resultsRef`". */
+const NEGATED = /\b(?:never|do not|does not|don't|must not)\b/i;
+/** "the scan", "a reading": an article before a lowercase verb makes it a noun. */
+const ARTICLE_BEFORE = /\b(?:the|a|an|each|this)\s+$/i;
+/** A reading tool's table row (`| \`sidecar_read\` | … |`) describes the tool, not an instruction. */
+const TOOL_ROW = new RegExp(`^\\s*\\|\\s*\`${PROJECT_READER}\`\\s*\\|`);
+/** A line that starts its own block: blank, list item, table row, heading, quote or fence. */
+const BLOCK_START = /^\s*(?:$|[-*+]\s|\d+\.\s|\||#|>|```)/;
 const NOUN_AMBIGUOUS = /^(?:check|checks|view|views|look|looks)$/i;
 /** A prohibition counts only when it governs the verb: at most two words sit between them. */
 const PROHIBITION =
@@ -48,25 +67,53 @@ export function bodyOf(text: string): string {
 
 /** Each offending line of a body, with its 1-based body line number. */
 export function directReadViolations(body: string): { line: number; text: string }[] {
-  const out: { line: number; text: string }[] = [];
-  body.split("\n").forEach((text, i) => {
-    let bad = false;
-    for (const sentence of text.split(/(?<=[.!?:;])\s+/)) {
-      for (const m of sentence.matchAll(READ_VERB)) {
-        const after = sentence.slice(m.index! + m[0].length);
-        const before = sentence.slice(0, m.index);
-        if (!PROJECT_FILE.test(after.slice(0, 120))) continue;
-        // "…a well-formedness check ("is research.json valid?")": the noun, with the file inside a quoted example.
-        if (NOUN_AMBIGUOUS.test(m[0]) && /^[*\s]*\(\s*["“]/.test(after)) continue;
-        if (PROHIBITION.test(before) || TOOL_SUBJECT.test(before)) continue;
-        bad = true;
-      }
+  const lines = body.split("\n");
+  const bad = new Set<number>();
+  // Join each block's soft-wrapped lines, remembering where each line starts.
+  let block = "";
+  let starts: { at: number; line: number }[] = [];
+  const flush = () => {
+    let offset = 0;
+    for (const sentence of block.split(/(?<=[.!?:;])\s+/)) {
+      const at = block.indexOf(sentence, offset);
+      offset = at + sentence.length;
+      const verb = directReadVerbAt(sentence);
+      if (verb >= 0) bad.add([...starts].reverse().find((s) => s.at <= at + verb)!.line);
     }
-    if (/narration_guidance/.test(text) && !/project_context/.test(text)) bad = true;
-    if (/working directory/i.test(text)) bad = true;
-    if (bad) out.push({ line: i + 1, text: text.trim().slice(0, 160) });
+    block = "";
+    starts = [];
+  };
+  lines.forEach((text, i) => {
+    if (BLOCK_START.test(text) && block) flush();
+    if (text.trim() === "") return;
+    if (TOOL_ROW.test(text)) return;
+    starts.push({ at: block ? block.length + 1 : 0, line: i });
+    block = block ? `${block} ${text.trim()}` : text.trim();
+    if (/narration_guidance/.test(text) && !/project_context/.test(text)) bad.add(i);
+    if (/working directory/i.test(text)) bad.add(i);
   });
-  return out;
+  if (block) flush();
+  return [...bad].sort((a, b) => a - b).map((i) => ({ line: i + 1, text: lines[i].trim().slice(0, 160) }));
+}
+
+/** Where the offending read verb sits in a sentence, or -1. */
+function directReadVerbAt(sentence: string): number {
+  for (const m of sentence.matchAll(READ_VERB)) {
+    const after = sentence.slice(m.index! + m[0].length);
+    const before = sentence.slice(0, m.index);
+    const window = after.slice(0, 120);
+    const file = PROJECT_FILE.exec(window);
+    if (!file) continue;
+    const between = window.slice(0, file.index);
+    if (NEGATED.test(between) || WITH_TOOL.test(between)) continue;
+    if (VIA_TOOL_AFTER.test(window.slice(file.index + file[0].length))) continue;
+    if (/^[a-z]/.test(m[0]) && ARTICLE_BEFORE.test(before) && !/^\s+(?:tool|of)\b/.test(after)) continue;
+    // "…a well-formedness check ("is research.json valid?")": the noun, with the file inside a quoted example.
+    if (NOUN_AMBIGUOUS.test(m[0]) && /^[*\s]*\(\s*["“]/.test(after)) continue;
+    if (PROHIBITION.test(before) || TOOL_SUBJECT.test(before)) continue;
+    return m.index!;
+  }
+  return -1;
 }
 
 function bodies(): { name: string; body: string }[] {
@@ -118,6 +165,35 @@ describe("plugin bodies never instruct a direct read of a project file", () => {
       expect(flagged("Check (briefly) research.json for the plan.")).toBe(true);
       expect(flagged("Check the \"plans\" section of research.json.")).toBe(true);
       expect(flagged("Default projectPath to the current working directory.")).toBe(true);
+      expect(flagged("Open results/log_007.json for the transcript.")).toBe(true);
+      expect(flagged("Read the hit out of `staged.resultsRef`.")).toBe(true);
+      expect(flagged("Read results/log_007.json, then call `sidecar_read`.")).toBe(true);
+      // Holes a review found in the first cut of the #4311 exemptions: each must stay flagged.
+      expect(flagged("Read the plans, log, and tree from research.json.")).toBe(true);
+      expect(flagged("Check, before anything else, research.json for open plans.")).toBe(true);
+      expect(flagged("Open the staged file, results/.staging/<uuid>.json, with Read.")).toBe(true);
+      expect(flagged("After `image_transcribe` returns, `Read` the page at `staged.resultsRef` for the full text.")).toBe(true);
+      expect(flagged("If `sidecar_read` is not listed, Read `staged.resultsRef` directly.")).toBe(true);
+      expect(flagged("Use the Read tool on `tree.gedcomx.json` to get the birth date.")).toBe(true);
+      expect(flagged("Use the read tool on `staged.resultsRef` to get the transcript.")).toBe(true);
+      expect(flagged("Open `research.json` through `Bash` and check the plans.")).toBe(true);
+      expect(flagged("Read `staged.resultsRef` via `Read` for the full page.")).toBe(true);
+      // From review on PR #4405: only a project-reading tool governs a read, and "a read of" is the verb.
+      expect(flagged("Do a read of research.json to find the plans.")).toBe(true);
+      expect(flagged("Read the plans from research.json with `research_append` afterwards.")).toBe(true);
+      expect(flagged("| `research_append` | Read research.json directly for the plans |")).toBe(true);
+    });
+
+    it("reads a sentence across soft-wrapped lines (#4311)", () => {
+      const wrapped =
+        "  the terms are bare. Verify against the original image (see the verification\n" +
+        "  note above), or `Read` the single result you are chasing out of\n" +
+        "  `staged.resultsRef`.";
+      expect(directReadViolations(wrapped).map((v) => v.line)).toEqual([2]);
+      expect(flagged("Then open\ntree.gedcomx.json to get the birth date.")).toBe(true);
+      // A list item, a table row or a blank line starts a new block, so no sentence spans them.
+      expect(flagged("- Read the first item.\n- `staged.resultsRef` is the handle.")).toBe(false);
+      expect(flagged("Read the image.\n\n`staged.resultsRef` is the handle.")).toBe(false);
     });
 
     it("accepts the tool-based and prohibition wordings", () => {
@@ -135,6 +211,17 @@ describe("plugin bodies never instruct a direct read of a project file", () => {
       expect(flagged("You must not load tree.gedcomx.json yourself.")).toBe(false);
       expect(flagged("Work without reading research.json.")).toBe(false);
       expect(flagged("A well-formedness check (\"is research.json valid?\") is validate-schema's.")).toBe(false);
+      expect(
+        flagged(
+          "  note above), or read the one hit you are chasing with\n" +
+            "  `sidecar_read({ projectPath, ref: \"<staged.resultsRef>#<hit id>\" })`; a ref",
+        ),
+      ).toBe(false);
+      expect(flagged("| `sidecar_read` | `projectPath`, `ref` | Read a staged page's text by its `staged.resultsRef` |")).toBe(false);
+      expect(flagged("It reads\n`tree.gedcomx.json` via `person_warnings` and `census_children_gap`.")).toBe(false);
+      expect(flagged("It OCRs the scan host-side,\nstages the page, and returns `staged.resultsRef`.")).toBe(false);
+      expect(flagged("A reading the user gives goes to the agent with that `staged.resultsRef`.")).toBe(false);
+      expect(flagged("`tool: \"image_search\"` even when you read pages, and never pass a page's\n`staged.resultsRef` as `stagedResultsRef`:")).toBe(false);
     });
 
     it("only reads a sentence at a time", () => {

@@ -189,7 +189,11 @@ const DOCUMENTED_TOTALS: Array<[string, number]> = [
   // and church birth+marriage+death, cemetery death), and the description names
   // them, 191 -> 276 chars. Measured independently (2695 tool-level + 14582
   // params), not copied from the failure message.
-  ["record_search", 17277],
+  // 17277 -> 17266: `projectPath` stopped promising full-fidelity rows inline
+  // with no project, since every answer is compacted now; it says so in fewer
+  // words. Measured independently (2695 tool-level + 14571 params), not copied
+  // from the failure message.
+  ["record_search", 17266],
   // 5292 -> 5302: the tool-level description gained "siblings, " when the
   // sibling fan-out landed (#2593). 5302 -> 5281: it lost " with relatives:
   // true" when person_read started ignoring that flag (#2696). Measured

@@ -57,9 +57,13 @@ explicitly scope extraction OUT ("I'll handle extraction myself afterward") so t
 on the two searches this test is actually about, and added a `judge_context` scope note in
 case it still wanders into extraction anyway.
 
+**Flipped under step mode (PR #4276):** the router now dispatches one search agent
+per plan item (`docs/plan/research-step-mode.md`, section D), so search-records runs
+one plan item per call even when the message asks for both. The test now pins that:
+pli_001 is executed and logged, pli_002 stays `planned` and is offered.
+
 ## Used by
 
-- `search-records` tests asserting that when an active plan has more than
-  one `planned` item and the invoking message already authorizes
-  continuing through the whole plan, the skill executes successive planned
-  items in the same turn rather than stopping after one to ask.
+- `search-records` tests asserting that, with two `planned` items and a
+  message asking for both, the agent executes only pli_001, leaves pli_002
+  `planned`, and offers it as the next search.

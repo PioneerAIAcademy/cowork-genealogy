@@ -23,6 +23,9 @@ import {
   censusStatedRelationships,
   normalizeFactType,
   censusKin,
+  birthRangeFromAge,
+  birthRangesFor,
+  wholeYearsOfAge,
   EXTRACTED_SOURCE_CLASSIFICATION,
   burialSourceKind,
   type ExtractDocument,
@@ -211,7 +214,7 @@ describe("a marriage record", () => {
   });
 
   it("classifies each party's own birth date, birthplace and age at self/secondary", () => {
-    expect(at("groom", "birth", "1889")).toBe("self/secondary");
+    expect(at("groom", "birth", "Bet 1888 and 1889")).toBe("self/secondary");
     expect(at("groom", "birth", ", Defiance, OH")).toBe("self/secondary");
     expect(at("groom", "age")).toBe("self/secondary");
     expect(at("bride", "birth")).toBe("self/secondary");
@@ -885,6 +888,12 @@ describe("marriage birth years — inferred only when they are the marriage year
       (a) => a.record_role === "groom" && a.fact_type === "birth" && a.date,
     );
 
+  it("the captured Ohio bride gets her age and a birth range (SP_AGE)", () => {
+    const as = extractRecord(load("marriage"), { logEntryId: "l_001", questionIds: [] }).assertions.filter((a) => a.record_role === "bride");
+    expect(as.find((a) => a.fact_type === "age")?.value).toBe("21 years");
+    expect(as.find((a) => a.fact_type === "birth" && a.date)?.date).toBe("Bet 1888 and 1889");
+  });
+
   it("the captured Ohio marriage: 1910, age 21 years, birth 1889 -> inferred", () => {
     expect(groomBirth(load("marriage"))?.record_basis).toBe("inferred");
   });
@@ -973,5 +982,168 @@ describe("summary — a flagged passage is withheld, not relayed", () => {
     expect(summary).not.toContain("remarks");
     expect(summary).toContain("- Albert Schreiber (deceased): [withheld: suspicious text].");
     expect(summary).toMatch(/Suspicious text: 1 passage\(s\) .* \(deceased\)\./);
+  });
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Issue #4127: a stated age with no full birth date is a birth RANGE, whatever
+// bare year the index carries beside the age.
+
+describe("birthRangeFromAge (issue #4127)", () => {
+  it("gives the two-year window the Tallman censuses imply", () => {
+    expect(birthRangeFromAge("11", "1850")).toMatchObject({ from: 1838, to: 1839, date: "Bet 1838 and 1839" });
+    expect(birthRangeFromAge("26 years", "1865")).toMatchObject({ from: 1838, to: 1839 });
+    expect(birthRangeFromAge("71", "1910")).toMatchObject({ from: 1838, to: 1839 });
+  });
+
+  it("reads the whole years of an age", () => {
+    expect(birthRangeFromAge("58 years, 4 months, 12 days", "1900")).toMatchObject({ from: 1841, to: 1842 });
+    expect(birthRangeFromAge("74 yrs 6 mos 16 dys", "1913")).toMatchObject({ from: 1838, to: 1839 });
+  });
+
+  it("reads a months-only or days-only age as 0", () => {
+    expect(birthRangeFromAge("6 months", "1850")).toMatchObject({ from: 1849, to: 1850 });
+    expect(birthRangeFromAge("3 days", "1850")).toMatchObject({ from: 1849, to: 1850 });
+  });
+
+  it("gives nothing for an approximate age, an unreadable one, or no event year", () => {
+    expect(birthRangeFromAge("about 60", "1850")).toBeNull();
+    expect(birthRangeFromAge("abt. 60", "1850")).toBeNull();
+    expect(birthRangeFromAge("6/12", "1850")).toBeNull();
+    expect(birthRangeFromAge("11", undefined)).toBeNull();
+    expect(birthRangeFromAge(undefined, "1850")).toBeNull();
+  });
+
+  it("reads 'and' and 'old' as words, not letters", () => {
+    expect(wholeYearsOfAge("58 years and 4 months")).toBe(58);
+    expect(wholeYearsOfAge("58 years old")).toBe(58);
+    expect(wholeYearsOfAge("58 years dan")).toBeNull();
+    expect(wholeYearsOfAge("58 years nad")).toBeNull();
+  });
+});
+
+describe("birthRangesFor: which event a persona's age is counted from (issue #4127)", () => {
+  const spouseDoc = (title: string, principalFacts: unknown[], coupleFacts: unknown[]) =>
+    ({
+      sources: [{ title }],
+      persons: [
+        { id: "p1", principal: true, names: [], facts: principalFacts },
+        { id: "p2", names: [], facts: [] },
+      ],
+      relationships: [{ type: "http://gedcomx.org/Couple", person1: "p1", person2: "p2", facts: coupleFacts }],
+    }) as any;
+
+  it("counts a spouse's age on a death record from the principal's death, not an unrelated couple fact", () => {
+    const gx = spouseDoc("Vermont Deaths", [{ type: "Death", date: "1910" }], [{ type: "Residence", date: "1860" }]);
+    expect(birthRangesFor(gx, { p1: { age: "74" }, p2: { age: "70" } })).toEqual({
+      p1: "Bet 1835 and 1836",
+      p2: "Bet 1839 and 1840",
+    });
+  });
+
+  it("gives a spouse on a death record no range when the record has no death date", () => {
+    const gx = spouseDoc("Vermont Deaths", [{ type: "Residence", date: "1900" }], [{ type: "Residence", date: "1860" }]);
+    expect(birthRangesFor(gx, { p2: { age: "70" } })).toBeUndefined();
+  });
+
+  it("still counts both parties' ages on a marriage record from the couple's marriage", () => {
+    const gx = spouseDoc("Ohio, County Marriages", [], [{ type: "Marriage", date: "1850" }]);
+    expect(birthRangesFor(gx, { p1: { age: "25" }, p2: { age: "22" } })).toEqual({
+      p1: "Bet 1824 and 1825",
+      p2: "Bet 1827 and 1828",
+    });
+  });
+});
+
+function censusDoc(birthDate: string | undefined, age: string, year: string): ExtractDocument {
+  return {
+    recordId: "ark:/61903/1:1:TEST-0001",
+    gedcomx: {
+      persons: [
+        {
+          id: "p1",
+          principal: true,
+          gender: "Male",
+          names: [{ given: "Edward", surname: "Tallman" }],
+          facts: [
+            ...(birthDate ? [{ type: "Birth", date: birthDate, place: "Vermont" }] : []),
+            { type: "Census", date: year, place: "Vermont, United States" },
+          ],
+        },
+      ],
+    },
+    indexFields: { p1: { age, householdId: "1" } },
+  } as unknown as ExtractDocument;
+}
+
+describe("the code extractor stores an age-derived birth range (issue #4127)", () => {
+  const births = (doc: ExtractDocument) =>
+    extractRecord(doc, { logEntryId: "l_001", questionIds: ["q_001"] }).assertions.filter(
+      (a) => a.fact_type === "birth" && a.date !== undefined,
+    );
+
+  it("replaces the indexer's bare 1839 with the 1838–1839 range, inferred", () => {
+    const [b] = births(censusDoc("1839", "11", "1850"));
+    expect(b.date).toBe("Bet 1838 and 1839");
+    expect(b.record_basis).toBe("inferred");
+    expect(b.date_certainty).toBe("approximate");
+  });
+
+  it("keeps an indexed bare year that is outside the range", () => {
+    expect(births(censusDoc("1841", "26", "1865"))[0].date).toBe("1841");
+    expect(births(censusDoc("abt. 1840", "71", "1910"))[0].date).toBe("abt. 1840");
+  });
+
+  it("replaces an abt. year inside the range", () => {
+    expect(births(censusDoc("abt. 1838", "71", "1910"))[0].date).toBe("Bet 1838 and 1839");
+  });
+
+  it("adds one inferred range when the record has an age and no Birth fact", () => {
+    const out = births(censusDoc(undefined, "11", "1850"));
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({ date: "Bet 1838 and 1839", record_basis: "inferred", date_certainty: "approximate" });
+  });
+
+  it("keeps the birthplace as its own assertion when the range replaces the year", () => {
+    const all = extractRecord(censusDoc("1839", "11", "1850"), { logEntryId: "l_001", questionIds: [] }).assertions;
+    expect(all.filter((a) => a.fact_type === "birth" && a.place === "Vermont")).toHaveLength(1);
+    expect(all.filter((a) => a.fact_type === "birth" && a.date)).toHaveLength(1);
+  });
+
+  it("gives no range to a full birth date, so a tombstone stays a finding", () => {
+    expect(births(censusDoc("31 Jan 1839", "74", "1913"))[0].date).toBe("31 Jan 1839");
+  });
+
+  it("gives no range to a month-and-year birth date", () => {
+    expect(births(censusDoc("Jan 1839", "11", "1850"))[0].date).toBe("Jan 1839");
+  });
+
+  it("leaves a bare year alone when the record states no age", () => {
+    const doc = censusDoc("1839", "", "1850");
+    (doc as unknown as { indexFields: object }).indexFields = {};
+    expect(births(doc)[0].date).toBe("1839");
+  });
+
+  it("keeps the principal's own birth on a birth or christening record", () => {
+    const doc = load("baptism");
+    const before = extractRecord(doc, { logEntryId: "l_001", questionIds: [] }).assertions.filter((a) => a.fact_type === "birth");
+    expect(before.every((a) => !/^Bet /.test(a.date ?? ""))).toBe(true);
+  });
+
+  it("is a range question-state reads, so it does not pair against 30 Nov 1838", async () => {
+    const { unregisteredDisagreements } = await import("../../src/utils/question-state.js");
+    const [b] = births(censusDoc("1839", "11", "1850"));
+    const research = {
+      assertions: [
+        { id: "a_1", fact_type: "birth", date: b.date },
+        { id: "a_2", fact_type: "birth", date: "30 Nov 1838" },
+      ],
+      person_evidence: [
+        { assertion_id: "a_1", person_id: "P1" },
+        { assertion_id: "a_2", person_id: "P1" },
+      ],
+      conflicts: [],
+    };
+    expect(unregisteredDisagreements(research, new Set(["a_1", "a_2"]))).toEqual([]);
   });
 });

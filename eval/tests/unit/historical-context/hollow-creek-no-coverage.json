@@ -12,6 +12,7 @@
     "scenario": null
   },
   "mcp_fixtures": [
+    "place-search-any",
     "wiki-search-hollow-creek-empty",
     "wikipedia-search-hollow-creek-error",
     "wiki-search-any",

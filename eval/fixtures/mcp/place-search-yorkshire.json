@@ -1,0 +1,29 @@
+{
+  "tool": "place_search",
+  "description": "place_search for Yorkshire, England. Measured live 2026-11-05 with dev/try-place-search.ts \"Yorkshire, England\". Resolves to the post-1801 county 'Yorkshire, England, United Kingdom', whose name carries 'Yorkshire' so collections-search-yorkshire and external-links-search-yorkshire match the agent's follow-on calls. Must be listed before place-search-england, whose '~England' predicate also matches 'Yorkshire, England'. Predicate matches ~Yorkshire.",
+  "args": {
+    "placeName": "~Yorkshire"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Yorkshire, England, United Kingdom",
+        "type": "County (Top level)",
+        "dateRange": "+1801/",
+        "latitude": 53.95878,
+        "longitude": -1.08248,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Yorkshire&focusedId=1088",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Yorkshire"
+      },
+      {
+        "standardPlace": "Yorkshire, England",
+        "type": "County (Top level)",
+        "dateRange": "+866/+1801",
+        "latitude": 53.95878,
+        "longitude": -1.08248,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Yorkshire&focusedId=10583950",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Yorkshire"
+      }
+    ]
+  }
+}

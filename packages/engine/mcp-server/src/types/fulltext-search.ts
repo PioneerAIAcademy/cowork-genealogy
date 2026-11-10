@@ -79,6 +79,11 @@ export interface FulltextResult {
   names?: string[];
   places?: string[];
   dates?: string[];
+  // The full distinct count, set only when the list above was shortened
+  // (compactStagedFulltextSearch). The sidecar keeps every entry.
+  namesCount?: number;
+  placesCount?: number;
+  datesCount?: number;
   highlightTerms?: string[];
 }
 

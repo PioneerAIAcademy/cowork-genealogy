@@ -453,7 +453,7 @@ async function discover(): Promise<Map<string, DiscoveredGroup[]>> {
     let pages = 0;
     do {
       const r = await volumeSearchTool(
-        { standardPlace, pageSize: 100, ...(pageToken ? { pageToken } : {}) },
+        { standardPlace, pageSize: 50, ...(pageToken ? { pageToken } : {}) },
         LOCAL,
       );
       for (const g of r.results) {
@@ -471,7 +471,7 @@ async function discover(): Promise<Map<string, DiscoveredGroup[]>> {
       }
       pageToken = r.nextPageToken;
       pages++;
-    } while (pageToken && pages < 10);
+    } while (pageToken && pages < 20);
     console.log(`    ${standardPlace}: ${pages} page(s)`);
   }
   discoveryCache = byFilm;

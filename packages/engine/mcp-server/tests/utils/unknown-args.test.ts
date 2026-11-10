@@ -6,6 +6,7 @@ import { RECORD_TYPE_GROUP_NAMES } from "../../src/utils/record-type-groups.js";
 import { callTool } from "../helpers/call-tool.js";
 import {
   PERSON_READ_REF_REMOVED,
+  PROJECT_TREE_REMOVED,
   SECTIONS_NEAR_MISS,
   treeCorrectRejection,
   treeEditRejection,
@@ -270,6 +271,25 @@ describe("rejectUnknownArgs: what it echoes back", () => {
     expect(r.isError).toBe(true);
     expect(r.text).toContain(PERSON_READ_REF_REMOVED);
     expect(r.text).not.toContain("the nearest are");
+  });
+
+  it("sends project_create's own message for the removed tree, with or without personId", async () => {
+    for (const args of [
+      { projectPath: "/p", objective: "o", tree: { persons: [], relationships: [] } },
+      { projectPath: "/p", objective: "o", personId: "KWCJ-RN4", tree: {} },
+    ]) {
+      const r = await callTool("project_create", args);
+      expect(r.isError).toBe(true);
+      expect(r.text).toContain(PROJECT_TREE_REMOVED);
+      expect(r.text).toMatch(/survey-surname agent with no projectPath/);
+      expect(r.text).not.toContain("the nearest are");
+    }
+  });
+
+  it("answers both removed project_create keys in one message", async () => {
+    const r = await callTool("project_create", { projectPath: "/p", objective: "o", tree: {}, personReadRef: "x" });
+    expect(r.text).toContain(PROJECT_TREE_REMOVED);
+    expect(r.text).toContain(PERSON_READ_REF_REMOVED);
   });
 
   it("cuts an over-long key short and suggests nothing for it", () => {

@@ -1,0 +1,504 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age. The raw recapi body carried the age (PR_AGE 40), which record_read never returned, so it rides in `indexFields`, where a captured sidecar keeps it; the mock never serves it inline and computes `birthRanges` from it. The age is not in the bundle: it is the age the issue gives (1850: 11, 1865: 26, 1910: 71, and the death indexes 74) or the year the index's bare birth year implies (1870: 29, 1880: 40). The one collection-level title was reconciled to the corpus spelling 'United States Census, 1880' (no comma), as the other mock-world census fixtures carry it, so the collection-attribute join holds; the per-person titles and citations keep the bundle's own spelling.",
+  "args": {
+    "recordId": "~MZ83-SG1"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_251993489",
+        "ark": "ark:/61903/1:1:MZ83-SG1",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "ff0756f9-d27e-4d06-82b9-4168949a8e5c",
+            "type": "BirthName",
+            "given": "Edward",
+            "surname": "Tallman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "ae8de400-eb32-4311-b2ce-a15fe17b6cca",
+            "type": "Birth",
+            "date": "1840",
+            "standard_date": "1840",
+            "place": "New York, United States"
+          },
+          {
+            "id": "853132c4-eb25-4eb5-9ff9-91a08ffaaf02",
+            "type": "Census",
+            "primary": true,
+            "date": "1880",
+            "standard_date": "1880",
+            "place": "Essex, ED 46, Essex, NY, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Occupation",
+            "value": "Laborer"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_251993490",
+        "ark": "ark:/61903/1:1:MZ83-SPM",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "f3716a84-02f5-4b0f-b4e3-1ebc6001daca",
+            "type": "BirthName",
+            "given": "Fannie",
+            "surname": "Tallman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "d49c56df-dbb1-412c-8811-434d11dc97f9",
+            "type": "Census",
+            "primary": true,
+            "date": "1880",
+            "standard_date": "1880",
+            "place": "Essex, ED 46, Essex, NY, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          },
+          {
+            "id": "dcddaeab-b94f-4eac-9cb0-3ed46f3dfc8f",
+            "type": "Birth",
+            "date": "1867",
+            "standard_date": "1867",
+            "place": "New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Occupation",
+            "value": "Keeping House"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_251993491",
+        "ark": "ark:/61903/1:1:MZ83-SP9",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "f860d534-080f-4889-8b3c-daa4c1fcd130",
+            "type": "BirthName",
+            "given": "Norah",
+            "surname": "Tallman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "f9229e09-1cc6-4013-9410-bc727343f177",
+            "type": "Birth",
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "New York, United States"
+          },
+          {
+            "id": "fa88b918-bfd7-4815-ae0e-570778b56fc0",
+            "type": "Census",
+            "primary": true,
+            "date": "1880",
+            "standard_date": "1880",
+            "place": "Essex, ED 46, Essex, NY, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          },
+          {
+            "type": "Occupation",
+            "value": "At Home"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_251993492",
+        "ark": "ark:/61903/1:1:MZ83-SPS",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "f42e34e7-a97e-4002-9bb8-074c203e0eff",
+            "type": "BirthName",
+            "given": "Blanche",
+            "surname": "Tallman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "7b5cee5a-8814-49f4-9a15-a033eeb6fdca",
+            "type": "Birth",
+            "date": "1873",
+            "standard_date": "1873",
+            "place": "New York, United States"
+          },
+          {
+            "id": "84fdef55-283b-4ced-b5c8-3e6311614f97",
+            "type": "Census",
+            "primary": true,
+            "date": "1880",
+            "standard_date": "1880",
+            "place": "Essex, ED 46, Essex, NY, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Occupation",
+            "value": "At Home"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_251993493",
+        "ark": "ark:/61903/1:1:MZ83-SP3",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "93daeef1-166a-4e42-af7d-9979da0586f4",
+            "type": "BirthName",
+            "given": "Theodore",
+            "surname": "Tallman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "e99f7681-e3c3-405a-be43-bb7948ea0749",
+            "type": "Birth",
+            "date": "1875",
+            "standard_date": "1875",
+            "place": "New York, United States"
+          },
+          {
+            "id": "19ba4a87-a387-4dc3-9ae0-6770cd3cef42",
+            "type": "Census",
+            "primary": true,
+            "date": "1880",
+            "standard_date": "1880",
+            "place": "Essex, ED 46, Essex, NY, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Occupation",
+            "value": "At Home"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_251993494",
+        "ark": "ark:/61903/1:1:MZ83-SPQ",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "9a2d555a-f9fd-401e-b23a-7e6716b2f296",
+            "type": "BirthName",
+            "given": "Orrin",
+            "surname": "Tallman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "78f2c52e-00bb-45ed-91ea-2241da7fd295",
+            "type": "Birth",
+            "date": "1878",
+            "standard_date": "1878",
+            "place": "New York, United States"
+          },
+          {
+            "id": "de4a07aa-7bde-4cf5-b9e3-14a689b51ab2",
+            "type": "Census",
+            "primary": true,
+            "date": "1880",
+            "standard_date": "1880",
+            "place": "Essex, ED 46, Essex, NY, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Occupation",
+            "value": "At Home"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_251993495",
+        "ark": "ark:/61903/1:1:MZ83-SP7",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "6f6b2081-6e66-4b4f-87de-0113d4e0ed12",
+            "type": "BirthName",
+            "given": "Nellie",
+            "surname": "Tallman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "9b749802-4bf0-4c70-b58f-d88f3bd0e13a",
+            "type": "Census",
+            "primary": true,
+            "date": "1880",
+            "standard_date": "1880",
+            "place": "Essex, ED 46, Essex, NY, United States",
+            "standard_place": "Essex, Essex, New York, United States"
+          },
+          {
+            "id": "937e866c-a061-48f4-b316-5b4eb9e3f07a",
+            "type": "Birth",
+            "date": "1869",
+            "standard_date": "1869",
+            "place": "New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "Occupation",
+            "value": "At Home"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "365e599a-f1e0-4bf7-81d0-eb212ae20dcc",
+        "type": "ParentChild",
+        "parent": "p_251993489",
+        "child": "p_251993490"
+      },
+      {
+        "id": "dcd4924c-2c97-44d0-921d-3df0cf18981d",
+        "type": "ParentChild",
+        "parent": "p_251993489",
+        "child": "p_251993491"
+      },
+      {
+        "id": "3d4d3301-f043-4c58-8a35-4bfca4b38981",
+        "type": "ParentChild",
+        "parent": "p_251993489",
+        "child": "p_251993494"
+      },
+      {
+        "id": "19261b86-94bd-4fbf-a5dc-a13170a74e3e",
+        "type": "ParentChild",
+        "parent": "p_251993489",
+        "child": "p_251993493"
+      },
+      {
+        "id": "d4285ba1-a6a3-4223-8142-e0c03aadbe94",
+        "type": "ParentChild",
+        "parent": "p_251993489",
+        "child": "p_251993495"
+      },
+      {
+        "id": "e786f1bd-6b73-4f01-9185-9ed61989e6ec",
+        "type": "ParentChild",
+        "parent": "p_251993489",
+        "child": "p_251993492"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_183733061",
+        "resource_type": "Record",
+        "title": "Household of Edward Tallman, \"United States, Census, 1880\"",
+        "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZ83-SG1 : Wed Sep 09 10:30:27 UTC 2026), Entry for Edward Tallman and Fannie Tallman, 1880.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:M4N5-YR8",
+        "coverage": {
+          "place_rep_id": "4608625",
+          "date_range": "1880",
+          "record_type": "Census",
+          "standard_place": "Essex, Essex, New York, United States"
+        }
+      },
+      {
+        "id": "sd_c_1417683",
+        "resource_type": "Collection",
+        "title": "United States Census, 1880",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1417683",
+        "coverage": {
+          "place_rep_id": "1",
+          "date_range": "1880/1880",
+          "record_type": "Census",
+          "standard_place": "United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBL-3ZH",
+        "coverage": {
+          "place_rep_id": "339",
+          "date_range": "1880",
+          "record_type": "CensusIndex",
+          "standard_place": "New York, United States"
+        }
+      },
+      {
+        "id": "sd_p_251993490",
+        "resource_type": "Person",
+        "title": "Fannie Tallman, \"United States, Census, 1880\"",
+        "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZ83-SPM : Wed Sep 09 10:30:27 UTC 2026), Fannie Tallman in entry for Edward Tallman, 1880.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MZ83-SPM"
+      },
+      {
+        "id": "sd_p_251993491",
+        "resource_type": "Person",
+        "title": "Norah Tallman, \"United States, Census, 1880\"",
+        "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZ83-SP9 : Wed Sep 09 10:30:27 UTC 2026), Norah Tallman in entry for Edward Tallman, 1880.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MZ83-SP9"
+      },
+      {
+        "id": "sd_p_251993489",
+        "resource_type": "Person",
+        "title": "Edward Tallman, \"United States, Census, 1880\"",
+        "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZ83-SG1 : Wed Sep 09 10:30:27 UTC 2026), Edward Tallman, 1880.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MZ83-SG1"
+      },
+      {
+        "id": "sd_p_251993495",
+        "resource_type": "Person",
+        "title": "Nellie Tallman, \"United States, Census, 1880\"",
+        "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZ83-SP7 : Wed Sep 09 10:30:27 UTC 2026), Nellie Tallman in entry for Edward Tallman, 1880.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MZ83-SP7"
+      },
+      {
+        "id": "sd_p_251993492",
+        "resource_type": "Person",
+        "title": "Blanche Tallman, \"United States, Census, 1880\"",
+        "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZ83-SPS : Wed Sep 09 10:30:27 UTC 2026), Blanche Tallman in entry for Edward Tallman, 1880.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MZ83-SPS"
+      },
+      {
+        "id": "sd_p_251993493",
+        "resource_type": "Person",
+        "title": "Theodore Tallman, \"United States, Census, 1880\"",
+        "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZ83-SP3 : Wed Sep 09 10:30:27 UTC 2026), Theodore Tallman in entry for Edward Tallman, 1880.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MZ83-SP3"
+      },
+      {
+        "id": "sd_p_251993494",
+        "resource_type": "Person",
+        "title": "Orrin Tallman, \"United States, Census, 1880\"",
+        "citation": "\"United States, Census, 1880\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:MZ83-SPQ : Wed Sep 09 10:30:27 UTC 2026), Orrin Tallman in entry for Edward Tallman, 1880.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:MZ83-SPQ"
+      },
+      {
+        "id": "sd_auto_M9JT-92D",
+        "resource_type": "auto",
+        "title": "United States, Residences, Census, from 1793 to 1964",
+        "coverage": {
+          "place_rep_id": "1",
+          "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+          "standard_place": "United States"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_4608625"
+      },
+      {
+        "id": "place_4653713"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:33SQ-GYBL-3ZH",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GYBL-3ZH",
+    "indexFields": {
+      "p_251993489": {
+        "age": "40"
+      }
+    }
+  }
+}

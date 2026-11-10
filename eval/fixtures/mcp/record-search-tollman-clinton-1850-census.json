@@ -1,0 +1,352 @@
+{
+  "tool": "record_search",
+  "description": "FamilySearch record search for the Tollman surname in Clinton County, New York, 1850 census, built from issue #4130 (feedback-2026-11-02T01-59-50-408623Z.zip, whose results/log_060.json indexed the 1850 Joseph Tollman household at Au Sable). Two households: Joseph Tollman's at Au Sable (four stubs sharing one recordArk, Joseph the Principal) and Nathan Tollman's at Peru (two stubs). Each stub's place carries the town as indexed; the county alone would read 'Clinton' for both. totalMatches 6, under the 600 threshold. Served with no projectPath for ut_survey_surname_d6.",
+  "args": {
+    "surname": "~Tollman",
+    "residenceYearFrom": 1850,
+    "residenceYearTo": 1850
+  },
+  "response": {
+    "query": {
+      "surname": "Tollman",
+      "recordType": "census",
+      "recordCountry": "United States",
+      "recordSubdivision": "New York",
+      "residencePlace": "Clinton, New York, United States",
+      "residenceYearFrom": 1850,
+      "residenceYearTo": 1850
+    },
+    "totalMatches": 6,
+    "paginationCappedAt": 4999,
+    "returned": 6,
+    "offset": 0,
+    "hasMore": false,
+    "rankingSkipped": "No subjectId provided — results are in FamilySearch relevance order.",
+    "results": [
+      {
+        "personId": "XTLM-1850-A",
+        "recordId": "XTLM-1850-A",
+        "personName": "Joseph Tollman",
+        "score": 0.95,
+        "sex": "Male",
+        "birthDate": "1798",
+        "birthPlace": "Vermont",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1850",
+            "place": "Au Sable, Clinton, New York, United States"
+          }
+        ],
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordArk": "ark:/61903/1:2:XTLM-AS1850",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Joseph",
+                  "surname": "Tollman",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "1798",
+                  "place": "Vermont"
+                },
+                {
+                  "id": "F2",
+                  "type": "Residence",
+                  "date": "1850",
+                  "place": "Au Sable, Clinton, New York, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XTLM-1850-B",
+        "recordId": "XTLM-1850-B",
+        "personName": "Polly Tollman",
+        "score": 0.92,
+        "sex": "Female",
+        "birthDate": "1802",
+        "birthPlace": "Vermont",
+        "role": "Other",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1850",
+            "place": "Au Sable, Clinton, New York, United States"
+          }
+        ],
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordArk": "ark:/61903/1:2:XTLM-AS1850",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Polly",
+                  "surname": "Tollman",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "1802",
+                  "place": "Vermont"
+                },
+                {
+                  "id": "F2",
+                  "type": "Residence",
+                  "date": "1850",
+                  "place": "Au Sable, Clinton, New York, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XTLM-1850-C",
+        "recordId": "XTLM-1850-C",
+        "personName": "Harvey Tollman",
+        "score": 0.89,
+        "sex": "Male",
+        "birthDate": "1829",
+        "birthPlace": "New York",
+        "role": "Other",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1850",
+            "place": "Au Sable, Clinton, New York, United States"
+          }
+        ],
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordArk": "ark:/61903/1:2:XTLM-AS1850",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Harvey",
+                  "surname": "Tollman",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "1829",
+                  "place": "New York"
+                },
+                {
+                  "id": "F2",
+                  "type": "Residence",
+                  "date": "1850",
+                  "place": "Au Sable, Clinton, New York, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XTLM-1850-D",
+        "recordId": "XTLM-1850-D",
+        "personName": "Lucinda Tollman",
+        "score": 0.86,
+        "sex": "Female",
+        "birthDate": "1834",
+        "birthPlace": "New York",
+        "role": "Other",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1850",
+            "place": "Au Sable, Clinton, New York, United States"
+          }
+        ],
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordArk": "ark:/61903/1:2:XTLM-AS1850",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Lucinda",
+                  "surname": "Tollman",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "1834",
+                  "place": "New York"
+                },
+                {
+                  "id": "F2",
+                  "type": "Residence",
+                  "date": "1850",
+                  "place": "Au Sable, Clinton, New York, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XTLM-1850-E",
+        "recordId": "XTLM-1850-E",
+        "personName": "Nathan Tollman",
+        "score": 0.83,
+        "sex": "Male",
+        "birthDate": "1824",
+        "birthPlace": "New York",
+        "role": "Principal",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1850",
+            "place": "Peru, Clinton, New York, United States"
+          }
+        ],
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordArk": "ark:/61903/1:2:XTLM-PE1850",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Nathan",
+                  "surname": "Tollman",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "1824",
+                  "place": "New York"
+                },
+                {
+                  "id": "F2",
+                  "type": "Residence",
+                  "date": "1850",
+                  "place": "Peru, Clinton, New York, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "XTLM-1850-F",
+        "recordId": "XTLM-1850-F",
+        "personName": "Abigail Tollman",
+        "score": 0.8,
+        "sex": "Female",
+        "birthDate": "1826",
+        "birthPlace": "New York",
+        "role": "Other",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1850",
+            "place": "Peru, Clinton, New York, United States"
+          }
+        ],
+        "collectionId": "1401638",
+        "collectionTitle": "United States Census, 1850",
+        "recordArk": "ark:/61903/1:2:XTLM-PE1850",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Abigail",
+                  "surname": "Tollman",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Birth",
+                  "date": "1826",
+                  "place": "New York"
+                },
+                {
+                  "id": "F2",
+                  "type": "Residence",
+                  "date": "1850",
+                  "place": "Peru, Clinton, New York, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      }
+    ]
+  }
+}

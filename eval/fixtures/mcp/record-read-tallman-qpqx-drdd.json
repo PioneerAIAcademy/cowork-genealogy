@@ -1,0 +1,288 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~QPQX-DRDD"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_104356598352",
+        "ark": "ark:/61903/1:1:QPQF-C7BD",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "656462ee-4102-4009-83e1-f457d9236eab",
+            "type": "BirthName",
+            "surname": "Bicconett",
+            "given": "N H"
+          }
+        ],
+        "facts": [
+          {
+            "id": "0bdb6582-4ea4-49e0-9baa-7be4a961e72d",
+            "type": "Birth",
+            "date": "1868",
+            "standard_date": "1868"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_104355886867",
+        "ark": "ark:/61903/1:1:QPQX-DRD4",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "59838a60-66b9-4db1-8f9f-90260eabb9d3",
+            "type": "BirthName",
+            "surname": "Tolman",
+            "given": "Fannie"
+          }
+        ],
+        "facts": [
+          {
+            "id": "ccb339d6-53e9-4c77-b82c-e3796ab82158",
+            "type": "Birth",
+            "date": "1867",
+            "standard_date": "1867"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_104355886826",
+        "ark": "ark:/61903/1:1:QPQX-DRZT",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "e81e9d34-41c8-4c3a-9066-8903a1ef2d6f",
+            "type": "BirthName",
+            "surname": "Bicconett",
+            "given": "Marble"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_104355886856",
+        "ark": "ark:/61903/1:1:QPQX-DR8T",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "bda089f0-59af-4bd0-a771-4a939ddb1a1e",
+            "type": "BirthName",
+            "surname": "White",
+            "given": "Clara"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_104355886872",
+        "ark": "ark:/61903/1:1:QPQX-DRDD",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "24fac927-6bc2-4132-922a-5a8f49e7ddf5",
+            "type": "BirthName",
+            "surname": "Tolman",
+            "given": "Edward"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_104355886876",
+        "ark": "ark:/61903/1:1:QPQX-DRDN",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "f7908a95-0db8-40f1-8d91-33710afdc4da",
+            "type": "BirthName",
+            "surname": "Wade",
+            "given": "Clara"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "ea07348f-0296-484a-95b4-67ad53b2f3f4",
+        "type": "ParentChild",
+        "parent": "p_104355886856",
+        "child": "p_104356598352"
+      },
+      {
+        "id": "76a850a0-5910-4fed-a2d8-187d5c5e0933",
+        "type": "ParentChild",
+        "parent": "p_104355886826",
+        "child": "p_104356598352"
+      },
+      {
+        "id": "a3cb498c-dfe5-442d-9b56-b67af3141c18",
+        "type": "Couple",
+        "person1": "p_104356598352",
+        "person2": "p_104355886867",
+        "facts": [
+          {
+            "id": "ba84c180-254d-49f8-a3f1-46d459930a35",
+            "type": "Marriage",
+            "primary": true,
+            "date": "4 June 1890",
+            "standard_date": "4 Jun 1890",
+            "place": "Shelburne, Chittenden, Vermont, United States"
+          }
+        ]
+      },
+      {
+        "id": "a652425b-1369-46c7-b56c-8a46d9aabed2",
+        "type": "ParentChild",
+        "parent": "p_104355886872",
+        "child": "p_104355886867"
+      },
+      {
+        "id": "7591318b-773e-4e11-a510-ab0b8f40b674",
+        "type": "ParentChild",
+        "parent": "p_104355886876",
+        "child": "p_104355886867"
+      },
+      {
+        "id": "e940bad3-d8b3-4aaf-8bd5-ebe10130af62",
+        "type": "Couple",
+        "person1": "p_104355886872",
+        "person2": "p_104355886876"
+      },
+      {
+        "id": "de509ef6-a95e-4696-8cba-049d8e7c6954",
+        "type": "Couple",
+        "person1": "p_104355886826",
+        "person2": "p_104355886856"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_106192772279",
+        "resource_type": "Record",
+        "title": "Entry for N H Bicconett and Fannie Tolman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQF-C7BD : Thu Mar 07 23:25:48 UTC 2024), Entry for N H Bicconett and Fannie Tolman, 4 June 1890.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:QR2S-7K71",
+        "coverage": {
+          "place_rep_id": "5405399",
+          "date_range": "4 June 1890",
+          "record_type": "Vital",
+          "standard_place": "Shelburne, Chittenden, Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_c_1987653",
+        "resource_type": "Collection",
+        "title": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1987653",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1699/2005",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L99S-FLK2",
+        "coverage": {
+          "place_rep_id": "5404972",
+          "date_range": "1883–1896",
+          "record_type": "Marriage",
+          "standard_place": "Colchester, Chittenden, Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_104356598352",
+        "resource_type": "Person",
+        "title": "N H Bicconett, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQF-C7BD : Thu Mar 07 23:25:48 UTC 2024), N H Bicconett and Fannie Tolman, 4 June 1890.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QPQF-C7BD"
+      },
+      {
+        "id": "sd_p_104355886867",
+        "resource_type": "Person",
+        "title": "Fannie Tolman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQX-DRD4 : Thu Mar 07 23:25:48 UTC 2024), N H Bicconett and Fannie Tolman, 4 June 1890.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QPQX-DRD4"
+      },
+      {
+        "id": "sd_p_104355886876",
+        "resource_type": "Person",
+        "title": "Clara Wade, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQX-DRDN : Thu Mar 07 23:25:48 UTC 2024), Clara Wade in entry for N H Bicconett and Fannie Tolman, 4 June 1890.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QPQX-DRDN"
+      },
+      {
+        "id": "sd_p_104355886872",
+        "resource_type": "Person",
+        "title": "Edward Tolman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQX-DRDD : Thu Mar 07 23:25:48 UTC 2024), Edward Tolman in entry for N H Bicconett and Fannie Tolman, 4 June 1890.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QPQX-DRDD"
+      },
+      {
+        "id": "sd_p_104355886826",
+        "resource_type": "Person",
+        "title": "Marble Bicconett, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQX-DRZT : Thu Mar 07 23:25:48 UTC 2024), Marble Bicconett in entry for N H Bicconett and Fannie Tolman, 4 June 1890.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QPQX-DRZT"
+      },
+      {
+        "id": "sd_p_104355886856",
+        "resource_type": "Person",
+        "title": "Clara White, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQX-DR8T : Thu Mar 07 23:25:48 UTC 2024), Clara White in entry for N H Bicconett and Fannie Tolman, 4 June 1890.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QPQX-DR8T"
+      },
+      {
+        "id": "sd_auto_M9J1-WM8",
+        "resource_type": "auto",
+        "title": "United States, Vermont, Marriages, from 10 January 1500 to 2006",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "+1500-01-10T00:00:00Z/+2006-12-31T23:59:59Z",
+          "standard_place": "Vermont, United States"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_5405399"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:3QS7-L99S-FLK2",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L99S-FLK2"
+  }
+}

@@ -35,7 +35,11 @@ import {
   type NoProjectResult,
 } from "../utils/project-io.js";
 import { stageSearchResults, type StagedHandle } from "../utils/results-staging.js";
-import { compactStagedImageTranscribe } from "../utils/staged-compaction.js";
+import {
+  compactImageTranscribeAnswer,
+  normalizeTranscription,
+  transcriptionDigest,
+} from "../utils/staged-compaction.js";
 import type {
   ImageTranscribeInput,
   ImageTranscribeResult,
@@ -47,10 +51,6 @@ import type {
 // Re-exported so existing importers (tests, dev/probe-ocr-finish-reason.ts) keep
 // their import path after the extraction to src/utils/ (issue #2183).
 export { OCR_MAX_TOKENS, MAX_OCR_INPUT_BYTES };
-
-// The digest's bounded excerpt (issue #2489): enough for a caller to triage a
-// staged transcription without asking for the full text.
-const DIGEST_EXCERPT_CHARS = 300;
 
 /**
  * The content type an uploaded file actually IS, decided by its magic bytes and
@@ -316,7 +316,7 @@ async function imageTranscribeToolInner(
     timeoutMs: ocrBudgetMs,
     maxTokens: OCR_MAX_TOKENS,
   });
-  const transcription = ocr.text;
+  const transcription = normalizeTranscription(ocr.text);
   const truncated = ocr.truncated;
   const truncationNotice = ocr.truncationNotice;
 
@@ -366,7 +366,7 @@ async function imageTranscribeToolInner(
   // read: a target may sit below the cut, so a half-read page must never yield
   // a clean NOT FOUND negative (#1974). Best-effort — any failure omits `found`
   // (the transcription is the primary payload) — and it runs BEFORE staging so
-  // the staged element and the digest carry it.
+  // the staged element carries it.
   const key = input.lookingFor?.trim();
   let found: "FOUND" | "NOT FOUND" | undefined;
   if (key && !truncated) {
@@ -424,13 +424,7 @@ async function imageTranscribeToolInner(
       staged = null;
       stagingError = error instanceof Error ? error.message : String(error);
     }
-    digest = {
-      id,
-      chars: transcription.length,
-      excerpt: transcription.slice(0, DIGEST_EXCERPT_CHARS),
-      ...(found ? { found } : {}),
-      ...(truncated ? { truncated: true as const } : {}),
-    };
+    digest = transcriptionDigest(id, transcription);
   }
 
   const viewerUrl = imageViewerUrl(
@@ -476,7 +470,7 @@ async function imageTranscribeToolInner(
  * The MCP entry point. In a project (issue #2490, lead ruling 2026-10-16) the
  * page is staged and the inline `transcription` dropped, so the caller gets
  * `staged.resultsRef`, `digest` and `found`; the text comes back inline only
- * when staging failed.
+ * when staging failed. Every leg goes through `compactImageTranscribeAnswer`.
  *
  * With no project — no `projectPath`, or a folder holding neither project file —
  * a FamilySearch scan or memory is read with `projectPath` removed, so nothing
@@ -496,7 +490,7 @@ export async function imageTranscribeMcpTool(
   if (cls === "missing_dir") throw new Error(missingProjectDirMessage(input.projectPath));
   if (cls === "missing_arg" || cls === "no_project") {
     const { projectPath: _dropped, ...unsaved } = input;
-    return imageTranscribeTool(unsaved, principal);
+    return compactOrPass(await imageTranscribeTool(unsaved, principal));
   }
   return compactOrPass(await imageTranscribeTool(input, principal));
 }
@@ -505,7 +499,7 @@ function compactOrPass(
   out: ImageTranscribeResult | NoProjectResult,
 ): ImageTranscribeToolResponse | NoProjectResult {
   if ("ok" in out) return out;
-  return compactStagedImageTranscribe<ImageTranscribeToolResponse>(out);
+  return compactImageTranscribeAnswer(out);
 }
 
 export const imageTranscribeToolSchema = {

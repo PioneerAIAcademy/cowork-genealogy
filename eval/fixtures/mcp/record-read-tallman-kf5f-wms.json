@@ -1,0 +1,177 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~KF5F-WMS"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_14235350401",
+        "ark": "ark:/61903/1:1:KF5F-WM9",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "9acb43b2-1327-4a27-935f-535028a72bae",
+            "type": "BirthName",
+            "given": "Fannie Tollman",
+            "surname": "Bissonnette"
+          }
+        ],
+        "facts": [
+          {
+            "id": "7b4ae945-0ee8-4d4d-a646-33a3f9ede7a8",
+            "type": "Death",
+            "primary": true,
+            "date": "15 Jun 1948",
+            "standard_date": "15 Jun 1948",
+            "place": "Burlington, Chittenden, Vermont, United States"
+          },
+          {
+            "id": "84b7dfb5-9569-4c3f-aa37-bc21109c95b9",
+            "type": "Residence",
+            "place": "Burlington"
+          },
+          {
+            "id": "011dca99-a034-4b1e-9d12-88710506d6aa",
+            "type": "Birth",
+            "date": "13 Oct 1866",
+            "standard_date": "13 Oct 1866",
+            "place": "Essex"
+          }
+        ]
+      },
+      {
+        "id": "p_14235350402",
+        "ark": "ark:/61903/1:1:KF5F-WMS",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "fb672bf4-9a80-4356-9381-ac1691d4b4b1",
+            "type": "BirthName",
+            "given": "Edward M",
+            "surname": "Tollman"
+          }
+        ]
+      },
+      {
+        "id": "p_14235350403",
+        "ark": "ark:/61903/1:1:KF5F-WM3",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "6491eeb6-46c4-426f-8d6c-f41bbce265c1",
+            "type": "BirthName",
+            "given": "Clara"
+          },
+          {
+            "id": "a20f5c3c-abb5-4625-a3e8-301155884046",
+            "type": "BirthName",
+            "surname": "Wade"
+          }
+        ]
+      },
+      {
+        "id": "p_14235350404",
+        "ark": "ark:/61903/1:1:KF5F-WMQ",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "36c1198c-e9f6-45d6-823b-7a1359b76576",
+            "type": "BirthName",
+            "given": "Noble H"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "503bd8a3-458f-4948-bbe3-26c71a3c3186",
+        "type": "Couple",
+        "person1": "p_14235350404",
+        "person2": "p_14235350401"
+      },
+      {
+        "id": "746b79d0-5a89-497b-bf10-fe8e754bcd3b",
+        "type": "ParentChild",
+        "parent": "p_14235350402",
+        "child": "p_14235350401"
+      },
+      {
+        "id": "e25a85ae-8eb9-4cd6-9fa7-0c9d31a21e8c",
+        "type": "Couple",
+        "person1": "p_14235350402",
+        "person2": "p_14235350403"
+      },
+      {
+        "id": "5f26380a-b4e5-4791-ba61-fe7ad321a982",
+        "type": "ParentChild",
+        "parent": "p_14235350403",
+        "child": "p_14235350401"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_22341888601",
+        "resource_type": "Record",
+        "title": "Entry for Fannie Tollman Bissonnette, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KF5F-WM9 : Thu Feb 20 22:29:12 UTC 2025), Entry for Fannie Tollman Bissonnette and Edward M Tollman, 15 Jun 1948.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9MKD-JZ29",
+        "coverage": {
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "sd_c_2075288",
+        "resource_type": "Collection",
+        "title": "Vermont, Vital Records, 1760-2008",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/2075288",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1760/2003",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_14235350404",
+        "resource_type": "Person",
+        "title": "Noble H, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KF5F-WMQ : Thu Feb 20 22:29:12 UTC 2025), Noble H in entry for Fannie Tollman Bissonnette, 15 Jun 1948.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KF5F-WMQ"
+      },
+      {
+        "id": "sd_p_14235350402",
+        "resource_type": "Person",
+        "title": "Edward M Tollman, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KF5F-WMS : Thu Feb 20 22:29:12 UTC 2025), Edward M Tollman in entry for Fannie Tollman Bissonnette, 15 Jun 1948.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KF5F-WMS"
+      },
+      {
+        "id": "sd_p_14235350403",
+        "resource_type": "Person",
+        "title": "Clara Wade, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KF5F-WM3 : Thu Feb 20 22:29:12 UTC 2025), Clara Wade in entry for Fannie Tollman Bissonnette, 15 Jun 1948.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KF5F-WM3"
+      },
+      {
+        "id": "sd_p_14235350401",
+        "resource_type": "Person",
+        "title": "Fannie Tollman Bissonnette, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KF5F-WM9 : Thu Feb 20 22:29:12 UTC 2025), Fannie Tollman Bissonnette, 15 Jun 1948.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KF5F-WM9"
+      },
+      {
+        "id": "sd_auto_M9LW-DW2",
+        "resource_type": "auto",
+        "title": "British Colonial America, New Hampshire Grants, Births, from 0001 to 2008",
+        "coverage": {
+          "place_rep_id": "12029673",
+          "date_range": "+0001-01-01T00:00:00Z/+2008-12-31T23:59:59Z",
+          "standard_place": "New Hampshire Grants, British Colonial America"
+        }
+      }
+    ]
+  }
+}

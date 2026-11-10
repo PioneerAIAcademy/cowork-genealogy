@@ -1529,3 +1529,80 @@ describe("recordReadTool — staging on a live read (#2048 / #2489)", () => {
     );
   });
 });
+
+// ─── birthRanges (issue #4127) ─────────────────────────────────────────────
+
+describe("recordReadTool — birthRanges from the stated age", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-read-birth-ranges-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const stage = (birth: string, age: string, year: string) =>
+    stageSearchResults({
+      projectPath: dir,
+      tool: "record_read",
+      response: {
+        results: [
+          {
+            recordId: "ark:/61903/1:1:TALL-0001",
+            gedcomx: {
+              persons: [
+                {
+                  id: "p1",
+                  names: [{ given: "Edward", surname: "Tallman" }],
+                  facts: [
+                    { type: "Birth", date: birth },
+                    { type: "Census", date: year, place: "Vermont, United States" },
+                  ],
+                },
+              ],
+            },
+            indexFields: { p1: { age } },
+          },
+        ],
+      },
+    });
+
+  const read = async (birth: string, age: string, year: string) => {
+    const handle = await stage(birth, age, year);
+    return recordReadTool(
+      { recordId: "ark:/61903/1:1:TALL-0001", resultsRef: handle!.resultsRef, projectPath: dir },
+      LOCAL,
+    );
+  };
+
+  it("returns 1838–1839 for the 1850, 1865 and 1910 censuses, beside the bare 1839", async () => {
+    for (const [age, year] of [["11", "1850"], ["26", "1865"], ["71", "1910"]]) {
+      const out = await read("1839", age, year);
+      expect(out.birthRanges).toEqual({ p1: "Bet 1838 and 1839" });
+      expect(out.persons![0].facts![0].date).toBe("1839");
+    }
+  });
+
+  it("agrees with extraction: a bare year outside the range stays, with no entry", async () => {
+    expect((await read("1840", "71", "1910")).birthRanges).toBeUndefined();
+    expect((await read("1841", "26", "1865")).birthRanges).toBeUndefined();
+  });
+
+  it("returns none for a full birth date or a month-and-year date", async () => {
+    expect((await read("31 Jan 1839", "74", "1913")).birthRanges).toBeUndefined();
+    expect((await read("Jan 1839", "11", "1850")).birthRanges).toBeUndefined();
+  });
+
+  it("returns none when the record carries no age", async () => {
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { results: [{ recordId: "ark:/61903/1:1:TALL-0001", gedcomx: { persons: [{ id: "p1", facts: [{ type: "Birth", date: "1839" }] }] } }] },
+    });
+    const out = await recordReadTool(
+      { recordId: "ark:/61903/1:1:TALL-0001", resultsRef: handle!.resultsRef, projectPath: dir },
+      LOCAL,
+    );
+    expect(out.birthRanges).toBeUndefined();
+  });
+});

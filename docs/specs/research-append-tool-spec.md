@@ -3084,13 +3084,49 @@ The law required the attending or examining physician to complete the cause of
 death, so it takes their row even though the FamilySearch index rarely names
 them. Everything else on the certificate stays the personal informant's.
 
-`record_basis` is `stated` for anything the record puts in a field. The one
-`inferred` value is a birth **year** computed from a stated age — and because
-FamilySearch folds that year and the birthplace into one `Birth` fact, the
-extractor splits them: the place is its own `stated` assertion, the year its own
+`record_basis` is `stated` for anything the record puts in a field. The `inferred`
+value on a birth is a year **range worked out from a stated age**, and because
+FamilySearch folds the year and the birthplace into one `Birth` fact, the
+extractor splits them: the place is its own `stated` assertion, the range its own
 `inferred` one at `date_certainty: "approximate"`. They cannot share a basis.
 
-Which birth years are computed (genealogist rulings, 2026-09-30):
+**Which birth is a range (lead ruling, 2026-11-04).** One function,
+`birthDecision` in `record-extract.ts`, decides it per person; `extraction_append`
+(indexed records and text documents) and `record_read`'s `birthRanges` both call
+it, so every source gets the same answer. The range is the event year less the
+age, less one, to the event year less the age, written `Bet 1838 and 1839`.
+
+| Birth on the record | Result |
+|---|---|
+| None, or place only | A birth assertion with the range, `inferred`, `approximate` |
+| Indexed record: bare year or "abt." inside the range | The range replaces it, `inferred` |
+| Text source: birth marked `computed`, bare year or `~1818` inside the range | The range replaces it, `inferred` |
+| Indexed bare year outside the range, or a text birth not marked `computed` | Kept, no range |
+| Full date, or month and year | Kept, no range |
+| The principal's own birth on a birth or christening record | Kept, no range (genealogist ruling 2026-09-30) |
+
+FamilySearch's bare birth year is usually the age restated (event year less age
+exactly), so the table widens a year that merely restates the age and keeps one
+the age does not explain. A year the record really states and the age happens to
+match is widened too; that cost is accepted.
+
+- **Age.** Whole years: "58 years, 4 months, 12 days" is 58, and a months-only or
+  days-only age is 0. An approximate age ("about 60") or an unreadable one gives
+  no range. Not `ageYears`, which reads "6 months" as 6. An indexed age is read
+  from `PR_AGE` or `SP_AGE` (a marriage's second party carries the latter), else
+  from the person's `age` fact.
+- **Event year, indexed records:** the record's own event (census day, death,
+  burial, marriage), from `eventDateFor`.
+- **Event year, text sources, in order:** `census.year` on a census; the
+  principal's event year where one is set; the record type's own event fact (a
+  burial's is the burial, else the death); `source.created`, only when
+  `documentForm` is `page_image` or `verbatim_transcript`. Nothing else: an
+  obituary of a woman aged 68 whose only dated fact is a 1849 immigration gets no
+  range. This is `DocumentMode.ageEventYear`, a field of its own so that
+  `eventYear` and `eventType` keep steering classification alone.
+
+Which birth years are otherwise computed, for a bare year the table keeps
+(genealogist rulings, 2026-09-30):
 
 - **A census:** a bare year (`1845`, `about 1845`) is computed. A date carrying a
   month (`January 1845`, from the 1900 schedule's month-and-year column) was
@@ -3297,8 +3333,8 @@ tries to classify is refused by the schema. It is not left to a prompt.
 | land and probate roles | `statedRelation`, `couple` edges, facts | **Land:** a party's `statedRelation` is their part in the deed, the principal's included: grantor → `grantor_N`; grantee → `grantee` (`grantee_N` if several); witness and officer words fall through to the row above. A spouse word with a `couple` edge to a grantor is `grantor_N` (a wife releasing dower); to a grantee, a grantee. Position and `principal` choose no land role in document mode. A land document with no grantor or no grantee is **refused** before anything is written. **Probate:** the decedent or testator is the party carrying the `probate` fact, else `will`, else `death`; a flagged principal breaks a tie, then the first in order. A document whose chosen decedent is stated as administrator, administratrix, executor or executrix is **refused**. |
 | couples | `relationships`, `statedRelation` | On a `land` or `probate` document a `couple` is **refused** unless one of its two parties has a spouse-word `statedRelation` (wife, husband, widow, widower, spouse; not "wife's mother" or "daughter-in-law"). Scoped to these two types: an obituary sends "John (Mary) Smith" as a couple with no spouse word, and marriage and newspaper principals carry no `statedRelation`. The indexed land path stays positional. |
 | roles against the transcription | `transcriptionRef`, `statedRelation` | On a `land` or `probate` document that carries a `transcriptionRef`, the tool reads the staged text and **refuses** a label a phrase contradicts, quoting it. Precision over recall: a wrong refusal leaves the agent no way to write the deed, so a missed refusal is the accepted direction. **Land:** "Know ye / Know all men by these presents that [I/we] ___" names the grantor (refused when a named party is labelled grantee, witness or officer and none is the grantor). "paid by ___", with only the filler words "to me, me, in hand, at, or, before, the, ensealing, and, delivery, of, these, presents, hereof" between (up to ten, any order), names the payer; it is consulted **only when no "Know ye" phrase names a party labelled grantor**, and it is not read when the word just before "paid" is be/been/is/are/was/were (so "borne and paid by" and "being paid by" are still read). A payer labelled grantor, witness or officer is refused. "in presence of ___", read to the end of its own line, names witnesses (refused when labelled grantor or grantee); a party the grantor or payer phrase already names is never read as a witness. Officers (justice of the peace, register, notary, clerk) count as witnesses for these checks. **Probate:** "___ Administrator [or Administratrix] on/of the Estate of ___"; refused when the person named as administrator, read as the name directly before the phrase, is the chosen decedent. A caption that puts "of <place>" or "Esq." between the name and the phrase is not read: reaching back over it reads the decedent's own caption. Names are read as a strict list of capitalized words (2-4 per name, split by a comma, "and" or "&"; a ";" or ":" ends the list; clause-opening words such as Whereas and That are not names); a name matching no party or more than one (a father and son, Johnson and Johnston) is dropped, and a phrase left with no name counts for nothing. A formula matched more than once refuses only when every occurrence that names a party contradicts. **Silent** on every other form ("unto", "received", indentures "between X of the one part", abstracts, recording certificates), and on an unreadable transcription; the check runs before anything is logged. Edit-distance-one drift is allowed for words of five letters or more, and a clerk's given-name abbreviation (Jno., Wm., Thos., Chas., Geo., Jas., Robt., Saml., Benj.) reads as the full name. The probate administrator is read on the phrase's own line only. **Known limits:** a pasted-text document (inline text, no `transcriptionRef`) is unchecked; a page whose OCR puts a glyph between "in presence of" and the names reads no witnesses; a signer on the same line as the witnesses, in a form with no "Know ye" or "paid by" phrase naming them, is read as a witness (a signature block on the lines below is not); a neighbouring deed's grantor listed as a party can switch the swapped-label refusal off; a form with no "Know ye" phrase whose tax or mortgage clause says "paid by" the grantor can still be refused; on a page holding two deeds in a chain of title, a grantor whose short given name the OCR drifts (Ely / Eli) loses its own phrase, so the next deed's grantor phrase refuses the correct labels. |
-| `record_basis` | `computed` | `inferred` for a computed attribute, `stated` otherwise. A fact whose attributes differ in mark is **split**, one assertion per group. This is §11.6's birth split, now keyed on the mark and no longer on record type. |
-| `date_certainty` | `computed` includes `date` | `approximate`. |
+| `record_basis` | `computed`, the age | `inferred` for a computed attribute, `stated` otherwise. A fact whose attributes differ in mark is **split**, one assertion per group. This is §11.6's birth split, now keyed on the mark and no longer on record type. A stated age also turns a computed birth year inside its range into the range, or adds one where no birth is written (§11.6, "Which birth is a range"): `inferred`. |
+| `date_certainty` | `computed` includes `date`; an age-derived range | `approximate`. |
 | information layer | the §11.6 table | The table keyed on record type × role family × fact class, with one document-only override: `informant.name`, when present, replaces the table's generic informant string. **`uncertain` changes no classification** (genealogist ruling, 2026-09-30): information quality measures what the informant knew, not how well the page was read. The doubt stays in the `[?]` in the value and in `informant_bias_notes`. |
 | `informant_bias_notes` | `note` | Copied verbatim. |
 | `source_classification` | `documentForm` | `compiled_work` → `authored`. **Everything else → `derivative`** (genealogist ruling, 2026-09-30). A transcript someone else made is a step from the original and can carry copying errors. A page image reaches this path only as a machine transcription, `image_transcribe`'s or a full-text hit's, which can misread. `documentForm` is still recorded in the source's `notes` (e.g. "read from a machine transcription of the page image"), so it is clear what was examined; a full-text hit's `notes` read "read from FamilySearch's full-text machine transcription of the page image" instead. Nothing on this path is `original`. |

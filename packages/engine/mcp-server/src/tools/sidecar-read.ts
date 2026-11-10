@@ -14,7 +14,8 @@
 // and control character, and the CLI spills any result above 50,000 characters
 // to a file the model must Read back (which, on a resumed turn, is deleted at
 // turn end). So the page is shrunk until its JSON-escaped text fits in `maxChars`
-// (40,000 at most), whatever the raw text looks like.
+// (40,000 at most), whatever the raw text looks like, and a `refs` batch fills one
+// 40,000-character budget with whole pages, smallest first.
 
 import { TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { getProjectStore } from "../store/project-store.js";
@@ -31,6 +32,7 @@ import {
 } from "../utils/results-staging.js";
 import { arkToBareId } from "../utils/ark.js";
 import { fitPage, requireWholeNumber } from "../utils/text-page.js";
+import { fillWholeFirst } from "../utils/share-budget.js";
 import {
   classifyProjectPath,
   MISSING_PROJECT_PATH_MESSAGE,
@@ -48,6 +50,10 @@ export { fitPage };
  *  (spec §4). */
 export const SIDECAR_READ_MAX_CHARS = TOOL_RESULT_CHAR_BUDGET;
 
+/** The bound on a whole serialized `refs` answer, envelopes and pages together (the
+ *  spec's "Pagination and the serialized-envelope bound"). */
+export const SIDECAR_READ_BATCH_BUDGET = TOOL_RESULT_CHAR_BUDGET;
+
 /** The only two ref prefixes this tool serves (spec §3). */
 export const SIDECAR_READ_PREFIXES = ["evaluations", "uploads"] as const;
 
@@ -63,7 +69,8 @@ export interface SidecarReadInput {
    *  `results/` ref holding a staged transcription. */
   ref?: string;
   /** Several refs in one call (the record-structurer agent's "read all" turn).
-   *  Each is read from its start; `offset` applies to `ref` only. */
+   *  Each is read from its start, into one budget filled whole pages first; `offset` applies to `ref` only,
+   *  and any but 0 with `refs` is refused. */
   refs?: string[];
   /** UTF-16 code-unit offset of the first character to return. Default 0. */
   offset?: number;
@@ -336,6 +343,78 @@ async function stagedTranscriptionText(projectPath: string, ref: string): Promis
   return texts.length > 0 ? texts.join("\n\n") : null;
 }
 
+/** `maxChars` validated (a throw), defaulted and clamped. */
+function pageSize(maxChars: unknown): number {
+  return Math.min(
+    SIDECAR_READ_MAX_CHARS,
+    maxChars === undefined ? SIDECAR_READ_MAX_CHARS : requireWholeNumber("maxChars", maxChars, 1),
+  );
+}
+
+/** Length of `s` once `JSON.stringify` has escaped it, the two quotes excluded. */
+function escapedLength(s: string): number {
+  return JSON.stringify(s).length - 2;
+}
+
+/** The result for `content`, the page of `read.text` that starts at `offset`. */
+function pageResult(
+  ref: string,
+  read: { text: string; hit?: HitFields },
+  offset: number,
+  content: string,
+): SidecarReadResult {
+  const totalChars = read.text.length;
+  const end = offset + content.length;
+  const truncated = end < totalChars;
+  return {
+    ok: true,
+    ref,
+    totalChars,
+    offset,
+    content,
+    truncated,
+    ...(truncated ? { nextOffset: end } : {}),
+    ...(read.hit ?? {}),
+  };
+}
+
+/**
+ * A `refs` batch, held to SIDECAR_READ_BATCH_BUDGET as a whole. Each ref first gets the
+ * page a lone `ref` read would return. What the answer costs with every page emptied,
+ * and every result counted as truncated at its longest `nextOffset`, is taken off the
+ * budget, and the rest is filled with whole pages, smallest first, by `fillWholeFirst`:
+ * the first page that does not fit is cut to what is left, and every page after it
+ * comes back empty, `truncated` with `nextOffset: 0`. A cut or empty page is continued
+ * by a `ref` read with `offset: nextOffset`. Results keep the caller's order.
+ */
+async function readBatch(projectPath: string, refs: string[], maxChars: number): Promise<SidecarReadBatchResult> {
+  const reads: RefText[] = [];
+  for (const ref of refs) reads.push(await readRefText(projectPath, ref));
+  const results = reads.map((r, i) => (r.ok ? pageResult(refs[i], r, 0, fitPage(r.text, 0, maxChars)) : r));
+  const fixed = JSON.stringify({
+    ok: true,
+    results: results.map((x) => (x.ok ? { ...x, content: "", truncated: true, nextOffset: x.totalChars } : x)),
+  }).length;
+  fillWholeFirst(
+    results.map((x) => (x.ok ? escapedLength(x.content) : 0)),
+    SIDECAR_READ_BATCH_BUDGET - fixed,
+    (i, offer) => {
+      const read = reads[i] as { text: string; hit?: HitFields };
+      // fitPage never cuts below one unit, which can escape past a small offer.
+      const cut = offer > 0 ? fitPage(read.text, 0, offer) : "";
+      const page = escapedLength(cut) <= offer ? cut : "";
+      results[i] = pageResult(refs[i], read, 0, page);
+      return escapedLength(page);
+    },
+  );
+  return { ok: true, results };
+}
+
+/** A `refs` batch reads every ref from its start, so an `offset` there would be dropped:
+ *  the caller would get the same cut pages back and never get further. */
+export const BATCH_OFFSET_MESSAGE =
+  "`offset` applies to `ref` only: continue a cut ref with sidecar_read({ projectPath, ref, offset: nextOffset })";
+
 export function sidecarRead(input: SidecarReadInput & { refs: string[] }): Promise<SidecarReadBatchResult>;
 export function sidecarRead(input: SidecarReadInput): Promise<SidecarReadResult>;
 export async function sidecarRead(input: SidecarReadInput): Promise<SidecarReadResult | SidecarReadBatchResult> {
@@ -346,21 +425,27 @@ export async function sidecarRead(input: SidecarReadInput): Promise<SidecarReadR
     if (!Array.isArray(input.refs) || input.refs.length === 0) {
       return { ok: false, reason: "invalid_ref", errors: ["`refs` must be a non-empty list"] };
     }
-    const results: SidecarReadResult[] = [];
-    for (const r of input.refs) {
-      results.push(await sidecarRead({ projectPath: input.projectPath, ref: r, maxChars: input.maxChars }));
+    if (input.offset !== undefined && input.offset !== 0) {
+      return { ok: false, reason: "invalid_ref", errors: [BATCH_OFFSET_MESSAGE] };
     }
-    return { ok: true, results };
+    return readBatch(input.projectPath, input.refs, pageSize(input.maxChars));
   }
-  const { projectPath } = input;
-  const ref = input.ref as string;
-
   const offset = input.offset === undefined ? 0 : requireWholeNumber("offset", input.offset, 0);
-  const maxChars = Math.min(
-    SIDECAR_READ_MAX_CHARS,
-    input.maxChars === undefined ? SIDECAR_READ_MAX_CHARS : requireWholeNumber("maxChars", input.maxChars, 1),
-  );
+  const maxChars = pageSize(input.maxChars);
+  const ref = input.ref as string;
+  const read = await readRefText(input.projectPath, ref);
+  if (!read.ok) return read;
+  const start = Math.min(offset, read.text.length);
+  return pageResult(ref, read, start, fitPage(read.text, start, maxChars));
+}
 
+/** A ref's text, read and checked, or the failure this tool answers for it. */
+type RefText =
+  | { ok: true; text: string; hit?: HitFields }
+  | { ok: false; reason: SidecarReadFailureReason; errors: string[] };
+
+/** Read one ref's text, or answer why not. Throws only what the dispatch arm's catch owns. */
+async function readRefText(projectPath: string, ref: string): Promise<RefText> {
   try {
     // A `results/` ref may carry `#<hit>`: split it off before the path rules,
     // so an ARK's `/` and `:` in the selector never meet them.
@@ -419,22 +504,7 @@ export async function sidecarRead(input: SidecarReadInput): Promise<SidecarReadR
 
     const text = raw.charCodeAt(0) === 0xfeff ? raw.slice(1) : raw;
     if (looksBinary(text)) throw new SidecarReadFailure("not_text", `${ref}: ${NOT_TEXT_MESSAGE}`);
-
-    const totalChars = text.length;
-    const start = Math.min(offset, totalChars);
-    const content = fitPage(text, start, maxChars);
-    const end = start + content.length;
-    const truncated = end < totalChars;
-    return {
-      ok: true,
-      ref,
-      totalChars,
-      offset: start,
-      content,
-      truncated,
-      ...(truncated ? { nextOffset: end } : {}),
-      ...(hitFields ?? {}),
-    };
+    return { ok: true, text, hit: hitFields };
   } catch (e) {
     if (e instanceof NoProjectError) return noProjectResult("read");
     if (e instanceof SidecarReadFailure) return { ok: false, reason: e.reason, errors: [e.message] };
@@ -461,9 +531,11 @@ export const sidecarReadSchema = {
     "A hit read adds `hitId`, `hitIndex` (1-based) and `logId` to the result, plus the hit's " +
     "`title`, `recordDate` and `recordPlace` when it has them. Returns " +
     "`{ ref, totalChars, offset, content, truncated, nextOffset? }`: `content` is at most " +
-    "40,000 characters (less when the text is heavy with quotes or backslashes, so the " +
-    "result never overflows the tool-result limit); when `truncated` is true, call again " +
-    "with `offset: nextOffset` until it is false. A missing file is `reason: \"not_found\"` " +
+    "40,000 characters, less when the text is heavy with quotes or backslashes. A `refs` " +
+    "answer lists its refs in your order and fills one 40,000-character budget with whole " +
+    "refs, smallest first: the first ref that does not fit comes back cut, and any larger " +
+    "come back empty with `truncated: true` and `nextOffset: 0`. When `truncated` is true, call again " +
+    "with that `ref` and `offset: nextOffset` until it is false. A missing file is `reason: \"not_found\"` " +
     "(this tool does not list directories — a ref is something you already hold); a " +
     "binary or UTF-16 file is `reason: \"not_text\"`.",
   inputSchema: {
@@ -487,12 +559,14 @@ export const sidecarReadSchema = {
         type: "array",
         items: { type: "string" },
         description:
-          "Several refs in one call, each read from its start. Send `ref` or `refs`, not both.",
+          "Several refs in one call, each read from its start, filling one 40,000-character " +
+          "answer with whole refs, smallest first. Send `ref` or `refs`, not both.",
       },
       offset: {
         type: "number",
         description:
-          "0-based character offset to start reading from. Default 0. When a result says " +
+          "0-based character offset to start reading from, with `ref` only (`refs` refuses any " +
+          "but 0). Default 0. When a result says " +
           "`truncated: true`, pass its `nextOffset` here to read the next page. Must be a " +
           "non-negative whole number.",
       },

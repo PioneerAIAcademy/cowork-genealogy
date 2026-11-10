@@ -1,0 +1,23 @@
+{
+  "tool": "record_search",
+  "description": "Zero-result response for an UNPINNED record_search (no collectionId) for 'Unna' with the ABBREVIATED surname 'Halsteinsdr'. In given-name-variant-secondary-party the pinned 'Unna Halsteinsdr' search in collection 1468080 returns zero (record-search-unna-exact-zero-results), so research_log_append refuses to log it until the same names are searched without the collection (research-log-editor-spec.md section 8.5). Without this fixture that retry hit fixture_not_found in run v12_2026-11-04_04-07-06. It returns zero because the real index entry is 'Urna', not 'Unna', so the test still has to reach the given-name variant. Used only by given-name-variant-secondary-party: in combined-given-surname-variant-secondary-party a pinned 'Halsteinsdr' search already finds the record, so this retry is never demanded there and a zero answer would contradict the pinned hit. The predicate cannot require collectionId to be absent; it only ever sees unpinned calls because it is listed LAST, after the collection-1468080 fixtures that answer every pinned call first.",
+  "args": {
+    "givenName": "Unna",
+    "surname": "Halsteinsdr"
+  },
+  "response": {
+    "query": {
+      "givenName": "Unna",
+      "surname": "Halsteinsdr",
+      "recordCountry": "Norway",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 4999,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

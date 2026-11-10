@@ -1,0 +1,175 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age. The raw recapi body carried the age (PR_AGE 74), which record_read never returned, so it rides in `indexFields`, where a captured sidecar keeps it; the mock never serves it inline and computes `birthRanges` from it. The age is not in the bundle: it is the age the issue gives (1850: 11, 1865: 26, 1910: 71, and the death indexes 74) or the year the index's bare birth year implies (1870: 29, 1880: 40).",
+  "args": {
+    "recordId": "~2V7M-JMY"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_15021465327",
+        "ark": "ark:/61903/1:1:2V7M-JMY",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "90d4aa14-8c3e-48d5-9baf-4bc1725a3685",
+            "type": "BirthName",
+            "surname": "Tallman",
+            "given": "Edward"
+          }
+        ],
+        "facts": [
+          {
+            "id": "ca780e9b-7a55-447b-b606-2c9cee49323a",
+            "type": "Birth",
+            "date": "1839",
+            "standard_date": "1839"
+          },
+          {
+            "id": "6ac7cde5-80f4-4776-aeac-de20e6d731fd",
+            "type": "Death",
+            "primary": true,
+            "date": "16 Aug 1913",
+            "standard_date": "16 Aug 1913",
+            "place": "Burlington, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_15021465328",
+        "ark": "ark:/61903/1:1:2V7M-JMB",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "82a45d14-6a53-43f8-b2e4-50d67a29a9a5",
+            "type": "BirthName",
+            "surname": "Tallman",
+            "given": "Jas"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_15021465329",
+        "ark": "ark:/61903/1:1:2V7M-JM1",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "34359989-e5d9-4a81-b025-b318b3445bdd",
+            "type": "BirthName",
+            "surname": "Patterson",
+            "given": "Jane"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "b9043f87-d985-451f-8091-85e04e875999",
+        "type": "Couple",
+        "person1": "p_15021465328",
+        "person2": "p_15021465329"
+      },
+      {
+        "id": "71b38a75-1a66-4482-9363-835eb2da4848",
+        "type": "ParentChild",
+        "parent": "p_15021465329",
+        "child": "p_15021465327"
+      },
+      {
+        "id": "6e03c51a-2bc7-4108-90cb-a0d7e51fd2ba",
+        "type": "ParentChild",
+        "parent": "p_15021465328",
+        "child": "p_15021465327"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_22975853672",
+        "resource_type": "Record",
+        "title": "Entry for Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2V7M-JMY : Fri Jul 19 07:45:19 UTC 2024), Entry for Edward Tallman and Jas Tallman, 16 Aug 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:99FF-4NCS",
+        "coverage": {
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "sd_c_1784223",
+        "resource_type": "Collection",
+        "title": "Vermont, Vital Records, 1760-1954",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1760/1954",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-9979-F9ZZ",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "title:1909-1942",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_15021465329",
+        "resource_type": "Person",
+        "title": "Jane Patterson, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2V7M-JM1 : Fri Jul 19 07:45:19 UTC 2024), Jane Patterson in entry for Edward Tallman, 16 Aug 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:2V7M-JM1"
+      },
+      {
+        "id": "sd_p_15021465328",
+        "resource_type": "Person",
+        "title": "Jas Tallman, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2V7M-JMB : Fri Jul 19 07:45:19 UTC 2024), Jas Tallman in entry for Edward Tallman, 16 Aug 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:2V7M-JMB"
+      },
+      {
+        "id": "sd_p_15021465327",
+        "resource_type": "Person",
+        "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:2V7M-JMY : Fri Jul 19 07:45:19 UTC 2024), Edward Tallman, 16 Aug 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:2V7M-JMY"
+      },
+      {
+        "id": "sd_auto_M9J1-78M",
+        "resource_type": "auto",
+        "title": "United States, Vermont, Births, from 0003 to 2009",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "+0003-01-01T00:00:00Z/+2009-12-31T23:59:59Z",
+          "standard_place": "Vermont, United States"
+        }
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:3QS7-9979-F9ZZ",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:3QS7-9979-F9ZZ",
+    "indexFields": {
+      "p_15021465327": {
+        "age": "74"
+      }
+    }
+  }
+}

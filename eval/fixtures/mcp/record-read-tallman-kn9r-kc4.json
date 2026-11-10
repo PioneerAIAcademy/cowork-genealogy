@@ -1,0 +1,152 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~KN9R-KC4"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_14241302376",
+        "ark": "ark:/61903/1:1:KN9R-KCW",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "5b420179-6cb8-4ccb-bb99-924c580bc68a",
+            "type": "BirthName",
+            "given": "Orrin",
+            "surname": "Tallman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "7ab8fe5d-7723-4d23-a870-4b0e6e2bb7f9",
+            "type": "Birth",
+            "date": "14 Oct 1878",
+            "standard_date": "14 Oct 1878",
+            "place": "Essex"
+          },
+          {
+            "id": "ea44d22d-dbe7-4e19-8d87-873050e51257",
+            "type": "Death",
+            "primary": true,
+            "date": "28 Sep 1930",
+            "standard_date": "28 Sep 1930",
+            "place": "Vermont, United States"
+          },
+          {
+            "id": "1e6dd1bc-663a-4bbb-be26-2d8e1212ae53",
+            "type": "Residence",
+            "place": "Burlington"
+          }
+        ]
+      },
+      {
+        "id": "p_14241302377",
+        "ark": "ark:/61903/1:1:KN9R-KC4",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "0ff5ecc3-fa3d-4570-9726-b87109ff2a11",
+            "type": "BirthName",
+            "given": "Edward",
+            "surname": "Tallman"
+          }
+        ]
+      },
+      {
+        "id": "p_14241302378",
+        "ark": "ark:/61903/1:1:KN9R-KCH",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "bbd5bf86-15e1-4636-8752-593bd96a424b",
+            "type": "BirthName",
+            "given": "Clarisa"
+          },
+          {
+            "id": "5b94594d-a722-4e3e-9e4a-5edca5c07b04",
+            "type": "BirthName",
+            "surname": "Wode"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "fad19496-b238-4b53-bfc0-851a55faca28",
+        "type": "ParentChild",
+        "parent": "p_14241302378",
+        "child": "p_14241302376"
+      },
+      {
+        "id": "388f6d90-2e06-43e1-bf66-5aea2f58b461",
+        "type": "Couple",
+        "person1": "p_14241302377",
+        "person2": "p_14241302378"
+      },
+      {
+        "id": "fa68b7ad-ae4d-4628-aae3-7b4998d27bf2",
+        "type": "ParentChild",
+        "parent": "p_14241302377",
+        "child": "p_14241302376"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_22343256525",
+        "resource_type": "Record",
+        "title": "Entry for Orrin Tallman, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KN9R-KCW : Thu Feb 20 22:49:00 UTC 2025), Entry for Orrin Tallman and Edward Tallman, 28 Sep 1930.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9MKX-HMJF",
+        "coverage": {
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "sd_c_2075288",
+        "resource_type": "Collection",
+        "title": "Vermont, Vital Records, 1760-2008",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/2075288",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1760/2003",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_14241302378",
+        "resource_type": "Person",
+        "title": "Clarisa Wode, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KN9R-KCH : Thu Feb 20 22:49:00 UTC 2025), Clarisa Wode in entry for Orrin Tallman, 28 Sep 1930.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KN9R-KCH"
+      },
+      {
+        "id": "sd_p_14241302376",
+        "resource_type": "Person",
+        "title": "Orrin Tallman, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KN9R-KCW : Thu Feb 20 22:49:00 UTC 2025), Orrin Tallman, 28 Sep 1930.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KN9R-KCW"
+      },
+      {
+        "id": "sd_p_14241302377",
+        "resource_type": "Person",
+        "title": "Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KN9R-KC4 : Thu Feb 20 22:49:00 UTC 2025), Edward Tallman in entry for Orrin Tallman, 28 Sep 1930.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KN9R-KC4"
+      },
+      {
+        "id": "sd_auto_M9LW-DW2",
+        "resource_type": "auto",
+        "title": "British Colonial America, New Hampshire Grants, Births, from 0001 to 2008",
+        "coverage": {
+          "place_rep_id": "12029673",
+          "date_range": "+0001-01-01T00:00:00Z/+2008-12-31T23:59:59Z",
+          "standard_place": "New Hampshire Grants, British Colonial America"
+        }
+      }
+    ]
+  }
+}

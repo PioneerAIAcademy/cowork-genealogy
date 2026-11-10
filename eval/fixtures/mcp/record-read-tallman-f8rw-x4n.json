@@ -1,0 +1,179 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~F8RW-X4N"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_11222724825",
+        "ark": "ark:/61903/1:1:F8RW-X4F",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "b52056e5-9a5b-410d-8388-3ef39e962e0e",
+            "type": "BirthName",
+            "given": "Orrin",
+            "surname": "...Allman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "4de066fe-dd0a-4b9f-9376-74680ac0ed91",
+            "type": "Birth",
+            "date": "1878",
+            "standard_date": "1878"
+          },
+          {
+            "id": "7a7f8475-af81-4367-ab6d-af71820b5134",
+            "type": "Death",
+            "primary": true,
+            "date": "28 Sep 1930",
+            "standard_date": "28 Sep 1930",
+            "place": "Burlington, Chittenden, Vermont, United States",
+            "standard_place": "Burlington, Chittenden, Vermont, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_11222724826",
+        "ark": "ark:/61903/1:1:F8RW-X4N",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "7c64366a-5cb5-44ff-980f-ba1b73fa6fef",
+            "type": "BirthName",
+            "given": "Edward",
+            "surname": "...Allman"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_11222724827",
+        "ark": "ark:/61903/1:1:F8RW-X4J",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "04d42e63-97ee-4a60-8054-1000814bc676",
+            "type": "BirthName",
+            "given": "Clarisa",
+            "surname": "Wade"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "a2fbfa55-25f2-496e-a437-abeda0281b85",
+        "type": "ParentChild",
+        "parent": "p_11222724827",
+        "child": "p_11222724825"
+      },
+      {
+        "id": "a60f227e-a3a5-4c65-a83a-730defb595d1",
+        "type": "ParentChild",
+        "parent": "p_11222724826",
+        "child": "p_11222724825"
+      },
+      {
+        "id": "cdc0e0dc-7079-48f2-b7b7-0d005dbeebd3",
+        "type": "Couple",
+        "person1": "p_11222724826",
+        "person2": "p_11222724827"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_732071317",
+        "resource_type": "Record",
+        "title": "Entry for Orrin ...Allman, \"Vermont, Deaths and Burials, 1871-1965\"",
+        "citation": "\"Vermont, Deaths and Burials, 1871-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F8RW-X4F : Fri Oct 16 14:24:04 UTC 2026), Entry for Orrin ...Allman and Edward ...Allman, 28 Sep 1930.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9M3P-GJ4",
+        "coverage": {
+          "place_rep_id": "8027775",
+          "date_range": "28 Sep 1930",
+          "record_type": "Vital",
+          "standard_place": "Burlington, Chittenden, Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_c_1675549",
+        "resource_type": "Collection",
+        "title": "Vermont, Deaths and Burials, 1871-1965",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1675549",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1871/1965",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L99P-HTGD",
+        "coverage": {
+          "place_rep_id": "8027775",
+          "date_range": "1928-1931",
+          "record_type": "DeathCertificate",
+          "standard_place": "Burlington, Chittenden, Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_11222724825",
+        "resource_type": "Person",
+        "title": "Orrin ...Allman, \"Vermont, Deaths and Burials, 1871-1965\"",
+        "citation": "\"Vermont, Deaths and Burials, 1871-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F8RW-X4F : Fri Oct 16 14:24:04 UTC 2026), Orrin ...Allman, 28 Sep 1930.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:F8RW-X4F"
+      },
+      {
+        "id": "sd_p_11222724827",
+        "resource_type": "Person",
+        "title": "Clarisa Wade, \"Vermont, Deaths and Burials, 1871-1965\"",
+        "citation": "\"Vermont, Deaths and Burials, 1871-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F8RW-X4J : Fri Oct 16 14:24:04 UTC 2026), Clarisa Wade in entry for Orrin ...Allman, 28 Sep 1930.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:F8RW-X4J"
+      },
+      {
+        "id": "sd_p_11222724826",
+        "resource_type": "Person",
+        "title": "Edward ...Allman, \"Vermont, Deaths and Burials, 1871-1965\"",
+        "citation": "\"Vermont, Deaths and Burials, 1871-1965\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:F8RW-X4N : Fri Oct 16 14:24:04 UTC 2026), Edward ...Allman in entry for Orrin ...Allman, 28 Sep 1930.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:F8RW-X4N"
+      },
+      {
+        "id": "sd_auto_M924-R5S",
+        "resource_type": "auto",
+        "title": "United States, Vermont, Deaths, from 0021 to 2990",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "+0021-01-01T00:00:00Z/+2990-12-31T23:59:59Z",
+          "standard_place": "Vermont, United States"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_8027775"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:3QS7-L99P-HTGD",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:3QS7-L99P-HTGD"
+  }
+}

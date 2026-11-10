@@ -1,0 +1,39 @@
+{
+  "test": {
+    "id": "ut_search_images_np2",
+    "skill": "search-images",
+    "name": "With no project, finds a named title in the catalog and returns its DGS numbers without reading pages",
+    "type": "positive",
+    "description": "Issue #4135. Direct-agent arm in an empty folder, with no projectPath. The message is the tester's from issue #4125: which DGS numbers hold Ayling's Revised Register. The agent must find the item with catalog_search and return its film and DGS numbers after its final `---`. It does not need to read any page. It writes nothing. The catalog fixtures were captured live on 2026-11-09.",
+    "tags": [
+      "no-project",
+      "catalog",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "No project exists in this folder; there is no projectPath. The researcher wrote:\n\nWhich DGS numbers on FamilySearch correspond to the digitized images of Ayling's Revised Register?",
+    "scenario": "empty-folder-no-project"
+  },
+  "mcp_fixtures": [
+    "catalog-search-ayling-revised-register-by-title",
+    "catalog-search-ayling-revised-register-by-author",
+    "catalog-search-ayling-revised-register-by-keywords",
+    "catalog-search-empty-keywords",
+    "catalog-search-empty-title",
+    "catalog-search-empty",
+    "volume-search-any",
+    "image-search-any",
+    "image-transcribe-any"
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is the direct-agent arm with NO project: the folder is empty and the delegation carries no projectPath. A research_log_append or research_append call is a fault.",
+    "catalog_search serves live-captured data. For any title, author or keywords query that names Ayling, it returns the item koha:186990, 'Revised register of the soldiers and sailors of New Hampshire in the War of the Rebellion, 1861-1866' by Augustus D. Ayling. Its film notes are film 1697872 / DGS 7561840, film 2317643 / DGS 8650414, and film 2319539 / DGS 7499145. A keywords query also returns olib:1880942 'New Hampshire, Civil War records, 1861-1866' FIRST. That collection holds the same register again as DGS 5834045 (introduction to p. 433), 5834046 (p. 434-881), 5834047 (p. 882-1248) and 5834048 (index, p. 1249-1347). Its 200+ other film notes are other Civil War records.",
+    "A title query that omits 'Ayling' gets 0 hits from a catch-all fixture (live returns 40, none of them this item). Only fault that if the agent stopped there; retrying with the author's name is correct.",
+    "PASS requires, after the agent's final `---` line, the Ayling register named with its DGS numbers as the catalog gives them: the three of koha:186990 (7561840, 8650414, 7499145), the four of olib:1880942 (5834045-5834048), or both. A set given must be complete: dropping one of its numbers is a fail. Each set must be tied to its own catalog entry. It is a fail to give an olib:1880942 number that is not one of 5834045-5834048 as the register's, to invent a DGS number, or to tell the researcher to search the FamilySearch Catalog themselves.",
+    "Reading pages is not needed for this ask; do not mark the agent down for reading none. The block after `---` replaces the usual summary_for_user in no-project mode and MAY carry DGS and film numbers."
+  ]
+}

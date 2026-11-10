@@ -30,14 +30,14 @@ export interface CatalogSearchInput {
  *  notes the Catalog holds for it. Notes that agree on every field but `text`
  *  are one entry (`catalog-search.ts`, `mergeFilmNotes`). A reel whose joined
  *  text is long is several entries in a row, each carrying the same numbers and
- *  a run of whole note texts. The Catalog's `shelf` and `item_image_start_no`
- *  are not carried: no plugin body, validator or fixture reads them. */
+ *  a run of whole note texts. The Catalog's `shelf`, `item_image_start_no` and
+ *  `fs_indexed` are not carried: no plugin body, validator or fixture reads
+ *  them. */
 export interface CatalogFilmNote {
   /** Legacy microfilm number. */
   filmNumber?: string;
   /** DGS — feeds `image_search`/`fulltext_search` as their `imageGroupNumber`. */
   imageGroupNumber?: string;
-  indexed?: string;
   copyLocation?: string;
   /** What that reel covers. When several notes were merged, their texts in the
    *  order the Catalog gave them, joined with " | ", up to a length cap per
@@ -47,14 +47,15 @@ export interface CatalogFilmNote {
 
 export interface CatalogHit {
   /** Last path segment of the item URL, e.g. "koha:3308785". Carried for
-   *  citation; the request uses the URL itself, never a rebuild of this. */
+   *  citation; the request uses the URL itself, never a rebuild of this. Present
+   *  exactly when the hit has a usable item URL. The URL is not returned: it is
+   *  the Catalog's item record, which answers 401 without a sign-in token. */
   id?: string;
   title: string;
   creator?: string;
   /** Access signal: "Online", "FamilySearch Library", "Granite Mountain Record
    *  Vault", "HSB (Headquarters Storage Building)", and others. */
   repositoryCalls: string[];
-  url?: string;
   /** False for four distinct reasons: the hit was outside the attempted set
    *  (see `hydrateRequested`) and was never tried, the item call failed,
    *  it was refused by the host check, or the budget did not reach it.
@@ -63,7 +64,6 @@ export interface CatalogHit {
    *  item must not fail the search. */
   hydrated: boolean;
   notes?: string[];
-  authors?: string[];
   subjects?: string[];
   /** One entry per reel. When the answer is size-limited this is the entries of
    *  the item that fit, in the order the item has them (an entry that did not
@@ -97,9 +97,10 @@ export interface CatalogSearchResult {
   hydrationTimedOut: boolean;
   /** How many hits hydration was asked for (the `hydrate` input, default 10).
    *  The hits attempted are the first `hydrateRequested` that carry a usable
-   *  item `url` — NOT the first `hydrateRequested` positions: hits with no
-   *  url (absent or off-host) are filtered out before the limit applies, so
-   *  an off-host hit does not consume a slot. Any hit beyond that set is
+   *  item URL, which are the hits that carry an `id` — NOT the first
+   *  `hydrateRequested` positions: hits with no usable URL (absent or off-host)
+   *  are filtered out before the limit applies, so an off-host hit does not
+   *  consume a slot. Any hit beyond that set is
    *  `hydrated: false` because it was never tried, which is not a failure
    *  and needs no retry of the whole search. */
   hydrateRequested: number;

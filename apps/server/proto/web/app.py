@@ -25,6 +25,7 @@ with the chat on (#3985, ``GENEALOGY_CHAT``):
                    served at FS_REDIRECT_URI's path, /callback by default, #3992)
   GET  /privacy, /terms (no sign-in), GET /api/account (the id and deletion code)
                                                 only with the chat off (#3993); 404 with it on
+  GET  /           onboarding signed out, account and projects signed in; chat off only (#4001)
   GET  /openrouter, /openrouter/link, /openrouter/callback, POST /openrouter/unlink
                                                 the patron's own OpenRouter key (#3988; served only
                                                 with OPENROUTER_LINKING_ENABLED=true; cookie needed)
@@ -149,6 +150,7 @@ from pg_credentials import PgCredentials  # noqa: E402
 from web import auth  # noqa: E402  (patron sign-in, vendored from the alpha)
 from web import blobstore  # noqa: E402  (U20: the S3 client, the engine's GENEALOGY_S3_* semantics)
 from web import feedback  # noqa: E402  (U20: the feedback bundle)
+from web import pages  # noqa: E402  (#4001: the chat-off tier's own pages)
 from web import policies  # noqa: E402  (#3993: the privacy and terms text)
 from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
 from web.job_state import job_state  # noqa: E402  (the four states the list shows)
@@ -377,6 +379,18 @@ ADMISSION_REFUSALS: dict[str, tuple[int, str, str]] = {
                     "{who} is not on the allowlist. Ask the administrator to add this exact address, "
                     "then sign in again."),
 }
+
+
+class SessionRefused(HTTPException):
+    """``current_user``'s refusal of a signed-in user (#4001): the API answer is unchanged,
+    an HTTPException with the reason's status and detail, but it carries the reason and the
+    account email, so a page can say what happened and to whom without matching text."""
+
+    def __init__(self, reason: str, email: str) -> None:
+        status, detail, _page = ADMISSION_REFUSALS[reason]
+        super().__init__(status_code=status, detail=detail)
+        self.reason = reason
+        self.email = email
 
 
 class AdmissionBusy(Exception):
@@ -2046,7 +2060,10 @@ def create_app(
 
     # Every route that returns one user's data goes here: it gets `private, no-store` and
     # `Vary: Cookie`, refusals included. A new per-user route outside these prefixes gets neither.
-    PER_USER_CACHE_PATHS = ("/api/account", "/api/projects")
+    # Chat off, "/" is the page that carries the deletion code (#4001), and "/upload" the
+    # upload page that follows it. Chat on, "/" is the SPA's index.html, which stays
+    # `no-cache`, so neither is added. The match is per path segment: "/" covers only "/".
+    PER_USER_CACHE_PATHS = ("/api/account", "/api/projects") + (() if app.state.chat else ("/", "/upload"))
 
     class ProjectCacheHeaders:
         def __init__(self, app: ASGIApp) -> None:
@@ -2165,8 +2182,7 @@ def create_app(
         if auth.revoked(data.get("iat"), user.sessions_revoked_at):
             raise HTTPException(status_code=401, detail="Session revoked")
         if (reason := await _admission_refusal(request, user.email, user)) is not None:
-            status, detail, _page = ADMISSION_REFUSALS[reason]
-            raise HTTPException(status_code=status, detail=detail)
+            raise SessionRefused(reason, user.email)
         return user
 
     async def _session(request: Request, session_id: str, user: User) -> SessionRow:
@@ -2239,7 +2255,7 @@ def create_app(
         # #3987: only when UPLOADS_ENABLED is set, so an unset tier answers as it always did.
         if app.state.uploads is not None:
             config["uploads"] = app.state.uploads
-        # #3988: always sent, so the browser app (#4001) shows the OpenRouter page only on true.
+        # #3988: always sent, so a client can offer OpenRouter linking only on true.
         config["openrouter"] = app.state.openrouter
         return config
 
@@ -2404,13 +2420,19 @@ def create_app(
         resp.delete_cookie(auth.OR_OAUTH_COOKIE, **auth.cookie_kwargs())
         return resp
 
+    async def _openrouter_linked(request: Request, user_id: str) -> bool:
+        """Linked means a key that decrypts under the current FS_TOKEN_ENC_KEY: one written
+        under another key is no key to the tool server either (#3984). GET /openrouter and
+        the landing page (#4001) both read it here."""
+        return auth.decrypt(await _store(request).openrouter_key_enc(user_id)) is not None
+
     @linking.get("/openrouter")
     async def openrouter_status(request: Request, response: Response, user: User = Depends(current_user)) -> dict:
-        """``{linked: bool}`` for the browser app's OpenRouter page (#4001). Never the key.
+        """``{linked: bool}``, whether the caller has a usable OpenRouter key. Never the key.
         Linked means a key that decrypts under the current FS_TOKEN_ENC_KEY: one written under
         another key is no key to the tool server either (#3984), so the page offers a relink."""
         response.headers["Cache-Control"] = "private, no-store"
-        return {"linked": auth.decrypt(await _store(request).openrouter_key_enc(user.id)) is not None}
+        return {"linked": await _openrouter_linked(request, user.id)}
 
     @linking.get("/openrouter/link")
     async def openrouter_link(next: str | None = None, user: User = Depends(current_user)) -> Response:
@@ -3126,6 +3148,33 @@ def create_app(
     # deliberately never included: it is a sink so the decorators below have somewhere to
     # register. Do not "fix" it by including it.
     beta = APIRouter() if app.state.chat else app
+
+    @beta.api_route("/", methods=["GET", "HEAD"])
+    async def home(request: Request) -> HTMLResponse:
+        """#4001: onboarding signed out, the account and projects signed in. Registered before
+        ``spa.mount_spa``, so with the chat off it wins over any SPA build, for HEAD too. A
+        refused session (blocked, not allowed, not ready) gets its reason's wording, naming
+        the account, instead of the onboarding, so a blocked patron is not sent round the
+        sign-in again."""
+        try:
+            user = await current_user(request)
+        except SessionRefused as exc:
+            _status, _detail, page = ADMISSION_REFUSALS[exc.reason]
+            message = page.format(who=f"The FamilySearch account {exc.email}", fail="Reload this page in a minute.")
+            return HTMLResponse(pages.refused_page(message, temporary=exc.reason == "not_ready"),
+                                status_code=exc.status_code)
+        except HTTPException as exc:
+            if exc.status_code != 401:
+                raise
+            sign_in = ("familysearch" if auth.familysearch_configured()
+                       else "dev" if auth.dev_login_enabled() else None)
+            return HTMLResponse(pages.signed_out_page(public_url=auth.public_url(), sign_in=sign_in))
+        linked = await _openrouter_linked(request, user.id) if app.state.openrouter else None
+        return HTMLResponse(pages.signed_in_page(
+            public_url=auth.public_url(), email=user.email, familysearch_id=user.familysearch_id, account_id=user.id,
+            deletion_code=auth.deletion_code(user.id), projects=await _store(request).list_projects(user.id),
+            openrouter_linked=linked,
+        ))
 
     @beta.get("/privacy")
     async def privacy_page() -> HTMLResponse:

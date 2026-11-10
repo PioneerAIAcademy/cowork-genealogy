@@ -234,6 +234,13 @@ def test_the_alpha_system_prompt_is_true_before_a_project_exists(tmp_path):
     assert opts.env[real_agent.HOSTED_PLANE_ENV] == "1"
 
 
+def test_the_alpha_system_prompt_tells_the_agent_what_the_researcher_can_see(tmp_path):
+    """Issue #4241: the agent told a researcher to open a report at a sandbox path they
+    can't reach, and didn't know a written proof conclusion is shown under Findings."""
+    opts = real_agent.build_options(tmp_path)
+    assert real_agent.RESEARCHER_VIEW_NOTE in opts.system_prompt["append"]
+
+
 def test_the_hosted_flag_is_the_one_the_plugin_hook_reads():
     """The server and the plugin hook each define `GENEALOGY_HOSTED_PLANE`. A rename on one
     side alone leaves every server test green while the hook speaks on both hosted planes,

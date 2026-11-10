@@ -30,7 +30,8 @@
     "rank-search-matches-anders-unna-marriage",
     "record-read-urna-anders-1786-marriage",
     "catalog-search-empty",
-    "catalog-search-empty-keywords"
+    "catalog-search-empty-keywords",
+    "record-search-halsteinsdatter-unpinned-zero-results"
   ],
   "execution": {
     "max_turns": 35,

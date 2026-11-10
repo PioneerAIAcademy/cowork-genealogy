@@ -25,6 +25,12 @@ tools:
   - mcp__genealogy__research_log_append
   - mcp__remote-devices__Genealogy_Research__research_log_append
   - mcp__Genealogy_Research__research_log_append
+  - mcp__genealogy__image_transcribe
+  - mcp__remote-devices__Genealogy_Research__image_transcribe
+  - mcp__Genealogy_Research__image_transcribe
+  - mcp__genealogy__sidecar_read
+  - mcp__remote-devices__Genealogy_Research__sidecar_read
+  - mcp__Genealogy_Research__sidecar_read
 ---
 
 # Translation
@@ -79,18 +85,19 @@ German, French, Spanish, Italian, Dutch, Latin, Portuguese.
 
 ## Reading images
 
-Translation works on text, or on an image file the delegation names by
-path.
+Translation works on text, or on an image the delegation names.
 
-- **Image file path given** — open the file with `Read` and attempt the
-  paleographic reading directly.
-- **Image exists only in the caller's conversation** — a subagent starts
-  with a fresh context and the delegation is text only; the image is not
-  present. Return asking for the file path or a transcription. Do NOT
-  claim to read an image "already in the conversation."
-- **Only an image URL, no file** — translation cannot open URLs. Ask
-  the user to open the link in the record viewer and paste or attach the
-  image.
+- **`uploads/<name>`** — `image_transcribe({ projectPath, file: "uploads/<name>" })`,
+  then `sidecar_read({ projectPath, ref: staged.resultsRef })` for the full text
+  (the returned `transcription` only when `staged` is null). Say the text is the
+  tool's OCR, not your reading.
+- **`results/...` transcription ref** — `sidecar_read({ projectPath, ref })`.
+- **Absolute path outside the project** — `Read` it and read the script yourself.
+- **Image only in the caller's conversation** — it is not in your context. Ask
+  for it saved to `uploads/` (with `project_context`'s `uploadUrl` when given)
+  or for a transcription; never claim to read it.
+- **Image URL only** — you cannot open URLs. Ask the user to paste or attach
+  the image from the record viewer.
 
 ## Steps
 
@@ -156,7 +163,7 @@ Before you write your reply: one `research_log_append` call with the delegation'
 
 Then return that same translation, in full, above the `---` line — never only a note that it was logged.
 
-A hand-off, or a return asking for the file path or a transcription, logs nothing.
+A hand-off, or a return asking for an upload or a transcription, logs nothing.
 
 ## Example
 
@@ -394,8 +401,7 @@ and [mother], at the age of [age] years. Buried on [burial date]."
 |-----------|--------|
 | Record is partly English, partly foreign | Translate only the foreign portions. Note which parts are already English. |
 | Mixed Latin/vernacular record (common in early Italian/German registers) | Translate both layers. Note where the scribe switches language. |
-| User provides an image file path | Open it with `Read` and attempt the paleographic reading. |
-| Image exists only in the caller's conversation | A subagent starts with fresh context. Return asking for the file path or a transcription. Do not claim to read an image not present in the delegation. |
+| User provides an image or image ref | Follow "Reading images". |
 | User provides text they already transcribed | Review for common misreadings (f/long-s, C/E confusion) before translating. |
 | A word has no clear modern equivalent | Keep the original term in italics, provide the closest English explanation in parentheses. |
 | The record uses regional dialect | Note the dialect and translate based on regional meaning, not standard-language meaning. |

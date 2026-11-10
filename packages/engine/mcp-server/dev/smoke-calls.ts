@@ -20,6 +20,7 @@ import {
   HOSTED_REAUTH_INSTRUCTION,
   OPENROUTER_API_KEY_MISSING_MESSAGE,
 } from "../src/auth/config.js";
+import { HOUSE_RESEARCHER_PROFILE } from "../src/tools/project-create.js";
 
 export type SmokeMode = "no-bearer" | "bearer";
 
@@ -53,6 +54,9 @@ export interface SmokeCtx {
   openRouterKeyConfigured: boolean | null;
   /** Values read back from earlier steps (e.g. the evaluations sidecar `file_path`). */
   values: Record<string, unknown>;
+  /** Write `seedDocuments()` into the project, as the driver's store holds it.
+   *  `project_create` always reads FamilySearch, so no smoke can create one. */
+  seedProject: () => Promise<void>;
 }
 
 export interface Expectation {
@@ -69,7 +73,8 @@ export interface SmokeStep {
   /** Reaches FamilySearch with the caller's token (every `tokenStep`). */
   familySearch?: boolean;
   args: (ctx: SmokeCtx) => Record<string, unknown>;
-  /** Host-side fixture write before the call; skipped when `hostProjectDir` is null. */
+  /** Runs before the call: the seed, or a host-side fixture write (which skips
+   *  itself when `hostProjectDir` is null). */
   before?: (ctx: SmokeCtx) => Promise<void>;
   expect: (res: CallResult, ctx: SmokeCtx) => Expectation;
   /** Capture values for later steps. */
@@ -104,6 +109,36 @@ const SEED_TREE = {
   relationships: [],
   sources: [],
 };
+
+/** The project every row after the seed works on: what `project_create` would
+ *  write for SEED_TREE, with the subject P1. */
+export function seedDocuments(): Record<"research.json" | "tree.gedcomx.json" | "starting-tree.gedcomx.json", unknown> {
+  const today = new Date().toISOString().slice(0, 10);
+  const research: Record<string, unknown> = {
+    project: {
+      id: "rp_001",
+      objective: "Does this transport reach every tool?",
+      title: "smoke",
+      subject_person_ids: ["P1"],
+      status: "active",
+      created: today,
+      updated: today,
+    },
+  };
+  for (const section of [
+    "questions", "plans", "log", "sources", "assertions", "person_evidence",
+    "conflicts", "hypotheses", "timelines", "proof_summaries", "evaluations",
+  ]) research[section] = [];
+  research.researcher_profile = { ...HOUSE_RESEARCHER_PROFILE };
+  return { "research.json": research, "tree.gedcomx.json": SEED_TREE, "starting-tree.gedcomx.json": SEED_TREE };
+}
+
+/** `seedDocuments()` written into a project directory on this host. */
+export async function seedHostProject(dir: string): Promise<void> {
+  for (const [name, doc] of Object.entries(seedDocuments())) {
+    await writeFile(join(dir, name), JSON.stringify(doc, null, 2), "utf-8");
+  }
+}
 
 const CANDIDATE_GEDCOMX = {
   persons: [
@@ -213,10 +248,10 @@ const tokenStep = (tool: string, args: Record<string, unknown>): SmokeStep => ({
 export const CALL_PLAN: readonly SmokeStep[] = [
   // Project tools, in fixture order against a fresh project.
   //
-  // Two refusals first, while the project does not exist yet. A successful
-  // `personId` create cannot be smoked: the run has one project, every later
-  // row works on the one the hand-built row creates, and a second create is
-  // refused as "already exist".
+  // The refusals first, while the project does not exist yet. A successful
+  // create cannot be smoked: `project_create` always reads a FamilySearch
+  // person, so the project every later row works on is seeded by the driver
+  // (`ctx.seedProject`), and a create on it is refused as "already exist".
   {
     tool: "project_create",
     label: "project_create (removed personReadRef)",
@@ -256,17 +291,38 @@ export const CALL_PLAN: readonly SmokeStep[] = [
   },
   {
     tool: "project_create",
+    label: "project_create (removed tree)",
     offline: true,
     args: (ctx) => ({
       projectPath: ctx.projectPath,
-      objective: "Does this transport reach every tool?",
-      title: "smoke",
-      subjectPersonIds: ["P1"],
+      objective: "Is a hand-built tree refused by name?",
       tree: SEED_TREE,
     }),
     expect: (res) => ({
-      ok: !res.isError && res.body?.ok === true && linksWellFormed(res.body),
-      detail: res.body?.ok === true ? `wrote ${res.body.filesWritten.join(", ")}` : brief(res, 300),
+      // Refused by server.ts's unknown-argument guard, with project_create's own text.
+      ok: res.isError && /tree is no longer accepted/.test(String(res.body?.error ?? "")),
+      detail: brief(res, 300),
+    }),
+  },
+  {
+    tool: "project_create",
+    label: "project_create (no personId)",
+    offline: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, objective: "Is a create with no person refused?" }),
+    expect: (res) => ({
+      ok: res.body?.ok === false && carries(res, "personId is required"),
+      detail: brief(res, 300),
+    }),
+  },
+  {
+    tool: "project_create",
+    label: "project_create (the seeded project exists)",
+    offline: true,
+    before: (ctx) => ctx.seedProject(),
+    args: (ctx) => ({ projectPath: ctx.projectPath, objective: "Is an existing project kept?", personId: FS_PID }),
+    expect: (res) => ({
+      ok: res.body?.ok === false && carries(res, "project_create never overwrites"),
+      detail: brief(res, 300),
     }),
   },
   {

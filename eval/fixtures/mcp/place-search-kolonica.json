@@ -1,0 +1,43 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Kolonica, Slovakia (Snina District). Measured live 2026-10-29 with place_search({ placeName: 'Kolonica', contextName: 'Slovakia' }). Without it the locality-guide n8p test had only place-search-any (empty results), so the place never resolved and the agent never reached its batched Step-3 survey. Predicate matches ~Kolonica.",
+  "args": {
+    "placeName": "~Kolonica"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Kolonica, Snina, Slovakia",
+        "type": "Municipality",
+        "dateRange": "+1993/",
+        "latitude": 48.951,
+        "longitude": 22.2622,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Kolonica&focusedId=7119289"
+      },
+      {
+        "standardPlace": "Kolonica, Humenné, Slovakia",
+        "type": "Municipality",
+        "dateRange": "+1993/+1996",
+        "latitude": 48.951,
+        "longitude": 22.2622,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Kolonica&focusedId=7119293"
+      },
+      {
+        "standardPlace": "Kolonica, Humenné, Czechoslovakia",
+        "type": "Municipality",
+        "dateRange": "+1960/+1993",
+        "latitude": 48.951,
+        "longitude": 22.2622,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Kolonica&focusedId=7119292"
+      },
+      {
+        "standardPlace": "Kolonica, Snina, Czechoslovakia",
+        "type": "Municipality",
+        "dateRange": "+1922/+1960",
+        "latitude": 48.951,
+        "longitude": 22.2622,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Kolonica&focusedId=7119290"
+      }
+    ]
+  }
+}

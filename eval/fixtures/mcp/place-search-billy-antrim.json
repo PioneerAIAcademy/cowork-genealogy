@@ -1,0 +1,45 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Billy civil parish, County Antrim. Measured live 2026-10-29 with place_search({ placeName: 'Billy', contextName: 'Antrim' }). Without it ut_locality_guide_v7h had only place-search-any (empty results), so the parish never resolved and the agent dropped volume_search in 2 of 4 runs. Predicate matches ~Billy.",
+  "args": {
+    "placeName": "~Billy"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Billy, County Antrim, Northern Ireland, United Kingdom",
+        "type": "Parish",
+        "dateRange": "+1922/",
+        "latitude": 55.1869,
+        "longitude": -6.4826,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Billy&focusedId=3400387",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Billy,_County_Antrim"
+      },
+      {
+        "standardPlace": "Billy, County Antrim, Ireland",
+        "type": "Parish",
+        "dateRange": "/+1922",
+        "latitude": 55.191,
+        "longitude": -6.4957,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Billy&focusedId=3400388",
+        "wikipediaUrl": "https://en.wikipedia.org/wiki/Billy,_County Antrim"
+      },
+      {
+        "standardPlace": "Curramoney, Billy, County Antrim, Northern Ireland, United Kingdom",
+        "type": "Townland",
+        "dateRange": "+1922/",
+        "latitude": 55.1829,
+        "longitude": -6.4917,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Curramoney&focusedId=12417595"
+      },
+      {
+        "standardPlace": "Curramoney, Billy, County Antrim, Ireland",
+        "type": "Townland",
+        "dateRange": "/+1922",
+        "latitude": 55.1828,
+        "longitude": -6.49176,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Curramoney&focusedId=12417594"
+      }
+    ]
+  }
+}

@@ -7629,7 +7629,7 @@ function rewriteLinkedFacts(
       const before = snapshot(fact);
       // A concluded fact is the value proof-conclusion landed, and a proof
       // summary may cite it. Correcting a misread record still has to reach it —
-      // leaving a known-wrong concluded value on the upload target is worse —
+      // leaving a known-wrong concluded value on the deliverable is worse —
       // but it must never happen quietly.
       const concluded = fact.primary === true;
       // A re-CLASSIFIED assertion no longer describes this fact's type, and the
@@ -7707,7 +7707,7 @@ function rewriteLinkedFacts(
             if (concluded) concludedTouched.add(fact);
             // Never silent. A blank string withdraws a claim exactly as `null`
             // does, and it is also the likelier typo; either way this deleted
-            // data from the upload target.
+            // data from the deliverable.
             mutationWarnings.push(
               `fact '${fact.id}' lost its '${attr}' because assertion '${a.entryId}' no longer ` +
                 "asserts one. If that was a typo rather than a withdrawal, set the field back.",

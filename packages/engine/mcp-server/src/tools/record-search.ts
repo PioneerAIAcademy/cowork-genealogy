@@ -941,8 +941,9 @@ export function mapEntry(
   if (recordTitle) result.recordTitle = recordTitle;
   if (recordSourceArkUrl) result.recordArk = toArk(recordSourceArkUrl);
 
-  // Carry the simplified GedcomX so downstream tools (same_person)
-  // get the real records, not a hand-rebuilt approximation. The FS search
+  // Carry the simplified GedcomX so the staged file holds the real record,
+  // not a hand-rebuilt approximation (rank_search_matches and record_read read
+  // it there; the slim block drops it from the answer). The FS search
   // payload is full GedcomX at runtime; FSGedcomx is just a narrower
   // declaration of the fields mapEntry reads, hence the cast.
   const rawGedcomx = entry.content?.gedcomx;
@@ -953,14 +954,14 @@ export function mapEntry(
 
   // Read off the RAW gedcomx, not `result.gedcomx`: `toSimplified` does not
   // carry the root `fields[]` into the simplified document, and — like
-  // `relativeTerms` below — this has to be resolved before the staged slim block
+  // `relativeTerms` below — this has to be resolved before the slim block
   // deletes `result.gedcomx` anyway.
   const batchNumber = extractBatchNumber(rawGedcomx);
   if (batchNumber) result.batchNumber = batchNumber;
 
   if (display?.role) result.role = display.role;
 
-  // Resolved HERE, before the staged slim block deletes `result.gedcomx`, so the
+  // Resolved HERE, before the slim block deletes `result.gedcomx`, so the
   // finding survives into both the inline response and the staged sidecar
   // (#1324). Resolving it downstream of the slim would be resolving against
   // nothing.
@@ -1182,14 +1183,14 @@ export async function recordSearchTool(
     }
   }
 
-  // Whenever results were staged, slim the INLINE projection so a broad search
-  // can't overflow the model's context. What is dropped and why — including the
-  // fields deliberately KEPT — is documented on `compactStagedRecordSearch`.
-  // It lives in `utils/` because the eval harness runs the same function on its
-  // canned responses; mirroring it in Python would make the copy that drifts.
-  if (out.staged) {
-    compactStagedRecordSearch(out);
-  }
+  // Slim EVERY answer, staged or not, so a broad search can't overflow the
+  // model's context: a 100-result page with no project is over Claude Code's
+  // ~50k cutoff with `gedcomx` (issue #4386). Runs after staging, so the staged
+  // file keeps the full rows. What is dropped and why — including the fields
+  // deliberately KEPT — is documented on `compactStagedRecordSearch`. It lives in
+  // `utils/` because the eval harness runs the same function on its canned
+  // responses; mirroring it in Python would make the copy that drifts.
+  compactStagedRecordSearch(out);
 
   // Rank host-side when the caller named a subject. This is the "always call
   // rank_search_matches" rule turned into a tool contract — a documented step
@@ -1494,7 +1495,7 @@ export const recordSearchToolSchema = {
       count: { type: "number", description: "Number of results per page. Max 100. Default 50 when `subjectId` is supplied — every row comes back scored and ordered, so fetching a deep pool is worth it — and 20 otherwise, since an unranked deep pool is just more stubs for you to read. Override only for a deliberate reason." },
       offset: { type: "number", description: "Pagination offset. Default 0. The combined value `offset + count` must be at most 4999 (FamilySearch's hard search-depth limit)." },
 
-      projectPath: { type: "string", description: "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle. The inline results come back as compact stubs — no per-result `gedcomx`, no `collectionUrl` (derive it from `collectionId`), no `treeMatches` key when there are none, and no per-row `collectionTitle`: those are hoisted into a single response-level `collections` map of `collectionId` → title. Stubs DO keep `relativeTerms` when you searched on a relative's name: it reports, per result, whether that relative is actually named on the record (`present`, with their name), definitely not on it (`absent`), or undetermined (`unknown`). Check it before writing that a record confirms a relationship — `absent` means the record is merely consistent with that relative, not evidence for them. The full-fidelity rows live in the staged file, so a broad search can't overflow the context. Pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them (that also lets you omit `query` — the staged payload already carries it). Only omit `projectPath` for a throwaway exploratory search you are certain you will not log: results come back inline at full fidelity but nothing reaches disk, and logging such a search anyway leaves a log entry whose raw response is gone for good (`research_log_append` warns when that happens)." },
+      projectPath: { type: "string", description: "Absolute path to the active project directory. Supply it whenever the search will be logged (the normal case): the tool then stages its raw results host-side and returns a `staged.resultsRef` handle. Either way the results come back as compact stubs — no per-result `gedcomx`, no `collectionUrl` (derive it from `collectionId`), no `treeMatches` key when there are none, and no per-row `collectionTitle`: those are hoisted into a single response-level `collections` map of `collectionId` → title. Stubs DO keep `relativeTerms` when you searched on a relative's name: it reports, per result, whether that relative is actually named on the record (`present`, with their name), definitely not on it (`absent`), or undetermined (`unknown`). Check it before writing that a record confirms a relationship — `absent` means the record is merely consistent with that relative, not evidence for them. The full rows live only in the staged file (`record_read` gives one record's), so a broad search can't overflow the context. Pass the `staged.resultsRef` to `rank_search_matches` to re-rank by match score, and to `research_log_append` as `stagedResultsRef` so the results are retained in the log sidecar without you re-serializing them (that also lets you omit `query` — the staged payload already carries it). Only omit `projectPath` for a throwaway exploratory search you are certain you will not log: nothing reaches disk, and logging such a search anyway leaves a log entry whose raw response is gone for good (`research_log_append` warns when that happens)." },
     },
   },
 };

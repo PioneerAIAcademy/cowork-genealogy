@@ -229,9 +229,8 @@ it and sets `primary`/`preferred` on the concluded value — via `tree_correct
 update_fact` when the value matches an existing evidence fact, or `tree_edit
 add_fact` (`primary: true` + multi-refs) for a synthesized conclusion matching
 no single record (`tree-materialization-spec.md` §7/§7.1). It writes
-`proof_summary`+`proof_tier`, ensures cited sources have GedcomX `S` entries, and
-gates upload to concluded facts. It no longer runs the coherence gate (§5.4) or
-folds a candidate document.
+the `proof_summary` and ensures cited sources have GedcomX `S` entries. It no
+longer runs the coherence gate (§5.4) or folds a candidate document.
 
 ### 5.7 Post-materialization
 

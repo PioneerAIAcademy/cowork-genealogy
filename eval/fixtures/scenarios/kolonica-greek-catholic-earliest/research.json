@@ -1,0 +1,21 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Find records for ancestors from Kolonica, Slovakia in the 19th century",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-01-01",
+    "updated": "2026-01-01"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

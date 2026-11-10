@@ -15,8 +15,8 @@ description: >-
   there, whether anything was mis-indexed — to source-evaluation. Given a
   mother's 1900 or 1910 US census children-born and children-living counts, it
   also reports which of her children the tree is missing and when each was born.
-model: claude-sonnet-4-6
-effort: high
+model: claude-haiku-5-5
+effort: low
 tools:
   # Listed under all three server spellings: `genealogy` (harnesses, .mcp.json,
   # hosted web), `remote-devices__Genealogy_Research` (bridged), and

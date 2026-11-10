@@ -1,0 +1,92 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~QPQ2-58BX"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_104361058754",
+        "ark": "ark:/61903/1:1:QPQ2-58BX",
+        "principal": true,
+        "names": [
+          {
+            "id": "35520aea-66ba-43d3-b1d1-a68a005edb4c",
+            "type": "BirthName",
+            "surname": "Tallman",
+            "given": "Edward"
+          }
+        ],
+        "facts": [
+          {
+            "id": "adf68f68-6659-4afa-abd8-b3c28904a9df",
+            "type": "Death",
+            "primary": true,
+            "date": "16 August 1913",
+            "standard_date": "16 Aug 1913",
+            "place": "Vermont",
+            "standard_place": "Vermont, United States"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_106197288597",
+        "resource_type": "Record",
+        "title": "Entry for Edward Tallman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQ2-58BX : Sat Mar 09 02:05:40 UTC 2024), Entry for Edward Tallman, 16 August 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:QR24-GYCY",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "16 August 1913",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_c_1987653",
+        "resource_type": "Collection",
+        "title": "Vermont, Town Clerk, Vital and Town Records, 1732-2005",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1987653",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1699/2005",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G99D-CFQT",
+        "coverage": {
+          "place_rep_id": "8027775",
+          "date_range": "1905-1969",
+          "record_type": "DeathCertificate",
+          "standard_place": "Burlington, Chittenden, Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_104361058754",
+        "resource_type": "Person",
+        "title": "Edward Tallman, \"Vermont, Town Clerk, Vital and Town Records, 1732-2005\"",
+        "citation": "\"Vermont, Town Clerk, Vital and Town Records, 1732-2005\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QPQ2-58BX : Sat Mar 09 02:05:40 UTC 2024), Edward Tallman, 16 August 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:QPQ2-58BX"
+      }
+    ],
+    "places": [
+      {
+        "id": "place_361"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:3QSQ-G99D-CFQT",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:3QSQ-G99D-CFQT"
+  }
+}

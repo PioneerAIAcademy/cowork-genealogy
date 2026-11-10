@@ -564,7 +564,10 @@ def test_nginx_rule_passes_a_legitimate_variant(name, old, new):
 
 
 def _script_env(tmp_path: Path, **extra: str) -> dict[str, str]:
-    env = {"PATH": os.environ["PATH"], "HOME": str(tmp_path), "MALACHI_ENV": str(tmp_path / "cfg" / "env")}
+    # MIN_FREE_MEM_GB=0: `up` reads the host's real MemAvailable, so on a box with under 4 GB free
+    # every `up` test failed on the floor. The floor's own tests set it explicitly.
+    env = {"PATH": os.environ["PATH"], "HOME": str(tmp_path), "MALACHI_ENV": str(tmp_path / "cfg" / "env"),
+           "MIN_FREE_MEM_GB": "0"}
     return {**env, **extra}
 
 

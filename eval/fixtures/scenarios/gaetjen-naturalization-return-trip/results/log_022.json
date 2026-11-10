@@ -1,0 +1,158 @@
+{
+  "log_id": "log_022",
+  "tool": "record_search",
+  "retrieved": "2026-10-07T04:26:30.832Z",
+  "returned_count": 1,
+  "payload": {
+    "query": {
+      "projectPath": "C:\\Users\\User\\Documents\\GenealogyProjects\\p2593-gaetjen",
+      "subjectId": "I1",
+      "surname": "G*tj*n",
+      "givenName": "Herm*",
+      "collectionId": "1849782",
+      "anyYearFrom": 1870,
+      "anyYearTo": 1872
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 4999,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "recordId": "ark:/61903/1:1:QVPF-ZQP5",
+        "events": [
+          {
+            "type": "Nationality",
+            "value": "Germany"
+          },
+          {
+            "type": "Immigration",
+            "date": "1885",
+            "place": "New York County, New York, United States"
+          }
+        ],
+        "treeMatches": [],
+        "personName": "Hermann Gätjen",
+        "score": 3.4636,
+        "confidence": 2,
+        "sex": "Male",
+        "birthDate": "1855",
+        "birthPlace": "Germany",
+        "collectionId": "1849782",
+        "collectionTitle": "New York, Passenger Lists, 1820-1920",
+        "collectionUrl": "https://www.familysearch.org/service/cds/recapi/collections/1849782",
+        "recordTitle": "Entry for Hermann Gätjen, \"New York, Passenger Lists, 1820-1920\"",
+        "recordArk": "ark:/61903/1:2:Q27V-BC4Q",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "p_101173324314",
+              "ark": "ark:/61903/1:1:QVPF-ZQP5",
+              "principal": true,
+              "gender": "Male",
+              "names": [
+                {
+                  "type": "BirthName",
+                  "given": "Hermann",
+                  "surname": "Gätjen"
+                }
+              ],
+              "facts": [
+                {
+                  "type": "Nationality",
+                  "value": "Germany"
+                },
+                {
+                  "type": "Immigration",
+                  "primary": true,
+                  "date": "1885",
+                  "standard_date": "1885",
+                  "place": "New York County, New York, United States",
+                  "standard_place": "New York City, New York, United States"
+                },
+                {
+                  "type": "Birth",
+                  "date": "1855",
+                  "standard_date": "1855",
+                  "place": "Germany",
+                  "standard_place": "Germany"
+                }
+              ],
+              "sources": [
+                {
+                  "ref": "sd_da1"
+                }
+              ]
+            }
+          ],
+          "sources": [
+            {
+              "id": "src_r_102196844314",
+              "resource_type": "Record",
+              "title": "Entry for Hermann Gätjen, \"New York, Passenger Lists, 1820-1920\"",
+              "citation": "\"New York, Passenger Lists, 1820-1920\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:QVPF-ZQP5 : Thu Jul 02 10:58:23 UTC 2026), Entry for Hermann Gätjen, 1885.",
+              "url": "https://www.familysearch.org/ark:/61903/1:2:Q27V-BC4Q",
+              "coverage": {
+                "place_rep_id": "399970",
+                "date_range": "1885",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_c_1849782",
+              "resource_type": "Collection",
+              "title": "New York, Passenger Lists, 1820-1920",
+              "url": "https://www.familysearch.org/service/cds/recapi/collections/1849782",
+              "coverage": {
+                "place_rep_id": "399970",
+                "date_range": "1820/1920",
+                "record_type": "Migration"
+              }
+            },
+            {
+              "id": "sd_da1",
+              "resource_type": "DigitalArtifact",
+              "url": "https://www.familysearch.org/ark:/61903/3:1:939V-R39K-KF",
+              "coverage": {
+                "place_rep_id": "0",
+                "date_range": "June 1, 1885-June 27, 1885",
+                "record_type": "PassengerList"
+              }
+            },
+            {
+              "id": "sd_auto_M9J1-SZ4",
+              "resource_type": "auto",
+              "title": "United States, New York, Migrations, from 0001 to 2006",
+              "coverage": {
+                "place_rep_id": "339",
+                "date_range": "+0001-01-01T00:00:00Z/+2006-12-31T23:59:59Z"
+              }
+            },
+            {
+              "id": "src_p_p_101173324314",
+              "resource_type": "Person",
+              "url": "#p_101173324314"
+            }
+          ],
+          "places": [
+            {
+              "id": "222",
+              "name": "Germany",
+              "latitude": 51.5,
+              "longitude": 10
+            },
+            {
+              "id": "399970",
+              "name": "New York City, New York, United States",
+              "latitude": 40.71417,
+              "longitude": -74.006
+            }
+          ]
+        },
+        "primaryId": "p_101173324314",
+        "role": "Principal"
+      }
+    ]
+  }
+}

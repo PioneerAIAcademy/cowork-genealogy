@@ -1,0 +1,22 @@
+{
+  "tool": "record_search",
+  "description": "Zero-result response for an UNPINNED record_search (no collectionId) on the bride's full surname 'Halsteinsdatter', whatever the given-name spelling. research_log_append refuses a zero-hit search pinned to one collection until the same names are also searched without the collection (research-log-editor-spec.md section 8.5), so the pinned 'Unna Halsteinsdatter' nil in collection 1468080 forces this retry. It returns zero because the real index entry is 'Urna Halsteinsdr' -- the full surname is not in the index in any collection, so the test still has to reach the abbreviation. The predicate cannot require collectionId to be absent; it only ever sees unpinned calls because it is listed LAST, after the collection-1468080 catch-alls (record-search-urna-variant-marriage-match.json, record-search-surname-not-abbreviated-zero-results.json) that answer every pinned call first.",
+  "args": {
+    "surname": "Halsteinsdatter"
+  },
+  "response": {
+    "query": {
+      "givenName": "Unna",
+      "surname": "Halsteinsdatter",
+      "recordCountry": "Norway",
+      "marriageYearFrom": 1770,
+      "marriageYearTo": 1800
+    },
+    "totalMatches": 0,
+    "paginationCappedAt": 4999,
+    "returned": 0,
+    "offset": 0,
+    "hasMore": false,
+    "results": []
+  }
+}

@@ -1,0 +1,46 @@
+{
+  "test": {
+    "id": "ut_search_records_no_fs_collection",
+    "skill": "search-records",
+    "name": "A record set FamilySearch holds no collection for hands back to search-external-sites after one logged search, with no sole-repository claim",
+    "type": "positive",
+    "holdout": true,
+    "description": "From feedback #4130 via issue #4139. The user asks, ad hoc, for every Tallman/Tollman household in Clinton and Essex Counties in the 1825, 1835 and 1845 New York state censuses. The live New York Census wiki page (wiki-read-new-york-census, a faithful capture) starts its state-census table at 1855 and mentions the earlier years only under a New York State Library county list; every record_search returns two city-directory rows and no census. The #4130 run reported 'Not on FamilySearch (held at NY State Library only)' and named no outside site. Step 8 item 7 now says a record set FamilySearch holds no collection for is reported as 'not on FamilySearch' and handed back to search-external-sites after one logged record_search, planned or ad-hoc, with no 3-variant threshold; Step 2 forbids a 'held only at' or 'not available elsewhere' claim. The claim validator also fails a true-sounding sentence such as '1892 is only available at Ancestry' -- intended, since the agent has no tool that checks outside holdings.",
+    "tags": [
+      "search",
+      "census",
+      "state-census",
+      "ad-hoc",
+      "escalation",
+      "external-sites",
+      "familysearch-exhausted",
+      "no-sole-repository-claim",
+      "topical-fixture-required",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Find every Tallman or Tollman family in Clinton and Essex Counties, New York, in the New York state censuses of 1825, 1835 and 1845.\n\nprojectPath: <workspace>",
+    "scenario": "tallman-ny-state-census"
+  },
+  "mcp_fixtures": [
+    "wiki-read-new-york-census",
+    "record-search-tallman-ny-directory-only",
+    "record-read-tallman-ny-directory",
+    "wiki-search-any",
+    "catalog-search-empty",
+    "catalog-search-empty-keywords"
+  ],
+  "execution": {
+    "max_turns": 35,
+    "max_wall_clock_seconds": 600
+  },
+  "judge_context": [
+    "This is an AD-HOC search the user named; executing it is correct. Do not expect a plan item or a research-plan hand-back.",
+    "FamilySearch holds no 1825, 1835 or 1845 New York state census collection: the wiki page's state-census table starts at 1855, and every record_search returns only city-directory rows. The correct return reports those years as 'not on FamilySearch' and hands back to search-external-sites after one logged record_search per county. Do NOT score Nil escalation down for handing back without 2-3 name variants: the agent body exempts a record set with no FamilySearch collection from the variant threshold, because no spelling can surface a collection that does not exist. Score Nil escalation on whether the agent established the absence from the wiki page or census-type record_search results, not on the number of variants.",
+    "DO NOT grade whether the hand-back was named, or whether the return says the records are held only at one repository -- deterministic validators (test_escalates_to_external_sites_after_fs_exhaustion, test_no_sole_repository_claim) own both and read the agent's own return text.",
+    "The city-directory rows are not census records. Logging them as a collection mismatch (partial) or a negative for the census question is correct; presenting them as census findings is not.",
+    "The census wiki_read calls are NOT graded on Tool Arguments -- score that dimension on the record_search calls. A state census reads the state's page (New_York_Census) instead of the country page. Not fetching it at all is owned by test_census_wiki_fixture_actually_used."
+  ],
+  "judge_reads_files": true
+}

@@ -33,6 +33,13 @@ const census1880Person = {
 };
 
 describe("personaIndexFields", () => {
+  it("reads a marriage's second party's age from SP_AGE, and its _ORIG twin", () => {
+    const spouse = (labelId: string) => ({ values: [{ labelId, text: "21" }] });
+    expect(personaIndexFields({ fields: [spouse("SP_AGE")] })?.age).toBe("21");
+    expect(personaIndexFields({ fields: [spouse("SP_AGE_ORIG")] })?.age).toBe("21");
+    expect(personaIndexFields({ fields: [spouse("SP_AGE_ORIG"), { values: [{ labelId: "SP_AGE", text: "22" }] }] })?.age).toBe("22");
+  });
+
   it("lifts every label a census persona carries", () => {
     expect(personaIndexFields(census1880Person)).toEqual({
       relationshipToHead: "Daughter",

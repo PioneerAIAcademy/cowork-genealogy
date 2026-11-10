@@ -1,0 +1,464 @@
+{
+  "guard": "pinned-nil-no-unpinned-retry",
+  "description": "A research_log_append record_search op that returned zero hits while pinned to a collectionId and has no unpinned retry — a sibling record_search with NO collectionId whose name fields (givenName, surname, givenNameAlt, surnameAlt, and every key ending in GivenName/Surname) equal this op's after trimming, ignoring case, and alternate-name auto-pairing, in the same batch (research.ops) or already in log[] (a sibling logged error never ran and does not count). Other filters may differ; a wildcard sibling does not clear an exact variant. Silent for a query with no name field, a non-zero-hit op, and an op with no collectionId. Keyed on zero HITS, never on outcome. Replayed by the writer-tool precondition pinnedNilRetryInvariants (research-log-append.ts).",
+  "format": "expect: fire | silent, judged for the op named by `write` in research.ops (the op the preflight has already resolved — `query` is its sent query, `zeroHit` its resolved zero-hit state). research.ops are the other ops in the same batch; research.log is what earlier calls persisted. `ops[].id` is a test-fixture selector; the ResearchLogAppendOp type carries no id. Every fire case carries a `shape`; a guard needs at least two distinct fire shapes and at least one silent case.",
+  "cases": [
+    {
+      "id": "nil-no-ref-no-retry",
+      "expect": "fire",
+      "shape": "nil-no-staged-ref",
+      "why": "The simon-heydocker-death shape: a death search pinned to collection 1394580, logged with no staged ref and resultsExamined 0, never re-run without the collection.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "recordType": "death",
+              "collectionId": "1394580"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "staged-count-zero-no-retry",
+      "expect": "fire",
+      "shape": "staged-count-zero",
+      "why": "Defensive branch: a staged ref whose recomputed count is 0 (a real zero-hit record_search stages nothing).",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heidecker",
+              "givenName": "Simon",
+              "collectionId": "1520587"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "variant-surname-sibling-only",
+      "expect": "fire",
+      "shape": "variant-surname-sibling-only",
+      "why": "The only unpinned sibling searched a different surname variant; each variant needs its own unpinned retry (surname-only matching rejected in the issue review).",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heidecker",
+              "givenName": "Simon",
+              "collectionId": "1394580"
+            },
+            "zeroHit": true
+          },
+          {
+            "id": "op_b",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon"
+            },
+            "zeroHit": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "wildcard-unpinned-sibling",
+      "expect": "fire",
+      "shape": "wildcard-unpinned-sibling",
+      "why": "The must-fire run's real shape: an unpinned Heyd* search is logged, but a wildcard does not clear the exact pinned variant.",
+      "write": "op_a",
+      "research": {
+        "log": [
+          {
+            "id": "log_001",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heyd*",
+              "givenName": "Simon"
+            }
+          }
+        ],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "collectionId": "1394580"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "alt-name-differs",
+      "expect": "fire",
+      "shape": "alt-name-differs",
+      "why": "Alternate names count as names: the unpinned sibling carries a different surnameAlt.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "surnameAlt": "Heidegger",
+              "collectionId": "1394580"
+            },
+            "zeroHit": true
+          },
+          {
+            "id": "op_b",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "surnameAlt": "Heydecker"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "pinned-sibling-other-collection",
+      "expect": "fire",
+      "shape": "pinned-sibling-only",
+      "why": "The must-fire run searched the same names in a second collection (1394580, then 1520587). A sibling that is itself pinned is not the unpinned retry.",
+      "write": "op_a",
+      "research": {
+        "log": [
+          {
+            "id": "log_001",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "collectionId": "1520587"
+            }
+          }
+        ],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "collectionId": "1394580"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "errored-log-sibling",
+      "expect": "fire",
+      "shape": "errored-unpinned-sibling-only",
+      "why": "The only unpinned sibling in log[] was logged error: it never ran, so the record was never searched without the collection.",
+      "write": "op_a",
+      "research": {
+        "log": [
+          {
+            "id": "log_001",
+            "tool": "record_search",
+            "outcome": "error",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon"
+            }
+          }
+        ],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "collectionId": "1394580"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "sibling-in-batch-after",
+      "expect": "silent",
+      "why": "The unpinned retry is in the same batch, listed AFTER the pinned op; the guard judges the whole resolved batch.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "recordType": "death",
+              "collectionId": "1394580"
+            },
+            "zeroHit": true
+          },
+          {
+            "id": "op_b",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "recordType": "death"
+            },
+            "zeroHit": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "sibling-in-log",
+      "expect": "silent",
+      "why": "The unpinned retry was persisted by an earlier call.",
+      "write": "op_a",
+      "research": {
+        "log": [
+          {
+            "id": "log_001",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon"
+            }
+          }
+        ],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "collectionId": "1394580"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "sibling-widened-other-filters",
+      "expect": "silent",
+      "why": "The names are the terms: an unpinned retry that also widened the year window and dropped recordType still clears it (identical-query-minus-collectionId was rejected in the review). Names compare after trimming.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "recordType": "death",
+              "deathLikeDateFrom": 1820,
+              "deathLikeDateTo": 1840,
+              "collectionId": "1394580"
+            },
+            "zeroHit": true
+          },
+          {
+            "id": "op_b",
+            "tool": "record_search",
+            "query": {
+              "surname": " Heydöcker ",
+              "givenName": "Simon",
+              "recordCountry": "Austria"
+            },
+            "zeroHit": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "alt-name-autopaired",
+      "expect": "silent",
+      "why": "The pinned op's logged query carries surnameAlt plus the auto-filled givenNameAlt; the sibling's staged echo is the raw input with only surnameAlt. Equal after applyAltNameAutoPair.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "surnameAlt": "Heidegger",
+              "givenNameAlt": "Simon",
+              "collectionId": "1394580"
+            },
+            "zeroHit": true
+          },
+          {
+            "id": "op_b",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "surnameAlt": "Heidegger"
+            },
+            "zeroHit": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "alt-name-autopaired-log",
+      "expect": "silent",
+      "why": "Mirror: the pinned op wrote only surnameAlt; the log[] sibling's query names both halves.",
+      "write": "op_a",
+      "research": {
+        "log": [
+          {
+            "id": "log_001",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "surnameAlt": "Heidegger",
+              "givenNameAlt": "Simon"
+            }
+          }
+        ],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "surnameAlt": "Heidegger",
+              "collectionId": "1394580"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "pinned-with-hits",
+      "expect": "silent",
+      "why": "A pinned search that returned hits is not a nil, whatever its outcome.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "collectionId": "1394580"
+            },
+            "zeroHit": false
+          }
+        ]
+      }
+    },
+    {
+      "id": "no-collection",
+      "expect": "silent",
+      "why": "An unpinned zero-hit search is outside this rule.",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "no-name-field-exempt",
+      "expect": "silent",
+      "why": "A pinned query that names no one has no terms to retry (decided 2026-11-02, mirroring the fulltext no-term exemption).",
+      "write": "op_a",
+      "research": {
+        "log": [],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "recordCountry": "Austria",
+              "collectionId": "1394580"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    },
+    {
+      "id": "sibling-differs-only-in-case",
+      "expect": "silent",
+      "why": "FamilySearch search ignores case, so an unpinned retry spelled 'heydöcker' / 'SIMON' is the same search.",
+      "write": "op_a",
+      "research": {
+        "log": [
+          {
+            "id": "log_001",
+            "tool": "record_search",
+            "query": {
+              "surname": "heydöcker",
+              "givenName": "SIMON"
+            }
+          }
+        ],
+        "ops": [
+          {
+            "id": "op_a",
+            "tool": "record_search",
+            "query": {
+              "surname": "Heydöcker",
+              "givenName": "Simon",
+              "collectionId": "1394580"
+            },
+            "zeroHit": true
+          }
+        ]
+      }
+    }
+  ]
+}

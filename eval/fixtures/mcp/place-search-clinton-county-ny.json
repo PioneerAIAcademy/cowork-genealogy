@@ -1,0 +1,19 @@
+{
+  "tool": "place_search",
+  "description": "FamilySearch place data for Clinton County, New York (formed 1788 from Washington County; on Lake Champlain). Supports ut_survey_surname_d6, the no-project survey from issue #4130.",
+  "args": {
+    "placeName": "~Clinton"
+  },
+  "response": {
+    "results": [
+      {
+        "standardPlace": "Clinton, New York, United States",
+        "type": "County",
+        "dateRange": "+1788/",
+        "latitude": 44.75,
+        "longitude": -73.68,
+        "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Clinton%2C%20New%20York"
+      }
+    ]
+  }
+}

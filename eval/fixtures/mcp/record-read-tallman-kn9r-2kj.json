@@ -1,0 +1,150 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~KN9R-2KJ"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_14241303587",
+        "ark": "ark:/61903/1:1:KN9R-2KJ",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "34abd545-3a53-42ba-a6e7-9f25164a31a1",
+            "type": "BirthName",
+            "given": "Edward",
+            "surname": "Tallman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "34007c4b-cee4-48ee-befb-fe356ab22a9e",
+            "type": "Birth",
+            "place": "Peru"
+          },
+          {
+            "id": "57695fd4-28f9-447d-b964-54db73829c3f",
+            "type": "Death",
+            "primary": true,
+            "date": "16 Aug 1913",
+            "standard_date": "16 Aug 1913",
+            "place": "Burlington, Chittenden, Vermont, United States"
+          },
+          {
+            "id": "af736f8d-1470-4ec5-b810-0acd6bff607b",
+            "type": "Residence",
+            "place": "Burlington"
+          }
+        ]
+      },
+      {
+        "id": "p_14241303588",
+        "ark": "ark:/61903/1:1:KN9R-2KV",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "9db9a7ed-1da4-4ed5-af75-128115ce84b8",
+            "type": "BirthName",
+            "given": "Joo",
+            "surname": "Tallman"
+          }
+        ]
+      },
+      {
+        "id": "p_14241303589",
+        "ark": "ark:/61903/1:1:KN9R-2KK",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "1d9547db-3252-4398-855f-b83f43518405",
+            "type": "BirthName",
+            "given": "Jane"
+          },
+          {
+            "id": "3ac51ae7-2593-4e50-9de0-a6497cb30c13",
+            "type": "BirthName",
+            "surname": "Patterson"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "4e90fd07-e77b-4a67-9d44-8c3b60cad3e4",
+        "type": "ParentChild",
+        "parent": "p_14241303589",
+        "child": "p_14241303587"
+      },
+      {
+        "id": "215fdcf4-cd9d-40e9-803a-3877222fecc5",
+        "type": "ParentChild",
+        "parent": "p_14241303588",
+        "child": "p_14241303587"
+      },
+      {
+        "id": "2415a493-f428-4f6d-9afb-c02a7bfeeaac",
+        "type": "Couple",
+        "person1": "p_14241303588",
+        "person2": "p_14241303589"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_22343256490",
+        "resource_type": "Record",
+        "title": "Entry for Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KN9R-2KJ : Thu Feb 20 22:27:35 UTC 2025), Entry for Edward Tallman and Joo Tallman, 16 Aug 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9MKX-HMNZ",
+        "coverage": {
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "sd_c_2075288",
+        "resource_type": "Collection",
+        "title": "Vermont, Vital Records, 1760-2008",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/2075288",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1760/2003",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_14241303587",
+        "resource_type": "Person",
+        "title": "Edward Tallman, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KN9R-2KJ : Thu Feb 20 22:27:35 UTC 2025), Edward Tallman, 16 Aug 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KN9R-2KJ"
+      },
+      {
+        "id": "sd_p_14241303589",
+        "resource_type": "Person",
+        "title": "Jane Patterson, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KN9R-2KK : Thu Feb 20 22:27:35 UTC 2025), Jane Patterson in entry for Edward Tallman, 16 Aug 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KN9R-2KK"
+      },
+      {
+        "id": "sd_p_14241303588",
+        "resource_type": "Person",
+        "title": "Joo Tallman, \"Vermont, Vital Records, 1760-2008\"",
+        "citation": "\"Vermont, Vital Records, 1760-2008\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:KN9R-2KV : Thu Feb 20 22:27:35 UTC 2025), Joo Tallman in entry for Edward Tallman, 16 Aug 1913.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:KN9R-2KV"
+      },
+      {
+        "id": "sd_auto_M9LW-DW2",
+        "resource_type": "auto",
+        "title": "British Colonial America, New Hampshire Grants, Births, from 0001 to 2008",
+        "coverage": {
+          "place_rep_id": "12029673",
+          "date_range": "+0001-01-01T00:00:00Z/+2008-12-31T23:59:59Z",
+          "standard_place": "New Hampshire Grants, British Colonial America"
+        }
+      }
+    ]
+  }
+}

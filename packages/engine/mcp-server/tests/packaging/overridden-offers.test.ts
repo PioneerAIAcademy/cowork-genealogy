@@ -2,27 +2,22 @@ import { describe, expect, it } from "vitest";
 import { readFileSync, readdirSync } from "node:fs";
 import { join } from "node:path";
 
-// Since phase 1 a hosted turn runs continuously: the Stop hook vetoes the model's voluntary
-// yield until `project.status` is `completed`. So a body that ends a reply with an offer gets
-// the offer overridden and answers its own question in the same turn — the reader sees
-// "Shall I continue?" followed by the agent continuing.
-//
-// Each of these is a paid eval slot to fix, so this guard is a LEDGER, not a blanket ban: it
-// pins the exact set that still carries one, and fails when the set changes in either
-// direction. Removing an offer without clearing its row here fails just as loudly as adding a
-// new one, which is what keeps the ledger honest as the slots are worked through.
+// Step mode removed the Stop veto (PR #4146 hosted, PR #4206 e2e): a turn is one step, and an
+// offer at the end of a reply is where that step stops, so an offer is no longer overridden.
+// This ledger now only pins which bodies end a reply on an offer, and fails when the set
+// changes in either direction, so adding or removing one is a deliberate, reviewed edit.
 //
 // Ownership as of 2026-09-28, because a collision costs two paid slots:
-//   agents/search-records.md     — PR #2971
 //   agents/person-evidence.md    — PR #2992
 const PLUGIN = join(__dirname, "..", "..", "..", "plugin");
 
 /** Phrases that read as "I am waiting for your answer" at the end of a reply. */
 const OFFER = /(Would you like me to|Shall I continue|Let the user confirm|Would you like to)/;
 
-/** Bodies that still end a reply with an offer the run overrides, and why each is still here. */
+/** Bodies that end a reply on an offer, and why each does. */
 const KNOWN: Record<string, string> = {
-  "agents/search-records.md": "carried over verbatim from skills/search-records/SKILL.md when it became an agent (issue #2243); PR #2971 owns the passage, batched behind it",
+  "agents/search-records.md": "step mode: offers the next plan item, by design",
+  "agents/research-plan.md": "step mode: offers to start the searches, by design",
   "agents/search-external-sites.md": "batched with phase 3's errand — same passage (R5); an agent since the main merge",
   // MEASURED 2026-09-29: these two offers are load-bearing STOPS, not politeness.
   // Removing the question let each skill run on into the next skill's work, and
@@ -35,15 +30,6 @@ const KNOWN: Record<string, string> = {
   // All three passed before the edit and failed after, so the offer is what was
   // holding the boundary. Reverted; removing either needs a replacement stop
   // rather than a reworded closing line, and that is its own paid slot.
-  // research-plan's offer showed NO boundary defect (19-20 pass, zero fails across
-  // three runs). It is reverted for a different, measured reason: the gate needs a
-  // red-free run of a suite whose longest tests stall. `sdk_stream_silence` is 100%
-  // research-plan corpus-wide, and it lands on the top-ranked tests by duration --
-  // wzk (424s, rank 1 of 23), 005 (rank 2), 014 (rank 3), 002 (rank 5). Five runs
-  // failed to produce a clean log for a one-line prose change. Fix the stall first.
-  // Converted from a skill to an agent on `main` (PR #3479); the ledger keys on
-  // the path, so the entry moves with the file. The reason below is unchanged.
-  "agents/research-plan.md": "reverted — gate blocked by duration-linked stalls, not by the edit",
   "agents/search-full-text.md": "offer is a load-bearing stop — see note above; an agent since the main merge",
   "agents/conflict-resolution.md": "offer is a load-bearing stop — see note above; an agent since the main merge",
   "agents/person-evidence.md": "PR #2992 owns this file; batched behind it",
@@ -60,7 +46,7 @@ function bodies(): string[] {
   return out;
 }
 
-describe("offers the continuous run overrides", () => {
+describe("bodies that end a reply on an offer", () => {
   it("is exactly the set the ledger names, in both directions", () => {
     const found: string[] = [];
     for (const rel of bodies()) {

@@ -18,8 +18,8 @@ export interface VolumeSearchInput {
    */
   recordTypeGroups?: string[];
   /**
-   * Volumes per page, 1–100; defaults to 50. Part of the request body, so a
-   * pageToken is only valid alongside the same pageSize.
+   * Volumes per page, 1–50; defaults to 50, or 10 with `summary`. Part of the
+   * request body, so a pageToken is only valid alongside the same pageSize.
    */
   pageSize?: number;
   pageToken?: string;

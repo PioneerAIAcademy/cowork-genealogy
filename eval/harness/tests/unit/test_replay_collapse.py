@@ -145,6 +145,8 @@ class Stub:
                 items = list(log)
             if self.mode == "edit":
                 items = [dict(e, tool="changed") for e in items]
+        if self.mode != "serves-staged-ref":
+            items = [{k: v for k, v in e.items() if k != "staged_ref"} for e in items]
         offset = args.get("offset", 0)
         page = items[offset:offset + 1] if self.mode == "tiny-pages" else items[offset:offset + 50]
         count = len(items) if self.mode != "drop-one" else len(items) + 1
@@ -197,6 +199,18 @@ def test_the_wrong_notebook_in_the_project_dir_is_caught_by_the_walk_counts(tmp_
     g.state = {"plans": STATE["plans"], "log": []}
     with pytest.raises(IntegrityError, match="recorded"):
         _run(tmp_path, group=g)
+
+
+def test_the_oracle_leaves_out_the_log_fields_the_tool_does_not_serve(tmp_path):
+    """research_query drops a log entry's `staged_ref`; the oracle must too, or a
+    state carrying one reads as a wrong replacement."""
+    g = _group()
+    g.state = json.loads(json.dumps(STATE))
+    g.state["log"][0]["staged_ref"] = "results/.staging/record_search-1.json"
+    assert all("staged_ref" not in e for e in rc.oracle(g.state, "q_001"))
+    assert _run(tmp_path, group=g).status == "collapsed"
+    with pytest.raises(IntegrityError, match="differs from the oracle"):
+        _run(tmp_path, mode="serves-staged-ref", group=g, base_mode="serves-staged-ref")
 
 
 def test_a_candidate_without_the_filter_is_rejected_not_passed(tmp_path):

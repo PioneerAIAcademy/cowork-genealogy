@@ -1,0 +1,115 @@
+{
+  "tool": "record_search",
+  "description": "Hand-authored for ut_search_records_no_fs_collection (issue #4139), mirroring what the #4130 run saw: every Tallman/Tollman search in Clinton and Essex Counties returns the same two city-directory rows and no census record, because FamilySearch holds no 1825/1835/1845 New York state census collection. Matches any surname, so every name variant and year gets this answer. Not carved from a live response.",
+  "args": {
+    "surname": "~"
+  },
+  "response": {
+    "query": {
+      "surname": "Tallman"
+    },
+    "totalMatches": 2,
+    "paginationCappedAt": 4999,
+    "returned": 2,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "QV2K-7TLM",
+        "recordId": "QV2K-7TLM",
+        "personName": "Jonathan Tallman",
+        "score": 0.62,
+        "sex": "Male",
+        "birthDate": null,
+        "birthPlace": null,
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:QV2K-7TLM",
+        "collectionId": "2469727",
+        "collectionTitle": "United States, City and County Directories, 1820-1995",
+        "recordTitle": "Jonathan Tallman, Plattsburgh, Clinton, New York, United States",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Jonathan",
+                  "surname": "Tallman",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1840",
+                  "place": "Plattsburgh, Clinton, New York, United States"
+                },
+                {
+                  "id": "F2",
+                  "type": "Occupation",
+                  "value": "Blacksmith",
+                  "date": "1840"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      },
+      {
+        "personId": "QV2K-9WRP",
+        "recordId": "QV2K-9WRP",
+        "personName": "Hiram Tallman",
+        "score": 0.62,
+        "sex": "Male",
+        "birthDate": null,
+        "birthPlace": null,
+        "events": [],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:QV2K-9WRP",
+        "collectionId": "2469727",
+        "collectionTitle": "United States, City and County Directories, 1820-1995",
+        "recordTitle": "Hiram Tallman, Keeseville, Essex, New York, United States",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Hiram",
+                  "surname": "Tallman",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1849",
+                  "place": "Keeseville, Essex, New York, United States"
+                },
+                {
+                  "id": "F2",
+                  "type": "Occupation",
+                  "value": "Farmer",
+                  "date": "1849"
+                }
+              ]
+            }
+          ],
+          "relationships": []
+        }
+      }
+    ]
+  }
+}

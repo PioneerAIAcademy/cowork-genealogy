@@ -118,7 +118,7 @@ _TOPICAL_FIXTURE_BY_TEST_ID = {
 }
 
 
-def test_topical_fixture_actually_used(tool_calls, test):
+def test_topical_fixture_actually_used(tool_calls, test, builtin_tool_calls):
     """A test tagged 'topical-fixture-required' lists a subject-matter fixture
     ahead of the wiki-search-any/wikipedia-search-any fallbacks (topical
     fixtures match first). Nothing previously confirmed the model's actual query
@@ -139,6 +139,7 @@ def test_topical_fixture_actually_used(tool_calls, test):
         test,
         _TOPICAL_FIXTURE_BY_TEST_ID,
         map_name="_TOPICAL_FIXTURE_BY_TEST_ID",
+        builtin_tool_calls=builtin_tool_calls,
     )
 
 

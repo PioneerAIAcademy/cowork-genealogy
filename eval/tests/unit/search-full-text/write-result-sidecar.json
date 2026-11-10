@@ -22,6 +22,7 @@
     "fulltext-search-flinn-witnesses-by-name",
     "fulltext-search-flynn-wildcard-variant",
     "fulltext-search-flynn-prefix-wildcard-variant",
+    "record-attachments-flynn-witnesses",
     "wiki-read-any",
     "wiki-search-any"
   ],

@@ -15,6 +15,7 @@ import type { Principal } from "../auth/principal.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
 import { BROWSER_USER_AGENT, TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import { shareBudget } from "../utils/share-budget.js";
 import {
   mapWithConcurrency,
   standardPlaceToRepId,
@@ -126,7 +127,7 @@ function objectsIn(v: unknown): Collapsed[] {
 }
 
 /** The first real object in a collapsed container. `item.source` is the
- *  PARENT of note/author/subject/film_note — all four are defended against
+ *  PARENT of note/subject/film_note — all three are defended against
  *  the object-for-one / array-for-several collapse and their container was
  *  not, so `source: [{...}]` reported `hydrated: true` with every field
  *  empty: "not filmed, not online, no notes", the opposite of the truth and
@@ -300,15 +301,14 @@ function renderNote(n: Collapsed | undefined): string {
  *  `film_note` key it comes from. Written as seven `str(x) ? {k: str(x)}`
  *  spreads it named each source key twice, so a single mistyped repeat would be
  *  invisible to both review and tests. The DGS is image_search's and
- *  fulltext_search's `imageGroupNumber`. `shelf` and `item_image_start_no` are
- *  deliberately not read: no plugin body, validator or fixture uses them (spec,
- *  Response). A reel's identity is derived from this table (`REEL_KEY_FIELDS`),
- *  so a field added here is part of the reel key and of its entry with no second
- *  edit. */
+ *  fulltext_search's `imageGroupNumber`. `shelf`, `item_image_start_no` and
+ *  `fs_indexed` are deliberately not read: no plugin body, validator or fixture
+ *  uses them (spec, Response). A reel's identity is derived from this table
+ *  (`REEL_KEY_FIELDS`), so a field added here is part of the reel key and of its
+ *  entry with no second edit. */
 export const FILM_FIELDS: readonly (readonly [keyof CatalogFilmNote, string])[] = [
   ["filmNumber", "filmno"],
   ["imageGroupNumber", "digital_film_no"],
-  ["indexed", "fs_indexed"],
   ["copyLocation", "copy_location"],
   ["text", "text"],
 ];
@@ -348,13 +348,13 @@ function hydrateFromSource(hit: CatalogHit, sources: Collapsed[]): void {
   // Markup is stripped rather than passed through: raw `<a href>` handed to
   // the LLM reads as prose.
   // `textOf` everywhere below: written out by hand, `notes` read `.text`
-  // before `.value` while authors/subjects/title read `.value` first, so one
-  // element carrying both spellings was read two different ways.
+  // before `.value` while subjects/title read `.value` first, so one
+  // element carrying both spellings was read two different ways. `author` is
+  // not read: no plugin body uses it (spec, Response).
   hit.notes = notes
     .filter((_n, i) => i !== consumed)
     .map(renderNote)
     .filter(Boolean);
-  hit.authors = across("author").map((a) => textOf(a) ?? "").filter(Boolean);
   hit.subjects = across("subject").map((x) => textOf(x) ?? "").filter(Boolean);
 
   hit.filmNotes = across("film_note").map((f) => {
@@ -419,7 +419,8 @@ export const REEL_TEXT_CAP = 2_000;
  * appeared in. A reel whose joined text would pass `REEL_TEXT_CAP` is several
  * entries in a row, each with the reel's fields and a run of whole note texts, so
  * the fit can still cut it. Only the fields of `FILM_FIELDS` survive, so a saved
- * answer that still carries `shelf` or `imageStartNumber` comes out without them.
+ * answer that still carries `shelf`, `imageStartNumber` or `indexed` comes out
+ * without them.
  */
 export function mergeFilmNotes(notes: readonly CatalogFilmNote[]): CatalogFilmNote[] {
   const reels = new Map<
@@ -460,13 +461,13 @@ const chars = (v: unknown): number => JSON.stringify(v).length;
 /** The one line a cut-short hit carries: how many entries are listed and the way
  *  back. `hydrateFor` is the `hydrate` value that reaches this hit, given only
  *  when it is fewer than the hydrate the call used. `hydrate` is a prefix count
- *  over the hits that carry a url, so a smaller value un-hydrates the hits below
+ *  over the hits that carry an `id`, so a smaller value un-hydrates the hits below
  *  that position and leaves this one more room, while at hydrate 1, or for a hit
  *  already at the last position hydrated, "fewer" is no remedy. A search with
  *  keywords that name the item hydrates it nearly alone, so that way is always
- *  offered. Names no input the tool does not have, and not the hit's `url`: that
- *  is the Catalog's item record, which answers 401 without a sign-in token, so
- *  neither an agent nor a person can open it. */
+ *  offered. Names no input the tool does not have, and not the Catalog's item
+ *  record, which answers 401 without a sign-in token, so neither an agent nor a
+ *  person can open it. */
 export function filmNotesHint(listed: number, total: number, hydrateFor?: number): string {
   const way =
     hydrateFor === undefined
@@ -530,11 +531,12 @@ export function fitFilmNotes(result: CatalogSearchResult, budget: number = ANSWE
     hits: result.hits.map((h) => (emptied.has(h) ? { ...h, filmNotes: [] } : h)),
   });
 
-  // `hydrate` is a prefix count over the hits that carry a url, so the value that
-  // reaches a hit is its position among them.
+  // `hydrate` is a prefix count over the hits that carry an item url, which are
+  // the hits that carry an `id`, so the value that reaches a hit is its position
+  // among them.
   const position = new Map<CatalogHit, number>();
-  let withUrl = 0;
-  for (const h of result.hits) if (h.url) position.set(h, ++withUrl);
+  let withId = 0;
+  for (const h of result.hits) if (h.id !== undefined) position.set(h, ++withId);
 
   const plans = open.map((hit) => {
     const entries = hit.filmNotes as CatalogFilmNote[];
@@ -566,15 +568,11 @@ export function fitFilmNotes(result: CatalogSearchResult, budget: number = ANSWE
 
   // What is left under the budget once the base and every floor are paid. None
   // when no allocation within the budget exists: every hit then gets its floor
-  // and nothing more.
-  let surplus = Math.max(0, budget - base - plans.reduce((a, p) => a + p.floor, 0));
-  const order = [...plans].sort((a, b) => a.demand - b.demand);
-  order.forEach((p, i) => {
-    const room = p.floor + Math.floor(surplus / (order.length - i));
-    if (p.need <= room) {
-      surplus -= p.demand;
-      return;
-    }
+  // and nothing more. A hit whose demand fits its offer is listed whole, as it is.
+  const surplus = budget - base - plans.reduce((a, p) => a + p.floor, 0);
+  shareBudget(plans.map((p) => p.demand), surplus, (i, offer) => {
+    const p = plans[i];
+    const room = p.floor + offer;
     // Every entry that fits what is left of the room, skipping one that does not,
     // so a large entry does not end the list while room stays. The first entry of
     // every reel is tried before any reel's later ones: those carry the numbers
@@ -602,7 +600,7 @@ export function fitFilmNotes(result: CatalogSearchResult, budget: number = ANSWE
     p.hit.filmNotes = kept;
     p.hit.filmNotesTotal = p.total;
     p.hit.filmNotesHint = filmNotesHint(kept.length, p.total, p.hydrateFor);
-    surplus -= content + p.cap(kept.length) - p.floor;
+    return content + p.cap(kept.length) - p.floor;
   });
 }
 
@@ -861,6 +859,10 @@ export async function catalogSearchTool(
         "refused and does not need changing.",
     );
   }
+  // The item url of each hit that has one. Kept off the hit: it is the Catalog's
+  // item record, which answers 401 without a sign-in token, so it is used only
+  // to hydrate the hit and never returned.
+  const itemUrl = new Map<CatalogHit, string>();
   // `searchHits` collapses to a bare object for a one-hit answer exactly as
   // its children do — a precise query (a film number) is the common way to
   // get one — and `.map` on it threw the whole search away.
@@ -880,7 +882,7 @@ export async function catalogSearchTool(
       .find((u): u is string => u !== undefined);
     const title = textOf(asArray(m.title)[0]);
     const creator = textOf(asArray(m.creator)[0]);
-    return {
+    const shaped: CatalogHit = {
       // The item segment only: everything after the prefix would carry a
       // query string or a trailing path into a citation.
       ...(url
@@ -910,16 +912,17 @@ export async function catalogSearchTool(
             }),
         ),
       ],
-      ...(url ? { url } : {}),
       hydrated: false,
     };
+    if (url) itemUrl.set(shaped, url);
+    return shaped;
   });
 
   // Hydration: mapWithConcurrency raced from outside, exactly as person-read
   // does it. Safe only because every task catches its own error (so the
   // Promise.all cannot be rejected by one bad item) and nothing reads the
   // return value (so losing the race loses nothing).
-  const targets = hits.filter((h) => h.url).slice(0, hydrate);
+  const targets = hits.filter((h) => itemUrl.has(h)).slice(0, hydrate);
   let hydrationTimedOut = false;
   if (targets.length > 0 && Date.now() >= deadline) {
     // The search leg spent the budget. Every task would short-circuit on its
@@ -953,7 +956,7 @@ export async function catalogSearchTool(
         // bound. The search leg keeps its retries; it is one request.
         const r = await fsFetch(
           principal,
-          hit.url as string,
+          itemUrl.get(hit) as string,
           { headers: HEADERS },
           remaining,
           { attempts: 1 },
@@ -981,7 +984,7 @@ export async function catalogSearchTool(
         if (Date.now() >= deadline) return;
         // EVERY source block, not just the first. `firstObject` closed the
         // array-of-one collapse and silently dropped an array of several,
-        // taking its notes, authors, subjects and imageGroupNumbers with it —
+        // taking its notes, subjects and imageGroupNumbers with it —
         // while every sibling container reads all elements through asArray.
         const sources = objectsIn(item.source);
         if (sources.length > 0) hydrateFromSource(hit, sources);
@@ -1039,6 +1042,8 @@ export const catalogSearchSchema = {
     "is invisible there and present here. Use it to answer where the " +
     "original records are held and whether they can be seen, and to get an " +
     "imageGroupNumber for image_search or fulltext_search from a film note. " +
+    "A hit's id (e.g. 'koha:3308785') is its catalog entry number, for " +
+    "citation. " +
     "Give at least one of standardPlace, keywords, surname, title, author, " +
     "subject, filmNumber or callNumber. Requires FamilySearch auth (call " +
     "login).",

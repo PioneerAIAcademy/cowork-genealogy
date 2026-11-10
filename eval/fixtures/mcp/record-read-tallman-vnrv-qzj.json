@@ -1,0 +1,210 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~VNRV-QZJ"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_13531539916",
+        "ark": "ark:/61903/1:1:VNRV-QZN",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "fbbc1177-5f56-4c35-86ea-c4a28f5dfae9",
+            "type": "BirthName",
+            "given": "Helen L",
+            "surname": "McIntosh"
+          }
+        ],
+        "facts": [
+          {
+            "id": "52a21096-0a0b-49f0-a789-86ff2e79ca9d",
+            "type": "Death",
+            "primary": true,
+            "date": "19 Apr 1943",
+            "standard_date": "19 Apr 1943",
+            "place": "Burlington, Vermont, United States",
+            "standard_place": "Burlington, Chittenden, Vermont, United States"
+          },
+          {
+            "id": "9f1c810a-a6b6-4ed2-863a-1b5f3afb08e5",
+            "type": "Birth",
+            "date": "1869",
+            "standard_date": "1869"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_13531539917",
+        "ark": "ark:/61903/1:1:VNRV-QZJ",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "cd1b718a-7f22-4213-b6ff-8174221de7fe",
+            "type": "BirthName",
+            "given": "Edward",
+            "surname": "Tallman"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_13531539918",
+        "ark": "ark:/61903/1:1:VNRV-QZV",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "7bbb1599-5c6d-47a2-a1f2-c6a8dbcd6a5b",
+            "type": "BirthName",
+            "given": "Clacissa",
+            "surname": "Wade"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_13531539919",
+        "ark": "ark:/61903/1:1:VNRV-QZK",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "34a2cff2-a64b-425a-98c5-32e1a88efbdf",
+            "type": "BirthName",
+            "given": "H M",
+            "surname": "McIntosh"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "b424fd9b-fc87-4fa9-a987-24ce4b10c810",
+        "type": "Couple",
+        "person1": "p_13531539917",
+        "person2": "p_13531539918"
+      },
+      {
+        "id": "4bcde093-2fd9-401b-b3e9-562f6786dd75",
+        "type": "ParentChild",
+        "parent": "p_13531539918",
+        "child": "p_13531539916"
+      },
+      {
+        "id": "05407575-3704-4c74-8727-aaa0d48ce94f",
+        "type": "ParentChild",
+        "parent": "p_13531539917",
+        "child": "p_13531539916"
+      },
+      {
+        "id": "63e0490a-a9c5-43fd-b9e2-a6f832a652a9",
+        "type": "Couple",
+        "person1": "p_13531539919",
+        "person2": "p_13531539916"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_21989018761",
+        "resource_type": "Record",
+        "title": "Entry for Helen L McIntosh, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VNRV-QZN : Thu Jan 09 03:59:40 UTC 2025), Entry for Helen L McIntosh and Edward Tallman, 19 Apr 1943.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9MQT-B3S9",
+        "coverage": {
+          "place_rep_id": "8027775",
+          "date_range": "19 April 1943",
+          "record_type": "Vital",
+          "standard_place": "Burlington, Chittenden, Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_c_1784223",
+        "resource_type": "Collection",
+        "title": "Vermont, Vital Records, 1760-1954",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1760/1954",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:33S7-951K-NYS",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "title:1942-1954",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_13531539918",
+        "resource_type": "Person",
+        "title": "Clacissa Wade, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VNRV-QZV : Thu Jan 09 03:59:40 UTC 2025), Clacissa Wade in entry for Helen L McIntosh, 19 Apr 1943.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:VNRV-QZV"
+      },
+      {
+        "id": "sd_p_13531539917",
+        "resource_type": "Person",
+        "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VNRV-QZJ : Thu Jan 09 03:59:40 UTC 2025), Edward Tallman in entry for Helen L McIntosh, 19 Apr 1943.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:VNRV-QZJ"
+      },
+      {
+        "id": "sd_p_13531539919",
+        "resource_type": "Person",
+        "title": "H M McIntosh, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VNRV-QZK : Thu Jan 09 03:59:40 UTC 2025), H M McIntosh in entry for Helen L McIntosh, 19 Apr 1943.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:VNRV-QZK"
+      },
+      {
+        "id": "sd_p_13531539916",
+        "resource_type": "Person",
+        "title": "Helen L McIntosh, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:VNRV-QZN : Thu Jan 09 03:59:40 UTC 2025), Helen L McIntosh, 19 Apr 1943.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:VNRV-QZN"
+      },
+      {
+        "id": "sd_auto_M9J1-78M",
+        "resource_type": "auto",
+        "title": "United States, Vermont, Births, from 0003 to 2009",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "+0003-01-01T00:00:00Z/+2009-12-31T23:59:59Z",
+          "standard_place": "Vermont, United States"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_8027775"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:33S7-951K-NYS",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:33S7-951K-NYS"
+  }
+}

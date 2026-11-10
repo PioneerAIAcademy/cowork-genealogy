@@ -1,0 +1,489 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age. The raw recapi body carried the age (PR_AGE 71), which record_read never returned, so it rides in `indexFields`, where a captured sidecar keeps it; the mock never serves it inline and computes `birthRanges` from it. The age is not in the bundle: it is the age the issue gives (1850: 11, 1865: 26, 1910: 71, and the death indexes 74) or the year the index's bare birth year implies (1870: 29, 1880: 40).",
+  "args": {
+    "recordId": "~M5W8-LDP"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_588376277",
+        "ark": "ark:/61903/1:1:M5W8-LDJ",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "be279ac4-a484-4ce0-9faa-38a0c508c792",
+            "type": "BirthName",
+            "given": "Chas H",
+            "surname": "Derby"
+          }
+        ],
+        "facts": [
+          {
+            "id": "74208e93-8663-4cbf-84ce-798c29fcc4a9",
+            "type": "Census",
+            "primary": true,
+            "date": "1910",
+            "standard_date": "1910",
+            "place": "Perinton, Monroe, New York, United States"
+          },
+          {
+            "id": "3f232260-4181-498d-a4a0-a9babc97c396",
+            "type": "Birth",
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "Vermont"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_588376278",
+        "ark": "ark:/61903/1:1:M5W8-LDV",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "d42b631d-2f0c-4381-9a6e-67ba5b3b5d0b",
+            "type": "BirthName",
+            "given": "Phoebe E",
+            "surname": "Derby"
+          }
+        ],
+        "facts": [
+          {
+            "id": "f612f94a-f21e-4c73-a3df-94f8fd04244f",
+            "type": "Birth",
+            "date": "1870",
+            "standard_date": "1870",
+            "place": "New York"
+          },
+          {
+            "id": "6c130927-8ebf-4a09-aacf-113edc199c27",
+            "type": "Census",
+            "primary": true,
+            "date": "1910",
+            "standard_date": "1910",
+            "place": "Perinton, Monroe, New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Married"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_588376279",
+        "ark": "ark:/61903/1:1:M5W8-LDK",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "f9fc74ab-874f-4f6d-bc7b-aa82963b81ec",
+            "type": "BirthName",
+            "given": "Ruth E",
+            "surname": "Derby"
+          }
+        ],
+        "facts": [
+          {
+            "id": "03c56911-3b46-4f31-b3ef-26eb9c9693ff",
+            "type": "Census",
+            "primary": true,
+            "date": "1910",
+            "standard_date": "1910",
+            "place": "Perinton, Monroe, New York, United States"
+          },
+          {
+            "id": "51524276-b842-4bbc-9594-4e1c3baee343",
+            "type": "Birth",
+            "date": "1894",
+            "standard_date": "1894",
+            "place": "New York"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_588376280",
+        "ark": "ark:/61903/1:1:M5W8-LD2",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "03474b8a-e4bc-4961-b404-9fd614adc363",
+            "type": "BirthName",
+            "given": "Myra E",
+            "surname": "Derby"
+          }
+        ],
+        "facts": [
+          {
+            "id": "e6d345f9-5837-4865-a8af-5121b819b3dc",
+            "type": "Census",
+            "primary": true,
+            "date": "1910",
+            "standard_date": "1910",
+            "place": "Perinton, Monroe, New York, United States"
+          },
+          {
+            "id": "c1e346fe-1392-4f96-855a-f1713855dfa4",
+            "type": "Birth",
+            "date": "1897",
+            "standard_date": "1897",
+            "place": "New York"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_588376281",
+        "ark": "ark:/61903/1:1:M5W8-LDL",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "d3d402e0-53ab-477e-9875-e741447dbc27",
+            "type": "BirthName",
+            "given": "Curtis F",
+            "surname": "Derby"
+          }
+        ],
+        "facts": [
+          {
+            "id": "6aa79a8e-0f0d-4098-8fc5-0e3295ce1216",
+            "type": "Birth",
+            "date": "1902",
+            "standard_date": "1902",
+            "place": "New York"
+          },
+          {
+            "id": "f596656e-eb71-4b1b-baef-504dfcc78656",
+            "type": "Census",
+            "primary": true,
+            "date": "1910",
+            "standard_date": "1910",
+            "place": "Perinton, Monroe, New York, United States"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_588376282",
+        "ark": "ark:/61903/1:1:M5W8-LDG",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "daab9970-31b3-4f11-b25d-4ff687809ba9",
+            "type": "BirthName",
+            "given": "Paul D",
+            "surname": "Derby"
+          }
+        ],
+        "facts": [
+          {
+            "id": "971ff74e-7d2a-4843-b8a2-55c23dafc622",
+            "type": "Census",
+            "primary": true,
+            "date": "1910",
+            "standard_date": "1910",
+            "place": "Perinton, Monroe, New York, United States"
+          },
+          {
+            "id": "ac73e1cf-8231-433e-85c8-89f88fd525e6",
+            "type": "Birth",
+            "date": "1904",
+            "standard_date": "1904",
+            "place": "New York"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Single"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_588376283",
+        "ark": "ark:/61903/1:1:M5W8-LDP",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "d86f194a-0822-4798-a38f-aabf2cc84ae8",
+            "type": "BirthName",
+            "given": "Edward",
+            "surname": "Tallman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "89b138cc-6e26-4c49-8731-1f6450050ff3",
+            "type": "Census",
+            "primary": true,
+            "date": "1910",
+            "standard_date": "1910",
+            "place": "Perinton, 33, Monroe, New York, United States",
+            "standard_place": "Perinton, Monroe, New York, United States"
+          },
+          {
+            "id": "d25c03e0-8f55-4d05-a1ca-a2204bc095b7",
+            "type": "Birth",
+            "date": "1839",
+            "standard_date": "1839",
+            "place": "New York"
+          },
+          {
+            "type": "MaritalStatus",
+            "value": "Widowed"
+          },
+          {
+            "type": "Race",
+            "value": "White"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "79bccf5a-2029-4ae4-bfdf-7333d7d92cb6",
+        "type": "ParentChild",
+        "parent": "p_588376278",
+        "child": "p_588376279"
+      },
+      {
+        "id": "abff8b24-99eb-4bc5-829d-6aaf8a622c00",
+        "type": "ParentChild",
+        "parent": "p_588376278",
+        "child": "p_588376280"
+      },
+      {
+        "id": "23a3093a-5f93-4393-965f-12df22f2d02d",
+        "type": "ParentChild",
+        "parent": "p_588376283",
+        "child": "p_588376278"
+      },
+      {
+        "id": "a530ae89-5e6b-4160-824d-62e6f031ede1",
+        "type": "Couple",
+        "person1": "p_588376277",
+        "person2": "p_588376278"
+      },
+      {
+        "id": "f6096d48-85a6-44fc-bedc-6ce636ed8604",
+        "type": "ParentChild",
+        "parent": "p_588376278",
+        "child": "p_588376281"
+      },
+      {
+        "id": "e3883277-7572-4572-bc8d-108494e85fa2",
+        "type": "ParentChild",
+        "parent": "p_588376278",
+        "child": "p_588376282"
+      },
+      {
+        "id": "1c0ad723-9f2e-4166-a29f-080512fd42dd",
+        "type": "ParentChild",
+        "parent": "p_588376277",
+        "child": "p_588376280"
+      },
+      {
+        "id": "b82d960b-5e5b-4079-b290-69f828488bec",
+        "type": "ParentChild",
+        "parent": "p_588376277",
+        "child": "p_588376281"
+      },
+      {
+        "id": "b28cfde3-2417-4a8a-893b-59df66bd7e74",
+        "type": "ParentChild",
+        "parent": "p_588376277",
+        "child": "p_588376279"
+      },
+      {
+        "id": "eccfa709-6d36-4983-ac61-d2ef438e4cf1",
+        "type": "ParentChild",
+        "parent": "p_588376277",
+        "child": "p_588376282"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_1216071043",
+        "resource_type": "Record",
+        "title": "Household of Chas H Derby, \"United States, Census, 1910\"",
+        "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M5W8-LDJ : Sat Oct 18 17:19:37 UTC 2025), Entry for Chas H Derby and Phoebe E Derby, 1910.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:929C-296",
+        "coverage": {
+          "date_range": "1910",
+          "record_type": "Census"
+        }
+      },
+      {
+        "id": "sd_c_1727033",
+        "resource_type": "Collection",
+        "title": "United States, Census, 1910",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1727033",
+        "coverage": {
+          "place_rep_id": "1",
+          "date_range": "1910/1910",
+          "record_type": "Census",
+          "standard_place": "United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GRJ5-CJV",
+        "coverage": {
+          "place_rep_id": "339",
+          "date_range": "1910",
+          "record_type": "FederalPopulationCensus",
+          "standard_place": "New York, United States"
+        }
+      },
+      {
+        "id": "sd_p_588376278",
+        "resource_type": "Person",
+        "title": "Phoebe E Derby, \"United States, Census, 1910\"",
+        "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M5W8-LDV : Sat Oct 18 17:19:37 UTC 2025), Phoebe E Derby in entry for Chas H Derby, 1910.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M5W8-LDV"
+      },
+      {
+        "id": "sd_p_588376280",
+        "resource_type": "Person",
+        "title": "Myra E Derby, \"United States, Census, 1910\"",
+        "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M5W8-LD2 : Sat Oct 18 17:19:37 UTC 2025), Myra E Derby in entry for Chas H Derby, 1910.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M5W8-LD2"
+      },
+      {
+        "id": "sd_p_588376283",
+        "resource_type": "Person",
+        "title": "Edward Tallman, \"United States, Census, 1910\"",
+        "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M5W8-LDP : Sat Oct 18 17:19:37 UTC 2025), Edward Tallman in entry for Chas H Derby, 1910.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M5W8-LDP"
+      },
+      {
+        "id": "sd_p_588376281",
+        "resource_type": "Person",
+        "title": "Curtis F Derby, \"United States, Census, 1910\"",
+        "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M5W8-LDL : Sat Oct 18 17:19:37 UTC 2025), Curtis F Derby in entry for Chas H Derby, 1910.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M5W8-LDL"
+      },
+      {
+        "id": "sd_p_588376279",
+        "resource_type": "Person",
+        "title": "Ruth E Derby, \"United States, Census, 1910\"",
+        "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M5W8-LDK : Sat Oct 18 17:19:37 UTC 2025), Ruth E Derby in entry for Chas H Derby, 1910.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M5W8-LDK"
+      },
+      {
+        "id": "sd_p_588376277",
+        "resource_type": "Person",
+        "title": "Chas H Derby, \"United States, Census, 1910\"",
+        "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M5W8-LDJ : Sat Oct 18 17:19:37 UTC 2025), Chas H Derby, 1910.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M5W8-LDJ"
+      },
+      {
+        "id": "sd_p_588376282",
+        "resource_type": "Person",
+        "title": "Paul D Derby, \"United States, Census, 1910\"",
+        "citation": "\"United States, Census, 1910\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M5W8-LDG : Sat Oct 18 17:19:37 UTC 2025), Paul D Derby in entry for Chas H Derby, 1910.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:M5W8-LDG"
+      },
+      {
+        "id": "sd_auto_M9JT-92D",
+        "resource_type": "auto",
+        "title": "United States, Residences, Census, from 1793 to 1964",
+        "coverage": {
+          "place_rep_id": "1",
+          "date_range": "+1793-01-01T00:00:00Z/+1964-12-31T23:59:59Z",
+          "standard_place": "United States"
+        }
+      }
+    ],
+    "places": [
+      {
+        "id": "place_4613096"
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:33SQ-GRJ5-CJV",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:33SQ-GRJ5-CJV",
+    "indexFields": {
+      "p_588376283": {
+        "age": "71"
+      }
+    }
+  }
+}

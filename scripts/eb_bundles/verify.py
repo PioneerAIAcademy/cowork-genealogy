@@ -49,7 +49,7 @@ BUILD_VERSION_RE = re.compile(r"^\d+\.\d+\.\d+\+(dev|\d{4}-\d{2}-\d{2}\.[0-9a-f]
 COMMON_REQUIRED = ("Procfile", "BUILD-INFO.json", "certs/rds-global-bundle.pem")
 REQUIRED = {
     "web": COMMON_REQUIRED + ("requirements.txt", "web/app.py", "web/auth.py", "web/spa.py", "web/feedback.py",
-                              "web/blobstore.py", "enqueue.py", "grants.py", "turn_message.py", "migrate.py",
+                              "web/blobstore.py", "web/pages.py", "enqueue.py", "grants.py", "turn_message.py", "migrate.py",
                               "pg_credentials.py", "config/familysearch.json",
                               "web-dist/index.html",
                               # Missing, nginx falls back to 8 KB header lines and a patron's

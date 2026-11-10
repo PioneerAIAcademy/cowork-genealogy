@@ -1,0 +1,205 @@
+{
+  "tool": "record_read",
+  "description": "Captured live record_read for a source attached to Edward Tallman (KPQ5-V9F), from feedback bundle feedback-2026-11-01T23-11-03-252755Z (issue 4127). The response is the live shape, byte for byte: FamilySearch's bare indexed birth year with no age.",
+  "args": {
+    "recordId": "~XF4D-B9M"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p_10576519229",
+        "ark": "ark:/61903/1:1:XF4D-BM1",
+        "principal": true,
+        "gender": "Male",
+        "names": [
+          {
+            "id": "c890da86-d807-4542-bee7-ff689bc29c98",
+            "type": "BirthName",
+            "given": "Theodore B.",
+            "surname": "Tallman"
+          }
+        ],
+        "facts": [
+          {
+            "id": "0e2a351d-ed1f-4970-b666-8086cad183cd",
+            "type": "Birth",
+            "date": "1875",
+            "standard_date": "1875",
+            "place": "Essex, N.Y."
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_10576519230",
+        "ark": "ark:/61903/1:1:XF4D-B9M",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "c517a0d7-7768-40cd-ac13-ad71b7634420",
+            "type": "BirthName",
+            "given": "Edward",
+            "surname": "Tallman"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_10576519231",
+        "ark": "ark:/61903/1:1:XF4D-B99",
+        "gender": "Female",
+        "names": [
+          {
+            "id": "17fc9f4f-79d1-4e34-85ca-76a58522558d",
+            "type": "BirthName",
+            "given": "Clarissa",
+            "surname": "Wade"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      },
+      {
+        "id": "p_10576519232",
+        "ark": "ark:/61903/1:1:XF4D-B9S",
+        "principal": true,
+        "gender": "Female",
+        "names": [
+          {
+            "id": "049abd8d-db66-4af9-bcdf-55e2a8168219",
+            "type": "BirthName",
+            "given": "Julia N.",
+            "surname": "Laramy"
+          }
+        ],
+        "sources": [
+          {
+            "ref": "sd_da1"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "id": "e5e6f04b-cfe6-4a92-a835-a4b6113449ff",
+        "type": "ParentChild",
+        "parent": "p_10576519231",
+        "child": "p_10576519229"
+      },
+      {
+        "id": "c85219bb-01d6-4d7e-b6d2-6dbce2c5c113",
+        "type": "Couple",
+        "person1": "p_10576519230",
+        "person2": "p_10576519231"
+      },
+      {
+        "id": "e010a07b-e5ca-49c0-b8a7-ceafd5a6b925",
+        "type": "Couple",
+        "person1": "p_10576519229",
+        "person2": "p_10576519232",
+        "facts": [
+          {
+            "id": "10dac13f-20ff-401d-927a-078b21898e83",
+            "type": "Marriage",
+            "primary": true,
+            "date": "26 Feb 1895",
+            "standard_date": "26 Feb 1895",
+            "place": "Vermont, United States"
+          }
+        ]
+      },
+      {
+        "id": "d1bc0b22-c623-4f58-aebf-b30623fcaad2",
+        "type": "ParentChild",
+        "parent": "p_10576519230",
+        "child": "p_10576519229"
+      }
+    ],
+    "sources": [
+      {
+        "id": "src_r_732387823",
+        "resource_type": "Record",
+        "title": "Entry for Theodore B. Tallman and Julia N. Laramy, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XF4D-BM1 : Wed Jul 10 21:24:43 UTC 2024), Entry for Theodore B. Tallman and Edward Tallman, 26 Feb 1895.",
+        "url": "https://www.familysearch.org/ark:/61903/1:2:9MQ7-X46",
+        "coverage": {
+          "record_type": "Vital"
+        }
+      },
+      {
+        "id": "sd_c_1784223",
+        "resource_type": "Collection",
+        "title": "Vermont, Vital Records, 1760-1954",
+        "url": "https://www.familysearch.org/service/cds/recapi/collections/1784223",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "1760/1954",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_da1",
+        "resource_type": "DigitalArtifact",
+        "url": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6Q13-391",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "title:1871-1908",
+          "record_type": "Vital",
+          "standard_place": "Vermont, United States"
+        }
+      },
+      {
+        "id": "sd_p_10576519231",
+        "resource_type": "Person",
+        "title": "Clarissa Wade, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XF4D-B99 : Wed Jul 10 21:24:43 UTC 2024), Clarissa Wade in entry for Theodore B. Tallman and Julia N. Laramy, 26 Feb 1895.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XF4D-B99"
+      },
+      {
+        "id": "sd_p_10576519229",
+        "resource_type": "Person",
+        "title": "Theodore B. Tallman, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XF4D-BM1 : Wed Jul 10 21:24:43 UTC 2024), Theodore B. Tallman and Julia N. Laramy, 26 Feb 1895.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XF4D-BM1"
+      },
+      {
+        "id": "sd_p_10576519232",
+        "resource_type": "Person",
+        "title": "Julia N. Laramy, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XF4D-B9S : Wed Jul 10 21:24:43 UTC 2024), Theodore B. Tallman and Julia N. Laramy, 26 Feb 1895.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XF4D-B9S"
+      },
+      {
+        "id": "sd_p_10576519230",
+        "resource_type": "Person",
+        "title": "Edward Tallman, \"Vermont, Vital Records, 1760-1954\"",
+        "citation": "\"Vermont, Vital Records, 1760-1954\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:XF4D-B9M : Wed Jul 10 21:24:43 UTC 2024), Edward Tallman in entry for Theodore B. Tallman and Julia N. Laramy, 26 Feb 1895.",
+        "url": "https://www.familysearch.org/ark:/61903/1:1:XF4D-B9M"
+      },
+      {
+        "id": "sd_auto_M9J1-78M",
+        "resource_type": "auto",
+        "title": "United States, Vermont, Births, from 0003 to 2009",
+        "coverage": {
+          "place_rep_id": "361",
+          "date_range": "+0003-01-01T00:00:00Z/+2009-12-31T23:59:59Z",
+          "standard_place": "Vermont, United States"
+        }
+      }
+    ],
+    "imageArk": "ark:/61903/3:1:S3HT-6Q13-391",
+    "viewerUrl": "https://www.familysearch.org/ark:/61903/3:1:S3HT-6Q13-391"
+  }
+}

@@ -47,6 +47,15 @@
         "file": "packages/engine/mcp-server/src/tools/research-log-append.ts",
         "function": "filteredNilRetryInvariants"
       }
+    },
+    {
+      "name": "pinned-nil-no-unpinned-retry",
+      "status": "enforcing",
+      "case_file": "pinned-nil-no-unpinned-retry.json",
+      "writer_guard": {
+        "file": "packages/engine/mcp-server/src/tools/research-log-append.ts",
+        "function": "pinnedNilRetryInvariants"
+      }
     }
   ],
   "owes_case_file": [

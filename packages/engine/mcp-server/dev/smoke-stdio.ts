@@ -21,6 +21,7 @@ import {
   printHeader,
   report,
   runPlan,
+  seedHostProject,
   type SmokeCtx,
 } from "./smoke-calls.js";
 
@@ -33,6 +34,7 @@ const ctx: SmokeCtx = {
   missingProjectPath: project.missingProjectPath,
   openRouterKeyConfigured: false,
   values: {},
+  seedProject: () => seedHostProject(project.hostProjectDir as string),
 };
 
 const client = new Client({ name: "smoke-stdio", version: "0" });
