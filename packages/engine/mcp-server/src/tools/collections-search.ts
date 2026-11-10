@@ -184,10 +184,8 @@ export function collectionCountsById(data: FSCollectionsResponse): Map<string, C
   for (const entry of data.entries ?? []) {
     const c = unwrapEntry(entry);
     if (!c) continue;
-    out.set(String(c.id), {
-      personCount: getCount(c.content, "/Person"),
-      recordCount: getCount(c.content, "/Record"),
-    });
+    const { personCount, recordCount } = toCollection(c);
+    out.set(String(c.id), { personCount, recordCount });
   }
   return out;
 }

@@ -10190,8 +10190,7 @@ async function checkLocalityFirstPlaces(
 ): Promise<void> {
   if (errors.length > 0) return;
   for (const [i, op] of ops.entries()) {
-    if (op.section !== "localities") continue;
-    const body = op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
+    const body = localityBody(op);
     if (!body || typeof body !== "object" || !Object.hasOwn(body, "for_place")) continue;
     const forPlace = (body as Record<string, unknown>).for_place;
     if (!isCheckablePlaceList(forPlace)) continue;
@@ -10220,13 +10219,18 @@ async function checkLocalityFirstPlaces(
   }
 }
 
+/** What a `localities` op writes: an append's `entry`, an update's `fields`. */
+function localityBody(op: any): unknown {
+  if (!op || op.section !== "localities") return undefined;
+  return op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
+}
+
 /** The `collections` lists of a batch's `localities` writes, by op index: an
  *  append's `entry.collections`, an update's `fields.collections`. */
 function localityCollectionLists(ops: readonly unknown[]): Array<[number, Record<string, unknown>[]]> {
   const out: Array<[number, Record<string, unknown>[]]> = [];
   ops.forEach((op: any, i) => {
-    if (!op || op.section !== "localities") return;
-    const body = op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
+    const body = localityBody(op);
     const list = body && typeof body === "object" ? (body as { collections?: unknown }).collections : undefined;
     if (!Array.isArray(list)) return;
     const items = list.filter((c): c is Record<string, unknown> => !!c && typeof c === "object" && !Array.isArray(c));
@@ -10254,6 +10258,7 @@ function stampLocalityCollectionCounts(
 ): void {
   if (catalog === undefined) return;
   for (const [i, items] of localityCollectionLists(ops)) {
+    for (const c of items) if (typeof c.id === "number") c.id = String(c.id);
     if (catalog === "unavailable") {
       for (const c of items) {
         c.person_count = null;
@@ -10269,8 +10274,15 @@ function stampLocalityCollectionCounts(
       continue;
     }
     for (const c of items) {
-      if (typeof c.id !== "string" && typeof c.id !== "number") continue;
-      const id = String(c.id);
+      if (typeof c.id !== "string" || c.id === "") {
+        c.person_count = null;
+        c.record_count = null;
+        warnings.push(
+          fmt(i, "localities collections: a collection with no id cannot be checked; person_count and record_count set to null (unknown)"),
+        );
+        continue;
+      }
+      const id = c.id;
       const counts = catalog.get(id);
       if (!counts) {
         c.person_count = null;
@@ -10284,7 +10296,6 @@ function stampLocalityCollectionCounts(
         );
         continue;
       }
-      c.id = id;
       const changes: string[] = [];
       for (const [key, value] of [
         ["person_count", counts.personCount],
@@ -11470,23 +11481,47 @@ function expandNarrativeEdits(
 /** The one field a direct `research_append` call may change on an assertion. */
 const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
 
+/** Reads FamilySearch's collection catalog as counts by id. */
+export type CollectionCatalogLoader = () => Promise<ReadonlyMap<string, CollectionCounts>>;
+
+/** The catalog through the caller's own FamilySearch session. `fetchAllCollections`
+ *  caches a successful read for an hour per token, so it is usually warm after
+ *  locality-guide's own collections_search. */
+function catalogLoader(principal: Principal): CollectionCatalogLoader {
+  return async () => collectionCountsById(await fetchAllCollections(await getValidToken(principal), principal));
+}
+
+/** How long a caller's write waits on the catalog before stamping null counts. A
+ *  cold read has been measured at 33-36s, and Cowork's bridge aborts a call at 60s
+ *  (`COWORK_CALL_ABORT_MS`), which the write's own place lookups also spend. The
+ *  read keeps running and fills the cache for the next write. */
+export const CATALOG_READ_BUDGET_MS = 20_000;
+
+/** `loadCatalog`, or `"unavailable"` when it fails or outlasts the budget. A spent
+ *  FamilySearch budget is a refusal, not a failed read, and is rethrown. */
+async function readCatalog(loadCatalog: CollectionCatalogLoader): Promise<CollectionCatalog> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<"unavailable">((done) => {
+    timer = setTimeout(() => done("unavailable"), CATALOG_READ_BUDGET_MS);
+  });
+  const read = loadCatalog().catch((err: unknown) => {
+    if (isFsBudgetExhausted(err)) throw err;
+    return "unavailable" as const;
+  });
+  try {
+    return await Promise.race([read, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** `research_append` as an MCP caller reaches it. Assertions are written only by
  *  `extraction_append`, which calls `researchAppend` directly and so never meets
  *  this check. A caller may update one existing assertion's
  *  `informant_bias_notes`, to record a re-reading or a doubt; any other
  *  `assertions` write is refused, whole call, before anything is read
- *  (genealogist ruling 2026-10-05, option B). */
-/** Reads FamilySearch's collection catalog as counts by id. */
-export type CollectionCatalogLoader = () => Promise<ReadonlyMap<string, CollectionCounts>>;
-
-/** The catalog through the caller's own FamilySearch session. `fetchAllCollections`
- *  caches it for an hour, so locality-guide's own collections_search makes this a hit. */
-function catalogLoader(principal: Principal): CollectionCatalogLoader {
-  return async () => collectionCountsById(await fetchAllCollections(await getValidToken(principal), principal));
-}
-
-/** `loadCatalog` null skips the collection-count stamp: the unit eval harness,
- *  which never contacts FamilySearch. */
+ *  (genealogist ruling 2026-10-05, option B). `loadCatalog` null skips the
+ *  collection-count stamp: the unit eval harness, which never contacts FamilySearch. */
 export async function researchAppendFromCaller(
   input: ResearchAppendInput,
   principal: Principal,
@@ -11526,11 +11561,7 @@ export async function researchAppendFromCaller(
   const writeOps = isBatch ? ops : [{ section: input.section, op: input.op, entry: decodedEntry, fields: decodedFields }];
   let collectionCatalog: CollectionCatalog | undefined;
   if (loadCatalog && localityCollectionLists(writeOps).length > 0) {
-    try {
-      collectionCatalog = await loadCatalog();
-    } catch {
-      collectionCatalog = "unavailable";
-    }
+    collectionCatalog = await readCatalog(loadCatalog);
   }
   return researchAppend(input, { judgeSuppliedPlaces: true, collectionCatalog });
 }

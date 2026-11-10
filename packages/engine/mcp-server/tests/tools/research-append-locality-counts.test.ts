@@ -12,7 +12,8 @@ vi.mock("../../src/auth/refresh.js", () => ({
 import { mkdtemp, copyFile, readFile, rm } from "fs/promises";
 import { join, resolve } from "path";
 import { tmpdir } from "os";
-import { researchAppend, researchAppendFromCaller } from "../../src/tools/research-append.js";
+import { researchAppend, researchAppendFromCaller, CATALOG_READ_BUDGET_MS } from "../../src/tools/research-append.js";
+import { markFsRefusal } from "../../src/utils/fs-budget.js";
 import { clearCollectionsCache } from "../../src/tools/collections-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { LOCAL } from "../../src/auth/principal.js";
@@ -136,6 +137,60 @@ describe("research_append stamps locality collection counts from the catalog", (
     const r = await appendLocality([col(1803969, 0, 0)]);
     warningsOf(r);
     expect((await storedCollections())[0]).toMatchObject({ id: "1803969", person_count: 240768, record_count: 240768 });
+  });
+
+  it("nulls the counts of a collection with no id, and warns", async () => {
+    const r = await appendLocality([{ title: "Illinois, State Census, 1855", person_count: 0, record_count: 5 }, col(null, 0, 5)]);
+    const warnings = warningsOf(r);
+    for (const c of await storedCollections()) expect(c).toMatchObject({ person_count: null, record_count: null });
+    expect(warnings).toHaveLength(2);
+    expect(warnings[0]).toContain("a collection with no id cannot be checked");
+  });
+
+  it("stores a number id as a string when the catalog cannot be read", async () => {
+    mockedGetValidToken.mockRejectedValue(new Error("no token"));
+    const r = await appendLocality([col(9999999, 0, 0)]);
+    warningsOf(r);
+    expect((await storedCollections())[0]).toMatchObject({ id: "9999999", person_count: null });
+  });
+
+  it("fails the call on a spent FamilySearch budget, writing nothing", async () => {
+    const before = await readFile(join(dir, "research.json"), "utf-8");
+    mockedGetValidToken.mockRejectedValue(markFsRefusal(new Error("FamilySearch request budget spent; try again in 30s")));
+    await expect(appendLocality([col("1803969", 240768, 240768)])).rejects.toThrow(/budget spent/);
+    expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+  });
+
+  const appendWithLoader = async (loader: () => Promise<ReadonlyMap<string, { personCount: number; recordCount: number }>>) => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    try {
+      const pending = researchAppendFromCaller(
+        { projectPath: dir, section: "localities", op: "append", entry: locality([col("1803969", 0, 0)]) } as never,
+        LOCAL,
+        loader,
+      );
+      await vi.advanceTimersByTimeAsync(CATALOG_READ_BUDGET_MS);
+      vi.useRealTimers();
+      return await pending;
+    } finally {
+      vi.useRealTimers();
+    }
+  };
+  const catalogAfter = (ms: number) => () =>
+    new Promise<ReadonlyMap<string, { personCount: number; recordCount: number }>>((done) =>
+      setTimeout(() => done(new Map([["1803969", { personCount: 240768, recordCount: 240768 }]])), ms),
+    );
+
+  it("uses a catalog read that answers just inside the budget", async () => {
+    const r = await appendWithLoader(catalogAfter(CATALOG_READ_BUDGET_MS - 1));
+    expect(warningsOf(r)[0]).toContain("person_count 0 -> 240768");
+    expect((await storedCollections())[0]).toMatchObject({ person_count: 240768 });
+  });
+
+  it("stops waiting on a catalog read that outlasts the budget, and nulls the counts", async () => {
+    const r = await appendWithLoader(() => new Promise(() => {}));
+    expect(warningsOf(r)[0]).toContain("catalog could not be read");
+    expect((await storedCollections())[0]).toMatchObject({ person_count: null, record_count: null });
   });
 
   it("writes with every count null when the catalog cannot be read, and does not pass on the login error", async () => {
