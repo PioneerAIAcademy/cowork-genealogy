@@ -50,7 +50,7 @@
   },
   "judge_context": [
     "project_list answered hosted: one listed project, on the parents of Patrick Flynn, at /proj_3f9a1c2e7b4d6a80 with projectUrl https://genealogy.example.org/projects/proj_3f9a1c2e7b4d6a80, and newProjectPath /proj_8c21d0e94fa7b315. The message names Patrick Flynn, so the router continues the listed project. A deterministic validator (test_named_subject_continues_the_listed_project) checks the projectPath it reads and hands off, and that the reply ending the turn ends with the projectUrl; do not grade those yourself.",
-    "The project has an objective but no questions yet. The routing table's first applicable row is 'Objective but no questions -> question-selection'.",
+    "The project has an objective but no questions yet. The routing table's first applicable row is 'Objective but no questions': for the subject, `extraction_append({ personId })` then `timeline_build`, then question-selection. I1 has no attached source here, so both calls write nothing and are not hand-offs; question-selection is still the first hand-off.",
     "question-selection is stubbed and returns the stop text. Grade only the quality of the router's own work: state derivation and narration.",
     "Do not penalize the router for not completing the full research cycle: the stub prevents progress beyond the first routing decision.",
     "ROUTING IS NOT YOURS TO GRADE. The hand-off is asserted deterministically by test_routes_to_expected_skill, which reads the PreToolUse hook records. Do NOT score Correctness or Completeness on whether the router reached the right callee. Grade only whether its narration is honest about what it delegated and did not do, and whether its state derivation is sound."
