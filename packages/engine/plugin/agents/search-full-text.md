@@ -308,10 +308,10 @@ fulltext_search({ keywords: "+Flynn +Patrick", collectionId: "<filterParam from 
 fulltext_search({ keywords: "+Naveda +Somarriba", projectPath })
 
 # Natural language search / tree person ID
-fulltext_search({ nlQuery: "KD96-TV2" })
+fulltext_search({ nlQuery: "KD96-TV2", projectPath })
 
 # Wildcard for HTR errors
-fulltext_search({ keywords: "+Fl?nn +Patrick" })
+fulltext_search({ keywords: "+Fl?nn +Patrick", projectPath })
 ```
 
 ### 5. Execute and iterate
@@ -319,8 +319,8 @@ fulltext_search({ keywords: "+Fl?nn +Patrick" })
 Call `fulltext_search` with the constructed query. This agent **logs
 every search**, so `projectPath` (the absolute path to the project
 folder) is **mandatory on every call** — never omit it. **Execute every
-planned search for the task before logging any results or calling
-`research_append`.** Do not stop after the first search if the plan
+planned search for the task before calling `research_append`.** Do not
+stop after the first search if the plan
 item or the user's message requires multiple queries (e.g., separate
 searches for two different people). When supplied,
 the host stages the raw results and the response gains a
@@ -360,8 +360,9 @@ Triage from the stubs first:
   as bare strings (e.g. `["Patrick", "Flynn", "Flynn Patrick"]`) — they confirm
   which query terms appear in the transcript, not where or in what role.
 - **Who and what?** `names` lists the persons the transcript mentions (the FAN
-  net — witnesses, neighbors, heirs); `title` and `recordType` give the
-  document kind.
+  net — witnesses, neighbors, heirs), capped when `namesCount` is present, so
+  read the hit with `sidecar_read` before calling anyone absent from it;
+  `title` and `recordType` give the document kind.
 - **Where and when?** Check `recordPlace`/`places` and `recordDate`/`dates` —
   is the place and approximate date consistent with your person?
 - **Right context, or a false positive?** Whether the name is a genuine mention
