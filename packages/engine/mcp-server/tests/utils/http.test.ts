@@ -572,8 +572,18 @@ describe("fetchWithRetry's onRetryableResponse and beforeAttempt hooks", () => {
 
   it("beforeAttempt runs before every attempt, and may wait only while the request keeps time to run", async () => {
     const maxWait: number[] = [];
+    let firstStart = 0;
+    let firstEnd = 0;
     mockFetch
-      .mockImplementationOnce(() => new Promise((resolve) => setTimeout(() => resolve(mockResponse(503)), 100)))
+      .mockImplementationOnce(() => {
+        firstStart = Date.now();
+        return new Promise((resolve) =>
+          setTimeout(() => {
+            firstEnd = Date.now();
+            resolve(mockResponse(503));
+          }, 100),
+        );
+      })
       .mockResolvedValueOnce(mockResponse(200));
     const res = await fetchWithRetry("https://example.com", {}, 1000, {
       budgetMs: 5000,
@@ -587,8 +597,11 @@ describe("fetchWithRetry's onRetryableResponse and beforeAttempt hooks", () => {
     // With retries left, the first attempt's time runs to the 5 s deadline,
     // which is later than its 1 s timeout; it keeps 2 s of that.
     expect(maxWait[0]).toBe(3_000);
-    // A later one runs until the deadline: about 4.9 s left, less the 2 s it keeps.
-    expect(maxWait[1]).toBeLessThanOrEqual(2_900);
+    // A later one runs until the deadline, less the 2 s it keeps, so it loses at
+    // least the time the first attempt took. Measured by the same clock rather
+    // than assumed to be 100 ms: Node can fire a 100 ms timer a millisecond early.
+    expect(maxWait[1]).toBeLessThanOrEqual(3_000 - (firstEnd - firstStart));
+    expect(firstEnd - firstStart).toBeGreaterThanOrEqual(90);
     expect(maxWait[1]).toBeGreaterThan(2_000);
   });
 
