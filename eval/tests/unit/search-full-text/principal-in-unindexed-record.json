@@ -16,6 +16,7 @@
     "fulltext-search-flynn-principal-deed-by-name",
     "fulltext-search-flinn-variant-zero",
     "wiki-read-any",
+    "source-attachments-fts-principal-unindexed",
     "wiki-search-any"
   ],
   "execution": {
