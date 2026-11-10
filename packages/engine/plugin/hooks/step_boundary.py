@@ -384,8 +384,7 @@ REPLY_SEARCH_MORE = "Search more."
 # The offer only the researcher can answer.
 WRAP_UP = "wrap-up"
 
-# How many replies one run may send. Replaces the alpha's
-# `auto_continue_max_steps`, which is 30 today.
+# How many replies one run may send.
 MAX_AUTO_REPLIES = 30
 
 # A research-plan turn following one of these is the ordinary first plan, not a
