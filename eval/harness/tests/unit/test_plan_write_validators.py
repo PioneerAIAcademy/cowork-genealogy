@@ -285,7 +285,7 @@ def test_dispose_gate_fails_a_skip_on_an_item_whose_search_ran():
     good.
 
     What must still fail is a SKIP on an item whose search ran -- `research_append`
-    refuses it (decision 9 of docs/plan/attached-records-baseline.md), because a
+    refuses it (research-append-tool-spec.md §8, the searched-item skip row), because a
     skip says nothing was searched. So the guard is keyed on a log entry naming
     the item, which is the evidence, not on the status it happens to hold.
     """
