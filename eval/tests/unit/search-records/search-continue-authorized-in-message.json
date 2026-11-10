@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_search_records_t9p",
     "skill": "search-records",
-    "name": "Run the one plan item the router hands over and offer the next",
+    "name": "Run the one plan item the router hands over and leave the next planned",
     "type": "positive",
-    "description": "An active plan has two `planned` items. Under step mode (docs/plan/research-step-mode.md, section D and Phase 2) the router dispatches one search agent per open plan item, and each delegation carries only the ids, the plan item as a `plan_item:` block and the subject as a `subject:` block (research/SKILL.md, \"Every spawn names\"), never the researcher's words. This test sends search-records that delegation for pli_001. It must execute and log pli_001, leave pli_002 `planned`, and offer it. Running pli_002 in the same call is the old behaviour this test guards against; flipped in PR #4276, re-scoped in #4330 to the delegation the router actually sends.",
+    "description": "An active plan has two `planned` items. Under step mode (docs/plan/research-step-mode.md, section D and Phase 2) the router dispatches one search agent per open plan item, and each delegation carries only the ids, the plan item as a `plan_item:` block and the subject as a `subject:` block (research/SKILL.md, \"Every spawn names\"), never the researcher's words. This test sends search-records that delegation for pli_001. It must execute and log pli_001 and leave pli_002 `planned`. Running pli_002 in the same call is the old behaviour this test guards against; flipped in PR #4276, re-scoped in #4330 to the delegation the router actually sends.",
     "tags": [
       "execution",
       "control-flow",
@@ -27,9 +27,10 @@
     "catalog-search-empty-keywords"
   ],
   "judge_context": [
-    "GENERAL RULE UNDER TEST: search-records runs the one plan item its delegation names. Compliant: pli_001 is executed and logged, pli_002 stays `planned`, and the reply offers it. Non-compliant: pli_002 is executed in the same call.",
-    "Why one item: under step mode the router dispatches one search agent per open plan item, and this delegation is the one it sends for pli_001: the ids, the plan item and the subject, with no request to run anything else. pli_002 is still `planned` in the project, but the host's reply carries the go-ahead between steps, so offering pli_002 next is the expected ending.",
-    "Compliant behavior: pli_001 (census) is executed, logged, and has its plan-item status updated, regardless of what the search found; pli_002 (church) is not searched, and the reply names it as the next search to run.",
+    "GENERAL RULE UNDER TEST: search-records runs the one plan item its delegation names. Compliant: pli_001 is executed and logged, and pli_002 stays `planned`. Non-compliant: pli_002 is executed in the same call.",
+    "Why one item: under step mode the router dispatches one search agent per open plan item, and this delegation is the one it sends for pli_001: the ids, the plan item and the subject, with no request to run anything else. pli_002 is still `planned` in the project, and the host's reply carries the go-ahead between steps.",
+    "Under step mode the router owns the next-step offer, so the reply need not name pli_002: offering extraction of a found match is an acceptable ending.",
+    "Compliant behavior: pli_001 (census) is executed, logged, and has its plan-item status updated, regardless of what the search found; pli_002 (church) is not searched and stays `planned`.",
     "Non-compliant behavior: a `record_search` for pli_002, a log entry for it, or a status update moving it off `planned` in this call.",
     "This judges CONTROL FLOW via base Completeness, not search quality -- do not score Completeness down for imperfect query construction on pli_001 (that is Search strategy's and Tool Arguments' job); score Completeness low ONLY for executing pli_002 in this call.",
     "If the agent stops before pli_001 completes for a reason like an authentication error, that is not a Completeness violation of this rule.",
