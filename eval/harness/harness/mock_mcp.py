@@ -2624,6 +2624,11 @@ def _make_extraction_append_handler(
                 # personId mode reads the person's attached records itself, as
                 # `ark:/61903/1:1:<id>`. Stage the fixtures for exactly those ids.
                 wanted += [f"ark:/61903/1:1:{b}" for b in _attached_record_ids(_ws, input_obj["personId"])]
+            if input_obj.get("attachWaitingPages") is True and input_obj.get("pageReadings") is not None:
+                # A page pass (#4286) re-reads a held record whose log entry keeps
+                # no index, to classify what its page says. Stage the records the
+                # readings name, by the id their assertions carry.
+                wanted += _page_reading_record_ids(_ws, input_obj["pageReadings"])
             for rid in wanted:
                 key = rid.strip()
                 bare = key.rsplit("1:1:", 1)[-1].rsplit("/", 1)[-1]
@@ -2682,6 +2687,30 @@ def _make_extraction_append_handler(
         return _tool_envelope("extraction_append", response)
 
     return handler
+
+
+def _page_reading_record_ids(workspace: Path, page_readings: Any) -> list[str]:
+    """The record ids of the assertions a `pageReadings` call names, read from the
+    workspace's research.json. Unreadable input stages nothing: the tool refuses
+    it on its own terms."""
+    try:
+        research = json.loads((Path(workspace) / "research.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    record_of = {
+        a.get("id"): a.get("record_id")
+        for a in research.get("assertions") or []
+        if isinstance(a, dict) and isinstance(a.get("record_id"), str)
+    }
+    ids: list[str] = []
+    for entry in page_readings if isinstance(page_readings, list) else []:
+        for r in (entry or {}).get("readings") or [] if isinstance(entry, dict) else []:
+            if not isinstance(r, dict):
+                continue
+            rid = record_of.get(r.get("disputesAssertionId") or r.get("personAssertionId"))
+            if rid and rid not in ids:
+                ids.append(rid)
+    return ids
 
 
 def _mock_memory_kinds(read: dict[str, Any]) -> dict[str, str]:
