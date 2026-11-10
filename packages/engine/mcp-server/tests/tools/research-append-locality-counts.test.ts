@@ -17,6 +17,7 @@ import { markFsRefusal } from "../../src/utils/fs-budget.js";
 import { clearCollectionsCache, collectionCatalogLoader } from "../../src/tools/collections-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { LOCAL } from "../../src/auth/principal.js";
+import { callTool } from "../helpers/call-tool.js";
 import type { FSCollectionsResponse } from "../../src/types/collection.js";
 
 const SCENARIO = resolve(__dirname, "../../../../../eval/fixtures/scenarios/mid-research-flynn");
@@ -48,8 +49,8 @@ const CATALOG: FSCollectionsResponse = {
   results: 2,
   index: 0,
   entries: [
-    catalogEntry("1803969", "Illinois, State Census, 1855", 240768, 240768),
-    catalogEntry("1803971", "Illinois, State Census, 1865", 380262, 380262),
+    catalogEntry("1803969", "Illinois, State Census, 1855", 60123, 240768),
+    catalogEntry("1803971", "Illinois, State Census, 1865", 95456, 380262),
   ],
 };
 
@@ -102,9 +103,9 @@ describe("research_append stamps locality collection counts from the catalog", (
   };
 
   it("replaces a wrong count with the catalog's, and warns naming the id and both values", async () => {
-    const r = await appendLocality([col("1803969", 0, 240768)]);
+    const r = await appendLocality([col("1803969", 0, 60123)]);
     const warnings = warningsOf(r);
-    expect((await storedCollections())[0]).toMatchObject({ person_count: 240768, record_count: 240768 });
+    expect((await storedCollections())[0]).toMatchObject({ person_count: 240768, record_count: 60123 });
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain("'1803969'");
     expect(warnings[0]).toContain("person_count 0 -> 240768");
@@ -112,31 +113,46 @@ describe("research_append stamps locality collection counts from the catalog", (
   });
 
   it("keeps a correct count with no warning", async () => {
-    const r = await appendLocality([col("1803969", 240768, 240768)]);
+    const r = await appendLocality([col("1803969", 240768, 60123)]);
     expect(warningsOf(r)).toEqual([]);
-    expect((await storedCollections())[0]).toMatchObject({ person_count: 240768, record_count: 240768 });
+    expect((await storedCollections())[0]).toMatchObject({ person_count: 240768, record_count: 60123 });
   });
 
   it("fills a count the caller left out, and says it was absent", async () => {
     const r = await appendLocality([{ id: "1803971", title: "Illinois, State Census, 1865" }]);
     expect(warningsOf(r)[0]).toContain("person_count absent -> 380262");
-    expect((await storedCollections())[0]).toMatchObject({ person_count: 380262, record_count: 380262 });
+    expect((await storedCollections())[0]).toMatchObject({ person_count: 380262, record_count: 95456 });
   });
 
   it("nulls both counts of an id the catalog lacks, and warns", async () => {
-    const r = await appendLocality([col("9999999", 12, 34), col("1803971", 380262, 380262)]);
+    const r = await appendLocality([col("9999999", 12, 34), col("1803971", 380262, 95456)]);
     const warnings = warningsOf(r);
     const [missing, known] = await storedCollections();
     expect(missing).toMatchObject({ id: "9999999", person_count: null, record_count: null });
-    expect(known).toMatchObject({ person_count: 380262, record_count: 380262 });
+    expect(known).toMatchObject({ person_count: 380262, record_count: 95456 });
     expect(warnings).toHaveLength(1);
     expect(warnings[0]).toContain("'9999999' is not in FamilySearch's collection catalog");
+  });
+
+  it("stamps a research_append call made through the MCP dispatch", async () => {
+    const r = await callTool("research_append", { projectPath: dir, section: "localities", op: "append", entry: locality([col("1803969", 0, 0)]) });
+    expect(r.isError).toBe(false);
+    expect((await storedCollections())[0]).toMatchObject({ person_count: 240768, record_count: 60123 });
+  });
+
+  it("stamps an entry the caller sent as a JSON string", async () => {
+    const r = await researchAppendFromCaller(
+      { projectPath: dir, section: "localities", op: "append", entry: JSON.stringify(locality([col("1803969", 0, 0)])) } as never,
+      collectionCatalogLoader(LOCAL),
+    );
+    expect(warningsOf(r)[0]).toContain("person_count 0 -> 240768");
+    expect((await storedCollections())[0]).toMatchObject({ person_count: 240768, record_count: 60123 });
   });
 
   it("matches a numeric id and stores it as a string", async () => {
     const r = await appendLocality([col(1803969, 0, 0)]);
     warningsOf(r);
-    expect((await storedCollections())[0]).toMatchObject({ id: "1803969", person_count: 240768, record_count: 240768 });
+    expect((await storedCollections())[0]).toMatchObject({ id: "1803969", person_count: 240768, record_count: 60123 });
   });
 
   it("nulls the counts of a collection with no id, and warns", async () => {
@@ -177,7 +193,7 @@ describe("research_append stamps locality collection counts from the catalog", (
   };
   const catalogAfter = (ms: number) => () =>
     new Promise<ReadonlyMap<string, { personCount: number; recordCount: number }>>((done) =>
-      setTimeout(() => done(new Map([["1803969", { personCount: 240768, recordCount: 240768 }]])), ms),
+      setTimeout(() => done(new Map([["1803969", { personCount: 240768, recordCount: 60123 }]])), ms),
     );
 
   it("uses a catalog read that answers just inside the budget", async () => {
@@ -194,7 +210,7 @@ describe("research_append stamps locality collection counts from the catalog", (
 
   it("writes with every count null when the catalog cannot be read, and does not pass on the login error", async () => {
     mockedGetValidToken.mockRejectedValue(new Error("User is not logged in to FamilySearch. Call the login tool to authenticate."));
-    const r = await appendLocality([col("1803969", 0, 240768), col("1803971", 380262, 380262)]);
+    const r = await appendLocality([col("1803969", 0, 60123), col("1803971", 380262, 95456)]);
     const warnings = warningsOf(r);
     for (const c of await storedCollections()) expect(c).toMatchObject({ person_count: null, record_count: null });
     expect(warnings).toHaveLength(1);
@@ -218,7 +234,7 @@ describe("research_append stamps locality collection counts from the catalog", (
         section: "localities",
         op: "update",
         entryId: "loc_001",
-        fields: { collections: [col("1803971", 0, 380262)] },
+        fields: { collections: [col("1803971", 0, 95456)] },
       } as never,
       collectionCatalogLoader(LOCAL),
     );

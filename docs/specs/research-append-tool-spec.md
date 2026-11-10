@@ -2121,14 +2121,15 @@ sent two indexed Illinois state censuses (1803969, 1803971; personCount 240,768 
 than the catalog, so a refusal would cost a turn and end in the same state.
 
 - **Ids.** A number id is stored as a string on every path below. A collection with
-  no id (absent, null, empty or not a scalar) cannot be checked: both counts become
+  no id (absent, null, empty, or neither a string nor a number) cannot be checked: both counts become
   `null`, with the warning
   > `localities collections: a collection with no id cannot be checked; person_count and record_count set to null (unknown)`
 - **Found.** The id is in the catalog: both counts become the catalog's. A warning names each
   value that changed:
-  > `localities collections '<id>': person_count <old> -> <new>[, record_count <old> -> <new>], set from FamilySearch's catalog`
+  > `localities collections '<id>': <count> <old> -> <new>[, <count> <old> -> <new>], set from FamilySearch's catalog`
 
-  `<old>` is the JSON of the supplied value, or `absent`.
+  `<count>` is `person_count` or `record_count`; only a count that changed is named,
+  `person_count` first. `<old>` is the JSON of the supplied value, or `absent`.
 - **Not found.** Both counts become `null`, which sends research-plan back to
   `collections_search`:
   > `localities collections '<id>' is not in FamilySearch's collection catalog; person_count and record_count set to null (unknown)`
@@ -2144,10 +2145,11 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   the project lock, and only when the call carries a `localities` collection. A cold
   read has been measured at 33-36 seconds and Cowork's bridge aborts a call at 60, so
   the write waits at most 20 seconds; a read still running then goes on and fills
-  the cache. `fetchAllCollections` caches a successful read for an hour per token,
-  so the read is usually warm after locality-guide's own `collections_search`, but
-  not after a token refresh, or on a hosted server where another patron's read has
-  since taken the cache's one per-token slot.
+  the cache. `fetchAllCollections` caches a successful read for an hour per token
+  (for the whole process when `GENEALOGY_SHARED_COLLECTIONS_CACHE` is `true`), so the
+  read is usually warm after locality-guide's own `collections_search`, but not after
+  a token refresh, or on a per-token hosted server where another patron's read has
+  since taken the cache's one slot.
 - **Whose session reads it.** The caller's: `server.ts` binds
   `collectionCatalogLoader(principal)` and passes it to `researchAppendFromCaller`,
   so `research-append.ts` imports no token code. That keeps every tool built on
