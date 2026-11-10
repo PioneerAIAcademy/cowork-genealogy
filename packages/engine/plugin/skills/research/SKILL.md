@@ -218,7 +218,9 @@ owns the deliverable. A record ask needs no question or plan:
 `subject:` block whose `subjectId` is the tree id from `project_context`'s
 `subjectPersonIds`, never the FamilySearch ID. Relay init-project's report without
 its next-step sentence, then the deliverable's report, and end on the
-deliverable's "Continue with …?" line. This paragraph does not apply to the
+deliverable's "Continue with …?" line. A record search that finds nothing still
+ends on one: offer `@plugin:search-external-sites`, naming no site or collection
+that no tool returned, with "Continue with `running the searches`?". This paragraph does not apply to the
 record-set and transcription paths with no project.
 
 **Start from what is already attached.** Before routing to any search —
