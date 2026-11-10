@@ -2,7 +2,9 @@
 
 A turn does ONE step. `step_allowed` decides whether a candidate agent may run
 given the steps the turn has already taken, so each plane asks the same question
-and gets the same answer.
+and gets the same answer. The one exception is a turn init-project opens: the
+step after it is the turn's real step (plan section H), so a bounded first
+message runs its deliverable in the turn that created the project.
 
 **This is a LIBRARY, not a registered hook** (lead, 2026-10-21). The prototype
 worker and both eval harnesses load it with
@@ -26,7 +28,8 @@ from typing import Any
 # The router itself is never a step: it is what spawns them.
 ROUTER = "research"
 
-# A turn's first step fixes the group; the rest of that group may follow it.
+# A turn's first step fixes the group (in a turn init-project opens, the step after
+# it does); the rest of that group may follow it.
 # Every agent and skill the router can spawn is in exactly one group here, or in
 # a one-member group below -- `test_every_shipped_agent_and_skill_has_a_group`
 # (`eval/harness/tests/unit/test_step_boundary.py`) fails when one is in none, so a new agent cannot ship without a decision about what may
@@ -78,6 +81,11 @@ _SOLO = (
 for _solo in _SOLO:
     GROUPS[_solo] = (_solo,)
 del _solo
+
+# A turn this step opens is grouped by the step AFTER it (plan section H): project
+# creation runs inside the one-shot's turn, so a bounded ask reaches its deliverable
+# and a job its question in the turn that created the project.
+UNGROUPED_OPENER = "init-project"
 
 # A step that OPENS a turn uses its home group. The overlaps above only admit a
 # follower -- they never change what a step means when it comes first. So a turn
@@ -190,6 +198,18 @@ def step_mode(text: str) -> str:
     return "step"
 
 
+def opening_step(steps: list[str] | None) -> str | None:
+    """The step that fixes the turn's group, or None while none has.
+
+    The turn's first step, unless that is `UNGROUPED_OPENER`, which leaves the
+    group to the step after it.
+    """
+    taken = [s for s in (bare_name(s) for s in (steps or [])) if s and s != ROUTER]
+    if taken[:1] == [UNGROUPED_OPENER]:
+        taken = taken[1:]
+    return taken[0] if taken else None
+
+
 def gate_mode(turn_mode: str) -> str:
     """The mode a hosted plane's `StepGate` enforces for a turn of `turn_mode`.
 
@@ -243,7 +263,12 @@ def step_allowed(
         # A step may always repeat itself: the search step fans out.
         return True
 
-    group = home_group(steps[0])
+    opener = opening_step(steps)
+    if opener is None:
+        # Only init-project has run: the candidate becomes the turn's step, if it
+        # is a step at all.
+        return home_group(name) is not None
+    group = home_group(opener)
     if group is None:
         return False
     if name == _HINTS:
@@ -271,7 +296,8 @@ def deny_reason(candidate: str, mode: str = "step", steps: list[str] | None = No
     taken = [s for s in (bare_name(s) for s in (steps or [])) if s and s != ROUTER]
     done = "proof-conclusion" in taken
     key = "wrap-up" if mode == "wrapup" and not done else (home_group(name) or name)
-    if mode != "wrapup" and name == "record-structurer" and taken[:1] == ["evaluate-search-results"]:
+    if mode != "wrapup" and name == "record-structurer" \
+            and opening_step(taken) == "evaluate-search-results":
         key = "extract-matches"
     return _DENY_REASON.format(label=STEP_LABELS.get(key, "the next step"))
 
@@ -653,12 +679,15 @@ class StepGate:
         self.halt_offer: str | None = None
         self._log = log
         self._turn_id = turn_id
-        # Called ONCE, when the turn's first step is allowed. The worker persists it to
-        # `turns.step`/`turns.mode` there and then -- NOT at complete() -- because the
-        # seed exists for an attempt that never reaches complete(): redelivery happens
-        # when an attempt is interrupted mid-turn, which is precisely the case a value
-        # written at close would miss.
-        self._on_first_step = on_first_step if not self.steps else None
+        # Called when the turn's first step is allowed, and again for the step after
+        # `UNGROUPED_OPENER`, which is the one that fixes the group. The worker persists
+        # it to `turns.step`/`turns.mode` there and then -- NOT at complete() --
+        # because the seed exists for an attempt that never reaches complete():
+        # redelivery happens when an attempt is interrupted mid-turn, which is
+        # precisely the case a value written at close would miss.
+        self._on_first_step = (
+            on_first_step if self._b.opening_step(self.steps) is None else None
+        )
 
     # The one candidate the predicate gates on ctx, in both `step` and `wrapup` mode.
     _CTX_CANDIDATE = "research-plan"
@@ -680,8 +709,9 @@ class StepGate:
 
     @property
     def first_step(self) -> str | None:
-        """What `turns.step` stores: the step this turn opened with."""
-        return self.steps[0] if self.steps else None
+        """What `turns.step` stores: the step that fixed the turn's group, or
+        init-project while it has run alone."""
+        return self._b.opening_step(self.steps) or (self.steps[0] if self.steps else None)
 
     def check(self, tool_name: str, tool_input: Any, *, subagent: bool):
         """`(decision, reason)` to stop this call, or None to let it through.
@@ -697,8 +727,11 @@ class StepGate:
             if name != self._b.ROUTER and name not in self.steps:
                 first = not self.steps
                 self.steps.append(name)
-                if first and self._on_first_step is not None:
-                    callback, self._on_first_step = self._on_first_step, None
+                opener = self._b.opening_step(self.steps)
+                if (first or opener == name) and self._on_first_step is not None:
+                    callback = self._on_first_step
+                    if opener is not None:
+                        self._on_first_step = None
                     try:
                         callback(name, self.mode)
                     except Exception as exc:  # noqa: BLE001 - persisting the seed must not fail the call

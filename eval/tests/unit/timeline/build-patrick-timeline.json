@@ -1,0 +1,49 @@
+{
+  "test": {
+    "id": "ut_timeline_001",
+    "skill": "timeline",
+    "name": "Build Patrick Flynn's timeline from existing assertions",
+    "type": "positive",
+    "description": "Mode A on flynn-timeline-links (mid-research-flynn with I1 linked to every one-party assertion of its three records). The agent builds Patrick Flynn's person timeline with timeline_build, which appends t_002 beside h_001's hypothesis timeline t_001, and reports the 1860-1908 census gap.",
+    "tags": [
+      "timeline",
+      "chronological",
+      "gap-detection",
+      "I1",
+      "rejected-assertion-id-a_012",
+      "direct-arm",
+      "person-timeline-in-code"
+    ]
+  },
+  "input": {
+    "delegation": "Build the timeline for Patrick Flynn (person I1).\n\nprojectPath: <workspace>",
+    "scenario": "flynn-timeline-links"
+  },
+  "mcp_fixtures": [
+    "place-search-ireland",
+    "place-search-ireland-by-name",
+    "place-search-ireland-by-place",
+    "place-search-schuylkill-county",
+    "place-search-schuylkill-by-name",
+    "place-search-schuylkill-by-place",
+    "place-search-pennsylvania-state",
+    "place-distance-ireland-pennsylvania",
+    "place-distance-pennsylvania-ireland",
+    "place-distance-within-pennsylvania",
+    "wiki-read-united-states-census",
+    "wiki-read-ireland-census",
+    "wiki-read-any"
+  ],
+  "judge_context": [
+    "The delegation names a person and no timeline or hypothesis, so it is Mode A: the agent calls `timeline_build`, which appends a new person timeline (`t_002`) beside `t_001`. `t_001` is h_001's hypothesis timeline and must be left unchanged; the `person-timeline-in-code` validator owns that check and the call itself. Grade `t_002`.",
+    "`t_002` holds four events: birth ~1845 Ireland (a_002, carrying `c_001`, the resolved birthplace conflict), the 1850 Schuylkill County residence (a_003 and a_004), the 1860 household listing (a_010) and the 12 March 1908 death (a_011). a_009 and a_012 lost c_001 and make no event. Every link is checked, so no event is unverified.",
+    "`t_002`'s gaps: one `high` gap from 1860 to 1908-03-12 naming the 1870, 1880 and 1900 United States censuses, then residence; one `medium` gap at 1908-03-12 naming burial (a death with no burial). There is no marriage gap: no linked record names a child of Patrick Flynn.",
+    "In Mode A `timeline_build` resolves every place and computes every `distance_from_previous_km` itself, in code, so the agent makes no `place_search` or `place_distance` call for the person timeline and none is expected. Do not mark Tool usage or Tool Arguments down for their absence, and do not ask a persisted `standard_place` or distance to trace to a call the agent made: they are the tool's. A place or distance the reply states must match the persisted timeline. `distance_from_previous_km` is the distance from the immediately preceding event in the sorted list, and `null` where either place has no coordinates.",
+    "`gaps[].expected_events` must name record sets that survive and can be searched. The 1890 US federal census does not, so it does not belong in the field. Grade the persisted array.",
+    "Geographic feasibility is N/A on this scenario: the only long-distance pair (Ireland birth → 1850 Pennsylvania census) has about five years between its events. Mark the dimension N/A.",
+    "h_001 (on `t_001`) is a parentage claim, not identity. Chronological coherence cannot settle a parentage claim, so a Step-6 verdict on h_001 is out of this skill's lane. **A \"verdict\" means an explicit Pass / Fail / Inconclusive — or supported / ruled-out — conclusion about the hypothesis itself.** Only that triggers the rubric's fail branch. Absent such a conclusion, Identity coherence is N/A. **Do not read a verdict into a Step-5 coherence signal.** Reporting an infeasible pair, an out-of-lifespan record or a doubtful attribution in the reply, or recommending a person-evidence review, is required behaviour and never a deduction."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

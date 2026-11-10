@@ -150,7 +150,7 @@ committed runs (17%) gave one question two or more plans.
 
 | Step | Runs | Ends with |
 |---|---|---|
-| Setup: init-project (new project), the attached-records baseline (`extraction_append` with `personId`, then `timeline_build`: tool calls, not steps), question-selection, locality-guide if the place is unsurveyed | always | what the attached records show, then the question, then "Continue with planning the searches?" |
+| Setup: init-project (new project), the attached-records baseline (`extraction_append` with `personId`, then `timeline_build`: tool calls, not steps; `research-append-tool-spec.md` §11.8), question-selection, locality-guide if the place is unsurveyed | always | what the attached records show, then the question, then "Continue with planning the searches?" |
 | Plan: research-plan | always | the plan, then "Continue with running the searches?" |
 | Search: every plan item in parallel, then extraction | always | what was found, any searches only the researcher can run (section I), then "Continue with linking the records?" |
 | Link: person-evidence | always | what attaches to whom |
@@ -213,7 +213,11 @@ first step and the members of that step's group:
   name. The same file fails on a group member that no longer ships, and on a group with
   no `STEP_LABELS` entry.
 - **A step that opens a turn uses its home group** (`HOME_GROUP`): research-plan → plan,
-  locality-guide → setup, init-project → setup, record-structurer → search. The overlaps
+  locality-guide → setup, record-structurer → search. **init-project fixes no group**
+  (`UNGROUPED_OPENER`, `opening_step()`): the step after it does, so a bounded first message
+  runs its deliverable in the turn that created the project, and a job keeps its setup
+  chain. The gate keys this on spawn order, not on there being no project, so a wasted
+  init-project spawn on an existing project lets a second group through. The overlaps
   only admit a follower:
   - `locality-guide` after research-plan, because research-plan stops for an unsurveyed
     place;
@@ -268,7 +272,8 @@ still under way it offers `wrap-up`. A record-structurer stopped in a turn that
   a deny, so the second halts a turn that never wrote its offer line. The gate keeps the
   offer the halt named, and the worker and the e2e host read it in place of the turn's
   last line.
-- **The first step is persisted the moment it is allowed** (`on_first_step`), to
+- **The step that fixed the turn's group is persisted the moment it is allowed**
+  (`on_first_step`): the first step, or the one after init-project. It goes to
   `turns.step` and `turns.mode`, so a redelivered attempt seeds `steps` from the row and
   cannot start a second step. Redelivery is the normal resume path, and an interrupted
   attempt never reaches `complete()`.
@@ -606,7 +611,9 @@ step:
 - A misclassified ask costs one step, not a research cycle.
 - A compound one-shot ask runs its first deliverable and offers the second as the next
   step.
-- On a new folder, project creation runs first.
+- On a new folder with a person ID, project creation runs inside the one-shot's turn:
+  init-project, then the deliverable's agent, then its offer (the gate groups an
+  init-project turn by the step after it, section A).
 - `research` is the only front door, so the router is always entered.
 
 ### I. External-site searches (errands)
@@ -681,7 +688,8 @@ A turn's duration is its step's duration, so production records the measure.
 - **The reply at each boundary:** the next turn's message against the step its
   predecessor ran (Continue, Keep going, Wrap it up, Search more, typed, or none).
 - **Wrap-up turns** (`turns.mode = 'wrapup'`) run several steps and are reported apart. A
-  host reply under "Keep going" is a one-step turn and counts.
+  host reply under "Keep going" is a one-step turn and counts. A turn init-project opens is
+  filed under the step after it, so that step's figures include project creation.
 - **Where:** `apps/server/proto/steps.py` prints the three tables over `turns` (read-only,
   run with `uv run python proto/steps.py`). e2e reports per-step wait and spend with
   `make e2e-latency BY_STEP=1`, from `usage.per_turn`. The halt rate is the
@@ -716,7 +724,8 @@ sequence of one-step turns. Against that design's rulings
   research-plan, section E); PR 2 (the router switch-on); ending on an unsettled conflict
   (section E). The two-question e2e fixtures
   were re-scoped to one question. Prerequisite: PR B of
-  `docs/plan/attached-records-baseline.md` (searched FamilySearch items close in code).
+  the attached-records baseline (searched FamilySearch items close in code;
+  `research-append-tool-spec.md` §8 and §11.6).
 - **Phase 2, cleanup (complete 2026-11-09).** The Stop veto was deleted on the hosted
   planes and in e2e, where `--step-mode job` became the default; `research_delivered` was
   deleted; the same-turn hand-off lines in research-plan and search-records were deleted.
