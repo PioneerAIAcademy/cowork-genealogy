@@ -530,8 +530,8 @@ export const sidecarReadSchema = {
     "`title`, `recordDate` and `recordPlace` when it has them. Returns " +
     "`{ ref, totalChars, offset, content, truncated, nextOffset? }`: `content` is at most " +
     "40,000 characters, less when the text is heavy with quotes or backslashes, and a " +
-    "`refs` answer shares one 40,000 among its refs, so a small ref comes back whole and a " +
-    "large one may come back cut. When `truncated` is true, call again with that `ref` and " +
+    "`refs` answer shares one 40,000-character budget among its refs, so a small ref comes " +
+    "back whole and a large one may come back cut. When `truncated` is true, call again with that `ref` and " +
     "`offset: nextOffset` until it is false. A missing file is `reason: \"not_found\"` " +
     "(this tool does not list directories — a ref is something you already hold); a " +
     "binary or UTF-16 file is `reason: \"not_text\"`.",
