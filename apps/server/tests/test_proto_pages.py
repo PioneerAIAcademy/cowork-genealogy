@@ -8,7 +8,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import pathlib
 from pathlib import Path
 from urllib.parse import parse_qs, urlsplit
 
@@ -312,7 +311,7 @@ async def test_a_sign_in_from_the_landing_page_ends_on_it(monkeypatch):
 # ── the upload page and pdf.js (PR 2) ───────────────────────────────────────────
 
 PID = "proj_0123456789abcdef"
-PDFJS = pathlib.Path(__file__).resolve().parent.parent / "proto" / "web" / "static" / "pdfjs"
+PDFJS = Path(__file__).resolve().parent.parent / "proto" / "web" / "static" / "pdfjs"
 
 
 @pytest.fixture
@@ -335,6 +334,14 @@ async def test_uploads_on_links_each_project_to_its_page(uploads_on):
     assert f'href="upload/{PID}"' in r.text
 
 
+async def test_a_project_the_upload_page_would_refuse_gets_no_upload_link(uploads_on):
+    """A seeded or demo id is not the minted shape, so its upload page is a 404."""
+    store = _store_with({PID: {"title": "Ugo"}, "proj_seed_1910": {"title": "Seed"}})
+    r = await _home(store)
+    assert f'href="upload/{PID}"' in r.text and 'href="upload/proj_seed_1910"' not in r.text
+    assert 'href="api/projects/proj_seed_1910/download"' in r.text, "the download stays"
+
+
 async def test_the_owner_gets_the_upload_page(uploads_on):
     store = _store_with({PID: {"title": "<b>Ugo</b>"}})
     async with make_client(store, None) as c:
@@ -342,7 +349,7 @@ async def test_the_owner_gets_the_upload_page(uploads_on):
     assert r.status_code == 200 and "Upload a file" in r.text
     assert "&lt;b&gt;Ugo&lt;/b&gt;" in r.text and "<b>Ugo</b>" not in r.text
     assert f'data-project="{PID}"' in r.text
-    assert 'new URL("../static/pdfjs/", location.href)' in r.text and "../api/projects/${project}/files" in r.text
+    assert 'new URL("../pdfjs/", location.href)' in r.text and "../api/projects/${project}/files" in r.text
     assert 'const PDFJS_VERSION = "6.4.299"' in r.text, "pdf.js is loaded by a versioned URL"
     assert 'href="../privacy"' in r.text, "links step up from /upload/<id>"
     assert r.headers["cache-control"] == "private, no-store" and "cookie" in r.headers["vary"].lower()
@@ -395,20 +402,25 @@ async def test_a_blocked_user_gets_the_refusal_on_the_upload_page(uploads_on):
     async with make_client(store, None) as c:
         r = await c.get(f"/upload/{PID}")
     assert r.status_code == 403 and "is blocked" in r.text and "Upload a file" not in r.text
-    # Served from /upload/<id>: Sign out and the footer step up to the tier's root.
-    assert "postAndReload('../auth/logout')" in r.text and 'href="../privacy"' in r.text
+    # Served from /upload/<id>: Sign out and the footer step up to the tier's root, and Sign
+    # out lands there, since reloading /upload/<id> signed out would go round sign-in again.
+    assert "postAndReload('../auth/logout', null, '../')" in r.text and 'href="../privacy"' in r.text
 
 
 @pytest.mark.parametrize("name", ["pdf.min.mjs", "pdf.worker.min.mjs"])
 async def test_pdfjs_is_served_from_the_tier(name):
     async with make_client(FakeStore(), None, user=None) as c:
-        r = await c.get(f"/static/pdfjs/{name}?v=6.4.299")
+        r = await c.get(f"/pdfjs/{name}?v=6.4.299")
+        head = await c.head(f"/pdfjs/{name}")
+        old = await c.get(f"/static/pdfjs/{name}")
     assert r.status_code == 200 and r.headers["content-type"].startswith("text/javascript")
     assert r.content == (PDFJS / name).read_bytes()
+    assert head.status_code == 200 and head.headers["content-length"] == str(len(r.content))
+    assert old.status_code == 404, "not under /static/, which Beanstalk's nginx keeps for itself"
 
 
 @pytest.mark.parametrize("name", ["README.md", "LICENSE", "..%2Fapp.py", "pdf.mjs"])
 async def test_only_the_two_pdfjs_files_are_served(name):
     async with make_client(FakeStore(), None, user=None) as c:
-        r = await c.get(f"/static/pdfjs/{name}")
+        r = await c.get(f"/pdfjs/{name}")
     assert r.status_code == 404

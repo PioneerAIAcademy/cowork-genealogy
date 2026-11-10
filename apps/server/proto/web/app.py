@@ -26,7 +26,7 @@ with the chat on (#3985, ``GENEALOGY_CHAT``):
   GET  /privacy, /terms (no sign-in), GET /api/account (the id and deletion code)
                                                 only with the chat off (#3993); 404 with it on
   GET  /           onboarding signed out, account and projects signed in; chat off only (#4001)
-  GET  /upload/{project_id}, /static/pdfjs/{name}
+  GET  /upload/{project_id}, /pdfjs/{name}
                    the upload page (UPLOADS_ENABLED) and the pdf.js it loads; chat off (#4001)
   GET  /openrouter, /openrouter/link, /openrouter/callback, POST /openrouter/unlink
                                                 the patron's own OpenRouter key (#3988; served only
@@ -142,9 +142,6 @@ PROTO_DIR = HERE.parent
 # from this fixed set only, so no path a request carries reaches the filesystem.
 PDFJS_DIR = HERE / "static" / "pdfjs"
 PDFJS_FILES = frozenset({"pdf.min.mjs", "pdf.worker.min.mjs"})
-# The one project-id shape both minters use (the web tier and the connector), and the one
-# auth.SAFE_NEXT_RE admits after `upload/`, so a sign-in can return to the page.
-UPLOAD_PAGE_ID_RE = re.compile(r"proj_[0-9a-f]{16}")
 SQL_DIR = PROTO_DIR / "sql"
 # enqueue.py, grants.py, migrate.py and pg_credentials.py are siblings of this package in the repo (proto/)
 # and in the container (/app); make them importable from wherever uvicorn, the driver or
@@ -164,6 +161,9 @@ from web import feedback  # noqa: E402  (U20: the feedback bundle)
 from web import pages  # noqa: E402  (#4001: the chat-off tier's own pages)
 from web import policies  # noqa: E402  (#3993: the privacy and terms text)
 from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
+
+# The minted project-id shape (auth.PROJECT_ID_PATTERN), the only one the upload page takes.
+UPLOAD_PAGE_ID_RE = re.compile(auth.PROJECT_ID_PATTERN)
 from web.job_state import job_state  # noqa: E402  (the four states the list shows)
 from web.project_blobs import (  # noqa: E402  (source scans in, researcher uploads out)
     IMAGE_REF_RE,
@@ -3186,10 +3186,15 @@ def create_app(
                        else "dev" if auth.dev_login_enabled() else None)
             return HTMLResponse(pages.signed_out_page(public_url=auth.public_url(), sign_in=sign_in))
         linked = await _openrouter_linked(request, user.id) if app.state.openrouter else None
+        projects = await _store(request).list_projects(user.id)
+        # Upload links only where the page answers: uploads on and a minted id (a seeded
+        # or demo id would link to a 404).
+        uploadable = (frozenset(p["id"] for p in projects if UPLOAD_PAGE_ID_RE.fullmatch(str(p["id"])))
+                      if app.state.uploads is True else frozenset())
         return HTMLResponse(pages.signed_in_page(
             public_url=auth.public_url(), email=user.email, familysearch_id=user.familysearch_id, account_id=user.id,
-            deletion_code=auth.deletion_code(user.id), projects=await _store(request).list_projects(user.id),
-            openrouter_linked=linked, uploads=app.state.uploads is True,
+            deletion_code=auth.deletion_code(user.id), projects=projects,
+            openrouter_linked=linked, uploadable=uploadable,
         ))
 
     @beta.api_route("/upload/{project_id}", methods=["GET", "HEAD"])
@@ -3222,10 +3227,14 @@ def create_app(
             return HTMLResponse(pages.not_found_page(), status_code=404)
         return HTMLResponse(pages.upload_page(project_id=project_id, label=row.get("label")))
 
-    @beta.get("/static/pdfjs/{name}")
+    @beta.api_route("/pdfjs/{name}", methods=["GET", "HEAD"])
     async def pdfjs_file(name: str) -> Response:
         """#4001: the vendored pdf.js, from the tier and never a CDN; chat off only, like the
-        page that loads it. Only the two names in PDFJS_FILES; anything else is a 404."""
+        page that loads it. Only the two names in PDFJS_FILES; anything else is a 404.
+
+        Not under ``/static/``: Beanstalk's Python platform has its nginx answer ``/static/``
+        from the bundle's own ``static/`` folder, so the request would never reach the tier
+        (eb-web/README.md)."""
         if name not in PDFJS_FILES:
             raise HTTPException(status_code=404, detail="Not found")
         return FileResponse(PDFJS_DIR / name, media_type="text/javascript",

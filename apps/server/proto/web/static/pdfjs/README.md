@@ -2,7 +2,8 @@
 
 The chat-off upload page (`/upload/<project id>`, issue #4001) runs pdf.js in the
 patron's browser to read a PDF's text layer before it uploads. The tier serves these
-files itself at `/static/pdfjs/`; it never loads pdf.js from a CDN.
+files itself at `/pdfjs/`; it never loads pdf.js from a CDN. Not at `/static/`: on
+Beanstalk the platform's nginx answers that path from the bundle's own `static/` folder.
 
 - **Package:** `pdfjs-dist` **6.4.299**, released 2026-10-03.
   - tarball: `https://registry.npmjs.org/pdfjs-dist/-/pdfjs-dist-6.4.299.tgz`

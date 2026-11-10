@@ -52,11 +52,11 @@ _FOOT = _foot()
 # POST from a page, then reload: a <form> would land the browser on the route's JSON.
 # Relative URLs, so the prefix the edge strips stays on.
 _POST_AND_RELOAD = """<script>
-async function postAndReload(path, body) {
+async function postAndReload(path, body, then) {
   const r = await fetch(path, {method: "POST", credentials: "same-origin",
     headers: body ? {"Content-Type": "application/json"} : {}, body: body ? JSON.stringify(body) : undefined});
   if (!r.ok) { alert("That did not work (" + r.status + "). Reload the page and try again."); return; }
-  location.reload();
+  if (then) location.assign(then); else location.reload();
 }
 </script>
 """
@@ -129,11 +129,11 @@ def signed_in_page(
     deletion_code: str,
     projects: list[dict[str, Any]],
     openrouter_linked: bool | None,
-    uploads: bool = False,
+    uploadable: frozenset[str] = frozenset(),
 ) -> str:
     """The signed-in ``/``. ``openrouter_linked`` None means linking is off, and the page
-    shows no OpenRouter section at all. ``uploads`` (UPLOADS_ENABLED) adds each project's
-    Upload link; off, the page links nothing the upload route would refuse. The setup steps
+    shows no OpenRouter section at all. ``uploadable`` is the projects that get an Upload
+    link: none with UPLOADS_ENABLED off, and only ids the upload page takes. The setup steps
     stay on the page: once sign-out also ends the connector's tokens, "sign out to see them"
     would undo step 1."""
     # A user with no FamilySearch id (dev-login) is not shown as a FamilySearch account.
@@ -146,7 +146,7 @@ def signed_in_page(
             pid = escape(str(p["id"]))
             label = p.get("label")
             name = escape(label) if isinstance(label, str) and label else "<em>Untitled project</em>"
-            upload = f'<a href="upload/{pid}">Upload a file</a> · ' if uploads else ""
+            upload = f'<a href="upload/{pid}">Upload a file</a> · ' if p["id"] in uploadable else ""
             items.append(f'<li>{name} — {upload}<a href="api/projects/{pid}/download">Download</a></li>')
         project_list = "<ul>\n" + "\n".join(items) + "\n</ul>"
     else:
@@ -178,6 +178,8 @@ def refused_page(message: str, *, temporary: bool = False, up: str = "") -> str:
 
     ``temporary`` (the allowlist has not loaded yet) offers no Sign out: signing out
     revokes every one of the user's sessions, a poor trade for a wait of seconds."""
+    # From /upload/<id>, a reload after sign-out would send the browser round sign-in again.
+    sign_out = f"postAndReload('{up}auth/logout', null, '{up}')" if up else "postAndReload('auth/logout')"
     if temporary:
         return (_HEAD.format(title="Genealogy Research beta")
                 + f"<h1>The beta isn't ready yet</h1>\n<p>{escape(message)}</p>\n" + _foot(up))
@@ -185,7 +187,7 @@ def refused_page(message: str, *, temporary: bool = False, up: str = "") -> str:
         _HEAD.format(title="Genealogy Research beta")
         + f"""<h1>You can't use the beta with this account</h1>
 <p>{escape(message)}</p>
-<p><button type="button" onclick="postAndReload('{up}auth/logout')">Sign out</button></p>
+<p><button type="button" onclick="{sign_out}">Sign out</button></p>
 {_POST_AND_RELOAD}"""
         + _foot(up)
     )
@@ -218,24 +220,31 @@ function say(text, error) {
 // The vendored version (static/pdfjs/README.md), in both URLs, so after an upgrade a
 // cached old file is never paired with a new one: pdf.js refuses a mismatched worker.
 const PDFJS_VERSION = "6.4.299";
-const PDFJS_DIR = new URL("../static/pdfjs/", location.href);
+const PDFJS_DIR = new URL("../pdfjs/", location.href);
 let pdfjsLib = null;
 
-// Loaded on the first PDF only, so a pdf.js that fails to load never blocks an image.
+// Loaded on the first PDF only, so a pdf.js that fails to load never blocks an image. A
+// failure here is marked notLoaded: the file may be fine, and the patron is told so.
 async function loadPdfjs() {
   if (pdfjsLib === null) {
-    const lib = await import(new URL(`pdf.min.mjs?v=${PDFJS_VERSION}`, PDFJS_DIR).href);
-    lib.GlobalWorkerOptions.workerSrc = new URL(`pdf.worker.min.mjs?v=${PDFJS_VERSION}`, PDFJS_DIR).href;
-    pdfjsLib = lib;
+    try {
+      const lib = await import(new URL(`pdf.min.mjs?v=${PDFJS_VERSION}`, PDFJS_DIR).href);
+      lib.GlobalWorkerOptions.workerSrc = new URL(`pdf.worker.min.mjs?v=${PDFJS_VERSION}`, PDFJS_DIR).href;
+      pdfjsLib = lib;
+    } catch (err) {
+      throw Object.assign(new Error("pdf.js did not load"), { cause: err, notLoaded: true });
+    }
   }
   return pdfjsLib;
 }
 
 // One line per pdf.js line (item.hasEOL), so a register's rows stay rows: name, age and
-// place keep to the line they share in the record.
+// place keep to the line they share in the record. Items join with nothing between them:
+// pdf.js starts an item at every font change, even mid-word ("J" bold, "ohn"), and adds
+// its own space item where the glyphs leave a gap.
 function pageText(items) {
   return items
-    .map((item) => item.str + (item.hasEOL ? "\n" : " "))
+    .map((item) => item.str + (item.hasEOL ? "\n" : ""))
     .join("")
     .split("\n")
     .map((line) => line.replace(/\s+/g, " ").trim())
@@ -244,11 +253,13 @@ function pageText(items) {
 }
 
 // The text layer, one block per page under a "--- Page N ---" marker, or "" when the PDF
-// has none (a scan). A file that is not a PDF has no text layer to read. Throws when
-// pdf.js cannot read the file; the caller decides what to tell the patron.
+// has none (a scan). A file that is not a PDF has no text layer to read. A PDF is known
+// by its first bytes, as the upload route knows it (project_blobs.sniff), not by its name
+// or type. Throws when pdf.js cannot load or read the file; the caller decides what to
+// tell the patron.
 async function textLayer(file) {
-  const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
-  if (!isPdf) return "";
+  const head = new Uint8Array(await file.slice(0, 5).arrayBuffer());
+  if (String.fromCharCode(...head) !== "%PDF-") return "";
   const lib = await loadPdfjs();
   // pdf.js 6 cleans up through the loading task: the document has no destroy().
   const task = lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), verbosity: 0 });
@@ -281,7 +292,8 @@ function send(file, text) {
       }
     };
     xhr.onload = () => resolve(xhr);
-    xhr.onerror = () => resolve(null);
+    // Every way the request can end settles the promise, so the button never stays disabled.
+    xhr.onerror = xhr.onabort = xhr.ontimeout = () => resolve(null);
     const body = new FormData();
     body.append("file", file);
     if (text) body.append("text", text);
@@ -300,7 +312,8 @@ const REFUSED = {
   422: "This PDF has more than one page and no text in it, so it looks like a scan. Upload its pages one at a time, as separate files.",
   503: "Uploads are not available right now. Try again later.",
 };
-// A 422 after pdf.js could not read the file is not a scan: say what happened instead.
+// A 422 after pdf.js could not load or read the file is not a scan: say what happened.
+const NOT_LOADED = "The PDF reader did not load, so this PDF's text could not be read here, and a PDF of several pages needs its text. Reload the page and try again.";
 const UNREADABLE = "This PDF's text could not be read here (it may be password-protected or damaged), and a PDF of several pages needs its text. Save it again as a PDF without a password, or upload its pages one at a time.";
 
 form.addEventListener("submit", async (event) => {
@@ -310,13 +323,13 @@ form.addEventListener("submit", async (event) => {
   if (file.size > MAX_BYTES) { say(TOO_BIG, true); return; }
   button.disabled = true;
   let text = "";
-  let unreadable = false;
+  let failed = null;  // "load" (pdf.js did not load) or "read" (it could not read the file)
   try {
     text = await textLayer(file);
   } catch (err) {
     // Sent with no text layer, and the route decides. Logged, so it is not silent.
     console.error("Reading the PDF's text failed:", err);
-    unreadable = true;
+    failed = err && err.notLoaded ? "load" : "read";
   }
   bar.value = 0;
   bar.hidden = false;
@@ -329,13 +342,14 @@ form.addEventListener("submit", async (event) => {
   try { body = JSON.parse(xhr.responseText); } catch (err) { body = {}; }
   if (xhr.status === 200) {
     say(`Uploaded ${body.path}` + (body.textPath ? ", with its text layer."
-      : unreadable ? ". Its text could not be read here, so no text layer was saved." : ". No text layer was found in it."));
+      : failed === "load" ? ". The PDF reader did not load, so no text layer was saved."
+      : failed === "read" ? ". Its text could not be read here, so no text layer was saved." : ". No text layer was found in it."));
     form.reset();
   } else if (xhr.status === 429) {
     const wait = xhr.getResponseHeader("Retry-After");
     say(`Other uploads are in progress. Try again${wait ? ` in ${wait} seconds` : " shortly"}.`, true);
-  } else if (xhr.status === 422 && unreadable) {
-    say(UNREADABLE, true);
+  } else if (xhr.status === 422 && failed) {
+    say(failed === "load" ? NOT_LOADED : UNREADABLE, true);
   } else if (REFUSED[xhr.status]) {
     say(REFUSED[xhr.status], true);
   } else {

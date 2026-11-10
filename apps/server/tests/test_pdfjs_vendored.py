@@ -2,8 +2,8 @@
 
 The block between ``// --- text layer: start`` and ``// --- text layer: end`` in
 ``pages._UPLOAD_SCRIPT`` is cut out and run as it is, with ``location`` set as if the page
-were at ``/upload/<id>``. It loads ``proto/web/static/pdfjs/`` through the same versioned
-URLs the browser uses, so a pdf.js call the vendored version no longer has (pdf.js 6
+were at ``/upload/<id>``. It loads ``proto/web/static/pdfjs/`` (served at ``/pdfjs/``) through
+the same versioned URLs the browser uses, so a pdf.js call the vendored version no longer has (pdf.js 6
 dropped ``doc.destroy()``) fails here instead of a PDF quietly going up without its text.
 
 Fixtures in ``tests/fixtures/pdfjs/``, written by its ``make_pdfs.py``: a one-line text
@@ -50,9 +50,11 @@ def _node() -> str:
     return node
 
 
-def _text_layer(pdf: str, tmp_path: Path) -> str:
-    """What the upload page would send as ``text`` for this fixture."""
-    page_url = (WEB / "upload" / "proj_0123456789abcdef").as_uri()
+def _text_layer(pdf: str, tmp_path: Path, *, name: str | None = None, mime: str = "application/pdf") -> str:
+    """What the upload page would send as ``text`` for this PDF, chosen as ``name``."""
+    # The tier serves static/pdfjs/ at /pdfjs/, so the page's "../pdfjs/" reaches the files
+    # from a page one level under static/, as it reaches them from /upload/<id>.
+    page_url = (WEB / "static" / "upload" / "proj_0123456789abcdef").as_uri()
     runner = tmp_path / "run.mjs"
     runner.write_text(
         'import { readFile } from "node:fs/promises";\n'
@@ -60,7 +62,7 @@ def _text_layer(pdf: str, tmp_path: Path) -> str:
         "const say = () => {};\n"
         + BLOCK
         + f"const bytes = await readFile({json.dumps(str(FIXTURES / pdf))});\n"
-        f'const file = new File([bytes], {json.dumps(pdf)}, {{ type: "application/pdf" }});\n'
+        f"const file = new File([bytes], {json.dumps(name or pdf)}, {{ type: {json.dumps(mime)} }});\n"
         "console.log(JSON.stringify(await textLayer(file)));\n"
         "process.exit(0);\n",
         encoding="utf-8",
@@ -80,6 +82,15 @@ def test_the_page_keeps_each_line_on_its_own_line(tmp_path):
     assert _text_layer("rows.pdf", tmp_path) == "--- Page 1 ---\nJohn Smith 34 Farmer\nMary Smith 30 Keeping house"
 
 
+def test_a_pdf_is_known_by_its_bytes_not_its_name(tmp_path):
+    """The route sniffs the bytes, so a PDF saved as "record" with no type still has its
+    text read, and a file named .pdf that is not one is not handed to pdf.js."""
+    assert _text_layer("text.pdf", tmp_path, name="record", mime="") == "--- Page 1 ---\nUgo Stella, Milano 1910"
+    not_pdf = tmp_path / "fake.pdf"
+    not_pdf.write_bytes(b"\xff\xd8\xff\xe0 a JPEG really")
+    assert _text_layer(str(not_pdf), tmp_path, name="fake.pdf") == ""
+
+
 def test_the_page_sends_no_text_for_a_scan(tmp_path):
     assert _text_layer("scan.pdf", tmp_path) == ""
 
@@ -93,3 +104,9 @@ def test_the_vendored_files_are_the_ones_the_page_loads():
 
 def test_the_pages_size_limit_is_the_routes():
     assert re.search(r"const MAX_BYTES = (\d+);", SCRIPT).group(1) == str(UPLOAD_MAX_BYTES)
+
+
+def test_a_word_split_across_fonts_stays_one_word(tmp_path):
+    """pdf.js starts a new item on a font change ("J" bold, "ohn" regular) and adds its own
+    space item where the glyphs leave a gap, so the items join with nothing between them."""
+    assert _text_layer("split.pdf", tmp_path) == "--- Page 1 ---\nJohn Smith"
