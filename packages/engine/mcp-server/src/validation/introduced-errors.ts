@@ -85,6 +85,11 @@ function normalizePath(path: string, research: unknown, tree: unknown): string {
       const el = Array.isArray(arr) ? arr[idx] : undefined;
       if (el && typeof el === "object" && typeof el.id === "string") {
         out.push(`${key}[id=${el.id}]`);
+      } else if (key === "sources" && el && typeof el === "object" && typeof el.ref === "string") {
+        // A source reference has no id of its own; its `ref` is the stable
+        // key, so removing a sibling ref (tree_forget's `source`) does not
+        // make a pre-existing error on the next ref read as new.
+        out.push(`${key}[ref=${el.ref}]`);
       } else {
         out.push(seg);
       }

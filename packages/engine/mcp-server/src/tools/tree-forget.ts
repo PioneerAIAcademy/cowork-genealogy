@@ -15,7 +15,7 @@
 //   2. It reports COUNTS AND KINDS, never values. This result lands in the
 //      context of the agent that is about to go looking for exactly this
 //      information — printing what went would put the answer straight back and
-//      make the exercise pointless. The researcher verifies in the viewer.
+//      make the exercise pointless. The researcher confirms from the counts.
 //
 // Stripping the local copy is only half the mechanism: live FamilySearch still
 // has the answer, so the agent must also be told not to look it up. That
@@ -65,7 +65,8 @@ export type ForgetSelectorKind =
   | "facts-between"
   | "person"
   | "fact"
-  | "relationship";
+  | "relationship"
+  | "source";
 
 const SELECTOR_KINDS: ReadonlySet<string> = new Set<ForgetSelectorKind>([
   "parents-of",
@@ -80,6 +81,7 @@ const SELECTOR_KINDS: ReadonlySet<string> = new Set<ForgetSelectorKind>([
   "person",
   "fact",
   "relationship",
+  "source",
 ]);
 
 // The subject's own person-level facts a relative selector must sweep alongside
@@ -101,6 +103,10 @@ export interface ForgetSelector {
   factType?: string;
   factId?: string;
   relationshipId?: string;
+  /** source: the tree source description id (`S9`), named by the researcher.
+   *  The caller never picks one itself — a source's title and citation are
+   *  the only clue to what it records, and the citation often IS the answer. */
+  sourceId?: string;
   /** facts-before/facts-after: the year threshold. */
   year?: number;
   /** facts-between: the inclusive range bounds. */
@@ -119,6 +125,9 @@ export interface TreeForgetRemoved {
   relationships: number;
   relationshipsCascaded: number;
   factsByType: Record<string, number>;
+  /** Source descriptions removed by the `source` selector. A count only: a
+   *  source's title or citation can state the forgotten answer (spec §3.1). */
+  sources: number;
 }
 
 export type TreeForgetResult =
@@ -531,6 +540,8 @@ interface Targets {
    *  resolved. */
   facts: Set<string>;
   relationships: Set<string>;
+  /** Source description ids (`S9`) to remove, with every citation of them. */
+  sources: Set<string>;
   /** One entry per resolved fact (birth-of/death-of/facts-of/parents-of/
    *  spouses-of/facts-before/facts-after/facts-between) whose literal id
    *  might also exist on a different owner. Not resolved to a final notice
@@ -598,6 +609,7 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
     persons: new Set(),
     facts: new Set(),
     relationships: new Set(),
+    sources: new Set(),
     pendingFactNotices: [],
     factSharingNotices: [],
     leftBehindChecks: [],
@@ -801,6 +813,22 @@ function resolveSelectors(tree: SimplifiedGedcomX, forget: ForgetSelector[]): Ta
         t.relationships.add(entry.relationshipId);
         break;
       }
+      case "source": {
+        // The id is the researcher's, read off the viewer's Sources section.
+        // Only the id goes into an error: a source's title or citation can
+        // state the very answer being forgotten (#4024, spec §3.1).
+        const sourceId = entry.sourceId;
+        if (!sourceId) throw new TreeForgetError("'source' requires sourceId");
+        if (!(tree.sources ?? []).some((s) => s.id === sourceId)) {
+          throw new TreeForgetError(
+            `'source' matched nothing — there is no source '${sourceId}' in ` +
+              `tree.gedcomx.json. Use the S id the researcher reads in the viewer's ` +
+              `Sources section.`,
+          );
+        }
+        t.sources.add(sourceId);
+        break;
+      }
     }
   }
   return t;
@@ -883,6 +911,8 @@ function applyForget(tree: SimplifiedGedcomX, t: Targets): ApplyForgetResult {
   tree.persons = keptPersons;
   tree.relationships = keptRels;
 
+  const removedSources = removeSources(tree, t.sources);
+
   // Resolved against the tree AS IT NOW STANDS, post-removal — see
   // resolveFactSharingNotices for why that is the point every pending check
   // must wait for.
@@ -898,9 +928,47 @@ function applyForget(tree: SimplifiedGedcomX, t: Targets): ApplyForgetResult {
       relationships: removedRels,
       relationshipsCascaded: [...cascaded].filter((r) => !t.relationships.has(r)).length,
       factsByType,
+      sources: removedSources,
     },
     factSharingNotices,
   };
+}
+
+/**
+ * Remove the named source descriptions and every `{ref}` citing them, from all
+ * five places a citation can sit — the same holders `checkTreeSourceRefs`
+ * walks in `validation/validator.ts`. Missing one would leave a dangling ref,
+ * which the whole-project validation then refuses. Runs on the post-removal
+ * tree, so owners removed this call are already gone. Returns how many source
+ * descriptions went.
+ */
+function removeSources(tree: SimplifiedGedcomX, sourceIds: ReadonlySet<string>): number {
+  if (sourceIds.size === 0) return 0;
+
+  const before = (tree.sources ?? []).length;
+  if (tree.sources !== undefined) {
+    tree.sources = tree.sources.filter((s) => !sourceIds.has(s.id ?? ""));
+  }
+
+  const strip = (holder: { sources?: { ref?: string }[] }): void => {
+    if (!Array.isArray(holder.sources)) return;
+    const kept = holder.sources.filter((r) => !sourceIds.has(r.ref ?? ""));
+    if (kept.length === holder.sources.length) return;
+    // Drop the key rather than leave `sources: []` where a citation used to be.
+    if (kept.length === 0) delete holder.sources;
+    else holder.sources = kept;
+  };
+  for (const p of persons(tree)) {
+    strip(p);
+    (p.names ?? []).forEach(strip);
+    (p.facts ?? []).forEach(strip);
+  }
+  for (const r of relationships(tree)) {
+    strip(r);
+    (r.facts ?? []).forEach(strip);
+  }
+
+  return before - (tree.sources ?? []).length;
 }
 
 // ─── entry point ─────────────────────────────────────────────────────────────
@@ -1023,15 +1091,16 @@ export const treeForgetSchema = {
     "wrong fact (tree_correct) or to clean up a duplicate (merge_tree_persons). " +
     "Project-start only: refused once research.json holds any plan.\n" +
     "\n" +
-    "Selection is STRUCTURAL: pass tree person/fact/relationship ids and the " +
+    "Selection is STRUCTURAL: pass tree person/fact/relationship/source ids and the " +
     "tool walks the tree's own relationships to resolve relatives. You do not " +
     "need to read — and are better off not reading — the names and dates you " +
-    "are about to remove.\n" +
+    "are about to remove. You never choose a source yourself: the researcher " +
+    "names the S id for the `source` selector, and you never look one up.\n" +
     "\n" +
     "The result reports COUNTS AND KINDS ONLY, never names, dates, or places: " +
     "printing the removed values would put the answer straight back into your " +
     "context and make the exercise worthless. The researcher confirms the gap " +
-    "in the viewer. Do not restate removed values even if you know them.\n" +
+    "from these counts. Do not restate removed values even if you know them.\n" +
     "\n" +
     "ALWAYS call with `dryRun: true` first and show the researcher the counts — " +
     "removing a person also removes every relationship touching them, so " +
@@ -1098,6 +1167,7 @@ export const treeForgetSchema = {
                 "person",
                 "fact",
                 "relationship",
+                "source",
               ],
               description:
                 "parents-of/children-of/spouses-of: the person's relatives AND the links to " +
@@ -1114,7 +1184,9 @@ export const treeForgetSchema = {
                 "omit personId to apply tree-wide instead of to one person. person: one " +
                 "person, cascading every relationship touching them. fact: one fact by id " +
                 "(add personId if that id exists on more than one person). relationship: " +
-                "one relationship by id.",
+                "one relationship by id. source: one source description by the S id the " +
+                "researcher names, plus every citation of it on persons, names, facts and " +
+                "relationships (reported as removed.sources).",
             },
             personId: {
               type: "string",
@@ -1135,6 +1207,13 @@ export const treeForgetSchema = {
             relationshipId: {
               type: "string",
               description: "Relationship id — required for the `relationship` selector.",
+            },
+            sourceId: {
+              type: "string",
+              description:
+                "Tree source description id (e.g. S9) — required for the `source` selector. " +
+                "Only an id the researcher gave you; never find one with tree_query or by " +
+                "reading tree.gedcomx.json, since a source's citation can state the answer.",
             },
             year: {
               type: "number",

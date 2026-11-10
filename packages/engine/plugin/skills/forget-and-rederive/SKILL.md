@@ -94,6 +94,13 @@ the tool itself, but nothing stops you from making that same mistake across
 what the counts do. That reads a date off the tree as surely as opening the
 file.
 
+**When the researcher says to forget the record too** ("the marriage fact and
+the marriage record"), ask them which sources to forget, by S id (`S9`), from
+the viewer's Sources section. Never look a source id up yourself: not with
+`tree_query`, not from the tree file, not any other way. If they cannot give
+you an id, forget the facts and relationships only, and tell them the record is
+still in the tree.
+
 **The canonical setup is build-full-then-forget.** When a project is seeded
 specifically to test re-derivation, `init-project` builds the *complete* tree
 first — every person, relationship, and documentary fact — and this skill then
@@ -130,6 +137,7 @@ Each entry in `forget` is `{ selector, … }`:
 | `person` | `personId` | one person, cascading their relationships |
 | `fact` | `factId`, optional `personId` | one specific fact; add `personId` if the tool reports the id exists on more than one owner |
 | `relationship` | `relationshipId` | one specific relationship |
+| `source` | `sourceId` | one source description and every reference to it; only an S id the researcher named |
 
 **Show the researcher the dry-run counts and get their agreement before
 writing.** This matters more than it looks: removing a *person* also removes
@@ -147,10 +155,12 @@ Re-run the same call without `dryRun`. Then:
   only**. Do not restate the removed names, dates or places back to the
   researcher: you are about to go looking for them, and repeating them here puts
   them right back in your context.
-- Tell the researcher to confirm the gap in the viewer. Seeing the hole is how
-  they check you removed what they meant.
+- Ask the researcher to confirm the gap from the tool's counts (persons,
+  relationships, facts by type, sources). The counts are how they check you
+  removed what they meant.
 - The tool writes `.tree-before-forget.gedcomx.json` so they can restore the
   tree. **Never read that file.** It still contains everything that was removed.
+  On a connector, undoing a forget means starting a new project.
 
 If the call comes back `{ ok: false, errors }`, nothing was written. Two errors
 are worth reading carefully rather than routing around:
@@ -163,6 +173,9 @@ are worth reading carefully rather than routing around:
   them what is blocking it and let them choose: clear those entries, or forget a
   narrower slice with a fact-level selector. Say plainly that entries which
   *state* the answer compromise the exercise anyway.
+- **"gedcomx_source_description_id '…' not found"** after a `source` selector —
+  `research.json` records that source, so it cannot be forgotten in this
+  project. Tell the researcher; the remedy is a new project.
 
 ### 4. Research it
 
@@ -232,7 +245,7 @@ later by noticing the tree is smaller than before.
 ## Re-invocation behavior
 
 **Writes** `tree.gedcomx.json` only — `tree_forget` removes the persons,
-relationships, and facts named by the selectors, plus everything that cascades
+relationships, facts and sources named by the selectors, plus everything that cascades
 from them. It writes nothing to `research.json`, the `log`, or the `results/`
 sidecars. It also writes the restore file `.tree-before-forget.gedcomx.json` next
 to the tree. `dryRun` writes neither file.
