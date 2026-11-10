@@ -213,7 +213,8 @@ gh issue comment <N> --repo PioneerAIAcademy/cowork-genealogy \
 # 2. splice the chosen option's pre-written body text in, replacing the whole
 #    `## Decision needed` block, so the next reader gets the decision and not the
 #    open fork. Copy it — do not compose your own; you did not do the reading.
-#    An item you prepared yourself in §2 has no pre-written option text and no
+#    Only when he picked the recommended option; any other goes back through a
+#    `task-reviewer` first (§4), and you splice what it returns. An item you prepared yourself in §2 has no pre-written option text and no
 #    block to replace: write the decision and the alternative it beat into the
 #    body directly. You did the reading this run, so you are the one who can.
 #    Edit body.md with `python3 - <<'PY'` (the body carries backticks and
@@ -249,10 +250,11 @@ the current facts, not a request to reverse him. Say which fact changed.
 
 - **"Neither — the real question is X."** Rewrite the `## Decision needed` block
   with the corrected question and **leave the label on**. It comes back next run.
-- **He picked against the recommendation, on an option the block flags as
-  changing the blast radius.** Do not splice — re-run one `task-reviewer` on that
-  issue alone, telling it the decision, and use what comes back. The site list was
-  computed under a different assumption.
+- **He picked against the recommendation — any option but the recommended one.**
+  Do not splice — re-run one `task-reviewer` on that issue alone, telling it the
+  decision, and use what comes back. Only the recommended option was worked
+  through: the others' body text is a sketch, often with `<reason>` placeholders
+  and an open clause, and its site list was computed under a different assumption.
 - **He answered something no option covered.** Same: re-run one agent with his
   answer rather than guessing at the body text.
 - **He answered with a question rather than a choice.** Answer it, then re-ask.
