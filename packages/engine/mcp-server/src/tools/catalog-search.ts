@@ -15,6 +15,7 @@ import type { Principal } from "../auth/principal.js";
 import { parseUpstreamErrorBody } from "../utils/search-helpers.js";
 import { BROWSER_USER_AGENT, TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
+import { shareBudget } from "../utils/share-budget.js";
 import {
   mapWithConcurrency,
   standardPlaceToRepId,
@@ -567,15 +568,11 @@ export function fitFilmNotes(result: CatalogSearchResult, budget: number = ANSWE
 
   // What is left under the budget once the base and every floor are paid. None
   // when no allocation within the budget exists: every hit then gets its floor
-  // and nothing more.
-  let surplus = Math.max(0, budget - base - plans.reduce((a, p) => a + p.floor, 0));
-  const order = [...plans].sort((a, b) => a.demand - b.demand);
-  order.forEach((p, i) => {
-    const room = p.floor + Math.floor(surplus / (order.length - i));
-    if (p.need <= room) {
-      surplus -= p.demand;
-      return;
-    }
+  // and nothing more. A hit whose demand fits its offer is listed whole, as it is.
+  const surplus = budget - base - plans.reduce((a, p) => a + p.floor, 0);
+  shareBudget(plans.map((p) => p.demand), surplus, (i, offer) => {
+    const p = plans[i];
+    const room = p.floor + offer;
     // Every entry that fits what is left of the room, skipping one that does not,
     // so a large entry does not end the list while room stays. The first entry of
     // every reel is tried before any reel's later ones: those carry the numbers
@@ -603,7 +600,7 @@ export function fitFilmNotes(result: CatalogSearchResult, budget: number = ANSWE
     p.hit.filmNotes = kept;
     p.hit.filmNotesTotal = p.total;
     p.hit.filmNotesHint = filmNotesHint(kept.length, p.total, p.hydrateFor);
-    surplus -= content + p.cap(kept.length) - p.floor;
+    return content + p.cap(kept.length) - p.floor;
   });
 }
 
