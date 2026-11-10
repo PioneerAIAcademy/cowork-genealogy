@@ -196,7 +196,9 @@ What does the user need to understand?
 
 ### 2. Research the context
 
-Call MCP tools for relevant information. `wiki_search` and `wiki_read` are the
+Call MCP tools for relevant information on every question, including one the
+guidance below already answers: that guidance says what to look for, and only a
+tool result is a source you can cite. `wiki_search` and `wiki_read` are the
 FamilySearch wiki tools; `wikipedia_search` is the separate, general Wikipedia
 tool:
 
