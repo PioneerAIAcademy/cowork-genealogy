@@ -2404,10 +2404,10 @@ def _make_live_append_handler(
     return handler
 
 
-#: `researchAppendFromCaller(input, principal, loadCatalog)`: no principal, and a
-#: null catalog loader, so the locality collection-count stamp (#4385) never
-#: contacts FamilySearch here — the `person_warnings` precedent (#1962).
-RESEARCH_APPEND_CALL_ARGS = "input, undefined, null"
+#: `researchAppendFromCaller(input, loadCatalog)` with a null catalog loader, so
+#: the locality collection-count stamp (#4385) never contacts FamilySearch here —
+#: the `person_warnings` precedent (#1962).
+RESEARCH_APPEND_CALL_ARGS = "input, null"
 
 
 def _make_research_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):

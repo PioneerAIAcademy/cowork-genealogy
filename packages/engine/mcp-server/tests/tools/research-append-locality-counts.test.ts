@@ -14,7 +14,7 @@ import { join, resolve } from "path";
 import { tmpdir } from "os";
 import { researchAppend, researchAppendFromCaller, CATALOG_READ_BUDGET_MS } from "../../src/tools/research-append.js";
 import { markFsRefusal } from "../../src/utils/fs-budget.js";
-import { clearCollectionsCache } from "../../src/tools/collections-search.js";
+import { clearCollectionsCache, collectionCatalogLoader } from "../../src/tools/collections-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
 import { LOCAL } from "../../src/auth/principal.js";
 import type { FSCollectionsResponse } from "../../src/types/collection.js";
@@ -93,7 +93,7 @@ describe("research_append stamps locality collection counts from the catalog", (
   const appendLocality = (collections: unknown[]) =>
     researchAppendFromCaller(
       { projectPath: dir, section: "localities", op: "append", entry: locality(collections) } as never,
-      LOCAL,
+      collectionCatalogLoader(LOCAL),
     );
 
   const warningsOf = (r: Awaited<ReturnType<typeof researchAppendFromCaller>>) => {
@@ -166,7 +166,6 @@ describe("research_append stamps locality collection counts from the catalog", (
     try {
       const pending = researchAppendFromCaller(
         { projectPath: dir, section: "localities", op: "append", entry: locality([col("1803969", 0, 0)]) } as never,
-        LOCAL,
         loader,
       );
       await vi.advanceTimersByTimeAsync(CATALOG_READ_BUDGET_MS);
@@ -221,7 +220,7 @@ describe("research_append stamps locality collection counts from the catalog", (
         entryId: "loc_001",
         fields: { collections: [col("1803971", 0, 380262)] },
       } as never,
-      LOCAL,
+      collectionCatalogLoader(LOCAL),
     );
     expect(warningsOf(r)[0]).toContain("'1803971': person_count 0 -> 380262");
     expect((await storedCollections())[0]).toMatchObject({ id: "1803971", person_count: 380262 });
@@ -237,7 +236,7 @@ describe("research_append stamps locality collection counts from the catalog", (
           { section: "localities", op: "append", entry: locality([col("1803971", 1, 1)]) },
         ],
       } as never,
-      LOCAL,
+      collectionCatalogLoader(LOCAL),
     );
     const warnings = warningsOf(r);
     expect(mockedGetValidToken).toHaveBeenCalledTimes(1);
@@ -249,7 +248,7 @@ describe("research_append stamps locality collection counts from the catalog", (
   it("does not read the catalog for a call with no locality collections", async () => {
     const r = await researchAppendFromCaller(
       { projectPath: dir, section: "localities", op: "append", entry: locality([]) } as never,
-      LOCAL,
+      collectionCatalogLoader(LOCAL),
     );
     expect(r.ok).toBe(true);
     expect(mockedGetValidToken).not.toHaveBeenCalled();
@@ -258,7 +257,6 @@ describe("research_append stamps locality collection counts from the catalog", (
   it("does not stamp when the loader is null (the unit eval harness)", async () => {
     const r = await researchAppendFromCaller(
       { projectPath: dir, section: "localities", op: "append", entry: locality([col("1803969", 0, 5)]) } as never,
-      LOCAL,
       null,
     );
     expect(warningsOf(r)).toEqual([]);

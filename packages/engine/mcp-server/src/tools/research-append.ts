@@ -122,9 +122,7 @@ import { recordBasisOf } from "../utils/record-basis.js";
 import { countsForProofGate, isAttachmentLink } from "../utils/tree-person.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
-import { collectionCountsById, fetchAllCollections, type CollectionCounts } from "./collections-search.js";
-import { getValidToken } from "../auth/refresh.js";
-import type { Principal } from "../auth/principal.js";
+import type { CollectionCatalogLoader, CollectionCounts } from "../types/collection.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -11481,16 +11479,6 @@ function expandNarrativeEdits(
 /** The one field a direct `research_append` call may change on an assertion. */
 const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
 
-/** Reads FamilySearch's collection catalog as counts by id. */
-export type CollectionCatalogLoader = () => Promise<ReadonlyMap<string, CollectionCounts>>;
-
-/** The catalog through the caller's own FamilySearch session. `fetchAllCollections`
- *  caches a successful read for an hour per token, so it is usually warm after
- *  locality-guide's own collections_search. */
-function catalogLoader(principal: Principal): CollectionCatalogLoader {
-  return async () => collectionCountsById(await fetchAllCollections(await getValidToken(principal), principal));
-}
-
 /** How long a caller's write waits on the catalog before stamping null counts. A
  *  cold read has been measured at 33-36s, and Cowork's bridge aborts a call at 60s
  *  (`COWORK_CALL_ABORT_MS`), which the write's own place lookups also spend. The
@@ -11520,12 +11508,13 @@ async function readCatalog(loadCatalog: CollectionCatalogLoader): Promise<Collec
  *  this check. A caller may update one existing assertion's
  *  `informant_bias_notes`, to record a re-reading or a doubt; any other
  *  `assertions` write is refused, whole call, before anything is read
- *  (genealogist ruling 2026-10-05, option B). `loadCatalog` null skips the
- *  collection-count stamp: the unit eval harness, which never contacts FamilySearch. */
+ *  (genealogist ruling 2026-10-05, option B). `loadCatalog` reads FamilySearch's
+ *  collection catalog through the caller's session (`collectionCatalogLoader`,
+ *  bound in `server.ts`); null skips the collection-count stamp: the unit eval
+ *  harness, which never contacts FamilySearch. */
 export async function researchAppendFromCaller(
   input: ResearchAppendInput,
-  principal: Principal,
-  loadCatalog: CollectionCatalogLoader | null = catalogLoader(principal),
+  loadCatalog: CollectionCatalogLoader | null,
 ): Promise<ResearchAppendResult> {
   // Judged on the decode `researchAppend` will make, and made in the one place it is
   // made (`decodeArg`). The decoded value is NOT written back: `researchAppend` decodes

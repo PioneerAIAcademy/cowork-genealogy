@@ -1,4 +1,3 @@
-import { LOCAL } from "../../src/auth/principal.js";
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { mkdtemp, mkdir, writeFile, readFile, rm } from "fs/promises";
 import { join } from "path";
@@ -131,9 +130,9 @@ describe("research_append — hit_verdicts", () => {
   }
   const readResearch = async () => JSON.parse(await readFile(join(dir, "research.json"), "utf-8"));
   const append = (e: Record<string, unknown>) =>
-    researchAppendFromCaller({ projectPath: dir, section: "hit_verdicts", op: "append", entry: e } as any, LOCAL);
+    researchAppendFromCaller({ projectPath: dir, section: "hit_verdicts", op: "append", entry: e } as any, null);
   const update = (entryId: string, fields: Record<string, unknown>) =>
-    researchAppendFromCaller({ projectPath: dir, section: "hit_verdicts", op: "update", entryId, fields } as any, LOCAL);
+    researchAppendFromCaller({ projectPath: dir, section: "hit_verdicts", op: "update", entryId, fields } as any, null);
   const errorsOf = (r: any): string => (r.ok ? "" : (r.errors as string[]).join("\n"));
 
   // ── the hit is a hit of that search, stored in its stored form ──
@@ -240,7 +239,7 @@ describe("research_append — hit_verdicts", () => {
         { section: "hit_verdicts", op: "append", entry: entry({ hit_id: HITS.marriage }) },
         { section: "hit_verdicts", op: "append", entry: { log_id: "log_001", hit_id: HITS.christening, person_id: "I1" } },
       ],
-    } as any, LOCAL);
+    } as any, null);
     expect(r.ok).toBe(false);
     expect(errorsOf(r)).toBe(
       ["verdict", "new_vital_info", "rationale"].map((f) => `ops[1]: missing required field '${f}'`).join("\n"),
@@ -276,7 +275,7 @@ describe("research_append — hit_verdicts", () => {
         { section: "hit_verdicts", op: "append", entry: entry({ verdict: "not_a_match" }) },
         { section: "hit_verdicts", op: "append", entry: entry({ hit_id: HITS.marriage }) },
       ],
-    } as any, LOCAL);
+    } as any, null);
     expect(r.ok, errorsOf(r)).toBe(true);
     expect(r.results).toEqual([
       { section: "hit_verdicts", op: "update", entryId: "hv_001" },
@@ -299,7 +298,7 @@ describe("research_append — hit_verdicts", () => {
         { section: "hit_verdicts", op: "append", entry: entry() },
         { section: "hit_verdicts", op: "append", entry: entry({ hit_id: "3Q9M-CSK3-ZSLR" }) },
       ],
-    } as any, LOCAL);
+    } as any, null);
     expect(r.ok).toBe(false);
     expect(errorsOf(r)).toContain("ops[1]: ops[0] already judges hit");
   });

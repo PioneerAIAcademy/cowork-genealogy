@@ -1360,7 +1360,7 @@ def test_research_append_runs_with_the_collection_catalog_disabled(tmp_path, mon
     tool_scripts = [x for x in scripts if "rejectUnknownArgs" not in x]
     assert len(tool_scripts) == 1
     assert "researchAppendFromCaller as run" in tool_scripts[0]
-    assert "await run(input, undefined, null)" in tool_scripts[0]
+    assert "await run(input, null)" in tool_scripts[0]
 
 
 @pytest.mark.skipif(

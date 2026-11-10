@@ -2146,6 +2146,12 @@ than the catalog, so a refusal would cost a turn and end in the same state.
   so the read is usually warm after locality-guide's own `collections_search`, but
   not after a token refresh, or on a hosted server where another patron's read has
   since taken the cache's one per-token slot.
+- **Whose session reads it.** The caller's: `server.ts` binds
+  `collectionCatalogLoader(principal)` and passes it to `researchAppendFromCaller`,
+  so `research-append.ts` imports no token code. That keeps every tool built on
+  `researchAppend` out of the hosted reauth alarm's set of tools that reach the token,
+  which they do not. `research_append` itself never passes on a sign-in instruction
+  (a failed read is the warning above), so it stays out of that set too.
 - **Who is stamped.** Only an MCP caller. The internal `researchAppend` callers are
   not. The unit eval harness passes a null catalog loader, so it never contacts
   FamilySearch and stores the counts as written (the `person_warnings`

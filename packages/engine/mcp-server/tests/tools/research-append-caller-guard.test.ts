@@ -9,7 +9,6 @@ import { mkdtemp, copyFile, readFile, rm } from "fs/promises";
 import { join, resolve } from "path";
 import { tmpdir } from "os";
 import { researchAppendFromCaller } from "../../src/tools/research-append.js";
-import { LOCAL } from "../../src/auth/principal.js";
 
 const SCENARIO = resolve(__dirname, "../../../../../eval/fixtures/scenarios/mid-research-flynn");
 
@@ -35,7 +34,7 @@ describe("research_append from a caller — assertions are extraction's", () => 
     ["a retirement", { section: "assertions", op: "update", entryId: "a_001", fields: { superseded_by: "retracted", superseded_reason: "wrong" } }],
   ])("refuses %s and writes nothing", async (_label, call) => {
     const before = await files();
-    const r = await researchAppendFromCaller({ projectPath: dir, ...(call as object) } as never, LOCAL);
+    const r = await researchAppendFromCaller({ projectPath: dir, ...(call as object) } as never, null);
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors[0]).toMatch(/does not write assertions/);
@@ -50,7 +49,7 @@ describe("research_append from a caller — assertions are extraction's", () => 
         { section: "questions", op: "update", entryId: "q_001", fields: { status: "in_progress" } },
         { section: "assertions", op: "update", entryId: "a_001", fields: { value: "Z" } },
       ],
-    } as never, LOCAL);
+    } as never, null);
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors).toHaveLength(1);
@@ -63,7 +62,7 @@ describe("research_append from a caller — assertions are extraction's", () => 
     const r = await researchAppendFromCaller({
       projectPath: dir,
       ops: JSON.stringify([{ section: "assertions", op: "append", entry: { value: "Z" } }]),
-    } as never, LOCAL);
+    } as never, null);
     expect(r.ok).toBe(false);
     if (r.ok) return;
     expect(r.errors[0]).toMatch(/^ops\[0\]: research_append does not write assertions/);
@@ -79,14 +78,14 @@ describe("research_append from a caller — assertions are extraction's", () => 
 
     it("refuses an assertions append stringified twice, and writes nothing", async () => {
       const before = await files();
-      const r = await researchAppendFromCaller({ projectPath: dir, ops: JSON.stringify(JSON.stringify([append])) } as never, LOCAL);
+      const r = await researchAppendFromCaller({ projectPath: dir, ops: JSON.stringify(JSON.stringify([append])) } as never, null);
       expect(r.ok).toBe(false);
       expect(await files()).toEqual(before);
     });
 
     it("refuses any batch stringified twice: still a string after one decode, it is not a batch", async () => {
       const before = await files();
-      const r = await researchAppendFromCaller({ projectPath: dir, ops: JSON.stringify(JSON.stringify([questionUpdate])) } as never, LOCAL);
+      const r = await researchAppendFromCaller({ projectPath: dir, ops: JSON.stringify(JSON.stringify([questionUpdate])) } as never, null);
       expect(r.ok).toBe(false);
       if (r.ok) return;
       expect(r.errors[0]).toMatch(/`ops` must be a non-empty array/);
@@ -98,7 +97,7 @@ describe("research_append from a caller — assertions are extraction's", () => 
       ["stringified once", JSON.stringify([append])],
     ])("still refuses an assertions append sent as %s", async (_label, ops) => {
       const before = await files();
-      const r = await researchAppendFromCaller({ projectPath: dir, ops } as never, LOCAL);
+      const r = await researchAppendFromCaller({ projectPath: dir, ops } as never, null);
       expect(r.ok).toBe(false);
       if (r.ok) return;
       expect(r.errors[0]).toMatch(/^ops\[0\]: research_append does not write assertions/);
@@ -110,7 +109,7 @@ describe("research_append from a caller — assertions are extraction's", () => 
       ["a notes-only update stringified once", JSON.stringify([notesOnly])],
       ["another section stringified once", JSON.stringify([questionUpdate])],
     ])("still accepts %s", async (_label, ops) => {
-      const r = await researchAppendFromCaller({ projectPath: dir, ops } as never, LOCAL);
+      const r = await researchAppendFromCaller({ projectPath: dir, ops } as never, null);
       expect(r.ok, JSON.stringify(r)).toBe(true);
     });
   });
@@ -122,7 +121,7 @@ describe("research_append from a caller — assertions are extraction's", () => 
       op: "update",
       entryId: "a_001",
       fields: { informant_bias_notes: "The researcher reads the first letter as T on the image." },
-    } as never, LOCAL);
+    } as never, null);
     expect(r.ok, JSON.stringify(r)).toBe(true);
     const research = JSON.parse((await files())[0]);
     const a = research.assertions.find((x: { id: string }) => x.id === "a_001");
@@ -136,7 +135,7 @@ describe("research_append from a caller — assertions are extraction's", () => 
       op: "update",
       entryId: "q_001",
       fields: { status: "in_progress" },
-    } as never, LOCAL);
+    } as never, null);
     expect(r.ok, JSON.stringify(r)).toBe(true);
   });
 });

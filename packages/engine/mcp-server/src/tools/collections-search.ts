@@ -9,6 +9,8 @@ import type {
   FSCollectionsResponse,
   FSContentCount,
   Collection,
+  CollectionCatalogLoader,
+  CollectionCounts,
   CollectionsSearchResult,
 } from "../types/collection.js";
 
@@ -172,12 +174,6 @@ function getCount(
   return entry?.count ?? 0;
 }
 
-/** One collection's indexed counts, as `collections_search` reports them. */
-export interface CollectionCounts {
-  personCount: number;
-  recordCount: number;
-}
-
 /** Every catalog collection's counts by id, derived as `toCollection` derives them. */
 export function collectionCountsById(data: FSCollectionsResponse): Map<string, CollectionCounts> {
   const out = new Map<string, CollectionCounts>();
@@ -188,6 +184,13 @@ export function collectionCountsById(data: FSCollectionsResponse): Map<string, C
     out.set(String(c.id), { personCount, recordCount });
   }
   return out;
+}
+
+/** The catalog through `principal`'s own FamilySearch session, for
+ *  `research_append`'s locality count stamp. Bound at dispatch (`server.ts`), so
+ *  `research-append.ts` imports no token code. */
+export function collectionCatalogLoader(principal: Principal): CollectionCatalogLoader {
+  return async () => collectionCountsById(await fetchAllCollections(await getValidToken(principal), principal));
 }
 
 function toCollection(data: FSCollectionData): Collection {
