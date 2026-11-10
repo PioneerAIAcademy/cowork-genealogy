@@ -1,0 +1,21 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Find death record for ancestor who died in Yorkshire, England in 1851",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-01-01",
+    "updated": "2026-01-01"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

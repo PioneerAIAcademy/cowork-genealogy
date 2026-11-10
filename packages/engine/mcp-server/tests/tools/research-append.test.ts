@@ -648,7 +648,7 @@ describe("research_append (Phase 1)", () => {
       // proof-conclusion lands the concluded value by setting `primary`, and
       // `primary` is not a detach trigger, so the backlink survives a
       // conclusion. The correction must still land — a known-wrong concluded
-      // value on the upload target is worse — but never quietly.
+      // value on the deliverable is worse — but never quietly.
       await writeProject(withAssertion(backlinkAssertion()), treeWithBacklink({ primary: true }));
 
       const r = await researchAppend({
@@ -690,7 +690,7 @@ describe("research_append (Phase 1)", () => {
 
     it("(15) warns when a correction DELETES a fact field, blank string included", async () => {
       // A blank string withdraws a claim exactly as null does, and is the
-      // likelier typo. Either way it deleted data from the upload target, so it
+      // likelier typo. Either way it deleted data from the deliverable, so it
       // must not be silent — the shape the malformed branch was added for.
       for (const blank of ["", "   "]) {
         await writeProject(
@@ -2027,6 +2027,54 @@ describe("research_append (Phase 1)", () => {
     const pe = await readResearch();
     expect(pe.person_evidence).toHaveLength(2); // old entry not deleted
     expect(pe.person_evidence.find((e: any) => e.id === "pe_001").superseded_by).toBe("pe_002");
+  });
+
+  describe("superseded_by names the link that replaces it", () => {
+    const link = (id: string, assertion_id: string, superseded_by: string | null = null) => ({
+      id, assertion_id, person_id: "I1", confidence: "probable", rationale: "match", created: "2026-01-01", superseded_by,
+    });
+    async function project(personEvidence: Record<string, unknown>[]) {
+      const research = baseResearch();
+      research.assertions = [validAssertion("a_001"), validAssertion("a_002")];
+      research.person_evidence = personEvidence;
+      await writeProject(research);
+    }
+    const retire = (entryId: string, superseded_by: string) =>
+      researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId, fields: { superseded_by } });
+
+    it("refuses a link for another assertion, and writes nothing", async () => {
+      await project([link("pe_001", "a_001"), link("pe_002", "a_002")]);
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await retire("pe_001", "pe_002");
+      expect(r.ok).toBe(false);
+      expect(errorsOf(r)?.join(" ")).toMatch(/links a different assertion \('a_002'\)/);
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+    });
+
+    it("refuses an id that names no entry, and itself", async () => {
+      await project([link("pe_001", "a_001")]);
+      expect(errorsOf(await retire("pe_001", "pe_999"))?.join(" ")).toMatch(/names no person_evidence entry/);
+      expect(errorsOf(await retire("pe_001", "pe_001"))?.join(" ")).toMatch(/cannot be superseded by itself/);
+    });
+
+    it("accepts a replacement appended earlier in the same batch, and refuses the update placed before it", async () => {
+      await project([link("pe_001", "a_001"), link("pe_002", "a_002")]);
+      await attestPairing(dir);
+      const append = { section: "person_evidence", op: "append", entry: { assertion_id: "a_001", person_id: "I1", confidence: "probable", match_score: 0.9, rationale: "score 0.9", superseded_by: null } };
+      const update = { section: "person_evidence", op: "update", entryId: "pe_001", fields: { superseded_by: "pe_003" } };
+      const wrongOrder = await researchAppend({ projectPath: dir, ops: [update, append] } as any);
+      expect(wrongOrder.ok).toBe(false);
+      expect(errorsOf(wrongOrder)?.join(" ")).toMatch(/names no person_evidence entry/);
+      const ok = await researchAppend({ projectPath: dir, ops: [append, update] } as any);
+      expect(ok.ok, JSON.stringify(ok)).toBe(true);
+      expect((await readResearch()).person_evidence.find((e: any) => e.id === "pe_001").superseded_by).toBe("pe_003");
+    });
+
+    it("leaves a pointer written before this rule editable", async () => {
+      await project([link("pe_001", "a_001", "pe_002"), link("pe_002", "a_002")]);
+      const r = await researchAppend({ projectPath: dir, section: "person_evidence", op: "update", entryId: "pe_001", fields: { rationale: "corrected note" } });
+      expect(r.ok, JSON.stringify(r)).toBe(true);
+    });
   });
 
   it("rejects update of a non-existent id and writes nothing", async () => {
@@ -4350,6 +4398,60 @@ describe("research_append (Phase 3)", () => {
         fields: { tier: "possible", claims: [nameClaim("name", "possible", "gap")] },
       } as never);
       expect(errorsOf(withClaims) ?? []).toEqual([]);
+    });
+  });
+
+  // #4366: `claims` is optional and the schema types it as an array, so a
+  // null is refused rather than persisted into a file that fails its schema.
+  describe("claims: null is refused; omission and [] are the ways to say none", () => {
+    const nameClaim = { claim: "name", proof_tier: "possible", shortfall: "gap", supporting_assertion_ids: ["a_001"], name: { person: "I1", given: "John" } };
+    const summary = (extra: Record<string, unknown>) => ({
+      question_id: "q_001", tier: "possible", vehicle: "summary", shortfall: "gap",
+      supporting_assertion_ids: ["a_001"], resolved_conflict_ids: [],
+      exhaustive_search_summary: "Searched census + vitals", narrative_markdown: "## Conclusion\n...",
+      ...extra,
+    });
+    const linked = () => phase3Research();
+
+    it("an append with claims: null is refused, nothing is written, and the error says to omit it", async () => {
+      await writeProject(linked());
+      const before = await readFile(join(dir, "research.json"), "utf-8");
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "append", entry: summary({ claims: null }),
+      } as never);
+      expect(r.ok).toBe(false);
+      expect((errorsOf(r) ?? []).join("\n")).toContain("'claims' is null — omit the field");
+      expect(await readFile(join(dir, "research.json"), "utf-8")).toBe(before);
+
+      const omitted = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "append", entry: summary({}),
+      } as never);
+      expect(errorsOf(omitted) ?? []).toEqual([]);
+      expect(omitted.ok).toBe(true);
+    });
+
+    it("a project already holding claims: null still accepts an unrelated write", async () => {
+      const research = linked();
+      research.proof_summaries.push({ id: "ps_001", ...summary({ claims: null }) });
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir, section: "project", op: "update", fields: { title: "Smith origins" },
+      } as never);
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect((await readResearch()).project.title).toBe("Smith origins");
+    });
+
+    it("an update with claims: [] clears the claims of a summary that holds them", async () => {
+      const research = linked();
+      research.proof_summaries.push({ id: "ps_001", ...summary({ claims: [nameClaim] }) });
+      await writeProject(research);
+      const r = await researchAppend({
+        projectPath: dir, section: "proof_summaries", op: "update", entryId: "ps_001", fields: { claims: [] },
+      } as never);
+      expect(errorsOf(r) ?? []).toEqual([]);
+      expect(r.ok).toBe(true);
+      expect((await readResearch()).proof_summaries[0].claims).toEqual([]);
     });
   });
 
@@ -13621,11 +13723,13 @@ describe("research_append — detected contradiction, two-party assertions", () 
   });
 
   it("does NOT pair with a one-party link the same call supersedes", async () => {
-    await write([{ id: "pe_900", ...entry("a_061", "I1", "speculative") }]);
+    // pe_901 is the link that replaces pe_900 for the same assertion (a
+    // superseded_by must name one).
+    await write([{ id: "pe_900", ...entry("a_061", "I1", "speculative") }, { id: "pe_901", ...entry("a_061", "I2", "speculative") }]);
     const r = await researchAppend({
       projectPath: dir,
       ops: [
-        { section: "person_evidence", op: "update", entryId: "pe_900", fields: { superseded_by: "pe_999" } },
+        { section: "person_evidence", op: "update", entryId: "pe_900", fields: { superseded_by: "pe_901" } },
         { section: "person_evidence", op: "append", entry: entry("a_060", "I1", "confident") },
       ],
     } as any);

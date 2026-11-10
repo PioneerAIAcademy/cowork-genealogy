@@ -647,6 +647,7 @@ Strict surname + birth-place match:
 | `unloggedSearches` | string \| undefined | Present **only** when this project holds staged search responses with no `research.json` log entry. Advisory — the search still succeeded and nothing is refused. **Serialized before `results`** — see below. |
 | `nilSearchNeedsLog` | string \| undefined | Present **only** when `projectPath` was supplied **and `totalMatches` is 0** — not merely when `results` is empty, which is the post-`mapEntry` set. A nil search stages no file, so `unloggedSearches` structurally cannot see it. **Serialized before `results`.** |
 | `results` | RecordSearchResult[] | Always present. FamilySearch's own search order (under a place expansion, the merged order), or best first with score fields when ranking ran — one row list, never two; see "The response is re-ordered; the staged sidecar is not". |
+| `collections` | object \| undefined | `collectionId` → collection title for every collection in `results`, hoisted off the rows by the compaction every answer gets (see the `gedcomx` row of `RecordSearchResult`). Absent when no row carries a title. |
 | `jurisdictionHints` | object \| undefined | Present **only** on a marriage search that did not find the subject, made with both `projectPath` and `subjectId`. See below. |
 | `surnameVariantHints` | object \| undefined | Present **only** on a search that did not identify the subject where a surname field ends in `-datter` or `-dotter`. Lists the abbreviated forms the index may hold. A nil search needs neither `projectPath` nor `subjectId`; a search that returned rows fires only through ranking's `subjectResolvable: false`, which needs both. **Serialized before `results`**; never staged. See below. |
 
@@ -1164,7 +1165,7 @@ it, and neither must this.
 
 Implementation: `packages/engine/mcp-server/src/utils/marriage-jurisdictions.ts`.
 
-Each `RecordSearchResult`:
+Each `RecordSearchResult`, as the staged file holds it (the answer compacts every row; see `gedcomx`):
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -1184,11 +1185,11 @@ Each `RecordSearchResult`:
 | `recordTitle` | string \| undefined | Human-readable description of the source record. |
 | `recordArk` | string \| undefined | The source record's ARK in canonical form (the `1:2:` entry, e.g. `"ark:/61903/1:2:HSJG-CLNF"`). Distinct from `recordId`, which is the `1:1:` persona ARK. **Not accepted by `record_read`** — feed that tool `recordId`. The two are independent id spaces, so a `1:2:` ARK passed to `record_read` resolved against the persona namespace and returned a different, unrelated record as a clean success; it is refused at the tool boundary. |
 | `treeMatches` | TreeMatch[] | Suggested matches between this record persona and existing FamilySearch Family Tree people. Sorted by `stars` descending. Empty array when the upstream entry has no `hints`. |
-| `gedcomx` | SimplifiedGedcomX \| undefined | The matched persona's record converted from the entry's raw `content.gedcomx` to the simplified GedcomX format (via `toSimplified`, see `simplified-gedcomx-spec.md`). Carries the faithful record shape — names, facts, source descriptions — for downstream tools that need more than the flattened summary fields. Undefined when the entry has no `content.gedcomx`. |
+| `gedcomx` | SimplifiedGedcomX \| undefined | The matched persona's record converted from the entry's raw `content.gedcomx` to the simplified GedcomX format (via `toSimplified`, see `simplified-gedcomx-spec.md`). Carries the faithful record shape — names, facts, source descriptions — for downstream tools that need more than the flattened summary fields. Undefined when the entry has no `content.gedcomx`. **Never in the answer, with or without `projectPath`:** every answer goes through `compactStagedRecordSearch`, which drops this field and `collectionUrl`, hoists `collectionTitle` into `collections`, drops an empty `treeMatches` and de-duplicates `events`, so only the staged file keeps the full row and `record_read` on `recordId` gives one record's document. The answer is compacted with no project too because a 100-result page carrying `gedcomx` is over Claude Code's ~50k-character tool-result cutoff (the Dixon fixture: about 62k characters, about 29k compacted), and a call over it reaches the model as an error notice with no data (lead, 2026-11-09). |
 | `primaryId` | string \| undefined | The `id` of the focus persona within `gedcomx.persons[]` (the person this result represents). Lets a downstream consumer pick the right person out of a multi-person record. Undefined when the represented persona carries no `id`. |
 | `relativeTerms` | RelativeTerms \| undefined | Per-relative answer to "is the relative I searched on actually named on this record?" Present only when the caller supplied a relative *name*; see [`relativeTerms`](#relativeterms--whether-the-relative-you-anchored-on-is-actually-there) below. |
 | `batchNumber` | string \| undefined | The extraction batch this record came out of (e.g. `"M01048-5"`), read off the entry's `content.gedcomx.fields[]`. Feed it straight back as the `batchNumber` **input** to enumerate the rest of the batch. Undefined on any record that does not trace to an extraction batch, which is most of them — **absence carries no information** and is not a statement about the collection. See [`batchNumber`](#batchnumber--the-only-route-to-a-batch-you-can-enumerate) below. |
-| `role` | string \| undefined | FamilySearch's label for the persona's role on this record: `"Principal"`, `"Father"`, `"Mother"`, `"Spouse"`, or `"Other"`. Flat and top-level for the same reason as `relativeTerms` and `batchNumber`: the staged slim block strips `gedcomx`, and a role the model cannot see in the staged case is the one case that matters. This is FamilySearch's own vocabulary, not a `research.json` `record_role` value. Absent means unknown, never "principal". Present on 100% of search personas (measured 2026-09-14). `record_read` carries `principal` (boolean) on each person instead — the recapi endpoint does not expose the role string. |
+| `role` | string \| undefined | FamilySearch's label for the persona's role on this record: `"Principal"`, `"Father"`, `"Mother"`, `"Spouse"`, or `"Other"`. Flat and top-level for the same reason as `relativeTerms` and `batchNumber`: the answer never carries `gedcomx`. This is FamilySearch's own vocabulary, not a `research.json` `record_role` value. Absent means unknown, never "principal". Present on 100% of search personas (measured 2026-09-14). `record_read` carries `principal` (boolean) on each person instead — the recapi endpoint does not expose the role string. |
 
 Output fields keep the `Date` naming because they hold the date as
 written on the record — which can include month and day even though
@@ -1406,7 +1407,7 @@ such evidence exists here — so no such denial is offered.
 trigger 3 (no graph) does not apply to it: a record with no `relationships` can
 still answer an `other` term.
 
-**Survives staging.** Resolved inside `mapEntry` before the staged slim block
+**Survives staging.** Resolved inside `mapEntry` before the slim block
 deletes `gedcomx`, so it reaches both the inline stub and the sidecar payload.
 `rank_search_matches` carries it onto the ranked stub verbatim.
 
@@ -1457,32 +1458,17 @@ Example:
         { "type": "Residence", "date": "1860", "place": "Springfield, Illinois" }
       ],
       "collectionId": "5000016",
-      "collectionTitle": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007",
-      "collectionUrl": "https://familysearch.org/collections/5000016",
       "recordTitle": "Entry for Abraham Lincoln, \"United States, Social Security...\"",
       "recordArk": "ark:/61903/1:2:HSJG-CLNF",
       "treeMatches": [
         { "treePersonId": "GQWZ-GPX", "stars": 5 }
       ],
-      "primaryId": "p_1",
-      "gedcomx": {
-        "persons": [
-          {
-            "id": "p_1",
-            "ark": "ark:/61903/1:1:QPRC-WPBZ",
-            "facts": [
-              { "type": "Birth", "date": "12 February 1809", "place": "Hardin, Kentucky, United States" },
-              { "type": "Residence", "date": "1860", "place": "Springfield, Illinois" }
-            ]
-          }
-        ],
-        "sources": [
-          { "title": "United States, Social Security...", "url": "https://familysearch.org/collections/5000016" },
-          { "title": "Entry for Abraham Lincoln, \"United States, Social Security...\"" }
-        ]
-      }
+      "primaryId": "p_1"
     }
-  ]
+  ],
+  "collections": {
+    "5000016": "United States, Social Security Numerical Identification Files (NUMIDENT), 1936-2007"
+  }
 }
 ```
 
@@ -2200,6 +2186,8 @@ ListTools, CallTool — same as `place_search`, `collections_search`).
 | 82 | The persona on `person1` of its Couple is matched | Every other case puts it on `person2` |
 | 83 | A duplicate Couple fact fills the kept copy's missing `value` | The `value` half of the fill |
 | 84 | A fact on the persona's ParentChild row is not an event | The `/Couple` type filter |
+| 85 | A search with no `projectPath`, and one whose staging failed, return compacted rows: no `gedcomx`, no `collectionUrl`, titles in `collections` | Every answer is compacted, staged or not |
+| 86 | The Dixon fixture's 100-row page, served with no `projectPath`, serializes under 40k characters, and a staged call still writes full `gedcomx` to the file | The overflow the rule exists for; fails on the staged-only rule |
 
 Numbering continues from 31; 32–34 are the staging/`rankingSkipped` tests added
 after this table was last extended. Cases 35–55 cover `relativeTerms`; 56–63

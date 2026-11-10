@@ -759,7 +759,7 @@ describe("recordSearchTool response shape", () => {
     expect(r.birthDate).toBe("1880");
     expect(r.birthPlace).toBe("Texas");
     expect(r.collectionId).toBe("9999");
-    expect(r.collectionTitle).toBe("Texas Births");
+    expect(result.collections).toEqual({ "9999": "Texas Births" });
   });
 
   it("28. surfaces treeMatches from entry.hints sorted by stars descending", async () => {
@@ -1002,7 +1002,7 @@ describe("recordSearchTool — User-Agent contract", () => {
   });
 });
 
-describe("recordSearchTool — inline gedcomx omission when staged", () => {
+describe("recordSearchTool — inline compaction", () => {
   let dir: string;
   beforeEach(async () => {
     dir = await mkdtemp(join(tmpdir(), "record-search-omit-"));
@@ -1255,7 +1255,7 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
     expect(row.treeMatches).toBeDefined();
   });
 
-  it("keeps inline gedcomx when staging returned null", async () => {
+  it("compacts the answer when staging returned null", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
     // A non-existent projectPath makes stageSearchResults throw → staged: null.
@@ -1266,20 +1266,166 @@ describe("recordSearchTool — inline gedcomx omission when staged", () => {
 
     expect(out.staged).toBeNull();
     expect(out.stagingError).toBeTruthy();
-    // Never strip when nothing was retained to re-read from.
-    expect(out.results![0].gedcomx).toBeDefined();
+    // Every answer is compacted, staged or not (issue #4386).
+    const r = out.results![0];
+    expect(r.gedcomx).toBeUndefined();
+    expect(r.collectionUrl).toBeUndefined();
+    expect(r.collectionTitle).toBeUndefined();
+    expect(out.collections).toEqual({ [r.collectionId!]: "Some Collection" });
   });
 
-  it("keeps inline gedcomx for an exploratory search with no projectPath", async () => {
+  it("compacts the answer of a search with no projectPath", async () => {
     mockFetch.mockResolvedValueOnce(makeOkResponse(oneResult()));
 
-    // No projectPath → no staging → full gedcomx returned inline as before.
     const out = await recordSearchTool({
       surname: "Lincoln",
     }, LOCAL);
 
     expect(out.staged).toBeUndefined();
-    expect(out.results![0].gedcomx).toBeDefined();
+    const r = out.results![0];
+    expect(r.gedcomx).toBeUndefined();
+    expect(r.collectionUrl).toBeUndefined();
+    expect(r.collectionTitle).toBeUndefined();
+    expect(out.collections).toEqual({ [r.collectionId!]: "Some Collection" });
+    // The flat stub fields a caller triages on, and record_read's input, stay.
+    expect(r.recordId).toBe("ark:/61903/1:1:QPRC-WPBZ");
+    expect(r.primaryId).toBe("p_1");
+    expect(r.personName).toBe("Abraham Lincoln");
+  });
+});
+
+// The overflow issue #4386 exists for: the Dixon 1840 Virginia census fixture is
+// one 100-row page, and with per-result `gedcomx` it serializes past Claude
+// Code's ~50k-character cutoff. Its rows are fed back through FamilySearch's
+// raw entry shape so the page runs the tool end to end.
+describe("recordSearchTool — the Dixon 100-row page", () => {
+  const DIXON = new URL(
+    "../../../../../eval/fixtures/mcp/record-search-dixon-virginia-1840-census.json",
+    import.meta.url,
+  );
+
+  interface DixonRow {
+    recordId: string;
+    personName: string;
+    score: number;
+    sex: string;
+    role: string;
+    events: Array<{ type: string; date: string; place: string }>;
+    collectionId: string;
+    collectionTitle: string;
+    recordArk: string;
+    gedcomx: { persons: Array<{ id: string }> };
+  }
+
+  const dixonEntry = (row: DixonRow): FSSearchEntry => {
+    const [given, ...rest] = row.personName.split(" ");
+    return {
+      id: row.recordId,
+      score: row.score,
+      content: {
+        gedcomx: {
+          persons: [
+            {
+              principal: true,
+              id: row.gedcomx.persons[0].id,
+              display: { name: row.personName, gender: row.sex, role: row.role },
+              gender: { type: `http://gedcomx.org/${row.sex}` },
+              names: [
+                {
+                  nameForms: [
+                    {
+                      fullText: row.personName,
+                      parts: [
+                        { type: "http://gedcomx.org/Given", value: given },
+                        { type: "http://gedcomx.org/Surname", value: rest.join(" ") },
+                      ],
+                    },
+                  ],
+                },
+              ],
+              facts: row.events.map((e) => ({
+                type: `http://gedcomx.org/${e.type}`,
+                date: { original: e.date },
+                place: { original: e.place },
+              })),
+              identifiers: {
+                "http://gedcomx.org/Persistent": [
+                  `https://familysearch.org/ark:/61903/1:1:${row.recordId}`,
+                ],
+              },
+            },
+          ],
+          sourceDescriptions: [
+            {
+              resourceType: "http://gedcomx.org/Collection",
+              about: `https://familysearch.org/collections/${row.collectionId}`,
+              titles: [{ value: row.collectionTitle }],
+            },
+            {
+              identifiers: {
+                "http://gedcomx.org/Persistent": [`https://familysearch.org/${row.recordArk}`],
+              },
+            },
+          ],
+        },
+      },
+    } as unknown as FSSearchEntry;
+  };
+
+  const dixonPage = async (): Promise<FSSearchResponse> => {
+    const fixture = JSON.parse(await readFile(DIXON, "utf-8")) as {
+      response: { totalMatches: number; results: DixonRow[] };
+    };
+    return {
+      results: fixture.response.totalMatches,
+      index: 0,
+      entries: fixture.response.results.map(dixonEntry),
+      links: { next: { href: "https://www.familysearch.org/next" } },
+    } as FSSearchResponse;
+  };
+
+  const DIXON_SEARCH = {
+    surname: "Dixon",
+    residenceYearFrom: 1840,
+    residenceYearTo: 1840,
+    count: 100,
+  };
+
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-search-dixon-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("serializes the page under 40,000 characters with no projectPath", async () => {
+    mockFetch.mockResolvedValueOnce(makeOkResponse(await dixonPage()));
+
+    const out = await recordSearchTool(DIXON_SEARCH, LOCAL);
+
+    expect(out.results).toHaveLength(100);
+    // As server.ts sends it: compact JSON.
+    expect(JSON.stringify(out).length).toBeLessThan(40_000);
+    expect(out.results.every((r) => r.gedcomx === undefined)).toBe(true);
+  });
+
+  it("still stages full gedcomx for every row when a project is given", async () => {
+    await writeFile(join(dir, "research.json"), JSON.stringify({ log: [] }), "utf-8");
+    mockFetch.mockResolvedValueOnce(makeOkResponse(await dixonPage()));
+
+    const out = await recordSearchTool({ ...DIXON_SEARCH, projectPath: dir }, LOCAL);
+
+    expect(out.staged).toBeTruthy();
+    expect(out.results.every((r) => r.gedcomx === undefined)).toBe(true);
+    const staged = JSON.parse(
+      await readFile(join(dir, out.staged!.resultsRef), "utf-8"),
+    );
+    expect(staged.payload.results).toHaveLength(100);
+    for (const row of staged.payload.results) {
+      expect(row.gedcomx.persons.length).toBeGreaterThan(0);
+      expect(row.collectionTitle).toBe("United States Census, 1840");
+    }
   });
 });
 
