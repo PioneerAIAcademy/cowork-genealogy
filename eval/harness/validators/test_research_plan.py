@@ -1937,7 +1937,7 @@ _PARENTS_MARRIAGE_BY_TEST_ID = {
 
 # wed(?:s|ded|ding|lock)?\b rather than wed\w* so "Wednesday" cannot match.
 _MARRIAGE_WORD = r"(?:marri\w*|wed(?:s|ded|ding|lock)?\b|bond\w*|licen[cs]\w*)"
-_FOLDED_WORD = r"(?:baptis\w*|christen\w*|sibling\w*)"
+_FOLDED_WORD = r"(?:baptis\w*|christen\w*|sibling\w*|child\w*)"
 
 
 def test_research_plan_plans_parents_marriage(before_state, after_state, test):
@@ -1949,14 +1949,17 @@ def test_research_plan_plans_parents_marriage(before_state, after_state, test):
     (church) carried "A marriage record for Thomas Flynn and his wife ...
     would supply her maiden name" alongside sibling baptisms. An item counts
     only when its rationale names the candidate father together with a
-    marriage word and does not also target a baptism, christening or sibling
-    in that same sentence. The anti-words are sentence-scoped (the death-route
-    validator's precedent): a 2026-11-03 run wrote "Dedicated search for
-    Thomas Flynn's marriage to Patrick's mother." and then noted the same
-    parish registers may also hold a sibling's baptism — a dedicated item a
-    whole-rationale scan false-failed. The v14 folded shape joins the marriage
-    and the sibling baptisms with a semicolon, one sentence, so it still
-    fires. ``record_type`` is deliberately not tested: the body names a church
+    marriage word and does not also target a baptism, christening, sibling or
+    child in that same sentence. The anti-words are sentence-scoped (the
+    death-route validator's precedent): a 2026-11-03 run wrote "Dedicated
+    search for Thomas Flynn's marriage to Patrick's mother." and then noted the
+    same parish registers may also hold a sibling's baptism — a dedicated item
+    a whole-rationale scan false-failed. The real v14 pli_009 rationale is five
+    sentences; its marriage sentence folds in sibling baptisms (one semicolon
+    sentence), and its last sentence searches "Thomas's marriage and ...
+    children bearing the Flynn surname" — so `child*` is in the anti-words
+    too, or that last sentence would slip the fold through (T-FEH, PR #4447).
+    ``record_type`` is deliberately not tested: the body names a church
     marriage register as a valid dedicated item (review-ready, 2026-10-30).
     Known limits, accepted with that decision: any new item pairing the
     father's name with a marriage word in a clean sentence qualifies (e.g. a
@@ -1996,8 +1999,8 @@ def test_research_plan_plans_parents_marriage(before_state, after_state, test):
     assert any(_dedicated(i) for i in items), (
         f"no new plan item is dedicated to the candidate parents' marriage: "
         f"no rationale sentence names {father} with a marriage word "
-        "(marri*/wed*/bond*/licen*) and no baptism, christening or sibling "
-        "target in that sentence (items: "
+        "(marri*/wed*/bond*/licen*) and no baptism, christening, sibling or "
+        "child target in that sentence (items: "
         + "; ".join(
             f"{i.get('id')} {i.get('record_type')}: {(i.get('rationale') or '')[:90]}"
             for i in items

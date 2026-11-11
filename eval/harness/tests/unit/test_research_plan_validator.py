@@ -1890,13 +1890,27 @@ def test_purchase_check_skips_an_untagged_test():
 
 PM = {"id": "ut_research_plan_014", "tags": ["planning", "parents-marriage-item"]}
 
-# The v14_2026-10-29 folded shape: pli_009, record_type church, the marriage
-# mention embedded beside sibling baptisms, one sentence (semicolon-joined).
+# The verbatim v14_2026-10-29 pli_009 rationale (ut_research_plan_014): pli_009,
+# record_type church. Five sentences — the marriage sentence folds in sibling
+# baptisms (semicolon), and the LAST sentence searches "Thomas's marriage and
+# ... children bearing the Flynn surname". T-FEH (PR #4447) showed the earlier
+# one-sentence strawman let this real shape pass through that last sentence,
+# because "children" was not an anti-word. With `child\w*` added it fires.
 FOLDED = _pli(
     9, "church", "1840-1850",
-    "A marriage record for Thomas Flynn and his wife in Schuylkill County "
-    "would supply her maiden name; baptismal records for Patrick's siblings "
-    "corroborate parentage.",
+    "The loc_001 locality entry notes that Roman Catholic parishes in "
+    "Schuylkill County were under the Diocese of Philadelphia (Archdiocese "
+    "from 1875); sacramental registers are held at the parish and diocese. "
+    "The Pennsylvania, Schuylkill County Church Records collection (id "
+    "SYNTH-PA-CHURCH) is name-searchable (personCount 982415), covering "
+    "1708-1985. A marriage record for Thomas Flynn and his wife in Schuylkill "
+    "County would supply her maiden name; baptismal records for Patrick's "
+    "siblings would independently corroborate Thomas and his wife as parents. "
+    "Image group 007936751 covers church records 1842-1895 and is browse-only "
+    "(personCount 0) for films not yet indexed — worth browsing if the name "
+    "search yields nothing. Search under Flynn and variant Flinn for Thomas's "
+    "marriage and for children bearing the Flynn surname in the anthracite "
+    "coal region parishes.",
     jurisdiction="Schuylkill County, Pennsylvania",
 )
 CENSUS = _pli(5, "census", "1850-1880", "Track Patrick with his household.",
@@ -1971,14 +1985,15 @@ def test_parents_marriage_known_limit_another_item_naming_the_marriage_passes():
 
 
 def test_parents_marriage_known_limit_a_two_sentence_fold_passes():
-    """Accepted limit of sentence-scoping: the v14 fold restated as two
-    sentences leaves the marriage sentence clean, so it passes. The measured
-    folded shape joins them with a semicolon — one sentence — and still
-    fires."""
+    """Accepted limit of sentence-scoping: a fold whose marriage sentence names
+    neither a baptism, christening, sibling nor child passes, because that
+    sentence is clean. The real v14 shape (the FOLDED fixture) does NOT have
+    such a sentence — its marriage sentence folds in sibling baptisms and its
+    search sentence names children — so it fires; this contrived two-sentence
+    variant is the boundary the sentence-scoping concedes."""
     two = _pli(9, "church", "1840-1850",
                "A marriage record for Thomas Flynn and his wife would supply "
-               "her maiden name. Baptismal records for Patrick's siblings "
-               "corroborate parentage.",
+               "her maiden name. Baptismal records corroborate parentage.",
                jurisdiction="Schuylkill County, Pennsylvania")
     b, a = _plan_states([CENSUS, two])
     check_parents_marriage(b, a, PM)
