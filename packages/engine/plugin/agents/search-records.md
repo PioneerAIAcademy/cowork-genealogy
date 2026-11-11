@@ -62,7 +62,7 @@ tools:
   - mcp__remote-devices__Genealogy_Research__catalog_search
   - mcp__Genealogy_Research__catalog_search
 model: claude-haiku-5-5
-effort: low
+effort: medium
 ---
 
 # Search Records
