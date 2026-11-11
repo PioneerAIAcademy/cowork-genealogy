@@ -425,7 +425,7 @@ export const REEL_TEXT_CAP = 2_000;
 export function mergeFilmNotes(notes: readonly CatalogFilmNote[]): CatalogFilmNote[] {
   const reels = new Map<
     string,
-    { identity: CatalogFilmNote; runs: { texts: string[]; length: number }[] }
+    { identity: CatalogFilmNote; runs: { texts: string[]; length: number }[]; seen: Set<string> }
   >();
   for (const n of notes) {
     const key = reelOf(n);
@@ -433,11 +433,14 @@ export function mergeFilmNotes(notes: readonly CatalogFilmNote[]): CatalogFilmNo
     if (!reel) {
       const identity: CatalogFilmNote = {};
       for (const f of REEL_KEY_FIELDS) if (n[f] !== undefined) identity[f] = n[f];
-      reel = { identity, runs: [{ texts: [], length: 0 }] };
+      reel = { identity, runs: [{ texts: [], length: 0 }], seen: new Set() };
       reels.set(key, reel);
     }
-    // A note with no text adds nothing, and so no separator either.
-    if (!n.text) continue;
+    // A note with no text adds nothing, and so no separator either. Nor does a
+    // text the reel already has: the reel's vault and library copies carry the
+    // same notes, and the copy location that told them apart is not read.
+    if (!n.text || reel.seen.has(n.text)) continue;
+    reel.seen.add(n.text);
     let run = reel.runs[reel.runs.length - 1];
     // A note never splits, so one that would take the run past the cap starts the
     // next run, and a note longer than the cap stands alone in its own.

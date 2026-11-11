@@ -184,13 +184,13 @@ function getCount(
 }
 
 /** Every catalog collection's counts by id: `personCount` as `toCollection`
- *  derives it, and the `/Record` count its answer no longer carries. */
+ *  derives it, and the `/Record` count its rows no longer carry. */
 export function collectionCountsById(data: FSCollectionsResponse): Map<string, CollectionCounts> {
   const out = new Map<string, CollectionCounts>();
   for (const entry of data.entries ?? []) {
     const c = unwrapEntry(entry);
     if (!c) continue;
-    out.set(String(c.id), { personCount: toCollection(c).personCount, recordCount: getCount(c.content, "/Record") });
+    out.set(String(c.id), { personCount: getCount(c.content, "/Person"), recordCount: getCount(c.content, "/Record") });
   }
   return out;
 }
@@ -225,17 +225,18 @@ export function subPlaceTerms(standardPlace: string): string[] {
     .split(",")
     .map((p) => p.trim())
     .filter(Boolean);
-  if (standardPlaceToCollectionsQuery(standardPlace) === standardPlace.trim()) return [];
-  const country = parts[parts.length - 1];
-  const stateLevel = country === "United States" || country === "Canada" || country === "Mexico";
-  return parts.slice(0, stateLevel ? -2 : -1);
+  const scope = standardPlaceToCollectionsQuery(standardPlace);
+  if (scope === standardPlace.trim()) return [];
+  // The scope standardPlaceToCollectionsQuery derived is the country (the last
+  // part) or a state level (the last two); every part before it is below it.
+  return parts.slice(0, scope === parts[parts.length - 1] ? -1 : -2);
 }
 
-/** Whether `title` names one of `terms` as a whole word, ignoring case. */
-function namesAny(title: string, terms: readonly string[]): boolean {
-  return terms.some((t) => {
+/** One whole-word, case-insensitive matcher per term, built once per answer. */
+function wholeWordMatchers(terms: readonly string[]): RegExp[] {
+  return terms.map((t) => {
     const escaped = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-    return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, "iu").test(title);
+    return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, "iu");
   });
 }
 
@@ -254,9 +255,10 @@ export function fitToBudget(
 ): CollectionsSearchResult {
   if (JSON.stringify(result).length <= budget) return result;
 
-  const terms = subPlaceTerms(standardPlace);
-  const named = terms.length ? result.results.filter((r) => namesAny(r.title, terms)) : [];
-  const rest = result.results.filter((r) => !named.includes(r));
+  const matchers = wholeWordMatchers(subPlaceTerms(standardPlace));
+  const named: Collection[] = [];
+  const rest: Collection[] = [];
+  for (const r of result.results) (matchers.some((m) => m.test(r.title)) ? named : rest).push(r);
   const ordered = [...named, ...rest];
 
   const out: CollectionsSearchResult = {
@@ -404,7 +406,8 @@ export const collectionsSearchToolSchema = {
     "whose date range overlaps that window. Each row is {id, title, dateRange, " +
     "personCount}; a collection's page is `collectionUrl` with `{id}` replaced by " +
     "the row's id. There is no pagination: the matched set comes back in one " +
-    "response, held to 40,000 characters. When it is over that, `truncated: true` " +
+    `response, held to ${ANSWER_CHAR_BUDGET.toLocaleString("en-US")} characters. ` +
+    "When it is over that, `truncated: true` " +
     "is set, `matched` gives how many rows matched, and rows whose title names " +
     "a part of `standardPlace` below the scope are kept first. " +
     "Requires authentication — call the login tool first if not logged in.",

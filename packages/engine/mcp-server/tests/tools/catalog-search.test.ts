@@ -1633,6 +1633,18 @@ describe("catalog_search — one entry per reel", () => {
     expect(entries).toEqual([{ filmNumber: "100", imageGroupNumber: "900", text: "a | b" }]);
   });
 
+  it("the vault and library copies of one note give its text once, not twice", async () => {
+    const entries = await notesOf(
+      note({ text: "Baptisms 1750-1790" }),
+      note({ text: "Marriages 1750-1790" }),
+      note({ text: "Baptisms 1750-1790", copy_location: "FamilySearch Library" }),
+      note({ text: "Marriages 1750-1790", copy_location: "FamilySearch Library" }),
+    );
+    expect(entries).toEqual([
+      { filmNumber: "100", imageGroupNumber: "900", text: "Baptisms 1750-1790 | Marriages 1750-1790" },
+    ]);
+  });
+
   it.each([
     // `shelf` is where the reel sits, not which reel it is.
     ["shelf", "Film", "B1 Floor Film", "shelf"],

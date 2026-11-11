@@ -42,7 +42,7 @@ export interface FSCollectionsResponse {
 
 // Tool Output Types
 
-/** One collection's indexed counts, as `collections_search` reports them. */
+/** One collection's indexed counts from FamilySearch's catalog: `personCount` as `collections_search` reports it, and the `/Record` count it does not return. */
 export interface CollectionCounts {
   personCount: number;
   recordCount: number;

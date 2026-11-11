@@ -326,10 +326,12 @@ dense reel can still be listed when all of it cannot, and large enough that an
 ordinary reel stays one entry. The entries of a reel sit together, and a reel's
 next entry is its next run.
 
-Nothing is lost. Every text is kept, once. Notes that differ in either field
-stay apart, and so does a note that lacks a field another has. The same reel
-held in two places (the vault and the library) is one entry, its notes' texts
-joined, since the copy location is no longer carried. Keeping reels apart
+Nothing is lost. Every distinct text is kept, once: a text the reel already has
+is not joined again. Notes that differ in either field stay apart, and so does a
+note that lacks a field another has. The same reel held in two places (the
+vault and the library) is one entry, since the copy location is no longer
+carried; its two copies carry the same notes, so without that rule each text
+would appear twice. Keeping reels apart
 matters because the plugin reads `filmNumber` and `imageGroupNumber` off each
 entry as a fact about one reel, and a merge across a difference would give an entry that says
 something no note said. Splitting the joined `text` of the entries of a reel
