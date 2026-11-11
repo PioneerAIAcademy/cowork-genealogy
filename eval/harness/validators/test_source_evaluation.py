@@ -1333,6 +1333,17 @@ _AGE_ROW_RE = re.compile(r"^[^|\n]*\|[^|\n]*\||^[-:+ ]*[-:]+[+|][-:+| ]*$")
 _AGE_CONFLICT_TAG_RE = re.compile(r"\[\s*conf", re.IGNORECASE)
 
 
+def _age_cell_segments(cell: str) -> list[str]:
+    """A table cell as the pieces one flag can cover: sentences, where a `[CONFLICT]` tag that
+    opens a sentence belongs to the sentence before it ("...(my arithmetic). [CONFLICT]
+    Age-based: 1910 census agrees" tags the arithmetic, not the census)."""
+    pieces: list[str] = []
+    for part in re.split(r"(?<=[.;])\s+(?!\[\s*conf)", cell, flags=re.IGNORECASE):
+        marked = re.sub(r"(?<=[.;)])(\s+\[\s*conf[^\]]*\])(?=\s+[A-Za-z])", "\x5c1\x00", part, flags=re.IGNORECASE)
+        pieces += [s.strip() for s in marked.split("\x00") if s.strip()]
+    return pieces
+
+
 def _age_flag_text(text: str) -> bool:
     """The text carries a conflict flag that is not denied in the same breath."""
     return bool(_AGE_CONFLICT_WORD_RE.search(text)) and not _AGE_DENIED_RE.search(text)
@@ -1421,7 +1432,7 @@ def _age_derived_flags(reply: str, sources: list[dict]) -> list[str]:
             # A [CONFLICT] tag on a birth row is a flag on the sentence that carries it:
             # "Exact dates: FG [CONFLICT]. Age ranges, all agree: 1850 census" flags no census.
             label = header[j] if j < len(header) else ""
-            for seg in re.split(r"(?<=[.;])\s+", cell):
+            for seg in _age_cell_segments(cell):
                 if _AGE_CONFLICT_TAG_RE.search(seg) or _age_flag_text(seg):
                     flagged += _age_source_hits(f"{label} {seg}", sources)
                     flagged += aliases.get(label.lower(), [])

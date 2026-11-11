@@ -2268,6 +2268,30 @@ def test_a_conflict_tag_on_an_age_derived_sentence_still_flags_even_beside_anoth
             _age_check(_THREE_COLUMN_HEADER + row + _TAIL_CONFLICT)
 
 
+def test_a_conflict_tag_after_its_sentence_does_not_reach_the_next_one():
+    """Live Tallman run: "...(my arithmetic). [CONFLICT] Age-based: 1910 census 1838-1839, agrees."
+    The tag follows the tombstone sentence it marks; the census sentence after it is clean."""
+    cell = (
+        "Exact-date sources: Find a Grave gives 31 Jan 1839. The tombstone age works out to about "
+        "31 Jan 1839 (my arithmetic). [CONFLICT] Age-based: 1910 census 1838-1839, agrees. "
+        "1865 NY census 1838-1839, agrees."
+    )
+    row = f"| Birth date: 30 Nov 1838 | {cell} | Exact date conflicts |\n"
+    _age_check(_THREE_COLUMN_HEADER + row + _TAIL_CONFLICT)
+
+
+def test_a_trailing_conflict_tag_on_an_age_derived_sentence_still_flags():
+    """The other direction: a tag that follows the census's own sentence flags it, and so does a
+    tag that opens the next sentence when the census is what the sentence before it names."""
+    for cell in (
+        "Find a Grave gives 31 Jan 1839. The 1850 census gives 1840. [CONFLICT] Both differ.",
+        "Find a Grave gives 31 Jan 1839 [CONFLICT]. The 1850 census gives 1840 [CONFLICT].",
+    ):
+        row = f"| Birth date: 30 Nov 1838 | {cell} | Conflict |\n"
+        with pytest.raises(AssertionError, match="1850 census"):
+            _age_check(_THREE_COLUMN_HEADER + row + _TAIL_CONFLICT)
+
+
 def test_a_finding_about_the_fathers_name_is_not_a_birth_finding():
     """Live Tallman run: the finding's paragraph said "same birth range" and "disagreement", so the
     validator read the 1850 household in it as a birth flag. The topic is the heading."""
