@@ -5,7 +5,9 @@
 -- redelivered attempt starts with an empty step list, believes it is opening the turn,
 -- and lets a SECOND step through -- the exact failure the boundary exists to stop.
 --
---   step  the agent this turn OPENED with, bare (no plugin prefix). NULL for a turn
+--   step  the agent that fixed this turn's group, bare (no plugin prefix): its first
+--         step, or in a turn init-project opens, the step after it (init-project
+--         when it ran alone). NULL for a turn
 --         that ran no step: a question answered from the project, an upload, a turn
 --         that ended before spawning anything. `next_auto_reply` reads prev_step from
 --         the last closed turn with a NON-NULL step, so such a turn is skipped rather

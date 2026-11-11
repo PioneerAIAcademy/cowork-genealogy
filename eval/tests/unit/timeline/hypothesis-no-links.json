@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_timeline_011",
+    "skill": "timeline",
+    "name": "Mode B with nothing linked: no extraction, no write",
+    "type": "positive",
+    "description": "Mode B on first-plan-migration-hypothesis. The delegation names hypothesis h_001 (Michael Sheahan's move to Schuylkill County). No assertion is linked to I1, so the agent writes no timeline, says that no linked record bears on the hypothesis yet, and never extracts: extraction belongs to a person timeline, not a hypothesis one.",
+    "tags": [
+      "timeline",
+      "mode-b",
+      "hypothesis",
+      "extraction-calls-0",
+      "no-project-write",
+      "I1",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Build a candidate timeline for hypothesis h_001 (Michael Sheahan, person I1).\n\nprojectPath: <workspace>",
+    "scenario": "first-plan-migration-hypothesis"
+  },
+  "judge_context": [
+    "The delegation names a hypothesis, so this is Mode B. The project holds no assertions and no `person_evidence`, so no linked record bears on h_001. The expected outcome is no write and a reply that says so; the `extraction-calls-0` and `no-project-write` validators own the call and the unchanged project.",
+    "Mode B never calls `timeline_build` or `extraction_append`. A reply that suggests what would put records into the project (searching for them, or linking records once found) is welcome; doing that work in this run is not.",
+    "The reply must make no claim about Michael Sheahan's life beyond what the delegation and the hypothesis state, and must not build events from the hypothesis's notes or the log's descriptions.",
+    "Tool usage, Gap detection, Geographic feasibility and Deferral of logical-impossibility detection are N/A: no timeline is written. Identity coherence is N/A: h_001 is a migration hypothesis, not an identity question, and no verdict on it is expected."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

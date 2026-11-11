@@ -31,7 +31,7 @@ code edits, no eval runs, and no board moves — promotion and demotion belong t
 Repo `PioneerAIAcademy/cowork-genealogy`, project **1**.
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 3000
 ```
 
 ## 1. Pick the candidates
@@ -87,7 +87,7 @@ answers this for every candidate at once — this is the whole standing-pool que
 # and are raw untriaged bundles, and reviewing one costs ~110k tokens to learn
 # nothing. `/triage-feedback` drops the label on the way to Backlog, so anything
 # still carrying it has not been triaged and this filter is the whole guard.
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 | jq -r '
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 3000 | jq -r '
   .items[]
   | select(.status == "Ready" and (.assignees | length) == 0
            and ((.labels | index("developer")) or (.labels | index("genealogist")))
@@ -206,19 +206,13 @@ Write each surviving question into the issue **body**, above the reviewed marker
 
 </details>
 
-<details><summary>Body text if B</summary>
-
-<the issue-body text option B produces>
-
-</details>
-
 *Prepared by review-ready YYYY-MM-DD.*
 ```
 
-**Carry every option's pre-written body text, not just the recommended one.** The
-agent wrote one block per option precisely so that applying the answer is a
-mechanical splice by someone who did not do the reading. Drop them and the
-splice becomes a rewrite, and `/fill-ready` skips its gate on text nobody vetted.
+**Carry the recommended option's pre-written body text.** It is what makes
+applying that answer a mechanical splice by someone who did not do the reading.
+Drop it and the splice becomes a rewrite, and `/fill-ready` skips its gate on text
+nobody vetted.
 
 **Apply `needs-decision` in the same write.** A block without the label is
 invisible to every query in the loop. `reviewed` goes on after, once the block

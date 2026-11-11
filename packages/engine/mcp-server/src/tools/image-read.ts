@@ -9,6 +9,7 @@ import {
 import { imageViewerUrl } from "../utils/ark.js";
 import { saveSourceImage } from "../utils/image-store.js";
 import { checkImageBrowseCap, recordImageBrowse } from "../utils/browse-budget.js";
+import { connectorUserId } from "../utils/user-limits.js";
 
 // The MCP transport between this server and the calling agent caps a single
 // response near 1 MiB. Base64 inflates raw bytes by ~33%, so this floor on
@@ -44,6 +45,16 @@ export async function imageReadTool(input: ImageReadInput, principal: Principal)
   imageData: string;
   metadata: ImageReadResult;
 }> {
+  // self-hosted beta E5 (issue #3996): refused for a connector caller, before
+  // any fetch or cap check. The tool stays advertised (docs/specs/image-read-spec.md),
+  // so the caller still learns about it and is pointed at image_transcribe,
+  // which reads the scan host-side and returns text instead.
+  if (connectorUserId(principal) !== undefined) {
+    throw new Error(
+      "image_read is not available on this connection. Use image_transcribe instead — " +
+        "it reads the scan host-side and returns text, with no size limit.",
+    );
+  }
   input = foldImageArkInput(input, "image_read");
   const { url, label, fallbackUrl, memoryShape } = resolveFsImageInput(
     input,
@@ -51,7 +62,7 @@ export async function imageReadTool(input: ImageReadInput, principal: Principal)
   );
 
   // The hard image cap (spec image-transcribe §5.8): refuse before the fetch.
-  const browse = await checkImageBrowseCap(input, input.projectPath, "image_read");
+  const browse = await checkImageBrowseCap(input, input.projectPath, "image_read", principal);
 
   // `memoryShape` must be forwarded, not defaulted. `ImageReadInput extends
   // FsImageInput`, so a direct call can carry `memoryArtifactUrl` (server.ts

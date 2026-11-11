@@ -30,7 +30,7 @@ planned; nothing else here needs a column change. A `gh` token without the
 ## 0. Compute the queues
 
 ```sh
-gh project item-list 1 --owner PioneerAIAcademy --format json --limit 2000 > /tmp/board.json
+gh project item-list 1 --owner PioneerAIAcademy --format json --limit 3000 > /tmp/board.json
 gh issue list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 400 \
   --json number,title,body,labels,assignees,createdAt > /tmp/open.json
 gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
@@ -38,9 +38,9 @@ gh pr list --repo PioneerAIAcademy/cowork-genealogy --state open --limit 200 \
 python3 .claude/skills/merge-issues/slots.py /tmp/board.json /tmp/open.json /tmp/prs.json
 ```
 
-`--limit` truncates silently. The board carries well over 1200 items; a returned
+`--limit` truncates silently. The board carries over 2000 items; a returned
 count equal to the limit means rows were lost and every depth below is wrong.
-The script says so itself at 2000, but check the issue and PR pulls by hand.
+The script says so itself at 3000, but check the issue and PR pulls by hand.
 
 **Read the coverage block at the bottom before anything else.** It names two
 buckets, and between them they are the part of the pool the script cannot judge:

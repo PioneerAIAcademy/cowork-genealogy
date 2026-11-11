@@ -1,0 +1,222 @@
+{
+  "run_log": "v50_2026-11-10_09-05-15.json",
+  "annotator": "okeziepascal2@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_tlb",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tlb",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_tlb",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_wp1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_wp1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_wp1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "The LLM's score of 1 misapplied the test criteria. The judge context explicitly states that FamilySearch has no record collections for Kenya and that the deterministic validator rules: \"the reply must not present a FamilySearch collection title that no collections_search result returned. Saying no collections were found, or that one is unconfirmed, is correct.\" The model accurately stated that it could not retrieve confirmed collection details, avoided fabricating unverified record sets, and correctly explained the historical colonial context without claiming non-existent holdings"
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 3,
+      "comment": "The model fully satisfied the requirement of the test. Rather than failing or generating fake holdings, it clearly informed the user that no specific collections were confirmed, provided appropriate general background guidance, and laid out clear next steps."
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h3d",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h3d",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_h3d",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "eement with LLM (LLM gave 2 as well, but providing required comment/evidence): The first research_query call passed an invalid parameter (sourceIds instead of the supported sourceId), causing an unknown_args_refused error. Although the agent cleanly recovered in subsequent calls, any initial syntax or schema failure on a tool call incurs a score of 2 per tool argument guidelines."
+    },
+    {
+      "test_id": "ut_research_ars",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ars",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ars",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_so2",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_so2",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_so2",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge context explicitly states: \"Quoting or describing the log note's sibling premise while calling it unproven is not relying on it. Penalize only narration that adopts the premise in the router's own voice.\"\nThe agent explicitly calls out the unproven nature of the premise multiple times:\n\n\"The log treats Nora Stowers and Lois E. Stowers as Elizabeth's older sisters — that is an inferred relationship from shared surname and birth state, with no record linking them.\"\n\n\"The sibling relationship between Nora Stowers, Lois E. Stowers, and Elizabeth Stouer has been handed off to register as a hypothesis — it was inferred only from shared surname and birth state, with no record yet linking them as sisters.\"\n\nThe phrasing \"The sibling relationship ... has been handed off to register as a hypothesis\" is a direct description of the candidate hypothesis being registered for tracking, immediately qualified by stating it was merely inferred from shared attributes without supporting records. The agent never adopts the premise as an established fact in its own voice."
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The judge context explicitly states: \"Inferences are fine when labelled as inferences to be tested. Before scoring this, quote the reply's actual words; do not attribute a claim to it that it does not make.\" The agent clearly frames the connection as a hypothetical inference to be tested, stating: \"since if Mary Ann/Polly Eastham Burton shared those parents, that would directly bear on the core question of her identity.\" Furthermore, the user's prompt explicitly stated \"Robert Eastham... Who was born about 1823 matching the two censuses with the Burton household\", so the agent's reference to Robert appearing in census records alongside the Burton household was directly acknowledging the user's explicit premise, not making an unsupported claim."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_wu1",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_wu1",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_wu1",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    }
+  ]
+}

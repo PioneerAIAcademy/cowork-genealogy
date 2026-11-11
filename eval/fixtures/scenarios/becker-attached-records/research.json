@@ -1,0 +1,21 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of John Becker, born January 1845 in Kentucky, who lived in Cincinnati, Ohio, in 1900 and 1910",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-10-26",
+    "updated": "2026-10-26"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

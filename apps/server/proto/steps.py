@@ -29,7 +29,9 @@ Three tables over ``turns``, which carries ``step`` and ``mode`` from
 **Wrap-up turns are left out of the per-step figures** and reported on their own
 line: ``mode = 'wrapup'`` runs several steps in one turn, so attributing its wait
 or spend to the one step it opened with would overstate that step. A host reply
-under "Keep going" is an ordinary one-step turn and counts.
+under "Keep going" is an ordinary one-step turn and counts. A turn init-project
+opens is filed under the step after it when one ran (a bounded first message,
+plan section H), so that step's figures include project creation.
 
 Reads only. Safe against a live stack.
 """

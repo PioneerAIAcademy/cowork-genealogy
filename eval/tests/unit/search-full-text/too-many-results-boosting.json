@@ -16,6 +16,7 @@
     "fulltext-search-flynn-probate-scoped",
     "fulltext-search-flynn-broad-with-facets",
     "wiki-read-any",
+    "source-attachments-fts-too-many-results",
     "wiki-search-any"
   ],
   "execution": {

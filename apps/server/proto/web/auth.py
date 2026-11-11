@@ -159,7 +159,10 @@ FS_ACCESS_TOKEN_LIFETIME_S = 8 * 60 * 60
 # value rides a cookie the browser controls, so anything else is an open redirect: no
 # leading ``/``, no ``\``, ``.``, ``?`` or scheme can match. ``\Z``, not ``$``, which also
 # matches before a trailing newline.
-SAFE_NEXT_RE = re.compile(r"^(?:#/[A-Za-z0-9/_-]{0,120}|upload/proj_[0-9a-f]{16})\Z")
+# The project id both minters use (the web tier and the connector); the upload page's route
+# takes only this shape too (web/app.py UPLOAD_PAGE_ID_RE), so a sign-in can return to it.
+PROJECT_ID_PATTERN = r"proj_[0-9a-f]{16}"
+SAFE_NEXT_RE = re.compile(rf"^(?:#/[A-Za-z0-9/_-]{{0,120}}|upload/{PROJECT_ID_PATTERN})\Z")
 # PUBLIC_URL's path: unreserved segments only, since it is written into a cookie Path and
 # the SPA's HTML.
 BASE_PATH_RE = re.compile(r"^(/[A-Za-z0-9._~-]+)*$")

@@ -60,6 +60,7 @@ from e2e import pricing
 from e2e.agent_spend_report import NO_TOKENS, NOT_RECORDED, collect, price_helper
 from e2e.result import axes_from_runlog, result_message_covers_last_query_only
 from e2e.runlog_selection import all_result_jsons
+from e2e.subagent_capture import oversize_notice_size
 
 REPORTS_DIRNAME = "reports"
 #: Reports kept per fixture — the same depth as the unit side's candidates
@@ -209,6 +210,21 @@ def _secs(value: Any) -> str:
     return f"{value / 60:.1f} min" if value >= 120 else f"{value:.0f} s"
 
 
+def lost_tool_answers(log: dict[str, Any]) -> list[tuple[str, str, str]]:
+    """`(bare tool, agent, size)` for each MCP call whose `response_summary` is
+    Claude Code's oversize notice (#4380). Empty once the 14-day strip has
+    dropped `response_summary`."""
+    lost = []
+    for call in log.get("tool_calls") or []:
+        if not isinstance(call, dict) or not str(call.get("tool") or "").startswith("mcp__"):
+            continue
+        size = oversize_notice_size(call.get("response_summary"))
+        if size is not None:
+            agent = call.get("agent_type") or ("unnamed helper" if call.get("agent_id") else "main researcher")
+            lost.append((call["tool"].split("__")[-1], agent, size))
+    return lost
+
+
 def render(
     log: dict[str, Any],
     name: str,
@@ -313,6 +329,11 @@ def render(
             out.append("  (every helper that carries token counts is unpriced — see its flags)")
         elif not helper_costs:
             out.append("  (no helper carries token counts — this run predates per-helper metering)")
+
+    lost = lost_tool_answers(log)
+    if lost:
+        out += ["", "TOOL ANSWERS LOST TO THE SIZE CAP (the agent got only a 'saved to file' notice)"]
+        out += [f"  {tool:<26} {agent:<26} {size}" for tool, agent, size in lost]
 
     # --- SUMMARY -----------------------------------------------------------
     out += ["", "SUMMARY"]

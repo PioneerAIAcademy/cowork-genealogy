@@ -1,0 +1,22 @@
+{
+  "tool": "same_person",
+  "description": "same_person — a strong, unambiguous match: a John Becker census persona (b. January 1845 Kentucky, head of household in Cincinnati) scored against the tree's John Becker (I1). Matches any assertion id, since same_person carries no record id to tell the two censuses apart.",
+  "args": {
+    "assertionId": "~",
+    "treePersonId": "I1"
+  },
+  "response": {
+    "score": 0.91,
+    "recordSource": "record_read",
+    "recorded": true,
+    "recordPersona": {
+      "id": "p_1",
+      "name": "John Becker",
+      "role": "head_of_household"
+    },
+    "treePerson": {
+      "id": "I1",
+      "name": "John Becker"
+    }
+  }
+}

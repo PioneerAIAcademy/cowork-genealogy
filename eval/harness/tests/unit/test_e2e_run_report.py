@@ -332,3 +332,39 @@ def test_a_helper_type_with_an_unpriced_launch_shows_no_type_total(tmp_path):
     row = next(line for line in text.split("by helper type")[1].splitlines()
                if line.strip().startswith("record-extractor"))
     assert row.split()[2] == "--"
+
+
+# #4380 — an MCP answer that reached an agent only as the oversize notice.
+_NOTICE = ("Error: result (85,315 characters across 1 line) exceeds maximum allowed tokens. "
+           "Output has been saved to C:\\x\\tool-results\\mcp-genealogy-wiki_read-1.txt.")
+
+
+def test_a_lost_tool_answer_is_listed_with_its_agent_and_size():
+    log = _log(tool_calls=[
+        {"tool": "mcp__genealogy__wiki_read", "agent_type": "research-exhaustiveness",
+         "response_summary": _NOTICE},
+        {"tool": "mcp__genealogy__volume_search", "agent_type": None,
+         "response_summary": "<persisted-output>\nOutput too large (69.9KB). Full output saved to: x"},
+    ])
+    text = render(log, "run-x.json", graded=False)
+    assert "TOOL ANSWERS LOST TO THE SIZE CAP" in text
+    assert re.search(r"wiki_read\s+research-exhaustiveness\s+85,315 characters across 1 line", text)
+    assert re.search(r"volume_search\s+main researcher\s+69\.9KB", text)
+
+
+def test_a_helper_with_no_type_is_not_the_main_researcher():
+    log = _log(tool_calls=[{"tool": "mcp__genealogy__record_read", "agent_type": None,
+                            "agent_id": "a1", "response_summary": _NOTICE}])
+    text = render(log, "run-x.json", graded=False)
+    assert re.search(r"record_read\s+unnamed helper", text)
+    assert "main researcher  " not in text.split("SIZE CAP")[1].split("SUMMARY")[0]
+
+
+def test_no_lost_answer_section_without_a_notice():
+    log = _log(tool_calls=[
+        {"tool": "Read", "response_summary": _NOTICE},  # not an MCP tool
+        {"tool": "Read", "response_summary": "File content (41347 tokens) exceeds maximum allowed tokens (25000)."},
+        {"tool": "mcp__genealogy__wiki_read", "response_summary": '{"page": "' + "x" * 50_000 + '"}'},
+        {"tool": "mcp__genealogy__wiki_read", "response_summary": None},  # stripped
+    ])
+    assert "SIZE CAP" not in render(log, "run-x.json", graded=False)

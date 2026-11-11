@@ -2,6 +2,7 @@ import type { Principal } from "../auth/principal.js";
 import { getWikiApiUrl } from "../auth/config.js";
 import { describeFetchError, fetchWithRetry } from "../utils/http.js";
 import { pageText, requireWholeNumber } from "../utils/text-page.js";
+import { stripWikiSidebar } from "../utils/wiki-sidebar.js";
 import {
   WIKI_OFFSET_PROPERTY,
   WIKI_PAGE_MAX_CHARS,
@@ -57,9 +58,10 @@ export async function wikiReadTool(input: WikiReadInput, principal: Principal): 
 
   const data = (await response.json()) as PageApiResponse;
   const url = `${FS_WIKI_BASE}/${slug}`;
-  // A body with no text passes through as it always did: there is nothing to cut.
+  // A body with no text passes through as it always did: there is nothing to cut. The sidebar
+  // goes before the cut, so `totalChars` and `offset` count the text the caller reads.
   if (typeof data.content !== "string") return { url, content: data.content };
-  const { content, paging } = pageText(data.content, offset, WIKI_PAGE_MAX_CHARS);
+  const { content, paging } = pageText(stripWikiSidebar(data.content), offset, WIKI_PAGE_MAX_CHARS);
   return { url, content, ...paging };
 }
 

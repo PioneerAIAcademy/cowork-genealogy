@@ -41,7 +41,7 @@ a verdict the caller cannot act on is a verdict that silently does nothing.
 |---|---|---|
 | `ready` | A junior can land it today | The `reviewed` label. Nothing else. |
 | `ready-after-edit` | Ready once the body carries the agent's text | Prepend the text; `reviewed`. |
-| `needs-a-decision` | An open fork only the lead can settle, by the four-way test in 3.2 | Label `needs-decision` and `reviewed`; **no assignee**. Orthogonal to `senior` — carry both when the work would still be hard after the answer. Write the `## Decision needed` block into the body; `/make-decisions` splices the chosen option's pre-written text once it is answered. The work behind the fork is frequently junior, so this is a request for one answer, not for a scarce person. |
+| `needs-a-decision` | An open fork only the lead can settle, by the four-way test in 3.2 | Label `needs-decision` and `reviewed`; **no assignee**. Orthogonal to `senior` — carry both when the work would still be hard after the answer. Write the `## Decision needed` block into the body; `/make-decisions` splices the recommended option's pre-written text once it is chosen, and sends any other pick back through a fresh `task-reviewer`. The work behind the fork is frequently junior, so this is a request for one answer, not for a scarce person. |
 | `senior` | Any trigger in the agent's `senior` list — green-and-wrong risk, cross-subsystem, inverts a mechanism, commits money or doctrine, or touches schema / credentials / a plugin-agent binding / an MCP tool contract / an ADR / anything hard to undo — **and still hard once every open question is answered** | Label `senior` and `reviewed`, keeping the `developer`/`genealogist` label that picks the lane; **no assignee** — the lead takes no issues and nobody is assigned here; seniors self-serve. Report to `fill-ready`; it ranks in its lane's Ready pool like anything else. |
 | `stale-rewrite` | The premise moved; the issue asks for the wrong thing | **Replace** the ask with the agent's rewrite, keeping the original under `## Original issue`; `reviewed`. |
 | `close` | No longer needed, already done, or refuted | `gh issue close --reason "not planned"` with the evidence. No label. |
@@ -149,10 +149,15 @@ prevent, moved one level up.
 
 So the agent surfaces the fork already shaped — header, question, options with
 the consequence that decides each, recommendation first — **and pre-writes the
-resulting issue-body text for every option, not only the recommended one.** By
-the time the answer arrives the agent is long gone and the caller may be someone
-else entirely; applying the answer must be a splice, not a rewrite by someone who
-did not do the reading.
+issue-body text for the recommended option.** By the time the answer arrives the
+agent is long gone and the caller may be someone else entirely; applying that
+answer must be a splice, not a rewrite by someone who did not do the reading.
+
+It writes no body text for the other options. The agent's reading is done under
+the recommended option's assumptions, so text for another option comes out as a
+sketch whose site list was never checked, and splicing it hands a junior an
+unvetted task. A pick of any other option goes back to one fresh `task-reviewer`
+told the decision, and `/make-decisions` splices what it returns.
 
 The caller then does the three things one agent cannot — merge identical forks
 across issues into a single policy question, rank them, and drop the ones whose

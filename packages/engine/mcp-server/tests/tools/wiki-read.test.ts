@@ -14,6 +14,7 @@ import { WIKI_PAGE_MAX_CHARS } from "../../src/types/wikiPage.js";
 import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
 import { SHAPES, escapedBody, headingPage, oneLinePage, walkParts } from "../helpers/wiki-pages.js";
+import { ENGLAND_HEAD, ENGLAND_STRIPPED, LONG_PAGE, LONG_PAGE_STRIPPED } from "../helpers/wiki-sidebar-pages.js";
 
 const API_BASE = "http://localhost:8000";
 const TEST_URL = "https://www.familysearch.org/en/wiki/Portugal_Genealogy";
@@ -283,6 +284,25 @@ describe("wikiReadTool, a page under the cap", () => {
   it("passes a body with no text through as it always did", async () => {
     servePage(undefined);
     expect(await read()).toStrictEqual({ url: TEST_URL, content: undefined });
+  });
+});
+
+describe("wikiReadTool, the sidebar", () => {
+  it("removes it from a page that fits, which still comes back as just { url, content }", async () => {
+    servePage(ENGLAND_HEAD);
+    expect(await read()).toStrictEqual({ url: TEST_URL, content: ENGLAND_STRIPPED });
+  });
+
+  it("removes it before the cut: the parts join to the page without it, and totalChars is that page's length", async () => {
+    servePage(LONG_PAGE);
+    const stripped = LONG_PAGE_STRIPPED;
+    const parts = await walkParts(read);
+    expect(parts.length).toBeGreaterThan(1);
+    expect(parts.map((p) => p.content).join("")).toBe(stripped);
+    for (const part of parts) {
+      expect(part.totalChars).toBe(stripped.length);
+      expect(part.content).not.toContain("Wiki Topics");
+    }
   });
 });
 

@@ -17,7 +17,7 @@ there.
 | Make target | Windows wrapper | What it does |
 |---|---|---|
 | `make install` | `scripts\windows\install.bat` | Install everything: pnpm workspace (incl. eval-ui), server venv, engine build |
-| `make reinstall` | `scripts\windows\reinstall.bat` | `clean-deps` then `install`, from scratch |
+| `make reinstall` | `scripts\windows\reinstall.bat` | Check the Node and npm versions, then `clean-deps` then `install`, from scratch |
 | `make clean-deps` | `scripts\windows\clean-deps.bat` | Remove every `node_modules` |
 | `make server-install` | `scripts\windows\server-install.bat` | Create the FastAPI server venv (uv sync) |
 | `make engine-build` | `scripts\windows\engine-build.bat` | Build the genealogy engine (mcp-server) |

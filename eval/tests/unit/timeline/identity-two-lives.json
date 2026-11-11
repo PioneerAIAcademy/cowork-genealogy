@@ -18,7 +18,7 @@
   },
   "input": {
     "delegation": "Do the records for persons I1 and I3 fit one life? Hypothesis h_002.\n\nprojectPath: <workspace>",
-    "scenario": "flynn-two-lives"
+    "scenario": "flynn-two-lives-links"
   },
   "mcp_fixtures": [
     "place-search-ireland",

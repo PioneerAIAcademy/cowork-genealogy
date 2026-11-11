@@ -177,6 +177,33 @@ describe('normalize', () => {
     expect(digest).toBe('a96c04ecadb2576600c24d749c867052596e518f780685017a6b1b4193178150');
   });
 
+  // Pinned: test_snapshot.py asserts the same text and digest for the same
+  // bytes (test_normalize_unknown_extension_*). If either changes, update both.
+  // A PNG signature is not valid UTF-8 (0x89 is a lone continuation byte).
+  it('hex-encodes an unknown-extension file that is not valid UTF-8', () => {
+    const raw = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0xff]);
+    const out = normalize('x.png', raw);
+    expect(out).toBe('89504e470d0a1a0aff');
+    expect(hashContent(out)).toBe('f5bb6f6edddd22f9c4e13127c899665a913c0bfe978d8a449264ca6656d8e5fe');
+  });
+
+  it('keeps a leading BOM on an unknown-extension UTF-8 file', () => {
+    const raw = Buffer.from([0xef, 0xbb, 0xbf, 0x68, 0x69]);
+    const out = normalize('x.bin', raw);
+    expect(out).toBe('﻿hi');
+    expect(hashContent(out)).toBe('7611e336d2b333aa772acee003373474c86cd9ce975c10d66a4b0156e8641dca');
+  });
+
+  // Pinned: test_snapshot.py asserts the same text and digest for the same
+  // bytes (test_normalize_json_with_invalid_utf8_falls_back_to_text). 0xE9 is
+  // Latin-1 é, not valid UTF-8, so the file normalizes as text, never as JSON.
+  it('normalizes a .json file that is not valid UTF-8 as text', () => {
+    const raw = Buffer.concat([Buffer.from('{"b": 1,\r\n "a": "caf'), Buffer.from([0xe9]), Buffer.from('"}')]);
+    const out = normalize('eval/foo.json', raw);
+    expect(out).toBe('{"b": 1,\n "a": "caf\uFFFD"}\n');
+    expect(hashContent(out)).toBe('b2cbb5fc5697c5d9eab47f7863f37f2df5f16794555581dcc00d23db54d1eaa7');
+  });
+
   it('does NOT strip cosmetic fields outside eval/tests/unit/', () => {
     const raw = Buffer.from(JSON.stringify({ test: { id: 'x', name: 'kept here' } }));
     const out = normalize('packages/engine/plugin/skills/foo/SKILL.json', raw);

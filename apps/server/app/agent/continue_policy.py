@@ -57,8 +57,8 @@ TERMINAL_MCP_UNAVAILABLE = "mcp_unavailable"
 # than going with it.
 NO_PROJECT_NOTE = (
     "While no project exists yet (`project_context` returns `no_project`), a request to "
-    "research a person is a research job, not a single lookup: follow the research "
-    "skill, which sets up the project first."
+    "research a person is not a single lookup: follow the research skill, which sets up "
+    "the project first."
 )
 
 

@@ -1,0 +1,54 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "ark": "ark:/61903/4:1:LZBK-7QN",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "John",
+          "surname": "Becker",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "January 1845",
+          "place": "Kentucky, United States",
+          "sources": [{ "ref": "S1" }]
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1910",
+          "place": "Cincinnati, Hamilton, Ohio, United States",
+          "sources": [{ "ref": "S2" }]
+        }
+      ],
+      "sources": [{ "ref": "S1" }, { "ref": "S2" }, { "ref": "S3" }]
+    }
+  ],
+  "relationships": [],
+  "sources": [
+    {
+      "id": "S1",
+      "title": "United States Census, 1900",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MM8C-43Q"
+    },
+    {
+      "id": "S2",
+      "title": "United States Census, 1910",
+      "url": "https://www.familysearch.org/ark:/61903/1:1:MLFM-GC8"
+    },
+    {
+      "id": "S3",
+      "title": "Family photograph of John Becker",
+      "url": "https://www.familysearch.org/photos/artifacts/123"
+    }
+  ]
+}

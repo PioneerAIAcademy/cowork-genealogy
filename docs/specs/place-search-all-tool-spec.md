@@ -112,8 +112,8 @@ identifiers, relevance score, and short `name` are not exposed.
     "result includes the standardized place name (standardPlace), place type, " +
     "date range, coordinates, a FamilySearch link, and (when available) a " +
     "Wikipedia link. " +
-    'If the response carries matchType: "fuzzy", the name you sent matched ' +
-    "nothing exactly and these are sounds-alike corrections. Confirm one " +
+    'If the response carries matchType: "fuzzy", the place you named had no ' +
+    "exact match and these are sounds-alike corrections. Confirm one " +
     "before using it.",
   inputSchema: {
     type: "object",

@@ -22,6 +22,7 @@
     "fulltext-search-flynn-witnesses",
     "fulltext-search-flynn-flinn-variant",
     "wiki-read-any",
+    "source-attachments-fts-lucene-operators",
     "wiki-search-any"
   ],
   "judge_context": [

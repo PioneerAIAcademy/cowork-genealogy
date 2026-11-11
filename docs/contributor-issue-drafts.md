@@ -16,7 +16,8 @@ V12.
 
 Clone fresh, follow `DEVELOPMENT.md` to a running `make server-mock` +
 `make web-dev`, and fix what is wrong. Known: no prerequisites section
-(Node 22 from `.nvmrc`, pnpm 9.15.9 from the root `packageManager`, npm 11,
+(Node 22.22.2+ on 22, 24.15+ on 24, or 26+, though `.nvmrc` says only 22;
+pnpm 9.15.9 from the root `packageManager`, npm 11,
 uv); the build example names `tests/tools/places.test.ts`, which is
 `place-search.test.ts`; "four auth exclusions" in `DEVELOPMENT.md` and the
 `smoke-calls.ts` header, where there are three.

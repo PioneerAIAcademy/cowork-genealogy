@@ -1,0 +1,32 @@
+{
+  "test": {
+    "id": "ut_question_selection_tlg",
+    "skill": "question-selection",
+    "name": "Fresh project with a setup timeline: the first question still restates the objective",
+    "type": "positive",
+    "description": "becker-timeline-no-questions: the state a /research job leaves after its attached-records step. The objective (John Becker's parents) has no questions yet, and the person timeline the step wrote carries two high gaps (the 1850-1880 United States censuses, and a marriage). Priority 3 fires only once a question at the objective's scope exists, so the first question restates the objective on the objective_decomposition basis rather than chasing a census gap.",
+    "tags": [
+      "question-selection",
+      "first-question",
+      "attached-records",
+      "selection-basis-objective-decomposition",
+      "first-question-depends-on-empty",
+      "new-question-exhaustive-declaration-unstarted",
+      "objective-scope-match",
+      "single-fact-objective",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Select and record the next research question for this project.\n\nprojectPath: <workspace>",
+    "scenario": "becker-timeline-no-questions"
+  },
+  "judge_context": [
+    "The objective is a single fact (identify John Becker's parents) and no question exists yet, so this is the fresh-project case: the first question restates the objective at its own scope with identifying detail (name, approximate birth date and place, residence) — e.g. 'Who were the parents of John Becker, b. January 1845 in Kentucky, of Cincinnati, Ohio, in 1900 and 1910?'. `selection_basis` is `objective_decomposition`.",
+    "The project already holds a person timeline with two `high` gaps (1845 to 1900, naming the 1850, 1860, 1870 and 1880 United States censuses; and a missing marriage). A timeline's gaps never displace the first question in a fresh project: a first question about a census year, or about his marriage, with `selection_basis: timeline_gap` is the failure this test guards. The gaps are not wasted: research-plan reads them when it plans the question. Mentioning them in the reply as context is fine.",
+    "Every record in the project comes from attachments nobody has checked yet. That is not a reason to make the first question about checking them: checking attached records is a separate request.",
+    "SCOPE — must not narrow to a record ('Where was John Becker in the 1880 census?' is a plan item, checked mechanically by `test_new_question_not_record_scoped`), and must not widen to a person the objective does not cover (his children in the 1900 household are context, not targets).",
+    "`depends_on` and `unblocks` should both be `[]`, and `search_stop` must be unstarted.",
+    "PRESENTATION: the reply has two parts, split by a final line containing only `---`. Above it are terse caller-facing lines, which may carry the `q_` id and a routing hint; do not penalize either there. Everything after the final `---` is what the researcher reads, and is graded: it must state the chosen question in plain words, never as a `q_` id alone, and give the next step in plain language, without naming a skill, tool or field."
+  ]
+}

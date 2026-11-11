@@ -247,6 +247,8 @@ export interface RecordSearchResult {
   // the record-match tools' `id`, or source_attachments' `uris`.
   recordId: string;
   personName?: string;
+  // FamilySearch's search relevance. In the staged file only: the answer's
+  // compactor drops both (staged-compaction.ts).
   score?: number;
   confidence?: number;
   sex?: string;
@@ -292,6 +294,9 @@ export interface RecordSearchResult {
   collectionId?: string;
   collectionTitle?: string;
   collectionUrl?: string;
+  // In the staged file in full. The answer drops it when it is exactly
+  // `Entry for <personName>, "<collection title>"`, else keeps it without the
+  // trailing `, "<collection title>"`.
   recordTitle?: string;
   // The source record/image ARK (the 1:2: entry), e.g.
   // "ark:/61903/1:2:HSJG-CLNF". Canonical ARK form.
@@ -307,8 +312,8 @@ export interface RecordSearchResult {
   // it, staged or not (compactStagedRecordSearch). `record_read` on `recordId`
   // returns the record's document.
   gedcomx?: SimplifiedGedcomX;
-  // The `id` of the focus person inside `gedcomx.persons[]`. Pass it to
-  // `same_person` as primaryId1/primaryId2.
+  // The `id` of the focus person inside `gedcomx.persons[]`. In the staged
+  // file only, beside `gedcomx`: rank_search_matches reads it there.
   primaryId?: string;
   // Whether the relative(s) the caller anchored the search on are actually
   // named on this record. Present only when a relative NAME was supplied.
@@ -341,10 +346,44 @@ export interface RecordSearchResult {
   role?: string;
 }
 
-export interface RecordSearchToolResponse {
-  query: Partial<RecordSearchInput>;
+/** The input fields a place expansion searches under other names. */
+export type PlaceField = "birthPlace" | "deathPlace" | "marriagePlace" | "residencePlace" | "anyPlace";
+
+/** One search of a place expansion: the place field(s) it used and what it found. */
+export interface PlaceExpansionSearch {
+  places: Partial<Record<PlaceField, string>>;
   totalMatches: number;
-  paginationCappedAt: number;
+  /** Rows read from this search (offset 0 to `offset + count`). */
+  returned: number;
+  /** Set when this further name was not searched or its search failed; the
+   *  merge went on without it. */
+  error?: string;
+}
+
+/**
+ * Present when a place field expanded to more than one name (issue #4067):
+ * every name the typed place has had was searched and the records merged.
+ * Serialized before `results` (spec § Key order).
+ */
+export interface PlaceExpansion {
+  searches: PlaceExpansionSearch[];
+  /** Unique records in the merged list read for this page. */
+  mergedCount: number;
+  /** Some names were left out to stay within the search cap. */
+  truncated?: true;
+  /** The merged list was longer than the ranked pool, so only its first rows
+   *  (every name's best, in interleave order) were staged and ranked. */
+  rankedPoolCapped?: true;
+  note: string;
+}
+
+export interface RecordSearchToolResponse {
+  // The answer drops it when it staged; the staged file keeps it, and
+  // research_log_append reads it from there.
+  query?: Partial<RecordSearchInput>;
+  totalMatches: number;
+  // Always 4999. In the staged file only; the answer drops it.
+  paginationCappedAt?: number;
   returned: number;
   offset: number;
   hasMore: boolean;
@@ -398,6 +437,7 @@ export interface RecordSearchToolResponse {
   // emptied by a page that fails mapping while matches exist. A nil search stages
   // no file, so `unloggedSearches` structurally cannot see it.
   nilSearchNeedsLog?: string;
+  placeExpansion?: PlaceExpansion;
   // Present only when `projectPath` was supplied. The host-staged handle to pass
   // to research_log_append as `stagedResultsRef`; null for a nil search or when
   // staging failed (see `stagingError`).

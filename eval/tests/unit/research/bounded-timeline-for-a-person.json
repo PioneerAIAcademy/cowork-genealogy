@@ -1,0 +1,46 @@
+{
+  "test": {
+    "id": "ut_research_tlb",
+    "skill": "research",
+    "name": "A timeline for a person is a bounded ask: extract, build, relay, stop",
+    "type": "positive",
+    "description": "Bounded ask on becker-attached-records: 'create a timeline' for John Becker, whose two indexed census records are attached on FamilySearch and not yet extracted. The router builds it itself with extraction_append({ personId }) then timeline_build, relays the tool's summary, and hands off to nothing: not question-selection, not the timeline agent. Both are stubbed so a wrong hand-off is recorded and denied.",
+    "tags": [
+      "routing",
+      "routes-to:stop",
+      "attached-records-setup",
+      "bounded-request"
+    ]
+  },
+  "input": {
+    "user_message": "/research Create a timeline for John Becker (FamilySearch LZBK-7QN), and leave it at that.",
+    "scenario": "becker-attached-records"
+  },
+  "mcp_fixtures": [
+    "record-read-becker-1900-mm8c-43q-attached",
+    "record-read-becker-1910-mlfm-gc8-attached"
+  ],
+  "execution": {
+    "max_turns": 20,
+    "max_wall_clock_seconds": 600,
+    "stub_skills": [
+      "question-selection",
+      "timeline",
+      "locality-guide",
+      "research-plan",
+      "search-records",
+      "record-structurer",
+      "person-evidence",
+      "research-exhaustiveness",
+      "proof-conclusion",
+      "gps-mentor"
+    ]
+  },
+  "judge_context": [
+    "This is a BOUNDED-REQUEST test. A timeline for a person is in the skill's bounded list, and the router builds it itself: `extraction_append({ projectPath, personId })`, then `timeline_build({ projectPath, personId })`, then it relays the tool's summary and stops. The `attached-records-setup` validator owns the order of the two calls, and `test_routes_to_expected_skill` (`routes-to:stop`) owns the absence of any hand-off. Do not grade either yourself.",
+    "The project exists, so no init-project is needed. The extraction reads John Becker's two attached census records and links his assertions to him as unchecked attachment links; the timeline then holds four events, all from records nobody has checked, and two `high` gaps (the 1850 to 1880 United States censuses, and a marriage).",
+    "Grade the reply: it relays what the tool's summary says, including that the events come from records nobody has checked yet and that checking those attached records is a separate request (\"identity-linking is a separate step\" and an offer to verify them say the second). A reply that lists what the records state and says they are unchecked meets this; it need not hedge each fact. A reply that never says the records are unchecked presents them as verified facts, a Correctness fault. Offering to take it further is welcome; starting the research is not.",
+    "Walking the routing table from the top, which on this project reaches question-selection, is the failure this test guards. So is handing the timeline to the timeline agent."
+  ],
+  "judge_reads_files": true
+}

@@ -1,0 +1,26 @@
+# Saskatchewan, Canada Genealogy
+
+
+
+[Canada](https://www.familysearch.org/en/wiki/Canada_Genealogy "Canada Genealogy")
+
+Saskatchewan
+
+|  |  |
+| --- | --- |
+| **[Saskatchewan Wiki Topics](https://www.familysearch.org/en/wiki/Saskatchewan_Genealogy "Saskatchewan Genealogy")** | |
+| [Saskatchewan Flag.png](https://www.familysearch.org/en/wiki/index.php?title=File:Saskatchewan_Flag.png&filetimestamp=20160526110604& "Saskatchewan Flag.png") | |
+| **Beginning Research** | |
+| * [Getting Started](https://www.familysearch.org/en/wiki/Saskatchewan_Getting_Started "Saskatchewan Getting Started") * [Guided Research](https://www.familysearch.org/en/wiki/GuidedResearch:Saskatchewan "GuidedResearch:Saskatchewan") * [Research Strategies](https://www.familysearch.org/en/wiki/Saskatchewan_Research_Tips_and_Strategies "Saskatchewan Research Tips and Strategies") * [Record Finder](https://www.familysearch.org/en/wiki/Saskatchewan_Record_Finder "Saskatchewan Record Finder") | |
+| **Record Types** | |
+| * [Cemeteries](https://www.familysearch.org/en/wiki/Saskatchewan_Cemeteries "Saskatchewan Cemeteries") * [Census](https://www.familysearch.org/en/wiki/Saskatchewan_Census "Saskatchewan Census") * [Church Records](https://www.familysearch.org/en/wiki/Saskatchewan_Church_Records "Saskatchewan Church Records") * [Civil Registration](https://www.familysearch.org/en/wiki/Saskatchewan_Civil_Registration "Saskatchewan Civil Registration") * [Court Records](https://www.familysearch.org/en/wiki/Saskatchewan_Court_Records "Saskatchewan Court Records") * [Directories](https://www.familysearch.org/en/wiki/Saskatchewan_Directories "Saskatchewan Directories") * [Emigration & Immigration](https://www.familysearch.org/en/wiki/Saskatchewan_Emigration_and_Immigration "Saskatchewan Emigration and Immigration") * [Compiled Genealogies](https://www.familysearch.org/en/wiki/Saskatchewan_Compiled_Genealogies "Saskatchewan Compiled Genealogies") * [Land & Property](https://www.familysearch.org/en/wiki/Saskatchewan_Land_and_Property_Records "Saskatchewan Land and Property Records") * [Military Records](https://www.familysearch.org/en/wiki/Saskatchewan_Military_Records "Saskatchewan Military Records") | * [Municipal Records](https://www.familysearch.org/en/wiki/Saskatchewan_Municipal_Records "Saskatchewan Municipal Records") * [Naturalization & Citizenship](https://www.familysearch.org/en/wiki/Saskatchewan_Naturalization_and_Citizenship "Saskatchewan Naturalization and Citizenship") * [Newspapers](https://www.familysearch.org/en/wiki/Saskatchewan_Newspapers "Saskatchewan Newspapers") * [Obituaries](https://www.familysearch.org/en/wiki/Saskatchewan_Obituaries "Saskatchewan Obituaries") * [Online Records](https://www.familysearch.org/en/wiki/Saskatchewan_Online_Genealogy_Records "Saskatchewan Online Genealogy Records") * [Periodicals](https://www.familysearch.org/en/wiki/Saskatchewan_Periodicals "Saskatchewan Periodicals") * [Probate Records](https://www.familysearch.org/en/wiki/Saskatchewan_Probate_Records "Saskatchewan Probate Records") * [Schools and Education Records](https://www.familysearch.org/en/wiki/Saskatchewan_Schools_and_Education_Records "Saskatchewan Schools and Education Records") * [Vital Statistics](https://www.familysearch.org/en/wiki/Saskatchewan_Vital_Records "Saskatchewan Vital Records") |
+| **Saskatchewan Background** | |
+| * [Biographies](https://www.familysearch.org/en/wiki/Saskatchewan_Biographies "Saskatchewan Biographies") * [Gazetteers](https://www.familysearch.org/en/wiki/Saskatchewan_Gazetteers "Saskatchewan Gazetteers") * [Historical Geography](https://www.familysearch.org/en/wiki/Saskatchewan_Historical_Geography "Saskatchewan Historical Geography") * [History](https://www.familysearch.org/en/wiki/Saskatchewan_History "Saskatchewan History") * [Languages](https://www.familysearch.org/en/wiki/Saskatchewan_Language_and_Languages "Saskatchewan Language and Languages") | * [Maps](https://www.familysearch.org/en/wiki/Saskatchewan_Maps "Saskatchewan Maps") * [Populated Places](https://www.familysearch.org/en/wiki/Saskatchewan_Populated_Places "Saskatchewan Populated Places") * [For Further Reading](https://www.familysearch.org/en/wiki/Saskatchewan_For_Further_Reading "Saskatchewan For Further Reading") |
+| **Cultural Groups** | |
+| * [Cultural Groups](https://www.familysearch.org/en/wiki/Saskatchewan_Cultural_Groups "Saskatchewan Cultural Groups") * [Saskatchewan First Nations](https://www.familysearch.org/en/wiki/Saskatchewan_First_Nations "Saskatchewan First Nations") | * [Métis](https://www.familysearch.org/en/wiki/M%C3%A9tis "Métis") * [Canada Native Races](https://www.familysearch.org/en/wiki/Canada_Native_Races "Canada Native Races") |
+| **Local Research Resources** | |
+| * [Archives & Libraries](https://www.familysearch.org/en/wiki/Saskatchewan_Archives_and_Libraries "Saskatchewan Archives and Libraries") * [Societies](https://www.familysearch.org/en/wiki/Saskatchewan_Societies "Saskatchewan Societies") * [Worldwide FamilySearch Centers](https://www.familysearch.org/centers/locations/?c=Canada) | |
+
+Guide to **Saskatchewan ancestry, family history and genealogy:** birth records, marriage records, death records, census records, parish registers, and military records.
+
+## Saskatchewan Information

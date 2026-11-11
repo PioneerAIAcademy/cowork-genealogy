@@ -20,7 +20,7 @@ export default defineConfig({
           name: 'jsdom',
           environment: 'jsdom',
           include: ['src/**/*.test.tsx'],
-          // Node 25's built-in localStorage global hides jsdom's.
+          // Node 25 and later ship a built-in localStorage global that hides jsdom's.
           execArgv: ['--no-experimental-webstorage'],
           testTimeout: 30_000,
           hookTimeout: 30_000

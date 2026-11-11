@@ -14,7 +14,7 @@
 - **Status:** Accepted
 - **Decided:** 2026-08-27 (issue #1967: no record-type × country tables) and
   2026-08-31 (issue #1923: the wiki is the source of truth)
-- **Last updated:** 2026-10-21 (issue #3516, decision 14: `timeline_build` reads census years from a table in code, never from the catalog or the wiki); 2026-10-06 (issue #2259: a small wiki-carried residue may stay inline when fetching it is out of all proportion to the residue; and 2026-10-05, the per-agent ruling for person-evidence's corridor fetch, issue #2537)
+- **Last updated:** 2026-10-21 (issue #3516, lead ruling: `timeline_build` reads census years from a table in code, never from the catalog or the wiki); 2026-10-06 (issue #2259: a small wiki-carried residue may stay inline when fetching it is out of all proportion to the residue; and 2026-10-05, the per-agent ruling for person-evidence's corridor fetch, issue #2537)
 - **Deciders:** Dallan Quass
 - **Supersedes:** —
 - **Superseded by:** —
@@ -140,8 +140,7 @@ Concretely:
   precondition rather than left to prose, since a harness check already
   encodes it (`test_us_1890_never_expected`) (issue #3255). A per-country
   census table is licensed in exactly one place, below.
-- **One census table lives in code** (lead, 2026-10-21, issue #3516 decision
-  14). `timeline_build` takes the census years a person timeline expects from
+- **One census table lives in code** (lead, 2026-10-21, issue #3516). `timeline_build` takes the census years a person timeline expects from
   `src/data/census-table.ts`, with a named fragment list (US 1890; Ireland
   1821–1851; New South Wales 1841), and never from the catalog or the wiki. A
   census gap there means FamilySearch likely holds a record that could be
@@ -173,7 +172,7 @@ process, in order"), then the model and effort floor search.
 | Option | Why rejected | Evidence |
 |---|---|---|
 | Author per-country reference guides in `references/` | Six guides for the UK and Scandinavian censuses were requested; the same content already existed upstream at about 440 KB, agents cannot read reference files, and six new unreached files would fail `skill-reference-reachability.test.ts` | issue #1923, closed 2026-09-01; the twelve-page probe in its comments |
-| Hard-code record-type × country checks in the writer tools | A year-only pre-1880 census gate false-denies a correct claim about an 1851–1871 England & Wales or a Norwegian census; the space is ~200 × dozens × eras and every entry goes stale silently. Still rejected as a gate on writes. The census table `timeline_build` reads (2026-10-21) is not one: it refuses no write, and a missing or stale row only misses a gap, the error direction decision 14 prefers | issue #1967, ruling 2026-08-27; 4 non-US flags measured on `residenceYearFrom < 1880`; issue #3516 decision 14 |
+| Hard-code record-type × country checks in the writer tools | A year-only pre-1880 census gate false-denies a correct claim about an 1851–1871 England & Wales or a Norwegian census; the space is ~200 × dozens × eras and every entry goes stale silently. Still rejected as a gate on writes. The census table `timeline_build` reads (2026-10-21) is not one: it refuses no write, and a missing or stale row only misses a gap, the error direction the lead's 2026-10-21 ruling prefers | issue #1967, ruling 2026-08-27; 4 non-US flags measured on `residenceYearFrom < 1880`; issue #3516 (lead, 2026-10-21) |
 | Fold `references/` verbatim into the agent body at pair conversion, locality content included | Carries the US-shaped content into a body billed on every spawn, and for `search-records` the reference layer alone makes the pair unbuildable | issue #2123: 87,313 of 143,557 folded bytes are references |
 | Serve every lookup through `wiki_search` | Fragments for a known page; on `record_search` mechanics the corpus returns refuted claims and contradicts itself inside one result set | issue #2123's comment of 2026-09-01, live probes |
 | Persist the facts once in `research.json`'s `localities` and read them there | Holds place-scoped record availability, not record-type craft, and `search-records` does not read that section | `docs/specs/research-schema-spec.md`; issue #2123's comment |
