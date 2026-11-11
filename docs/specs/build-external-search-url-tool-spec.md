@@ -205,8 +205,10 @@ so the line is built here rather than in the agent.
   the user sets the range in the site's own UI), `openarch` (some networks
   are refused by the site outright — a page that never loads is the network
   being blocked, not evidence the record is missing; measured 2026-10-22),
-  `blm_glo` (federal land only — the public-land states — and the names are
-  one free-text search to narrow with the site's side filters; §10.1),
+  `blm_glo` (federal land only — the public-land states; patents only, other
+  GLO record types via the site's Document Category filter; and a free-text
+  name search that can miss a patent indexed under initials, so re-run
+  surname-only before reading a nil as absence; §10.1),
   and the two browse sites
   `archion` and `matricula` (the path through the site — parish → register
   type → volume → image — and, for Archion, that viewing needs a pass; §3.11).
@@ -598,6 +600,7 @@ nil.
 | `chronicling_america` with `searchStartYear` after `searchEndYear` | no `dates` window; `notes` says the start is after the end |
 | `chronicling_america` window entirely outside 1798–1963 | `{ ok: false, reason: "outside_coverage" }` — a URL for it could only log a nil as evidence of absence; a window that only partly overlaps succeeds, with a note |
 | `blm_glo` with a `usState` outside the 30 public-land states (the 13 original states, TX, KY, TN, VT, ME, WV, HI, and DC) | `{ ok: false, reason: "outside_coverage" }` — BLM GLO holds no federal patent there, so a URL could only log a nil as evidence of absence; the error routes to the state's own land office and county deed records |
+| `blm_glo` `baseUrl` on any path but `/s/advanced-search` (the legacy `/search/default.aspx` and `/results/default.aspx`, or the portal root) | `{ ok: false, reason: "invalid_base_url" }` — the legacy paths 301 to `/s/` and drop every parameter, and no other portal path reads `searchTerm`, so the search would run unscoped (§10.1) |
 | `findmypast` call carrying only a tuning knob (`birthYearOffset` / `placeProximityMiles`) | `{ ok: false, reason: "no_attributes" }` — a knob without its slot searches nothing |
 | `attributes` is a JSON string | coerced to the object first; if the result is still not an object, `no_attributes` with an error naming the type |
 | every supplied attribute is rejected by its validator (`{ birthYear: 99999 }`) | `no_attributes`, with each rejection note carried in `errors` so the caller learns why |

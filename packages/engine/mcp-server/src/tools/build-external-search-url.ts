@@ -259,9 +259,7 @@ const US_STATE_CODES: Record<string, string> = Object.entries(US_STATE_NAMES).re
 // Reuses `usStateFacet`'s right-to-left segment scan, so the same
 // "Indiana, Pennsylvania" mis-scoping it guards against is guarded here.
 function newspapersRegion(v: unknown): string | undefined {
-  const full = usStateFacet(v);
-  if (full === undefined) return undefined;
-  const code = US_STATE_CODES[full];
+  const code = usStateCode(v);
   return code === undefined ? undefined : `us-${code}`;
 }
 
@@ -330,7 +328,8 @@ const BLM_PUBLIC_LAND_STATES: ReadonlySet<string> = new Set([
   "ms", "mo", "mt", "ne", "nv", "nm", "nd", "oh", "ok", "or", "sd", "ut", "wa", "wi", "wy",
 ]);
 
-// Lowercase postal code for `usState`, via `usStateFacet`'s right-to-left scan.
+// Lowercase postal code for a state name, code or comma-qualified place, via
+// `usStateFacet`'s right-to-left scan. Shared by blm_glo and newspapersRegion.
 function usStateCode(v: unknown): string | undefined {
   const full = usStateFacet(v);
   return full === undefined ? undefined : US_STATE_CODES[full];
@@ -873,8 +872,10 @@ const SITE_NOTES: Partial<Record<ExternalSearchSite, string>> = {
   blm_glo:
     "federal land only: patents for the 30 public-land states — the 13 original states and TX, KY, TN, " +
     "VT, ME, WV and HI granted their own land, so look for state land-office and county deed records " +
-    "there; the names go in one free-text search, so narrow by county or document type with the " +
-    "site's side filters",
+    "there; this search is limited to land patents — for land-status records, survey plats or " +
+    "warrant files, change the Document Category filter on the site; the names go in one free-text " +
+    "search, so a patent indexed under initials or a middle name may not match the full given name — " +
+    "re-run with the surname alone before treating no result as absence",
   digital_newspaper_archive:
     "this archive's URL carries no date filter — tell the user which date range to set in the site's own UI. " +
     "The access classification is this class's default, NOT checked against this archive: if it turns out to " +
@@ -950,6 +951,15 @@ function baseUrlHostError(site: ExternalSearchSite, baseUrl: string): string | u
   const allowed = [siteUrl, UK_BASE_URL[site]].filter((u): u is string => u !== undefined).map(hostOf);
   if (!allowed.some((h) => inDomainOf(host, h))) {
     return `baseUrl host "${host}" does not belong to ${site} (expected ${allowed.map(registrableDomain).join(" or ")})`;
+  }
+  // The GLO Portal kept its host but retired its paths: the legacy
+  // /search/default.aspx and /results/default.aspx 301 to /s/ and drop every
+  // parameter (spec §10.1), and only /s/advanced-search reads `searchTerm`.
+  if (site === "blm_glo" && new URL(baseUrl).pathname.replace(/\/+$/, "") !== "/s/advanced-search") {
+    return (
+      `baseUrl path "${new URL(baseUrl).pathname}" does not take a search on ${site} — the legacy paths ` +
+      `redirect and drop every parameter, so the search would run unscoped; use ${siteUrl}`
+    );
   }
   return undefined;
 }
@@ -1429,7 +1439,7 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
         ok: false,
         reason: "outside_coverage",
         errors: [
-          `${US_STATE_NAMES[code].replace(/\b\w/g, (c) => c.toUpperCase())} is not a public-land state — BLM GLO holds no federal land patents there, ` +
+          `${US_STATE_NAMES[code].replace(/\b(?!of\b)\w/g, (c) => c.toUpperCase())} is not a public-land state — BLM GLO holds no federal land patents there, ` +
             "so a search could only return a nil that is not evidence of absence; search that state's own " +
             "land office and county deed records instead",
         ],

@@ -2327,6 +2327,57 @@ describe("build_external_search_url", () => {
       expect(r.reason).toBe("invalid_base_url");
     });
 
+    it.each([
+      "https://glorecords.blm.gov/search/default.aspx?searchTabIndex=0",
+      "https://glorecords.blm.gov/results/default.aspx?searchCriteria=type=patent",
+      "https://glorecords.blm.gov/s/",
+    ])("refuses a baseUrl on a path that does not take a search: %s", (baseUrl) => {
+      const r = buildExternalSearchUrl({ site: "blm_glo", baseUrl, attributes: { surname: "McElwee" } });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.reason).toBe("invalid_base_url");
+      expect(r.errors.join(" ")).toMatch(/redirect and drop every parameter/);
+    });
+
+    it("accepts the portal's own search path as baseUrl, with or without a trailing slash", () => {
+      for (const baseUrl of [
+        "https://glorecords.blm.gov/s/advanced-search",
+        "https://glorecords.blm.gov/s/advanced-search/",
+      ]) {
+        const r = buildExternalSearchUrl({ site: "blm_glo", baseUrl, attributes: { surname: "McElwee" } });
+        expect(r.ok).toBe(true);
+      }
+    });
+
+    it("names DC with a lower-case 'of' in the refusal", () => {
+      const r = buildExternalSearchUrl({
+        site: "blm_glo",
+        attributes: { surname: "McElwee", usState: "Washington, D.C." },
+      });
+      expect(r.ok).toBe(false);
+      if (r.ok) return;
+      expect(r.errors[0]).toMatch(/^District of Columbia is not a public-land state/);
+    });
+
+    it("the standing note says the search is patents only and how to avoid a name-form false negative", () => {
+      const r = buildExternalSearchUrl({ site: "blm_glo", attributes: { surname: "McElwee" } });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      const note = r.notes.find((n) => n.startsWith("federal land only")) ?? "";
+      expect(note).toMatch(/limited to land patents/);
+      expect(note).toMatch(/surname alone/);
+    });
+
+    it("newspapers still scopes region from a state after the shared helper refactor", () => {
+      const r = buildExternalSearchUrl({
+        site: "newspapers",
+        attributes: { surname: "Flynn", searchPlace: "Schuylkill, Pennsylvania, United States" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      expect(new URL(r.url).searchParams.get("region")).toBe("us-pa");
+    });
+
     it("is advertised in the schema's site enum", () => {
       expect(buildExternalSearchUrlSchema.inputSchema.properties.site.enum).toContain("blm_glo");
     });
