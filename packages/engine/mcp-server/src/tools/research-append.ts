@@ -119,7 +119,13 @@ import { gatherRelatives, isRealGivenName, PLACEHOLDER_GIVEN } from "../utils/re
 import { factsEquivalent, namesEquivalent, relationshipMatches } from "../utils/merge-gedcomx.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
-import { countsForProofGate, isAttachmentLink } from "../utils/tree-person.js";
+import {
+  countsForProofGate,
+  isAttachmentLink,
+  isDerivedEntryLink,
+  derivedEntryLinkRationale,
+  DERIVED_ENTRY_LINK_PREFIX,
+} from "../utils/tree-person.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
 import type { CollectionCatalogLoader, CollectionCounts } from "../types/collection.js";
@@ -3109,6 +3115,11 @@ export function circularCorroborationCallCheck(
   const findings: Array<{ index: number | null; message: string }> = [];
   for (const e of (Array.isArray(after.research?.person_evidence) ? after.research.person_evidence : []) as any[]) {
     if (!isLiveStrong(e) || typeof e.id !== "string" || typeof e.person_id !== "string") continue;
+    // #4226: a derived row shares its trigger's person AND record entry, and
+    // this verdict is computed from exactly those two, so its finding is always
+    // a second copy of the trigger's. Reporting both told the caller twice
+    // about one link they wrote once.
+    if (isDerivedEntryLink(e)) continue;
     const prev = strongBefore.get(pairingKey(e));
     if (prev && CONFIDENCE_RANK[e.confidence] <= CONFIDENCE_RANK[prev.confidence]) continue;
     const verdict = circularCorroborationVerdict(e, after.research, after.tree, baseline);
@@ -5007,6 +5018,10 @@ export function namesakeCallCheck(
   const findings: Array<{ index: number | null; message: string }> = [];
   for (const { entry, rows, pairs, verdict } of assertedNamesakeVerdicts(before, after, startingPersonIds, { startingTree })) {
     if (verdict.allowed) continue;
+    // #4226: as in `circularCorroborationCallCheck` — the cap judges a (person,
+    // record) pairing, which a derived row shares with its trigger, so its
+    // finding duplicates one the caller already has.
+    if (isDerivedEntryLink(entry)) continue;
     let index: number | null = null;
     for (let i = applied.length - 1; i >= 0; i--) {
       if (applied[i].section === "person_evidence" && applied[i].entryId === entry.id) {
@@ -7518,6 +7533,11 @@ interface SingleSuccess {
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces?: ResolvedPlaceEcho[];
   /** Places looked up and left with no standard_place (§3.6). */
+  /** #4226: derived `person_evidence` rows a gate refused, so they were rolled
+   *  back out of the document rather than failing the call. Present only when
+   *  an entry did not expand fully, so the caller can see why it got fewer
+   *  rows than the entry has facts. */
+  skippedDerivedLinks?: string[];
   unresolvedPlaces?: string[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
@@ -7528,6 +7548,11 @@ interface BatchSuccess {
   sourceDescriptionId?: string;
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces?: ResolvedPlaceEcho[];
+  /** #4226: derived `person_evidence` rows a gate refused, so they were rolled
+   *  back out of the document rather than failing the call. Present only when
+   *  an entry did not expand fully, so the caller can see why it got fewer
+   *  rows than the entry has facts. */
+  skippedDerivedLinks?: string[];
   unresolvedPlaces?: string[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
@@ -7682,6 +7707,11 @@ interface AppliedByApplyOne {
   /** A settled no-op (e.g. re-declaring an already-exhaustive question): the
    *  document was not mutated, so the caller may skip the write. */
   noop?: boolean;
+  /** #4226: this op was a DERIVED `person_evidence` row and a gate refused it,
+   *  so it was rolled back out of the document instead of failing the call.
+   *  Carries the first refusal, for the response's skip list. The caller did
+   *  not write this row and cannot act on a failure about it. */
+  skippedDerived?: string;
   warnings?: string[];
 }
 
@@ -8006,7 +8036,16 @@ function retireRejectedLinks(
     const rj = rejections.find((r) => r && r.id === a.entryId);
     if (!rj || typeof rj.assertion_id !== "string" || typeof rj.person_id !== "string") continue;
     const live = links.filter(
-      (pe) => pe && !pe.superseded_by && pe.assertion_id === rj.assertion_id && pe.person_id === rj.person_id,
+      // A link claims its whole record entry, so retiring it must retire the rows
+      // derived from it too (#4355 review). The derived rationale names the
+      // trigger assertion, and the trailing ":" keeps a_001 from matching a_0011.
+      (pe) =>
+        pe &&
+        !pe.superseded_by &&
+        pe.person_id === rj.person_id &&
+        (pe.assertion_id === rj.assertion_id ||
+          (isDerivedEntryLink(pe) &&
+            pe.rationale.startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${rj.assertion_id}:`))),
     );
     if (live.length === 0) continue;
     for (const pe of live) pe.superseded_by = rj.id;
@@ -8017,9 +8056,11 @@ function retireRejectedLinks(
     const person = (tree?.persons ?? []).find((p) => p && p.id === rj.person_id);
     const removed: string[] = [];
     const kept: string[] = [];
+    // The derived rows retired above take their facts with them (#4355 review).
+    const retiredAssertions = new Set(live.map((pe) => pe.assertion_id));
     if (person && Array.isArray(person.facts)) {
       person.facts = person.facts.filter((f) => {
-        if (!f || f.assertion_id !== rj.assertion_id) return true;
+        if (!f || !retiredAssertions.has(f.assertion_id)) return true;
         const otherEvidence = (f.sources ?? []).some((s) => typeof s?.ref === "string" && s.ref !== ownRef);
         if (otherEvidence) {
           kept.push(f.id ?? f.type ?? "(fact)");
@@ -8046,6 +8087,90 @@ function retireRejectedLinks(
     }
   }
   return { mutated, warnings };
+}
+
+/**
+ * Retire the rows a link derived when that link is superseded onto a DIFFERENT
+ * tree person, pointing each at the replacement's row for the same assertion.
+ *
+ * Step 6 of person-evidence.md corrects a wrong link in two calls: append the
+ * replacement, then supersede the old entry with it. Retiring only the entry
+ * named in the update leaves every row it derived on the old person, which is
+ * the "one entry, one person" split the entry rule exists to stop (#4355
+ * review). The expansion on the first call has already put the replacement's
+ * own rows on the new person, so the row to point at exists by the second.
+ *
+ * A supersede onto the SAME person is a correction of that link, not a move,
+ * and leaves the derived rows alone.
+ *
+ * A post-apply pass for the same reason `retireRejectedLinks` is one: `applyOne`
+ * cannot report a change it makes to another entry. It fabricates no link -- a
+ * derived row with no replacement row to name is left live and named in a
+ * warning, because `superseded_by` may only name a link for the same assertion.
+ */
+function retireSupersededDerivedLinks(
+  applied: AppliedOp[],
+  research: any,
+  beforeResearch: any,
+): { warnings: string[] } {
+  const warnings: string[] = [];
+  const links: any[] = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
+  const before: any[] = Array.isArray(beforeResearch?.person_evidence) ? beforeResearch.person_evidence : [];
+
+  for (const a of applied) {
+    if (a.section !== "person_evidence" || a.op !== "update" || a.noop) continue;
+    const pe = links.find((x) => x && x.id === a.entryId);
+    if (!pe || typeof pe.superseded_by !== "string" || pe.superseded_by === "") continue;
+    // Only a supersede THIS call set. An unrelated update to an already-retired
+    // link must not re-run the move.
+    const was = before.find((x) => x && x.id === a.entryId);
+    if (was && was.superseded_by === pe.superseded_by) continue;
+    const target = links.find((x) => x && x.id === pe.superseded_by);
+    if (!target || String(target.person_id) === String(pe.person_id)) continue;
+
+    const derived = links.filter(
+      (d) =>
+        d &&
+        !d.superseded_by &&
+        String(d.person_id) === String(pe.person_id) &&
+        isDerivedEntryLink(d) &&
+        String(d.rationale).startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${pe.assertion_id}:`),
+    );
+    if (derived.length === 0) continue;
+
+    const moved: string[] = [];
+    const stranded: string[] = [];
+    for (const d of derived) {
+      const replacement = links.find(
+        (x) =>
+          x &&
+          !x.superseded_by &&
+          x.id !== d.id &&
+          String(x.assertion_id) === String(d.assertion_id) &&
+          String(x.person_id) === String(target.person_id),
+      );
+      if (!replacement) {
+        stranded.push(`${d.id} (${d.assertion_id})`);
+        continue;
+      }
+      d.superseded_by = replacement.id;
+      moved.push(`${d.id} -> ${replacement.id}`);
+    }
+    if (moved.length > 0) {
+      warnings.push(
+        `${pe.id} moved ${pe.assertion_id} to ${target.person_id}, so the rows it derived went ` +
+          `with it: ${moved.join(", ")}. A record entry is one person.`,
+      );
+    }
+    if (stranded.length > 0) {
+      warnings.push(
+        `${stranded.join(", ")} stayed on ${pe.person_id}: ${target.person_id} has no link for ` +
+          `that assertion to supersede them with, and a link is superseded only by one for the ` +
+          `same assertion. Link ${target.person_id} to those assertions, or reject the pairing.`,
+      );
+    }
+  }
+  return { warnings };
 }
 
 /**
@@ -8706,6 +8831,10 @@ function applyOne(
   // Ids that count as taken beyond the entries the document shows: the ones ops
   // that failed would have had. Only the failure path sets it.
   reservedIds?: ReadonlySet<string>,
+  // #4226: this op is a `person_evidence` row `planEntryLinkExpansion` derived
+  // from the caller's own link, not one the caller wrote. Set by index at the
+  // call site, never from the op's contents.
+  derivedLink = false,
 ): AppliedByApplyOne {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -9510,6 +9639,40 @@ function applyOne(
       !!priorPair &&
       (priorPair.assertion_id !== resultEntry.assertion_id ||
         priorPair.person_id !== resultEntry.person_id);
+
+    // #4355 review: the entry rule governs APPENDS, so re-pointing `person_id`
+    // on a link that already expanded walked around it -- the trigger moved and
+    // the rows it derived stayed on the old person, which is the "one entry, one
+    // person" split the rule exists to stop. Refuse the move and name step 6,
+    // which moves the derived rows with the trigger
+    // (`retireSupersededDerivedLinks`). A re-point of a link that derived
+    // nothing is untouched: it is legitimate correction.
+    if (
+      op.op === "update" &&
+      !!priorPair &&
+      priorPair.person_id !== resultEntry.person_id &&
+      !resultEntry.superseded_by
+    ) {
+      const stranded = ((research?.person_evidence ?? []) as any[]).filter(
+        (d) =>
+          d &&
+          !d.superseded_by &&
+          d.id !== resultEntry.id &&
+          String(d.person_id) === String(priorPair?.person_id) &&
+          isDerivedEntryLink(d) &&
+          String(d.rationale).startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${resultEntry.assertion_id}:`),
+      );
+      if (stranded.length > 0) {
+        invariantErrors.push(
+          `${resultEntry.id} links ${resultEntry.assertion_id}, which claimed its whole record entry ` +
+            `for ${priorPair.person_id}: ${stranded.map((d) => `${d.id} (${d.assertion_id})`).join(", ")} ` +
+            `were derived from it. Re-pointing person_id would move this one fact and leave those on ` +
+            `${priorPair.person_id}, and a record entry is one person. Correct it the way step 6 of ` +
+            `person-evidence does instead: append the link to '${resultEntry.person_id}', then update ` +
+            `${resultEntry.id} with { superseded_by: "<that id>" } -- which moves the derived rows too.`,
+        );
+      }
+    }
     const wasRetired = !!priorPair?.superseded_by;
     const reRaising =
       op.op === "append" ||
@@ -9625,7 +9788,15 @@ function applyOne(
     // gate). Exempt only on extraction_append's internal flag AND the entry's
     // full attachment shape, so neither half alone reaches the exemption.
     const exemptAttachment = attachmentLink && op.op === "append" && isAttachmentLink(resultEntry);
-    if (writesScore && !exemptAttachment) {
+    // #4226: a derived row carries no score because none was computed for its
+    // pairing, and none can be: the attestation is keyed on the ASSERTION, and
+    // its persona arm fires only where the assertion carries a non-null
+    // `record_persona_id` -- null on thousands of corpus links. The caller made
+    // one scored identity decision about the entry, which is what the ruling
+    // says a link is. Keyed on the op's index, so no caller-supplied shape can
+    // reach this exemption.
+    const exemptDerived = derivedLink && op.op === "append";
+    if (writesScore && !exemptAttachment && !exemptDerived) {
       invariantErrors.push(
         ...personEvidenceScoreInvariants(
           resultEntry,
@@ -9730,6 +9901,17 @@ function applyOne(
     }
   }
   if (invariantErrors.length > 0) {
+    // #4226: a derived row is the TOOL's, not the caller's. Any gate refusing
+    // one must drop that row, never fail the call: the caller did not write it
+    // and cannot act on a message about it. General on purpose -- an earlier
+    // draft pre-checked two named invariants in the planner instead, and the
+    // circular-corroboration gate and the namesake cap, which fire here, each
+    // emitted a second copy of their trigger's own error (22 tests).
+    if (derivedLink && op.op === "append" && typeof arrayIndex === "number") {
+      const list = research[section];
+      if (Array.isArray(list) && list.length > arrayIndex) list.splice(arrayIndex, 1);
+      return { section, op: op.op, entryId, skippedDerived: invariantErrors[0] };
+    }
     throw new ResearchAppendError(invariantErrors);
   }
 
@@ -10480,7 +10662,12 @@ function stampLocalityCollectionCounts(
         ["record_count", counts.recordCount],
       ] as const) {
         const was = Object.hasOwn(c, key) ? JSON.stringify(c[key]) : "absent";
-        if (c[key] !== value) changes.push(`${key} ${was} -> ${value}`);
+        // collections_search no longer returns a record count (issue #4416), so
+        // locality-guide leaves `record_count` out and this stamp supplies it:
+        // filling it is the contract, not a correction worth a warning.
+        if (c[key] !== value && !(key === "record_count" && was === "absent")) {
+          changes.push(`${key} ${was} -> ${value}`);
+        }
         c[key] = value;
       }
       if (changes.length > 0) {
@@ -11659,6 +11846,269 @@ function expandNarrativeEdits(
 /** The one field a direct `research_append` call may change on an assertion. */
 const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
 
+/** #4226: the rows a one-party `person_evidence` append implies.
+ *
+ *  Lead ruling 2026-11-04 — a link means THE RECORD ENTRY is this person, so
+ *  once the person in role X of record Y is linked to tree person Z, every
+ *  one-party fact of that entry belongs to Z. The caller writes one link; this
+ *  writes the rest.
+ *
+ *  Four rules decide what is in an entry, and each has cost a measurement:
+ *
+ *  - **The party key is `recordPartyKeyer`'s**, not a local one. It reads the
+ *    whole record (persona id, else role, with #2537's corrections) and is the
+ *    same key `contradictionScope` uses, so the write rule and the gate cannot
+ *    disagree about what a party is.
+ *  - **`absent` is not an entry, and that is applied HERE, at the key.** The
+ *    keyer returns the persona id for negative evidence filed against a persona
+ *    (anders-monsen's "Unna absent from 1801 Hamre" is filed on ANDERS' persona
+ *    and linked to Unna). Dropped only at the point of use, it makes Unna a
+ *    holder of Anders' entry and the refusal below fires on a correct record.
+ *    Both spellings: `record_basis: "absent"` and the legacy `record_role`.
+ *  - **A two-party fact is neither a trigger nor a product.** Its link does not
+ *    say which of the two parties it is about, so it cannot identify an entry
+ *    (ADR-0009 constraint 3).
+ *  - **An attachment-shaped link does not trigger.** The baseline step assumes
+ *    every FamilySearch attachment is correct and runs no `same_person`;
+ *    expanding there multiplies an assumption instead of recording a judgement.
+ *
+ *  The refusal ("an entry belongs to one tree person") counts only ONE-PARTY
+ *  links on the holder side. Counting any live link refuses 1,138 further
+ *  (entry, person) pairs across the committed corpus -- roughly 44% of all
+ *  linked record parties are multi-person solely through two-party links.
+ *  Measured by `dev/replay-entry-link.ts`.
+ *
+ *  A derived row that an invariant would refuse is SKIPPED and reported, never
+ *  raised: the caller did not write it and cannot act on a failure about it. */
+export function planEntryLinkExpansion(
+  ops: ResearchAppendOp[],
+  research: any,
+): { derived: ResearchAppendOp[]; refusals: string[] } {
+  const derived: ResearchAppendOp[] = [];
+  const refusals: string[] = [];
+
+  // The two call-level post-checks below -- `circularCorroborationCallCheck`
+  // and `namesakeCallCheck` -- skip a row carrying this rationale, because a
+  // derived row's finding is always a second copy of its trigger's. They read
+  // the FINISHED document, which cannot tell who wrote a row, so a caller that
+  // writes the prefix itself skips both gates. Refuse it at the boundary: the
+  // prefix is the tool's, and the gates' skip is sound only while that holds.
+  for (const [i, op] of ops.entries()) {
+    if (op.section !== "person_evidence") continue;
+    const rationale =
+      op.op === "append" ? (op.entry as any)?.rationale : (op.fields as any)?.rationale;
+    if (isDerivedEntryLink({ rationale })) {
+      refusals.push(
+        `ops[${i}]: a person_evidence rationale starting "${DERIVED_ENTRY_LINK_PREFIX}" is ` +
+          `written only by research_append, for the rows it derives when a one-party link ` +
+          `claims its record entry. Write your own rationale for the link you are making.`,
+      );
+    }
+  }
+  if (refusals.length > 0) return { derived, refusals };
+
+  const live = new Map<string, any>();
+  for (const [id, a] of batchAssertionsById(research, ops)) {
+    if (isLiveAssertion(a)) live.set(id, { ...a, id });
+  }
+
+  const byRecord = new Map<string, any[]>();
+  for (const a of live.values()) {
+    if (recordBasisOf(a) === "absent" || a.record_role === "absent") continue;
+    const rec = arkToBareId(String(a.record_id ?? ""));
+    if (rec === "") continue;
+    const list = byRecord.get(rec);
+    if (list) list.push(a);
+    else byRecord.set(rec, [a]);
+  }
+  const entryOf = new Map<string, string>();
+  const inEntry = new Map<string, any[]>();
+  for (const [rec, list] of byRecord) {
+    const keyer = recordPartyKeyer(list);
+    for (const a of list) {
+      const party = keyer(a);
+      if (party === null) continue;
+      const k = `${rec}/${party}`;
+      entryOf.set(a.id, k);
+      const bucket = inEntry.get(k);
+      if (bucket) bucket.push(a);
+      else inEntry.set(k, [a]);
+    }
+  }
+
+  // Links the document already holds, PLUS this batch's own appends: a batch
+  // linking two facts of one entry must not derive the second from the first.
+  type Held = { person: string; assertionId: string; oneParty: boolean };
+  const held: Held[] = [];
+  const note = (personId: unknown, assertionId: unknown): void => {
+    const a = live.get(String(assertionId));
+    if (!a) return;
+    held.push({
+      person: String(personId),
+      assertionId: String(assertionId),
+      oneParty: !isTwoParty(a.fact_type),
+    });
+  };
+  // A link this call is retiring is not a holder. Without this the refusal
+  // below names a link the same call removes, so correcting a wrong link takes
+  // two calls -- and the refusal's own advice ("supersede the existing link,
+  // record a rejected_links entry") does not work when followed in one.
+  const retiring = new Set<string>();
+  const rejectedNow = new Set<string>();
+  for (const op of ops) {
+    if (op.section === "person_evidence" && op.op === "update") {
+      const by = (op.fields as any)?.superseded_by;
+      if (by != null && String(by) !== "") retiring.add(String(op.entryId));
+    } else if (op.section === "rejected_links" && op.op === "append") {
+      const e = op.entry as any;
+      if (e && typeof e === "object") {
+        rejectedNow.add(`${String(e.assertion_id)}\u0000${String(e.person_id)}`);
+      }
+    }
+  }
+  // Step 6 of person-evidence.md corrects a wrong link in TWO calls: append the
+  // replacement to get its `pe_` id, then update the old entry's `superseded_by`
+  // with it. On that FIRST call the wrong link is still live and still holds the
+  // entry, so the refusal below fired on the one route that fixes a wrong link --
+  // and neither way out it offered worked: a rejection needs `researcher_words`
+  // only the researcher can give (lead, 2026-10-20), and a supersede needs the
+  // replacement link this very call is making (#4355 review). An assertion this
+  // call re-links to someone else is no longer a holder, and neither are the rows
+  // that assertion derived.
+  const relinkedTo = new Map<string, Set<string>>();
+  for (const op of ops) {
+    if (op.section !== "person_evidence" || op.op !== "append") continue;
+    const e = op.entry as any;
+    if (!e || typeof e !== "object") continue;
+    const a = String(e.assertion_id);
+    const to = relinkedTo.get(a);
+    if (to) to.add(String(e.person_id));
+    else relinkedTo.set(a, new Set([String(e.person_id)]));
+  }
+  const movedAway = (assertionId: string, personId: string): boolean =>
+    [...(relinkedTo.get(assertionId) ?? [])].some((p) => p !== personId);
+
+  for (const pe of (research?.person_evidence ?? []) as any[]) {
+    if (pe?.superseded_by != null) continue;
+    if (retiring.has(String(pe?.id))) continue;
+    if (rejectedNow.has(`${String(pe?.assertion_id)}\u0000${String(pe?.person_id)}`)) continue;
+    if (movedAway(String(pe?.assertion_id), String(pe?.person_id))) continue;
+    if (
+      isDerivedEntryLink(pe) &&
+      [...relinkedTo.keys()].some(
+        (a) =>
+          movedAway(a, String(pe?.person_id)) &&
+          String(pe?.rationale).startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${a}:`),
+      )
+    ) {
+      continue;
+    }
+    // Its trigger is being rejected in this same call, so it retires with it and
+    // cannot hold the entry against the replacement link (#4355 review).
+    if (
+      isDerivedEntryLink(pe) &&
+      [...rejectedNow].some((k) => {
+        const [ra, rp] = k.split("\u0000");
+        return (
+          rp === String(pe?.person_id) &&
+          String(pe?.rationale).startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${ra}:`)
+        );
+      })
+    ) {
+      continue;
+    }
+    note(pe?.person_id, pe?.assertion_id);
+  }
+  for (const op of ops) {
+    if (op.section !== "person_evidence" || op.op !== "append") continue;
+    const e = op.entry as any;
+    if (e && typeof e === "object") note(e.person_id, e.assertion_id);
+  }
+  const heldByEntry = new Map<string, Held[]>();
+  for (const h of held) {
+    const k = entryOf.get(h.assertionId);
+    if (k === undefined) continue;
+    const b = heldByEntry.get(k);
+    if (b) b.push(h);
+    else heldByEntry.set(k, [h]);
+  }
+
+  const emitted = new Set<string>();
+
+  for (const op of ops) {
+    if (op.section !== "person_evidence" || op.op !== "append") continue;
+    const entry = op.entry as any;
+    if (!entry || typeof entry !== "object") continue;
+    const trigger = live.get(String(entry.assertion_id));
+    if (!trigger) continue;
+    if (isTwoParty(trigger.fact_type)) continue;
+    if (isAttachmentLink(entry)) continue;
+    if (isDerivedEntryLink(entry)) continue;
+    const k = entryOf.get(trigger.id);
+    if (k === undefined) continue;
+    const person = String(entry.person_id);
+
+    const others = [
+      ...new Set(
+        (heldByEntry.get(k) ?? [])
+          .filter((h) => h.oneParty && h.person !== person)
+          .map((h) => h.person),
+      ),
+    ];
+    if (others.length > 0) {
+      const theirs = (heldByEntry.get(k) ?? [])
+        .filter((h) => h.oneParty && h.person !== person)
+        .map((h) => h.assertionId);
+      refusals.push(
+        `person_evidence for '${person}' links ${trigger.id}, but that record entry ` +
+          `(${k}) is already this project's entry for ${others.join(", ")}, via ${theirs.join(", ")}. ` +
+          `A record entry is one person: linking a one-party fact of it claims the whole entry. ` +
+          `If new evidence shows that existing link is wrong, correct THAT link the way step 6 of ` +
+          `person-evidence does: append the replacement for its assertion, then update it with ` +
+          `{ superseded_by: "<the new id>" }. If the researcher said this record is not that ` +
+          `person, append a rejected_links entry for that pairing in THIS SAME call, which retires ` +
+          `the existing link for you. Otherwise link an assertion of the party you actually mean.`,
+      );
+      continue;
+    }
+
+    const already = new Set(
+      (heldByEntry.get(k) ?? []).filter((h) => h.person === person).map((h) => h.assertionId),
+    );
+    for (const sib of inEntry.get(k) ?? []) {
+      if (already.has(sib.id) || isTwoParty(sib.fact_type)) continue;
+      const dedupe = `${k}\u0000${person}\u0000${sib.id}`;
+      if (emitted.has(dedupe)) continue;
+      const row: Record<string, unknown> = {
+        assertion_id: sib.id,
+        person_id: person,
+        confidence: entry.confidence,
+        match_score: null,
+        rationale: derivedEntryLinkRationale(String(trigger.id), k),
+      };
+      // Inherited, not defaulted. `unexplainedMoveInvariants` reads the move off
+      // the RECORD and the PARTY -- the same record and party a derived row sits
+      // on -- so a `confident` trigger that cleared it by carrying a bridge would
+      // otherwise produce rows that every one get refused, and the entry would
+      // not expand at all. That is the bug this card exists to fix, surviving on
+      // a named class.
+      if (typeof entry.move_bridge === "string" && entry.move_bridge.trim() !== "") {
+        row.move_bridge = entry.move_bridge;
+      }
+      if (entry.core_identifier_conflict != null) {
+        row.core_identifier_conflict = entry.core_identifier_conflict;
+      }
+      // No gate pre-check here. Every gate runs in `applyOne`, which rolls a
+      // refused derived row back out of the document (`skippedDerived`). A
+      // second, partial copy of that rule in this planner is what let the
+      // circular-corroboration gate and the namesake cap through.
+      emitted.add(dedupe);
+      derived.push({ section: "person_evidence", op: "append", entry: row });
+    }
+  }
+  return { derived, refusals };
+}
+
 /** How long a caller's write waits on the catalog before stamping null counts. A
  *  cold read can run past 30s (2 of 51 in the committed e2e logs took 33s and 36s), and Cowork's bridge aborts a call at 60s
  *  (`COWORK_CALL_ABORT_MS`), which the write's own place lookups also spend. The
@@ -11892,6 +12342,22 @@ export async function researchAppend(
       retracted = plan.retracted;
     }
 
+    // #4226: a one-party link claims its whole record entry, so write the rest
+    // of that entry's rows. BEFORE prepareOps, never inside it: prepareOps is
+    // where the batch's derived views are built FROM `ops`
+    // (`batchAssertionsById`, `batchPersonLinks`, the per-record attestation
+    // load), so rows added inside it would be judged against a snapshot
+    // computed without them -- the contradiction gate's two-party arm and the
+    // score-gate load would both silently miss them.
+    const expansion = planEntryLinkExpansion(ops, research);
+    if (expansion.refusals.length > 0) return fail(boundErrors(expansion.refusals));
+    const derivedFrom = ops.length;
+    ops.push(...expansion.derived);
+    // Index-based, not a marker on the op: the failure path below re-applies
+    // `structuredClone(ops)`, which would drop any non-enumerable property.
+    const derivedOpIndices = new Set<number>();
+    for (let i = derivedFrom; i < ops.length; i++) derivedOpIndices.add(i);
+
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
     const readSidecar = sidecarReader(projectPath);
     const prep = await prepareOps(input, ops, research, tree, projectPath, fmt, options, readSidecar);
@@ -11928,6 +12394,7 @@ export async function researchAppend(
         storedCollectionUrls,
         options.attachmentLink === true,
         ctx.reserved,
+        derivedOpIndices.has(opIndex),
       ),
       opIndex,
     });
@@ -11984,6 +12451,9 @@ export async function researchAppend(
     // #3601: a rejection retires its pair's live link and that link's facts,
     // in this same all-or-nothing write.
     const retire = retireRejectedLinks(applied, research, tree);
+    // #4355 review: a link superseded onto a different person takes the rows it
+    // derived with it, or they strand on the old person.
+    const movedDerived = retireSupersededDerivedLinks(applied, research, beforeResearch);
 
     // The rows' personas and birth years, before the namesake judgement reads them.
     const readResults = sidecarResultsReader(readSidecar);
@@ -12009,7 +12479,7 @@ export async function researchAppend(
     // may arrive in any order within the call.
     const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt, prep.startingTree);
 
-    const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? []), ...retire.warnings];
+    const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? []), ...retire.warnings, ...movedDerived.warnings];
     // Folded into locals rather than mutated onto `prep`: both the mutation test
     // and the write branch below have to see the rewrite's tree write, and the
     // degrade path below can take it back.
@@ -12179,16 +12649,26 @@ export async function researchAppend(
       valid: true as const,
       warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...removalWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
     };
-    const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces" | "unresolvedPlaces"> = {};
+    const extras: Pick<
+      BatchSuccess,
+      "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces" | "unresolvedPlaces" | "skippedDerivedLinks"
+    > = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
     if (prep.sourceReuse) extras.sourceReuse = prep.sourceReuse;
     if (prep.resolvedPlaces.length > 0) extras.resolvedPlaces = prep.resolvedPlaces;
     if (prep.unresolvedPlaces.length > 0) extras.unresolvedPlaces = prep.unresolvedPlaces;
 
+    // #4226: a derived row a gate refused was rolled back out of the document,
+    // so it is not a result. Reported instead, so the caller can see that the
+    // entry did not expand fully rather than silently getting fewer rows.
+    const skippedDerived = applied.flatMap((a) => (a.skippedDerived ? [a.skippedDerived] : []));
+    if (skippedDerived.length > 0) extras.skippedDerivedLinks = skippedDerived;
+    const written = applied.filter((a) => !a.skippedDerived);
+
     if (isBatch) {
       return {
         ok: true,
-        results: applied.map((a) => ({ section: a.section, op: a.op, entryId: a.entryId })),
+        results: written.map((a) => ({ section: a.section, op: a.op, entryId: a.entryId })),
         ...extras,
         filesWritten,
         validation: validationBlock,

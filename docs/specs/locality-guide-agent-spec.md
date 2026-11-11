@@ -52,9 +52,14 @@ eval harness's 180-second silence watchdog, so every locality-guide test sets
 The `localities` entry carries what research-plan and research-exhaustiveness
 otherwise re-fetched:
 
-- `collections[].person_count` / `record_count`, copied from `collections_search`;
-  research_append re-stamps them from FamilySearch's catalog (null when unknown,
-  research-append-tool-spec §5.12).
+- `collections[].person_count`, copied from `collections_search`'s `personCount`,
+  and `record_count`, which the agent leaves out: `collections_search` no longer
+  returns a record count, and research_append stamps both from FamilySearch's
+  catalog (null when unknown, research-append-tool-spec §5.12). Filling an
+  absent `record_count` raises no warning.
+- `collections_search` answers over its character budget carry `truncated: true`.
+  Rows whose titles name the place come first, so what was left out is rows for
+  other places in the same scope; the agent does not report it as a coverage gap.
   research-plan chooses a name search or an image browse on `person_count > 0`.
 - `registration_start[]` — `{ event, level, year, source_url }` from the
   `{Jurisdiction}_Vital_Records` page, one per event and level, so
