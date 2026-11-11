@@ -64,6 +64,8 @@ def test_positive_appends_browse_log_entry(before_state, after_state, test):
             "redirect-no-browse: the volume is indexed, so the skill correctly "
             "performs no browse and writes no log entry"
         )
+    if "confirm-read" in test.get("tags", []):
+        pytest.skip("confirm-read: one page read by ARK is not a browse")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
     new_entries = _new_log_entries(before_state, after_state)
@@ -328,6 +330,8 @@ def test_browse_log_never_labelled_image_transcribe(before_state, after_state, t
             "a cap refusal stops the browse at a page read, so its partial log "
             "may name image_transcribe"
         )
+    if "confirm-read" in test.get("tags", []):
+        pytest.skip("confirm-read: one page read by ARK is not a browse")
     relabelled = [
         entry.get("id")
         for entry in _new_log_entries(before_state, after_state)

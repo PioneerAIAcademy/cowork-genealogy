@@ -784,6 +784,7 @@ The rule is enforced in the forward direction only. `record_role: "absent"` pair
 | `extracted_for_question_ids` | string[] | yes | Question IDs this assertion bears on (may be empty; many assertions are extracted opportunistically) |
 | `superseded_by` | string or null | no | Set only by `extraction_append({ reextract: true })`. **Any non-null value means the assertion is retired**: it is history, not evidence. Either the `a_` id of the assertion that replaced it, or the literal `"retracted"` when the re-extraction wrote no counterpart (an invented relationship, say). Absent or null means live |
 | `superseded_reason` | string or null | no | Why the assertion was retired. Required, non-empty, when `superseded_by` is `"retracted"` |
+| `disputes_assertion_id` | string | no | Tool-stamped, never the caller's: the `a_` id of the index assertion, on the **same source**, that this page reading disputes. Written only by `extraction_append`'s `attachWaitingPages` mode with `pageReadings` (research-append spec §11.9); `research_append` refuses a caller's value. A disputed index value counts as doubtful, like a `[?]` reading (research-append spec §5). The target may be retired: a dispute follows the target's `superseded_by` to its successor |
 
 **`structured_value`** — Optional machine-readable form of `value` that enables programmatic comparison (timeline construction, conflict detection) without parsing prose. The freeform `value` stays for human readability. See Section 5.6.1 for recommended shapes by fact_type.
 

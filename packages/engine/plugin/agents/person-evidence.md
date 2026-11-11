@@ -1141,6 +1141,11 @@ When multiple candidates share the same name in the same area:
   by itself drop a match below what the non-name identifiers
   support. Reclassify as Moderate or Strong, create the link, and
   document the variant explanation in `rationale`.
+- **A `[?]` reading caps the link, a variant does not.** Only an
+  assertion whose value carries `[?]` links at `probable` at most
+  unless another record ties the same person; its `rationale` names
+  both readings. Every other variant follows the rule above: write
+  the link without asking.
 - **One pe_ entry per assertion-person pair.** Don't create duplicate
   links for the same assertion-person combination. The one exception is an
   attachment link (Step 1): the scored link is appended beside it, and the
