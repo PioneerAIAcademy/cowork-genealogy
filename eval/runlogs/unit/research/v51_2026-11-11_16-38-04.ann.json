@@ -8,7 +8,7 @@
       "dimension_name": "Correctness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": null
+      "comment": "grade:trigger positive test; outcome is activation-gated only (the right sub-skill fired), so this dimension is diagnostic. The overclaim the judge flags (asserting a tree link the before-state doesn't fully support) is a real quality nuance worth noting but does not affect pass/fail here."
     },
     {
       "test_id": "ut_research_001",
@@ -160,7 +160,7 @@
       "dimension_name": "Completeness",
       "llm_score": 2,
       "corrected_score": 2,
-      "comment": null
+      "comment": "Same root cause as the Correctness dimension above: the response claims the hypothesis hand-off's outcome without confirming it. Pre-existing, matches EdmondOware's prior review of this test."
     },
     {
       "test_id": "ut_research_9k4",
@@ -256,7 +256,7 @@
       "dimension_name": "Completeness",
       "llm_score": 1,
       "corrected_score": 1,
-      "comment": null
+      "comment": "grade_on_invariant negative test; diagnostic-only, same as the Correctness dimension above. Outcome is pass because the collection-invariant validator passed."
     },
     {
       "test_id": "ut_research_ken",
