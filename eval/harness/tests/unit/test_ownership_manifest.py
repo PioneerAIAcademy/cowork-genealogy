@@ -246,8 +246,8 @@ def _union_writer_sets(artifact: str) -> dict[str, set[str]]:
     return merged
 
 
-#: tree `persons` and `relationships` gain `forget-and-rederive`. It holds
-#: `tree_forget` in its `allowed-tools`, and both rows list that tool among their
+#: tree `persons`, `relationships` and `sources` gain `forget-and-rederive`. It holds
+#: `tree_forget` in its `allowed-tools`, and all three rows list that tool among their
 #: `writerTools`, so it was a writer of both sections that no row named — one of
 #: the nine (holder, writer tool) pairs the new packaging guard finds
 #: (`ownership-manifest.test.ts`, "names every plugin holder of a writer tool").
@@ -260,6 +260,7 @@ def _union_writer_sets(artifact: str) -> dict[str, set[str]]:
 TREE_WIDENED: dict[str, set[str]] = {
     "persons": {"forget-and-rederive"},
     "relationships": {"forget-and-rederive"},
+    "sources": {"forget-and-rederive"},
 }
 
 #: tree `persons` and `relationships` lose `person-evidence` from the no-subject
