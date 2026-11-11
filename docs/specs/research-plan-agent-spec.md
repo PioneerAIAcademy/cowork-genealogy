@@ -239,7 +239,7 @@ change; keep no local copy.
   because a dedicated marriage item may legitimately note what else the same
   register holds. `child*` is an anti-word because the real v14 pli_009
   rationale's last sentence searched "Thomas's marriage and … children bearing
-  the Flynn surname" (T-FEH, PR #4447). `record_type` is deliberately untested —
+  the Flynn surname" (found in review, 2026-11-10). `record_type` is deliberately untested —
   a church marriage register is a valid dedicated item (review decision,
   2026-10-30). Proven to fail in
   `eval/harness/tests/unit/test_research_plan_validator.py`.
