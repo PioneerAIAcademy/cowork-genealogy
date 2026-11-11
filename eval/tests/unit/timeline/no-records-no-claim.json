@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_timeline_009",
+    "skill": "timeline",
+    "name": "Nothing linked and nothing attached: extract once, then make no claim and write nothing",
+    "type": "positive",
+    "description": "Mode A on empty-project-just-created. Patrick Flynn (I1) has no linked record and no attached source, so timeline_build returns no_linked_evidence, the one extraction_append({ personId }) call finds nothing to extract, and timeline_build returns no_linked_evidence again. The agent writes nothing, makes no claim about his life, and relays the tool's summary.",
+    "tags": [
+      "timeline",
+      "attached-records",
+      "extraction-calls-1",
+      "no-project-write",
+      "person-timeline-in-code",
+      "I1",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Build the timeline for Patrick Flynn (person I1).\n\nprojectPath: <workspace>",
+    "scenario": "empty-project-just-created"
+  },
+  "judge_context": [
+    "Expected path: `timeline_build` returns `no_linked_evidence`; the agent calls `extraction_append({ projectPath, personId })` once, which reports no attached indexed record and writes nothing; `timeline_build` returns `no_linked_evidence` again. The `extraction-calls-1` and `no-project-write` validators own the call count, the order and the unchanged project.",
+    "The reply must make no claim about Patrick Flynn's life: no dates, places or events, not even ones from the project objective or the tree. A timeline is never built from tree facts. It says that no record yet places him and relays the tool's summary; asking for nothing and handing nothing back is correct.",
+    "Tool usage, Gap detection, Geographic feasibility, Deferral of logical-impossibility detection and Identity coherence are all N/A: no timeline is written. Grade Correctness and Completeness on the reply alone."
+  ],
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

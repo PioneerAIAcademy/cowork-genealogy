@@ -605,7 +605,7 @@ describe("dates", () => {
 });
 
 describe("the census-1870 record-extract fixture", () => {
-  it("joins the split birth into one Pennsylvania event (age-derived, so ~1845), and the 1870 census expects 1850 and 1860", async () => {
+  it("joins the split birth into one Pennsylvania event (age-derived, so 1844-1845), and the 1870 census expects 1850 and 1860", async () => {
     const fx = JSON.parse(readFileSync(resolve(__dirname, "../fixtures/record-extract/census-1870-no-relationship-column.json"), "utf-8"));
     const out = extractRecord(fx.element ?? fx, { questionIds: [] } as any);
     const mine = out.assertions.filter((a: any) => a.record_persona_id === "p_260900945");
@@ -621,7 +621,7 @@ describe("the census-1870 record-extract fixture", () => {
       "Lower Towamensing Township, Carbon, Pennsylvania, United States": "Lower Towamensing, Carbon, Pennsylvania, United States",
     }));
     const births = p!.events.filter((e: any) => e.event_type === "birth");
-    expect(births).toEqual([expect.objectContaining({ date: "~1845", standard_place: "Pennsylvania, United States" })]);
+    expect(births).toEqual([expect.objectContaining({ date: "1844-1845", standard_place: "Pennsylvania, United States" })]);
     expect(census(p)).toEqual(["1850 United States census", "1860 United States census"]);
   });
 });

@@ -410,6 +410,42 @@ export interface DocumentMode {
   eventYear?: number;
   /** The principal's event fact type, snake_case (`death`, `marriage`, `birth`…). */
   eventType?: string;
+  /** The year a stated age is counted from, for the birth range an age implies.
+   *  Its own field: `eventYear` and `eventType` steer classification, and this
+   *  must not. Absent when the text gives no event to count from. */
+  ageEventYear?: number;
+}
+
+/** The record type's own event fact, for the year an age is counted from. A
+ *  burial's is the burial, else the death. */
+const AGE_EVENT_FACTS: Partial<Record<RecordType, RegExp[]>> = {
+  marriage: [/^marriage/],
+  death: [/^death$/],
+  burial: [/^(burial|cremation)$/, /^death$/],
+  christening: [/^(christening|baptism)$/],
+  birth: [/^birth$/],
+  obituary: [/^death$/],
+  probate: [/^death$/],
+  draft_registration: [/^draft|^military/],
+};
+
+/** The year an age in this document is counted from, in order: a census's year;
+ *  the principal's event year where one is set; the record type's own event
+ *  fact; the source's creation year, only for a page image or verbatim
+ *  transcript. No other fallback: an obituary whose only dated fact is an
+ *  immigration must not give a birth range. */
+function ageEventYearOf(doc: StructuredDocument, principalEventYear: number | undefined): number | undefined {
+  if (doc.recordType === "census") return doc.census?.year;
+  if (principalEventYear !== undefined) return principalEventYear;
+  for (const re of AGE_EVENT_FACTS[doc.recordType] ?? []) {
+    for (const p of doc.persons) {
+      const y = yearOf(p.facts.find((f) => re.test(f.type.toLowerCase()) && yearOf(f.date) !== undefined)?.date);
+      if (y !== undefined) return y;
+    }
+  }
+  return doc.documentForm === "page_image" || doc.documentForm === "verbatim_transcript"
+    ? yearOf(doc.source.created)
+    : undefined;
 }
 
 const PRINCIPAL_EVENT: Partial<Record<RecordType, RegExp>> = {
@@ -527,6 +563,7 @@ export function documentToExtract(
   const pairs = events.filter((f) => f.type.toLowerCase() !== "birth");
   const eventFact = pairs.find(allCarry) ?? pairs[0] ?? events[0];
   const eventYear = yearOf(eventFact?.date);
+  const ageEventYear = ageEventYearOf(doc, eventYear);
 
   const hasWill =
     doc.recordType === "probate"
@@ -550,6 +587,7 @@ export function documentToExtract(
       nameNotes,
       ...(eventYear !== undefined ? { eventYear } : {}),
       ...(eventFact ? { eventType: eventFact.type.toLowerCase() } : {}),
+      ...(ageEventYear !== undefined ? { ageEventYear } : {}),
     },
   };
 }

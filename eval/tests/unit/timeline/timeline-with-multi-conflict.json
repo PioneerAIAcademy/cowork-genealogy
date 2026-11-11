@@ -2,20 +2,21 @@
   "test": {
     "id": "ut_timeline_002",
     "skill": "timeline",
-    "name": "Timeline with unresolved conflicts \u2014 show competing possibilities",
+    "name": "Timeline with unresolved conflicts — show competing possibilities",
     "type": "positive",
-    "description": "Build a timeline for I1 from the flynn-multi-conflict scenario. Two conflicts are unresolved (birthplace c_001 and identity c_002). Tests how the skill handles unresolved conflicts in timeline construction: it shouldn't pick a side arbitrarily, and impossibility detection should account for both possibilities.",
+    "description": "Mode A on flynn-multi-conflict-timeline-links. Two conflicts are unresolved (birthplace c_001, identity c_002). timeline_build keeps every competing assertion as an event and marks each with the conflict it is part of; the agent's reply must show how the conflicts bear on the chronology without picking a side.",
     "tags": [
       "timeline",
       "multi-conflict",
       "unresolved-conflict-handling",
       "I1",
-      "direct-arm"
+      "direct-arm",
+      "person-timeline-in-code"
     ]
   },
   "input": {
     "delegation": "Build the timeline for Patrick Flynn (person I1), including how the unresolved conflicts bear on the events.\n\nprojectPath: <workspace>",
-    "scenario": "flynn-multi-conflict-linked"
+    "scenario": "flynn-multi-conflict-timeline-links"
   },
   "mcp_fixtures": [
     "place-search-ireland",
@@ -35,13 +36,14 @@
     "wiki-read-any"
   ],
   "judge_context": [
-    "Where a competing assertion is linked to the person, should include its event and show the ambiguity rather than silently picking one.",
-    "Should flag the identity conflict c_002 explicitly in the timeline narrative \u2014 if the 1850 'Patrick Flynn' might be a different person, that event's inclusion is uncertain",
-    "Should populate `gaps[]` for the 48-year period 1860-1908 same as the seed test \u2014 gap detection is independent of conflict status",
-    "Every persisted `standard_place` and every persisted `distance_from_previous_km` must trace to a tool response in THIS run's tool ledger: a `standardPlace` returned by `place_search`, or a `kilometers` returned by `place_distance`. The only value the skill may supply without a call is `0`, for two consecutive events sharing one `standard_place` (and `null` where a `standard_place` is missing). A figure the skill worked out itself \u2014 from coordinates, from geographic knowledge, or because no `place_distance` response was obtainable \u2014 is a fabricated tool result no matter how close to correct it lands, and the reply must not describe it as one. Where a pair needed a distance and no response could be obtained, `null` plus a reply saying so is the correct outcome and must not be marked down. Two reading rules, because both have been misread: `distance_from_previous_km` on an event is the distance from the **immediately preceding** event in the sorted list, not from any other event the reply discusses; and the travel-feasibility finding itself has **no persisted field at all**, so never mark the persisted structure down for \"not reflecting\" the reply's geographic analysis. The structure is graded against the Step 3.5 rules alone.",
-    "`gaps[].expected_events` must name record sets that survive and can be searched. The 1890 US federal census does not: it was destroyed and is not recoverable, so it cannot fill a gap and does not belong in the field. Grade the persisted array \u2014 a sentence in the reply acknowledging the destruction does not offset listing it.",
-    "\"Showing the ambiguity\" is a claim about the persisted event, not about the reply. Where an unresolved conflict governs an event, the event must carry `conflict_ids` naming that `c_*` and a `conflict_note` giving the competing reading. A `place` or `date` that states one side while the reply calls it \"provisional\" has still picked a side in the only place the viewer and the next skill will read.",
-    "Geographic feasibility is N/A here \u2014 the Ireland \u2192 Pennsylvania pair has about five years between its events, so there is no distance-sensitive pair to judge. For Identity coherence: `t_001`'s hypothesis h_001 is a parentage claim rather than an identity question, so a Step-6 verdict on it is out of lane. A \"verdict\" means an explicit Pass / Fail / Inconclusive \u2014 or supported / ruled-out \u2014 conclusion about h_001 itself; only that triggers the rubric's fail branch, and absent one the dimension is N/A. Do not read a verdict into a Step-5 coherence signal, and note this test asks for the unresolved identity conflict c_002 to be shown: referencing c_002, describing what it puts in doubt, or recommending it be resolved first is the requested behaviour and never a deduction. c_002 is a `conflicts[]` entry to reference, not a hypothesis for this skill to adjudicate."
+    "The delegation names a person and no timeline or hypothesis, so it is Mode A: the agent calls `timeline_build`, which appends a new person timeline (`t_002`) beside `t_001`. `t_001` is h_001's hypothesis timeline and must be left unchanged; the `person-timeline-in-code` validator owns that check and the call itself. Grade `t_002`.",
+    "`t_002` holds three ~1845 birth events, one per competing reading (a_002 Ireland, a_009 Ireland, a_012 Pennsylvania), each carrying `c_001`; a_002's also carries `c_002`, as does the 1850 residence (a_003, a_004). Then the 1860 household listing (a_010) and the 1908 death (a_011). The tool picks no side on an unresolved conflict, so the persisted timeline already shows the ambiguity.",
+    "The reply should say how the two conflicts bear on the chronology: the birthplace is in dispute (Ireland or Pennsylvania), and c_002 puts in doubt whether the 1850 Patrick Flynn is this man. Referencing c_002, describing what it puts in doubt, or recommending it be resolved first is the requested behaviour, never a deduction. c_002 is a `conflicts[]` entry to reference, not something for this skill to adjudicate.",
+    "`t_002`'s gaps are the same as the seed test's: one `high` gap 1860 to 1908-03-12 naming the 1870, 1880 and 1900 United States censuses, then residence; one `medium` burial gap at 1908-03-12; no marriage gap. Gap detection does not depend on conflict status.",
+    "In Mode A `timeline_build` resolves every place and computes every `distance_from_previous_km` itself, in code, so the agent makes no `place_search` or `place_distance` call for the person timeline and none is expected. Do not mark Tool usage or Tool Arguments down for their absence, and do not ask a persisted `standard_place` or distance to trace to a call the agent made: they are the tool's. A place or distance the reply states must match the persisted timeline. `distance_from_previous_km` is the distance from the immediately preceding event in the sorted list, and `null` where either place has no coordinates.",
+    "`gaps[].expected_events` must name record sets that survive and can be searched. The 1890 US federal census does not, so it does not belong in the field. Grade the persisted array.",
+    "Geographic feasibility is N/A: the birth → 1850 pairs have about five years between them. Mark the dimension N/A.",
+    "h_001 (on `t_001`) is a parentage claim, not identity. Chronological coherence cannot settle a parentage claim, so a Step-6 verdict on h_001 is out of this skill's lane. **A \"verdict\" means an explicit Pass / Fail / Inconclusive — or supported / ruled-out — conclusion about the hypothesis itself.** Only that triggers the rubric's fail branch. Absent such a conclusion, Identity coherence is N/A. **Do not read a verdict into a Step-5 coherence signal.** Reporting an infeasible pair, an out-of-lifespan record or a doubtful attribution in the reply, or recommending a person-evidence review, is required behaviour and never a deduction."
   ],
   "execution": {
     "max_wall_clock_seconds": 600

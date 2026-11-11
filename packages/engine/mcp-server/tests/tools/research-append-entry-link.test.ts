@@ -414,13 +414,17 @@ describe("#4226 a link means the record entry", () => {
   it("MUST NOT FIRE: superseding the holder in the SAME call clears it", async () => {
     await write(project({
       assertions: [assertion("a_001"), assertion("a_002", { fact_type: "residence", value: "X" })],
-      person_evidence: [linkRow("pe_001", "a_002", "I2")],
+      // pe_002 is the link pe_001 is superseded BY -- the refusal's own wording,
+      // "superseded by a link you already have". `superseded_by` must name a real
+      // person_evidence entry or a rejection of this pairing, so a sentinel string
+      // is not a valid retirement.
+      person_evidence: [linkRow("pe_001", "a_002", "I2"), linkRow("pe_002", "a_002", "I1")],
     }));
     await attest("a_001");
     const r = await researchAppend({
       projectPath: dir,
       ops: [
-        { section: "person_evidence", op: "update", entryId: "pe_001", fields: { superseded_by: "RETRACTED" } },
+        { section: "person_evidence", op: "update", entryId: "pe_001", fields: { superseded_by: "pe_002" } },
         {
           section: "person_evidence",
           op: "append",

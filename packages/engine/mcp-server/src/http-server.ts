@@ -488,7 +488,6 @@ export function connectorConfig(baseConfig: AppConfig, caller: ConnectorCaller):
     openRouterModel: baseConfig.openRouterModel,
     webPublicUrl: baseConfig.webPublicUrl,
     uploadsEnabled: baseConfig.uploadsEnabled,
-    transcriptionEnabled: baseConfig.transcriptionEnabled,
     matcher: baseConfig.matcher,
     matcherUrl: baseConfig.matcherUrl,
     matcherApiKey: baseConfig.matcherApiKey,

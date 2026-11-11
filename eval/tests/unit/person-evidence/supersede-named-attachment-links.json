@@ -1,0 +1,30 @@
+{
+  "test": {
+    "id": "ut_person_evidence_atl",
+    "skill": "person-evidence",
+    "name": "Named assertions with only an attachment link are linked for real; the rest are left alone",
+    "type": "positive",
+    "description": "becker-attachment-links-question: every link to John Becker (I1) is an unchecked attachment link written by extraction_append. The delegation names q_001's six assertions (the 1900 census persona). Each counts as unlinked: the agent scores it with same_person, appends a scored link, and supersedes the attachment link with it. The 1910 record's attachment links, which the delegation does not name, stay as they are.",
+    "tags": [
+      "person-evidence",
+      "attached-records",
+      "supersedes-named-attachment-links"
+    ]
+  },
+  "input": {
+    "delegation": "Link question q_001's assertions to persons: a_001, a_002, a_003, a_004, a_005 and a_006 (the 1900 census, John Becker's entry). This is a linking request.\n\nprojectPath: <workspace>",
+    "scenario": "becker-attachment-links-question"
+  },
+  "mcp_fixtures": [
+    "same-person-becker-strong"
+  ],
+  "judge_context": [
+    "Each named assertion's only live link is an attachment link (speculative, no `match_score`, the fixed rationale 'Linked because FamilySearch has this record attached to this person; not verified.'), so each counts as unlinked. The expected work: score with `same_person` (a strong match, 0.91, here), append a scored link to I1 per assertion, then set each attachment link's `superseded_by` to its new `pe_`. The `supersedes-named-attachment-links` validator owns the writes; do not re-check them.",
+    "The attachment links are superseded, never edited in place: raising one's confidence or rewriting its rationale is refused by the tool, and trying it is a Tool Arguments fault. Appending a second `pe_` for an assertion-person pair that has only an attachment link is the one sanctioned exception to 'one pe_ per pair'.",
+    "The 1910 record's John Becker assertions (a_035 to a_041) are not named. Leaving their attachment links as they are is correct; linking or superseding them is scope creep, caught by the validator.",
+    "Grade the rationale on each new link as usual: it should cite what matches (name, January 1845 Kentucky birth, Cincinnati residence, head of household) and disclose the score. 'Name matches' alone is insufficient. The project holds no other John Becker, so the disambiguation step is met by a rationale saying no other person in the project fits.",
+    "Expected tier: `probable`. Each new link rests on one record, the 1900 census; the 1910 record's links are unchecked attachment links, which are not corroboration. `confident` here is a one-tier overstatement (a partial on Confidence calibration).",
+    "The household's other members in both records are not linked to anyone. That is not this delegation's work; a reply may mention them as context."
+  ],
+  "judge_reads_files": true
+}

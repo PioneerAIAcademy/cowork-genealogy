@@ -4666,7 +4666,7 @@ def test_the_prompt_routes_a_first_message_with_no_project_and_names_no_deleted_
     """#3768's routing sentence lived in DELIVERY_GUIDANCE; it moved to the project note
     when `research_delivered` was deleted (step mode phase 2) rather than going with it."""
     prompt = _options(config_dir=str(tmp_path)).system_prompt["append"]
-    assert "a request to research a person is a research job, not a single lookup" in prompt
+    assert "a request to research a person is not a single lookup" in prompt
     assert "research_delivered" not in prompt
 
 
@@ -4676,6 +4676,15 @@ def test_the_sources_instruction_rides_the_same_turn_prompt(tmp_path):
     opts = _options(config_dir=str(tmp_path))
     assert options.SOURCES_GUIDANCE in opts.system_prompt["append"]
     assert opts.system_prompt["append"].startswith("You are the hosted genealogy research agent")
+
+
+def test_the_researcher_view_note_is_alpha_only(tmp_path):
+    """Issue #4241: the note the alpha carries about sandbox paths and Findings is
+    specific to the alpha's own download story (#3987 / #4001 gave the beta its own
+    download route), so it must not ride the shared continue_policy prompt text the
+    worker also appends."""
+    opts = _options(config_dir=str(tmp_path))
+    assert "cannot open or download files" not in opts.system_prompt["append"]
 
 
 # ── U3: the attempt bears its owner's current grant ──────────────────────────────
@@ -6565,7 +6574,7 @@ def test_a_keep_going_turn_is_still_bounded_and_records_job(turn_env, monkeypatc
     module.StepGate = Recording
     monkeypatch.setattr(worker, "load_step_boundary", lambda: module)
     recorded: list[tuple] = []
-    monkeypatch.setattr(worker, "record_turn_step", lambda conn, tid, step, mode: recorded.append((step, mode)))
+    monkeypatch.setattr(worker, "record_turn_step", lambda conn, tid, step, mode, opener: recorded.append((step, mode)))
 
     turn_env["conn"].research = _RESEARCH
     turn = {**TURN, "message": {**TURN["message"], "text": "keep going."}}
@@ -6578,3 +6587,32 @@ def test_a_keep_going_turn_is_still_bounded_and_records_job(turn_env, monkeypatc
     assert gate.check("Task", {"subagent_type": "research-plan"}, subagent=False) is None
     assert recorded == [("research-plan", "job")], recorded
     assert gate.check("Task", {"subagent_type": "search-records"}, subagent=False)[0] == "deny"
+
+
+def test_the_turn_step_write_may_replace_only_the_ungrouped_opener():
+    """A turn init-project opens is grouped by the step after it (plan section H), so
+    that step replaces init-project in `turns.step`; nothing else is ever overwritten."""
+    executed: list[tuple] = []
+
+    class Cursor:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *exc):
+            return False
+
+        def execute(self, sql, params):
+            executed.append((sql, params))
+
+    class Conn:
+        def cursor(self):
+            return Cursor()
+
+        def commit(self):
+            pass
+
+    worker.record_turn_step(Conn(), "t1", "search-records", "step", "init-project")
+    sql, params = executed[0]
+    assert "CASE WHEN step IS NULL OR step = %s THEN %s ELSE step END" in sql
+    assert "COALESCE(mode, %s)" in sql
+    assert params == ("init-project", "search-records", "step", "t1")

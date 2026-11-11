@@ -4,19 +4,20 @@
     "skill": "timeline",
     "name": "Build Patrick Flynn's timeline from existing assertions",
     "type": "positive",
-    "description": "Build a chronological timeline for I1 from the assertions linked via person_evidence. The skill should produce events for the 1850 census, 1860 census, and 1908 death certificate, identify the 48-year gap between 1860 and 1908 as significant, and not flag any impossibilities (the existing data is internally consistent).",
+    "description": "Mode A on flynn-timeline-links (mid-research-flynn with I1 linked to every one-party assertion of its three records). The agent builds Patrick Flynn's person timeline with timeline_build, which appends t_002 beside h_001's hypothesis timeline t_001, and reports the 1860-1908 census gap.",
     "tags": [
       "timeline",
       "chronological",
       "gap-detection",
       "I1",
       "rejected-assertion-id-a_012",
-      "direct-arm"
+      "direct-arm",
+      "person-timeline-in-code"
     ]
   },
   "input": {
     "delegation": "Build the timeline for Patrick Flynn (person I1).\n\nprojectPath: <workspace>",
-    "scenario": "mid-research-flynn-linked"
+    "scenario": "flynn-timeline-links"
   },
   "mcp_fixtures": [
     "place-search-ireland",
@@ -34,12 +35,13 @@
     "wiki-read-any"
   ],
   "judge_context": [
-    "Should produce timeline events covering at least birth (Ireland, estimated from census ages), 1850 census, 1860 census, and 1908 death \u2014 with `date_certainty` reflecting source confidence (e.g. `estimated` for census-derived births, `exact` for the death certificate)",
-    "Should identify the 1860-to-1908 period as a significant gap in `gaps[]` with `expected_events` populated (1870 census, 1880 census, 1900 census, marriage, residence) and severity reflecting the 48-year span",
-    "Every persisted `standard_place` and every persisted `distance_from_previous_km` must trace to a tool response in THIS run's tool ledger: a `standardPlace` returned by `place_search`, or a `kilometers` returned by `place_distance`. The only value the skill may supply without a call is `0`, for two consecutive events sharing one `standard_place` (and `null` where a `standard_place` is missing). A figure the skill worked out itself \u2014 from coordinates, from geographic knowledge, or because no `place_distance` response was obtainable \u2014 is a fabricated tool result no matter how close to correct it lands, and the reply must not describe it as one. Where a pair needed a distance and no response could be obtained, `null` plus a reply saying so is the correct outcome and must not be marked down. Two reading rules, because both have been misread: `distance_from_previous_km` on an event is the distance from the **immediately preceding** event in the sorted list, not from any other event the reply discusses; and the travel-feasibility finding itself has **no persisted field at all**, so never mark the persisted structure down for \"not reflecting\" the reply's geographic analysis. The structure is graded against the Step 3.5 rules alone.",
-    "`gaps[].expected_events` must name record sets that survive and can be searched. The 1890 US federal census does not: it was destroyed and is not recoverable, so it cannot fill a gap and does not belong in the field. Grade the persisted array \u2014 a sentence in the reply acknowledging the destruction does not offset listing it.",
-    "Geographic feasibility is N/A on this scenario: the only long-distance pair (Ireland birth \u2192 1850 Pennsylvania census) has about five years between its events, so there is no distance-sensitive pair to judge. Mark the dimension N/A rather than scoring it for a correct feasibility call.",
-    "`t_001` carries `hypothesis_id: h_001`, whose claim is parentage (\"Patrick Flynn's father was Thomas Flynn\"), not identity. Chronological coherence cannot settle a parentage claim, so a Step-6 verdict on h_001 is out of this skill's lane. **A \"verdict\" means an explicit Pass / Fail / Inconclusive \u2014 or supported / ruled-out \u2014 conclusion about the hypothesis itself.** Only that triggers the rubric's fail branch, and where it appears, citing the death certificate's naming of the father as a deciding signal is additionally the evidence weighing the skill hands to conflict-resolution and proof-conclusion. Absent such a conclusion, Identity coherence is N/A. **Do not read a verdict into a Step-5 coherence signal.** Step 5 requires the skill to report an infeasible pair, an out-of-lifespan record, or a doubtful attribution in its reply as a coherence signal, because that finding has no persisted field. Observing that one record may not belong to this person, recommending a person-evidence review, or questioning a `pe_*` link's confidence IS that signal: it is required behaviour and never a deduction on any dimension, including this one."
+    "The delegation names a person and no timeline or hypothesis, so it is Mode A: the agent calls `timeline_build`, which appends a new person timeline (`t_002`) beside `t_001`. `t_001` is h_001's hypothesis timeline and must be left unchanged; the `person-timeline-in-code` validator owns that check and the call itself. Grade `t_002`.",
+    "`t_002` holds four events: birth ~1845 Ireland (a_002, carrying `c_001`, the resolved birthplace conflict), the 1850 Schuylkill County residence (a_003 and a_004), the 1860 household listing (a_010) and the 12 March 1908 death (a_011). a_009 and a_012 lost c_001 and make no event. Every link is checked, so no event is unverified.",
+    "`t_002`'s gaps: one `high` gap from 1860 to 1908-03-12 naming the 1870, 1880 and 1900 United States censuses, then residence; one `medium` gap at 1908-03-12 naming burial (a death with no burial). There is no marriage gap: no linked record names a child of Patrick Flynn.",
+    "In Mode A `timeline_build` resolves every place and computes every `distance_from_previous_km` itself, in code, so the agent makes no `place_search` or `place_distance` call for the person timeline and none is expected. Do not mark Tool usage or Tool Arguments down for their absence, and do not ask a persisted `standard_place` or distance to trace to a call the agent made: they are the tool's. A place or distance the reply states must match the persisted timeline. `distance_from_previous_km` is the distance from the immediately preceding event in the sorted list, and `null` where either place has no coordinates.",
+    "`gaps[].expected_events` must name record sets that survive and can be searched. The 1890 US federal census does not, so it does not belong in the field. Grade the persisted array.",
+    "Geographic feasibility is N/A on this scenario: the only long-distance pair (Ireland birth → 1850 Pennsylvania census) has about five years between its events. Mark the dimension N/A.",
+    "h_001 (on `t_001`) is a parentage claim, not identity. Chronological coherence cannot settle a parentage claim, so a Step-6 verdict on h_001 is out of this skill's lane. **A \"verdict\" means an explicit Pass / Fail / Inconclusive — or supported / ruled-out — conclusion about the hypothesis itself.** Only that triggers the rubric's fail branch. Absent such a conclusion, Identity coherence is N/A. **Do not read a verdict into a Step-5 coherence signal.** Reporting an infeasible pair, an out-of-lifespan record or a doubtful attribution in the reply, or recommending a person-evidence review, is required behaviour and never a deduction."
   ],
   "execution": {
     "max_wall_clock_seconds": 600

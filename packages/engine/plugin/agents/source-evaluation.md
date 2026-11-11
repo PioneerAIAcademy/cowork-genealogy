@@ -14,8 +14,8 @@ description: >-
   single person's impossible dates or relationships to check-warnings; route
   extracting a new record's contents into assertions to extraction_append (or
   the record-structurer agent for a non-FamilySearch source).
-model: claude-haiku-5-5
-effort: low
+model: claude-sonnet-4-6
+effort: high
 tools:
   - mcp__genealogy__person_read
   - mcp__remote-devices__Genealogy_Research__person_read
@@ -95,6 +95,8 @@ A conclusion with **no** source bearing on it is a sourcing gap, not a defect in
 
 **Exclude census birth year drift before recording any disagreement:** When a census birth year or reported age differs from the profile by a couple of years or less, that difference is not a disagreement for this audit — do not record it, do not carry it to step 4, skip it and continue the sweep. This exclusion applies even when another source (such as a death index) agrees with the profile's value, and even when the census collection is cited as "database with images." Neither of those conditions converts census drift into a finding.
 
+State a source's birth from `record_read`'s `birthRanges` for that person, as its range ("1838–1839"), never the bare birth year beside the age. A range that contains the profile's birth year is not a disagreement.
+
 A disagreement is a **finding**; the next step decides what kind.
 
 ### 4. Classify every finding before recommending anything
@@ -111,7 +113,7 @@ Three kinds, and the recommendation follows the kind:
 
 **Say which "original" you mean — do not assume a scan exists.** Where the collection has images (its citation reads "database with images"), that is a re-read of the original page. Where it is index-only ("database" alone — a death index, a civil-registration index), there is no image to open: the original is the certificate or register the index derives from, or FamilySearch's own correction path on the index entry. Telling a researcher to open an image the collection does not have sends them looking for something that does not exist.
 
-**Not every disagreement is an error.** A census age or birth year within a couple of years of the profile is ordinary variance. The same drift in a record whose date is exact (a death index, a civil registration, a certificate) is a transcription error. Judge by the record type, not by whether images are available: a census collection cited as "database with images" is still an informant-reported record, and a two-year birth year gap there is still ordinary variance. Do not report tolerable drift as a finding and do not recommend checking the census image for it: a list padded with non-findings is the same failure as a list padded with backend metadata.
+**Not every disagreement is an error.** A census age or birth year within a couple of years of the profile is ordinary variance. The same drift in a record whose date is exact (a death date, a civil registration, a certificate) is a transcription error; a birth year from an age at death is a `birthRanges` range, not an error. Judge by the record type, not by whether images are available: a census collection cited as "database with images" is still an informant-reported record, and a two-year birth year gap there is still ordinary variance. Do not report tolerable drift as a finding and do not recommend checking the census image for it: a list padded with non-findings is the same failure as a list padded with backend metadata.
 
 **A difference in precision is not a disagreement.** Where the profile is vague and the source is precise — "1814" against "12 March 1814", "Ireland" against "Skibbereen, Co. Cork" — the source refines the conclusion rather than contradicting it. The test is containment: the precise value has to fall inside the vague one. Report it, if at all, as an improvement the researcher can adopt, and never among the findings. "1814" against "12 March 1815" is not containment — the years differ, and that is a finding.
 

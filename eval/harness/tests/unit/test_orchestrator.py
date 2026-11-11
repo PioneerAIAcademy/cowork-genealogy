@@ -3174,3 +3174,45 @@ def test_a_covered_run_with_no_refusals_raises_neither_warning():
     kinds = [w["kind"] for w in out]
     assert "unknown_args_refused" not in kinds
     assert "uncovered_tool_call" not in kinds
+
+
+def test_oversize_hits_reach_the_run_entrys_warnings(tmp_path, monkeypatch):
+    """The hop from `result.oversize_tool_results` to `output.warnings` (#4380).
+
+    The capture and `_build_warnings` are each tested alone; this drives the
+    real `_execute_single_run` call between them. Deleting
+    `oversize_tool_results=...` or `test_id=spec.id` at that call reds this.
+    """
+    import asyncio
+
+    spec = load_test(WIKI_TEST_PATH)
+    paths = OrchestratorPaths(runlogs_root=tmp_path)
+    auth = AuthConfig(skill_runner_mode="api_key", api_key="x", detail="stub")
+
+    async def fake_run_skill(**kwargs):
+        from harness.skill_runner import SkillRunResult
+
+        return SkillRunResult(text_response="done", skills_invoked=[], tool_calls=[],
+                              duration_ms=1.0, usage={"num_turns": 1})
+
+    def fake_capture(result, workspace):
+        result.oversize_tool_results = [{
+            "tool": "mcp__genealogy__person_read", "tool_use_id": "tu1",
+            "size": "168,770 characters across 1 line", "agent": "source-evaluation",
+            "can_read": False,
+        }]
+
+    monkeypatch.setattr(orchestrator, "run_skill", fake_run_skill)
+    monkeypatch.setattr(orchestrator, "_capture_context_meters", fake_capture)
+
+    entry = asyncio.run(_run_one_test_async(
+        spec=spec, auth=auth, paths=paths,
+        model="claude-sonnet-4-6", judge_model="claude-haiku-4-5-20251001",
+        timestamp="2026-11-10_10-00-00",
+    ))
+
+    hits = [w for w in entry["runs"][0]["output"].get("warnings", [])
+            if w["kind"] == "oversize_tool_result"]
+    assert [(w["test_id"], w["tool"], w["can_read"]) for w in hits] == [
+        (spec.id, "person_read", False)
+    ]
