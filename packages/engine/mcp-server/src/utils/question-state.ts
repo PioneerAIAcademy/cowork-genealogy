@@ -33,6 +33,7 @@
  */
 
 import { earliestYear, latestYear, earliestIsUnbounded, latestIsUnbounded } from "./date-helpers.js";
+import { disputeGroups, disputeGroupKey } from "./page-disputes.js";
 import { countsForLinkedRung } from "./tree-person.js";
 import { isLiveAssertion } from "./assertion-liveness.js";
 import { awaitingUploadItemIds, closesHandOff, externalSiteOf } from "./awaiting-hand-offs.js";
@@ -226,7 +227,16 @@ export function unregisteredDisagreements(
     if (!g.includes(a)) g.push(a);
     groups.set(key, g);
   }
+  // A page that disputes its own index opens no conflict (ruling 10, #4286): a
+  // pair inside one dispute group is that page's reading, reported and doubted
+  // already, not a disagreement between two records.
+  const disputes = disputeGroups(research);
+  const allById = new Map<string, any>(
+    arr(research?.assertions).filter((a) => typeof a?.id === "string").map((a) => [a.id, a]),
+  );
+  const groupOf = (id: string) => disputeGroupKey(allById.get(id), disputes, allById);
   const covered = (x: string, y: string): boolean =>
+    (groupOf(x) !== undefined && groupOf(x) === groupOf(y)) ||
     arr(research?.conflicts).some((c) => {
       const ids = arr(c?.competing_assertion_ids);
       return ids.includes(x) && ids.includes(y);
