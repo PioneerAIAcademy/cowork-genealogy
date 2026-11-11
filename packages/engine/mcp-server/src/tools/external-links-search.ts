@@ -161,10 +161,25 @@ export async function externalLinksSearchTool(
     );
   }
   if (totalResults > FETCH_COUNT) {
+    // The refusal counts as the lookup (build_external_search_url's place gate,
+    // #4410): stored as too_large, it lets a site-wide build for exactly this
+    // place through, and never a place inside it.
+    let recorded = false;
+    if (input.projectPath !== undefined) {
+      try {
+        recorded = (await recordExternalCollections(input.projectPath, standardPlace, [], { tooLarge: true })) !== null;
+      } catch {
+        recorded = false;
+      }
+    }
     throw new Error(
       `"${standardPlace}" has ${totalResults} curated links, more than the ${FETCH_COUNT} one request ` +
-        "can return, so the list would be partial. Nothing was stored. Request a smaller place — a " +
-        "state or county, not a whole country such as the United States.",
+        "can return, so no list is returned or stored. " +
+        (recorded
+          ? `It is recorded as looked up: build_external_search_url accepts a site-wide search for exactly ` +
+            `"${standardPlace}". For a smaller place inside it, look that place up instead.`
+          : "For a site-wide search inside a project, pass projectPath so the place is recorded as looked up; " +
+            "for a smaller place inside it, look that place up instead."),
     );
   }
   if (totalResults > collections.length) {
@@ -276,8 +291,10 @@ export const externalLinksSearchToolSchema = {
     "response returns only matching links plus `returned` (their count). Pass " +
     "`projectPath` to store the place's full list (every year, every host) in the " +
     "project for research_query({section: 'external_collections'}). Inline `results[]` is " +
-    "deduplicated and capped at 200 (`inlineCapped`). A whole country such as the United " +
-    "States is too large: ask for a state.",
+    "deduplicated and capped at 200 (`inlineCapped`). A place with more than 1000 links, " +
+    "such as the United States, returns an error and no list; given `projectPath`, it is " +
+    "recorded as looked up, so build_external_search_url accepts a site-wide search for " +
+    "exactly that place. Look up a smaller place inside it for its own collections.",
   inputSchema: {
     type: "object" as const,
     properties: {

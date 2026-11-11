@@ -141,7 +141,7 @@ can drop:
   }],
   claimKinds: string[],                  // proof_summaries claim kinds this engine accepts: relationship, fact, identity, name, finding
   externalCollections?: {                // stored curated collections, counts only — §2.4
-    [place: string]: { total: number, byRecordType: { [recordType: string]: number } },
+    [place: string]: { total: number, byRecordType: { [recordType: string]: number } } | { tooLarge: true },
   },
   sectionCounts: { [section: string]: number | null },  // entries per research_query section — §2.6
   unregisteredDisagreementCount: number,         // what research_query's conflicts adds — §2.6
@@ -515,8 +515,14 @@ Present only when the project holds `external-collections.json` (written by
 ```typescript
 externalCollections?: {
   [place: string]: { total: number, byRecordType: { [recordType: string]: number } }
+                 | { tooLarge: true }
 }
 ```
+
+A place `external_links_search` refused as too large to list (more than 1,000
+links, such as the United States) is `{ tooLarge: true }`: looked up, but its
+collections are unknown. It is never reported as `total: 0`, which a planner
+would read as "no curated collections here".
 
 Counts only, never rows — the lists run to hundreds of rows per state, and the
 rows are read with `research_query({section: "external_collections", place,
