@@ -60,11 +60,6 @@ DORMANT: dict[str, str] = {
         "three validators charge research_append's own removal of unanchored persons "
         "to the agent; issue #4425 restores them"
     ),
-    "tier-proved-q001": (
-        "its only test, ut_proof_conclusion_002, was deleted by PR #4341: Sonnet 5.5 "
-        "holds the proved-tier Flynn proof at probable in 2 of 3 runs; issue #4425 "
-        "restores it"
-    ),
     "unblocks-nonempty": (
         "step mode section E retired the gatekeeper questions it graded "
         "(ut_question_selection_003, _005, _006, _008, _d03); the validator was "
