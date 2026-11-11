@@ -1021,8 +1021,10 @@ def test_namesake_row_recorded(before_state, after_state, test):
     A row names a subject of the project and cites a `record_search` log entry
     this run wrote. `research_append` stamps `record_persona_ids` only for a
     record found in the results of a search or read the row cites, as a result or
-    as a member of a result's record, so a row with no stamp listed an id no cited
-    log returned (a `recordArk`, a retyped id) or cited the wrong log.
+    as a member of a result's record, whose persona shares a given word with the
+    row's `name`, so a row with no stamp listed an id no cited log returned (a
+    `recordArk`, a retyped id), cited the wrong log, or listed another person of
+    the record (a household member's own id).
     """
     if "namesake-row" not in test.get("tags", []):
         pytest.skip("not a namesake-row scenario")
@@ -1044,8 +1046,9 @@ def test_namesake_row_recorded(before_state, after_state, test):
             f"row {row.get('id')} cites {row.get('log_entry_ids')}, none of them a record_search this run logged"
         )
         assert row.get("record_persona_ids"), (
-            f"row {row.get('id')} lists {row.get('record_ids')}, which research_append found in none of the "
-            "cited logs' results or their records' persons: copy each recordId verbatim, never recordArk"
+            f"row {row.get('id')} lists {row.get('record_ids')}, none of them stamped: research_append found no "
+            "persona of the row's given name for them in the cited logs' results or their records' persons. "
+            "Copy the namesake's own recordId verbatim, never recordArk or another household member's id"
         )
 
 
