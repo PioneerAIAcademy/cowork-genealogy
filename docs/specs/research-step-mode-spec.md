@@ -80,10 +80,13 @@ entry says so.
     conflict that needs new evidence, a FAN pivot, an objective-level sub-question
     (section E).
 21. **`deferred` is a closed-enum value** of `not_reached`, not prose (section B).
-22. **`--autonomous` was to be retired once e2e ran on the host's replies.** Not carried
-    out: the e2e orchestrator still opens every run with `/research --autonomous
-    <question>` (`_render_user_message` in `eval/harness/e2e/orchestrator.py`), and that
-    flag is what gives search-external-sites and search-hints `userPresent: no` in e2e.
+22. **`--autonomous` stays as e2e's opening. Rescinded by the lead on 2026-11-10;** it was
+    to be retired once e2e ran on the host's replies. The e2e orchestrator opens every run
+    with `/research --autonomous <question>` (`_render_user_message` in
+    `eval/harness/e2e/orchestrator.py`), and that flag gives search-external-sites and
+    search-hints `userPresent: no` in e2e. The orchestrator writes no delegation, so it
+    cannot pass `userPresent: no` itself, and production routing is measured by the
+    single-ask panel (`make e2e-single-ask`), not e2e.
 23. **The `AskUserQuestion` decision carrier is kept.** Taken as "drop the carrier", then
     REVERSED by the lead on 2026-10-19: phase 0 measured that a `PreToolUse` deny does not
     end a turn on the alpha, and that `AskUserQuestion` waits in Cowork but does not end
@@ -711,8 +714,8 @@ sequence of one-step turns. Against that design's rulings
   what to fetch, and the researcher may carry on (decision 16).
 - **Kept:** `research` as the only front door; the `AskUserQuestion` carrier and
   `DecisionCard` (decision 23); `q_`/`ps_` ids in user-facing text; the spend bound; the
-  reading-experience and cold-start work. Phase 4's person pick becomes the setup step's
-  report: candidate cards, then the researcher's reply.
+  reading-experience work. Phase 4's person pick is dropped (lead, 2026-10-19): a project
+  starts from a FamilySearch person ID, and a researcher without one is asked for it.
 
 ## History
 

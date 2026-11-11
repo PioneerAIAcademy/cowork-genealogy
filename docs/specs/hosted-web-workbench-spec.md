@@ -643,7 +643,7 @@ server → client:  {type:"agent_event", event}        # streamed Agent SDK mess
 >
 >   `MAX_AUTO_REPLIES` (30) in `step_boundary.py` is the prototype's and the e2e
 >   harness's reply cap. Neither the alpha nor Cowork loads `step_boundary.py`
->   (decision 25), so neither has "Keep going".
+>   (decision 25), so neither gets the host's replies: there "keep going." is one bounded turn (research-step-mode-spec.md §A2).
 
 ### 6.3 Database (Postgres) — minimum tables
 - `users` (id, google_sub, email, created)

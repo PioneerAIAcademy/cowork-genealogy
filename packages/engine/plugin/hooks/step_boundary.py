@@ -3,7 +3,7 @@
 A turn does ONE step. `step_allowed` decides whether a candidate agent may run
 given the steps the turn has already taken, so each plane asks the same question
 and gets the same answer. The one exception is a turn init-project opens: the
-step after it is the turn's real step (plan section H), so a bounded first
+step after it is the turn's real step (spec section H), so a bounded first
 message runs its deliverable in the turn that created the project.
 
 **This is a LIBRARY, not a registered hook** (lead, 2026-10-21). The prototype
@@ -82,7 +82,7 @@ for _solo in _SOLO:
     GROUPS[_solo] = (_solo,)
 del _solo
 
-# A turn this step opens is grouped by the step AFTER it (plan section H): project
+# A turn this step opens is grouped by the step AFTER it (spec section H): project
 # creation runs inside the one-shot's turn, so a bounded ask reaches its deliverable
 # and a job its question in the turn that created the project.
 UNGROUPED_OPENER = "init-project"
@@ -114,7 +114,7 @@ WRAPUP_ORDER: tuple[str, ...] = (
 )
 
 # What "Continue with <label>?" says. The three the researcher actually sees in
-# the common flow are fixed by the plan's "What the researcher sees" table:
+# the common flow are fixed by the spec's "What the researcher sees" table:
 # plan, search and link.
 STEP_LABELS: dict[str, str] = {
     "setup": "setting up the project",
