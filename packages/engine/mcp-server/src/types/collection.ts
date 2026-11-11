@@ -42,6 +42,15 @@ export interface FSCollectionsResponse {
 
 // Tool Output Types
 
+/** One collection's indexed counts, as `collections_search` reports them. */
+export interface CollectionCounts {
+  personCount: number;
+  recordCount: number;
+}
+
+/** Reads FamilySearch's collection catalog as counts by id. */
+export type CollectionCatalogLoader = () => Promise<ReadonlyMap<string, CollectionCounts>>;
+
 export interface Collection {
   id: string;
   title: string;

@@ -117,6 +117,45 @@ def test_a_step_that_opens_a_turn_uses_its_home_group():
     assert sb.step_allowed(["record-structurer"], "forget-and-rederive") is False
 
 
+def test_a_turn_init_project_opens_is_grouped_by_the_step_after_it():
+    """Plan section H: project creation runs inside the one-shot's turn."""
+    # A bounded record ask: the search step follows, then its own members.
+    assert sb.step_allowed(["init-project"], "search-records") is True
+    assert sb.step_allowed(["init-project", "search-records"], "record-structurer") is True
+    assert sb.step_allowed(["init-project", "search-records"], "search-records") is True
+    assert sb.step_allowed(["init-project", "search-records"], "research-plan") is False
+    assert sb.step_allowed(["init-project", "search-records"], "question-selection") is False
+    # A bounded hint verdict: search-hints is admitted as the turn's own step.
+    assert sb.step_allowed(["init-project"], "search-hints") is True
+    assert sb.step_allowed(["init-project", "search-hints"], "search-records") is False
+
+
+def test_a_job_after_init_project_keeps_the_setup_chain():
+    assert sb.step_allowed(["init-project"], "question-selection") is True
+    assert sb.step_allowed(["init-project", "question-selection"], "locality-guide") is True
+    assert sb.step_allowed(["init-project", "question-selection"], "research-plan") is False
+    # The bounded locality deliverable fixes `setup` too, so question-selection
+    # may follow it: only the router's prose keeps it out of a bounded turn.
+    assert sb.step_allowed(["init-project", "locality-guide"], "question-selection") is True
+
+
+def test_after_init_project_a_spawn_that_is_no_step_is_still_denied():
+    assert sb.step_allowed(["init-project"], sb.UNNAMED_SPAWN) is False
+    assert sb.step_allowed(["init-project"], "not-an-agent") is False
+
+
+def test_only_init_project_leaves_the_group_open():
+    """Any other opener, or init-project after another step, fixes the group as before."""
+    assert sb.step_allowed(["question-selection"], "search-records") is False
+    assert sb.step_allowed(["forget-and-rederive", "init-project"], "search-records") is False
+    assert sb.step_allowed(["forget-and-rederive", "init-project"], "record-structurer") is True
+    assert sb.opening_step(["init-project"]) is None
+    assert sb.opening_step(["init-project", "search-records"]) == "search-records"
+    assert sb.opening_step(["research", "init-project", "search-records"]) == "search-records"
+    assert sb.opening_step(["forget-and-rederive", "init-project"]) == "forget-and-rederive"
+    assert sb.opening_step([]) is None
+
+
 def test_research_plan_after_exhaustiveness_needs_an_open_item():
     """Dispose's precondition. A decline turn cannot start a new plan."""
     opened = ["research-exhaustiveness"]

@@ -107,6 +107,75 @@ describe("compactStagedRecordSearch", () => {
     expect(row.relativeTerms).toEqual({ father: { present: true } });
   });
 
+  describe("fields no caller reads off the answer", () => {
+    const TITLE = "1850 United States Census";
+    const page = (rows: Record<string, unknown>[], extra: Record<string, unknown> = {}) =>
+      ({
+        query: { surname: "Flynn" },
+        totalMatches: rows.length,
+        paginationCappedAt: 4999,
+        returned: rows.length,
+        offset: 0,
+        hasMore: false,
+        results: rows.map((r) => ({ collectionId: "1234", collectionTitle: TITLE, events: [], ...r })),
+        ...extra,
+      }) as unknown as RecordSearchToolResponse;
+
+    it("drops primaryId, score, confidence, an empty events and paginationCappedAt", () => {
+      const out = compactStagedRecordSearch(page([
+        { recordId: "R1", primaryId: "p_1", score: 5.4, confidence: 4 },
+        { recordId: "R2", events: [{ type: "Census", date: "1850" }] },
+      ]));
+      expect(out.results[0]).not.toHaveProperty("primaryId");
+      expect(out.results[0]).not.toHaveProperty("score");
+      expect(out.results[0]).not.toHaveProperty("confidence");
+      expect(out.results[0]).not.toHaveProperty("events");
+      expect(out.results[1].events).toEqual([{ type: "Census", date: "1850" }]);
+      expect(out).not.toHaveProperty("paginationCappedAt");
+    });
+
+    it("drops an `Entry for <personName>` title and strips the collection from any other", () => {
+      const out = compactStagedRecordSearch(page([
+        { recordId: "R1", personName: "Patrick Flynn", recordTitle: `Entry for Patrick Flynn, "${TITLE}"` },
+        { recordId: "R2", personName: "Mary Flynn", recordTitle: `Mary Flynn in household of Patrick Flynn, "${TITLE}"` },
+        { recordId: "R3", personName: "Ann Flynn", recordTitle: `Entry for Ann Flinn, "${TITLE}"` },
+        { recordId: "R4", personName: "John Flynn", recordTitle: "John Flynn in household of Thomas Flynn" },
+      ]));
+      expect(out.results[0]).not.toHaveProperty("recordTitle");
+      expect(out.results[1].recordTitle).toBe("Mary Flynn in household of Patrick Flynn");
+      // A different name in the title is information: only the collection goes.
+      expect(out.results[2].recordTitle).toBe("Entry for Ann Flinn");
+      expect(out.results[3].recordTitle).toBe("John Flynn in household of Thomas Flynn");
+    });
+
+    it("strips the title on a second pass from the collections map, then leaves it alone", () => {
+      const out = compactStagedRecordSearch(page([
+        { recordId: "R1", personName: "Mary Flynn", recordTitle: `Mary Flynn in household of Patrick Flynn, "${TITLE}"` },
+      ]));
+      const snapshot = JSON.parse(JSON.stringify(out));
+      expect(JSON.parse(JSON.stringify(compactStagedRecordSearch(out)))).toEqual(snapshot);
+
+      // An already-hoisted fixture: no per-row title, the map holds it.
+      const hoisted = {
+        collections: { "1234": TITLE },
+        results: [{ recordId: "R1", collectionId: "1234", personName: "Ann Flynn", recordTitle: `Entry for Ann Flynn, "${TITLE}"` }],
+      } as unknown as RecordSearchToolResponse;
+      expect(compactStagedRecordSearch(hoisted).results[0]).not.toHaveProperty("recordTitle");
+    });
+
+    it("drops the query echo only from a staged answer", () => {
+      const staged = compactStagedRecordSearch(page([{ recordId: "R1" }], { staged: { resultsRef: "results/.staging/a.json" } }));
+      expect(staged).not.toHaveProperty("query");
+
+      // The eval mock compacts before it attaches `staged`, so it says so.
+      expect(compactStagedRecordSearch(page([{ recordId: "R1" }]), { staged: true })).not.toHaveProperty("query");
+
+      // No project, or staging failed: the echo is the only copy of the query.
+      expect(compactStagedRecordSearch(page([{ recordId: "R1" }])).query).toEqual({ surname: "Flynn" });
+      expect(compactStagedRecordSearch(page([{ recordId: "R1" }], { staged: null })).query).toEqual({ surname: "Flynn" });
+    });
+  });
+
   it("leaves a nil result set alone", () => {
     const nil = {
       query: {},
