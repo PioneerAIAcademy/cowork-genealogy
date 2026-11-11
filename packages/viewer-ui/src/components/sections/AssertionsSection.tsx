@@ -107,6 +107,16 @@ function AssertionCard({ assertion }: { assertion: Assertion }): React.JSX.Eleme
         </div>
       )}
 
+      {assertion.disputes_assertion_id && (
+        <div className={styles.field}>
+          <div className={styles.fieldLabel}>Page reads differently</div>
+          <div className={styles.fieldValue}>
+            The record&apos;s own page reads this differently from its index entry{' '}
+            <CrossLink id={assertion.disputes_assertion_id} />
+          </div>
+        </div>
+      )}
+
       {assertion.informant_bias_notes && (
         <div className={styles.field}>
           <div className={styles.fieldLabel}>Informant Bias Notes</div>

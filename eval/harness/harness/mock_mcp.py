@@ -514,6 +514,8 @@ _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
 
 _UNKNOWN_ARGS_JS = _MCP_BUILD / "utils" / "unknown-args.js"
 
+_VOLUME_SEARCH_JS = _MCP_BUILD / "tools" / "volume-search.js"
+
 
 #: Compiled modules already warned about, so a missing build says so once per
 #: process rather than once per call. Keyed on the path, so a second module
@@ -562,6 +564,15 @@ def _unknown_args_module_present() -> bool:
     return _compiled_module_present(
         _UNKNOWN_ARGS_JS,
         "mock tool calls will NOT be checked for non-parameter arguments",
+    )
+
+
+def _volume_search_module_present() -> bool:
+    """A build predating #4414 serves every volume_search fixture unfiltered,
+    which reads as `omitSearchable` being silently ignored."""
+    return _compiled_module_present(
+        _VOLUME_SEARCH_JS,
+        "volume_search responses will NOT have omitSearchable applied",
     )
 
 
@@ -685,6 +696,47 @@ def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> di
     except Exception as exc:  # noqa: BLE001 — advisory, never fails the call
         warnings.warn(f"mock record_search could not compute surnameVariantHints ({exc})", stacklevel=2)
         return None
+
+
+def _filter_searchable_volumes(response: dict[str, Any]) -> dict[str, Any]:
+    """Production's `omitSearchable` post-processing (#4414), applied to a
+    canned `volume_search` fixture exactly as `volumeSearchTool` applies it to
+    its own computed page — before `fitToBudget`.
+
+    Calls the COMPILED `filterSearchableVolumes` (`build/tools/volume-search.js`),
+    never a Python restatement: the omission rule (two searchability signals, a
+    labelling tie-break, the concept-id fallback) is tool behaviour, and a
+    second copy is a second thing to drift (CLAUDE.md, "Code reuse"). A node
+    failure serves the fixture unfiltered, with a warning — a harness fault
+    must not read as the flag having been exercised.
+    """
+    if not _volume_search_module_present():
+        return response
+    script = (
+        f"import {{ filterSearchableVolumes }} from '{_node_module_url(_VOLUME_SEARCH_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify(filterSearchableVolumes(input)));"
+    )
+    try:
+        # DEFAULT, not LONG, and store=False: `filterSearchableVolumes` is a
+        # pure function over the response object -- no network, no file I/O,
+        # no store, same reasoning as `_reject_unknown_args`.
+        proc = _run_node_eval(
+            script,
+            json.dumps(response),
+            timeout=NODE_EVAL_TIMEOUT_DEFAULT,
+            store=False,
+        )
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        return json.loads(proc.stdout)
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as e:
+        warnings.warn(
+            f"mock volume_search could not apply omitSearchable ({e}); the fixture was served unfiltered.",
+            stacklevel=2,
+        )
+        return response
 
 
 def _place_before_results(response: dict[str, Any], key: str) -> dict[str, Any]:
@@ -1727,6 +1779,19 @@ def create_mock_server(
             ):
                 response = {k: v for k, v in response.items() if k != "facets"}
 
+            # Production's volume_search applies `omitSearchable` to its own
+            # computed page before fitToBudget (#4414); call the same compiled
+            # filter on a canned fixture, keyed on the call's OWN args, never
+            # the fixture's recorded predicate -- the fixture itself stays
+            # unfiltered for a call that doesn't ask.
+            if (
+                _name == "volume_search"
+                and isinstance(response, dict)
+                and "error" not in response
+                and args.get("omitSearchable")
+            ):
+                response = _filter_searchable_volumes(response)
+
             # Production's record_search and fulltext_search return (and stage)
             # `query: echoQuery(input)` — every argument the call sent — while a
             # fixture carries whatever query it was recorded with, and a
@@ -2143,24 +2208,31 @@ def _make_live_handler(
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 
-def _hosted_store(manifest: dict[str, Any]) -> dict[str, str | None] | None:
-    """The paths a hosted store answers for, each with its `projectUrl`, when the test
-    serves a hosted `project_list` answer; None for every other test.
+def _hosted_store(manifest: dict[str, Any]) -> dict[str, dict[str, str | None]] | None:
+    """The paths a hosted store answers for, each with its `projectUrl` and `uploadUrl`
+    (either may be None), when the test serves a hosted `project_list` answer; None for
+    every other test.
 
     A hosted store has no folder: it is bound to the projects it lists, refuses any
     other `projectPath` (`PgS3ProjectStore`, "is not this store's project"), and its
-    `project_context` carries the bound project's link (`utils/project-links.ts`). The
-    file store this harness runs does neither, so a hosted test emulates both.
+    `project_context` carries the bound project's `uploadUrl` (`utils/project-links.ts`).
+    The file store this harness runs does neither, so a hosted test emulates both,
+    taking each link from the listed project. `projectUrl` is the harness's own:
+    production's `project_context` no longer returns one, and it is kept for the
+    research suite's hosted tests.
     """
-    paths: dict[str, str | None] = {}
+    paths: dict[str, dict[str, str | None]] = {}
     for _args, listing, _src in (manifest.get("project_list") or {}).get("predicated") or []:
         if not isinstance(listing, dict) or listing.get("mode") != "hosted":
             continue
         for project in listing.get("projects") or []:
             if isinstance(project, dict) and isinstance(project.get("projectPath"), str):
-                paths[project["projectPath"]] = project.get("projectUrl")
+                paths[project["projectPath"]] = {
+                    "projectUrl": project.get("projectUrl"),
+                    "uploadUrl": project.get("uploadUrl"),
+                }
         if isinstance(listing.get("newProjectPath"), str):
-            paths.setdefault(listing["newProjectPath"], None)
+            paths.setdefault(listing["newProjectPath"], {"projectUrl": None, "uploadUrl": None})
     return paths or None
 
 
@@ -2393,6 +2465,7 @@ def _make_live_append_handler(
     tool: str,
     module_file: str,
     export: str,
+    call_args: str = "input",
 ):
     """Build a live handler that runs a compiled research-writer tool.
 
@@ -2424,7 +2497,7 @@ def _make_live_append_handler(
                 f"import {{ {export} as run }} from '{append_url}';"
                 " import { readFileSync } from 'node:fs';"
                 " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-                " const r = await run(input);"
+                f" const r = await run({call_args});"
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
@@ -2457,11 +2530,18 @@ def _make_live_append_handler(
     return handler
 
 
+#: `researchAppendFromCaller(input, loadCatalog)` with a null catalog loader, so
+#: the locality collection-count stamp (#4385) never contacts FamilySearch here —
+#: the `person_warnings` precedent (#1962).
+RESEARCH_APPEND_CALL_ARGS = "input, null"
+
+
 def _make_research_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
     """The live handler for research_append."""
     return _make_live_append_handler(
         workspace, call_log,
         tool="research_append", module_file="research-append.js", export="researchAppendFromCaller",
+        call_args=RESEARCH_APPEND_CALL_ARGS,
     )
 
 
@@ -2574,7 +2654,7 @@ def _make_compiled_tool_handler(
     workspace: Path | None,
     call_log: list[dict[str, Any]],
     place_table=None,
-    hosted: dict[str, str | None] | None = None,
+    hosted: dict[str, dict[str, str | None]] | None = None,
 ):
     """Build the live handler for a compiled single-export tool — the tree
     writers (tree_edit / tree_correct) and the read-only project_context all
@@ -2671,9 +2751,14 @@ def _make_compiled_tool_handler(
                     "ok": False,
                     "errors": [f"{tool_name}: {e}"],
                 }
-            link = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
-            if tool_name == "project_context" and link and isinstance(response, dict) and response.get("objective"):
-                response = {**response, "projectUrl": link}
+            links = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
+            if tool_name == "project_context" and links and isinstance(response, dict):
+                if links["projectUrl"] and response.get("objective"):
+                    response = {**response, "projectUrl": links["projectUrl"]}
+                # Production spreads `uploadUrl` onto every answer that read the project,
+                # and returns an `ok: false` one before it.
+                if links["uploadUrl"] and response.get("ok") is True:
+                    response = {**response, "uploadUrl": links["uploadUrl"]}
 
         entry: dict[str, Any] = {
             "tool": f"mcp__genealogy__{tool_name}",
@@ -2766,6 +2851,11 @@ def _make_extraction_append_handler(
                 # personId mode reads the person's attached records itself, as
                 # `ark:/61903/1:1:<id>`. Stage the fixtures for exactly those ids.
                 wanted += [f"ark:/61903/1:1:{b}" for b in _attached_record_ids(_ws, input_obj["personId"])]
+            if input_obj.get("attachWaitingPages") is True and input_obj.get("pageReadings") is not None:
+                # A page pass (#4286) re-reads a held record whose log entry keeps
+                # no index, to classify what its page says. Stage the records the
+                # readings name, by the id their assertions carry.
+                wanted += _page_reading_record_ids(_ws, input_obj["pageReadings"])
             for rid in wanted:
                 key = rid.strip()
                 bare = key.rsplit("1:1:", 1)[-1].rsplit("/", 1)[-1]
@@ -2824,6 +2914,30 @@ def _make_extraction_append_handler(
         return _tool_envelope("extraction_append", response)
 
     return handler
+
+
+def _page_reading_record_ids(workspace: Path, page_readings: Any) -> list[str]:
+    """The record ids of the assertions a `pageReadings` call names, read from the
+    workspace's research.json. Unreadable input stages nothing: the tool refuses
+    it on its own terms."""
+    try:
+        research = json.loads((Path(workspace) / "research.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    record_of = {
+        a.get("id"): a.get("record_id")
+        for a in research.get("assertions") or []
+        if isinstance(a, dict) and isinstance(a.get("record_id"), str)
+    }
+    ids: list[str] = []
+    for entry in page_readings if isinstance(page_readings, list) else []:
+        for r in (entry or {}).get("readings") or [] if isinstance(entry, dict) else []:
+            if not isinstance(r, dict):
+                continue
+            rid = record_of.get(r.get("disputesAssertionId") or r.get("personAssertionId"))
+            if rid and rid not in ids:
+                ids.append(rid)
+    return ids
 
 
 def _mock_memory_kinds(read: dict[str, Any]) -> dict[str, str]:

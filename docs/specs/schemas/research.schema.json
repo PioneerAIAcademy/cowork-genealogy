@@ -970,6 +970,10 @@
             "string",
             "null"
           ]
+        },
+        "disputes_assertion_id": {
+          "type": "string",
+          "pattern": "^a_"
         }
       },
       "allOf": [
@@ -2190,7 +2194,7 @@
           }
         },
         "record_persona_ids": {
-          "description": "Tool-stamped by research_append, never by a caller: for each listed record found in a sidecar of the row's log_entry_ids, the persona that search or read result names, or a household member of it found by ark. A record found in no sidecar has no key.",
+          "description": "Tool-stamped by research_append, never by a caller: for each listed record found in a sidecar of the row's log_entry_ids, the persona that search or read result names, or a household member of it found by ark, when one of its names shares a given word with the row's name. A record found in no sidecar, or whose persona fails that check, has no key.",
           "type": "object",
           "additionalProperties": {
             "type": "string",
@@ -2198,7 +2202,7 @@
           }
         },
         "birth_year": {
-          "description": "Tool-stamped by research_append, never by a caller: the earliest birth, christening or baptism year among the personas the persona lookup finds for the listed records, absent when none states one. Stamped with record_persona_ids, and filled in on a row without one when a call links its person. The namesake cap's age exemption reads it.",
+          "description": "Tool-stamped by research_append, never by a caller: the earliest birth, christening or baptism year among the personas the persona lookup finds for the listed records, each sharing a given word with the row's name, absent when none states one. Stamped with record_persona_ids, and filled in on a row without one when a call links its person. The namesake cap's age exemption reads it.",
           "type": "integer"
         },
         "notes": {

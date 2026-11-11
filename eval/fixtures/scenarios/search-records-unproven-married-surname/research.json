@@ -1,0 +1,64 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Learn what became of Juanita Ruth Kimbrell (b. 1921, Sedgwick County, Kansas) after 1940",
+    "subject_person_ids": [
+      "I1"
+    ],
+    "status": "active",
+    "created": "2026-10-19",
+    "updated": "2026-10-19"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Where was Juanita Ruth Kimbrell living in 1950, and under what name?",
+      "rationale": "Selected as the next question; a plan already exists for it.",
+      "selection_basis": "objective_decomposition",
+      "priority": "high",
+      "status": "in_progress",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "created": "2026-10-19",
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      }
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-10-19",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Sedgwick County, Kansas",
+          "date_range": "1950",
+          "repository": "FamilySearch",
+          "rationale": "Juanita was 19 and single in her parents' 1940 household. The researcher recalls a family story that she married a man named Fenstermaker in the early 1940s; no marriage record is in hand and the marriage is unproven. The 1950 census is the next enumeration of her adult household.",
+          "fallback_for": null,
+          "status": "planned"
+        }
+      ]
+    }
+  ],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

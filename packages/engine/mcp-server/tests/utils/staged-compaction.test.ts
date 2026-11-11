@@ -432,6 +432,17 @@ describe("annotateResultsWithRanking", () => {
     expect(out.results[1]).not.toHaveProperty("birthYearGap");
   });
 
+  it("copies the surname-not-on-subject flag and surname onto the annotated row, and keeps the note on `ranked`", () => {
+    const out = annotateResultsWithRanking(resp(rankedWith([
+      { recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.9, surnameNotOnSubject: true, candidateSurname: "Fenstermaker" },
+      { recordId: rowB.recordId, matchRank: 2, searchRank: 2, matchScore: 0.8 },
+    ], { surnameNote: "note" })));
+    expect(out.results[0]).toMatchObject({ surnameNotOnSubject: true, candidateSurname: "Fenstermaker" });
+    expect(out.results[1]).not.toHaveProperty("surnameNotOnSubject");
+    expect(out.results[1]).not.toHaveProperty("candidateSurname");
+    expect(out.ranked).toMatchObject({ surnameNote: "note" });
+  });
+
   it("gives up the duplicate row list: `ranked` keeps metadata, not matches", () => {
     const out = annotateResultsWithRanking(
       resp(rankedWith([{ recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.5 }])),

@@ -16,8 +16,8 @@
     ]
   },
   "input": {
-    "delegation": "I'm researching ancestors in Chicago during the Great Fire of 1871. What records or repositories would help trace families affected by the disaster?\n\nprojectPath: <workspace>",
-    "scenario": "empty-project-just-created",
+    "delegation": "I'm researching ancestors in Chicago during the Great Fire of 1871. What records or repositories would help trace families affected by the disaster?",
+    "scenario": null,
     "scenario_notes": null
   },
   "execution": {
@@ -39,7 +39,8 @@
     "wiki-search-any",
     "wikipedia-search-any",
     "place-search-cook-county",
-    "place-search-any"
+    "place-search-any",
+    "catalog-search-empty"
   ],
   "judge_context": [
     "Must mention record loss due to the fire. Must highlight substitutes (church registers, insurance claims, reconstructed deeds). Newspaper collections documented the fire and its aftermath and are a valuable source for this period. Must not suggest uninterrupted civil records.",

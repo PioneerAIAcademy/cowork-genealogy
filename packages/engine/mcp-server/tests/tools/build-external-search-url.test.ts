@@ -8,6 +8,8 @@ import {
   buildExternalSearchUrlTool,
 } from "../../src/tools/build-external-search-url.js";
 import { VALIDATOR_ENUMS } from "../../src/validation/validator.js";
+import { recordExternalCollections } from "../../src/utils/external-collections-store.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 describe("build_external_search_url", () => {
   describe("one passing case per site", () => {
@@ -134,6 +136,34 @@ describe("build_external_search_url", () => {
       expect(placeOnly.ok).toBe(true);
       if (!placeOnly.ok) return;
       expect(placeOnly.url).toContain("qevents-event1=Event+et.any+ep.Ireland+epmo.similar");
+      expect(placeOnly.notes.some((n) => n.includes("is not used by myheritage"))).toBe(false);
+    });
+
+    // A caller that is not told logs a place the search never used.
+    it("myheritage: an event the one slot drops is reported, not silently lost", () => {
+      const r = buildExternalSearchUrl({
+        site: "myheritage",
+        attributes: { surname: "Flynn", birthYear: 1845, deathYear: 1908, birthPlace: "Ireland", deathPlace: "Pennsylvania" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      for (const attr of ["deathYear", "birthPlace", "deathPlace"]) {
+        expect(r.notes).toContain(
+          `'${attr}' is not used by myheritage when birthYear is supplied — the site's search takes one event`,
+        );
+      }
+      expect(r.notes.some((n) => n.startsWith("'birthYear'"))).toBe(false);
+
+      const deathYearWins = buildExternalSearchUrl({
+        site: "myheritage",
+        attributes: { surname: "Flynn", deathYear: 1908, birthPlace: "Ireland" },
+      });
+      expect(deathYearWins.ok).toBe(true);
+      if (!deathYearWins.ok) return;
+      expect(deathYearWins.url).toContain("et.death+ey.1908");
+      expect(deathYearWins.notes).toContain(
+        "'birthPlace' is not used by myheritage when deathYear is supplied — the site's search takes one event",
+      );
     });
 
     it("myheritage: marriage year and parent names are reported unused, not silently dropped", () => {
@@ -2021,6 +2051,136 @@ describe("build_external_search_url", () => {
     }
     const ancestry = (baseUrl: string) =>
       buildExternalSearchUrlTool({ site: "ancestry", attributes: { surname: "Flynn" }, baseUrl, projectPath: dir });
+    // The place every site-wide in-project build below names, stored as fetched.
+    const PA = "Pennsylvania, United States";
+    async function writeFetchedProject() {
+      await writeProject();
+      await storeCollections([STORED]);
+    }
+
+    describe("a site-wide build inside a project needs a fetched place (lead ruling 2026-11-10, issue #4410)", () => {
+      const siteWide = (extra: Record<string, unknown> = {}) =>
+        buildExternalSearchUrlTool({ site: "myheritage", attributes: { surname: "Flynn" }, projectPath: dir, ...extra });
+
+      it("refuses a place never looked up, names external_links_search, and logs nothing", async () => {
+        await writeFetchedProject();
+        const r = await siteWide({ standardPlace: "Hampshire, Massachusetts, United States" });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.reason).toBe("place_not_fetched");
+        expect(r.errors.join(" ")).toContain(
+          `external_links_search(${JSON.stringify({ standardPlace: "Hampshire, Massachusetts, United States", projectPath: dir })})`,
+        );
+        expect(await readLog()).toEqual([]);
+      });
+
+      it("refuses when nothing is stored at all", async () => {
+        await writeProject();
+        const r = await siteWide({ standardPlace: PA });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.reason).toBe("place_not_fetched");
+      });
+
+      it("refuses a missing or blank standardPlace inside a project", async () => {
+        await writeFetchedProject();
+        for (const extra of [{}, { standardPlace: "   " }, { standardPlace: 42 }]) {
+          const r = await siteWide(extra);
+          expect(r.ok, JSON.stringify(extra)).toBe(false);
+          if (r.ok) continue;
+          expect(r.reason).toBe("place_not_fetched");
+          expect(r.errors.join(" ")).toMatch(/standardPlace is required.*external_links_search/);
+        }
+        expect(await readLog()).toEqual([]);
+      });
+
+      it("treats a blank baseUrl and the archion/matricula root fallback as site-wide", async () => {
+        await writeProject();
+        const blank = await siteWide({ baseUrl: "  ", standardPlace: PA });
+        expect(!blank.ok && blank.reason).toBe("place_not_fetched");
+        const root = await buildExternalSearchUrlTool({ site: "archion", attributes: {}, projectPath: dir, standardPlace: "Germany" });
+        expect(!root.ok && root.reason).toBe("place_not_fetched");
+      });
+
+      it("refuses when external-collections.json cannot be read", async () => {
+        fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
+        await writeProject();
+        await writeFile(join(dir, "external-collections.json"), "{ not json");
+        const r = await siteWide({ standardPlace: PA });
+        expect(r.ok).toBe(false);
+        if (r.ok) return;
+        expect(r.reason).toBe("place_not_fetched");
+        expect(r.errors.join(" ")).toMatch(/could not be read.*external_links_search/);
+      });
+
+      it("allows a fetched place, trimmed and in any case", async () => {
+        await writeFetchedProject();
+        for (const standardPlace of [PA, "  pennsylvania,united states "]) {
+          const r = await siteWide({ standardPlace });
+          expect(r.ok, `${standardPlace}: ${JSON.stringify(r)}`).toBe(true);
+        }
+        expect(await readLog()).toHaveLength(2);
+      });
+
+      it("allows a place inside a fetched one, but not a place that only shares a tail word", async () => {
+        await writeFetchedProject();
+        const inside = await siteWide({ standardPlace: "Philadelphia, Pennsylvania, United States" });
+        expect(inside.ok, JSON.stringify(inside)).toBe(true);
+        const country = await siteWide({ standardPlace: "United States" });
+        expect(!country.ok && country.reason).toBe("place_not_fetched");
+        const lookalike = await siteWide({ standardPlace: "New Pennsylvania, United States" });
+        expect(!lookalike.ok && lookalike.reason).toBe("place_not_fetched");
+      });
+
+      it("allows a place whose lookup found nothing, stored as rows: [] by recordExternalCollections", async () => {
+        await writeProject();
+        expect(await recordExternalCollections(dir, "Ireland", [])).toEqual(["Ireland"]);
+        const r = await siteWide({ standardPlace: "Cork, Munster, Ireland" });
+        expect(r.ok, JSON.stringify(r)).toBe(true);
+      });
+
+      it("allows a too_large place for exactly itself, and never for a place inside it", async () => {
+        await writeProject();
+        expect(await recordExternalCollections(dir, "United States", [], { tooLarge: true })).toEqual(["United States"]);
+        const nationwide = await siteWide({ standardPlace: " united states " });
+        expect(nationwide.ok, JSON.stringify(nationwide)).toBe(true);
+        for (const inside of ["Hampshire, Massachusetts, United States", "Massachusetts, United States"]) {
+          const r = await siteWide({ standardPlace: inside });
+          expect(!r.ok && r.reason, inside).toBe("place_not_fetched");
+        }
+      });
+
+      it("does not check a build with baseUrl, a folder that is not a project, or a call with no project", async () => {
+        await writeProject();
+        const curated = await buildExternalSearchUrlTool({
+          site: "digital_newspaper_archive",
+          attributes: { keywords: "Flynn" },
+          baseUrl: "https://example-archive.org/search",
+          projectPath: dir,
+        });
+        expect(curated.ok, JSON.stringify(curated)).toBe(true);
+        const outsideProject = await mkdtemp(join(tmpdir(), "build-url-no-project-"));
+        try {
+          const r = await buildExternalSearchUrlTool({ site: "myheritage", attributes: { surname: "Flynn" }, projectPath: outsideProject });
+          expect(r.ok, JSON.stringify(r)).toBe(true);
+        } finally {
+          await rm(outsideProject, { recursive: true, force: true });
+        }
+        const standalone = await buildExternalSearchUrlTool({ site: "myheritage", attributes: { surname: "Flynn" } });
+        expect(standalone.ok, JSON.stringify(standalone)).toBe(true);
+      });
+
+      it("a build error still wins over the gate", async () => {
+        await writeProject();
+        const r = await buildExternalSearchUrlTool({ site: "findagrave", attributes: {}, projectPath: dir });
+        expect(!r.ok && r.reason).toBe("no_attributes");
+      });
+
+      it("keeps standardPlace out of the schema's required list", () => {
+        expect(buildExternalSearchUrlSchema.inputSchema.required).toEqual(["site", "attributes"]);
+        expect(buildExternalSearchUrlSchema.inputSchema.properties).toHaveProperty("standardPlace");
+      });
+    });
 
     describe("a collection baseUrl must be a stored collection (lead ruling 2026-10-23)", () => {
       it("refuses a collection the project has not stored, and logs nothing", async () => {
@@ -2083,12 +2243,13 @@ describe("build_external_search_url", () => {
     });
 
     it("appends one partial external_site entry and returns its logId", async () => {
-      await writeProject();
+      await writeFetchedProject();
       const r = await buildExternalSearchUrlTool({
         site: "ancestry",
         attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845 },
         projectPath: dir,
         planItemId: "pli_003",
+        standardPlace: PA,
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
@@ -2106,11 +2267,12 @@ describe("build_external_search_url", () => {
     });
 
     it("returns a handoffLine carrying exactly the URL it logged", async () => {
-      await writeProject();
+      await writeFetchedProject();
       const r = await buildExternalSearchUrlTool({
         site: "myheritage",
         attributes: { givenName: "Patrick", surname: "Flynn", marriagePlace: "Pennsylvania" },
         projectPath: dir,
+        standardPlace: PA,
       });
       expect(r.ok).toBe(true);
       if (!r.ok) return;
@@ -2155,12 +2317,13 @@ describe("build_external_search_url", () => {
     });
 
     it("a bad planItemId fails the call as log_write_failed and leaves the log alone", async () => {
-      await writeProject();
+      await writeFetchedProject();
       const r = await buildExternalSearchUrlTool({
         site: "findagrave",
         attributes: { surname: "Flynn" },
         projectPath: dir,
         planItemId: "q_001",
+        standardPlace: PA,
       });
       expect(r.ok).toBe(false);
       if (r.ok) return;

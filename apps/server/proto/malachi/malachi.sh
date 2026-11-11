@@ -611,6 +611,52 @@ cmd_export() {
   printf 'malachi: exported under %s/exports\n' "$DATA"
 }
 
+# ── one user ─────────────────────────────────────────────────────────────────
+
+user_admin() { # args...; stdin passes through
+  compose run --rm --no-deps -T --user "$(id -u):$(id -g)" -e PYTHONPATH=/app \
+    -v "$HERE/user_admin.py:/opt/malachi/user_admin.py:ro" ${REPORT_MOUNT[@]+"${REPORT_MOUNT[@]}"} \
+    web python /opt/malachi/user_admin.py "$@"
+}
+
+cmd_block_user() {
+  [ -n "${ACCOUNT:-}" ] || die "ACCOUNT= is required"
+  load_env
+  user_admin block "--account=$ACCOUNT" </dev/null
+}
+
+# The code reaches the container on stdin: printf is a builtin, so no argv carries it, and
+# neither does -e, which docker and compose both log.
+cmd_delete_user() {
+  [ -n "${ACCOUNT:-}" ] || die "ACCOUNT= is required"
+  [ -n "${CODE:-}" ] || die "CODE= is required: the deletion code the user quoted"
+  local code=$CODE confirm=() id status=0
+  # No child inherits it: make also copies its command-line variables into MAKEFLAGS.
+  unset CODE MAKEFLAGS MAKEOVERRIDES MFLAGS
+  [ "${CONFIRM:-}" != yes ] || confirm=(--confirm)
+  load_env
+  # A global, not a local: the EXIT trap runs after this function has returned.
+  REPORT_DIR=$(mktemp -d)
+  trap 'rm -rf "$REPORT_DIR"' EXIT
+  REPORT_MOUNT=(-v "$REPORT_DIR:/report")
+  printf '%s' "$code" | user_admin delete "--account=$ACCOUNT" ${confirm[@]+"${confirm[@]}"} --report /report/projects ||
+    status=$?
+  # 3: the rows are gone and objects may remain. A rerun finds no user, so the exports go now.
+  [ "$status" = 0 ] || [ "$status" = 3 ] || exit "$status"
+  [ -n "${confirm[*]-}" ] && [ -f "$REPORT_DIR/projects" ] || return 0
+  # The container cannot see the host's exports, so they go here.
+  while IFS= read -r id; do
+    case $id in
+      '' | . | .. | */*) die "refusing to remove an export named '$id'" ;;
+    esac
+    if [ -e "$DATA/exports/$id" ]; then
+      rm -rf "${DATA:?}/exports/$id"
+      printf 'malachi: removed %s/exports/%s\n' "$DATA" "$id"
+    fi
+  done <"$REPORT_DIR/projects"
+  [ "$status" = 0 ] || die "the rows are deleted, but objects may remain: see the message above"
+}
+
 case "${1:-}" in
   env-init) cmd_env_init ;;
   up) cmd_up ;;
@@ -623,8 +669,10 @@ case "${1:-}" in
   restore) cmd_restore ;;
   export) cmd_export ;;
   openrouter) cmd_openrouter ;;
+  block-user) cmd_block_user ;;
+  delete-user) cmd_delete_user ;;
   prune) cmd_prune ;;
   down) cmd_down ;;
   wipe) cmd_wipe ;;
-  *) die "usage: malachi.sh env-init|up|check|check-http <url>|check-public|logs|backup|restore-check|restore|export|openrouter|prune|down|wipe" ;;
+  *) die "usage: malachi.sh env-init|up|check|check-http <url>|check-public|logs|backup|restore-check|restore|export|openrouter|block-user|delete-user|prune|down|wipe" ;;
 esac
