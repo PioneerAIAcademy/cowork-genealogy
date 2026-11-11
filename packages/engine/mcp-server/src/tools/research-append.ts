@@ -10662,7 +10662,12 @@ function stampLocalityCollectionCounts(
         ["record_count", counts.recordCount],
       ] as const) {
         const was = Object.hasOwn(c, key) ? JSON.stringify(c[key]) : "absent";
-        if (c[key] !== value) changes.push(`${key} ${was} -> ${value}`);
+        // collections_search no longer returns a record count (issue #4416), so
+        // locality-guide leaves `record_count` out and this stamp supplies it:
+        // filling it is the contract, not a correction worth a warning.
+        if (c[key] !== value && !(key === "record_count" && was === "absent")) {
+          changes.push(`${key} ${was} -> ${value}`);
+        }
         c[key] = value;
       }
       if (changes.length > 0) {

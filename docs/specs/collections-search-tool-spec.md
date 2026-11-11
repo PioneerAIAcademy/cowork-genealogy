@@ -69,8 +69,8 @@ reported back as, the state level).
 | `startYear` | integer | No | Earliest year of interest (inclusive). Omit for all periods. |
 | `endYear` | integer | No | Latest year of interest (inclusive). Must be ≥ startYear. Omit for all periods. |
 
-There is **no record-type filter**: the tool lists every collection for the
-place. `recordType`, `record_type`, `recordTypes`, `recordTypeGroup` and
+There is **no record-type filter**: the tool narrows by place and years only.
+`recordType`, `record_type`, `recordTypes`, `recordTypeGroup` and
 `recordTypeGroups` — the spellings the sibling tools take — are refused before
 any request, with an error that points to `volume_search`'s `recordTypeGroups`
 and names its valid groups. The refusal is the server's unknown-argument guard
@@ -91,31 +91,40 @@ Examples:
 ## Output
 
 Output is an envelope of the form
-`{ query, scope, totalForPlace, results }`:
+`{ collectionUrl, scope, totalForPlace, results }`, plus `truncated` and
+`matched` only when the answer was bounded (see **Answer budget** below). The
+input is not echoed back.
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `query` | object | Echo of the input: `{ standardPlace, startYear?, endYear? }` |
+| `collectionUrl` | string | `"https://www.familysearch.org/search/collection/{id}"`: a collection's FamilySearch page is this with `{id}` replaced by the row's `id`. Given once, not on every row. |
 | `scope` | string | The derived FamilySearch collection scope/jurisdiction the titles were matched at (the US/Canada/Mexico state, or the country elsewhere). This is the "level served" signal — a county input is matched at the state level. |
-| `totalForPlace` | number | Count of collections matching the scope **before** the optional date filter is applied. Always present. Equals `results.length` when no years are passed. `results: [], totalForPlace: 8` reads as "8 collections cover this place, none in your window." |
+| `totalForPlace` | number | Count of collections matching the scope **before** the optional date filter is applied. Always present. Equals `results.length` when no years are passed and the answer is not truncated. `results: [], totalForPlace: 8` reads as "8 collections cover this place, none in your window." |
 | `results` | Collection[] | The matching collection objects (after the optional date filter). |
+| `truncated` | `true` | Present only when the answer was over its budget and rows were left out. |
+| `matched` | number | Present only with `truncated`: the rows after the year filter and before any were left out. Not `totalForPlace` (before the year filter) and not `results.length`. |
 
-Each `Collection` object:
+Each `Collection` object is the same for every caller:
 
 | Field | Type | Description |
 |-------|------|-------------|
 | `id` | string | FamilySearch collection identifier |
 | `title` | string | Human-readable collection name |
 | `dateRange` | string | Time period the collection covers (e.g., `"1809-1950"`) |
-| `recordCount` | number | Number of records in the collection |
-| `personCount` | number | Number of persons in the collection |
-| `imageCount` | number | Number of images in the collection |
-| `url` | string | Link to the collection on FamilySearch |
+| `personCount` | number | Number of persons indexed in the collection |
+
+Rows used to carry `recordCount`, `imageCount` and their own
+`url`. Only locality-guide read them, and they took Italy-scoped answers to
+56–62k characters, past the budget; they spilled three times on 2026-10-30, in
+locality-guide and research-plan. A per-row opt-in for the counts was weighed
+and not taken: it leaves locality-guide's Italy answer at about 45.7k. The
+`/Record` count is still derived, by the exported `collectionCountsById`, for
+`research_append`'s locality count stamp.
 
 Example:
 ```json
 {
-  "query": { "standardPlace": "Birmingham, Jefferson, Alabama, United States" },
+  "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
   "scope": "Alabama",
   "totalForPlace": 29,
   "results": [
@@ -123,10 +132,7 @@ Example:
       "id": "1743384",
       "title": "Alabama County Marriages, 1711-1992",
       "dateRange": "1711-1992",
-      "recordCount": 6049744,
-      "personCount": 22361103,
-      "imageCount": 1231203,
-      "url": "https://www.familysearch.org/search/collection/1743384"
+      "personCount": 22361103
     }
   ]
 }
@@ -138,12 +144,35 @@ overlapping the requested year window:
 
 ```json
 {
-  "query": { "standardPlace": "Birmingham, Jefferson, Alabama, United States", "startYear": 1850, "endYear": 1900 },
+  "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
   "scope": "Alabama",
   "totalForPlace": 29,
   "results": [ /* the subset of the 29 that overlap 1850–1900 */ ]
 }
 ```
+
+### Answer budget
+
+The answer, measured as the server sends it (`JSON.stringify(result)`, compact;
+`server.ts`), is held to `ANSWER_CHAR_BUDGET`, the shared
+`TOOL_RESULT_CHAR_BUDGET` (40,000 characters), as `catalog_search`'s is. There
+is no pagination: the bound decides which rows come back in the one response.
+
+- **Under the budget** the answer is unchanged: every matched row, in catalog
+  order, with no `truncated` or `matched` key.
+- **Over it** (`fitToBudget`), the rows are reordered: first the rows whose
+  title names, as a whole word and ignoring case, a part of `standardPlace`
+  below the scope (`subPlaceTerms`: Palermo and Sicilia for
+  `"Palermo, Sicilia, Italy"`), then the rest in catalog order. Rows are kept in
+  that order until the next would not fit, and the answer gains
+  `truncated: true` and `matched`. A truncated answer means rows for other
+  places in the scope were left out. It is not a coverage gap.
+
+Measured live on 2026-11-11 with `dev/try-collections-search.ts`, no years:
+`Italy` returns all 287 rows in 39,689 characters (the old row shape is about
+69.8k for the same rows), and `United States` all 176 rows in 24,156. Neither is
+truncated. Italy sits close to the bound, so a growing Italian catalog is the
+likeliest first answer to be truncated.
 
 ---
 
@@ -158,11 +187,15 @@ overlapping the requested year window:
     "\"Schuylkill, Pennsylvania, United States\"); a plain place name also works. " +
     "FamilySearch organizes collections at the state/province level for the " +
     "United States, Canada, and Mexico, and at the country level everywhere else, " +
-    "so results come back at that scope; the derived scope is returned in the " +
-    "`scope` field (the tool derives it from the place). Optionally pass " +
-    "`startYear`/`endYear` to filter the returned collections to those overlapping " +
-    "that year window. Requires authentication — call the login tool first if " +
-    "not logged in.",
+    "so results come back at that scope (the tool derives it and returns it as " +
+    "`scope`). Optionally filter by startYear/endYear to keep only collections " +
+    "whose date range overlaps that window. Each row is {id, title, dateRange, " +
+    "personCount}; a collection's page is `collectionUrl` with `{id}` replaced by " +
+    "the row's id. There is no pagination: the matched set comes back in one " +
+    "response, held to 40,000 characters. When it is over that, `truncated: true` " +
+    "is set, `matched` gives how many rows matched, and rows whose title names " +
+    "a part of `standardPlace` below the scope are kept first. " +
+    "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
     properties: {
@@ -272,10 +305,10 @@ contains only the collections that pass it.
 |-----------|----------|
 | `standardPlace` not provided | Throw error: `"collections_search requires a standardPlace (preferably the standardPlace from place_search)."` |
 | `endYear` less than `startYear` (both given) | Throw error: `"endYear must be greater than or equal to startYear."` |
-| `recordType`, `record_type`, `recordTypes`, `recordTypeGroup` or `recordTypeGroups` supplied | Throw, before any request: `"collections_search has no record-type filter: it lists every collection for the place, so {field} cannot narrow it. To filter by record type, use volume_search's recordTypeGroups (an array of group names). Valid groups: {RECORD_TYPE_GROUP_NAMES}."` |
+| `recordType`, `record_type`, `recordTypes`, `recordTypeGroup` or `recordTypeGroups` supplied | Throw, before any request: `"collections_search has no record-type filter: it lists the place's collections by place and years only, so {field} cannot narrow it. To filter by record type, use volume_search's recordTypeGroups (an array of group names). Valid groups: {RECORD_TYPE_GROUP_NAMES}."` |
 | Not authenticated | Let `getValidToken(principal)` throw its LLM-instruction error ("User is not logged in to FamilySearch. Call the login tool to authenticate.") |
 | API returns non-OK status | Throw error: `"FamilySearch collections API error: {status} {statusText}"` |
-| API returns empty/malformed response | Return `{ query, scope, totalForPlace: 0, results: [] }` |
+| API returns empty/malformed response | Return `{ collectionUrl, scope, totalForPlace: 0, results: [] }` |
 
 ---
 
@@ -340,6 +373,10 @@ and output types (`Collection`, `CollectionsSearchResult`).
 - `collectionsCacheMode()` — the mode in force, read back for `src/http.ts`'s
   start-up line
 - `filterByQuery(entries, query)` — case-insensitive title matching
+- `fitToBudget(result, standardPlace, budget?)` — the answer budget above
+- `subPlaceTerms(standardPlace)` — the parts of `standardPlace` below its scope
+- `collectionCountsById(data)` — every collection's `personCount` and `/Record`
+  count by id, for `research_append`
 - `clearCollectionsCache()` — empties the cache, for testing
 
 ### `packages/engine/mcp-server/src/index.ts`
@@ -360,7 +397,7 @@ Smoke-test script for list mode.
 
 | # | Test case | What it verifies |
 |---|-----------|------------------|
-| 1 | Returns collections matching a place; echoes `query` and reports `scope` | List happy path |
+| 1 | Returns collections matching a place, reports `scope`, and carries no `query` echo | List happy path |
 | 2 | Converts a US standardPlace to its state before matching (reflected in `scope`) | Conversion wired into the tool |
 | 3 | Matching is case-insensitive | Case handling |
 | 4 | Returns empty `results` with `totalForPlace: 0` when nothing matches | Zero-match |
@@ -369,11 +406,18 @@ Smoke-test script for list mode.
 | 7 | Throws on non-OK API response | HTTP error handling |
 | 8 | Handles malformed API response gracefully (empty envelope) | Empty/null response |
 | 9 | Throws when `standardPlace` is not provided | Input validation |
-| 10 | Maps API response fields to Collection shape | Field mapping |
+| 10 | Maps API response fields to the four-field Collection row, with one `collectionUrl` | Field mapping |
 | 11 | `startYear`/`endYear` filter `results` but not `totalForPlace` | Date filter |
 | 12 | Collection with no year span always survives the date filter | Date filter edge case |
 | 13 | Throws when `endYear` < `startYear` | Input validation |
 | 14 | Each of the five record-type spellings throws, pointing to `volume_search`'s `recordTypeGroups`, with no token read and no request | Record-type refusal |
+
+**Answer budget tests:** a synthetic Italy catalog over the budget answers within
+it, the Palermo row first and the rest in catalog order, with `truncated` and
+`matched`; `matched` counts rows after the year filter, not `totalForPlace` or
+the rows returned; rows are kept up to the edge; an answer under the budget is
+byte-for-byte unchanged with neither key; a sub-place matches only as a whole
+word. `collectionCountsById` still derives the `/Record` count.
 
 **Cache tests (`fetchAllCollections`):** with the setting unset, the same
 token is served from cache and another token re-fetches into the one slot;

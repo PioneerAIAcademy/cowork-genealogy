@@ -2158,6 +2158,9 @@ than the catalog, so a refusal would cost a turn and end in the same state.
 
   `<count>` is `person_count` or `record_count`; only a count that changed is named,
   `person_count` first. `<old>` is the JSON of the supplied value, or `absent`.
+  An absent `record_count` is filled without being named: `collections_search`
+  returns no record count, so locality-guide leaves it out and this stamp is
+  where it comes from. A supplied `record_count` that differs is still named.
 - **Not found.** Both counts become `null`, which sends research-plan back to
   `collections_search`:
   > `localities collections '<id>' is not in FamilySearch's collection catalog; person_count and record_count set to null (unknown)`
