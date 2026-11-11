@@ -8022,6 +8022,90 @@ function retireRejectedLinks(
 }
 
 /**
+ * Retire the rows a link derived when that link is superseded onto a DIFFERENT
+ * tree person, pointing each at the replacement's row for the same assertion.
+ *
+ * Step 6 of person-evidence.md corrects a wrong link in two calls: append the
+ * replacement, then supersede the old entry with it. Retiring only the entry
+ * named in the update leaves every row it derived on the old person, which is
+ * the "one entry, one person" split the entry rule exists to stop (#4355
+ * review). The expansion on the first call has already put the replacement's
+ * own rows on the new person, so the row to point at exists by the second.
+ *
+ * A supersede onto the SAME person is a correction of that link, not a move,
+ * and leaves the derived rows alone.
+ *
+ * A post-apply pass for the same reason `retireRejectedLinks` is one: `applyOne`
+ * cannot report a change it makes to another entry. It fabricates no link -- a
+ * derived row with no replacement row to name is left live and named in a
+ * warning, because `superseded_by` may only name a link for the same assertion.
+ */
+function retireSupersededDerivedLinks(
+  applied: AppliedOp[],
+  research: any,
+  beforeResearch: any,
+): { warnings: string[] } {
+  const warnings: string[] = [];
+  const links: any[] = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
+  const before: any[] = Array.isArray(beforeResearch?.person_evidence) ? beforeResearch.person_evidence : [];
+
+  for (const a of applied) {
+    if (a.section !== "person_evidence" || a.op !== "update" || a.noop) continue;
+    const pe = links.find((x) => x && x.id === a.entryId);
+    if (!pe || typeof pe.superseded_by !== "string" || pe.superseded_by === "") continue;
+    // Only a supersede THIS call set. An unrelated update to an already-retired
+    // link must not re-run the move.
+    const was = before.find((x) => x && x.id === a.entryId);
+    if (was && was.superseded_by === pe.superseded_by) continue;
+    const target = links.find((x) => x && x.id === pe.superseded_by);
+    if (!target || String(target.person_id) === String(pe.person_id)) continue;
+
+    const derived = links.filter(
+      (d) =>
+        d &&
+        !d.superseded_by &&
+        String(d.person_id) === String(pe.person_id) &&
+        isDerivedEntryLink(d) &&
+        String(d.rationale).startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${pe.assertion_id}:`),
+    );
+    if (derived.length === 0) continue;
+
+    const moved: string[] = [];
+    const stranded: string[] = [];
+    for (const d of derived) {
+      const replacement = links.find(
+        (x) =>
+          x &&
+          !x.superseded_by &&
+          x.id !== d.id &&
+          String(x.assertion_id) === String(d.assertion_id) &&
+          String(x.person_id) === String(target.person_id),
+      );
+      if (!replacement) {
+        stranded.push(`${d.id} (${d.assertion_id})`);
+        continue;
+      }
+      d.superseded_by = replacement.id;
+      moved.push(`${d.id} -> ${replacement.id}`);
+    }
+    if (moved.length > 0) {
+      warnings.push(
+        `${pe.id} moved ${pe.assertion_id} to ${target.person_id}, so the rows it derived went ` +
+          `with it: ${moved.join(", ")}. A record entry is one person.`,
+      );
+    }
+    if (stranded.length > 0) {
+      warnings.push(
+        `${stranded.join(", ")} stayed on ${pe.person_id}: ${target.person_id} has no link for ` +
+          `that assertion to supersede them with, and a link is superseded only by one for the ` +
+          `same assertion. Link ${target.person_id} to those assertions, or reject the pairing.`,
+      );
+    }
+  }
+  return { warnings };
+}
+
+/**
  * A plan this call CREATED that ends the call with no items, while the same
  * call's `plan_items` ops wrote into a different plan — the misroute that
  * persisted a schema-invalid `research.json`.
@@ -9487,6 +9571,40 @@ function applyOne(
       !!priorPair &&
       (priorPair.assertion_id !== resultEntry.assertion_id ||
         priorPair.person_id !== resultEntry.person_id);
+
+    // #4355 review: the entry rule governs APPENDS, so re-pointing `person_id`
+    // on a link that already expanded walked around it -- the trigger moved and
+    // the rows it derived stayed on the old person, which is the "one entry, one
+    // person" split the rule exists to stop. Refuse the move and name step 6,
+    // which moves the derived rows with the trigger
+    // (`retireSupersededDerivedLinks`). A re-point of a link that derived
+    // nothing is untouched: it is legitimate correction.
+    if (
+      op.op === "update" &&
+      !!priorPair &&
+      priorPair.person_id !== resultEntry.person_id &&
+      !resultEntry.superseded_by
+    ) {
+      const stranded = ((research?.person_evidence ?? []) as any[]).filter(
+        (d) =>
+          d &&
+          !d.superseded_by &&
+          d.id !== resultEntry.id &&
+          String(d.person_id) === String(priorPair?.person_id) &&
+          isDerivedEntryLink(d) &&
+          String(d.rationale).startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${resultEntry.assertion_id}:`),
+      );
+      if (stranded.length > 0) {
+        invariantErrors.push(
+          `${resultEntry.id} links ${resultEntry.assertion_id}, which claimed its whole record entry ` +
+            `for ${priorPair.person_id}: ${stranded.map((d) => `${d.id} (${d.assertion_id})`).join(", ")} ` +
+            `were derived from it. Re-pointing person_id would move this one fact and leave those on ` +
+            `${priorPair.person_id}, and a record entry is one person. Correct it the way step 6 of ` +
+            `person-evidence does instead: append the link to '${resultEntry.person_id}', then update ` +
+            `${resultEntry.id} with { superseded_by: "<that id>" } -- which moves the derived rows too.`,
+        );
+      }
+    }
     const wasRetired = !!priorPair?.superseded_by;
     const reRaising =
       op.op === "append" ||
@@ -11775,10 +11893,43 @@ export function planEntryLinkExpansion(
       }
     }
   }
+  // Step 6 of person-evidence.md corrects a wrong link in TWO calls: append the
+  // replacement to get its `pe_` id, then update the old entry's `superseded_by`
+  // with it. On that FIRST call the wrong link is still live and still holds the
+  // entry, so the refusal below fired on the one route that fixes a wrong link --
+  // and neither way out it offered worked: a rejection needs `researcher_words`
+  // only the researcher can give (lead, 2026-10-20), and a supersede needs the
+  // replacement link this very call is making (#4355 review). An assertion this
+  // call re-links to someone else is no longer a holder, and neither are the rows
+  // that assertion derived.
+  const relinkedTo = new Map<string, Set<string>>();
+  for (const op of ops) {
+    if (op.section !== "person_evidence" || op.op !== "append") continue;
+    const e = op.entry as any;
+    if (!e || typeof e !== "object") continue;
+    const a = String(e.assertion_id);
+    const to = relinkedTo.get(a);
+    if (to) to.add(String(e.person_id));
+    else relinkedTo.set(a, new Set([String(e.person_id)]));
+  }
+  const movedAway = (assertionId: string, personId: string): boolean =>
+    [...(relinkedTo.get(assertionId) ?? [])].some((p) => p !== personId);
+
   for (const pe of (research?.person_evidence ?? []) as any[]) {
     if (pe?.superseded_by != null) continue;
     if (retiring.has(String(pe?.id))) continue;
     if (rejectedNow.has(`${String(pe?.assertion_id)}\u0000${String(pe?.person_id)}`)) continue;
+    if (movedAway(String(pe?.assertion_id), String(pe?.person_id))) continue;
+    if (
+      isDerivedEntryLink(pe) &&
+      [...relinkedTo.keys()].some(
+        (a) =>
+          movedAway(a, String(pe?.person_id)) &&
+          String(pe?.rationale).startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${a}:`),
+      )
+    ) {
+      continue;
+    }
     // Its trigger is being rejected in this same call, so it retires with it and
     // cannot hold the entry against the replacement link (#4355 review).
     if (
@@ -11839,10 +11990,11 @@ export function planEntryLinkExpansion(
         `person_evidence for '${person}' links ${trigger.id}, but that record entry ` +
           `(${k}) is already this project's entry for ${others.join(", ")}, via ${theirs.join(", ")}. ` +
           `A record entry is one person: linking a one-party fact of it claims the whole entry. ` +
-          `In THIS SAME call, either append a rejected_links entry for the pairing you are ruling ` +
-          `out (which retires the existing link for you), or update that link with ` +
-          `{ superseded_by } if it is superseded by a link you already have. Otherwise link an ` +
-          `assertion of the party you actually mean.`,
+          `If new evidence shows that existing link is wrong, correct THAT link the way step 6 of ` +
+          `person-evidence does: append the replacement for its assertion, then update it with ` +
+          `{ superseded_by: "<the new id>" }. If the researcher said this record is not that ` +
+          `person, append a rejected_links entry for that pairing in THIS SAME call, which retires ` +
+          `the existing link for you. Otherwise link an assertion of the party you actually mean.`,
       );
       continue;
     }
@@ -12226,6 +12378,9 @@ export async function researchAppend(
     // #3601: a rejection retires its pair's live link and that link's facts,
     // in this same all-or-nothing write.
     const retire = retireRejectedLinks(applied, research, tree);
+    // #4355 review: a link superseded onto a different person takes the rows it
+    // derived with it, or they strand on the old person.
+    const movedDerived = retireSupersededDerivedLinks(applied, research, beforeResearch);
 
     // The rows' personas and birth years, before the namesake judgement reads them.
     const readResults = sidecarResultsReader(readSidecar);
@@ -12251,7 +12406,7 @@ export async function researchAppend(
     // may arrive in any order within the call.
     const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt, prep.startingTree);
 
-    const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? []), ...retire.warnings];
+    const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? []), ...retire.warnings, ...movedDerived.warnings];
     // Folded into locals rather than mutated onto `prep`: both the mutation test
     // and the write branch below have to see the rewrite's tree write, and the
     // degrade path below can take it back.

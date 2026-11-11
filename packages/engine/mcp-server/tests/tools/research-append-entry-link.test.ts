@@ -522,4 +522,85 @@ describe("#4226 a link means the record entry", () => {
     expect(rows.find((x) => x.id === "pe_001").superseded_by).toBe(null);
     expect(rows.find((x) => x.id === "pe_003").superseded_by).toBe(null);
   });
+
+  // ── Step 6 of person-evidence.md: correcting a link the agent got wrong ───
+  //
+  // Step 6 is TWO calls: append the corrected link to get its `pe_` id, then
+  // update the old entry's `superseded_by` with it. The first call is a bare
+  // append, so the link it corrects is still live and still holds the entry --
+  // which the entry rule refused (#4355 review). Neither way out the refusal
+  // offered worked: a rejection needs `researcher_words` the agent does not
+  // have (only the researcher rejects a pair, lead 2026-10-20), and a
+  // supersede needs the replacement link this very call is trying to make.
+
+  /** a_001 linked to I2, entry NOT expanded (one assertion in the entry). */
+  const unexpandedOnI2 = async () => {
+    await write(project({
+      assertions: [assertion("a_001")],
+      person_evidence: [linkRow("pe_001", "a_001", "I2")],
+    }));
+    await attest("a_001");
+  };
+
+  it("step 6 corrects a single link: append the replacement, then supersede", async () => {
+    await unexpandedOnI2();
+    const call1 = await link("a_001", "I1");
+    expect(call1.ok, JSON.stringify((call1 as any).errors)).toBe(true);
+    const newId = (call1 as any).entryId;
+    const call2 = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { superseded_by: newId },
+    });
+    expect(call2.ok, JSON.stringify((call2 as any).errors)).toBe(true);
+    const rows = await links();
+    expect(rows.find((x) => x.id === "pe_001").superseded_by).toBe(newId);
+    expect(rows.find((x) => x.id === newId)).toMatchObject({ assertion_id: "a_001", person_id: "I1" });
+  });
+
+  it("step 6 corrects an expanded entry: the derived rows move too", async () => {
+    await expandedOnI2();
+    const call1 = await link("a_001", "I1");
+    expect(call1.ok, JSON.stringify((call1 as any).errors)).toBe(true);
+    const newId = (call1 as any).entryId;
+    const call2 = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { superseded_by: newId },
+    });
+    expect(call2.ok, JSON.stringify((call2 as any).errors)).toBe(true);
+    const rows = await links();
+    // Every I2 row retired -- the derived ones with their trigger.
+    for (const id of ["pe_001", "pe_002", "pe_003"]) {
+      expect(rows.find((x) => x.id === id).superseded_by, `${id} still live on I2`).toMatch(/^pe_/);
+    }
+    expect(rows.some((x) => x.person_id === "I2" && x.superseded_by == null)).toBe(false);
+    // And all three facts sit on I1.
+    for (const a of ["a_001", "a_002", "a_003"]) {
+      expect(rows.some((x) => x.assertion_id === a && x.person_id === "I1" && x.superseded_by == null), a).toBe(true);
+    }
+  });
+
+  it("MUST NOT FIRE: a person_id re-point on a link that derived nothing is allowed", async () => {
+    // The other direction. The entry rule is about a link that CLAIMED an entry
+    // for someone; re-pointing one that derived no rows strands nothing, and
+    // refusing every re-point would block legitimate correction.
+    await unexpandedOnI2();
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { person_id: "I1" },
+    });
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    expect((await links()).find((x) => x.id === "pe_001").person_id).toBe("I1");
+  });
+
+  it("refuses a person_id update that would leave the derived rows behind", async () => {
+    await expandedOnI2();
+    const r = await researchAppend({
+      projectPath: dir, section: "person_evidence", op: "update",
+      entryId: "pe_001", fields: { person_id: "I1" },
+    });
+    expect(r.ok).toBe(false);
+    const rows = await links();
+    // Nothing moved: a_002 and a_003 are not stranded on I2.
+    expect(rows.find((x) => x.id === "pe_001").person_id).toBe("I2");
+  });
 });

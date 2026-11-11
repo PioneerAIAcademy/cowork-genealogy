@@ -2227,11 +2227,39 @@ prefix means "the tool derived this".
 
 **Correcting a wrong link.** The holder set is the pre-call document's live
 links minus the ones this call retires — a `person_evidence` update setting
-`superseded_by`, and a `rejected_links` append naming the pairing. Both are the
-routes the refusal advises, so following that advice works in the one call it is
-given in. (Superseding onto the *corrected* link cannot be one call: the tool
-assigns that row's id, so the rejection route is the one-call correction and the
-supersede route is for a link already held.)
+`superseded_by`, a `rejected_links` append naming the pairing, **and** an
+assertion this call re-links to a different person, together with the rows that
+assertion derived. The first two are the routes the refusal advises, so
+following that advice works in the one call it is given in.
+
+**Step 6 of `person-evidence` is two calls, and both of them work.** Correcting
+a link the agent itself got wrong goes: append the replacement to get its `pe_`
+id, then update the old entry's `superseded_by` with it. The first call is a
+bare append, so the link being corrected is still live and still holds the
+entry — which is why an assertion re-linked elsewhere in the same call is struck
+from the holder set, along with the rows it derived. Without that, the entry
+rule refused the one route that fixes a wrong link, and neither way out the
+refusal offered was open to an agent: a rejection needs `researcher_words` that
+only the researcher can give (lead, 2026-10-20), and a supersede needs the
+replacement link that very call is trying to make.
+
+**A supersede onto a different person moves the rows the link derived.**
+Retiring only the entry named in the update would leave every row it produced on
+the old person — the same "one entry, one person" break the rule exists to stop,
+arrived at from the other side. So when an update's `superseded_by` names a link
+for a *different* `person_id`, each derived row of the retired trigger is retired
+too and pointed at the replacement's row for its own assertion, which the first
+call's expansion has already written. A supersede onto the **same** person is a
+correction of that link, not a move, and leaves the derived rows alone. No link
+is fabricated: `superseded_by` may only name a link for the same assertion, so a
+derived row with no replacement row to name is left live and named in a warning.
+
+**Re-pointing `person_id` on a link that derived rows is refused.** The entry
+rule governs appends, so an update that moves `person_id` walked around it,
+carrying the one fact across and stranding the derived rows. It is refused with
+the step-6 route named, since that route moves them. A re-point of a link that
+derived nothing is untouched — refusing every re-point would block legitimate
+correction.
 
 **A rejection retires what the rejected link derived.** The rule above is what
 makes this necessary: if a link claims the whole entry, then ruling that link out
