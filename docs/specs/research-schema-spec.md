@@ -1235,8 +1235,8 @@ measured by `packages/engine/mcp-server/dev/measure-namesake-cap.ts` §0).
 | `time_period` | string or null | no | When, as free text (e.g. "born about 1873") |
 | `record_ids` | string[] | yes | The ids of the namesake's own records: a record id in the form assertions carry in `record_id`, a page's image id exactly as `image_transcribe` was given it (or its `ark`), or a full-text hit's `id`. Empty on a pool row |
 | `log_entry_ids` | string[] | no | `log_` references to the searches that found the namesake; each must name an existing log entry |
-| `record_persona_ids` | object | no | Tool-stamped, never the caller's: each listed record found in a sidecar of the row's `log_entry_ids`, mapped to the persona that search or read result names: its `primaryId`, or, where it has none, the person of its record whose ark is the listed id, a household member of a hit or read included. A record found in none has no key |
-| `birth_year` | integer | no | Tool-stamped, never the caller's: the earliest birth, christening or baptism year among the personas that lookup finds, absent when none states one. Stamped with `record_persona_ids`, and filled in on a row without one when a call links its person. The namesake cap's age exemption reads it (see below) |
+| `record_persona_ids` | object | no | Tool-stamped, never the caller's: each listed record found in a sidecar of the row's `log_entry_ids`, mapped to the persona that search or read result names: its `primaryId`, or, where it has none, the person of its record whose ark is the listed id, a household member of a hit or read included, and only a persona one of whose names shares a given word with the row's `name`. A record found in none, or whose persona fails that check, has no key |
+| `birth_year` | integer | no | Tool-stamped, never the caller's: the earliest birth, christening or baptism year among the personas that lookup finds, each sharing a given word with the row's `name`, absent when none states one. Stamped with `record_persona_ids`, and filled in on a row without one when a call links its person. The namesake cap's age exemption reads it (see below) |
 | `notes` | string or null | no | Free text |
 | `created` | string | yes | Tool-stamped ISO 8601 date |
 
@@ -1252,18 +1252,23 @@ the ruling below rejected.
 the record id alone, since a household record gives every member one id, so
 `research_append` stamps the namesake's own persona per listed record, the way it
 fills an assertion's `record_persona_id`: on an append, and on an update that
-sets `record_ids` or `log_entry_ids`, overwriting whatever the caller sent. Each
+sets `record_ids`, `log_entry_ids` or `name`, overwriting whatever the caller sent. Each
 listed id found in the sidecar of a persona-bearing search or read the row cites,
 as a result or as a person of a result's record, is stored in that sidecar's form,
-as an assertion's is. A record found in no sidecar is left
+as an assertion's is. Only a persona sharing a given word with the row's `name` is
+stamped (chesworthrm, 2026-11-09), since a household member listed by mistake
+would otherwise count as the namesake; a Latin or abbreviated form, an initial, or a
+surname first name written without a comma loses its stamp too, the safe direction,
+and §7 says so beside its figures. A record found in no sidecar is left
 unstamped and the row is still written: unlike an assertion, whose persona is
 lost for good when its search staged no sidecar, a missing stamp costs a count,
 not an identity: a row with no persona has no `birth_year`, so it caps every link as a row always did. The first runs that write rows count, with
 `dev/measure-namesake-cap.ts` §7, how many listed records were stamped, how many
 were not though their row cites such a search, and what a persona-keyed refusal
 would refuse and spare; item 10 is decided on those counts. A run whose engine
-cannot stamp a read, or whose engine commit is not in the clone, is left out and
-named rather than counted as zeros (chesworthrm, 2026-11-05). "Would refuse" counts
+cannot stamp a read (chesworthrm, 2026-11-05), stamps without the given name check
+(2026-11-09), or whose engine commit is not in the clone, is left out and named
+rather than counted as zeros. "Would refuse" counts
 a strong link whose assertion's persona is any persona the row stamped, from any
 record id, a household member's included; "spare" counts links to another persona
 of a record the row stamped, the record found as the cap finds a link's (its
@@ -1278,7 +1283,8 @@ share, so a refusal never keys on an image id alone.
 **`birth_year` is what the age exemption reads** (Dallan, 2026-11-05; chesworthrm,
 2026-11-06). A row does not cap a link whose record is dated less than 12 years
 after it, when the record makes the persona an adult (`research-append-tool-spec.md`
-§5). The year comes from the persona the same lookup finds, never from
+§5). The year comes from the persona the same lookup finds, one of the row's
+given name, never from
 `time_period`'s free text, and the earliest of several, which errs toward the cap.
 The stamp writes it with `record_persona_ids`; the fill in writes it alone, on each
 row without one of a person a call's `person_evidence` ops name, so a row written

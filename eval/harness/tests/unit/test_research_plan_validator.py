@@ -1719,6 +1719,34 @@ def test_death_route_passes_legitimate_variants(rationale, date_range):
     check_death_route(b, a, DTH)
 
 
+@pytest.mark.parametrize("rationale", [
+    "Her own death/burial entry, since a baptism may not exist (register start 1688 in Västra "
+    "Karaby). Son Asmund was christened at Barsebäck in 1718 and died there in 1768. Burial "
+    "entries usually state age, and sometimes birthplace or parentage.",
+    "Baptism may not exist, so this is the subject's own death/burial entry. Son Asmund died "
+    "there 4 Feb 1768; a burial entry often states age and birthplace.",
+    "Subject's own death or burial entry. Burial entries commonly give age and sometimes "
+    "birthplace or parents.",
+])
+def test_death_route_passes_when_the_item_calls_her_the_subject(rationale):
+    """Sonnet 5.5 low runs, 2026-11-11: her burial item names her as "her own" or
+    "the subject's own" and never by given name."""
+    b, a = _plan_states([BAPTISM, _pli(2, "church", "1718-1780", rationale), _pli(3, "tax", "1700-1712", "mantalslängder")])
+    check_death_route(b, a, DTH)
+
+
+@pytest.mark.parametrize("rationale", [
+    "Her own son's burial entry in Barsebäck names his mother.",
+    "Her mother's burial entry may name the farm.",
+    "Her husband died in Barsebäck; his burial entry dates the widowhood.",
+    "The subject's husband was buried in Barsebäck.",
+])
+def test_death_route_fires_when_an_unnamed_burial_is_someone_elses(rationale):
+    b, a = _plan_states([BAPTISM, _pli(2, "church", "1718-1780", rationale), _pli(3, "tax", "1700-1712", "mantalslängder")])
+    with pytest.raises(AssertionError, match="no item targets Elena's own death"):
+        check_death_route(b, a, DTH)
+
+
 def test_death_route_skips_an_untagged_test():
     b, a = _plan_states([BAPTISM])
     with pytest.raises(pytest.skip.Exception):
