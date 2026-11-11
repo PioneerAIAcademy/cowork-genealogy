@@ -183,12 +183,20 @@ describe("tree_query", () => {
   it("resolves a FamilySearch id to every person linked to it, case-insensitively", async () => {
     await writeProject({
       ...TREE,
-      persons: [...TREE.persons, { id: "I7", ark: "https://www.familysearch.org/tree/person/details/aaaa-111", names: [{ given: "Dup" }] }],
+      persons: [
+        ...TREE.persons.map((p) => (p.id === "I3" ? { ...p, ark: "ark:/61903/4:1:BBBB-222" } : p)),
+        { id: "I7", ark: "https://www.familysearch.org/tree/person/details/aaaa-111", names: [{ given: "Dup" }] },
+      ],
     });
     const r = await treeQuery({ projectPath: dir, personIds: ["aaaa-111"] });
     if (!r.ok) throw new Error("not ok");
     expect(r.persons.map((p) => p.id)).toEqual(["I1", "I7"]);
     expect(r.missingPersonIds).toEqual([]);
+    // One linked person: just that one.
+    const one = await treeQuery({ projectPath: dir, personIds: ["BBBB-222"] });
+    if (!one.ok) throw new Error("not ok");
+    expect(one.persons.map((p) => p.id)).toEqual(["I3"]);
+    expect(one.missingPersonIds).toEqual([]);
     // A tree id wins over a FamilySearch link.
     const byTreeId = await treeQuery({ projectPath: dir, personIds: ["I1"] });
     if (!byTreeId.ok) throw new Error("not ok");
