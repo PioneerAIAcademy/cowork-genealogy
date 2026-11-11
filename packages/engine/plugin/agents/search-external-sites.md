@@ -298,7 +298,9 @@ A place absent from `externalCollections` was never fetched: call
 `external_links_search({ standardPlace, host: "<e.g. ancestry.com>",
 projectPath })` once (it stores the list), then read as above. Keep rows
 whose `url` is on your target site; a row for the plan item's record type and
-years → Case A, none → Case B.
+years → Case A, none → Case B. Keep the `standardPlace`: a Case B build in
+step 3 passes it, and the tool refuses a site-wide search for a place that was
+never looked up.
 
 ### 2b. Check FamilySearch's own holdings
 
@@ -339,7 +341,10 @@ The tool then writes the search's in-flight `external_site` log
 entry itself and returns its `logId`. It returns
 `{ ok: true, url, notes, access, logId }` or `{ ok: false, reason, errors }`; on
 `ok: false`, surface the errors and fix the inputs rather than retrying
-blindly or hand-writing a URL. **One exception:** when the results for that URL
+blindly or hand-writing a URL. On `reason: "place_not_fetched"`, the place was
+never looked up: make the `external_links_search` call the error names, read the
+stored list (step 2) — it may hold a curated link for Case A — then build again.
+**One exception:** when the results for that URL
 are already in the delegation and no `awaitingUser` row matches it, or `userPresent` is `no`, the search
 is not awaiting anything — call the tool **without** `projectPath`, so no
 in-flight entry is written, and log the search once at step 6.
@@ -371,13 +376,14 @@ build_external_search_url({
 
 Tell the user plainly: "No FamilySearch-curated link for [site] in
 [year window] — using the site-wide search instead." Then call the tool
-without `baseUrl` — it builds the site-wide search, which covers the whole
-site index, not a scoped collection:
+without `baseUrl`, passing the `standardPlace` from step 2 — it builds the
+site-wide search, which covers the whole site index, not a scoped collection:
 
 ```
 build_external_search_url({
   site: "ancestry",
   attributes: { givenName: "Patrick", surname: "Flynn", birthYear: 1845, birthPlace: "Ireland" },
+  standardPlace: "Ireland",
   projectPath: "<projectPath>",
   planItemId: "<pli_XXX>"
 })
