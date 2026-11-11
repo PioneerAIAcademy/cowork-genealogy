@@ -135,6 +135,34 @@ describe("build_external_search_url", () => {
       expect(placeOnly.ok).toBe(true);
       if (!placeOnly.ok) return;
       expect(placeOnly.url).toContain("qevents-event1=Event+et.any+ep.Ireland+epmo.similar");
+      expect(placeOnly.notes.some((n) => n.includes("is not used by myheritage"))).toBe(false);
+    });
+
+    // A caller that is not told logs a place the search never used.
+    it("myheritage: an event the one slot drops is reported, not silently lost", () => {
+      const r = buildExternalSearchUrl({
+        site: "myheritage",
+        attributes: { surname: "Flynn", birthYear: 1845, deathYear: 1908, birthPlace: "Ireland", deathPlace: "Pennsylvania" },
+      });
+      expect(r.ok).toBe(true);
+      if (!r.ok) return;
+      for (const attr of ["deathYear", "birthPlace", "deathPlace"]) {
+        expect(r.notes).toContain(
+          `'${attr}' is not used by myheritage when birthYear is supplied — the site's search takes one event`,
+        );
+      }
+      expect(r.notes.some((n) => n.startsWith("'birthYear'"))).toBe(false);
+
+      const deathYearWins = buildExternalSearchUrl({
+        site: "myheritage",
+        attributes: { surname: "Flynn", deathYear: 1908, birthPlace: "Ireland" },
+      });
+      expect(deathYearWins.ok).toBe(true);
+      if (!deathYearWins.ok) return;
+      expect(deathYearWins.url).toContain("et.death+ey.1908");
+      expect(deathYearWins.notes).toContain(
+        "'birthPlace' is not used by myheritage when deathYear is supplied — the site's search takes one event",
+      );
     });
 
     it("myheritage: marriage year and parent names are reported unused, not silently dropped", () => {

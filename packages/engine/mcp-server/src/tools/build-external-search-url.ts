@@ -1215,6 +1215,24 @@ function siteNotes(
         ...shadowedNotes(site, "localita", [["birthPlace", a.birthPlace], ["deathPlace", a.deathPlace]], str),
       );
       break;
+    case "myheritage": {
+      // One event slot ships (the case arm in siteWideParams has the
+      // measurements): the first valid of a birth year, a death year, then a
+      // place fills it and the rest are dropped. Silence would read as a search
+      // scoped by them, and a caller then logs a place the search never used.
+      const slot: Array<[keyof BuildExternalSearchUrlAttributes, unknown, (v: unknown) => unknown]> = [
+        ["birthYear", a.birthYear, numYear],
+        ["deathYear", a.deathYear, numYear],
+        ["birthPlace", a.birthPlace, str],
+        ["deathPlace", a.deathPlace, str],
+        ["marriagePlace", a.marriagePlace, str],
+      ];
+      const filled = slot.filter(([, value, validate]) => validate(value) !== undefined);
+      for (const [key] of filled.slice(1)) {
+        notes.push(`'${key}' is not used by ${site} when ${filled[0][0]} is supplied — the site's search takes one event`);
+      }
+      break;
+    }
     case "openarch": {
       const given = openarchNamePart(a.givenName);
       const surname = openarchNamePart(a.surname);
