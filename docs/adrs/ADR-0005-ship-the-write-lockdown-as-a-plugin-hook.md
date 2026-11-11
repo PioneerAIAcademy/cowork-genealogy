@@ -196,7 +196,7 @@ this ADR records behaviour rather than citing them:
   **Contradicted 2026-10-19:** it fired, on startup and on resume (below).
 
 **What the step-mode phase-0 probe found (Cowork, 2026-10-19).** Phase 0 of
-`docs/plan/research-step-mode.md`, measured with a recorder plugin on
+`docs/specs/research-step-mode-spec.md`, measured with a recorder plugin on
 `PreToolUse` (matcher `.*`), `UserPromptSubmit`, `SessionStart` and `Stop`. The
 kit was deleted once these results were in. It lived in a step-probe folder
 under `apps/server/dev/`, and is in git history on the PR #3262 branch
