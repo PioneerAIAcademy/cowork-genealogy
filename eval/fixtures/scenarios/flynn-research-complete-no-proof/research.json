@@ -1,7 +1,7 @@
 {
   "project": {
     "id": "rp_001",
-    "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Pennsylvania, died 1908 in Schuylkill County, PA",
+    "objective": "Identify the parents of Patrick Flynn, born ca. 1845 in Ireland, died 1908 in Schuylkill County, PA",
     "subject_person_ids": [
       "I1"
     ],
@@ -12,7 +12,7 @@
   "questions": [
     {
       "id": "q_001",
-      "question": "Who was the father of Patrick Flynn (b. ~1845, PA, d. 1908)?",
+      "question": "Who was the father of Patrick Flynn (b. ~1845, Ireland, d. 1908, Schuylkill County, PA)?",
       "rationale": "Identifying the father is the primary research objective. Mother identification is tracked as a separate downstream question.",
       "selection_basis": "objective_decomposition",
       "priority": "high",
@@ -327,7 +327,7 @@
       },
       "outcome": "positive",
       "results_examined": 1,
-      "notes": "Examined digital images of the Flynn family Bible (imprint 1840) held by a descendant. The birth/family record page records Patrick Flynn, b. 1845, son of Thomas Flynn and Mary Brennan, in a single consistent contemporaneous hand. The Bible imprint predates the entries, supporting contemporaneous recording. Provides a second primary-information source on the parent-child relationship, independent of the 1845 baptismal register (different recorder, different record type).",
+      "notes": "Examined digital images of the Flynn family Bible (imprint 1840) held by a descendant. The Bible descended from Patrick Flynn (d. 1908, Schuylkill County, Pennsylvania) to his daughter, the wife of James Brown (the informant on Patrick's death certificate), and down her line to its present holder. The birth/family record page records Patrick Flynn, b. 1845, son of Thomas Flynn and Mary Brennan, in a single consistent contemporaneous hand. The Bible imprint predates the entries, supporting contemporaneous recording. Provides a second primary-information source on the parent-child relationship, independent of the 1845 baptismal register (different recorder, different record type).",
       "external_site": null
     }
   ],
@@ -435,7 +435,7 @@
     {
       "id": "src_006",
       "gedcomx_source_description_id": "S6",
-      "citation": "Flynn family Bible (Holy Bible, Dublin imprint 1840), birth and family record pages, entry for Patrick Flynn, b. 1845, son of Thomas Flynn and Mary Brennan; original privately held by a Flynn descendant; digital images examined 4 May 2026.",
+      "citation": "Flynn family Bible (Holy Bible, Dublin imprint 1840), birth and family record pages, entry for Patrick Flynn, b. 1845, son of Thomas Flynn and Mary Brennan; original descended from Patrick Flynn (d. 1908, Schuylkill County, Pennsylvania) through his daughter, the wife of James Brown, to its present holder, a descendant in her line; digital images examined 4 May 2026.",
       "citation_detail": {
         "who": "Thomas Flynn (father; recorder of the family birth entries)",
         "what": "Family Bible birth/family record page",
@@ -449,7 +449,7 @@
       "access_date": "2026-05-04",
       "url": null,
       "url_archived": null,
-      "notes": "Bible imprint (1840) predates the birth entries, which are in a single consistent contemporaneous hand — supporting that births were recorded as they occurred, not transcribed later. Recorded by the father, who has firsthand knowledge of his children: primary information, direct evidence of the parent-child relationship, and independent of the baptismal register.",
+      "notes": "Bible imprint (1840) predates the birth entries, which are in a single consistent contemporaneous hand — supporting that births were recorded as they occurred, not transcribed later. Provenance: the Bible descended from Patrick Flynn (d. 1908, Schuylkill County, Pennsylvania) to his daughter, the wife of James Brown (the informant on Patrick's death certificate), and down her line to its present holder. Recorded by the father, who has firsthand knowledge of his children: primary information, direct evidence of the parent-child relationship, and independent of the baptismal register.",
       "log_entry_id": "log_008"
     }
   ],
@@ -772,7 +772,7 @@
         "related_person_role": "child"
       },
       "date": "1845",
-      "date_certainty": "exact",
+      "date_certainty": "approximate",
       "place": "Ireland",
       "information_quality": "primary",
       "informant": "Thomas Flynn (father), recording his children's births in the family Bible contemporaneously",
