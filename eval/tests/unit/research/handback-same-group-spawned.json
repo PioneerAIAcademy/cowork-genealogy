@@ -34,7 +34,7 @@
       },
       {
         "skill": "search-records",
-        "response": "Your delegation is recorded and counts as complete. It changed no project state, so do not re-read research.json to work out what happened or what to do next, and do not walk further down the routing table. Write your summary of what you routed and why, and stop."
+        "response": "Searched collection 1468080 for Unna Halsteinsdatter; no indexed hit.\n\nHand-back: search-external-sites — search the Norwegian Digital Archive for the Hamre marriage register 1770-1800\n\n---\n\nNo indexed match for Unna Halsteinsdatter in the Hamre marriages. A register outside FamilySearch may hold it."
       },
       {
         "skill": "record-structurer",
@@ -64,6 +64,8 @@
   },
   "judge_context": [
     "This is a ROUTING test of research/SKILL.md search step. Spawns are asserted deterministically from the hook records (test_routes_to_expected_skill, test_handback_routing_follows_the_step_group). You cannot see them; do not grade them.",
-    "Every callee is STUBBED, so no project state changes by construction. Do not mark Correctness or Completeness down for missing research.json changes, and do not penalize the router for not completing the research cycle. Grade only whether its narration is honest about what it delegated."
+    "Every callee is STUBBED, so no project state changes by construction. Do not mark Correctness or Completeness down for missing research.json changes, and do not penalize the router for not completing the research cycle. Grade only whether its narration is honest about what it delegated.",
+    "search-records is STUBBED. The spawn is an agent spawn recorded by the hook, not an MCP tool call, so no search_records call appears in the tool calls and you cannot see the spawn. Its canned return says the indexed search found no match for Unna Halsteinsdatter and ends with a Hand-back line. A reply that relays that no-match result is supported by the stub: it is NOT a fabricated search, and a missing search_records tool call is NOT an omission. Do not mark Correctness or Completeness down for either.",
+    "The Hand-back line routing is asserted by the deterministic validator; do not grade whether the router spawned or did not spawn the named agent."
   ]
 }

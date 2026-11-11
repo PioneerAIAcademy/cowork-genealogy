@@ -1306,7 +1306,7 @@ def test_delegation_hands_subject(test, builtin_tool_calls, before_state):
 _SETUP_ORDER_TAG = "attached-records-setup"
 
 
-def test_attached_records_setup_order(tool_calls, test):
+def test_attached_records_setup_order(tool_calls, test, before_state):
     """Tag-gated (``attached-records-setup``): the router runs the attached-
     records step for a subject — ``extraction_append({ personId })``, then
     ``timeline_build`` after it — on a job's "Objective but no questions" row and
@@ -1321,9 +1321,22 @@ def test_attached_records_setup_order(tool_calls, test):
     if _SETUP_ORDER_TAG not in (test.get("tags") or []):
         pytest.skip(f"not an {_SETUP_ORDER_TAG} test")
 
+    persons = ((before_state or {}).get("tree_gedcomx_json") or {}).get("persons") or []
+    tree_ids = {p.get("id") for p in persons}
+    by_fsid = {}
+    for p in persons:
+        found = re.search(r"4:1:([A-Za-z0-9-]+)", str(p.get("ark") or ""))
+        if found:
+            by_fsid.setdefault(found.group(1).upper(), []).append(p.get("id"))
+
     def person(c):
+        # timeline_build and extraction_append both take a tree id or a
+        # FamilySearch id (findAnchor); compare the person they resolve to.
         pid = (c.get("args") or {}).get("personId")
-        return pid.strip() if isinstance(pid, str) else ""
+        pid = pid.strip() if isinstance(pid, str) else ""
+        if pid and pid not in tree_ids and len(by_fsid.get(pid.upper(), [])) == 1:
+            return by_fsid[pid.upper()][0]
+        return pid
 
     first_extract: dict[str, int] = {}
     builds: dict[str, list[int]] = {}
