@@ -9,6 +9,7 @@ import {
 } from "../../src/tools/build-external-search-url.js";
 import { VALIDATOR_ENUMS } from "../../src/validation/validator.js";
 import { recordExternalCollections } from "../../src/utils/external-collections-store.js";
+import { fileStoreOnly } from "../helpers/store-backend.js";
 
 describe("build_external_search_url", () => {
   describe("one passing case per site", () => {
@@ -2102,6 +2103,7 @@ describe("build_external_search_url", () => {
       });
 
       it("refuses when external-collections.json cannot be read", async () => {
+        fileStoreOnly("a document that is not JSON cannot exist in the Postgres store");
         await writeProject();
         await writeFile(join(dir, "external-collections.json"), "{ not json");
         const r = await siteWide({ standardPlace: PA });
