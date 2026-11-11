@@ -1702,13 +1702,32 @@ is listed, and the name sentence only when a name is. It rides
   the main thread then routes them to person-evidence is not checked; the first
   e2e runs that write rows measure it.
 - **The same call stamps `record_persona_ids` and `birth_year`.** On an append, and on an update
-  setting `record_ids` or `log_entry_ids`, `stampNamesakePersonas` looks each
+  setting `record_ids`, `log_entry_ids` or `name` (the check below reads the name),
+  `stampNamesakePersonas` looks each
   listed record up in the sidecars of the row's `log_entry_ids` (persona-bearing
   searches and reads only, matched by bare id), stores a found id in the sidecar's
   form and maps it to that result's `primaryId`, or, where the result has none (a
   read), to the person of its record whose ark is the listed id (`personaFor`). A
   listed household member of a hit or a read is found the same way, by that
-  person's ark, and stored in it. A log that finds the record but names no persona
+  person's ark, and stored in it. **A persona is taken only when one of its names
+  shares a given word with the row's `name`** (chesworthrm, 2026-11-09). Words come
+  from `ownGivenWords` once every mark but a letter, an apostrophe or a hyphen is a
+  space, so a bracketed placeholder ("(Mrs.)") is still dropped; then hyphenated
+  words are split, accents folded, and initials and particles (de, da, do, dos,
+  das) dropped. The row's are the words of
+  its name before any relative it names ("wife of Edwin Earnest"), read "Given
+  Surname" when written "Surname, Given", less name suffixes, and less the last
+  word, the surname, when two or more are left, taken before any hyphen in it is
+  split (`sharesRowGivenName`). A row whose name has "Mrs." anywhere before any
+  relative it names may give her husband's given name ("Mrs. Edwin Earnest",
+  "Hannah Earnest (Mrs. Edwin Earnest)", "Earnest, Edwin, Mrs."), so it takes no
+  persona not recorded female. A persona with no entry, or with no such word,
+  counts as none named, so a household member listed by mistake (a husband's own
+  record for his wife's namesake) is left unstamped and gives the row no year. A
+  Latin given name for an English one (Maria for Mary), an abbreviation (Wm for
+  William), an initial, and a surname first name written without a comma lose
+  their stamp too: the safe direction, since a wrong stamp corrupts item 10's
+  counts and the age exemption's year. A log that finds the record but names no persona
   for it does not end the lookup: a later cited log may still stamp it, and
   otherwise the first found form is kept. `birth_year` is the earliest birth,
   christening or baptism year among the personas so found, and is deleted when
@@ -1721,7 +1740,7 @@ is listed, and the name sentence only when a name is. It rides
   `person_evidence` ops name a person, each of that person's rows with no
   `birth_year` gets one by the same lookup (`fillNamesakeBirthYears`), before the
   cap judges; nothing else of the row changes, and a row whose listed records no
-  persona matches exactly stays without one. So a row written before the year was
+  persona matches exactly, or only one of another given name, stays without one. So a row written before the year was
   stamped gets one the first time a call links its person. A row whose personas
   state no year is looked up again on each later call that links its person; the
   call reads each sidecar once, and a read that fails leaves the row to the next

@@ -3314,6 +3314,58 @@ function ownGivenWords(given: unknown): string[] {
     .filter((w) => w !== "" && w !== "of" && /\p{L}/u.test(w) && !PLACEHOLDER_GIVEN.has(w));
 }
 
+/** A name's words as the namesake persona lookup reads them: every mark but a
+ *  letter, an apostrophe or a hyphen made a space first, so a bracketed
+ *  placeholder ("(Mrs.)") is still one, then `ownGivenWords`. */
+function lookupNameWords(text: string): string[] {
+  return ownGivenWords(text.replace(/[^\p{L}\p{M}\s'-]/gu, " "));
+}
+
+/** Words as the lookup compares them: hyphenated words split, accents folded,
+ *  apostrophes trimmed from each end, and initials and particles dropped. */
+function comparableWords(words: readonly string[]): string[] {
+  return words
+    .flatMap((w) => w.split("-"))
+    .map((w) => w.normalize("NFD").replace(/\p{M}/gu, "").replace(/^'+|'+$/g, ""))
+    .filter((w) => w.length > 1 && !NAME_PARTICLES.has(w));
+}
+
+/** Particles a given name can carry ("Maria de Jesus"), which name no one. */
+const NAME_PARTICLES: ReadonlySet<string> = new Set(["de", "da", "do", "dos", "das"]);
+
+/** A relative named inside a row's name ("Hannah Earnest (wife of Edwin
+ *  Earnest)"): the words from the relation on are the relative's. */
+const RELATIVE_OF = /\b(?:wife|husband|widow|widower|relict|son|daughter|child|mother|father|brother|sister)\s+of\b/i;
+
+/** The given words of a namesake row's `name`, a free string: the words before
+ *  any relative it names, read "Given Surname" (`surnameLast`), less name
+ *  suffixes, and less the last word, the surname, when two or more are left. */
+function rowGivenWords(name: unknown): RowGiven {
+  if (typeof name !== "string") return { words: new Set(), mrs: false };
+  const relative = RELATIVE_OF.exec(name);
+  const before = relative ? name.slice(0, relative.index) : name;
+  const own = surnameLast(before);
+  const words = lookupNameWords(own).filter((w) => !NAME_SUFFIXES.has(w));
+  return {
+    words: new Set(comparableWords(words.length > 1 ? words.slice(0, -1) : words)),
+    mrs: /\bmrs\b/i.test(before),
+  };
+}
+
+/** A row's given words, and whether its name has "Mrs." anywhere before any
+ *  relative it names, which may give her husband's given name ("Mrs. Edwin
+ *  Earnest"). */
+type RowGiven = { words: ReadonlySet<string>; mrs: boolean };
+
+/** Whether one of `person`'s names has a given word of the row's; a row named
+ *  "Mrs." never takes a persona not recorded female, who may be her husband. */
+function sharesRowGivenName(person: any, row: RowGiven): boolean {
+  if (row.mrs && knownSex(person) !== "female") return false;
+  return ((Array.isArray(person?.names) ? person.names : []) as any[]).some(
+    (n) => typeof n?.given === "string" && comparableWords(lookupNameWords(n.given)).some((w) => row.words.has(w)),
+  );
+}
+
 /** Why a relative's names cannot separate namesakes, or null when one can. A
  *  relative separates them only through a given name of their own: not a
  *  placeholder, and not one that only repeats the given name of the relative's
@@ -3353,15 +3405,18 @@ const INVERSE_RELATION: ReadonlyMap<string, string> = new Map([
 ]);
 const NAME_SUFFIXES: ReadonlySet<string> = new Set(["jr", "sr", "ii", "iii", "iv", "junior", "senior"]);
 
+/** A name written "Surname, Given" as "Given Surname"; any other name as it is. */
+function surnameLast(v: string): string {
+  if (!v.includes(",")) return v;
+  const [surname, given] = v.split(",", 2);
+  return `${given} ${surname}`;
+}
+
 /** A name as the co-resident exclusion compares it: the first given name and
  *  the surname, lower case, a generational suffix dropped. */
 function nameKey(value: unknown): string | null {
   if (typeof value !== "string") return null;
-  let v = value.toLowerCase();
-  if (v.includes(",")) {
-    const [surname, given] = v.split(",", 2);
-    v = `${given} ${surname}`;
-  }
+  const v = surnameLast(value.toLowerCase());
   const words = v.replace(/[^\p{L}\s'-]/gu, " ").split(/\s+/).filter((w) => w && !NAME_SUFFIXES.has(w));
   if (words.length === 0) return null;
   return words.length === 1 ? words[0] : `${words[0]} ${words[words.length - 1]}`;
@@ -4518,7 +4573,9 @@ function logIndex(research: any): Map<string, any> {
 /** What the persona lookup of item 10 finds for one row in its own search and
  *  read sidecars: each listed record id in the sidecar's form, the persona each
  *  found record names (a search hit's `primaryId`, else the person whose ark is
- *  the listed one), and those personas' own entries. */
+ *  the listed one) when one of its names shares a given word with the row's
+ *  `name` (chesworthrm, 2026-11-09), and those personas' own entries. A persona
+ *  with no entry, or with none of the row's given words, counts as none named. */
 async function lookUpNamesakePersonas(
   row: any,
   logById: ReadonlyMap<string, any>,
@@ -4526,6 +4583,7 @@ async function lookUpNamesakePersonas(
 ): Promise<{ recordIds: unknown[]; stamp: Record<string, string>; personas: any[] }> {
   const stamp: Record<string, string> = {};
   const personas: any[] = [];
+  const rowGiven = rowGivenWords(row?.name);
   const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
     if (typeof id !== "string") return id;
     const bare = arkToBareId(id);
@@ -4553,9 +4611,11 @@ async function lookUpNamesakePersonas(
         form ??= person?.ark;
       }
       if (typeof form !== "string") continue;
-      if (isPersonaId(persona)) {
+      // Another person of the record, such as a household member listed by
+      // mistake, would corrupt item 10's count and give the row their birth year.
+      if (isPersonaId(persona) && sharesRowGivenName(person, rowGiven)) {
         stamp[form] = persona;
-        if (person) personas.push(person);
+        personas.push(person);
         return form;
       }
       found ??= form;
@@ -4577,10 +4637,15 @@ function earliestPersonaBirthYear(personas: readonly any[]): number | null {
   return out;
 }
 
+/** The row fields whose update restamps it: the stamp reads the listed records,
+ *  the logs that found them, and the name a persona must share. */
+const RESTAMPING_FIELDS = ["record_ids", "log_entry_ids", "name"] as const;
+
 /** Item 10 of #3363 (chesworthrm, 2026-10-24): stamps `record_persona_ids` on
- *  each row the call appended, or updated through `record_ids` or
- *  `log_entry_ids`, from the row's own search and read sidecars, so the first
- *  runs can count what a persona-keyed refusal would catch, and `birth_year`,
+ *  each row the call appended, or updated through `record_ids`, `log_entry_ids`
+ *  or `name`, from the row's own search and read sidecars and only with a
+ *  persona of the row's given name, so the first runs can count what a
+ *  persona-keyed refusal would catch, and `birth_year`,
  *  the earliest birth year those personas state, which the age exemption reads.
  *  Overwrites whatever the caller supplied; an update cannot set either field
  *  (`updatableFields`). A found record id is stored in the sidecar's form, as an
@@ -4597,7 +4662,7 @@ export async function stampNamesakePersonas(
   for (const a of applied) {
     if (a.section !== "namesakes" || a.noop) continue;
     const fields = (ops[a.opIndex] as any)?.fields;
-    if (a.op === "update" && !("record_ids" in (fields ?? {})) && !("log_entry_ids" in (fields ?? {}))) continue;
+    if (a.op === "update" && !RESTAMPING_FIELDS.some((f) => f in (fields ?? {}))) continue;
     const row = rows.find((r) => r && r.id === a.entryId);
     if (!row) continue;
     const { recordIds, stamp, personas } = await lookUpNamesakePersonas(row, logById, readResults);
@@ -4624,8 +4689,9 @@ export function linkedPersonIds(research: any, applied: ReadonlyArray<AppliedByA
 }
 
 /** The fill in of #3363 (chesworthrm, 2026-11-06): each row of `personIds` with
- *  no `birth_year` gets the year the persona lookup finds, and nothing else of
- *  the row changes; a row it finds none for stays without one. Runs when a call
+ *  no `birth_year` gets the year the persona lookup finds, from personas of the
+ *  row's given name only, and nothing else of the row changes; a row it finds
+ *  none for stays without one. Runs when a call
  *  links the row's person, so a row written before the stamp read years gets
  *  one. Rows in `skip` (just stamped) are left alone. Returns the ids it filled. */
 export async function fillNamesakeBirthYears(
