@@ -172,10 +172,11 @@ async function projectUploads(projectPath: string): Promise<ProjectContextUpload
     .map((e) => ({ name: e.name, uploaded: new Date(e.mtimeMs).toISOString(), hasText: names.has(`${e.name}.txt`) }));
 }
 
-export interface ProjectContextCollectionCounts {
-  total: number;
-  byRecordType: Record<string, number>;
-}
+/** A place's stored counts, or `{ tooLarge: true }` for a place external_links_search
+ *  refused as too large to list: looked up, but its collections are unknown, never 0. */
+export type ProjectContextCollectionCounts =
+  | { total: number; byRecordType: Record<string, number> }
+  | { tooLarge: true };
 
 /** Counts from the stored lists; `undefined` when there is nothing to report. Never
  *  throws: a missing or unreadable file must not fail the whole projection. */
@@ -191,6 +192,10 @@ async function externalCollectionCounts(
   if (!doc) return undefined;
   const out: Record<string, ProjectContextCollectionCounts> = {};
   for (const place of Object.keys(doc.places).sort()) {
+    if (doc.places[place]?.too_large === true) {
+      out[place] = { tooLarge: true };
+      continue;
+    }
     const rows = Array.isArray(doc.places[place]?.rows) ? doc.places[place].rows : [];
     const byRecordType: Record<string, number> = {};
     for (const row of rows) {
@@ -577,7 +582,8 @@ export const projectContextSchema = {
     "style every skill applies; subscriptions is researcher_profile.subscriptions. " +
     "For tree facts, dates, places, marriages, cited S ids and arks call tree_query. " +
     "externalCollections counts stored curated " +
-    "collections per place by record type (rows: research_query external_collections). " +
+    "collections per place by record type (rows: research_query external_collections); " +
+    "a place too large to list shows {tooLarge: true}, meaning looked up but its collections unknown, not none. " +
     "sectionCounts gives the entry count of every research.json section research_query " +
     "serves (null when research_query would refuse the section), and unregisteredDisagreementCount the project-wide count of " +
     "unregistered disagreements research_query's conflicts section reports — a section " +
