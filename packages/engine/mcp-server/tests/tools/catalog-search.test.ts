@@ -233,7 +233,6 @@ describe("catalog_search — hydration", () => {
       filmNotes: [{
         filmNumber: "111",
         imageGroupNumber: "999",
-        copyLocation: "Granite Mountain Record Vault",
         text: "Baptisms 1750-1790 | Marriages 1750-1790",
       }],
       availableOnline: true,
@@ -303,11 +302,10 @@ describe("catalog_search — hydration", () => {
     expect(r.hits[0].filmNotes?.[0]).toEqual({
       filmNumber: "111",
       imageGroupNumber: "999",
-      copyLocation: "Granite Mountain Record Vault",
       text: "Baptisms 1750-1790",
     });
     expect(Object.keys(r.hits[0].filmNotes?.[0] ?? {})).toEqual([
-      "filmNumber", "imageGroupNumber", "copyLocation", "text",
+      "filmNumber", "imageGroupNumber", "text",
     ]);
   });
 
@@ -1561,14 +1559,16 @@ describe("catalog_search — errors", () => {
 // A hydrated item can carry a film note per frame range, dozens of them on one
 // reel. Notes that agree on every field but `text` are one entry, texts joined
 // with " | " in order. Nothing is dropped, and notes that differ in ANY other
-// field stay apart: the plugin reads `copyLocation` and the numbers off each
-// entry, so a merge across them would make an entry say something no note said.
+// field stay apart: the plugin reads the numbers off each entry, so a merge
+// across them would make an entry say something no note said. The copy location
+// is not read, so one reel held in two places is one entry.
 
 /** The answer the tool gave for "Ireland" + "Catholic parish registers baptism
  *  marriage" on 2026-10-22, saved verbatim by `dev/try-catalog-search.ts --save`
  *  at the defaults (count 25, hydrate 10) before film notes were merged or
  *  budgeted: 433 hits, 25 returned, 10 hydrated, 55,803 characters. Its hits still
- *  carry the item `url` and `authors`, which the tool no longer returns. */
+ *  carry the item `url` and `authors`, which the tool no longer returns. Its film
+ *  notes' `copyLocation` was deleted by hand when the tool stopped returning it. */
 const IRELAND: SavedAnswer = JSON.parse(
   readFileSync(
     new URL("../fixtures/catalog-search/ireland-catholic-parish-registers.answer.json", import.meta.url),
@@ -1607,7 +1607,6 @@ describe("catalog_search — one entry per reel", () => {
       {
         filmNumber: "100",
         imageGroupNumber: "900",
-        copyLocation: "Granite Mountain Record Vault",
         text: "MIC 1/1-10 baptisms | MIC 1/11-20 marriages | MIC 1/21-30 burials",
       },
     ]);
@@ -1616,7 +1615,6 @@ describe("catalog_search — one entry per reel", () => {
   it.each([
     ["filmno", "101"],
     ["digital_film_no", "901"],
-    ["copy_location", "FamilySearch Library"],
   ])("two notes that differ only in %s stay apart", async (field, other) => {
     const entries = await notesOf(note({ text: "a" }), note({ text: "b", [field]: other }));
     expect(entries).toHaveLength(2);
@@ -1624,10 +1622,15 @@ describe("catalog_search — one entry per reel", () => {
   });
 
   it("a note missing a field the other has stays apart from it", async () => {
-    const { copy_location: _gone, ...noCopy } = note({ text: "b" });
-    const entries = await notesOf(note({ text: "a" }), noCopy);
+    const { digital_film_no: _gone, ...noDgs } = note({ text: "b" });
+    const entries = await notesOf(note({ text: "a" }), noDgs);
     expect(entries).toHaveLength(2);
-    expect(entries[1]).not.toHaveProperty("copyLocation");
+    expect(entries[1]).not.toHaveProperty("imageGroupNumber");
+  });
+
+  it("one reel held in two places (vault and library) is one entry, with no copyLocation", async () => {
+    const entries = await notesOf(note({ text: "a" }), note({ text: "b", copy_location: "FamilySearch Library" }));
+    expect(entries).toEqual([{ filmNumber: "100", imageGroupNumber: "900", text: "a | b" }]);
   });
 
   it.each([
@@ -1667,7 +1670,7 @@ describe("catalog_search — one entry per reel", () => {
 
   it("hydration reads none of shelf, item_image_start_no and fs_indexed, even when the service sends them", async () => {
     const [entry] = await notesOf(note({ text: "a", shelf: "Film", item_image_start_no: "42" }));
-    expect(Object.keys(entry)).toEqual(["filmNumber", "imageGroupNumber", "copyLocation", "text"]);
+    expect(Object.keys(entry)).toEqual(["filmNumber", "imageGroupNumber", "text"]);
     // A note with nothing but those two is no entry at all, not an empty one: it
     // would claim the item was filmed while naming neither the film nor the DGS.
     respond({ totalHits: 1, searchHits: [hit("koha:1")] }, { source: { film_note: { shelf: "Film", item_image_start_no: "7" } } });
@@ -1688,7 +1691,7 @@ describe("catalog_search — one entry per reel", () => {
         { filmNumber: "1", imageGroupNumber: "2", indexed: "Y", shelf: "Film", copyLocation: "V", text: "t", imageStartNumber: "7", mystery: "x" },
       ] as unknown as CatalogFilmNote[];
       const [entry] = mergeFilmNotes(saved);
-      expect(Object.keys(entry)).toEqual(["filmNumber", "imageGroupNumber", "copyLocation", "text"]);
+      expect(Object.keys(entry)).toEqual(["filmNumber", "imageGroupNumber", "text"]);
     });
 
     // The reel key is derived from FILM_FIELDS, so these loop over it: a field
@@ -1697,13 +1700,12 @@ describe("catalog_search — one entry per reel", () => {
     const full = (o: CatalogFilmNote = {}): CatalogFilmNote => ({
       filmNumber: "10",
       imageGroupNumber: "20",
-      copyLocation: "V",
       text: "t",
       ...o,
     });
 
     it("the reel key is every field of the film-note table but text", () => {
-      expect(identity.length).toBeGreaterThanOrEqual(3);
+      expect(identity).toEqual(["filmNumber", "imageGroupNumber"]);
       expect(FILM_FIELDS.map(([key]) => key)).toContain("text");
       for (const key of identity) {
         const entries = mergeFilmNotes([full(), full({ [key]: "other", text: "u" })]);
@@ -1739,7 +1741,7 @@ describe("catalog_search — one entry per reel", () => {
       expect(entries.length).toBeGreaterThan(1);
       for (const [i, e] of entries.entries()) {
         const { text: _t, ...reel } = e;
-        expect(reel).toEqual({ filmNumber: "10", imageGroupNumber: "20", copyLocation: "V" });
+        expect(reel).toEqual({ filmNumber: "10", imageGroupNumber: "20" });
         expect((e.text ?? "").length).toBeLessThanOrEqual(REEL_TEXT_CAP);
         // Each run is as full as it can be: the next note would have passed the cap.
         const next = entries[i + 1]?.text?.split(" | ")[0];
@@ -1800,7 +1802,7 @@ describe("catalog_search — one entry per reel", () => {
     const merged = mergeFilmNotes(original);
     // The reel, as the rule defines it, counted here independently of the code.
     const reelOfNote = (n: CatalogFilmNote): string =>
-      JSON.stringify([n.filmNumber ?? null, n.imageGroupNumber ?? null, n.copyLocation ?? null]);
+      JSON.stringify([n.filmNumber ?? null, n.imageGroupNumber ?? null]);
     const reels = [...new Set(original.map(reelOfNote))];
     expect(merged.length).toBeLessThan(original.length);
     // Every reel is there, its entries sit together, and reels keep the order they first appeared in.
@@ -1877,7 +1879,7 @@ function upstreamFor(saved: SavedAnswer): { search: unknown; items: unknown[] } 
 /** The distinct reels of a note list, by the rule, counted independently of the code. */
 const reelKeys = (notes: readonly CatalogFilmNote[]): Set<string> =>
   new Set(
-    notes.map((n) => JSON.stringify([n.filmNumber ?? null, n.imageGroupNumber ?? null, n.copyLocation ?? null])),
+    notes.map((n) => JSON.stringify([n.filmNumber ?? null, n.imageGroupNumber ?? null])),
   );
 
 /** `small` is some of `big`'s entries, whole, in `big`'s order. */
@@ -1909,7 +1911,6 @@ const reels = (count: number, textLength = 40, from = 0): object[] =>
 const entryFor = (j: number, textLength = 40): CatalogFilmNote => ({
   filmNumber: String(1_000_000 + j),
   imageGroupNumber: String(5_000_000 + j),
-  copyLocation: "Granite Mountain Record Vault",
   text: `${j}:`.padEnd(textLength, "x"),
 });
 
@@ -2627,7 +2628,6 @@ describe("catalog_search — the answer stays under the spill line", () => {
             return {
               filmNumber: String(100 + reel),
               imageGroupNumber: String(900 + reel),
-              copyLocation: "Vault",
               ...(length > 0 ? { text: `${j}:`.padEnd(Math.max(length, 3), "x") } : {}),
             };
           });

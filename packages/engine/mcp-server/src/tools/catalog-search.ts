@@ -303,13 +303,13 @@ function renderNote(n: Collapsed | undefined): string {
  *  invisible to both review and tests. The DGS is image_search's and
  *  fulltext_search's `imageGroupNumber`. `shelf`, `item_image_start_no` and
  *  `fs_indexed` are deliberately not read: no plugin body, validator or fixture
- *  uses them (spec, Response). A reel's identity is derived from this table
+ *  uses them (spec, Response). Nor is `copy_location`: a hit's `repositoryCalls`
+ *  already names the same places, so it repeated them on every reel. A reel's identity is derived from this table
  *  (`REEL_KEY_FIELDS`), so a field added here is part of the reel key and of its
  *  entry with no second edit. */
 export const FILM_FIELDS: readonly (readonly [keyof CatalogFilmNote, string])[] = [
   ["filmNumber", "filmno"],
   ["imageGroupNumber", "digital_film_no"],
-  ["copyLocation", "copy_location"],
   ["text", "text"],
 ];
 
@@ -395,8 +395,8 @@ const FILM_TEXT_SEPARATOR = " | ";
 
 /** The film-note fields that identify a reel: every field of `FILM_FIELDS` but
  *  `text`, which is what varies. Notes that agree on ALL of them are one reel.
- *  `copyLocation` is among them on purpose: the same reel held in two places is
- *  two entries, and the plugin reads `copyLocation` off each one. */
+ *  With no copy location among them, the same reel held in two places (vault and
+ *  library) is one entry, its notes' texts joined. */
 const REEL_KEY_FIELDS = FILM_FIELDS.map(([key]) => key).filter((key) => key !== "text");
 
 /** The reel a film note or an entry belongs to. The values are JSON-quoted, so
