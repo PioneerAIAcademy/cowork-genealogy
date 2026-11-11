@@ -14,13 +14,16 @@ import { recordIndexFields } from "../utils/record-index-fields.js";
 import { birthRangesFor } from "../utils/record-extract.js";
 import { toArk, arkToBareId, isDocumentImageArk, imageViewerUrl } from "../utils/ark.js";
 import { extractImageContextQuery } from "../utils/fs-image-fetch.js";
+import { findRequestedPersona } from "../utils/requested-persona.js";
 import type { GedcomX, SimplifiedFact, SimplifiedGedcomX } from "../types/gedcomx.js";
 import type { RecordSearchResult } from "../types/record-search.js";
 import type {
+  CompactRecordReadAnswer,
   RecordReadInput,
   RecordReadResult,
   StagedRecordReadElement,
 } from "../types/record-read.js";
+import { compactRecordReadAnswer } from "../utils/staged-compaction.js";
 import { rejectedTokenMessage } from "../auth/config.js";
 
 const RECAPI_BASE =
@@ -50,6 +53,16 @@ export const recordReadSchema = {
     "years and the record has no full or month-and-year birth date; a bare " +
     "year outside the range is kept and gets no entry. Absent when no " +
     "persona has one. " +
+    "One read returns every persona on the record, so reading another persona " +
+    "of the same record adds nothing. The answer is compacted: no `sources`, " +
+    "`places` or name/fact/relationship ids; `citation` and `recordUrl` (plus " +
+    "`collectionTitle` when the citation lacks it) describe the source. A " +
+    "large household keeps its first 40 personas whole (the one asked for, its " +
+    "relatives and the principal first), then names-only stubs, and counts the " +
+    "rest in `personsOmitted`. With `projectPath` the full record is staged " +
+    "(`staged.resultsRef`) for research_log_append and extraction_append; no " +
+    "read returns it uncompacted. Pass the answer as merge_warnings' " +
+    "`candidateGedcomx` as it is. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -93,6 +106,22 @@ export const recordReadSchema = {
 } as const;
 
 // ─── Entry point ──────────────────────────────────────────────────────────
+
+/**
+ * The `record_read` tool call: `recordReadTool`, then `compactRecordReadAnswer`
+ * (record-read-tool-spec.md §6). extraction_append and same_person call
+ * `recordReadTool` directly and keep the full document; the compaction lives
+ * here so it cannot reach them. The return type admits the full shape too: the
+ * compactor is idempotent, and the eval fixtures carry the full shape, which the
+ * harness compacts as it serves them.
+ */
+export async function recordReadMcpTool(
+  input: RecordReadInput,
+  principal: Principal,
+): Promise<CompactRecordReadAnswer | RecordReadResult> {
+  return compactRecordReadAnswer(await recordReadTool(input, principal), input.recordId);
+}
+
 
 export async function recordReadTool(
   input: RecordReadInput,
@@ -273,12 +302,7 @@ export function extractImageArk(
   };
 
   if (personId) {
-    const wanted = arkToBareId(personId);
-    const person = doc.persons?.find(
-      (pp) =>
-        pp.id === wanted ||
-        (typeof pp.ark === "string" && arkToBareId(pp.ark) === wanted),
-    );
+    const person = findRequestedPersona(doc, personId);
     for (const ref of person?.sources ?? []) {
       if (!ref.ref) continue;
       const sd = sources.find((cand) => cand.id === ref.ref);

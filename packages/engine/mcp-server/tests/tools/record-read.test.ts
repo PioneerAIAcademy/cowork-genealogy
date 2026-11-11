@@ -23,7 +23,10 @@ vi.mock("../../src/utils/place-api.js");
 
 import { mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
-import { join } from "path";
+import { dirname, join, sep } from "path";
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { callTool } from "../helpers/call-tool.js";
 import {
   recordReadTool,
   recordReadDocument,
@@ -1604,5 +1607,92 @@ describe("recordReadTool — birthRanges from the stated age", () => {
       LOCAL,
     );
     expect(out.birthRanges).toBeUndefined();
+  });
+});
+
+// ─── the answer is compacted at the MCP boundary only (#4415) ─────────────
+
+const RECORD_WITH_SOURCES: GedcomX = {
+  persons: [
+    {
+      id: "QVS9-DHDB",
+      gender: { type: "http://gedcomx.org/Male" },
+      names: [
+        {
+          id: "name-1",
+          nameForms: [
+            {
+              parts: [
+                { type: "http://gedcomx.org/Given", value: "John" },
+                { type: "http://gedcomx.org/Surname", value: "Smith" },
+              ],
+            },
+          ],
+        },
+      ],
+      facts: [{ id: "fact-1", type: "http://gedcomx.org/Birth", date: { original: "1850" } }],
+      sources: [{ description: "#src-1" }],
+    },
+  ],
+  sourceDescriptions: [
+    {
+      id: "src-1",
+      resourceType: "http://gedcomx.org/Record",
+      about: "https://www.familysearch.org/ark:/61903/1:2:QQQQ-QQQ",
+      titles: [{ value: 'Entry for John Smith, "Ohio, Births"' }],
+      citations: [{ value: '"Ohio, Births", FamilySearch, Entry for John Smith.' }],
+    },
+  ],
+} as unknown as GedcomX;
+
+describe("record_read compacts its answer at the MCP boundary only (#4415)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-read-compact-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("the handler keeps sources and ids for in-process readers, and stages the full document", async () => {
+    mockOk(RECORD_WITH_SOURCES);
+    const live = await recordReadTool({ recordId: "QVS9-DHDB", projectPath: dir }, LOCAL);
+    expect(live.sources?.length).toBeGreaterThan(0);
+    expect(live.persons?.[0]?.names?.[0]?.id).toBeDefined();
+    expect(live.persons?.[0]?.facts?.[0]?.id).toBeDefined();
+
+    const { readFile } = await import("fs/promises");
+    const envelope = JSON.parse(await readFile(join(dir, live.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0].gedcomx.sources?.length).toBeGreaterThan(0);
+    expect(envelope.payload.results[0].gedcomx.persons[0].names[0].id).toBeDefined();
+  });
+
+  it("the record_read tool call answers with the compacted shape", async () => {
+    mockOk(RECORD_WITH_SOURCES);
+    const { isError, text } = await callTool("record_read", { recordId: "QVS9-DHDB" });
+    expect(isError).toBe(false);
+    const answer = JSON.parse(text);
+    expect(answer.sources).toBeUndefined();
+    expect(answer.citation).toBe('"Ohio, Births", FamilySearch, Entry for John Smith.');
+    expect(answer.recordUrl).toBe("https://www.familysearch.org/ark:/61903/1:2:QQQQ-QQQ");
+    expect(answer.persons[0].id).toBe("QVS9-DHDB");
+    expect(answer.persons[0].names[0].id).toBeUndefined();
+    expect(answer.persons[0].facts[0].id).toBeUndefined();
+  });
+
+  it("only the record_read tool call compacts, so extraction_append and same_person keep the full document", () => {
+    const srcDir = join(dirname(fileURLToPath(import.meta.url)), "../../src");
+    const importers = (symbol: string) =>
+      readdirSync(srcDir, { recursive: true, encoding: "utf-8" })
+        .filter((f) => f.endsWith(".ts"))
+        .filter((f) =>
+          new RegExp(`import\\s*\\{[^}]*\\b${symbol}\\b[^}]*\\}\\s*from`).test(
+            readFileSync(join(srcDir, f), { encoding: "utf-8" }),
+          ),
+        )
+        .map((f) => f.split(sep).join("/"))
+        .sort();
+    expect(importers("compactRecordReadAnswer")).toEqual(["tools/record-read.ts"]);
+    expect(importers("recordReadMcpTool")).toEqual(["server.ts"]);
   });
 });

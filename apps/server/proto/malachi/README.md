@@ -12,9 +12,11 @@ MinIO and an nginx edge. There is no worker, queue or shim.
 | `dml_role.py` | Creates the role web and tools connect as. Runs in the `migrate` one-shot. |
 | `project_export.py` | `make malachi-export`. Runs in the web image. |
 | `openrouter_seed.py` | `make malachi-openrouter`. Runs in the web image. |
+| `user_admin.py` | `make beta-block-user` and `make beta-delete-user`. Runs in the web image. |
 | `rehearsal.sh` | `make malachi-rehearsal`: all of this on a Mac, under its own name. |
 
-`tests/test_malachi_stack.py` and `tests/test_malachi_role_pg.py` pin the rules.
+`tests/test_malachi_stack.py`, `tests/test_malachi_role_pg.py` and
+`tests/test_malachi_user_admin_pg.py` pin the rules.
 
 ## What matters on this host
 
@@ -84,6 +86,8 @@ run `make malachi-openrouter EMAIL=`. Seed one person at a time, on the lead's s
 | `make malachi-restore-check` | Restores the newest backup into a scratch database, then checks the ledger and every blob against the mirror. |
 | `make malachi-export EMAIL=` or `PROJECT=` | A project's files in `DATA_DIR/exports/<id>/`, what the web tier's download would give, with its `MISSING.txt`. |
 | `make malachi-openrouter EMAIL=` | Encrypts the env file's `OPENROUTER_SEED_KEY` onto that user's row. They must have signed in once. |
+| `make beta-block-user ACCOUNT=` | Blocks one user: their cookie and their connector token are refused from the next request. |
+| `make beta-delete-user ACCOUNT= CODE=` | Checks the deletion code, then prints the account, its projects and what would be deleted. `CONFIRM=yes` deletes. See below. |
 | `make malachi-prune` | Removes this stack's superseded images, and build cache older than a week. Build cache has no owner, so that half reaches everyone on the host. |
 | `make malachi-down` | Stops the stack and keeps the data. |
 
@@ -104,6 +108,23 @@ before it builds. `malachi-check` and `malachi-backup` want 20 GB free on `DATA_
 
 **Docker's root.** Each `malachi-up` removes the images it replaced, and only this stack's. Build
 cache keeps growing until `make malachi-prune`, which is what to run when `malachi-up` refuses.
+
+## Deleting a user
+
+A user asks by quoting their account id and deletion code, both from the account menu.
+
+```
+make beta-delete-user ACCOUNT=usr_... CODE=...
+make beta-delete-user ACCOUNT=usr_... CODE=... CONFIRM=yes
+```
+
+The first run checks the code and deletes nothing: compare what it prints with the request. The
+second blocks the user, deletes the objects under each of their projects and their feedback
+bundles, deletes every row in one transaction, then removes their folders under
+`DATA_DIR/exports/`. A wrong code changes nothing, and nothing prints the code.
+
+Backups taken before the delete still hold the user's data until they are pruned. Their email
+stays on the allowlist, so a new sign-in creates a new, empty account.
 
 ## Restoring after a loss
 
