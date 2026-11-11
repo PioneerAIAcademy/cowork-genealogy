@@ -2494,7 +2494,6 @@ def test_build_external_search_url_without_projectpath_writes_nothing(tmp_path):
     assert _logged(ws) == []
 
 
-@pytest.mark.requires_engine_build
 def _store_fetched_place(ws, place: str) -> None:
     """The entry external_links_search leaves for a place it looked up."""
     (ws / "external-collections.json").write_text(
@@ -2502,6 +2501,7 @@ def _store_fetched_place(ws, place: str) -> None:
     )
 
 
+@pytest.mark.requires_engine_build
 def test_build_external_search_url_with_projectpath_writes_one_entry(tmp_path):
     """A projectPath the agent sent is rebased onto the workspace and honoured."""
     ws = _hand_off_workspace(tmp_path)
@@ -2526,6 +2526,7 @@ def test_build_external_search_url_with_projectpath_writes_one_entry(tmp_path):
     assert log[0]["external_site"]["url_generated"] == out["url"]
 
 
+@pytest.mark.requires_engine_build
 def test_build_external_search_url_refuses_an_unfetched_place_in_the_workspace(tmp_path):
     """The engine's place gate (#4410) reaches the agent through the mock: a
     site-wide build for a place never looked up is refused and logs nothing."""
