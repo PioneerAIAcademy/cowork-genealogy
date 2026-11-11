@@ -532,3 +532,35 @@ def test_no_carve_out_still_fires_on_a_record_name():
             test=_test_dict(),
             agent_returns=[{"subagent_type": "question-selection", "text": reply}],
         )
+
+
+def test_will_pattern_does_not_flag_the_modal_verb():
+    """Pins the `(?!\\s+be\\b)` fix (ut_question_selection_007's flaky run-0
+    fail): "her will be planned" is the modal auxiliary (her [searches] will
+    be planned), not "her will" the legal document, and must not fire."""
+    reply = _reply(
+        "**Next step:** plan research for this question.",
+        "Searches for her will be planned next.",
+    )
+    check_handback(
+        before_state=_before(),
+        text_response=None,
+        test=_test_dict(),
+        agent_returns=[{"subagent_type": "question-selection", "text": reply}],
+    )
+
+
+def test_will_pattern_still_flags_the_document_noun():
+    """The pattern must still catch the actual document: "her will" as a
+    noun, not followed by "be", is unaffected by the modal-verb carve-out."""
+    reply = _reply(
+        "**Next step:** plan research for this question.",
+        "Her will names her surviving children.",
+    )
+    with pytest.raises(AssertionError, match="names a record"):
+        check_handback(
+            before_state=_before(),
+            text_response=None,
+            test=_test_dict(),
+            agent_returns=[{"subagent_type": "question-selection", "text": reply}],
+        )

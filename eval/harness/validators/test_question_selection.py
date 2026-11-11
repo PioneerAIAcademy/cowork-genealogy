@@ -66,12 +66,17 @@ def _new_questions(before: dict, after: dict) -> list[dict]:
 # record nouns that betray a plan item wearing a question's clothing — the
 # defect behind "showed me a question specific to the 1900 census" when the
 # user asked for a person's parents. `will` is matched only with a preceding
-# article/possessive so the modal verb ("who will…") can't false-positive.
+# article/possessive so the modal verb ("who will…") can't false-positive --
+# except that a preceding possessive pronoun doesn't rule out the modal
+# either: "searches for her will be planned next" still reads as "her" (the
+# subject) "will be planned" (the verb), not "her will" (the document). The
+# `(?!\s+be\b)` lookahead excludes that one observed shape (issue #4166
+# review, ut_question_selection_007's flaky run).
 _RECORD_SCOPED_PATTERNS = (
     r"\bcensus\b",
     r"\bcertificates?\b",
     r"\bregisters?\b",
-    r"\b(?:a|the|his|her|their)\s+will\b",
+    r"\b(?:a|the|his|her|their)\s+will\b(?!\s+be\b)",
     r"\bprobate\b",
     r"\bdeeds?\b",
     r"\bmuster\s+roll\b",
