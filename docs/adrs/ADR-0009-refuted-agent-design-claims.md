@@ -255,6 +255,17 @@ six:
    true`. So one `same_person` call per (persona, tree person) answers for every
    fact of that persona; `person_evidence` rows stay one per assertion.
 
+   **Since #4226, an absent row no longer means "the rule does not apply here."**
+   A link means the whole record entry is that person, so `research_append`
+   writes the entry's other one-party rows itself, each carrying no score. A
+   reader counting rows to infer what was judged will undercount: one judgement
+   is now recorded many times. It overcounts nothing — a derived row names the
+   link it came from in its rationale (`isDerivedEntryLink`). The score gate
+   skips those rows for the reason this constraint already gives: the persona
+   arm fires only where the assertion carries a non-null `record_persona_id`,
+   null on thousands of corpus links, so holding a derived row to the gate
+   would demand a score that cannot exist.
+
    This literally meets the constraint's wording, and it is not PR A's party key
    (below), for three reasons. It fires only where the ASSERTION carries P, which
    `research_append` verified against the record at write time — PR A's defect

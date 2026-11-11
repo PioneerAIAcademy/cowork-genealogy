@@ -666,24 +666,9 @@ SUPPRESSIONS: list[dict[str, str]] = [
     },
     {
         "file": "packages/engine/plugin/agents/proof-conclusion.md",
-        "tool": "collections_search",
-        "quotes": [
-            "Only describe a source as having an \"accessible\" or \"digitized\" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `collections_search`/`volume_search`)",
-        ],
-        "reason": (
-            "descriptive provenance of record data the agent READS, not "
-            "calls - 'Only describe a source as having an \"accessible\" or "
-            "\"digitized\" image when the record data actually contains an "
-            "image reference (e.g. an `imageId`/`artifacts` field on the "
-            "record, or a nonzero image count from "
-            "`collections_search`/`volume_search`)'"
-        ),
-    },
-    {
-        "file": "packages/engine/plugin/agents/proof-conclusion.md",
         "tool": "volume_search",
         "quotes": [
-            "Only describe a source as having an \"accessible\" or \"digitized\" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `collections_search`/`volume_search`)",
+            "Only describe a source as having an \"accessible\" or \"digitized\" image when the record data actually contains an image reference (e.g. an `imageId`/`artifacts` field on the record, or a nonzero image count from `volume_search`)",
         ],
         "reason": (
             "descriptive provenance of record data the agent READS, not "
@@ -691,7 +676,7 @@ SUPPRESSIONS: list[dict[str, str]] = [
             "\"digitized\" image when the record data actually contains an "
             "image reference (e.g. an `imageId`/`artifacts` field on the "
             "record, or a nonzero image count from "
-            "`collections_search`/`volume_search`)'"
+            "`volume_search`)'"
         ),
     },
     {

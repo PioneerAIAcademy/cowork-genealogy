@@ -2494,16 +2494,29 @@ def test_build_external_search_url_without_projectpath_writes_nothing(tmp_path):
     assert _logged(ws) == []
 
 
+def _store_fetched_place(ws, place: str) -> None:
+    """The entry external_links_search leaves for a place it looked up."""
+    (ws / "external-collections.json").write_text(
+        json.dumps({"places": {place: {"rows": []}}}), encoding="utf-8"
+    )
+
+
 @pytest.mark.requires_engine_build
 def test_build_external_search_url_with_projectpath_writes_one_entry(tmp_path):
     """A projectPath the agent sent is rebased onto the workspace and honoured."""
     ws = _hand_off_workspace(tmp_path)
+    _store_fetched_place(ws, "Pennsylvania, United States")
     _cfg, _log, tools = create_mock_server([], FIXTURES_DIR, workspace=ws)
     out = _extract_response_dict(
         _invoke(
             tools,
             "build_external_search_url",
-            {"site": "findagrave", "attributes": {"surname": "Flynn"}, "projectPath": "/somewhere/else"},
+            {
+                "site": "findagrave",
+                "attributes": {"surname": "Flynn"},
+                "projectPath": "/somewhere/else",
+                "standardPlace": "Pennsylvania, United States",
+            },
         )
     )
     assert out["ok"] is True
@@ -2511,6 +2524,29 @@ def test_build_external_search_url_with_projectpath_writes_one_entry(tmp_path):
     assert [e["id"] for e in log] == [out["logId"]]
     assert log[0]["outcome"] == "partial"
     assert log[0]["external_site"]["url_generated"] == out["url"]
+
+
+@pytest.mark.requires_engine_build
+def test_build_external_search_url_refuses_an_unfetched_place_in_the_workspace(tmp_path):
+    """The engine's place gate (#4410) reaches the agent through the mock: a
+    site-wide build for a place never looked up is refused and logs nothing."""
+    ws = _hand_off_workspace(tmp_path)
+    _cfg, _log, tools = create_mock_server([], FIXTURES_DIR, workspace=ws)
+    out = _extract_response_dict(
+        _invoke(
+            tools,
+            "build_external_search_url",
+            {
+                "site": "findagrave",
+                "attributes": {"surname": "Flynn"},
+                "projectPath": "/somewhere/else",
+                "standardPlace": "Pennsylvania, United States",
+            },
+        )
+    )
+    assert out["ok"] is False
+    assert out["reason"] == "place_not_fetched"
+    assert _logged(ws) == []
 
 
 # --- external_links_search stores the place's list (#2995) ---------------------
