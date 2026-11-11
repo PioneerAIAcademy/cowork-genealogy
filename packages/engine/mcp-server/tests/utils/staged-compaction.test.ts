@@ -24,7 +24,7 @@ import {
   INLINE_TRANSCRIPTION_MAX_CHARS,
 } from "../../src/utils/staged-compaction.js";
 import type { RecordSearchToolResponse } from "../../src/types/record-search.js";
-import type { FulltextSearchResponse } from "../../src/types/fulltext-search.js";
+import type { FulltextResult, FulltextSearchResponse } from "../../src/types/fulltext-search.js";
 import type { ImageTranscribeResult } from "../../src/types/image-transcribe.js";
 
 function fullRecordSearchResponse(): RecordSearchToolResponse {
@@ -107,6 +107,75 @@ describe("compactStagedRecordSearch", () => {
     expect(row.relativeTerms).toEqual({ father: { present: true } });
   });
 
+  describe("fields no caller reads off the answer", () => {
+    const TITLE = "1850 United States Census";
+    const page = (rows: Record<string, unknown>[], extra: Record<string, unknown> = {}) =>
+      ({
+        query: { surname: "Flynn" },
+        totalMatches: rows.length,
+        paginationCappedAt: 4999,
+        returned: rows.length,
+        offset: 0,
+        hasMore: false,
+        results: rows.map((r) => ({ collectionId: "1234", collectionTitle: TITLE, events: [], ...r })),
+        ...extra,
+      }) as unknown as RecordSearchToolResponse;
+
+    it("drops primaryId, score, confidence, an empty events and paginationCappedAt", () => {
+      const out = compactStagedRecordSearch(page([
+        { recordId: "R1", primaryId: "p_1", score: 5.4, confidence: 4 },
+        { recordId: "R2", events: [{ type: "Census", date: "1850" }] },
+      ]));
+      expect(out.results[0]).not.toHaveProperty("primaryId");
+      expect(out.results[0]).not.toHaveProperty("score");
+      expect(out.results[0]).not.toHaveProperty("confidence");
+      expect(out.results[0]).not.toHaveProperty("events");
+      expect(out.results[1].events).toEqual([{ type: "Census", date: "1850" }]);
+      expect(out).not.toHaveProperty("paginationCappedAt");
+    });
+
+    it("drops an `Entry for <personName>` title and strips the collection from any other", () => {
+      const out = compactStagedRecordSearch(page([
+        { recordId: "R1", personName: "Patrick Flynn", recordTitle: `Entry for Patrick Flynn, "${TITLE}"` },
+        { recordId: "R2", personName: "Mary Flynn", recordTitle: `Mary Flynn in household of Patrick Flynn, "${TITLE}"` },
+        { recordId: "R3", personName: "Ann Flynn", recordTitle: `Entry for Ann Flinn, "${TITLE}"` },
+        { recordId: "R4", personName: "John Flynn", recordTitle: "John Flynn in household of Thomas Flynn" },
+      ]));
+      expect(out.results[0]).not.toHaveProperty("recordTitle");
+      expect(out.results[1].recordTitle).toBe("Mary Flynn in household of Patrick Flynn");
+      // A different name in the title is information: only the collection goes.
+      expect(out.results[2].recordTitle).toBe("Entry for Ann Flinn");
+      expect(out.results[3].recordTitle).toBe("John Flynn in household of Thomas Flynn");
+    });
+
+    it("strips the title on a second pass from the collections map, then leaves it alone", () => {
+      const out = compactStagedRecordSearch(page([
+        { recordId: "R1", personName: "Mary Flynn", recordTitle: `Mary Flynn in household of Patrick Flynn, "${TITLE}"` },
+      ]));
+      const snapshot = JSON.parse(JSON.stringify(out));
+      expect(JSON.parse(JSON.stringify(compactStagedRecordSearch(out)))).toEqual(snapshot);
+
+      // An already-hoisted fixture: no per-row title, the map holds it.
+      const hoisted = {
+        collections: { "1234": TITLE },
+        results: [{ recordId: "R1", collectionId: "1234", personName: "Ann Flynn", recordTitle: `Entry for Ann Flynn, "${TITLE}"` }],
+      } as unknown as RecordSearchToolResponse;
+      expect(compactStagedRecordSearch(hoisted).results[0]).not.toHaveProperty("recordTitle");
+    });
+
+    it("drops the query echo only from a staged answer", () => {
+      const staged = compactStagedRecordSearch(page([{ recordId: "R1" }], { staged: { resultsRef: "results/.staging/a.json" } }));
+      expect(staged).not.toHaveProperty("query");
+
+      // The eval mock compacts before it attaches `staged`, so it says so.
+      expect(compactStagedRecordSearch(page([{ recordId: "R1" }]), { staged: true })).not.toHaveProperty("query");
+
+      // No project, or staging failed: the echo is the only copy of the query.
+      expect(compactStagedRecordSearch(page([{ recordId: "R1" }])).query).toEqual({ surname: "Flynn" });
+      expect(compactStagedRecordSearch(page([{ recordId: "R1" }], { staged: null })).query).toEqual({ surname: "Flynn" });
+    });
+  });
+
   it("leaves a nil result set alone", () => {
     const nil = {
       query: {},
@@ -152,6 +221,146 @@ describe("compactStagedFulltextSearch", () => {
       hasMore: false,
       results: [{ id: "ark:/61903/3:1:ABCD", textDocument: "page text" }],
     } as unknown as FulltextSearchResponse);
+    const snapshot = JSON.parse(JSON.stringify(once));
+    const twice = compactStagedFulltextSearch(once);
+    expect(JSON.parse(JSON.stringify(twice))).toEqual(snapshot);
+  });
+
+  const page = (results: FulltextResult[]): FulltextSearchResponse => ({
+    query: {},
+    totalResults: results.length,
+    returned: results.length,
+    offset: 0,
+    hasMore: false,
+    results,
+  });
+  const nameAt = (k: number) => `Given${k} Surname${k % 97}`;
+
+  it("caps names, places and dates at 60/15/10 with the full count beside each", () => {
+    const names = Array.from({ length: 100 }, (_, k) => nameAt(k));
+    names[70] = "Patrick Flynn";
+    names[72] = "Mary Flynn";
+    const out = compactStagedFulltextSearch(
+      page([
+        {
+          id: "ark:/61903/3:1:LONG",
+          names,
+          places: Array.from({ length: 20 }, (_, k) => `Town${k}`),
+          dates: Array.from({ length: 12 }, (_, k) => String(1800 + k)),
+          highlightTerms: ["Patrick", "Flynn", "Flynn Patrick"],
+        },
+      ]),
+    );
+    const r = out.results[0];
+    expect(r.names).toHaveLength(60);
+    expect(r.namesCount).toBe(100);
+    expect(r.places).toHaveLength(15);
+    expect(r.placesCount).toBe(20);
+    expect(r.dates).toHaveLength(10);
+    expect(r.datesCount).toBe(12);
+    // The matched names and the 58 nearest them, in page order: index 40..99.
+    expect(r.names).toEqual(names.slice(40, 100));
+    expect(r.names).toContain("Patrick Flynn");
+    expect(r.names).not.toContain(nameAt(0));
+  });
+
+  it("ranks by how many highlight words a name shares, not whether it shares one", () => {
+    const names = Array.from({ length: 200 }, (_, k) => `Person${k} Flynn`);
+    names[150] = "Patrick Flynn";
+    const r = compactStagedFulltextSearch(
+      page([{ id: "ark:/61903/3:1:DIR", names, highlightTerms: ["Patrick", "Flynn"] }]),
+    ).results[0];
+    expect(r.names).toHaveLength(60);
+    expect(r.names).toContain("Patrick Flynn");
+  });
+
+  it("keeps the page order and sets no count when nothing is over its cap", () => {
+    const r = compactStagedFulltextSearch(
+      page([
+        {
+          id: "ark:/61903/3:1:SHORT",
+          names: [" Patrick  Flynn ", "Mary Flynn", "patrick flynn", "John Kelly"],
+          places: ["Tipperary", "TIPPERARY"],
+          highlightTerms: ["Flynn"],
+        },
+      ]),
+    ).results[0];
+    expect(r.names).toEqual(["Patrick Flynn", "Mary Flynn", "John Kelly"]);
+    expect(r.places).toEqual(["Tipperary"]);
+    expect(r.namesCount).toBeUndefined();
+    expect(r.placesCount).toBeUndefined();
+    expect(r.datesCount).toBeUndefined();
+  });
+
+  it("drops sourceUrl only where it is the FamilySearch origin plus the id", () => {
+    const out = compactStagedFulltextSearch(
+      page([
+        { id: "ark:/61903/3:1:AAAA", sourceUrl: "https://www.familysearch.org/ark:/61903/3:1:AAAA" },
+        { id: "ark:/61903/3:1:BBBB", sourceUrl: "https://www.familysearch.org/ark:/61903/3:1:BBBB?lang=es" },
+      ]),
+    );
+    expect(out.results[0].sourceUrl).toBeUndefined();
+    expect(out.results[1].sourceUrl).toBe("https://www.familysearch.org/ark:/61903/3:1:BBBB?lang=es");
+  });
+
+  it("keeps collectionTitle on each row and adds no collections map", () => {
+    const out = compactStagedFulltextSearch(
+      page([
+        { id: "ark:/61903/3:1:A", collectionId: "111", collectionTitle: "Deeds" },
+        { id: "ark:/61903/3:1:B", collectionId: "111", collectionTitle: "Deeds" },
+        { id: "ark:/61903/3:1:C", collectionId: "222", collectionTitle: "Wills" },
+        { id: "ark:/61903/3:1:D", collectionTitle: "No id" },
+      ]),
+    );
+    expect("collections" in out).toBe(false);
+    expect(out.results.map((r) => r.collectionTitle)).toEqual(["Deeds", "Deeds", "Wills", "No id"]);
+  });
+
+  it("keeps a 50-row page of long newspaper rows under 40,000 characters", () => {
+    const row = (i: number): FulltextResult => {
+      const names = Array.from({ length: 400 }, (_, k) => nameAt(k));
+      names[300] = "Patrick Flynn";
+      return {
+        id: `ark:/61903/3:1:NEWS-${i}`,
+        sourceUrl: `https://www.familysearch.org/ark:/61903/3:1:NEWS-${i}`,
+        collectionId: "333",
+        collectionTitle: "United States, Newspapers",
+        title: "Springfield, Illinois Newspaper 1885",
+        recordDate: "1885",
+        recordType: "Newspaper",
+        recordPlace: "Springfield, Illinois",
+        textDocument: "column text ".repeat(800),
+        names,
+        places: Array.from({ length: 150 }, (_, k) => `Township${k}, County${k % 13}`),
+        dates: Array.from({ length: 150 }, (_, k) => String(1700 + k)),
+        highlightTerms: ["Patrick", "Flynn", "Flynn Patrick"],
+      };
+    };
+    const full = page(Array.from({ length: 50 }, (_, i) => row(i)));
+    expect(JSON.stringify(full).length).toBeGreaterThan(500_000);
+
+    const out = compactStagedFulltextSearch(full);
+    expect(JSON.stringify(out).length).toBeLessThanOrEqual(40_000);
+    expect(out.results).toHaveLength(50);
+    for (const r of out.results) {
+      expect(r.namesCount).toBe(400);
+      expect(r.names).toContain("Patrick Flynn");
+    }
+  });
+
+  it("is idempotent on a capped row and never overwrites a count", () => {
+    const once = compactStagedFulltextSearch(
+      page([
+        {
+          id: "ark:/61903/3:1:LONG",
+          collectionId: "111",
+          collectionTitle: "Deeds",
+          names: Array.from({ length: 100 }, (_, k) => nameAt(k)),
+          highlightTerms: ["Given50"],
+        },
+      ]),
+    );
+    expect(once.results[0].namesCount).toBe(100);
     const snapshot = JSON.parse(JSON.stringify(once));
     const twice = compactStagedFulltextSearch(once);
     expect(JSON.parse(JSON.stringify(twice))).toEqual(snapshot);

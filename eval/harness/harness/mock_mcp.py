@@ -424,9 +424,8 @@ def echo_query(args: dict[str, Any]) -> dict[str, Any]:
 # so grep RANKING_SKIPPED_NOTE to find both copies when editing either.
 RANKING_SKIPPED_NOTE = (
     "No `subjectId`, so match-score ranking and marriage jurisdiction hints did "
-    "not run. Pass the tree person this search is about as `subjectId` to enable "
-    "both. Omit it only when the search is not about a specific tree person — a "
-    "broad survey, or a person not yet in the tree."
+    "not run. Pass the searched tree person as `subjectId`. Omit it only for a "
+    "broad survey or a person not yet in the tree."
 )
 
 # Verbatim copies of UNLOGGED_SEARCHES_NOTE and NIL_SEARCH_NEEDS_LOG_NOTE in
@@ -437,12 +436,9 @@ RANKING_SKIPPED_NOTE = (
 # restatement of the pairing rule is a second implementation the drift test
 # cannot see.
 UNLOGGED_SEARCHES_NOTE = (
-    "{n} earlier staged search response(s) in this project have no research.json log "
-    "entry: {refs}. Call `research_log_append` for each, passing that ref as "
-    "`stagedResultsRef` — the staged file holds the search's own query, so the entry "
-    "is filled in host-side and needs no reconstruction from memory. Log each as you "
-    "go rather than batching them at the end. A search with no log entry is a search "
-    "that did not happen, and the staged response is deleted 24h after it was made."
+    "{n} earlier staged search(es) have no log entry: {refs}. Log each now: "
+    "`research_log_append` with that ref as `stagedResultsRef`. An unlogged staged "
+    "search is deleted 24h after it ran."
 )
 
 #: Verbatim copy of NO_PROJECT_MESSAGE_READ in
@@ -719,8 +715,9 @@ _STAGED_COMPACTORS: dict[str, str] = {
 }
 
 #: Search tools whose compactor production runs on every answer, staged or not
-#: (record-search.ts), so an answer with no `projectPath` is compacted too.
-COMPACTS_UNSTAGED: frozenset[str] = frozenset({"record_search"})
+#: (record-search.ts, fulltext-search.ts), so an answer with no `projectPath` is
+#: compacted too.
+COMPACTS_UNSTAGED: frozenset[str] = frozenset({"record_search", "fulltext_search"})
 
 
 def _compact_unstaged_search(tool_name: str, response: dict[str, Any]) -> dict[str, Any]:
@@ -963,7 +960,9 @@ def _stage_and_compact_search_results(
     compactor = _STAGED_COMPACTORS.get(tool_name)
     if compactor and compactor_js.exists():
         compact_import = f"import {{ {compactor} }} from '{_url(compactor_js)}';"
-        compact_call = f" if (r) {compactor}(input.response);"
+        # `staged` is attached by the caller after this returns, so the compactor
+        # is told the answer staged: record_search then drops its query echo.
+        compact_call = f" if (r) {compactor}(input.response, {{ staged: true }});"
     else:
         compact_import = ""
         compact_call = ""
@@ -1015,7 +1014,7 @@ def _stage_and_compact_search_results(
         " const input = JSON.parse(readFileSync(0, 'utf-8'));"
         # Counted BEFORE staging, exactly as the real tools order it: a count taken
         # after would include the call being answered and fire on every first search.
-        " const unlogged = await unloggedStagedSearches(input.projectPath);"
+        " const unlogged = await unloggedStagedSearches(input.projectPath, input.tool);"
         " const r = await stageSearchResults(input);"
         f"{compact_call}"
         # Production's own annotation, run on a throwaway copy carrying the
@@ -1265,6 +1264,7 @@ def _inline_image_transcribe(response: dict[str, Any]) -> dict[str, Any]:
 
 def _unlogged_staged_handles(
     workspace: Path,
+    tool_name: str,
     *,
     args: dict[str, Any] | None = None,
     response: dict[str, Any] | None = None,
@@ -1293,7 +1293,7 @@ def _unlogged_staged_handles(
         + " import { readFileSync } from 'node:fs';"
         " const input = JSON.parse(readFileSync(0, 'utf-8'));"
         " process.stdout.write(JSON.stringify({"
-        " unlogged: await unloggedStagedSearches(input.projectPath),"
+        " unlogged: await unloggedStagedSearches(input.projectPath, input.tool),"
         + (
             " surnameHint: surnameVariantHints(input.args, input.response) ?? null"
             if with_hint
@@ -1306,6 +1306,7 @@ def _unlogged_staged_handles(
             script,
             json.dumps({
                 "projectPath": str(workspace).replace("\\", "/"),
+                "tool": tool_name,
                 "args": args,
                 "response": response or {},
             }),
@@ -1748,6 +1749,7 @@ def create_mock_server(
                 # The same process computes record_search's surnameVariantHints.
                 _unlogged_staged, _surname_hint = _unlogged_staged_handles(
                     _workspace,
+                    _name,
                     args=dict(args) if _name == "record_search" else None,
                     response=response,
                 )
@@ -2088,24 +2090,31 @@ def _make_live_handler(
     raise ValueError(f"No live handler defined for {tool_name!r}")
 
 
-def _hosted_store(manifest: dict[str, Any]) -> dict[str, str | None] | None:
-    """The paths a hosted store answers for, each with its `projectUrl`, when the test
-    serves a hosted `project_list` answer; None for every other test.
+def _hosted_store(manifest: dict[str, Any]) -> dict[str, dict[str, str | None]] | None:
+    """The paths a hosted store answers for, each with its `projectUrl` and `uploadUrl`
+    (either may be None), when the test serves a hosted `project_list` answer; None for
+    every other test.
 
     A hosted store has no folder: it is bound to the projects it lists, refuses any
     other `projectPath` (`PgS3ProjectStore`, "is not this store's project"), and its
-    `project_context` carries the bound project's link (`utils/project-links.ts`). The
-    file store this harness runs does neither, so a hosted test emulates both.
+    `project_context` carries the bound project's `uploadUrl` (`utils/project-links.ts`).
+    The file store this harness runs does neither, so a hosted test emulates both,
+    taking each link from the listed project. `projectUrl` is the harness's own:
+    production's `project_context` no longer returns one, and it is kept for the
+    research suite's hosted tests.
     """
-    paths: dict[str, str | None] = {}
+    paths: dict[str, dict[str, str | None]] = {}
     for _args, listing, _src in (manifest.get("project_list") or {}).get("predicated") or []:
         if not isinstance(listing, dict) or listing.get("mode") != "hosted":
             continue
         for project in listing.get("projects") or []:
             if isinstance(project, dict) and isinstance(project.get("projectPath"), str):
-                paths[project["projectPath"]] = project.get("projectUrl")
+                paths[project["projectPath"]] = {
+                    "projectUrl": project.get("projectUrl"),
+                    "uploadUrl": project.get("uploadUrl"),
+                }
         if isinstance(listing.get("newProjectPath"), str):
-            paths.setdefault(listing["newProjectPath"], None)
+            paths.setdefault(listing["newProjectPath"], {"projectUrl": None, "uploadUrl": None})
     return paths or None
 
 
@@ -2338,6 +2347,7 @@ def _make_live_append_handler(
     tool: str,
     module_file: str,
     export: str,
+    call_args: str = "input",
 ):
     """Build a live handler that runs a compiled research-writer tool.
 
@@ -2369,7 +2379,7 @@ def _make_live_append_handler(
                 f"import {{ {export} as run }} from '{append_url}';"
                 " import { readFileSync } from 'node:fs';"
                 " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-                " const r = await run(input);"
+                f" const r = await run({call_args});"
                 " process.stdout.write(JSON.stringify(r));"
             )
             try:
@@ -2402,11 +2412,18 @@ def _make_live_append_handler(
     return handler
 
 
+#: `researchAppendFromCaller(input, loadCatalog)` with a null catalog loader, so
+#: the locality collection-count stamp (#4385) never contacts FamilySearch here —
+#: the `person_warnings` precedent (#1962).
+RESEARCH_APPEND_CALL_ARGS = "input, null"
+
+
 def _make_research_append_handler(workspace: Path | None, call_log: list[dict[str, Any]]):
     """The live handler for research_append."""
     return _make_live_append_handler(
         workspace, call_log,
         tool="research_append", module_file="research-append.js", export="researchAppendFromCaller",
+        call_args=RESEARCH_APPEND_CALL_ARGS,
     )
 
 
@@ -2519,7 +2536,7 @@ def _make_compiled_tool_handler(
     workspace: Path | None,
     call_log: list[dict[str, Any]],
     place_table=None,
-    hosted: dict[str, str | None] | None = None,
+    hosted: dict[str, dict[str, str | None]] | None = None,
 ):
     """Build the live handler for a compiled single-export tool — the tree
     writers (tree_edit / tree_correct) and the read-only project_context all
@@ -2616,9 +2633,14 @@ def _make_compiled_tool_handler(
                     "ok": False,
                     "errors": [f"{tool_name}: {e}"],
                 }
-            link = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
-            if tool_name == "project_context" and link and isinstance(response, dict) and response.get("objective"):
-                response = {**response, "projectUrl": link}
+            links = hosted.get(sent_path) if hosted is not None and isinstance(sent_path, str) else None
+            if tool_name == "project_context" and links and isinstance(response, dict):
+                if links["projectUrl"] and response.get("objective"):
+                    response = {**response, "projectUrl": links["projectUrl"]}
+                # Production spreads `uploadUrl` onto every answer that read the project,
+                # and returns an `ok: false` one before it.
+                if links["uploadUrl"] and response.get("ok") is True:
+                    response = {**response, "uploadUrl": links["uploadUrl"]}
 
         entry: dict[str, Any] = {
             "tool": f"mcp__genealogy__{tool_name}",

@@ -41,14 +41,11 @@ export interface AppConfig {
   openRouterApiKey?: string;
   openRouterModel?: string;
   /** The web tier's public origin. Set with `uploadsEnabled`, `project_context`
-   *  returns `uploadUrl` (`<origin>/#/p/<id>/upload`) for a store that knows its
+   *  returns `uploadUrl` (`<origin>/upload/<id>`) for a store that knows its
    *  project id (src/utils/project-links.ts). */
   webPublicUrl?: string;
   /** On, with `webPublicUrl`, `project_context` returns `uploadUrl`. */
   uploadsEnabled?: boolean;
-  /** The beta's transcription switch. Unset means run as today. Its reader is
-   *  issue #3996. */
-  transcriptionEnabled?: boolean;
   /** Which matcher scores `same_person` and ranking: `"familysearch"` (the default) or `"service"`. */
   matcher?: "familysearch" | "service";
   /** The matcher service's base URL; required when `matcher` is `"service"`. */

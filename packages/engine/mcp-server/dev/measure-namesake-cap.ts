@@ -57,8 +57,9 @@
 //       written, no row planted: the personas `research_append` stamped, and
 //       what a refusal keyed on them would refuse and spare
 //       (dev/namesake-persona-counts.ts). Zero until runs write rows. A run
-//       whose engine cannot stamp a read (before #4279), or whose engine commit
-//       is unknown here, is left out and named, not counted as zeros.
+//       whose engine cannot stamp a read (before #4279), stamps without the
+//       given name check, or whose engine commit is unknown here, is left out
+//       and named, not counted as zeros.
 //   §8  tree-derived namesake pairs (#3681): each committed e2e final state,
 //       every person with a same-named parent, child or sibling, no row
 //       planted: the links ties (a) and (b) refuse, how many the pair tests
@@ -1465,10 +1466,20 @@ function stampsReads(source: string): boolean {
   return stamp.includes("lookUpNamesakePersonas(") && lookUp !== null && lookUp.includes("personaFor(");
 }
 
-/** The engine a final state's run used, from its run log's `git_sha`: "reads"
- *  when it stamps reads, "before" when it cannot, "unknown" when the run
- *  recorded no commit or this clone lacks it. */
-function stampEra(state: FinalState): "reads" | "before" | "unknown" {
+/** Whether an engine's persona lookup stamps only a persona of the row's given
+ *  name (chesworthrm, 2026-11-09): `lookUpNamesakePersonas` calls
+ *  `sharesRowGivenName`. A stamp made without it may name another member of the
+ *  record, which corrupts the counts. */
+function stampsChecksName(source: string): boolean {
+  const lookUp = bodyOf(source, "async function lookUpNamesakePersonas(");
+  return lookUp !== null && lookUp.includes("sharesRowGivenName(");
+}
+
+/** The engine a final state's run used, from its run log's `git_sha`: "checked"
+ *  when it stamps reads and checks the given name, "unchecked" when it stamps
+ *  reads without the check, "before" when it cannot stamp a read, "unknown" when
+ *  the run recorded no commit or this clone lacks it. */
+function stampEra(state: FinalState): "checked" | "unchecked" | "before" | "unknown" {
   const runLog = readRunLog(state.file.replace(/\.final-research\.json$/, ".json")) as any;
   const commit = typeof runLog?.git_sha === "string" ? runLog.git_sha.trim() : "";
   if (!/^[0-9a-f]{7,40}$/.test(commit)) return "unknown";
@@ -1479,7 +1490,8 @@ function stampEra(state: FinalState): "reads" | "before" | "unknown" {
       stdio: ["ignore", "pipe", "ignore"],
       maxBuffer: 64 * 1024 * 1024,
     });
-    return stampsReads(source) ? "reads" : "before";
+    if (!stampsReads(source)) return "before";
+    return stampsChecksName(source) ? "checked" : "unchecked";
   } catch {
     return "unknown";
   }
@@ -1489,11 +1501,11 @@ function section7(states: FinalState[]): void {
   const sum = { listed: 0, unstampable: 0, stamped: 0, absent: 0, wouldRefuse: 0, spared: 0 };
   const refusedByLabel: Record<string, number> = { true: 0, false: 0, unlabelled: 0 };
   let carrying = 0;
-  const leftOut: Record<"before" | "unknown", string[]> = { before: [], unknown: [] };
+  const leftOut: Record<"unchecked" | "before" | "unknown", string[]> = { unchecked: [], before: [], unknown: [] };
   for (const s of states) {
     if (!Array.isArray(s.research?.namesakes) || s.research.namesakes.length === 0) continue;
     const era = stampEra(s);
-    if (era !== "reads") {
+    if (era !== "checked") {
       leftOut[era].push(`${s.slug} ${s.run}`);
       continue;
     }
@@ -1504,17 +1516,25 @@ function section7(states: FinalState[]): void {
   }
   console.log(
     "\n§7  item 10 (PR 2): each committed e2e final state carrying rows, as written, whose engine stamps a read " +
-      "(#4279); the record_persona_ids research_append stamped and what a refusal keyed on them would do",
+      "(#4279) and only a persona of the row's given name; the record_persona_ids research_append stamped and what " +
+      "a refusal keyed on them would do",
   );
   const named = (runs: string[]) => (runs.length > 0 ? ` (${runs.join("; ")})` : "");
   console.log(`    final states carrying rows: ${carrying}`);
+  if (carrying === 0) {
+    console.log("    no run yet whose engine checks the given name: every count below is empty, not a finding of zero");
+  }
   console.log(`    left out, engine before the read stamp: ${leftOut.before.length}${named(leftOut.before)}`);
+  console.log(
+    `    left out, engine stamps without the given name check: ${leftOut.unchecked.length}${named(leftOut.unchecked)}`,
+  );
   console.log(
     `    left out, engine commit not recorded or not in this clone: ${leftOut.unknown.length}${named(leftOut.unknown)}`,
   );
   console.log(
     `    (c) listed records stamped: ${sum.stamped} of ${sum.listed}; ` +
-      `(d) unstamped though their row cites a persona search with a sidecar: ${sum.absent}`,
+      `(d) unstamped though their row cites a persona search with a sidecar, a persona whose given name ` +
+      `is not the row's included (Latin and abbreviated forms, initials, surname first without a comma): ${sum.absent}`,
   );
   console.log(
     `    (e) ids on rows no persona search reaches (page image ids, full-text hit ids), outside (c): ${sum.unstampable}`,
@@ -1527,6 +1547,11 @@ function section7(states: FinalState[]): void {
   floor(
     stampsReads(readFileSync(join(repoRoot, STAMPER), "utf-8")),
     "§7 finds no personaFor in this tree's stampNamesakePersonas, so it would leave every run out: update stampsReads",
+  );
+  floor(
+    stampsChecksName(readFileSync(join(repoRoot, STAMPER), "utf-8")),
+    "§7 finds no sharesRowGivenName in this tree's lookUpNamesakePersonas, so it would leave every run out: " +
+      "update stampsChecksName",
   );
   floor(sum.listed === 0 || sum.stamped > 0, "§7 stamped none of the listed records on runs whose engine stamps a read");
 }

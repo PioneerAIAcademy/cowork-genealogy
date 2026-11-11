@@ -19,7 +19,8 @@ written: in a worktree the engine's node_modules is a symlink into the main chec
 the encoding lint walks releases/. The zips are written with Python's zipfile, which stores
 Unix modes (a .platform hook keeps its exec bit) and zip64.
 
-Needs git, node >= 22 with npm >= 11.12 < 12, pnpm with the JS workspace installed, and pip;
+Needs git, node >= 22 with npm >= 11.12 < 12, pnpm with the JS workspace installed (which takes
+Node 22.22.2+ on 22, 24.15+ on 24, or 26+), and pip;
 the network for PyPI, npm and the RDS truststore (--rds-ca FILE replaces the last).
 
 The two --fs-* flags add the SAS clients (U29), which only FamilySearch's registries serve,
@@ -125,6 +126,11 @@ RULES: dict[str, tuple[Rule, ...]] = {
     # The image's /app shape, so auth's CLIENT_CONFIG_CANDIDATES[0] and SQL_DIR resolve.
     "web": (
         Rule(PROTO + "web/", "web/", top_py=True),
+        # #4001: the upload page's vendored pdf.js, file by file: its README.md stays in the
+        # checkout (verify.py refuses a README in tier code).
+        Rule(PROTO + "web/static/pdfjs/pdf.min.mjs", "web/static/pdfjs/pdf.min.mjs"),
+        Rule(PROTO + "web/static/pdfjs/pdf.worker.min.mjs", "web/static/pdfjs/pdf.worker.min.mjs"),
+        Rule(PROTO + "web/static/pdfjs/LICENSE", "web/static/pdfjs/LICENSE"),
         Rule(PROTO + "enqueue.py", "enqueue.py"),
         Rule(PROTO + "grants.py", "grants.py"),
         Rule(PROTO + "turn_message.py", "turn_message.py"),

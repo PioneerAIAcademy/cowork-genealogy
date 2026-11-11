@@ -1224,3 +1224,252 @@ def test_a_request_blob_copy_is_not_a_second_message():
 def test_a_request_blob_is_not_counted_as_a_turn():
     records = [_msg("msg_1", _tool_use("Read")), _blob(_tool_use("Read"))]
     assert summarize_transcript(records)["num_assistant_turns"] == 1
+
+
+# ---------------------------------------------------------------------------
+# #4380 — an MCP result over Claude Code's token cap reaches the model as a
+# "saved to file" notice with no data. Detected from transcripts, not sizes.
+# ---------------------------------------------------------------------------
+
+from e2e.subagent_capture import (  # noqa: E402
+    collect_oversize_tool_results,
+    oversize_notice_size,
+    oversize_tool_results,
+)
+
+_SHAPE1 = ("Error: result (162,835 characters across 1 line) exceeds maximum allowed "
+           "tokens. Output has been saved to /x/tool-results/mcp-genealogy-person_read-1.txt.")
+_SHAPE1_NO_LINES = ("Error: result (121,658 characters) exceeds maximum allowed tokens. "
+                    "Output has been saved to /x/tool-results/mcp-genealogy-person_read-2.txt.")
+_SHAPE2 = ("<persisted-output>\nOutput too large (58.2KB). Full output saved to: /x/t.json"
+           "\n\nPreview (first 2KB):\n[{\"type\": \"text\"")
+_READ_FALSE_FRIEND = ("File content (41347 tokens) exceeds maximum allowed tokens (25000). "
+                      "Use offset and limit parameters to read specific portions of the file.")
+
+
+def _str_result(tuid, text):
+    return {"type": "tool_result", "tool_use_id": tuid, "content": text}
+
+
+def _call(tuid, tool, content_block):
+    return [_assistant_rec([_tool_use_block(tuid, tool)]), _user_rec([content_block])]
+
+
+@pytest.mark.parametrize(
+    "text,size",
+    [(_SHAPE1, "162,835 characters across 1 line"),
+     (_SHAPE1_NO_LINES, "121,658 characters"),
+     (_SHAPE2, "58.2KB")],
+)
+def test_each_notice_shape_is_detected_with_its_size(text, size):
+    assert oversize_notice_size(text) == size
+    assert oversize_notice_size([{"type": "text", "text": text}]) == size
+    records = _call("tu1", "mcp__genealogy__person_read", _str_result("tu1", text))
+    assert oversize_tool_results(records) == [
+        {"tool": "mcp__genealogy__person_read", "tool_use_id": "tu1", "size": size}
+    ]
+
+
+def test_reads_own_cap_message_is_not_a_notice():
+    # Breaks if the detector becomes a bare substring check on the phrases.
+    assert oversize_notice_size(_READ_FALSE_FRIEND) is None
+
+
+def test_a_non_mcp_tool_is_never_reported():
+    # Breaks if the `mcp__` filter is dropped: the content IS shape 1.
+    assert oversize_tool_results(_call("tu1", "Read", _str_result("tu1", _SHAPE1))) == []
+
+
+def test_an_answer_that_only_quotes_the_phrase_is_not_a_notice():
+    # Breaks if the match is unanchored.
+    quoted = '{"note": "' + _SHAPE1 + '"}'
+    assert oversize_notice_size(quoted) is None
+    records = _call("tu1", "mcp__genealogy__wiki_read", _str_result("tu1", quoted))
+    assert oversize_tool_results(records) == []
+
+
+def test_a_large_answer_that_arrived_whole_is_not_reported():
+    whole = '{"persons": "' + "x" * 50_000 + '"}'
+    records = _call("tu1", "mcp__genealogy__person_read", _tool_result_block("tu1", whole))
+    assert oversize_tool_results(records) == []
+
+
+@pytest.mark.parametrize(
+    "records",
+    [["a string", 3, None],
+     [{"message": "nope"}, {"message": {"content": [{"type": "tool_result"}]}}],
+     [{"message": {"content": [{"type": "tool_use", "id": "t", "name": "mcp__a__b"}]}},
+      {"message": {"content": [{"type": "tool_result", "tool_use_id": "t", "content": 7}]}}]],
+)
+def test_a_malformed_transcript_never_raises(records):
+    assert oversize_tool_results(records) == []
+
+
+def test_a_request_blob_copy_does_not_double_a_call():
+    # Real order on CLI 2.1.30x: message, its blob copy, result, the result's blob copy.
+    use = _tool_use_block("tu1", "mcp__genealogy__person_read")
+    res = _str_result("tu1", _SHAPE1)
+    records = [_assistant_rec([use]), _blob(use), _user_rec([res]), _blob(res)]
+    pairs = pair_tool_calls(records)
+    assert len(pairs) == 1 and pairs[0]["content"] == _SHAPE1
+    assert len(oversize_tool_results(records)) == 1
+
+
+def test_collect_attributes_each_hit_to_its_thread(shortspace: Path, monkeypatch):
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-oversize-abc123"
+    slug_dir = home / ".claude" / "projects" / _key(workspace)
+    subagents = slug_dir / "session-uuid" / "subagents"
+    subagents.mkdir(parents=True)
+
+    def _write(path, records):
+        path.write_text("\n".join(json.dumps(r) for r in records), encoding="utf-8")
+
+    sidechain = [{**r, "isSidechain": True}
+                 for r in _call("tuS", "mcp__genealogy__wiki_read", _str_result("tuS", _SHAPE2))]
+    _write(slug_dir / "session-uuid.jsonl",
+           _call("tuM", "mcp__genealogy__person_read", _str_result("tuM", _SHAPE1)) + sidechain)
+    _write(subagents / "agent-1.jsonl",
+           _call("tuA", "mcp__genealogy__record_read", _str_result("tuA", _SHAPE1_NO_LINES)))
+    (subagents / "agent-1.meta.json").write_text(
+        json.dumps({"agentType": "record-extractor"}), encoding="utf-8")
+    _write(subagents / "agent-2.jsonl",
+           _call("tuB", "mcp__genealogy__wiki_read", _str_result("tuB", _SHAPE2)))
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    hits = {(h["tool"].split("__")[-1], h["agent"], h["size"])
+            for h in collect_oversize_tool_results(workspace)}
+    assert hits == {
+        ("person_read", "main thread", "162,835 characters across 1 line"),
+        ("record_read", "record-extractor", "121,658 characters"),
+        ("wiki_read", "unnamed agent", "58.2KB"),
+    }
+
+
+def test_collect_is_empty_when_no_cache(tmp_path: Path, monkeypatch):
+    monkeypatch.setattr(Path, "home", lambda: tmp_path / "nonexistent")
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+    assert collect_oversize_tool_results(tmp_path / "e2e-x") == []
+
+
+def test_capture_context_meters_puts_the_hits_on_the_result(shortspace: Path, monkeypatch):
+    # The hop from transcript to `result`, which `_build_warnings` reads.
+    from types import SimpleNamespace
+
+    from harness.orchestrator import _capture_context_meters
+
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-meters-abc123"
+    slug_dir = home / ".claude" / "projects" / _key(workspace)
+    slug_dir.mkdir(parents=True)
+    (slug_dir / "s.jsonl").write_text(
+        "\n".join(json.dumps(r) for r in
+                  _call("tu1", "mcp__genealogy__person_read", _str_result("tu1", _SHAPE1))),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    result = SimpleNamespace()
+    _capture_context_meters(result, workspace)
+    assert [(h["tool"], h["agent"], h["can_read"]) for h in result.oversize_tool_results] == [
+        ("mcp__genealogy__person_read", "main thread", True)
+    ]
+    assert "oversize" not in json.dumps(result.main_thread or {})
+
+
+def test_build_warnings_names_test_tool_agent_and_size():
+    from harness.orchestrator import _build_warnings
+
+    hits = [
+        {"tool": "mcp__genealogy__person_read", "tool_use_id": "tu1",
+         "size": "162,835 characters across 1 line", "agent": "source-evaluation",
+         "can_read": False},
+        {"tool": "mcp__genealogy__wiki_read", "tool_use_id": "tu2",
+         "size": "58.2KB", "agent": "main thread", "can_read": True},
+        {"tool": "mcp__genealogy__record_read", "tool_use_id": "tu3",
+         "size": "1KB", "agent": "unnamed agent", "can_read": None},
+    ]
+    out = [w for w in _build_warnings([], oversize_tool_results=hits, test_id="ut_x")
+           if w["kind"] == "oversize_tool_result"]
+    assert [(w["test_id"], w["tool"], w["agent"], w["size"], w["can_read"]) for w in out] == [
+        ("ut_x", "person_read", "source-evaluation", "162,835 characters across 1 line", False),
+        ("ut_x", "wiki_read", "main thread", "58.2KB", True),
+        ("ut_x", "record_read", "unnamed agent", "1KB", None),
+    ]
+    assert "ut_x" in out[0]["advisory"] and "never saw" in out[0]["advisory"]
+    assert "never saw" not in out[1]["advisory"] and "holds Read" in out[1]["advisory"]
+    assert "Could not tell" in out[2]["advisory"]
+    assert _build_warnings([], oversize_tool_results=[], test_id="ut_x") == []
+
+
+def _stage_agent(workspace: Path, name: str, frontmatter: str) -> None:
+    agents = workspace / ".claude" / "agents"
+    agents.mkdir(parents=True, exist_ok=True)
+    (agents / f"{name}.md").write_text(f"---\n{frontmatter}\n---\nbody\n", encoding="utf-8")
+
+
+@pytest.mark.parametrize(
+    "frontmatter,expected",
+    [("name: a\ntools:\n  - Read\n  - mcp__genealogy__record_read", True),
+     ("name: a\ntools:\n  - mcp__genealogy__record_read", False),
+     ("name: a\ntools: Glob, Read", True),
+     ("name: a\ntools: Glob, Grep", False),
+     ("name: a\ndescription: inherits every tool", True),
+     ("name: [unclosed", None)],
+)
+def test_agent_holds_read_reads_the_staged_tools_list(tmp_path: Path, frontmatter, expected):
+    from harness.orchestrator import _agent_holds_read
+
+    _stage_agent(tmp_path, "a", frontmatter)
+    assert _agent_holds_read("a", tmp_path) is expected
+
+
+def test_agent_holds_read_main_thread_and_missing_file(tmp_path: Path):
+    from harness.orchestrator import _agent_holds_read
+
+    assert _agent_holds_read("main thread", tmp_path) is True
+    assert _agent_holds_read("no-such-agent", tmp_path) is None
+    assert _agent_holds_read("general-purpose", tmp_path) is True  # built-in, no staged file
+
+
+def test_capture_context_meters_runs_the_oversize_capture_after_an_earlier_failure(
+    shortspace: Path, monkeypatch
+):
+    from types import SimpleNamespace
+
+    import e2e.subagent_capture as capture
+    from harness.orchestrator import _capture_context_meters
+
+    home = shortspace / "home"
+    workspace = shortspace / "e2e-guard-abc123"
+    slug_dir = home / ".claude" / "projects" / _key(workspace)
+    slug_dir.mkdir(parents=True)
+    (slug_dir / "s.jsonl").write_text(
+        "\n".join(json.dumps(r) for r in
+                  _call("tu1", "mcp__genealogy__person_read", _str_result("tu1", _SHAPE1))),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(Path, "home", lambda: home)
+    monkeypatch.delenv("CLAUDE_CONFIG_DIR", raising=False)
+
+    def _boom(workspace):
+        raise RuntimeError("earlier capture failed")
+
+    monkeypatch.setattr(capture, "collect_main_thread", _boom)
+    result = SimpleNamespace()
+    _capture_context_meters(result, workspace)
+    assert result.subagent_capture_status == "error"
+    assert [h["tool"] for h in result.oversize_tool_results] == ["mcp__genealogy__person_read"]
+
+
+def test_source_evaluation_holds_no_read_today(tmp_path: Path):
+    # The scratch-run case (#4380): its notice is a lost answer, not a recoverable one.
+    from harness.orchestrator import _agent_holds_read
+
+    real = Path(__file__).resolve().parents[4] / "packages/engine/plugin/agents/source-evaluation.md"
+    agents = tmp_path / ".claude" / "agents"
+    agents.mkdir(parents=True)
+    (agents / "source-evaluation.md").write_text(real.read_text(encoding="utf-8"), encoding="utf-8")
+    assert _agent_holds_read("source-evaluation", tmp_path) is False
