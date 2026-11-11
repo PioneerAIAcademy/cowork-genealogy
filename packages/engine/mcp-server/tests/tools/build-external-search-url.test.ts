@@ -2139,6 +2139,17 @@ describe("build_external_search_url", () => {
         expect(r.ok, JSON.stringify(r)).toBe(true);
       });
 
+      it("allows a too_large place for exactly itself, and never for a place inside it", async () => {
+        await writeProject();
+        expect(await recordExternalCollections(dir, "United States", [], { tooLarge: true })).toEqual(["United States"]);
+        const nationwide = await siteWide({ standardPlace: " united states " });
+        expect(nationwide.ok, JSON.stringify(nationwide)).toBe(true);
+        for (const inside of ["Hampshire, Massachusetts, United States", "Massachusetts, United States"]) {
+          const r = await siteWide({ standardPlace: inside });
+          expect(!r.ok && r.reason, inside).toBe("place_not_fetched");
+        }
+      });
+
       it("does not check a build with baseUrl, a folder that is not a project, or a call with no project", async () => {
         await writeProject();
         const curated = await buildExternalSearchUrlTool({

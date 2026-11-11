@@ -15,6 +15,10 @@
  *
  *     { "places": { "<place>": { "rows": [StoredCollectionRow, ...] } } }
  *
+ * A place `external_links_search` refused as too large to list (more curated
+ * links than one request returns) is stored as `{ "rows": [], "too_large": true }`:
+ * looked up, list unknown — not "no collections".
+ *
  * Entries are keyed by each link's OWN `place`, so a county fetch that returns
  * its state's whole list updates the state entry once rather than storing a
  * second copy under the county. Everything is sorted and nothing is time-stamped,
@@ -43,8 +47,14 @@ export interface StoredCollectionRow {
   end_year: string;
 }
 
+export interface StoredPlaceEntry {
+  rows: StoredCollectionRow[];
+  /** Refused as too large to list: looked up, but its rows are unknown. */
+  too_large?: true;
+}
+
 export interface ExternalCollectionsDoc {
-  places: Record<string, { rows: StoredCollectionRow[] }>;
+  places: Record<string, StoredPlaceEntry>;
 }
 
 /** One API row, as `external_links_search` reads it. */
@@ -231,33 +241,48 @@ function placeSegments(place: string): string[] {
     .filter((s) => s !== "");
 }
 
+/** One stored place as the place gate reads it. */
+export interface StoredPlace {
+  place: string;
+  tooLarge: boolean;
+}
+
 /**
  * Whether `standardPlace`, or a place containing it, has an entry — an entry
  * with `rows: []` counts, since `recordExternalCollections` stores the queried
  * place even when nothing matched (issue #4410). A stored key matches when it
  * equals `standardPlace` or its last 1..n comma-separated segments, compared
  * trimmed and case-insensitively: "Massachusetts, United States" covers
- * "Hampshire, Massachusetts, United States". No place resolution, no network.
+ * "Hampshire, Massachusetts, United States". A `too_large` entry matches only
+ * its own place, never a place inside it: its list is unknown, so it cannot
+ * stand in for a county's lookup. No place resolution, no network.
  */
-export function placeIsStored(places: Iterable<string>, standardPlace: string): boolean {
+export function placeIsStored(places: Iterable<StoredPlace>, standardPlace: string): boolean {
   const target = placeSegments(standardPlace);
   if (target.length === 0) return false;
+  const exact = target.join(", ");
   const suffixes = new Set<string>();
   for (let i = 0; i < target.length; i++) suffixes.add(target.slice(i).join(", "));
-  for (const key of places) {
-    const stored = placeSegments(key);
-    if (stored.length > 0 && suffixes.has(stored.join(", "))) return true;
+  for (const { place, tooLarge } of places) {
+    const stored = placeSegments(place).join(", ");
+    if (stored === "") continue;
+    if (tooLarge ? stored === exact : suffixes.has(stored)) return true;
   }
   return false;
 }
 
-/** The stored entries' place keys, or why the file could not be read. */
-export type StoredPlaces = { places: ReadonlySet<string> } | { error: string };
+/** The stored places, or why the file could not be read. */
+export type StoredPlaces = { places: StoredPlace[] } | { error: string };
 
 export async function loadStoredPlaces(projectPath: string): Promise<StoredPlaces> {
   try {
     const doc = await readExternalCollections(projectPath);
-    return { places: new Set(Object.keys(doc?.places ?? {})) };
+    return {
+      places: Object.entries(doc?.places ?? {}).map(([place, entry]) => ({
+        place,
+        tooLarge: entry?.too_large === true,
+      })),
+    };
   } catch (e) {
     return { error: e instanceof Error ? e.message : String(e) };
   }
@@ -271,12 +296,15 @@ export async function loadStoredPlaces(projectPath: string): Promise<StoredPlace
  * another folder; else the places written, sorted. A file that does not parse, or
  * is not this file's shape, is rebuilt from this fetch (it is a cache of API data);
  * any other read failure throws, so a passing store error cannot wipe the other
- * places' lists.
+ * places' lists. With `tooLarge`, `rows` must be empty and the queried place is
+ * stored as `{ rows: [], too_large: true }`. Only a fetch of that same place
+ * clears the flag; rows another fetch files under it keep it.
  */
 export async function recordExternalCollections(
   projectPath: string,
   queriedPlace: string,
   rows: StoredCollectionRow[],
+  options: { tooLarge?: boolean } = {},
 ): Promise<string[] | null> {
   if ((await classifyProjectPath(projectPath)) !== "project") return null;
   return withProjectLock(projectPath, async () => {
@@ -298,7 +326,13 @@ export async function recordExternalCollections(
     }
     if (!byPlace.has(queriedPlace)) byPlace.set(queriedPlace, []);
     const places: ExternalCollectionsDoc["places"] = { ...doc.places };
-    for (const [place, list] of byPlace) places[place] = { rows: list };
+    for (const [place, list] of byPlace) {
+      // Rows another place's fetch carries for a too-large place are a part of
+      // its list, not the whole: it stays too_large, so it still covers only itself.
+      const keepTooLarge = place !== queriedPlace && doc.places[place]?.too_large === true;
+      places[place] = keepTooLarge ? { rows: list, too_large: true } : { rows: list };
+    }
+    if (options.tooLarge) places[queriedPlace] = { rows: [], too_large: true };
     const sorted: ExternalCollectionsDoc["places"] = {};
     for (const k of Object.keys(places).sort(cmp)) sorted[k] = places[k];
     await getProjectStore().writeJson(projectPath, EXTERNAL_COLLECTIONS_FILE, { places: sorted });

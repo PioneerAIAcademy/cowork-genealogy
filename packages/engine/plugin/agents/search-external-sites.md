@@ -298,9 +298,7 @@ A place absent from `externalCollections` was never fetched: call
 `external_links_search({ standardPlace, host: "<e.g. ancestry.com>",
 projectPath })` once (it stores the list), then read as above. Keep rows
 whose `url` is on your target site; a row for the plan item's record type and
-years → Case A, none → Case B. Keep the `standardPlace`: a Case B build in
-step 3 passes it, and the tool refuses a site-wide search for a place that was
-never looked up.
+years → Case A, none → Case B. Keep the `standardPlace` for step 3.
 
 ### 2b. Check FamilySearch's own holdings
 
@@ -341,9 +339,9 @@ The tool then writes the search's in-flight `external_site` log
 entry itself and returns its `logId`. It returns
 `{ ok: true, url, notes, access, logId }` or `{ ok: false, reason, errors }`; on
 `ok: false`, surface the errors and fix the inputs rather than retrying
-blindly or hand-writing a URL. On `reason: "place_not_fetched"`, the place was
-never looked up: make the `external_links_search` call the error names, read the
-stored list (step 2) — it may hold a curated link for Case A — then build again.
+blindly or hand-writing a URL. On `reason: "place_not_fetched"`, make the
+`external_links_search` call the error names, read the stored list (step 2), then
+build again.
 **One exception:** when the results for that URL
 are already in the delegation and no `awaitingUser` row matches it, or `userPresent` is `no`, the search
 is not awaiting anything — call the tool **without** `projectPath`, so no
@@ -487,8 +485,7 @@ plain prose:
    the line (see "Every observation the tool makes" above);
 6. when `collections_search` returned the same collection (step 2b), one
    sentence saying FamilySearch holds it too and can be searched there instead
-   — here, after the `---`, not only in the report above it. A curated link
-   for the site does not make this sentence optional.
+   — here, after the `---`, Case A or Case B.
 
 **If the results for that URL are already in the delegation,
 skip this whole step** — no in-flight entry and no capture instructions.

@@ -523,6 +523,15 @@ so the MCP tool now refuses the build:
 - **Always satisfiable in one call.** `recordExternalCollections` stores the
   queried place with `rows: []` when nothing matched, so a place like Ireland is
   looked up once and never refused again. There is no second write path.
+- **A place too large to list.** `external_links_search` refuses a place with
+  more than 1,000 links (the United States has 1,998). Decided 2026-11-11 by
+  chesworthrm on the PR: that refusal counts as the lookup. It stores the place
+  as `too_large` with no rows (`external-links-search-tool-spec.md`, "Stored
+  list"), and a `too_large` entry matches **only its exact place**, never a place
+  inside it. So "United States" passes for a nationwide or surname-only search,
+  and "Hampshire, Massachusetts, United States" still needs its own lookup. An
+  explicit "no place" and dropping `projectPath` were both rejected: either one
+  becomes the agent's way past every refusal.
 - **Refusal.** `{ ok: false, reason: "place_not_fetched" }`, before the log
   write, beside the `baseUrl` collection check (§9.1). The error names
   `external_links_search({ standardPlace, projectPath })` as the next call. An
