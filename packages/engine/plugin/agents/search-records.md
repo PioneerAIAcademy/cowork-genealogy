@@ -61,8 +61,8 @@ tools:
   - mcp__genealogy__catalog_search
   - mcp__remote-devices__Genealogy_Research__catalog_search
   - mcp__Genealogy_Research__catalog_search
-model: claude-haiku-5-5
-effort: medium
+model: claude-sonnet-5-5
+effort: low
 ---
 
 # Search Records
