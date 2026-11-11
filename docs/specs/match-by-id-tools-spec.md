@@ -181,7 +181,10 @@ restricted — `person_read` returns `403`, i.e. it *exists* but is not viewable
 for `KW66-5VV` too, so the evidence cannot separate "the match endpoint ignores
 the merge redirect" from "it follows the redirect to a survivor that itself has
 no visible matches." Either way the retired id yields not-found, not the
-survivor's matches. A populated retired-vs-survivor comparison could not be made;
+survivor's matches. The 2026-11-09 measurement below settles that question: the
+redirect **is** followed, so Outcome B holds wherever the survivor has a
+match-resolution record of its own. A populated retired-vs-survivor comparison
+could not be made here;
 this rests on the single merged-away candidate the pool yielded (n=1). The pool
 is the tree PIDs in the committed `*.gedcomx.json` fixtures, and its one redirect,
 `KD96-TV5`, was **not** an organic discovery: it is a deliberately-embedded id in
@@ -204,7 +207,8 @@ independent existence oracle. `links` is the match response's link set.
 | `L4BP-ZWW` | `200` | `not-found`, `target-system`, `self` | epoch | live, viewable | 2026-11-09 |
 | `KW66-5VV` | `403` | `not-found`, `target-system`, `self` | epoch | exists, restricted | 2026-11-09 |
 | `KD96-TV5` | `301` → `KW66-5VV` (`403`) | `not-found`, `target-system`, `self` | epoch | merged, survivor restricted | 2026-11-09 |
-| `LZNY-BRF` | `301` → `PFTB-NS6` (`200`) | `target-system`, `self` | real | merged, survivor viewable | 2026-11-09 |
+| `LZNY-BRF` | `301` → `PFTB-NS6` | `target-system`, `self` | real | merged away | 2026-11-09 |
+| `PFTB-NS6` | `200` | `target-system`, `self` | real, same instant as `LZNY-BRF` | the survivor | 2026-11-09 |
 | `ZZZZ-ZZZ` | `404` | `not-found`, `target-system`, `self` | epoch | never assigned | 2026-11-09 |
 | `L6KS-9PW` | `200` | `self` | real | control, 1 match | 2026-11-09 |
 | `275H-YL3` | `200` | `self` | real | control, 10 matches | 2026-11-09 |
@@ -227,12 +231,20 @@ Hints — its one Research Help item is the "No Sources Attached" data-quality
 notice — so **zero matches is the correct answer for him and the error is not**.
 
 **This qualifies the merged-away finding above.** A merged-away id does *not*
-uniformly return not-found: `KD96-TV5` does and `LZNY-BRF` does not, and the
-difference tracks whether the **survivor** is viewable (`KW66-5VV` is `403`;
-`PFTB-NS6` is `200`). That is Outcome B — the survivor's answer surfacing under
-the retired id — which the 2026-09-15 run recorded as not observed and could not
-have observed, since its only merge candidate had a restricted survivor. The
-2026-09-15 paragraph's reading holds for its own case and not as a general rule.
+uniformly return not-found: `KD96-TV5` does and `LZNY-BRF` does not. The
+difference is **not** the survivor's viewability — `P4M8-VM7` and `L4BP-ZWW` are
+live and viewable and read not-found anyway. It is whether a match-resolution
+record exists for the id at all, which `updated` reports: the epoch on every
+not-found row above, a real timestamp on every other.
+
+`LZNY-BRF` and its survivor `PFTB-NS6` return the same links, the same
+`results`, and the same `updated` to the millisecond
+(`2026-09-30T23:22:04.016Z`), so the retired id is serving the **survivor's**
+record. That is Outcome B, measured rather than inferred — the 2026-09-15 run
+recorded it as not observed and could not have observed it, since its only merge
+candidate's survivor had no record either. `KD96-TV5` reads not-found because
+`KW66-5VV` has no record, not because it is restricted. The 2026-09-15
+paragraph's reading holds for its own case and not as a general rule.
 
 **The record-persona (`1:1:`) side is NOT ESTABLISHED.** No independent
 retirement/merge oracle exists for a record persona: `person_read` and

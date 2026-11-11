@@ -55,7 +55,9 @@
  * match endpoint ignores the merge redirect" from "it follows the redirect to a
  * survivor that itself has no visible matches"; either way the retired id yields
  * not-found, not the survivor's matches. A populated retired-vs-survivor
- * comparison could not be made (n=1 candidate in this pool).
+ * comparison could not be made (n=1 candidate in this pool). The 2026-11-09 run
+ * below settles that: the redirect IS followed (LZNY-BRF serves PFTB-NS6's
+ * record), so Outcome B holds where the survivor has a record of its own.
  *
  * Measured 2026-11-09 — a LIVE, viewable tree person gets the same shape:
  *
@@ -63,6 +65,7 @@
  *   4:1:L4BP-ZWW  tree-persons 200   -> 200 not-found, epoch updated
  *   4:1:ZZZZ-ZZZ  tree-persons 404   -> 200 not-found, epoch updated
  *   4:1:LZNY-BRF  tree-persons 301   -> 200 GENUINE ZERO (no not-found, real updated)
+ *   4:1:PFTB-NS6 tree-persons 200   -> 200 GENUINE ZERO, same `updated` as LZNY-BRF
  *   4:1:L6KS-9PW  tree-persons 200   -> 200 populated (control)
  *
  * P4M8-VM7 and ZZZZ-ZZZ were compared field by field: identical key sets,
@@ -72,10 +75,15 @@
  * does. That is why the tool cannot key on a field here.
  *
  * It also qualifies Outcome A above. A merged-away id does NOT uniformly return
- * not-found: KD96-TV5 does (survivor KW66-5VV is 403) and LZNY-BRF does not
- * (survivor PFTB-NS6 is 200). The difference tracks the SURVIVOR's viewability,
- * which is Outcome B — unobservable in the 2026-09-15 run, whose only merge
- * candidate had a restricted survivor.
+ * not-found: KD96-TV5 does and LZNY-BRF does not. The difference is NOT the
+ * survivor's viewability — P4M8-VM7 and L4BP-ZWW are live and viewable and read
+ * not-found anyway. It is whether a match-resolution record exists for the id,
+ * which `updated` reports: the epoch on every not-found row, a real timestamp on
+ * every other. LZNY-BRF and its survivor PFTB-NS6 return the same links, the
+ * same results, and the same `updated` to the millisecond, so the retired id is
+ * serving the SURVIVOR's record — Outcome B, measured rather than inferred.
+ * KD96-TV5 reads not-found because KW66-5VV has no record either, not because
+ * it is restricted.
  *
  * Record-persona side: NOT ESTABLISHED. No independent retirement/merge oracle
  * exists for a 1:1: persona — person_read/person_quality are tree-only,
@@ -102,7 +110,8 @@ const CASES: Array<[label: string, collection: string, id: string, status?: stri
   // 2026-09-15; see header). Both collections return the same not-found shape as
   // a never-assigned id (Outcome A), not a populated survivor match set. Survivor
   // KW66-5VV is restricted (403 = exists but not viewable) and also reads
-  // not-found here, so this run cannot show whether the redirect was followed.
+  // not-found here, so this run cannot show whether the redirect was followed;
+  // the LZNY-BRF/PFTB-NS6 pair below shows that it is.
   ["merged-away tree person KD96-TV5", "records", "ark:/61903/4:1:KD96-TV5"],
   ["merged-away tree person KD96-TV5", "tree", "ark:/61903/4:1:KD96-TV5"],
   ["survivor KW66-5VV (restricted)", "records", "ark:/61903/4:1:KW66-5VV"],
@@ -113,7 +122,7 @@ const CASES: Array<[label: string, collection: string, id: string, status?: stri
   // never returns matches". The count is not permanent; the shape is the point.
   ["positive control, tree dup matches (275H-YL3)", "tree", "ark:/61903/4:1:275H-YL3"],
 
-  // ── Issue #4390, measured 2026-11-10 ──────────────────────────────────────
+  // ── Issue #4390, measured 2026-11-09 ──────────────────────────────────────
   // P4M8-VM7 and L4BP-ZWW are LIVE, viewable tree people whom person_read
   // returns, yet person_record_matches answered not-found for both on
   // 2026-11-09. If that reproduces, a not-found link does not mean "no such
@@ -133,8 +142,10 @@ const CASES: Array<[label: string, collection: string, id: string, status?: stri
   ["live tree person P4M8-VM7 (Charles Bazzle)", "tree", "ark:/61903/4:1:P4M8-VM7"],
   ["live tree person L4BP-ZWW (son Francis)", "records", "ark:/61903/4:1:L4BP-ZWW"],
   ["live tree person L4BP-ZWW (son Francis)", "tree", "ark:/61903/4:1:L4BP-ZWW"],
-  ["genuine zero, tree person (LZNY-BRF)", "records", "ark:/61903/4:1:LZNY-BRF"],
-  ["genuine zero, tree person (LZNY-BRF)", "tree", "ark:/61903/4:1:LZNY-BRF"],
+  ["merged-away LZNY-BRF -> PFTB-NS6, genuine zero", "records", "ark:/61903/4:1:LZNY-BRF"],
+  ["merged-away LZNY-BRF -> PFTB-NS6, genuine zero", "tree", "ark:/61903/4:1:LZNY-BRF"],
+  ["survivor PFTB-NS6", "records", "ark:/61903/4:1:PFTB-NS6"],
+  ["survivor PFTB-NS6", "tree", "ark:/61903/4:1:PFTB-NS6"],
   ["positive control, records slot (L6KS-9PW)", "records", "ark:/61903/4:1:L6KS-9PW"],
   ["positive control, records slot (L6KS-9PW)", "tree", "ark:/61903/4:1:L6KS-9PW"],
   ["never assigned, TREE shape (4-3)", "records", "ark:/61903/4:1:ZZZZ-ZZZ"],
