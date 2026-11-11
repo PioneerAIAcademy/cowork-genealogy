@@ -1,0 +1,246 @@
+{
+  "run_log": "v51.json",
+  "annotator": "eruth937@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4w",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Claude correctly created the project, checked Patrick Flynn's FamilySearch record, and reported that no new records were found. However, it mentioned Ancestry, MyHeritage, and Newspapers.com as possible places to continue searching, even though these sites were not returned by any tool. The response should have stayed within the search results and avoided naming unsupported external sources. I agree with the deduction."
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_b4i",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Claude correctly identified that no project existed and successfully created one for Patrick Flynn using the correct FamilySearch ID and objective. However, it stated that it had searched FamilySearch historical records even though no record_search calls were made. The result came from a canned report, so the response should not have implied that active searches were performed. It also mentioned Ancestry, MyHeritage, and Newspapers.com, which were not returned by any tool. I agree with the deduction."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Claude should have recognized that this was a negative test and declined to perform further planning. Instead, it analyzed the project, concluded that no new plan item was needed, and offered to log the probate result or write another proof conclusion. The expected behavior was to route the request to research-exhaustiveness rather than perform the planning task."
+    },
+    {
+      "test_id": "ut_research_rpn",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "The response did not provide the required decline or hand-off to research-exhaustiveness. Although it correctly recognized that the parentage question was resolved, it continued with substantive recommendations and offered further actions. The required negative-test routing behavior was missing."
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 1,
+      "corrected_score": 1,
+      "comment": "Claude correctly avoided naming unconfirmed FamilySearch collections, but it did not complete the main task. The user asked what Kenyan records could be searched on FamilySearch, and the skill should have attempted to retrieve the Kenya locality guide. Instead, it provided general suggestions and asked the user to try again or search independently. It should have attempted the appropriate tool call before responding."
+    },
+    {
+      "test_id": "ut_research_ken",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_012",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_013",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_014",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_9k4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Claude correctly recognized that the sibling relationship was only an inference from the available record and did not treat it as established fact. However, it stated that the possible relationship had been handed off for hypothesis tracking, which was inaccurate because no hypothesis was actually saved. The project still showed an empty hypothesis section. Claude should have said that the relationship needs to be tracked as a hypothesis rather than claiming the hand-off had occurred. I agree with the deduction."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Claude correctly recognized that the reported 1861 death would contradict the 1870 marriage if both records refer to the same Robert Eastham. However, it described the death record as explicitly matching Robert to the Burton household censuses. The researcher reported that the record matched those censuses, but the record itself has not yet been examined to establish that identity. Claude should have kept that connection as something to verify."
+    },
+    {
+      "test_id": "ut_research_gm4",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Claude correctly identified the contradiction and requested the record identifier so the death record could be added and examined. However, it did not explain how the new lead would be investigated beyond locating the record. The next research should also examine James and Elizabeth Eastham and other relevant records in Pulaski County to determine whether the Robert who died in 1861 is the same person found in the Burton household censuses. The response needed a clearer forward research direction."
+    }
+  ]
+}

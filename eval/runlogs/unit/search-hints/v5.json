@@ -2,7 +2,7 @@
   "schema_version": 3,
   "skill": "search-hints",
   "version": 5,
-  "released": false,
+  "released": true,
   "releasable": true,
   "invocation": "skill",
   "timestamp": "2026-11-10_11-58-52",
@@ -78,13 +78,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude's response correctly identifies and triages all three pending hints. The 1870 census (M70C) is accepted with sound reasoning: name, age, birthplace, and household position match the tree. The 1880 census (M80C) is correctly marked 'not enough information to judge' because the index reads 'Glynn' while the image reads 'Flynn'\u2014Claude appropriately read the image and flagged the surname discrepancy as requiring researcher verification. The death certificate (MDEF) is accepted with proper caveats: it is extracted as src_004, not linked, and Claude notes the Pennsylvania/Ireland birthplace disagreement while correctly attributing it to the son-in-law informant's secondary knowledge. All three confidence scores are stated (3, 2, 2). No fabricated material; all claims are grounded in tool responses and the before-state."
+            "rationale": "Claude's response correctly identifies and triages all three pending hints. The 1870 census (M70C) is accepted with sound reasoning: name, age, birthplace, and household position match the tree. The 1880 census (M80C) is correctly marked 'not enough information to judge' because the index reads 'Glynn' while the image reads 'Flynn'—Claude appropriately read the image and flagged the surname discrepancy as requiring researcher verification. The death certificate (MDEF) is accepted with proper caveats: it is extracted as src_004, not linked, and Claude notes the Pennsylvania/Ireland birthplace disagreement while correctly attributing it to the son-in-law informant's secondary knowledge. All three confidence scores are stated (3, 2, 2). No fabricated material; all claims are grounded in tool responses and the before-state."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed all three pending hints returned by person_record_matches. Each hint received a verdict (accept, not enough information to judge, or accept), reasoning, and relevant context. The response correctly notes that no hints are linked yet and that the researcher should give verdicts\u2014appropriate for triage mode. The final paragraph summarizes the three records and their status, completing the triage task as required."
+            "rationale": "Claude addressed all three pending hints returned by person_record_matches. Each hint received a verdict (accept, not enough information to judge, or accept), reasoning, and relevant context. The response correctly notes that no hints are linked yet and that the researcher should give verdicts—appropriate for triage mode. The final paragraph summarizes the three records and their status, completing the triage task as required."
           },
           {
             "source": "base",
@@ -96,19 +96,19 @@
             "source": "rubric",
             "name": "Hint scope",
             "score": 3,
-            "rationale": "Claude reviewed exactly the three pending hints returned by person_record_matches (M70C, M80C, MDEF) and no others. The 1850 census (MXYZ) is correctly not presented as a hint\u2014it is an accepted match already in the project. Each hint's FamilySearch confidence is stated: M70C confidence 3, M80C confidence 2, MDEF confidence 2. The death certificate (MDEF) is noted as extracted but not linked, which is correct per the scenario. No invented hints; no accepted matches mixed in as pending."
+            "rationale": "Claude reviewed exactly the three pending hints returned by person_record_matches (M70C, M80C, MDEF) and no others. The 1850 census (MXYZ) is correctly not presented as a hint—it is an accepted match already in the project. Each hint's FamilySearch confidence is stated: M70C confidence 3, M80C confidence 2, MDEF confidence 2. The death certificate (MDEF) is noted as extracted but not linked, which is correct per the scenario. No invented hints; no accepted matches mixed in as pending."
           },
           {
             "source": "rubric",
             "name": "Recommendation soundness",
             "score": 3,
-            "rationale": "Each recommendation is defensible and names its deciding facts. M70C (1870 census): accepted because name, age (~25), birthplace (Ireland), and household position with Thomas Flynn (born ~1818, Ireland) match the tree's father-son pair strongly. M80C (1880 census): correctly marked 'not enough information to judge' because the index reads 'Glynn' while the image reads 'Flynn'\u2014Claude read the image and identified the surname discrepancy as the deciding factor, appropriately deferring to the researcher. MDEF (death certificate): accepted because death date (12 March 1908), place (Schuylkill County), and father name (Thomas Flynn) match the tree exactly; Claude notes the Pennsylvania birthplace disagrees with Ireland in the tree but correctly attributes this to the son-in-law informant's secondary knowledge and the resolved conflict c_001. No recommendation rests on FamilySearch confidence alone; confidence is stated but not the deciding factor. Index-only evidence (M70C, MDEF) is appropriately used without image reads where no image was available."
+            "rationale": "Each recommendation is defensible and names its deciding facts. M70C (1870 census): accepted because name, age (~25), birthplace (Ireland), and household position with Thomas Flynn (born ~1818, Ireland) match the tree's father-son pair strongly. M80C (1880 census): correctly marked 'not enough information to judge' because the index reads 'Glynn' while the image reads 'Flynn'—Claude read the image and identified the surname discrepancy as the deciding factor, appropriately deferring to the researcher. MDEF (death certificate): accepted because death date (12 March 1908), place (Schuylkill County), and father name (Thomas Flynn) match the tree exactly; Claude notes the Pennsylvania birthplace disagrees with Ireland in the tree but correctly attributes this to the son-in-law informant's secondary knowledge and the resolved conflict c_001. No recommendation rests on FamilySearch confidence alone; confidence is stated but not the deciding factor. Index-only evidence (M70C, MDEF) is appropriately used without image reads where no image was available."
           },
           {
             "source": "rubric",
             "name": "Verdict recording",
             "score": null,
-            "rationale": "This is a triage test, not a record test. Triage mode produces no log entries, no person_evidence links, and no tree edits\u2014only recommendations. Verdict recording dimension applies only to record mode. N/A."
+            "rationale": "This is a triage test, not a record test. Triage mode produces no log entries, no person_evidence links, and no tree edits—only recommendations. Verdict recording dimension applies only to record mode. N/A."
           }
         ],
         "review_dimensions": [
@@ -116,13 +116,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude's response correctly identifies and triages all three pending hints. The 1870 census (M70C) is accepted with sound reasoning: name, age, birthplace, and household position match the tree. The 1880 census (M80C) is correctly marked 'not enough information to judge' because the index reads 'Glynn' while the image reads 'Flynn'\u2014Claude appropriately read the image and flagged the surname discrepancy as requiring researcher verification. The death certificate (MDEF) is accepted with proper caveats: it is extracted as src_004, not linked, and Claude notes the Pennsylvania/Ireland birthplace disagreement while correctly attributing it to the son-in-law informant's secondary knowledge. All three confidence scores are stated (3, 2, 2). No fabricated material; all claims are grounded in tool responses and the before-state."
+            "rationale": "Claude's response correctly identifies and triages all three pending hints. The 1870 census (M70C) is accepted with sound reasoning: name, age, birthplace, and household position match the tree. The 1880 census (M80C) is correctly marked 'not enough information to judge' because the index reads 'Glynn' while the image reads 'Flynn'—Claude appropriately read the image and flagged the surname discrepancy as requiring researcher verification. The death certificate (MDEF) is accepted with proper caveats: it is extracted as src_004, not linked, and Claude notes the Pennsylvania/Ireland birthplace disagreement while correctly attributing it to the son-in-law informant's secondary knowledge. All three confidence scores are stated (3, 2, 2). No fabricated material; all claims are grounded in tool responses and the before-state."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed all three pending hints returned by person_record_matches. Each hint received a verdict (accept, not enough information to judge, or accept), reasoning, and relevant context. The response correctly notes that no hints are linked yet and that the researcher should give verdicts\u2014appropriate for triage mode. The final paragraph summarizes the three records and their status, completing the triage task as required."
+            "rationale": "Claude addressed all three pending hints returned by person_record_matches. Each hint received a verdict (accept, not enough information to judge, or accept), reasoning, and relevant context. The response correctly notes that no hints are linked yet and that the researcher should give verdicts—appropriate for triage mode. The final paragraph summarizes the three records and their status, completing the triage task as required."
           },
           {
             "source": "base",
@@ -134,25 +134,25 @@
             "source": "rubric",
             "name": "Hint scope",
             "score": 3,
-            "rationale": "Claude reviewed exactly the three pending hints returned by person_record_matches (M70C, M80C, MDEF) and no others. The 1850 census (MXYZ) is correctly not presented as a hint\u2014it is an accepted match already in the project. Each hint's FamilySearch confidence is stated: M70C confidence 3, M80C confidence 2, MDEF confidence 2. The death certificate (MDEF) is noted as extracted but not linked, which is correct per the scenario. No invented hints; no accepted matches mixed in as pending."
+            "rationale": "Claude reviewed exactly the three pending hints returned by person_record_matches (M70C, M80C, MDEF) and no others. The 1850 census (MXYZ) is correctly not presented as a hint—it is an accepted match already in the project. Each hint's FamilySearch confidence is stated: M70C confidence 3, M80C confidence 2, MDEF confidence 2. The death certificate (MDEF) is noted as extracted but not linked, which is correct per the scenario. No invented hints; no accepted matches mixed in as pending."
           },
           {
             "source": "rubric",
             "name": "Recommendation soundness",
             "score": 3,
-            "rationale": "Each recommendation is defensible and names its deciding facts. M70C (1870 census): accepted because name, age (~25), birthplace (Ireland), and household position with Thomas Flynn (born ~1818, Ireland) match the tree's father-son pair strongly. M80C (1880 census): correctly marked 'not enough information to judge' because the index reads 'Glynn' while the image reads 'Flynn'\u2014Claude read the image and identified the surname discrepancy as the deciding factor, appropriately deferring to the researcher. MDEF (death certificate): accepted because death date (12 March 1908), place (Schuylkill County), and father name (Thomas Flynn) match the tree exactly; Claude notes the Pennsylvania birthplace disagrees with Ireland in the tree but correctly attributes this to the son-in-law informant's secondary knowledge and the resolved conflict c_001. No recommendation rests on FamilySearch confidence alone; confidence is stated but not the deciding factor. Index-only evidence (M70C, MDEF) is appropriately used without image reads where no image was available."
+            "rationale": "Each recommendation is defensible and names its deciding facts. M70C (1870 census): accepted because name, age (~25), birthplace (Ireland), and household position with Thomas Flynn (born ~1818, Ireland) match the tree's father-son pair strongly. M80C (1880 census): correctly marked 'not enough information to judge' because the index reads 'Glynn' while the image reads 'Flynn'—Claude read the image and identified the surname discrepancy as the deciding factor, appropriately deferring to the researcher. MDEF (death certificate): accepted because death date (12 March 1908), place (Schuylkill County), and father name (Thomas Flynn) match the tree exactly; Claude notes the Pennsylvania birthplace disagrees with Ireland in the tree but correctly attributes this to the son-in-law informant's secondary knowledge and the resolved conflict c_001. No recommendation rests on FamilySearch confidence alone; confidence is stated but not the deciding factor. Index-only evidence (M70C, MDEF) is appropriately used without image reads where no image was available."
           },
           {
             "source": "rubric",
             "name": "Verdict recording",
             "score": null,
-            "rationale": "This is a triage test, not a record test. Triage mode produces no log entries, no person_evidence links, and no tree edits\u2014only recommendations. Verdict recording dimension applies only to record mode. N/A."
+            "rationale": "This is a triage test, not a record test. Triage mode produces no log entries, no person_evidence links, and no tree edits—only recommendations. Verdict recording dimension applies only to record mode. N/A."
           }
         ]
       },
       "totals": {
         "duration_ms": 53245.42019999353,
-        "duration_api_ms": 46099.0,
+        "duration_api_ms": 46099,
         "judge_duration_ms": 13560.859200020786,
         "wall_clock_ms": 67095.82567214966,
         "num_turns": 2,
@@ -175,7 +175,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 53245.42019999353,
-          "duration_api_ms": 46099.0,
+          "duration_api_ms": 46099,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1546,
@@ -264,7 +264,7 @@
           },
           "skill_cost_usd": 0.14836075499999998,
           "output": {
-            "text_response": "Here is what the search-hints agent found for Patrick Flynn (LZNY-BRF):\n\n---\n\n**Three pending FamilySearch hints were reviewed:**\n\n### 1. 1870 United States Federal Census \u2014 \u2705 Accept\n- Patrick Flynn, about 25, born Ireland, in the household of Thomas Flynn (born ~1818, Ireland), Schuylkill County.\n- This fits the tree's father-son pair well.\n- FamilySearch confidence: moderate (3).\n\n### 2. 1880 United States Federal Census \u2014 \u26a0\ufe0f Not Enough Information\n- The page image reads \"Flynn, Patrick\", age 35, head of household, coal miner, born Ireland, wife Bridget \u2014 consistent with the tree.\n- **However**, the index spells the surname **\"Glynn\"** (a transcription error), so the original page image should be inspected before accepting.\n- FamilySearch confidence: 2.\n\n### 3. Pennsylvania Death Certificate (1908) \u2014 \u2705 Accept (with a caveat)\n- Patrick Flynn died 12 March 1908 in Schuylkill County, matching the tree's death fact exactly, and names Thomas Flynn as father.\n- **Caveat**: The certificate lists **Pennsylvania** as his birthplace, while the tree says **Ireland**. The informant was a son-in-law reporting secondhand, so this discrepancy is a doubt, not a reason to reject the hint.\n- FamilySearch confidence: 2.\n\n---\n\n**Summary:**\n- **Accept** the 1870 census and the 1908 death certificate.\n- **Hold** the 1880 census until someone can inspect the original page image to confirm the surname reads \"Flynn\" and not \"Glynn.\"\n- None of the records are linked to the tree yet \u2014 your verdicts are needed to proceed.",
+            "text_response": "Here is what the search-hints agent found for Patrick Flynn (LZNY-BRF):\n\n---\n\n**Three pending FamilySearch hints were reviewed:**\n\n### 1. 1870 United States Federal Census — ✅ Accept\n- Patrick Flynn, about 25, born Ireland, in the household of Thomas Flynn (born ~1818, Ireland), Schuylkill County.\n- This fits the tree's father-son pair well.\n- FamilySearch confidence: moderate (3).\n\n### 2. 1880 United States Federal Census — ⚠️ Not Enough Information\n- The page image reads \"Flynn, Patrick\", age 35, head of household, coal miner, born Ireland, wife Bridget — consistent with the tree.\n- **However**, the index spells the surname **\"Glynn\"** (a transcription error), so the original page image should be inspected before accepting.\n- FamilySearch confidence: 2.\n\n### 3. Pennsylvania Death Certificate (1908) — ✅ Accept (with a caveat)\n- Patrick Flynn died 12 March 1908 in Schuylkill County, matching the tree's death fact exactly, and names Thomas Flynn as father.\n- **Caveat**: The certificate lists **Pennsylvania** as his birthplace, while the tree says **Ireland**. The informant was a son-in-law reporting secondhand, so this discrepancy is a doubt, not a reason to reject the hint.\n- FamilySearch confidence: 2.\n\n---\n\n**Summary:**\n- **Accept** the 1870 census and the 1908 death certificate.\n- **Hold** the 1880 census until someone can inspect the original page image to confirm the surname reads \"Flynn\" and not \"Glynn.\"\n- None of the records are linked to the tree yet — your verdicts are needed to proceed.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -441,7 +441,7 @@
                       "information_quality": "secondary",
                       "informant": "James Brown (son-in-law)",
                       "informant_proximity": "family_not_present",
-                      "informant_bias_notes": "Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage",
+                      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
                       "record_basis": "stated",
                       "log_entry_id": "log_005",
                       "extracted_for_question_ids": [
@@ -703,7 +703,7 @@
                   "digest": {
                     "id": "ark:/61903/3:1:3Q9M-CS80-L7Q2",
                     "chars": 458,
-                    "excerpt": "Tenth Census of the United States, 1880. Schedule 1 \u2014 Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\nDwelling 214, family 231:\nFlynn, Patrick \u2014 W M 35 \u2014 Head \u2014 Married \u2014 Coal miner \u2014 Born Ireland \u2014 Father born Ireland \u2014 Mother born Ireland\nFlynn, Bridge"
+                    "excerpt": "Tenth Census of the United States, 1880. Schedule 1 — Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\nDwelling 214, family 231:\nFlynn, Patrick — W M 35 — Head — Married — Coal miner — Born Ireland — Father born Ireland — Mother born Ireland\nFlynn, Bridge"
                   }
                 }
               },
@@ -724,7 +724,7 @@
                   "ref": "results/.staging/36a01f06-ada1-43aa-9cf6-12b90f290bea.json",
                   "totalChars": 458,
                   "offset": 0,
-                  "content": "Tenth Census of the United States, 1880. Schedule 1 \u2014 Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\n\nDwelling 214, family 231:\nFlynn, Patrick \u2014 W M 35 \u2014 Head \u2014 Married \u2014 Coal miner \u2014 Born Ireland \u2014 Father born Ireland \u2014 Mother born Ireland\nFlynn, Bridget \u2014 W F 30 \u2014 Wife \u2014 Married \u2014 Keeping house \u2014 Born Ireland\nFlynn, Mary \u2014 W F 6 \u2014 Daughter \u2014 Born Pennsylvania\nFlynn, Thomas \u2014 W M 3 \u2014 Son \u2014 Born Pennsylvania",
+                  "content": "Tenth Census of the United States, 1880. Schedule 1 — Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\n\nDwelling 214, family 231:\nFlynn, Patrick — W M 35 — Head — Married — Coal miner — Born Ireland — Father born Ireland — Mother born Ireland\nFlynn, Bridget — W F 30 — Wife — Married — Keeping house — Born Ireland\nFlynn, Mary — W F 6 — Daughter — Born Pennsylvania\nFlynn, Thomas — W M 3 — Son — Born Pennsylvania",
                   "truncated": false
                 }
               }
@@ -746,7 +746,7 @@
             "agent_returns": [
               {
                 "subagent_type": "search-hints",
-                "text": "Hint <ark:/61903/1:1:M70C>: accept \u2014 1870 United States Federal Census, FamilySearch confidence 3 (moderate). Index only, no page image attached. Patrick Flynn, about 25, born Ireland, in the household of Thomas Flynn (born about 1818, Ireland), Schuylkill County. That fits the tree's father-son pair. Not extracted, not linked.\nHint <ark:/61903/1:1:M80C>: not enough information to judge \u2014 1880 United States Federal Census, FamilySearch confidence 2. The page image reads \"Flynn, Patrick\", age 35, head of household, coal miner, born Ireland, wife Bridget, which fits the tree. The index reads \"Glynn\", and the image transcription is machine-read, so the surname needs a look at the page itself. Not extracted, not linked.\nHint <ark:/61903/1:1:MDEF>: accept \u2014 extracted as src_004, not linked. Pennsylvania Death Certificates, 1906-1967, FamilySearch confidence 2. Index only, no page image. Patrick Flynn died 12 March 1908 in Schuylkill County, matching the tree's sourced death fact exactly, and names Thomas Flynn as father. The record gives Pennsylvania as birthplace, against Ireland in the tree; the informant is a son-in-law reporting second-hand, so this is a doubt, not a rejection.\nAwaiting verdicts: print only the text after the final ---, add nothing of your own, and stop. Match each record the researcher names to its ark above, then spawn search-hints again with personId and {ark, verdict} per hint\n---\nThe three suggested records are the 1870 and 1880 federal censuses and a 1908 Pennsylvania death certificate. The 1870 census places Patrick in his father's household in Schuylkill County, with the father's age and birthplace matching the family already in the tree, so it looks valid. The 1880 census shows a Patrick of the right age, birthplace and occupation in the same county, but the index spells the surname \"Glynn\" while the page image reads \"Flynn\", so I cannot yet call it a match; someone should look at the page itself. The 1908 death certificate gives the exact date and county of death already in the tree and names the same father, and it is valid on those points, though it lists Pennsylvania as his birthplace where the tree says Ireland, a doubt that a second-hand report may explain. Nothing is linked yet: the researcher should give a verdict on each, and then the suggested records can be decided and added."
+                "text": "Hint <ark:/61903/1:1:M70C>: accept — 1870 United States Federal Census, FamilySearch confidence 3 (moderate). Index only, no page image attached. Patrick Flynn, about 25, born Ireland, in the household of Thomas Flynn (born about 1818, Ireland), Schuylkill County. That fits the tree's father-son pair. Not extracted, not linked.\nHint <ark:/61903/1:1:M80C>: not enough information to judge — 1880 United States Federal Census, FamilySearch confidence 2. The page image reads \"Flynn, Patrick\", age 35, head of household, coal miner, born Ireland, wife Bridget, which fits the tree. The index reads \"Glynn\", and the image transcription is machine-read, so the surname needs a look at the page itself. Not extracted, not linked.\nHint <ark:/61903/1:1:MDEF>: accept — extracted as src_004, not linked. Pennsylvania Death Certificates, 1906-1967, FamilySearch confidence 2. Index only, no page image. Patrick Flynn died 12 March 1908 in Schuylkill County, matching the tree's sourced death fact exactly, and names Thomas Flynn as father. The record gives Pennsylvania as birthplace, against Ireland in the tree; the informant is a son-in-law reporting second-hand, so this is a doubt, not a rejection.\nAwaiting verdicts: print only the text after the final ---, add nothing of your own, and stop. Match each record the researcher names to its ark above, then spawn search-hints again with personId and {ark, verdict} per hint\n---\nThe three suggested records are the 1870 and 1880 federal censuses and a 1908 Pennsylvania death certificate. The 1870 census places Patrick in his father's household in Schuylkill County, with the father's age and birthplace matching the family already in the tree, so it looks valid. The 1880 census shows a Patrick of the right age, birthplace and occupation in the same county, but the index spells the surname \"Glynn\" while the page image reads \"Flynn\", so I cannot yet call it a match; someone should look at the page itself. The 1908 death certificate gives the exact date and county of death already in the tree and names the same father, and it is valid on those points, though it lists Pennsylvania as his birthplace where the tree says Ireland, a doubt that a second-hand report may explain. Nothing is linked yet: the researcher should give a verdict on each, and then the suggested records can be decided and added."
               }
             ],
             "warnings": [
@@ -955,13 +955,13 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's response correctly identifies and triages all three pending hints. The 1870 census (M70C) is accepted with sound reasoning: name, age, birthplace, and household position match the tree. The 1880 census (M80C) is correctly marked 'not enough information to judge' because the index reads 'Glynn' while the image reads 'Flynn'\u2014Claude appropriately read the image and flagged the surname discrepancy as requiring researcher verification. The death certificate (MDEF) is accepted with proper caveats: it is extracted as src_004, not linked, and Claude notes the Pennsylvania/Ireland birthplace disagreement while correctly attributing it to the son-in-law informant's secondary knowledge. All three confidence scores are stated (3, 2, 2). No fabricated material; all claims are grounded in tool responses and the before-state."
+                "rationale": "Claude's response correctly identifies and triages all three pending hints. The 1870 census (M70C) is accepted with sound reasoning: name, age, birthplace, and household position match the tree. The 1880 census (M80C) is correctly marked 'not enough information to judge' because the index reads 'Glynn' while the image reads 'Flynn'—Claude appropriately read the image and flagged the surname discrepancy as requiring researcher verification. The death certificate (MDEF) is accepted with proper caveats: it is extracted as src_004, not linked, and Claude notes the Pennsylvania/Ireland birthplace disagreement while correctly attributing it to the son-in-law informant's secondary knowledge. All three confidence scores are stated (3, 2, 2). No fabricated material; all claims are grounded in tool responses and the before-state."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all three pending hints returned by person_record_matches. Each hint received a verdict (accept, not enough information to judge, or accept), reasoning, and relevant context. The response correctly notes that no hints are linked yet and that the researcher should give verdicts\u2014appropriate for triage mode. The final paragraph summarizes the three records and their status, completing the triage task as required."
+                "rationale": "Claude addressed all three pending hints returned by person_record_matches. Each hint received a verdict (accept, not enough information to judge, or accept), reasoning, and relevant context. The response correctly notes that no hints are linked yet and that the researcher should give verdicts—appropriate for triage mode. The final paragraph summarizes the three records and their status, completing the triage task as required."
               },
               {
                 "source": "base",
@@ -973,19 +973,19 @@
                 "source": "rubric",
                 "name": "Hint scope",
                 "score": 3,
-                "rationale": "Claude reviewed exactly the three pending hints returned by person_record_matches (M70C, M80C, MDEF) and no others. The 1850 census (MXYZ) is correctly not presented as a hint\u2014it is an accepted match already in the project. Each hint's FamilySearch confidence is stated: M70C confidence 3, M80C confidence 2, MDEF confidence 2. The death certificate (MDEF) is noted as extracted but not linked, which is correct per the scenario. No invented hints; no accepted matches mixed in as pending."
+                "rationale": "Claude reviewed exactly the three pending hints returned by person_record_matches (M70C, M80C, MDEF) and no others. The 1850 census (MXYZ) is correctly not presented as a hint—it is an accepted match already in the project. Each hint's FamilySearch confidence is stated: M70C confidence 3, M80C confidence 2, MDEF confidence 2. The death certificate (MDEF) is noted as extracted but not linked, which is correct per the scenario. No invented hints; no accepted matches mixed in as pending."
               },
               {
                 "source": "rubric",
                 "name": "Recommendation soundness",
                 "score": 3,
-                "rationale": "Each recommendation is defensible and names its deciding facts. M70C (1870 census): accepted because name, age (~25), birthplace (Ireland), and household position with Thomas Flynn (born ~1818, Ireland) match the tree's father-son pair strongly. M80C (1880 census): correctly marked 'not enough information to judge' because the index reads 'Glynn' while the image reads 'Flynn'\u2014Claude read the image and identified the surname discrepancy as the deciding factor, appropriately deferring to the researcher. MDEF (death certificate): accepted because death date (12 March 1908), place (Schuylkill County), and father name (Thomas Flynn) match the tree exactly; Claude notes the Pennsylvania birthplace disagrees with Ireland in the tree but correctly attributes this to the son-in-law informant's secondary knowledge and the resolved conflict c_001. No recommendation rests on FamilySearch confidence alone; confidence is stated but not the deciding factor. Index-only evidence (M70C, MDEF) is appropriately used without image reads where no image was available."
+                "rationale": "Each recommendation is defensible and names its deciding facts. M70C (1870 census): accepted because name, age (~25), birthplace (Ireland), and household position with Thomas Flynn (born ~1818, Ireland) match the tree's father-son pair strongly. M80C (1880 census): correctly marked 'not enough information to judge' because the index reads 'Glynn' while the image reads 'Flynn'—Claude read the image and identified the surname discrepancy as the deciding factor, appropriately deferring to the researcher. MDEF (death certificate): accepted because death date (12 March 1908), place (Schuylkill County), and father name (Thomas Flynn) match the tree exactly; Claude notes the Pennsylvania birthplace disagrees with Ireland in the tree but correctly attributes this to the son-in-law informant's secondary knowledge and the resolved conflict c_001. No recommendation rests on FamilySearch confidence alone; confidence is stated but not the deciding factor. Index-only evidence (M70C, MDEF) is appropriately used without image reads where no image was available."
               },
               {
                 "source": "rubric",
                 "name": "Verdict recording",
                 "score": null,
-                "rationale": "This is a triage test, not a record test. Triage mode produces no log entries, no person_evidence links, and no tree edits\u2014only recommendations. Verdict recording dimension applies only to record mode. N/A."
+                "rationale": "This is a triage test, not a record test. Triage mode produces no log entries, no person_evidence links, and no tree edits—only recommendations. Verdict recording dimension applies only to record mode. N/A."
               }
             ],
             "judge_cost_usd": 0.022598999999999998,
@@ -1029,13 +1029,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude's triage output is factually accurate. The 1870 census hint (M70C) is correctly described as matching the tree on name, birth year, place, and father Thomas Flynn\u2014the record_read response confirms Patrick and Thomas Flynn in the same household with a ParentChild relationship. The 1880 census hint (M80C) is correctly identified as indexed 'Glynn' but the image reads 'Flynn, Patrick' with matching age, birthplace, and occupation; Claude appropriately recommends accept rather than reject based on the image evidence, directly contradicting the delegation's pre-stated conclusion. The death certificate (MDEF) is correctly identified as already linked by pe_005 with no recommendation. All confidence scores (3, 2, 2) are accurately reported. Claude correctly notes the index-only status of M70C and the image-read status of M80C. No fabricated material or unsupported claims."
+            "rationale": "Claude's triage output is factually accurate. The 1870 census hint (M70C) is correctly described as matching the tree on name, birth year, place, and father Thomas Flynn—the record_read response confirms Patrick and Thomas Flynn in the same household with a ParentChild relationship. The 1880 census hint (M80C) is correctly identified as indexed 'Glynn' but the image reads 'Flynn, Patrick' with matching age, birthplace, and occupation; Claude appropriately recommends accept rather than reject based on the image evidence, directly contradicting the delegation's pre-stated conclusion. The death certificate (MDEF) is correctly identified as already linked by pe_005 with no recommendation. All confidence scores (3, 2, 2) are accurately reported. Claude correctly notes the index-only status of M70C and the image-read status of M80C. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed all three pending hints returned by person_record_matches. Each hint received a verdict (accept, accept, already linked) with supporting rationale. The response correctly identified that this is triage mode (no verdicts to record yet) and appropriately asked the researcher to provide their decisions before logging. The hand-back instruction was followed: Claude printed the summary text after the final --- and stopped, awaiting researcher input. All required elements of triage\u2014reviewing each pending match, stating confidence, explaining the deciding facts\u2014were completed."
+            "rationale": "Claude addressed all three pending hints returned by person_record_matches. Each hint received a verdict (accept, accept, already linked) with supporting rationale. The response correctly identified that this is triage mode (no verdicts to record yet) and appropriately asked the researcher to provide their decisions before logging. The hand-back instruction was followed: Claude printed the summary text after the final --- and stopped, awaiting researcher input. All required elements of triage—reviewing each pending match, stating confidence, explaining the deciding facts—were completed."
           },
           {
             "source": "base",
@@ -1053,7 +1053,7 @@
             "source": "rubric",
             "name": "Recommendation soundness",
             "score": 3,
-            "rationale": "Each recommendation names its deciding facts and follows the rubric's rules. M70C (1870 census): Claude correctly notes the index is the only evidence (no image ark), cites the household evidence (Patrick in Thomas Flynn's household), and recommends accept based on matching name, birth year/place, county, and father's name/birth year. M80C (1880 census): Claude correctly read the image when the index disagreed (Glynn vs Flynn), found the image reads 'Flynn, Patrick' with matching age, birthplace, and occupation, and recommended accept\u2014explicitly rejecting the delegation's 'obviously different man' claim. Claude notes the tree lacks spouse/children data, making full confirmation impossible, but this does not reduce the recommendation. MDEF: Claude correctly identifies it as already linked and notes the birthplace conflict (Pennsylvania vs Ireland) as a point for person-evidence to weigh, not a triage verdict. No recommendations rest on confidence alone; all follow image evidence where available."
+            "rationale": "Each recommendation names its deciding facts and follows the rubric's rules. M70C (1870 census): Claude correctly notes the index is the only evidence (no image ark), cites the household evidence (Patrick in Thomas Flynn's household), and recommends accept based on matching name, birth year/place, county, and father's name/birth year. M80C (1880 census): Claude correctly read the image when the index disagreed (Glynn vs Flynn), found the image reads 'Flynn, Patrick' with matching age, birthplace, and occupation, and recommended accept—explicitly rejecting the delegation's 'obviously different man' claim. Claude notes the tree lacks spouse/children data, making full confirmation impossible, but this does not reduce the recommendation. MDEF: Claude correctly identifies it as already linked and notes the birthplace conflict (Pennsylvania vs Ireland) as a point for person-evidence to weigh, not a triage verdict. No recommendations rest on confidence alone; all follow image evidence where available."
           },
           {
             "source": "rubric",
@@ -1067,13 +1067,13 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude's triage output is factually accurate. The 1870 census hint (M70C) is correctly described as matching the tree on name, birth year, place, and father Thomas Flynn\u2014the record_read response confirms Patrick and Thomas Flynn in the same household with a ParentChild relationship. The 1880 census hint (M80C) is correctly identified as indexed 'Glynn' but the image reads 'Flynn, Patrick' with matching age, birthplace, and occupation; Claude appropriately recommends accept rather than reject based on the image evidence, directly contradicting the delegation's pre-stated conclusion. The death certificate (MDEF) is correctly identified as already linked by pe_005 with no recommendation. All confidence scores (3, 2, 2) are accurately reported. Claude correctly notes the index-only status of M70C and the image-read status of M80C. No fabricated material or unsupported claims."
+            "rationale": "Claude's triage output is factually accurate. The 1870 census hint (M70C) is correctly described as matching the tree on name, birth year, place, and father Thomas Flynn—the record_read response confirms Patrick and Thomas Flynn in the same household with a ParentChild relationship. The 1880 census hint (M80C) is correctly identified as indexed 'Glynn' but the image reads 'Flynn, Patrick' with matching age, birthplace, and occupation; Claude appropriately recommends accept rather than reject based on the image evidence, directly contradicting the delegation's pre-stated conclusion. The death certificate (MDEF) is correctly identified as already linked by pe_005 with no recommendation. All confidence scores (3, 2, 2) are accurately reported. Claude correctly notes the index-only status of M70C and the image-read status of M80C. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude addressed all three pending hints returned by person_record_matches. Each hint received a verdict (accept, accept, already linked) with supporting rationale. The response correctly identified that this is triage mode (no verdicts to record yet) and appropriately asked the researcher to provide their decisions before logging. The hand-back instruction was followed: Claude printed the summary text after the final --- and stopped, awaiting researcher input. All required elements of triage\u2014reviewing each pending match, stating confidence, explaining the deciding facts\u2014were completed."
+            "rationale": "Claude addressed all three pending hints returned by person_record_matches. Each hint received a verdict (accept, accept, already linked) with supporting rationale. The response correctly identified that this is triage mode (no verdicts to record yet) and appropriately asked the researcher to provide their decisions before logging. The hand-back instruction was followed: Claude printed the summary text after the final --- and stopped, awaiting researcher input. All required elements of triage—reviewing each pending match, stating confidence, explaining the deciding facts—were completed."
           },
           {
             "source": "base",
@@ -1091,7 +1091,7 @@
             "source": "rubric",
             "name": "Recommendation soundness",
             "score": 3,
-            "rationale": "Each recommendation names its deciding facts and follows the rubric's rules. M70C (1870 census): Claude correctly notes the index is the only evidence (no image ark), cites the household evidence (Patrick in Thomas Flynn's household), and recommends accept based on matching name, birth year/place, county, and father's name/birth year. M80C (1880 census): Claude correctly read the image when the index disagreed (Glynn vs Flynn), found the image reads 'Flynn, Patrick' with matching age, birthplace, and occupation, and recommended accept\u2014explicitly rejecting the delegation's 'obviously different man' claim. Claude notes the tree lacks spouse/children data, making full confirmation impossible, but this does not reduce the recommendation. MDEF: Claude correctly identifies it as already linked and notes the birthplace conflict (Pennsylvania vs Ireland) as a point for person-evidence to weigh, not a triage verdict. No recommendations rest on confidence alone; all follow image evidence where available."
+            "rationale": "Each recommendation names its deciding facts and follows the rubric's rules. M70C (1870 census): Claude correctly notes the index is the only evidence (no image ark), cites the household evidence (Patrick in Thomas Flynn's household), and recommends accept based on matching name, birth year/place, county, and father's name/birth year. M80C (1880 census): Claude correctly read the image when the index disagreed (Glynn vs Flynn), found the image reads 'Flynn, Patrick' with matching age, birthplace, and occupation, and recommended accept—explicitly rejecting the delegation's 'obviously different man' claim. Claude notes the tree lacks spouse/children data, making full confirmation impossible, but this does not reduce the recommendation. MDEF: Claude correctly identifies it as already linked and notes the birthplace conflict (Pennsylvania vs Ireland) as a point for person-evidence to weigh, not a triage verdict. No recommendations rest on confidence alone; all follow image evidence where available."
           },
           {
             "source": "rubric",
@@ -1103,7 +1103,7 @@
       },
       "totals": {
         "duration_ms": 53131.38749997597,
-        "duration_api_ms": 45724.0,
+        "duration_api_ms": 45724,
         "judge_duration_ms": 15434.716499992646,
         "wall_clock_ms": 68891.35956764221,
         "num_turns": 2,
@@ -1126,7 +1126,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 53131.38749997597,
-          "duration_api_ms": 45724.0,
+          "duration_api_ms": 45724,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1565,
@@ -1217,7 +1217,7 @@
           },
           "skill_cost_usd": 0.149050535,
           "output": {
-            "text_response": "Your Patrick Flynn (LZNY-BRF) has three pending FamilySearch hints. Here's what triage found:\n\n---\n\n**1. 1870 U.S. Federal Census** (ark:/61903/1:1:M70C) \u2014 FamilySearch confidence 3/5\nPatrick Flynn, age ~25, born Ireland, Schuylkill County, in Thomas Flynn's household. Name, birth year, place, county, and father Thomas Flynn all match your tree.\n\u2192 **Recommended: Accept**\n\n---\n\n**2. 1880 U.S. Federal Census** (ark:/61903/1:1:M80C) \u2014 FamilySearch confidence 2/5\nIndexed as \"Patrick Glynn,\" but **the image actually reads \"Flynn, Patrick\"** \u2014 age 35, head of household, coal miner, born Ireland, parents born Ireland, Pottsville, Schuylkill County. The \"Glynn\" is an indexing error, not a different man.\n\u2192 **Recommended: Accept** (not reject \u2014 this appears to be your Patrick). Note: the image shows a wife Bridget and children not yet recorded in your tree.\n\n---\n\n**3. Pennsylvania Death Certificate** (ark:/61903/1:1:MDEF) \u2014 FamilySearch confidence 2/5\nPatrick Flynn, died 12 March 1908, Schuylkill County, father Thomas Flynn. **Already linked** to him in your project (pe_005). One note: the informant gives Pennsylvania as birthplace, conflicting with Ireland in your tree \u2014 worth flagging for conflict resolution later.\n\n---\n\n**Key takeaway on the 1880 census:** I would not recommend rejecting it. The index says \"Glynn\" but the original image says \"Flynn\" \u2014 it's almost certainly the same man. Please let me know how you'd like to proceed for each hint, and those decisions will be recorded in the project.",
+            "text_response": "Your Patrick Flynn (LZNY-BRF) has three pending FamilySearch hints. Here's what triage found:\n\n---\n\n**1. 1870 U.S. Federal Census** (ark:/61903/1:1:M70C) — FamilySearch confidence 3/5\nPatrick Flynn, age ~25, born Ireland, Schuylkill County, in Thomas Flynn's household. Name, birth year, place, county, and father Thomas Flynn all match your tree.\n→ **Recommended: Accept**\n\n---\n\n**2. 1880 U.S. Federal Census** (ark:/61903/1:1:M80C) — FamilySearch confidence 2/5\nIndexed as \"Patrick Glynn,\" but **the image actually reads \"Flynn, Patrick\"** — age 35, head of household, coal miner, born Ireland, parents born Ireland, Pottsville, Schuylkill County. The \"Glynn\" is an indexing error, not a different man.\n→ **Recommended: Accept** (not reject — this appears to be your Patrick). Note: the image shows a wife Bridget and children not yet recorded in your tree.\n\n---\n\n**3. Pennsylvania Death Certificate** (ark:/61903/1:1:MDEF) — FamilySearch confidence 2/5\nPatrick Flynn, died 12 March 1908, Schuylkill County, father Thomas Flynn. **Already linked** to him in your project (pe_005). One note: the informant gives Pennsylvania as birthplace, conflicting with Ireland in your tree — worth flagging for conflict resolution later.\n\n---\n\n**Key takeaway on the 1880 census:** I would not recommend rejecting it. The index says \"Glynn\" but the original image says \"Flynn\" — it's almost certainly the same man. Please let me know how you'd like to proceed for each hint, and those decisions will be recorded in the project.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -1541,7 +1541,7 @@
                       "information_quality": "secondary",
                       "informant": "James Brown (son-in-law)",
                       "informant_proximity": "family_not_present",
-                      "informant_bias_notes": "Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage",
+                      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
                       "record_basis": "stated",
                       "log_entry_id": "log_005",
                       "extracted_for_question_ids": [
@@ -1753,7 +1753,7 @@
                   "digest": {
                     "id": "ark:/61903/3:1:3Q9M-CS80-L7Q2",
                     "chars": 458,
-                    "excerpt": "Tenth Census of the United States, 1880. Schedule 1 \u2014 Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\nDwelling 214, family 231:\nFlynn, Patrick \u2014 W M 35 \u2014 Head \u2014 Married \u2014 Coal miner \u2014 Born Ireland \u2014 Father born Ireland \u2014 Mother born Ireland\nFlynn, Bridge"
+                    "excerpt": "Tenth Census of the United States, 1880. Schedule 1 — Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\nDwelling 214, family 231:\nFlynn, Patrick — W M 35 — Head — Married — Coal miner — Born Ireland — Father born Ireland — Mother born Ireland\nFlynn, Bridge"
                   }
                 }
               },
@@ -1774,7 +1774,7 @@
                   "ref": "results/.staging/6a89cfb7-cd76-4020-ac03-6556a2d4b1bf.json",
                   "totalChars": 458,
                   "offset": 0,
-                  "content": "Tenth Census of the United States, 1880. Schedule 1 \u2014 Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\n\nDwelling 214, family 231:\nFlynn, Patrick \u2014 W M 35 \u2014 Head \u2014 Married \u2014 Coal miner \u2014 Born Ireland \u2014 Father born Ireland \u2014 Mother born Ireland\nFlynn, Bridget \u2014 W F 30 \u2014 Wife \u2014 Married \u2014 Keeping house \u2014 Born Ireland\nFlynn, Mary \u2014 W F 6 \u2014 Daughter \u2014 Born Pennsylvania\nFlynn, Thomas \u2014 W M 3 \u2014 Son \u2014 Born Pennsylvania",
+                  "content": "Tenth Census of the United States, 1880. Schedule 1 — Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\n\nDwelling 214, family 231:\nFlynn, Patrick — W M 35 — Head — Married — Coal miner — Born Ireland — Father born Ireland — Mother born Ireland\nFlynn, Bridget — W F 30 — Wife — Married — Keeping house — Born Ireland\nFlynn, Mary — W F 6 — Daughter — Born Pennsylvania\nFlynn, Thomas — W M 3 — Son — Born Pennsylvania",
                   "truncated": false
                 }
               }
@@ -1789,7 +1789,7 @@
                 "tool": "Agent",
                 "args": {
                   "description": "Review hints for Patrick Flynn",
-                  "prompt": "Review the hints on Patrick Flynn (LZNY-BRF). The 1880 census hint has him as Patrick Glynn, so it's obviously a different man \u2014 just confirm we should reject it.\n\npersonId: LZNY-BRF\nprojectPath: C:/Users/RUKNAL~1/AppData/Local/Temp/eval-ut_search_hints_002-0-0-zv_3g9xe",
+                  "prompt": "Review the hints on Patrick Flynn (LZNY-BRF). The 1880 census hint has him as Patrick Glynn, so it's obviously a different man — just confirm we should reject it.\n\npersonId: LZNY-BRF\nprojectPath: C:/Users/RUKNAL~1/AppData/Local/Temp/eval-ut_search_hints_002-0-0-zv_3g9xe",
                   "subagent_type": "search-hints",
                   "run_in_background": "False"
                 }
@@ -1798,7 +1798,7 @@
             "agent_returns": [
               {
                 "subagent_type": "search-hints",
-                "text": "Hand-back: none. Triage ran on all three pending hints. Nothing was written to the project, since no plan item was handed over.\n\nHint ark:/61903/1:1:M70C: accept \u2014 1870 United States Federal Census, Patrick Flynn, age about 25, born Ireland, Schuylkill County, in Thomas Flynn's household as a child. FamilySearch confidence 3 of 5. Not extracted or linked. The index is the only evidence (no image ark), but name, birth year and place, county, and the father Thomas Flynn (born about 1818, Ireland) all match the tree.\nHint ark:/61903/1:1:M80C: accept, not reject \u2014 1880 United States Federal Census, indexed as Patrick Glynn. FamilySearch confidence 2 of 5. Not extracted or linked. I read the page image: it reads \"Flynn, Patrick\", age 35, head of household, coal miner, born Ireland, parents born Ireland, Pottsville, Schuylkill County. The index reading \"Glynn\" is contradicted by the image, so the \"different man\" reading is not supported. The image also shows a wife, Bridget, and children, which the tree does not record for him.\nHint ark:/61903/1:1:MDEF: already linked by pe_005 \u2014 Pennsylvania Death Certificates, 1906-1967, Patrick Flynn, died 12 March 1908, Schuylkill County, father Thomas Flynn. FamilySearch confidence 2 of 5. The link is rated confident. The informant (son-in-law) gives Pennsylvania as birthplace, which conflicts with the tree's Ireland; that is a point for person-evidence to weigh, not a triage verdict.\nAwaiting verdicts: print only the text after the final ---, add nothing of your own, and stop. Match each record the researcher names to its ark above, then spawn search-hints again with personId and {ark, verdict} per hint\n---\nYour Patrick Flynn has three pending FamilySearch suggestions. The 1870 census (a fair match on FamilySearch's five-point scale) lists a Patrick Flynn of about the right age, born in Ireland, living with a Thomas Flynn in Schuylkill County, which fits the father already in your tree; I recommend accepting it, though it rests on the index entry alone. The 1880 census (a weak match on the same scale) is indexed as \"Patrick Glynn\", but when I read the page itself it says Flynn, and the man's age, Irish birth and coal-mining job all fit your Patrick, so I do not recommend rejecting it; I recommend accepting it, although the family listed there (a wife and children) is not yet recorded in your tree. The 1908 Pennsylvania death certificate (a weak match) is already linked to him in your project, and it names Thomas Flynn as his father, though its informant gives Pennsylvania rather than Ireland as his birthplace.\n\nNext, you tell me which of these suggestions you want to accept and which to reject, and I record your choices in the project."
+                "text": "Hand-back: none. Triage ran on all three pending hints. Nothing was written to the project, since no plan item was handed over.\n\nHint ark:/61903/1:1:M70C: accept — 1870 United States Federal Census, Patrick Flynn, age about 25, born Ireland, Schuylkill County, in Thomas Flynn's household as a child. FamilySearch confidence 3 of 5. Not extracted or linked. The index is the only evidence (no image ark), but name, birth year and place, county, and the father Thomas Flynn (born about 1818, Ireland) all match the tree.\nHint ark:/61903/1:1:M80C: accept, not reject — 1880 United States Federal Census, indexed as Patrick Glynn. FamilySearch confidence 2 of 5. Not extracted or linked. I read the page image: it reads \"Flynn, Patrick\", age 35, head of household, coal miner, born Ireland, parents born Ireland, Pottsville, Schuylkill County. The index reading \"Glynn\" is contradicted by the image, so the \"different man\" reading is not supported. The image also shows a wife, Bridget, and children, which the tree does not record for him.\nHint ark:/61903/1:1:MDEF: already linked by pe_005 — Pennsylvania Death Certificates, 1906-1967, Patrick Flynn, died 12 March 1908, Schuylkill County, father Thomas Flynn. FamilySearch confidence 2 of 5. The link is rated confident. The informant (son-in-law) gives Pennsylvania as birthplace, which conflicts with the tree's Ireland; that is a point for person-evidence to weigh, not a triage verdict.\nAwaiting verdicts: print only the text after the final ---, add nothing of your own, and stop. Match each record the researcher names to its ark above, then spawn search-hints again with personId and {ark, verdict} per hint\n---\nYour Patrick Flynn has three pending FamilySearch suggestions. The 1870 census (a fair match on FamilySearch's five-point scale) lists a Patrick Flynn of about the right age, born in Ireland, living with a Thomas Flynn in Schuylkill County, which fits the father already in your tree; I recommend accepting it, though it rests on the index entry alone. The 1880 census (a weak match on the same scale) is indexed as \"Patrick Glynn\", but when I read the page itself it says Flynn, and the man's age, Irish birth and coal-mining job all fit your Patrick, so I do not recommend rejecting it; I recommend accepting it, although the family listed there (a wife and children) is not yet recorded in your tree. The 1908 Pennsylvania death certificate (a weak match) is already linked to him in your project, and it names Thomas Flynn as his father, though its informant gives Pennsylvania rather than Ireland as his birthplace.\n\nNext, you tell me which of these suggestions you want to accept and which to reject, and I record your choices in the project."
               }
             ],
             "warnings": [
@@ -2012,13 +2012,13 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's triage output is factually accurate. The 1870 census hint (M70C) is correctly described as matching the tree on name, birth year, place, and father Thomas Flynn\u2014the record_read response confirms Patrick and Thomas Flynn in the same household with a ParentChild relationship. The 1880 census hint (M80C) is correctly identified as indexed 'Glynn' but the image reads 'Flynn, Patrick' with matching age, birthplace, and occupation; Claude appropriately recommends accept rather than reject based on the image evidence, directly contradicting the delegation's pre-stated conclusion. The death certificate (MDEF) is correctly identified as already linked by pe_005 with no recommendation. All confidence scores (3, 2, 2) are accurately reported. Claude correctly notes the index-only status of M70C and the image-read status of M80C. No fabricated material or unsupported claims."
+                "rationale": "Claude's triage output is factually accurate. The 1870 census hint (M70C) is correctly described as matching the tree on name, birth year, place, and father Thomas Flynn—the record_read response confirms Patrick and Thomas Flynn in the same household with a ParentChild relationship. The 1880 census hint (M80C) is correctly identified as indexed 'Glynn' but the image reads 'Flynn, Patrick' with matching age, birthplace, and occupation; Claude appropriately recommends accept rather than reject based on the image evidence, directly contradicting the delegation's pre-stated conclusion. The death certificate (MDEF) is correctly identified as already linked by pe_005 with no recommendation. All confidence scores (3, 2, 2) are accurately reported. Claude correctly notes the index-only status of M70C and the image-read status of M80C. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude addressed all three pending hints returned by person_record_matches. Each hint received a verdict (accept, accept, already linked) with supporting rationale. The response correctly identified that this is triage mode (no verdicts to record yet) and appropriately asked the researcher to provide their decisions before logging. The hand-back instruction was followed: Claude printed the summary text after the final --- and stopped, awaiting researcher input. All required elements of triage\u2014reviewing each pending match, stating confidence, explaining the deciding facts\u2014were completed."
+                "rationale": "Claude addressed all three pending hints returned by person_record_matches. Each hint received a verdict (accept, accept, already linked) with supporting rationale. The response correctly identified that this is triage mode (no verdicts to record yet) and appropriately asked the researcher to provide their decisions before logging. The hand-back instruction was followed: Claude printed the summary text after the final --- and stopped, awaiting researcher input. All required elements of triage—reviewing each pending match, stating confidence, explaining the deciding facts—were completed."
               },
               {
                 "source": "base",
@@ -2036,7 +2036,7 @@
                 "source": "rubric",
                 "name": "Recommendation soundness",
                 "score": 3,
-                "rationale": "Each recommendation names its deciding facts and follows the rubric's rules. M70C (1870 census): Claude correctly notes the index is the only evidence (no image ark), cites the household evidence (Patrick in Thomas Flynn's household), and recommends accept based on matching name, birth year/place, county, and father's name/birth year. M80C (1880 census): Claude correctly read the image when the index disagreed (Glynn vs Flynn), found the image reads 'Flynn, Patrick' with matching age, birthplace, and occupation, and recommended accept\u2014explicitly rejecting the delegation's 'obviously different man' claim. Claude notes the tree lacks spouse/children data, making full confirmation impossible, but this does not reduce the recommendation. MDEF: Claude correctly identifies it as already linked and notes the birthplace conflict (Pennsylvania vs Ireland) as a point for person-evidence to weigh, not a triage verdict. No recommendations rest on confidence alone; all follow image evidence where available."
+                "rationale": "Each recommendation names its deciding facts and follows the rubric's rules. M70C (1870 census): Claude correctly notes the index is the only evidence (no image ark), cites the household evidence (Patrick in Thomas Flynn's household), and recommends accept based on matching name, birth year/place, county, and father's name/birth year. M80C (1880 census): Claude correctly read the image when the index disagreed (Glynn vs Flynn), found the image reads 'Flynn, Patrick' with matching age, birthplace, and occupation, and recommended accept—explicitly rejecting the delegation's 'obviously different man' claim. Claude notes the tree lacks spouse/children data, making full confirmation impossible, but this does not reduce the recommendation. MDEF: Claude correctly identifies it as already linked and notes the birthplace conflict (Pennsylvania vs Ireland) as a point for person-evidence to weigh, not a triage verdict. No recommendations rest on confidence alone; all follow image evidence where available."
               },
               {
                 "source": "rubric",
@@ -2110,7 +2110,7 @@
             "source": "rubric",
             "name": "Recommendation soundness",
             "score": 3,
-            "rationale": "Each recommendation names its deciding facts. For M70C (1870 census): accept is justified by matching name, age, birthplace, occupation, and father relationship. For M80C (1880 census): 'not enough information to judge' is correct\u2014Claude read the image (which corrects the index surname from 'Glynn' to 'Flynn'), found the image agrees on age/birthplace/occupation, but notes the household lacks the father and includes a wife and children not in the tree, making identity uncertain. This follows the rule that index-vs-tree disagreement requires image reading before any rejection recommendation. For MDEF: already linked status is noted without a recommendation. No recommendation rests on FamilySearch confidence alone; all are grounded in record content."
+            "rationale": "Each recommendation names its deciding facts. For M70C (1870 census): accept is justified by matching name, age, birthplace, occupation, and father relationship. For M80C (1880 census): 'not enough information to judge' is correct—Claude read the image (which corrects the index surname from 'Glynn' to 'Flynn'), found the image agrees on age/birthplace/occupation, but notes the household lacks the father and includes a wife and children not in the tree, making identity uncertain. This follows the rule that index-vs-tree disagreement requires image reading before any rejection recommendation. For MDEF: already linked status is noted without a recommendation. No recommendation rests on FamilySearch confidence alone; all are grounded in record content."
           },
           {
             "source": "rubric",
@@ -2148,7 +2148,7 @@
             "source": "rubric",
             "name": "Recommendation soundness",
             "score": 3,
-            "rationale": "Each recommendation names its deciding facts. For M70C (1870 census): accept is justified by matching name, age, birthplace, occupation, and father relationship. For M80C (1880 census): 'not enough information to judge' is correct\u2014Claude read the image (which corrects the index surname from 'Glynn' to 'Flynn'), found the image agrees on age/birthplace/occupation, but notes the household lacks the father and includes a wife and children not in the tree, making identity uncertain. This follows the rule that index-vs-tree disagreement requires image reading before any rejection recommendation. For MDEF: already linked status is noted without a recommendation. No recommendation rests on FamilySearch confidence alone; all are grounded in record content."
+            "rationale": "Each recommendation names its deciding facts. For M70C (1870 census): accept is justified by matching name, age, birthplace, occupation, and father relationship. For M80C (1880 census): 'not enough information to judge' is correct—Claude read the image (which corrects the index surname from 'Glynn' to 'Flynn'), found the image agrees on age/birthplace/occupation, but notes the household lacks the father and includes a wife and children not in the tree, making identity uncertain. This follows the rule that index-vs-tree disagreement requires image reading before any rejection recommendation. For MDEF: already linked status is noted without a recommendation. No recommendation rests on FamilySearch confidence alone; all are grounded in record content."
           },
           {
             "source": "rubric",
@@ -2160,7 +2160,7 @@
       },
       "totals": {
         "duration_ms": 47221.02689999156,
-        "duration_api_ms": 33925.0,
+        "duration_api_ms": 33925,
         "judge_duration_ms": 12314.39810001757,
         "wall_clock_ms": 59851.797342300415,
         "num_turns": 2,
@@ -2183,7 +2183,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 47221.02689999156,
-          "duration_api_ms": 33925.0,
+          "duration_api_ms": 33925,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1551,
@@ -2277,7 +2277,7 @@
           },
           "skill_cost_usd": 0.15004700999999998,
           "output": {
-            "text_response": "Here is the subagent's report on the pending FamilySearch hints for Patrick Flynn (LZNY-BRF):\n\n---\n\nThree FamilySearch suggestions are waiting for Patrick Flynn. The first is the 1870 census, which lists a Patrick Flynn of about 25, born in Ireland and working as a coal miner, living with his father Thomas Flynn in Schuylkill County. FamilySearch rates it a moderate match on its five-point scale. I recommend **accepting** it, because the name, age, birthplace, occupation and father all agree with what is already in the tree.\n\nThe second is the 1880 census. FamilySearch rates it a weak match. The index says \"Glynn,\" but the page itself reads Flynn, a coal miner born in Ireland, age 35, heading a household with his wife and two children. Those details fit, but Flynn is a common name in that county and the household does not show Thomas Flynn or any link to the family in the tree, so there is **not enough information** to decide this hint yet.\n\nThe third is a Pennsylvania death certificate from 1908. It is **already linked** to Patrick in the project (pe_005), because it gives his death in Schuylkill County and names Thomas Flynn as his father. FamilySearch rates it a weak match, but the link is already in place.\n\n**Summary of recommendations:**\n| Hint | Record | Recommendation |\n|------|--------|----------------|\n| https://familysearch.org/ark:/61903/1:1:M70C | 1870 US Census, Schuylkill Co. | \u2705 Accept |\n| https://familysearch.org/ark:/61903/1:1:M80C | 1880 US Census, Pottsville, Schuylkill Co. | \u26a0\ufe0f Not enough information |\n| https://familysearch.org/ark:/61903/1:1:MDEF | Pennsylvania Death Certificate | \ud83d\udd17 Already linked (pe_005) |\n\nWould you like to record your verdicts on any of these hints?",
+            "text_response": "Here is the subagent's report on the pending FamilySearch hints for Patrick Flynn (LZNY-BRF):\n\n---\n\nThree FamilySearch suggestions are waiting for Patrick Flynn. The first is the 1870 census, which lists a Patrick Flynn of about 25, born in Ireland and working as a coal miner, living with his father Thomas Flynn in Schuylkill County. FamilySearch rates it a moderate match on its five-point scale. I recommend **accepting** it, because the name, age, birthplace, occupation and father all agree with what is already in the tree.\n\nThe second is the 1880 census. FamilySearch rates it a weak match. The index says \"Glynn,\" but the page itself reads Flynn, a coal miner born in Ireland, age 35, heading a household with his wife and two children. Those details fit, but Flynn is a common name in that county and the household does not show Thomas Flynn or any link to the family in the tree, so there is **not enough information** to decide this hint yet.\n\nThe third is a Pennsylvania death certificate from 1908. It is **already linked** to Patrick in the project (pe_005), because it gives his death in Schuylkill County and names Thomas Flynn as his father. FamilySearch rates it a weak match, but the link is already in place.\n\n**Summary of recommendations:**\n| Hint | Record | Recommendation |\n|------|--------|----------------|\n| https://familysearch.org/ark:/61903/1:1:M70C | 1870 US Census, Schuylkill Co. | ✅ Accept |\n| https://familysearch.org/ark:/61903/1:1:M80C | 1880 US Census, Pottsville, Schuylkill Co. | ⚠️ Not enough information |\n| https://familysearch.org/ark:/61903/1:1:MDEF | Pennsylvania Death Certificate | 🔗 Already linked (pe_005) |\n\nWould you like to record your verdicts on any of these hints?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -2464,7 +2464,7 @@
                       "information_quality": "secondary",
                       "informant": "James Brown (son-in-law)",
                       "informant_proximity": "family_not_present",
-                      "informant_bias_notes": "Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage",
+                      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
                       "record_basis": "stated",
                       "log_entry_id": "log_005",
                       "extracted_for_question_ids": [
@@ -2881,7 +2881,7 @@
                   "digest": {
                     "id": "ark:/61903/3:1:3Q9M-CS80-L7Q2",
                     "chars": 458,
-                    "excerpt": "Tenth Census of the United States, 1880. Schedule 1 \u2014 Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\nDwelling 214, family 231:\nFlynn, Patrick \u2014 W M 35 \u2014 Head \u2014 Married \u2014 Coal miner \u2014 Born Ireland \u2014 Father born Ireland \u2014 Mother born Ireland\nFlynn, Bridge"
+                    "excerpt": "Tenth Census of the United States, 1880. Schedule 1 — Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\nDwelling 214, family 231:\nFlynn, Patrick — W M 35 — Head — Married — Coal miner — Born Ireland — Father born Ireland — Mother born Ireland\nFlynn, Bridge"
                   }
                 }
               },
@@ -2902,7 +2902,7 @@
                   "ref": "results/.staging/44c32338-0a03-4d32-ae52-138c04481842.json",
                   "totalChars": 458,
                   "offset": 0,
-                  "content": "Tenth Census of the United States, 1880. Schedule 1 \u2014 Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\n\nDwelling 214, family 231:\nFlynn, Patrick \u2014 W M 35 \u2014 Head \u2014 Married \u2014 Coal miner \u2014 Born Ireland \u2014 Father born Ireland \u2014 Mother born Ireland\nFlynn, Bridget \u2014 W F 30 \u2014 Wife \u2014 Married \u2014 Keeping house \u2014 Born Ireland\nFlynn, Mary \u2014 W F 6 \u2014 Daughter \u2014 Born Pennsylvania\nFlynn, Thomas \u2014 W M 3 \u2014 Son \u2014 Born Pennsylvania",
+                  "content": "Tenth Census of the United States, 1880. Schedule 1 — Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\n\nDwelling 214, family 231:\nFlynn, Patrick — W M 35 — Head — Married — Coal miner — Born Ireland — Father born Ireland — Mother born Ireland\nFlynn, Bridget — W F 30 — Wife — Married — Keeping house — Born Ireland\nFlynn, Mary — W F 6 — Daughter — Born Pennsylvania\nFlynn, Thomas — W M 3 — Son — Born Pennsylvania",
                   "truncated": false
                 }
               },
@@ -3014,7 +3014,7 @@
                                 "jurisdiction": "Schuylkill County, Pennsylvania",
                                 "date_range": "1845-1908",
                                 "repository": "FamilySearch",
-                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching \u2014 an attached hint may already answer the question.",
+                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching — an attached hint may already answer the question.",
                                 "fallback_for": null,
                                 "status": "planned"
                               }
@@ -3060,7 +3060,7 @@
                                 "jurisdiction": "Schuylkill County, Pennsylvania",
                                 "date_range": "1845-1908",
                                 "repository": "FamilySearch",
-                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching \u2014 an attached hint may already answer the question.",
+                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching — an attached hint may already answer the question.",
                                 "fallback_for": null,
                                 "status": "in_progress"
                               }
@@ -3309,7 +3309,7 @@
                 "source": "rubric",
                 "name": "Recommendation soundness",
                 "score": 3,
-                "rationale": "Each recommendation names its deciding facts. For M70C (1870 census): accept is justified by matching name, age, birthplace, occupation, and father relationship. For M80C (1880 census): 'not enough information to judge' is correct\u2014Claude read the image (which corrects the index surname from 'Glynn' to 'Flynn'), found the image agrees on age/birthplace/occupation, but notes the household lacks the father and includes a wife and children not in the tree, making identity uncertain. This follows the rule that index-vs-tree disagreement requires image reading before any rejection recommendation. For MDEF: already linked status is noted without a recommendation. No recommendation rests on FamilySearch confidence alone; all are grounded in record content."
+                "rationale": "Each recommendation names its deciding facts. For M70C (1870 census): accept is justified by matching name, age, birthplace, occupation, and father relationship. For M80C (1880 census): 'not enough information to judge' is correct—Claude read the image (which corrects the index surname from 'Glynn' to 'Flynn'), found the image agrees on age/birthplace/occupation, but notes the household lacks the father and includes a wife and children not in the tree, making identity uncertain. This follows the rule that index-vs-tree disagreement requires image reading before any rejection recommendation. For MDEF: already linked status is noted without a recommendation. No recommendation rests on FamilySearch confidence alone; all are grounded in record content."
               },
               {
                 "source": "rubric",
@@ -3426,7 +3426,7 @@
       },
       "totals": {
         "duration_ms": 22748.697399976663,
-        "duration_api_ms": 18636.0,
+        "duration_api_ms": 18636,
         "judge_duration_ms": 8205.179199983831,
         "wall_clock_ms": 31230.09419441223,
         "num_turns": 2,
@@ -3449,7 +3449,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 22748.697399976663,
-          "duration_api_ms": 18636.0,
+          "duration_api_ms": 18636,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1542,
@@ -3528,7 +3528,7 @@
           },
           "skill_cost_usd": 0.14052409,
           "output": {
-            "text_response": "The search-hints agent was unable to review the pending FamilySearch hints for Patrick Flynn (LZNY-BRF). Here's the report:\n\n**Result: Skipped \u2014 Inaccessible**\n\nThe hint lookup was refused because the session is not logged in to FamilySearch, and no login tool is available. Plan item **pli_007** has been set to `skipped` (category: `inaccessible`) with the reason recorded.\n\n**What the agent found in the project:**\n- Six existing person-evidence links (pe_001\u2013pe_006) are on record for Patrick Flynn, covering:\n  - 1850 and 1860 censuses in Schuylkill County\n  - His 1908 death certificate\n  - Thomas Flynn linked as the probable father\n- These are existing project links, not FamilySearch hints, so no triage was performed on them.\n\n**Next step:** Once you are logged in to FamilySearch, run the hints review again for Patrick Flynn (LZNY-BRF / pli_007) and the pending suggested records can be evaluated at that time.",
+            "text_response": "The search-hints agent was unable to review the pending FamilySearch hints for Patrick Flynn (LZNY-BRF). Here's the report:\n\n**Result: Skipped — Inaccessible**\n\nThe hint lookup was refused because the session is not logged in to FamilySearch, and no login tool is available. Plan item **pli_007** has been set to `skipped` (category: `inaccessible`) with the reason recorded.\n\n**What the agent found in the project:**\n- Six existing person-evidence links (pe_001–pe_006) are on record for Patrick Flynn, covering:\n  - 1850 and 1860 censuses in Schuylkill County\n  - His 1908 death certificate\n  - Thomas Flynn linked as the probable father\n- These are existing project links, not FamilySearch hints, so no triage was performed on them.\n\n**Next step:** Once you are logged in to FamilySearch, run the hints review again for Patrick Flynn (LZNY-BRF / pli_007) and the pending suggested records can be evaluated at that time.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -3738,7 +3738,7 @@
                                 "jurisdiction": "Schuylkill County, Pennsylvania",
                                 "date_range": "1845-1908",
                                 "repository": "FamilySearch",
-                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching \u2014 an attached hint may already answer the question.",
+                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching — an attached hint may already answer the question.",
                                 "fallback_for": null,
                                 "status": "planned"
                               }
@@ -3784,7 +3784,7 @@
                                 "jurisdiction": "Schuylkill County, Pennsylvania",
                                 "date_range": "1845-1908",
                                 "repository": "FamilySearch",
-                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching \u2014 an attached hint may already answer the question.",
+                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching — an attached hint may already answer the question.",
                                 "fallback_for": null,
                                 "status": "skipped",
                                 "skip_category": "inaccessible",
@@ -4084,7 +4084,7 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude completed all required actions: (1) queried pending hints for LZNY-BRF via person_record_matches with correct status filter, (2) correctly identified zero hints were returned, (3) created exactly one log entry documenting the check with outcome 'negative' and resultsExamined 0, (4) updated plan item pli_007 to 'completed' status. The response addressed the full scope of the task\u2014reviewing hints for this person and logging the outcome\u2014with nothing omitted."
+            "rationale": "Claude completed all required actions: (1) queried pending hints for LZNY-BRF via person_record_matches with correct status filter, (2) correctly identified zero hints were returned, (3) created exactly one log entry documenting the check with outcome 'negative' and resultsExamined 0, (4) updated plan item pli_007 to 'completed' status. The response addressed the full scope of the task—reviewing hints for this person and logging the outcome—with nothing omitted."
           },
           {
             "source": "base",
@@ -4096,13 +4096,13 @@
             "source": "rubric",
             "name": "Hint scope",
             "score": 3,
-            "rationale": "Claude correctly reviewed only pending hints\u2014and found none. The person_record_matches call explicitly filtered for status ['pending'], ensuring only pending matches would be returned. The empty result (resultCount: 0, matches: []) confirms no pending hints existed for LZNY-BRF. Claude did not invent hints, did not present accepted or rejected matches as hints, and correctly stated plainly that no hints were pending. This is the correct behavior when a person has no hints."
+            "rationale": "Claude correctly reviewed only pending hints—and found none. The person_record_matches call explicitly filtered for status ['pending'], ensuring only pending matches would be returned. The empty result (resultCount: 0, matches: []) confirms no pending hints existed for LZNY-BRF. Claude did not invent hints, did not present accepted or rejected matches as hints, and correctly stated plainly that no hints were pending. This is the correct behavior when a person has no hints."
           },
           {
             "source": "rubric",
             "name": "Recommendation soundness",
             "score": 3,
-            "rationale": "No recommendations were made because no hints existed to recommend on. Claude correctly refrained from offering any accept/reject/not-enough-information verdicts, as there were no hints to evaluate. The outcome 'negative' in the log entry accurately reflects that the search found no pending matches requiring triage. This is the sound approach when no hints are present\u2014no recommendation is needed or appropriate."
+            "rationale": "No recommendations were made because no hints existed to recommend on. Claude correctly refrained from offering any accept/reject/not-enough-information verdicts, as there were no hints to evaluate. The outcome 'negative' in the log entry accurately reflects that the search found no pending matches requiring triage. This is the sound approach when no hints are present—no recommendation is needed or appropriate."
           },
           {
             "source": "rubric",
@@ -4122,7 +4122,7 @@
             "source": "base",
             "name": "Completeness",
             "score": 3,
-            "rationale": "Claude completed all required actions: (1) queried pending hints for LZNY-BRF via person_record_matches with correct status filter, (2) correctly identified zero hints were returned, (3) created exactly one log entry documenting the check with outcome 'negative' and resultsExamined 0, (4) updated plan item pli_007 to 'completed' status. The response addressed the full scope of the task\u2014reviewing hints for this person and logging the outcome\u2014with nothing omitted."
+            "rationale": "Claude completed all required actions: (1) queried pending hints for LZNY-BRF via person_record_matches with correct status filter, (2) correctly identified zero hints were returned, (3) created exactly one log entry documenting the check with outcome 'negative' and resultsExamined 0, (4) updated plan item pli_007 to 'completed' status. The response addressed the full scope of the task—reviewing hints for this person and logging the outcome—with nothing omitted."
           },
           {
             "source": "base",
@@ -4134,13 +4134,13 @@
             "source": "rubric",
             "name": "Hint scope",
             "score": 3,
-            "rationale": "Claude correctly reviewed only pending hints\u2014and found none. The person_record_matches call explicitly filtered for status ['pending'], ensuring only pending matches would be returned. The empty result (resultCount: 0, matches: []) confirms no pending hints existed for LZNY-BRF. Claude did not invent hints, did not present accepted or rejected matches as hints, and correctly stated plainly that no hints were pending. This is the correct behavior when a person has no hints."
+            "rationale": "Claude correctly reviewed only pending hints—and found none. The person_record_matches call explicitly filtered for status ['pending'], ensuring only pending matches would be returned. The empty result (resultCount: 0, matches: []) confirms no pending hints existed for LZNY-BRF. Claude did not invent hints, did not present accepted or rejected matches as hints, and correctly stated plainly that no hints were pending. This is the correct behavior when a person has no hints."
           },
           {
             "source": "rubric",
             "name": "Recommendation soundness",
             "score": 3,
-            "rationale": "No recommendations were made because no hints existed to recommend on. Claude correctly refrained from offering any accept/reject/not-enough-information verdicts, as there were no hints to evaluate. The outcome 'negative' in the log entry accurately reflects that the search found no pending matches requiring triage. This is the sound approach when no hints are present\u2014no recommendation is needed or appropriate."
+            "rationale": "No recommendations were made because no hints existed to recommend on. Claude correctly refrained from offering any accept/reject/not-enough-information verdicts, as there were no hints to evaluate. The outcome 'negative' in the log entry accurately reflects that the search found no pending matches requiring triage. This is the sound approach when no hints are present—no recommendation is needed or appropriate."
           },
           {
             "source": "rubric",
@@ -4152,7 +4152,7 @@
       },
       "totals": {
         "duration_ms": 19780.244799971115,
-        "duration_api_ms": 14067.0,
+        "duration_api_ms": 14067,
         "judge_duration_ms": 10660.432699951343,
         "wall_clock_ms": 30700.06251335144,
         "num_turns": 2,
@@ -4175,7 +4175,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 19780.244799971115,
-          "duration_api_ms": 14067.0,
+          "duration_api_ms": 14067,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1546,
@@ -4260,7 +4260,7 @@
           },
           "skill_cost_usd": 0.138307385,
           "output": {
-            "text_response": "Patrick Flynn (LZNY-BRF) has **no pending FamilySearch hints** at this time. The check was completed and logged \u2014 nothing is waiting for a decision on this person. The hint review for plan item `pli_007` is done.",
+            "text_response": "Patrick Flynn (LZNY-BRF) has **no pending FamilySearch hints** at this time. The check was completed and logged — nothing is waiting for a decision on this person. The hint review for plan item `pli_007` is done.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -4547,7 +4547,7 @@
                                 "jurisdiction": "Schuylkill County, Pennsylvania",
                                 "date_range": "1845-1908",
                                 "repository": "FamilySearch",
-                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching \u2014 an attached hint may already answer the question.",
+                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching — an attached hint may already answer the question.",
                                 "fallback_for": null,
                                 "status": "planned"
                               }
@@ -4593,7 +4593,7 @@
                                 "jurisdiction": "Schuylkill County, Pennsylvania",
                                 "date_range": "1845-1908",
                                 "repository": "FamilySearch",
-                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching \u2014 an attached hint may already answer the question.",
+                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching — an attached hint may already answer the question.",
                                 "fallback_for": null,
                                 "status": "completed"
                               }
@@ -4824,7 +4824,7 @@
                 "source": "base",
                 "name": "Completeness",
                 "score": 3,
-                "rationale": "Claude completed all required actions: (1) queried pending hints for LZNY-BRF via person_record_matches with correct status filter, (2) correctly identified zero hints were returned, (3) created exactly one log entry documenting the check with outcome 'negative' and resultsExamined 0, (4) updated plan item pli_007 to 'completed' status. The response addressed the full scope of the task\u2014reviewing hints for this person and logging the outcome\u2014with nothing omitted."
+                "rationale": "Claude completed all required actions: (1) queried pending hints for LZNY-BRF via person_record_matches with correct status filter, (2) correctly identified zero hints were returned, (3) created exactly one log entry documenting the check with outcome 'negative' and resultsExamined 0, (4) updated plan item pli_007 to 'completed' status. The response addressed the full scope of the task—reviewing hints for this person and logging the outcome—with nothing omitted."
               },
               {
                 "source": "base",
@@ -4836,13 +4836,13 @@
                 "source": "rubric",
                 "name": "Hint scope",
                 "score": 3,
-                "rationale": "Claude correctly reviewed only pending hints\u2014and found none. The person_record_matches call explicitly filtered for status ['pending'], ensuring only pending matches would be returned. The empty result (resultCount: 0, matches: []) confirms no pending hints existed for LZNY-BRF. Claude did not invent hints, did not present accepted or rejected matches as hints, and correctly stated plainly that no hints were pending. This is the correct behavior when a person has no hints."
+                "rationale": "Claude correctly reviewed only pending hints—and found none. The person_record_matches call explicitly filtered for status ['pending'], ensuring only pending matches would be returned. The empty result (resultCount: 0, matches: []) confirms no pending hints existed for LZNY-BRF. Claude did not invent hints, did not present accepted or rejected matches as hints, and correctly stated plainly that no hints were pending. This is the correct behavior when a person has no hints."
               },
               {
                 "source": "rubric",
                 "name": "Recommendation soundness",
                 "score": 3,
-                "rationale": "No recommendations were made because no hints existed to recommend on. Claude correctly refrained from offering any accept/reject/not-enough-information verdicts, as there were no hints to evaluate. The outcome 'negative' in the log entry accurately reflects that the search found no pending matches requiring triage. This is the sound approach when no hints are present\u2014no recommendation is needed or appropriate."
+                "rationale": "No recommendations were made because no hints existed to recommend on. Claude correctly refrained from offering any accept/reject/not-enough-information verdicts, as there were no hints to evaluate. The outcome 'negative' in the log entry accurately reflects that the search found no pending matches requiring triage. This is the sound approach when no hints are present—no recommendation is needed or appropriate."
               },
               {
                 "source": "rubric",
@@ -4966,7 +4966,7 @@
       },
       "totals": {
         "duration_ms": 51414.95909995865,
-        "duration_api_ms": 43145.0,
+        "duration_api_ms": 43145,
         "judge_duration_ms": 12579.118699999526,
         "wall_clock_ms": 64426.454067230225,
         "num_turns": 2,
@@ -4989,7 +4989,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 51414.95909995865,
-          "duration_api_ms": 43145.0,
+          "duration_api_ms": 43145,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1558,
@@ -5083,7 +5083,7 @@
           },
           "skill_cost_usd": 0.15191459000000002,
           "output": {
-            "text_response": "Here is the subagent's report on the pending FamilySearch hints for Patrick Flynn (LZNY-BRF):\n\n---\n\n**Three hints were reviewed. Plan item pli_007 is set to skipped** (no researcher present to give verdicts). Here is what was found:\n\n---\n\n**Hint 1 \u2014 1870 U.S. Federal Census** (`ark:/61903/1:1:M70C`)\n**Recommendation: Accept**\nFamilySearch confidence: 3/5. Patrick Flynn, age 25, born ~1845 in Ireland, Schuylkill County, living in Thomas Flynn's household (father, born ~1818 in Ireland). Name, birth year, birthplace, county, and father's household all agree with the tree. This record is not yet linked to him in the project.\n\n---\n\n**Hint 2 \u2014 1880 U.S. Federal Census** (`ark:/61903/1:1:M80C`)\n**Recommendation: Not enough information**\nFamilySearch confidence: 2/5. The index reads \"Patrick Glynn,\" but the page itself reads \"Flynn\" \u2014 likely an indexing error. Age and birthplace fit, but the household shows a married head with wife Bridget and children Mary and Thomas, which the tree does not currently describe. Flynn is a common name in Schuylkill County. Confirming his spouse and children in the project would resolve this.\n\n---\n\n**Hint 3 \u2014 Pennsylvania Death Certificate, 1908** (`ark:/61903/1:1:MDEF`)\n**Already linked** (pe_005) \u2014 no action needed.\nFamilySearch confidence: 2/5. Patrick Flynn, died 12 March 1908 in Schuylkill County, naming Thomas Flynn as father. The only discrepancy is birthplace (Pennsylvania per the informant vs. Ireland per censuses), which is likely explained by the son-in-law informant.\n\n---\n\n**Next step:** To finalize, provide your verdicts on Hints 1 and 2 (accept/reject for the 1870 census, and accept/reject/defer for the 1880 census), and the agent can be resumed to record them.",
+            "text_response": "Here is the subagent's report on the pending FamilySearch hints for Patrick Flynn (LZNY-BRF):\n\n---\n\n**Three hints were reviewed. Plan item pli_007 is set to skipped** (no researcher present to give verdicts). Here is what was found:\n\n---\n\n**Hint 1 — 1870 U.S. Federal Census** (`ark:/61903/1:1:M70C`)\n**Recommendation: Accept**\nFamilySearch confidence: 3/5. Patrick Flynn, age 25, born ~1845 in Ireland, Schuylkill County, living in Thomas Flynn's household (father, born ~1818 in Ireland). Name, birth year, birthplace, county, and father's household all agree with the tree. This record is not yet linked to him in the project.\n\n---\n\n**Hint 2 — 1880 U.S. Federal Census** (`ark:/61903/1:1:M80C`)\n**Recommendation: Not enough information**\nFamilySearch confidence: 2/5. The index reads \"Patrick Glynn,\" but the page itself reads \"Flynn\" — likely an indexing error. Age and birthplace fit, but the household shows a married head with wife Bridget and children Mary and Thomas, which the tree does not currently describe. Flynn is a common name in Schuylkill County. Confirming his spouse and children in the project would resolve this.\n\n---\n\n**Hint 3 — Pennsylvania Death Certificate, 1908** (`ark:/61903/1:1:MDEF`)\n**Already linked** (pe_005) — no action needed.\nFamilySearch confidence: 2/5. Patrick Flynn, died 12 March 1908 in Schuylkill County, naming Thomas Flynn as father. The only discrepancy is birthplace (Pennsylvania per the informant vs. Ireland per censuses), which is likely explained by the son-in-law informant.\n\n---\n\n**Next step:** To finalize, provide your verdicts on Hints 1 and 2 (accept/reject for the 1870 census, and accept/reject/defer for the 1880 census), and the agent can be resumed to record them.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -5407,7 +5407,7 @@
                       "information_quality": "secondary",
                       "informant": "James Brown (son-in-law)",
                       "informant_proximity": "family_not_present",
-                      "informant_bias_notes": "Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage",
+                      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
                       "record_basis": "stated",
                       "log_entry_id": "log_005",
                       "extracted_for_question_ids": [
@@ -5619,7 +5619,7 @@
                   "digest": {
                     "id": "ark:/61903/3:1:3Q9M-CS80-L7Q2",
                     "chars": 458,
-                    "excerpt": "Tenth Census of the United States, 1880. Schedule 1 \u2014 Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\nDwelling 214, family 231:\nFlynn, Patrick \u2014 W M 35 \u2014 Head \u2014 Married \u2014 Coal miner \u2014 Born Ireland \u2014 Father born Ireland \u2014 Mother born Ireland\nFlynn, Bridge"
+                    "excerpt": "Tenth Census of the United States, 1880. Schedule 1 — Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\nDwelling 214, family 231:\nFlynn, Patrick — W M 35 — Head — Married — Coal miner — Born Ireland — Father born Ireland — Mother born Ireland\nFlynn, Bridge"
                   }
                 }
               },
@@ -5640,7 +5640,7 @@
                   "ref": "results/.staging/f2c002cf-e74e-4da2-b049-f7800e35253a.json",
                   "totalChars": 458,
                   "offset": 0,
-                  "content": "Tenth Census of the United States, 1880. Schedule 1 \u2014 Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\n\nDwelling 214, family 231:\nFlynn, Patrick \u2014 W M 35 \u2014 Head \u2014 Married \u2014 Coal miner \u2014 Born Ireland \u2014 Father born Ireland \u2014 Mother born Ireland\nFlynn, Bridget \u2014 W F 30 \u2014 Wife \u2014 Married \u2014 Keeping house \u2014 Born Ireland\nFlynn, Mary \u2014 W F 6 \u2014 Daughter \u2014 Born Pennsylvania\nFlynn, Thomas \u2014 W M 3 \u2014 Son \u2014 Born Pennsylvania",
+                  "content": "Tenth Census of the United States, 1880. Schedule 1 — Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\n\nDwelling 214, family 231:\nFlynn, Patrick — W M 35 — Head — Married — Coal miner — Born Ireland — Father born Ireland — Mother born Ireland\nFlynn, Bridget — W F 30 — Wife — Married — Keeping house — Born Ireland\nFlynn, Mary — W F 6 — Daughter — Born Pennsylvania\nFlynn, Thomas — W M 3 — Son — Born Pennsylvania",
                   "truncated": false
                 }
               },
@@ -5755,7 +5755,7 @@
                                 "jurisdiction": "Schuylkill County, Pennsylvania",
                                 "date_range": "1845-1908",
                                 "repository": "FamilySearch",
-                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching \u2014 an attached hint may already answer the question.",
+                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching — an attached hint may already answer the question.",
                                 "fallback_for": null,
                                 "status": "planned"
                               }
@@ -5801,7 +5801,7 @@
                                 "jurisdiction": "Schuylkill County, Pennsylvania",
                                 "date_range": "1845-1908",
                                 "repository": "FamilySearch",
-                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching \u2014 an attached hint may already answer the question.",
+                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching — an attached hint may already answer the question.",
                                 "fallback_for": null,
                                 "status": "skipped",
                                 "skip_category": "inaccessible",
@@ -6132,7 +6132,7 @@
       },
       "totals": {
         "duration_ms": 13297.383500030264,
-        "duration_api_ms": 10681.0,
+        "duration_api_ms": 10681,
         "judge_duration_ms": 3874.6671000262722,
         "wall_clock_ms": 17590.280294418335,
         "num_turns": 2,
@@ -6155,7 +6155,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 13297.383500030264,
-          "duration_api_ms": 10681.0,
+          "duration_api_ms": 10681,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1523,
@@ -6226,7 +6226,7 @@
           },
           "skill_cost_usd": 0.13821605,
           "output": {
-            "text_response": "The search-hints agent handed this back with the following response:\n\n> **Hand-back: tree-edit** \u2014 list the records already attached to Patrick Flynn (LZNY-BRF), including every match whatever its status.\n>\n> This request asks which historical records are already attached to Patrick Flynn, and that lookup belongs to the tree-editing step, which I have not run. I did not check the records myself. The next step is to hand the request to that step so it can list them.\n\nIn short, the search-hints agent determined that listing already-attached records falls under the **tree-edit** agent's responsibility, not search-hints. To get the list of records attached to Patrick Flynn (LZNY-BRF), the request should be routed to the **tree-edit** agent.",
+            "text_response": "The search-hints agent handed this back with the following response:\n\n> **Hand-back: tree-edit** — list the records already attached to Patrick Flynn (LZNY-BRF), including every match whatever its status.\n>\n> This request asks which historical records are already attached to Patrick Flynn, and that lookup belongs to the tree-editing step, which I have not run. I did not check the records myself. The next step is to hand the request to that step so it can list them.\n\nIn short, the search-hints agent determined that listing already-attached records falls under the **tree-edit** agent's responsibility, not search-hints. To get the list of records attached to Patrick Flynn (LZNY-BRF), the request should be routed to the **tree-edit** agent.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [],
@@ -6244,7 +6244,7 @@
             "agent_returns": [
               {
                 "subagent_type": "search-hints",
-                "text": "Hand-back: tree-edit \u2014 list the records already attached to Patrick Flynn (LZNY-BRF), including every match whatever its status.\n\n---\nThis request asks which historical records are already attached to Patrick Flynn, and that lookup belongs to the tree-editing step, which I have not run. I did not check the records myself. The next step is to hand the request to that step so it can list them."
+                "text": "Hand-back: tree-edit — list the records already attached to Patrick Flynn (LZNY-BRF), including every match whatever its status.\n\n---\nThis request asks which historical records are already attached to Patrick Flynn, and that lookup belongs to the tree-editing step, which I have not run. I did not check the records myself. The next step is to hand the request to that step so it can list them."
               }
             ],
             "warnings": [
@@ -6267,7 +6267,7 @@
               {
                 "name": "test_decline_response_nonempty",
                 "passed": true,
-                "error": "skipped: grade_on_invariant test \u2014 routing is not gated",
+                "error": "skipped: grade_on_invariant test — routing is not gated",
                 "outcome": "skipped"
               },
               {
@@ -6333,7 +6333,7 @@
               {
                 "name": "test_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -6369,7 +6369,7 @@
               {
                 "name": "test_tool_allowlist",
                 "passed": true,
-                "error": "skipped: allowlist is not checked on negative tests \u2014 tool calls belong to the routed-to skill, not the skill under test",
+                "error": "skipped: allowlist is not checked on negative tests — tool calls belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
@@ -6387,13 +6387,13 @@
               {
                 "name": "test_tree_ownership_table",
                 "passed": true,
-                "error": "skipped: ownership is not checked on negative tests \u2014 writes belong to the routed-to skill, not the skill under test",
+                "error": "skipped: ownership is not checked on negative tests — writes belong to the routed-to skill, not the skill under test",
                 "outcome": "skipped"
               },
               {
                 "name": "test_write_then_validate",
                 "passed": true,
-                "error": "skipped: negative test \u2014 tool calls belong to the routed-to skill",
+                "error": "skipped: negative test — tool calls belong to the routed-to skill",
                 "outcome": "skipped"
               },
               {
@@ -6529,7 +6529,7 @@
             "source": "rubric",
             "name": "Recommendation soundness",
             "score": null,
-            "rationale": "N/A \u2014 this is a record-mode test. Record mode does not generate recommendations; it logs the researcher's verdicts as-is. Recommendation soundness applies only to triage mode, where the agent recommends accept/reject/not enough information. This test operates in record mode, so this dimension does not apply."
+            "rationale": "N/A — this is a record-mode test. Record mode does not generate recommendations; it logs the researcher's verdicts as-is. Recommendation soundness applies only to triage mode, where the agent recommends accept/reject/not enough information. This test operates in record mode, so this dimension does not apply."
           },
           {
             "source": "rubric",
@@ -6567,7 +6567,7 @@
             "source": "rubric",
             "name": "Recommendation soundness",
             "score": null,
-            "rationale": "N/A \u2014 this is a record-mode test. Record mode does not generate recommendations; it logs the researcher's verdicts as-is. Recommendation soundness applies only to triage mode, where the agent recommends accept/reject/not enough information. This test operates in record mode, so this dimension does not apply."
+            "rationale": "N/A — this is a record-mode test. Record mode does not generate recommendations; it logs the researcher's verdicts as-is. Recommendation soundness applies only to triage mode, where the agent recommends accept/reject/not enough information. This test operates in record mode, so this dimension does not apply."
           },
           {
             "source": "rubric",
@@ -6579,7 +6579,7 @@
       },
       "totals": {
         "duration_ms": 25124.568100029137,
-        "duration_api_ms": 19269.0,
+        "duration_api_ms": 19269,
         "judge_duration_ms": 10152.346900023986,
         "wall_clock_ms": 35577.57663726807,
         "num_turns": 2,
@@ -6602,7 +6602,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 25124.568100029137,
-          "duration_api_ms": 19269.0,
+          "duration_api_ms": 19269,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1639,
@@ -6685,7 +6685,7 @@
           },
           "skill_cost_usd": 0.14184809,
           "output": {
-            "text_response": "Here is the subagent's report:\n\n- **ark:/61903/1:1:M70C \u2192 Accepted** (logged as log_006)\n- **ark:/61903/1:1:M80C \u2192 Rejected** (logged as log_007)\n\nBoth verdicts have been recorded in the project's research log, and plan item **pli_007** is now marked completed. The accepted hint (ark:/61903/1:1:M70C) is ready for extraction \u2014 its details can now be pulled and added to Patrick Flynn's file. The rejected hint will not be attached to his profile.",
+            "text_response": "Here is the subagent's report:\n\n- **ark:/61903/1:1:M70C → Accepted** (logged as log_006)\n- **ark:/61903/1:1:M80C → Rejected** (logged as log_007)\n\nBoth verdicts have been recorded in the project's research log, and plan item **pli_007** is now marked completed. The accepted hint (ark:/61903/1:1:M70C) is ready for extraction — its details can now be pulled and added to Patrick Flynn's file. The rejected hint will not be attached to his profile.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -6926,7 +6926,7 @@
             "agent_returns": [
               {
                 "subagent_type": "search-hints",
-                "text": "ark:/61903/1:1:M70C: accept \u2192 log_006\nark:/61903/1:1:M80C: reject \u2192 log_007\n\nNeither record is already extracted or linked in the project, so nothing is handed back to person-evidence. The accepted hint is ready for extraction (ark:/61903/1:1:M70C, log_006). Plan item pli_007 is marked completed.\n\n---\nTwo FamilySearch suggestions for Patrick Flynn were reviewed. You said yes to the first and no to the second, and both decisions are now written into the project's research log. The record you accepted can now be read and its details added to his file. The one you rejected stays out of his file. Next, the project will go on to pull the details from the accepted record."
+                "text": "ark:/61903/1:1:M70C: accept → log_006\nark:/61903/1:1:M80C: reject → log_007\n\nNeither record is already extracted or linked in the project, so nothing is handed back to person-evidence. The accepted hint is ready for extraction (ark:/61903/1:1:M70C, log_006). Plan item pli_007 is marked completed.\n\n---\nTwo FamilySearch suggestions for Patrick Flynn were reviewed. You said yes to the first and no to the second, and both decisions are now written into the project's research log. The record you accepted can now be read and its details added to his file. The one you rejected stays out of his file. Next, the project will go on to pull the details from the accepted record."
               }
             ],
             "file_changes": {
@@ -7020,7 +7020,7 @@
                                 "jurisdiction": "Schuylkill County, Pennsylvania",
                                 "date_range": "1845-1908",
                                 "repository": "FamilySearch",
-                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching \u2014 an attached hint may already answer the question.",
+                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching — an attached hint may already answer the question.",
                                 "fallback_for": null,
                                 "status": "in_progress"
                               }
@@ -7066,7 +7066,7 @@
                                 "jurisdiction": "Schuylkill County, Pennsylvania",
                                 "date_range": "1845-1908",
                                 "repository": "FamilySearch",
-                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching \u2014 an attached hint may already answer the question.",
+                                "rationale": "Review pending FamilySearch hints on LZNY-BRF before searching — an attached hint may already answer the question.",
                                 "fallback_for": null,
                                 "status": "completed"
                               }
@@ -7315,7 +7315,7 @@
                 "source": "rubric",
                 "name": "Recommendation soundness",
                 "score": null,
-                "rationale": "N/A \u2014 this is a record-mode test. Record mode does not generate recommendations; it logs the researcher's verdicts as-is. Recommendation soundness applies only to triage mode, where the agent recommends accept/reject/not enough information. This test operates in record mode, so this dimension does not apply."
+                "rationale": "N/A — this is a record-mode test. Record mode does not generate recommendations; it logs the researcher's verdicts as-is. Recommendation soundness applies only to triage mode, where the agent recommends accept/reject/not enough information. This test operates in record mode, so this dimension does not apply."
               },
               {
                 "source": "rubric",
@@ -7365,7 +7365,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly recorded the researcher's verdicts as log entries with the right outcomes: M70C (accept \u2192 log_006, positive outcome), M80C (reject \u2192 log_007, negative outcome). MDEF was correctly identified as already linked by pe_005 with no new log entry needed. The notes accurately describe each record and the verdicts follow the researcher's stated decisions, not the agent's own view. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly recorded the researcher's verdicts as log entries with the right outcomes: M70C (accept → log_006, positive outcome), M80C (reject → log_007, negative outcome). MDEF was correctly identified as already linked by pe_005 with no new log entry needed. The notes accurately describe each record and the verdicts follow the researcher's stated decisions, not the agent's own view. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -7383,19 +7383,19 @@
             "source": "rubric",
             "name": "Hint scope",
             "score": 3,
-            "rationale": "The skill reviewed only the three pending hints provided (M70C, M80C, MDEF). M70C and M80C are treated as pending matches to decide. MDEF is correctly identified as already linked by pe_005 with no recommendation offered\u2014the skill notes it was extracted earlier and linked, which is the correct handling of a hint whose record the project already linked. No accepted or rejected matches were mixed in as hints. FamilySearch confidence was not explicitly stated in the response text, but the records read show the hints' content and the skill's notes accurately describe them."
+            "rationale": "The skill reviewed only the three pending hints provided (M70C, M80C, MDEF). M70C and M80C are treated as pending matches to decide. MDEF is correctly identified as already linked by pe_005 with no recommendation offered—the skill notes it was extracted earlier and linked, which is the correct handling of a hint whose record the project already linked. No accepted or rejected matches were mixed in as hints. FamilySearch confidence was not explicitly stated in the response text, but the records read show the hints' content and the skill's notes accurately describe them."
           },
           {
             "source": "rubric",
             "name": "Recommendation soundness",
             "score": 3,
-            "rationale": "Each verdict is grounded in concrete facts from the records read. M70C (accept): the 1870 census shows Patrick Flynn, age ~25, born Ireland, in Schuylkill County with Thomas Flynn\u2014consistent with prior evidence and the researcher accepted it. M80C (reject): the surname differs (Glynn vs Flynn), a clear reason to reject despite matching birth year and place\u2014the skill correctly notes this discrepancy. MDEF: already extracted and linked, so no recommendation needed. The skill does not rely on FamilySearch confidence alone and does not force a thin hint to accept/reject."
+            "rationale": "Each verdict is grounded in concrete facts from the records read. M70C (accept): the 1870 census shows Patrick Flynn, age ~25, born Ireland, in Schuylkill County with Thomas Flynn—consistent with prior evidence and the researcher accepted it. M80C (reject): the surname differs (Glynn vs Flynn), a clear reason to reject despite matching birth year and place—the skill correctly notes this discrepancy. MDEF: already extracted and linked, so no recommendation needed. The skill does not rely on FamilySearch confidence alone and does not force a thin hint to accept/reject."
           },
           {
             "source": "rubric",
             "name": "Verdict recording",
             "score": 3,
-            "rationale": "Two log entries were created with outcomes matching the researcher's verdicts: log_006 (M70C, positive outcome for accept), log_007 (M80C, negative outcome for reject). Both entries have tool person_record_matches, planItemId null, and notes that attribute the verdict to the researcher (\"the researcher's verdict is accept/reject\"). The return includes M70C's ark and log_006 id for extraction handoff. No extraction, no person_evidence link, no tree edit occurred\u2014the skill stayed in record mode as required."
+            "rationale": "Two log entries were created with outcomes matching the researcher's verdicts: log_006 (M70C, positive outcome for accept), log_007 (M80C, negative outcome for reject). Both entries have tool person_record_matches, planItemId null, and notes that attribute the verdict to the researcher (\"the researcher's verdict is accept/reject\"). The return includes M70C's ark and log_006 id for extraction handoff. No extraction, no person_evidence link, no tree edit occurred—the skill stayed in record mode as required."
           }
         ],
         "review_dimensions": [
@@ -7403,7 +7403,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "The skill correctly recorded the researcher's verdicts as log entries with the right outcomes: M70C (accept \u2192 log_006, positive outcome), M80C (reject \u2192 log_007, negative outcome). MDEF was correctly identified as already linked by pe_005 with no new log entry needed. The notes accurately describe each record and the verdicts follow the researcher's stated decisions, not the agent's own view. No fabricated material or unsupported claims."
+            "rationale": "The skill correctly recorded the researcher's verdicts as log entries with the right outcomes: M70C (accept → log_006, positive outcome), M80C (reject → log_007, negative outcome). MDEF was correctly identified as already linked by pe_005 with no new log entry needed. The notes accurately describe each record and the verdicts follow the researcher's stated decisions, not the agent's own view. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -7421,25 +7421,25 @@
             "source": "rubric",
             "name": "Hint scope",
             "score": 3,
-            "rationale": "The skill reviewed only the three pending hints provided (M70C, M80C, MDEF). M70C and M80C are treated as pending matches to decide. MDEF is correctly identified as already linked by pe_005 with no recommendation offered\u2014the skill notes it was extracted earlier and linked, which is the correct handling of a hint whose record the project already linked. No accepted or rejected matches were mixed in as hints. FamilySearch confidence was not explicitly stated in the response text, but the records read show the hints' content and the skill's notes accurately describe them."
+            "rationale": "The skill reviewed only the three pending hints provided (M70C, M80C, MDEF). M70C and M80C are treated as pending matches to decide. MDEF is correctly identified as already linked by pe_005 with no recommendation offered—the skill notes it was extracted earlier and linked, which is the correct handling of a hint whose record the project already linked. No accepted or rejected matches were mixed in as hints. FamilySearch confidence was not explicitly stated in the response text, but the records read show the hints' content and the skill's notes accurately describe them."
           },
           {
             "source": "rubric",
             "name": "Recommendation soundness",
             "score": 3,
-            "rationale": "Each verdict is grounded in concrete facts from the records read. M70C (accept): the 1870 census shows Patrick Flynn, age ~25, born Ireland, in Schuylkill County with Thomas Flynn\u2014consistent with prior evidence and the researcher accepted it. M80C (reject): the surname differs (Glynn vs Flynn), a clear reason to reject despite matching birth year and place\u2014the skill correctly notes this discrepancy. MDEF: already extracted and linked, so no recommendation needed. The skill does not rely on FamilySearch confidence alone and does not force a thin hint to accept/reject."
+            "rationale": "Each verdict is grounded in concrete facts from the records read. M70C (accept): the 1870 census shows Patrick Flynn, age ~25, born Ireland, in Schuylkill County with Thomas Flynn—consistent with prior evidence and the researcher accepted it. M80C (reject): the surname differs (Glynn vs Flynn), a clear reason to reject despite matching birth year and place—the skill correctly notes this discrepancy. MDEF: already extracted and linked, so no recommendation needed. The skill does not rely on FamilySearch confidence alone and does not force a thin hint to accept/reject."
           },
           {
             "source": "rubric",
             "name": "Verdict recording",
             "score": 3,
-            "rationale": "Two log entries were created with outcomes matching the researcher's verdicts: log_006 (M70C, positive outcome for accept), log_007 (M80C, negative outcome for reject). Both entries have tool person_record_matches, planItemId null, and notes that attribute the verdict to the researcher (\"the researcher's verdict is accept/reject\"). The return includes M70C's ark and log_006 id for extraction handoff. No extraction, no person_evidence link, no tree edit occurred\u2014the skill stayed in record mode as required."
+            "rationale": "Two log entries were created with outcomes matching the researcher's verdicts: log_006 (M70C, positive outcome for accept), log_007 (M80C, negative outcome for reject). Both entries have tool person_record_matches, planItemId null, and notes that attribute the verdict to the researcher (\"the researcher's verdict is accept/reject\"). The return includes M70C's ark and log_006 id for extraction handoff. No extraction, no person_evidence link, no tree edit occurred—the skill stayed in record mode as required."
           }
         ]
       },
       "totals": {
         "duration_ms": 35124.36830002116,
-        "duration_api_ms": 27941.0,
+        "duration_api_ms": 27941,
         "judge_duration_ms": 11536.13610001048,
         "wall_clock_ms": 46989.1152381897,
         "num_turns": 2,
@@ -7462,7 +7462,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 35124.36830002116,
-          "duration_api_ms": 27941.0,
+          "duration_api_ms": 27941,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1658,
@@ -7549,7 +7549,7 @@
           },
           "skill_cost_usd": 0.14570741499999998,
           "output": {
-            "text_response": "Here is the subagent's report:\n\n**Hint verdicts recorded for Patrick Flynn (LZNY-BRF):**\n\n- **`M70C` \u2192 Accepted** (logged as log_006): 1870 census, Patrick Flynn, ~25, born Ireland, Schuylkill County. Ready for extraction.\n- **`M80C` \u2192 Rejected** (logged as log_007): 1880 census record names \"Patrick Glynn\" \u2014 surname differs, so it was rejected.\n- **`MDEF` \u2192 Already linked** (pe_005): The death certificate's assertions (a_011\u2013a_013, src_004) were extracted earlier; pe_005 already links the father fact (a_013). No new log entry was written.\n\nNo undecided hints remain. Since no `planItemId` was supplied, the entries carry no plan-item attribution.\n\n**Next step:** The accepted 1870 census record (M70C) still needs its facts extracted and linked to this person via the person-evidence step.",
+            "text_response": "Here is the subagent's report:\n\n**Hint verdicts recorded for Patrick Flynn (LZNY-BRF):**\n\n- **`M70C` → Accepted** (logged as log_006): 1870 census, Patrick Flynn, ~25, born Ireland, Schuylkill County. Ready for extraction.\n- **`M80C` → Rejected** (logged as log_007): 1880 census record names \"Patrick Glynn\" — surname differs, so it was rejected.\n- **`MDEF` → Already linked** (pe_005): The death certificate's assertions (a_011–a_013, src_004) were extracted earlier; pe_005 already links the father fact (a_013). No new log entry was written.\n\nNo undecided hints remain. Since no `planItemId` was supplied, the entries carry no plan-item attribution.\n\n**Next step:** The accepted 1870 census record (M70C) still needs its facts extracted and linked to this person via the person-evidence step.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -7634,7 +7634,7 @@
                       "information_quality": "secondary",
                       "informant": "James Brown (son-in-law)",
                       "informant_proximity": "family_not_present",
-                      "informant_bias_notes": "Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage",
+                      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
                       "record_basis": "stated",
                       "log_entry_id": "log_005",
                       "extracted_for_question_ids": [
@@ -7681,7 +7681,7 @@
                       },
                       "outcome": "positive",
                       "results_examined": 8,
-                      "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. Three other Flynn results examined \u2014 ages and locations don't match.",
+                      "notes": "Found Patrick Flynn age 5 in household of Thomas Flynn, dwelling 84, Schuylkill Co. Three other Flynn results examined — ages and locations don't match.",
                       "external_site": null
                     },
                     {
@@ -7697,7 +7697,7 @@
                       },
                       "outcome": "positive",
                       "results_examined": 12,
-                      "notes": "Ancestry index confirms same household. Transcription matches FamilySearch except Ancestry reads dwelling as 84, FamilySearch as 84 \u2014 consistent.",
+                      "notes": "Ancestry index confirms same household. Transcription matches FamilySearch except Ancestry reads dwelling as 84, FamilySearch as 84 — consistent.",
                       "external_site": {
                         "site": "ancestry",
                         "url_generated": "https://www.ancestry.com/search/collections/8054/?name=Patrick_Flynn&birth=1845&birthplace=Pennsylvania",
@@ -7718,7 +7718,7 @@
                       },
                       "outcome": "negative",
                       "results_examined": 0,
-                      "notes": "MyHeritage returned no results for Patrick Flynn in 1850 Schuylkill County. Site may not have this collection indexed. Searched broader Pennsylvania \u2014 still no match.",
+                      "notes": "MyHeritage returned no results for Patrick Flynn in 1850 Schuylkill County. Site may not have this collection indexed. Searched broader Pennsylvania — still no match.",
                       "external_site": {
                         "site": "myheritage",
                         "url_generated": "https://www.myheritage.com/research?action=query&first=Patrick&last=Flynn&birth_year=1845&birth_place=Pennsylvania",
@@ -8098,7 +8098,7 @@
             "agent_returns": [
               {
                 "subagent_type": "search-hints",
-                "text": "M70C: accept \u2192 log_006. M80C: reject \u2192 log_007. MDEF: already linked by pe_005.\n\nHint https://familysearch.org/ark:/61903/1:1:M70C: accept \u2192 log_006. Record: 1870 census, Patrick Flynn, about 25, born Ireland, listed in Schuylkill County with Thomas Flynn. The entry is ready for extraction.\nHint https://familysearch.org/ark:/61903/1:1:M80C: reject \u2192 log_007. Record: 1880 census, Patrick Glynn (surname differs), born Ireland, Schuylkill County.\nHint https://familysearch.org/ark:/61903/1:1:MDEF: already linked by pe_005. Its death-certificate assertions (a_011\u2013a_013, src_004) were extracted earlier, and pe_005 links the father fact (a_013); no log entry was written for an accept.\nUndecided hints: none.\nHand-back: person-evidence for M70C, since it is accepted but not yet extracted or linked.\n\nNo planItemId was supplied, so the entries carry no plan-item attribution and the plan item was not completed.\n\n---\nTwo of the three Patrick Flynn suggestions are now recorded. The 1870 census entry (accepted, rated on FamilySearch's five-point scale) is logged and ready for the next step of pulling its facts into the project. The 1880 census entry is recorded as rejected because it names a Patrick Glynn, not Flynn. The 1908 death certificate was already in the project and is already linked to this person, so nothing new was logged for it.\nNext, the accepted 1870 census record still needs to be linked to this person, which is a separate decision the project will ask you to make."
+                "text": "M70C: accept → log_006. M80C: reject → log_007. MDEF: already linked by pe_005.\n\nHint https://familysearch.org/ark:/61903/1:1:M70C: accept → log_006. Record: 1870 census, Patrick Flynn, about 25, born Ireland, listed in Schuylkill County with Thomas Flynn. The entry is ready for extraction.\nHint https://familysearch.org/ark:/61903/1:1:M80C: reject → log_007. Record: 1880 census, Patrick Glynn (surname differs), born Ireland, Schuylkill County.\nHint https://familysearch.org/ark:/61903/1:1:MDEF: already linked by pe_005. Its death-certificate assertions (a_011–a_013, src_004) were extracted earlier, and pe_005 links the father fact (a_013); no log entry was written for an accept.\nUndecided hints: none.\nHand-back: person-evidence for M70C, since it is accepted but not yet extracted or linked.\n\nNo planItemId was supplied, so the entries carry no plan-item attribution and the plan item was not completed.\n\n---\nTwo of the three Patrick Flynn suggestions are now recorded. The 1870 census entry (accepted, rated on FamilySearch's five-point scale) is logged and ready for the next step of pulling its facts into the project. The 1880 census entry is recorded as rejected because it names a Patrick Glynn, not Flynn. The 1908 death certificate was already in the project and is already linked to this person, so nothing new was logged for it.\nNext, the accepted 1870 census record still needs to be linked to this person, which is a separate decision the project will ask you to make."
               }
             ],
             "file_changes": {
@@ -8357,7 +8357,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "The skill correctly recorded the researcher's verdicts as log entries with the right outcomes: M70C (accept \u2192 log_006, positive outcome), M80C (reject \u2192 log_007, negative outcome). MDEF was correctly identified as already linked by pe_005 with no new log entry needed. The notes accurately describe each record and the verdicts follow the researcher's stated decisions, not the agent's own view. No fabricated material or unsupported claims."
+                "rationale": "The skill correctly recorded the researcher's verdicts as log entries with the right outcomes: M70C (accept → log_006, positive outcome), M80C (reject → log_007, negative outcome). MDEF was correctly identified as already linked by pe_005 with no new log entry needed. The notes accurately describe each record and the verdicts follow the researcher's stated decisions, not the agent's own view. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
@@ -8375,19 +8375,19 @@
                 "source": "rubric",
                 "name": "Hint scope",
                 "score": 3,
-                "rationale": "The skill reviewed only the three pending hints provided (M70C, M80C, MDEF). M70C and M80C are treated as pending matches to decide. MDEF is correctly identified as already linked by pe_005 with no recommendation offered\u2014the skill notes it was extracted earlier and linked, which is the correct handling of a hint whose record the project already linked. No accepted or rejected matches were mixed in as hints. FamilySearch confidence was not explicitly stated in the response text, but the records read show the hints' content and the skill's notes accurately describe them."
+                "rationale": "The skill reviewed only the three pending hints provided (M70C, M80C, MDEF). M70C and M80C are treated as pending matches to decide. MDEF is correctly identified as already linked by pe_005 with no recommendation offered—the skill notes it was extracted earlier and linked, which is the correct handling of a hint whose record the project already linked. No accepted or rejected matches were mixed in as hints. FamilySearch confidence was not explicitly stated in the response text, but the records read show the hints' content and the skill's notes accurately describe them."
               },
               {
                 "source": "rubric",
                 "name": "Recommendation soundness",
                 "score": 3,
-                "rationale": "Each verdict is grounded in concrete facts from the records read. M70C (accept): the 1870 census shows Patrick Flynn, age ~25, born Ireland, in Schuylkill County with Thomas Flynn\u2014consistent with prior evidence and the researcher accepted it. M80C (reject): the surname differs (Glynn vs Flynn), a clear reason to reject despite matching birth year and place\u2014the skill correctly notes this discrepancy. MDEF: already extracted and linked, so no recommendation needed. The skill does not rely on FamilySearch confidence alone and does not force a thin hint to accept/reject."
+                "rationale": "Each verdict is grounded in concrete facts from the records read. M70C (accept): the 1870 census shows Patrick Flynn, age ~25, born Ireland, in Schuylkill County with Thomas Flynn—consistent with prior evidence and the researcher accepted it. M80C (reject): the surname differs (Glynn vs Flynn), a clear reason to reject despite matching birth year and place—the skill correctly notes this discrepancy. MDEF: already extracted and linked, so no recommendation needed. The skill does not rely on FamilySearch confidence alone and does not force a thin hint to accept/reject."
               },
               {
                 "source": "rubric",
                 "name": "Verdict recording",
                 "score": 3,
-                "rationale": "Two log entries were created with outcomes matching the researcher's verdicts: log_006 (M70C, positive outcome for accept), log_007 (M80C, negative outcome for reject). Both entries have tool person_record_matches, planItemId null, and notes that attribute the verdict to the researcher (\"the researcher's verdict is accept/reject\"). The return includes M70C's ark and log_006 id for extraction handoff. No extraction, no person_evidence link, no tree edit occurred\u2014the skill stayed in record mode as required."
+                "rationale": "Two log entries were created with outcomes matching the researcher's verdicts: log_006 (M70C, positive outcome for accept), log_007 (M80C, negative outcome for reject). Both entries have tool person_record_matches, planItemId null, and notes that attribute the verdict to the researcher (\"the researcher's verdict is accept/reject\"). The return includes M70C's ark and log_006 id for extraction handoff. No extraction, no person_evidence link, no tree edit occurred—the skill stayed in record mode as required."
               }
             ],
             "judge_cost_usd": 0.019649,
@@ -8501,7 +8501,7 @@
       },
       "totals": {
         "duration_ms": 42768.30319996225,
-        "duration_api_ms": 34506.0,
+        "duration_api_ms": 34506,
         "judge_duration_ms": 11860.490699997172,
         "wall_clock_ms": 54911.40413284302,
         "num_turns": 2,
@@ -8524,7 +8524,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 42768.30319996225,
-          "duration_api_ms": 34506.0,
+          "duration_api_ms": 34506,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1545,
@@ -8612,7 +8612,7 @@
           },
           "skill_cost_usd": 0.143983315,
           "output": {
-            "text_response": "Here is the subagent's report on the FamilySearch hints for Thomas Flynn (LZNY-TF1):\n\n---\n\n**One pending hint found:**\n\n- **Ark:** `ark:/61903/1:1:MTHN`\n- **Collection:** Pennsylvania, Naturalization Records, 1795\u20131931\n- **Index entry:** \"Thos. Flinn,\" 1856\n- **FamilySearch confidence:** 2 of 5 (score 0.51 \u2014 weak match)\n\n**Verdict: Not enough information to judge.**\n\nThe index entry gives only a surname variant (\"Flinn\"), a year (1856), and a state (Pennsylvania). There is no birth date, birthplace, or family members to compare against Thomas Flynn's profile, and no record image was available to examine further. An 1856 naturalization is chronologically plausible for a man born about 1818 in Ireland, but that alone is insufficient to confirm the match.\n\n**Recommendation:** Hold off on attaching this record. Before accepting it, you would want to view the original naturalization document image directly on FamilySearch to see if it contains additional identifying details (birthplace, age, witnesses, etc.) that would confirm or rule out Thomas Flynn.\n\nWould you like to record an accept or reject decision on this hint, or take any other action?",
+            "text_response": "Here is the subagent's report on the FamilySearch hints for Thomas Flynn (LZNY-TF1):\n\n---\n\n**One pending hint found:**\n\n- **Ark:** `ark:/61903/1:1:MTHN`\n- **Collection:** Pennsylvania, Naturalization Records, 1795–1931\n- **Index entry:** \"Thos. Flinn,\" 1856\n- **FamilySearch confidence:** 2 of 5 (score 0.51 — weak match)\n\n**Verdict: Not enough information to judge.**\n\nThe index entry gives only a surname variant (\"Flinn\"), a year (1856), and a state (Pennsylvania). There is no birth date, birthplace, or family members to compare against Thomas Flynn's profile, and no record image was available to examine further. An 1856 naturalization is chronologically plausible for a man born about 1818 in Ireland, but that alone is insufficient to confirm the match.\n\n**Recommendation:** Hold off on attaching this record. Before accepting it, you would want to view the original naturalization document image directly on FamilySearch to see if it contains additional identifying details (birthplace, age, witnesses, etc.) that would confirm or rule out Thomas Flynn.\n\nWould you like to record an accept or reject decision on this hint, or take any other action?",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -9489,7 +9489,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude's response accurately reports the three pending hints with correct arks, titles, and confidence scores. The 1870 census recommendation to accept is sound: name, age, birthplace, county, and father all match the tree. The 1880 census recommendation of 'not enough information to judge' is correct\u2014Claude read the image, found 'Flynn, Patrick' (not 'Glynn'), confirmed age/birthplace/occupation match, but correctly noted the household (wife, children) is not in the tree and Flynn was a common name, making identity uncertain without additional evidence. The death certificate is correctly identified as 'already linked by pe_005' with no recommendation, which is the proper handling of a pending hint that is already extracted and linked. No fabricated material or unsupported claims."
+            "rationale": "Claude's response accurately reports the three pending hints with correct arks, titles, and confidence scores. The 1870 census recommendation to accept is sound: name, age, birthplace, county, and father all match the tree. The 1880 census recommendation of 'not enough information to judge' is correct—Claude read the image, found 'Flynn, Patrick' (not 'Glynn'), confirmed age/birthplace/occupation match, but correctly noted the household (wife, children) is not in the tree and Flynn was a common name, making identity uncertain without additional evidence. The death certificate is correctly identified as 'already linked by pe_005' with no recommendation, which is the proper handling of a pending hint that is already extracted and linked. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -9507,7 +9507,7 @@
             "source": "rubric",
             "name": "Hint scope",
             "score": 3,
-            "rationale": "Every hint Claude reviewed is a pending match: the 1870 census (M70C, confidence 3), the 1880 census (M80C, confidence 2), and the 1908 death certificate (MDEF, confidence 2). The death certificate, though already linked by pe_005, is correctly listed as a pending hint with the notation 'already linked by pe_005' and no recommendation\u2014this is the correct handling per the rubric. Each hint's FamilySearch confidence is stated in plain words (moderate, weak, weak). The 1850 census, which is an accepted match, was not presented as a hint. No invented hints or accepted matches mixed in as pending."
+            "rationale": "Every hint Claude reviewed is a pending match: the 1870 census (M70C, confidence 3), the 1880 census (M80C, confidence 2), and the 1908 death certificate (MDEF, confidence 2). The death certificate, though already linked by pe_005, is correctly listed as a pending hint with the notation 'already linked by pe_005' and no recommendation—this is the correct handling per the rubric. Each hint's FamilySearch confidence is stated in plain words (moderate, weak, weak). The 1850 census, which is an accepted match, was not presented as a hint. No invented hints or accepted matches mixed in as pending."
           },
           {
             "source": "rubric",
@@ -9519,7 +9519,7 @@
             "source": "rubric",
             "name": "Verdict recording",
             "score": null,
-            "rationale": "This is a triage test (the skill reviews hints and recommends verdicts without recording them). The rubric dimension 'Verdict recording' applies only to record mode, where the agent logs researcher decisions. In triage mode, the agent produces no log entries and makes no tree edits\u2014it only recommends. The response correctly ends by stating 'The next step is that you will be asked which of these suggested records to accept and which to reject, and I will record your choices,' indicating the researcher will decide and the agent will record in a subsequent record-mode run. Score is N/A."
+            "rationale": "This is a triage test (the skill reviews hints and recommends verdicts without recording them). The rubric dimension 'Verdict recording' applies only to record mode, where the agent logs researcher decisions. In triage mode, the agent produces no log entries and makes no tree edits—it only recommends. The response correctly ends by stating 'The next step is that you will be asked which of these suggested records to accept and which to reject, and I will record your choices,' indicating the researcher will decide and the agent will record in a subsequent record-mode run. Score is N/A."
           }
         ],
         "review_dimensions": [
@@ -9527,7 +9527,7 @@
             "source": "base",
             "name": "Correctness",
             "score": 3,
-            "rationale": "Claude's response accurately reports the three pending hints with correct arks, titles, and confidence scores. The 1870 census recommendation to accept is sound: name, age, birthplace, county, and father all match the tree. The 1880 census recommendation of 'not enough information to judge' is correct\u2014Claude read the image, found 'Flynn, Patrick' (not 'Glynn'), confirmed age/birthplace/occupation match, but correctly noted the household (wife, children) is not in the tree and Flynn was a common name, making identity uncertain without additional evidence. The death certificate is correctly identified as 'already linked by pe_005' with no recommendation, which is the proper handling of a pending hint that is already extracted and linked. No fabricated material or unsupported claims."
+            "rationale": "Claude's response accurately reports the three pending hints with correct arks, titles, and confidence scores. The 1870 census recommendation to accept is sound: name, age, birthplace, county, and father all match the tree. The 1880 census recommendation of 'not enough information to judge' is correct—Claude read the image, found 'Flynn, Patrick' (not 'Glynn'), confirmed age/birthplace/occupation match, but correctly noted the household (wife, children) is not in the tree and Flynn was a common name, making identity uncertain without additional evidence. The death certificate is correctly identified as 'already linked by pe_005' with no recommendation, which is the proper handling of a pending hint that is already extracted and linked. No fabricated material or unsupported claims."
           },
           {
             "source": "base",
@@ -9545,7 +9545,7 @@
             "source": "rubric",
             "name": "Hint scope",
             "score": 3,
-            "rationale": "Every hint Claude reviewed is a pending match: the 1870 census (M70C, confidence 3), the 1880 census (M80C, confidence 2), and the 1908 death certificate (MDEF, confidence 2). The death certificate, though already linked by pe_005, is correctly listed as a pending hint with the notation 'already linked by pe_005' and no recommendation\u2014this is the correct handling per the rubric. Each hint's FamilySearch confidence is stated in plain words (moderate, weak, weak). The 1850 census, which is an accepted match, was not presented as a hint. No invented hints or accepted matches mixed in as pending."
+            "rationale": "Every hint Claude reviewed is a pending match: the 1870 census (M70C, confidence 3), the 1880 census (M80C, confidence 2), and the 1908 death certificate (MDEF, confidence 2). The death certificate, though already linked by pe_005, is correctly listed as a pending hint with the notation 'already linked by pe_005' and no recommendation—this is the correct handling per the rubric. Each hint's FamilySearch confidence is stated in plain words (moderate, weak, weak). The 1850 census, which is an accepted match, was not presented as a hint. No invented hints or accepted matches mixed in as pending."
           },
           {
             "source": "rubric",
@@ -9557,13 +9557,13 @@
             "source": "rubric",
             "name": "Verdict recording",
             "score": null,
-            "rationale": "This is a triage test (the skill reviews hints and recommends verdicts without recording them). The rubric dimension 'Verdict recording' applies only to record mode, where the agent logs researcher decisions. In triage mode, the agent produces no log entries and makes no tree edits\u2014it only recommends. The response correctly ends by stating 'The next step is that you will be asked which of these suggested records to accept and which to reject, and I will record your choices,' indicating the researcher will decide and the agent will record in a subsequent record-mode run. Score is N/A."
+            "rationale": "This is a triage test (the skill reviews hints and recommends verdicts without recording them). The rubric dimension 'Verdict recording' applies only to record mode, where the agent logs researcher decisions. In triage mode, the agent produces no log entries and makes no tree edits—it only recommends. The response correctly ends by stating 'The next step is that you will be asked which of these suggested records to accept and which to reject, and I will record your choices,' indicating the researcher will decide and the agent will record in a subsequent record-mode run. Score is N/A."
           }
         ]
       },
       "totals": {
         "duration_ms": 54476.28619999159,
-        "duration_api_ms": 42424.0,
+        "duration_api_ms": 42424,
         "judge_duration_ms": 13957.502499979455,
         "wall_clock_ms": 69746.21987342834,
         "num_turns": 2,
@@ -9586,7 +9586,7 @@
           "aborted_reason": null,
           "error": null,
           "duration_ms": 54476.28619999159,
-          "duration_api_ms": 42424.0,
+          "duration_api_ms": 42424,
           "num_turns": 2,
           "skill_attempts": 1,
           "input_tokens": 1547,
@@ -9676,7 +9676,7 @@
           },
           "skill_cost_usd": 0.153429565,
           "output": {
-            "text_response": "Here is the subagent's report on Patrick Flynn's (LZNY-BRF) FamilySearch hints:\n\n---\n\n**Three hints were reviewed:**\n\n### 1. 1870 U.S. Federal Census \u2014 \u2705 ACCEPT\n**Ark:** `ark:/61903/1:1:M70C` | FamilySearch confidence: 3/5\n\nPatrick Flynn, born ~1845 in Ireland, coal miner, Schuylkill County, listed as a *son* in Thomas Flynn's household. The name, birth estimate, birthplace (Ireland), county, and father all agree with the tree. This record is not yet extracted or linked. **Recommended: Accept.**\n\n---\n\n### 2. 1880 U.S. Federal Census \u2014 \u26a0\ufe0f NOT ENOUGH INFORMATION\n**Ark:** `ark:/61903/1:1:M80C` | FamilySearch confidence: 2/5\n\nThe index misspells the surname as \"Glynn,\" but the original page reads \"Flynn, Patrick\" \u2014 age 35, coal miner, born Ireland, parents born Ireland, Pottsville, Schuylkill County. The name, age, birthplace, and occupation fit. However, he appears as a *household head* with wife Bridget and children Mary and Thomas \u2014 a family the tree does not describe. Because \"Patrick Flynn\" was extremely common among Irish miners in Schuylkill County, more evidence (spouse or children's details) is needed to confirm this is the same man. **Verdict: Needs more information.**\n\n---\n\n### 3. Pennsylvania Death Certificate (1906\u20131967) \u2014 \u2139\ufe0f ALREADY LINKED\n**Ark:** `ark:/61903/1:1:MDEF` | FamilySearch confidence: 2/5\n\nThis record (Patrick Flynn, died 12 March 1908, Schuylkill County, father Thomas Flynn) is already linked to this person in the project (`pe_005`). No decision needed. Note: the certificate lists birthplace as *Pennsylvania*, which conflicts with the census records showing *Ireland* \u2014 the informant was a son-in-law reporting secondhand, so his secondary testimony carries less weight.\n\n---\n\n**Summary:** The 1870 census hint looks valid and should be accepted. The 1880 census is plausible but cannot be confirmed without more information about Patrick's spouse or children. The death certificate is already attached to the project.\n\nIf you'd like to accept or reject any of these hints, let me know and I'll record your decisions.",
+            "text_response": "Here is the subagent's report on Patrick Flynn's (LZNY-BRF) FamilySearch hints:\n\n---\n\n**Three hints were reviewed:**\n\n### 1. 1870 U.S. Federal Census — ✅ ACCEPT\n**Ark:** `ark:/61903/1:1:M70C` | FamilySearch confidence: 3/5\n\nPatrick Flynn, born ~1845 in Ireland, coal miner, Schuylkill County, listed as a *son* in Thomas Flynn's household. The name, birth estimate, birthplace (Ireland), county, and father all agree with the tree. This record is not yet extracted or linked. **Recommended: Accept.**\n\n---\n\n### 2. 1880 U.S. Federal Census — ⚠️ NOT ENOUGH INFORMATION\n**Ark:** `ark:/61903/1:1:M80C` | FamilySearch confidence: 2/5\n\nThe index misspells the surname as \"Glynn,\" but the original page reads \"Flynn, Patrick\" — age 35, coal miner, born Ireland, parents born Ireland, Pottsville, Schuylkill County. The name, age, birthplace, and occupation fit. However, he appears as a *household head* with wife Bridget and children Mary and Thomas — a family the tree does not describe. Because \"Patrick Flynn\" was extremely common among Irish miners in Schuylkill County, more evidence (spouse or children's details) is needed to confirm this is the same man. **Verdict: Needs more information.**\n\n---\n\n### 3. Pennsylvania Death Certificate (1906–1967) — ℹ️ ALREADY LINKED\n**Ark:** `ark:/61903/1:1:MDEF` | FamilySearch confidence: 2/5\n\nThis record (Patrick Flynn, died 12 March 1908, Schuylkill County, father Thomas Flynn) is already linked to this person in the project (`pe_005`). No decision needed. Note: the certificate lists birthplace as *Pennsylvania*, which conflicts with the census records showing *Ireland* — the informant was a son-in-law reporting secondhand, so his secondary testimony carries less weight.\n\n---\n\n**Summary:** The 1870 census hint looks valid and should be accepted. The 1880 census is plausible but cannot be confirmed without more information about Patrick's spouse or children. The death certificate is already attached to the project.\n\nIf you'd like to accept or reject any of these hints, let me know and I'll record your decisions.",
             "activated": true,
             "skills_invoked": [],
             "tool_calls": [
@@ -9863,7 +9863,7 @@
                       "information_quality": "secondary",
                       "informant": "James Brown (son-in-law)",
                       "informant_proximity": "family_not_present",
-                      "informant_bias_notes": "Secondary information \u2014 son-in-law reporting what he was told about father-in-law's parentage",
+                      "informant_bias_notes": "Secondary information — son-in-law reporting what he was told about father-in-law's parentage",
                       "record_basis": "stated",
                       "log_entry_id": "log_005",
                       "extracted_for_question_ids": [
@@ -10188,7 +10188,7 @@
                   "digest": {
                     "id": "ark:/61903/3:1:3Q9M-CS80-L7Q2",
                     "chars": 458,
-                    "excerpt": "Tenth Census of the United States, 1880. Schedule 1 \u2014 Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\nDwelling 214, family 231:\nFlynn, Patrick \u2014 W M 35 \u2014 Head \u2014 Married \u2014 Coal miner \u2014 Born Ireland \u2014 Father born Ireland \u2014 Mother born Ireland\nFlynn, Bridge"
+                    "excerpt": "Tenth Census of the United States, 1880. Schedule 1 — Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\nDwelling 214, family 231:\nFlynn, Patrick — W M 35 — Head — Married — Coal miner — Born Ireland — Father born Ireland — Mother born Ireland\nFlynn, Bridge"
                   }
                 }
               },
@@ -10209,7 +10209,7 @@
                   "ref": "results/.staging/58c517d9-a977-416c-97da-8241d2411863.json",
                   "totalChars": 458,
                   "offset": 0,
-                  "content": "Tenth Census of the United States, 1880. Schedule 1 \u2014 Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\n\nDwelling 214, family 231:\nFlynn, Patrick \u2014 W M 35 \u2014 Head \u2014 Married \u2014 Coal miner \u2014 Born Ireland \u2014 Father born Ireland \u2014 Mother born Ireland\nFlynn, Bridget \u2014 W F 30 \u2014 Wife \u2014 Married \u2014 Keeping house \u2014 Born Ireland\nFlynn, Mary \u2014 W F 6 \u2014 Daughter \u2014 Born Pennsylvania\nFlynn, Thomas \u2014 W M 3 \u2014 Son \u2014 Born Pennsylvania",
+                  "content": "Tenth Census of the United States, 1880. Schedule 1 — Inhabitants in Pottsville, County of Schuylkill, State of Pennsylvania. Enumerated June 1880.\n\nDwelling 214, family 231:\nFlynn, Patrick — W M 35 — Head — Married — Coal miner — Born Ireland — Father born Ireland — Mother born Ireland\nFlynn, Bridget — W F 30 — Wife — Married — Keeping house — Born Ireland\nFlynn, Mary — W F 6 — Daughter — Born Pennsylvania\nFlynn, Thomas — W M 3 — Son — Born Pennsylvania",
                   "truncated": false
                 }
               }
@@ -10447,7 +10447,7 @@
                 "source": "base",
                 "name": "Correctness",
                 "score": 3,
-                "rationale": "Claude's response accurately reports the three pending hints with correct arks, titles, and confidence scores. The 1870 census recommendation to accept is sound: name, age, birthplace, county, and father all match the tree. The 1880 census recommendation of 'not enough information to judge' is correct\u2014Claude read the image, found 'Flynn, Patrick' (not 'Glynn'), confirmed age/birthplace/occupation match, but correctly noted the household (wife, children) is not in the tree and Flynn was a common name, making identity uncertain without additional evidence. The death certificate is correctly identified as 'already linked by pe_005' with no recommendation, which is the proper handling of a pending hint that is already extracted and linked. No fabricated material or unsupported claims."
+                "rationale": "Claude's response accurately reports the three pending hints with correct arks, titles, and confidence scores. The 1870 census recommendation to accept is sound: name, age, birthplace, county, and father all match the tree. The 1880 census recommendation of 'not enough information to judge' is correct—Claude read the image, found 'Flynn, Patrick' (not 'Glynn'), confirmed age/birthplace/occupation match, but correctly noted the household (wife, children) is not in the tree and Flynn was a common name, making identity uncertain without additional evidence. The death certificate is correctly identified as 'already linked by pe_005' with no recommendation, which is the proper handling of a pending hint that is already extracted and linked. No fabricated material or unsupported claims."
               },
               {
                 "source": "base",
@@ -10465,7 +10465,7 @@
                 "source": "rubric",
                 "name": "Hint scope",
                 "score": 3,
-                "rationale": "Every hint Claude reviewed is a pending match: the 1870 census (M70C, confidence 3), the 1880 census (M80C, confidence 2), and the 1908 death certificate (MDEF, confidence 2). The death certificate, though already linked by pe_005, is correctly listed as a pending hint with the notation 'already linked by pe_005' and no recommendation\u2014this is the correct handling per the rubric. Each hint's FamilySearch confidence is stated in plain words (moderate, weak, weak). The 1850 census, which is an accepted match, was not presented as a hint. No invented hints or accepted matches mixed in as pending."
+                "rationale": "Every hint Claude reviewed is a pending match: the 1870 census (M70C, confidence 3), the 1880 census (M80C, confidence 2), and the 1908 death certificate (MDEF, confidence 2). The death certificate, though already linked by pe_005, is correctly listed as a pending hint with the notation 'already linked by pe_005' and no recommendation—this is the correct handling per the rubric. Each hint's FamilySearch confidence is stated in plain words (moderate, weak, weak). The 1850 census, which is an accepted match, was not presented as a hint. No invented hints or accepted matches mixed in as pending."
               },
               {
                 "source": "rubric",
@@ -10477,7 +10477,7 @@
                 "source": "rubric",
                 "name": "Verdict recording",
                 "score": null,
-                "rationale": "This is a triage test (the skill reviews hints and recommends verdicts without recording them). The rubric dimension 'Verdict recording' applies only to record mode, where the agent logs researcher decisions. In triage mode, the agent produces no log entries and makes no tree edits\u2014it only recommends. The response correctly ends by stating 'The next step is that you will be asked which of these suggested records to accept and which to reject, and I will record your choices,' indicating the researcher will decide and the agent will record in a subsequent record-mode run. Score is N/A."
+                "rationale": "This is a triage test (the skill reviews hints and recommends verdicts without recording them). The rubric dimension 'Verdict recording' applies only to record mode, where the agent logs researcher decisions. In triage mode, the agent produces no log entries and makes no tree edits—it only recommends. The response correctly ends by stating 'The next step is that you will be asked which of these suggested records to accept and which to reject, and I will record your choices,' indicating the researcher will decide and the agent will record in a subsequent record-mode run. Score is N/A."
               }
             ],
             "judge_cost_usd": 0.021576,
@@ -10497,7 +10497,7 @@
   ],
   "totals": {
     "duration_ms": 418332.6451999019,
-    "duration_api_ms": 336417.0,
+    "duration_api_ms": 336417,
     "judge_duration_ms": 124135.84770000307,
     "num_turns": 22,
     "input_tokens": 17220,
