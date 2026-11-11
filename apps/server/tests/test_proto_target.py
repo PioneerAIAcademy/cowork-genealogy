@@ -533,7 +533,7 @@ def test_spill_kill_is_void_when_nothing_read_a_tool_results_file(monkeypatch):
     assert "neither re-ran nor read" in rep.findings[-1]
 
 
-@pytest.mark.parametrize("rerun, said", [(0, "stranded spill"), (1, "re-ran collections_search")])
+@pytest.mark.parametrize("rerun, said", [(0, "stranded spill"), (1, "re-ran record_search")])
 def test_spill_kill_counts_a_tool_results_read_and_records_rerun_vs_stranded(monkeypatch, rerun, said):
     rep, _order = _spill_run(monkeypatch, reads_after=1, rerun=rerun)
     assert _spilled(rep) is True

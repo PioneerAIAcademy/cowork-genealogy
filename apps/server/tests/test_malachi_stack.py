@@ -1284,3 +1284,134 @@ def test_malachi_export_needs_exactly_one_selector(first_run, given):
     _path, env = first_run
     result = _run(["export"], {**env, **given})
     assert result.returncode == 1 and "exactly one" in result.stderr
+
+
+# ── beta-block-user and beta-delete-user (user_admin.py; its pg half is test_malachi_user_admin_pg.py) ──
+
+# A docker that records its argv, stdin and environment, and writes FAKE_REPORT's project ids into
+# the folder mounted at /report, confirmed or not, so the shell's own CONFIRM gate is what a test
+# sees. FAKE_STATUS is its exit status.
+FAKE_ADMIN_DOCKER = """#!/bin/sh
+cat >"$FAKE_DIR/stdin"
+printf '%s\\n' "$*" >"$FAKE_DIR/argv"
+env >"$FAKE_DIR/env"
+for arg in "$@"; do
+  case $arg in
+    *:/report) printf '%s' "${FAKE_REPORT-}" >"${arg%:/report}/projects" ;;
+  esac
+done
+exit "${FAKE_STATUS:-0}"
+"""
+
+
+@pytest.fixture
+def admin_run(first_run, tmp_path):
+    """``(run, data)``: ``run(command, **env)`` runs malachi.sh with FAKE_ADMIN_DOCKER, and
+    ``data`` is DATA_DIR with two exports in it."""
+    path, env = first_run
+    bin_dir = tmp_path / "admin-bin"
+    bin_dir.mkdir()
+    fake = bin_dir / "docker"
+    fake.write_text(FAKE_ADMIN_DOCKER, encoding="utf-8")
+    fake.chmod(0o755)
+    data = Path(env["DATA_DIR"])
+    for project in ("proj_gone", "proj_kept"):
+        (data / "exports" / project).mkdir(parents=True)
+        (data / "exports" / project / "research.json").write_text("{}", encoding="utf-8")
+    base = {**env, "PATH": f"{bin_dir}{os.pathsep}{env['PATH']}", "FAKE_DIR": str(tmp_path)}
+
+    def run(command: str, **extra: str) -> subprocess.CompletedProcess:
+        return _run([command], {**base, **extra})
+
+    return run, data
+
+
+@needs_bash
+@pytest.mark.parametrize(("command", "given", "message"), [
+    ("block-user", {}, "ACCOUNT= is required"),
+    ("delete-user", {"CODE": "abc"}, "ACCOUNT= is required"),
+    ("delete-user", {"ACCOUNT": "usr_a"}, "CODE= is required"),
+])
+def test_a_user_command_needs_its_inputs(admin_run, tmp_path, command, given, message):
+    run, _data = admin_run
+    result = run(command, **given)
+    assert result.returncode == 1 and message in result.stderr
+    assert not (tmp_path / "argv").exists()
+
+
+@needs_bash
+def test_block_user_runs_the_block(admin_run, tmp_path):
+    run, _data = admin_run
+    assert run("block-user", ACCOUNT="usr_a").returncode == 0
+    argv = (tmp_path / "argv").read_text(encoding="utf-8")
+    assert "user_admin.py block --account=usr_a" in argv and "--confirm" not in argv
+
+
+@needs_bash
+def test_delete_user_sends_the_code_on_stdin_and_never_argv(admin_run, tmp_path):
+    run, data = admin_run
+    code = "0123456789abcdef0123"
+    result = run("delete-user", ACCOUNT="usr_a", CODE=code)
+    assert result.returncode == 0, result.stderr
+    assert (tmp_path / "stdin").read_text(encoding="utf-8") == code
+    argv = (tmp_path / "argv").read_text(encoding="utf-8")
+    assert code not in argv + result.stdout + result.stderr
+    assert "user_admin.py delete --account=usr_a --report /report/projects" in argv
+
+
+@needs_bash
+@pytest.mark.parametrize("confirm", [None, "no", "YES"])
+def test_delete_user_without_confirm_yes_passes_no_confirm_and_removes_nothing(admin_run, tmp_path, confirm):
+    run, data = admin_run
+    extra = {"CONFIRM": confirm} if confirm is not None else {}
+    assert run("delete-user", ACCOUNT="usr_a", CODE="c", FAKE_REPORT="proj_gone\n", **extra).returncode == 0
+    assert "--confirm" not in (tmp_path / "argv").read_text(encoding="utf-8")
+    assert sorted(p.name for p in (data / "exports").iterdir()) == ["proj_gone", "proj_kept"]
+
+
+@needs_bash
+def test_a_confirmed_delete_removes_the_reported_exports_and_no_other(admin_run, tmp_path):
+    run, data = admin_run
+    result = run("delete-user", ACCOUNT="usr_a", CODE="c", CONFIRM="yes", FAKE_REPORT="proj_gone\nproj_none\n")
+    assert result.returncode == 0, result.stderr
+    assert " --confirm " in f" {(tmp_path / 'argv').read_text(encoding='utf-8')} "
+    assert sorted(p.name for p in (data / "exports").iterdir()) == ["proj_kept"]
+    assert f"removed {data}/exports/proj_gone" in result.stdout and "proj_none" not in result.stdout
+
+
+@needs_bash
+@pytest.mark.parametrize("climbing", ["..", "../proj_kept", "proj_gone/../proj_kept", "."])
+def test_a_confirmed_delete_refuses_a_climbing_export_name(admin_run, climbing):
+    run, data = admin_run
+    result = run("delete-user", ACCOUNT="usr_a", CODE="c", CONFIRM="yes", FAKE_REPORT=f"{climbing}\n")
+    assert result.returncode == 1 and "refusing to remove an export" in result.stderr
+    assert sorted(p.name for p in (data / "exports").iterdir()) == ["proj_gone", "proj_kept"]
+    assert data.is_dir()
+
+
+@needs_bash
+def test_a_failed_delete_removes_no_export(admin_run):
+    run, data = admin_run
+    result = run("delete-user", ACCOUNT="usr_a", CODE="c", CONFIRM="yes", FAKE_REPORT="proj_gone\n", FAKE_STATUS="1")
+    assert result.returncode != 0
+    assert sorted(p.name for p in (data / "exports").iterdir()) == ["proj_gone", "proj_kept"]
+
+
+@needs_bash
+def test_the_code_reaches_no_child_environment_even_through_makeflags(admin_run, tmp_path):
+    """make copies its command-line variables into MAKEFLAGS for every recipe."""
+    run, _data = admin_run
+    code = "0123456789abcdef0123"
+    result = run("delete-user", ACCOUNT="usr_a", CODE=code, MAKEFLAGS=f" -- ACCOUNT=usr_a CODE={code}",
+                 MAKEOVERRIDES=f"ACCOUNT=usr_a CODE={code}")
+    assert result.returncode == 0, result.stderr
+    assert code not in (tmp_path / "env").read_text(encoding="utf-8")
+    assert (tmp_path / "stdin").read_text(encoding="utf-8") == code
+
+
+@needs_bash
+def test_rows_gone_with_objects_left_still_removes_the_exports_and_fails(admin_run):
+    run, data = admin_run
+    result = run("delete-user", ACCOUNT="usr_a", CODE="c", CONFIRM="yes", FAKE_REPORT="proj_gone\n", FAKE_STATUS="3")
+    assert result.returncode == 1 and "objects may remain" in result.stderr
+    assert sorted(p.name for p in (data / "exports").iterdir()) == ["proj_kept"]

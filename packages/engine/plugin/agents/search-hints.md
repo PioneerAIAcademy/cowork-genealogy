@@ -146,9 +146,9 @@ Otherwise proceed.
    an `imageArk`, transcribe it with `image_transcribe({ ark: <imageArk>,
    projectPath, lookingFor: <the disputed field> })`, then read the page with
    `sidecar_read({ projectPath, ref: staged.resultsRef })` (or the inline
-   `transcription` when `staged` is null) before recommending anything. Indexes of
-   European parish and civil registers are routinely wrong; the image outranks
-   the index. If the image cannot be read, the recommendation is `not enough
+   `transcription` when `staged` is null) before recommending anything. A page that
+   disagrees with the index is a doubt to report with both readings, never a
+   correction: a machine reading can be wrong too. If the image cannot be read, the recommendation is `not enough
    information to judge`. When the record carries no `imageArk`, say the index
    is the only evidence: a reject then needs a contradiction no transcription
    error could produce.

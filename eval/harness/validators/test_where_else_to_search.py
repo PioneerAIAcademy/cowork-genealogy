@@ -22,7 +22,7 @@ from pathlib import Path
 
 import pytest
 
-from validators_lib import bare_tool_name
+from validators_lib import bare_tool_name, response_strings
 
 _FIXTURES = Path(__file__).resolve().parents[2] / "fixtures" / "mcp"
 _TOOLS = {"place_search", "external_links_search", "build_external_search_url"}
@@ -63,16 +63,6 @@ def _response(call):
     return json.loads(path.read_text(encoding="utf-8")).get("response") if path.exists() else None
 
 
-def _strings(value) -> set[str]:
-    if isinstance(value, str):
-        return {value}
-    if isinstance(value, dict):
-        return set().union(*(_strings(v) for v in value.values())) if value else set()
-    if isinstance(value, list):
-        return set().union(*(_strings(v) for v in value)) if value else set()
-    return set()
-
-
 def _built(tool_calls) -> list[str]:
     """Every url an `ok` build_external_search_url call returned."""
     out = []
@@ -104,7 +94,7 @@ def _positive(test):
 
 def test_every_link_is_one_a_tool_returned(tool_calls, agent_returns, text_response, test):
     _positive(test)
-    returned = set().union(*(_strings(_response(c)) for c in (tool_calls or []))) if tool_calls else set()
+    returned = {s for c in (tool_calls or []) for s in response_strings(_response(c))}
     reply = _reply(agent_returns, text_response, test)
     stray = sorted({u for u in _urls(reply) if u not in returned})
     assert not stray, f"links no tool returned in this run (hand-written or edited): {stray}"

@@ -5,9 +5,7 @@
     "standardPlace": "~"
   },
   "response": {
-    "query": {
-      "standardPlace": "Baiersbronn, Freudenstadt, Baden-Württemberg, Germany"
-    },
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
     "scope": "Germany",
     "totalForPlace": 0,
     "results": []

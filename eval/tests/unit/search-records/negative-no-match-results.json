@@ -14,7 +14,8 @@
       "rank-search-matches",
       "collection-mismatch",
       "topical-fixture-required",
-      "direct-arm"
+      "direct-arm",
+      "outside-holding-claim"
     ]
   },
   "input": {

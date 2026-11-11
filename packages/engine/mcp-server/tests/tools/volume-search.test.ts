@@ -28,6 +28,7 @@ import {
   volumeSearchSchema,
   fitToBudget,
   mergeCoverages,
+  filterSearchableVolumes,
   RESULT_CHAR_BUDGET,
 } from "../../src/tools/volume-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
@@ -1144,6 +1145,132 @@ describe("mergeCoverages", () => {
   });
 });
 
+describe("filterSearchableVolumes", () => {
+  const indexed = (overrides: Record<string, unknown> = {}) => ({
+    imageGroupNumber: "i1",
+    imageCount: 10,
+    recordSearchablePercent: 95,
+    fulltextSearchable: false,
+    languages: ["en"],
+    coverages: [{ places: ["Edensor"], dateRange: "1870-1880", recordType: "Marriage Records" }],
+    ...overrides,
+  });
+  const browseOnly = (overrides: Record<string, unknown> = {}) => ({
+    imageGroupNumber: "b1",
+    imageCount: 10,
+    recordSearchablePercent: 10,
+    fulltextSearchable: false,
+    languages: ["en"],
+    coverages: [{ places: ["Edensor"], dateRange: "1870-1880", recordType: "Death Records" }],
+    ...overrides,
+  });
+  const page = (results: ReturnType<typeof indexed>[]) => ({
+    query: { standardPlace: "X", pageSize: results.length },
+    totalResults: results.length,
+    results,
+  });
+
+  it("omits a volume at or above 50% recordSearchablePercent, labelled indexed", () => {
+    const out = filterSearchableVolumes(page([indexed({ recordSearchablePercent: 50 })]));
+    expect(out.results).toEqual([]);
+    expect(out.searchableOmitted).toEqual(["indexed | Marriage Records | 1870-1880 | Edensor"]);
+  });
+
+  it("omits a fulltext-searchable volume below 50% recordSearchablePercent, labelled full-text", () => {
+    const out = filterSearchableVolumes(
+      page([indexed({ recordSearchablePercent: 4, fulltextSearchable: true })])
+    );
+    expect(out.searchableOmitted).toEqual(["full-text | Marriage Records | 1870-1880 | Edensor"]);
+  });
+
+  it("labels a volume that is both indexed and fulltext-searchable as indexed", () => {
+    const out = filterSearchableVolumes(
+      page([indexed({ recordSearchablePercent: 95, fulltextSearchable: true })])
+    );
+    expect(out.searchableOmitted).toEqual(["indexed | Marriage Records | 1870-1880 | Edensor"]);
+  });
+
+  it("keeps a volume whose signals are both null", () => {
+    const out = filterSearchableVolumes(
+      page([indexed({ recordSearchablePercent: null, fulltextSearchable: null })])
+    );
+    expect(out.results).toHaveLength(1);
+    expect(out.searchableOmitted).toEqual([]);
+  });
+
+  it("keeps a volume below the bar with an unknown fulltext status", () => {
+    const out = filterSearchableVolumes(
+      page([indexed({ recordSearchablePercent: 30, fulltextSearchable: null })])
+    );
+    expect(out.results).toHaveLength(1);
+  });
+
+  it("omits a volume at or above the bar even when fulltextSearchable is null", () => {
+    // Decided in review: a null fulltext check must not rescue a volume a
+    // known signal already qualifies -- that would disable the filter on
+    // every page where the full-text sub-fetch failed (it sets
+    // fulltextSearchable: null on every volume).
+    const out = filterSearchableVolumes(
+      page([indexed({ recordSearchablePercent: 95, fulltextSearchable: null })])
+    );
+    expect(out.results).toEqual([]);
+    expect(out.searchableOmitted).toEqual(["indexed | Marriage Records | 1870-1880 | Edensor"]);
+  });
+
+  it("carries a coverage's concept id in place of a missing recordType", () => {
+    const out = filterSearchableVolumes(
+      page([
+        indexed({
+          coverages: [{ places: ["Edensor"], dateRange: "1870-1880", recordTypeConceptId: 124443 }],
+        }),
+      ])
+    );
+    expect(out.searchableOmitted).toEqual(["indexed | concept-id:124443 | 1870-1880 | Edensor"]);
+  });
+
+  it("joins multiple places with a semicolon, not a comma, since place names already carry commas", () => {
+    const out = filterSearchableVolumes(
+      page([
+        indexed({
+          coverages: [
+            {
+              places: ["Edensor, Derbyshire, England", "Bakewell, Derbyshire, England"],
+              dateRange: "1870-1880",
+              recordType: "Marriage Records",
+            },
+          ],
+        }),
+      ])
+    );
+    expect(out.searchableOmitted).toEqual([
+      "indexed | Marriage Records | 1870-1880 | Edensor, Derbyshire, England; Bakewell, Derbyshire, England",
+    ]);
+  });
+
+  it("still emits one line for an omitted volume with no coverage rows", () => {
+    const out = filterSearchableVolumes(page([indexed({ coverages: [] })]));
+    expect(out.searchableOmitted).toEqual(["indexed |  |  | "]);
+  });
+
+  it("dedupes identical lines across different volumes", () => {
+    const out = filterSearchableVolumes(page([indexed(), indexed({ imageGroupNumber: "i2" })]));
+    expect(out.searchableOmitted).toEqual(["indexed | Marriage Records | 1870-1880 | Edensor"]);
+  });
+
+  it("keeps browse-only volumes in results beside omitted ones", () => {
+    const out = filterSearchableVolumes(page([indexed(), browseOnly()]));
+    expect(out.results).toEqual([browseOnly()]);
+    expect(out.searchableOmitted).toEqual(["indexed | Marriage Records | 1870-1880 | Edensor"]);
+  });
+
+  it("leaves an already-under-budget answer's other fields untouched", () => {
+    const input = page([browseOnly()]);
+    const out = filterSearchableVolumes(input);
+    expect(out.query).toBe(input.query);
+    expect(out.totalResults).toBe(input.totalResults);
+  });
+});
+
 describe("pageSize", () => {
   it("sends a caller's pageSize and echoes it in query", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
@@ -1255,5 +1382,128 @@ describe("volumeSearchTool — summary", () => {
     const result = await volumeSearchTool({ standardPlace: "Edensor" }, LOCAL);
     expect(result.summary).toBeUndefined();
     expect(result.summaryError).toBeUndefined();
+  });
+});
+
+describe("volumeSearchTool — omitSearchable (issue #4414)", () => {
+  function mixedPage() {
+    const searchable = Array.from({ length: 40 }, (_, i) =>
+      makeGroup({
+        groupName: `searchable-${i}`,
+        childCount: 100,
+        indexedChildCount: 90,
+        noIndexableDataChildCount: 0,
+        coverages: [
+          {
+            place: `Town ${i}, Somewhere, United States`,
+            datesOrig: `${1800 + i}-${1810 + i}`,
+            recordTypeOrig: "Census",
+          },
+        ],
+      })
+    );
+    const browseOnly = Array.from({ length: 10 }, (_, i) =>
+      makeGroup({
+        groupName: `browse-${i}`,
+        childCount: 100,
+        indexedChildCount: 5,
+        noIndexableDataChildCount: 0,
+        coverages: [
+          {
+            place: `Hamlet ${i}, Somewhere, United States`,
+            datesOrig: `${1850 + i}-${1860 + i}`,
+            recordTypeOrig: "Probate Records",
+          },
+        ],
+      })
+    );
+    return [...searchable, ...browseOnly];
+  }
+
+  it("collapses a page's searchable volumes to lines, keeps only browse-only volumes in results, at under half the flag-off size", async () => {
+    const groups = mixedPage();
+
+    setupCalls([2968392], makeSearchResponse(groups), []);
+    const withoutFlag = await volumeSearchTool(
+      { standardPlace: "Edensor, Derbyshire, England, United Kingdom" },
+      LOCAL
+    );
+
+    setupCalls([2968392], makeSearchResponse(groups), []);
+    const withFlag = await volumeSearchTool(
+      { standardPlace: "Edensor, Derbyshire, England, United Kingdom", omitSearchable: true },
+      LOCAL
+    );
+
+    expect(withFlag.results).toHaveLength(10);
+    expect(withFlag.results.every((g) => g.imageGroupNumber.startsWith("browse-"))).toBe(true);
+    expect(withFlag.searchableOmitted).toHaveLength(40);
+    expect(withFlag.totalResults).toBe(withoutFlag.totalResults);
+    expect(JSON.stringify(withFlag).length).toBeLessThan(JSON.stringify(withoutFlag).length / 2);
+  });
+
+  it("keeps a volume whose signals are both null, and omits one at or above the bar despite an unknown fulltext status", async () => {
+    const groups = [
+      makeGroup({ groupName: "both-null" }),
+      makeGroup({ groupName: "high-with-null-fulltext" }),
+    ];
+    delete (groups[0] as Partial<MetadataRmsGroup>).childCount;
+    delete (groups[0] as Partial<MetadataRmsGroup>).indexedChildCount;
+    // groups[1] keeps makeGroup's default 366/412 (~89%, >= the 50% bar). The
+    // fulltext call fails all 3 retries, so both volumes' fulltextSearchable
+    // comes back null -- the real-world shape of a failed full-text sub-fetch
+    // (volume-search.ts mapGroup), which must not rescue a volume a known
+    // signal already qualifies.
+    mockFetch
+      .mockResolvedValueOnce(makeOkResponse(makeSearchResponse(groups)))
+      .mockRejectedValueOnce(new Error("network error"))
+      .mockRejectedValueOnce(new Error("network error"))
+      .mockRejectedValueOnce(new Error("network error"));
+
+    const result = await volumeSearchTool(
+      { standardPlace: "Edensor, Derbyshire, England, United Kingdom", omitSearchable: true },
+      LOCAL
+    );
+
+    expect(result.results.map((g) => g.imageGroupNumber)).toEqual(["both-null"]);
+    expect(result.searchableOmitted).toHaveLength(1);
+  });
+
+  it("is byte-identical to today's answer when the flag is false or absent", async () => {
+    setupCalls([2968392], makeSearchResponse([makeGroup()]), ["004452257"]);
+    const base = await volumeSearchTool(
+      { standardPlace: "Edensor, Derbyshire, England, United Kingdom" },
+      LOCAL
+    );
+
+    setupCalls([2968392], makeSearchResponse([makeGroup()]), ["004452257"]);
+    const explicitFalse = await volumeSearchTool(
+      { standardPlace: "Edensor, Derbyshire, England, United Kingdom", omitSearchable: false },
+      LOCAL
+    );
+
+    expect(JSON.stringify(explicitFalse)).toBe(JSON.stringify(base));
+    expect(base).not.toHaveProperty("searchableOmitted");
+    expect(explicitFalse).not.toHaveProperty("searchableOmitted");
+  });
+
+  it("totalResults stays upstream's count even when every volume on the page is omitted", async () => {
+    setupCalls(
+      [2968392],
+      makeSearchResponse([makeGroup()], { totalCount: 5000, nextPageToken: "tok" }),
+      ["004452257"]
+    );
+    const result = await volumeSearchTool(
+      { standardPlace: "Edensor, Derbyshire, England, United Kingdom", omitSearchable: true },
+      LOCAL
+    );
+    expect(result.results).toEqual([]);
+    expect(result.searchableOmitted).toHaveLength(1);
+    expect(result.totalResults).toBe(5000);
+    expect(result.nextPageToken).toBe("tok");
+  });
+
+  it("advertises omitSearchable on the schema", () => {
+    expect(volumeSearchSchema.inputSchema.properties).toHaveProperty("omitSearchable");
   });
 });

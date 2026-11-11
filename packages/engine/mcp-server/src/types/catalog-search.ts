@@ -32,13 +32,13 @@ export interface CatalogSearchInput {
  *  text is long is several entries in a row, each carrying the same numbers and
  *  a run of whole note texts. The Catalog's `shelf`, `item_image_start_no` and
  *  `fs_indexed` are not carried: no plugin body, validator or fixture reads
- *  them. */
+ *  them. Nor is `copy_location`: the hit's `repositoryCalls` names the same
+ *  places. */
 export interface CatalogFilmNote {
   /** Legacy microfilm number. */
   filmNumber?: string;
   /** DGS — feeds `image_search`/`fulltext_search` as their `imageGroupNumber`. */
   imageGroupNumber?: string;
-  copyLocation?: string;
   /** What that reel covers. When several notes were merged, their texts in the
    *  order the Catalog gave them, joined with " | ", up to a length cap per
    *  entry (a note is never cut in two). */

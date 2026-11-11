@@ -764,6 +764,75 @@ def test_fulltext_search_withholding_facets_does_not_strip_them_from_the_fixture
     assert body["facets"] == _fixture_facets()
 
 
+# --- volume_search applies omitSearchable only when asked (#4414) -------------
+# Production moves an already-searchable volume (fulltextSearchable, or >= 50%
+# recordSearchablePercent) out of `results` into a `searchableOmitted` line
+# only when the call's own `omitSearchable` is true. A fixture carries the
+# unfiltered shape unconditionally.
+
+_MIXED_VOLUMES_FIXTURE = "volume-search-schuylkill-mixed"
+
+
+@pytest.mark.requires_engine_build
+def test_volume_search_serves_the_fixture_unfiltered_without_omit_searchable(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        [_MIXED_VOLUMES_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "volume_search", {"standardPlace": "Schuylkill, Pennsylvania, United States"})
+    )
+    assert "error" not in body, body
+    assert [g["imageGroupNumber"] for g in body["results"]] == [
+        "007621224",
+        "004812990",
+        "004288771",
+    ]
+    assert "searchableOmitted" not in body
+
+
+@pytest.mark.requires_engine_build
+def test_volume_search_moves_searchable_volumes_to_lines_with_omit_searchable(tmp_path):
+    server, call_log, tools_by_name = create_mock_server(
+        [_MIXED_VOLUMES_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    body = _extract_response_dict(
+        _invoke(
+            tools_by_name,
+            "volume_search",
+            {"standardPlace": "Schuylkill, Pennsylvania, United States", "omitSearchable": True},
+        )
+    )
+    assert "error" not in body, body
+    # The 96%-indexed and the 4%-but-fulltext volumes both leave `results`; the
+    # 0%/not-fulltext browse-only volume stays.
+    assert [g["imageGroupNumber"] for g in body["results"]] == ["004288771"]
+    assert body["searchableOmitted"] == [
+        "indexed | U.S. Federal Census | 1850-1860 | Schuylkill, Pennsylvania, United States",
+        "full-text | Probate Records | 1845-1880 | Schuylkill, Pennsylvania, United States",
+    ]
+    # totalResults is upstream's count, unaffected by the filter.
+    assert body["totalResults"] == 3
+
+
+@pytest.mark.requires_engine_build
+def test_volume_search_omit_searchable_does_not_mutate_the_shared_fixture(tmp_path):
+    """The fixture response is shared across calls: a filtered call must not
+    cost a later unfiltered call its searchable volumes."""
+    server, call_log, tools_by_name = create_mock_server(
+        [_MIXED_VOLUMES_FIXTURE], FIXTURES_DIR, workspace=tmp_path
+    )
+    _invoke(
+        tools_by_name,
+        "volume_search",
+        {"standardPlace": "Schuylkill, Pennsylvania, United States", "omitSearchable": True},
+    )
+    body = _extract_response_dict(
+        _invoke(tools_by_name, "volume_search", {"standardPlace": "Schuylkill, Pennsylvania, United States"})
+    )
+    assert len(body["results"]) == 3
+    assert "searchableOmitted" not in body
+
+
 def test_facets_gate_has_not_drifted_from_the_typescript_source():
     """The mock's gate restates the tool's condition: it selects the response
     rather than transforming a staged one, and the tool exports no function for
@@ -2425,16 +2494,29 @@ def test_build_external_search_url_without_projectpath_writes_nothing(tmp_path):
     assert _logged(ws) == []
 
 
+def _store_fetched_place(ws, place: str) -> None:
+    """The entry external_links_search leaves for a place it looked up."""
+    (ws / "external-collections.json").write_text(
+        json.dumps({"places": {place: {"rows": []}}}), encoding="utf-8"
+    )
+
+
 @pytest.mark.requires_engine_build
 def test_build_external_search_url_with_projectpath_writes_one_entry(tmp_path):
     """A projectPath the agent sent is rebased onto the workspace and honoured."""
     ws = _hand_off_workspace(tmp_path)
+    _store_fetched_place(ws, "Pennsylvania, United States")
     _cfg, _log, tools = create_mock_server([], FIXTURES_DIR, workspace=ws)
     out = _extract_response_dict(
         _invoke(
             tools,
             "build_external_search_url",
-            {"site": "findagrave", "attributes": {"surname": "Flynn"}, "projectPath": "/somewhere/else"},
+            {
+                "site": "findagrave",
+                "attributes": {"surname": "Flynn"},
+                "projectPath": "/somewhere/else",
+                "standardPlace": "Pennsylvania, United States",
+            },
         )
     )
     assert out["ok"] is True
@@ -2442,6 +2524,29 @@ def test_build_external_search_url_with_projectpath_writes_one_entry(tmp_path):
     assert [e["id"] for e in log] == [out["logId"]]
     assert log[0]["outcome"] == "partial"
     assert log[0]["external_site"]["url_generated"] == out["url"]
+
+
+@pytest.mark.requires_engine_build
+def test_build_external_search_url_refuses_an_unfetched_place_in_the_workspace(tmp_path):
+    """The engine's place gate (#4410) reaches the agent through the mock: a
+    site-wide build for a place never looked up is refused and logs nothing."""
+    ws = _hand_off_workspace(tmp_path)
+    _cfg, _log, tools = create_mock_server([], FIXTURES_DIR, workspace=ws)
+    out = _extract_response_dict(
+        _invoke(
+            tools,
+            "build_external_search_url",
+            {
+                "site": "findagrave",
+                "attributes": {"surname": "Flynn"},
+                "projectPath": "/somewhere/else",
+                "standardPlace": "Pennsylvania, United States",
+            },
+        )
+    )
+    assert out["ok"] is False
+    assert out["reason"] == "place_not_fetched"
+    assert _logged(ws) == []
 
 
 # --- external_links_search stores the place's list (#2995) ---------------------

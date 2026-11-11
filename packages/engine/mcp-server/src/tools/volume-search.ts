@@ -366,6 +366,72 @@ export function fitToBudget(
   return { ...result, results: groups };
 }
 
+// A volume is already reachable by a faster tool than browsing once either
+// signal clears this bar: fulltext_search once fulltextSearchable is true, or
+// record_search once at least half its indexable images are indexed. Below the
+// bar, or when a signal is null (unknown), the volume stays a browse candidate.
+const SEARCHABLE_PERCENT_THRESHOLD = 50;
+
+function isAlreadySearchable(group: VolumeGroup): boolean {
+  return (
+    group.fulltextSearchable === true ||
+    (group.recordSearchablePercent != null &&
+      group.recordSearchablePercent >= SEARCHABLE_PERCENT_THRESHOLD)
+  );
+}
+
+// A volume at or above the threshold is reachable by record_search regardless
+// of its full-text status, so "indexed" wins the label even when the volume is
+// also full-text searchable -- search-images routes an indexed volume to
+// search-records first.
+function searchableLabel(group: VolumeGroup): "indexed" | "full-text" {
+  return group.recordSearchablePercent != null &&
+    group.recordSearchablePercent >= SEARCHABLE_PERCENT_THRESHOLD
+    ? "indexed"
+    : "full-text";
+}
+
+function searchableOmittedLine(label: string, coverage: SimplifiedCoverage): string {
+  const recordType =
+    coverage.recordType ??
+    (coverage.recordTypeConceptId != null ? `concept-id:${coverage.recordTypeConceptId}` : "");
+  const places = coverage.places.join("; ");
+  return `${label} | ${recordType} | ${coverage.dateRange ?? ""} | ${places}`;
+}
+
+/**
+ * Collapse this page's already-searchable volumes (fulltextSearchable, or at
+ * least SEARCHABLE_PERCENT_THRESHOLD% recordSearchablePercent) to one line
+ * each in `searchableOmitted`, leaving only volumes still worth a browse in
+ * `results`. A volume with no known qualifying signal (both null, or neither
+ * clears the bar) stays in `results` -- a null never omits on its own. Lines
+ * are deduped by their full text across the whole page; a volume with no
+ * coverage rows still contributes one line, so it is not silently dropped.
+ * Pure function of its input: called identically by the tool and, on a canned
+ * fixture, by the eval mock (CLAUDE.md, "Code reuse").
+ */
+export function filterSearchableVolumes(result: VolumeSearchResult): VolumeSearchResult {
+  const kept: VolumeGroup[] = [];
+  const seen = new Set<string>();
+  const lines: string[] = [];
+  for (const group of result.results) {
+    if (!isAlreadySearchable(group)) {
+      kept.push(group);
+      continue;
+    }
+    const label = searchableLabel(group);
+    const rows = group.coverages.length > 0 ? group.coverages : [{ places: [] }];
+    for (const coverage of rows) {
+      const line = searchableOmittedLine(label, coverage);
+      if (!seen.has(line)) {
+        seen.add(line);
+        lines.push(line);
+      }
+    }
+  }
+  return { ...result, results: kept, searchableOmitted: lines };
+}
+
 export async function volumeSearchTool(
   input: VolumeSearchInput,
   principal: Principal
@@ -472,7 +538,7 @@ export async function volumeSearchTool(
   if (typeof summary === "string") result.summaryError = summary;
   else if (summary) result.summary = summary;
 
-  return fitToBudget(result);
+  return fitToBudget(input.omitSearchable ? filterSearchableVolumes(result) : result);
 }
 
 export const volumeSearchSchema = {
@@ -495,6 +561,9 @@ export const volumeSearchSchema = {
     "coverages shortened to fit the answer; call again with a smaller pageSize, " +
     "starting from the first page, to see them all. " +
     "Optionally narrow to record-type groups with recordTypeGroups. " +
+    "Set omitSearchable to drop already-searchable volumes from results into " +
+    "one-line entries in searchableOmitted, so a browse-planning caller is not " +
+    "shown volumes it would only decline. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
@@ -554,6 +623,19 @@ export const volumeSearchSchema = {
           "coverages reach, parents included. First page only — not with pageToken. " +
           "Slower: it reads all matching volumes. If it cannot be computed, the page " +
           "still returns, with `summaryError` saying why.",
+      },
+      omitSearchable: {
+        type: "boolean",
+        description:
+          "Set true to drop volumes that are already fulltextSearchable or at " +
+          "least 50% recordSearchablePercent out of results, replacing each with " +
+          "a one-line entry in searchableOmitted: " +
+          "`<indexed|full-text> | <recordType> | <dateRange> | <places>`. Runs on " +
+          "this page only, so results can be empty while nextPageToken is set — " +
+          "check both results and searchableOmitted, and page again, before " +
+          "concluding nothing was found. totalResults is unaffected. Use when " +
+          "the goal is to find a volume worth browsing image by image, not one " +
+          "already reachable by record_search or fulltext_search.",
       },
     },
     required: ["standardPlace"],

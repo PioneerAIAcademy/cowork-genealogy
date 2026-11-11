@@ -135,7 +135,23 @@ describe("waiting pages", () => {
     await seed([source("src_001", { image_ark: ARK })]);
     const ref = await stagePage({ ark: ARK });
     const r: any = await projectContext({ projectPath: dir }, LOCAL);
-    expect(r.waitingPages).toEqual([{ sourceId: "src_001", ref }]);
+    expect(r.waitingPages).toEqual([{ sourceId: "src_001", ref, index: [] }]);
+  });
+
+  it("project_context lists each waiting page's index: its source's live assertions (#4286)", async () => {
+    const doc = research([source("src_001", { image_ark: ARK })]);
+    const a = (id: string, more: Record<string, unknown> = {}) => ({
+      id, source_id: "src_001", record_id: "XHRQ-CGX", record_role: "child_1", fact_type: "name", value: "Harriet Curtis",
+      information_quality: "primary", informant: "x", informant_proximity: "self", record_basis: "stated",
+      extracted_for_question_ids: [], ...more,
+    });
+    doc.assertions = [a("a_001"), a("a_002", { superseded_by: "retracted", superseded_reason: "r" }), a("a_003", { source_id: "src_009" })] as any;
+    await writeFile(join(dir, "research.json"), JSON.stringify(doc), "utf8");
+    const ref = await stagePage({ ark: ARK });
+    const r: any = await projectContext({ projectPath: dir }, LOCAL);
+    expect(r.waitingPages).toEqual([
+      { sourceId: "src_001", ref, index: [{ assertionId: "a_001", role: "child_1", factType: "name", value: "Harriet Curtis" }] },
+    ]);
   });
 
   it("project_context leaves the key out when nothing waits", async () => {
@@ -176,7 +192,7 @@ describe("waiting pages", () => {
       const staged = await stagePage({ ark: ARK });
       const ref = await logPage(staged);
       expect(await getProjectStore().exists(dir, staged)).toBe(false);
-      expect(await listed()).toEqual([{ sourceId: "src_001", ref }]);
+      expect(await listed()).toEqual([{ sourceId: "src_001", ref, index: [] }]);
       const r = await attach();
       expect(r).toMatchObject({ ok: true, attached: 1 });
       const after = await read();
@@ -196,7 +212,7 @@ describe("waiting pages", () => {
       const doc = await read();
       doc.sources.push(source("src_001", { image_ark: ARK }));
       await getProjectStore().writeJson(dir, "research.json", doc);
-      expect(await listed()).toEqual([{ sourceId: "src_001", ref }]);
+      expect(await listed()).toEqual([{ sourceId: "src_001", ref, index: [] }]);
     });
 
     it("is listed, attached, then not listed", async () => {

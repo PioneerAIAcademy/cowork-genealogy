@@ -491,10 +491,10 @@ def test_no_gate_stop(before_state, after_state, test):
 # ---------------------------------------------------------------------------
 
 
-def test_keeps_waiting_page(before_state, after_state, tool_calls, test):
-    """Tag-gated: a read page of a held record is kept by one
-    `extraction_append({ attachWaitingPages: true })` call, so its text reaches
-    the source that waited, with no second source and no assertion."""
+def test_keeps_waiting_page(before_state, after_state, tool_calls, builtin_tool_calls, test):
+    """Tag-gated: a read page of a held record goes to record-structurer in one
+    spawn, which keeps it. The router does not keep it itself, and writes no
+    source and no assertion for it."""
     if "keeps-waiting-page" not in test.get("tags", []):
         pytest.skip("not a keeps-waiting-page test")
     before = before_state.get("research_json")
@@ -502,24 +502,28 @@ def test_keeps_waiting_page(before_state, after_state, tool_calls, test):
     if before is None or after is None:
         pytest.skip("missing research.json for diff")
 
-    kept = [
+    waiting = [s["id"] for s in before.get("sources", []) if s.get("image_ark") and not s.get("transcription")]
+    assert waiting, "The scenario has no source waiting for its page."
+
+    spawns = [
+        c for c in (builtin_tool_calls or [])
+        if isinstance(c, dict) and (c.get("args") or {}).get("subagent_type") == "record-structurer"
+    ]
+    assert len(spawns) == 1, (
+        f"Expected one record-structurer spawn for the waiting page; got {len(spawns)}."
+    )
+    kept_here = [
         c for c in (tool_calls or [])
         if isinstance(c, dict)
         and bare_tool_name(c.get("tool") or "") == "extraction_append"
         and (c.get("args") or {}).get("attachWaitingPages") is True
     ]
-    assert kept, "No extraction_append call kept the waiting page."
-
-    held = {s["id"]: s for s in after.get("sources", [])}
-    waiting = [s["id"] for s in before.get("sources", []) if s.get("image_ark") and not s.get("transcription")]
-    assert waiting, "The scenario has no source waiting for its page."
-    empty = [i for i in waiting if not (held.get(i) or {}).get("transcription")]
-    assert not empty, f"Still no page on: {empty}"
+    assert not kept_here, "The router kept the page itself; record-structurer keeps it."
     assert len(after.get("sources", [])) == len(before.get("sources", [])), (
-        "Keeping a page fills the existing source; a new source was written."
+        "The router wrote a new source for the waiting page."
     )
     assert len(after.get("assertions", [])) == len(before.get("assertions", [])), (
-        "Keeping a page writes no assertion."
+        "The router wrote an assertion for the waiting page."
     )
 
 
@@ -1306,24 +1310,41 @@ def test_delegation_hands_subject(test, builtin_tool_calls, before_state):
 _SETUP_ORDER_TAG = "attached-records-setup"
 
 
-def test_attached_records_setup_order(tool_calls, test):
+def test_attached_records_setup_order(tool_calls, test, before_state):
     """Tag-gated (``attached-records-setup``): the router runs the attached-
     records step for a subject — ``extraction_append({ personId })``, then
     ``timeline_build`` after it — on a job's "Objective but no questions" row and
     on the bounded "a timeline for a person" ask (issue #3516 PR D).
 
     Checked per subject: each person extracted is built after it, for the same
-    ``personId``. Orders only the two MCP calls. ``tool_calls`` (the mock's MCP
-    log) and ``builtin_tool_calls`` (the hook's) share no ordering, so "both
-    before the first question-selection" is not checked here: on a job test it
-    rests on ``execution.stop_at_stub`` and ``routes-to:question-selection``.
+    subject. ``timeline_build``'s own contract accepts "a tree person id or the
+    FamilySearch id a tree person links to" (timeline-build.ts), so the router
+    is free to spell the two calls' ``personId`` differently for the same
+    person (e.g. the FamilySearch id on the extract, the tree id on the build,
+    once the earlier call's result surfaces it) — canonicalize both to the
+    person's bare FamilySearch id via the scenario's tree before comparing,
+    rather than requiring an identical literal string. Orders only the two MCP
+    calls. ``tool_calls`` (the mock's MCP log) and ``builtin_tool_calls`` (the
+    hook's) share no ordering, so "both before the first question-selection" is
+    not checked here: on a job test it rests on ``execution.stop_at_stub`` and
+    ``routes-to:question-selection``.
     """
     if _SETUP_ORDER_TAG not in (test.get("tags") or []):
         pytest.skip(f"not an {_SETUP_ORDER_TAG} test")
 
+    tree = before_state.get("tree_gedcomx_json") or {}
+    by_tree_id = {
+        p.get("id"): bare_ark_id(p["ark"])
+        for p in tree.get("persons") or []
+        if isinstance(p, dict) and isinstance(p.get("ark"), str) and p["ark"].strip()
+    }
+
     def person(c):
         pid = (c.get("args") or {}).get("personId")
-        return pid.strip() if isinstance(pid, str) else ""
+        pid = pid.strip() if isinstance(pid, str) else ""
+        if not pid:
+            return ""
+        return by_tree_id.get(pid, bare_ark_id(pid))
 
     first_extract: dict[str, int] = {}
     builds: dict[str, list[int]] = {}

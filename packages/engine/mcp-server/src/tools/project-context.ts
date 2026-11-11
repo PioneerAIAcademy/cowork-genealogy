@@ -172,10 +172,11 @@ async function projectUploads(projectPath: string): Promise<ProjectContextUpload
     .map((e) => ({ name: e.name, uploaded: new Date(e.mtimeMs).toISOString(), hasText: names.has(`${e.name}.txt`) }));
 }
 
-export interface ProjectContextCollectionCounts {
-  total: number;
-  byRecordType: Record<string, number>;
-}
+/** A place's stored counts, or `{ tooLarge: true }` for a place external_links_search
+ *  refused as too large to list: looked up, but its collections are unknown, never 0. */
+export type ProjectContextCollectionCounts =
+  | { total: number; byRecordType: Record<string, number> }
+  | { tooLarge: true };
 
 /** Counts from the stored lists; `undefined` when there is nothing to report. Never
  *  throws: a missing or unreadable file must not fail the whole projection. */
@@ -191,6 +192,10 @@ async function externalCollectionCounts(
   if (!doc) return undefined;
   const out: Record<string, ProjectContextCollectionCounts> = {};
   for (const place of Object.keys(doc.places).sort()) {
+    if (doc.places[place]?.too_large === true) {
+      out[place] = { tooLarge: true };
+      continue;
+    }
     const rows = Array.isArray(doc.places[place]?.rows) ? doc.places[place].rows : [];
     const byRecordType: Record<string, number> = {};
     for (const row of rows) {
@@ -568,16 +573,19 @@ export const projectContextSchema = {
     "planItemId, performed}] lists external-site URLs already handed to the user that " +
     "nothing has answered yet — do not raise them again; when the user brings back a " +
     "capture, or says they cannot access the site, log that as the row's closing " +
-    "entry with the same urlGenerated. waitingPages [{sourceId, ref}], absent when " +
-    "none, lists read pages of held records; keep them with one " +
-    "extraction_append({ projectPath, attachWaitingPages: true }). " +
+    "entry with the same urlGenerated. waitingPages [{sourceId, ref, index}], absent when " +
+    "none, lists read pages of held records, each with its record's index " +
+    "[{assertionId, role, factType, value}]; hand them to record-structurer in one spawn, " +
+    "which keeps them with one extraction_append({ projectPath, attachWaitingPages: true, " +
+    "pageReadings }). " +
     "subjectPersonIds are the project's subject " +
     "persons (research.project.subject_person_ids). narrationGuidance is " +
     "researcher_profile.narration_guidance verbatim: the narration " +
     "style every skill applies; subscriptions is researcher_profile.subscriptions. " +
     "For tree facts, dates, places, marriages, cited S ids and arks call tree_query. " +
     "externalCollections counts stored curated " +
-    "collections per place by record type (rows: research_query external_collections). " +
+    "collections per place by record type (rows: research_query external_collections); " +
+    "a place too large to list shows {tooLarge: true}, meaning looked up but its collections unknown, not none. " +
     "sectionCounts gives the entry count of every research.json section research_query " +
     "serves (null when research_query would refuse the section), and unregisteredDisagreementCount the project-wide count of " +
     "unregistered disagreements research_query's conflicts section reports — a section " +

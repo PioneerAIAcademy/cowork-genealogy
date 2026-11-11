@@ -970,6 +970,10 @@
             "string",
             "null"
           ]
+        },
+        "disputes_assertion_id": {
+          "type": "string",
+          "pattern": "^a_"
         }
       },
       "allOf": [
