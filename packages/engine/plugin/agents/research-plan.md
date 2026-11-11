@@ -16,7 +16,7 @@ description: >-
   a search comes back empty, to judge whether research is done ("are we done",
   "what's the next step" → research-exhaustiveness).
 model: claude-haiku-5-5
-effort: low
+effort: medium
 tools:
 
   - mcp__genealogy__collections_search
