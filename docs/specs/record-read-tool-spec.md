@@ -157,11 +157,14 @@ is `collectionTitle`, else the first double-quoted run of `citation` with
 trailing punctuation removed (FamilySearch often quotes the title with its
 comma, `"United States Census, 1860,"`), else the citation.
 
-That rebuilt source is what keeps `hasSameCensus` working: a persona with no
-source refs reads every candidate source title. **Known limit:** a tree census
-source titled per person (`Henry Gaetjen, "United States Census, 1940"`) does
-not equal the rebuilt collection title, so the check does not fire against it.
-`extraction_append` titles new tree sources with the collection name.
+The rebuilt source gives `hasSameCensus` a candidate title: a persona with no
+source refs reads every candidate source title. It matches only a tree source
+titled with the bare collection name, and tree census sources rarely are:
+`extraction_append` titles a FamilySearch record's source with its Record source
+title (`Entry for John Becker and Louisa Becker, "United States, Census, 1900"`),
+and `person_read` titles each source per person (`Henry Gaetjen, "United States
+Census, 1940"`). Neither equals the rebuilt title, so on a project tree the check
+seldom fires.
 
 ## 8. The eval harness
 
