@@ -275,9 +275,21 @@ six:
    or a fact about another person) shares nothing either: its link may be about
    that other party, while the arm sees only the assertion's own persona, so a
    score comparing the child with the father's tree person would otherwise admit
-   the father's link on the child's baptism relationship. The gate gathers the
+   the father's link on the child's baptism relationship. That holds unless
+   another link ties a one-party fact of the same persona to the same tree
+   person (#3677) and no link ties another party's one-party
+   fact to that person: then the link is about the persona, and its score is the
+   right comparison. The gate gathers the
    record's assertions with `sameRecord`, the rule the scorer uses, so the two
-   read one role set. An assertion with no persona id keeps the exact key.
+   read one role set. An assertion with no persona id keeps the exact key,
+   except on a record whose assertions carry no persona id at all (a capture,
+   feedback #4316) and an assertion whose log entry reads as projected: there
+   the party is the `record_role`, and an entry with
+   `record_persona_id: null`, `record_source: "projection"` and that role
+   answers for every fact of it. This is not PR A's party fallback below: that
+   failed because the fetched route files a resolved id the assertion does not
+   carry, and the role arm never reads a fetched or id-bearing entry, so the
+   worst it can do is miss and fall back to the exact key.
 
    Not measurable offline: committed runs carry no `results/.scores` files, so
    the risk of a wrongly extended score is bounded by the guards above and

@@ -53,6 +53,7 @@ import { coerceJsonArg, jsonParseFailure, V8_POSITION_SUFFIX } from "../utils/co
 import {
   readMatchScores,
   findRecordedScore,
+  readsAsFetched,
   type MatchScoreFile,
   type ScoredPersona,
 } from "../utils/match-scores.js";
@@ -2381,6 +2382,9 @@ function personEvidenceScoreInvariants(
   // Assertion ids this very call creates. They cannot carry a score yet, and the
   // refusal has to say so rather than prescribe an impossible `same_person` call.
   createdAssertions?: ReadonlySet<string>,
+  // The links this call leaves standing, which say whether a two-party
+  // assertion's link is about its own party (`scoredPersonaOf`).
+  personLinks?: ReadonlyArray<PersonLink>,
 ): string[] {
   const assertions: any[] = research?.assertions ?? [];
   // The batch map first: it carries the ids this call's own assertion appends
@@ -2447,13 +2451,13 @@ function personEvidenceScoreInvariants(
   // called with and the pair this entry carries. Keying on the PARTY instead
   // could not see a score written by the fetched route, which resolves a real
   // persons[].id where the assertion carries null. Then the persona arm: a score
-  // that compared this assertion's verified persona with this tree person
-  // answers for every fact of that persona (#3552; match-scores.ts header). A
-  // second persona of the record is a different persona, so ADR-0009
-  // constraint 3 holds.
+  // that compared this assertion's party with this tree person answers for every
+  // fact of that party (#3552; match-scores.ts header). A second party of the
+  // record is a different party, so ADR-0009 constraint 3 holds.
   const file = matchScores.get(recordId) ?? null;
-  const persona = scoredPersonaOf(assertion, recordId, assertions, batchAssertions);
-  if (findRecordedScore(file, entry.assertion_id, entry.person_id, persona) !== null) return [];
+  if (findRecordedScore(file, entry.assertion_id, entry.person_id) !== null) return [];
+  const persona = scoredPersonaOf(assertion, entry, recordId, research?.log, assertions, batchAssertions, personLinks);
+  if (persona && findRecordedScore(file, null, entry.person_id, persona) !== null) return [];
 
   // Name `recordRole` when the assertion has one. Without it the agent takes the
   // call literally, `same_person` scores the assertion's OWN party against this
@@ -2469,8 +2473,13 @@ function personEvidenceScoreInvariants(
     : "";
   // The persona arm is why one call is enough per persona; say so, or the agent
   // repeats the identical call for each fact.
+  const partyName = persona
+    ? persona.personaId !== null
+      ? `persona '${persona.personaId}'`
+      : `the '${[...persona.roles][0]}' party`
+    : "";
   const personaHint = persona
-    ? ` One score covers every fact of persona '${persona.personaId}' on this record: score it ` +
+    ? ` One score covers every fact of ${partyName} on this record: score it ` +
       `once for '${entry.person_id}' and the links for its other facts need no further call.`
     : "";
   // An assertion this same call CREATES cannot already have a score: `same_person`
@@ -2499,25 +2508,59 @@ function personEvidenceScoreInvariants(
   ];
 }
 
-/** The persona a link's assertion is about, with the roles its record gives it,
- *  or undefined when no score can be shared: the assertion carries no persona
- *  id; it names a second person (`isTwoParty`), so its link may be about that
- *  other party; or the record gives the id to more than one role, so it names no
- *  single party (`same_person` passes over such an id the same way). The
- *  record's assertions are gathered with `sameRecord`, the rule `same_person`
- *  scores by, from `batchAssertions` (the document plus this call's appends)
- *  when given. */
+/** The party a link's assertion is about, with the roles its record gives it,
+ *  or undefined when no score can be shared. The party is the assertion's
+ *  persona id, or, on a record whose live assertions carry no persona id at all
+ *  (a capture), its `record_role`, which is how the projection `same_person`
+ *  scores there groups the record. None when the assertion carries no persona
+ *  id on a record that names some, since only a fetch could say which persona it
+ *  is; when it carries none and reads as fetched (`readsAsFetched`), since that
+ *  score files the fetched persona's id; when the record gives the id to more
+ *  than one role, so it names no single party (`same_person` passes over such an
+ *  id the same way); and when it names a second person (`isTwoParty`), unless
+ *  the one-party facts of the record linked to the same tree person all fall in
+ *  this party under `recordPartyKeyer` (the key the relational gates use), and
+ *  at least one does. The record's live assertions are gathered with
+ *  `sameRecord`, the rule `same_person` scores by, from `batchAssertions` (the
+ *  document plus this call's appends) when given. */
 function scoredPersonaOf(
   assertion: any,
+  entry: any,
   recordId: string,
+  log: unknown,
   assertions: readonly any[],
   batchAssertions?: Map<string, any>,
+  personLinks?: ReadonlyArray<PersonLink>,
 ): ScoredPersona | undefined {
-  const personaId = assertion?.record_persona_id;
-  if (typeof personaId !== "string" || personaId === "" || isTwoParty(assertion?.fact_type)) return undefined;
   const pool = batchAssertions ? [...batchAssertions.values()] : assertions;
-  const roles = personaRolesById(pool.filter((a) => sameRecord(a?.record_id, recordId))).get(personaId);
-  return roles !== undefined && roles.size === 1 ? { personaId, roles } : undefined;
+  const onRecord = pool.filter((a) => isLiveAssertion(a) && sameRecord(a?.record_id, recordId));
+  const rolesById = personaRolesById(onRecord);
+  const pid = assertion?.record_persona_id;
+  let party: ScoredPersona | undefined;
+  if (typeof pid === "string" && pid !== "") {
+    const roles = rolesById.get(pid);
+    if (roles !== undefined && roles.size === 1) party = { personaId: pid, roles };
+  } else {
+    const role = assertion?.record_role;
+    if (
+      rolesById.size === 0 && typeof role === "string" && role !== "" && role !== "absent" &&
+      !readsAsFetched(assertion, log)
+    ) {
+      party = { personaId: null, roles: new Set([role]) };
+    }
+  }
+  if (party === undefined || !isTwoParty(assertion?.fact_type)) return party;
+  const partyKey = recordPartyKeyer(onRecord);
+  const own = partyKey(assertion);
+  if (own === null) return undefined;
+  const byId = new Map(onRecord.map((a) => [a?.id, a]));
+  const linked = new Set<string | null>();
+  for (const l of personLinks ?? []) {
+    if (l.person_id !== entry.person_id || l.assertion_id === entry.assertion_id) continue;
+    const other = byId.get(l.assertion_id);
+    if (other && !isTwoParty(other.fact_type)) linked.add(partyKey(other));
+  }
+  return linked.size === 1 && linked.has(own) ? party : undefined;
 }
 
 /** Whether a record persona `same_person` could score against is reachable for
@@ -5487,6 +5530,7 @@ export async function mergeLinkCheckRefusals(
       ...unexplainedMoveInvariants(entry, after.research, after.tree, batchAssertions),
       ...personEvidenceScoreInvariants(
         entry, after.research, after.tree, matchScores, batchAssertions, false, startingPersonIds, new Set<string>(),
+        personLinks,
       ),
     ];
     for (const f of findings) {
@@ -9641,6 +9685,7 @@ function applyOne(
           op.op === "append",
           startingPersonIds,
           createdAssertions,
+          personLinks,
         ),
       );
     }

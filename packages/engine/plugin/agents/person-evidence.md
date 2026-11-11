@@ -448,11 +448,13 @@ never replaces it (see step 3).
    project. You assemble nothing.
 
    Call it **once per record persona and candidate**. That score covers every
-   assertion carrying the same `record_persona_id` except one that names a
-   second person (a relationship, marriage or couple event); write the covered
-   links with the same `match_score` and no further call. An assertion that
-   names a second person, or whose `record_persona_id` is null, needs its own
-   call.
+   assertion carrying the same `record_persona_id`, and on a record where no
+   assertion carries one, every assertion of the same `record_role`. Write the
+   covered links with the same `match_score` and no further call. One that
+   names a second person (a relationship, marriage or couple event) is covered
+   only when you also link one of that party's own facts to the same candidate;
+   otherwise it needs its own call. An assertion whose `record_persona_id` is
+   null on a record where others carry one needs its own call.
 
    For the **second party** of a relationship or marriage assertion — the party
    the assertion names but is not itself about — add `recordRole` (or
@@ -725,8 +727,8 @@ record. Make that change yourself and report it.
   when the candidate was minted from the persona itself (step 2). **The
   writer now enforces both halves of this.** A link for a reachable
   persona is REFUSED unless `same_person` actually scored that record
-  persona against that person (for a null `record_persona_id`, that
-  assertion), so "no score was obtained" is no longer an option there:
+  persona against that person (step 1 says which facts one score
+  covers), so "no score was obtained" is no longer an option there:
   make the call first. And a link to a person minted from this very record is refused
   if it carries a score at all, whatever the record's retrieval route —
   a number there came from a different comparison. Leave it null and say
