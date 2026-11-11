@@ -1,6 +1,6 @@
 {
   "test": {
-    "id": "ut_search_images_d9",
+    "id": "ut_search_images_d10",
     "skill": "search-images",
     "name": "A page read to confirm one fact reports the fact and links the page (direct-agent arm)",
     "type": "positive",
