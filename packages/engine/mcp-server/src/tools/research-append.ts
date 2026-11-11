@@ -6614,7 +6614,9 @@ export function closesLastOpenQuestion(before: any, after: any): boolean {
 }
 
 /** The result line naming what the removal took, so the agent can tell the
- *  researcher. */
+ *  researcher. The eval validators read its opening words
+ *  (`_UNANCHORED_REMOVAL_PREFIX` in eval/harness/validators/test_universal.py)
+ *  to excuse this removal; reword both together. */
 function unanchoredRemovalMessage(removed: UnanchoredRemoval): string {
   const parts = [`${removed.persons.length} person(s): ${removed.persons.map((p) => `${p.id} ${p.name}`.trim()).join(", ")}`];
   if (removed.relationshipCount > 0) parts.push(`${removed.relationshipCount} relationship(s)`);

@@ -39,11 +39,18 @@ chronological impossibility, no weighing or judgment call required.
 The conclusion **disproves Thomas**; it does not identify the real father —
 that would be a separate, future research question. So the skill should write
 the `disproved` proof and **add nothing to the tree** (no `ParentChild`
-relationship, and no alternative father). Thomas remains in the tree as an
-investigated person whose 1842 death fact is already recorded; a correct run
-leaves `tree.gedcomx.json` byte-for-byte identical.
+relationship, and no alternative father). The agent itself writes nothing to
+`tree.gedcomx.json`.
+
+q_001 is the project's only open question, so the call that resolves it with
+the `disproved` proof also runs `research_append`'s unanchored-person sweep:
+I2 Thomas Flynn is a minted person and no relationship connects him to I1,
+the project's subject, so the tool removes him with his links `pe_002` and `pe_003`, unless the conclusion names
+him in its claims, and says so in its response. That removal is the tool's,
+not the agent's.
 
 ## Used by
 
-- proof-conclusion positive test: write a `disproved`-tier conclusion **and
-  leave `tree.gedcomx.json` unchanged**.
+- proof-conclusion positive tests `ut_proof_conclusion_006` and
+  `ut_proof_conclusion_d3c`: write a `disproved`-tier conclusion **and add
+  nothing to `tree.gedcomx.json`** (the tool's sweep aside).

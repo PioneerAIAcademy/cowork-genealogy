@@ -262,22 +262,31 @@ def test_log_append_only(before_state, after_state):
 
 # --- No-delete enforcement ---
 
-def test_no_entries_deleted(before_state, after_state):
+def test_no_entries_deleted(before_state, after_state, tool_calls=None):
     """No entries should be deleted from any section. Supersede with status instead.
 
     Covers every id-bearing section, including `localities` and `evaluations`
     — two the old list omitted while the prose ownership table stated the
-    no-delete rule for both. Widening it is close to free: `research_append`'s
-    op enum is `append | update` with no delete at all, so the only route to a
-    deletion is a raw file write, which is already a violation on two other
-    counts. No run in the committed e2e corpus deletes an entry from any
-    section.
+    no-delete rule for both. `research_append`'s op enum is `append | update`
+    with no delete at all, so a caller's only route to a deletion is a raw file
+    write, which is already a violation on two other counts.
+
+    One deletion is the tool's own: when a call resolves the project's last open
+    question, research_append's unanchored-person sweep removes minted persons
+    with the `person_evidence` and `rejected_links` entries naming them, and
+    reports it (research-append-tool-spec.md §5.11). An entry in those two
+    sections is exempt only when its `person_id` is a person
+    `_tool_reported_removal` confirms the tool removed. Every other deletion
+    still fails.
     """
     before_research = before_state.get("research_json")
     after_research = after_state.get("research_json")
 
     if before_research is None or after_research is None:
         pytest.skip("Missing research.json for diff")
+
+    removed = _tool_reported_removal(tool_calls, _tree_of(before_state))
+    remap = _merge_remap(tool_calls)
 
     errors = []
     for section in DIFFED_SECTIONS:
@@ -292,6 +301,8 @@ def test_no_entries_deleted(before_state, after_state):
         }
 
         deleted = set(before_entries) - set(after_entries)
+        if section in _TOOL_REMOVAL_SECTIONS:
+            deleted = {i for i in deleted if not _names_one_of(before_entries[i], removed, remap)}
         if deleted:
             errors.append(f"{section}: deleted IDs {deleted}")
 
@@ -553,6 +564,94 @@ def _merge_remap(tool_calls) -> dict[str, str]:
                 if isinstance(survivor, str) and isinstance(collapsed, str):
                     remap[collapsed] = survivor
     return remap
+
+
+# The opening words of `unanchoredRemovalMessage` (research-append.ts). The
+# engine pins them in research-append.test.ts, and
+# tests/unit/test_tool_reported_removal.py checks the engine source still opens
+# with this text; reword both together.
+_UNANCHORED_REMOVAL_PREFIX = "the last open question is resolved, so the minted persons"
+
+# The sections research_append's unanchored-person sweep deletes entries from:
+# each entry whose `person_id` names a removed person
+# (research-append-tool-spec.md §5.11).
+_TOOL_REMOVAL_SECTIONS = ("person_evidence", "rejected_links")
+
+
+def _tree_of(state) -> dict | None:
+    tree = (state or {}).get("tree_gedcomx_json") or (state or {}).get("tree_gedcomx")
+    return tree if isinstance(tree, dict) else None
+
+
+def _person_ids(tree) -> set[str]:
+    persons = tree.get("persons") if isinstance(tree, dict) else None
+    return {
+        p["id"] for p in (persons if isinstance(persons, list) else [])
+        if isinstance(p, dict) and isinstance(p.get("id"), str)
+    }
+
+
+def _tool_reported_removal(tool_calls, before_tree) -> set[str]:
+    """The before-tree persons research_append's own unanchored-person sweep
+    removed.
+
+    When a call resolves the project's last open question, research_append
+    removes every minted person no relationship connects to an imported person,
+    with the edges and the person_evidence/rejected_links entries that name
+    them, and says so in `validation.warnings` (research-append-tool-spec.md
+    §5.11). That deletion is the tool's, not the caller's.
+
+    A person counts only when it is in the before tree AND a successful
+    (`ok is True`, the `_merge_remap` gate) research_append response carries a
+    warning that starts with `_UNANCHORED_REMOVAL_PREFIX` and lists the
+    person's id where the message lists one: right after `person(s): ` or a
+    `, ` separator, never inside a name. Candidates come from the tree, not from
+    splitting names, so a name with a comma in it cannot split wrongly, and a
+    reworded message exempts nothing, which fails safe. A person the agent took
+    out by any other path is not named, and still counts against it. The person
+    need not be absent afterwards: ids are reused (highest plus one), so a later
+    write may mint a new person under a removed one's id.
+    """
+    candidates = _person_ids(before_tree)
+    if not candidates:
+        return set()
+    warnings: list[str] = []
+    for call in tool_calls or []:
+        if not isinstance(call, dict) or _bare_tool_name(call.get("tool", "")) != "research_append":
+            continue
+        response = call.get("response")
+        if not isinstance(response, dict) or response.get("ok") is not True:
+            continue
+        validation = response.get("validation")
+        found = validation.get("warnings") if isinstance(validation, dict) else None
+        if isinstance(found, list):
+            warnings += [w for w in found if isinstance(w, str) and w.startswith(_UNANCHORED_REMOVAL_PREFIX)]
+    return {
+        pid for pid in candidates
+        if any(re.search(rf"(?:person\(s\): |, ){re.escape(pid)}(?![\w-])", w) for w in warnings)
+    }
+
+
+def _explained_by_tool_removal(before_section, after_section, removed: set[str], remap: dict[str, str]) -> bool:
+    """True when the section's whole delta is the sweep's deletion of the
+    entries naming `removed` persons, after any successful merge's remap.
+
+    Exact, like `_explained_by_merge`: an edit, an append or another deletion
+    survives the filter and breaks the comparison.
+    """
+    if not removed or not isinstance(before_section, list) or not isinstance(after_section, list):
+        return False
+    if not all(isinstance(e, dict) for e in before_section):
+        return False
+    remapped = _remap_collapsing(before_section, remap) if remap else before_section
+    return [e for e in remapped if not _names_one_of(e, removed)] == after_section
+
+
+def _names_one_of(entry, removed: set[str], remap: dict[str, str] | None = None) -> bool:
+    """Whether a person_evidence/rejected_links entry's `person_id`, read
+    through `remap`, is one of `removed`. Any other shape is not."""
+    pid = entry.get("person_id") if isinstance(entry, dict) else None
+    return isinstance(pid, str) and (remap or {}).get(pid, pid) in removed
 
 
 def _remap_collapsing(value, remap: dict[str, str]):
@@ -918,7 +1017,12 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     fourth is the birth year `research_append` fills in on a namesake row of a
     person a call links, whichever tool wrote the link
     (`_explained_by_birth_year_fill`): it is not `toolAuthorized`, which would
-    grant the section to every caller of the tool.
+    grant the section to every caller of the tool. The fifth is
+    `research_append`'s unanchored-person sweep, which deletes the
+    `person_evidence` and `rejected_links` entries naming the persons it
+    removes when a call resolves the last open question
+    (`_explained_by_tool_removal`, over the persons `_tool_reported_removal`
+    confirms): not `toolAuthorized` either, for the same reason.
 
     The merge path is scoped to research.json. `test_tree_ownership_table` does
     NOT take it: the tree rows already list `merge_tree_persons` among their
@@ -980,6 +1084,7 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
     identity_tools = writer_tool_sets(RESEARCH_JSON)
     called = _tools_called(tool_calls)
     remap = _merge_remap(tool_calls)
+    removed = _tool_reported_removal(tool_calls, _tree_of(before_state))
     modified = _modified_sections(before, after, sorted(owners))
     unauthorized = []
     for section in modified:
@@ -1038,6 +1143,14 @@ def test_ownership_table(before_state, after_state, skill_frontmatter, test, too
             # rows that have none (#3363), and changes nothing else there.
             if section == "namesakes" and called & _BIRTH_YEAR_FILL_TOOLS and _explained_by_birth_year_fill(
                 before.get(section), after.get(section)
+            ):
+                continue
+            # research_append's unanchored-person sweep: the whole delta is the
+            # deletion of the entries naming the persons it reported removing,
+            # after a merge's remap only where the merge itself is authorized.
+            merge_ok = "merge_tree_persons" in (identity_tools.get(section) or set())
+            if section in _TOOL_REMOVAL_SECTIONS and _explained_by_tool_removal(
+                before.get(section), after.get(section), removed, remap if merge_ok else {}
             ):
                 continue
             unauthorized.append(section)
