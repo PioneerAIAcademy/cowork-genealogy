@@ -26,8 +26,9 @@ with the chat on (#3985, ``GENEALOGY_CHAT``):
   GET  /privacy, /terms (no sign-in), GET /api/account (the id and deletion code)
                                                 only with the chat off (#3993); 404 with it on
   GET  /           onboarding signed out, account and projects signed in; chat off only (#4001)
-  GET  /upload/{project_id}, /pdfjs/{name}
-                   the upload page (UPLOADS_ENABLED) and the pdf.js it loads; chat off (#4001)
+  GET  /upload/{project_id}, /pdfjs/{name}, /pdfjs/cmaps/{name}
+                   the upload page (UPLOADS_ENABLED), the pdf.js it loads, and the character
+                   maps a CID-keyed CJK font needs for text extraction; chat off (#4001, #4448)
   GET  /openrouter, /openrouter/link, /openrouter/callback, POST /openrouter/unlink
                                                 the patron's own OpenRouter key (#3988; served only
                                                 with OPENROUTER_LINKING_ENABLED=true; cookie needed)
@@ -142,6 +143,23 @@ PROTO_DIR = HERE.parent
 # from this fixed set only, so no path a request carries reaches the filesystem.
 PDFJS_DIR = HERE / "static" / "pdfjs"
 PDFJS_FILES = frozenset({"pdf.min.mjs", "pdf.worker.min.mjs"})
+# #4448: the vendored character maps a CID font with no /ToUnicode table needs for text
+# extraction. Built once from the *.bcmap names on disk -- never LICENSE, which stays
+# unservable here exactly as the top-level static/pdfjs/LICENSE already is at /pdfjs/LICENSE.
+PDFJS_CMAPS_DIR = PDFJS_DIR / "cmaps"
+PDFJS_CMAP_FILES = frozenset(p.name for p in PDFJS_CMAPS_DIR.glob("*.bcmap"))
+
+
+def _serve_allowlisted(dir_: Path, allowed: frozenset[str], name: str, media_type: str) -> Response:
+    """Serve ``dir_ / name`` when ``name`` is in ``allowed``, else 404 -- membership is
+    checked before any path is built, so a name outside the allow-list never reaches the
+    filesystem. Shared by every ``/pdfjs/...`` route; a {name} path parameter never matches
+    a request carrying a '/'."""
+    if name not in allowed:
+        raise HTTPException(status_code=404, detail="Not found")
+    return FileResponse(dir_ / name, media_type=media_type, headers={"Cache-Control": "public, max-age=3600"})
+
+
 SQL_DIR = PROTO_DIR / "sql"
 # enqueue.py, grants.py, migrate.py and pg_credentials.py are siblings of this package in the repo (proto/)
 # and in the container (/app); make them importable from wherever uvicorn, the driver or
@@ -3242,10 +3260,14 @@ def create_app(
         Not under ``/static/``: Beanstalk's Python platform has its nginx answer ``/static/``
         from the bundle's own ``static/`` folder, so the request would never reach the tier
         (eb-web/README.md)."""
-        if name not in PDFJS_FILES:
-            raise HTTPException(status_code=404, detail="Not found")
-        return FileResponse(PDFJS_DIR / name, media_type="text/javascript",
-                            headers={"Cache-Control": "public, max-age=3600"})
+        return _serve_allowlisted(PDFJS_DIR, PDFJS_FILES, name, "text/javascript")
+
+    @beta.api_route("/pdfjs/cmaps/{name}", methods=["GET", "HEAD"])
+    async def pdfjs_cmap_file(name: str) -> Response:
+        """#4448: the vendored pdf.js character maps textLayer() resolves through cMapUrl.
+        Only names in PDFJS_CMAP_FILES (the *.bcmap files on disk); anything else, including
+        LICENSE, is a 404."""
+        return _serve_allowlisted(PDFJS_CMAPS_DIR, PDFJS_CMAP_FILES, name, "application/octet-stream")
 
     @beta.get("/privacy")
     async def privacy_page() -> HTMLResponse:
