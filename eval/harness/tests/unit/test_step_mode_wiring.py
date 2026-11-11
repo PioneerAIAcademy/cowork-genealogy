@@ -80,8 +80,15 @@ def test_the_mode_is_read_off_the_test(execution, expected):
         orchestrator._step_mode(_Spec(execution)) == expected
 
 
-def test_no_declared_mode_means_no_boundary_which_is_the_whole_corpus_today():
-    """Every committed test omits it, so none of them changes behaviour."""
+# The tests that declare a mode, each a deliberate choice. ut_research_b4w measures
+# the prototype's gate on a turn init-project opens (issue #2813).
+DECLARING_TESTS = [
+    "eval/tests/unit/research/bounded-first-message-runs-in-the-setup-turn-step-gate.json",
+]
+
+
+def test_only_the_listed_tests_declare_a_mode():
+    """Every other committed test omits it, so none of them changes behaviour."""
     corpus = sorted((REPO / "eval" / "tests" / "unit").glob("*/*.json"))
     assert corpus, "no tests found; this assertion would pass vacuously"
     declaring = [
@@ -92,7 +99,7 @@ def test_no_declared_mode_means_no_boundary_which_is_the_whole_corpus_today():
             str,
         )
     ]
-    assert declaring == [], (
+    assert declaring == DECLARING_TESTS, (
         f"these tests declare execution.step_mode: {declaring}. That is allowed, but each one "
         "changes what that test measures and owes a paid run, so it must be a deliberate choice "
         "rather than something that arrived with a refactor."

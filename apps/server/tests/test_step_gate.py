@@ -398,6 +398,43 @@ def test_a_seeded_gate_never_rewrites_the_turns_step(boundary):
     assert seen == []
 
 
+def test_after_init_project_the_group_fixing_step_is_persisted_too(boundary):
+    """The step after init-project fixes the turn's group (plan section H), so a
+    redelivery must seed from it, not from init-project."""
+    seen: list[tuple] = []
+    g = gate(boundary, on_first_step=lambda step, mode: seen.append((step, mode)))
+    g.check(*spawn("init-project"), subagent=False)
+    g.check(*spawn("search-records"), subagent=False)
+    g.check(*spawn("record-structurer"), subagent=False)
+    assert seen == [("init-project", "step"), ("search-records", "step")]
+    assert g.first_step == "search-records"
+
+
+def test_init_project_alone_is_the_turns_first_step(boundary):
+    """What the e2e orchestrator records for a turn that only created the project."""
+    g = gate(boundary)
+    g.check(*spawn("init-project"), subagent=False)
+    assert g.first_step == "init-project"
+
+
+def test_a_gate_seeded_with_init_project_alone_still_persists_the_group_step(boundary):
+    seen: list[tuple] = []
+    g = gate(boundary, steps=["init-project"],
+             on_first_step=lambda step, mode: seen.append((step, mode)))
+    g.check(*spawn("search-records"), subagent=False)
+    assert seen == [("search-records", "step")]
+    assert g.check(*spawn("research-plan"), subagent=False)[0] == "deny"
+
+
+def test_a_gate_seeded_with_the_group_step_denies_a_third_group(boundary):
+    """What a redelivered bounded turn reads back from `turns.step`."""
+    seen: list[tuple] = []
+    g = gate(boundary, steps=["search-records"],
+             on_first_step=lambda step, mode: seen.append((step, mode)))
+    assert g.check(*spawn("research-plan"), subagent=False)[0] == "deny"
+    assert seen == []
+
+
 def test_a_failing_seed_write_does_not_fail_the_call(boundary):
     logs: list[dict] = []
 

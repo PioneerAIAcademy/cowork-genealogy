@@ -275,7 +275,7 @@ export async function fulltextSearchTool(
   // being answered now and fires on the first search of every session.
   const unloggedStaged =
     input.projectPath !== undefined
-      ? await unloggedStagedSearches(input.projectPath)
+      ? await unloggedStagedSearches(input.projectPath, "fulltext_search")
       : [];
 
   // A nil on an image group the volume metadata reports as NOT full-text

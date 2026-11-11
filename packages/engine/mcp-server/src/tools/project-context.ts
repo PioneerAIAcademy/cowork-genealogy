@@ -77,7 +77,7 @@ export interface ProjectContextLocality {
   forPlace?: string;
   timePeriod?: string;
   jurisdictions?: { name: string; dateRange?: string }[];
-  /** personCount/recordCount: the counts locality-guide copied from collections_search. */
+  /** personCount/recordCount: FamilySearch's catalog counts, which research_append stamps on a caller's write (null when unknown). */
   collections?: {
     id: string;
     title?: string;

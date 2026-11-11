@@ -7,9 +7,9 @@ import react from '@vitejs/plugin-react'
 // suites are component render tests that need a DOM and the React plugin's jsx
 // transform, so they run under `jsdom`. The globs are exact (`.ts` vs `.tsx`)
 // and do not overlap, so no file runs twice or under the wrong environment.
-// `testTimeout`/`hookTimeout` are not inherited into inline projects, so both
-// carry them: raised from vitest's 5000ms default to match every other
-// workspace config under `make test-all`'s parallel turbo contention.
+// Each project sets `testTimeout`/`hookTimeout` itself (the root config sets
+// none for them to inherit): raised from vitest's 5000ms default to match every
+// other workspace config under `make test-all`'s parallel turbo contention.
 export default defineConfig({
   test: {
     projects: [
@@ -28,7 +28,7 @@ export default defineConfig({
           name: 'jsdom',
           environment: 'jsdom',
           include: ['src/**/*.test.tsx'],
-          // Node 25's built-in localStorage global hides jsdom's.
+          // Node 25 and later ship a built-in localStorage global that hides jsdom's.
           execArgv: ['--no-experimental-webstorage'],
           testTimeout: 30_000,
           hookTimeout: 30_000

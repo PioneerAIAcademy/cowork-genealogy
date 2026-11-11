@@ -19,7 +19,7 @@
     "wiki-place-page-pennsylvania-research-tips","place-search-any","place-search-all-any",
     "place-population-any","collections-search-pennsylvania","collections-search-any",
     "volume-search-pennsylvania","volume-search-any","external-links-search-pennsylvania",
-    "external-links-search-any","wiki-read-any","wiki-place-page-any","wiki-search-any","wikipedia-search-any"
+    "external-links-search-any","wiki-read-any","wiki-place-page-any","wiki-search-any","wikipedia-search-any","catalog-search-empty"
   ],
   "judge_context": [
     "The wiki_read fixture for Pennsylvania Church Records describes HSP's collections as abstracts 'taken from various Pennsylvania Church Records.' These are derivative compilations, not original registers. The skill must not suggest HSP as a repository where the original Christ Church registers might be held.",

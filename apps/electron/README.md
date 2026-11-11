@@ -16,7 +16,10 @@ No telemetry. No analytics. Offline-first.
 
 ## Prerequisites
 
-- Node.js 22+ (the repo pins 22 via `.nvmrc`; root `engines.node` is `>=22`)
+- Node.js 22.22.2+ on 22, 24.15+ on 24, or 26+ (23 and 25 are refused). Root
+  `engines.node` says `>=22`, but the workspace's test tooling sets the real floor:
+  jsdom 30 declares exactly this range, and `.npmrc`'s `engine-strict=true` refuses
+  an install outside it.
 - pnpm (run `corepack enable`) — this app is a member of the monorepo pnpm workspace
 
 ## Install

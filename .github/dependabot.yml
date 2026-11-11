@@ -54,7 +54,7 @@
 # on 2026-07-31 and three of its PRs merged green and broke `main`, because no
 # CI job then covered the trees they touched:
 #
-#   #1044  @vitejs/plugin-react 6 needs Vite 8; the repo is on Vite 7. Broke the
+#   #1044  @vitejs/plugin-react 6 needs Vite 8; the repo was on Vite 7. Broke the
 #          viewer-ui tests AND `pnpm --filter web build` — the exact command
 #          deploy/Dockerfile runs. Reverted in #1052.
 #   #1043  eslint 10 removed `context.getFilename()`. Broke apps/electron lint.

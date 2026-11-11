@@ -1,0 +1,16 @@
+{
+  "tool": "image_transcribe",
+  "description": "image_transcribe on the researcher's uploaded screenshot of the MyHeritage results page, uploads/ma-1855-census-josiah-barnes.png in the ma-state-census-capture-image scenario (ut_search_external_sites_ul3, form 3 of the capture forms). The page is the same results page as ma-state-census-handoff-capture-uploaded's text upload. It is longer than the 300-character `digest.excerpt` (`DIGEST_EXCERPT_CHARS`): with a projectPath the mock stages it and returns `staged` + `digest` with no inline `transcription`, as production does, and the excerpt stops inside result 1's household and never reaches result 2, so the agent has to `sidecar_read` the staged ref to see the whole page. `metadata` is what production returns for a `file` read: the file echoed, the sniffed content type, and the scenario PNG's real size. No `imageRef` and no `viewerUrl`: an upload is already kept in the project and has no FamilySearch viewer.",
+  "args": {
+    "file": "uploads/ma-1855-census-josiah-barnes.png"
+  },
+  "response": {
+    "transcription": "MyHeritage search results, saved by the researcher\nCollection: 1855 Massachusetts State Census\nSearch: Josiah Barnes, born 1818\n\nResults 1-2 of 2\n\n1. Josiah Barnes\n   Birth: about 1818 - Massachusetts\n   Residence: 1855 - Lexington, Middlesex, Massachusetts\n   Household members: Lucy Barnes (about 1821), Henry Barnes (about 1844), Mary Barnes (about 1847)\n\n2. Josiah Barnes\n   Birth: about 1817 - New Hampshire\n   Residence: 1855 - Lowell, Middlesex, Massachusetts\n   Household members: (none listed)",
+    "metadata": {
+      "file": "uploads/ma-1855-census-josiah-barnes.png",
+      "contentType": "image/png",
+      "model": "google/gemini-3.7-flash",
+      "sizeBytes": 67
+    }
+  }
+}

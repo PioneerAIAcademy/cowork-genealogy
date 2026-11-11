@@ -217,6 +217,23 @@ that it called `image_transcribe` with a `projectPath`, read the staged page wit
 `sidecar_read` on the returned `staged.resultsRef`, and — on a single bounded ask —
 handed off to nothing.
 
+`ut_research_b4i` (`bounded-first-message-runs-in-the-setup-turn.json`) and
+`ut_research_b4w` (`…-step-gate.json`) cover a bounded first message with a
+FamilySearch ID and no project (issue #2813 item 3, feedback #4237): init-project
+runs live, then search-records runs in the same turn, with no question, locality
+survey or plan first. b4i has no `step_mode`, the alpha's and Cowork's shape; b4w
+runs under the prototype's step gate, which before #2813 denied the search because
+init-project fixed the setup group. Both are deterministic through the
+`bounded-after-init` tag and
+`test_bounded_first_message_runs_its_deliverable_after_init_project`, which reads
+the hand-off list, that the project exists after the run, that the search was
+handed the subject's tree id, the search's returned text (a gate denial carries the
+gate's reason), that init-project's next-step sentence was left out, and that the
+reply ends on a "Continue with …?" offer, whichever step it names. A hint review
+fails here: it stops for the researcher's verdict
+and writes no offer. **They put init-project's full body in this
+suite's snapshot**, so an init-project body edit now owes a research run.
+
 `ut_research_021` (`attached-before-searching.json`) covers the third rule in that
 section, "Start from what is already attached" (issue #2813 item 4). Cornelius
 Driscoll already holds `SD-DRIS-D`, a Quebec civil death registration, so a request

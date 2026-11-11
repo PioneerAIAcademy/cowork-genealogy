@@ -21,6 +21,6 @@ also missing from the tree (William, already in the tree, is not it).
 
 Expected: `census_children_gap` finds two missing children (one deceased
 before 1900, one living born 1900–1910), and question-selection writes a
-research question targeting them, mapped to Priority 5
+research question targeting them, mapped to Priority 3
 (`objective_decomposition`) per the priority table's
 "a missing-child group from `census_children_gap`" clause.

@@ -78,6 +78,7 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Callable, NamedTuple
 
+from e2e.subagent_capture import OVERSIZE_NOTICE_PHRASES
 from e2e.runlog_selection import (
     REPO_ROOT,
     add_since_arg,
@@ -147,8 +148,7 @@ _FAILURE_MATCHERS: tuple[tuple[str, tuple[str, ...]], ...] = (
         "other",
         (
             "No such tool available",
-            "Output too large",
-            "exceeds maximum allowed tokens",
+            *OVERSIZE_NOTICE_PHRASES,
             "is disabled for this benchmark fixture",
         ),
     ),

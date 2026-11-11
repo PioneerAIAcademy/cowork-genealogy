@@ -47,7 +47,8 @@
     "wiki-read-massachusetts-vital-records",
     "wiki-read-any",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "catalog-search-empty"
   ],
   "judge_context": [
     "Must NOT assert that Massachusetts had no vital registration requirement before 1841, and must not otherwise present 1841 as the date recording of births, marriages, and deaths was first required. This is the exact reported defect (issue #1321): the Massachusetts_Vital_Records excerpt loaded by this test states recording was ordered as early as 1639 and that only the permanent, statewide system dates from 1841, with the original records held by the town or city clerk. A guide that sends the researcher only to church and cemetery records for 1820-1850 'because civil registration had not begun' has failed this test.",

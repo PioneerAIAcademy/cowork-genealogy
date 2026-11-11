@@ -217,8 +217,8 @@ def test_catalog_search_called_and_broadened(tool_calls, test):
 
     Grades call PRESENCE and COUNT, not the result content: the skill *making*
     the initial call and then broadening is the behaviour under test. Skips for
-    all other tests — catalog_search is not registered in their fixtures, so they
-    cannot call it.
+    all other tests — they serve catalog_search only the `catalog-search-empty`
+    fallback, so a call there grades nothing.
     """
     if (test.get("id") or "") != "ut_locality_guide_028":
         pytest.skip("not the catalog-search broadening test")

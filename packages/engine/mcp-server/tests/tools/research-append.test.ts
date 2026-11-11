@@ -1492,7 +1492,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "re-read: the entry is faint" },
-      });
+      }, null);
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       expect(r.filesWritten).toEqual(["research.json"]);
@@ -1512,7 +1512,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "faint" },
-      });
+      }, null);
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       expect(r.validation.warnings).toContain("could not resolve standard_place for 'Hilperton' (left unset)");
@@ -1539,7 +1539,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "faint" },
-      });
+      }, null);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
       expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
@@ -1769,7 +1769,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "faint" },
-      });
+      }, null);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
       expect(r.resolvedPlaces).toBeUndefined();
@@ -1790,7 +1790,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "faint" },
-      });
+      }, null);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
       expect(r.unresolvedPlaces).toEqual([PROSE]);
@@ -3722,7 +3722,7 @@ describe("research_append (Phase 3)", () => {
     const timeline = (events: unknown[]) => ({ label: "test timeline", person_ids: ["I1"], events, gaps: [] });
     const placeWarnings = (r: any) => r.validation.warnings.filter((w: string) => /standard_place '/.test(w));
     const append = (events: unknown[]) =>
-      researchAppendFromCaller({ projectPath: dir, section: "timelines", op: "append", entry: timeline(events) } as never);
+      researchAppendFromCaller({ projectPath: dir, section: "timelines", op: "append", entry: timeline(events) } as never, null);
     const events = async () => (await readResearch()).timelines[0].events;
     const realPlace = vi.mocked(familySearchPlace);
     const spelled = (fullName: string) => ({ fullName, places: [{ placeId: "1" }] });
@@ -3805,7 +3805,7 @@ describe("research_append (Phase 3)", () => {
             fields: { events: [ev("Schuylkill, Kansas", OTHER, 10), ev(null, "Atlantis", 20)] },
           },
         ],
-      } as never);
+      } as never, null);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
       expect((await events()).map((e: any) => [e.standard_place, e.distance_from_previous_km])).toEqual([

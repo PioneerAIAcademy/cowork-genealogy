@@ -178,7 +178,8 @@ describe("recordSearchTool happy path", () => {
     expect(result.returned).toBe(1);
     expect(result.results![0].recordId).toBe("ark:/61903/1:1:QPRC-WPBZ");
     expect(result.results![0].personName).toBe("Abraham Lincoln");
-    expect(result.paginationCappedAt).toBe(4999);
+    // Always 4999, so the answer drops it (staged-compaction.ts).
+    expect(result).not.toHaveProperty("paginationCappedAt");
   });
 
   it("2. returns results for country-scoped search (recordCountry only)", async () => {
@@ -824,13 +825,14 @@ describe("recordSearchTool response shape", () => {
     expect(result.hasMore).toBe(true);
   });
 
-  it("31. echoes totalMatches and paginationCappedAt", async () => {
+  it("31. echoes totalMatches, and the query when nothing staged, but not paginationCappedAt", async () => {
     mockFetch.mockResolvedValueOnce(
       makeOkResponse({ results: 17, index: 0, entries: [] })
     );
     const result = await recordSearchTool({ surname: "Lincoln" }, LOCAL);
     expect(result.totalMatches).toBe(17);
-    expect(result.paginationCappedAt).toBe(4999);
+    expect(result.query).toEqual({ surname: "Lincoln" });
+    expect(result).not.toHaveProperty("paginationCappedAt");
   });
 });
 
@@ -1134,7 +1136,14 @@ describe("recordSearchTool — inline compaction", () => {
     expect(out.results).toHaveLength(1);
     expect(out.results![0].gedcomx).toBeUndefined();
     expect(out.results![0].recordId).toBeTruthy();
-    expect(out.results![0].primaryId).toBe("p_1");
+    // The answer drops what only the staged file's readers use; the file keeps it.
+    expect(out.results![0]).not.toHaveProperty("primaryId");
+    expect(out).not.toHaveProperty("query");
+    expect(out).not.toHaveProperty("paginationCappedAt");
+    const staged = JSON.parse(await readFile(join(dir, out.staged!.resultsRef), "utf-8"));
+    expect(staged.payload.results[0].primaryId).toBe("p_1");
+    expect(staged.payload.query).toMatchObject({ surname: "Lincoln" });
+    expect(staged.payload.paginationCappedAt).toBe(4999);
   });
 
   it("slims the inline stub when staged: no collectionUrl, no empty treeMatches, title hoisted", async () => {
@@ -1152,9 +1161,8 @@ describe("recordSearchTool — inline compaction", () => {
     expect(out.collections![r.collectionId!]).toBeTruthy();
     // This fixture carries hints, so treeMatches is real signal and is kept.
     expect(r.treeMatches?.length).toBeGreaterThan(0);
-    // primaryId is deliberately KEPT — rank_search_matches skips candidates
-    // without it, so dropping it would silently disable the re-ranker.
-    expect(r.primaryId).toBe("p_1");
+    // rank_search_matches reads primaryId from the staged file, not the answer.
+    expect(r).not.toHaveProperty("primaryId");
   });
 
   it("ranks host-side when subjectId is supplied, and defaults count to 50", async () => {
@@ -1289,8 +1297,10 @@ describe("recordSearchTool — inline compaction", () => {
     expect(out.collections).toEqual({ [r.collectionId!]: "Some Collection" });
     // The flat stub fields a caller triages on, and record_read's input, stay.
     expect(r.recordId).toBe("ark:/61903/1:1:QPRC-WPBZ");
-    expect(r.primaryId).toBe("p_1");
+    expect(r).not.toHaveProperty("primaryId");
     expect(r.personName).toBe("Abraham Lincoln");
+    // Nothing staged, so the query echo is the only copy and stays.
+    expect(out.query).toEqual({ surname: "Lincoln" });
   });
 });
 
@@ -1426,6 +1436,61 @@ describe("recordSearchTool — the Dixon 100-row page", () => {
       expect(row.gedcomx.persons.length).toBeGreaterThan(0);
       expect(row.collectionTitle).toBe("United States Census, 1840");
     }
+  });
+});
+
+// The largest replayed hosted page (issue #4386): a staged, unranked 100-row
+// page of 46,837 characters AFTER the compaction main already did, so its rows
+// are built in that shape (no gedcomx, collectionUrl or per-row title), not
+// fed through the tool. What still made it big: primaryId, score, confidence,
+// empty events, recordTitle repeating the collection, and the envelope's
+// paginationCappedAt and query echo.
+describe("record_search's answer — a synthetic 100-row page at the largest hosted row size", () => {
+  const COLLECTION = "Virginia, Rockingham County, Personal Property Tax Lists, 1782-1850";
+  const syntheticPage = (): RecordSearchToolResponse => {
+    const results = Array.from({ length: 100 }, (_, i) => {
+      const n = String(i).padStart(3, "0");
+      const personName = `Mary Fenstermaker ${n}`;
+      return {
+        recordId: `ark:/61903/1:1:Q${n}-WPBZ`,
+        personName,
+        score: 5.4236,
+        confidence: 4,
+        sex: "Female",
+        birthPlace: "Rockingham, Virginia, United States",
+        collectionId: "1325221",
+        // Nine rows in ten carry the record title FamilySearch writes most;
+        // the rest a household title with the same trailing collection.
+        recordTitle: i % 10 === 0
+          ? `${personName} in household of John Fenstermaker, "${COLLECTION}"`
+          : `Entry for ${personName}, "${COLLECTION}"`,
+        recordArk: `ark:/61903/1:2:Q${n}-WPBZ`,
+        primaryId: `p_${n}1736542891`,
+        events: i % 4 === 0
+          ? []
+          : [{ type: "Residence", date: "1850", place: "Rockingham, Virginia, United States" }],
+      };
+    });
+    return {
+      query: { surname: "Fenstermaker", residencePlace: "Rockingham, Virginia, United States", count: 100, projectPath: "/p" },
+      totalMatches: 1840,
+      paginationCappedAt: 4999,
+      returned: 100,
+      offset: 0,
+      hasMore: true,
+      collections: { "1325221": COLLECTION },
+      results,
+      staged: { resultsRef: "results/.staging/x.json", returnedCount: 100 },
+    } as unknown as RecordSearchToolResponse;
+  };
+
+  // 46,627 characters before (the hosted page: 46,837) and 28,560 after (29,743).
+  it("is over 40,000 characters as main sends it, and under after this compaction", () => {
+    const page = syntheticPage();
+    const before = JSON.stringify(page).length;
+    expect(before).toBeGreaterThan(40_000);
+    const after = JSON.stringify(compactStagedRecordSearch(page)).length;
+    expect(after).toBeLessThan(40_000);
   });
 });
 
@@ -1726,7 +1791,8 @@ describe("recordSearchTool — rankingSkipped when no subject was named", () => 
     expect(out.rankingSkipped).toContain("not yet in the tree");
     // Names what was actually given up, so the note is actionable.
     expect(out.rankingSkipped).toContain("ranking");
-    expect(out.rankingSkipped).toContain("jurisdiction");
+    expect(out.rankingSkipped).toContain("jurisdiction");    // It rides two thirds of all searches, so it stays short (issue #4386).
+    expect(out.rankingSkipped!.length).toBeLessThanOrEqual(200);
   });
 
   it("stays absent once a subject IS named", async () => {
@@ -2873,7 +2939,7 @@ describe("recordSearchTool — searches every name of the place (issue #4067)", 
     expect(expansion.searches[0]).toMatchObject({ places: { deathPlace: PERIOD }, totalMatches: 33 });
     expect(expansion.searches[1]).toMatchObject({ places: { deathPlace: MODERN }, totalMatches: 41 });
     expect(out.totalMatches).toBe(41);
-    expect(out.query.deathPlace).toBe(PERIOD);
+    expect(out.query!.deathPlace).toBe(PERIOD);
   });
 
   it("interleaves by each search's rank, typed first, de-duplicated by record", async () => {

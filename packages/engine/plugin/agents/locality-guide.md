@@ -15,8 +15,8 @@ description: >-
   records in Pennsylvania). Also do not use for narrative historical context
   like migration or why an event happened (use historical-context), or a
   general Wikipedia summary of the place (use search-wikipedia).
-model: claude-sonnet-4-6
-effort: high
+model: claude-sonnet-5
+effort: low
 tools:
   - mcp__genealogy__project_context
   - mcp__remote-devices__Genealogy_Research__project_context

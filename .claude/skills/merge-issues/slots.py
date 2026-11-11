@@ -47,8 +47,8 @@ READ_FIRST = 4
 # so the guard below must test this number and not a smaller one: warning early
 # means warning on every run through the whole range where the pull is fine, with
 # the same message used when truncation is real -- and telling the operator to
-# "re-pull with a higher --limit" when 2000 is already what they passed.
-BOARD_LIMIT = 2000
+# "re-pull with a higher --limit" when 3000 is already what they passed.
+BOARD_LIMIT = 3000
 
 # A file named by more than this many pool issues is a hub -- docs/architecture.md
 # is the repo's map and everyone edits it, in different sections. Still printed,

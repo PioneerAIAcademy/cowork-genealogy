@@ -13,6 +13,10 @@ export default defineConfig({
     testTimeout: 30_000,
     hookTimeout: 30_000,
   },
+  // tsconfig.json sets `jsx: "preserve"` for Next, which compiles JSX itself.
+  // Vite 8 honours that and would leave JSX in the .tsx components a test
+  // imports (tests/unit/statusBadgeParity.test.ts), so compile it here.
+  oxc: { jsx: { runtime: 'automatic' } },
   resolve: {
     alias: {
       '@': path.resolve(__dirname),

@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "image_transcribe refusing the researcher's plain-text upload, uploads/ma-1855-census-josiah-barnes.txt in the ma-state-census-capture-txt scenario. Production reads the file, finds no image or PDF signature in its bytes and throws before any OCR call; the error text is the sniff branch in packages/engine/mcp-server/src/tools/image-transcribe.ts, verbatim, with the file name filled in. That assumes an OpenRouter key is configured: with none, production refuses with the no-key error first (image-transcribe-upload-no-key). Marked is_error because production returns a thrown error with isError: true, so nothing is staged. Listed by ut_search_external_sites_ul2 (hosted) and ut_search_external_sites_ulf (folder mode) only so image_transcribe exists in those sessions: the upload is text, so any call to it is the failure, and a validator fails the run on the call itself. The '~' predicate is a substring match, so it also answers a `file` with a './' or project-path prefix, which production refuses with a different error (a bad shape, or no such file).",
+  "args": {
+    "file": "~uploads/ma-1855-census-josiah-barnes.txt"
+  },
+  "is_error": true,
+  "response": {
+    "error": "`file` 'uploads/ma-1855-census-josiah-barnes.txt' is not an image or a PDF (by its content, not its name) — image_transcribe reads JPEG, PNG, GIF, WEBP and PDF. A text upload is read by sidecar_read."
+  }
+}

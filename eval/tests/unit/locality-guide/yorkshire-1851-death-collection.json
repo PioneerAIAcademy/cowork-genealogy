@@ -38,7 +38,8 @@
     "wikipedia-search-any",
     "volume-search-any",
     "place-population-any",
-    "wiki-place-page-any"
+    "wiki-place-page-any",
+    "catalog-search-empty"
   ],
   "judge_context": [
     "The collections_search fixture returns FamilySearch collection 2285341, 'England and Wales, Death Registration Index 1837-2007', among 167 collections, past the point where the judge's view of that result is cut off. The guide must name this collection by number or exact title as an indexed source for an 1851 death. A guide that describes civil registration generically, without naming it, has not used the tool response and must not pass. Citing a collection number the tools did not return is a failure.",

@@ -14,8 +14,8 @@
     ]
   },
   "input": {
-    "delegation": "What genealogical records are available for the Alabama region around 1800, before statehood? Please give me a locality research guide for that place and period - and I'm especially interested in whether there are any digitized, browsable record volumes for it, even if they're not name-indexed.\n\nprojectPath: <workspace>",
-    "scenario": "empty-project-just-created",
+    "delegation": "What genealogical records are available for the Alabama region around 1800, before statehood? Please give me a locality research guide for that place and period - and I'm especially interested in whether there are any digitized, browsable record volumes for it, even if they're not name-indexed.",
+    "scenario": null,
     "scenario_notes": null
   },
   "execution": {
@@ -40,7 +40,8 @@
     "place-population-any",
     "place-search-all-any",
     "wiki-search-any",
-    "wikipedia-search-any"
+    "wikipedia-search-any",
+    "catalog-search-empty"
   ],
   "judge_context": [
     "volume_search returns totalResults 0 for the Alabama/Mississippi Territory pre-statehood period. The skill must state that FamilySearch currently has no digitized image groups (browsable or indexed) for this place/period \u2014 and must not phrase this as evidence that no records were ever created or survived. It should still point to the territorial, church, and court record classes already covered by collections_search/wiki_search, since record existence and FamilySearch digitization coverage are separate facts.",

@@ -69,6 +69,9 @@ WARNING_KIND_SIDES: dict[str, str] = {
     # server.ts refuses it in production (#3947). A fixture advisory's opposite:
     # no fixture can cover it, so the advisory says to fix the caller's args.
     "unknown_args_refused": "harness",
+    # An MCP result reached the model as Claude Code's "too large, saved to file"
+    # notice, so the agent never saw that tool's answer (#4380).
+    "oversize_tool_result": "harness",
 }
 
 _VALID_SIDES = frozenset({"judge", "harness"})

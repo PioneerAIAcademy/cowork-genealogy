@@ -1,0 +1,42 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_ulr",
+    "skill": "search-external-sites",
+    "name": "Hosted: a refused transcription asks for the results text and leaves the hand-off open",
+    "type": "positive",
+    "description": "Form 3 with no OpenRouter key. Same scenario and delegation as ut_search_external_sites_ul3, but image_transcribe refuses the screenshot with production's no-key error, so nothing is staged and the upload cannot be read. The agent asks the researcher to paste the results text and logs no closing entry, so the hand-off for pli_001 stays open in awaitingUser and pli_001 stays in_progress. Gated by test_refused_transcription_leaves_the_handoff_open (transcribe-refused-stays-open); not triage-closes-handoff, which asserts the opposite, and test_positive_appends_external_site_log_entry skips under this tag.",
+    "tags": [
+      "myheritage",
+      "external-site",
+      "census",
+      "upload-capture",
+      "hosted",
+      "transcribe-refused-stays-open",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "The researcher brought back the capture for the MyHeritage search on plan item pli_001, the 1855 Massachusetts State Census for Josiah Barnes.\n\ncapture: uploads/ma-1855-census-josiah-barnes.png\nuserPresent: yes\nplanItemId: pli_001\nprojectPath: /proj_7d4b2e91c6a05f38",
+    "scenario": "ma-state-census-capture-image"
+  },
+  "mcp_fixtures": [
+    "project-list-hosted-barnes",
+    "place-search-massachusetts",
+    "external-links-search-massachusetts",
+    "collections-search-massachusetts-census",
+    "image-transcribe-upload-no-key"
+  ],
+  "judge_context": [
+    "The capture came back as an upload the agent cannot read. Do not penalize the absence of a new URL, of a build_external_search_url call, or of the full capture instructions: the researcher already captured the page, and its hand-off is still open in awaitingUser.",
+    "This test runs hosted: project_context returns uploadUrl https://genealogy.example.org/#/p/proj_7d4b2e91c6a05f38/upload, and the delegation names the project as projectPath /proj_7d4b2e91c6a05f38. That path is correct here; it is not a missing or invented project folder.",
+    "The capture is uploads/ma-1855-census-josiah-barnes.png, which project_context lists with hasText: false, so image_transcribe with file 'uploads/ma-1855-census-josiah-barnes.png' is the right first read. It refuses: no OpenRouter key is configured, and nothing is staged. A built-in Read (or Grep or Glob) of the uploads/ path is wrong on a hosted store: production keeps no file at that path, so the capture is read only through the tools named here.",
+    "After the refusal the agent must ask the researcher for the results text: paste the results page's text into the conversation, or as plain text on the upload page. Either is a pass. Relaying the error's key-setup steps (an OpenRouter key in Claude Desktop settings or ~/.familysearch-mcp/config.json) in place of that ask is a fail: those are desktop instructions, and this researcher is on the hosted web app. Handing over the MyHeritage link again, or treating this as a site the researcher could not open, is also a fail.",
+    "No results were read, so there is nothing to triage. Defer the triage cleanly; listing or judging any result (from the file name, the hand-off or anywhere else) is fabrication and a fail on Result triage.",
+    "No log entry is expected this turn. An external_site entry with capture_received TRUE is wrong, and so is any entry on the hand-off's url_generated with an outcome other than partial: either one closes the hand-off, and the researcher's pasted text could then never close it. A deterministic validator checks the hand-off stays open.",
+    "pli_001 must stay in_progress: the capture has not been read."
+  ],
+  "judge_reads_files": true,
+  "execution": {
+    "max_wall_clock_seconds": 600
+  }
+}

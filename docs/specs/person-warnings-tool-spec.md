@@ -46,7 +46,7 @@ mob."
   report on a relationship between the anchor and a one-hop relative.
 
 **Single-person warnings run on the anchor *and* its one-hop relatives,
-not the anchor alone.** 28 of the 75 self-checks have a relative-mob variant
+not the anchor alone.** 28 of the 76 self-checks have a relative-mob variant
 (`relatives*`, `maleRelatives*`, `femaleRelatives*`) that fires the same
 condition on a parent, spouse, or child. Most variants emit one warning that
 keeps the anchor in `personId`/`personName` and names the flagged relative in
@@ -54,7 +54,7 @@ keeps the anchor in `personId`/`personName` and names the flagged relative in
 `relativesEarliestChildBirthToBirth12`, `relativesHasDeathBeforeChildBirth365_2`
 and `relativesHasDeathBeforeChildBirth30_10`, emit one warning per failing
 relative with the relative in `personId`/`personName`, and name that
-relative's child in `relatedPersonId` when the child has an id. The other 47
+relative's child in `relatedPersonId` when the child has an id. The other 48
 run on the anchor only.
 The relative-variant tags in § Warning Definitions are the evidence.
 
@@ -310,10 +310,10 @@ All warnings are evaluated relative to the **anchor person** (the
 required `personId`) and its one-hop relatives. Single-person checks
 read the anchor's own facts; relationship checks consider relationships
 in which the anchor participates (as parent, spouse, or child); and 28 of
-the 75 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
+the 76 self-checks have a `relatives*`/`maleRelatives*`/`femaleRelatives*`
 variant that fires the same condition on a one-hop relative.
 
-The full catalogue of the **103 tags** the tool emits in `issueType` is
+The full catalogue of the **104 tags** the tool emits in `issueType` is
 the § Tag Catalogue below. It is the source of truth an implementation is
 checked against, and the drift lint
 (`tests/packaging/person-warnings-spec-drift.test.ts`) fails if it and
@@ -544,7 +544,7 @@ tool.
 
 ### Tag Catalogue
 
-The full set of **103** tags the tool emits in `issueType`. Each row is
+The full set of **104** tags the tool emits in `issueType`. Each row is
 `Tag`, `Severity`, `Rule` (the condition that fires it), and `Cause`
 (what it usually indicates). `scoreType` is `COHERENCE` for every tag.
 The bidirectional drift lint
@@ -636,6 +636,7 @@ merged. Or the check sits in `calculateNonFinalWarnings`, which
 | `similarSpouses` | implausible | Two spouses look like the same individual recorded twice | One spouse duplicated |
 | `similarSpousesConflictingDates` | implausible | Two spouses have similar names but conflicting dates | Same spouse recorded twice with a date discrepancy |
 | `hasDissimilarSpousesWithSameMarriageYear` | implausible | Two spouses share a marriage year but have dissimilar names | Two marriage records conflated, or a mis-transcribed name |
+| `hasInterleavedChildrenIgnoreSimilarSpouses` | implausible | A child whose biological parents are this person and one spouse is born, on every reading of the Birth dates, between two children of this person and another spouse; a pair `similarSpouses` or `similarSpousesConflictingDates` reports is skipped. One warning per spouse pair (§ Interleaved children by two spouses) | One spouse recorded twice in a pair neither similar-spouse tag reports (a nickname, a maiden and a married surname, a distant spelling, or a similar-named pair after the first of its kind), two people merged into one, a spouse attached to the wrong person, or a spouse's child by an earlier partner linked as this person's own; a plural marriage can also cause it |
 | `hasLateChristening18` | implausible | A Christening, Baptism or BaptismRegistration begins 18 or more years after the latest possible Birth | An adult baptism, or another date filed as a christening |
 | `hasEventsOutsideLifespanNear` | implausible | Merge-mode only: merging places an event slightly outside the other record's lifespan | A borderline mismatch worth checking before the merge |
 
@@ -826,9 +827,9 @@ every other warning, in both the single and the list form.
 
 #### Relative-mob mirrors (`implausible`)
 
-28 of the 75 self-checks above have a relative-mob variant that fires the
+28 of the 76 self-checks above have a relative-mob variant that fires the
 same condition on a one-hop relative (parent, spouse, or child) instead of
-the anchor; the other 47 run on the anchor only. They are **always
+the anchor; the other 48 run on the anchor only. They are **always
 `implausible`** regardless of the self-check's
 severity — the anchor's own data isn't necessarily wrong; the issue is in
 the relationship. Most variants keep the anchor in the warning's
@@ -1009,6 +1010,95 @@ as never having children should have to say why. `hasDelayedBurial365` stays out
 for the reason the `implausible` parent-age tags do. A reburial or a later burial
 of ashes is legitimate but rare, and a one-line justification records it.
 
+### Interleaved children by two spouses
+
+`hasInterleavedChildrenIgnoreSimilarSpouses` fires when a person
+has children by two spouses and a child of one is born between two children of
+the other. That usually means one spouse recorded twice in a pair neither
+similar-spouse tag reports (a nickname, a maiden and a married surname, a distant
+spelling, or a similar-named pair after the first of its kind), two people merged
+into one, a spouse attached to the wrong person, or a spouse's child by an
+earlier partner linked as the anchor's own when the link should be `Step`; real
+plural marriages exist, so it is `implausible`.
+
+**Which spouse a child belongs to.** The anchor's Mob is built over the whole
+project tree, so a child's second ParentChild edge is there to read. A child
+counts for spouse S only when its qualifying parents (`isQualifyingParentChildEdge`:
+`Biological` or no subtype) are the anchor and exactly S, and S shares a Couple
+relationship with the anchor. A `Step`, `Adoptive`, `Foster` or `Guardian` edge
+is not a qualifying one, so a child linked to the anchor or to S only that way,
+or with no second qualifying parent, or with two, counts for no one. Counting a child under every spouse it links to was considered and rejected:
+a child linked to both spouses would then stand inside one spouse's family while
+belonging to it, and `tooManyParents3` already reports a child with three parents.
+Over the corpus measured below, before the similar-spouse skip, that reading fires on
+5 anchors rather than 3.
+
+**Dates.** Birth facts only: `birthReading` (`utils/impossible-date-range.ts`)
+gives the union of each child's Birth facts, each read by `factRange`, and a
+reading it estimates from a christening is skipped. No christening proxy: a proxy
+reading would need its own `…Estimated` tag (one severity per tag). It fires when, for spouses A and B, some
+child x of B and two children a1, a2 of A satisfy `a1.latest < x.earliest` and
+`x.latest < a2.earliest`, so no reading of the three dates removes the overlap:
+a child dated `1850` against `1850` and `1852` does not fire, `1851` does, and
+`Bef 1855` never sits inside a span.
+
+**Similar spouses are skipped.** The pair `similarSpouses` reports, and the pair
+`similarSpousesConflictingDates` reports, are left to those tags (the check calls
+their own predicates): the two spouses are usually one person recorded twice, and
+firing here as well would report one duplicate spouse twice. Hence the tag's
+`IgnoreSimilarSpouses` suffix, as `hasCloseChildBirthsIgnoreSimilarChildren`
+skips similar children. Each of those tags reports only the first similar pair of
+its kind (dates conflicting or not), so with three or more spouses a second pair of
+the same kind is not skipped here: no other tag would report it. Measured 2026-11-09 at 7c17dbb9c over the 236 committed
+e2e final trees (`calculateWarnings` on every person with two or more Couple
+edges, and again with each spouse renamed so that no pair is similar): the rule
+without the skip fires on 3 anchors, `similarSpouses` already
+fires on 1 of them (`inocente-lopez-death`), and the tag fires on the other 2
+(`jimmie-jewel-neal`, `victoriano-macatangay-parents`). The skip is by name, so a
+wife recorded under two spellings the name matcher does not call similar
+("Gabina Sinquino", "Gabina Singamuto") still fires here.
+
+**One warning per spouse pair, and which three children it names.**
+`relatedPersonId` is B, the spouse whose child falls inside the span; `facts` are
+three Birth facts, the first dated one of each of x, a1 and a2, and the message
+names both spouses and the three children. x is B's earliest-born child that some
+child of A is born before and another after; a1 is the child of A whose birth ends
+last before x, and a2 the one whose birth begins first after it: x's nearest
+siblings by A. When the children interleave both ways, the direction whose x is
+born first is reported. One fact per child is enough evidence: when the rule
+fires, every Birth fact of a1 ends before every Birth fact of x begins, and every
+Birth fact of x ends before every Birth fact of a2 begins.
+
+The write gate keys a warning on its facts, so these choices decide which writes
+read as introducing it. Nearest siblings rather than the eldest and youngest,
+because then a child of A added or removed away from x keeps the key: a new eldest
+or youngest child keeps it unless it brings an earlier child of B inside a span,
+and removing a child of A keeps it unless that child is one of the three cited. A
+second Birth fact on a witness that leaves it the witness, or a later child of B
+inside the span, keeps it too. These change it, and the gate asks for a
+justification again: a child of A born between x and a nearest sibling, or a child
+of B born inside a span before x (each closer evidence, however it arrives);
+removing a cited child while another child of A stands beyond it, since its fact
+leaves the key; dating an undated child into one of those places; a merge that
+replaces a witness child's first Birth fact (the gate remaps person ids after a
+merge, not fact ids); and a reverse-direction hit with an earlier x, which also
+moves `relatedPersonId`. In `merge_warnings`, which dedupes on
+`issueType|personId|relatedPersonId|severity`, two pairs that share the inside
+spouse show as one advisory.
+
+**It gates.** It is not in `GATE_EXEMPT_TYPES`, with `similarSpouses` and
+`hasDissimilarSpousesWithSameMarriageYear`: each reports a spouse-structure claim
+the writer is making, not an import artefact, and the exempt class of
+implausibilities is the age priors, which this is not. A real plural marriage still
+writes, with a justification. In `merge_warnings` it is advisory, since only
+`contradiction` blocks there. Measured with `dev/measure-parentage-gate-rate.ts`
+on 2026-11-09 over 236 trees and 2619 ParentChild edges: refusals move from 106
+(measured at ca2a92571, before this tag) to 118 (measured at 7c17dbb9c, with it), the 12 added edges being the six witness edges (anchor and
+spouse to each of the three children) of the two trees named above.
+
+**No `relatives*` twin.** A spouse-mob has no coparents and a parent-mob has no
+spouses, so a relative form could never fire.
+
 ---
 
 ## Error Handling
@@ -1123,7 +1213,7 @@ fixture trees; there are no `extractYear`/`extractEarliestYear`/
 `extractLatestYear` tests, because those helpers do not exist (date
 handling is tested where it lives, under `src/utils/`).
 
-**Per-tag coverage is partial.** Roughly half of the 103 tags are named
+**Per-tag coverage is partial.** Roughly half of the 104 tags are named
 in that test file; the rest are covered indirectly or not at all. The
 drift lint proves a tag is *documented and emitted*, never that its
 catalogue entry reads correctly — so a reviewer verifying a
@@ -1174,7 +1264,7 @@ and need not be added to that reference.
    `tests/tools/person-warnings-birth-residence.test.ts`).
 6. Add the tag's row to § Tag Catalogue in this spec.
 7. Bump the three hardcoded tag-count assertions in
-   `tests/packaging/person-warnings-spec-drift.test.ts` (the `toBe(103)` guards)
+   `tests/packaging/person-warnings-spec-drift.test.ts` (the `toBe(104)` guards)
    to the new total.
 8. **Run the drift lint** (`make engine-test`, or the
    `tests/packaging/person-warnings-spec-drift.test.ts` suite directly).
@@ -1270,6 +1360,10 @@ Grep for `calculateWarnings` when sizing the blast radius.
   refusals from **101 to 104** edges (74 distinct warnings, was 51). All the new
   ones are in `elsa-heikkinen-birth`, and each links a mother who died in
   February 1826 to a child born 1827–1832. No child born in time is refused.
+  Re-measured 2026-11-09 (236 trees, 2619 edges): `hasInterleavedChildrenIgnoreSimilarSpouses`
+  moves refusals from **106** (measured at ca2a92571) **to 118** (measured at 7c17dbb9c)
+  edges, two distinct warnings, one each in `jimmie-jewel-neal` and
+  `victoriano-macatangay-parents` (§ Interleaved children by two spouses).
 
   Measured over the committed e2e final trees at a36651a33, 203 trees and 2266
   ParentChild edges: gating parentage edges unexempted refuses **419 of 2266** (18.5%) — 559

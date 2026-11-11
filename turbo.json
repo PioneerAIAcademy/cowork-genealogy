@@ -11,6 +11,30 @@
     "test": {
       "dependsOn": ["^build"]
     },
+    "@genealogy/viewer-ui#test": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/apps/*/package.json",
+        "$TURBO_ROOT$/apps/electron/src/main/external-link.ts",
+        "$TURBO_ROOT$/apps/electron/test/fixtures/sample-project/results/log_001.json",
+        "$TURBO_ROOT$/apps/server/app/seed/sample_project/results/log_001.json",
+        "$TURBO_ROOT$/docs/specs/schemas/*.json",
+        "$TURBO_ROOT$/eval/fixtures/scenarios/compound-objective-fully-covered/*.json",
+        "$TURBO_ROOT$/eval/fixtures/scenarios/g9gj-proof-update-after-later-search/*.json",
+        "$TURBO_ROOT$/eval/fixtures/scenarios/mid-research-flynn/*.json",
+        "$TURBO_ROOT$/eval/fixtures/scenarios/mid-research-flynn-merge-pending/*.json",
+        "$TURBO_ROOT$/eval/fixtures/scenarios/research-competing-parent-sets-no-hypotheses/*.json",
+        "$TURBO_ROOT$/packages/engine/mcp-server/package.json",
+        "$TURBO_ROOT$/packages/engine/mcp-server/src/utils/external-collections-store.ts",
+        "$TURBO_ROOT$/pnpm-lock.yaml",
+        "$TURBO_ROOT$/scripts/check-node-floor.mjs",
+        "$TURBO_ROOT$/Makefile",
+        "$TURBO_ROOT$/Reinstall.bat",
+        "$TURBO_ROOT$/scripts/windows/reinstall.bat",
+        "$TURBO_ROOT$/eval/Setup.bat"
+      ]
+    },
     "dev": {
       "cache": false,
       "persistent": true

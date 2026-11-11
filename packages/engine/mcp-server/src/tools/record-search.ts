@@ -89,9 +89,8 @@ const MAX_JURISDICTION_HINTS = 8;
  */
 const RANKING_SKIPPED_NOTE =
   "No `subjectId`, so match-score ranking and marriage jurisdiction hints did " +
-  "not run. Pass the tree person this search is about as `subjectId` to enable " +
-  "both. Omit it only when the search is not about a specific tree person — a " +
-  "broad survey, or a person not yet in the tree.";
+  "not run. Pass the searched tree person as `subjectId`. Omit it only for a " +
+  "broad survey or a person not yet in the tree.";
 const PERSISTENT_ID_URI = "http://gedcomx.org/Persistent";
 const COLLECTION_RESOURCE_TYPE = "http://gedcomx.org/Collection";
 
@@ -1347,7 +1346,7 @@ export async function recordSearchTool(
   // failure, and refuses nothing.
   const unloggedStaged =
     input.projectPath !== undefined
-      ? await unloggedStagedSearches(input.projectPath)
+      ? await unloggedStagedSearches(input.projectPath, "record_search")
       : [];
 
   const out: RecordSearchToolResponse = {
