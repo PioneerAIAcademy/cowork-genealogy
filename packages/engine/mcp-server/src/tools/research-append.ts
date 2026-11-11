@@ -20,6 +20,7 @@
 
 import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
+import { disputeGroups, liveSuccessorId } from "../utils/page-disputes.js";
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
 import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../utils/plan-item-plausibility.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
@@ -982,7 +983,7 @@ function uncertainPreferenceInvariants(entry: any, research: any): string[] {
   const assertions: any[] = (research.assertions ?? []).filter(isLiveAssertion);
   const byId = new Map<string, any>(assertions.map((a: any) => [a.id, a]));
   const preferred = byId.get(entry.preferred_assertion_id);
-  if (!preferred || !hasUncertainReading(preferred)) return [];
+  if (!preferred || !isDoubtful(preferred, research)) return [];
 
   const competing: string[] = Array.isArray(entry.competing_assertion_ids)
     ? entry.competing_assertion_ids
@@ -1014,8 +1015,8 @@ function uncertainPreferenceInvariants(entry: any, research: any): string[] {
 
   for (const a of assertions) {
     if (!a || a.id === entry.preferred_assertion_id) continue;
-    // Condition 1: no [?] on the corroborator.
-    if (hasUncertainReading(a)) continue;
+    // Condition 1: the corroborator is not itself in doubt ([?] or disputed by its page).
+    if (isDoubtful(a, research)) continue;
     // Condition 2: different record.
     const aRecord = a.record_id ?? a.source_id ?? null;
     if (aRecord == null || aRecord === preferredRecord) continue;
@@ -1035,8 +1036,8 @@ function uncertainPreferenceInvariants(entry: any, research: any): string[] {
   }
 
   return [
-    `preferred_assertion_id '${entry.preferred_assertion_id}' carries an uncertain reading ` +
-      `([?]) and no assertion from a different record corroborates it. To settle the conflict: ` +
+    `preferred_assertion_id '${entry.preferred_assertion_id}' ${doubtReason(preferred, research)} ` +
+      `and no assertion from a different record corroborates it. To settle the conflict: ` +
       `find a second record whose reading agrees. A reading the user confirms is one more reading ` +
       `to weigh in this conflict's rationale, not a correction: assertion ` +
       `'${entry.preferred_assertion_id}' was written by extraction and is final, and a conflict ` +
@@ -1225,6 +1226,27 @@ function hasUncertainReading(assertion: any): boolean {
   return typeof assertion?.value === "string" && assertion.value.includes("[?]");
 }
 
+/** A researcher's own reading of a page (#4286): a disputing assertion cited
+ *  under a `user_provided` log entry. */
+function isResearcherReading(a: any, logById: Map<string, any>): boolean {
+  return typeof a?.disputes_assertion_id === "string" && logById.get(a?.log_entry_id)?.tool === "user_provided";
+}
+
+/** Ruling 10 (#4286): an assertion is doubtful when its value carries `[?]`, or
+ *  when its own page disputes it. A researcher's own reading is not. */
+function isDoubtful(a: any, research: any): boolean {
+  if (hasUncertainReading(a)) return true;
+  return disputeGroups(research).has(a?.id);
+}
+
+/** Why `a` is doubtful, for a refusal: the `[?]`, or the page that disputes it. */
+function doubtReason(a: any, research: any): string {
+  if (hasUncertainReading(a)) return "carries an uncertain reading ([?])";
+  const g = disputeGroups(research).get(a?.id);
+  const reads = (g?.disputers ?? []).map((d: any) => `${d.id} reads "${d.value}"`).join(", ");
+  return `is disputed by its own page (${reads})`;
+}
+
 /** Distinct records (falling back to source) that already tie other, still-live
  *  person_evidence rows to this person — excluding this entry and its own
  *  record. Size 0 ⇒ the identity rests on this single record alone. */
@@ -1400,13 +1422,14 @@ function personEvidenceInvariants(entry: any, research: any): string[] {
   const byId = new Map<string, any>(assertions.map((a: any) => [a.id, a]));
   const linked = byId.get(entry.assertion_id);
   // Missing FK is already reported by the document validator; don't double-fault.
-  if (!linked || !hasUncertainReading(linked)) return [];
+  if (!linked || !isDoubtful(linked, research)) return [];
   if (corroboratingRecordCount(entry, research, byId) > 0) return [];
   return [
-    `confidence 'confident' is not available here: assertion '${entry.assertion_id}' carries an ` +
-      `uncertain reading ([?]) and no other record independently ties person '${entry.person_id}' ` +
-      `to this identity. Use 'probable' (or 'speculative'), keep the [?] in the assertion value, ` +
-      `and record what would resolve it — a second independent record, or the original image. ` +
+    `confidence 'confident' is not available here: assertion '${entry.assertion_id}' ` +
+      `${doubtReason(linked, research)} and no other record independently ties person '${entry.person_id}' ` +
+      `to this identity. Either lower the link to 'probable' (or 'speculative'), or stop citing this ` +
+      `value and link a reading that is not in doubt. Record what would resolve it — a second ` +
+      `independent record, or the researcher's own reading of the page. ` +
       `A confident wrong parent is worse than a flagged uncertain one.`,
   ];
 }
@@ -6404,6 +6427,88 @@ function stripQuoted(text: string): string {
     .replace(/(^|[\s(])'[^'\n]+'(?=[\s.,;:)]|$)/g, "$1 ");
 }
 
+/** Text normalized for the both-readings check: `[?]` removed, whitespace
+ *  collapsed, case folded. */
+function readingText(v: unknown): string {
+  return typeof v === "string" ? normalizeUncertainValue(v) : "";
+}
+
+/** Where `needle` occurs in `hay` as whole words (Unicode letters and digits). */
+function wholeWordSpans(hay: string, needle: string): Array<[number, number]> {
+  if (needle === "") return [];
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, "gu");
+  const out: Array<[number, number]> = [];
+  for (const m of hay.matchAll(re)) out.push([m.index!, m.index! + m[0].length]);
+  return out;
+}
+
+/** True when the text names every reading as whole words, a shorter reading
+ *  counting only where it is not inside a longer one that contains it. */
+export function namesEveryReading(text: string, readings: readonly string[]): boolean {
+  const hay = readingText(text);
+  const wanted = [...new Set(readings.map(readingText).filter((r) => r !== ""))];
+  const spans = new Map(wanted.map((r) => [r, wholeWordSpans(hay, r)]));
+  return wanted.every((r) => {
+    const longer = wanted.filter((o) => o !== r && o.length > r.length && o.includes(r));
+    const covered = longer.flatMap((o) => spans.get(o) ?? []);
+    return (spans.get(r) ?? []).some(([a, b]) => !covered.some(([x, y]) => a >= x && b <= y));
+  });
+}
+
+/** Ruling 10 (#4286): a proof above `not_proved` that cites a value its own page
+ *  disputes names both readings. The check is literal: each reading's value, with
+ *  `[?]` removed and case folded, appears as whole words in the narrative or a
+ *  claim's text. A paraphrase ("the page gives another name") does not count. A
+ *  proof citing the researcher's own reading is settled and is not checked; one
+ *  citing the value they read differently still is.
+ *  Runs on every write of the summary, not only one that touches the narrative,
+ *  so a summary written before the page was read is caught on its next edit. */
+export function disputedValueNarrativeInvariants(entry: any, preCallResearch: any): string[] {
+  if (typeof entry?.tier !== "string" || entry.tier === "not_proved") return [];
+  const groups = disputeGroups(preCallResearch);
+  if (groups.size === 0) return [];
+  const all: any[] = Array.isArray(preCallResearch?.assertions) ? preCallResearch.assertions : [];
+  const byId = new Map<string, any>(all.filter((a) => typeof a?.id === "string").map((a) => [a.id, a]));
+  const logById = new Map<string, any>(
+    (Array.isArray(preCallResearch?.log) ? preCallResearch.log : []).map((e: any) => [e?.id, e]),
+  );
+  const claims: any[] = Array.isArray(entry?.claims) ? entry.claims : [];
+  const cited = [
+    ...(Array.isArray(entry?.supporting_assertion_ids) ? entry.supporting_assertion_ids : []),
+    ...claims.flatMap((c: any) => (Array.isArray(c?.supporting_assertion_ids) ? c.supporting_assertion_ids : [])),
+  ].filter((id: unknown): id is string => typeof id === "string");
+  const text = [
+    entry?.narrative_markdown,
+    ...claims.flatMap((c: any) => [c?.claim, c?.finding]),
+  ].filter((t) => typeof t === "string").join("\n");
+  const errors: string[] = [];
+  const seen = new Set<string>();
+  for (const id of cited) {
+    const a = byId.get(id);
+    // Citing the researcher's own reading is what settles it; citing the value
+    // they read differently still names every reading.
+    if (!a || isResearcherReading(a, logById)) continue;
+    const key =
+      typeof a.disputes_assertion_id === "string"
+        ? liveSuccessorId(a.disputes_assertion_id, byId)
+        : liveSuccessorId(a.id, byId);
+    const g = groups.get(key);
+    if (!g || seen.has(key)) continue;
+    seen.add(key);
+    const readings = [g.target, ...g.disputers].map((x) => String(x.value ?? ""));
+    if (namesEveryReading(text, readings)) continue;
+    errors.push(
+      `proof_summaries ${entry?.id ?? "(entry)"} cites ${id}, whose ${g.target.fact_type} the record's own page ` +
+        `reads differently: the index reads "${readingText(g.target.value)}", the page reads ` +
+        `${g.disputers.map((d) => `"${readingText(d.value)}"`).join(", ")}. A conclusion that relies on that ` +
+        "value names both readings, word for word, in narrative_markdown or a claim. Either write both " +
+        "readings in, or stop citing it and cite a value no page disputes.",
+    );
+  }
+  return errors;
+}
+
 /** A conclusion above `not_proved` may not STATE a parent nobody identified.
  *
  *  `unlinkedParentProofInvariants` reads the citation, so dropping the parent's
@@ -9171,6 +9276,9 @@ function applyOne(
         "record_document_id is not updatable: research_append stamps it from the record's results sidecar on append",
       );
     }
+    if (section === "assertions" && "disputes_assertion_id" in op.fields) {
+      throw new ResearchAppendError(DISPUTES_NOT_CALLERS);
+    }
     const existingIndex = array.findIndex((e) => e && e.id === op.entryId);
     if (existingIndex === -1) {
       throw new ResearchAppendError(`entryId '${op.entryId}' not found in '${section}'`);
@@ -9910,6 +10018,9 @@ function applyOne(
     // source is invalid whether or not this call put it there. Lowering the
     // tier in the same update satisfies it, so the deny stays satisfiable.
     invariantErrors.push(...conflictedSourceInvariants(resultEntry, preCallResearch));
+    // Also ungated (#4286): a page that disputes a cited value is read after the
+    // summary is written as often as before it.
+    invariantErrors.push(...disputedValueNarrativeInvariants(resultEntry, preCallResearch));
     // Also NOT tier-gated, and reads LIVE research: a conflict resolved only in
     // prose must reach conflicts[] before any summary relies on it. See
     // `unpersistedConflictResolutionInvariants` for scope and what it lets through.
@@ -10349,7 +10460,7 @@ export function reextractionKey(a: any): string | undefined {
 /** A fact type's comparison key after the `FACT_TYPE_ALIASES` fold: "Baptism",
  *  `baptism` and `christening` are one fact type, as are "BirthRegistration" and
  *  `birth_registration`. */
-function canonicalFactKey(ft: unknown): string {
+export function canonicalFactKey(ft: unknown): string {
   const key = factTypeKey(ft);
   return Object.hasOwn(FACT_TYPE_ALIASES, key) ? factTypeKey(FACT_TYPE_ALIASES[key]) : key;
 }
@@ -11302,6 +11413,10 @@ async function prepareOps(
     if (!entry || typeof entry !== "object") continue;
     // Only the sidecar names the document (stamped below); a caller's value is dropped.
     delete entry.record_document_id;
+    if ("disputes_assertion_id" in entry && options.stampDisputes !== true) {
+      errors.push(fmt(i, DISPUTES_NOT_CALLERS));
+      continue;
+    }
 
     // ── D2: persona/record-id matrix against the log entry's sidecar ──
     let matchedRecord: any = null;
@@ -11727,7 +11842,16 @@ export interface ResearchAppendOptions {
    *  `recordId` against the batch's appends, in the same write (`planRetirement`).
    *  Never set by a tool caller. */
   retireAssertions?: RetireAssertions;
+  /** extraction_append's page readings (#4286): its assertion appends may carry
+   *  `disputes_assertion_id`. Never set by a tool caller. */
+  stampDisputes?: boolean;
 }
+
+/** `disputes_assertion_id` is the tool's to write, never a caller's (#4286). */
+export const DISPUTES_NOT_CALLERS =
+  "disputes_assertion_id is written only by extraction_append, when record-structurer reports what a " +
+  "read page says (`attachWaitingPages` with `pageReadings`). Leave it out: a page reading is not written " +
+  "through research_append.";
 
 export interface RetireAssertions {
   recordId: string;

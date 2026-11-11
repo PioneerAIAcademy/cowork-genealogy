@@ -117,3 +117,26 @@ describe('AssertionsSection — B1 persona row', () => {
     expect(options.length).toBeGreaterThanOrEqual(2)
   })
 })
+
+describe('AssertionsSection — a page reading (#4286)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks()
+  })
+
+  it('names the index entry a page reading disputes', async () => {
+    const base = patrickFlynnResearch.assertions[0] as Assertion
+    const reading: Assertion = { ...base, id: 'a_900', value: 'Patrik Flynn [?]', disputes_assertion_id: base.id }
+    mockResearch({ assertions: [base, reading] })
+    render(<AssertionsSection />)
+    await expandCardByTitle('name: Patrik Flynn [?]')
+    expect(screen.getByText('Page reads differently')).toBeInTheDocument()
+    expect(screen.getByText(/reads this differently from its index entry/)).toBeInTheDocument()
+  })
+
+  it('shows nothing of the kind on an ordinary assertion', async () => {
+    mockResearch()
+    render(<AssertionsSection />)
+    await expandCardByTitle('name: Patrick Flynn')
+    expect(screen.queryByText('Page reads differently')).toBeNull()
+  })
+})
