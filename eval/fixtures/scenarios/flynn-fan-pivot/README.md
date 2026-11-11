@@ -25,4 +25,4 @@ Extends `flynn-census-exhausted` by adding completed negative searches of the 18
 ## Used by
 
 - `question-selection` tests where FAN pivot is the correct next step — all planned direct searches are complete and unresolved, making associates/neighbors research the highest-value next action.
-- Tests verifying that Priority 6 (fan_pivot) fires correctly after direct evidence is exhausted.
+- Tests verifying that, once direct evidence is exhausted, the FAN pivot goes to `research-plan` as plan items on q_001 and no second question is written.
