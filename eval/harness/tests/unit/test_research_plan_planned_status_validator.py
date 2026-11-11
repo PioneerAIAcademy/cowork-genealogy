@@ -1,9 +1,13 @@
 """Direct tests for `test_new_plan_items_planned_status`.
 
 Same reason as `test_research_plan_objective_target_validator.py`: nothing
-under `validators/` is collected by `make harness-test`, and 17 research-plan
-tests carry this validator's tag, so a regression here would otherwise surface
+under `validators/` is collected by `make harness-test`, and every research-plan
+test counted by `grep -rl new-plan-items-planned-status eval/tests/unit/research-plan | wc -l`
+carries this validator's tag, so a regression here would otherwise surface
 only inside a paid per-skill run.
+
+Issue #4477: the tag means the test writes a plan, so a tagged run that adds no
+new plan item fails instead of passing with nothing checked.
 
 Issue #1830 item 1 (the lead's 2026-08-31 ruling on #1917) adds one exception:
 on an `enumerative` question, an event type the plan does not cover is written
@@ -113,6 +117,37 @@ def test_fails_other_statuses_even_on_an_enumerative_question(status):
 def test_ignores_pre_existing_items():
     old = {**_planned(9), "status": "completed"}
     before, after = _states("targeted", [_planned(1)], before_items=[old])
+    check_planned(before, after, TAGGED)
+
+
+# --- #4477: a tagged run must write at least one new item --------------------
+
+def _hand_states(before_plans, after_plans):
+    q = [_question("targeted")]
+    return ({"research_json": {"questions": q, "plans": before_plans}},
+            {"research_json": {"questions": q, "plans": after_plans}})
+
+
+def test_fails_a_tagged_run_that_writes_an_empty_plan():
+    before, after = _states("targeted", [])
+    with pytest.raises(AssertionError, match="wrote no new plan items"):
+        check_planned(before, after, TAGGED)
+
+
+def test_fails_a_tagged_run_that_writes_no_plan_at_all():
+    """research-plan v18: the agent stopped for a locality survey and the
+    pre-existing plan came through untouched."""
+    old = [{"id": "pl_000", "question_id": "q_001", "items": [_planned(9)]}]
+    before, after = _hand_states(old, [dict(p) for p in old])
+    with pytest.raises(AssertionError, match="wrote no new plan items"):
+        check_planned(before, after, TAGGED)
+
+
+def test_counts_an_item_added_to_an_existing_plan():
+    before, after = _hand_states(
+        [{"id": "pl_000", "question_id": "q_001", "items": [_planned(9)]}],
+        [{"id": "pl_000", "question_id": "q_001", "items": [_planned(9), _planned(10)]}],
+    )
     check_planned(before, after, TAGGED)
 
 
