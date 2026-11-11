@@ -12,8 +12,8 @@ description: >-
   research-plan), wants to know if research is exhaustive (use
   research-exhaustiveness), or wants to search records (use search-records
   or search-external-sites).
-model: claude-sonnet-4-6
-effort: high
+model: claude-haiku-5-5
+effort: medium
 tools:
   - mcp__genealogy__research_append
   - mcp__remote-devices__Genealogy_Research__research_append

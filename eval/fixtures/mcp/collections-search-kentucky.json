@@ -5,9 +5,7 @@
     "standardPlace": "~"
   },
   "response": {
-    "query": {
-      "standardPlace": "Muhlenberg, Kentucky, United States"
-    },
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
     "scope": "Kentucky",
     "totalForPlace": 5,
     "results": [
@@ -15,49 +13,31 @@
         "id": "1417491",
         "title": "Kentucky Deaths, 1911-1967",
         "dateRange": "1911-1967",
-        "recordCount": 2900412,
-        "personCount": 2900412,
-        "imageCount": 2611350,
-        "url": "https://www.familysearch.org/search/collection/1417491",
-        "notes": "Statewide death certificates — registration began 1 January 1911; no statewide certificates exist for earlier deaths."
+        "personCount": 2900412
       },
       {
         "id": "1804888",
         "title": "Kentucky, Deaths and Burials, 1843-1970",
         "dateRange": "1843-1970",
-        "recordCount": 421870,
-        "personCount": 421870,
-        "imageCount": 0,
-        "url": "https://www.familysearch.org/search/collection/1804888",
-        "notes": "Index of county-level death registers (1852-1910 era coverage is partial — many counties have gaps for the 1860s-1870s) and later certificates."
+        "personCount": 421870
       },
       {
         "id": "1875188",
         "title": "Kentucky Probate Records, 1727-1990",
         "dateRange": "1727-1990",
-        "recordCount": 0,
-        "personCount": 0,
-        "imageCount": 1349204,
-        "url": "https://www.familysearch.org/search/collection/1875188",
-        "notes": "County court probate — wills, administrator bonds, estate settlements, inventories. Browse-only images organized by county and volume; deep coverage for the 1870s including Muhlenberg County."
+        "personCount": 0
       },
       {
         "id": "1804987",
         "title": "Kentucky, County Marriages, 1797-1954",
         "dateRange": "1797-1954",
-        "recordCount": 1330975,
-        "personCount": 1330975,
-        "imageCount": 990120,
-        "url": "https://www.familysearch.org/search/collection/1804987"
+        "personCount": 1330975
       },
       {
         "id": "1786457",
         "title": "United States, Census, 1840",
         "dateRange": "1840-1840",
-        "recordCount": 2566652,
-        "personCount": 2567892,
-        "imageCount": 196897,
-        "url": "https://www.familysearch.org/search/collection/1786457"
+        "personCount": 2567892
       }
     ]
   }
