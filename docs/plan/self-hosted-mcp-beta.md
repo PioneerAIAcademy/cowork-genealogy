@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a limited beta
 
-**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2's first half (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget; PR #4292), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, and D1's stack. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
+**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2's first half (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget; PR #4292), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), D1's stack, and S2's block and delete targets. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
 
 ## What this is
 
@@ -227,11 +227,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 
 **S1 Schema.** Shipped: numbered files from 016.
 
-**S2 Deleting and blocking one user (issue #4000).**
-- **Deleting.** `make beta-delete-user ACCOUNT=<id> CODE=<deletion code>` refuses a wrong code. Otherwise it deletes the user's rows and objects, and says that a backup already taken keeps them.
-- **Blocking.** `make beta-block-user ACCOUNT=<id>` sets `blocked_at` and `sessions_revoked_at`.
-- Both run on `malachi`, inside the compose network.
-- **Done when:** a test deletes a seeded user and finds none of their rows, connector tokens or objects, and a blocked user's cookie is refused and their token gets 401.
+**S2 Deleting and blocking one user.** Shipped: `make beta-block-user ACCOUNT=<id>` sets `blocked_at` and `sessions_revoked_at`. `make beta-delete-user ACCOUNT=<id> CODE=<deletion code>` refuses a wrong code, and otherwise prints what it would delete; with `CONFIRM=yes` it deletes the user's rows, objects and exports, and says that a backup already taken keeps them. Both run in the web image on `malachi` (`apps/server/proto/malachi/user_admin.py`).
 
 ## Phase 2: the plugin (`packages/engine/plugin`)
 
@@ -241,7 +237,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 
 **G4 Hook-only rules.** The hook fires on connector calls in a Cowork task (issue #3529 item 3), so these rules hold there as they do on the desktop. Claude's docs say chat runs no hooks and no agents. Today the research skill says that without an `Agent` tool, research runs only in a Cowork task, and stops. The Surface decision settles that line.
 
-**G5 Capture wording (issue #3990).** `search-external-sites`' `capture` accepts three forms: an upload's `.txt`, read with `sidecar_read`; the upload itself, to be transcribed; or the text itself. The upload wording shows only when `project_context` returns an `uploadUrl`.
+**G5 Capture wording (issue #3990).** Shipped in PR #4387. `search-external-sites`' `capture` accepts three forms: an upload's `.txt`, read with `sidecar_read`; the upload itself, to be transcribed; or the text itself. The upload wording shows only when `project_context` returns an `uploadUrl`.
 
 **G6 The router PR (issue #4297).** Merges with the MCP App work before launch, in one paid `research` run: the card lines, removing `projectUrl`, showing `signInUrl`, logging an upload the main thread reads, an answer to "where is my report?", the agent lines that lean on the viewer, what `project_list`'s cut-short and error answers mean, and the no-`Agent` line the Surface decision sets. Until then the card lines exist only in a variant plugin, which the demo may run at a pinned commit. Invited users get the zip `make plugin-connector` builds.
 
@@ -256,7 +252,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 - **DNS:** `tools` names public resolvers. The host's resolver gives the tailnet address, whose listener refuses a container, and public DNS gives the Funnel relay.
 - **Off by default:** `OPENROUTER_LINKING_ENABLED` always, and `UPLOADS_ENABLED` until issue #4001 lands.
 - **Settings:** compose sets `WEB_PUBLIC_URL` from `PUBLIC_URL`. W2's redirect and budget settings, `FS_REDIRECT_URI` and `GENEALOGY_SIGNIN_CALLS_PER_MINUTE`, are in compose and the env template, unset by default. Before invited users, set the FamilySearch budget, and the transcription cap at 5 or more.
-- **Make targets:** `malachi-up`, `-check`, `-logs`, `-deploy REF=<sha>`, `-backup`, `-restore-check`, `-restore`, `-export`, `-openrouter EMAIL=`, `-prune`, `-down`, `-wipe` and `-rehearsal`.
+- **Make targets:** `malachi-up`, `-check`, `-logs`, `-deploy REF=<sha>`, `-backup`, `-restore-check`, `-restore`, `-export`, `-openrouter EMAIL=`, `-prune`, `-down`, `-wipe` and `-rehearsal`; `beta-block-user ACCOUNT=` and `beta-delete-user ACCOUNT= CODE= [CONFIRM=yes]`.
 - **Never** run `tailscale serve reset`, `tailscale funnel --https=443 off` or `make proto-up` with defaults on `malachi`, and do not reboot it for a test: `/wiki` and `/pop-stats` are production ingress for every installed `.mcpb`.
 
 **D2 Monitoring.** Before invited users: a scheduled `make malachi-check` that emails the lead, and logs that survive a redeploy. The per-call log line ties a call to a user. `make malachi-backup` runs by hand, and nothing schedules it.
@@ -347,7 +343,6 @@ The lead's two agents hold the first group. The team builds the rest; an issue l
 | E5 Fit for a connector | issue #3996 | team | The pin |
 | E5 Direct reads | issue #4311 | team, senior | Merged; live connector check owed |
 | S2 Deleting and blocking one user | issue #4000 | team, senior | Before invited users |
-| G5 Capture wording | issue #3990 | team | Before invited users |
 
 P0.2 is issue #3529. Issue #3994, the browser app, is in the icebox until cards pass the live test behind sign-in.
 

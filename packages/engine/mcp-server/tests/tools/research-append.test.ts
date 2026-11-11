@@ -1492,7 +1492,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "re-read: the entry is faint" },
-      });
+      }, null);
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       expect(r.filesWritten).toEqual(["research.json"]);
@@ -1512,7 +1512,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "faint" },
-      });
+      }, null);
       expect(r.ok).toBe(true);
       if (!r.ok) return;
       expect(r.validation.warnings).toContain("could not resolve standard_place for 'Hilperton' (left unset)");
@@ -1539,7 +1539,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "faint" },
-      });
+      }, null);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
       expect(vi.mocked(resolveStandardPlace)).not.toHaveBeenCalled();
@@ -1769,7 +1769,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "faint" },
-      });
+      }, null);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
       expect(r.resolvedPlaces).toBeUndefined();
@@ -1790,7 +1790,7 @@ describe("research_append (Phase 1)", () => {
         op: "update",
         entryId: "a_001",
         fields: { informant_bias_notes: "faint" },
-      });
+      }, null);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
       expect(r.unresolvedPlaces).toEqual([PROSE]);
@@ -3722,7 +3722,7 @@ describe("research_append (Phase 3)", () => {
     const timeline = (events: unknown[]) => ({ label: "test timeline", person_ids: ["I1"], events, gaps: [] });
     const placeWarnings = (r: any) => r.validation.warnings.filter((w: string) => /standard_place '/.test(w));
     const append = (events: unknown[]) =>
-      researchAppendFromCaller({ projectPath: dir, section: "timelines", op: "append", entry: timeline(events) } as never);
+      researchAppendFromCaller({ projectPath: dir, section: "timelines", op: "append", entry: timeline(events) } as never, null);
     const events = async () => (await readResearch()).timelines[0].events;
     const realPlace = vi.mocked(familySearchPlace);
     const spelled = (fullName: string) => ({ fullName, places: [{ placeId: "1" }] });
@@ -3805,7 +3805,7 @@ describe("research_append (Phase 3)", () => {
             fields: { events: [ev("Schuylkill, Kansas", OTHER, 10), ev(null, "Atlantis", 20)] },
           },
         ],
-      } as never);
+      } as never, null);
       expect(r.ok, JSON.stringify(r)).toBe(true);
       if (!r.ok) return;
       expect((await events()).map((e: any) => [e.standard_place, e.distance_from_previous_km])).toEqual([
@@ -7944,17 +7944,34 @@ describe("research_append (batch ops)", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok || !("results" in r)) return;
+    // One `person_evidence` append now returns THREE rows (#4226): a_001,
+    // a_002 and a_003 all carry record_id "rec1" at role "principal", so they
+    // are one record entry, and linking a_002 claims the whole of it.
     expect(r.results.map((x) => `${x.section}:${x.entryId}`)).toEqual([
       "sources:src_002",
       "assertions:a_002",
       "assertions:a_003",
       "person_evidence:pe_001",
+      "person_evidence:pe_002",
+      "person_evidence:pe_003",
     ]);
     const research = await readResearch();
     expect(research.sources).toHaveLength(2);
     expect(research.assertions.map((a: any) => a.id)).toEqual(["a_001", "a_002", "a_003"]);
     expect(research.assertions[1].source_id).toBe("src_002"); // intra-batch forward ref persisted + validated
-    expect(research.person_evidence).toHaveLength(1);
+    expect(research.person_evidence).toHaveLength(3);
+    // The caller's row is theirs; the other two are the tool's, carry the
+    // caller's confidence, no score, and say what they came from.
+    expect(research.person_evidence[0]).toMatchObject({
+      id: "pe_001", assertion_id: "a_002", person_id: "I1", confidence: "confident", rationale: "match",
+    });
+    expect(research.person_evidence.slice(1).map((pe: any) => pe.assertion_id).sort()).toEqual(["a_001", "a_003"]);
+    for (const pe of research.person_evidence.slice(1)) {
+      expect(pe.person_id).toBe("I1");
+      expect(pe.confidence).toBe("confident"); // inherited from the trigger
+      expect(pe.match_score).toBeNull();
+      expect(pe.rationale).toMatch(/^Derived from the link on a_002: the same record entry \(rec1\/principal\)/);
+    }
   });
 
   it("(d2) appends a plan + its items in one batch, referencing the predicted plan id pl_001", async () => {

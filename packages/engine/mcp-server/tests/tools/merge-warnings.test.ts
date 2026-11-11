@@ -592,6 +592,54 @@ describe("merge_warnings tool", () => {
     expect(result.errors.join(" ")).toContain("leave a new person's persona out of merges");
   });
 
+  // Issue #4345: the interleaved-children tag is `implausible`, which is advisory
+  // in merge_warnings; only `contradiction` blocks a merge there.
+  it("reports hasInterleavedChildrenIgnoreSimilarSpouses as implausible, not a block", async () => {
+    const birth = (id: string, date: string) => ({ id, type: "Birth", date, standard_date: date });
+    await writeProject({
+      persons: [
+        { id: "H", gender: "Male", names: [{ id: "NH", given: "Henry", surname: "Ward" }] },
+        { id: "A", gender: "Female", names: [{ id: "NA", given: "Agnes", surname: "Brown" }] },
+        { id: "A1", gender: "Male", names: [{ id: "NA1", given: "Albert", surname: "Ward" }], facts: [birth("A1B", "1850")] },
+        { id: "A2", gender: "Male", names: [{ id: "NA2", given: "Arthur", surname: "Ward" }], facts: [birth("A2B", "1860")] },
+      ],
+      relationships: [
+        { id: "R1", type: "Couple", person1: "H", person2: "A" },
+        { id: "R2", type: "ParentChild", parent: "H", child: "A1" },
+        { id: "R3", type: "ParentChild", parent: "A", child: "A1" },
+        { id: "R4", type: "ParentChild", parent: "H", child: "A2" },
+        { id: "R5", type: "ParentChild", parent: "A", child: "A2" },
+      ],
+      sources: [],
+    });
+
+    // The record: Henry with a second wife, Bertha, and their son born 1855.
+    const result = await mergeWarnings({
+      projectPath: dir,
+      candidateGedcomx: {
+        persons: [
+          { id: "C1", gender: "Male", names: [{ id: "N1", given: "Henry", surname: "Ward" }] },
+          { id: "C2", gender: "Female", names: [{ id: "N2", given: "Bertha", surname: "Clark" }] },
+          { id: "C3", gender: "Male", names: [{ id: "N3", given: "Xavier", surname: "Ward" }], facts: [birth("XB", "1855")] },
+        ],
+        relationships: [
+          { id: "CR1", type: "Couple", person1: "C1", person2: "C2" },
+          { id: "CR2", type: "ParentChild", parent: "C1", child: "C3" },
+          { id: "CR3", type: "ParentChild", parent: "C2", child: "C3" },
+        ],
+        sources: [],
+      },
+      merges: [["H", "C1"]],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const hit = result.warnings.filter((w) => w.issueType === "hasInterleavedChildrenIgnoreSimilarSpouses");
+    expect(hit).toHaveLength(1);
+    expect(hit[0].severity).toBe("implausible");
+    expect(result.warnings.filter((w) => w.severity === "contradiction")).toEqual([]);
+  });
+
   it("candidate with one paired and one unpaired persona returns ok: true", async () => {
     await writeProject({
       persons: [

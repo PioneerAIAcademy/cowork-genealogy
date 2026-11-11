@@ -1,6 +1,6 @@
 import type { Principal } from "../auth/principal.js";
 import { getValidToken } from "../auth/refresh.js";
-import { BROWSER_USER_AGENT } from "../constants.js";
+import { BROWSER_USER_AGENT, TOOL_RESULT_CHAR_BUDGET } from "../constants.js";
 import { fsFetch } from "../utils/fs-fetch.js";
 import { formatYearRange } from "../utils/search-helpers.js";
 import type {
@@ -9,12 +9,23 @@ import type {
   FSCollectionsResponse,
   FSContentCount,
   Collection,
+  CollectionCatalogLoader,
+  CollectionCounts,
   CollectionsSearchResult,
 } from "../types/collection.js";
 
 const FS_COLLECTIONS_URL =
   "https://www.familysearch.org/service/search/hr/v2/collections";
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+/** A collection's FamilySearch page, returned once per answer as
+ *  `collectionUrl` rather than repeated on every row. */
+export const COLLECTION_URL_TEMPLATE = "https://www.familysearch.org/search/collection/{id}";
+
+/** The whole answer, as the server serializes it (`JSON.stringify(result)`,
+ *  compact), stays at or under this many characters — the shared
+ *  `TOOL_RESULT_CHAR_BUDGET`, as catalog_search's answer does. */
+export const ANSWER_CHAR_BUDGET = TOOL_RESULT_CHAR_BUDGET;
 
 // One un-retried request for the whole catalog (count=5000), so the budget
 // covers a large body streaming in full. Cold calls have been measured at 33s
@@ -172,6 +183,25 @@ function getCount(
   return entry?.count ?? 0;
 }
 
+/** Every catalog collection's counts by id: `personCount` as `toCollection`
+ *  derives it, and the `/Record` count its rows no longer carry. */
+export function collectionCountsById(data: FSCollectionsResponse): Map<string, CollectionCounts> {
+  const out = new Map<string, CollectionCounts>();
+  for (const entry of data.entries ?? []) {
+    const c = unwrapEntry(entry);
+    if (!c) continue;
+    out.set(String(c.id), { personCount: getCount(c.content, "/Person"), recordCount: getCount(c.content, "/Record") });
+  }
+  return out;
+}
+
+/** The catalog through `principal`'s own FamilySearch session, for
+ *  `research_append`'s locality count stamp. Bound at dispatch (`server.ts`), so
+ *  `research-append.ts` imports no token code. */
+export function collectionCatalogLoader(principal: Principal): CollectionCatalogLoader {
+  return async () => collectionCountsById(await fetchAllCollections(await getValidToken(principal), principal));
+}
+
 function toCollection(data: FSCollectionData): Collection {
   const meta = data.searchMetadata?.[0];
   const dateRange = formatYearRange(meta?.startYear, meta?.endYear);
@@ -180,11 +210,73 @@ function toCollection(data: FSCollectionData): Collection {
     id: data.id,
     title: data.title,
     dateRange,
-    recordCount: getCount(data.content, "/Record"),
     personCount: getCount(data.content, "/Person"),
-    imageCount: meta?.imageCount ?? 0,
-    url: `https://www.familysearch.org/search/collection/${data.id}`,
   };
+}
+
+/**
+ * The parts of a `standardPlace` below the collection scope it derives — for
+ * "Palermo, Sicilia, Italy" (scope "Italy") that is Palermo and Sicilia; for
+ * "Schuylkill, Pennsylvania, United States" (scope "Pennsylvania") it is
+ * Schuylkill. A free-text query that passed through as its own scope has none.
+ */
+export function subPlaceTerms(standardPlace: string): string[] {
+  const parts = standardPlace
+    .split(",")
+    .map((p) => p.trim())
+    .filter(Boolean);
+  const scope = standardPlaceToCollectionsQuery(standardPlace);
+  if (scope === standardPlace.trim()) return [];
+  // The scope standardPlaceToCollectionsQuery derived is the country (the last
+  // part) or a state level (the last two); every part before it is below it.
+  return parts.slice(0, scope === parts[parts.length - 1] ? -1 : -2);
+}
+
+/** One whole-word, case-insensitive matcher per term, built once per answer. */
+function wholeWordMatchers(terms: readonly string[]): RegExp[] {
+  return terms.map((t) => {
+    const escaped = t.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, "iu");
+  });
+}
+
+/**
+ * Hold the answer to `budget` characters of compact JSON. An answer already
+ * within it is returned unchanged — the same rows, in catalog order, with no
+ * `truncated` or `matched`. Over it, rows whose title names a part of
+ * `standardPlace` below the scope come first, then the rest in catalog order,
+ * and rows are kept in that order until the next would not fit; the answer then
+ * carries `truncated: true` and `matched` (the rows before any were left out).
+ */
+export function fitToBudget(
+  result: CollectionsSearchResult,
+  standardPlace: string,
+  budget: number = ANSWER_CHAR_BUDGET,
+): CollectionsSearchResult {
+  if (JSON.stringify(result).length <= budget) return result;
+
+  const matchers = wholeWordMatchers(subPlaceTerms(standardPlace));
+  const named: Collection[] = [];
+  const rest: Collection[] = [];
+  for (const r of result.results) (matchers.some((m) => m.test(r.title)) ? named : rest).push(r);
+  const ordered = [...named, ...rest];
+
+  const out: CollectionsSearchResult = {
+    collectionUrl: result.collectionUrl,
+    scope: result.scope,
+    totalForPlace: result.totalForPlace,
+    truncated: true,
+    matched: result.results.length,
+    results: [],
+  };
+  let size = JSON.stringify(out).length;
+  for (const row of ordered) {
+    const add = JSON.stringify(row).length + (out.results.length ? 1 : 0);
+    if (size + add > budget) break;
+    out.results.push(row);
+    size += add;
+  }
+  return out;
 }
 
 // A collection overlaps [startYear, endYear] when its searchMetadata year span
@@ -287,20 +379,15 @@ export async function collectionsSearchTool(
           )
         );
 
-  const results = dateFiltered.map(toCollection);
-
-  const query: CollectionsSearchResult["query"] = {
-    standardPlace: input.standardPlace,
-  };
-  if (startYear != null) query.startYear = startYear;
-  if (endYear != null) query.endYear = endYear;
-
-  return {
-    query,
-    scope,
-    totalForPlace: matchedByScope.length,
-    results,
-  };
+  return fitToBudget(
+    {
+      collectionUrl: COLLECTION_URL_TEMPLATE,
+      scope,
+      totalForPlace: matchedByScope.length,
+      results: dateFiltered.map(toCollection),
+    },
+    input.standardPlace,
+  );
 }
 
 /**
@@ -316,8 +403,13 @@ export const collectionsSearchToolSchema = {
     "United States, Canada, and Mexico, and at the country level everywhere else, " +
     "so results come back at that scope (the tool derives it and returns it as " +
     "`scope`). Optionally filter by startYear/endYear to keep only collections " +
-    "whose date range overlaps that window. Returns the full matched set in one " +
-    "response (no pagination). " +
+    "whose date range overlaps that window. Each row is {id, title, dateRange, " +
+    "personCount}; a collection's page is `collectionUrl` with `{id}` replaced by " +
+    "the row's id. There is no pagination: the matched set comes back in one " +
+    `response, held to ${ANSWER_CHAR_BUDGET.toLocaleString("en-US")} characters. ` +
+    "When it is over that, `truncated: true` " +
+    "is set, `matched` gives how many rows matched, and rows whose title names " +
+    "a part of `standardPlace` below the scope are kept first. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
