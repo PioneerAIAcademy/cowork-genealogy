@@ -1310,24 +1310,41 @@ def test_delegation_hands_subject(test, builtin_tool_calls, before_state):
 _SETUP_ORDER_TAG = "attached-records-setup"
 
 
-def test_attached_records_setup_order(tool_calls, test):
+def test_attached_records_setup_order(tool_calls, test, before_state):
     """Tag-gated (``attached-records-setup``): the router runs the attached-
     records step for a subject — ``extraction_append({ personId })``, then
     ``timeline_build`` after it — on a job's "Objective but no questions" row and
     on the bounded "a timeline for a person" ask (issue #3516 PR D).
 
     Checked per subject: each person extracted is built after it, for the same
-    ``personId``. Orders only the two MCP calls. ``tool_calls`` (the mock's MCP
-    log) and ``builtin_tool_calls`` (the hook's) share no ordering, so "both
-    before the first question-selection" is not checked here: on a job test it
-    rests on ``execution.stop_at_stub`` and ``routes-to:question-selection``.
+    subject. ``timeline_build``'s own contract accepts "a tree person id or the
+    FamilySearch id a tree person links to" (timeline-build.ts), so the router
+    is free to spell the two calls' ``personId`` differently for the same
+    person (e.g. the FamilySearch id on the extract, the tree id on the build,
+    once the earlier call's result surfaces it) — canonicalize both to the
+    person's bare FamilySearch id via the scenario's tree before comparing,
+    rather than requiring an identical literal string. Orders only the two MCP
+    calls. ``tool_calls`` (the mock's MCP log) and ``builtin_tool_calls`` (the
+    hook's) share no ordering, so "both before the first question-selection" is
+    not checked here: on a job test it rests on ``execution.stop_at_stub`` and
+    ``routes-to:question-selection``.
     """
     if _SETUP_ORDER_TAG not in (test.get("tags") or []):
         pytest.skip(f"not an {_SETUP_ORDER_TAG} test")
 
+    tree = before_state.get("tree_gedcomx_json") or {}
+    by_tree_id = {
+        p.get("id"): bare_ark_id(p["ark"])
+        for p in tree.get("persons") or []
+        if isinstance(p, dict) and isinstance(p.get("ark"), str) and p["ark"].strip()
+    }
+
     def person(c):
         pid = (c.get("args") or {}).get("personId")
-        return pid.strip() if isinstance(pid, str) else ""
+        pid = pid.strip() if isinstance(pid, str) else ""
+        if not pid:
+            return ""
+        return by_tree_id.get(pid, bare_ark_id(pid))
 
     first_extract: dict[str, int] = {}
     builds: dict[str, list[int]] = {}
