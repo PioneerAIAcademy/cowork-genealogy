@@ -47,15 +47,14 @@ export interface StoredCollectionRow {
   end_year: string;
 }
 
-export interface StoredPlaceEntry {
-  rows: StoredCollectionRow[];
-  /** Refused as too large to list: looked up, but its rows are unknown. */
-  too_large?: true;
+// Kept inline: packages/viewer-ui mirrors this shape by hand and its drift test
+// compares the two as text. `too_large`: refused as too large to list, so looked
+// up but its rows are unknown.
+export interface ExternalCollectionsDoc {
+  places: Record<string, { rows: StoredCollectionRow[]; too_large?: true }>;
 }
 
-export interface ExternalCollectionsDoc {
-  places: Record<string, StoredPlaceEntry>;
-}
+export type StoredPlaceEntry = ExternalCollectionsDoc["places"][string];
 
 /** One API row, as `external_links_search` reads it. */
 export interface RawCollectionRow {

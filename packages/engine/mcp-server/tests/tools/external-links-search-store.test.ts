@@ -502,7 +502,8 @@ describe("stored-list edges", () => {
     const ctx = await projectContext({ projectPath: project }, LOCAL);
     const ec = ctx.ok ? ctx.externalCollections! : {};
     expect(Object.keys(ec)).toEqual([PA, VENANGO]);
-    expect(Object.keys(ec[PA].byRecordType)).toEqual(["Census", "Wills"]);
+    const pa = ec[PA];
+    expect("byRecordType" in pa && Object.keys(pa.byRecordType)).toEqual(["Census", "Wills"]);
   });
 });
 
