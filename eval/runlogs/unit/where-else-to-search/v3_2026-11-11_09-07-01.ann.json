@@ -1,11 +1,11 @@
 {
-  "run_log": "v2_2026-10-28_14-18-05.json",
-  "annotator": "Francisbucci2@gmail.com",
+  "run_log": "v3_2026-11-11_09-07-01.json",
+  "annotator": "raphaeldaveal@gmail.com",
   "corrections": [
     {
       "test_id": "ut_where_else_to_search_003",
       "dimension_source": "base",
-      "dimension_name": "Completeness",
+      "dimension_name": "Correctness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -13,7 +13,7 @@
     {
       "test_id": "ut_where_else_to_search_003",
       "dimension_source": "base",
-      "dimension_name": "Correctness",
+      "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -60,40 +60,8 @@
     },
     {
       "test_id": "ut_where_else_to_search_001",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_001",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_001",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_001",
       "dimension_source": "rubric",
-      "dimension_name": "Selection",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_001",
-      "dimension_source": "rubric",
-      "dimension_name": "Grounding",
+      "dimension_name": "Prose",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -109,109 +77,13 @@
     {
       "test_id": "ut_where_else_to_search_001",
       "dimension_source": "rubric",
-      "dimension_name": "Prose",
+      "dimension_name": "Grounding",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_where_else_to_search_007",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_007",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_007",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_006",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_006",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_006",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_008",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_008",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_008",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_002",
-      "dimension_source": "base",
-      "dimension_name": "Correctness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_002",
-      "dimension_source": "base",
-      "dimension_name": "Completeness",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_002",
-      "dimension_source": "base",
-      "dimension_name": "Tool Arguments",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_002",
+      "test_id": "ut_where_else_to_search_001",
       "dimension_source": "rubric",
       "dimension_name": "Selection",
       "llm_score": 3,
@@ -219,9 +91,113 @@
       "comment": null
     },
     {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_001",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_007",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_006",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_006",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_006",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_008",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_008",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_008",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
       "test_id": "ut_where_else_to_search_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Grounding",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -230,14 +206,6 @@
       "test_id": "ut_where_else_to_search_002",
       "dimension_source": "rubric",
       "dimension_name": "Links",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_where_else_to_search_002",
-      "dimension_source": "rubric",
-      "dimension_name": "Prose",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
@@ -246,9 +214,9 @@
       "test_id": "ut_where_else_to_search_005",
       "dimension_source": "rubric",
       "dimension_name": "Prose",
-      "llm_score": 3,
+      "llm_score": 2,
       "corrected_score": 3,
-      "comment": null
+      "comment": "The 'Also listed, without a filled-in search:' section with <linkText>: <url> lines is the format the agent body requires (where-else-to-search.md:167) and the rubric's Prose pass names; not a defect."
     },
     {
       "test_id": "ut_where_else_to_search_005",
@@ -256,23 +224,23 @@
       "dimension_name": "Links",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "The 'Also listed, without a filled-in search:' section with <linkText>: <url> lines is the format the agent body requires (where-else-to-search.md:167) and the rubric's Prose pass names; not a defect."
     },
     {
       "test_id": "ut_where_else_to_search_005",
       "dimension_source": "rubric",
       "dimension_name": "Grounding",
       "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
+      "corrected_score": 3,
+      "comment": "The 'Also listed, without a filled-in search:' section with <linkText>: <url> lines is the format the agent body requires (where-else-to-search.md:167) and the rubric's Prose pass names; not a defect."
     },
     {
       "test_id": "ut_where_else_to_search_005",
       "dimension_source": "rubric",
       "dimension_name": "Selection",
-      "llm_score": 3,
+      "llm_score": 2,
       "corrected_score": 3,
-      "comment": null
+      "comment": "The 'Also listed, without a filled-in search:' section with <linkText>: <url> lines is the format the agent body requires (where-else-to-search.md:167) and the rubric's Prose pass names; not a defect."
     },
     {
       "test_id": "ut_where_else_to_search_005",
@@ -288,15 +256,47 @@
       "dimension_name": "Completeness",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": null
+      "comment": "The 'Also listed, without a filled-in search:' section with <linkText>: <url> lines is the format the agent body requires (where-else-to-search.md:167) and the rubric's Prose pass names; not a defect."
     },
     {
       "test_id": "ut_where_else_to_search_005",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 2,
-      "corrected_score": 2,
-      "comment": "judge is correct"
+      "corrected_score": 3,
+      "comment": "The 'Also listed, without a filled-in search:' section with <linkText>: <url> lines is the format the agent body requires (where-else-to-search.md:167) and the rubric's Prose pass names; not a defect."
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The 'Also listed, without a filled-in search:' section with <linkText>: <url> lines is the format the agent body requires (where-else-to-search.md:167) and the rubric's Prose pass names; not a defect."
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Selection",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The 'Also listed, without a filled-in search:' section with <linkText>: <url> lines is the format the agent body requires (where-else-to-search.md:167) and the rubric's Prose pass names; not a defect."
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Grounding",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The 'Also listed, without a filled-in search:' section with <linkText>: <url> lines is the format the agent body requires (where-else-to-search.md:167) and the rubric's Prose pass names; not a defect."
+    },
+    {
+      "test_id": "ut_where_else_to_search_002",
+      "dimension_source": "rubric",
+      "dimension_name": "Prose",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "The 'Also listed, without a filled-in search:' section with <linkText>: <url> lines is the format the agent body requires (where-else-to-search.md:167) and the rubric's Prose pass names; not a defect."
     }
   ]
 }
