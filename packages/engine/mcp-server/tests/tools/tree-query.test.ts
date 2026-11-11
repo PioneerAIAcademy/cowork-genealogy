@@ -341,6 +341,29 @@ describe("tree_query", () => {
       expect([...r.sources!.map((s) => s.id), ...r.omittedSourceIds!]).toEqual(wanted);
     });
 
+    it("lists under omittedSourceIds only sources a returned person or edge cites", async () => {
+      // I1 alone cites more source text than fits; I2..I5 each cite one source of
+      // their own, which goes with them when they are cut.
+      const big = (id: string) => ({ id, title: id, citation: "x".repeat(2000) });
+      await writeProject({
+        persons: [
+          { id: "I1", names: [{ given: "First" }], facts: Array.from({ length: 30 }, (_, k) => ({ id: `FA${k}`, type: "Residence", sources: [{ ref: `A${k}` }] })) },
+          ...[2, 3, 4, 5].map((i) => ({ id: `I${i}`, names: [{ given: `P${i}` }], facts: [{ id: `FB${i}`, type: "Residence", sources: [{ ref: `B${i}` }] }] })),
+        ],
+        relationships: [{ id: "R1", type: "ParentChild", parent: "I1", child: "I2", sources: [{ ref: "E1" }] }],
+        sources: [...Array.from({ length: 30 }, (_, k) => big(`A${k}`)), big("E1"), ...[2, 3, 4, 5].map((i) => big(`B${i}`))],
+      });
+      const r = await treeQuery({ projectPath: dir, includeSources: true });
+      if (!r.ok) throw new Error("not ok");
+      expect(size(r)).toBeLessThanOrEqual(40_000);
+      expect(r.persons.map((p) => p.id)).toEqual(["I1"]);
+      expect(r.omittedPersonIds).toEqual(["I2", "I3", "I4", "I5"]);
+      expect(r.omittedSourceIds!.length).toBeGreaterThan(0);
+      const citedByKept = new Set([...Array.from({ length: 30 }, (_, k) => `A${k}`), "E1"]);
+      for (const id of [...r.sources!.map((s) => s.id), ...r.omittedSourceIds!]) expect(citedByKept.has(id)).toBe(true);
+      expect([...r.sources!.map((s) => s.id), ...r.omittedSourceIds!].sort()).toEqual([...citedByKept].sort());
+    });
+
     it("still returns a named source whose only citing person the cap dropped", async () => {
       await writeProject(bigTree(120));
       const r = await treeQuery({ projectPath: dir, sourceIds: ["S120"] });
