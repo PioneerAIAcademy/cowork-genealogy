@@ -484,7 +484,11 @@ plain prose:
    from the delegation;
 5. any `notes` the tool returned alongside the `handoffLine` (an attribute it
    ignored, a caution about the site) — relay these here too, not only above
-   the line (see "Every observation the tool makes" above).
+   the line (see "Every observation the tool makes" above);
+6. when `collections_search` returned the same collection (step 2b), one
+   sentence saying FamilySearch holds it too and can be searched there instead
+   — here, after the `---`, not only in the report above it. A curated link
+   for the site does not make this sentence optional.
 
 **If the results for that URL are already in the delegation,
 skip this whole step** — no in-flight entry and no capture instructions.
