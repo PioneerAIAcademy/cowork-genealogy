@@ -1,4 +1,4 @@
-"""Direct tests for keeping a read page: `test_research.test_keeps_waiting_page`,
+"""Direct tests for a waiting page: `test_research.test_keeps_waiting_page`,
 and the `sources` arm of `test_universal.test_ownership_table` that lets
 `extraction_append` fill a page onto an existing source.
 
@@ -41,55 +41,62 @@ def kept() -> dict:
     return after
 
 
-def test_a_kept_page_passes():
-    check(state(), kept(), [CALL], TEST)
+SPAWN = {"tool": "Agent", "args": {"subagent_type": "record-structurer", "prompt": "projectPath: /p"}}
 
 
-def test_any_server_spelling_counts():
-    call = {**CALL, "tool": "mcp__remote-devices__Genealogy_Research__extraction_append"}
-    check(state(), kept(), [call], TEST)
+def test_one_spawn_and_no_call_passes():
+    check(state(), state(), [], [SPAWN], TEST)
 
 
 def test_other_tests_are_skipped():
     with pytest.raises(pytest.skip.Exception):
-        check(state(), state(), [], {"tags": []})
+        check(state(), state(), [], [], {"tags": []})
 
 
-@pytest.mark.parametrize("calls", [
+@pytest.mark.parametrize("spawns", [
     [],
-    [{"tool": "mcp__genealogy__research_append", "args": {"attachWaitingPages": True}}],
-    [{"tool": "mcp__genealogy__extraction_append", "args": {"projectPath": "/p", "recordIds": ["X"]}}],
-    [{"tool": "mcp__genealogy__extraction_append", "args": {"attachWaitingPages": "true"}}],
+    [{"tool": "Agent", "args": {"subagent_type": "person-evidence"}}],
+    [{"tool": "Agent", "args": {"prompt": "record-structurer"}}],
+    [SPAWN, SPAWN],
 ])
-def test_no_keeping_call_fails(calls):
-    with pytest.raises(AssertionError, match="kept the waiting page"):
-        check(state(), kept(), calls, TEST)
+def test_no_single_spawn_fails(spawns):
+    with pytest.raises(AssertionError, match="one record-structurer spawn"):
+        check(state(), state(), [], spawns, TEST)
 
 
-def test_a_page_left_off_fails():
-    with pytest.raises(AssertionError, match="Still no page"):
-        check(state(), state(), [CALL], TEST)
+@pytest.mark.parametrize("tool", [
+    "mcp__genealogy__extraction_append",
+    "mcp__remote-devices__Genealogy_Research__extraction_append",
+])
+def test_the_router_keeping_the_page_itself_fails(tool):
+    with pytest.raises(AssertionError, match="kept the page itself"):
+        check(state(), kept(), [{**CALL, "tool": tool}], [SPAWN], TEST)
+
+
+def test_a_record_extraction_call_is_not_keeping_the_page():
+    call = {"tool": "mcp__genealogy__extraction_append", "args": {"projectPath": "/p", "recordIds": ["X"]}}
+    check(state(), state(), [call], [SPAWN], TEST)
 
 
 def test_a_second_source_fails():
-    after = kept()
+    after = state()
     after["research_json"]["sources"].append({"id": "src_002", "citation": "the page"})
     with pytest.raises(AssertionError, match="new source"):
-        check(state(), after, [CALL], TEST)
+        check(state(), after, [], [SPAWN], TEST)
 
 
 def test_an_assertion_fails():
-    after = kept()
+    after = state()
     after["research_json"]["assertions"].append({"id": "a_001"})
-    with pytest.raises(AssertionError, match="no assertion"):
-        check(state(), after, [CALL], TEST)
+    with pytest.raises(AssertionError, match="assertion"):
+        check(state(), after, [], [SPAWN], TEST)
 
 
 def test_a_scenario_with_nothing_waiting_fails_rather_than_passing_empty():
     before = state()
     del before["research_json"]["sources"][0]["image_ark"]
     with pytest.raises(AssertionError, match="no source waiting"):
-        check(before, kept(), [CALL], TEST)
+        check(before, state(), [], [SPAWN], TEST)
 
 
 # ── ownership: what `extraction_append` may change on an existing source ─────

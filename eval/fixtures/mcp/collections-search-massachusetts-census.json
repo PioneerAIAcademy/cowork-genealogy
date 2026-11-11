@@ -5,9 +5,7 @@
     "standardPlace": "~Massachusetts"
   },
   "response": {
-    "query": {
-      "standardPlace": "Massachusetts, United States"
-    },
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
     "scope": "Massachusetts",
     "totalForPlace": 4,
     "results": [
@@ -15,37 +13,25 @@
         "id": "1459985",
         "title": "Massachusetts, State Census, 1855",
         "dateRange": "1855-1855",
-        "recordCount": 1202234,
-        "personCount": 1202234,
-        "imageCount": 15239,
-        "url": "https://www.familysearch.org/search/collection/1459985"
+        "personCount": 1202234
       },
       {
         "id": "1410399",
         "title": "Massachusetts, State Census, 1865",
         "dateRange": "1865-1865",
-        "recordCount": 1352817,
-        "personCount": 1352817,
-        "imageCount": 17616,
-        "url": "https://www.familysearch.org/search/collection/1410399"
+        "personCount": 1352817
       },
       {
         "id": "2311325",
         "title": "Massachusetts, Federal Census Mortality Schedule, 1870",
         "dateRange": "1870-1870",
-        "recordCount": 0,
-        "personCount": 0,
-        "imageCount": 657,
-        "url": "https://www.familysearch.org/search/collection/2311325"
+        "personCount": 0
       },
       {
         "id": "2315101",
         "title": "Massachusetts, Federal Census Mortality Schedule, 1880",
         "dateRange": "1880-1880",
-        "recordCount": 0,
-        "personCount": 0,
-        "imageCount": 2423,
-        "url": "https://www.familysearch.org/search/collection/2315101"
+        "personCount": 0
       }
     ]
   }

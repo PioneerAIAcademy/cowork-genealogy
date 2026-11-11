@@ -486,6 +486,26 @@ def assert_capture_pending_item_not_terminal(
         )
 
 
+def response_strings(value: Any, _depth: int = 0) -> list[str]:
+    """Every string leaf of a tool response. A string that holds JSON is parsed and
+    walked, so a response logged as serialized JSON is read the same as an object.
+    Depth-capped so a pathological response cannot recurse without end.
+    """
+    if _depth > 12 or value is None:
+        return []
+    if isinstance(value, str):
+        try:
+            parsed = json.loads(value)
+        except ValueError:
+            return [value]
+        return [parsed] if isinstance(parsed, str) else response_strings(parsed, _depth + 1)
+    if isinstance(value, dict):
+        return [s for v in value.values() for s in response_strings(v, _depth + 1)]
+    if isinstance(value, list):
+        return [s for v in value for s in response_strings(v, _depth + 1)]
+    return [str(value)]
+
+
 def as_mapping(value: Any) -> dict:
     """A tool argument a model may have serialized as a JSON string.
 

@@ -1,0 +1,31 @@
+{
+  "test": {
+    "id": "ut_record_structurer_009",
+    "skill": "record-structurer",
+    "name": "Page pass: a page that agrees with its index keeps the page and reports no difference",
+    "type": "positive",
+    "description": "project_context lists the 1860 census page of src_003 under waitingPages. The page agrees with the index on Patrick Flynn and names Michael, a child the index does not hold. The agent keeps the page with one extraction_append carrying attachWaitingPages and pageReadings, sends no dispute, and does not add Michael.",
+    "tags": [
+      "page-pass",
+      "census",
+      "confirming-page"
+    ]
+  },
+  "input": {
+    "delegation": "Run the page pass for the pages waiting in this project.\n\nprojectPath: <workspace>",
+    "scenario": "flynn-read-page-waiting"
+  },
+  "mcp_fixtures": [
+    "record-read-flynn-hint-1860-census-mabc"
+  ],
+  "judge_context": [
+    "The agent calls project_context, reads the waiting page with sidecar_read, and makes one extraction_append call with attachWaitingPages: true and pageReadings carrying src_003. It returns the tool's summary verbatim.",
+    "The page agrees with the index on Patrick's name and age, so no reading disputes a_008 or a_009. readings: [] is correct. A fact the page states about Patrick that the index lacks (his attending school) may be sent as an addition naming a Patrick assertion; it is not required.",
+    "Michael Flynn is not in the index, so he is not sent. Leaving him out is correct, not a missed fact.",
+    "Roles and classifications are decided in code: grade what the agent read and sent, not the classifications."
+  ],
+  "execution": {
+    "max_turns": 12,
+    "max_wall_clock_seconds": 400
+  }
+}

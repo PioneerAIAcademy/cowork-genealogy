@@ -13,12 +13,14 @@
     ]
   },
   "input": {
-    "delegation": "Question: q_001 (when and from where in Germany did Hermann Gaetjen immigrate; tree I1 Hermann, husband of I4 Amelia Nichols, father of I2 Henry Joseph b. 5 May 1878 San Francisco and I3 Amelia Otillie b. 23 Aug 1883 California).\nLink these to the right person in the tree:\n- src_001, assertions a_001 to a_009: 1875 San Francisco Great Register, Hermann Gatjen, 21, b. Germany, fireman, 5 Cook Street, naturalized 13 Aug 1875, California 4th District Court.\n- src_002, assertions a_010 to a_014: Germans to America Index, Herm Gaetjen, b. 1854 Prussia, arrived New York 2 Jun 1871.\nDecide identity yourself with same_person scoring. I1's only birth fact (about 1859) is unsourced. If the evidence does not support linking either persona to I1, put it on a separate stub and say so.\n\nprojectPath: <workspace>",
+    "delegation": "Question: q_001 (when and from where in Germany did Hermann Gaetjen immigrate; tree I1 Hermann, husband of I4 Amelia Nichols, father of I2 Henry Joseph b. 5 May 1878 San Francisco and I3 Amelia Otillie b. 23 Aug 1883 California).\nLink these to the right person in the tree:\n- src_001, assertions a_001 to a_009: 1875 San Francisco Great Register, Hermann Gatjen, 21, b. Germany, fireman, 5 Cook Street, naturalized 13 Aug 1875, California 4th District Court.\n- src_002, assertions a_010 to a_014: Germans to America Index, Herm Gaetjen, b. 1854 Prussia, arrived New York 2 Jun 1871.\nDecide identity yourself with same_person scoring. I1's only birth fact (about 1859) is unsourced. If the evidence does not support linking either persona to I1, put that persona on a separate stub instead of I1, not on both, and say so.\n\nprojectPath: <workspace>",
     "scenario": "gaetjen-naturalization-interval"
   },
   "mcp_fixtures": [
     "same-person-gaetjen-voter-1875",
-    "same-person-gaetjen-arrival-1871"
+    "same-person-gaetjen-arrival-1871",
+    "same-person-gaetjen-voter-1875-stub",
+    "same-person-gaetjen-arrival-1871-stub"
   ],
   "execution": {
     "max_wall_clock_seconds": 1200,
