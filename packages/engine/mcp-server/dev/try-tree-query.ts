@@ -10,7 +10,9 @@ const sourceIdsAt = args.indexOf("--source-ids");
 const input: TreeQueryInput = { projectPath: "" };
 if (sourcesAt >= 0) input.includeSources = true;
 if (sourceIdsAt >= 0) input.sourceIds = (args[sourceIdsAt + 1] ?? "").split(",").filter(Boolean);
-const positional = args.filter((a, i) => i !== sourcesAt && i !== sourceIdsAt && i !== sourceIdsAt + 1);
+const positional = args.filter(
+  (_a, i) => i !== sourcesAt && (sourceIdsAt < 0 || (i !== sourceIdsAt && i !== sourceIdsAt + 1)),
+);
 const [projectPath, personIds, factTypes] = positional;
 if (!projectPath) {
   console.error("usage: try-tree-query.ts <projectPath> [personId,personId] [factType,factType] [--sources | --source-ids S1,S2]");

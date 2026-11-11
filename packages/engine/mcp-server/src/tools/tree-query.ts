@@ -377,7 +377,7 @@ export const treeQuerySchema = {
     "standardDate, place, standardPlace, value and sourceRefs; relationships [{type: Couple " +
     "or ParentChild, person1, person2, parent, child, subtype, facts, notes}] — marriages " +
     "and their dates live on the Couple's facts; and missingPersonIds. A key that would be " +
-    "null, empty or false is left out, and a fact's place (or date) is left out when it equals " +
+    "null or empty is left out (preferred and primary are sent only when true), and a fact's place (or date) is left out when it equals " +
     "standardPlace (or standardDate). Source entries [{id, title, citation, author, url}] " +
     "come back only when asked: includeSources: true returns those cited by what is " +
     "returned; sourceIds returns the named ones, cited or not. To read a person's sources, " +
