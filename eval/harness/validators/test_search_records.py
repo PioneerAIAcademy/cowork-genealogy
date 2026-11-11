@@ -28,6 +28,7 @@ from validators_lib import new_section_entries as _new_section_entries
 from validators_lib import namesake_bare_id as _namesake_bare_id
 from validators_lib import assert_namesake_warning_handed_back as _assert_namesake_warning_handed_back
 from validators_lib import record_search_sent as _record_search_sent
+from validators_lib import response_strings as _response_strings
 from validators_lib import tool_input_keys as _tool_input_keys
 from validators_lib import (
     assert_topical_fixture_used,
@@ -374,6 +375,355 @@ def test_searched_before_no_collection_hand_back(tool_calls, test):
         "the agent reported the record set not on FamilySearch without running a "
         "record_search; Step 8 item 7 requires one logged search first"
     )
+
+
+# --- Outside holdings must come from a tool response (issue #4352) -----------
+
+# The outside sites the agent body names (Ancestry, MyHeritage, FindMyPast,
+# FindAGrave, Newspapers.com), plus "other sites", which no tool can ground.
+_SITE_NAMES = (
+    r"ancestry(?:\.com)?|myheritage(?:\.com)?|find ?my ?past(?:\.com)?"
+    r"|find ?a ?grave(?:\.com)?|newspapers\.com"
+)
+_GENERIC_SITES = r"other (?:genealogy )?sites?|another (?:genealogy )?site|other repositor(?:y|ies)"
+_OUTSIDE_SITE = re.compile(rf"\b(?:{_SITE_NAMES}|{_GENERIC_SITES})\b", re.I)
+# A word saying a site holds, indexes or has a record set. Started from PR
+# #4229's strict check (commit 7319cd9d6). "surviving" is not one: it describes
+# the records, not who holds them. Hedged "may have it" is not one either.
+_HOLDING_WORD = re.compile(
+    r"(?<!FamilySearch )\b(?:hold|holds|held|index|indexes|indexed|digiti[sz](?:e|es|ed)|hosts?|hosted"
+    r"|carr(?:y|ies)|available|offers?|contains?|providers?"
+    r"|has (?:the |these |those |its |some |many |all )?(?:[\w-]+ ){0,3}?"
+    r"(?:census(?:es)?|records|schedules|rolls|images|years|collections?|index(?:es)?|returns|registers)"
+    r"|found (?:on|at)|(?:is|are|was|were) (?:now )?(?:on|at))\b",
+    re.I,
+)
+_NEGATED = re.compile(r"\b(?:not|never|no longer)\s+(?:\w+\s+)?$|n't\s+(?:\w+\s+)?$", re.I)
+# "No 1825 census is available on Ancestry", "None of it is held there": a clause
+# that opens on "no"/"none" denies its holding word.
+_NEGATED_CLAUSE = re.compile(r"(?:^|[,:(])\s*(?:there\s+(?:is|are|was|were)\s+)?(?:no|none)\b[^,:(]*$", re.I)
+# "an Ancestry search link", "an Ancestry search is available": an offer of a
+# search, not a holding.
+_SEARCH_OFFER = re.compile(
+    rf"\b(?:{_SITE_NAMES})(?:\s*/\s*(?:{_SITE_NAMES}))*(?:'s)?"
+    rf"(?:\s+search(?:es)?\b(?:\s+(?:links?|urls?|pages?)\b)?|\s+(?:links?|urls?|pages?)\b)",
+    re.I,
+)
+# A holding word followed at once by a holder names that holder: "indexed on
+# Ancestry.com", "held at the New York State Library", and, for a word that
+# already ends in on/at ("is on"), the site right after it.
+_HELD_BY_SITE = re.compile(
+    rf"^\W*(?:(?!(?:not|never|familysearch)\b)\w+\W+){{0,3}}?(?:on|at|by|through|via|from)\s+"
+    rf"(?:the\s+)?(?:\*\*)?((?:{_SITE_NAMES}|{_GENERIC_SITES})\b)",
+    re.I,
+)
+_SITE_RIGHT_AFTER = re.compile(rf"^\s*(?:\*\*)?((?:{_SITE_NAMES}|{_GENERIC_SITES})\b)", re.I)
+_HELD_BY_OTHER = re.compile(
+    r"^\W*(?:\w+\W+){0,3}?(?:on|at|by|through|via|from|in)\s+(?:the\s+)?"
+    r"(?:FamilySearch|NYSL|FHL|(?:[\w.'&-]+\s+){0,6}?"
+    r"(?:library|archives?|society|courthouse|office|museum|clerk))\b",
+    re.I,
+)
+# "held on FamilySearch and Ancestry": a site listed after the other holder.
+_AND_SITE = re.compile(rf"^\s*(?:,|and|or|&)\s*(?:\*\*)?((?:{_SITE_NAMES})\b)", re.I)
+# "find the 1825 census on Ancestry": "find" claims a holder only when it names
+# the site as where the set is.
+_FIND_ON_SITE = re.compile(
+    rf"\bfind\b(?:\W+\w+){{0,5}}?\W+(?:on|at)\s+(?:\*\*)?((?:{_SITE_NAMES}|{_GENERIC_SITES})\b)", re.I
+)
+# "Ancestry is not indexing 1825": a site the sentence negates is not a holder.
+_NEGATED_AFTER_SITE = re.compile(
+    r"^\W*(?:\w+\s+){0,2}?(?:not|never)\b(?!\s+(?:by\s+|on\s+|at\s+)?(?:the\s+)?FamilySearch)"
+    r"|^\W*\w*n't\b",
+    re.I,
+)
+# "Ancestry doesn't hold the 1825 census, but MyHeritage does": a site that
+# stands in for an earlier holding word claims it, unless it is negated too.
+_SITE_DOES_TOO = re.compile(
+    rf"\b(?:but|while|whereas)\s+(?:\*\*)?((?:{_SITE_NAMES})\b)\W*\s+(?:also\s+)?"
+    r"(?:does|do|did|is|are|was|were|has|have)\b(?!n't|\s+not\b)",
+    re.I,
+)
+_ONLY_AT_SITE = re.compile(
+    rf"\bonly (?:on|at|by|through|via|from)\s+(?:\*\*)?((?:{_SITE_NAMES}|{_GENERIC_SITES})\b)", re.I
+)
+_FAMILYSEARCH = re.compile(r"\bFamilySearch\b", re.I)
+# "Ancestry and FamilySearch both hold", "Ancestry, not FamilySearch, holds":
+# FamilySearch listed beside a site, as a co-holder or set aside, does not take
+# the holding word from it.
+_COORDINATED_BEFORE = re.compile(
+    rf"(?:{_SITE_NAMES})\W*\s*(?:,|and|or|&)?\s*(?:(?:but\s+)?not|rather than|instead of)?\s*$", re.I
+)
+# A break needs a capital (or markup) after it, so "U.S. 1825" and "ca. 1845"
+# stay whole; the same rule as test_research_plan's _SENTENCE_SPLIT_RE. A
+# semicolon also ends a claim: "No FamilySearch collection is available; Ancestry
+# may have it" is two statements.
+_SENTENCE_BREAK = re.compile(r"(?<=[.!?])\s+(?=[A-Z*\"\u201c(\[])|;\s+")
+# A fragment ending in one of these stopped at an abbreviation, not a sentence
+# end: "born ca. 1845", "St. Lawrence County".
+_ABBREVIATION_END = re.compile(r"\b(?:ca|c|b|d|st|co|mr|mrs|abt)\.$", re.I)
+_YEAR = re.compile(r"\b(?:1[5-9]\d\d|20\d\d)\b")
+_BARE_YEAR = re.compile(r"(?:\*\*)?(1[5-9]\d\d|20\d\d)(?:\*\*)?")
+# A person's vital year is not the year of the record set the sentence is about:
+# "born ca. 1845", "born in 1845", "d. 1910", and a lifespan after a name,
+# "Patrick Flynn (1845-1910)". A bare "about 1825" or "(1825-1845)" after a
+# record set ("the state censuses (1825-1845)") keeps its years.
+_VITAL_BEFORE_YEAR = re.compile(
+    r"\b(?:born(?:\s+(?:in|on|about|around|abt\.|ca\.|c\.|circa))?|b\.|ca\.|c\.|circa|d\.|died(?:\s+in)?"
+    r"|aged|abt\.)\s*~?$",
+    re.I,
+)
+_LIFESPAN = re.compile(
+    r"(\b(?!(?:Census|Censuses|Records|Schedules|Index|Indexes|Collection|Collections|Registers|Lists"
+    r"|Rolls|Returns|Directory|Directories|Lists)\b)[A-Z][\w'-]+\s*)"
+    r"\(\s*~?\d{4}\s*[-\u2013\u2014]\s*~?\d{4}\s*\)"
+)
+_YEAR_RANGE = re.compile(r"\b(1[5-9]\d\d|20\d\d)\s*[-\u2013\u2014]\s*(1[5-9]\d\d|20\d\d)\b")
+_SITE_HOST = re.compile(
+    r"https?://(?:[\w-]+\.)*(ancestry|myheritage|findmypast|findagrave|newspapers)\.[a-z.]+", re.I
+)
+# A list line that opens on a year and links a site later on the same line:
+# `* **1870** [United States, Census, 1870](…) … *Also at: [Ancestry](…)*`.
+_LIST_LINE_YEAR = re.compile(r"\s*(?:[*+-]\s+)?(?:\*\*)?(1[5-9]\d\d|20\d\d)\b")
+
+
+def _claim_sentences(text: str) -> list[str]:
+    sentences: list[str] = []
+    for line in re.split(r"\n+", text or ""):
+        pending = ""
+        for part in _SENTENCE_BREAK.split(line):
+            pending = f"{pending} {part}" if pending else part
+            if _ABBREVIATION_END.search(pending):
+                continue
+            sentences.append(pending)
+            pending = ""
+        if pending:
+            sentences.append(pending)
+    return sentences
+
+
+def _record_years(text: str) -> set[int]:
+    text = _LIFESPAN.sub(lambda m: m.group(1), text or "")
+    return {
+        int(m.group(0))
+        for m in _YEAR.finditer(text)
+        if not _VITAL_BEFORE_YEAR.search(text[: m.start()])
+    }
+
+
+def _site_key(name: str) -> str:
+    """`ancestry` / `myheritage` / `findmypast` / `findagrave` / `newspapers`, or
+    "other sites", which no tool response can ground."""
+    flat = name.lower().replace(" ", "")
+    for key in ("ancestry", "myheritage", "findmypast", "findagrave", "newspapers"):
+        if flat.startswith(key):
+            return key
+    return "other sites"
+
+
+def _claimed_sites(sentence: str) -> set[str]:
+    """The outside sites a sentence says hold a record set. Each holding word is
+    tied to one holder: the site it goes on to name ("indexed on Ancestry.com",
+    "is on Ancestry"), another repository it names ("held at the New York State
+    Library" -- no outside claim), or else the sites named before it since the
+    previous holding word. A negated word claims nothing, and neither does one
+    FamilySearch owns -- "FamilySearch" stands between it and those sites ("No
+    FamilySearch collection is available for 1835, so I could not search
+    Ancestry") -- unless FamilySearch is listed beside a site as a co-holder.
+    "only on Ancestry" claims Ancestry whatever else the sentence says, and so
+    does "…, but Ancestry does" after a holding word."""
+    text = _SEARCH_OFFER.sub(lambda m: " " * len(m.group(0)), sentence)
+    sites = [(m.start(), m.end(), _site_key(m.group(0))) for m in _OUTSIDE_SITE.finditer(text)]
+    sites = [(s, e, key) for s, e, key in sites if not _NEGATED_AFTER_SITE.match(text[e:])]
+    claimed = {_site_key(m.group(1)) for m in _ONLY_AT_SITE.finditer(text)}
+    claimed |= {
+        _site_key(m.group(1))
+        for m in _FIND_ON_SITE.finditer(text)
+        if not _NEGATED.search(text[: m.start()])
+    }
+    claimed |= {
+        _site_key(m.group(1))
+        for m in _SITE_DOES_TOO.finditer(text)
+        if _HOLDING_WORD.search(text, 0, m.start())
+    }
+    segment_start = 0
+    for m in _HOLDING_WORD.finditer(text):
+        before, after = text[: m.start()], text[m.end():]
+        at = _HELD_BY_SITE.match(after)
+        if at is None and re.search(r"\b(?:on|at)$", m.group(0), re.I):
+            at = _SITE_RIGHT_AFTER.match(after)
+        if _NEGATED.search(before) or _NEGATED_CLAUSE.search(before):
+            pass
+        elif at is not None:
+            claimed.add(_site_key(at.group(1)))
+        elif (other := _HELD_BY_OTHER.match(after)) is not None:
+            also = _AND_SITE.match(after[other.end():])
+            if also is not None:
+                claimed.add(_site_key(also.group(1)))
+        else:
+            start = segment_start
+            for fs in _FAMILYSEARCH.finditer(text, segment_start, m.start()):
+                if not _COORDINATED_BEFORE.search(text[: fs.start()]):
+                    start = fs.end()
+            claimed |= {key for s, e, key in sites if s >= start and e <= m.start()}
+        segment_start = m.end()
+    return claimed
+
+
+def _linked_sites(text: str) -> set[str]:
+    return {m.group(1).lower() for m in _SITE_HOST.finditer(text or "")}
+
+
+def _markdown_groundings(text: str) -> set[tuple[str, int]]:
+    """(site, year) pairs a wiki page ties together. Three shapes: a table row
+    with a bare-year cell and a cell linking the site (`| 1855 | … | at
+    [Ancestry](…) |`); a table cell linking the site under a year in the nearest
+    earlier all-year row (the federal grid); a list line opening on a year."""
+    pairs: set[tuple[str, int]] = set()
+    year_row: list[str] | None = None
+    for line in (text or "").split("\n"):
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            year_row = None
+            m = _LIST_LINE_YEAR.match(line)
+            if m:
+                pairs |= {(site, int(m.group(1))) for site in _linked_sites(line[m.end():])}
+            continue
+        cells = [c.strip() for c in stripped.strip("|").split("|")]
+        filled = [c for c in cells if c]
+        if filled and all(_BARE_YEAR.fullmatch(c) for c in filled):
+            year_row = cells
+            continue
+        row_year = next(
+            (int(m.group(1)) for c in cells if (m := _BARE_YEAR.fullmatch(c))), None
+        )
+        for j, cell in enumerate(cells):
+            sites = _linked_sites(cell)
+            if not sites:
+                continue
+            year = row_year
+            if year is None and year_row is not None and j < len(year_row):
+                m = _BARE_YEAR.fullmatch(year_row[j])
+                year = int(m.group(1)) if m else None
+            if year is not None:
+                pairs |= {(site, year) for site in sites}
+    return pairs
+
+
+def _as_year(value) -> int | None:
+    try:
+        year = int(str(value).strip())
+    except (TypeError, ValueError):
+        return None
+    return year if 1500 <= year <= 2099 else None
+
+
+def _link_years(link: dict) -> set[int]:
+    start = _as_year(link.get("startYear", link.get("start_year")))
+    end = _as_year(link.get("endYear", link.get("end_year")))
+    if start is not None or end is not None:
+        start, end = (start if start is not None else end), (end if end is not None else start)
+        return set(range(start, end + 1)) if start <= end else set()
+    text = str(link.get("linkText") or link.get("link_text") or "")
+    years = {int(y) for y in _YEAR.findall(text)}
+    for lo, hi in _YEAR_RANGE.findall(text):
+        if int(lo) <= int(hi):
+            years |= set(range(int(lo), int(hi) + 1))
+    return years
+
+
+def _link_groundings(value, _depth: int = 0) -> set[tuple[str, int]]:
+    """(site, year) for every object in a response that links a site and dates
+    it: an `external_links_search` result, or a stored external-collections row
+    read back through `research_query`. Years come from `startYear`/`endYear`
+    (`start_year`/`end_year` on a stored row), else from the years the link text
+    names -- a written range ("1768-1801") in full, other years one by one."""
+    pairs: set[tuple[str, int]] = set()
+    if _depth > 12:
+        return pairs
+    if isinstance(value, str) and value.lstrip()[:1] in "[{":
+        try:
+            value = json.loads(value)
+        except ValueError:
+            return pairs
+    if isinstance(value, list):
+        for item in value:
+            pairs |= _link_groundings(item, _depth + 1)
+    elif isinstance(value, dict):
+        sites = _linked_sites(str(value.get("url") or ""))
+        if sites:
+            pairs |= {(site, year) for site in sites for year in _link_years(value)}
+        for item in value.values():
+            pairs |= _link_groundings(item, _depth + 1)
+    return pairs
+
+
+def _tool_groundings(tool_calls) -> set[tuple[str, int]]:
+    pairs: set[tuple[str, int]] = set()
+    for call in tool_calls or []:
+        if not isinstance(call, dict):
+            continue
+        response = call.get("response")
+        pairs |= _link_groundings(response)
+        for text in _response_strings(response):
+            pairs |= _markdown_groundings(text)
+    return pairs
+
+
+def report_names_no_ungrounded_outside_holding(tool_calls, agent_returns, text_response, test):
+    """Issue #4352 -- a sentence saying an outside site holds a record set must be
+    backed by a tool response this run received that ties that site to that year:
+    an `external_links_search` link whose years cover it, or a wiki table cell or
+    list line linking the site under that year. Grounded per (site, year), not per
+    site: the New York census wiki links Ancestry for 1855 onward, which must not
+    back a claim about 1825-1845. A sentence naming no year takes the years of the
+    delegation's first paragraph; with none there either it is ungrounded. "Other
+    sites" is never grounded.
+
+    Tier 2 -- reports, never gates (decided on the issue, 2026-11-09): at the
+    measured rates a gate would red evals at random.
+
+    Reads `tool_calls[].response`, what `mock_mcp.py` returned; never re-reads
+    fixture files (see `test_check_warnings.report_unsourced_year_in_response`).
+    Reads the agent's own return (`subject_reply_text`).
+    """
+    from harness.skill_runner import subject_reply_text
+
+    if "outside-holding-claim" not in test.get("tags", []):
+        pytest.skip("only the outside-holding measurement tests")
+    if test.get("type") == "negative":
+        pytest.skip("negative test -- the agent body does not run")
+    reply = subject_reply_text(agent_returns, text_response, "search-records", test)
+    if not reply.strip():
+        pytest.skip("no reply to check")
+
+    stated = str(test.get("delegation") or test.get("user_message") or "")
+    fallback_years = _record_years(re.split(r"\n\s*\n", stated, maxsplit=1)[0])
+    grounded: set[tuple[str, int]] | None = None
+    problems: list[str] = []
+    for sentence in _claim_sentences(reply):
+        sites = sorted(_claimed_sites(sentence))
+        if not sites:
+            continue
+        if grounded is None:
+            grounded = _tool_groundings(tool_calls)
+        years = _record_years(sentence) or fallback_years
+        if not years:
+            missing = [f"{site} (no year)" for site in sites]
+        else:
+            missing = [
+                f"{site} {year}"
+                for site in sites
+                for year in sorted(years)
+                if site == "other sites" or (site, year) not in grounded
+            ]
+        if missing:
+            problems.append(f"{sentence.strip()[:300]!r} [no tool response ties: {', '.join(missing)}]")
+    if problems:
+        raise AssertionError(
+            "the reply says an outside site holds a record set, and no tool response "
+            "this run received ties that site to that year: " + " | ".join(problems)
+        )
 
 
 def test_capture_pending_item_not_terminal(before_state, after_state, test):
@@ -1187,4 +1537,101 @@ def test_children_enumeration_unpinned(tool_calls, test):
         "every unpinned parent-name record_search still carried a place "
         f"({sorted({s for a in unpinned for s in _sent(a, CHILD_PLACE_FIELDS)})}); "
         "the children-enumeration search clears birthPlace, residencePlace and anyPlace"
+    )
+
+
+# --- Issue #2213 PR 3: unproven surnames --------------------------------
+
+def _calls_named(tool_calls, *names) -> list[dict]:
+    wanted = set(names)
+    return [
+        c for c in (tool_calls or [])
+        if _bare_tool_name(c.get("tool") or "") in wanted
+    ]
+
+
+def _norm_name(value) -> str:
+    return re.sub(r"[^a-z]", "", str(value or "").lower())
+
+
+def _same_name(a, b, width: int) -> bool:
+    a, b = _norm_name(a), _norm_name(b)
+    n = min(width, len(a), len(b))
+    return n > 0 and a[:n] == b[:n]
+
+
+# Test id -> (her given name, the researcher-named surname that is not proven).
+_UNPROVEN_SURNAME_BY_TEST_ID = {
+    "ut_search_records_d33": ("Juanita", "Fenstermaker"),
+}
+
+
+def test_unproven_surname_used_as_search_input(
+    before_state, after_state, tool_calls, test
+):
+    """Tag-gated (unproven-surname-search): issue #2213 PR 3 item 3, the Fittro
+    run. Typing a researcher-named, unproven surname into a query asserts
+    nothing, so she is searched under it: a record_search whose givenName is
+    hers and whose `surname` or `surnameAlt` is that surname (a wildcard such as
+    `Fenst*` counts when up to its first six letters match, as does a variant
+    spelling such as Fenstermacher). The caution belongs on the tree, so
+    nothing written to it asserts the marriage: no new Couple relationship for
+    the subject, and no name on her in that surname.
+    """
+    tags = test.get("tags", [])
+    test_id = test.get("id")
+    assert test_id not in _UNPROVEN_SURNAME_BY_TEST_ID or "unproven-surname-search" in tags, (
+        f"{test_id} has an entry in _UNPROVEN_SURNAME_BY_TEST_ID but no "
+        "'unproven-surname-search' tag - restore the tag or delete the entry"
+    )
+    if "unproven-surname-search" not in test.get("tags", []):
+        pytest.skip("not an unproven-surname-search scenario")
+    assert test_id in _UNPROVEN_SURNAME_BY_TEST_ID, (
+        f"{test_id} carries 'unproven-surname-search' but has no entry in "
+        "_UNPROVEN_SURNAME_BY_TEST_ID"
+    )
+    given, surname = _UNPROVEN_SURNAME_BY_TEST_ID[test_id]
+    calls = [_as_mapping(c.get("args")) for c in _calls_named(tool_calls, "record_search")]
+    target = _norm_name(surname)
+
+    def under_it(value) -> bool:
+        v = _norm_name(value)
+        n = min(len(v), len(target), 6)
+        return n >= 4 and v[:n] == target[:n]
+
+    hit = [
+        a for a in calls
+        if _same_name(a.get("givenName"), given, len(_norm_name(given)))
+        and (under_it(a.get("surname")) or under_it(a.get("surnameAlt")))
+    ]
+    assert hit, (
+        f"no record_search looked for {given} under the unproven surname "
+        f"{surname}; searching under it asserts nothing. record_search calls: {calls}"
+    )
+
+    research = before_state.get("research_json") or {}
+    subjects = (research.get("project") or {}).get("subject_person_ids") or []
+    subject = subjects[0] if subjects else None
+
+    def couples(state):
+        tree = state.get("tree_gedcomx_json") or state.get("tree_gedcomx") or {}
+        return {
+            r.get("id") for r in tree.get("relationships") or []
+            if r.get("type") == "Couple" and subject in (r.get("person1"), r.get("person2"))
+        }
+
+    def surnames(state):
+        tree = state.get("tree_gedcomx_json") or state.get("tree_gedcomx") or {}
+        person = next((p for p in tree.get("persons") or [] if p.get("id") == subject), {})
+        return {_norm_name(n.get("surname")) for n in person.get("names") or []}
+
+    new_couples = couples(after_state) - couples(before_state)
+    assert not new_couples, (
+        f"the marriage to a {surname} is unproven, yet the run wrote a Couple "
+        f"relationship for the subject: {sorted(new_couples)}"
+    )
+    added = surnames(after_state) - surnames(before_state)
+    assert _norm_name(surname) not in added, (
+        f"the marriage to a {surname} is unproven, yet the run gave the subject "
+        f"a {surname} name in the tree"
     )

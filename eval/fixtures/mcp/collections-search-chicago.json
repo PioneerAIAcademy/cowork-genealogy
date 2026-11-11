@@ -5,35 +5,25 @@
     "standardPlace": "~Illinois"
   },
   "response": {
-    "query": {
-      "standardPlace": "Illinois"
-    },
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
     "scope": "Illinois",
     "totalForPlace": 4,
     "results": [
       {
         "id": "1803978",
-        "title": "Illinois, Cook County, Chicago, Church Records, 1833-1925",
-        "recordCount": 285000,
-        "dates": "1833-1925"
+        "title": "Illinois, Cook County, Chicago, Church Records, 1833-1925"
       },
       {
         "id": "2024189",
-        "title": "Illinois, Cook County, Birth Certificates, 1871-1940",
-        "recordCount": 1450000,
-        "dates": "1871-1940"
+        "title": "Illinois, Cook County, Birth Certificates, 1871-1940"
       },
       {
         "id": "1913456",
-        "title": "Illinois, Cook County, Death Records, 1871-1947",
-        "recordCount": 980000,
-        "dates": "1871-1947"
+        "title": "Illinois, Cook County, Death Records, 1871-1947"
       },
       {
         "id": "1756321",
-        "title": "Illinois, Cook County, Marriage Records, 1871-1920",
-        "recordCount": 620000,
-        "dates": "1871-1920"
+        "title": "Illinois, Cook County, Marriage Records, 1871-1920"
       }
     ]
   }
