@@ -259,6 +259,12 @@ def test_outside_holding_with_no_tool_response_is_reported(text):
     "Not on FamilySearch. search-external-sites can check other sites for these years.",
     "Hand-back: search-external-sites — NY state censuses 1825/1835/1845, Tallman, Clinton and Essex; FamilySearch holds no collection for these years; check Ancestry",
     "The New York State Library keeps a county list; FamilySearch holds no collection for these years.\nsearch-external-sites can check Ancestry.",
+    # Hand-backs a later review of PR #4468 found reported: a holding word about
+    # FamilySearch or another repository, with a site named for the next step.
+    "I searched the available FamilySearch collections; search-external-sites can check other sites for 1825.",
+    "No results were available for 1825, so search-external-sites can try Ancestry.",
+    "FamilySearch has indexed the 1855 census, so search-external-sites can check Ancestry for 1825.",
+    "The New York State Library holds the original 1825 schedules; Ancestry and other sites may be searched next.",
 ])
 def test_a_reply_with_no_holding_claim_is_not_reported(text):
     _holding(text)
