@@ -53,6 +53,14 @@ describe('parseExternalCollections', () => {
   it('keeps a fetched place with no rows', () => {
     expect(parseExternalCollections({ places: { P: { rows: [] } } })!.places.P.rows).toEqual([])
   })
+
+  it('keeps too_large only when it is exactly true', () => {
+    const doc = parseExternalCollections({
+      places: { US: { rows: [], too_large: true }, P: { rows: [], too_large: 'yes' } }
+    })!
+    expect(doc.places.US).toEqual({ rows: [], too_large: true })
+    expect(doc.places.P).toEqual({ rows: [] })
+  })
 })
 
 describe('groupCollections', () => {
@@ -97,7 +105,14 @@ describe('groupCollections', () => {
 
   it('keeps an empty place with no groups', () => {
     const [place] = groupCollections(parseExternalCollections({ places: { P: { rows: [] } } }))
-    expect(place).toEqual({ place: 'P', groups: [], rowCount: 0 })
+    expect(place).toEqual({ place: 'P', groups: [], rowCount: 0, tooLarge: false })
+  })
+
+  it('marks a too-large place', () => {
+    const [place] = groupCollections(
+      parseExternalCollections({ places: { US: { rows: [], too_large: true } } })
+    )
+    expect(place).toEqual({ place: 'US', groups: [], rowCount: 0, tooLarge: true })
   })
 })
 
