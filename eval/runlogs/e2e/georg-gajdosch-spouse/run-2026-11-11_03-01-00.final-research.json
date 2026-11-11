@@ -1,0 +1,2447 @@
+{
+  "project": {
+    "id": "rp_georg_gajdosch_spouse",
+    "objective": "Did Georg Gajdosch of Lide\u010dko, Moravia have a daughter Anna, baptised 22 April 1718 \u2014 and was her mother named Catharina rather than the Dorothea the tree records as his wife?",
+    "subject_person_ids": [
+      "K69J-F7Y"
+    ],
+    "status": "completed",
+    "created": "2026-09-07",
+    "updated": "2026-11-11"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Do independent records confirm or refute that Georg Gajdosch of Lide\u010dko had a daughter Anna baptised 22 April 1718 whose mother was named Catharina rather than Dorothea?",
+      "rationale": "The tree records Georg's wife as Dorothea with no source; the objective asserts a specific baptism entry may name the mother as Catharina. The Lide\u010dko parish registers (available via Matricula/FamilySearch) for 1718 are the direct test: a single baptism entry for Anna would simultaneously confirm her existence as Georg's daughter and name her mother, confirming or refuting the tree's Dorothea assignment.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "targeted",
+      "priority": "high",
+      "date_window": "1710-1750",
+      "status": "resolved",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": "2026-11-11",
+      "resolution_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_006",
+        "a_008",
+        "a_009",
+        "a_010"
+      ],
+      "search_stop": {
+        "stopped_because": "resources_spent",
+        "justification": "Researcher chose to wrap up. The FamilySearch indexed abstract (ark:/61903/1:1:FMSZ-MBF) confirms Anna Gajdosch's baptism on 22 April 1718 with mother Catharina, corroborated by three sibling baptisms (Martin 1714, Catharina 1722, Zuzana 1729) all naming the same Catharina, against Joannes's baptism (Oct 1714) naming Dorothea \u2014 the best evidence gathered supports two distinct Georg Gajdosch men / two wives. By researcher choice, the original register images were not viewed: the browse-only original baptism register (vol. 2504, image group 005387300) was skipped once the indexed abstract returned a positive match; the Opava Archive's independent scan of the same volume (digi.archives.cz) was likewise skipped; and the browse-only marriage register (vol. 2506, image group 005387302, 1709-1779) that could independently confirm which wife(s) Georg Gajdosch had was never browsed frame-by-frame (only a nil indexed marriage search was run). Status left in_progress; this is a resource-exhaustion stop, not a proof.",
+        "log_entry_ids": [
+          "log_001",
+          "log_002",
+          "log_003",
+          "log_004",
+          "log_005",
+          "log_006",
+          "log_007",
+          "log_008",
+          "log_009",
+          "log_010",
+          "log_011",
+          "log_012",
+          "log_013",
+          "log_014",
+          "log_015",
+          "log_016",
+          "log_017",
+          "log_018",
+          "log_019",
+          "log_020",
+          "log_021",
+          "log_022",
+          "log_023",
+          "log_024",
+          "log_025",
+          "log_026",
+          "log_027"
+        ],
+        "stop_criteria": null,
+        "not_reached": [
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "Image browse of the Lide\u010dko baptism register, vol. 2504 (image group 005387300, 1707-1742), skipped by researcher choice once the FamilySearch indexed abstract returned Anna's baptism; the original handwritten entry for Anna (22 Apr 1718) and the three other Catharina-mother baptisms was never viewed to confirm the mother's name against transcription error."
+          },
+          {
+            "kind": "skipped_plan_item",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "Browse of the Opava Archive portal (digi.archives.cz) scan of the same vol. 2504 baptism register under Lide\u010dko or Klein Litsch, skipped for the same reason \u2014 an independent image source for the same decisive entries, never viewed."
+          },
+          {
+            "kind": "deferred",
+            "log_entry_id": null,
+            "wiki_title": null,
+            "description": "Browse of the Lide\u010dko marriage register, vol. 2506 (image group 005387302, 1709-1779) \u2014 only a name-indexed marriage search was run (nil results); the browse-only original register, which could directly confirm whether Georg Gajdosch married Catharina, Dorothea, or both sequentially, was never browsed frame by frame."
+          }
+        ]
+      },
+      "created": "2026-11-11"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-11",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "church",
+          "jurisdiction": "Lide\u010dko, Vset\u00edn, Czechia",
+          "date_range": "1718",
+          "repository": "FamilySearch",
+          "rationale": "The loc_001 locality entry and the delegation briefing identify FamilySearch collection 1804263 (Czech Republic, Church Books, 1552\u20131981) as name-searchable and the first search to attempt. A name search for Anna Gajdosch \u2014 and spelling variants Gajdos and Gaidosch \u2014 baptised in Lide\u010dko in 1718 may surface the entry directly and name the mother in Latin genitive (Catharinae or Dorotheae). Searching Georg Gajdosch as father is also worth running to retrieve all indexed entries for his children, enabling a comparison across baptisms. Name-searchable per the delegation briefing.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "church",
+          "jurisdiction": "Lide\u010dko, Vset\u00edn, Czechia",
+          "date_range": "1707-1742",
+          "repository": "FamilySearch",
+          "rationale": "If the indexed search (pli_001) returns nothing, the 1707\u20131742 Lide\u010dko baptism register (image group 005387300, vol. 2504) must be browsed page by page. The loc_001 entry confirms this volume is the precise source for a 22 April 1718 baptism. The Latin genitive forms Catharinae and Dorotheae will distinguish the mothers. Browsing should also cover the 26 Oct 1714 Joannes Gajdosch entry \u2014 in the same volume and recorded in the tree without any source \u2014 to compare the mother's name across two of Georg's children's baptisms. The surrounding villages (Horn\u00ed Lide\u010d, Pul\u010d\u00edn, St\u0159eln\u00e1) also filed their baptisms in this register; any entry for Georg near those villages should not be overlooked. browse-only (personCount 0).",
+          "fallback_for": "pli_001",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "pli_001's indexed search returned an abstract confirming Anna Gajdosch baptised 22 April 1718 with mother Catharina; the image-browse fallback was never needed."
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "church",
+          "jurisdiction": "Lide\u010dko, Vset\u00edn, Czechia",
+          "date_range": "1707-1742",
+          "repository": "digi.archives.cz (Opava Archive)",
+          "rationale": "The loc_001 entry confirms the same 1707\u20131742 volume is available at the Opava Archive portal (digi.archives.cz) under both the Czech name Lide\u010dko and the German name Klein Litsch. If FamilySearch images (pli_002) are illegible or unavailable, this portal provides an alternative scan of the same register. browse-only (personCount 0).",
+          "fallback_for": "pli_002",
+          "status": "skipped",
+          "skip_category": "fallback_not_triggered",
+          "skip_reason": "Fallback chain (pli_002 \u2192 pli_003) was not triggered because pli_001 resolved the baptism record through an indexed abstract before either image-browse fallback was required."
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "church",
+          "jurisdiction": "Lide\u010dko, Vset\u00edn, Czechia",
+          "date_range": "1705-1715",
+          "repository": "FamilySearch",
+          "rationale": "The tree records Georg's marriage to Dorothea c. 1710 with no source attached. A marriage entry in the Lide\u010dko parish register naming his wife would confirm whether she was recorded as Dorothea or Catharina \u2014 evidence independent of the baptism entries that could resolve whether the name discrepancy reflects two different women or a recording variant. Search collection 1804263 by name first (name-searchable); if not found, browse the marriage section of the Opava Archive Church Books (collection 1475346, browse-only (personCount 0)). The date range is set to 1705\u20131715 to bracket the c. 1710 estimate and account for the register's 1707 start.",
+          "fallback_for": null,
+          "status": "completed"
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T02:20:02.611Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdosch",
+        "collectionId": "1804263"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 401,
+      "staged_ref": "results/.staging/2a1026d1-5e92-4355-ba9b-ebd79e1175fb.json"
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T02:20:02.621Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdosch",
+        "givenName": "Georgius",
+        "collectionId": "1804263"
+      },
+      "outcome": "positive",
+      "results_examined": 19,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 19,
+      "staged_ref": "results/.staging/bf7d588b-3056-4747-801e-47c9c445b3c6.json"
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T02:20:02.627Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdosch",
+        "givenName": "Georg",
+        "marriagePlace": "Lide\u010dko, Vset\u00edn, Czechoslovakia",
+        "marriageYearFrom": 1700,
+        "marriageYearTo": 1720
+      },
+      "outcome": "positive",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 8,
+      "staged_ref": "results/.staging/7cd6c910-9a2e-4348-ab7c-36aea3983a6c.json"
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T02:22:38.719Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Anna",
+        "surname": "Gajdosch",
+        "fatherGivenName": "Georg",
+        "fatherSurname": "Gajdosch",
+        "birthYearFrom": 1715,
+        "birthYearTo": 1722,
+        "birthPlace": "Lide\u010dko, Vset\u00edn, Czechia",
+        "collectionId": "1804263",
+        "recordType": "birth"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Zero results. Place expansion tried Lide\u010dko under all historical name variants \u2014 all 0."
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T02:22:38.719Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Anna",
+        "surname": "Gajdosch",
+        "fatherGivenName": "Georg",
+        "fatherSurname": "Gajdosch",
+        "birthYearFrom": 1710,
+        "birthYearTo": 1725,
+        "recordType": "birth",
+        "recordCountry": "Czech Republic"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Unpinned retry for the coll-1804263 Gajdosch search above \u2014 0 results country-wide."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T02:22:38.719Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Anna",
+        "surname": "Gajdos",
+        "fatherGivenName": "Georg",
+        "birthYearFrom": 1710,
+        "birthYearTo": 1725,
+        "collectionId": "1804263",
+        "recordType": "birth",
+        "recordCountry": "Czech Republic"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Surname variant Gajdos (without h), collection-pinned \u2014 0 results."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T02:22:38.719Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Anna",
+        "surname": "Gajdos",
+        "fatherGivenName": "Georg",
+        "birthYearFrom": 1710,
+        "birthYearTo": 1725,
+        "recordType": "birth",
+        "recordCountry": "Czech Republic"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Unpinned retry for Gajdos collection-pinned search \u2014 0 results country-wide."
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T02:22:38.719Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdosch",
+        "collectionId": "1804263",
+        "recordCountry": "Czech Republic"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Surname-only Gajdosch in collection 1804263 \u2014 0. No indexed Gajdosch records in this collection."
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T02:22:38.719Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdo\u0161",
+        "collectionId": "1804263",
+        "recordCountry": "Czech Republic"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Czech diacritic spelling Gajdo\u0161, collection-pinned \u2014 0 results."
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T02:22:38.719Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdo\u0161",
+        "recordCountry": "Czech Republic"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Unpinned retry for Gajdo\u0161 collection-pinned search \u2014 0 results country-wide."
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T02:22:38.719Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajd*",
+        "birthPlace": "Lide\u010dko, Vset\u00edn, Czechia",
+        "recordType": "birth",
+        "recordCountry": "Czech Republic"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Wildcard Gajd* at Lide\u010dko (all historical place variants tried) \u2014 0. No indexed birth records for ANY Gajd* surname in Lide\u010dko."
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T02:22:38.719Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajd*",
+        "collectionId": "1804263",
+        "recordCountry": "Czech Republic"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Wildcard Gajd* country-wide in collection 1804263 \u2014 0. Collection 1804263 has NO indexed records for any Gajd* surname."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-11T02:22:38.719Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdosch",
+        "recordCountry": "Czech Republic"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Gajdosch country-wide without collection pin \u2014 0. Surname not indexed anywhere in Czech records on FamilySearch. Catalog search confirms Lide\u010dko baptism records 1707-1742 (imageGroupNumber 5387300) are digital-image-only, NOT indexed in the records search engine. Full-text search or image browsing of imageGroupNumber 5387300 is required."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-11T02:23:24.452Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdosch",
+        "givenName": "Georg",
+        "collectionId": "1804263",
+        "marriageYearFrom": 1705,
+        "marriageYearTo": 1715
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Nil. Marriage records 1705-1715 for Georg Gajdosch not indexed in collection 1804263 (Czech Republic, Church Books, 1552-1981)."
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-11T02:23:24.452Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdosch",
+        "givenName": "Georg",
+        "collectionId": "1804263",
+        "marriageYearFrom": 1700,
+        "marriageYearTo": 1720
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Nil after broadening marriage year window to 1700-1720. No marriage entries in collection 1804263."
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-11T02:23:24.452Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdosch",
+        "collectionId": "1804263"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Previously logged as log_001 under pli_001; examined for pli_004 as well. 401 Gajdosch results in collection 1804263, all 1800s baptisms. No marriage entry for c.1690 Georg Gajdosch."
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-11T02:23:24.452Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdosch",
+        "givenName": "Georg",
+        "collectionId": "1804263",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Nil. recordType:marriage filter confirms no marriage entries indexed for Georg Gajdosch in collection 1804263."
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-11T02:23:24.452Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdosch",
+        "givenName": "Jiri",
+        "collectionId": "1804263",
+        "recordType": "marriage"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Nil. Czech given-name variant Jiri returns nothing for marriage type in collection 1804263."
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-11T02:23:24.452Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdosch",
+        "givenName": "Jiri",
+        "recordType": "marriage",
+        "recordCountry": "Czechia"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Nil. Unpinned Jiri + marriage search across all Czechia also returns zero. Czech variant of given name confirms no accessible marriage entry in FamilySearch."
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-11T02:23:24.452Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdosch",
+        "givenName": "Georgius",
+        "collectionId": "1804263"
+      },
+      "outcome": "negative",
+      "results_examined": 19,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Previously logged as log_002 under pli_001; examined for pli_004. Latin variant Georgius. 19 results all 1800s, match scores below 0.003. No marriage entry for subject."
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-11T02:23:24.452Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdosch",
+        "givenName": "Georg",
+        "recordCountry": "Czechia",
+        "recordType": "marriage",
+        "marriageYearFrom": 1700,
+        "marriageYearTo": 1720
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Nil country-scope marriage search. JurisdictionHint returned: marriage in Lide\u010dko, Vset\u00edn, Czechoslovakia, earliest year 1709. Used hint place for next search."
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-11T02:23:24.452Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Gajdosch",
+        "givenName": "Georg",
+        "marriagePlace": "Lide\u010dko, Vset\u00edn, Czechoslovakia",
+        "marriageYearFrom": 1700,
+        "marriageYearTo": 1720
+      },
+      "outcome": "positive",
+      "results_examined": 8,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Previously logged as log_003 under pli_001; examined for pli_004. 8 baptism entries for Georg Gajdosch children in Lide\u010dko (collection 1784129, batch C92604-1). No marriage entry found; children's baptisms name the mother. Split: Joannes (Oct 1714) mother Dorothea; Martin (Nov 1714), Anna (1718), Catharina (1722), Zuzana (1729) all name Catharina. Two children born 8 days apart with different mothers indicates two distinct Georg Gajdosch men in Lide\u010dko."
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-11T02:23:24.452Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:FMSZ-MBF"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_023.json",
+      "notes": "Baptism of Anna Gajdosch, 22 Apr 1718, Lide\u010dko. Father: Georg Gajdosch; Mother: Catharina (no surname).",
+      "staged_ref": "results/.staging/f7148349-813f-41a8-97cc-7f2baaf8682c.json"
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-11T02:23:24.458Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:FMSZ-SFP"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_024.json",
+      "notes": "Baptism of Catharina Gajdosch, 11 Oct 1722, Lide\u010dko. Father: Georg Gajdosch; Mother: Catharina (no surname).",
+      "staged_ref": "results/.staging/f1d08d0f-e3c2-4108-b45c-641644430eee.json"
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-11T02:23:24.464Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:FMS8-XFQ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_025.json",
+      "notes": "Baptism of Joannes Gajdosch, 26 Oct 1714, Lide\u010dko. Father: Georg Gajdosch; Mother: Dorothea (no surname). Already attached to subject K69J-F7Y.",
+      "staged_ref": "results/.staging/bc1ebbf8-3dbf-46db-b7ee-32b236c236dd.json"
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-11T02:23:24.470Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:FMS8-6GZ"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_026.json",
+      "notes": "Baptism of Martin Gajdosch, 3 Nov 1714, Lide\u010dko. Father: Georg Gajdosch; Mother: Catharina (no surname). Only 8 days after Joannes (mother Dorothea) \u2014 impossible for same couple, confirming two distinct Georg Gajdosch men in Lide\u010dko.",
+      "staged_ref": "results/.staging/5ad81d1b-2161-456b-bdd6-dc0eae2bcbd6.json"
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-11T02:23:24.475Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:FMSZ-9RC"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_027.json",
+      "notes": "Baptism of Zuzana Gajdosch, 9 Feb 1729, Lide\u010dko. Father: Georg Gajdosch; Mother: Catharina (no surname). Catharina pattern confirmed through 1729.",
+      "staged_ref": "results/.staging/de4ee397-cccd-4708-90df-ff8862aedf11.json"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"Czech Republic, Births and Baptisms, 1637-1889\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMSZ-MBX : Mon Oct 19 23:50:27 UTC 2026), Entry for Anna Gajdosch and Georg Gajdosch, 22 April 1718.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Anna Gajdosch, \"Czech Republic, Births and Baptisms, 1637-1889\"",
+        "when_created": "1718",
+        "when_accessed": "2026-11-11",
+        "where": "Czech Republic, Births and Baptisms, 1637-1889",
+        "where_within": "ark:/61903/1:1:FMSZ-MBF"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-11",
+      "log_entry_id": "log_023",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MGR2-XQ1",
+      "gedcomx_source_description_id": "S1"
+    },
+    {
+      "id": "src_002",
+      "citation": "\"Czech Republic, Births and Baptisms, 1637-1889\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMS8-XF3 : Mon Oct 19 23:44:55 UTC 2026), Entry for Joannes Gajdosch and Georg Gajdosch, 26 October 1714.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Joannes Gajdosch, \"Czech Republic, Births and Baptisms, 1637-1889\"",
+        "when_created": "1714",
+        "when_accessed": "2026-11-11",
+        "where": "Czech Republic, Births and Baptisms, 1637-1889",
+        "where_within": "ark:/61903/1:1:FMS8-XFQ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-11",
+      "log_entry_id": "log_025",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MGR2-8QQ",
+      "gedcomx_source_description_id": "S2"
+    },
+    {
+      "id": "src_003",
+      "citation": "\"Czech Republic, Births and Baptisms, 1637-1889\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMS8-6GC : Mon Oct 19 22:57:50 UTC 2026), Entry for Martin Gajdosch and Georg Gajdosch, 3 November 1714.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Martin Gajdosch, \"Czech Republic, Births and Baptisms, 1637-1889\"",
+        "when_created": "1714",
+        "when_accessed": "2026-11-11",
+        "where": "Czech Republic, Births and Baptisms, 1637-1889",
+        "where_within": "ark:/61903/1:1:FMS8-6GZ"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-11",
+      "log_entry_id": "log_026",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MGR2-2RQ",
+      "gedcomx_source_description_id": "S3"
+    },
+    {
+      "id": "src_004",
+      "citation": "\"Czech Republic, Births and Baptisms, 1637-1889\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMSZ-SFG : Tue Oct 20 00:29:37 UTC 2026), Entry for Catharina Gajdosch and Georg Gajdosch, 11 October 1722.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Catharina Gajdosch, \"Czech Republic, Births and Baptisms, 1637-1889\"",
+        "when_created": "1722",
+        "when_accessed": "2026-11-11",
+        "where": "Czech Republic, Births and Baptisms, 1637-1889",
+        "where_within": "ark:/61903/1:1:FMSZ-SFP"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-11",
+      "log_entry_id": "log_024",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MGR2-VKZ",
+      "gedcomx_source_description_id": "S4"
+    },
+    {
+      "id": "src_005",
+      "citation": "\"Czech Republic, Births and Baptisms, 1637-1889\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:FMSZ-9RH : Mon Oct 19 22:58:22 UTC 2026), Entry for Zuzana Gajdosch and Georg Gajdosch, 9 February 1729.",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Entry for Zuzana Gajdosch, \"Czech Republic, Births and Baptisms, 1637-1889\"",
+        "when_created": "1729",
+        "when_accessed": "2026-11-11",
+        "where": "Czech Republic, Births and Baptisms, 1637-1889",
+        "where_within": "ark:/61903/1:1:FMSZ-9RC"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-11",
+      "log_entry_id": "log_027",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:MGR2-VJF",
+      "gedcomx_source_description_id": "S5"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:FMSZ-MBF",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Anna Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Anna",
+        "surname": "Gajdosch"
+      },
+      "record_persona_id": "p_10936890854",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:MGR2-XQ1"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:FMSZ-MBF",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936890854",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:MGR2-XQ1"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:FMSZ-MBF",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "22 April 1718",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "22 April 1718",
+      "place": "Lidecko, Vsetin, Czechoslovakia",
+      "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+      "record_persona_id": "p_10936890854",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:MGR2-XQ1"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:FMSZ-MBF",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Georg Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Georg",
+        "surname": "Gajdosch"
+      },
+      "record_persona_id": "p_10936890855",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:MGR2-XQ1"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:FMSZ-MBF",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936890855",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:MGR2-XQ1"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:FMSZ-MBF",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Catharina",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Catharina",
+        "surname": ""
+      },
+      "record_persona_id": "p_10936890856",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:MGR2-XQ1"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:FMSZ-MBF",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936890856",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:MGR2-XQ1"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:FMSZ-MBF",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Catharina",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10936890854",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:MGR2-XQ1"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:FMSZ-MBF",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Georg Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_10936890854",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:MGR2-XQ1"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:FMSZ-MBF",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Catharina",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_023",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10936890855",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:MGR2-XQ1"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:FMS8-XFQ",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Joannes Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Joannes",
+        "surname": "Gajdosch"
+      },
+      "record_persona_id": "p_10936930053",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MGR2-8QQ"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:FMS8-XFQ",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936930053",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MGR2-8QQ"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:FMS8-XFQ",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "26 October 1714",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "26 October 1714",
+      "place": "Lidecko, Vsetin, Czechoslovakia",
+      "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+      "record_persona_id": "p_10936930053",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MGR2-8QQ"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:FMS8-XFQ",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Georg Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Georg",
+        "surname": "Gajdosch"
+      },
+      "record_persona_id": "p_10936930054",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MGR2-8QQ"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:FMS8-XFQ",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936930054",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MGR2-8QQ"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:FMS8-XFQ",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Dorothea",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Dorothea",
+        "surname": ""
+      },
+      "record_persona_id": "p_10936930055",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MGR2-8QQ"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:FMS8-XFQ",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936930055",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MGR2-8QQ"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:FMS8-XFQ",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Georg Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_10936930053",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MGR2-8QQ"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:FMS8-XFQ",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Dorothea",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10936930053",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MGR2-8QQ"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:FMS8-XFQ",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Dorothea",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_025",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10936930054",
+      "source_id": "src_002",
+      "record_document_id": "ark:/61903/1:2:MGR2-8QQ"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:FMS8-6GZ",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Martin Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_026",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Martin",
+        "surname": "Gajdosch"
+      },
+      "record_persona_id": "p_10936929369",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:MGR2-2RQ"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:FMS8-6GZ",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_026",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936929369",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:MGR2-2RQ"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:FMS8-6GZ",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "3 November 1714",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_026",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "3 November 1714",
+      "place": "Lidecko, Vsetin, Czechoslovakia",
+      "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+      "record_persona_id": "p_10936929369",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:MGR2-2RQ"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:FMS8-6GZ",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Georg Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_026",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Georg",
+        "surname": "Gajdosch"
+      },
+      "record_persona_id": "p_10936929370",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:MGR2-2RQ"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:FMS8-6GZ",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_026",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936929370",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:MGR2-2RQ"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:FMS8-6GZ",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Catharina",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_026",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Catharina",
+        "surname": ""
+      },
+      "record_persona_id": "p_10936929371",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:MGR2-2RQ"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:FMS8-6GZ",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_026",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936929371",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:MGR2-2RQ"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:FMS8-6GZ",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Georg Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_026",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_10936929369",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:MGR2-2RQ"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:FMS8-6GZ",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Catharina",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_026",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10936929369",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:MGR2-2RQ"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:FMS8-6GZ",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Catharina",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_026",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10936929370",
+      "source_id": "src_003",
+      "record_document_id": "ark:/61903/1:2:MGR2-2RQ"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:FMSZ-SFP",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Catharina Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Catharina",
+        "surname": "Gajdosch"
+      },
+      "record_persona_id": "p_10936892272",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:MGR2-VKZ"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:FMSZ-SFP",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936892272",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:MGR2-VKZ"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:FMSZ-SFP",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "11 October 1722",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "11 October 1722",
+      "place": "Lidecko, Vsetin, Czechoslovakia",
+      "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+      "record_persona_id": "p_10936892272",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:MGR2-VKZ"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:FMSZ-SFP",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Georg Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Georg",
+        "surname": "Gajdosch"
+      },
+      "record_persona_id": "p_10936892273",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:MGR2-VKZ"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:FMSZ-SFP",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936892273",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:MGR2-VKZ"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:FMSZ-SFP",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Catharina",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Catharina",
+        "surname": ""
+      },
+      "record_persona_id": "p_10936892274",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:MGR2-VKZ"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:FMSZ-SFP",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936892274",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:MGR2-VKZ"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:FMSZ-SFP",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Georg Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_10936892272",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:MGR2-VKZ"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:FMSZ-SFP",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Catharina",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10936892272",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:MGR2-VKZ"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:FMSZ-SFP",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Catharina",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_024",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10936892273",
+      "source_id": "src_004",
+      "record_document_id": "ark:/61903/1:2:MGR2-VKZ"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:FMSZ-9RC",
+      "record_role": "child",
+      "fact_type": "name",
+      "value": "Zuzana Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Zuzana",
+        "surname": "Gajdosch"
+      },
+      "record_persona_id": "p_10936891658",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:MGR2-VJF"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:FMSZ-9RC",
+      "record_role": "child",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936891658",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:MGR2-VJF"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:FMSZ-9RC",
+      "record_role": "child",
+      "fact_type": "birth",
+      "value": "9 February 1729",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "9 February 1729",
+      "place": "Lidecko, Vsetin, Czechoslovakia",
+      "standard_place": "Lide\u010dko, Ungarisch Brod, Moravia",
+      "record_persona_id": "p_10936891658",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:MGR2-VJF"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:FMSZ-9RC",
+      "record_role": "father",
+      "fact_type": "name",
+      "value": "Georg Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Georg",
+        "surname": "Gajdosch"
+      },
+      "record_persona_id": "p_10936891659",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:MGR2-VJF"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/1:1:FMSZ-9RC",
+      "record_role": "father",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936891659",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:MGR2-VJF"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/1:1:FMSZ-9RC",
+      "record_role": "mother",
+      "fact_type": "name",
+      "value": "Catharina",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Catharina",
+        "surname": ""
+      },
+      "record_persona_id": "p_10936891660",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:MGR2-VJF"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/1:1:FMSZ-9RC",
+      "record_role": "mother",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_10936891660",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:MGR2-VJF"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/1:1:FMSZ-9RC",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Catharina",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10936891658",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:MGR2-VJF"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/1:1:FMSZ-9RC",
+      "record_role": "child",
+      "fact_type": "relationship",
+      "value": "child of Georg Gajdosch",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "father"
+      },
+      "record_persona_id": "p_10936891658",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:MGR2-VJF"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/1:1:FMSZ-9RC",
+      "record_role": "father",
+      "fact_type": "relationship",
+      "value": "spouse of Catharina",
+      "information_quality": "primary",
+      "informant": "the presenting parent",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_027",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "mother"
+      },
+      "record_persona_id": "p_10936891659",
+      "source_id": "src_005",
+      "record_document_id": "ark:/61903/1:2:MGR2-VJF"
+    }
+  ],
+  "person_evidence": [
+    {
+      "id": "pe_001",
+      "assertion_id": "a_014",
+      "person_id": "K69J-F7Y",
+      "confidence": "confident",
+      "match_score": 0.98389626,
+      "rationale": "Date check: none stated (record names father, no birth year for him). Residence check: Lide\u010dko, 1714 vs Lide\u010dko (tree has K69J-F7Y with birth ~1690 at Lide\u010dko): same. Score 0.9839. Name Georg Gajdosch matches exactly. Tree establishes K69J-F7Y as father of Joannes (K8GQ-C6M) and husband of Dorothea (KZYF-GBJ); record confirms both. This is the Dorothea-line Georg, supporting hypothesis h_001. Strong match.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_002",
+      "assertion_id": "a_015",
+      "person_id": "K69J-F7Y",
+      "confidence": "confident",
+      "match_score": 0.98389626,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs Lide\u010dko: same. Score 0.9839. Sex Male matches K69J-F7Y. Same father persona (p_10936930054) as a_014. Strong match.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_003",
+      "assertion_id": "a_018",
+      "person_id": "K69J-F7Y",
+      "confidence": "confident",
+      "match_score": 0.98389626,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1714 vs Lide\u010dko: same. Score 0.9839 (father persona p_10936930054 via a_018 recordRole=father). Relationship assertion: Joannes is child of Georg Gajdosch (K69J-F7Y). Record names K69J-F7Y as father; tree confirms R5. Strong match.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_004",
+      "assertion_id": "a_020",
+      "person_id": "K69J-F7Y",
+      "confidence": "confident",
+      "match_score": 0.98389626,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1714 vs Lide\u010dko: same. Score 0.9839 (a_020, father persona). Relationship assertion: Georg Gajdosch (K69J-F7Y) is spouse of Dorothea (KZYF-GBJ). Tree confirms Couple R1. Strong match.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_005",
+      "assertion_id": "a_016",
+      "person_id": "KZYF-GBJ",
+      "confidence": "confident",
+      "match_score": 0.98952734,
+      "rationale": "Date check: none stated (record names mother, no birth year for her). Residence check: Lide\u010dko, 1714 vs Lide\u010dko (KZYF-GBJ is K69J-F7Y\u2019s wife, same location): same. Score 0.9895. Name Dorothea matches exactly. Tree has KZYF-GBJ as wife of K69J-F7Y and mother of K8GQ-C6M; record confirms both roles. Strong match.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_006",
+      "assertion_id": "a_017",
+      "person_id": "KZYF-GBJ",
+      "confidence": "confident",
+      "match_score": 0.98952734,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs Lide\u010dko: same. Score 0.9895. Sex Female matches KZYF-GBJ (Dorothea). Same mother persona (p_10936930055) as a_016. Strong match.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_007",
+      "assertion_id": "a_019",
+      "person_id": "KZYF-GBJ",
+      "confidence": "confident",
+      "match_score": 0.98952734,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs Lide\u010dko: same. Score 0.9895 (mother persona p_10936930055 via a_019 recordRole=mother). Relationship assertion: Joannes is child of Dorothea (KZYF-GBJ). Record names KZYF-GBJ as the mother; tree confirms R6. Strong match.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_008",
+      "assertion_id": "a_020",
+      "person_id": "KZYF-GBJ",
+      "confidence": "confident",
+      "match_score": 0.98952734,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs Lide\u010dko: same. Score 0.9895 (mother persona p_10936930055 via a_020 recordRole=mother). Relationship assertion: Georg Gajdosch (K69J-F7Y) is spouse of Dorothea (KZYF-GBJ). Tree confirms Couple R1. Strong match.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_009",
+      "assertion_id": "a_001",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: record 22 Apr 1718 vs tree none stated (new person I3 minted from this persona): no gap. Residence check: Lide\u010dko, 1718 vs none attested (new person): none attested. Match score null: I3 was minted from this record\u2019s child persona (p_10936890854); scoring is circular. Name Anna Gajdosch, Female, born 22 Apr 1718, child of Georg Gajdosch and Catharina. Distinct from the Dorothea-line family (8-day birth gap with Martin proves two contemporaneous Georg Gajdosch men at Lide\u010dko). Stub confidence: single-record introduction.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_010",
+      "assertion_id": "a_002",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: none stated vs none stated: no gap. Residence check: Lide\u010dko vs none attested: none attested. Match score null: I3 minted from this persona. Sex Female matches. Same child persona (p_10936890854).",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_011",
+      "assertion_id": "a_003",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: record 22 Apr 1718 vs tree none stated (new person): no gap. Residence check: Lide\u010dko, 1718 vs none attested: none attested. Match score null: I3 minted from this persona. Birth date and place for Anna Gajdosch. Stub confidence.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_012",
+      "assertion_id": "a_008",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs none attested: none attested. Match score null: I3 minted from child persona. Relationship: Anna (I3) is child of Catharina (I2). Record names Anna on the child side.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_013",
+      "assertion_id": "a_008",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: none stated (record names mother Catharina, no birth year). Residence check: Lide\u010dko, 1718 vs none attested (new person I2): none attested. Match score null: I2 was minted from this record\u2019s mother persona (p_10936890856); scoring is circular. Relationship: Anna (I3) is child of Catharina (I2). Record names I2 as the mother. Stub confidence: single-record introduction, Catharina-line family.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_014",
+      "assertion_id": "a_009",
+      "person_id": "I3",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs none attested: none attested. Match score null: I3 minted from child persona. Relationship: Anna (I3) is child of Georg Gajdosch (I1, Catharina-line). Record names Anna on the child side.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_015",
+      "assertion_id": "a_009",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: none stated (record names father Georg Gajdosch, no birth year). Residence check: Lide\u010dko, 1718 vs none attested (new person I1): none attested. Match score null: I1 was minted from this record\u2019s father persona (p_10936890855); scoring is circular. Relationship: Anna (I3) is child of Georg Gajdosch (I1). Record names I1 as father. Stub person representing the second, Catharina-line Georg Gajdosch, NOT K69J-F7Y. Stub confidence: single-record introduction.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_016",
+      "assertion_id": "a_004",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1718 vs none attested: none attested. Match score null: I1 minted from father persona. Name Georg Gajdosch. Second Georg Gajdosch, Catharina-line; NOT K69J-F7Y (identity contested under h_001/h_002, to be resolved by conflict-resolution). Stub confidence.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_017",
+      "assertion_id": "a_005",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs none attested: none attested. Match score null: I1 minted from this persona. Sex Male matches. Same father persona (p_10936890855).",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_018",
+      "assertion_id": "a_010",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1718 vs none attested: none attested. Match score null: I1 minted from father persona of this record. Relationship: Georg Gajdosch (I1) is spouse of Catharina (I2). Both are new Catharina-line stubs. Stub confidence.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_019",
+      "assertion_id": "a_010",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1718 vs none attested: none attested. Match score null: I2 minted from mother persona of this record. Relationship: Georg Gajdosch (I1) is spouse of Catharina (I2). Record names I2 as mother/wife. Stub confidence: single-record introduction.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_020",
+      "assertion_id": "a_006",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1718 vs none attested: none attested. Match score null: I2 minted from mother persona (p_10936890856). Name Catharina. Catharina-line wife; first Catharina-side record 1718. Stub confidence.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_021",
+      "assertion_id": "a_007",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": null,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs none attested: none attested. Match score null: I2 minted from mother persona. Sex Female matches. Same mother persona (p_10936890856).",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_026",
+      "assertion_id": "a_028",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.02831343,
+      "rationale": "Date check: none stated (record names father, no birth year). Residence check: Lide\u010dko, 1714 vs none attested (I1 is thin stub with name Georg Gajdosch from FMSZ-MBF only): none attested. Score 0.0283 (thin-stub effect: I1 has only name + sex, so the score is in the weak band despite matching). Thin-subject rule applies: nothing conflicts (name exact match, same location, same Catharina-line pattern across FMSZ-MBF and FMS8-6GZ), correlation carries the decision at probable. Relationship: Martin (I4) is child of Georg Gajdosch (I1). Father side.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_028",
+      "assertion_id": "a_029",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.0011232386,
+      "rationale": "Date check: none stated (record names mother Catharina, no birth year). Residence check: Lide\u010dko, 1714 vs none attested (I2 thin stub with name Catharina from FMSZ-MBF only): none attested. Score 0.0011 (thin-stub effect: I2 has only first name Catharina, no surname, no dates \u2014 extremely sparse). Thin-subject rule: nothing conflicts (name matches, same location, same Catharina-line pattern), correlation carries decision at probable. Relationship: Martin (I4) child of Catharina (I2). Mother side.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_029",
+      "assertion_id": "a_024",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.02831343,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1714 vs none attested (I1 thin stub): none attested. Score 0.0283 (thin-stub effect: same reasoning as a_028 father side). Name Georg Gajdosch exact match. Second Catharina-line Georg Gajdosch, NOT K69J-F7Y (identity contested, to be resolved by conflict-resolution). Thin-subject rule applies; correlation at probable.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_030",
+      "assertion_id": "a_025",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.02831343,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs none attested: none attested. Score 0.0283 (father persona p_10936929370 vs I1, covered by a_024 call). Sex Male matches. Thin-stub, same reasoning.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_031",
+      "assertion_id": "a_030",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.02831343,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs none attested: none attested. Score 0.0283 (a_030 father side vs I1). Relationship: Georg Gajdosch (I1) spouse of Catharina (I2). Consistent with FMSZ-MBF (pe_018). Thin-stub, correlation carries.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_032",
+      "assertion_id": "a_026",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.0011232386,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1714 vs none attested (I2 thin stub): none attested. Score 0.0011 (thin-stub effect). Name Catharina exact match. Same Catharina-line mother. Thin-subject rule applies; correlation at probable.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_033",
+      "assertion_id": "a_027",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.0011232386,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs none attested: none attested. Score 0.0011 (covered by a_026 call). Sex Female matches. Same mother persona.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_034",
+      "assertion_id": "a_030",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.0011232386,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs none attested: none attested. Score 0.0011 (a_030 mother side). Relationship: Georg Gajdosch (I1) spouse of Catharina (I2). Consistent with FMSZ-MBF. Thin-stub, correlation carries.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_039",
+      "assertion_id": "a_038",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.02831343,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1722 vs none attested (I1 thin stub, now enriched from FMSZ-MBF and FMS8-6GZ): none attested. Score 0.0283 (thin-stub effect). Name Georg Gajdosch exact match. Third Catharina-line record naming same father. Thin-subject rule: correlation at probable.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_041",
+      "assertion_id": "a_039",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.0011232386,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1722 vs none attested (I2 thin stub): none attested. Score 0.0011 (thin-stub effect). Name Catharina matches. Third Catharina-line record. Thin-subject rule: correlation at probable.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_042",
+      "assertion_id": "a_034",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.02831343,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1722 vs none attested (I1 thin stub): none attested. Score 0.0283 (thin-stub). Name Georg Gajdosch exact match. NOT K69J-F7Y (identity contested). Thin-subject rule: correlation at probable.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_043",
+      "assertion_id": "a_035",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.02831343,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs none attested: none attested. Score 0.0283 (covered by a_034 call). Sex Male matches. Same father persona p_10936892273.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_044",
+      "assertion_id": "a_040",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.02831343,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1722 vs none attested: none attested. Score 0.0283. Relationship: Georg Gajdosch (I1) spouse of Catharina (I2). Consistent across FMSZ-MBF, FMS8-6GZ, FMSZ-SFP. Thin-stub, correlation carries.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_045",
+      "assertion_id": "a_036",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.0011232386,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1722 vs none attested: none attested. Score 0.0011 (thin-stub). Name Catharina exact match. Same Catharina-line mother. Thin-subject rule: probable.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_046",
+      "assertion_id": "a_037",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.0011232386,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs none attested: none attested. Score 0.0011 (covered by a_036 call). Sex Female matches. Same mother persona p_10936892274.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_047",
+      "assertion_id": "a_040",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.0011232386,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1722 vs none attested: none attested. Score 0.0011. Relationship: Georg Gajdosch (I1) spouse of Catharina (I2). Consistent pattern across three records. Thin-stub, correlation carries.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_052",
+      "assertion_id": "a_048",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.0011232386,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1729 vs none attested (I2 thin stub, enriched from FMSZ-MBF/FMS8-6GZ/FMSZ-SFP): none attested. Score 0.0011 (thin-stub). Name Catharina matches. Fourth Catharina-line record. Thin-subject rule: correlation at probable.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_054",
+      "assertion_id": "a_049",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.02831343,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1729 vs none attested (I1 thin stub): none attested. Score 0.0283 (thin-stub). Name Georg Gajdosch exact match. Fourth Catharina-line record. Thin-subject rule: correlation at probable.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_055",
+      "assertion_id": "a_044",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.02831343,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1729 vs none attested (I1 thin stub): none attested. Score 0.0283 (thin-stub). Name Georg Gajdosch exact match. NOT K69J-F7Y. Thin-subject rule: correlation at probable.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_056",
+      "assertion_id": "a_045",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.02831343,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs none attested: none attested. Score 0.0283 (covered by a_044 call). Sex Male matches. Same father persona p_10936891659.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_057",
+      "assertion_id": "a_050",
+      "person_id": "I1",
+      "confidence": "probable",
+      "match_score": 0.02831343,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1729 vs none attested: none attested. Score 0.0283. Relationship: Georg Gajdosch (I1) spouse of Catharina (I2). Consistent across all four Catharina-line records. Thin-stub, correlation carries.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_058",
+      "assertion_id": "a_046",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.0011232386,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1729 vs none attested: none attested. Score 0.0011 (thin-stub). Name Catharina exact match. Fourth Catharina-line record for I2. Thin-subject rule: probable.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_059",
+      "assertion_id": "a_047",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.0011232386,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko vs none attested: none attested. Score 0.0011 (covered by a_046 call). Sex Female matches. Same mother persona p_10936891660.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_060",
+      "assertion_id": "a_050",
+      "person_id": "I2",
+      "confidence": "probable",
+      "match_score": 0.0011232386,
+      "rationale": "Date check: none stated. Residence check: Lide\u010dko, 1729 vs none attested: none attested. Score 0.0011. Relationship: Georg Gajdosch (I1) spouse of Catharina (I2). Consistent across all four Catharina-line records. Thin-stub, correlation carries.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_061",
+      "assertion_id": "a_011",
+      "person_id": "K8GQ-C6M",
+      "confidence": "speculative",
+      "match_score": 0.9892023,
+      "rationale": "Date check: none stated on this assertion; birth established by a_013 (26 Oct 1714) vs tree 26 Oct 1714: gap 0 years \u2014 exact match. Residence check: Lide\u010dko, 1714 vs Lide\u010dko (tree): same village; administrative era label difference (record standard_place 'Lide\u010dko, Ungarisch Brod, Moravia' vs tree 'Lide\u010dko, Vset\u00edn, Gottwaldovsk\u00fd kraj, Czechoslovakia') is a known jurisdictional naming quirk documented in loc_001 \u2014 not a genuine place conflict. Score 0.9892 (child persona p_10936930053). Name 'Joannes Gajdosch' matches exactly. Sex, birth date, and both parents (K69J-F7Y and KZYF-GBJ per a_018/a_019) all corroborate. Evidence warrants confident; link recorded at speculative because the writer treats the administrative-label birthplace difference as a core identifier conflict until a moot fact conflict (disputed_attribute: birth_place) is registered by conflict-resolution. No competing candidate in the tree.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_062",
+      "assertion_id": "a_012",
+      "person_id": "K8GQ-C6M",
+      "confidence": "speculative",
+      "match_score": 0.9892023,
+      "rationale": "Date check: none stated on this assertion; birth via a_013 (26 Oct 1714) vs tree 26 Oct 1714: gap 0 years. Residence check: Lide\u010dko vs Lide\u010dko (tree): same village; administrative era label quirk documented in loc_001. Score 0.9892 (child persona p_10936930053). Sex Male matches tree person. All identifiers (name, birth date, parents) confirm this is K8GQ-C6M. Evidence warrants confident; speculative applied because writer caps due to birthplace string mismatch in a_013 pending moot fact conflict registration by conflict-resolution.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_063",
+      "assertion_id": "a_013",
+      "person_id": "K8GQ-C6M",
+      "confidence": "speculative",
+      "match_score": 0.9892023,
+      "rationale": "Date check: record 26 October 1714 vs tree 26 Oct 1714: gap 0 years \u2014 exact match. Residence check: record standard_place 'Lide\u010dko, Ungarisch Brod, Moravia' vs tree standardPlace 'Lide\u010dko, Vset\u00edn, Czechoslovakia': same village; the label difference reflects four jurisdictional eras all documented in loc_001 (Habsburg Moravia \u2192 1918 Czechoslovakia \u2192 1960s reorganisation \u2192 1993 Czech Republic). No genuine geographic discrepancy. Score 0.9892 (child persona p_10936930053). The delegation (wrap-up pass) explicitly directs treating this as a moot administrative naming difference per loc_001. Evidence warrants confident; speculative applied because the writer treats differing birthplace strings as a core identifier conflict until conflict-resolution registers a moot fact conflict (disputed_attribute: birth_place, competing_assertion_ids: a_013 and the tree Birth fact on K8GQ-C6M). No competing candidate in the tree.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_064",
+      "assertion_id": "a_018",
+      "person_id": "K8GQ-C6M",
+      "confidence": "speculative",
+      "match_score": 0.9892023,
+      "rationale": "Date check: none stated for child on this assertion. Residence check: Lide\u010dko, 1714 vs Lide\u010dko (tree): same village; administrative era label quirk per loc_001. Score 0.9892 (child persona p_10936930053 against K8GQ-C6M). Relationship assertion 'child of Georg Gajdosch' names K8GQ-C6M as the child: tree confirms K8GQ-C6M's parent is K69J-F7Y (Georg Gajdosch). Both-sided link \u2014 father side already recorded as pe_003. Evidence warrants confident; speculative applied pending moot birthplace conflict registration.",
+      "created": "2026-11-11"
+    },
+    {
+      "id": "pe_065",
+      "assertion_id": "a_019",
+      "person_id": "K8GQ-C6M",
+      "confidence": "speculative",
+      "match_score": 0.9892023,
+      "rationale": "Date check: none stated for child on this assertion. Residence check: Lide\u010dko, 1714 vs Lide\u010dko (tree): same village; administrative era label quirk per loc_001. Score 0.9892 (child persona p_10936930053 against K8GQ-C6M). Relationship assertion 'child of Dorothea' names K8GQ-C6M as the child: tree confirms K8GQ-C6M's parent is KZYF-GBJ (Dorothea). Both-sided link \u2014 mother side already recorded as pe_007. Evidence warrants confident; speculative applied pending moot birthplace conflict registration.",
+      "created": "2026-11-11"
+    }
+  ],
+  "conflicts": [],
+  "hypotheses": [
+    {
+      "id": "h_001",
+      "claim": "Subject Georg Gajdosch (K69J-F7Y) of Lide\u010dko, Moravia, is the Georg who married Dorothea (KZYF-GBJ) and was the father of Joannes Gajdosch (K8GQ-C6M), baptised 26 October 1714 with mother Dorothea (ark:/61903/1:1:FMS8-XFQ). This is the existing tree assignment and is treated as a lead until verified.",
+      "status": "active",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Competes with the Catharina hypothesis for the same subject. Source of the tree link (Dorothea as wife, Joannes as child) is an uncited compiled tree entry, so it is a lead, not evidence. No assertions extracted yet. Evidence to test: the Joannes baptism entry itself (father and mother named as Georg and Dorothea); whether a second Georg Gajdosch appears in Lide\u010dko baptisms in 1714-1729 with mother Catharina. Under this hypothesis the Catharina-mother baptisms (Martin 3 Nov 1714, Anna 22 Apr 1718, Catharina 11 Oct 1722, Zuzana 9 Feb 1729) would have to belong to a different Georg, which is the basis of H2 and the eight-day gap argument (Joannes 26 Oct 1714 vs Martin 3 Nov 1714 cannot share a mother, so two Georgs were active at once). Any Dorothea-mother entry after 1714 that is not Joannes would weaken this hypothesis.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    },
+    {
+      "id": "h_002",
+      "claim": "Subject Georg Gajdosch (K69J-F7Y) of Lide\u010dko, Moravia, is the Georg who married Catharina (surname and tree identity not yet established) and was the father of Anna (baptised 22 April 1718, mother Catharina), Martin (baptised 3 November 1714, mother Catharina), Catharina (baptised 11 October 1722, mother Catharina) and Zuzana (baptised 9 February 1729, mother Catharina). Under this hypothesis the tree's assignment of Dorothea (KZYF-GBJ) as the subject's wife and of Joannes (K8GQ-C6M) as his child is wrong.",
+      "status": "active",
+      "supporting_assertion_ids": [],
+      "contradicting_assertion_ids": [],
+      "ruled_out": false,
+      "ruled_out_reason": null,
+      "notes": "Competes with the Dorothea hypothesis. No assertions extracted yet, so no evidence has been linked. The four Catharina-mother baptisms come from a FamilySearch search of collection 1784129 (log_022-log_027), with the Anna entry the one named in the research objective. Key test: the Anna baptism entry (22 April 1718, Lide\u010dko, falls in the 1707-1742 volume, image group 5387300) must be read to confirm the father is Georg and the mother is Catharina. The eight-day gap between Joannes (26 Oct 1714, mother Dorothea) and Martin (3 Nov 1714, mother Catharina) makes the sequential-marriage explanation (Dorothea died, Georg remarried Catharina) impossible, so H2 requires a second contemporaneous Georg Gajdosch in Lide\u010dko. That second-Georg requirement is itself an unsound-assumption risk until a second Georg is located in records; it must be tested, not assumed. Note: the subject K69J-F7Y is not yet tied to any Catharina record; the H2 claim is about which Georg fathered the Catharina-mother children, and whether that is the subject is open.",
+      "related_question_ids": [
+        "q_001"
+      ]
+    }
+  ],
+  "timelines": [],
+  "proof_summaries": [
+    {
+      "id": "ps_001",
+      "question_id": "q_001",
+      "tier": "probable",
+      "vehicle": "argument",
+      "shortfall": "gap",
+      "supporting_assertion_ids": [
+        "a_001",
+        "a_003",
+        "a_004",
+        "a_006",
+        "a_008",
+        "a_009",
+        "a_010",
+        "a_011",
+        "a_013",
+        "a_014",
+        "a_016",
+        "a_019",
+        "a_020",
+        "a_021",
+        "a_023",
+        "a_024",
+        "a_026",
+        "a_029",
+        "a_031",
+        "a_033",
+        "a_034",
+        "a_036",
+        "a_041",
+        "a_043",
+        "a_044",
+        "a_046"
+      ],
+      "resolved_conflict_ids": [],
+      "claims": [
+        {
+          "claim": "Anna was baptised 22 April 1718 at Lide\u010dko, daughter of a Georg Gajdosch and a mother named Catharina (not Dorothea)",
+          "proof_tier": "probable",
+          "shortfall": "gap",
+          "supporting_assertion_ids": [
+            "a_001",
+            "a_003",
+            "a_004",
+            "a_006",
+            "a_008",
+            "a_009",
+            "a_010"
+          ],
+          "relationship": {
+            "type": "ParentChild",
+            "parent": "I1",
+            "child": "I3"
+          }
+        },
+        {
+          "claim": "The Georg who fathered Anna is the tree subject Georg Gajdosch (K69J-F7Y), so that the tree's wife Dorothea is wrong",
+          "proof_tier": "possible",
+          "shortfall": "gap",
+          "supporting_assertion_ids": [
+            "a_014",
+            "a_016",
+            "a_019",
+            "a_020",
+            "a_024",
+            "a_026"
+          ],
+          "relationship": {
+            "type": "ParentChild",
+            "parent": "K69J-F7Y",
+            "child": "I3"
+          }
+        }
+      ],
+      "exhaustive_search_summary": "Searched: FamilySearch indexed collection 'Czech Republic, Births and Baptisms, 1637-1889' (five baptism abstracts: Anna 1718, Joannes 1714, Martin 1714, Catharina 1722, Zuzana 1729, all Lide\u010dko), plus a nil name-indexed marriage search (log_001-log_027). Not examined, by researcher choice at wrap-up: (1) the original Lide\u010dko baptism register, vol. 2504, image group 5387300 (1707-1742), which would check the index transcription of Catharina against the handwritten entry and may give godparents, residence or house numbers distinguishing two Georgs; (2) the Opava Archive scan of the same volume at digi.archives.cz (Lide\u010dko / Klein Litsch); (3) the Lide\u010dko marriage register, vol. 2506, image group 5387302 (1709-1779), which could show which wife or wives Georg married and would narrow the subject-identity claim; (4) burial registers, which would show whether Dorothea or Catharina died before the other children were born and what Georg each husband was; (5) no census-type or land/urbarial records for Lide\u010dko were searched. Items 1-3 are reachable and would narrow the identity claim, which is why that claim is capped at possible.",
+      "narrative_markdown": "## Argument: Anna Gajdosch, baptised 22 April 1718 at Lide\u010dko, and her mother's name\n\n**Question.** Do independent records confirm or refute that Georg Gajdosch of Lide\u010dko had a daughter Anna, baptised 22 April 1718, whose mother was named Catharina rather than Dorothea?\n\n**Answer in two parts.** (1) It is probable that Anna was baptised at Lide\u010dko on 22 April 1718 as the daughter of a Georg Gajdosch and his wife Catharina. (2) Whether that Georg is the tree subject, Georg Gajdosch (K69J-F7Y), is only possible, and the tree's wife Dorothea is neither confirmed as wrong nor shown to be right for the subject.\n\n### Part 1: Anna's baptism (probable)\nThe FamilySearch index entry for Anna Gajdosch records a baptism on 22 April 1718 at Lide\u010dko, father Georg Gajdosch, mother Catharina (ark:/61903/1:1:FMSZ-MBF). Stored citation: \"Czech Republic, Births and Baptisms, 1637-1889\", FamilySearch (https://www.familysearch.org/ark:/61903/1:1:FMSZ-MBX : Mon Oct 19 23:50:27 UTC 2026), Entry for Anna Gajdosch and Georg Gajdosch, 22 April 1718. The source is a derivative index abstract of an original parish register; its information is primary (the parent presenting the child is the informant), the basis is stated, and the evidence is direct. Three further derivative index entries from the same parish name Georg Gajdosch with the same mother Catharina: Martin (3 November 1714, ark:/61903/1:1:FMS8-6GZ), Catharina (11 October 1722, ark:/61903/1:1:FMSZ-SFP) and Zuzana (9 February 1729, ark:/61903/1:1:FMSZ-9RC). Four entries naming the same couple make a transcription slip in Anna's mother's name unlikely, though all come from one index and no original image was viewed. Tier: probable, not proved, because the evidence is derivative and the original register and the marriage register were not examined.\n\n### Part 2: Which Georg? (possible)\nThe index also holds Joannes Gajdosch, baptised 26 October 1714 at Lide\u010dko, father Georg Gajdosch, mother Dorothea (ark:/61903/1:1:FMS8-XFQ). Martin, with mother Catharina, was baptised only eight days later. One woman cannot have borne both children, and a remarriage within eight days of a birth, with the first wife dead, is not a plausible explanation. The records therefore point to two men named Georg Gajdosch in Lide\u010dko at the same time, one with a wife Dorothea and one with a wife Catharina. This is an inference from the dates, not something any entry states, and the unexamined burial and marriage registers could show a different arrangement.\n\nThe tree subject K69J-F7Y is linked to Dorothea and Joannes by the existing tree (those relationships carry no source entry in the project) and, in the research, by the Joannes baptism entry (hypothesis h_001). No record examined ties the subject to Catharina. Hypotheses h_001 (subject is Dorothea's Georg) and h_002 (subject is Catharina's Georg) both remain active; the index entries give no ages, residences or house numbers to separate them. So the claim that Anna is the subject's daughter is possible, not probable, and the tree's Dorothea is neither refuted nor confirmed. No conflict is registered, because the records do not contradict one another; they describe two families whose connection to the subject is unresolved.\n\n### What the tree now says\nAnna (I3) is linked as daughter of a separate Georg Gajdosch (I1) and Catharina (I2), who are linked as a couple, at probable quality from the 1718 entry. Whether I1 is the same person as K69J-F7Y is deliberately not written: the persons are not merged, and the subject's existing Dorothea and Joannes links are untouched. Anna's birth (22 April 1718, Lide\u010dko) is marked primary.\n\n### What would settle it\nThe original baptism entries (Lide\u010dko register, vol. 2504, image group 5387300, also scanned by the Opava Archive) could confirm the index transcription and may give godparents or house numbers separating the two Georgs. The Lide\u010dko marriage register (vol. 2506, image group 5387302, 1709-1779) could show which wife each Georg married. Burial registers could show whether either wife died and who the husbands were. These are reachable but were not examined, by the researcher's choice, and they, rather than more index searching, would raise either part. Like every proof, this finding remains open to revision if new evidence appears.",
+      "updated": "2026-11-11T02:59:52.564Z"
+    }
+  ],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Lide\u010dko, Ungarisch Brod, Moravia",
+      "for_place": "Lide\u010dko, Vset\u00edn, Czechia",
+      "time_period": "1700-1750",
+      "jurisdictions": [
+        {
+          "name": "Lide\u010dko, Ungarisch Brod, Moravia",
+          "date_range": ""
+        },
+        {
+          "name": "Lide\u010dko, Uhersk\u00fd Brod, Moravia, Czechoslovakia",
+          "date_range": "+1918/+1949"
+        },
+        {
+          "name": "Lide\u010dko, Vset\u00edn, Czechoslovakia",
+          "date_range": "+1960/"
+        },
+        {
+          "name": "Lide\u010dko, Vset\u00edn, Czechia",
+          "date_range": "+1993/"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1475346",
+          "title": "Czech Republic, Northern Moravia, Opava Archive Church Books, 1571-1905",
+          "date_range": "1571-1905",
+          "person_count": 0,
+          "record_count": 0
+        }
+      ],
+      "quirks": [
+        "All surviving Lide\u010dko church registers are browse-only images with no name index \u2014 must be browsed image by image. The baptism volume covering 1707\u20131742 (image group 5387300, vol. 2504) is the precise volume for a 22 April 1718 baptism event.",
+        "Records are in Latin and German for the early 18th century. Czech was not recognised as an official language in Moravia until 1905. Mother's names appear in Latin genitive form (Catharinae, Dorotheae).",
+        "No civil registration exists for the 1700\u20131750 period. Catholic parish registers are the sole vital record source. Civil registration began in limited form in 1874 and was fully mandatory from 1921.",
+        "The German name for Lide\u010dko is Klein Litsch. The Opava archive portal (digi.archives.cz) can be searched under either the Czech or German place name.",
+        "Records are not available on microfilm \u2014 digital images only (confirmed by FamilySearch Catalog entry olib:2425382).",
+        "Lide\u010dko served as a parish seat; surrounding villages (Horn\u00ed Lide\u010d, Pul\u010d\u00edn, St\u0159eln\u00e1) also filed their baptisms in the Lide\u010dko register. Entries for those villages appear in the same volumes.",
+        "The baptism register begins at 1707. No digitised Lide\u010dko baptism records predate that year in this survey; whether earlier records were kept and lost, or simply never kept, is unresolved."
+      ],
+      "guide_markdown": "# Locality Guide: Lide\u010dko, Moravia (c. 1700\u20131750)\n\n## Jurisdiction overview\n- **German name:** Klein Litsch\n- **Administrative district 1700\u20131750:** Ungarisch Brod (Uhersk\u00fd Brod), Moravia, Habsburg Austrian Empire\n- **Modern jurisdiction:** Vset\u00edn District, Zl\u00edn Region, Czech Republic (population c. 1,800 today)\n- **Economy:** Rural Beskyd-foothill village, predominantly agricultural\n- **Religious denominations:** Roman Catholic exclusively \u2014 Protestantism was suppressed and only legally tolerated after the Toleration Patent of 1781; no Protestant registers exist for this period\n- **Archival jurisdiction:** Zemsk\u00fd archiv v Opav\u011b (State Regional Archive of Opava), serving northern Moravia and Czech Silesia\n\n## Boundary changes\n- 1700\u20131750: Lide\u010dko, Ungarisch Brod, Moravia (Habsburg Austrian Empire)\n- 1918\u20131949: Lide\u010dko, Uhersk\u00fd Brod, Moravia, Czechoslovakia\n- 1960 onward: Lide\u010dko, Vset\u00edn, Czechoslovakia / Czechia\n- Boundaries stable throughout the target period; search under Ungarisch Brod / Uhersk\u00fd Brod in the Opava archive system\n\n## Available record types\n\n### Vital records (civil registration)\n- **Start date:** Civil registration in Moravia began in limited form for dissenters c. 1870\u20131874; mandatory civil registration was enacted in 1921 throughout Czechoslovakia (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Czechia_Civil_Registration). No civil records exist for 1700\u20131750.\n- **Pre-registration alternatives:** Catholic parish registers are the sole vital record source for the target period.\n\n### Church records\n- **Denominations:** Roman Catholic only (the sole legally recognised religion in Moravia before 1781)\n- **Record types:** Baptisms (k\u0159ty / N), marriages (s\u0148atky / O), burials (poh\u0159by / Z)\n- **Surviving digitised volumes at FamilySearch:**\n  - Baptisms 1707\u20131742, vol. 2504, image group 005387300 \u2014 **this is the volume for a 22 April 1718 baptism**; 142 images; browse-only\n  - Baptisms 1742\u20131774, vol. 2505, image group 005387301; 225 images; browse-only\n  - Marriages 1709\u20131779, vol. 2506, image group 005387302; 143 images; browse-only\n  - Burials 1710\u20131762, vol. 2507, image group 005387303; 145 images; browse-only\n- **Digitisation level:** All four volumes are **browse-only images** \u2014 0% name-indexed, not full-text searchable. No name search is possible; the researcher must browse frame by frame.\n- **Originals held at:** State Regional Archive of Opava (Zemsk\u00fd archiv v Opav\u011b). FamilySearch confirms: \"Digital images of originals housed at State Regional Archive of Opava, Czech Republic\" (catalog olib:2425382). Not available on microfilm.\n- **Language:** Czech, German, and Latin. For the early 18th century, entries will be in Latin or German. Czech was not an official language in Moravia until 1905 (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Opava_Provincial_Archives,_Czechia_Church_Records).\n- **Gaps:** Baptism records start at 1707; no digitised register survives for Lide\u010dko before that date. Whether pre-1707 registers existed and were lost is not established by this survey.\n- **Parish scope:** Lide\u010dko was a parish seat. Surrounding villages \u2014 Horn\u00ed Lide\u010d (Oberlitsch), Pul\u010d\u00edn (Pultschin), St\u0159eln\u00e1 (Strelna) \u2014 are also indexed under the Lide\u010dko parish in the Opava archive. Their baptisms appear in the same volumes.\n\n#### Diocesan and decanate context\nLide\u010dko falls within the archival jurisdiction of the Opava Provincial Archives. The specific Catholic diocese and decanate serving Lide\u010dko in 1700\u20131750 is not confirmed by the tool results returned in this survey. The Diocese of Olomouc historically covered Moravia under the Habsburgs, but the specific decanate cannot be named from retrieved sources. For confirmed diocese/decanate assignment, consult the Index of municipalities of Czech Silesia and northern Moravia (compiled by Dr. Adolf Turek et al., published by the Regional Archives in Opava, 2004), linked at https://www.familysearch.org/en/wiki/Opava_Provincial_Archives,_Czechia_Church_Records.\n\n### Census records\n- **For 1700\u20131750:** No census records apply. Austrian-era censuses began post-1848.\n- **Later censuses digitised:** Austrian census records for Lide\u010dko 1880\u20131921 are online at FamilySearch (catalog olib:3371480, image groups 102030669, 102112429, 102198774, 102275237, 102339608). Originals at the Moravian Regional Archive of Brno.\n- **Substitutes for the target period:** Domain estate records (urbaria) and tax rolls held by the Moravian Regional Archive of Brno may name householders; not confirmed digitised for this survey.\n\n### Probate and court records\n- Not confirmed in digitised form for 1700\u20131750 at FamilySearch. Domain and estate court records (vrchnostensk\u00e9 soudy) for the Uhersk\u00fd Brod district would be held by the Moravian Regional Archive of Brno.\n\n### Land records\n- **Land register (pozemkov\u00e1 kniha) 1740\u20131881:** Digitised at FamilySearch, image group 104715679 (catalog: Fond C17 pozemkov\u00e9 knihy, vol. 11938). Overlaps the target period from 1740.\n- **Stable cadastre 1828:** Digitised \u2014 catalog olib:4118204, image group 107201334; held at the Moravian Regional Archive of Brno.\n- **Land Records, 1450\u20131889** (Ancestry / FamilySearch collection 1918632): covers Czech Republic land records broadly; images only.\n\n### Military records\n- Not confirmed as digitised for Lide\u010dko at this period in this survey.\n\n### Cemetery records\n- Sexton records not separately digitised in this survey. Czech cemetery transcriptions: http://czech.stonepics.com/\n\n### Newspaper records\n- Not applicable for 1700\u20131750.\n\n### Immigration/emigration records\n- Declarations of intention and naturalisation filed well after the target period. Not applicable to 1700\u20131750 Lide\u010dko.\n\n### Tax records\n- Not confirmed as digitised for 1700\u20131750. Estate records at the Moravian Regional Archive of Brno may contain tax-related listings.\n\n### Other record types\n- **School records:** Czech Republic School Registers 1799\u20131953 (FamilySearch collection 2328519, images only) postdates the target period.\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Gap it fills | Access |\n|---|---|---|---|\n| FamilySearch Catalog (catalog entry olib:2425382) | Baptisms 1707\u20131742 (img grp 5387300), 1742\u20131774 (5387301); Marriages 1709\u20131779 (5387302); Burials 1710\u20131762 (5387303) | Primary source for 1718 baptism; browse-only | Free |\n| FamilySearch \u2014 Czech Republic, Church Books, 1552\u20131981 (collection 1804263) | Indexed records covering Opava archive parish books including Lide\u010dko | Name-index search; may surface the 1718 entry without browsing | Free |\n| FamilySearch \u2014 Czech Republic, Northern Moravia, Opava Archive Church Books, 1571\u20131905 (collection 1475346) | Browse images for Opava archive \u2014 Lide\u010dko 1707\u20131905 | Lide\u010dko church books | Free |\n| Zemsk\u00fd archiv v Opav\u011b portal (digi.archives.cz) | Same Lide\u010dko church registers directly at the archive | Direct archive access; sometimes easier navigation than FS | Free |\n| Ancestry \u2014 Czech Republic Church Books, 1552\u20131963 (collection 60254) | Church books | Alternative interface | Subscription (https://www.ancestry.com/search/collections/60254) |\n| MyHeritage \u2014 Czech Republic Church Books, 1552\u20131963 | Church books | Alternative interface | Subscription (http://www.myheritage.com/research/collection-30248/czech-republic-church-books-1552-1948) |\n\n**Coverage of this survey:** Volume_search returned all 5 digitised volumes matching Lide\u010dko for the 1700\u20131750 window; the result set was complete (no further pages). All 5 volumes are browse-only.\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Zemsk\u00fd archiv v Opav\u011b (State Regional Archive of Opava) | Originals of all Lide\u010dko parish registers | In-person; online images at https://digi.archives.cz/da/ |\n| Moravsk\u00fd zemsk\u00fd archiv (Moravian Regional Archive, Brno) | Domain/estate records, stable cadastre, later censuses | In-person; some images at FamilySearch |\n\n## Records NOT online\n- Baptism records before 1707: not found in any digitised source in this survey\n- Decanate or diocesan records (Olomouc diocese level): not confirmed digitised for Lide\u010dko\n- Pre-1710 burial and pre-1709 marriage registers: not found in this survey\n- Domain/estate court records (probate equivalents) for 1700\u20131750: not digitised at FamilySearch\n- Matricula Online and Archion: neither platform returned results for Lide\u010dko in this survey; Matricula focuses on Austrian Catholic records and Archion on German Protestant records \u2014 the access routes for Lide\u010dko are FamilySearch and digi.archives.cz\n\n## Known record losses\nNo tool result reports a specific loss or destruction event for the Lide\u010dko church registers. The absence of baptism records before 1707 may reflect either the parish's register-keeping start date or the loss of earlier volumes \u2014 this survey cannot determine which.\n\n## Research tips\n- **Go directly to image group 5387300 on FamilySearch** for the baptism register covering 1707\u20131742. The most efficient access path is the FamilySearch Catalog: search \"Lide\u010dko\" at https://www.familysearch.org/search/catalog, click the camera icon beside vol. 2504, and browse frame by frame. This avoids the complex multi-level browse structure of collection 1475346 (per FamilySearch Wiki: https://www.familysearch.org/en/wiki/Opava_Provincial_Archives,_Czechia_Church_Records).\n- **Search the indexed collection 1804263 first.** Czech Republic, Church Books, 1552\u20131981 at FamilySearch has name indexes that may partially cover this volume. If the April 1718 entry appears there, you are taken straight to the image. If not, the entry may still exist in the unindexed images.\n- **Also search the Opava archive portal** at https://digi.archives.cz/da/ \u2014 enter \"Lide\u010dko\" or \"Klein Litsch\" and select the N (Narozeni / baptism) register for 1707\u20131742. The same images are available but portal navigation may differ.\n- **Language:** Expect Latin column headings and given names in Latin form \u2014 \"Catharinae\" or \"Dorotheae\" in the genitive. The Opava Archives wiki page notes the vocabulary: N = births/baptisms, O = marriages, Z = deaths (https://www.familysearch.org/en/wiki/Opava_Provincial_Archives,_Czechia_Church_Records).\n- **Baptismal entries in Moravia typically include:** child's name, date of baptism (and often date of birth), names of both father and mother, godparents, and sometimes the father's residence and occupation (FamilySearch Wiki: https://www.familysearch.org/en/wiki/Opava_Provincial_Archives,_Czechia_Church_Records#Parish_Registers_and_the_Information_They_Contain). The mother's name will be present and is the field bearing on the Catharina/Dorothea question.\n- **Check the register index pages.** Many Moravian parish registers include an index at the front or back of the volume; image group 5387300 may have one. Check the first and last images before browsing sequentially.",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": null,
+          "found": false
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Czechia_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Czechia_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Czechia_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "registration_start": [
+        {
+          "event": "birth",
+          "level": "state",
+          "year": 1874,
+          "source_url": "https://www.familysearch.org/en/wiki/Czechia_Civil_Registration"
+        },
+        {
+          "event": "marriage",
+          "level": "state",
+          "year": 1874,
+          "source_url": "https://www.familysearch.org/en/wiki/Czechia_Civil_Registration"
+        },
+        {
+          "event": "death",
+          "level": "state",
+          "year": 1874,
+          "source_url": "https://www.familysearch.org/en/wiki/Czechia_Civil_Registration"
+        }
+      ],
+      "volume_summary": {
+        "start_year": 1700,
+        "end_year": 1750,
+        "total_volumes": 5,
+        "complete": true,
+        "by_record_type": [
+          {
+            "group": "Religious",
+            "volumes": 4,
+            "browse_only": 4,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Baptism",
+            "volumes": 2,
+            "browse_only": 2,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Religious Death",
+            "volumes": 1,
+            "browse_only": 1,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Religious Marriage",
+            "volumes": 1,
+            "browse_only": 1,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Legal",
+            "volumes": 1,
+            "browse_only": 1,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Land",
+            "volumes": 1,
+            "browse_only": 1,
+            "fulltext_only": 0
+          }
+        ],
+        "untyped": {
+          "volumes": 0,
+          "browse_only": 0,
+          "fulltext_only": 0
+        }
+      },
+      "source": "locality-guide",
+      "created": "2026-11-11"
+    }
+  ]
+}
