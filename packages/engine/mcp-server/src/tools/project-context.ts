@@ -573,9 +573,11 @@ export const projectContextSchema = {
     "planItemId, performed}] lists external-site URLs already handed to the user that " +
     "nothing has answered yet — do not raise them again; when the user brings back a " +
     "capture, or says they cannot access the site, log that as the row's closing " +
-    "entry with the same urlGenerated. waitingPages [{sourceId, ref}], absent when " +
-    "none, lists read pages of held records; keep them with one " +
-    "extraction_append({ projectPath, attachWaitingPages: true }). " +
+    "entry with the same urlGenerated. waitingPages [{sourceId, ref, index}], absent when " +
+    "none, lists read pages of held records, each with its record's index " +
+    "[{assertionId, role, factType, value}]; hand them to record-structurer in one spawn, " +
+    "which keeps them with one extraction_append({ projectPath, attachWaitingPages: true, " +
+    "pageReadings }). " +
     "subjectPersonIds are the project's subject " +
     "persons (research.project.subject_person_ids). narrationGuidance is " +
     "researcher_profile.narration_guidance verbatim: the narration " +
