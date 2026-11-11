@@ -65,6 +65,16 @@ DORMANT: dict[str, str] = {
         "holds the proved-tier Flynn proof at probable in 2 of 3 runs; issue #4425 "
         "restores it"
     ),
+    "confidence-calibration": (
+        "its only test, ut_person_evidence_001, was deleted when person-evidence moved "
+        "to Haiku 5.5: its review downgrades pe_005 on the resolved conflict c_001; "
+        "issue #4478 restores it"
+    ),
+    "pe_005": (
+        "its only test, ut_person_evidence_001, was deleted when person-evidence moved "
+        "to Haiku 5.5: its review downgrades pe_005 on the resolved conflict c_001; "
+        "issue #4478 restores it"
+    ),
     "materialize": (
         "its only test, ut_person_evidence_027, was deleted when person-evidence moved "
         "to Haiku 5.5: it links a_011/a_012 but never calls materialize_facts; "

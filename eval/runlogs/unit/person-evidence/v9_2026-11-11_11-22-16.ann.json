@@ -1,0 +1,38 @@
+{
+  "run_log": "v9_2026-11-11_11-22-16.json",
+  "annotator": "Promiseemmanuel2019@gmail.com",
+  "corrections": [
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "It says Thomas's side \"cannot be linked until his persona is extracted\". That's wrong: a_010 itself links to Thomas, exactly as the 1850 a_004 already does via pe_006."
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 2,
+      "comment": "It never compares with a_004's two-sided links, and it doesn't ask whether to add the Thomas link."
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_person_evidence_015",
+      "dimension_source": "rubric",
+      "dimension_name": "Confidence calibration",
+      "llm_score": 2,
+      "corrected_score": 3,
+      "comment": "Audit only, and the agent wrote no rationale. Questioning pe_004's confident tier is a fair audit point."
+    }
+  ]
+}
