@@ -8056,9 +8056,11 @@ function retireRejectedLinks(
     const person = (tree?.persons ?? []).find((p) => p && p.id === rj.person_id);
     const removed: string[] = [];
     const kept: string[] = [];
+    // The derived rows retired above take their facts with them (#4355 review).
+    const retiredAssertions = new Set(live.map((pe) => pe.assertion_id));
     if (person && Array.isArray(person.facts)) {
       person.facts = person.facts.filter((f) => {
-        if (!f || f.assertion_id !== rj.assertion_id) return true;
+        if (!f || !retiredAssertions.has(f.assertion_id)) return true;
         const otherEvidence = (f.sources ?? []).some((s) => typeof s?.ref === "string" && s.ref !== ownRef);
         if (otherEvidence) {
           kept.push(f.id ?? f.type ?? "(fact)");

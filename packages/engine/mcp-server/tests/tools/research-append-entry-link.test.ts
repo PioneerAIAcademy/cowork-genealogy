@@ -523,6 +523,35 @@ describe("#4226 a link means the record entry", () => {
     expect(rows.find((x) => x.id === "pe_003").superseded_by).toBe(null);
   });
 
+  /** The expanded entry, with each assertion's fact already materialized on I2. */
+  const i2HoldsTheFacts = async () => {
+    const f = (id: string, type: string, assertion_id: string) => ({ id, type, assertion_id, sources: [{ ref: "SD-001" }] });
+    const withFacts = structuredClone(tree) as any;
+    withFacts.persons.find((p: any) => p.id === "I2").facts = [
+      f("F1", "Birth", "a_001"), f("F2", "Residence", "a_002"), f("F3", "Death", "a_003"),
+    ];
+    await writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(withFacts, null, 2), "utf-8");
+  };
+  const i2Facts = async () =>
+    (JSON.parse(await readFile(join(dir, "tree.gedcomx.json"), "utf-8")).persons.find((p: any) => p.id === "I2").facts ?? [])
+      .map((x: any) => x.assertion_id);
+
+  it("a rejection removes the derived rows' facts from the person, not only the trigger's", async () => {
+    await expandedOnI2();
+    await i2HoldsTheFacts();
+    const r = await researchAppend({ projectPath: dir, ops: [rejectOf("a_001", "I2")] });
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    expect(await i2Facts()).toEqual([]);
+  });
+
+  it("MUST NOT FIRE: rejecting one derived pairing removes only that fact", async () => {
+    await expandedOnI2();
+    await i2HoldsTheFacts();
+    const r = await researchAppend({ projectPath: dir, ops: [rejectOf("a_002", "I2")] });
+    expect(r.ok, JSON.stringify((r as any).errors)).toBe(true);
+    expect(await i2Facts()).toEqual(["a_001", "a_003"]);
+  });
+
   // ── Step 6 of person-evidence.md: correcting a link the agent got wrong ───
   //
   // Step 6 is TWO calls: append the corrected link to get its `pe_` id, then

@@ -2286,7 +2286,9 @@ rules out the rows it produced. So a `rejected_links` append retires, on the sam
 person, both the link naming that assertion **and** every derived row whose
 rationale names it as the trigger — matched on the rationale's
 `<prefix><assertion_id>:` form, whose trailing colon keeps `a_001` from matching
-`a_0011`. The same set is excluded from the holder count, so the one-call
+`a_0011`. Each retired row's fact leaves the person's tree too, unless another
+source also cites it, the same as the rejected link's own fact. The same set is
+excluded from the holder count, so the one-call
 correction works on an entry that has already expanded. Without this, rejecting
 the original link leaves the derived facts on a person the researcher has just
 said they do not belong to, and the one-call correction the refusal advertises is
