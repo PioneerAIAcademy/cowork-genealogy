@@ -65,6 +65,21 @@ DORMANT: dict[str, str] = {
         "holds the proved-tier Flynn proof at probable in 2 of 3 runs; issue #4425 "
         "restores it"
     ),
+    "materialize": (
+        "its only test, ut_person_evidence_027, was deleted when person-evidence moved "
+        "to Haiku 5.5: it links a_011/a_012 but never calls materialize_facts; "
+        "issue #4478 restores it"
+    ),
+    "naturalization-exception": (
+        "its only test, ut_person_evidence_r8t, was deleted when person-evidence moved "
+        "to Haiku 5.5: it counts the interval from a return-trip arrival; "
+        "issue #4478 restores it"
+    ),
+    "score-variant": (
+        "its only test, ut_person_evidence_013, was deleted when person-evidence moved "
+        "to Haiku 5.5: it treats a low same_person score as a veto; "
+        "issue #4478 restores it"
+    ),
     "unblocks-nonempty": (
         "step mode section E retired the gatekeeper questions it graded "
         "(ut_question_selection_003, _005, _006, _008, _d03); the validator was "
