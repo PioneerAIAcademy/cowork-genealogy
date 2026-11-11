@@ -347,6 +347,17 @@ export const CALL_PLAN: readonly SmokeStep[] = [
     expect: okTrue,
   },
   {
+    // The source opt-in: the schema must admit includeSources, or server.ts
+    // refuses the argument before the tool runs.
+    tool: "tree_query",
+    offline: true,
+    args: (ctx) => ({ projectPath: ctx.projectPath, includeSources: true }),
+    expect: (res) => ({
+      ok: !res.isError && res.body?.ok === true && Array.isArray(res.body?.sources),
+      detail: brief(res, 300),
+    }),
+  },
+  {
     // The stdio smoke runs the file store, which lists nothing. Over HTTP the
     // bound store lists the project the create above wrote; a connector's store
     // lists it too, plus the fresh path a new project would go to.
