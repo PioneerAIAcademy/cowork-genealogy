@@ -295,7 +295,7 @@ describe("research_append and disputes_assertion_id", () => {
     const { id: _id, ...entry } = indexAssertion("a_003", "sex", "Female [?]");
     const r: any = await researchAppendFromCaller({
       projectPath: dir, section: "assertions", op: "append", entry: { ...entry, disputes_assertion_id: "a_002" },
-    } as any);
+    } as any, null);
     expect(r.ok).toBe(false);
   });
 
