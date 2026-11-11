@@ -52,15 +52,19 @@ export default function CollectionsSection(): React.JSX.Element {
   return (
     <div className={styles.section}>
       <h2 className={styles.sectionTitle}>Collections</h2>
-      {places.map(({ place, groups, rowCount }) => (
+      {places.map(({ place, groups, rowCount, tooLarge }) => (
         <Card
           key={place}
           id={`collections-${place}`}
           title={place}
           summary={
-            rowCount === 0
-              ? 'Fetched — nothing specific to this place'
-              : `${rowCount} collection${rowCount === 1 ? '' : 's'} · ${groups.length} record type${groups.length === 1 ? '' : 's'}`
+            tooLarge && rowCount === 0
+              ? 'Too large to list — look up a smaller place for its collections'
+              : tooLarge
+                ? `${rowCount} collection${rowCount === 1 ? '' : 's'} seen so far · too large to list in full`
+                : rowCount === 0
+                  ? 'Fetched — nothing specific to this place'
+                  : `${rowCount} collection${rowCount === 1 ? '' : 's'} · ${groups.length} record type${groups.length === 1 ? '' : 's'}`
           }
         >
           {groups.map(({ recordType, rows }) => (

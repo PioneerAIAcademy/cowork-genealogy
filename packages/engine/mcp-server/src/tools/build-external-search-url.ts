@@ -14,7 +14,9 @@ import {
   collectionKey,
   EXTERNAL_COLLECTIONS_FILE,
   loadStoredCollectionUrls,
+  loadStoredPlaces,
   namesCollection,
+  placeIsStored,
 } from "../utils/external-collections-store.js";
 
 export type ExternalSearchSite =
@@ -103,11 +105,16 @@ export type BuildExternalSearchUrlResult =
 export interface BuildExternalSearchUrlToolInput extends BuildExternalSearchUrlInput {
   projectPath?: string;
   planItemId?: string | null;
+  // The place the search is about, as external_links_search takes it. Required
+  // for a site-wide build (no `baseUrl`) inside a project, which is refused
+  // until that place or one containing it is stored (issue #4410).
+  standardPlace?: string;
 }
 
 export type BuildExternalSearchUrlToolResult =
   | ({ ok: true; url: string; handoffLine: string; notes: string[]; access: AccessClassification; logId?: string })
   | Exclude<BuildExternalSearchUrlResult, { ok: true }>
+  | { ok: false; reason: "place_not_fetched"; errors: string[] }
   | { ok: false; reason: "log_write_failed"; errors: string[] };
 
 // ─── Value validators (spec §3.7) ────────────────────────────────────────────
@@ -1540,6 +1547,34 @@ async function uncuratedBaseUrlError(projectPath: string, baseUrl: string): Prom
     : `baseUrl ${baseUrl} names a collection that is not in ${EXTERNAL_COLLECTIONS_FILE}. ${ways}`;
 }
 
+/** Why a site-wide build (no `baseUrl`) is refused, or `undefined`. Inside a
+ *  project the place must have been looked up with `external_links_search` first,
+ *  so a curated collection for it is never skipped unseen (lead ruling,
+ *  2026-11-10, issue #4410). A lookup that finds nothing stores an empty entry,
+ *  so the gate is always satisfiable in one call. The agent still chooses
+ *  between a curated link and a site-wide search. */
+async function placeNotFetchedError(projectPath: string, standardPlace: unknown): Promise<string | undefined> {
+  if ((await classifyProjectPath(projectPath)) !== "project") return undefined;
+  const place = typeof standardPlace === "string" ? standardPlace.trim() : "";
+  if (place === "") {
+    return (
+      "standardPlace is required for a site-wide search inside a project (no baseUrl). Pass the place " +
+      "the search is about, look it up with external_links_search({standardPlace, projectPath}) if it is " +
+      "not in project_context's externalCollections, then build again."
+    );
+  }
+  const next = `Call external_links_search(${JSON.stringify({ standardPlace: place, projectPath })}) first, then build again.`;
+  const stored = await loadStoredPlaces(projectPath);
+  if ("error" in stored) {
+    return `"${place}" cannot be checked: ${EXTERNAL_COLLECTIONS_FILE} could not be read (${stored.error}). ${next}`;
+  }
+  if (placeIsStored(stored.places, place)) return undefined;
+  return (
+    `"${place}" has never been looked up for curated collections, and neither has any place containing it, ` +
+    `so a site-wide search could miss a collection FamilySearch lists for it. ${next}`
+  );
+}
+
 // The build stays pure and synchronous; this wrapper adds the one write. With a
 // `projectPath` it appends the in-flight `external_site` entry — `outcome:
 // "partial"`, `capture_received: false` — through `researchLogAppend` itself,
@@ -1562,6 +1597,10 @@ export async function buildExternalSearchUrlTool(
   if (baseUrl !== "") {
     const refusal = await uncuratedBaseUrlError(projectPath, baseUrl);
     if (refusal) return { ok: false, reason: "invalid_base_url", errors: [refusal] };
+  } else {
+    // Site-wide on every site, the archion/matricula root fallback included.
+    const refusal = await placeNotFetchedError(projectPath, input.standardPlace);
+    if (refusal) return { ok: false, reason: "place_not_fetched", errors: [refusal] };
   }
 
   const attributes = coerceJsonArg(input.attributes);
@@ -1626,6 +1665,9 @@ export const buildExternalSearchUrlSchema = {
     "Given `projectPath`, it also appends the search's " +
     "in-flight `external_site` log entry (outcome partial, captureReceived false) " +
     "to research.json and returns its `logId` — do not log that hand-off again. " +
+    "Inside a project a site-wide search (no `baseUrl`) needs `standardPlace`, and is " +
+    "refused (`place_not_fetched`) until external_links_search has looked up that place " +
+    "or one containing it. " +
     "It makes no network call.",
   inputSchema: {
     type: "object" as const,
@@ -1662,6 +1704,14 @@ export const buildExternalSearchUrlSchema = {
       planItemId: {
         type: "string",
         description: "The `pli_` plan item this search executes, recorded on the logged hand-off.",
+      },
+      standardPlace: {
+        type: "string",
+        description:
+          "The standard place the search is about, as passed to external_links_search (e.g. " +
+          "'Hampshire, Massachusetts, United States'). Required with projectPath when baseUrl is " +
+          "omitted: the site-wide search is refused until external_links_search has looked up this " +
+          "place or one containing it. Not checked when baseUrl is given or outside a project.",
       },
       attributes: {
         type: "object",
