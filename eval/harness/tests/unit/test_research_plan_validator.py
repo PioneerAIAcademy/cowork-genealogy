@@ -650,6 +650,30 @@ def test_v5_still_fires_on_browse_claim_about_the_collection_itself():
         check_v5(before, after, _SERVED)
 
 
+# Issue #4163, both verbatim but for the id: an unindexed adjective on entries
+# or files, before or after the noun, describes those, not the collection.
+@pytest.mark.parametrize("rationale", [
+    "Use the collection (1921317, name-searchable) and, for unindexed entries, "
+    "the full-text-searchable volumes.",
+    "If pli_001 yields nothing (collection 1921317 may have incomplete coverage), "
+    "Ancestry may hold estate files not yet indexed on FamilySearch.",
+])
+def test_v5_ignores_unindexed_on_entries_or_files(rationale):
+    before, after = _states([_item("pli_012", rationale=rationale)])
+    check_v5(before, after, _SERVED)
+
+
+@pytest.mark.parametrize("rationale", [
+    "Collection 1921317 is not yet indexed.",
+    "Collection 1921317's records are not indexed.",
+    "Collection 1921317 (unindexed) holds the estate files.",
+])
+def test_v5_still_fires_on_not_yet_indexed_about_the_collection(rationale):
+    before, after = _states([_item("pli_012", rationale=rationale)])
+    with pytest.raises(AssertionError, match="1921317"):
+        check_v5(before, after, _SERVED)
+
+
 def test_v5_still_fires_on_indexed_collection_beside_a_browsed_volume():
     before, after = _states([_item("pli_010", rationale=(
         "Search the indexed collection 1999196 before browsing volume 007936749."

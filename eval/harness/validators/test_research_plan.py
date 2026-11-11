@@ -1253,7 +1253,18 @@ _BROWSE_ONLY_RE = re.compile(r"\b(?:browse|image)[\s-]?only\b", re.I)
 _ADJ_ON_NON_COLLECTION_RE = re.compile(
     r"\b(?:(?:browse|image)[\s-]?only|un-?indexed|not\s+indexed)\s+"
     r"(?:volumes?|films?|microfilms?|image\s+groups?|registers?|items?|"
-    r"for\s+(?:this|the)\s+\w+)\b",
+    r"entries|files?|pages?|documents?|for\s+(?:this|the)\s+\w+)\b",
+    re.I,
+)
+# The same adjective after its noun ("estate files not yet indexed on
+# FamilySearch") describes those files. Issue #4163: ut_research_plan_csn,
+# v17_2026-11-07_11-50-41, pli_008, "for unindexed entries" charged to 1500692
+# (personCount > 0); ut_research_plan_hoh, 2026-11-10, pli_012, "Berkshire County
+# estate files not yet indexed on FamilySearch" charged to 3155889 (81433).
+# "records" is left out: "its records are not indexed" is a collection claim.
+_NON_COLLECTION_NOUN_THEN_ADJ_RE = re.compile(
+    r"\b(?:entries|files?|pages?|documents?)\s+"
+    r"(?:(?:that\s+)?(?:are|were)\s+)?(?:not\s+(?:yet\s+)?indexed|un-?indexed)\b",
     re.I,
 )
 # An availability adjective describes the nearest identifier before it. When
@@ -1364,7 +1375,9 @@ def test_research_plan_availability_claim_matches_counts(
                 claims_indexed = _claim_on_collection(
                     _INDEXED_RE, claim_text, cid
                 ) and not _claim_on_collection(_UNINDEXED_RE, claim_text, cid)
-                about_collection = _ADJ_ON_NON_COLLECTION_RE.sub(" ", claim_text)
+                about_collection = _NON_COLLECTION_NOUN_THEN_ADJ_RE.sub(
+                    " ", _ADJ_ON_NON_COLLECTION_RE.sub(" ", claim_text)
+                )
                 claims_browse = _claim_on_collection(
                     _BROWSE_ONLY_RE, about_collection, cid
                 ) or _claim_on_collection(_UNINDEXED_RE, about_collection, cid)
