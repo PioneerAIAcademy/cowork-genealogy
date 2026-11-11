@@ -1,0 +1,97 @@
+{
+  "persons": [
+    {
+      "id": "I1",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N1",
+          "preferred": true,
+          "given": "Juanita Ruth",
+          "surname": "Kimbrell",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F1",
+          "type": "Birth",
+          "primary": true,
+          "date": "1921",
+          "place": "Sedgwick County, Kansas"
+        },
+        {
+          "id": "F2",
+          "type": "Residence",
+          "date": "1940",
+          "place": "Wichita, Sedgwick County, Kansas"
+        }
+      ]
+    },
+    {
+      "id": "I2",
+      "gender": "Male",
+      "names": [
+        {
+          "id": "N2",
+          "preferred": true,
+          "given": "Oscar",
+          "surname": "Kimbrell",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F3",
+          "type": "Birth",
+          "primary": true,
+          "date": "1893",
+          "place": "Kansas"
+        }
+      ]
+    },
+    {
+      "id": "I3",
+      "gender": "Female",
+      "names": [
+        {
+          "id": "N3",
+          "preferred": true,
+          "given": "Edna",
+          "surname": "Kimbrell",
+          "type": "BirthName"
+        }
+      ],
+      "facts": [
+        {
+          "id": "F4",
+          "type": "Birth",
+          "primary": true,
+          "date": "1897",
+          "place": "Kansas"
+        }
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "id": "R1",
+      "type": "ParentChild",
+      "parent": "I2",
+      "child": "I1"
+    },
+    {
+      "id": "R2",
+      "type": "ParentChild",
+      "parent": "I3",
+      "child": "I1"
+    },
+    {
+      "id": "R3",
+      "type": "Couple",
+      "person1": "I2",
+      "person2": "I3"
+    }
+  ],
+  "sources": []
+}

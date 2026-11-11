@@ -533,11 +533,14 @@ refusal comes once the merged list passes 800 rows, with 2 once it passes 1200.
 When a search ranks, `results` comes back **annotated in place** — each row
 carries `matchRank`, `searchRank`, `matchScore`, and where available
 `candidateFactCount`, `birthYearConflict` with `birthYearGap` when the
-birth years differ by more than two, and the `attachedTo*` flags — and the
+birth years differ by more than two, `surnameNotOnSubject` with
+`candidateSurname` when the surname is none the project gives the subject, and
+the `attachedTo*` flags — and the
 list is ordered **best first**. `ranked` carries metadata only (plus
 `subjectTooThin: true` and its `subjectTooThinNote` when the subject lacks both a
 narrow date and a named relative — see `rank-search-matches-tool-spec.md` §
-`subjectTooThin`); it has
+`subjectTooThin` — and `surnameNote` when a row carries `surnameNotOnSubject`,
+§ `surnameNotOnSubject`); it has
 no row list of its own. There is one set of rows, never two.
 
 `searchRank` is what keeps that re-ordering **auditable rather than lossy**.

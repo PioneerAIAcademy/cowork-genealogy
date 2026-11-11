@@ -287,6 +287,11 @@ export interface RecordSearchResult {
   birthYearConflict?: true;
   /** Candidate birth year minus subject birth year; present with the flag. */
   birthYearGap?: number;
+  /** True when the candidate's surname is not one the project gives the
+   *  subject; see `RankedMatch.surnameNotOnSubject`. */
+  surnameNotOnSubject?: true;
+  /** The candidate's surname; present with `surnameNotOnSubject`. */
+  candidateSurname?: string;
   /** Only set when attachment-checking ran and the batch call succeeded. */
   attachedToSubject?: boolean;
   attachedToOther?: boolean;
