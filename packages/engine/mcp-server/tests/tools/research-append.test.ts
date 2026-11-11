@@ -7944,17 +7944,34 @@ describe("research_append (batch ops)", () => {
     });
     expect(r.ok).toBe(true);
     if (!r.ok || !("results" in r)) return;
+    // One `person_evidence` append now returns THREE rows (#4226): a_001,
+    // a_002 and a_003 all carry record_id "rec1" at role "principal", so they
+    // are one record entry, and linking a_002 claims the whole of it.
     expect(r.results.map((x) => `${x.section}:${x.entryId}`)).toEqual([
       "sources:src_002",
       "assertions:a_002",
       "assertions:a_003",
       "person_evidence:pe_001",
+      "person_evidence:pe_002",
+      "person_evidence:pe_003",
     ]);
     const research = await readResearch();
     expect(research.sources).toHaveLength(2);
     expect(research.assertions.map((a: any) => a.id)).toEqual(["a_001", "a_002", "a_003"]);
     expect(research.assertions[1].source_id).toBe("src_002"); // intra-batch forward ref persisted + validated
-    expect(research.person_evidence).toHaveLength(1);
+    expect(research.person_evidence).toHaveLength(3);
+    // The caller's row is theirs; the other two are the tool's, carry the
+    // caller's confidence, no score, and say what they came from.
+    expect(research.person_evidence[0]).toMatchObject({
+      id: "pe_001", assertion_id: "a_002", person_id: "I1", confidence: "confident", rationale: "match",
+    });
+    expect(research.person_evidence.slice(1).map((pe: any) => pe.assertion_id).sort()).toEqual(["a_001", "a_003"]);
+    for (const pe of research.person_evidence.slice(1)) {
+      expect(pe.person_id).toBe("I1");
+      expect(pe.confidence).toBe("confident"); // inherited from the trigger
+      expect(pe.match_score).toBeNull();
+      expect(pe.rationale).toMatch(/^Derived from the link on a_002: the same record entry \(rec1\/principal\)/);
+    }
   });
 
   it("(d2) appends a plan + its items in one batch, referencing the predicted plan id pl_001", async () => {
