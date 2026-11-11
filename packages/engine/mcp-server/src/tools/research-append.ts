@@ -7970,7 +7970,16 @@ function retireRejectedLinks(
     const rj = rejections.find((r) => r && r.id === a.entryId);
     if (!rj || typeof rj.assertion_id !== "string" || typeof rj.person_id !== "string") continue;
     const live = links.filter(
-      (pe) => pe && !pe.superseded_by && pe.assertion_id === rj.assertion_id && pe.person_id === rj.person_id,
+      // A link claims its whole record entry, so retiring it must retire the rows
+      // derived from it too (#4355 review). The derived rationale names the
+      // trigger assertion, and the trailing ":" keeps a_001 from matching a_0011.
+      (pe) =>
+        pe &&
+        !pe.superseded_by &&
+        pe.person_id === rj.person_id &&
+        (pe.assertion_id === rj.assertion_id ||
+          (isDerivedEntryLink(pe) &&
+            pe.rationale.startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${rj.assertion_id}:`))),
     );
     if (live.length === 0) continue;
     for (const pe of live) pe.superseded_by = rj.id;
@@ -11770,6 +11779,20 @@ export function planEntryLinkExpansion(
     if (pe?.superseded_by != null) continue;
     if (retiring.has(String(pe?.id))) continue;
     if (rejectedNow.has(`${String(pe?.assertion_id)}\u0000${String(pe?.person_id)}`)) continue;
+    // Its trigger is being rejected in this same call, so it retires with it and
+    // cannot hold the entry against the replacement link (#4355 review).
+    if (
+      isDerivedEntryLink(pe) &&
+      [...rejectedNow].some((k) => {
+        const [ra, rp] = k.split("\u0000");
+        return (
+          rp === String(pe?.person_id) &&
+          String(pe?.rationale).startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${ra}:`)
+        );
+      })
+    ) {
+      continue;
+    }
     note(pe?.person_id, pe?.assertion_id);
   }
   for (const op of ops) {

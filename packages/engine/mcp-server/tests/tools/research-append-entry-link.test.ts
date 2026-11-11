@@ -16,7 +16,7 @@ import { join } from "path";
 import { tmpdir } from "os";
 import { researchAppend } from "../../src/tools/research-append.js";
 import { recordMatchScore } from "../../src/utils/match-scores.js";
-import { ATTACHMENT_LINK_RATIONALE } from "../../src/utils/tree-person.js";
+import { ATTACHMENT_LINK_RATIONALE, derivedEntryLinkRationale } from "../../src/utils/tree-person.js";
 
 const source = {
   id: "src_001",
@@ -434,5 +434,92 @@ describe("#4226 a link means the record entry", () => {
     });
     expect(r.ok).toBe(true);
     expect((await links()).some((x) => x.assertion_id === "a_001" && x.person_id === "I1")).toBe(true);
+  });
+
+  // ── An entry that has ALREADY expanded (review of PR #4355, round 2) ───────
+  //
+  // The two correction cases above each start from a holder with ONE link, so
+  // neither reaches the rows a previous call derived. A rejection has to retire
+  // those too, or the researcher's "not him" leaves his facts on the person.
+
+  /** a_001 linked to I2 and already expanded: a_002 and a_003 derived to I2. */
+  const expandedOnI2 = async () => {
+    await write(project({
+      assertions: [
+        assertion("a_001"),
+        assertion("a_002", { fact_type: "residence", value: "Schuylkill" }),
+        assertion("a_003", { fact_type: "death", value: "1899" }),
+      ],
+      person_evidence: [
+        linkRow("pe_001", "a_001", "I2"),
+        linkRow("pe_002", "a_002", "I2", {
+          match_score: null,
+          rationale: derivedEntryLinkRationale("a_001", "principal"),
+        }),
+        linkRow("pe_003", "a_003", "I2", {
+          match_score: null,
+          rationale: derivedEntryLinkRationale("a_001", "principal"),
+        }),
+      ],
+    }));
+    await attest("a_001");
+  };
+
+  const rejectOf = (assertion_id: string, person_id: string) => ({
+    section: "rejected_links" as const,
+    op: "append" as const,
+    entry: {
+      assertion_id, person_id,
+      reason: "The residence belongs to a different Flynn household in the same county.",
+      researcher_words: "No, that's not him, wrong household",
+    },
+  });
+
+  it("MUST NOT FIRE: one call corrects an entry that has already expanded", async () => {
+    await expandedOnI2();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        rejectOf("a_001", "I2"),
+        {
+          section: "person_evidence",
+          op: "append",
+          entry: { assertion_id: "a_001", person_id: "I1", confidence: "confident", rationale: "match", superseded_by: null },
+        },
+      ],
+    });
+    expect(r.ok).toBe(true);
+    const rows = await links();
+    // Every I2 row retired, and all three facts now sit on I1.
+    for (const id of ["pe_001", "pe_002", "pe_003"]) {
+      expect(rows.find((x) => x.id === id).superseded_by).toMatch(/^rj_/);
+    }
+    for (const a of ["a_001", "a_002", "a_003"]) {
+      expect(rows.some((x) => x.assertion_id === a && x.person_id === "I1" && x.superseded_by == null)).toBe(true);
+    }
+  });
+
+  it("a rejection on its own retires the rows derived from the rejected link", async () => {
+    await expandedOnI2();
+    const r = await researchAppend({ projectPath: dir, ops: [rejectOf("a_001", "I2")] });
+    expect(r.ok).toBe(true);
+    const rows = await links();
+    for (const id of ["pe_001", "pe_002", "pe_003"]) {
+      expect(rows.find((x) => x.id === id).superseded_by).toMatch(/^rj_/);
+    }
+    // I2 keeps none of the entry's one-party facts.
+    expect(rows.some((x) => x.person_id === "I2" && x.superseded_by == null)).toBe(false);
+  });
+
+  it("MUST NOT FIRE: rejecting one derived pairing leaves the original link live", async () => {
+    await expandedOnI2();
+    const r = await researchAppend({ projectPath: dir, ops: [rejectOf("a_002", "I2")] });
+    expect(r.ok).toBe(true);
+    const rows = await links();
+    expect(rows.find((x) => x.id === "pe_002").superseded_by).toMatch(/^rj_/);
+    // The trigger and the sibling it derived are untouched: the researcher ruled
+    // out one fact's pairing, not the identification.
+    expect(rows.find((x) => x.id === "pe_001").superseded_by).toBe(null);
+    expect(rows.find((x) => x.id === "pe_003").superseded_by).toBe(null);
   });
 });

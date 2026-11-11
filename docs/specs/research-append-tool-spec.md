@@ -2233,6 +2233,20 @@ given in. (Superseding onto the *corrected* link cannot be one call: the tool
 assigns that row's id, so the rejection route is the one-call correction and the
 supersede route is for a link already held.)
 
+**A rejection retires what the rejected link derived.** The rule above is what
+makes this necessary: if a link claims the whole entry, then ruling that link out
+rules out the rows it produced. So a `rejected_links` append retires, on the same
+person, both the link naming that assertion **and** every derived row whose
+rationale names it as the trigger — matched on the rationale's
+`<prefix><assertion_id>:` form, whose trailing colon keeps `a_001` from matching
+`a_0011`. The same set is excluded from the holder count, so the one-call
+correction works on an entry that has already expanded. Without this, rejecting
+the original link leaves the derived facts on a person the researcher has just
+said they do not belong to, and the one-call correction the refusal advertises is
+itself refused, because the derived rows still hold the entry. Rejecting a
+*derived* pairing retires only that row: it rules out one fact, not the
+identification.
+
 **Scope.** The rule runs at write time, so a project written before it stays
 partly linked; nothing backfills. It reaches an entry only where one one-party
 fact is already linked. An entry reached solely through two-party links is not
