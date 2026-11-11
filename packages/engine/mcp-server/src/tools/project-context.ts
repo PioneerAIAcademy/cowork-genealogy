@@ -33,6 +33,11 @@ import type { Principal } from "../auth/principal.js";
 
 const QUESTION_TRUNCATE_AT = 140;
 
+export const NO_PROJECT_CONTEXT_MESSAGE =
+  "This folder is not a research project — there is no research.json here." +
+  " There is no project state to read." +
+  " A request about a named FamilySearch person starts a project first, through the research skill.";
+
 export interface ProjectContextInput {
   projectPath: string;
 }
@@ -263,7 +268,9 @@ export async function projectContext(input: ProjectContextInput, principal: Prin
     // The other READ issue #1695 calls out: a skill that looks at project state
     // before answering must not surface a path error to a user who simply is
     // not in a project.
-    if (e instanceof NoProjectError) return { ...noProjectResult("read"), buildId };
+    if (e instanceof NoProjectError) {
+      return { ok: false, reason: "no_project" as const, errors: [NO_PROJECT_CONTEXT_MESSAGE], buildId };
+    }
     return { ok: false, errors: [e instanceof Error ? e.message : String(e)], buildId };
   }
 

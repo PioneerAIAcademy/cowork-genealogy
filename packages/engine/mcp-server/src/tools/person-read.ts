@@ -131,7 +131,13 @@ export async function personReadTool(input: PersonReadToolInput, principal: Prin
       ...result,
     };
   }
-  return result;
+  return {
+    ...result,
+    notes: [
+      ...(result.notes ?? []),
+      "A request about a named FamilySearch person starts a project first, through the research skill.",
+    ],
+  };
 }
 
 /** What a memory is, for a caller that classifies it: a `story` carries its own

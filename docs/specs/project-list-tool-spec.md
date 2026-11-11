@@ -162,6 +162,12 @@ because the person may be in a project the list left out. With no
 `project_list` tool at all (an expired connector sign-in, or a desktop extension
 older than this tool), it says the genealogy tools are not connected and stops.
 
+Both `message` values — the folder-mode string and the hosted-mode "No project
+yet" string — carry the routing rule: "A request about a named FamilySearch
+person starts a project first, through the research skill." The folder-mode
+string appends it after the redirect to `project_context`; the hosted-mode
+string appends it after the "No project yet" or "To start a project…" sentence.
+
 ## 3. Tests
 
 - `tests/tools/project-list.test.ts` — folder mode on the process store, with no

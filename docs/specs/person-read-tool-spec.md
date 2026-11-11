@@ -93,6 +93,12 @@ than the client accepts from one tool call, and the model then sees only a previ
 of the head of the text, so a `staged` written last fell outside it and the agent
 could not pass the ref on. `server.ts` keeps insertion order.
 
+When `projectPath` is **absent**, the tool appends one entry to `notes[]`: "A
+request about a named FamilySearch person starts a project first, through the
+research skill." This is the routing rule — it reaches `person_read`'s callers
+(direct FamilySearch reads) on every surface that has no project yet, without
+touching calls that already supply a project path.
+
 - `persons[]` is always present (at minimum, the requested person)
 - `relationships[]` and `sources[]` are always present; an empty array means
   FamilySearch holds none, except on the living-person 204 stub, where both are

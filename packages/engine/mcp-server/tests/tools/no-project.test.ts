@@ -55,6 +55,7 @@ import {
   NO_PROJECT_MESSAGE_READ,
   NO_PROJECT_MESSAGE_WRITE,
 } from "../../src/utils/project-io.js";
+import { NO_PROJECT_CONTEXT_MESSAGE } from "../../src/tools/project-context.js";
 
 /** The five tools that are not writers. Telling someone who asked "where are
  *  we?" in a non-project folder that their work was not saved is both wrong and
@@ -214,9 +215,14 @@ describe("an existing directory holding neither project file", () => {
       expect(r.reason, `${tool} must carry the no_project discriminator`).toBe("no_project");
       expect(r.ok).toBe(false);
       // The text is relayed to a person unedited, so it is pinned, not just present.
-      expect(r.errors).toEqual([
-        READERS.has(tool) ? NO_PROJECT_MESSAGE_READ : NO_PROJECT_MESSAGE_WRITE,
-      ]);
+      // project_context has its own text (not shared with other readers) carrying the routing rule.
+      const expectedMessage =
+        tool === "project_context"
+          ? NO_PROJECT_CONTEXT_MESSAGE
+          : READERS.has(tool)
+            ? NO_PROJECT_MESSAGE_READ
+            : NO_PROJECT_MESSAGE_WRITE;
+      expect(r.errors).toEqual([expectedMessage]);
       expect(r.errors[0]).not.toMatch(/projectPath|research\.json not found|tree\.gedcomx/);
       // A read must not claim the user's work went unsaved — it was never asked
       // to save anything.
