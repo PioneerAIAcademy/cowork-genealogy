@@ -391,14 +391,12 @@ never revise an existing question's `status`.
 
 Everything is ALREADY persisted; the tool return confirmed the id. Do NOT
 reproduce the gap analysis or the criteria walkthrough. **Never name a
-record type anywhere in this reply — not in the rationale, the next-step
-hint, or `summary_for_user` — and not a census, deed, will, probate, estate,
-land, church record or any other kind, however sound the reasoning for
-naming it, and even when a tool's finding (a count, a date, a birth window)
-came from one: name the finding, never the record it came from — "the
-computed birth window" is correct, "the window the census data defines" is
-not. Record choice is research-plan's job; say only that research will be
-planned and searched.** Return **≤8 lines** to the caller, in this order:
+record type in the rationale bullet, the next-step hint, or
+`summary_for_user` paragraph 2 — not a census, deed, will, probate, estate,
+land, church record or any other kind, even when a tool's finding (a count,
+a date, a birth window) came from one: name the finding, never the record it
+came from — "the computed birth window" is correct, "the window the census
+data defines" is not.** Return **≤8 lines** to the caller, in this order:
 
 - the `q_` id written, or "no question written" and the one-line reason
 - the question in full, quoted as written
@@ -406,8 +404,8 @@ planned and searched.** Return **≤8 lines** to the caller, in this order:
   which record (see above)
 - what it depends on and unblocks, naming any other question by its text
 - next-step hint for the caller — what happens, not which record (see
-  above). An existing `planned` plan item for this question may be named as
-  the plan already states it
+  above). An existing `planned` or `in_progress` plan item for this question
+  may be named as the plan already states it
 
 ### `summary_for_user`
 
@@ -418,11 +416,12 @@ plain prose with **no label, heading or field name**:
 1. One paragraph for someone who has never done genealogy: the question chosen
    next, in plain words, and why it is the one to pursue — or, when you selected
    nothing, why not. No identifiers, file names, tool names or field names; a
-   question is what it asks, never a `q_` id.
+   question is what it asks, never a `q_` id. A finding's evidence or record
+   source may be named here.
 2. One sentence: what happens next, in plain language — never which step,
    skill or tool does it, no identifiers, and not which record (see above).
-   An existing `planned` plan item for this question may be named as the
-   plan already states it.
+   An existing `planned` or `in_progress` plan item for this question may be
+   named as the plan already states it.
 
 The caller prints everything after that `---` verbatim and nothing above it.
 No closing essay.

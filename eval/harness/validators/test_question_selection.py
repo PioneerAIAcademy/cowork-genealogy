@@ -144,7 +144,10 @@ def _last_nonblank_line(text: str) -> str:
 
 
 _SENTENCE_ABBREVIATIONS = frozenset(
-    {"mr", "mrs", "ms", "dr", "sr", "jr", "st", "vs", "etc", "co", "no"}
+    {
+        "mr", "mrs", "ms", "dr", "sr", "jr", "st", "vs", "etc", "co", "no",
+        "ca", "abt", "bef", "aft",
+    }
 )
 
 
@@ -160,9 +163,13 @@ def _last_sentence(text: str) -> str:
     this validator on content paragraph 2 never contained.
 
     A naive split on [.!?] plus whitespace breaks on genealogy's own
-    abbreviations ("Paul Sr. was his father" is not two sentences), so a
-    split right after one of `_SENTENCE_ABBREVIATIONS` is rejoined to the
-    previous piece instead of starting a new "sentence"."""
+    abbreviations ("Paul Sr. was his father" is not two sentences) and,
+    worse, on a single-letter initial or a date qualifier ("Thomas J. Flynn",
+    "b. ca. 1795") -- the latter silently drops an earlier record mention
+    from what gets checked, a false negative rather than a false positive.
+    A split right after one of `_SENTENCE_ABBREVIATIONS`, or after any bare
+    single letter (an initial), is rejoined to the previous piece instead of
+    starting a new "sentence"."""
     stripped = (text or "").strip()
     if not stripped:
         return ""
@@ -171,7 +178,10 @@ def _last_sentence(text: str) -> str:
     for part in parts:
         if sentences:
             last_word = re.search(r"(\w+)\.$", sentences[-1])
-            if last_word and last_word.group(1).lower() in _SENTENCE_ABBREVIATIONS:
+            if last_word and (
+                len(last_word.group(1)) == 1
+                or last_word.group(1).lower() in _SENTENCE_ABBREVIATIONS
+            ):
                 sentences[-1] = sentences[-1] + " " + part
                 continue
         sentences.append(part)
