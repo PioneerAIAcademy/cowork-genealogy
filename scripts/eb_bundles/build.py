@@ -131,6 +131,9 @@ RULES: dict[str, tuple[Rule, ...]] = {
         Rule(PROTO + "web/static/pdfjs/pdf.min.mjs", "web/static/pdfjs/pdf.min.mjs"),
         Rule(PROTO + "web/static/pdfjs/pdf.worker.min.mjs", "web/static/pdfjs/pdf.worker.min.mjs"),
         Rule(PROTO + "web/static/pdfjs/LICENSE", "web/static/pdfjs/LICENSE"),
+        # #4448: the character maps a CID font with no /ToUnicode table needs for text
+        # extraction; its own LICENSE ships with it but is not in the HTTP allow-list.
+        Rule(PROTO + "web/static/pdfjs/cmaps/", "web/static/pdfjs/cmaps/"),
         Rule(PROTO + "enqueue.py", "enqueue.py"),
         Rule(PROTO + "grants.py", "grants.py"),
         Rule(PROTO + "turn_message.py", "turn_message.py"),
