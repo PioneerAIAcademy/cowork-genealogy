@@ -1,9 +1,9 @@
 {
-  "run_log": "v12_2026-11-06_22-23-07.json",
-  "annotator": "taiwoadedotunxx1@gmail.com",
+  "run_log": "v6_2026-11-10_04-07-50.json",
+  "annotator": "clack391@gmail.com",
   "corrections": [
     {
-      "test_id": "ut_search_records_hpm",
+      "test_id": "ut_check_warnings_006",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -11,7 +11,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_hpm",
+      "test_id": "ut_check_warnings_006",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -19,7 +19,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_hpm",
+      "test_id": "ut_check_warnings_006",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -27,39 +27,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_hpm",
+      "test_id": "ut_check_warnings_006",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_hpm",
+      "test_id": "ut_check_warnings_006",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_hpm",
+      "test_id": "ut_check_warnings_006",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Actionability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_hpm",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_hpi",
+      "test_id": "ut_check_warnings_007",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -67,7 +59,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_hpi",
+      "test_id": "ut_check_warnings_007",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -75,7 +67,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_hpi",
+      "test_id": "ut_check_warnings_007",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -83,39 +75,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_hpi",
+      "test_id": "ut_check_warnings_007",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_hpi",
+      "test_id": "ut_check_warnings_007",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_hpi",
+      "test_id": "ut_check_warnings_007",
       "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_hpi",
-      "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Actionability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_014",
+      "test_id": "ut_check_warnings_008",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -123,7 +107,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_014",
+      "test_id": "ut_check_warnings_008",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -131,7 +115,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_014",
+      "test_id": "ut_check_warnings_008",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -139,39 +123,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_014",
+      "test_id": "ut_check_warnings_008",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_014",
+      "test_id": "ut_check_warnings_008",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_014",
+      "test_id": "ut_check_warnings_008",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Actionability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_014",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_d29",
+      "test_id": "ut_check_warnings_011",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -179,7 +155,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d29",
+      "test_id": "ut_check_warnings_011",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -187,7 +163,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d29",
+      "test_id": "ut_check_warnings_011",
+      "dimension_source": "base",
+      "dimension_name": "Tool Arguments",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_020",
+      "dimension_source": "base",
+      "dimension_name": "Correctness",
+      "llm_score": 2,
+      "corrected_score": 2,
+      "comment": "Agree 2: it counts relative I2's warning in Ambrose's cluster ('2 contradictions plus 2 implausible on this one person') and later says 'three contradictions'; Ambrose has 2 contradictions and 1 implausible. The warnings and facts themselves are right."
+    },
+    {
+      "test_id": "ut_check_warnings_020",
+      "dimension_source": "base",
+      "dimension_name": "Completeness",
+      "llm_score": 3,
+      "corrected_score": 3,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_020",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -195,55 +195,31 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d29",
+      "test_id": "ut_check_warnings_020",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d29",
+      "test_id": "ut_check_warnings_020",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Severity classification",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d29",
+      "test_id": "ut_check_warnings_020",
       "dimension_source": "rubric",
-      "dimension_name": "Log quality",
+      "dimension_name": "Actionability",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_d29",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_h4k",
-      "dimension_source": "rubric",
-      "dimension_name": "Log quality",
-      "llm_score": 3,
-      "corrected_score": 3,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_h4k",
-      "dimension_source": "rubric",
-      "dimension_name": "Nil escalation",
-      "llm_score": null,
-      "corrected_score": null,
-      "comment": null
-    },
-    {
-      "test_id": "ut_search_records_h4k",
+      "test_id": "ut_check_warnings_021",
       "dimension_source": "base",
       "dimension_name": "Correctness",
       "llm_score": 3,
@@ -251,7 +227,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_h4k",
+      "test_id": "ut_check_warnings_021",
       "dimension_source": "base",
       "dimension_name": "Completeness",
       "llm_score": 3,
@@ -259,7 +235,7 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_h4k",
+      "test_id": "ut_check_warnings_021",
       "dimension_source": "base",
       "dimension_name": "Tool Arguments",
       "llm_score": 3,
@@ -267,20 +243,28 @@
       "comment": null
     },
     {
-      "test_id": "ut_search_records_h4k",
+      "test_id": "ut_check_warnings_021",
       "dimension_source": "rubric",
-      "dimension_name": "Search strategy",
+      "dimension_name": "Detection accuracy",
       "llm_score": 3,
       "corrected_score": 3,
       "comment": null
     },
     {
-      "test_id": "ut_search_records_h4k",
+      "test_id": "ut_check_warnings_021",
       "dimension_source": "rubric",
-      "dimension_name": "Result triage",
+      "dimension_name": "Severity classification",
+      "llm_score": null,
+      "corrected_score": null,
+      "comment": null
+    },
+    {
+      "test_id": "ut_check_warnings_021",
+      "dimension_source": "rubric",
+      "dimension_name": "Actionability",
       "llm_score": 3,
       "corrected_score": 3,
-      "comment": "con"
+      "comment": null
     }
   ]
 }

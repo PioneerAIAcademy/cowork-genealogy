@@ -1375,6 +1375,56 @@ def test_person_warnings_runs_with_place_lookups_disabled(tmp_path, monkeypatch)
 
 
 @pytest.mark.skipif(
+    not (BUILD_TOOLS / "research-append.js").exists(),
+    reason="engine build required for the live research_append handler",
+)
+def test_research_append_runs_with_the_collection_catalog_disabled(tmp_path, monkeypatch):
+    """research_append is called with a null catalog loader, so the locality
+    collection-count stamp never reaches FamilySearch here (issue #4385)."""
+    scripts: list[str] = []
+    spy = _NodeEvalSpy(stdout='{"ok": true}')
+
+    def _recording(script, input_str=None, timeout=mock_mcp.NODE_EVAL_TIMEOUT_DEFAULT, *, store=True):
+        scripts.append(script)
+        return spy(script, input_str, timeout)
+
+    monkeypatch.setattr(mock_mcp, "_run_node_eval", _recording)
+    _server, _log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+    scripts.clear()
+    _invoke(tools_by_name, "research_append", {"projectPath": str(tmp_path), "section": "notes", "op": "append", "entry": {}})
+    tool_scripts = [x for x in scripts if "rejectUnknownArgs" not in x]
+    assert len(tool_scripts) == 1
+    assert "researchAppendFromCaller as run" in tool_scripts[0]
+    assert "await run(input, null)" in tool_scripts[0]
+
+
+@pytest.mark.skipif(
+    not (BUILD_TOOLS / "research-append.js").exists(),
+    reason="engine build required for the live research_append handler",
+)
+def test_research_append_keeps_a_locality_count_unstamped_in_the_harness(tmp_path):
+    """Through the real compiled writer: a locality's collection count is kept as
+    written, with no catalog warning, because the harness skips the stamp."""
+    scenario = REPO_ROOT / "eval/fixtures/scenarios/mid-research-flynn"
+    for name in ("research.json", "tree.gedcomx.json"):
+        (tmp_path / name).write_text((scenario / name).read_text(encoding="utf-8"), encoding="utf-8")
+    _server, _log, tools_by_name = create_mock_server([], FIXTURES_DIR, workspace=tmp_path)
+    entry = {
+        "place": "Illinois, United States",
+        "collections": [{"id": "1803969", "title": "Illinois, State Census, 1855", "person_count": 0, "record_count": 5}],
+        "pages_read": [{"section": "home", "url": "u1", "found": True}],
+        "source": "locality-guide",
+    }
+    result = _invoke(tools_by_name, "research_append", {"projectPath": str(tmp_path), "section": "localities", "op": "append", "entry": entry})
+    reply = json.loads(result["content"][0]["text"])
+    assert reply["ok"] is True, reply
+    assert not any("catalog" in w for w in reply["validation"]["warnings"]), reply
+    stored = json.loads((tmp_path / "research.json").read_text(encoding="utf-8"))["localities"][-1]["collections"][0]
+    assert stored["person_count"] == 0
+    assert stored["record_count"] == 5
+
+
+@pytest.mark.skipif(
     not BUILD_SCHEMAS_JS.exists(),
     reason="engine build required for the catalog probe",
 )
