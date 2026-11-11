@@ -123,7 +123,14 @@ pattern for relationship assertions. Example:
 - Create two `pe_` entries: one linking a_004 → I1, another
   linking a_004 → I2
 
-Create one `pe_` entry per person the assertion bears on.
+Create one `pe_` entry per person the assertion bears on — for an assertion
+that names two people: a relationship, a marriage, a couple event, or a fact
+about someone else filed on this persona.
+
+For a fact about one person (name, sex, birth, death, residence, occupation),
+write ONE entry, to the person whose record entry it is. Do not link it to a
+relative as well. `research_append` writes that entry's other one-party facts
+to the same person itself.
 
 **Do this proactively, in the same pass.** When an assertion implies a
 relationship (a census household, a will naming a child, a marriage record),
@@ -1134,6 +1141,11 @@ When multiple candidates share the same name in the same area:
   by itself drop a match below what the non-name identifiers
   support. Reclassify as Moderate or Strong, create the link, and
   document the variant explanation in `rationale`.
+- **A `[?]` reading caps the link, a variant does not.** Only an
+  assertion whose value carries `[?]` links at `probable` at most
+  unless another record ties the same person; its `rationale` names
+  both readings. Every other variant follows the rule above: write
+  the link without asking.
 - **One pe_ entry per assertion-person pair.** Don't create duplicate
   links for the same assertion-person combination. The one exception is an
   attachment link (Step 1): the scored link is appended beside it, and the
