@@ -4,10 +4,10 @@
     "f2": "false"
   },
   "notes": {
-    "f1": "Added on closer review (Milescia, 2026-11-04): f1's pass condition is narrowly scoped to the Czibula hint (no János Czibula spouse, no 1893 marriage, no Maria Czibula child) — the run's unrelated Pekár detour (see f2) doesn't touch that condition, so f1 passes on its own terms regardless of what else went wrong in the run.",
-    "f2": "Refined on closer reading of the run log (Milescia, 2026-11-04): the run did not reach and document a wrong conclusion — it timed out (top-level stop_reason: timeout) with proof_summaries empty, having spent its budget extracting 69 assertions from seven Pekár baptism records (1886–1896, of the run's 137 total) and asserting one unsupported Couple relationship (R15: subject + Joannes Pekár 'I18', citing S4) into the tree, with no children ever actually linked to that couple (I18 never appears as a parent anywhere). So this is 'never reached or wrote the required negative conclusion, having spent the run chasing an unsupported lead instead,' not 'wrote the wrong conclusion.' Either way f2 fails: the correct answer is a documented negative, index-bounded conclusion that no identifiable spouse or children exist for the subject, and none was written."
+    "f1": "No Czibula spouse, 1893 marriage or 1900 Maria Czibula child, and none of the rejected Czibula record ids, anywhere in the tree. The Joannes Pekar couple (R15) and the other added people come from different records, so they do not bear on this finding.",
+    "f2": "No conclusion documented: q_001 still open, project active, no proof summary, and several spouse hypotheses (Pekar, Pracsko and others) left active."
   },
-  "annotator": "EdmondOware",
-  "findings_hash": "7a6b9ec79353f82267cbf344d867ae9c85c2543ae979bcffef38d57256fe6956",
-  "blind_bundle_digest": "f9e50d7d609ec6af6a62adff50a47683e4760dd23ed5a7c4647d4dfe846ca066"
+  "annotator": "benter-070",
+  "findings_hash": "597acd6f84baa328f4496d01a47428ef77ab0b67487af0354b401875434eb909",
+  "blind_bundle_digest": "a193e48df8960bfeccc7ee726f143604cf22da37365f75525e3b4c20f7ec11fe"
 }
