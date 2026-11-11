@@ -125,9 +125,13 @@ clean-deps: ## Remove all node_modules (force a from-scratch install; use after 
 # prerequisite: make reads the .make-installed stamp timestamps once at startup,
 # so a single `reinstall: clean-deps install` would still see the (now-deleted)
 # stamps as up-to-date and skip the JS installs. The recursive call re-evaluates
-# them post-clean.
+# them post-clean. The Node and npm check runs first, as its own recipe line, so
+# a version the installs would refuse stops this before anything is deleted (a
+# prerequisite would be unordered under -j).
 .PHONY: reinstall
-reinstall: clean-deps ## Clean every node_modules, then install EVERYTHING from scratch (the safe path after a Node upgrade)
+reinstall: ## Clean every node_modules, then install EVERYTHING from scratch (the safe path after a Node upgrade)
+	node scripts/check-node-floor.mjs
+	$(MAKE) clean-deps
 	$(MAKE) install
 
 # ── Worktrees ────────────────────────────────────────────────────
@@ -1797,8 +1801,9 @@ cowork-install: mcpb plugin ## Build BOTH artifacts and print the install click-
 # The prototype's three Elastic Beanstalk source bundles (U12, docs/plan/familysearch-handoff.md),
 # every dependency vendored: releases/eb-{web,worker,tools}.zip + releases/eb-bundles.json. The
 # builder stages outside the repo and needs node >= 22 with the engine's npm, the pnpm workspace
-# installed, and the network (PyPI, npm, the RDS truststore). pip is the version the AL2023
-# Python 3.12 platform ships; pyyaml is apps/server/uv.lock's (test_eb_bundles checks it).
+# installed (which takes Node 22.22.2+ on 22, 24.15+ on 24, or 26+), and the network (PyPI, npm,
+# the RDS truststore). pip is the version the AL2023 Python 3.12 platform ships; pyyaml is
+# apps/server/uv.lock's (test_eb_bundles checks it).
 # ARGS passes through to the builder only (make eb-bundles ARGS="--arch x86_64 --rds-ca FILE"); the
 # verifier always dry-runs both arches, so a single-arch build fails it.
 EB_PIP    := 26.2.1

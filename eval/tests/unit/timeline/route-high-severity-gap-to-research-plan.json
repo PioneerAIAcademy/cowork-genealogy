@@ -4,7 +4,7 @@
     "skill": "timeline",
     "name": "A high-severity timeline gap routes to research-plan, not question-selection (E)",
     "type": "positive",
-    "description": "mid-research-flynn carries a high-severity gap on the open q_001. Section E moves that hand-off to research-plan: a gap in a person's timeline is a SEARCH on the question already open, and asking question-selection for a new question would leave q_001 unfinished while a second competes with it. timeline is reachable from conflict-resolution's identity row, so this route also decides where an identity investigation goes next.",
+    "description": "In flynn-timeline-links the records linked to Patrick Flynn go silent after 1860, so the timeline built from them carries a high-severity gap (1860 to 1908: the 1870, 1880 and 1900 censuses) on the open q_001. Section E moves that hand-off to research-plan: a gap in a person's timeline is a SEARCH on the question already open, and asking question-selection for a new question would leave q_001 unfinished while a second competes with it. timeline is reachable from conflict-resolution's identity row, so this route also decides where an identity investigation goes next.",
     "tags": [
       "timeline",
       "gaps",
@@ -16,7 +16,7 @@
   },
   "input": {
     "delegation": "Build the timeline for Patrick Flynn (person I1), then say what happens next.\n\nprojectPath: <workspace>",
-    "scenario": "mid-research-flynn"
+    "scenario": "flynn-timeline-links"
   },
   "mcp_fixtures": [
     "place-search-ireland",

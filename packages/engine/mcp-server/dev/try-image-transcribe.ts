@@ -73,7 +73,7 @@ if ("ok" in result) {
   console.log("No project here:", result.errors.join(" "));
   process.exit(0);
 }
-console.log("Metadata:", JSON.stringify(result.metadata, null, 2));
+if (result.metadata) console.log("Memory artifact:", result.metadata.memoryArtifactUrl);
 if (result.found) console.log("Found:", result.found);
 console.log("Staged:", JSON.stringify(result.staged), result.stagingError ?? "");
 if (result.digest) console.log("Digest:", JSON.stringify(result.digest, null, 2));

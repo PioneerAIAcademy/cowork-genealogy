@@ -21,7 +21,6 @@ export const PER_USER_ENV = [
   "OPENROUTER_MODEL",
   "WEB_PUBLIC_URL",
   "UPLOADS_ENABLED",
-  "TRANSCRIPTION_ENABLED",
   "MATCHER_URL",
   "MATCHER_API_KEY",
 ] as const;
@@ -36,7 +35,7 @@ export const PER_USER_ENV = [
  * A switch takes `true` or `false` (trimmed, any case) and `WEB_PUBLIC_URL` a plain http(s)
  * URL with no `#`, `?`, credentials, backslash, space or control character; anything else
  * throws, so `http.js` refuses to start. Unset means "as today", so a lenient parse would turn
- * `TRANSCRIPTION_ENABLED=off` into transcription left running.
+ * `UPLOADS_ENABLED=off` into uploads left on.
  */
 export function configFromEnv(env: NodeJS.ProcessEnv, base: AppConfig = {}): AppConfig {
   const out: AppConfig = { ...base };
@@ -56,8 +55,6 @@ export function configFromEnv(env: NodeJS.ProcessEnv, base: AppConfig = {}): App
   }
   const uploads = envSwitch(env, "UPLOADS_ENABLED");
   if (uploads !== undefined) out.uploadsEnabled = uploads;
-  const transcription = envSwitch(env, "TRANSCRIPTION_ENABLED");
-  if (transcription !== undefined) out.transcriptionEnabled = transcription;
   // The matcher service needs both; one alone names no service to call.
   if (env.MATCHER_URL && env.MATCHER_API_KEY) {
     out.matcher = "service";
@@ -67,7 +64,7 @@ export function configFromEnv(env: NodeJS.ProcessEnv, base: AppConfig = {}): App
   return out;
 }
 
-/** The links append `/#/p/<id>` to the raw value, so a `#`, a `?` or credentials in it break or
+/** The links append `/upload/<id>` to the raw value, so a `#`, a `?` or credentials in it break or
  *  leak every link; `new URL` alone accepts `https:user:pw@host` and treats `\` as `/`. */
 export function isPlainHttpUrl(raw: string): boolean {
   return (

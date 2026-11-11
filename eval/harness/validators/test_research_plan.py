@@ -198,7 +198,7 @@ def test_dispose_named_items(before_state, after_state, test):
                 if not now.get("skip_category"):
                     errors.append(f"{iid}: skipped with no skip_category")
                 # A search that RAN is never `skipped`: `research_append` refuses it
-                # (decision 9 of docs/plan/attached-records-baseline.md), because a
+                # (research-append-tool-spec.md §8, the searched-item skip row), because a
                 # skip says nothing was searched and research-exhaustiveness reads a
                 # disposed item as settled.
                 if iid in logged:
@@ -1776,13 +1776,20 @@ _RELATIVE = r"(?:(?:grand|step)?(?:son|daughter|child|children|father|mother|par
 _SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+(?=[A-ZÅÄÖ])")
 
 
+_SUBJECT_OWN_DEATH_RE = re.compile(
+    rf"\b(?:subject['’]s|her)\s+own\s+{_DEATH_WORD}", re.IGNORECASE
+)
+
+
 def _death_route_res(given: str) -> tuple[re.Pattern, re.Pattern]:
     """(own, relative): `own` ties the entry to the subject ("Elena's burial",
-    "burials index for Elena", "her age at death", "Elena's entry");
-    `relative` names a relative of hers ("Elena's son", "her husband")."""
+    "burials index for Elena", "her age at death", "Elena's entry", "the
+    subject's own burial"); `relative` names a relative of hers ("Elena's
+    son", "her husband")."""
     g = re.escape(given)
     own = re.compile(
-        rf"\b{g}(?:\s+\w+)?['’]s\s+(?:own\s+)?(?:{_DEATH_WORD}|entry)"
+        _SUBJECT_OWN_DEATH_RE.pattern
+        + rf"|\b{g}(?:\s+\w+)?['’]s\s+(?:own\s+)?(?:{_DEATH_WORD}|entry)"
         rf"|\b{_DEATH_WORD}\w*(?:\s+[\w-]+){{0,2}}\s+(?:of|for)\s+{g}\b(?!['’]s)"
         rf"|(?<!\bof\s)\b{g}(?:\s+\w+)?,?\s+(?:was\s+)?(?:buried|died)\b"
         rf"|\bher\s+(?:own\s+)?(?:age\s+at\s+)?{_DEATH_WORD}",
@@ -1807,6 +1814,7 @@ def test_pre_register_birth_plans_death_route(before_state, after_state, test):
     her birthplace. Both defects are asserted here.
 
     An item counts only when its rationale or jurisdiction names the subject
+    (by given name, or as "her own" / "the subject's own" death or burial)
     and a death/burial word, and its `date_range` starts after the subject's
     birth window. When every sentence carrying a death word also names a
     relative of hers ("Elena's son", "her husband"), the item counts only if
@@ -1839,7 +1847,8 @@ def test_pre_register_birth_plans_death_route(before_state, after_state, test):
 
     def _qualifies(item: dict) -> bool:
         text = f"{item.get('rationale') or ''} {item.get('jurisdiction') or ''}"
-        if given.lower() not in text.lower() or not re.search(_DEATH_WORD, text, re.IGNORECASE):
+        named = given.lower() in text.lower() or _SUBJECT_OWN_DEATH_RE.search(text)
+        if not named or not re.search(_DEATH_WORD, text, re.IGNORECASE):
             return False
         death_sentences = [
             s for s in _SENTENCE_SPLIT_RE.split(text)

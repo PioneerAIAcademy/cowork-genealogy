@@ -4,15 +4,15 @@
     "skill": "timeline",
     "name": "Timeline derives English census years from the England_Census wiki page, not the US schedule",
     "type": "positive",
-    "description": "Build a timeline for William Ashford (b. ~1838 Canterbury, Kent, England; d. 1874), a person resident only in England. The skill must read the England census schedule from the England_Census wiki page via wiki_read and expect the English decennial census years (1841, 1851, 1861, 1871) — only 1851 is documented, so 1841/1861/1871 are gaps expecting an English census. It must NOT assume the US federal years (1850/1860/1870/...), none of which apply to an England-only life.",
+    "description": "Mode A for William Ashford (b. ~1838 Canterbury, Kent, England; d. 1874), resident only in England. timeline_build reads census years from its census table, so the person timeline expects the English censuses of 1841, 1861 and 1871 (1851 is documented) and no US federal year.",
     "tags": [
       "timeline",
       "chronological",
       "gap-detection",
-      "census-from-wiki",
       "non-us",
       "I1",
-      "direct-arm"
+      "direct-arm",
+      "person-timeline-in-code"
     ]
   },
   "input": {
@@ -21,15 +21,14 @@
   },
   "mcp_fixtures": [
     "place-search-canterbury",
-    "place-distance-canterbury",
-    "wiki-read-england-census",
-    "wiki-read-any"
+    "place-distance-canterbury"
   ],
   "judge_context": [
-    "Should call wiki_read for the England_Census page (https://www.familysearch.org/en/wiki/England_Census) to obtain the jurisdiction's census schedule, rather than assuming the US decennial years.",
-    "Should build a chronology from the documented events (birth ~1838, 1851 census residence, marriage 1859, death 1874), all in Canterbury, Kent, England.",
-    "Should identify gaps where an English census should exist but is undocumented — the person was alive and resident in England for the 1841, 1861 and 1871 censuses (1851 is documented) — and populate expected_events with those English census years.",
-    "Must NOT list US federal census years (1850, 1860, 1870, 1880, 1900, 1910, 1920) as expected for this England-only life; the expected census years are England's (1841, 1851, 1861, 1871, ...), read from the England_Census page.",
+    "The delegation names a person and no timeline or hypothesis, so it is Mode A: the agent calls `timeline_build`, which writes the person timeline `t_001` (the project had none). The `person-timeline-in-code` validator owns the call. Grade `t_001`.",
+    "`t_001` holds four events, all at Canterbury, Kent, England: birth ~1838, the 1851 census residence, the 1859 marriage and the 1874 death.",
+    "Its gaps: `high` ~1838 to 1851 naming the 1841 England and Wales census; `high` 1859 to 1874 naming the 1861 and 1871 England and Wales censuses; `medium` burial at 1874. No US federal census year (1850, 1860, 1870, ...) may appear for this England-only life.",
+    "Census years in Mode A come from `timeline_build`'s census table, never from the wiki: the agent makes no `wiki_read` call and none is expected.",
+    "In Mode A `timeline_build` resolves every place and computes every `distance_from_previous_km` itself, in code, so the agent makes no `place_search` or `place_distance` call for the person timeline and none is expected. Do not mark Tool usage or Tool Arguments down for their absence, and do not ask a persisted `standard_place` or distance to trace to a call the agent made: they are the tool's. A place or distance the reply states must match the persisted timeline. `distance_from_previous_km` is the distance from the immediately preceding event in the sorted list, and `null` where either place has no coordinates.",
     "The distance dimension is N/A: all events are at the same place (Canterbury), so there is no distance-sensitive pair to judge."
   ],
   "execution": {

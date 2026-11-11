@@ -26,6 +26,8 @@ with the chat on (#3985, ``GENEALOGY_CHAT``):
   GET  /privacy, /terms (no sign-in), GET /api/account (the id and deletion code)
                                                 only with the chat off (#3993); 404 with it on
   GET  /           onboarding signed out, account and projects signed in; chat off only (#4001)
+  GET  /upload/{project_id}, /pdfjs/{name}
+                   the upload page (UPLOADS_ENABLED) and the pdf.js it loads; chat off (#4001)
   GET  /openrouter, /openrouter/link, /openrouter/callback, POST /openrouter/unlink
                                                 the patron's own OpenRouter key (#3988; served only
                                                 with OPENROUTER_LINKING_ENABLED=true; cookie needed)
@@ -126,7 +128,9 @@ from urllib.parse import urlparse
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request, File, UploadFile
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse
+from fastapi.responses import (
+    FileResponse, HTMLResponse, JSONResponse, RedirectResponse, Response, StreamingResponse,
+)
 from pydantic import BaseModel, Field, ValidationError, field_validator
 from starlette.datastructures import MutableHeaders
 from starlette.routing import get_route_path
@@ -134,6 +138,10 @@ from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 HERE = Path(__file__).resolve().parent
 PROTO_DIR = HERE.parent
+# #4001: the vendored pdf.js the upload page loads (static/pdfjs/README.md), served by name
+# from this fixed set only, so no path a request carries reaches the filesystem.
+PDFJS_DIR = HERE / "static" / "pdfjs"
+PDFJS_FILES = frozenset({"pdf.min.mjs", "pdf.worker.min.mjs"})
 SQL_DIR = PROTO_DIR / "sql"
 # enqueue.py, grants.py, migrate.py and pg_credentials.py are siblings of this package in the repo (proto/)
 # and in the container (/app); make them importable from wherever uvicorn, the driver or
@@ -153,6 +161,9 @@ from web import feedback  # noqa: E402  (U20: the feedback bundle)
 from web import pages  # noqa: E402  (#4001: the chat-off tier's own pages)
 from web import policies  # noqa: E402  (#3993: the privacy and terms text)
 from web import spa  # noqa: E402  (the SPA build, mounted last; U12)
+
+# The minted project-id shape (auth.PROJECT_ID_PATTERN), the only one the upload page takes.
+UPLOAD_PAGE_ID_RE = re.compile(auth.PROJECT_ID_PATTERN)
 from web.job_state import job_state  # noqa: E402  (the four states the list shows)
 from web.project_blobs import (  # noqa: E402  (source scans in, researcher uploads out)
     IMAGE_REF_RE,
@@ -3155,6 +3166,14 @@ def create_app(
     # register. Do not "fix" it by including it.
     beta = APIRouter() if app.state.chat else app
 
+    def _refused_page(exc: SessionRefused, up: str = "") -> HTMLResponse:
+        """A refused session's page on ``/`` and ``/upload/<id>`` (``up="../"``): its
+        reason's wording, naming the account, and never the account data."""
+        _status, _detail, page = ADMISSION_REFUSALS[exc.reason]
+        message = page.format(who=f"The FamilySearch account {exc.email}", fail="Reload this page in a minute.")
+        return HTMLResponse(pages.refused_page(message, temporary=exc.reason == "not_ready", up=up),
+                            status_code=exc.status_code)
+
     @beta.api_route("/", methods=["GET", "HEAD"])
     async def home(request: Request) -> HTMLResponse:
         """#4001: onboarding signed out, the account and projects signed in. Registered before
@@ -3165,10 +3184,7 @@ def create_app(
         try:
             user = await current_user(request)
         except SessionRefused as exc:
-            _status, _detail, page = ADMISSION_REFUSALS[exc.reason]
-            message = page.format(who=f"The FamilySearch account {exc.email}", fail="Reload this page in a minute.")
-            return HTMLResponse(pages.refused_page(message, temporary=exc.reason == "not_ready"),
-                                status_code=exc.status_code)
+            return _refused_page(exc)
         except HTTPException as exc:
             if exc.status_code != 401:
                 raise
@@ -3176,11 +3192,60 @@ def create_app(
                        else "dev" if auth.dev_login_enabled() else None)
             return HTMLResponse(pages.signed_out_page(public_url=auth.public_url(), sign_in=sign_in))
         linked = await _openrouter_linked(request, user.id) if app.state.openrouter else None
+        projects = await _store(request).list_projects(user.id)
+        # Upload links only where the page answers: uploads on and a minted id (a seeded
+        # or demo id would link to a 404).
+        uploadable = (frozenset(p["id"] for p in projects if UPLOAD_PAGE_ID_RE.fullmatch(str(p["id"])))
+                      if app.state.uploads is True else frozenset())
         return HTMLResponse(pages.signed_in_page(
             public_url=auth.public_url(), email=user.email, familysearch_id=user.familysearch_id, account_id=user.id,
-            deletion_code=auth.deletion_code(user.id), projects=await _store(request).list_projects(user.id),
-            openrouter_linked=linked,
+            deletion_code=auth.deletion_code(user.id), projects=projects,
+            openrouter_linked=linked, uploadable=uploadable,
         ))
+
+    @beta.api_route("/upload/{project_id}", methods=["GET", "HEAD"])
+    async def upload_page(project_id: str, request: Request) -> Response:
+        """#4001: the upload page for one project. pdf.js reads a PDF's text layer in the
+        browser and sends it beside the file to ``POST /api/projects/{id}/files``.
+
+        404 while ``UPLOADS_ENABLED`` is not true (the route it posts to answers 404 too),
+        and for an id outside ``UPLOAD_PAGE_ID_RE``, both before any cookie is read. Signed
+        out, the browser goes to FamilySearch sign-in with ``next=upload/<id>`` and comes back
+        here (``auth.SAFE_NEXT_RE``); with FamilySearch off, to ``/``. A missing project and
+        someone else's get the same 404 page."""
+        if app.state.uploads is not True or not UPLOAD_PAGE_ID_RE.fullmatch(project_id):
+            return HTMLResponse(pages.not_found_page(), status_code=404)
+        try:
+            user = await current_user(request)
+        except SessionRefused as exc:
+            return _refused_page(exc, up="../")
+        except HTTPException as exc:
+            if exc.status_code != 401:
+                raise
+            base = app.state.base_path
+            if auth.familysearch_configured():
+                return RedirectResponse(f"{base}/auth/familysearch/login?next=upload/{project_id}", status_code=303)
+            return RedirectResponse(f"{base}/", status_code=303)
+        # One project's owner, then its research.json for the label: missing, foreign and
+        # NULL-owner ids miss alike, without listing every project the user has.
+        store = _store(request)
+        if await store.project_owner(project_id) != user.id:
+            return HTMLResponse(pages.not_found_page(), status_code=404)
+        research = (await store.documents(project_id, ("research.json",))).get("research.json", (0, None))[1]
+        return HTMLResponse(pages.upload_page(project_id=project_id, label=project_label(research)))
+
+    @beta.api_route("/pdfjs/{name}", methods=["GET", "HEAD"])
+    async def pdfjs_file(name: str) -> Response:
+        """#4001: the vendored pdf.js, from the tier and never a CDN; chat off only, like the
+        page that loads it. Only the two names in PDFJS_FILES; anything else is a 404.
+
+        Not under ``/static/``: Beanstalk's Python platform has its nginx answer ``/static/``
+        from the bundle's own ``static/`` folder, so the request would never reach the tier
+        (eb-web/README.md)."""
+        if name not in PDFJS_FILES:
+            raise HTTPException(status_code=404, detail="Not found")
+        return FileResponse(PDFJS_DIR / name, media_type="text/javascript",
+                            headers={"Cache-Control": "public, max-age=3600"})
 
     @beta.get("/privacy")
     async def privacy_page() -> HTMLResponse:

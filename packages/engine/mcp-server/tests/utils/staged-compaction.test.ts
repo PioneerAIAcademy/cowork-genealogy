@@ -17,9 +17,15 @@ import {
   compactStagedRecordSearch,
   compactStagedFulltextSearch,
   annotateResultsWithRanking,
+  compactImageTranscribeAnswer,
+  normalizeTranscription,
+  transcriptionDigest,
+  DIGEST_EXCERPT_CHARS,
+  INLINE_TRANSCRIPTION_MAX_CHARS,
 } from "../../src/utils/staged-compaction.js";
 import type { RecordSearchToolResponse } from "../../src/types/record-search.js";
-import type { FulltextSearchResponse } from "../../src/types/fulltext-search.js";
+import type { FulltextResult, FulltextSearchResponse } from "../../src/types/fulltext-search.js";
+import type { ImageTranscribeResult } from "../../src/types/image-transcribe.js";
 
 function fullRecordSearchResponse(): RecordSearchToolResponse {
   return {
@@ -101,6 +107,75 @@ describe("compactStagedRecordSearch", () => {
     expect(row.relativeTerms).toEqual({ father: { present: true } });
   });
 
+  describe("fields no caller reads off the answer", () => {
+    const TITLE = "1850 United States Census";
+    const page = (rows: Record<string, unknown>[], extra: Record<string, unknown> = {}) =>
+      ({
+        query: { surname: "Flynn" },
+        totalMatches: rows.length,
+        paginationCappedAt: 4999,
+        returned: rows.length,
+        offset: 0,
+        hasMore: false,
+        results: rows.map((r) => ({ collectionId: "1234", collectionTitle: TITLE, events: [], ...r })),
+        ...extra,
+      }) as unknown as RecordSearchToolResponse;
+
+    it("drops primaryId, score, confidence, an empty events and paginationCappedAt", () => {
+      const out = compactStagedRecordSearch(page([
+        { recordId: "R1", primaryId: "p_1", score: 5.4, confidence: 4 },
+        { recordId: "R2", events: [{ type: "Census", date: "1850" }] },
+      ]));
+      expect(out.results[0]).not.toHaveProperty("primaryId");
+      expect(out.results[0]).not.toHaveProperty("score");
+      expect(out.results[0]).not.toHaveProperty("confidence");
+      expect(out.results[0]).not.toHaveProperty("events");
+      expect(out.results[1].events).toEqual([{ type: "Census", date: "1850" }]);
+      expect(out).not.toHaveProperty("paginationCappedAt");
+    });
+
+    it("drops an `Entry for <personName>` title and strips the collection from any other", () => {
+      const out = compactStagedRecordSearch(page([
+        { recordId: "R1", personName: "Patrick Flynn", recordTitle: `Entry for Patrick Flynn, "${TITLE}"` },
+        { recordId: "R2", personName: "Mary Flynn", recordTitle: `Mary Flynn in household of Patrick Flynn, "${TITLE}"` },
+        { recordId: "R3", personName: "Ann Flynn", recordTitle: `Entry for Ann Flinn, "${TITLE}"` },
+        { recordId: "R4", personName: "John Flynn", recordTitle: "John Flynn in household of Thomas Flynn" },
+      ]));
+      expect(out.results[0]).not.toHaveProperty("recordTitle");
+      expect(out.results[1].recordTitle).toBe("Mary Flynn in household of Patrick Flynn");
+      // A different name in the title is information: only the collection goes.
+      expect(out.results[2].recordTitle).toBe("Entry for Ann Flinn");
+      expect(out.results[3].recordTitle).toBe("John Flynn in household of Thomas Flynn");
+    });
+
+    it("strips the title on a second pass from the collections map, then leaves it alone", () => {
+      const out = compactStagedRecordSearch(page([
+        { recordId: "R1", personName: "Mary Flynn", recordTitle: `Mary Flynn in household of Patrick Flynn, "${TITLE}"` },
+      ]));
+      const snapshot = JSON.parse(JSON.stringify(out));
+      expect(JSON.parse(JSON.stringify(compactStagedRecordSearch(out)))).toEqual(snapshot);
+
+      // An already-hoisted fixture: no per-row title, the map holds it.
+      const hoisted = {
+        collections: { "1234": TITLE },
+        results: [{ recordId: "R1", collectionId: "1234", personName: "Ann Flynn", recordTitle: `Entry for Ann Flynn, "${TITLE}"` }],
+      } as unknown as RecordSearchToolResponse;
+      expect(compactStagedRecordSearch(hoisted).results[0]).not.toHaveProperty("recordTitle");
+    });
+
+    it("drops the query echo only from a staged answer", () => {
+      const staged = compactStagedRecordSearch(page([{ recordId: "R1" }], { staged: { resultsRef: "results/.staging/a.json" } }));
+      expect(staged).not.toHaveProperty("query");
+
+      // The eval mock compacts before it attaches `staged`, so it says so.
+      expect(compactStagedRecordSearch(page([{ recordId: "R1" }]), { staged: true })).not.toHaveProperty("query");
+
+      // No project, or staging failed: the echo is the only copy of the query.
+      expect(compactStagedRecordSearch(page([{ recordId: "R1" }])).query).toEqual({ surname: "Flynn" });
+      expect(compactStagedRecordSearch(page([{ recordId: "R1" }], { staged: null })).query).toEqual({ surname: "Flynn" });
+    });
+  });
+
   it("leaves a nil result set alone", () => {
     const nil = {
       query: {},
@@ -146,6 +221,146 @@ describe("compactStagedFulltextSearch", () => {
       hasMore: false,
       results: [{ id: "ark:/61903/3:1:ABCD", textDocument: "page text" }],
     } as unknown as FulltextSearchResponse);
+    const snapshot = JSON.parse(JSON.stringify(once));
+    const twice = compactStagedFulltextSearch(once);
+    expect(JSON.parse(JSON.stringify(twice))).toEqual(snapshot);
+  });
+
+  const page = (results: FulltextResult[]): FulltextSearchResponse => ({
+    query: {},
+    totalResults: results.length,
+    returned: results.length,
+    offset: 0,
+    hasMore: false,
+    results,
+  });
+  const nameAt = (k: number) => `Given${k} Surname${k % 97}`;
+
+  it("caps names, places and dates at 60/15/10 with the full count beside each", () => {
+    const names = Array.from({ length: 100 }, (_, k) => nameAt(k));
+    names[70] = "Patrick Flynn";
+    names[72] = "Mary Flynn";
+    const out = compactStagedFulltextSearch(
+      page([
+        {
+          id: "ark:/61903/3:1:LONG",
+          names,
+          places: Array.from({ length: 20 }, (_, k) => `Town${k}`),
+          dates: Array.from({ length: 12 }, (_, k) => String(1800 + k)),
+          highlightTerms: ["Patrick", "Flynn", "Flynn Patrick"],
+        },
+      ]),
+    );
+    const r = out.results[0];
+    expect(r.names).toHaveLength(60);
+    expect(r.namesCount).toBe(100);
+    expect(r.places).toHaveLength(15);
+    expect(r.placesCount).toBe(20);
+    expect(r.dates).toHaveLength(10);
+    expect(r.datesCount).toBe(12);
+    // The matched names and the 58 nearest them, in page order: index 40..99.
+    expect(r.names).toEqual(names.slice(40, 100));
+    expect(r.names).toContain("Patrick Flynn");
+    expect(r.names).not.toContain(nameAt(0));
+  });
+
+  it("ranks by how many highlight words a name shares, not whether it shares one", () => {
+    const names = Array.from({ length: 200 }, (_, k) => `Person${k} Flynn`);
+    names[150] = "Patrick Flynn";
+    const r = compactStagedFulltextSearch(
+      page([{ id: "ark:/61903/3:1:DIR", names, highlightTerms: ["Patrick", "Flynn"] }]),
+    ).results[0];
+    expect(r.names).toHaveLength(60);
+    expect(r.names).toContain("Patrick Flynn");
+  });
+
+  it("keeps the page order and sets no count when nothing is over its cap", () => {
+    const r = compactStagedFulltextSearch(
+      page([
+        {
+          id: "ark:/61903/3:1:SHORT",
+          names: [" Patrick  Flynn ", "Mary Flynn", "patrick flynn", "John Kelly"],
+          places: ["Tipperary", "TIPPERARY"],
+          highlightTerms: ["Flynn"],
+        },
+      ]),
+    ).results[0];
+    expect(r.names).toEqual(["Patrick Flynn", "Mary Flynn", "John Kelly"]);
+    expect(r.places).toEqual(["Tipperary"]);
+    expect(r.namesCount).toBeUndefined();
+    expect(r.placesCount).toBeUndefined();
+    expect(r.datesCount).toBeUndefined();
+  });
+
+  it("drops sourceUrl only where it is the FamilySearch origin plus the id", () => {
+    const out = compactStagedFulltextSearch(
+      page([
+        { id: "ark:/61903/3:1:AAAA", sourceUrl: "https://www.familysearch.org/ark:/61903/3:1:AAAA" },
+        { id: "ark:/61903/3:1:BBBB", sourceUrl: "https://www.familysearch.org/ark:/61903/3:1:BBBB?lang=es" },
+      ]),
+    );
+    expect(out.results[0].sourceUrl).toBeUndefined();
+    expect(out.results[1].sourceUrl).toBe("https://www.familysearch.org/ark:/61903/3:1:BBBB?lang=es");
+  });
+
+  it("keeps collectionTitle on each row and adds no collections map", () => {
+    const out = compactStagedFulltextSearch(
+      page([
+        { id: "ark:/61903/3:1:A", collectionId: "111", collectionTitle: "Deeds" },
+        { id: "ark:/61903/3:1:B", collectionId: "111", collectionTitle: "Deeds" },
+        { id: "ark:/61903/3:1:C", collectionId: "222", collectionTitle: "Wills" },
+        { id: "ark:/61903/3:1:D", collectionTitle: "No id" },
+      ]),
+    );
+    expect("collections" in out).toBe(false);
+    expect(out.results.map((r) => r.collectionTitle)).toEqual(["Deeds", "Deeds", "Wills", "No id"]);
+  });
+
+  it("keeps a 50-row page of long newspaper rows under 40,000 characters", () => {
+    const row = (i: number): FulltextResult => {
+      const names = Array.from({ length: 400 }, (_, k) => nameAt(k));
+      names[300] = "Patrick Flynn";
+      return {
+        id: `ark:/61903/3:1:NEWS-${i}`,
+        sourceUrl: `https://www.familysearch.org/ark:/61903/3:1:NEWS-${i}`,
+        collectionId: "333",
+        collectionTitle: "United States, Newspapers",
+        title: "Springfield, Illinois Newspaper 1885",
+        recordDate: "1885",
+        recordType: "Newspaper",
+        recordPlace: "Springfield, Illinois",
+        textDocument: "column text ".repeat(800),
+        names,
+        places: Array.from({ length: 150 }, (_, k) => `Township${k}, County${k % 13}`),
+        dates: Array.from({ length: 150 }, (_, k) => String(1700 + k)),
+        highlightTerms: ["Patrick", "Flynn", "Flynn Patrick"],
+      };
+    };
+    const full = page(Array.from({ length: 50 }, (_, i) => row(i)));
+    expect(JSON.stringify(full).length).toBeGreaterThan(500_000);
+
+    const out = compactStagedFulltextSearch(full);
+    expect(JSON.stringify(out).length).toBeLessThanOrEqual(40_000);
+    expect(out.results).toHaveLength(50);
+    for (const r of out.results) {
+      expect(r.namesCount).toBe(400);
+      expect(r.names).toContain("Patrick Flynn");
+    }
+  });
+
+  it("is idempotent on a capped row and never overwrites a count", () => {
+    const once = compactStagedFulltextSearch(
+      page([
+        {
+          id: "ark:/61903/3:1:LONG",
+          collectionId: "111",
+          collectionTitle: "Deeds",
+          names: Array.from({ length: 100 }, (_, k) => nameAt(k)),
+          highlightTerms: ["Given50"],
+        },
+      ]),
+    );
+    expect(once.results[0].namesCount).toBe(100);
     const snapshot = JSON.parse(JSON.stringify(once));
     const twice = compactStagedFulltextSearch(once);
     expect(JSON.parse(JSON.stringify(twice))).toEqual(snapshot);
@@ -206,6 +421,17 @@ describe("annotateResultsWithRanking", () => {
     expect(out.results[0]).toMatchObject({ birthYearConflict: true, birthYearGap: -5 });
     expect(out.results[1]).not.toHaveProperty("birthYearConflict");
     expect(out.results[1]).not.toHaveProperty("birthYearGap");
+  });
+
+  it("copies the surname-not-on-subject flag and surname onto the annotated row, and keeps the note on `ranked`", () => {
+    const out = annotateResultsWithRanking(resp(rankedWith([
+      { recordId: rowA.recordId, matchRank: 1, searchRank: 1, matchScore: 0.9, surnameNotOnSubject: true, candidateSurname: "Fenstermaker" },
+      { recordId: rowB.recordId, matchRank: 2, searchRank: 2, matchScore: 0.8 },
+    ], { surnameNote: "note" })));
+    expect(out.results[0]).toMatchObject({ surnameNotOnSubject: true, candidateSurname: "Fenstermaker" });
+    expect(out.results[1]).not.toHaveProperty("surnameNotOnSubject");
+    expect(out.results[1]).not.toHaveProperty("candidateSurname");
+    expect(out.ranked).toMatchObject({ surnameNote: "note" });
   });
 
   it("gives up the duplicate row list: `ranked` keeps metadata, not matches", () => {
@@ -369,6 +595,232 @@ describe("#1212 payload", () => {
     const bare = JSON.stringify(row(0)).length;
     const withScore = JSON.stringify(annotated(0)).length;
     expect(withScore - bare).toBeLessThan(bare * 0.25);
+  });
+});
+
+// ─── image_transcribe ──────────────────────────────────────────────
+
+// A register page the way the OCR draws one: a fixed-width table in a fence, a
+// rule row under its header, space padding at line ends, a CRLF, a run of blank
+// lines, a markdown table, and three lines that look like rules but are not only
+// rules, or are too short to shorten.
+const PADDED_PAGE = [
+  "Register of Births, 1853   ",
+  "",
+  "```",
+  "No.  Name                 Father               Born        ",
+  "==================================================================",
+  "1    Anna Weber           Peter Weber          3 Jan       ",
+  "2    Johann Klein         Jakob Klein          9 Jan\t",
+  "```",
+  "",
+  "   ",
+  "",
+  "",
+  "| Col          | Value      |",
+  "|:-------------|-----------:|",
+  "| a            | b          |",
+  "Signature: ____________",
+  "____________",
+  "---",
+  "- - - -",
+].join("\r\n");
+
+const PADDED_PAGE_NORMALIZED = [
+  "Register of Births, 1853",
+  "",
+  "```",
+  "No.  Name                 Father               Born",
+  "===",
+  "1    Anna Weber           Peter Weber          3 Jan",
+  "2    Johann Klein         Jakob Klein          9 Jan",
+  "```",
+  "",
+  "| Col          | Value      |",
+  "|:---|---:|",
+  "| a            | b          |",
+  "Signature: ____________",
+  "___",
+  "---",
+  "- - - -",
+].join("\n");
+
+/** Every line that says something, with its trailing whitespace dropped. */
+function meaningfulLines(text: string): string[] {
+  return text
+    .split(/\r?\n/)
+    .map((l) => l.replace(/\s+$/, ""))
+    .filter((l) => l !== "" && !/^[-=_|:+\s]+$/.test(l));
+}
+
+describe("normalizeTranscription", () => {
+  it("strips trailing whitespace, shortens rule runs on rule-only lines, and collapses blank-line runs", () => {
+    expect(normalizeTranscription(PADDED_PAGE)).toBe(PADDED_PAGE_NORMALIZED);
+  });
+
+  it("is lossless on meaningful text: every line with words survives, byte for byte, in order", () => {
+    const out = normalizeTranscription(PADDED_PAGE);
+    expect(meaningfulLines(out)).toEqual(meaningfulLines(PADDED_PAGE));
+    // The inner column padding is what places a value in its column, so it stays.
+    expect(out).toContain("1    Anna Weber           Peter Weber          3 Jan");
+    // No rule-only line is removed, only shortened.
+    const lineCount = (t: string) => t.split(/\r?\n/).filter((l) => l.trim() !== "").length;
+    expect(lineCount(out)).toBe(lineCount(PADDED_PAGE));
+  });
+
+  it("leaves an ordinary page byte-identical", () => {
+    const page = "Johann Schreck, b. 1801, Bayern\nAnna Schreck\n\nWitnesses: Peter Klein, Jakob Weber";
+    expect(normalizeTranscription(page)).toBe(page);
+  });
+
+  it("leaves a row of column rulings as it is, so each ruling stays under its column", () => {
+    const page = [
+      "Name        No   Residence",
+      "--------    --   --------",
+      "Anna Weber  12   Alsweiler",
+      "",
+      "Born    Died    Buried",
+      "====    =====   ======",
+      "1801    1867    1867",
+    ].join("\n");
+    expect(normalizeTranscription(page)).toBe(page);
+    // A single rule, and a markdown delimiter row, are still shortened.
+    expect(normalizeTranscription("    ------------")).toBe("    ---");
+    expect(normalizeTranscription("| ------- | ------- |")).toBe("| --- | --- |");
+  });
+
+  it("is linear: a line of 64k spaces before a letter takes well under 100 ms", () => {
+    for (const line of [" ".repeat(65_536) + "x", "-" + " ".repeat(65_536) + "x", " \t".repeat(32_768) + "-x"]) {
+      const start = performance.now();
+      const out = normalizeTranscription(line);
+      const ms = performance.now() - start;
+      expect(out).toBe(line);
+      expect(ms).toBeLessThan(100);
+    }
+  });
+
+  it("is idempotent", () => {
+    const once = normalizeTranscription(PADDED_PAGE);
+    expect(normalizeTranscription(once)).toBe(once);
+  });
+});
+
+describe("transcriptionDigest", () => {
+  it("counts the text it was given and shows the page's words, not its padding, fences or rules", () => {
+    const text = normalizeTranscription(PADDED_PAGE);
+    const d = transcriptionDigest("004884748_02613", text);
+    expect(d.id).toBe("004884748_02613");
+    expect(d.chars).toBe(text.length);
+    expect(d.excerpt.startsWith(
+      "Register of Births, 1853\nNo. Name Father Born\n1 Anna Weber Peter Weber 3 Jan\n",
+    )).toBe(true);
+    expect(d.excerpt).not.toMatch(/ {2}|```|===|:---/);
+    expect(Object.keys(d).sort()).toEqual(["chars", "excerpt", "id"]);
+  });
+
+  it("bounds the excerpt at DIGEST_EXCERPT_CHARS", () => {
+    const d = transcriptionDigest("x", "Weber Anna farmer\n".repeat(100));
+    expect(DIGEST_EXCERPT_CHARS).toBe(300);
+    expect(d.excerpt.length).toBe(300);
+  });
+
+  it("never ends the excerpt on half of a surrogate pair", () => {
+    const d = transcriptionDigest("x", "a" + "\u{1F600}".repeat(200));
+    expect(d.excerpt.length).toBe(299);
+    const last = d.excerpt.charCodeAt(d.excerpt.length - 1);
+    expect(last >= 0xdc00 && last <= 0xdfff).toBe(true);
+  });
+});
+
+/** A page of `chars` or more characters: register rows, one per line. */
+function longPage(chars: number): string {
+  const rows: string[] = [];
+  let length = 0;
+  for (let i = 1; length < chars; i++) {
+    const row = `${String(i).padStart(4)}  Weber, Anna Maria    farmer's daughter    Alsweiler    3 Jan 1853`;
+    rows.push(row);
+    length += row.length + 1;
+  }
+  return rows.join("\n");
+}
+
+function inlineAnswer(transcription: string, extra: Partial<ImageTranscribeResult> = {}): ImageTranscribeResult {
+  return {
+    transcription,
+    viewerUrl: "https://www.familysearch.org/search/film/004884748?i=2612",
+    nameExpansion: { original: "Anna Weber", expanded: "Anna Weber (also known as Ann)", expansions: { Anna: ["Ann"] } },
+    metadata: { imageId: "004884748_02613", contentType: "image/jpeg", model: "google/gemini-3.7-flash", sizeBytes: 3 },
+    ...extra,
+  };
+}
+
+describe("compactImageTranscribeAnswer", () => {
+  it("staged: drops the text, nameExpansion and metadata; keeps the ref, digest, found, imageRef and viewerUrl", () => {
+    const out = compactImageTranscribeAnswer(inlineAnswer("Anna Weber", {
+      found: "FOUND",
+      imageRef: "images/004884748_02613.jpg",
+      staged: { resultsRef: "results/.staging/abc.json", returnedCount: 1 },
+      digest: transcriptionDigest("004884748_02613", "Anna Weber"),
+    }));
+    expect(Object.keys(out).sort()).toEqual(["digest", "found", "imageRef", "staged", "viewerUrl"]);
+  });
+
+  it("keeps only a resolved Memories artifact url from metadata", () => {
+    const url = "https://sg30p0.familysearch.org/service/records/storage/deepzoomcloud/dz/v1/x/dist.jpg";
+    const answer = inlineAnswer("a memory");
+    answer.metadata.memoryArtifactUrl = url;
+    expect(compactImageTranscribeAnswer(answer).metadata).toEqual({ memoryArtifactUrl: url });
+  });
+
+  it("inline under the bound: the text is returned whole, with no notice", () => {
+    const out = compactImageTranscribeAnswer(inlineAnswer("Anna Weber", { staged: null, stagingError: "EACCES" }));
+    expect(out.transcription).toBe("Anna Weber");
+    expect(out).not.toHaveProperty("truncationNotice");
+    expect(out).not.toHaveProperty("metadata");
+    expect(out).not.toHaveProperty("nameExpansion");
+  });
+
+  it("inline over the bound: cuts at a line boundary, says so, keeps found, and sets no truncated", () => {
+    const page = longPage(40_000);
+    const out = compactImageTranscribeAnswer(inlineAnswer(page, { found: "FOUND" }));
+    const text = out.transcription!;
+    expect(page.startsWith(text)).toBe(true);
+    expect(text.endsWith("\n")).toBe(true);
+    const escaped = JSON.stringify(text).length - 2;
+    expect(escaped).toBeLessThanOrEqual(INLINE_TRANSCRIPTION_MAX_CHARS);
+    expect(escaped).toBeGreaterThan(INLINE_TRANSCRIPTION_MAX_CHARS - 200);
+    expect(out.truncated).toBeUndefined();
+    expect(out.found).toBe("FOUND");
+    expect(out.truncationNotice).toContain(
+      `Only the first ${text.length.toLocaleString("en-US")} of the page's ${page.length.toLocaleString("en-US")} characters`,
+    );
+    expect(out.truncationNotice).toContain("`found` covers the whole page");
+    expect(out.truncationNotice).toContain("projectPath");
+    expect(JSON.stringify(out).length).toBeLessThanOrEqual(37_000);
+  });
+
+  it("adds the cut to the OCR's own truncation notice rather than replacing it", () => {
+    const ocrNotice = "The OCR stopped at its output limit: this transcription is partial.";
+    const out = compactImageTranscribeAnswer(inlineAnswer(longPage(40_000), {
+      truncated: true,
+      truncationNotice: ocrNotice,
+    }));
+    expect(out.truncated).toBe(true);
+    expect(out.truncationNotice!.startsWith(`${ocrNotice} Only the first `)).toBe(true);
+    expect(out.truncationNotice).not.toContain("`found`");
+  });
+
+  it("is idempotent on every leg", () => {
+    const legs = [
+      inlineAnswer(longPage(40_000), { found: "NOT FOUND" }),
+      inlineAnswer("short", { staged: null, stagingError: "EACCES" }),
+      inlineAnswer("staged", { staged: { resultsRef: "results/.staging/a.json", returnedCount: 1 } }),
+    ];
+    for (const leg of legs) {
+      const once = compactImageTranscribeAnswer(leg);
+      const snapshot = JSON.stringify(once);
+      expect(JSON.stringify(compactImageTranscribeAnswer(once))).toBe(snapshot);
+    }
   });
 });
 

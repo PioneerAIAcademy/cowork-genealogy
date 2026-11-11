@@ -1021,8 +1021,10 @@ def test_namesake_row_recorded(before_state, after_state, test):
     A row names a subject of the project and cites a `record_search` log entry
     this run wrote. `research_append` stamps `record_persona_ids` only for a
     record found in the results of a search or read the row cites, as a result or
-    as a member of a result's record, so a row with no stamp listed an id no cited
-    log returned (a `recordArk`, a retyped id) or cited the wrong log.
+    as a member of a result's record, whose persona shares a given word with the
+    row's `name`, so a row with no stamp listed an id no cited log returned (a
+    `recordArk`, a retyped id), cited the wrong log, or listed another person of
+    the record (a household member's own id).
     """
     if "namesake-row" not in test.get("tags", []):
         pytest.skip("not a namesake-row scenario")
@@ -1044,8 +1046,9 @@ def test_namesake_row_recorded(before_state, after_state, test):
             f"row {row.get('id')} cites {row.get('log_entry_ids')}, none of them a record_search this run logged"
         )
         assert row.get("record_persona_ids"), (
-            f"row {row.get('id')} lists {row.get('record_ids')}, which research_append found in none of the "
-            "cited logs' results or their records' persons: copy each recordId verbatim, never recordArk"
+            f"row {row.get('id')} lists {row.get('record_ids')}, none of them stamped: research_append found no "
+            "persona of the row's given name for them in the cited logs' results or their records' persons. "
+            "Copy the namesake's own recordId verbatim, never recordArk or another household member's id"
         )
 
 
@@ -1184,4 +1187,101 @@ def test_children_enumeration_unpinned(tool_calls, test):
         "every unpinned parent-name record_search still carried a place "
         f"({sorted({s for a in unpinned for s in _sent(a, CHILD_PLACE_FIELDS)})}); "
         "the children-enumeration search clears birthPlace, residencePlace and anyPlace"
+    )
+
+
+# --- Issue #2213 PR 3: unproven surnames --------------------------------
+
+def _calls_named(tool_calls, *names) -> list[dict]:
+    wanted = set(names)
+    return [
+        c for c in (tool_calls or [])
+        if _bare_tool_name(c.get("tool") or "") in wanted
+    ]
+
+
+def _norm_name(value) -> str:
+    return re.sub(r"[^a-z]", "", str(value or "").lower())
+
+
+def _same_name(a, b, width: int) -> bool:
+    a, b = _norm_name(a), _norm_name(b)
+    n = min(width, len(a), len(b))
+    return n > 0 and a[:n] == b[:n]
+
+
+# Test id -> (her given name, the researcher-named surname that is not proven).
+_UNPROVEN_SURNAME_BY_TEST_ID = {
+    "ut_search_records_d33": ("Juanita", "Fenstermaker"),
+}
+
+
+def test_unproven_surname_used_as_search_input(
+    before_state, after_state, tool_calls, test
+):
+    """Tag-gated (unproven-surname-search): issue #2213 PR 3 item 3, the Fittro
+    run. Typing a researcher-named, unproven surname into a query asserts
+    nothing, so she is searched under it: a record_search whose givenName is
+    hers and whose `surname` or `surnameAlt` is that surname (a wildcard such as
+    `Fenst*` counts when up to its first six letters match, as does a variant
+    spelling such as Fenstermacher). The caution belongs on the tree, so
+    nothing written to it asserts the marriage: no new Couple relationship for
+    the subject, and no name on her in that surname.
+    """
+    tags = test.get("tags", [])
+    test_id = test.get("id")
+    assert test_id not in _UNPROVEN_SURNAME_BY_TEST_ID or "unproven-surname-search" in tags, (
+        f"{test_id} has an entry in _UNPROVEN_SURNAME_BY_TEST_ID but no "
+        "'unproven-surname-search' tag - restore the tag or delete the entry"
+    )
+    if "unproven-surname-search" not in test.get("tags", []):
+        pytest.skip("not an unproven-surname-search scenario")
+    assert test_id in _UNPROVEN_SURNAME_BY_TEST_ID, (
+        f"{test_id} carries 'unproven-surname-search' but has no entry in "
+        "_UNPROVEN_SURNAME_BY_TEST_ID"
+    )
+    given, surname = _UNPROVEN_SURNAME_BY_TEST_ID[test_id]
+    calls = [_as_mapping(c.get("args")) for c in _calls_named(tool_calls, "record_search")]
+    target = _norm_name(surname)
+
+    def under_it(value) -> bool:
+        v = _norm_name(value)
+        n = min(len(v), len(target), 6)
+        return n >= 4 and v[:n] == target[:n]
+
+    hit = [
+        a for a in calls
+        if _same_name(a.get("givenName"), given, len(_norm_name(given)))
+        and (under_it(a.get("surname")) or under_it(a.get("surnameAlt")))
+    ]
+    assert hit, (
+        f"no record_search looked for {given} under the unproven surname "
+        f"{surname}; searching under it asserts nothing. record_search calls: {calls}"
+    )
+
+    research = before_state.get("research_json") or {}
+    subjects = (research.get("project") or {}).get("subject_person_ids") or []
+    subject = subjects[0] if subjects else None
+
+    def couples(state):
+        tree = state.get("tree_gedcomx_json") or state.get("tree_gedcomx") or {}
+        return {
+            r.get("id") for r in tree.get("relationships") or []
+            if r.get("type") == "Couple" and subject in (r.get("person1"), r.get("person2"))
+        }
+
+    def surnames(state):
+        tree = state.get("tree_gedcomx_json") or state.get("tree_gedcomx") or {}
+        person = next((p for p in tree.get("persons") or [] if p.get("id") == subject), {})
+        return {_norm_name(n.get("surname")) for n in person.get("names") or []}
+
+    new_couples = couples(after_state) - couples(before_state)
+    assert not new_couples, (
+        f"the marriage to a {surname} is unproven, yet the run wrote a Couple "
+        f"relationship for the subject: {sorted(new_couples)}"
+    )
+    added = surnames(after_state) - surnames(before_state)
+    assert _norm_name(surname) not in added, (
+        f"the marriage to a {surname} is unproven, yet the run gave the subject "
+        f"a {surname} name in the tree"
     )

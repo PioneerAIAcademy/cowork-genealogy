@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a limited beta
 
-**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2's first half (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget; PR #4292), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, the connector plugin build, the probe's reconnect flags, D1's stack, and S2's block and delete targets. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
+**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2's first half (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget; PR #4292), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), D1's stack, and S2's block and delete targets. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
 
 ## What this is
 
@@ -115,7 +115,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 | 1. Tool prefix | It comes only from the connector's name. Under "Genealogy Research", agents get their tools; under any other name they spawn with only `Read`. |
 | 2. Agents and approvals | Agents work under that name. Every call after the first asked for approval. On a personal account, "Always allow" stopped the prompts for that tool, in new tasks too. Still to measure: whether it reaches agents, whether the hook's `permissionDecision: "allow"` removes the prompt, and an org account. |
 | 3. Hook | The `PreToolUse` hook fires on connector calls. |
-| 4. Limits | Not measured: the per-call timeout, with 60, 120 and 240 s sleeps, and the result-size limit, through Funnel. |
+| 4. Limits | Measured 2026-11-08: the per-call timeout is 230 s, with 60, 120 and 240 s sleeps. Not measured: the result-size limit, through Funnel. |
 | 5. Tool delivery | Every advertised tool arrives on a fresh add. |
 | 6. Sign-in | Recorded: Claude's client document, the `/authorize` and `/token` parameters, and that it accepts a grant with no refresh token. Not measured: whether a sign-in started in one Claude account can finish in another. If it can, report it to Anthropic, and the launch decision goes to the lead. |
 | 7. Folder access | `Read` cannot see the project folder. |
@@ -177,11 +177,11 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 - **Done when:** one user's limits leave another's untouched, a planted 429 pauses only its user, and 12 parallel calls from one user all complete, with no more than 4 running at once.
 
 **E5 Fit for a connector (issue #3996).**
-- **Time:** `image_transcribe`'s worst case stays under the per-call limit P0.2 item 4 measures: one download attempt, and an OCR budget set from that limit. Use 240 s until it is recorded.
+- **Time:** `image_transcribe`'s worst case for a connector caller stays under the per-call limit P0.2 item 4 measured — 230 s, 2026-11-08: one download attempt, and an OCR budget set from a single 180 s overall budget that starts when the tool is entered.
 - **`image_read`** is refused for connector callers, and `docs/specs/image-read-spec.md` says so.
 - **The image cap** is keyed per user, so a connector call that names no project cannot spend a film's cap for everyone.
 - **`TRANSCRIPTION_ENABLED` goes,** with its plumbing and its line in the handoff's step 9.
-- **Direct reads (issue #4311).** `search-full-text` uses `Read` on a staged result and `translation` on an image path, and neither file exists for a connector. Both move to tools, and each agent's edit owes its eval.
+- **Direct reads (issue #4311), merged; one live connector session still owed.** `search-full-text` reads one hit with `sidecar_read`, and `translation` reads an upload with `image_transcribe` and `sidecar_read`; `Read` stays only for a path outside the project. The direct-read lint now flags a read of a `results/` ref. CI cannot show the new grants bind, so issue #4311 stays open until a connector session shows each agent's new tool call return a `tool_result`.
 - **Done when:** tests pin the time budget, the refusal and the per-user cap, and `git grep -E 'TRANSCRIPTION_ENABLED|transcriptionEnabled' -- ':!docs/plan/self-hosted-mcp-beta.md'` returns nothing.
 
 ### The web tier (`apps/server/proto/web`)
@@ -237,11 +237,11 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 
 **G4 Hook-only rules.** The hook fires on connector calls in a Cowork task (issue #3529 item 3), so these rules hold there as they do on the desktop. Claude's docs say chat runs no hooks and no agents. Today the research skill says that without an `Agent` tool, research runs only in a Cowork task, and stops. The Surface decision settles that line.
 
-**G5 Capture wording (issue #3990).** `search-external-sites`' `capture` accepts three forms: an upload's `.txt`, read with `sidecar_read`; the upload itself, to be transcribed; or the text itself. The upload wording shows only when `project_context` returns an `uploadUrl`.
+**G5 Capture wording (issue #3990).** Shipped in PR #4387. `search-external-sites`' `capture` accepts three forms: an upload's `.txt`, read with `sidecar_read`; the upload itself, to be transcribed; or the text itself. The upload wording shows only when `project_context` returns an `uploadUrl`.
 
 **G6 The router PR (issue #4297).** Merges with the MCP App work before launch, in one paid `research` run: the card lines, removing `projectUrl`, showing `signInUrl`, logging an upload the main thread reads, an answer to "where is my report?", the agent lines that lean on the viewer, what `project_list`'s cut-short and error answers mean, and the no-`Agent` line the Surface decision sets. Until then the card lines exist only in a variant plugin, which the demo may run at a pinned commit. Invited users get the zip `make plugin-connector` builds.
 
-**Issue #3836**, agents reading project files directly, is closed: the tools, the agents' reads and the hook's deny have shipped. Issue #4311 takes the last two reads.
+**Issue #3836**, agents reading project files directly, is closed: the tools, the agents' reads and the hook's deny have shipped. Issue #4311 moved the last two reads to tools.
 
 ## Phase 3: release and operations
 
@@ -341,9 +341,8 @@ The lead's two agents hold the first group. The team builds the rest; an issue l
 | G6 The router PR | issue #4297 | MCP App agent | Before launch |
 | W4 Plain pages (D4) | issue #4001 | team | 30 Nov |
 | E5 Fit for a connector | issue #3996 | team | The pin |
-| E5 Direct reads | issue #4311 | team, senior | The pin |
+| E5 Direct reads | issue #4311 | team, senior | Merged; live connector check owed |
 | S2 Deleting and blocking one user | issue #4000 | team, senior | Before invited users |
-| G5 Capture wording | issue #3990 | team | Before invited users |
 
 P0.2 is issue #3529. Issue #3994, the browser app, is in the icebox until cards pass the live test behind sign-in.
 
@@ -376,7 +375,7 @@ Issue #4003, in the icebox, holds the worker's half of the one door and server-s
 - **The first real run.** No real token, plugin agent or hosted router has gone through the door together. Stage it: curl with a real token, then a seeded connector, then sign-in.
 - **The long token.** If Claude stops using a token with no refresh token, we add refresh on our own token. If the tools vanish on a tool-level message, E3's design changes.
 - **Approvals.** A run makes over 100 tool calls, mostly in agents. If "Always allow" does not reach agents, a run prompts on nearly every call.
-- **The per-call limit.** Unmeasured in Claude or Funnel. `project_create` needs about 55 s, and `image_transcribe` longer.
+- **The per-call limit.** Measured 2026-11-08 at 230 s (P0.2 item 4). `project_create` needs about 55 s; `image_transcribe` for a connector caller is now held to a 180 s budget (E5), leaving room for the trip both ways. The result-size limit stays unmeasured, in Claude or Funnel.
 - **The wrong server.** A `.mcpb` left on shares the connector's prefix, so research can land on disk and look right. The first reply must say `hosted`.
 - **One host.** A single server, with `/wiki` and `/pop-stats` on the same machine and the same Funnel. A lost disk loses users' research, and D4 and the terms say so.
 - **Research in chat.** Claude's docs say a chat session runs no hooks or agents, but the MCP App's host record shows the model listing `Agent` in chat on one account. This plugin is 2 skills and 31 agents. If the tool is there, the research skill's no-`Agent` line does not stop, and a run may fall to a general-purpose stand-in with no agent's tool list, which the hook would let through. Item 12 settles which. Either way, a rule that must hold in chat has to be a tool rule.
