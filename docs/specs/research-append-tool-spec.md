@@ -1701,13 +1701,32 @@ is listed, and the name sentence only when a name is. It rides
   the main thread then routes them to person-evidence is not checked; the first
   e2e runs that write rows measure it.
 - **The same call stamps `record_persona_ids` and `birth_year`.** On an append, and on an update
-  setting `record_ids` or `log_entry_ids`, `stampNamesakePersonas` looks each
+  setting `record_ids`, `log_entry_ids` or `name` (the check below reads the name),
+  `stampNamesakePersonas` looks each
   listed record up in the sidecars of the row's `log_entry_ids` (persona-bearing
   searches and reads only, matched by bare id), stores a found id in the sidecar's
   form and maps it to that result's `primaryId`, or, where the result has none (a
   read), to the person of its record whose ark is the listed id (`personaFor`). A
   listed household member of a hit or a read is found the same way, by that
-  person's ark, and stored in it. A log that finds the record but names no persona
+  person's ark, and stored in it. **A persona is taken only when one of its names
+  shares a given word with the row's `name`** (chesworthrm, 2026-11-09). Words come
+  from `ownGivenWords` once every mark but a letter, an apostrophe or a hyphen is a
+  space, so a bracketed placeholder ("(Mrs.)") is still dropped; then hyphenated
+  words are split, accents folded, and initials and particles (de, da, do, dos,
+  das) dropped. The row's are the words of
+  its name before any relative it names ("wife of Edwin Earnest"), read "Given
+  Surname" when written "Surname, Given", less name suffixes, and less the last
+  word, the surname, when two or more are left, taken before any hyphen in it is
+  split (`sharesRowGivenName`). A row whose name has "Mrs." anywhere before any
+  relative it names may give her husband's given name ("Mrs. Edwin Earnest",
+  "Hannah Earnest (Mrs. Edwin Earnest)", "Earnest, Edwin, Mrs."), so it takes no
+  persona not recorded female. A persona with no entry, or with no such word,
+  counts as none named, so a household member listed by mistake (a husband's own
+  record for his wife's namesake) is left unstamped and gives the row no year. A
+  Latin given name for an English one (Maria for Mary), an abbreviation (Wm for
+  William), an initial, and a surname first name written without a comma lose
+  their stamp too: the safe direction, since a wrong stamp corrupts item 10's
+  counts and the age exemption's year. A log that finds the record but names no persona
   for it does not end the lookup: a later cited log may still stamp it, and
   otherwise the first found form is kept. `birth_year` is the earliest birth,
   christening or baptism year among the personas so found, and is deleted when
@@ -1720,7 +1739,7 @@ is listed, and the name sentence only when a name is. It rides
   `person_evidence` ops name a person, each of that person's rows with no
   `birth_year` gets one by the same lookup (`fillNamesakeBirthYears`), before the
   cap judges; nothing else of the row changes, and a row whose listed records no
-  persona matches exactly stays without one. So a row written before the year was
+  persona matches exactly, or only one of another given name, stays without one. So a row written before the year was
   stamped gets one the first time a call links its person. A row whose personas
   state no year is looked up again on each later call that links its person; the
   call reads each sidecar once, and a read that fails leaves the row to the next
@@ -2101,6 +2120,69 @@ ended with every question resolved, and in 6 of them the rule removes 17
 persons. The only `research.json` entries naming those persons are 91
 `person_evidence` links.
 
+### 5.12 A caller's `localities` collection counts are stamped from the catalog
+
+On a `localities` append, and on an update whose `fields` sets `collections`,
+reached as an MCP caller (`researchAppendFromCaller`), each collection's
+`person_count` and `record_count` are set from FamilySearch's collection catalog
+(`fetchAllCollections`, the catalog `collections_search` reads, counted as it
+counts them: `collectionCountsById`). The write is never refused (decided at review-ready,
+2026-11-09). The wiring is `stampLocalityCollectionCounts` in
+`research-append.ts`, called from `prepareOps` after the `for_place` check (§5.8)
+and skipped when an earlier check has refused the batch.
+
+**Why.** research-plan plans from these counts without calling `collections_search`
+when every collection in a covering locality carries a `person_count`, and decides
+a name search vs an image browse on `person_count > 0`. In alpha feedback bundle
+`feedback-2026-11-05T18-50-09-991Z.zip` one locality stored `person_count: 0` on all 13 of its collections, and the second plan
+sent two indexed Illinois state censuses (1803969, 1803971; personCount 240,768 and
+380,262) to full-text search as browse-only. The agent cannot know a better count
+than the catalog, so a refusal would cost a turn and end in the same state.
+
+- **Ids.** A number id is stored as a string on every path below. A collection with
+  no id (absent, null, empty, or neither a string nor a number) cannot be checked: both counts become
+  `null`, with the warning
+  > `localities collections: a collection with no id cannot be checked; person_count and record_count set to null (unknown)`
+- **Found.** The id is in the catalog: both counts become the catalog's. A warning names each
+  value that changed:
+  > `localities collections '<id>': <count> <old> -> <new>[, <count> <old> -> <new>], set from FamilySearch's catalog`
+
+  `<count>` is `person_count` or `record_count`; only a count that changed is named,
+  `person_count` first. `<old>` is the JSON of the supplied value, or `absent`.
+- **Not found.** Both counts become `null`, which sends research-plan back to
+  `collections_search`:
+  > `localities collections '<id>' is not in FamilySearch's collection catalog; person_count and record_count set to null (unknown)`
+- **The catalog cannot be read** (no FamilySearch session, a network failure, a
+  non-200, or no answer within `CATALOG_READ_BUDGET_MS`, 20 seconds): every count in each such op becomes `null`, with one warning per op. The
+  underlying error, including the auth error's "Call the login tool", is not passed on:
+  > `localities collections: FamilySearch's collection catalog could not be read, so every person_count and record_count in this entry was set to null (unknown)`
+- **A spent FamilySearch request budget** (the process-wide limit or the per-user
+  429 pause, `isFsBudgetExhausted`) is a refusal, not a failed read: it is rethrown,
+  so the call fails with that error and nothing is written, as for an assertion's
+  geocode.
+- **When the catalog is read.** Once per call, in `researchAppendFromCaller`, before
+  the project lock, and only when the call carries a `localities` collection. A cold
+  read can run past 30 seconds (2 of 51 in the committed e2e run logs took 33 and 36,
+  collections-search-tool-spec "Timeout") and Cowork's bridge aborts a call at 60, so
+  the write waits at most 20 seconds; a read still running then goes on and fills
+  the cache. `fetchAllCollections` caches a successful read for an hour per token
+  (for the whole process when `GENEALOGY_SHARED_COLLECTIONS_CACHE` is `true`), so the
+  read is usually warm after locality-guide's own `collections_search`, but not after
+  a token refresh, or on a per-token hosted server where another patron's read has
+  since taken the cache's one slot.
+- **Whose session reads it.** The caller's: `server.ts` binds
+  `collectionCatalogLoader(principal)` and passes it to `researchAppendFromCaller`,
+  so `research-append.ts` imports no token code. That keeps every tool built on
+  `researchAppend` out of the hosted reauth alarm's set of tools that reach the token,
+  which they do not. `research_append` itself never passes on a sign-in instruction
+  (a failed read is the warning above), so it stays out of that set too.
+- **Who is stamped.** Only an MCP caller. The internal `researchAppend` callers are
+  not. The unit eval harness passes a null catalog loader, so it never contacts
+  FamilySearch and stores the counts as written (the `person_warnings`
+  precedent).
+- **Measured 2026-11-10** with a live session: the catalog held 3,638 collections
+  (the read asks for 5,000, so an id is not missed by truncation), every `id` a string.
+
 ## 6. Decisions recorded
 
 - **One tool with `section` + `op`, not per-section tools.** Same rationale as
@@ -2237,6 +2319,12 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   supplied persona rejected; absence never errors.
 - **joint-write atomicity** — a research-side validation failure after the
   in-memory `S` creation leaves **both** files byte-unchanged, no `.bak`.
+- **locality collection counts** (§5.12) — a wrong count replaced with a warning;
+  a correct one kept silently; an id the catalog lacks, and every id on a failed
+  read (an error, a non-200 or the 20-second budget), nulled with a warning and the
+  write kept; a collection with no id nulled; a number id stored as a string; a spent
+  FamilySearch budget rethrown; an update stamped like an append;
+  a null loader and an internal `researchAppend` write left unstamped.
 - **place levers** — sidecar copy preferred over geocoding; `resolvedPlaces`
   echo; country-contradiction rejected; `standard_place: null` opt-out honored;
   `opsReceived` echoed on batch failures.

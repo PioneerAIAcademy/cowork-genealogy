@@ -122,6 +122,7 @@ import { recordBasisOf } from "../utils/record-basis.js";
 import { countsForProofGate, isAttachmentLink } from "../utils/tree-person.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
+import type { CollectionCatalogLoader, CollectionCounts } from "../types/collection.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -3290,6 +3291,58 @@ function ownGivenWords(given: unknown): string[] {
     .filter((w) => w !== "" && w !== "of" && /\p{L}/u.test(w) && !PLACEHOLDER_GIVEN.has(w));
 }
 
+/** A name's words as the namesake persona lookup reads them: every mark but a
+ *  letter, an apostrophe or a hyphen made a space first, so a bracketed
+ *  placeholder ("(Mrs.)") is still one, then `ownGivenWords`. */
+function lookupNameWords(text: string): string[] {
+  return ownGivenWords(text.replace(/[^\p{L}\p{M}\s'-]/gu, " "));
+}
+
+/** Words as the lookup compares them: hyphenated words split, accents folded,
+ *  apostrophes trimmed from each end, and initials and particles dropped. */
+function comparableWords(words: readonly string[]): string[] {
+  return words
+    .flatMap((w) => w.split("-"))
+    .map((w) => w.normalize("NFD").replace(/\p{M}/gu, "").replace(/^'+|'+$/g, ""))
+    .filter((w) => w.length > 1 && !NAME_PARTICLES.has(w));
+}
+
+/** Particles a given name can carry ("Maria de Jesus"), which name no one. */
+const NAME_PARTICLES: ReadonlySet<string> = new Set(["de", "da", "do", "dos", "das"]);
+
+/** A relative named inside a row's name ("Hannah Earnest (wife of Edwin
+ *  Earnest)"): the words from the relation on are the relative's. */
+const RELATIVE_OF = /\b(?:wife|husband|widow|widower|relict|son|daughter|child|mother|father|brother|sister)\s+of\b/i;
+
+/** The given words of a namesake row's `name`, a free string: the words before
+ *  any relative it names, read "Given Surname" (`surnameLast`), less name
+ *  suffixes, and less the last word, the surname, when two or more are left. */
+function rowGivenWords(name: unknown): RowGiven {
+  if (typeof name !== "string") return { words: new Set(), mrs: false };
+  const relative = RELATIVE_OF.exec(name);
+  const before = relative ? name.slice(0, relative.index) : name;
+  const own = surnameLast(before);
+  const words = lookupNameWords(own).filter((w) => !NAME_SUFFIXES.has(w));
+  return {
+    words: new Set(comparableWords(words.length > 1 ? words.slice(0, -1) : words)),
+    mrs: /\bmrs\b/i.test(before),
+  };
+}
+
+/** A row's given words, and whether its name has "Mrs." anywhere before any
+ *  relative it names, which may give her husband's given name ("Mrs. Edwin
+ *  Earnest"). */
+type RowGiven = { words: ReadonlySet<string>; mrs: boolean };
+
+/** Whether one of `person`'s names has a given word of the row's; a row named
+ *  "Mrs." never takes a persona not recorded female, who may be her husband. */
+function sharesRowGivenName(person: any, row: RowGiven): boolean {
+  if (row.mrs && knownSex(person) !== "female") return false;
+  return ((Array.isArray(person?.names) ? person.names : []) as any[]).some(
+    (n) => typeof n?.given === "string" && comparableWords(lookupNameWords(n.given)).some((w) => row.words.has(w)),
+  );
+}
+
 /** Why a relative's names cannot separate namesakes, or null when one can. A
  *  relative separates them only through a given name of their own: not a
  *  placeholder, and not one that only repeats the given name of the relative's
@@ -3329,15 +3382,18 @@ const INVERSE_RELATION: ReadonlyMap<string, string> = new Map([
 ]);
 const NAME_SUFFIXES: ReadonlySet<string> = new Set(["jr", "sr", "ii", "iii", "iv", "junior", "senior"]);
 
+/** A name written "Surname, Given" as "Given Surname"; any other name as it is. */
+function surnameLast(v: string): string {
+  if (!v.includes(",")) return v;
+  const [surname, given] = v.split(",", 2);
+  return `${given} ${surname}`;
+}
+
 /** A name as the co-resident exclusion compares it: the first given name and
  *  the surname, lower case, a generational suffix dropped. */
 function nameKey(value: unknown): string | null {
   if (typeof value !== "string") return null;
-  let v = value.toLowerCase();
-  if (v.includes(",")) {
-    const [surname, given] = v.split(",", 2);
-    v = `${given} ${surname}`;
-  }
+  const v = surnameLast(value.toLowerCase());
   const words = v.replace(/[^\p{L}\s'-]/gu, " ").split(/\s+/).filter((w) => w && !NAME_SUFFIXES.has(w));
   if (words.length === 0) return null;
   return words.length === 1 ? words[0] : `${words[0]} ${words[words.length - 1]}`;
@@ -4494,7 +4550,9 @@ function logIndex(research: any): Map<string, any> {
 /** What the persona lookup of item 10 finds for one row in its own search and
  *  read sidecars: each listed record id in the sidecar's form, the persona each
  *  found record names (a search hit's `primaryId`, else the person whose ark is
- *  the listed one), and those personas' own entries. */
+ *  the listed one) when one of its names shares a given word with the row's
+ *  `name` (chesworthrm, 2026-11-09), and those personas' own entries. A persona
+ *  with no entry, or with none of the row's given words, counts as none named. */
 async function lookUpNamesakePersonas(
   row: any,
   logById: ReadonlyMap<string, any>,
@@ -4502,6 +4560,7 @@ async function lookUpNamesakePersonas(
 ): Promise<{ recordIds: unknown[]; stamp: Record<string, string>; personas: any[] }> {
   const stamp: Record<string, string> = {};
   const personas: any[] = [];
+  const rowGiven = rowGivenWords(row?.name);
   const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
     if (typeof id !== "string") return id;
     const bare = arkToBareId(id);
@@ -4529,9 +4588,11 @@ async function lookUpNamesakePersonas(
         form ??= person?.ark;
       }
       if (typeof form !== "string") continue;
-      if (isPersonaId(persona)) {
+      // Another person of the record, such as a household member listed by
+      // mistake, would corrupt item 10's count and give the row their birth year.
+      if (isPersonaId(persona) && sharesRowGivenName(person, rowGiven)) {
         stamp[form] = persona;
-        if (person) personas.push(person);
+        personas.push(person);
         return form;
       }
       found ??= form;
@@ -4553,10 +4614,15 @@ function earliestPersonaBirthYear(personas: readonly any[]): number | null {
   return out;
 }
 
+/** The row fields whose update restamps it: the stamp reads the listed records,
+ *  the logs that found them, and the name a persona must share. */
+const RESTAMPING_FIELDS = ["record_ids", "log_entry_ids", "name"] as const;
+
 /** Item 10 of #3363 (chesworthrm, 2026-10-24): stamps `record_persona_ids` on
- *  each row the call appended, or updated through `record_ids` or
- *  `log_entry_ids`, from the row's own search and read sidecars, so the first
- *  runs can count what a persona-keyed refusal would catch, and `birth_year`,
+ *  each row the call appended, or updated through `record_ids`, `log_entry_ids`
+ *  or `name`, from the row's own search and read sidecars and only with a
+ *  persona of the row's given name, so the first runs can count what a
+ *  persona-keyed refusal would catch, and `birth_year`,
  *  the earliest birth year those personas state, which the age exemption reads.
  *  Overwrites whatever the caller supplied; an update cannot set either field
  *  (`updatableFields`). A found record id is stored in the sidecar's form, as an
@@ -4573,7 +4639,7 @@ export async function stampNamesakePersonas(
   for (const a of applied) {
     if (a.section !== "namesakes" || a.noop) continue;
     const fields = (ops[a.opIndex] as any)?.fields;
-    if (a.op === "update" && !("record_ids" in (fields ?? {})) && !("log_entry_ids" in (fields ?? {}))) continue;
+    if (a.op === "update" && !RESTAMPING_FIELDS.some((f) => f in (fields ?? {}))) continue;
     const row = rows.find((r) => r && r.id === a.entryId);
     if (!row) continue;
     const { recordIds, stamp, personas } = await lookUpNamesakePersonas(row, logById, readResults);
@@ -4600,8 +4666,9 @@ export function linkedPersonIds(research: any, applied: ReadonlyArray<AppliedByA
 }
 
 /** The fill in of #3363 (chesworthrm, 2026-11-06): each row of `personIds` with
- *  no `birth_year` gets the year the persona lookup finds, and nothing else of
- *  the row changes; a row it finds none for stays without one. Runs when a call
+ *  no `birth_year` gets the year the persona lookup finds, from personas of the
+ *  row's given name only, and nothing else of the row changes; a row it finds
+ *  none for stays without one. Runs when a call
  *  links the row's person, so a row written before the stamp read years gets
  *  one. Rows in `skip` (just stamped) are left alone. Returns the ids it filled. */
 export async function fillNamesakeBirthYears(
@@ -10301,8 +10368,7 @@ async function checkLocalityFirstPlaces(
 ): Promise<void> {
   if (errors.length > 0) return;
   for (const [i, op] of ops.entries()) {
-    if (op.section !== "localities") continue;
-    const body = op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
+    const body = localityBody(op);
     if (!body || typeof body !== "object" || !Object.hasOwn(body, "for_place")) continue;
     const forPlace = (body as Record<string, unknown>).for_place;
     if (!isCheckablePlaceList(forPlace)) continue;
@@ -10327,6 +10393,101 @@ async function checkLocalityFirstPlaces(
             "write this entry: return to your caller saying the place did not resolve.",
         ),
       );
+    }
+  }
+}
+
+/** What a `localities` op writes: an append's `entry`, an update's `fields`. */
+function localityBody(op: any): unknown {
+  if (!op || op.section !== "localities") return undefined;
+  return op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
+}
+
+/** The `collections` lists of a batch's `localities` writes, by op index: an
+ *  append's `entry.collections`, an update's `fields.collections`. */
+function localityCollectionLists(ops: readonly unknown[]): Array<[number, Record<string, unknown>[]]> {
+  const out: Array<[number, Record<string, unknown>[]]> = [];
+  ops.forEach((op: any, i) => {
+    const body = localityBody(op);
+    const list = body && typeof body === "object" ? (body as { collections?: unknown }).collections : undefined;
+    if (!Array.isArray(list)) return;
+    const items = list.filter((c): c is Record<string, unknown> => !!c && typeof c === "object" && !Array.isArray(c));
+    if (items.length > 0) out.push([i, items]);
+  });
+  return out;
+}
+
+/** FamilySearch's collection catalog as `researchAppendFromCaller` read it before
+ *  the lock, or `"unavailable"` when that read failed. */
+export type CollectionCatalog = ReadonlyMap<string, CollectionCounts> | "unavailable";
+
+/**
+ * Stamp each `localities` collection's `person_count` / `record_count` from
+ * FamilySearch's catalog (issue #4385): research-plan decides a name search vs an
+ * image browse on them. An id the catalog lacks, or every id when the catalog
+ * could not be read, gets null counts, which send research-plan back to
+ * collections_search. A warning names each change; the write is never refused.
+ */
+function stampLocalityCollectionCounts(
+  ops: ResearchAppendOp[],
+  catalog: CollectionCatalog | undefined,
+  warnings: string[],
+  fmt: (i: number, msg: string) => string,
+): void {
+  if (catalog === undefined) return;
+  for (const [i, items] of localityCollectionLists(ops)) {
+    for (const c of items) if (typeof c.id === "number") c.id = String(c.id);
+    if (catalog === "unavailable") {
+      for (const c of items) {
+        c.person_count = null;
+        c.record_count = null;
+      }
+      warnings.push(
+        fmt(
+          i,
+          "localities collections: FamilySearch's collection catalog could not be read, so every " +
+            "person_count and record_count in this entry was set to null (unknown)",
+        ),
+      );
+      continue;
+    }
+    for (const c of items) {
+      if (typeof c.id !== "string" || c.id === "") {
+        c.person_count = null;
+        c.record_count = null;
+        warnings.push(
+          fmt(i, "localities collections: a collection with no id cannot be checked; person_count and record_count set to null (unknown)"),
+        );
+        continue;
+      }
+      const id = c.id;
+      const counts = catalog.get(id);
+      if (!counts) {
+        c.person_count = null;
+        c.record_count = null;
+        warnings.push(
+          fmt(
+            i,
+            `localities collections '${id}' is not in FamilySearch's collection catalog; ` +
+              "person_count and record_count set to null (unknown)",
+          ),
+        );
+        continue;
+      }
+      const changes: string[] = [];
+      for (const [key, value] of [
+        ["person_count", counts.personCount],
+        ["record_count", counts.recordCount],
+      ] as const) {
+        const was = Object.hasOwn(c, key) ? JSON.stringify(c[key]) : "absent";
+        if (c[key] !== value) changes.push(`${key} ${was} -> ${value}`);
+        c[key] = value;
+      }
+      if (changes.length > 0) {
+        warnings.push(
+          fmt(i, `localities collections '${id}': ${changes.join(", ")}, set from FamilySearch's catalog`),
+        );
+      }
     }
   }
 }
@@ -11274,6 +11435,7 @@ async function prepareOps(
   errors.push(...retiredAssertionCitations(ops, research, fmt));
 
   await checkLocalityFirstPlaces(ops, errors, warnings, fmt);
+  if (errors.length === 0) stampLocalityCollectionCounts(ops, options.collectionCatalog, warnings, fmt);
   if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, recordStandards, warnings, fmt);
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
@@ -11326,6 +11488,9 @@ export interface ResearchAppendOptions {
    *  is the caller's own, so it is judged (`judgeTimelinePlaces`). A tool builds
    *  its timeline from the project's own standard places. */
   judgeSuppliedPlaces?: boolean;
+  /** Set only by `researchAppendFromCaller`: the catalog `localities` collection
+   *  counts are stamped from (`stampLocalityCollectionCounts`). Omitted = not stamped. */
+  collectionCatalog?: CollectionCatalog;
   /** extraction_append's re-extraction (#3678): retire these assertions of
    *  `recordId` against the batch's appends, in the same write (`planRetirement`).
    *  Never set by a tool caller. */
@@ -11494,14 +11659,42 @@ function expandNarrativeEdits(
 /** The one field a direct `research_append` call may change on an assertion. */
 const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
 
+/** How long a caller's write waits on the catalog before stamping null counts. A
+ *  cold read can run past 30s (2 of 51 in the committed e2e logs took 33s and 36s), and Cowork's bridge aborts a call at 60s
+ *  (`COWORK_CALL_ABORT_MS`), which the write's own place lookups also spend. The
+ *  read keeps running and fills the cache for the next write. */
+export const CATALOG_READ_BUDGET_MS = 20_000;
+
+/** `loadCatalog`, or `"unavailable"` when it fails or outlasts the budget. A spent
+ *  FamilySearch budget is a refusal, not a failed read, and is rethrown. */
+async function readCatalog(loadCatalog: CollectionCatalogLoader): Promise<CollectionCatalog> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<"unavailable">((done) => {
+    timer = setTimeout(() => done("unavailable"), CATALOG_READ_BUDGET_MS);
+  });
+  const read = loadCatalog().catch((err: unknown) => {
+    if (isFsBudgetExhausted(err)) throw err;
+    return "unavailable" as const;
+  });
+  try {
+    return await Promise.race([read, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** `research_append` as an MCP caller reaches it. Assertions are written only by
  *  `extraction_append`, which calls `researchAppend` directly and so never meets
  *  this check. A caller may update one existing assertion's
  *  `informant_bias_notes`, to record a re-reading or a doubt; any other
  *  `assertions` write is refused, whole call, before anything is read
- *  (genealogist ruling 2026-10-05, option B). */
+ *  (genealogist ruling 2026-10-05, option B). `loadCatalog` reads FamilySearch's
+ *  collection catalog through the caller's session (`collectionCatalogLoader`,
+ *  bound in `server.ts`); null skips the collection-count stamp: the unit eval
+ *  harness, which never contacts FamilySearch. */
 export async function researchAppendFromCaller(
   input: ResearchAppendInput,
+  loadCatalog: CollectionCatalogLoader | null,
 ): Promise<ResearchAppendResult> {
   // Judged on the decode `researchAppend` will make, and made in the one place it is
   // made (`decodeArg`). The decoded value is NOT written back: `researchAppend` decodes
@@ -11532,7 +11725,14 @@ export async function researchAppendFromCaller(
   if (errors.length > 0) {
     return isBatch ? { ok: false, errors, opsReceived: ops.length } : { ok: false, errors };
   }
-  return researchAppend(input, { judgeSuppliedPlaces: true });
+  // Read before the project lock: a cold catalog fetch can run past 30s.
+  const decodedEntry = decodeArg(input.entry);
+  const writeOps = isBatch ? ops : [{ section: input.section, op: input.op, entry: decodedEntry, fields: decodedFields }];
+  let collectionCatalog: CollectionCatalog | undefined;
+  if (loadCatalog && localityCollectionLists(writeOps).length > 0) {
+    collectionCatalog = await readCatalog(loadCatalog);
+  }
+  return researchAppend(input, { judgeSuppliedPlaces: true, collectionCatalog });
 }
 
 export async function researchAppend(
