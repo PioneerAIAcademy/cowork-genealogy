@@ -1373,8 +1373,8 @@ def test_research_plan_availability_claim_matches_counts(
                 pcs = counts[cid]
                 claim_text = _PERCENT_INDEXED_RE.sub(" ", sentence)
                 claims_indexed = _claim_on_collection(
-                    _INDEXED_RE, claim_text, cid
-                ) and not _claim_on_collection(_UNINDEXED_RE, claim_text, cid)
+                    _INDEXED_RE, _UNINDEXED_RE.sub(" ", claim_text), cid
+                )
                 about_collection = _NON_COLLECTION_NOUN_THEN_ADJ_RE.sub(
                     " ", _ADJ_ON_NON_COLLECTION_RE.sub(" ", claim_text)
                 )
