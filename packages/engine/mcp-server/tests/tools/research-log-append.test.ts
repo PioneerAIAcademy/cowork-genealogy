@@ -2100,6 +2100,14 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
       expect(r.escalationDue).toBeUndefined();
     });
 
+    it("quotes a rationale holding replacement patterns as written", async () => {
+      const research: any = project([]);
+      const odd = "Paid $& and $' and $` and $$ and $1 for the bounty land.";
+      research.plans[0].items[0].rationale = odd;
+      await write(research);
+      expect(((await logNil()) as any).planRationale).toContain(`"${odd}"`);
+    });
+
     it("fires for any record type, not only a census", async () => {
       await write(project([], { recordType: "probate" }));
       expect(((await logNil()) as any).planRationale).toContain(RATIONALE);

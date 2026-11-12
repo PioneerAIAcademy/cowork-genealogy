@@ -263,7 +263,8 @@ function planRationaleNote(research: any, newEntries: any[]): string | null {
     const item = plans.flatMap((p) => (Array.isArray(p?.items) ? p.items : [])).find((i: any) => i?.id === pli);
     const rationale = typeof item?.rationale === "string" ? item.rationale.trim() : "";
     if (rationale === "") continue;
-    notes.push(PLAN_RATIONALE_NOTE.replaceAll("{planItemId}", pli).replaceAll("{rationale}", rationale));
+    // Function replacers: a string replacement would expand `$&` and `$'` in the rationale.
+    notes.push(PLAN_RATIONALE_NOTE.replaceAll("{planItemId}", () => pli).replaceAll("{rationale}", () => rationale));
   }
   return notes.length > 0 ? notes.join("\n") : null;
 }

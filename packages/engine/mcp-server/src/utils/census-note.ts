@@ -73,13 +73,18 @@ function searchedPlace(input: CensusNoteInput): string | undefined {
 
 /** The forms cover the place; or the place is a bare country they lie in; or the
  *  place leaves its country off ("Dodge County, Wisconsin") and a form without
- *  its own country is a whole-segment suffix of it. */
-function formsCover(forms: readonly string[], place: string): boolean {
+ *  its own country is a whole-segment suffix of it. The last reading is not
+ *  taken when the search names another country: "Tbilisi, Georgia" searched
+ *  with `recordCountry: "Georgia"` is not the US state. */
+function formsCover(forms: readonly string[], place: string, recordCountry?: string): boolean {
   if (placeMatches(forms, place)) return true;
   const want = segments(place);
   if (want.length === 1 && forms.some((f) => segments(f).pop() === want[0])) return true;
+  const named = recordCountry?.trim().toLowerCase();
   return forms.some((f) => {
-    const withoutCountry = segments(f).slice(0, -1);
+    const form = segments(f);
+    if (named && form[form.length - 1] !== named) return false;
+    const withoutCountry = form.slice(0, -1);
     if (withoutCountry.length === 0 || withoutCountry.length > want.length) return false;
     const tail = want.slice(want.length - withoutCountry.length);
     return withoutCountry.every((seg, i) => seg === tail[i]);
@@ -139,13 +144,14 @@ export function censusNote(
 
   const place = searchedPlace(input);
   if (!place) return undefined;
+  const country = str(input.recordCountry);
 
   const rows = table
-    .filter((r) => r.year >= from && r.year <= to && formsCover(r.covers, place))
+    .filter((r) => r.year >= from && r.year <= to && formsCover(r.covers, place, country))
     .sort((a, b) => a.year - b.year);
   const fragmentYears = [
     ...new Set(
-      CENSUS_FRAGMENTS.filter((f) => f.year >= from && f.year <= to && formsCover(f.covers, place)).map(
+      CENSUS_FRAGMENTS.filter((f) => f.year >= from && f.year <= to && formsCover(f.covers, place, country)).map(
         (f) => f.year,
       ),
     ),

@@ -139,6 +139,19 @@ describe("censusNote", () => {
     ).toBeUndefined();
   });
 
+  it("does not read a country-less place against a census of another country the search names", () => {
+    const tbilisi = {
+      recordType: "census",
+      residenceYearFrom: 1850,
+      residenceYearTo: 1850,
+      residencePlace: "Tbilisi, Georgia",
+    };
+    expect(censusNote({ ...tbilisi, recordCountry: "Georgia" })).toBeUndefined();
+    // With the country that matches, or none named, the state reading stands.
+    expect(censusNote({ ...tbilisi, residencePlace: "Savannah, Georgia", recordCountry: "United States" })?.schedules[0].year).toBe(1850);
+    expect(censusNote({ ...tbilisi, residencePlace: "Savannah, Georgia" })?.schedules[0].year).toBe(1850);
+  });
+
   it("gives the census a pinned collection belongs to, with no year or place", () => {
     const note = censusNote({ collectionId: "1401638", surname: "Flynn" } as never);
     expect(note?.schedules).toEqual([expect.objectContaining({ year: 1850, census: "United States" })]);
