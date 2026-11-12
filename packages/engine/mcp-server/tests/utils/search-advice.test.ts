@@ -58,6 +58,10 @@ describe("patronymicSearchNote", () => {
     expect(note).toContain("`recordCountry`");
   });
 
+  it("tells the caller to keep the given name, the place and the years", () => {
+    expect(patronymicSearchNote(MOEN, NIL)?.note).toContain("keep `givenName`, the place and the years");
+  });
+
   it("stays silent when the search found someone", () => {
     expect(patronymicSearchNote(MOEN, { totalMatches: 1 })).toBeUndefined();
     expect(patronymicSearchNote(MOEN, { totalMatches: 3, ranked: { subjectResolvable: true } })).toBeUndefined();

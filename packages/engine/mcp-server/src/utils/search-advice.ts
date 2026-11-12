@@ -73,9 +73,10 @@ export const PATRONYMIC_COUNTRIES: readonly string[] = ["norway", "sweden"];
 export const PATRONYMIC_SEARCH_NOTE =
   "This search carried a surname and found nobody. In these records the surname is a patronymic that " +
   "changes each generation, or a farm or emigrant name taken later, so the index may hold this person " +
-  "under a surname you cannot guess. Before any other retry, send the search with no `surname`: " +
-  "`givenName`, the parents' given names you hold as `fatherGivenName` and `motherGivenName`, and " +
-  "`recordCountry`. A record found that way must still be evaluated as this person.";
+  "under a surname you cannot guess. Before any other retry, send the same search with no `surname`: " +
+  "keep `givenName`, the place and the years; add the parents' given names you hold as " +
+  "`fatherGivenName` and `motherGivenName`; anchor on `recordCountry`. A record found that way must " +
+  "still be evaluated as this person.";
 
 function searchedCountries(input: SearchAdviceInput): string[] {
   const places = [text(input.recordCountry), ...EVENTS.map((e) => text(input[`${e}Place`]))];
