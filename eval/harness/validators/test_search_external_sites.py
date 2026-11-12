@@ -595,8 +595,10 @@ def test_archion_browse_handoff(tool_calls, test):
 def test_blm_outside_coverage_refusal_is_the_answer(before_state, after_state, tool_calls, test):
     """Tag-gated (blm-outside-coverage, #4402). A `blm_glo` build for a
     state-land state is refused `outside_coverage`, and that refusal is the
-    answer: the agent does not re-call without the state or with another one to
-    get a URL, and logs nothing, since no URL was built."""
+    answer: the agent does not re-call for that land without a state, or with
+    the refused state, to get a URL, and logs no blm_glo search. A build for
+    another state, or a log entry for another site, is a separate search and
+    not judged here."""
     if "blm-outside-coverage" not in test.get("tags", []):
         pytest.skip("not a blm-outside-coverage scenario")
     blm = [
@@ -605,18 +607,33 @@ def test_blm_outside_coverage_refusal_is_the_answer(before_state, after_state, t
         and _as_mapping(c.get("args")).get("site") == "blm_glo"
     ]
     responses = [_as_mapping(c.get("response")) for c in blm]
+
+    def state(call):
+        return str(_as_mapping(_as_mapping(call.get("args")).get("attributes")).get("usState") or "").strip().lower()
+
+    refused_at = [
+        i for i, r in enumerate(responses) if r.get("ok") is False and r.get("reason") == "outside_coverage"
+    ]
     errors = []
-    if not any(r.get("ok") is False and r.get("reason") == "outside_coverage" for r in responses):
+    if not refused_at:
         errors.append(
             f"no blm_glo build was refused outside_coverage; blm_glo calls: {[_as_mapping(c.get('args')) for c in blm]}"
         )
-    built = [_as_mapping(c.get("args")) for c, r in zip(blm, responses) if r.get("ok") is True]
-    if built:
-        errors.append(f"a blm_glo build went through after the refusal: {built}")
+    else:
+        refused_states = {state(blm[i]) for i in refused_at}
+        dodged = [
+            _as_mapping(blm[i].get("args")) for i in range(refused_at[0] + 1, len(blm))
+            if responses[i].get("ok") is True and state(blm[i]) in refused_states | {""}
+        ]
+        if dodged:
+            errors.append(f"a blm_glo build went through after the refusal, for the same land: {dodged}")
     if before_state.get("research_json") is not None:
-        logged = [e.get("id") for e in _new_external_entries(before_state, after_state, "external_site")]
+        logged = [
+            e.get("id") for e in _new_external_entries(before_state, after_state, "external_site")
+            if (e.get("external_site") or {}).get("site") == "blm_glo"
+        ]
         if logged:
-            errors.append(f"log {logged} record a search, though no URL was built")
+            errors.append(f"log {logged} record a blm_glo search, though no URL was built")
     assert not errors, "the outside_coverage refusal was not taken as the answer:\n  - " + "\n  - ".join(errors)
 
 

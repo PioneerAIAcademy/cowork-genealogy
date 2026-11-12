@@ -1707,7 +1707,7 @@ def _blm_call(response, **args):
     }
 
 
-REFUSED_BUILD = _blm_call({"ok": False, "reason": "outside_coverage", "error": "Pennsylvania is not a public-land state"})
+REFUSED_BUILD = _blm_call({"ok": False, "reason": "outside_coverage", "errors": ["Pennsylvania is not a public-land state"]})
 NATIONWIDE_BUILD = _blm_call(
     {"ok": True, "url": "https://glorecords.blm.gov/s/advanced-search?searchTerm=x", "access": "free"},
     attributes={"surname": "Flynn"},
@@ -1734,7 +1734,7 @@ def test_blm_refusal_fires_when_the_refused_search_is_logged():
     }
     before, after = _states(before_log=_open_log(), after_log=_open_log() + [logged])
     expect_fires(
-        lambda: check_blm_refusal(before, after, [REFUSED_BUILD], BLM_REFUSAL), "record a search"
+        lambda: check_blm_refusal(before, after, [REFUSED_BUILD], BLM_REFUSAL), "record a blm_glo search"
     )
 
 
@@ -1765,8 +1765,41 @@ def test_positive_log_check_skips_a_blm_refusal():
 
 def test_blm_refusal_fires_when_the_refusal_is_for_another_reason():
     """A `no_attributes` refusal (no name passed) is not the state-land answer."""
-    no_name = _blm_call({"ok": False, "reason": "no_attributes", "error": "blm_glo needs a surname or given name"})
+    no_name = _blm_call({"ok": False, "reason": "no_attributes", "errors": ["blm_glo needs a surname or given name"]})
     before, after = _states(before_log=_open_log(), after_log=_open_log())
     expect_fires(
         lambda: check_blm_refusal(before, after, [no_name], BLM_REFUSAL), "no blm_glo build was refused"
     )
+
+
+def test_blm_refusal_fires_when_the_refused_state_is_retried_and_built():
+    retried = _blm_call({"ok": True, "url": "https://glorecords.blm.gov/s/advanced-search?searchTerm=y"})
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_fires(
+        lambda: check_blm_refusal(before, after, [REFUSED_BUILD, retried], BLM_REFUSAL), "for the same land"
+    )
+
+
+def test_blm_refusal_passes_a_build_for_another_state():
+    """A public-land state the person lived in is a separate search."""
+    ohio = _blm_call(
+        {"ok": True, "url": "https://glorecords.blm.gov/s/advanced-search?searchTerm=oh"},
+        attributes={"surname": "Flynn", "usState": "Ohio"},
+    )
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_passes(lambda: check_blm_refusal(before, after, [REFUSED_BUILD, ohio], BLM_REFUSAL))
+
+
+def test_blm_refusal_passes_a_nationwide_build_before_the_refusal():
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_passes(lambda: check_blm_refusal(before, after, [NATIONWIDE_BUILD, REFUSED_BUILD], BLM_REFUSAL))
+
+
+def test_blm_refusal_passes_a_logged_follow_up_search_on_another_site():
+    """Routing to the county deed records may build and log another site's search."""
+    deeds = {
+        "id": "log_002", "tool": "external_site", "outcome": "partial",
+        "external_site": {"site": "familysearch_web", "url_generated": "https://www.familysearch.org/search/catalog", "capture_received": False},
+    }
+    before, after = _states(before_log=_open_log(), after_log=_open_log() + [deeds])
+    expect_passes(lambda: check_blm_refusal(before, after, [REFUSED_BUILD], BLM_REFUSAL))
