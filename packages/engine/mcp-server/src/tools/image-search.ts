@@ -12,6 +12,7 @@ import {
 import type {
   ImageSearchInput,
   ImageSearchResult,
+  ImageIdRange,
   ChildrenNamesResponse,
 } from "../types/image-search.js";
 import { rejectedTokenMessage } from "../auth/config.js";
@@ -26,7 +27,6 @@ interface ResolvedItem {
   /** Entries the item's list lost to a defective response, after the retry. */
   dropped: number;
   imageGroupNumber: string;
-  imageGroupNumberFrom: "name" | "position";
   place: string | null;
 }
 
@@ -313,10 +313,9 @@ async function itemLabel(
   position: number,
   principal: Principal,
   timing: () => Timing,
-): Promise<Pick<ResolvedItem, "imageGroupNumber" | "imageGroupNumberFrom" | "place">> {
+): Promise<Pick<ResolvedItem, "imageGroupNumber" | "place">> {
   const composed = {
     imageGroupNumber: `${imageGroupNumber}_${String(position).padStart(3, "0")}_${groupId}`,
-    imageGroupNumberFrom: "position" as const,
     place: null,
   };
   try {
@@ -325,13 +324,65 @@ async function itemLabel(
     const place = typeof meta.coverages?.[0]?.place === "string" ? meta.coverages[0].place : null;
     const name = meta.groupName;
     if (typeof name === "string" && name.startsWith(`${imageGroupNumber}_`)) {
-      return { imageGroupNumber: name, imageGroupNumberFrom: "name", place };
+      return { imageGroupNumber: name, place };
     }
     return { ...composed, place };
   } catch (err) {
     if (isFsBudgetExhausted(err)) throw err;
     return composed;
   }
+}
+
+// ─── The answer: a count and id ranges (spec § Output) ─────────────────────
+
+/** Past this many runs the range list is cut and `truncated: true` is set. */
+export const MAX_IMAGE_ID_RANGES = 500;
+
+const IMAGE_ID = /^(\d{9})_(\d{5})$/;
+
+/**
+ * Sorted ids as one inclusive `[firstId, lastId]` pair per run: the same 9-digit
+ * film prefix with the 5-digit suffix rising by exactly 1. An id of any other
+ * form is its own pair. `imageCount` is always the full count.
+ */
+export function toImageIdRanges(
+  imageIds: string[],
+): Pick<ImageSearchResult, "imageCount" | "imageIdRanges" | "truncated"> {
+  const ranges: ImageIdRange[] = [];
+  let previous: RegExpExecArray | null = null;
+  for (const id of imageIds) {
+    const parts = IMAGE_ID.exec(id);
+    const continuesRun =
+      parts !== null &&
+      previous !== null &&
+      parts[1] === previous[1] &&
+      Number(parts[2]) === Number(previous[2]) + 1;
+    if (continuesRun) ranges[ranges.length - 1][1] = id;
+    else ranges.push([id, id]);
+    previous = parts;
+  }
+  return {
+    imageCount: imageIds.length,
+    imageIdRanges: ranges.slice(0, MAX_IMAGE_ID_RANGES),
+    ...(ranges.length > MAX_IMAGE_ID_RANGES ? { truncated: true as const } : {}),
+  };
+}
+
+/**
+ * Every image id in one group, sorted. The one source of a group's full list:
+ * `image_search` builds its ranges from it, and `volume_bisect` indexes its
+ * positions against it in-process.
+ */
+export async function listGroupImageIds(
+  imageGroupNumber: string,
+  principal: Principal,
+  /** Lower the per-attempt fetch budget (volume-bisect-tool-spec.md §8). */
+  opts: { timeoutMs?: number } = {},
+): Promise<string[]> {
+  const timing = timingFor(opts.timeoutMs);
+  const groupId = await resolveGroupId(imageGroupNumber, principal, timing);
+  const { imageIds } = await fetchImageIds(groupId, principal, () => timing);
+  return imageIds;
 }
 
 export async function imageSearchTool(
@@ -353,10 +404,7 @@ export async function imageSearchTool(
   }
 
   if (item === undefined) {
-    const timing = timingFor(opts.timeoutMs);
-    const groupId = await resolveGroupId(input.imageGroupNumber, principal, timing);
-    const { imageIds } = await fetchImageIds(groupId, principal, () => timing);
-    return { imageIds };
+    return toImageIdRanges(await listGroupImageIds(input.imageGroupNumber, principal, opts));
   }
 
   if (input.imageGroupNumber.includes("_")) {
@@ -376,9 +424,8 @@ export async function imageSearchTool(
     );
   }
   const result: ImageSearchResult = {
-    imageIds: resolved.imageIds,
+    ...toImageIdRanges(resolved.imageIds),
     imageGroupNumber: resolved.imageGroupNumber,
-    imageGroupNumberFrom: resolved.imageGroupNumberFrom,
     place: resolved.place,
   };
   if (itemImage !== undefined) {
@@ -395,16 +442,20 @@ export async function imageSearchTool(
 export const imageSearchSchema = {
   name: "image_search",
   description:
-    "List the images in a single FamilySearch image group (a digitized " +
-    "volume — one microfilm roll or book scan). Provide an imageGroupNumber " +
-    "(from volume_search) and get back the sorted list of image IDs in that " +
-    "volume, each of the form '004884748_02613'. To view an image, pass its ID " +
-    "to image_read. Use volume_search " +
-    "first to find which image groups cover a place and year range. " +
+    "Count the images in a single FamilySearch image group (a digitized " +
+    "volume — one microfilm roll or book scan) and return their ids as ranges. " +
+    "Provide an imageGroupNumber (from volume_search) and get back imageCount " +
+    "and imageIdRanges: one inclusive [firstId, lastId] pair per unbroken run " +
+    "of ids, each id of the form '004884748_02613'. The image at offset k " +
+    "within a run is firstId with its 5-digit suffix raised by k, zero-padded. " +
+    "Past 500 runs the list is cut and truncated: true is set; imageCount stays " +
+    "the full count. To read an image, pass its id to image_transcribe or " +
+    "image_read. Use volume_search first to find which image groups cover a " +
+    "place and year range. " +
     "For a citation like 'DGS 004528134, Item 5, Image 10', pass the bare " +
     "film number with item and itemImage: you get that image's imageId " +
-    "(and the item's images, imageGroupNumber and place) without paging " +
-    "through the film. " +
+    "(and the item's imageCount, imageIdRanges, imageGroupNumber and place) " +
+    "without paging through the film. " +
     "Requires authentication — call the login tool first if not logged in.",
   inputSchema: {
     type: "object",
