@@ -1,0 +1,3430 @@
+{
+  "project": {
+    "id": "rp_mary_mcandrew_son",
+    "objective": "Did Mary E. McAndrew (G13G-P68) and her husband John Mogan of Detroit have any children besides the five already in the tree?",
+    "subject_person_ids": [
+      "G13G-P68"
+    ],
+    "status": "active",
+    "created": "2026-07-10",
+    "updated": "2026-07-10"
+  },
+  "researcher_profile": {
+    "experience_level": "intermediate",
+    "subscriptions": [],
+    "narration_guidance": "concise"
+  },
+  "questions": [
+    {
+      "id": "q_001",
+      "question": "Who were all the children born to Mary E. McAndrew and John Mogan of Detroit?",
+      "rationale": "The objective asks whether the couple had children beyond the five in the tree, which is the complete set of their children; no question covers it yet. The tree's five children were born 1876-1888, and no marriage date is recorded for the couple, so the search window is open at both ends. The tree holds no sourced evidence for any of the five yet.",
+      "selection_basis": "objective_decomposition",
+      "question_kind": "enumerative",
+      "priority": "high",
+      "date_window": "1868-1925",
+      "status": "open",
+      "depends_on": [],
+      "unblocks": [],
+      "resolved": null,
+      "resolution_assertion_ids": [],
+      "search_stop": {
+        "stopped_because": null,
+        "justification": null,
+        "log_entry_ids": [],
+        "stop_criteria": null,
+        "not_reached": []
+      },
+      "created": "2026-11-12"
+    }
+  ],
+  "plans": [
+    {
+      "id": "pl_001",
+      "question_id": "q_001",
+      "status": "active",
+      "created": "2026-11-12",
+      "items": [
+        {
+          "id": "pli_001",
+          "sequence": 1,
+          "record_type": "census",
+          "jurisdiction": "Detroit, Wayne, Michigan, United States",
+          "date_range": "1870-1880",
+          "repository": "FamilySearch",
+          "rationale": "Tree records Mary (b. 12 Jul 1848 New Brunswick) in Detroit in 1870 and her parents Bernard and Abby in Detroit in 1870 and 1880; no census is attached for the Mogan household in 1880. The 1880 schedule gives relationship to head, so it shows every child living with John and Mary then (tree children Thomas b. 1876 and John Vincent b. 1879) and any unrecorded child born 1876-1880 or dead before 1880. The 1870 schedule predates the known births and serves to locate Mary and the marriage window (no marriage date is in the tree). Check surname variants Mogan, Moogan, Mohan, Morgan, Magan and McAndrew/McAndrews. loc_001 says most Detroit census volumes are browse-only, so check each volume's searchability.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_002",
+          "sequence": 2,
+          "record_type": "census",
+          "jurisdiction": "Detroit Ward 8, Wayne, Michigan, United States",
+          "date_range": "1900",
+          "repository": "FamilySearch",
+          "rationale": "Tree places John, Mary, Edward, Anna Irene and Mary L. in Detroit Ward 8 in 1900. The 1900 schedule records the number of children born to the mother and the number still living, so a count above five, or a gap between born and living, signals unrecorded children, including ones who died young. loc_001 notes the Detroit 1900 volumes are largely name-indexed with images.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_003",
+          "sequence": 3,
+          "record_type": "census",
+          "jurisdiction": "Detroit, Wayne, Michigan, United States",
+          "date_range": "1910-1920",
+          "repository": "FamilySearch",
+          "rationale": "Mary (widowed, d. 1925) should appear in 1910 and 1920; the 1910 census again records children born and living for the mother, extending the 1900 count test to the end of her childbearing years. Tree residences: Thomas in Ward 4 in 1910, Anna Irene in Ward 10 in 1920. Detroit streets were renumbered 1 Jan 1921, which affects matching addresses across years.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_004",
+          "sequence": 4,
+          "record_type": "census",
+          "jurisdiction": "Michigan, United States",
+          "date_range": "1894",
+          "repository": "FamilySearch",
+          "rationale": "The Michigan State Census 1894 (name-searchable, collection 1825187) falls in the gap left by the lost 1890 federal census, between the 1880 and 1900 schedules, and would show any child present in 1894 who is absent in both federal years.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_005",
+          "sequence": 5,
+          "record_type": "vital_record",
+          "jurisdiction": "Wayne County, Michigan, United States",
+          "date_range": "1867-1902",
+          "repository": "FamilySearch",
+          "rationale": "Search for births to John Mogan and Mary McAndrew/McAndrews across Michigan, Births, 1867-1902 (1459684), Michigan, County Births, 1867-1917 (1923472) and Michigan, Births and Christenings, 1775-1995 (1675348), all name-searchable. Tree births: Thomas 1876, John Vincent 1879, Anna Irene 18 Nov 1884, Edward 31 Dec 1885, Mary L. Aug 1888. Gaps 1880-1884 and 1886-1887, and any birth after 1888, are where an unrecorded child would sit. loc_001 warns the unindexed Wayne County microfilm excludes City of Detroit and pre-1900 registration was incomplete, so a miss is weak evidence; search by parents' names with no child name.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_006",
+          "sequence": 6,
+          "record_type": "church",
+          "jurisdiction": "Detroit, Wayne, Michigan, United States",
+          "date_range": "1870-1895",
+          "repository": "FamilySearch",
+          "rationale": "Irish Catholic family; baptisms stand in for missing civil births. Michigan, Church Records, 1819-1991 (2787825) is name-searchable; search parents' names. Tree holds Anna Irene christened 27 May 1885 (Wayne, Michigan). loc_001 says the family's parish is not established and Archdiocese of Detroit registers (1704-1930) are on microfilm at the Burton Historical Collection; the parish named in Anna Irene's christening, once read, should be the first register browsed there. Registers are often in Latin.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_007",
+          "sequence": 7,
+          "record_type": "vital_record",
+          "jurisdiction": "Wayne County, Michigan, United States",
+          "date_range": "1868-1878",
+          "repository": "FamilySearch",
+          "rationale": "Marriage of John Mogan and Mary E. McAndrew: the tree has no marriage date. Search Wayne County marriage returns (indexed marriage collections) and Catholic marriage entries to fix the earliest possible birth date; if the marriage was after 1876 only, no earlier child; a marriage before 1876 opens a window for children born 1870-1876. Check surname variants. The record may also name witnesses, relatives to follow.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_008",
+          "sequence": 8,
+          "record_type": "vital_record",
+          "jurisdiction": "Detroit, Wayne, Michigan, United States",
+          "date_range": "1870-1950",
+          "repository": "FamilySearch",
+          "rationale": "Death records for children who may have died young and left no census trace: Michigan, Deaths, 1867-1897 (1452402), Michigan, Deaths and Burials, 1800-1995 (1675357), Michigan Mortality Schedules 1850-1880 (2632078, for deaths in the year before the 1880 census) and Michigan, Death Certificates, 1921-1952 (1968532). Adult children's certificates (tree: Thomas d. 2 May 1924, Edward d. 16 Nov 1934, John Vincent d. 22 Sep 1950) and Mary's own (d. 31 Mar 1925) name parents and sometimes list siblings. Search parents' names as father/mother with surname Mogan. Detroit deaths before 1897 are not separately described in loc_001; Detroit deaths since 1897 sit with the Detroit Health Department.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_009",
+          "sequence": 9,
+          "record_type": "vital_record",
+          "jurisdiction": "Wayne County, Michigan, United States",
+          "date_range": "1867-1925",
+          "repository": "Ancestry",
+          "rationale": "Pre-provided capture ancestry-mi-deaths-mogan-wayneco.pdf (Wayne County death records from Ancestry): read it for Mogan decedents whose parents are John and Mary, especially children who died young or between censuses; compare with the FamilySearch death results in the previous item. Hand to search-external-sites to log the capture and record extractable facts.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_010",
+          "sequence": 10,
+          "record_type": "newspaper",
+          "jurisdiction": "Michigan, United States",
+          "date_range": "1894-1925",
+          "repository": "FamilySearch",
+          "rationale": "Michigan, Obituaries, 1820-2006 (2215693, name-searchable) and Detroit newspapers: loc_001 notes obituaries list surviving children by name. Targets: John d. 3 May 1905, Mary d. 31 Mar 1925, Mary's mother Abby (obituaries 20 and 21 Aug 1894 are in the tree) and father Bernard (d. 12 Oct 1888), plus the adult children's obituaries. A child named as surviving who is not among the five answers the question directly.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_011",
+          "sequence": 11,
+          "record_type": "probate",
+          "jurisdiction": "Wayne County, Michigan, United States",
+          "date_range": "1905-1930",
+          "repository": "FamilySearch",
+          "rationale": "Michigan, Probate Records, 1797-1973 (2013878) is browse-only (personCount 0), so this is an image browse of Wayne County dockets, not a name search. John d. 3 May 1905 and Mary d. 31 Mar 1925; petitions list heirs at law and are sized to the parents' deaths, not the children's births. Both testate and intestate files; the heirs list would name all living children and any grandchildren of deceased ones.",
+          "fallback_for": null,
+          "status": "completed"
+        },
+        {
+          "id": "pli_012",
+          "sequence": 12,
+          "record_type": "probate",
+          "jurisdiction": "Wayne County, Michigan, United States",
+          "date_range": "1905-1910",
+          "repository": "Ancestry",
+          "rationale": "Pre-provided capture ancestry-mi-probate-mogan-john.pdf (John Mogan's Wayne County probate file from Ancestry): read for the petition's heirs list and any will naming children. Compare against the five known children; confirm this John Mogan is the husband of Mary E. before using it. Hand to search-external-sites.",
+          "fallback_for": null,
+          "status": "in_progress"
+        },
+        {
+          "id": "pli_013",
+          "sequence": 13,
+          "record_type": "cemetery",
+          "jurisdiction": "Detroit, Wayne, Michigan, United States",
+          "date_range": "1870-1930",
+          "repository": "other",
+          "rationale": "Catholic cemetery interment records (Mt. Elliot, also Elmwood per loc_001; held at the Burton Historical Collection and the cemeteries) and Find a Grave. Infants buried in the family lot, or Mogan burials sharing a lot with John, Mary or her parents (Bernard d. 1888, Abby d. 1894), expose children who died young and never reached a census or obituary. Tree burials are only recorded as Detroit.",
+          "fallback_for": null,
+          "status": "skipped",
+          "skip_category": "inaccessible",
+          "skip_reason": "Find a Grave search requires a user capture; no user present to capture during autonomous run. URL logged for later."
+        }
+      ]
+    }
+  ],
+  "log": [
+    {
+      "id": "log_001",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-12T21:10:03.075Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McAndrew",
+        "givenName": "Mary",
+        "residencePlace": "Detroit, Wayne, Michigan, United States",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_001.json",
+      "results_available": 61,
+      "notes": "Surname McAndrew, Detroit, 1900. No candidate scored above 0.01; all surnames not on subject. Real negative for this spelling; subject known as Mogan/Magan in 1900.",
+      "staged_ref": "results/.staging/3bc0b1ed-da81-41cd-9f67-6af0103d7ed0.json"
+    },
+    {
+      "id": "log_002",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-12T21:10:03.089Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "givenName": "Mary",
+        "residencePlace": "Detroit Ward 8, Wayne, Michigan, United States",
+        "residenceYearFrom": 1900,
+        "residenceYearTo": 1900,
+        "collectionId": "1325221"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_002.json",
+      "results_available": 4,
+      "notes": "Mogan/Magan, Detroit Ward 8, 1900 census (1325221, name-indexed). Top: Mary E Magan, b. July 1853 Maine, married 1875, household of John Magan; attached to subject in tree; birth year gap 5 and birthplace Maine vs New Brunswick, so cross-check flags needs-review on age though month (July) matches. Same household has Mary L Magan b. Aug 1888 (tree child). Census fields include children born/living (wiki 1900 page). Index only, original image not examined.",
+      "staged_ref": "results/.staging/16c19f55-3468-4c41-8985-d280b71d5777.json"
+    },
+    {
+      "id": "log_003",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-12T21:10:16.408Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McAndrew",
+        "givenName": "Mary",
+        "birthYearFrom": 1843,
+        "birthYearTo": 1853,
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910,
+        "residencePlace": "Detroit, Wayne, Michigan, United States",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_003.json",
+      "results_available": 9,
+      "notes": "1910 census, McAndrew, Detroit. No candidate above 0.025; top rows are other surnames (Enders, Andrews) with birth gaps. No clear match.",
+      "staged_ref": "results/.staging/c5afc5e8-3874-4bfe-9fec-ed7602016a8e.json"
+    },
+    {
+      "id": "log_004",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-12T21:10:16.413Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "givenName": "Mary",
+        "birthYearFrom": 1843,
+        "birthYearTo": 1853,
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1920,
+        "residencePlace": "Detroit, Wayne, Michigan, United States",
+        "recordType": "census"
+      },
+      "outcome": "partial",
+      "results_examined": 6,
+      "external_site": null,
+      "results_ref": "results/log_004.json",
+      "results_available": 6,
+      "notes": "Surname Mogan, 1910-1920 Detroit. Top: Mary E Mogan, 1910 Ward 8, widowed, b.~1853 Maine (birth gap 5, birthplace differs from New Brunswick): needs-review, possible namesake. Also Mary A Magan 1920 Ward 1 widowed b.1852 Michigan (gap 4): needs-review. No score above 0.01.",
+      "staged_ref": "results/.staging/ad8f9bef-79b6-4aff-ab18-edb64bff94f9.json"
+    },
+    {
+      "id": "log_005",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-12T21:10:16.418Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McAndrew*",
+        "givenName": "Mary",
+        "birthYearFrom": 1843,
+        "birthYearTo": 1853,
+        "residenceYearFrom": 1920,
+        "residenceYearTo": 1920,
+        "residencePlace": "Detroit, Wayne, Michigan, United States",
+        "recordType": "census"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "1920 census nil for McAndrew* Mary in Detroit. Further levers (McAndrews/Mcandrew variants, search by son Thomas or daughter Anna Irene, drop given name) not yet tried; 1920 collection covers Detroit and is well indexed."
+    },
+    {
+      "id": "log_006",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-12T21:10:19.668Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "givenName": "Mary",
+        "residenceYearFrom": 1894,
+        "residenceYearTo": 1894,
+        "residencePlace": "Michigan, United States",
+        "collectionId": "1825187"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Nil. Michigan 1894 state census is select counties only, household members listed."
+    },
+    {
+      "id": "log_007",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-12T21:10:19.668Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McAndrew",
+        "givenName": "Mary",
+        "residenceYearFrom": 1894,
+        "residenceYearTo": 1894,
+        "collectionId": "1825187"
+      },
+      "outcome": "negative",
+      "results_examined": 49,
+      "external_site": null,
+      "results_ref": "results/log_007.json",
+      "results_available": 49,
+      "notes": "Mary McAndrew 1894 census: 49 rows, none scored above 0.01. Closest Mary Mcandrews b.1855 Vergennes Kent (gap 7, birthYearConflict) and Mcandrew households Bay City (no given name). Not tied to subject; Andrews/Andrus rows are surname-variant noise.",
+      "staged_ref": "results/.staging/48ad5da5-a62d-4bea-a592-d76ffd4719db.json"
+    },
+    {
+      "id": "log_008",
+      "plan_item_id": "pli_004",
+      "performed": "2026-11-12T21:10:19.675Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "collectionId": "1825187"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_008.json",
+      "results_available": 5,
+      "notes": "Surname Mogan only, 1894 collection: 5 rows (Maginn, Mogan in Sagola Dickinson), all birthYearConflict, no female Mary Mogan. No match.",
+      "staged_ref": "results/.staging/023a6b8a-693a-41f4-bc1a-721e4af7ace0.json"
+    },
+    {
+      "id": "log_009",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-12T21:10:45.361Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "givenName": "Mary",
+        "residencePlace": "Detroit, Wayne, Michigan, United States",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "recordType": "census"
+      },
+      "outcome": "partial",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_009.json",
+      "results_available": 3,
+      "notes": "Mary Mogan, Detroit, 1880 census: results came from wrong collections (Native American census rolls, city directory); not the target. Collection mismatch.",
+      "staged_ref": "results/.staging/8cac1352-8c1a-4a26-84f0-b3fe2b3350cf.json"
+    },
+    {
+      "id": "log_010",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-12T21:10:45.366Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "residencePlace": "Detroit, Wayne, Michigan, United States",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880,
+        "collectionId": "1417683"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_010.json",
+      "results_available": 1,
+      "notes": "Surname Mogan, Detroit, 1880 census collection 1417683: only Catherine Mugan b.1850 Ireland, single servant in Rees household; not subject. No Mogan household found.",
+      "staged_ref": "results/.staging/ef5b142b-828a-42dd-8578-3e1d26d54f2e.json"
+    },
+    {
+      "id": "log_011",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-12T21:10:45.370Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McAndrew*",
+        "givenName": "Bernard",
+        "residencePlace": "Detroit, Wayne, Michigan, United States",
+        "residenceYearFrom": 1870,
+        "residenceYearTo": 1880,
+        "recordType": "census"
+      },
+      "outcome": "positive",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_011.json",
+      "results_available": 3,
+      "notes": "Bernard McAndrew* Detroit 1870-1880. 1880 Household of Bernard Mc Andrew (b.1816 Ireland, car painter, married) already attached to another tree person (likely subject's father). 1870 Bryan/Bernard McAndrews b.1852 Michigan: birth gap, needs-review, probably different person. Pre-1880 relationships inferred. Neither is Mary's own household.",
+      "staged_ref": "results/.staging/923265c9-be4d-41bb-ad0d-398e46227f0a.json"
+    },
+    {
+      "id": "log_012",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-12T21:10:45.376Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "M?gan",
+        "givenName": "John",
+        "spouseGivenName": "Mary",
+        "residencePlace": "Detroit, Wayne, Michigan, United States",
+        "residenceYear": 1880,
+        "collectionId": "1417683"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Nil, pinned to 1880 census. Unpinned retry logged next."
+    },
+    {
+      "id": "log_013",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-12T21:10:45.376Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mohan",
+        "givenName": "Mary",
+        "birthYearFrom": 1846,
+        "birthYearTo": 1850,
+        "residencePlace": "Detroit, Wayne, Michigan, United States",
+        "residenceYear": 1880,
+        "collectionId": "1417683"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Nil, pinned to 1880 census. Unpinned retry logged next."
+    },
+    {
+      "id": "log_014",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-12T21:10:45.376Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "givenName": "Thomas",
+        "birthYearFrom": 1875,
+        "birthYearTo": 1877,
+        "residencePlace": "Michigan, United States",
+        "residenceYearFrom": 1880,
+        "residenceYearTo": 1880
+      },
+      "outcome": "partial",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_014.json",
+      "results_available": 301,
+      "notes": "Thomas Mogan b.1875-77, Michigan 1880, no collection pin: no 1880 census hit. Two WWI draft cards for Thomas Frank Mogan b. 19 Oct 1876 Detroit (possible son Thomas, unverified, not census). Rest irrelevant.",
+      "staged_ref": "results/.staging/c82236f2-4674-4080-9d03-d450e713f1cf.json"
+    },
+    {
+      "id": "log_015",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-12T21:10:45.384Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "M?gan",
+        "givenName": "John",
+        "spouseGivenName": "Mary",
+        "residencePlace": "Detroit, Wayne, Michigan, United States",
+        "count": 20
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_015.json",
+      "results_available": 905,
+      "notes": "Unpinned John M?gan spouse Mary, Detroit. No census hit. Michigan death certificates 1921-1952 (coll 1968532) for Frank, Ed and John Vincent Mogan name father John Mogan and mother Mary E McAndrews/Mcandrew(s): consistent with sons of subject; relativeTerms spouse present, but not census. Frank Mogan and Ed Mogan are possible unrecorded children. Also Ohio marriage Frank Mogan/Margaret Murray names mother Mary E. McAndrews.",
+      "staged_ref": "results/.staging/9024b97e-cc9f-422d-b8ce-be311b17f7aa.json"
+    },
+    {
+      "id": "log_016",
+      "plan_item_id": "pli_001",
+      "performed": "2026-11-12T21:10:45.400Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mohan",
+        "givenName": "Mary",
+        "birthYearFrom": 1846,
+        "birthYearTo": 1850,
+        "residencePlace": "Detroit, Wayne, Michigan, United States",
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_016.json",
+      "results_available": 1171,
+      "notes": "Unpinned Mary Mohan b.1846-50 Detroit: no 1880 census; Mary Mohan b.1848 Ireland d.1878 Detroit is not subject (born Ireland, died 1878 while subject lived to 1925).",
+      "staged_ref": "results/.staging/4568a985-ceb6-41fa-942f-bdfab0775bd2.json"
+    },
+    {
+      "id": "log_017",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:12:54.388Z",
+      "tool": "record_read",
+      "query": {
+        "recordId": "ark:/61903/1:1:M91M-LK1"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_017.json",
+      "staged_ref": "results/.staging/6ebb58a8-50d6-4a2e-bbe7-42a2064361b4.json"
+    },
+    {
+      "id": "log_018",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-12T21:14:25.269Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "John",
+        "fatherSurname": "Mogan",
+        "motherGivenName": "Mary",
+        "motherSurname": "McAndrew",
+        "recordCountry": "United States",
+        "recordSubdivision": "Michigan",
+        "birthYearFrom": 1867,
+        "birthYearTo": 1902
+      },
+      "outcome": "partial",
+      "results_examined": 3,
+      "external_site": null,
+      "results_ref": "results/log_018.json",
+      "results_available": 3,
+      "notes": "Parents John Mogan + Mary McAndrew(s), Michigan 1867-1902. Hits are Michigan Death Certificates 1921-1952 (collection mismatch, not births) for Frank 1876, John Vincent 12 May 1879, Ed 31 Dec 1885; all name mother as Mary E McAndrews variants. Confirms family, no new child.",
+      "staged_ref": "results/.staging/f9939d1d-76e8-4232-9617-c91411684a5e.json"
+    },
+    {
+      "id": "log_019",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-12T21:14:25.273Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "John",
+        "fatherSurname": "Mogan",
+        "recordCountry": "United States",
+        "collectionId": "1459684"
+      },
+      "outcome": "negative",
+      "results_examined": 12,
+      "external_site": null,
+      "results_ref": "results/log_019.json",
+      "results_available": 12,
+      "notes": "Coll 1459684, father John Mogan, no child name. 12 hits, all other Migan/Magan/Mogen families (father only; no mother named). None matches known five. Needs-review none.",
+      "staged_ref": "results/.staging/e4074d8e-a347-4bad-bbfc-41b776e2c472.json"
+    },
+    {
+      "id": "log_020",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-12T21:14:25.279Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "John",
+        "fatherSurname": "Mogan",
+        "recordCountry": "United States",
+        "collectionId": "1923472"
+      },
+      "outcome": "positive",
+      "results_examined": 12,
+      "external_site": null,
+      "results_ref": "results/log_020.json",
+      "results_available": 12,
+      "notes": "Coll 1923472, father John Mogan. Notable: John V Mogan b. 12 May 1877 Detroit, father John Mogan (no mother indexed); day/month match John Vincent but year 1877 vs tree/death cert 1879: needs-review, possibly same person with year discrepancy. Others other families.",
+      "staged_ref": "results/.staging/a112b099-d4d6-4b88-bf2b-4ba1883ea504.json"
+    },
+    {
+      "id": "log_021",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-12T21:14:25.286Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "John",
+        "fatherSurname": "Mogan",
+        "recordCountry": "United States",
+        "collectionId": "1675348"
+      },
+      "outcome": "negative",
+      "results_examined": 9,
+      "external_site": null,
+      "results_ref": "results/log_021.json",
+      "results_available": 9,
+      "notes": "Coll 1675348, father John Mogan. 9 hits, other Migan/Magan/Mogen families; none match the five. Two timeout errors on Michigan-wide recordType=birth searches not retried.",
+      "staged_ref": "results/.staging/f6452918-a251-431f-82a7-7dcbfa2f31c6.json"
+    },
+    {
+      "id": "log_022",
+      "plan_item_id": "pli_007",
+      "performed": "2026-11-12T21:14:36.094Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "givenName": "John",
+        "spouseGivenName": "Mary",
+        "spouseSurname": "McAndrew",
+        "marriageYearFrom": 1868,
+        "marriageYearTo": 1878,
+        "marriagePlace": "Wayne, Michigan, United States"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_022.json",
+      "results_available": 1329,
+      "notes": "John Mogan + spouse Mary McAndrew, Wayne MI marriage 1868-1878. No marriage of the couple; pool is mostly military rosters. Only couple-linked hits are children's records (death certs, Ohio marriage of son Frank Mogan). Not a cross-check issue: no candidate for the marriage itself.",
+      "staged_ref": "results/.staging/c2413a42-8040-4149-9d81-e744c67594ae.json"
+    },
+    {
+      "id": "log_023",
+      "plan_item_id": "pli_007",
+      "performed": "2026-11-12T21:14:36.104Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mog?n",
+        "givenName": "John",
+        "spouseSurname": "McAndrew*",
+        "recordType": "marriage",
+        "marriageYearFrom": 1868,
+        "marriageYearTo": 1878,
+        "recordCountry": "United States"
+      },
+      "outcome": "negative",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_023.json",
+      "results_available": 1,
+      "notes": "Wildcard Mog?n / McAndrew*, recordType marriage, US, 1868-1878: only hit is the Ohio County Marriages entry for son Frank Mogan and Margaret Murray (names parents John Mogan and Mary E. McAndrews), not the parents' marriage.",
+      "staged_ref": "results/.staging/f993bd9b-d0bd-4f92-97f1-d0764c5a7bbf.json"
+    },
+    {
+      "id": "log_024",
+      "plan_item_id": "pli_007",
+      "performed": "2026-11-12T21:14:36.109Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "McAndrews",
+        "givenName": "Mary",
+        "spouseGivenName": "John",
+        "recordType": "marriage",
+        "marriageYearFrom": 1868,
+        "marriageYearTo": 1878,
+        "marriagePlace": "Michigan, United States"
+      },
+      "outcome": "negative",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_024.json",
+      "results_available": 242,
+      "notes": "Mary McAndrews + spouse John, Michigan marriage 1868-1878, collections Michigan Marriages 1868-1925, 1822-1995, County Marriages. Top hit is again son Frank's Ohio marriage (attachedToSubject true, score 0.40). Rest are Andrews/Andrus namesakes with surnameNotOnSubject, needs-review, not the subject. No Mogan-McAndrew marriage indexed. Michigan marriage collections may be incomplete for 1875; record may be unindexed or filed in New Brunswick/Maine/Canada or Catholic register.",
+      "staged_ref": "results/.staging/35893001-6f33-4fb0-997d-47b2e6704d48.json"
+    },
+    {
+      "id": "log_025",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-12T21:14:37.868Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "fatherGivenName": "John",
+        "fatherSurname": "Mogan",
+        "motherGivenName": "Mary",
+        "birthYearFrom": 1870,
+        "birthYearTo": 1895,
+        "birthPlace": "Michigan, United States",
+        "collectionId": "2787825"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Pinned to collection 2787825: zero results (an earlier identical attempt hit a transient fetch error and was retried). Browse-limited/unverified coverage; not evidence of absence. Surname variously indexed Mogan/Magan/Magin."
+    },
+    {
+      "id": "log_026",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-12T21:14:37.868Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "fatherGivenName": "John",
+        "fatherSurname": "Mogan",
+        "motherGivenName": "Mary",
+        "birthYearFrom": 1870,
+        "birthYearTo": 1895,
+        "birthPlace": "Michigan, United States"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_026.json",
+      "results_available": 11923,
+      "notes": "Unpinned retry, same names, Michigan 1870-1895. No church/baptism records. Hits: births, censuses, marriages, death certs for the known children (John V, Frank, Ed, Annie I, Edward L, Mary L). Rankings near zero because subject is the mother. Possible additional children not among the five: Martin Magin/Magan b 24 Sep 1887 Detroit (parents John and Mary Magan; needs-review, possible different family or additional child); 1910 household of Mary E Mogan lists Natie b 1889, Martin b 1882, John B b 1880, Edward b 1888.",
+      "staged_ref": "results/.staging/8922b260-5596-4ce6-91fd-4f6fa04ca822.json"
+    },
+    {
+      "id": "log_027",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-12T21:14:37.880Z",
+      "tool": "record_search",
+      "query": {
+        "fatherGivenName": "John",
+        "fatherSurname": "Mogan",
+        "motherGivenName": "Mary",
+        "recordCountry": "United States",
+        "recordSubdivision": "Michigan",
+        "birthYearFrom": 1870,
+        "birthYearTo": 1895
+      },
+      "outcome": "positive",
+      "results_examined": 12,
+      "external_site": null,
+      "results_ref": "results/log_027.json",
+      "results_available": 12,
+      "notes": "Michigan-wide parents John Mogan + Mary, 1870-1895, no collection pin. No baptism records; only births, 1900 census, death certificates.",
+      "staged_ref": "results/.staging/23666e23-3d58-44ec-b4f7-1ebd7e9b97fa.json"
+    },
+    {
+      "id": "log_028",
+      "plan_item_id": "pli_006",
+      "performed": "2026-11-12T21:14:37.886Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mo?an",
+        "fatherGivenName": "John",
+        "recordCountry": "United States",
+        "recordSubdivision": "Michigan",
+        "birthYearFrom": 1870,
+        "birthYearTo": 1895,
+        "recordType": "church"
+      },
+      "outcome": "positive",
+      "results_examined": 50,
+      "external_site": null,
+      "results_ref": "results/log_028.json",
+      "results_available": 6030,
+      "notes": "Surname Mo?an wildcard, father John, church type: 6030 hits, top 50 Moran civil births; noise.",
+      "staged_ref": "results/.staging/bea3a825-2011-49b1-8844-2ed5ce7bdc91.json"
+    },
+    {
+      "id": "log_029",
+      "plan_item_id": "pli_009",
+      "performed": "2026-11-12T21:17:32.875Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "collection": "Michigan Death Records 1867-1952 (60872), category-wide death search",
+        "surname": "Mogan",
+        "deathPlace": "Wayne, Michigan, United States"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/collections/60872?name=_Mogan&deathplace=Wayne%2C+Michigan%2C+United+States",
+        "capture_received": true,
+        "capture_filename": "ancestry-mi-deaths-mogan-wayneco.pdf"
+      },
+      "results_ref": null,
+      "results_available": 220269,
+      "notes": "Pre-provided capture (original capture URL: ancestry bmd_death category search name=_Mogan, Wayne MI; captured 9/7/26). Surname-only, page 1 of 11,014 (20 of 220,269 results, mixed collections). Index list only: birth/death dates are blurred, and NO parent names appear. Decedents listed: Ralph J Mogan; John Vincent Mogan (MI Death Records 1867-1952; likely the known son d. 1950, unconfirmed); George Mogan; Elizabeth Mitchell [Elizabeth Mogan]; John Mogan (MI Death Records 1897-1929); Katherine Appel [Katherine Mogan]; John Mogan; Ed Mogan (possibly Edward Lawrence d. 1934, unconfirmed); Mattie Mogan d. 22 Aug 1960 (Macomb index); William Mogan d. 16 Jul 1971; Howard Mogan (obit index); William T Mogan; Frank Mogan (possibly Thomas Frank? unconfirmed); Turner Mogan (obit index); Mildred Mary Mogan 1924-2005; William Timothy Mogan 1886 Ohio-1944; Edwin Martin Mogan 1922-1996; Linda May Mogan 1947-1990; Clara M Mogan 1889-1968 (b. Dearborn). No parents visible, so no child of John and Mary can be identified or excluded. Inconclusive, not a conclusive nil: must open individual records (John Vincent, Ed, Frank, William T, John, George, Ralph J, women) for parents and dates. Ancestry URL recorded is the equivalent collection-scoped search built by tool; Michigan death collections also on FamilySearch."
+    },
+    {
+      "id": "log_030",
+      "plan_item_id": "pli_012",
+      "performed": "2026-11-12T21:17:35.653Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "givenName": "John",
+        "surname": "Mogan",
+        "deathYear": 1905,
+        "deathPlace": "Detroit, Wayne, Michigan, United States",
+        "capturedPageUrl": "https://www.ancestry.com/search/categories/bmd_death?name=John_Mogan&event=_Wayne-Michigan&searchMode=advanced"
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/?name=John_Mogan&death=1905&deathplace=Detroit%2C+Wayne%2C+Michigan%2C+United+States",
+        "capture_received": true,
+        "capture_filename": "ancestry-mi-probate-mogan-john.pdf"
+      },
+      "results_ref": null,
+      "results_available": 27204,
+      "notes": "Capture was labelled as a probate file but is page 1 of a generic Ancestry Death, Burial, Cemetery and Obituaries search (John Mogan, Wayne MI; 27,204 results, 20 shown). It contains NO probate record, petition, heirs list or will, so no children could be extracted. Only relevant hit: Find a Grave Index entry John Mogan, b. 18 Jun 1840 Ireland, d. 3 May 1905 Detroit, Wayne, Michigan. Death date and place match the tree's John Mogan (d. 3 May 1905), a plausible lead but index/compiled only, no spouse or children shown. Other John Mogan/Migan hits are unrelated or have blurred details. Probate not searched: need Ancestry Michigan probate collection (Wayne County) search. Absence of heirs is not evidence; probate not yet examined."
+    },
+    {
+      "id": "log_031",
+      "plan_item_id": "pli_008",
+      "performed": "2026-11-12T21:17:53.562Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "fatherGivenName": "John",
+        "motherGivenName": "Mary",
+        "recordCountry": "United States",
+        "recordSubdivision": "Michigan",
+        "recordType": "death",
+        "deathYearFrom": 1870,
+        "deathYearTo": 1950
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Timed out after retries; transient, coverage unknown, not a nil."
+    },
+    {
+      "id": "log_032",
+      "plan_item_id": "pli_008",
+      "performed": "2026-11-12T21:17:53.563Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "fatherGivenName": "John",
+        "recordCountry": "United States",
+        "recordSubdivision": "Michigan",
+        "deathYearFrom": 1870,
+        "deathYearTo": 1950
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Timed out after retries; transient, coverage unknown, not a nil."
+    },
+    {
+      "id": "log_033",
+      "plan_item_id": "pli_002",
+      "performed": "2026-11-12T21:20:05.093Z",
+      "tool": "image_transcribe",
+      "query": {
+        "imageArk": "ark:/61903/3:1:S3HT-68D7-Y42"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Image read of 1900 census page (Sheet 2B, ED 81, Detroit Ward 8). Line 56: Mary E Magan (wife of John Magan), 'Mother of how many children: 6 / Number of these children living: 6.' Only 3 children appear in the household (Anna G, Edward L, Mary L). The five tree children account for only 5; the census column indicates a 6th child who was alive in 1900 but living elsewhere. This directly supports the hypothesis that at least one additional child of John and Mary Mogan is not in the tree."
+    },
+    {
+      "id": "log_034",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:21:03.068Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Martin +Magan",
+        "includeFacets": true
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_034.json",
+      "results_available": 40849,
+      "notes": "Unscoped (no place, year or record-type filter) ad-hoc search for Martin Magan, prompted by the Martin Magin 1887 Detroit birth lead. 40,849 hits, almost all non-Michigan (Irish deeds, Virginia court minutes, Scottish land records). Top 5 triaged: none is a Michigan family record for a Martin Magan. Ad-hoc, no plan item.",
+      "staged_ref": "results/.staging/a35611ae-ec0b-4332-9e48-bfbe8da8270e.json"
+    },
+    {
+      "id": "log_035",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:21:03.076Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Martin +Mogan",
+        "includeFacets": true
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_035.json",
+      "results_available": 11098,
+      "notes": "Unscoped ad-hoc search for Martin Mogan. 11,098 hits; top 5 are Tennessee land and probate, Alaska probate (Moggan), Irish land, New Jersey newspapers. None is a Detroit or Michigan record for a Martin Mogan. Negative for the top five only.",
+      "staged_ref": "results/.staging/3ff819a0-f18a-498f-82da-ae386fbaf379.json"
+    },
+    {
+      "id": "log_036",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:21:03.081Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mogan +McAndrew",
+        "includeFacets": true
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_036.json",
+      "results_available": 55,
+      "notes": "Unscoped ad-hoc co-occurrence search Mogan + McAndrew. 55 hits, top 5 are New Jersey and Atlantic City newspapers (Mogan and McAndrew names in unrelated sports and society columns). Not the family. Ad-hoc, no plan item.",
+      "staged_ref": "results/.staging/1afb6761-ea64-4602-a7b8-a3dcc24c5b87.json"
+    },
+    {
+      "id": "log_037",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:21:03.088Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Magan +McAndrew",
+        "includeFacets": true
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_037.json",
+      "results_available": 68,
+      "notes": "Unscoped ad-hoc co-occurrence search Magan + McAndrew. 68 hits; top 5 are New York newspapers and a Beaver County PA deed (McAndrew, Magan in unrelated context). None is a Michigan record of this family. Ad-hoc, no plan item.",
+      "staged_ref": "results/.staging/6305b4fb-2c70-4863-ba13-8fe3ce375b9d.json"
+    },
+    {
+      "id": "log_038",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:21:13.582Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Martin +Magan",
+        "place": "Michigan"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_038.json",
+      "results_available": 1050,
+      "notes": "Ad-hoc, Michigan place filter (collection metadata). 1,050 hits. Top 5 are Indiana biographies, a Michigan 1910 census page with Spanish-language names, Berrien County mortgages, a 1894 Michigan marriage index with Mary Magan and Simon Magan in Kent County. No Martin Magan of Detroit or a Mogan household. Negative for top five only.",
+      "staged_ref": "results/.staging/3fa7ac2a-b429-4883-ba48-a4fa03948ea3.json"
+    },
+    {
+      "id": "log_039",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:21:13.587Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Martin +Mogan",
+        "place": "Michigan"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_039.json",
+      "results_available": 114,
+      "notes": "Ad-hoc, Michigan place filter. 114 hits; top 5 are Michigan newspaper biographies where Mogan appears as a place or name in unrelated articles. No Detroit family record for a Martin Mogan. Negative for top five.",
+      "staged_ref": "results/.staging/531c8611-bf39-4c19-bdd8-4fbdfbf26323.json"
+    },
+    {
+      "id": "log_040",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:21:13.594Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mogan +McAndrew",
+        "place": "Michigan"
+      },
+      "outcome": "positive",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_040.json",
+      "results_available": 4,
+      "notes": "Ad-hoc, Michigan place filter. 4 hits total. Two are Wayne County, Michigan Probate Index 1896 entries naming Mary MOGAN and William McANDREW (both entries), and one is a Wayne County Probate Estate File 1897 naming Mary Mogan and William McAndrew (with Sarah C. Christian, Charles E. Christian). These are the only Michigan hits pairing Mogan with McAndrew. Possibly a probate involving Mary Mogan and a McAndrew (perhaps a brother of Mary E. McAndrew, unverified). Needs reading before any inference. Other hit is a Grand Rapids newspaper 1988, unrelated.",
+      "staged_ref": "results/.staging/f72375ac-2bcd-49c4-86fb-dcb41081c0f0.json"
+    },
+    {
+      "id": "log_041",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:21:13.602Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Magan +McAndrew",
+        "place": "Michigan"
+      },
+      "outcome": "negative",
+      "results_examined": 2,
+      "external_site": null,
+      "results_ref": "results/log_041.json",
+      "results_available": 2,
+      "notes": "Ad-hoc, Michigan place filter. Two hits, both Ann Arbor newspapers, unrelated (McAndrew and Magan as incidental names). Negative for this family.",
+      "staged_ref": "results/.staging/7efba7b2-6a01-4ff0-82ab-c4d7608580cc.json"
+    },
+    {
+      "id": "log_042",
+      "plan_item_id": "pli_008",
+      "performed": "2026-11-12T21:21:28.671Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "recordCountry": "United States",
+        "recordSubdivision": "Michigan",
+        "deathYearFrom": 1921,
+        "deathYearTo": 1952,
+        "collectionId": "1968532"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Timed out after retries; transient, not a nil."
+    },
+    {
+      "id": "log_043",
+      "plan_item_id": "pli_008",
+      "performed": "2026-11-12T21:21:28.671Z",
+      "tool": "record_search",
+      "query": {
+        "givenName": "Martin",
+        "surname": "Mogan",
+        "recordCountry": "United States",
+        "recordSubdivision": "Michigan",
+        "recordType": "death"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Timed out; transient, not a nil."
+    },
+    {
+      "id": "log_044",
+      "plan_item_id": "pli_008",
+      "performed": "2026-11-12T21:21:28.671Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "recordCountry": "United States",
+        "recordSubdivision": "Michigan",
+        "collectionId": "1452402"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Timed out; transient, not a nil."
+    },
+    {
+      "id": "log_045",
+      "plan_item_id": "pli_008",
+      "performed": "2026-11-12T21:21:28.671Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "recordCountry": "United States",
+        "recordSubdivision": "Michigan",
+        "recordType": "death",
+        "count": 20
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Retry of broad search also timed out; FamilySearch service appears unavailable."
+    },
+    {
+      "id": "log_046",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:21:34.170Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Martin +Magin"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_046.json",
+      "results_available": 41759,
+      "notes": "Ad-hoc, unscoped, spelling variant Magin from the 1887 Martin Magin birth lead. 41,759 hits. Top 5: Minnesota land (Martin Magin in Blue Earth County 1881, Germanic family), Irish deeds, New York newspaper, Chicago directories. None is a Detroit or Wayne County record. Negative for top five. Variant run filter-free per protocol.",
+      "staged_ref": "results/.staging/337102ec-5414-4566-acd0-f007a11acf6b.json"
+    },
+    {
+      "id": "log_047",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:21:34.176Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mogan +McAndrews",
+        "place": "Michigan"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_047.json",
+      "results_available": 1,
+      "notes": "Ad-hoc, Michigan place filter. One hit: Wayne County Probate Estate File 1896 naming Mary E. Mogan, William McAndrews, Sarah C. Christian, Charles E. Christian and Charles Mohan. Relevant family estate. Needs reading.",
+      "staged_ref": "results/.staging/01a7508c-d306-4840-b883-42c2ccdf31c2.json"
+    },
+    {
+      "id": "log_048",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:21:34.180Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Christian +McAndrew",
+        "place": "Michigan"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_048.json",
+      "results_available": 275,
+      "notes": "Ad-hoc, Michigan place filter, to find the other McAndrew heirs of Sarah C. Christian. 275 hits, top 5 Grand Rapids and Ann Arbor newspapers with Christian and McAndrew as common names. No Wayne County McAndrew family record in the top five. Negative for top five.",
+      "staged_ref": "results/.staging/61cd1723-440e-478e-99e5-e0f01cf50bec.json"
+    },
+    {
+      "id": "log_049",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:21:34.188Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mogan +Detroit +heirs",
+        "place": "Michigan"
+      },
+      "outcome": "partial",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_049.json",
+      "results_available": 45,
+      "notes": "Ad-hoc, Michigan place filter, probate heirs. 45 hits. Top 5: Wayne County Probate Estate Files 1923 and 1930 naming George F. Mogan, John L. Mogan, Sadie B. Mogan, Ralph J. Mogan, Florence E. Mogan. These are other Wayne County Mogan families; no Mary E. Mogan, no McAndrew, no Martin. Not linked to the subject on present reading, not examined in full.",
+      "staged_ref": "results/.staging/f442c5bb-caef-47c4-a139-8ea3f7a95806.json"
+    },
+    {
+      "id": "log_050",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:21:34.195Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mogan +Detroit +baptized"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_050.json",
+      "results_available": 13,
+      "notes": "Ad-hoc, unscoped, church-record vocabulary. 13 hits. Top 5 are Tennessee and Kentucky newspapers and biographies. No Detroit baptism of a Mogan child. Negative for top five; the FTS corpus holds little Detroit church register text.",
+      "staged_ref": "results/.staging/773f6e6c-ebde-448c-9854-88b04f467e53.json"
+    },
+    {
+      "id": "log_051",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:21:37.076Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "collectionId": "2215693",
+        "recordCountry": "United States"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Three searches (John Mogan; Mogan deaths 1905-1935 Michigan; Mogan surname only) all timed out at 25s. Transient failure, not a nil; coverage unknown."
+    },
+    {
+      "id": "log_052",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:22:02.351Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mogan +Natie"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_052.json",
+      "results_available": 17,
+      "notes": "Ad-hoc, unscoped. Tests the 1910 Detroit household name Natie (b. 1889) reported by an earlier index search (log_026 note). 17 hits; top 5 Alabama, Missouri, New Jersey, California. No Detroit or Michigan Natie Mogan. The 1910 household could not be confirmed in full-text; the 1910 census page is not text-searchable under this name. Negative for top five.",
+      "staged_ref": "results/.staging/08368f35-f18b-4f24-9b6c-ed9922753ddb.json"
+    },
+    {
+      "id": "log_053",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:22:02.356Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mogan +Detroit +Martin +Edward"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_053.json",
+      "results_available": 25,
+      "notes": "Ad-hoc, Michigan place filter. 25 hits; top 5 Ann Arbor and Jackson, Michigan newspapers with Mogan as a name in unrelated articles. No Detroit family record naming a Martin Mogan with Edward. Negative for top five.",
+      "staged_ref": "results/.staging/d7ece4c6-ca97-48c5-aa1b-abd69ec7a6c7.json"
+    },
+    {
+      "id": "log_054",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:24:49.416Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "givenName": "John",
+        "collectionId": "2215693",
+        "deathYearFrom": 1905,
+        "deathYearTo": 1905
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Timed out after 25s; transient error, not a nil."
+    },
+    {
+      "id": "log_055",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:24:49.416Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "collectionId": "2215693"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Timed out after 25s; transient error, not a nil. Coverage unknown."
+    },
+    {
+      "id": "log_056",
+      "plan_item_id": "pli_011",
+      "performed": "2026-11-12T21:38:01.364Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "106586381",
+        "standardPlace": "Wayne, Michigan, United States (County)",
+        "recordType": "Probate Records (Michigan, Wayne County, probate records, 1832-1967, FamilySearch catalog olib:3292257)",
+        "subject": "John Mogan d. 3 May 1905 Detroit; Mary E. Mogan d. 31 Mar 1925",
+        "imagesExamined": "106586381_00915, 00950, 00980, 01000, 01025, 01050, 01100, 01150; 106586382_00100; 106586383_00100; 106743162_00100, 00160, 00250, 00500; 106743163_00010, 00500; 106550392_00100; 106550420_00010, 00100; 106586381_00100, 00800"
+      },
+      "outcome": "partial",
+      "results_examined": 22,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "volume_search for Wayne County probate 1905-1930 (Probate group) returned no browse-only volume in results across two pages; all candidates were full-text or indexed (searchableOmitted). Wayne County probate case files were then located through catalog_search (olib:3292257, Michigan Wayne County probate records 1832-1967, Michigan State Archives digital capture, film notes by case-number range). Case numbers run roughly 34,4xx for 1905 filings (case 34438 at image 106586381_00915, a 1905 estate; case 34443 at 106586381_01025-01110; case 34445 at 106586381_01150; case 34454 filed 1 June 1905 at 106586382_00100). Case 35520 is April 1906, so the 1906 films (106743162/163) were read in error for 1905. Not yet browsed: the case jackets between images 106586381_00915 and 01150 (cases ~34439-34442 and 34444) page by page, and film 106586382 beyond image 100. No page read so far names John Mogan or Mary E. Mogan. Not browsed: 1925-1930 Mary E. Mogan estate (case numbers for 1925 not yet located). Also not checked: whether John Mogan's estate was probated at all (a widow may have taken without administration). Negative for the sampled pages only; not an exhaustive negative."
+    },
+    {
+      "id": "log_057",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:40:29.053Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mogan +Detroit +survived",
+        "includeFacets": true
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_057.json",
+      "results_available": 285,
+      "notes": "Unscoped FTS, facets requested to obtain real partition IDs (Michigan Biographies M9J1-W3Y, Michigan Legal M9J1-SZ7 noted). 285 hits, 5 examined. Top hits are Westbrook, Maine 1912 history and Nashville 1931-1934 newspapers that mention Mogan and Detroit in passing; none is a Detroit obituary of a Mogan family member. Doubtful; not extracted.",
+      "staged_ref": "results/.staging/3e0c1c1a-92ec-478e-aa51-6c8a1caf592a.json"
+    },
+    {
+      "id": "log_058",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:40:29.059Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mogan +Detroit",
+        "place": "Michigan",
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_058.json",
+      "results_available": 433,
+      "notes": "Place filter Michigan (collection metadata). 433 hits, 20 examined. Mostly Ann Arbor 1933-1950 Michigan Biographies newspapers and Wayne County probate estate files 1923-1930 (George F. Mogan, John L. Mogan, Sadie B. Mogan, Ralph J. Mogan, Florence Mogan) in the Michigan Legal collection. Probate file names noted for later review, none is an obituary of John or Mary Mogan. Not extracted.",
+      "staged_ref": "results/.staging/c99c3852-e610-4c2f-b19a-655744446764.json"
+    },
+    {
+      "id": "log_059",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:40:29.068Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"John Mogan\" +Detroit",
+        "yearFrom": 1905,
+        "yearTo": 1905
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Filtered nil: year 1905 with exact phrase John Mogan and Detroit. Retried filter-free in the same turn (see next entry)."
+    },
+    {
+      "id": "log_060",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:40:29.068Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"John Mogan\" +Detroit"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_060.json",
+      "results_available": 112,
+      "notes": "Filter-free retry of the 1905 nil. 112 hits, 5 examined. Hits are Nashville, Tennessee newspapers (John Mogan Sr./Jr., 1895-1928) and a 1944 Pearl Harbor muster roll; none is a Detroit obituary for John Mogan d. 3 May 1905. Not extracted.",
+      "staged_ref": "results/.staging/9aba5d13-aff2-4cd2-ac62-dd94e40ab89d.json"
+    },
+    {
+      "id": "log_061",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:40:29.075Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Mary Mogan\" +Detroit",
+        "yearFrom": 1925,
+        "yearTo": 1925
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "results_available": 0,
+      "notes": "Filtered nil: year 1925 with exact phrase Mary Mogan and Detroit. Retried filter-free in the same turn (see next entry)."
+    },
+    {
+      "id": "log_062",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:40:29.075Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Mary Mogan\" +Detroit"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_062.json",
+      "results_available": 19,
+      "notes": "Filter-free retry of the 1925 nil. 19 hits, 5 examined. Hits: Ohio marriage 1940 (Mary L. Mogan), Tennessee and Pennsylvania newspapers, Escanaba Michigan probate 1888 (Mary Mogan, not Detroit). None is a Detroit obituary for Mary E. Mogan d. 31 Mar 1925. Not extracted.",
+      "staged_ref": "results/.staging/27f46491-cf4c-4805-a353-4b4f18775e60.json"
+    },
+    {
+      "id": "log_063",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:40:29.082Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mogan +Detroit +obituary +survived"
+      },
+      "outcome": "negative",
+      "results_examined": 5,
+      "external_site": null,
+      "results_ref": "results/log_063.json",
+      "results_available": 13,
+      "notes": "Obituary-boilerplate query. 13 hits, 5 examined. Pennsylvania and Tennessee newspapers and a 1905 Nashville column with OBITUARY heading; no Detroit Mogan obituary. Not extracted.",
+      "staged_ref": "results/.staging/f538f663-1d03-4d1e-a596-a6de755bb70c.json"
+    },
+    {
+      "id": "log_064",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:40:29.089Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mogan +Detroit +\"Frank Mogan\" OR +\"Edward Mogan\""
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Malformed query: OR is not a Boolean operator in this search, and the + on the second phrase made the expression mixed. Returned nil. Not a valid negative. Do not rely on it; the + terms alone were tested in the next query design."
+    },
+    {
+      "id": "log_065",
+      "plan_item_id": "pli_008",
+      "performed": "2026-11-12T21:40:39.405Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "givenName": "Thomas",
+        "deathYearFrom": 1924,
+        "deathYearTo": 1924,
+        "collectionId": "1968532",
+        "recordCountry": "United States"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Two attempts (with and without recordSubdivision Michigan) timed out after 25s. Transient failure, not a nil; coverage unknown. Frank and Mary searches not run."
+    },
+    {
+      "id": "log_066",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:40:45.724Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mogan +Detroit",
+        "collectionId": "M9J1-W3Y",
+        "count": 20
+      },
+      "outcome": "negative",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_066.json",
+      "results_available": 194,
+      "notes": "Scoped to Michigan Biographies (M9J1-W3Y, a facet-derived partition from the earlier includeFacets call). 194 hits, 20 examined. All are Ann Arbor and Jackson newspapers 1929-2002 with James E. Mogan or a bare Mogan in passing; none is a Detroit obituary of John, Mary or the children. The Michigan Obituaries collection 2215693 does not appear among these partitions.",
+      "staged_ref": "results/.staging/dfc5a959-293e-4f69-80a9-1a34954bd47e.json"
+    },
+    {
+      "id": "log_067",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:40:45.736Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+Mogan +Detroit +John",
+        "collectionId": "M9J1-SZ7",
+        "count": 20
+      },
+      "outcome": "partial",
+      "results_examined": 20,
+      "external_site": null,
+      "results_ref": "results/log_067.json",
+      "results_available": 49,
+      "notes": "Scoped to Michigan Legal (M9J1-SZ7, facet-derived). 49 hits, 20 examined. All are Wayne County probate estate files 1923-1936 (George F. Mogan, John L. Mogan, Sadie B. Mogan, Ralph J. Mogan, James E. Mogan, John G. Mogan, Florence E. Mogan). These are other Mogan families or unrelated decedents; no John or Mary E. Mogan of our family is named. Not extracted. Probate-file collection is the Michigan Legal partition, not the obituary collection.",
+      "staged_ref": "results/.staging/37a75760-2729-4940-9a56-880c8709d23a.json"
+    },
+    {
+      "id": "log_068",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:40:45.746Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Martin Mogan\" +Detroit",
+        "count": 10
+      },
+      "outcome": "negative",
+      "results_examined": 4,
+      "external_site": null,
+      "results_ref": "results/log_068.json",
+      "results_available": 4,
+      "notes": "Search for Martin Mogan with Detroit, no filters. 4 hits. One is a 1937 Atlantic City, NJ sports column listing Martin Mogan (not our family); others are Tennessee and Detroit-place noise. No Detroit obituary naming Martin Mogan as a child of John and Mary.",
+      "staged_ref": "results/.staging/5273e6bb-dfa6-49ff-9bed-2a22ed64e62e.json"
+    },
+    {
+      "id": "log_069",
+      "plan_item_id": "pli_010",
+      "performed": "2026-11-12T21:40:45.752Z",
+      "tool": "fulltext_search",
+      "query": {
+        "keywords": "+\"Mary E. Mogan\" +Michigan",
+        "count": 10
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_069.json",
+      "results_available": 1,
+      "notes": "Search for Mary E. Mogan with Michigan, no filters. 1 hit: Wayne County probate estate file dated 1896 naming Mary E. Mogan, William McAndrews, Charles Mohan, Sarah C. Christian, Charles E. Christian, Edgar A. Durfee (Detroit). Possibly relevant to the McAndrew family (William McAndrews is a possible brother of Mary McAndrew). Doubtful until the page is read. Not an obituary; relevance to the children question unclear.",
+      "staged_ref": "results/.staging/468b3525-f527-4079-89d1-42950d08bbdb.json"
+    },
+    {
+      "id": "log_070",
+      "plan_item_id": "pli_011",
+      "performed": "2026-11-12T21:41:36.842Z",
+      "tool": "image_search",
+      "query": {
+        "imageGroupNumber": "106586381",
+        "continuedFrom": "log_056",
+        "continuation": "case first pages, cases 34439-34444, May-June 1905; then start of 106586382",
+        "imagesExamined": "106586381_00925, 00935, 00945, 00950 (Suminick text), 00960, 00970, 00990, 01000, 01005, 01012, 01025, 01040, 01050, 01070, 01090, 01100, 01120, 01135, 01150; 106586382_00002, 00030 (plus 106586382_00100 from log_056)"
+      },
+      "outcome": "partial",
+      "results_examined": 22,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Film 106586381 reached its per-film image cap (20 distinct images) during this continuation, so the browse is unfinished. Cases identified by first page: 34438 Shaening (about image 915-935); 34439 Suminick, final account 1907 (about 950); 34440 Sarah McCullagh will, filed 18 Apr 1905 (990); 34442 Adam Clark Mott, died 28 Mar 1905, petition with heirs (about 1000-1012); 34443 Veronica Krzywdzinski (1025-1110); 34444 John H. Crook (1120); 34445 Joseph A. Abbott (1150). Not identified: the first page of case 34441 (between 990 and 1005) and the start of case 34444 (between 1110 and 1120). No page read names John Mogan or Magan as decedent. Film 106586382 starts with cases after 34451 (Ida B. Stacker at image 2; Adeline McQuillen at image 30; Mary Savage 34454 filed 1 June 1905 at image 100); no Mogan. Unfinished: case 34441 and 34444 starts, and any remaining pages in 106586381 and 106586382 (cap applies to 106586381 for this project; 106586382 has its own cap, not reached). Link for hand completion: https://www.familysearch.org/search/film/106586381?i=914"
+    },
+    {
+      "id": "log_071",
+      "plan_item_id": "pli_005",
+      "performed": "2026-11-12T21:43:05.546Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Magan",
+        "givenName": "Martin",
+        "birthYearFrom": 1886,
+        "birthYearTo": 1888,
+        "birthPlace": "Michigan, United States",
+        "collectionId": "1923472"
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Two attempts timed out at 25s (transient network error, not a nil). Coverage unknown. Mogan/Magin variants and the 1910 census search not run."
+    },
+    {
+      "id": "log_072",
+      "plan_item_id": "pli_013",
+      "performed": "2026-11-12T21:44:33.289Z",
+      "tool": "external_site",
+      "query": {
+        "site": "findagrave",
+        "surname": "Mogan",
+        "place": "Detroit, Wayne, Michigan",
+        "targets": "John d. 3 May 1905; Mary E. d. 31 Mar 1925; infants; Mt. Elliot / Elmwood lots"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "findagrave",
+        "url_generated": "https://www.findagrave.com/memorial/search?lastname=Mogan",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "Deferred - requires a user capture, which cannot happen while the run is working. URL recorded for later capture. Surname-only search chosen because Find a Grave has no place parameter; filter by Detroit, Mt. Elliot, Elmwood on results page. Not a negative finding."
+    },
+    {
+      "id": "log_073",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:44:33.289Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "givenName": "Mary",
+        "surname": "Mogan",
+        "birthYear": 1848,
+        "residenceYear": 1910,
+        "residencePlace": "Detroit, Wayne, Michigan"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/?name=Mary_Mogan&birth=1848&residence=1910_Detroit%2C+Wayne%2C+Michigan%2C+United+States",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "Deferred - requires a user capture, which cannot happen while the run is working. URL recorded for later capture. 1910 census; FamilySearch plan item pli_003 covers the same census. Not a negative finding."
+    },
+    {
+      "id": "log_074",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:44:33.289Z",
+      "tool": "external_site",
+      "query": {
+        "site": "ancestry",
+        "givenName": "Mary",
+        "surname": "Mogan",
+        "birthYear": 1848,
+        "residenceYear": 1920,
+        "residencePlace": "Detroit, Wayne, Michigan"
+      },
+      "outcome": "negative",
+      "results_examined": 0,
+      "external_site": {
+        "site": "ancestry",
+        "url_generated": "https://www.ancestry.com/search/?name=Mary_Mogan&birth=1848&residence=1920_Detroit%2C+Wayne%2C+Michigan%2C+United+States",
+        "capture_received": false,
+        "capture_filename": null
+      },
+      "results_ref": null,
+      "notes": "Deferred - requires a user capture, which cannot happen while the run is working. URL recorded for later capture. 1920 census; FamilySearch plan item pli_003 covers the same census. Not a negative finding."
+    },
+    {
+      "id": "log_075",
+      "plan_item_id": "pli_003",
+      "performed": "2026-11-12T21:45:33.146Z",
+      "tool": "record_search",
+      "query": {
+        "surname": "Mogan",
+        "givenName": "Thomas",
+        "residencePlace": "Detroit, Wayne, Michigan, United States",
+        "residenceYearFrom": 1910,
+        "residenceYearTo": 1910
+      },
+      "outcome": "error",
+      "results_examined": 0,
+      "external_site": null,
+      "results_ref": null,
+      "notes": "Three attempts (Detroit+census type, Detroit, Michigan-wide) all timed out at 25s. Transient failure, not a nil; coverage unknown. Searches 2 and 3 not attempted."
+    },
+    {
+      "id": "log_076",
+      "plan_item_id": null,
+      "performed": "2026-11-12T21:50:17.150Z",
+      "tool": "image_transcribe",
+      "query": {
+        "ark": "ark:/61903/3:1:S3HT-68D7-Y42",
+        "lookingFor": "children born, children living, mother of how many children"
+      },
+      "outcome": "positive",
+      "results_examined": 1,
+      "external_site": null,
+      "results_ref": "results/log_076.json",
+      "staged_ref": "results/.staging/96191593-25e4-4569-81d7-6e2c1a246d5d.json"
+    }
+  ],
+  "sources": [
+    {
+      "id": "src_001",
+      "citation": "\"United States, Census, 1900\", <i>FamilySearch</i> (https://www.familysearch.org/ark:/61903/1:1:M91M-LKB : Fri Oct 17 05:10:47 UTC 2025), Entry for John Magan and Mary E Magan, 1900.",
+      "citation_detail": {
+        "who": "the enumerated household",
+        "what": "Household of John Magan, \"United States, Census, 1900\"",
+        "when_created": "1900",
+        "when_accessed": "2026-11-12",
+        "where": "United States, Census, 1900",
+        "where_within": "ark:/61903/1:1:M91M-LK1"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-12",
+      "log_entry_id": "log_017",
+      "url": "https://www.familysearch.org/ark:/61903/1:2:1YSF-6CB",
+      "image_ark": "ark:/61903/3:1:S3HT-68D7-Y42",
+      "gedcomx_source_description_id": "S1",
+      "transcription": "### **TWELFTH CENSUS OF THE UNITED STATES.**\n**SCHEDULE No. 1.\u2014POPULATION.**\n\n- **State:** Michigan\n- **County:** Detroit [Wayne]\n- **Township or other division of county:** Detroit City\n- **Name of incorporated city, town, or village, within the above-named division:** Detroit City\n- **Ward of city:** 8\n- **Supervisor's District No.:** 1st\n- **Enumeration District No.:** 81\n- **Sheet No.:** 2 B\n- **Enumerated by me on the 4 day of June, 1900,** John R. Wilson, Enumerator.\n\n---\n\n| Line | Street | House No. | Dwelling No. | Family No. | Name | Relation | Color/Race | Sex | Month of Birth | Year of Birth | Age | Single, Married, Widowed, Divorced | Years Married | Mother of how many children | Number of these children living | Place of Birth | Place of Birth of Father | Place of Birth of Mother | Year of Immigration | Years in US | Naturalization | Occupation | Months Not Employed | Attended School (Months) | Can Read | Can Write | Can Speak English | Home Owned or Rented | Owned Free or Mortgaged | Farm or House |\n|:---:|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|:---|\n| 51 | | | | | ----- Patrick | Brother | W | M | Mar | 1872 | 28 | S | | | | Ireland | Ireland | Ireland | 1878 | 21 | Na | Laborer in Foundry | 6 | | Yes | Yes | Yes | | | |\n| 52 | | | | | ----- Margaret | Mother | W | F | Mar | 1835 | 65 | M | 45 | 10 | 4 | Ireland | Ireland | Ireland | 1878 | 21 | | | | | Yes | Yes | Yes | | | |\n| 53 | | 301 | 31 | 34 | Pinder Charles | Head | W | M | Feb | 1867 | 33 | M | 26 | | | New York | England | Virginia | | | | House Painter | 9 | | Yes | Yes | Yes | | | |\n| 54 | | | | | ----- Elizabeth | Wife | W | F | Oct | 1849 | 50 | M | 26 | 0 | 0 | New Brunswick | New Brunswick | New Brunswick | 1887 | 26 | | | | | Yes | Yes | Yes | | | |\n| 55 | 15th East | 394 | 31 | 35 | Magan John | Head | W | M | Mar | 1840 | 60 | M | 25 | | | Ireland | Ireland | Ireland | 1855 | 45 | na | Engineer Marine | | | Yes | Yes | Yes | O | F | H |\n| 56 | | | | | ----- Mary E | Wife | W | F | July | 1853 | 46 | M | 25 | 6 | 6 | Maine | Ireland | Ireland | | | | | | | Yes | Yes | Yes | | | |\n| 57 | | | | | ----- Anna G | Daughter | W | F | Nov | 1883 | 16 | S | | | | Michigan | Ireland | Maine | | | | at School | | 9 | Yes | Yes | Yes | | | |\n| 58 | | | | | ----- Edward L | Son | W | M | Jan | 1886 | 14 | S | | | | Michigan | Ireland | Maine | | | | at School | | 9 | Yes | Yes | Yes | | | |\n| 59 | | | | | ----- Mary L | Daughter | W | F | Aug | 1888 | 11 | S | | | | Michigan | Ireland | Maine | | | | at School | | 9 | Yes | Yes | Yes | | | |\n| 60 | | 390 | 32 | 36 | Haltis Ellen | Head | W | F | Sept | 1830 | 69 | Wd | | 11 | 6 | France | Germany | Germany | 1854 | 46 | | | | | Yes | Yes | Yes | O | F | H |\n| 61 | | 386 | 33 | 5 | ----- Tory | Son | W | M | Mar | 1868 | 32 | S | | | | New York | France | France | | | | Music Teacher | 0 | | Yes | Yes | Yes | | | |\n| 62 | | 386 | 33 | 37 | Leach Darwin | Head | W | M | Aug | 1871 | 28 | M | 1 | | | Michigan | Michigan | Michigan | | | | Tele Lineman | 2 | | Yes | Yes | Yes | R | | H |\n| 63 | | | | | ----- Nora | Wife | W | F | Sept | 1874 | 25 | M | 1 | 0 | 0 | Michigan | Scotland | Michigan | | | | | | | Yes | Yes | Yes | | | |\n| 64 | | 386 | 33 | 36 | Carly James | Head | W | M | May | 1868 | 32 | M | 1 | | | Canada Eng | Ireland | New York | 1868 | 32 | Na | Steamfitter | 4 | | Yes | Yes | Yes | R | | H |\n| 65 | | | | | ----- Mary | Wife | W | F | Mar | 1877 | 22 | M | 1 | 0 | 0 | Ohio | England | Ohio | | | | | | | Yes | Yes | Yes | | | |\n| 66 | Highland | 548 | 34 | 37 | Law Daniel A | Head | W | M | Dec | 1863 | 36 | M | 12 | | | Michigan | Scotland | Scotland | | | | City Fireman | 0 | | Yes | Yes | Yes | R | | H |\n| 67 | | | | | ----- Jemima | Wife | W | F | Sept | 1864 | 35 | M | 12 | 2 | 2 | Michigan | Ireland | Scotland | | | | | | | Yes | Yes | Yes | | | |\n| 68 | | | | | ----- Allan D | Son | W | M | Sept | 1891 | 8 | S | | | | Michigan | Michigan | Michigan | | | | at School | | 9 | Yes | Yes | Yes | | | |\n| 69 | | | | | ----- Raymond | Son | W | M | Sept | 1893 | 6 | S | | | | Michigan | Michigan | Michigan | | | | at School | | 9 | Yes | Yes | Yes | | | |\n| 70 | | 377 | 35 | 38 | Ehlke Julius | Head | W | M | Jan | 1850 | 50 | M | 26 | | | Germany | Germany | Germany | 1854 | 46 | na | Engineer Stationary | 0 | | Yes | Yes | Yes | O | F | H |\n| 71 | | | | | ----- Caroline | Wife | W | F | May | 1852 | 48 | M | 26 | 4 | 4 | Michigan | Germany | Germany | | | | | | | Yes | Yes | Yes | | | |\n| 72 | | | | | ----- Julius Jr | Son | W | M | Aug | 1874 | 25 | S | | | | Michigan | Germany | Michigan | | | | Tailor | 2 | | Yes | Yes | Yes | | | |\n| 73 | | | | | ----- George | Son | W | M | July | 1878 | 21 | S | | | | Michigan | Germany | Michigan | | | | Clerk | 0 | | Yes | Yes | Yes | | | |\n| 74 | | | | | ----- Laura | Daughter | W | F | Sept | 1882 | 17 | S | | | | Michigan | Germany | Michigan | | | | | | | Yes | Yes | Yes | | | |\n| 75 | | 379 | 36 | 39 | Wiffler Charlie | Head | W | M | June | 1872 | 27 | M | 2 | | | Michigan | Germany | Michigan | | | | Patternmaker | 0 | | Yes | Yes | Yes | R | | H |\n| 76 | | | | | ----- Lena | Wife | W | F | Sept | 1876 | 23 | M | 2 | 0 | 0 | Michigan | Germany | Michigan | | | | | | | Yes | Yes | Yes | | | |\n| 77 | | 379 | 37 | 40 | Roeder Wm | Head | W | M | May | 1867 | 33 | M | 5 | | | Michigan | Germany | Germany | | | | Salesman | 0 | | Yes | Yes | Yes | R | | H |\n| 78 | | | | | ----- Minnie | Wife | W | F | Jan | 1864 | 36 | M | 5 | 1 | 1 | Michigan | Germany | Germany | | | | | | | Yes | Yes | Yes | | | |\n| 79 | | | | | ----- Catherine | Daughter | W | F | Sept | 1896 | 3 | S | | | | Michigan | Michigan | Michigan | | | | | | | | | | | | |\n| 80 | | 385 | 38 | 41 | Gutekunst John | Head | W | M | July | 1827 | 72 | M | 46 | | | Germany | Germany | Germany | 1852 | 48 | na | Shoemaker | 0 | | Yes | Yes | Yes | R | | H |\n| 81 | | | | | ----- Veronica | Wife | W | F | Mar | 1831 | 69 | M | 46 | 10 | 3 | Germany | Germany | Germany | 1853 | 47 | | | | | Yes | Yes | Yes | | | |\n| 82 | | | | | ----- Christian | Son | W | M | Sept | 1851 | 48 | S | | | | Germany | Germany | Germany | 1852 | 48 | na | Labour | 4 | | Yes | Yes | Yes | | | |\n| 83 | | 387 | 39 | 42 | Mandy Jacob H | Head | W | M | April | 1851 | 49 | M | 28 | | | Canada Eng | England | England | 1876 | 24 | Pa | House Carpenter | 0 | | Yes | Yes | Yes | R | | H |\n| 84 | | | | | ----- Mary E | Wife | W | F | June | 1860 | 39 | M | 28 | 0 | 0 | Canada Eng | Canada Eng | Canada Eng | 1876 | 24 | | | | | Yes | Yes | Yes | | | |\n| 85 | | | | | Eastlake Bertha | Niece | W | F | June | 1888 | 11 | S | | | | Canada Eng | Canada Eng | Canada Eng | 1893 | 7 | | at school | | 8 | Yes | Yes | Yes | | | |\n| 86 | [Rear] | 387 | 40 | 43 | Wheeler Herbert | Head | W | M | Dec | 1869 | 30 | M | 7 | | | Connecticut | Connecticut | Ireland | | | | RR Conductor | 5 | | Yes | Yes | Yes | R | | H |\n| 87 | | | | | ----- Sarah | Wife | W | F | July | 1865 | 34 | M | 7 | 3 | 2 | Ireland | Ireland | Ireland | 1893 | 7 | | | | | Yes | Yes | Yes | | | |\n| 88 | 12th St. West | | | | ----- Anson B. | Son | W | M | June | 1896 | 3 | S | | | | Michigan | Connecticut | Ireland | | | | | | | | | | | | |\n| 89 | | | | | ----- Pearl M | Daughter | W | F | Sept | 1899 | 8/12 | S | | | | Michigan | Connecticut | Ireland | | | | | | | | | | | | |\n| 90 | | 389 | 41 | 44 | Downing William | Head | W | M | June | 1838 | 61 | M | 33 | | | England | England | England | 1872 | 28 | Na | House Carpenter | 1 | | Yes | Yes | Yes | R | | H |\n| 91 | | | | | ----- Emma | Wife | W | F | June | 1845 | 52 | M | 33 | 6 | 5 | England | England | England | 1872 | 28 | | | | | Yes | Yes | Yes | | | |\n| 92 | | | | | ----- William T | Son | W | M | July | 1872 | 27 | S | | | | Canada Eng | England | England | 1872 | 28 | na | Printer | 0 | | Yes | Yes | Yes | | | |\n| 93 | | | | | ----- Herbert H | Son | W | M | Nov | 1874 | 25 | S | | | | Michigan | England | England | | | | Teamster | 0 | | Yes | Yes | Yes | | | |\n| 94 | | | | | ----- Emily | Daughter | W | F | Aug | 1877 | 22 | S | | | | Michigan | England | England | | | | Saleswoman | 2 | | Yes | Yes | Yes | | | |\n| 95 | [Rear] | 389 | 42 | 45 | Loomis Marg D | Head | W | F | Feb | 1858 | 42 | Wd | | 6 | 1 | Maine | Ireland | Ireland | | | | | | | Yes | Yes | Yes | R | | H |\n| 96 | | | | | ----- Edwin | Son | W | M | Nov | 1889 | 10 | S | | | | Michigan | Connecticut | Maine | | | | at School | | 7 | Yes | Yes | Yes | | | |\n| 97 | | 391 | 43 | 46 | Webster Guy | Head | W | M | Feb | 1853 | 47 | M | 7 | | | Vermont | Vermont | Vermont | | | | Horse Dealer | 0 | | Yes | Yes | Yes | R | | H |\n| 98 | | | | | ----- Rosana | Wife | W | F | Feb | 1877 | 23 | M | 7 | 3 | 2 | Canada Eng | Canada Eng | Canada Eng | 1887 | 13 | | | | | Yes | Yes | Yes | | | |\n| 99 | | | | | ----- John | Son | W | M | July | 1894 | 5 | S | | | | Michigan | Vermont | Canada Eng | | | | | | | | | | | | |\n| 100 | | | | | ----- Arthur | Son | W | M | June | 1896 | 3 | S | | | | Michigan | Vermont | Canada Eng | | | | | | | | | | | | |",
+      "image_filename": "images/ark_61903_3_1_S3HT-68D7-Y42.jpg"
+    },
+    {
+      "id": "src_002",
+      "citation": "Wayne, Michigan, United States Probate Estate File 1896, ark:/61903/3:1:3QS7-89SY-KH28 (https://www.familysearch.org/ark:/61903/3:1:3QS7-89SY-KH28 : accessed 2026-11-12).",
+      "citation_detail": {
+        "who": "the record's parties",
+        "what": "Wayne, Michigan, United States Probate Estate File 1896",
+        "when_created": "unknown",
+        "when_accessed": "2026-11-12",
+        "where": "FamilySearch",
+        "where_within": "ark:/61903/3:1:3QS7-89SY-KH28"
+      },
+      "source_classification": "derivative",
+      "repository": "FamilySearch",
+      "access_date": "2026-11-12",
+      "log_entry_id": "log_069",
+      "notes": "read from FamilySearch's full-text machine transcription of the page image. Full-text search hit transcription. Printed form (James H. Stone & Co., Printers). Garbled readings noted per person.",
+      "url": "https://www.familysearch.org/ark:/61903/3:1:3QS7-89SY-KH28",
+      "transcription": "PETITION FOR APPOINTME . ENT OF ADMINISTRATOR . James 11 . Stone & Co., Printers, 11 Rowland Street, TO THE HON . Edgar A. Durfee Judge of Probate for the County of Wayne, in the State of Michigan : The Petition of Charles E. Christian who is the age of twenty - one years and upwards, of the County of Wayne respectfully shows : That Sarah C. Christian departed this life on the Ninth day of November in the year of our Lord one thousand eight hundred and ninety - six leaving no and Testament, as your petitioner is informed and verily believes . last Will Petroit That said deceased was, at the time of her death an inhabitant of the city of in said County of Wayne, that she was possessed of real and personal estate, situate and being in the County of Wayne, to be administered, and that the estimated value thereof is the sum of three thousand Dollars, or thereabout, of which three hundred Dollars is personal estate, as your petitioner is informed and verily believes . And your petitioner further shows that the names and residences of the heirs at law of said deceased, and other persons interested in her estate, are as follows : Charles E. Christian, husband of said deceased, your petition Mrs Mary E. Mogan, of full age, sister William McAndrews, aged fifteen years, replew all residents of the City of Detroit Michigan Your petitioner therefore prays to himself that administration of said estate may be granted or some other suitable person, and that such other and further order and proceedings may be had in the premises, as may be required by the statutes in such case made and provided . Dated November A.D. 1896 Charles Mohan ",
+      "gedcomx_source_description_id": "S2"
+    }
+  ],
+  "assertions": [
+    {
+      "id": "a_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "name",
+      "value": "John Magan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "John",
+        "surname": "Magan"
+      },
+      "record_persona_id": "p_47809498",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_002",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809498",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_003",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "age",
+      "value": "60",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809498",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_004",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809498",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_005",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809498",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_006",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "census",
+      "value": "1900",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1900",
+      "place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States",
+      "record_persona_id": "p_47809498",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB",
+      "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+    },
+    {
+      "id": "a_007",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "immigration",
+      "value": "1845",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1845",
+      "record_persona_id": "p_47809498",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_008",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Mar 1840",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Mar 1840",
+      "place": "Ireland",
+      "record_persona_id": "p_47809498",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB",
+      "standard_place": "Ireland"
+    },
+    {
+      "id": "a_009",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "name",
+      "value": "Mary E Magan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Mary E",
+        "surname": "Magan"
+      },
+      "record_persona_id": "p_47809499",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_010",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809499",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_011",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "age",
+      "value": "47",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809499",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_012",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "marital_status",
+      "value": "Married",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809499",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_013",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809499",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_014",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Jul 1853",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Jul 1853",
+      "place": "Maine",
+      "record_persona_id": "p_47809499",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB",
+      "standard_place": "Maine, United States"
+    },
+    {
+      "id": "a_015",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "census",
+      "value": "1900",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1900",
+      "place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States",
+      "record_persona_id": "p_47809499",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB",
+      "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+    },
+    {
+      "id": "a_016",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Annie I Magan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Annie I",
+        "surname": "Magan"
+      },
+      "record_persona_id": "p_47809500",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_017",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809500",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_018",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_1",
+      "fact_type": "age",
+      "value": "17",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809500",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_019",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_1",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809500",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_020",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_1",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809500",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_021",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Nov 1883",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Nov 1883",
+      "place": "Michigan",
+      "record_persona_id": "p_47809500",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB",
+      "standard_place": "Michigan, United States"
+    },
+    {
+      "id": "a_022",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_1",
+      "fact_type": "census",
+      "value": "1900",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1900",
+      "place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States",
+      "record_persona_id": "p_47809500",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB",
+      "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+    },
+    {
+      "id": "a_023",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_2",
+      "fact_type": "name",
+      "value": "Edward L Magan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Edward L",
+        "surname": "Magan"
+      },
+      "record_persona_id": "p_47809501",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_024",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_2",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809501",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_025",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_2",
+      "fact_type": "age",
+      "value": "14",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809501",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_026",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_2",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809501",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_027",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_2",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47809501",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_028",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "Jan 1886",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Jan 1886",
+      "place": "Michigan",
+      "record_persona_id": "p_47809501",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB",
+      "standard_place": "Michigan, United States"
+    },
+    {
+      "id": "a_029",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_2",
+      "fact_type": "census",
+      "value": "1900",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1900",
+      "place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States",
+      "record_persona_id": "p_47809501",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB",
+      "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+    },
+    {
+      "id": "a_030",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_3",
+      "fact_type": "name",
+      "value": "Mary L Magan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Mary L",
+        "surname": "Magan"
+      },
+      "record_persona_id": "p_47812802",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_031",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_3",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47812802",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_032",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_3",
+      "fact_type": "age",
+      "value": "12",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47812802",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_033",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_3",
+      "fact_type": "marital_status",
+      "value": "Single",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47812802",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_034",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_3",
+      "fact_type": "race",
+      "value": "White",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "record_persona_id": "p_47812802",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_035",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "Aug 1888",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "Aug 1888",
+      "place": "Michigan",
+      "record_persona_id": "p_47812802",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB",
+      "standard_place": "Michigan, United States"
+    },
+    {
+      "id": "a_036",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_3",
+      "fact_type": "census",
+      "value": "1900",
+      "information_quality": "primary",
+      "informant": "census enumerator",
+      "informant_proximity": "witness",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1900",
+      "place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States",
+      "record_persona_id": "p_47812802",
+      "informant_bias_notes": "the enumerator visited the dwelling",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB",
+      "standard_place": "Detroit Ward 8, Detroit, Wayne, Michigan, United States"
+    },
+    {
+      "id": "a_037",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "marriage",
+      "value": "1875",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1875",
+      "record_persona_id": "p_47809498",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_038",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "marriage",
+      "value": "1875",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1875",
+      "record_persona_id": "p_47809499",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_039",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "relationship",
+      "value": "wife of John Magan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_47809499",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_040",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_1",
+      "fact_type": "relationship",
+      "value": "daughter of John Magan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_47809500",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_041",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_2",
+      "fact_type": "relationship",
+      "value": "son of John Magan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_47809501",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_042",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_3",
+      "fact_type": "relationship",
+      "value": "daughter of John Magan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "child",
+        "related_person_role": "head_of_household"
+      },
+      "record_persona_id": "p_47812802",
+      "informant_bias_notes": "the census does not record who answered",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB"
+    },
+    {
+      "id": "a_043",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "birth",
+      "value": "Ireland",
+      "information_quality": "secondary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Ireland",
+      "record_persona_id": "p_47809498",
+      "informant_bias_notes": "the father's birthplace as stated on 3 household member line(s); no household respondent could have witnessed it",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB",
+      "standard_place": "Ireland"
+    },
+    {
+      "id": "a_044",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "birth",
+      "value": "Maine",
+      "information_quality": "secondary",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_017",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "Maine",
+      "record_persona_id": "p_47809499",
+      "informant_bias_notes": "the mother's birthplace as stated on 3 household member line(s); no household respondent could have witnessed it",
+      "source_id": "src_001",
+      "record_document_id": "ark:/61903/1:2:1YSF-6CB",
+      "standard_place": "Maine, United States"
+    },
+    {
+      "id": "a_045",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "decedent",
+      "fact_type": "name",
+      "value": "Sarah C. Christian",
+      "information_quality": "primary",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Sarah C.",
+        "surname": "Christian"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_046",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "decedent",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_047",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "decedent",
+      "fact_type": "death",
+      "value": "9 November 1896",
+      "information_quality": "indeterminate",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "9 November 1896",
+      "informant_bias_notes": "Text reads 'departed this life on the Ninth day of November ... one thousand eight hundred and ninety-six'. Place of death not stated.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_048",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "decedent",
+      "fact_type": "residence",
+      "value": "City of Detroit, County of Wayne, Michigan",
+      "information_quality": "indeterminate",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "City of Detroit, County of Wayne, Michigan",
+      "informant_bias_notes": "Text: 'an inhabitant of the city of Detroit in said County of Wayne'. OCR shows 'Petroit' before 'in said County'; read as Detroit.",
+      "source_id": "src_002",
+      "standard_place": "Detroit, Wayne, Michigan, United States"
+    },
+    {
+      "id": "a_049",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "husband",
+      "fact_type": "name",
+      "value": "Charles E. Christian",
+      "information_quality": "primary",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Charles E.",
+        "surname": "Christian"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_050",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "husband",
+      "fact_type": "sex",
+      "value": "Male",
+      "information_quality": "indeterminate",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_051",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "husband",
+      "fact_type": "residence",
+      "value": "County of Wayne, Michigan",
+      "information_quality": "indeterminate",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "County of Wayne, Michigan",
+      "informant_bias_notes": "Petitioner; text states he is of age twenty-one and upwards.",
+      "source_id": "src_002",
+      "standard_place": "Wayne, Michigan, United States"
+    },
+    {
+      "id": "a_052",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "sister_1",
+      "fact_type": "name",
+      "value": "Mary E. Mogan",
+      "information_quality": "primary",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "Mary E.",
+        "surname": "Mogan"
+      },
+      "informant_bias_notes": "Text: 'Mrs Mary E. Mogan, of full age, sister'. Maiden surname not stated in this text.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_053",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "sister_1",
+      "fact_type": "sex",
+      "value": "Female",
+      "information_quality": "indeterminate",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_054",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "sister_1",
+      "fact_type": "residence",
+      "value": "City of Detroit, Michigan",
+      "information_quality": "indeterminate",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "City of Detroit, Michigan",
+      "source_id": "src_002",
+      "standard_place": "Detroit, Wayne, Michigan, United States"
+    },
+    {
+      "id": "a_055",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "other_3",
+      "fact_type": "name",
+      "value": "William McAndrews [?]",
+      "information_quality": "primary",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "given": "William",
+        "surname": "McAndrews [?]"
+      },
+      "informant_bias_notes": "The word before his name reads 'replew' in the transcription, likely a garbled 'nephew' or ward; the relation is not confirmed, so no statedRelation is given.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_056",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "other_3",
+      "fact_type": "age",
+      "value": "fifteen years",
+      "information_quality": "indeterminate",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "date": "1896",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_057",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "other_3",
+      "fact_type": "birth",
+      "value": "~1881",
+      "information_quality": "indeterminate",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "inferred",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "Computed from stated age fifteen in 1896.",
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_058",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "other_3",
+      "fact_type": "residence",
+      "value": "City of Detroit, Michigan",
+      "information_quality": "indeterminate",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "place": "City of Detroit, Michigan",
+      "source_id": "src_002",
+      "standard_place": "Detroit, Wayne, Michigan, United States"
+    },
+    {
+      "id": "a_059",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "decedent",
+      "fact_type": "relationship",
+      "value": "sister of Mary E. Mogan",
+      "information_quality": "primary",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "sibling",
+        "related_person_role": "sister_1"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_060",
+      "record_id": "ark:/61903/3:1:3QS7-89SY-KH28",
+      "record_role": "decedent",
+      "fact_type": "relationship",
+      "value": "spouse of Charles E. Christian",
+      "information_quality": "primary",
+      "informant": "the petitioner (executor or administrator)",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_069",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "structured_value": {
+        "relationship_type": "spouse",
+        "related_person_role": "husband"
+      },
+      "source_id": "src_002"
+    },
+    {
+      "id": "a_061",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "age",
+      "value": "46 [?]",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered",
+      "disputes_assertion_id": "a_011"
+    },
+    {
+      "id": "a_062",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "immigration",
+      "value": "1855 [?]",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered",
+      "disputes_assertion_id": "a_007"
+    },
+    {
+      "id": "a_063",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_1",
+      "fact_type": "name",
+      "value": "Anna G [?]",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered",
+      "disputes_assertion_id": "a_016"
+    },
+    {
+      "id": "a_064",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_1",
+      "fact_type": "age",
+      "value": "16 [?]",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered",
+      "disputes_assertion_id": "a_018"
+    },
+    {
+      "id": "a_065",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_3",
+      "fact_type": "age",
+      "value": "11 [?]",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered",
+      "disputes_assertion_id": "a_032"
+    },
+    {
+      "id": "a_066",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "children_born",
+      "value": "6",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered"
+    },
+    {
+      "id": "a_067",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "children_living",
+      "value": "6",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered"
+    },
+    {
+      "id": "a_068",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "years_married",
+      "value": "25",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered"
+    },
+    {
+      "id": "a_069",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "father_birthplace",
+      "value": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered"
+    },
+    {
+      "id": "a_070",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "wife",
+      "fact_type": "mother_birthplace",
+      "value": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered"
+    },
+    {
+      "id": "a_071",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "years_married",
+      "value": "25",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered"
+    },
+    {
+      "id": "a_072",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "occupation",
+      "value": "Engineer Marine",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered"
+    },
+    {
+      "id": "a_073",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "naturalization",
+      "value": "na",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered"
+    },
+    {
+      "id": "a_074",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "father_birthplace",
+      "value": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered"
+    },
+    {
+      "id": "a_075",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "head_of_household",
+      "fact_type": "mother_birthplace",
+      "value": "Ireland",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered"
+    },
+    {
+      "id": "a_076",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_1",
+      "fact_type": "birth",
+      "value": "Michigan",
+      "place": "Michigan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered",
+      "standard_place": "Michigan, United States"
+    },
+    {
+      "id": "a_077",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_2",
+      "fact_type": "birth",
+      "value": "Michigan",
+      "place": "Michigan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered",
+      "standard_place": "Michigan, United States"
+    },
+    {
+      "id": "a_078",
+      "source_id": "src_001",
+      "record_id": "ark:/61903/1:1:M91M-LK1",
+      "record_role": "child_3",
+      "fact_type": "birth",
+      "value": "Michigan",
+      "place": "Michigan",
+      "information_quality": "indeterminate",
+      "informant": "unknown household member",
+      "informant_proximity": "household_member",
+      "record_basis": "stated",
+      "log_entry_id": "log_076",
+      "extracted_for_question_ids": [
+        "q_001"
+      ],
+      "informant_bias_notes": "the census does not record who answered",
+      "standard_place": "Michigan, United States"
+    }
+  ],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": [],
+  "localities": [
+    {
+      "id": "loc_001",
+      "place": "Wayne County, Michigan, United States",
+      "for_place": "Detroit, Wayne County, Michigan",
+      "time_period": "1870-1930",
+      "jurisdictions": [
+        {
+          "name": "Wayne County, Michigan, United States",
+          "date_range": "1815-"
+        }
+      ],
+      "collections": [
+        {
+          "id": "1675348",
+          "title": "Michigan, Births and Christenings, 1775-1995",
+          "date_range": "1775-1995",
+          "person_count": 2943996,
+          "record_count": 899505
+        },
+        {
+          "id": "1459684",
+          "title": "Michigan, Births, 1867-1902",
+          "date_range": "1867-1902",
+          "person_count": 4215535,
+          "record_count": 1409988
+        },
+        {
+          "id": "1923472",
+          "title": "Michigan, County Births, 1867-1917",
+          "date_range": "1867-1917",
+          "person_count": 3830045,
+          "record_count": 724380
+        },
+        {
+          "id": "1452402",
+          "title": "Michigan, Deaths, 1867-1897",
+          "date_range": "1867-1897",
+          "person_count": 1238724,
+          "record_count": 507104
+        },
+        {
+          "id": "1675357",
+          "title": "Michigan, Deaths and Burials, 1800-1995",
+          "date_range": "1800-1995",
+          "person_count": 3459943,
+          "record_count": 1094840
+        },
+        {
+          "id": "1968532",
+          "title": "Michigan, Death Certificates, 1921-1952",
+          "date_range": "1921-1952",
+          "person_count": 4519137,
+          "record_count": 1654686
+        },
+        {
+          "id": "2215693",
+          "title": "Michigan, Obituaries, 1820-2006",
+          "date_range": "1820-2006",
+          "person_count": 8932479,
+          "record_count": 8912502
+        },
+        {
+          "id": "2787825",
+          "title": "Michigan, Church Records, 1819-1991",
+          "date_range": "1819-1991",
+          "person_count": 103627,
+          "record_count": 47038
+        },
+        {
+          "id": "2013878",
+          "title": "Michigan, Probate Records, 1797-1973",
+          "date_range": "1797-1973",
+          "person_count": 0,
+          "record_count": 0
+        },
+        {
+          "id": "2632078",
+          "title": "Michigan, Mortality Schedules, 1850-1880",
+          "date_range": "1850-1880",
+          "person_count": 41597,
+          "record_count": 41597
+        },
+        {
+          "id": "1825187",
+          "title": "Michigan, State Census, 1894",
+          "date_range": "1894-1894",
+          "person_count": 381961,
+          "record_count": 381961
+        },
+        {
+          "id": "1916040",
+          "title": "Michigan, Wayne, Detroit, Manifests of Arrivals at the Port of Detroit, 1906-1956",
+          "date_range": "1906-1956",
+          "person_count": 1364974,
+          "record_count": 1364860
+        }
+      ],
+      "quirks": [
+        "Statewide birth and death registration in Michigan began 1867, general compliance not reached until 1915 (FamilySearch Michigan Vital Records) - Mogan children born before ~1900 may lack filed birth records.",
+        "Detroit birth records since 1893 are obtained from the Wayne County Clerk; FamilySearch's unindexed Wayne County birth/death microfilm (1867-1917) explicitly excludes City of Detroit events, so Detroit births/deaths must be sought separately from county-wide ones.",
+        "Wayne County death index 1934-1953 held at Burton Historical Collection also excludes City of Detroit deaths; a separate Detroit Death Index (microfiche, 1920-current) covers Detroit proper.",
+        "A large number of Roman Catholic church records from the Archdiocese of Detroit (1704-1930, baptisms, marriages, deaths, first communions, confirmations) are on microfilm at the Burton Historical Collection, Detroit Public Library - the specific parish Mary McAndrew and John Mogan attended is not established by any tool result in this survey; search broadly across Detroit's Catholic parish registers.",
+        "Detroit streets were renumbered 1 January 1921 (same house, different numbers) - affects matching addresses across census years.",
+        "volume_search found 644 digitized volumes for Detroit 1870-1930; most Vital/Death group volumes (140 of 154) are browse-only images with no name index, and most Census volumes (55 of 69) are likewise browse-only despite being ~97-100% recordSearchablePercent on some specific rolls - check each volume's own searchability rather than assuming."
+      ],
+      "guide_markdown": "# Locality Guide: Detroit, Wayne County, Michigan (1870-1930)\n\n## Jurisdiction overview\n- Wayne County organized November 21, 1815; county seat Detroit, the oldest county in Michigan.\n- Population (Wayne County): 1870: 119,068; 1880: 168,444; 1890: 257,114; 1900: 348,793; 1910: 531,591; 1920: 1,177,645; 1930: 1,888,946 (FamilySearch Wayne County Genealogy page).\n- Large Irish Catholic immigrant population in Detroit in this era; parish-based Catholic recordkeeping common.\n- No known courthouse record-loss disasters in Wayne County (per the wiki page).\n\n## Boundary changes\nWayne County boundaries were established in 1815 as an original county and were stable through the 1870-1930 period; Detroit itself annexed surrounding land 1806-1926 (especially 1915-1925), which can change which jurisdiction a given Detroit address fell under historically, and streets were renumbered in 1921.\n\n## Available record types\n\n### Vital records (civil registration)\n- Start date: statewide registration of births and deaths began in Michigan in 1867; general compliance by 1915 (FamilySearch Michigan Vital Records, https://www.familysearch.org/en/wiki/Michigan_Vital_Records). Marriage registration with the county clerk dates to 1805/county formation.\n- What exists: FamilySearch \"Michigan, Births, 1867-1902\" and \"Michigan, County Births, 1867-1917\" (index & images); \"Michigan, Deaths, 1867-1897\" and \"Michigan, Deaths and Burials, 1800-1995\"; \"Michigan, Death Certificates, 1921-1952.\"\n- Where held: county level at the Wayne County Clerk for events in Wayne County generally; Detroit-specific births since 1893 come from the Wayne County Clerk, and Detroit deaths since 1897 from the Detroit Health Department. The FamilySearch Library's unindexed Wayne County birth/death microfilm (1867-1917) explicitly excludes City of Detroit events.\n- Gaps: pre-1915 compliance was incomplete; Detroit deaths before 1897 are not separately described by a tool result.\n- Pre-registration alternatives: church (Catholic parish) baptism/death records; obituaries; probate.\n\n### Church records\n- Denominations present: Catholic (large Irish and other immigrant population), Lutheran, LDS branches, others.\n- Record types: Archdiocese of Detroit Catholic church records on microfilm at the Burton Historical Collection, Detroit Public Library, ranging (by parish) 1704-1930 and including baptisms, marriages, deaths, first communions, confirmations.\n- Where held: Burton Historical Collection, Detroit Public Library (physical/microfilm); also FamilySearch \"Michigan, Church Records, 1819-1991\" (index & images, 103,627 persons) and the volume_search results show many browse-only Detroit \"Church records\" volumes dated 1858-1930.\n- Gaps: this survey did not identify the specific parish the Mogan/McAndrew family attended; no tool result names it.\n- Language: Catholic sacramental registers of this era are commonly in Latin; researcher should expect to read Latin entries.\n\n### Census records\n- Federal census: 1870, 1880, 1900, 1910, 1920, 1930 cover this period (no 1890 federal census survives generally); Ancestry links for each year were returned by external_links_search.\n- State census: Michigan State Census 1894 (FamilySearch collection 1825187, 381,961 persons) and 1884 Statistical Returns (Ancestry/Findmypast).\n- Access: volume_search shows several Detroit 1900 federal census enumeration volumes 97-98% name-indexed with images; overall, of 69 Census-group volumes for Detroit 1870-1930, 55 are browse-only and 2 are full-text-only, so specific rolls vary - check each volume.\n\n### Probate and court records\n- Types: wills, administrations, guardianships, inventories, petitions - held by the county probate judge.\n- Testate or intestate: not established; search both wills and administration files until one is found for John Mogan (d. by 1905) and Mary E. McAndrew Mogan (d. by 1925).\n- Date range: Wayne County probate records 1832-1967 (FamilySearch Catalog koha 3292257); FamilySearch \"Michigan, Probate Records, 1797-1973\" collection (images only).\n- Where held: Wayne County Probate Court, Coleman A. Young Municipal Center, Detroit; also microfilmed estate case files 1797-1901 and probate calendar books 1797-1914 at the Archives of Michigan, Lansing.\n\n### Land records\n- Survey system: rectangular (federal) survey for Michigan generally.\n- Land-distribution jurisdiction: after initial transfer from public to private ownership, subsequent transactions recorded at the Wayne County courthouse (Register of Deeds).\n- Types: deeds, mortgages; FamilySearch Full-Text Search - Land Records covers variable dates/places.\n- Where held: Wayne County Register of Deeds (https://www.waynecountylandrecords.com/recorder/web/).\n\n### Military records\n- Relevant conflicts: Civil War (ended 1865, veteran records continue into this period via GAR), WWI (1917-1918).\n- Record types: Michigan GAR Membership Records 1876-1945; Michigan Census of WWI Veterans with Card Index, 1917-1919.\n- Where held: FamilySearch collections 2351035 and 3007553; NARA for federal military/pension files.\n\n### Cemetery records\n- Major cemeteries named in the wiki page: Elmwood Cemetery (Record of Interments 1846-1992), Mt. Elliot Cemetery (1845-1997), Woodmere Cemetery (1868-1888) - held at the Burton Historical Collection, Detroit Public Library.\n- Online coverage: Find a Grave and BillionGraves both have Wayne County search pages.\n- Physical records: sexton/interment records at the cemeteries themselves and the Burton Historical Collection.\n\n### Newspaper records\n- Local papers: Detroit Gazette (1817-1830) digitized at Google News; Digital Michigan Newspapers at Central Michigan University; Chronicling America has Michigan newspapers.\n- Where held: digital archives as above; Ancestry's Michigan Newspapers.com Stories and Events Index, 1800s-current.\n- Content value: obituaries, marriage notices.\n\n### Obituaries\n- FamilySearch \"Michigan, Obituaries, 1820-2006\" collection (index & images, 8,932,479 persons, id 2215693) - this is the primary named obituary index for the state and covers the full 1870-1930 window.\n- Content note: obituaries in this era commonly list surviving children by name and residence, directly useful for enumerating the Mogan children.\n\n### Immigration/emigration records\n- Relevant ports: Port of Detroit (land/water border crossings from Canada).\n- Record types: \"Michigan, Wayne, Detroit, Manifests of Arrivals at the Port of Detroit, 1906-1956\" (FamilySearch collection 1916040, 1,364,974 persons) covers only 1906 onward, so it postdates the Mogan/McAndrew Irish immigration if it occurred earlier; naturalization records (Michigan, Eastern and Western Districts, Naturalization Records, 1837-1993) may show arrival and origin information for John Mogan.\n- Where held: FamilySearch/NARA RG 85 (manifests), Eastern District federal court (naturalizations).\n\n### Tax records\n- Types: county property/personal tax; no specific Wayne County tax collection was returned by these tools.\n- Substitute value: can fill gaps between census years; see Michigan Taxation wiki page (not fetched in this survey).\n\n### Other record types\n- City directories: \"City Directories - Detroit\" 1861-1923 at Fold3; Detroit City Directory 1895 at MyHeritage - useful between censuses to track the family's address and track children aging into adulthood.\n\n## Repository guide\n\n### Online repositories\n| Repository | Collections for this place | Gap it fills | Access |\n|---|---|---|---|\n| FamilySearch | Michigan Births 1867-1902 (id 1459684); Michigan County Births 1867-1917 (id 1923472); Michigan Deaths 1867-1897 (id 1452402); Michigan Deaths and Burials 1800-1995 (id 1675357); Michigan Death Certificates 1921-1952 (id 1968532); Michigan Church Records 1819-1991 (id 2787825); Michigan Probate Records 1797-1973 (id 2013878); Michigan Obituaries 1820-2006 (id 2215693); Michigan State Census 1894 (id 1825187); Manifests of Arrivals at Port of Detroit 1906-1956 (id 1916040) | Wayne County birth/death microfilm excludes City of Detroit; Michigan Obituaries fills the gap of listing children by name | Free |\n| Ancestry | Michigan Death Records 1867-1952; Michigan Wills and Probate Records 1784-1980; 1870-1930 US Federal Census years | Images where FamilySearch has index-only | Subscription |\n\n**Coverage of this survey:** volume_search matched 644 digitized volumes for Detroit 1870-1930 across all record types; only the first 10 were detailed above (titles), with the full by-record-type counts given in the summary (e.g., 154 Vital, 69 Census, 53 Religious, 354 Migration volumes). collections_search returned 31 Michigan-level (not Detroit-specific) collections, all listed above or omitted as out-of-scope (military, naturalization).\n\n### Physical repositories\n| Repository | Holdings | Access method |\n|---|---|---|\n| Burton Historical Collection, Detroit Public Library | Catholic Archdiocese of Detroit church records on microfilm (1704-1930); Wayne County Marriage Returns 1803-1893; cemetery interment records (Elmwood, Mt. Elliot, Woodmere); Wayne County Death Index 1934-1953 (excludes Detroit) | In-person; some indexes online |\n| Wayne County Probate Court, Coleman A. Young Municipal Center | Probate records for all of Wayne County and Detroit | In-person/mail |\n| Wayne County Register of Deeds | Land records for Wayne County and Detroit | In-person/online (waynecountylandrecords.com) |\n| Archives of Michigan, Lansing | Wayne County estate case files 1797-1901; probate calendar books 1797-1914 (microfilm) | In-person |\n\n## Records NOT online\n- Original Catholic parish sacramental registers (only microfilmed at the Burton Historical Collection, not digitized online per these tool results).\n- Pre-1920s Wayne County tax records.\n- Many probate case files/dockets - full case files largely require in-person access at the courthouse or Archives of Michigan.\n\n## Known record losses\nNo tool result in this survey identifies any lost or destroyed Wayne County vital, probate, or court records; the FamilySearch Wayne County Genealogy page states there is no known history of courthouse disasters in this county.\n\n## Research tips\n- Search both the FamilySearch \"Michigan, Obituaries, 1820-2006\" collection and local Detroit newspapers for obituaries naming all surviving children of John Mogan and Mary E. McAndrew Mogan (https://www.familysearch.org/en/wiki/Michigan_Obituaries).\n- Because Wayne County's unindexed birth/death microfilm (1867-1917) excludes City of Detroit events, search Detroit-specific sources (Detroit Health Department for deaths since 1897, Wayne County Clerk for Detroit births since 1893) separately from county-wide collections (https://www.familysearch.org/en/wiki/Michigan_Vital_Records).\n- Search Wayne County probate records (wills if testate, administration if intestate) for both John Mogan (d. by 1905) and Mary E. McAndrew Mogan (d. by 1925); Michigan probate records in the 20th century often give an exact death date and can name heirs/children.\n- Search all available federal censuses (1870, 1880, 1900, 1910, 1920, 1930) for the Mogan household; the 1880 census added relationship-to-head-of-household, useful for confirming children.\n- Check the Archdiocese of Detroit Catholic parish registers (microfilmed at the Burton Historical Collection) for baptisms of children born to the couple; no tool result names the specific parish, so this will require browsing multiple Detroit Catholic parishes' baptismal registers.\n- Detroit streets were renumbered 1 January 1921 - keep this in mind when tracing addresses across census years (https://www.familysearch.org/en/wiki/Wayne_County,_Michigan_Genealogy).",
+      "pages_read": [
+        {
+          "section": "home",
+          "url": "https://www.familysearch.org/en/wiki/Wayne_County,_Michigan_Genealogy",
+          "found": true
+        },
+        {
+          "section": "getting_started",
+          "url": "https://www.familysearch.org/en/wiki/Michigan_Getting_Started",
+          "found": true
+        },
+        {
+          "section": "online_records",
+          "url": "https://www.familysearch.org/en/wiki/Michigan_Online_Genealogy_Records",
+          "found": true
+        },
+        {
+          "section": "research_tips",
+          "url": "https://www.familysearch.org/en/wiki/Michigan_Research_Tips_and_Strategies",
+          "found": true
+        }
+      ],
+      "registration_start": [
+        {
+          "event": "birth",
+          "level": "county",
+          "year": 1867,
+          "source_url": "https://www.familysearch.org/en/wiki/Michigan_Vital_Records"
+        },
+        {
+          "event": "death",
+          "level": "county",
+          "year": 1867,
+          "source_url": "https://www.familysearch.org/en/wiki/Michigan_Vital_Records"
+        },
+        {
+          "event": "marriage",
+          "level": "county",
+          "year": 1805,
+          "source_url": "https://www.familysearch.org/en/wiki/Michigan_Vital_Records"
+        }
+      ],
+      "volume_summary": {
+        "start_year": 1870,
+        "end_year": 1930,
+        "total_volumes": 644,
+        "complete": true,
+        "by_record_type": [
+          {
+            "group": "Vital",
+            "volumes": 154,
+            "browse_only": 140,
+            "fulltext_only": 10
+          },
+          {
+            "group": "Death",
+            "volumes": 152,
+            "browse_only": 139,
+            "fulltext_only": 10
+          },
+          {
+            "group": "Marriage",
+            "volumes": 14,
+            "browse_only": 1,
+            "fulltext_only": 9
+          },
+          {
+            "group": "Religious",
+            "volumes": 53,
+            "browse_only": 26,
+            "fulltext_only": 10
+          },
+          {
+            "group": "Baptism",
+            "volumes": 19,
+            "browse_only": 15,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Census",
+            "volumes": 69,
+            "browse_only": 55,
+            "fulltext_only": 2
+          },
+          {
+            "group": "Migration",
+            "volumes": 354,
+            "browse_only": 44,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Naturalization",
+            "volumes": 232,
+            "browse_only": 44,
+            "fulltext_only": 0
+          },
+          {
+            "group": "Legal",
+            "volumes": 9,
+            "browse_only": 0,
+            "fulltext_only": 6
+          },
+          {
+            "group": "Land",
+            "volumes": 6,
+            "browse_only": 0,
+            "fulltext_only": 6
+          },
+          {
+            "group": "Newspapers",
+            "volumes": 22,
+            "browse_only": 0,
+            "fulltext_only": 0
+          }
+        ],
+        "untyped": {
+          "volumes": 0,
+          "browse_only": 0,
+          "fulltext_only": 0
+        }
+      },
+      "source": "locality-guide",
+      "created": "2026-11-12"
+    }
+  ]
+}
