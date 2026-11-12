@@ -1,0 +1,54 @@
+{
+  "tool": "catalog_search",
+  "description": "catalog_search with author Ayling (captured as title \"Revised register\", author \"Ayling\"): one hit. Captured live 2026-11-09 with catalog_search (issue #4135). Item koha:186990 is Augustus D. Ayling's 1895 register, which covers the War of the Rebellion, 1861-1866, not the Revolution; its three film notes carry imageGroupNumbers 7561840, 8650414 and 7499145. Order it before catalog-search-empty-keywords, catalog-search-empty-title and catalog-search-empty: the first matching fixture wins.",
+  "args": {
+    "author": "~ayling"
+  },
+  "response": {
+    "totalHits": 1,
+    "returned": 1,
+    "placeResolved": true,
+    "hydrationTimedOut": false,
+    "hydrateRequested": 10,
+    "hits": [
+      {
+        "id": "koha:186990",
+        "title": "Revised register of the soldiers and sailors of New Hampshire in the War of the Rebellion, 1861-1866/ prepared and published by authority of the Legislature, by Augustus D. Ayling, Adjutant General",
+        "creator": "Ayling, Augustus D., 1840-1918",
+        "repositoryCalls": [
+          "FamilySearch Library",
+          "Granite Mountain Record Vault",
+          "HSB (Headquarters Storage Building)",
+          "Online"
+        ],
+        "hydrated": true,
+        "digitalLibraryUrl": "http://www.familysearch.org/library/books/idurl/1/283203",
+        "notes": [
+          "Also available on microfilm and digital images.",
+          "Includes index of names."
+        ],
+        "subjects": [
+          "United States, New Hampshire - Military records - Civil War, 1861-1865"
+        ],
+        "filmNotes": [
+          {
+            "filmNumber": "1697872",
+            "imageGroupNumber": "7561840",
+            "text": "Also on microfilm. Salt Lake City : Filmed by the Genealogical Society of Utah, 1993. on 1 microfilm reel ; 35 mm."
+          },
+          {
+            "filmNumber": "2317643",
+            "imageGroupNumber": "8650414",
+            "text": "Another filming, 2002"
+          },
+          {
+            "filmNumber": "2319539",
+            "imageGroupNumber": "7499145",
+            "text": "Another filming (cont.), 2002"
+          }
+        ],
+        "availableOnline": true
+      }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "per_finding": {
+    "f1": "false"
+  },
+  "proof_quality_score": 2,
+  "notes": {
+    "f1": "ps_001 (not_proved) engages the 14 Dec 1919 entry (6YP6-D37M, 6B9P) but 'conclusively' rules it out on reading the mother as 'Barria' rather than Corrêa, and never names the elder brother baptised 1839 as a candidate. It also makes the 1851 subject 'husband of Ana Augusta de Jesus', the 1865 groom, conflating the two brothers. The not_proved tier is not over-stated; the elimination and the identity are."
+  },
+  "findings_hash": "503193a426cdb80c65525204c86942daaf8b3982a28ea113e1f83ae9744c42e7",
+  "blind_bundle_digest": "f86c48c7f3e0688f1cef2a011b45f27d90fc66d39ed8ca8fc3ad33694729e4f1"
+}

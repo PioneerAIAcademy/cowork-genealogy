@@ -105,7 +105,7 @@ Incognito chat at claude.ai opens no client of its own.
 
    On the organization's connectors admin page, add a custom connector named exactly
    `Genealogy Viewer`, paste the URL, and set no sign-in. Then connect it on your own
-   account under Settings → Connectors. A connector can also go straight on a personal
+   account under Customize → Connectors. A connector can also go straight on a personal
    account; record which one was used in **Run**.
 
    Then fully quit and reopen Claude Desktop. Until then it does not list a connector
@@ -326,8 +326,10 @@ Open every conversation with the connector on.
        cd -
        ```
 
-    2. Install it at claude.ai's plugin page: remove the plugin that is there, then Add,
-       Upload plugin, and pick that zip. Fully quit and reopen Claude Desktop.
+    2. Install it by the click-path `make cowork-install` prints, without running the
+       target: Claude Desktop → Customize → Plugins → Yours, remove any Genealogy Research
+       plugin, then + Add → Upload plugin → that zip. Fully quit and reopen Claude
+       Desktop.
 
     3. Connect the sign-in probe, then start a new conversation. Turn `Genealogy Viewer`
        off in it, as in **Connector off**, so only the probe offers `show_project`, and

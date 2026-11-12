@@ -3,9 +3,10 @@
 ## Purpose
 
 Tabulate every household of a surname across a place's US federal censuses.
-The agent searches each census year in a given span, stages results, groups
-stubs by household, and logs a markdown table sectioned by census year as
-one research-log entry.
+The agent searches each census year in a given span, groups stubs by household,
+and builds a markdown table sectioned by census year. With a project it stages
+the results and logs the table as one research-log entry; with none it returns
+the table in its reply.
 
 ## Scope rule
 
@@ -13,11 +14,34 @@ The agent searches at state level by default. It passes the state as
 `recordCountry: "United States"` + `recordSubdivision: "<State>"`. A county
 narrows further with `residencePlace: "<County>, <State>, United States"`.
 
-Results are staged: the agent passes `projectPath` to `record_search`, so
-rows come back as staged stubs (~400-540 B each). The log is the agent's one
+With a project, results are staged: the agent passes `projectPath` to
+`record_search`, so rows come back as staged stubs (~400-540 B each). The log is the agent's one
 `research.json` write (via `research_log_append`): one entry per search page,
 plus one entry carrying the table (below). The tree is untouched, and the
 agent writes no file.
+
+## No project
+
+Decided (lead, 2026-11-02): a surname survey does not create a project. A
+project always starts from a FamilySearch person ID (`project-create-tool-spec.md`
+§3), and a survey usually has none, so the agent runs with no `projectPath`.
+
+- It runs the same searches, passing `projectPath` to no tool, so nothing is
+  staged and the stubs come back inline.
+- It makes no `research_log_append` call and writes nothing.
+- The tables, ending with the hedge sentence below, go after the `---` line
+  of its return, between paragraph 1 of `summary_for_user` and paragraph 2,
+  so the caller relays them verbatim. The ≤10 lines above `---` keep the
+  per-year counts. Putting the tables above `---` was considered and rejected:
+  the caller prints nothing above it.
+
+Accepted costs: nothing is saved, and a large survey's tables travel through
+the caller's context. With a project, the agent behaves as below.
+
+**Untested:** that a no-project survey is reachable from a fresh Cowork or
+hosted session. `research` routes any request that states an objective to
+`init-project`, which now asks for a person ID. The direct-agent unit test
+(`no-project-reply-tables.json`) reaches the agent without that router.
 
 ## The table entry
 
@@ -103,14 +127,24 @@ Measured 2026-09-29: 100 rows of 1850 Virginia yielded 81 distinct
 
 ## Table columns
 
-One row per household:
+One row per household (decided review-ready, 2026-11-02):
 - Census year
-- County (extracted from `events[].place`, e.g. "Wheeling, Ohio, Virginia,
-  United States" yields county "Ohio")
-- Head of household (`personName` where `role` is Principal)
-- Other members carrying the surname, with `birthDate` where the stub has one
+- Place as indexed: the household's `events[].place` without its state and
+  country, so the town survives ("Au Sable, Clinton, New York, United States"
+  yields "Au Sable, Clinton"; "Clinton, New York, United States" yields
+  "Clinton"). A county column lost the town the index carries, which made
+  households hard to correlate.
+- Head of household (`personName` where `role` is Principal), with the
+  head's own `birthDate` and `birthPlace` where the stub has them
+- Members: every other stub sharing the head's `recordArk`, each as given
+  name, `birthDate`, `birthPlace` where the stub has them
 - Record ARK (`recordArk`, the household's record, not one person's `recordId`)
 - Ruled out (empty by default; filled only with reasons the delegation carries)
+
+Birth year, not age: the `record_search` stub has no age field. Adding one was
+rejected because it changes a tool contract, and reading the staged sidecars
+because the agent never reads them. A block of rows per household was rejected
+because it changes the header the validators and rubric parse.
 
 ## Schedule sectioning
 

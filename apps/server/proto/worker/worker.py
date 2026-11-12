@@ -1131,14 +1131,17 @@ def insert_tool_call(conn: psycopg.Connection, row: dict[str, Any]) -> None:
 # Step mode (decision 25). `turns.step`/`turns.mode` are written the moment a turn's
 # FIRST step is allowed, not at complete(), because the seed exists for an attempt that
 # never reaches complete(): redelivery is what happens when one is interrupted mid-turn.
+# The one value a later write replaces is the boundary's `UNGROUPED_OPENER`: the step
+# after it fixes the turn's group, so it is what a redelivery must seed from.
 TURN_STEP_READ_SQL = "SELECT step, mode FROM turns WHERE turn_id = %s"
 TURN_STEP_WRITE_SQL = (
-    "UPDATE turns SET step = COALESCE(step, %s), mode = COALESCE(mode, %s) WHERE turn_id = %s"
+    "UPDATE turns SET step = CASE WHEN step IS NULL OR step = %s THEN %s ELSE step END, "
+    "mode = COALESCE(mode, %s) WHERE turn_id = %s"
 )
 
 
 def read_turn_step(conn: psycopg.Connection, turn_id: str) -> tuple[str | None, str | None]:
-    """What this turn already opened with, for a redelivered attempt to seed from."""
+    """The step that fixed this turn's group, for a redelivered attempt to seed from."""
     with conn.cursor() as cur:
         cur.execute(TURN_STEP_READ_SQL, (turn_id,))
         row = cur.fetchone()
@@ -1148,11 +1151,14 @@ def read_turn_step(conn: psycopg.Connection, turn_id: str) -> tuple[str | None, 
     return (step if isinstance(step, str) else None, mode if isinstance(mode, str) else None)
 
 
-def record_turn_step(conn: psycopg.Connection, turn_id: str, step: str, mode: str) -> None:
-    """Stamp the turn's first step. COALESCE, so a redelivery cannot overwrite what the
-    first attempt recorded -- the turn opened with that step whatever happens next."""
+def record_turn_step(
+    conn: psycopg.Connection, turn_id: str, step: str, mode: str, opener: str,
+) -> None:
+    """Stamp the turn's step. A redelivery cannot overwrite what the first attempt
+    recorded, except `opener` (the boundary's `UNGROUPED_OPENER`), which the
+    group-fixing step after it replaces."""
     with conn.cursor() as cur:
-        cur.execute(TURN_STEP_WRITE_SQL, (step, mode, turn_id))
+        cur.execute(TURN_STEP_WRITE_SQL, (opener, step, mode, turn_id))
     conn.commit()
 
 
@@ -1173,7 +1179,7 @@ AUTO_REPLY_WRITE_SQL = "UPDATE sessions SET auto_reply = %s WHERE session_id = %
 
 
 def read_prev_step(conn: psycopg.Connection, session_id: str, turn_id: str) -> str | None:
-    """The step the session's PREVIOUS step-running turn opened with."""
+    """The step that fixed the group of the session's PREVIOUS step-running turn."""
     with conn.cursor() as cur:
         cur.execute(PREV_STEP_SQL, (session_id, turn_id))
         row = cur.fetchone()
@@ -1229,7 +1235,7 @@ def completed_already_labelled(conn: psycopg.Connection, project_id: str, turn_i
     project's status at the turn's START, a read every turn would pay and a down
     store must not be asked twice.
 
-    Two consequences, both recorded in docs/plan/research-step-mode.md. When the
+    Two consequences, both recorded in docs/specs/research-step-mode-spec.md. When the
     completing turn closed `stopped` or `budget`, the NEXT ordinary
     turn carries the label -- which is right, since the project is complete and
     the researcher should be told. And a project completed a SECOND time is labelled
@@ -2875,7 +2881,8 @@ async def _run_turn(
                 log=log, turn_id=turn_id,
                 # The TURN's mode, not the gate's: a redelivered `job` turn must still
                 # read back as `job`, or the host's reply would be lost.
-                on_first_step=lambda step, _gate: record_turn_step(conn, turn_id, step, turn_mode),
+                on_first_step=lambda step, _gate: record_turn_step(
+                    conn, turn_id, step, turn_mode, boundary.UNGROUPED_OPENER),
             )
         except Exception as exc:  # noqa: BLE001 - a broken boundary must not deny the researcher their turn
             log(ev="step_gate_unavailable", turn_id=turn_id, session_id=session_id,

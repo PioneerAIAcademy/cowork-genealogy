@@ -23,7 +23,10 @@ vi.mock("../../src/utils/place-api.js");
 
 import { mkdtemp, rm } from "fs/promises";
 import { tmpdir } from "os";
-import { join } from "path";
+import { dirname, join, sep } from "path";
+import { readdirSync, readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { callTool } from "../helpers/call-tool.js";
 import {
   recordReadTool,
   recordReadDocument,
@@ -1527,5 +1530,169 @@ describe("recordReadTool — staging on a live read (#2048 / #2489)", () => {
     expect(again.viewerUrl).toBe(
       "https://www.familysearch.org/ark:/61903/3:1:9Q97-YSRZ-GWP"
     );
+  });
+});
+
+// ─── birthRanges (issue #4127) ─────────────────────────────────────────────
+
+describe("recordReadTool — birthRanges from the stated age", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-read-birth-ranges-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const stage = (birth: string, age: string, year: string) =>
+    stageSearchResults({
+      projectPath: dir,
+      tool: "record_read",
+      response: {
+        results: [
+          {
+            recordId: "ark:/61903/1:1:TALL-0001",
+            gedcomx: {
+              persons: [
+                {
+                  id: "p1",
+                  names: [{ given: "Edward", surname: "Tallman" }],
+                  facts: [
+                    { type: "Birth", date: birth },
+                    { type: "Census", date: year, place: "Vermont, United States" },
+                  ],
+                },
+              ],
+            },
+            indexFields: { p1: { age } },
+          },
+        ],
+      },
+    });
+
+  const read = async (birth: string, age: string, year: string) => {
+    const handle = await stage(birth, age, year);
+    return recordReadTool(
+      { recordId: "ark:/61903/1:1:TALL-0001", resultsRef: handle!.resultsRef, projectPath: dir },
+      LOCAL,
+    );
+  };
+
+  it("returns 1838–1839 for the 1850, 1865 and 1910 censuses, beside the bare 1839", async () => {
+    for (const [age, year] of [["11", "1850"], ["26", "1865"], ["71", "1910"]]) {
+      const out = await read("1839", age, year);
+      expect(out.birthRanges).toEqual({ p1: "Bet 1838 and 1839" });
+      expect(out.persons![0].facts![0].date).toBe("1839");
+    }
+  });
+
+  it("agrees with extraction: a bare year outside the range stays, with no entry", async () => {
+    expect((await read("1840", "71", "1910")).birthRanges).toBeUndefined();
+    expect((await read("1841", "26", "1865")).birthRanges).toBeUndefined();
+  });
+
+  it("returns none for a full birth date or a month-and-year date", async () => {
+    expect((await read("31 Jan 1839", "74", "1913")).birthRanges).toBeUndefined();
+    expect((await read("Jan 1839", "11", "1850")).birthRanges).toBeUndefined();
+  });
+
+  it("returns none when the record carries no age", async () => {
+    const handle = await stageSearchResults({
+      projectPath: dir,
+      tool: "record_search",
+      response: { results: [{ recordId: "ark:/61903/1:1:TALL-0001", gedcomx: { persons: [{ id: "p1", facts: [{ type: "Birth", date: "1839" }] }] } }] },
+    });
+    const out = await recordReadTool(
+      { recordId: "ark:/61903/1:1:TALL-0001", resultsRef: handle!.resultsRef, projectPath: dir },
+      LOCAL,
+    );
+    expect(out.birthRanges).toBeUndefined();
+  });
+});
+
+// ─── the answer is compacted at the MCP boundary only (#4415) ─────────────
+
+const RECORD_WITH_SOURCES: GedcomX = {
+  persons: [
+    {
+      id: "QVS9-DHDB",
+      gender: { type: "http://gedcomx.org/Male" },
+      names: [
+        {
+          id: "name-1",
+          nameForms: [
+            {
+              parts: [
+                { type: "http://gedcomx.org/Given", value: "John" },
+                { type: "http://gedcomx.org/Surname", value: "Smith" },
+              ],
+            },
+          ],
+        },
+      ],
+      facts: [{ id: "fact-1", type: "http://gedcomx.org/Birth", date: { original: "1850" } }],
+      sources: [{ description: "#src-1" }],
+    },
+  ],
+  sourceDescriptions: [
+    {
+      id: "src-1",
+      resourceType: "http://gedcomx.org/Record",
+      about: "https://www.familysearch.org/ark:/61903/1:2:QQQQ-QQQ",
+      titles: [{ value: 'Entry for John Smith, "Ohio, Births"' }],
+      citations: [{ value: '"Ohio, Births", FamilySearch, Entry for John Smith.' }],
+    },
+  ],
+} as unknown as GedcomX;
+
+describe("record_read compacts its answer at the MCP boundary only (#4415)", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "record-read-compact-"));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  it("the handler keeps sources and ids for in-process readers, and stages the full document", async () => {
+    mockOk(RECORD_WITH_SOURCES);
+    const live = await recordReadTool({ recordId: "QVS9-DHDB", projectPath: dir }, LOCAL);
+    expect(live.sources?.length).toBeGreaterThan(0);
+    expect(live.persons?.[0]?.names?.[0]?.id).toBeDefined();
+    expect(live.persons?.[0]?.facts?.[0]?.id).toBeDefined();
+
+    const { readFile } = await import("fs/promises");
+    const envelope = JSON.parse(await readFile(join(dir, live.staged!.resultsRef), "utf8"));
+    expect(envelope.payload.results[0].gedcomx.sources?.length).toBeGreaterThan(0);
+    expect(envelope.payload.results[0].gedcomx.persons[0].names[0].id).toBeDefined();
+  });
+
+  it("the record_read tool call answers with the compacted shape", async () => {
+    mockOk(RECORD_WITH_SOURCES);
+    const { isError, text } = await callTool("record_read", { recordId: "QVS9-DHDB" });
+    expect(isError).toBe(false);
+    const answer = JSON.parse(text);
+    expect(answer.sources).toBeUndefined();
+    expect(answer.citation).toBe('"Ohio, Births", FamilySearch, Entry for John Smith.');
+    expect(answer.recordUrl).toBe("https://www.familysearch.org/ark:/61903/1:2:QQQQ-QQQ");
+    expect(answer.persons[0].id).toBe("QVS9-DHDB");
+    expect(answer.persons[0].names[0].id).toBeUndefined();
+    expect(answer.persons[0].facts[0].id).toBeUndefined();
+  });
+
+  it("only the record_read tool call compacts, so extraction_append and same_person keep the full document", () => {
+    const srcDir = join(dirname(fileURLToPath(import.meta.url)), "../../src");
+    const importers = (symbol: string) =>
+      readdirSync(srcDir, { recursive: true, encoding: "utf-8" })
+        .filter((f) => f.endsWith(".ts"))
+        .filter((f) =>
+          new RegExp(`import\\s*\\{[^}]*\\b${symbol}\\b[^}]*\\}\\s*from`).test(
+            readFileSync(join(srcDir, f), { encoding: "utf-8" }),
+          ),
+        )
+        .map((f) => f.split(sep).join("/"))
+        .sort();
+    expect(importers("compactRecordReadAnswer")).toEqual(["tools/record-read.ts"]);
+    expect(importers("recordReadMcpTool")).toEqual(["server.ts"]);
   });
 });

@@ -82,6 +82,7 @@ describe("the connector-only rows", () => {
     connector,
     openRouterKeyConfigured: false,
     values: {},
+    seedProject: async () => {},
   });
 
   const row = (tool: string) => {
@@ -121,14 +122,14 @@ describe("the connector-only rows", () => {
     }
   });
 
-  it("sit after the create that claims the project", () => {
-    const create = CALL_PLAN.findIndex((s) => s.tool === "project_create" && s.label === undefined);
-    expect(create).toBeGreaterThanOrEqual(0);
-    expect(CALL_PLAN.indexOf(row("show_project"))).toBeGreaterThan(create);
-    expect(CALL_PLAN.indexOf(row("read_project_view"))).toBeGreaterThan(create);
+  it("sit after the row that seeds the project", () => {
+    const seed = CALL_PLAN.findIndex((s) => s.tool === "project_create" && s.before !== undefined);
+    expect(seed).toBeGreaterThanOrEqual(0);
+    expect(CALL_PLAN.indexOf(row("show_project"))).toBeGreaterThan(seed);
+    expect(CALL_PLAN.indexOf(row("read_project_view"))).toBeGreaterThan(seed);
   });
 
-  // The documents as the hand-built `project_create` row writes them.
+  // The documents as `seedDocuments()` writes them.
   const documents = {
     research: { project: { objective: "Does this transport reach every tool?" } },
     tree: { persons: [{ id: "P1" }] },

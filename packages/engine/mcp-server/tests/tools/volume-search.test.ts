@@ -25,8 +25,10 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import {
   volumeSearchTool,
+  volumeSearchSchema,
   fitToBudget,
   mergeCoverages,
+  filterSearchableVolumes,
   RESULT_CHAR_BUDGET,
 } from "../../src/tools/volume-search.js";
 import { getValidToken } from "../../src/auth/refresh.js";
@@ -801,6 +803,58 @@ describe("volumeSearchTool", () => {
     expect(err?.message).not.toContain("omitting pageToken");
   });
 
+  // Shaped like a real upstream 409 body: a JSON error envelope of about 10,000
+  // characters, almost all of it a Java stack trace, of which only `message` is
+  // any use. The trace's lines here are invented.
+  const PAGING_MESSAGE =
+    "Paging state mismatch: the token does not match this query. Retry the search without setting the nextPageToken";
+  const STACK =
+    "org.familysearch.rms.PagingStateException: " + PAGING_MESSAGE + "\n" +
+    "\tat org.familysearch.rms.group.GroupSearchService.search(GroupSearchService.java:211)\n".repeat(120);
+  const errorEnvelope = (fields: Record<string, unknown>) =>
+    JSON.stringify({ timestamp: "2026-10-30T14:02:11.000+00:00", status: 409, error: "Conflict", path: "/group/search", ...fields });
+
+  async function errorFor(status: number, statusText: string, body: string) {
+    mockFetch.mockResolvedValueOnce(makeErrorResponse(status, statusText, body));
+    return volumeSearchTool(
+      { standardPlace: "Pittsylvania, Virginia, United States", pageToken: "tok" },
+      LOCAL
+    ).then(
+      () => null,
+      (e: unknown) => e as Error
+    );
+  }
+
+  it("cuts a 409's upstream body to its message, keeping the recovery", async () => {
+    const body = errorEnvelope({ trace: STACK, message: PAGING_MESSAGE });
+    expect(body.length).toBeGreaterThan(9_000);
+
+    const err = await errorFor(409, "", body);
+
+    expect(err?.message).toContain(PAGING_MESSAGE);
+    expect(err?.message).toContain("re-issue this search from the first page");
+    expect(err?.message).not.toContain("GroupSearchService");
+    expect(err?.message).not.toContain('"timestamp"');
+    expect(err!.message.length).toBeLessThan(600);
+  });
+
+  it("falls back to the first line of the trace when the body has no message", async () => {
+    const err = await errorFor(409, "", errorEnvelope({ trace: STACK }));
+
+    expect(err?.message).toContain("PagingStateException");
+    expect(err?.message).not.toContain("GroupSearchService");
+    expect(err!.message.length).toBeLessThan(600);
+  });
+
+  it("cuts a long plain-text body on the generic arm to 200 characters", async () => {
+    const err = await errorFor(400, "Bad Request", `upstream exploded ${"x".repeat(5_000)}`);
+
+    expect(err?.message).toContain("FamilySearch volume search API error: 400 Bad Request. upstream exploded");
+    expect(err?.message).toMatch(/x…$/);
+    const detail = err!.message.slice("FamilySearch volume search API error: 400 Bad Request. ".length);
+    expect(detail).toHaveLength(200);
+  });
+
   it("throws when the standard place cannot be resolved", async () => {
     mockResolveStandardPlaceToPlaceId.mockResolvedValueOnce({ kind: "unresolved" });
 
@@ -902,6 +956,14 @@ function triples(groups: { coverages?: { place?: string; datesOrig?: string; rec
   );
 }
 
+function listedTriples(result: { results: { coverages: { places: string[]; dateRange?: string; recordType?: string }[] }[] }) {
+  return new Set(
+    result.results.flatMap((g) =>
+      g.coverages.flatMap((c) => c.places.map((p) => JSON.stringify([p, c.dateRange, c.recordType])))
+    )
+  );
+}
+
 describe("volumeSearchTool answer size", () => {
   it("fits the real first page under the budget with no coverage cut", async () => {
     // At the default pageSize of 50 the first page is volumes 0–49, which holds
@@ -924,21 +986,36 @@ describe("volumeSearchTool answer size", () => {
 
     const result = await volumeSearchTool({ standardPlace: FREEBORN_P }, LOCAL);
 
-    const out = new Set(
-      result.results.flatMap((g) =>
-        g.coverages.flatMap((c) => c.places.map((p) => JSON.stringify([p, c.dateRange, c.recordType])))
-      )
-    );
-    expect(out).toEqual(triples(groups));
+    expect(listedTriples(result)).toEqual(triples(groups));
   });
 
-  it("keeps a full page of 100 under the limit by shortening coverages, never dropping a volume", async () => {
-    serveFreeborn(FREEBORN.response.groups!);
+  it("lists a volume's rows wholly outside the requested years, so none of its record types is lost", async () => {
+    // search-images reads every record type a volume lists to tell a film of
+    // several record sets from a single-type one.
+    const groups = FREEBORN.response.groups!.slice(0, 50);
+    const outside = groups
+      .flatMap((g) => g.coverages ?? [])
+      .filter((c) => Number(c.todateString?.slice(0, 4)) < 1870 || Number(c.fromdateString?.slice(0, 4)) > 1900);
+    expect(outside.length).toBeGreaterThan(0);
+    serveFreeborn(groups);
 
-    const result = await volumeSearchTool({ standardPlace: FREEBORN_P, pageSize: 100 }, LOCAL);
+    const result = await volumeSearchTool({ standardPlace: FREEBORN_P, startYear: 1870, endYear: 1900 }, LOCAL);
 
-    expect(JSON.parse(mockFetch.mock.calls[0][1].body).pageSize).toBe(100);
-    expect(result.results).toHaveLength(100);
+    expect(listedTriples(result)).toEqual(triples(groups));
+    for (const g of result.results) expect(g).not.toHaveProperty("coveragesOutsideYears");
+  });
+
+  it("keeps a denser page of 50 under the limit by shortening coverages, never dropping a volume", async () => {
+    // Freeborn's volumes of 31 or more coverage rows, repeated to fill a
+    // 50-volume page: denser than any page measured.
+    const dense = FREEBORN.response.groups!.filter((g) => (g.coverages ?? []).length >= 31);
+    expect(dense.length).toBeGreaterThan(5);
+    serveFreeborn(Array.from({ length: 50 }, (_, i) => dense[i % dense.length]));
+
+    const result = await volumeSearchTool({ standardPlace: FREEBORN_P }, LOCAL);
+
+    expect(JSON.parse(mockFetch.mock.calls[0][1].body).pageSize).toBe(50);
+    expect(result.results).toHaveLength(50);
     expect(result.nextPageToken).toBe("tok");
     const size = JSON.stringify(result).length;
     expect(size).toBeLessThan(HARD_LIMIT);
@@ -1068,6 +1145,132 @@ describe("mergeCoverages", () => {
   });
 });
 
+describe("filterSearchableVolumes", () => {
+  const indexed = (overrides: Record<string, unknown> = {}) => ({
+    imageGroupNumber: "i1",
+    imageCount: 10,
+    recordSearchablePercent: 95,
+    fulltextSearchable: false,
+    languages: ["en"],
+    coverages: [{ places: ["Edensor"], dateRange: "1870-1880", recordType: "Marriage Records" }],
+    ...overrides,
+  });
+  const browseOnly = (overrides: Record<string, unknown> = {}) => ({
+    imageGroupNumber: "b1",
+    imageCount: 10,
+    recordSearchablePercent: 10,
+    fulltextSearchable: false,
+    languages: ["en"],
+    coverages: [{ places: ["Edensor"], dateRange: "1870-1880", recordType: "Death Records" }],
+    ...overrides,
+  });
+  const page = (results: ReturnType<typeof indexed>[]) => ({
+    query: { standardPlace: "X", pageSize: results.length },
+    totalResults: results.length,
+    results,
+  });
+
+  it("omits a volume at or above 50% recordSearchablePercent, labelled indexed", () => {
+    const out = filterSearchableVolumes(page([indexed({ recordSearchablePercent: 50 })]));
+    expect(out.results).toEqual([]);
+    expect(out.searchableOmitted).toEqual(["indexed | Marriage Records | 1870-1880 | Edensor"]);
+  });
+
+  it("omits a fulltext-searchable volume below 50% recordSearchablePercent, labelled full-text", () => {
+    const out = filterSearchableVolumes(
+      page([indexed({ recordSearchablePercent: 4, fulltextSearchable: true })])
+    );
+    expect(out.searchableOmitted).toEqual(["full-text | Marriage Records | 1870-1880 | Edensor"]);
+  });
+
+  it("labels a volume that is both indexed and fulltext-searchable as indexed", () => {
+    const out = filterSearchableVolumes(
+      page([indexed({ recordSearchablePercent: 95, fulltextSearchable: true })])
+    );
+    expect(out.searchableOmitted).toEqual(["indexed | Marriage Records | 1870-1880 | Edensor"]);
+  });
+
+  it("keeps a volume whose signals are both null", () => {
+    const out = filterSearchableVolumes(
+      page([indexed({ recordSearchablePercent: null, fulltextSearchable: null })])
+    );
+    expect(out.results).toHaveLength(1);
+    expect(out.searchableOmitted).toEqual([]);
+  });
+
+  it("keeps a volume below the bar with an unknown fulltext status", () => {
+    const out = filterSearchableVolumes(
+      page([indexed({ recordSearchablePercent: 30, fulltextSearchable: null })])
+    );
+    expect(out.results).toHaveLength(1);
+  });
+
+  it("omits a volume at or above the bar even when fulltextSearchable is null", () => {
+    // Decided in review: a null fulltext check must not rescue a volume a
+    // known signal already qualifies -- that would disable the filter on
+    // every page where the full-text sub-fetch failed (it sets
+    // fulltextSearchable: null on every volume).
+    const out = filterSearchableVolumes(
+      page([indexed({ recordSearchablePercent: 95, fulltextSearchable: null })])
+    );
+    expect(out.results).toEqual([]);
+    expect(out.searchableOmitted).toEqual(["indexed | Marriage Records | 1870-1880 | Edensor"]);
+  });
+
+  it("carries a coverage's concept id in place of a missing recordType", () => {
+    const out = filterSearchableVolumes(
+      page([
+        indexed({
+          coverages: [{ places: ["Edensor"], dateRange: "1870-1880", recordTypeConceptId: 124443 }],
+        }),
+      ])
+    );
+    expect(out.searchableOmitted).toEqual(["indexed | concept-id:124443 | 1870-1880 | Edensor"]);
+  });
+
+  it("joins multiple places with a semicolon, not a comma, since place names already carry commas", () => {
+    const out = filterSearchableVolumes(
+      page([
+        indexed({
+          coverages: [
+            {
+              places: ["Edensor, Derbyshire, England", "Bakewell, Derbyshire, England"],
+              dateRange: "1870-1880",
+              recordType: "Marriage Records",
+            },
+          ],
+        }),
+      ])
+    );
+    expect(out.searchableOmitted).toEqual([
+      "indexed | Marriage Records | 1870-1880 | Edensor, Derbyshire, England; Bakewell, Derbyshire, England",
+    ]);
+  });
+
+  it("still emits one line for an omitted volume with no coverage rows", () => {
+    const out = filterSearchableVolumes(page([indexed({ coverages: [] })]));
+    expect(out.searchableOmitted).toEqual(["indexed |  |  | "]);
+  });
+
+  it("dedupes identical lines across different volumes", () => {
+    const out = filterSearchableVolumes(page([indexed(), indexed({ imageGroupNumber: "i2" })]));
+    expect(out.searchableOmitted).toEqual(["indexed | Marriage Records | 1870-1880 | Edensor"]);
+  });
+
+  it("keeps browse-only volumes in results beside omitted ones", () => {
+    const out = filterSearchableVolumes(page([indexed(), browseOnly()]));
+    expect(out.results).toEqual([browseOnly()]);
+    expect(out.searchableOmitted).toEqual(["indexed | Marriage Records | 1870-1880 | Edensor"]);
+  });
+
+  it("leaves an already-under-budget answer's other fields untouched", () => {
+    const input = page([browseOnly()]);
+    const out = filterSearchableVolumes(input);
+    expect(out.query).toBe(input.query);
+    expect(out.totalResults).toBe(input.totalResults);
+  });
+});
+
 describe("pageSize", () => {
   it("sends a caller's pageSize and echoes it in query", async () => {
     setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
@@ -1079,23 +1282,27 @@ describe("pageSize", () => {
     expect(result.query.pageSize).toBe(20);
   });
 
-  it.each([0, 101, 2.5, "50", -1, Number.NaN])("refuses pageSize %s before any request", async (pageSize) => {
+  it.each([0, 51, 100, 2.5, "50", -1, Number.NaN])("refuses pageSize %s before any request", async (pageSize) => {
     await expect(
       volumeSearchTool(
         { standardPlace: "Edensor, Derbyshire, England, United Kingdom", pageSize: pageSize as number },
         LOCAL
       )
-    ).rejects.toThrow("pageSize must be a whole number from 1 to 100.");
+    ).rejects.toThrow("pageSize must be a whole number from 1 to 50.");
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
-  it("accepts the bounds 1 and 100", async () => {
-    for (const pageSize of [1, 100]) {
+  it("accepts the bounds 1 and 50", async () => {
+    for (const pageSize of [1, 50]) {
       setupCalls([2968392], makeSearchResponse([makeGroup()]), []);
       await volumeSearchTool({ standardPlace: "Edensor, Derbyshire, England, United Kingdom", pageSize }, LOCAL);
     }
     expect(JSON.parse(mockFetch.mock.calls[0][1].body).pageSize).toBe(1);
-    expect(JSON.parse(mockFetch.mock.calls[2][1].body).pageSize).toBe(100);
+    expect(JSON.parse(mockFetch.mock.calls[2][1].body).pageSize).toBe(50);
+  });
+
+  it("advertises the same maximum it enforces", () => {
+    expect(volumeSearchSchema.inputSchema.properties.pageSize.maximum).toBe(50);
   });
 
   it("names pageSize in the 409 recovery instruction", async () => {
@@ -1151,6 +1358,23 @@ describe("volumeSearchTool — summary", () => {
     expect(result.summaryError).toMatch(/400.*pageSize too large/);
   });
 
+  it("defaults the page to 10 volumes with summary and echoes it", async () => {
+    routeFetch(() => makeOkResponse(makeSearchResponse([makeGroup()])));
+    const result = await volumeSearchTool({ standardPlace: "Edensor", summary: true }, LOCAL);
+    const pageSizes = mockFetch.mock.calls
+      .filter(([url]) => !String(url).includes("/fulltext/"))
+      .map(([, init]) => JSON.parse(init.body).pageSize);
+    expect(pageSizes).toContain(10);
+    expect(pageSizes).not.toContain(50);
+    expect(result.query.pageSize).toBe(10);
+  });
+
+  it("keeps a caller's pageSize with summary", async () => {
+    routeFetch(() => makeOkResponse(makeSearchResponse([makeGroup()])));
+    const result = await volumeSearchTool({ standardPlace: "Edensor", summary: true, pageSize: 30 }, LOCAL);
+    expect(result.query.pageSize).toBe(30);
+  });
+
   it("makes no rollup call when summary is not asked for", async () => {
     routeFetch(() => {
       throw new Error("rollup must not run");
@@ -1158,5 +1382,128 @@ describe("volumeSearchTool — summary", () => {
     const result = await volumeSearchTool({ standardPlace: "Edensor" }, LOCAL);
     expect(result.summary).toBeUndefined();
     expect(result.summaryError).toBeUndefined();
+  });
+});
+
+describe("volumeSearchTool — omitSearchable (issue #4414)", () => {
+  function mixedPage() {
+    const searchable = Array.from({ length: 40 }, (_, i) =>
+      makeGroup({
+        groupName: `searchable-${i}`,
+        childCount: 100,
+        indexedChildCount: 90,
+        noIndexableDataChildCount: 0,
+        coverages: [
+          {
+            place: `Town ${i}, Somewhere, United States`,
+            datesOrig: `${1800 + i}-${1810 + i}`,
+            recordTypeOrig: "Census",
+          },
+        ],
+      })
+    );
+    const browseOnly = Array.from({ length: 10 }, (_, i) =>
+      makeGroup({
+        groupName: `browse-${i}`,
+        childCount: 100,
+        indexedChildCount: 5,
+        noIndexableDataChildCount: 0,
+        coverages: [
+          {
+            place: `Hamlet ${i}, Somewhere, United States`,
+            datesOrig: `${1850 + i}-${1860 + i}`,
+            recordTypeOrig: "Probate Records",
+          },
+        ],
+      })
+    );
+    return [...searchable, ...browseOnly];
+  }
+
+  it("collapses a page's searchable volumes to lines, keeps only browse-only volumes in results, at under half the flag-off size", async () => {
+    const groups = mixedPage();
+
+    setupCalls([2968392], makeSearchResponse(groups), []);
+    const withoutFlag = await volumeSearchTool(
+      { standardPlace: "Edensor, Derbyshire, England, United Kingdom" },
+      LOCAL
+    );
+
+    setupCalls([2968392], makeSearchResponse(groups), []);
+    const withFlag = await volumeSearchTool(
+      { standardPlace: "Edensor, Derbyshire, England, United Kingdom", omitSearchable: true },
+      LOCAL
+    );
+
+    expect(withFlag.results).toHaveLength(10);
+    expect(withFlag.results.every((g) => g.imageGroupNumber.startsWith("browse-"))).toBe(true);
+    expect(withFlag.searchableOmitted).toHaveLength(40);
+    expect(withFlag.totalResults).toBe(withoutFlag.totalResults);
+    expect(JSON.stringify(withFlag).length).toBeLessThan(JSON.stringify(withoutFlag).length / 2);
+  });
+
+  it("keeps a volume whose signals are both null, and omits one at or above the bar despite an unknown fulltext status", async () => {
+    const groups = [
+      makeGroup({ groupName: "both-null" }),
+      makeGroup({ groupName: "high-with-null-fulltext" }),
+    ];
+    delete (groups[0] as Partial<MetadataRmsGroup>).childCount;
+    delete (groups[0] as Partial<MetadataRmsGroup>).indexedChildCount;
+    // groups[1] keeps makeGroup's default 366/412 (~89%, >= the 50% bar). The
+    // fulltext call fails all 3 retries, so both volumes' fulltextSearchable
+    // comes back null -- the real-world shape of a failed full-text sub-fetch
+    // (volume-search.ts mapGroup), which must not rescue a volume a known
+    // signal already qualifies.
+    mockFetch
+      .mockResolvedValueOnce(makeOkResponse(makeSearchResponse(groups)))
+      .mockRejectedValueOnce(new Error("network error"))
+      .mockRejectedValueOnce(new Error("network error"))
+      .mockRejectedValueOnce(new Error("network error"));
+
+    const result = await volumeSearchTool(
+      { standardPlace: "Edensor, Derbyshire, England, United Kingdom", omitSearchable: true },
+      LOCAL
+    );
+
+    expect(result.results.map((g) => g.imageGroupNumber)).toEqual(["both-null"]);
+    expect(result.searchableOmitted).toHaveLength(1);
+  });
+
+  it("is byte-identical to today's answer when the flag is false or absent", async () => {
+    setupCalls([2968392], makeSearchResponse([makeGroup()]), ["004452257"]);
+    const base = await volumeSearchTool(
+      { standardPlace: "Edensor, Derbyshire, England, United Kingdom" },
+      LOCAL
+    );
+
+    setupCalls([2968392], makeSearchResponse([makeGroup()]), ["004452257"]);
+    const explicitFalse = await volumeSearchTool(
+      { standardPlace: "Edensor, Derbyshire, England, United Kingdom", omitSearchable: false },
+      LOCAL
+    );
+
+    expect(JSON.stringify(explicitFalse)).toBe(JSON.stringify(base));
+    expect(base).not.toHaveProperty("searchableOmitted");
+    expect(explicitFalse).not.toHaveProperty("searchableOmitted");
+  });
+
+  it("totalResults stays upstream's count even when every volume on the page is omitted", async () => {
+    setupCalls(
+      [2968392],
+      makeSearchResponse([makeGroup()], { totalCount: 5000, nextPageToken: "tok" }),
+      ["004452257"]
+    );
+    const result = await volumeSearchTool(
+      { standardPlace: "Edensor, Derbyshire, England, United Kingdom", omitSearchable: true },
+      LOCAL
+    );
+    expect(result.results).toEqual([]);
+    expect(result.searchableOmitted).toHaveLength(1);
+    expect(result.totalResults).toBe(5000);
+    expect(result.nextPageToken).toBe("tok");
+  });
+
+  it("advertises omitSearchable on the schema", () => {
+    expect(volumeSearchSchema.inputSchema.properties).toHaveProperty("omitSearchable");
   });
 });

@@ -40,7 +40,7 @@ So the split is:
 |---|---|---|---|
 | Jurisdictions, boundary changes, register start dates, indexing quirks, record loss and substitutes | place | `locality-guide` | the `localities` entry research-plan reads |
 | Levy rolls for sons, naming conventions | subject × country | `research-plan` | `wiki_read` in the Step 3 pre-work block |
-| Which records exist for the place | place | `research-plan` | `collections_search`, `volume_search`; third-party collections from the stored list (`project_context` `externalCollections`, `research_query` `external_collections`), with `external_links_search` only for a place never fetched. A third-party item's `collection_url` is a stored row's `url`, which `research_append` checks |
+| Which records exist for the place | place | `research-plan` | the `localities` entry's `collections[]` when its `time_period` covers the years being planned and every one carries a `person_count` (no `collections_search` for that place, its state, or outside the US, Canada and Mexico its country, then; the national `United States` call is unchanged), else `collections_search`; `volume_search`; third-party collections from the stored list (`project_context` `externalCollections`, `research_query` `external_collections`), with `external_links_search` only for a place never fetched. A third-party item's `collection_url` is a stored row's `url`, which `research_append` checks |
 | Relatives, facts and attached sources the project tree lacks | the question person | `research-plan` | `person_read`, for each person the question's text names who is not a project subject (`project_context` `subjectPersonIds`) and whose tree entry has an `ark`, before any plan item; no one else's profile is read. A subject is planned from the project tree, which `project_create` built from the subject's full read. That holds because init-project, the one caller, creates a project with `personId` and `subjectPersonIds` set to that same id and no hand-built `tree`; a subject a project was given some other way (a hand-built tree, a second subject) is not covered, and no shipped caller produces one. The trade: memories left untranscribed at creation, and sources attached on FamilySearch since, are no longer picked up by research-plan's re-read; another agent's `person_read`, at the researcher's request, still can |
 | Record-type selection by goal, FAN, sequencing, BCG 9–18 | GPS craft | `research-plan` | body and its Appendices A and B |
 
@@ -127,6 +127,20 @@ that would replace it (probed 2026-10-02, §5):
   search asserts nothing, so a search keyed on a surname from a single marriage
   record may be planned freely. The caution applies to what is written down: no
   rationale calls it her maiden name, and a companion item must test it.
+- **The dedicated parents'-marriage item, re-checked at return time.** The
+  body's parentage rule (a dedicated item for the candidate parents' marriage
+  to each other, Appendix B) slipped roughly one full run in seven by folding
+  the marriage into a generic church item — the 2026-10-29 full run's church
+  item carried "Thomas's marriage record would supply her maiden name" beside
+  sibling baptisms. Reinforcing the rule's prose was rejected (the measured
+  position behind the body's style rules), so the return contract carries a
+  matching line instead: for a parentage question whose plan was written this
+  turn (create or supersede), the `pli_` id of the dedicated item, appended
+  before returning when missing. The turn scoping is load-bearing — the
+  contract applies in every mode, and review and dispose modes may not touch
+  `plans[]` (their validators fail any appended item). This spec has no fuller
+  return-contract description; the agent body's "Return contract" section is
+  the source. The validator is in §7.
 
 **r3d deleted (lead, 2026-10-06).** `ut_research_plan_r3d` failed in every
 committed research-plan run, including a same-day run of the unchanged skill:
@@ -202,6 +216,15 @@ change; keep no local copy.
   item targets the subject's own death or burial entry, dated after the birth
   window, and the items span at least two `record_type`s.
 - Both are proven to fail in `eval/harness/tests/unit/test_research_plan_validator.py`.
+- `test_research_plan_reuses_counted_locality_collections`: on
+  `reuses-counted-locality` tests (`ut_research_plan_clc`), research-plan makes no
+  `collections_search` call whose scope (a port of `standardPlaceToCollectionsQuery`)
+  equals that of the `place` of a `localities` entry counted on every collection, unless the
+  call's `startYear`–`endYear` reach outside the entry's `time_period`; an entry with no
+  parseable `time_period` covers nothing. `United States` is exempt. `_collection_person_counts` also reads entry counts for collections no response served, so the
+  availability check grades a plan written from the entry. `test_names_collections_only_from_search`
+  (`validators/test_research.py`, Kenya test only) still accepts only search-returned
+  titles. Proven to fail in `eval/harness/tests/unit/test_research_plan_validator.py`.
 - `test_research_plan_hints_review_first`: on `fs-hints-first` tests (ut_016,
   `ut_research_plan_subj`, `ut_research_plan_prof`) the new plan has an
   `fs_hints` item at `sequence` 1, none lower, whose rationale names the question
@@ -209,3 +232,14 @@ change; keep no local copy.
   `fs_hints` item. Either tag fails when no person the question names has an
   `ark`. Proven to fail in
   `eval/harness/tests/unit/test_research_plan_hints_review_validator.py`.
+- `test_research_plan_plans_parents_marriage`: on `parents-marriage-item`
+  tests, some sentence of a new plan item's rationale names the candidate
+  father together with a marriage word (marri*/wed*/bond*/licen*) and no
+  baptism, christening, sibling or child target in that sentence — sentence-scoped
+  because a dedicated marriage item may legitimately note what else the same
+  register holds. `child*` is an anti-word because the real v14 pli_009
+  rationale's last sentence searched "Thomas's marriage and … children bearing
+  the Flynn surname" (found in review, 2026-11-10). `record_type` is deliberately untested —
+  a church marriage register is a valid dedicated item (review decision,
+  2026-10-30). Proven to fail in
+  `eval/harness/tests/unit/test_research_plan_validator.py`.

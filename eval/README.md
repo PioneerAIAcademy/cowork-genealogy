@@ -54,7 +54,8 @@ the e2e benchmark; see
 ## Prerequisites
 
 - **Python 3.12+** with [uv](https://github.com/astral-sh/uv) (`pip install uv` or `brew install uv`).
-- **Node.js 20+** with npm, plus **pnpm** — the CRUD UI installs from the repo-root
+- **Node.js 22.22.2+ on 22, 24.15+ on 24, or 26+** (23 and 25 are refused) with **npm 11.12 or a later 11.x, not 12**
+  (Node 24.15+ and 26 ship one; on 22 run `npm install -g npm@11.12.1`), plus **pnpm** — the CRUD UI installs from the repo-root
   pnpm workspace, and Node ships npm only:
   ```
   npm install -g pnpm@9.15.9
@@ -415,11 +416,11 @@ the measured median).
 **First time (and after any skill or MCP-server change):** run
 `eval\CoworkInstall.bat` (`make cowork-install`). It builds **both** artifacts
 and prints where each one goes — install the `.mcpb` in Claude Desktop →
-Settings → Extensions → Advanced Settings → Install extension (over the old copy
-— no uninstall needed), and the `.zip` in Cowork → Customize, **removing any
-existing Genealogy Research plugin first**, via Add → Upload Plugin. Upload it
-from the **Cowork** tab, not the Code tab — they keep separate plugin lists.
-**Fully quit and reopen** Claude Desktop after installing. The headless
+Settings → Desktop app → Extensions → Advanced settings → Install extension
+(while an old copy is installed it offers only Uninstall: uninstall, then
+install), and the `.zip` in Customize → Plugins → Yours, **removing any existing
+Genealogy Research plugin first**, via + Add → Upload plugin. **Fully quit and
+reopen** Claude Desktop after installing. The headless
 `RunE2E.bat` path doesn't use these (it runs the compiled engine directly), so
 this is only for the live Cowork loop.
 

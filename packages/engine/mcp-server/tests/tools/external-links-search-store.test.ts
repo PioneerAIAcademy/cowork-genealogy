@@ -230,15 +230,33 @@ describe("external_links_search stores the full list in external-collections.jso
     expect(await readdir(project)).not.toContain("external-collections.json");
   });
 
-  it("writes nothing when totalResults is missing, or over the 1,000-row cap", async () => {
+  it("writes nothing when totalResults is missing", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true, status: 200, statusText: "OK", headers: new Headers(),
       json: async () => ({ collections: paRows }),
     } as unknown as Response);
     await expect(externalLinksSearchTool({ standardPlace: PA, projectPath: project })).rejects.toThrow(/no totalResults/);
-    mockFetch.mockResolvedValueOnce(response(paRows, 1998));
-    await expect(externalLinksSearchTool({ standardPlace: "United States", projectPath: project })).rejects.toThrow(/1998/);
     expect(await readdir(project)).not.toContain("external-collections.json");
+  });
+
+  it("records a place over the 1,000-row cap as too_large, with no rows, and still refuses (#4410)", async () => {
+    mockFetch.mockResolvedValueOnce(response(paRows, 1998));
+    await expect(externalLinksSearchTool({ standardPlace: "United States", projectPath: project })).rejects.toThrow(
+      /1998 curated links.*recorded as looked up.*exactly "United States"/s,
+    );
+    expect((await stored()).places).toEqual({ "United States": { rows: [], too_large: true } });
+  });
+
+  it("keeps too_large when another place's fetch files rows under it; a fetch of that place clears it", async () => {
+    mockFetch.mockResolvedValueOnce(response(paRows, 1998));
+    await externalLinksSearchTool({ standardPlace: PA, projectPath: project }).catch(() => undefined);
+    mockFetch.mockResolvedValueOnce(response([...paRows, ...schuylkillOnly]));
+    await externalLinksSearchTool({ standardPlace: SCHUYLKILL, projectPath: project });
+    expect((await stored()).places[PA]).toMatchObject({ too_large: true });
+    expect((await stored()).places[PA].rows.length).toBeGreaterThan(0);
+    mockFetch.mockResolvedValueOnce(response(paRows));
+    await externalLinksSearchTool({ standardPlace: PA, projectPath: project });
+    expect((await stored()).places[PA].too_large).toBeUndefined();
   });
 
   it("never creates the file in a folder that is not a project", async () => {
@@ -355,6 +373,13 @@ describe("project_context counts the stored lists", () => {
       [PA]: { total: 3, byRecordType: { Death: 1, Guides: 1, Probate: 1, Societies: 1, Wills: 1 } },
       [SCHUYLKILL]: { total: 2, byRecordType: { "Church Records": 1, Death: 1 } },
     });
+  });
+
+  it("reports a place too large to list as tooLarge, never as total 0 (#4410)", async () => {
+    mockFetch.mockResolvedValueOnce(response(paRows, 1998));
+    await externalLinksSearchTool({ standardPlace: "United States", projectPath: project }).catch(() => undefined);
+    const ctx = await projectContext({ projectPath: project }, LOCAL);
+    expect(ctx.ok && ctx.externalCollections).toEqual({ "United States": { tooLarge: true } });
   });
 
   it("omits the field when nothing is stored, and never fails on an unreadable file", async () => {
@@ -477,7 +502,8 @@ describe("stored-list edges", () => {
     const ctx = await projectContext({ projectPath: project }, LOCAL);
     const ec = ctx.ok ? ctx.externalCollections! : {};
     expect(Object.keys(ec)).toEqual([PA, VENANGO]);
-    expect(Object.keys(ec[PA].byRecordType)).toEqual(["Census", "Wills"]);
+    const pa = ec[PA];
+    expect("byRecordType" in pa && Object.keys(pa.byRecordType)).toEqual(["Census", "Wills"]);
   });
 });
 

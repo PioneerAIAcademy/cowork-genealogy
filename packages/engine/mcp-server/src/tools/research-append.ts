@@ -20,6 +20,7 @@
 
 import { rejectionFor, type RejectedLink } from "../utils/rejected-links.js";
 import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
+import { disputeGroups, liveSuccessorId } from "../utils/page-disputes.js";
 import { assertionReferrers, personsNamedFromRetracted } from "../utils/assertion-retirement.js";
 import { compoundJurisdictionError, planItemFlags, planWindowFlag } from "../utils/plan-item-plausibility.js";
 import { readStartingTree, startingPersonIdsOf } from "../utils/starting-tree.js";
@@ -119,9 +120,16 @@ import { gatherRelatives, isRealGivenName, PLACEHOLDER_GIVEN } from "../utils/re
 import { factsEquivalent, namesEquivalent, relationshipMatches } from "../utils/merge-gedcomx.js";
 import type { SimplifiedGedcomX, SimplifiedFact } from "../types/gedcomx.js";
 import { recordBasisOf } from "../utils/record-basis.js";
-import { countsForProofGate, isAttachmentLink } from "../utils/tree-person.js";
+import {
+  countsForProofGate,
+  isAttachmentLink,
+  isDerivedEntryLink,
+  derivedEntryLinkRationale,
+  DERIVED_ENTRY_LINK_PREFIX,
+} from "../utils/tree-person.js";
 import { isFsBudgetExhausted } from "../utils/fs-budget.js";
 import { awaitingUploadItemIds } from "../utils/awaiting-hand-offs.js";
+import type { CollectionCatalogLoader, CollectionCounts } from "../types/collection.js";
 
 // ─── Section configuration (the per-section table phases 2–3 extend) ─────────
 
@@ -803,7 +811,9 @@ function conflictInvariants(entry: any): string[] {
   // a genealogical judgment; it owes only the reason, because there is nothing
   // to weigh or to declare independent once the conflict has stopped bearing
   // on the question. Measured cost: 0 of the 1 moot conflict in the committed
-  // e2e corpus (`ogletree-children` c_006, which carries one).
+  // e2e corpus (`ogletree-children` c_006, which carries one). The analyses are
+  // optional here but not inert: a moot conflict that carries both can lift the
+  // core-identifier cap on its competitors (`resolvedAgainstIds`).
   if (entry.status === "moot") {
     const rationale = entry.resolution_rationale;
     // Trimmed, and type-checked: a whitespace-only string asserts exactly as
@@ -972,7 +982,7 @@ function uncertainPreferenceInvariants(entry: any, research: any): string[] {
   const assertions: any[] = (research.assertions ?? []).filter(isLiveAssertion);
   const byId = new Map<string, any>(assertions.map((a: any) => [a.id, a]));
   const preferred = byId.get(entry.preferred_assertion_id);
-  if (!preferred || !hasUncertainReading(preferred)) return [];
+  if (!preferred || !isDoubtful(preferred, research)) return [];
 
   const competing: string[] = Array.isArray(entry.competing_assertion_ids)
     ? entry.competing_assertion_ids
@@ -1004,8 +1014,8 @@ function uncertainPreferenceInvariants(entry: any, research: any): string[] {
 
   for (const a of assertions) {
     if (!a || a.id === entry.preferred_assertion_id) continue;
-    // Condition 1: no [?] on the corroborator.
-    if (hasUncertainReading(a)) continue;
+    // Condition 1: the corroborator is not itself in doubt ([?] or disputed by its page).
+    if (isDoubtful(a, research)) continue;
     // Condition 2: different record.
     const aRecord = a.record_id ?? a.source_id ?? null;
     if (aRecord == null || aRecord === preferredRecord) continue;
@@ -1025,8 +1035,8 @@ function uncertainPreferenceInvariants(entry: any, research: any): string[] {
   }
 
   return [
-    `preferred_assertion_id '${entry.preferred_assertion_id}' carries an uncertain reading ` +
-      `([?]) and no assertion from a different record corroborates it. To settle the conflict: ` +
+    `preferred_assertion_id '${entry.preferred_assertion_id}' ${doubtReason(preferred, research)} ` +
+      `and no assertion from a different record corroborates it. To settle the conflict: ` +
       `find a second record whose reading agrees. A reading the user confirms is one more reading ` +
       `to weigh in this conflict's rationale, not a correction: assertion ` +
       `'${entry.preferred_assertion_id}' was written by extraction and is final, and a conflict ` +
@@ -1215,6 +1225,27 @@ function hasUncertainReading(assertion: any): boolean {
   return typeof assertion?.value === "string" && assertion.value.includes("[?]");
 }
 
+/** A researcher's own reading of a page (#4286): a disputing assertion cited
+ *  under a `user_provided` log entry. */
+function isResearcherReading(a: any, logById: Map<string, any>): boolean {
+  return typeof a?.disputes_assertion_id === "string" && logById.get(a?.log_entry_id)?.tool === "user_provided";
+}
+
+/** Ruling 10 (#4286): an assertion is doubtful when its value carries `[?]`, or
+ *  when its own page disputes it. A researcher's own reading is not. */
+function isDoubtful(a: any, research: any): boolean {
+  if (hasUncertainReading(a)) return true;
+  return disputeGroups(research).has(a?.id);
+}
+
+/** Why `a` is doubtful, for a refusal: the `[?]`, or the page that disputes it. */
+function doubtReason(a: any, research: any): string {
+  if (hasUncertainReading(a)) return "carries an uncertain reading ([?])";
+  const g = disputeGroups(research).get(a?.id);
+  const reads = (g?.disputers ?? []).map((d: any) => `${d.id} reads "${d.value}"`).join(", ");
+  return `is disputed by its own page (${reads})`;
+}
+
 /** Distinct records (falling back to source) that already tie other, still-live
  *  person_evidence rows to this person — excluding this entry and its own
  *  record. Size 0 ⇒ the identity rests on this single record alone. */
@@ -1272,19 +1303,132 @@ function rejectedLinkInvariants(
   ];
 }
 
+/** A `person_evidence` link is superseded by the link that replaces it: another
+ *  existing entry for the same assertion (§6: append the corrected link, then
+ *  point the old one at it). Checked only on the op that sets the pointer, so a
+ *  document written before this rule stays editable. A pointer at another
+ *  assertion's link retires valid evidence: a batch that guessed its own new
+ *  ids pointed six links at another record's live links, and every one of the
+ *  five cross-assertion pointers in the committed e2e corpus retired a valid
+ *  link. Ops apply in batch order, so a replacement appended earlier in the
+ *  same call counts. The target must itself be live, or two links could retire
+ *  each other and leave the assertion with none. A pointer the engine wrote at
+ *  a rejection (`retireRejectedLinks`) names that `rj_` entry: it is accepted
+ *  when the rejection is for the same pair, and an update re-sending the stored
+ *  pointer unchanged is not setting it. */
+function supersedeTargetInvariants(
+  op: any,
+  entry: any,
+  research: any,
+  priorPair?: { superseded_by: unknown },
+): string[] {
+  const set =
+    op.op === "append"
+      ? op.entry?.superseded_by
+      : Object.prototype.hasOwnProperty.call(op.fields ?? {}, "superseded_by")
+        ? op.fields.superseded_by
+        : undefined;
+  if (typeof set !== "string" || set === "") return [];
+  if (op.op === "update" && priorPair?.superseded_by === set) return [];
+  const how =
+    "Append the replacement link first, read its id from that call's `results[].entryId`, " +
+    "then update this one with only { superseded_by: \"<that id>\" }.";
+  if (set === entry.id) {
+    return [`person_evidence ${entry.id} cannot be superseded by itself. ${how}`];
+  }
+  const target = ((research?.person_evidence ?? []) as any[]).find((pe: any) => pe?.id === set);
+  if (!target) {
+    const rejection = ((research?.rejected_links ?? []) as any[]).find((rj: any) => rj?.id === set);
+    if (rejection && rejection.assertion_id === entry.assertion_id && rejection.person_id === entry.person_id) {
+      return [];
+    }
+    return [
+      `person_evidence ${entry.id}: superseded_by '${set}' names no person_evidence entry, and no ` +
+        `rejection of this assertion and person. ${how}`,
+    ];
+  }
+  if (target.assertion_id !== entry.assertion_id) {
+    return [
+      `person_evidence ${entry.id} (assertion '${entry.assertion_id}') cannot be superseded by '${set}', ` +
+        `which links a different assertion ('${target.assertion_id}'). A link is superseded only by the ` +
+        `link that replaces it for the same assertion. ${how}`,
+    ];
+  }
+  if (target.superseded_by) {
+    return [
+      `person_evidence ${entry.id} cannot be superseded by '${set}': '${set}' is itself superseded ` +
+        `(by '${target.superseded_by}'), so the assertion would be left with no live link. Point it at ` +
+        `the live link that replaces it.`,
+    ];
+  }
+  return [];
+}
+
+/** A link for an assertion whose link to the same tree person began as an
+ *  attachment link (live or superseded) replaces an unchecked candidate, and
+ *  other attachment links are not corroboration: it is `confident` only when a
+ *  checked link from another source ties that person. Checked on every route to
+ *  `confident`: every append (one arriving already superseded too, since a later
+ *  update could revive it), and every update leaving a live `confident` link
+ *  except an edit to a link that was already live and `confident` on the same
+ *  pair. So a `probable` replacement cannot be raised in place, followed by a
+ *  `confident` correction, moved onto the person, or revived, once the
+ *  attachment link is superseded. A link to a different person is not capped:
+ *  that is main's general doctrine. The person-evidence rule said so in prose,
+ *  and a unit run still wrote `confident` on one record three times in three. */
+function attachmentReplacementTierInvariants(
+  op: any,
+  entry: any,
+  research: any,
+  priorPair?: { assertion_id: unknown; person_id: unknown; superseded_by: unknown; confidence: unknown },
+): string[] {
+  if (entry?.confidence !== "confident") return [];
+  if (op.op === "update") {
+    if (entry.superseded_by) return [];
+    const samePair = priorPair?.assertion_id === entry.assertion_id && priorPair?.person_id === entry.person_id;
+    if (priorPair?.confidence === "confident" && samePair && !priorPair?.superseded_by) return [];
+  } else if (op.op !== "append") {
+    return [];
+  }
+  const all = ((research?.person_evidence ?? []) as any[]).filter((pe: any) => pe && pe.id !== entry.id);
+  const began = all.some(
+    (pe: any) => pe.assertion_id === entry.assertion_id && pe.person_id === entry.person_id && isAttachmentLink(pe),
+  );
+  if (!began) return [];
+  const links = all.filter((pe: any) => pe.superseded_by == null);
+  const assertions = new Map<string, any>(
+    ((research?.assertions ?? []) as any[]).filter((a: any) => typeof a?.id === "string").map((a: any) => [a.id, a]),
+  );
+  const source = capSource(assertions.get(entry.assertion_id));
+  const corroborated = links.some(
+    (pe: any) =>
+      pe.person_id === entry.person_id &&
+      !isAttachmentLink(pe) &&
+      pe.confidence !== "speculative" &&
+      capSource(assertions.get(pe.assertion_id)) !== source,
+  );
+  if (corroborated) return [];
+  return [
+    `person_evidence for '${entry.assertion_id}' replaces an unverified attachment link, and no checked ` +
+      `link from another source ties ${entry.person_id}: attachment links are not corroboration, so a ` +
+      `link resting on this one record is 'probable', not 'confident'. Write it with confidence: "probable".`,
+  ];
+}
+
 function personEvidenceInvariants(entry: any, research: any): string[] {
   if (entry.confidence !== "confident") return [];
   const assertions: any[] = research.assertions ?? [];
   const byId = new Map<string, any>(assertions.map((a: any) => [a.id, a]));
   const linked = byId.get(entry.assertion_id);
   // Missing FK is already reported by the document validator; don't double-fault.
-  if (!linked || !hasUncertainReading(linked)) return [];
+  if (!linked || !isDoubtful(linked, research)) return [];
   if (corroboratingRecordCount(entry, research, byId) > 0) return [];
   return [
-    `confidence 'confident' is not available here: assertion '${entry.assertion_id}' carries an ` +
-      `uncertain reading ([?]) and no other record independently ties person '${entry.person_id}' ` +
-      `to this identity. Use 'probable' (or 'speculative'), keep the [?] in the assertion value, ` +
-      `and record what would resolve it — a second independent record, or the original image. ` +
+    `confidence 'confident' is not available here: assertion '${entry.assertion_id}' ` +
+      `${doubtReason(linked, research)} and no other record independently ties person '${entry.person_id}' ` +
+      `to this identity. Either lower the link to 'probable' (or 'speculative'), or stop citing this ` +
+      `value and link a reading that is not in doubt. Record what would resolve it — a second ` +
+      `independent record, or the researcher's own reading of the page. ` +
       `A confident wrong parent is worse than a flagged uncertain one.`,
   ];
 }
@@ -1396,8 +1540,9 @@ const WEAK_INFORMANT_PROXIMITY: ReadonlySet<string> = new Set([
  *  tree. Measured over every committed scenario fixture 2026-09-24: with these
  *  two gates the arm refuses **0 of 323** confident/probable person_evidence
  *  entries, against 38 without them and 274 comparing any place at all. An
- *  assertion a resolved conflict decided against, on the attribute that conflict
- *  disputed, is not credible either (`resolvedAgainstIds`). */
+ *  assertion a settled conflict set aside, on the attribute that conflict
+ *  disputed, is not credible either: one a resolved conflict decided against, or
+ *  a competitor in a moot one that carries both analyses (`resolvedAgainstIds`). */
 function contradictionIsCredible(assertion: any, resolvedAgainst: ReadonlySet<string>): boolean {
   if (resolvedAgainst.has(assertion?.id)) return false;
   if (assertion?.information_quality === "secondary") return false;
@@ -1423,28 +1568,76 @@ export interface ResolvedAgainst {
   date: ReadonlySet<string>;
 }
 
-/** Assertions a RESOLVED FACT conflict decided against, per arm: every
- *  competitor that is not its `preferred_assertion_id`, released only on the
- *  arm its `disputed_attribute` names. A contradiction the project has already
- *  weighed and set aside is not a live one, so it cannot cap the link; one it did
- *  not weigh (a birthplace dispute says nothing about the same record's
- *  christening date) still does. An identity conflict releases nothing: its
- *  loser was judged to be a different person, so a link through it to the
- *  rejected identity is exactly what must stay capped. Read from the document as
- *  this op sees it, so a conflict resolved LATER in the same batch still
- *  refuses, which fails safe. Figures: `dev/measure-core-identifier-gate.ts`. */
-function resolvedAgainstIds(research: any): ResolvedAgainst {
+/** Assertions a settled FACT conflict set aside, per arm, released only on the
+ *  arm its `disputed_attribute` names: every competitor but its
+ *  `preferred_assertion_id`. A `resolved` conflict settles when it names a
+ *  preferred assertion. A `moot` one settles only when it carries non-blank
+ *  `independence_analysis` and `weighing_analysis`, the bar `resolved` meets:
+ *  `moot` itself owes only a `resolution_rationale`, and one sentence must not
+ *  lift the cap. Issue #4255: a late group baptism, 12 years after the birth,
+ *  found to be two events and marked moot, left every link capped with no way
+ *  out. A contradiction the project has already weighed and set aside is not a
+ *  live one, so it cannot cap the link; one it did not weigh (a birthplace
+ *  dispute says nothing about the same record's christening date) still does.
+ *
+ *  An identity conflict releases nothing: its loser was judged to be a
+ *  different person, so a link through it to the rejected identity is exactly
+ *  what must stay capped. For the same reason a moot conflict releases nothing
+ *  while an identity conflict still doubts the record person behind one of its
+ *  competitors: `moot` is also how a fact conflict ends when its record turns
+ *  out to be someone else (#2475), and that must not lift the cap onto the
+ *  wrong person. The doubt is read by record person (`recordParties`), not by
+ *  assertion id, because an identity conflict usually names the persona's name
+ *  assertion rather than its christening. It holds at any status: a `resolved`
+ *  identity conflict does not say which way it settled (the corpus holds one
+ *  whose rationale rejects the person its preferred assertion names). A moot
+ *  meaning "someone else" written with no identity conflict beside it cannot be
+ *  told apart from the documents, and releases.
+ *
+ *  Read from the document as this op sees it, so a conflict settled LATER in the
+ *  same batch still refuses, which fails safe. Figures:
+ *  `dev/measure-core-identifier-gate.ts`. */
+function resolvedAgainstIds(research: any, assertionById: Map<string, any>): ResolvedAgainst {
   const place = new Set<string>();
   const date = new Set<string>();
-  for (const c of (research?.conflicts ?? []) as any[]) {
-    if (c?.status !== "resolved" || c.conflict_type !== "fact") continue;
-    if (typeof c.preferred_assertion_id !== "string") continue;
+  const conflicts: any[] = Array.isArray(research?.conflicts) ? research.conflicts : [];
+  const competingIds = (c: any): string[] =>
+    Array.isArray(c?.competing_assertion_ids)
+      ? c.competing_assertion_ids.filter((id: unknown): id is string => typeof id === "string")
+      : [];
+  // The record person an assertion is about, or the assertion itself when its
+  // record or party cannot be read.
+  const keyers = new Map<string, (a: any) => string | null>();
+  const personOf = (id: string): string => {
+    const a = assertionById.get(id);
+    const recordId = a ? recordIdOf(a) : null;
+    if (recordId == null) return `assertion ${id}`;
+    let keyOf = keyers.get(recordId);
+    if (!keyOf) keyers.set(recordId, (keyOf = recordParties(assertionById.values(), recordId).partyKey));
+    const party = keyOf(a);
+    return party == null ? `assertion ${id}` : `${recordId} ${party}`;
+  };
+  const doubted = new Set(
+    conflicts
+      .filter((c) => c?.conflict_type === "identity")
+      .flatMap(competingIds)
+      .map(personOf),
+  );
+  for (const c of conflicts) {
+    if (c?.conflict_type !== "fact") continue;
     const attr = String(c.disputed_attribute ?? "").trim().toLowerCase().replace(/[\s-]+/g, "_");
     const into = BIRTH_PLACE_DISPUTES.has(attr) ? place : BIRTH_DATE_DISPUTES.has(attr) ? date : null;
     if (!into) continue;
-    for (const id of (c.competing_assertion_ids ?? []) as unknown[]) {
-      if (typeof id === "string" && id !== c.preferred_assertion_id) into.add(id);
-    }
+    const ids = competingIds(c);
+    const settled =
+      c.status === "resolved"
+        ? typeof c.preferred_assertion_id === "string"
+        : c.status === "moot" &&
+          !isBlank(c.independence_analysis) &&
+          !isBlank(c.weighing_analysis) &&
+          !ids.some((id) => doubted.has(personOf(id)));
+    if (!settled) continue;
+    for (const id of ids) if (id !== c.preferred_assertion_id) into.add(id);
   }
   return { place, date };
 }
@@ -1782,7 +1975,7 @@ function contradictionScope(
   // against a father who the tree says was born 1818 produced 30 refusals that
   // are all one household, not one contradiction.
   const sameRecord = onRecord.filter((a: any) => parties.includes(partyKey(a) as string));
-  return { birth, sameRecord, resolvedAgainst: resolvedAgainstIds(research) };
+  return { birth, sameRecord, resolvedAgainst: resolvedAgainstIds(research, assertionById) };
 }
 
 /** The record's birth-place assertions that disagree with the tree's Birth
@@ -1902,8 +2095,12 @@ export function coreIdentifierContradictionInvariants(
     `confidence '${entry.confidence}' is not available on this link: ${findings.join("; ")}. ` +
       `A contradicted core identifier caps the link at 'speculative' regardless of the match ` +
       `score, and the user is asked before it stands. Use 'speculative' and name the ` +
-      `contradiction in the rationale, or resolve it first — a confident wrong identity is ` +
-      `worse than a flagged uncertain one.`,
+      `contradiction in the rationale, or have conflict-resolution settle it first in a fact ` +
+      `conflict whose disputed_attribute is 'birth_place' (or 'birth_date' for a date): ` +
+      `'resolved' preferring another assertion, or 'moot' carrying independence_analysis and ` +
+      `weighing_analysis (a moot still caps with only a resolution_rationale, or while any ` +
+      `identity conflict names that record's person). A confident wrong identity is worse ` +
+      `than a flagged uncertain one.`,
   ];
 }
 
@@ -2941,6 +3138,11 @@ export function circularCorroborationCallCheck(
   const findings: Array<{ index: number | null; message: string }> = [];
   for (const e of (Array.isArray(after.research?.person_evidence) ? after.research.person_evidence : []) as any[]) {
     if (!isLiveStrong(e) || typeof e.id !== "string" || typeof e.person_id !== "string") continue;
+    // #4226: a derived row shares its trigger's person AND record entry, and
+    // this verdict is computed from exactly those two, so its finding is always
+    // a second copy of the trigger's. Reporting both told the caller twice
+    // about one link they wrote once.
+    if (isDerivedEntryLink(e)) continue;
     const prev = strongBefore.get(pairingKey(e));
     if (prev && CONFIDENCE_RANK[e.confidence] <= CONFIDENCE_RANK[prev.confidence]) continue;
     const verdict = circularCorroborationVerdict(e, after.research, after.tree, baseline);
@@ -3123,6 +3325,58 @@ function ownGivenWords(given: unknown): string[] {
     .filter((w) => w !== "" && w !== "of" && /\p{L}/u.test(w) && !PLACEHOLDER_GIVEN.has(w));
 }
 
+/** A name's words as the namesake persona lookup reads them: every mark but a
+ *  letter, an apostrophe or a hyphen made a space first, so a bracketed
+ *  placeholder ("(Mrs.)") is still one, then `ownGivenWords`. */
+function lookupNameWords(text: string): string[] {
+  return ownGivenWords(text.replace(/[^\p{L}\p{M}\s'-]/gu, " "));
+}
+
+/** Words as the lookup compares them: hyphenated words split, accents folded,
+ *  apostrophes trimmed from each end, and initials and particles dropped. */
+function comparableWords(words: readonly string[]): string[] {
+  return words
+    .flatMap((w) => w.split("-"))
+    .map((w) => w.normalize("NFD").replace(/\p{M}/gu, "").replace(/^'+|'+$/g, ""))
+    .filter((w) => w.length > 1 && !NAME_PARTICLES.has(w));
+}
+
+/** Particles a given name can carry ("Maria de Jesus"), which name no one. */
+const NAME_PARTICLES: ReadonlySet<string> = new Set(["de", "da", "do", "dos", "das"]);
+
+/** A relative named inside a row's name ("Hannah Earnest (wife of Edwin
+ *  Earnest)"): the words from the relation on are the relative's. */
+const RELATIVE_OF = /\b(?:wife|husband|widow|widower|relict|son|daughter|child|mother|father|brother|sister)\s+of\b/i;
+
+/** The given words of a namesake row's `name`, a free string: the words before
+ *  any relative it names, read "Given Surname" (`surnameLast`), less name
+ *  suffixes, and less the last word, the surname, when two or more are left. */
+function rowGivenWords(name: unknown): RowGiven {
+  if (typeof name !== "string") return { words: new Set(), mrs: false };
+  const relative = RELATIVE_OF.exec(name);
+  const before = relative ? name.slice(0, relative.index) : name;
+  const own = surnameLast(before);
+  const words = lookupNameWords(own).filter((w) => !NAME_SUFFIXES.has(w));
+  return {
+    words: new Set(comparableWords(words.length > 1 ? words.slice(0, -1) : words)),
+    mrs: /\bmrs\b/i.test(before),
+  };
+}
+
+/** A row's given words, and whether its name has "Mrs." anywhere before any
+ *  relative it names, which may give her husband's given name ("Mrs. Edwin
+ *  Earnest"). */
+type RowGiven = { words: ReadonlySet<string>; mrs: boolean };
+
+/** Whether one of `person`'s names has a given word of the row's; a row named
+ *  "Mrs." never takes a persona not recorded female, who may be her husband. */
+function sharesRowGivenName(person: any, row: RowGiven): boolean {
+  if (row.mrs && knownSex(person) !== "female") return false;
+  return ((Array.isArray(person?.names) ? person.names : []) as any[]).some(
+    (n) => typeof n?.given === "string" && comparableWords(lookupNameWords(n.given)).some((w) => row.words.has(w)),
+  );
+}
+
 /** Why a relative's names cannot separate namesakes, or null when one can. A
  *  relative separates them only through a given name of their own: not a
  *  placeholder, and not one that only repeats the given name of the relative's
@@ -3162,15 +3416,18 @@ const INVERSE_RELATION: ReadonlyMap<string, string> = new Map([
 ]);
 const NAME_SUFFIXES: ReadonlySet<string> = new Set(["jr", "sr", "ii", "iii", "iv", "junior", "senior"]);
 
+/** A name written "Surname, Given" as "Given Surname"; any other name as it is. */
+function surnameLast(v: string): string {
+  if (!v.includes(",")) return v;
+  const [surname, given] = v.split(",", 2);
+  return `${given} ${surname}`;
+}
+
 /** A name as the co-resident exclusion compares it: the first given name and
  *  the surname, lower case, a generational suffix dropped. */
 function nameKey(value: unknown): string | null {
   if (typeof value !== "string") return null;
-  let v = value.toLowerCase();
-  if (v.includes(",")) {
-    const [surname, given] = v.split(",", 2);
-    v = `${given} ${surname}`;
-  }
+  const v = surnameLast(value.toLowerCase());
   const words = v.replace(/[^\p{L}\s'-]/gu, " ").split(/\s+/).filter((w) => w && !NAME_SUFFIXES.has(w));
   if (words.length === 0) return null;
   return words.length === 1 ? words[0] : `${words[0]} ${words[words.length - 1]}`;
@@ -3338,10 +3595,12 @@ export function derivedNamesakePairs(tree: any, personId: string): NamesakePartn
   return out.sort((x, y) => x.personId.localeCompare(y.personId));
 }
 
+/** The facts that date a record. An office is held on a date, so a town record
+ *  whose only dated fact is its office is dated by it (#3363). */
 const PAIR_EVENT_TYPES: ReadonlySet<string> = new Set([
   "marriage", "death", "burial", "christening", "baptism", "census", "residence", "census_residence",
   "immigration", "probate", "naturalization", "birth_registration", "death_registration",
-  "marriage_intention", "event",
+  "marriage_intention", "event", "office",
 ]);
 const PAIR_BIRTH_TYPES: ReadonlySet<string> = new Set(["birth", "birth_date", "christening", "baptism"]);
 /** Facts that show a persona dead by the record's date: their death, burial or estate. */
@@ -3374,6 +3633,20 @@ export interface PairRecordFacts {
   death: number | null;
   /** The record shows its persona dead: a death, burial or estate of theirs. */
   dead: boolean;
+  /** The persona holds an office on the record, which only an adult does
+   *  (chesworthrm, 2026-11-06). */
+  office: boolean;
+  /** The year of the record's latest dated event, any party, an office among
+   *  them: the year the namesake age exemption reads. Never a birth or
+   *  christening, which a household lists for its members, so a younger
+   *  brother's would date a census his elder brother heads; never the source's
+   *  date, never a year read from a value (chesworthrm, 2026-11-06). */
+  dated: number | null;
+}
+
+/** An office, or an adult role: what the record says needs an adult. */
+function actsAsAdult(rf: PairRecordFacts): boolean {
+  return rf.office || (rf.role !== null && PAIR_ADULT_ROLE.test(rf.role));
 }
 
 /** The assertions of `assertion`'s record, matched on the bare record id, and the
@@ -3388,9 +3661,10 @@ function pairRecordParties(research: any, assertion: any) {
 }
 
 /** What the linked record says about the persona `personId` is linked to: its
- *  role, its birth year (stated, or the record's year less a stated age), its
- *  death or burial year, and the record's own year (its latest event, else its
- *  latest birth, else the source's date). The persona is the linked assertion's
+ *  role, whether it holds an office, its birth year (stated, or the record's
+ *  year less a stated age), its death or burial year, the record's own year (its
+ *  latest event or office, else its latest birth, else the source's date), and
+ *  the year of its latest dated event that is no birth. The persona is the linked assertion's
  *  own; a two-party assertion speaks for two people, so for one the persona is
  *  the one `personId`'s one-party links on the record name most, else none. */
 export function pairRecordFacts(research: any, assertion: any, personId: string): PairRecordFacts {
@@ -3445,7 +3719,14 @@ export function pairRecordFacts(research: any, assertion: any, personId: string)
     if (LIFE_DEATH_FACTS.has(type(a)) && (death = yearIn(a)) !== null) break;
   }
   const dead = mine.some((a) => PAIR_POSTHUMOUS_TYPES.has(type(a)));
-  return { role: typeof role === "string" ? role.toLowerCase() : null, persona, year, birth, death, dead };
+  const office = mine.some((a) => type(a) === "office");
+  let dated: number | null = null;
+  for (const a of same) {
+    if (!PAIR_EVENT_TYPES.has(type(a)) || PAIR_BIRTH_TYPES.has(type(a))) continue;
+    const y = yearOf(a?.date);
+    if (y !== null && (dated === null || y > dated)) dated = y;
+  }
+  return { role: typeof role === "string" ? role.toLowerCase() : null, persona, year, birth, death, dead, office, dated };
 }
 
 export interface PairLife {
@@ -3520,7 +3801,7 @@ function pairRuledOutBy(life: PairLife, rf: PairRecordFacts): PairTest[] {
   ) {
     out.push("lifespan");
   }
-  if (PAIR_ADULT_ROLE.test(rf.role) && rf.year !== null && life.birth !== null && rf.year - life.birth < PAIR_ADULT_AGE) {
+  if (actsAsAdult(rf) && rf.year !== null && life.birth !== null && rf.year - life.birth < PAIR_ADULT_AGE) {
     out.push("adult role");
   }
   return out;
@@ -3569,7 +3850,7 @@ export function pairJudgement(
       (rf.birth !== null && latest !== null && rf.birth > latest + PAIR_AGE_TOLERANCE) ||
       (rf.birth !== null && earliest !== null && rf.birth < earliest - PAIR_AGE_TOLERANCE) ||
       (rf.year !== null && earliest !== null && rf.year < earliest) ||
-      (rf.year !== null && earliest !== null && PAIR_ADULT_ROLE.test(rf.role) && rf.year - earliest < PAIR_ADULT_AGE)
+      (rf.year !== null && earliest !== null && actsAsAdult(rf) && rf.year - earliest < PAIR_ADULT_AGE)
     );
   };
   const { record, partyOf } = pairRecordParties(research, assertion);
@@ -3614,13 +3895,29 @@ export function pairJudgement(
 export type NamesakeTie =
   | { kind: "a"; link: string; relative: string; relation: TieRelation; crossRecord: boolean }
   | { kind: "b"; voucher: string; field: CapField; value: string }
-  | { kind: "pair"; partner: string; relation: PairRelation; test: PairTest };
+  | { kind: "pair"; partner: string; relation: PairRelation; test: PairTest }
+  | { kind: "age"; row: string; age: number; marker: string };
+
+/** A namesake under this age at the record's date cannot be its persona when
+ *  the record makes that persona an adult (Dallan, 2026-11-05). */
+export const NAMESAKE_MINOR_AGE = 12;
+
+/** What makes the record's persona an adult for the age exemption: a household
+ *  head's role (a numbered head too), or an office; `principal` alone is not one. */
+function adultMarker(rf: PairRecordFacts): string | null {
+  const role = rf.role === null ? null : rf.role.replace(/_\d+$/, "");
+  if (role !== null && HOUSEHOLD_HEADS.has(role)) return role;
+  return rf.office ? "office" : null;
+}
 
 export interface NamesakeVerdict {
   allowed: boolean;
   /** Every tie found; `crossRecord` marks a co-party on another record id of
    *  the same source. */
   ties: NamesakeTie[];
+  /** The person's rows that cap this link: every row but those the age
+   *  exemption lifts for its record. */
+  rows: any[];
   /** The link's source. */
   source: string;
   /** Why nothing ties the link, one clause each; empty when it is allowed. */
@@ -3654,9 +3951,17 @@ export interface NamesakeVerdicts {
  *  (`derivedNamesakePairs`) is judged too. A pair member's tie (a) or (b), row or
  *  no row, counts only when the record would not tie a partner as well, reading
  *  the partner's siblings among the partner's relatives, and with no row a link
- *  also stands when `pairJudgement` rules every partner out. A row
- *  holder still needs tie (a) or (b), since the pair tests say nothing about a
- *  stranger. */
+ *  also stands when `pairJudgement` rules every partner out.
+ *
+ *  A row does not cap a link whose record is dated less than
+ *  `NAMESAKE_MINOR_AGE` years after the row's `birth_year`, by the record's
+ *  latest dated event that is no birth, when the record makes the persona an adult
+ *  (`adultMarker`); except under `tiesOnly`. A link no row caps is judged as a
+ *  person with no row is: by the pair tests when the person has a namesake in
+ *  the tree, and otherwise it stands on the age ties. A link a row still caps
+ *  needs tie (a) or (b), since the pair tests say nothing about a stranger. A
+ *  row holder's link that only the exemption or the pair tests let stand
+ *  vouches for nothing. */
 export function namesakeVerdicts(
   personId: string,
   research: any,
@@ -3827,6 +4132,9 @@ export function namesakeVerdicts(
     pair: PairJudgement | null;
     /** The record parties the link speaks for. */
     speaking: Set<string>;
+    /** The rows that cap the link, and those the age exemption lifts. */
+    capping: any[];
+    exempt: Array<{ row: string; age: number; marker: string }>;
   }
   // With `only`, the links judged and every link that could vouch for one of
   // them, by an occupation or street address anywhere on its source; the rest
@@ -3945,13 +4253,28 @@ export function namesakeVerdicts(
       }
       fields.push({ field: k.field, value: k.value, vouchers, excluded, sameCall, sameNamed: shown });
     }
-    // The pair tests say nothing about a stranger, so a row holder is not judged by them.
+    // The age exemption: a row whose namesake was under NAMESAKE_MINOR_AGE at the
+    // record's latest dated event, on a persona the record makes an adult, does not
+    // cap the link. Not under `tiesOnly`, where only ties (a) and (b) say whether
+    // the record ties a partner. A link outside `only` is here only to vouch, and
+    // with rows nothing reads its capping rows or its pair tests, so it skips both.
+    const capping: any[] = [];
+    const exempt: Pending["exempt"] = [];
+    const judgedHere = !opts.only || opts.only.has(e.id);
+    const rf = rows.length > 0 && !opts.tiesOnly && judgedHere ? pairRecordFacts(research, a, personId) : null;
+    const marker = rf === null ? null : adultMarker(rf);
+    for (const r of rows) {
+      const age = rf?.dated != null && Number.isInteger(r.birth_year) ? rf.dated - r.birth_year : null;
+      if (marker !== null && age !== null && age < NAMESAKE_MINOR_AGE) exempt.push({ row: String(r.id), age, marker });
+      else capping.push(r);
+    }
+    // The pair tests say nothing about a stranger, so a link a row caps is not judged by them.
     const pair =
-      pairs.length > 0 && rows.length === 0 ? pairJudgement(personId, a, pairs, research, tree, opts.startingTree) : null;
-    pending.push({ e, source, sourceId, tieA: ties, reasons, fields, blocked, pair, speaking });
+      pairs.length > 0 && capping.length === 0 ? pairJudgement(personId, a, pairs, research, tree, opts.startingTree) : null;
+    pending.push({ e, source, sourceId, tieA: ties, reasons, fields, blocked, pair, speaking, capping, exempt });
   }
-  /** A link of a person with no row that the pair tests tie: the record fits
-   *  them and rules out every partner. */
+  /** A link no row caps that the pair tests tie: the record fits the person and
+   *  rules out every partner. */
   const pairStands = (j: Pending): boolean => j.pair !== null && j.pair.fits && j.pair.ties.length === pairs.length;
 
   // A pair member's tie counts only when the record would not tie a partner as
@@ -4002,9 +4325,12 @@ export function namesakeVerdicts(
 
   // Grounding: a voucher counts only when it is itself allowed, so the allowed
   // set grows from the links tie (a) holds, through grounded vouchers, until
-  // nothing changes.
+  // nothing changes. A row holder's link the pair tests or the age exemption let
+  // stand says only that the namesake is not its persona, so it seeds nothing.
   const allowedIds = new Set(
-    pending.filter((j) => (j.tieA.length > 0 && tiesCount(j)) || pairStands(j)).map((j) => String(j.e.id)),
+    pending
+      .filter((j) => (j.tieA.length > 0 && tiesCount(j)) || (rows.length === 0 && pairStands(j)))
+      .map((j) => String(j.e.id)),
   );
   for (let grew = true; grew; ) {
     grew = false;
@@ -4052,11 +4378,14 @@ export function namesakeVerdicts(
       j.blocked.add("pair");
     }
     if (pairStands(j)) for (const t of j.pair!.ties) ties.push({ kind: "pair", ...t });
+    // Rows, none capping, and no namesake in the tree: the exemption alone lets it stand.
+    if (j.capping.length === 0 && pairs.length === 0) for (const x of j.exempt) ties.push({ kind: "age", ...x });
     if (j.pair) reasons.unshift(...j.pair.reasons);
     const allowed = ties.length > 0;
     verdicts.set(j.e.id, {
       allowed,
       ties,
+      rows: j.capping,
       source: String(j.sourceId),
       reasons: allowed ? [] : reasons,
       blockedBy: allowed ? [] : [...j.blocked].sort(),
@@ -4145,11 +4474,12 @@ export function namesakeTieInvariants(
   const v = namesakeVerdicts(entry.person_id, research, tree, { startingPersonIds, derivedPairs: true, startingTree });
   const verdict = v?.verdicts.get(entry.id);
   if (!v || !verdict || verdict.allowed) return [];
-  return [namesakeRefusal(entry, v.rows, verdict, new Set(), v.pairs)];
+  return [namesakeRefusal(entry, verdict.rows, verdict, new Set(), v.pairs)];
 }
 
 /** The links one research_append call ASSERTS to a person with a namesake row
- *  or a namesake in the tree after the call, each with the cap's verdict: a link
+ *  or a namesake in the tree after the call, each with the cap's verdict, the
+ *  rows that cap it and the person's namesakes in the tree: a link
  *  live and probable or confident after the call whose pairing was not before,
  *  or whose confidence is above that pairing's strongest live link before the
  *  call (an append, a re-point, an un-supersede, a raise). Only those links are
@@ -4207,7 +4537,7 @@ export function assertedNamesakeVerdicts(
       startingTree: opts.startingTree,
     });
     if (!v) continue;
-    for (const [id, verdict] of v.verdicts) out.push({ entry: entryById.get(id), rows: v.rows, pairs: v.pairs, verdict });
+    for (const [id, verdict] of v.verdicts) out.push({ entry: entryById.get(id), rows: verdict.rows, pairs: v.pairs, verdict });
   }
   return out;
 }
@@ -4243,68 +4573,158 @@ export function factEvidenceParties(
 
 const isPersonaId = (v: unknown): v is string => typeof v === "string" && v !== "";
 
+function logIndex(research: any): Map<string, any> {
+  return new Map<string, any>(
+    (Array.isArray(research?.log) ? research.log : [])
+      .filter((e: any) => e && typeof e.id === "string")
+      .map((e: any) => [e.id, e]),
+  );
+}
+
+/** What the persona lookup of item 10 finds for one row in its own search and
+ *  read sidecars: each listed record id in the sidecar's form, the persona each
+ *  found record names (a search hit's `primaryId`, else the person whose ark is
+ *  the listed one) when one of its names shares a given word with the row's
+ *  `name` (chesworthrm, 2026-11-09), and those personas' own entries. A persona
+ *  with no entry, or with none of the row's given words, counts as none named. */
+async function lookUpNamesakePersonas(
+  row: any,
+  logById: ReadonlyMap<string, any>,
+  readResults: (ref: string) => Promise<any[] | null>,
+): Promise<{ recordIds: unknown[]; stamp: Record<string, string>; personas: any[] }> {
+  const stamp: Record<string, string> = {};
+  const personas: any[] = [];
+  const rowGiven = rowGivenWords(row?.name);
+  const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
+    if (typeof id !== "string") return id;
+    const bare = arkToBareId(id);
+    // A bare id is a record persona's.
+    const ark = toArk(id).startsWith("ark:/") ? toArk(id) : `ark:/61903/1:1:${bare}`;
+    // The form of a log that finds the record but names no persona for it; a
+    // later cited log may still name one.
+    let found: string | undefined;
+    for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
+      const entry = logById.get(logId);
+      if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
+      const results = (await readResults(entry.results_ref)) ?? [];
+      const hit = results.find((r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === bare);
+      let persona: unknown = hit?.primaryId;
+      let form: unknown = hit?.recordId;
+      let person: any = isPersonaId(persona)
+        ? (Array.isArray(hit?.gedcomx?.persons) ? hit.gedcomx.persons : []).find((p: any) => p?.id === persona)
+        : undefined;
+      if (!isPersonaId(persona)) {
+        // A record_read names its persona only among the record's persons, and a
+        // row may list another member of a hit's or a read's household.
+        const persons = results.flatMap((r) => (Array.isArray(r?.gedcomx?.persons) ? r.gedcomx.persons : []));
+        person = personaFor({ persons }, ark);
+        persona = person?.id;
+        form ??= person?.ark;
+      }
+      if (typeof form !== "string") continue;
+      // Another person of the record, such as a household member listed by
+      // mistake, would corrupt item 10's count and give the row their birth year.
+      if (isPersonaId(persona) && sharesRowGivenName(person, rowGiven)) {
+        stamp[form] = persona;
+        personas.push(person);
+        return form;
+      }
+      found ??= form;
+    }
+    // Accepted unstamped, unlike #699's assertions: a row with no persona caps
+    // every link, so this loses a count and an age, not identity.
+    return found ?? id;
+  });
+  return { recordIds: await Promise.all(recordIds), stamp, personas };
+}
+
+/** The earliest birth year the personas state, or null. */
+function earliestPersonaBirthYear(personas: readonly any[]): number | null {
+  let out: number | null = null;
+  for (const p of personas) {
+    const y = anyBirthYear(p);
+    if (y !== null && (out === null || y < out)) out = y;
+  }
+  return out;
+}
+
+/** The row fields whose update restamps it: the stamp reads the listed records,
+ *  the logs that found them, and the name a persona must share. */
+const RESTAMPING_FIELDS = ["record_ids", "log_entry_ids", "name"] as const;
+
 /** Item 10 of #3363 (chesworthrm, 2026-10-24): stamps `record_persona_ids` on
- *  each row the call appended, or updated through `record_ids` or
- *  `log_entry_ids`, from the row's own search and read sidecars, so the first
- *  runs can count what a persona-keyed refusal would catch. Overwrites whatever
- *  the caller supplied; an update cannot set the field (`updatableFields`). A
- *  found record id is stored in the sidecar's form, as an assertion's is. */
+ *  each row the call appended, or updated through `record_ids`, `log_entry_ids`
+ *  or `name`, from the row's own search and read sidecars and only with a
+ *  persona of the row's given name, so the first runs can count what a
+ *  persona-keyed refusal would catch, and `birth_year`,
+ *  the earliest birth year those personas state, which the age exemption reads.
+ *  Overwrites whatever the caller supplied; an update cannot set either field
+ *  (`updatableFields`). A found record id is stored in the sidecar's form, as an
+ *  assertion's is. Returns the ids of the rows it stamped. */
 export async function stampNamesakePersonas(
   research: any,
   ops: ReadonlyArray<ResearchAppendOp>,
   applied: ReadonlyArray<AppliedOp>,
   readResults: (ref: string) => Promise<any[] | null>,
-): Promise<void> {
-  const logById = new Map<string, any>(
-    (Array.isArray(research?.log) ? research.log : [])
-      .filter((e: any) => e && typeof e.id === "string")
-      .map((e: any) => [e.id, e]),
-  );
+): Promise<Set<string>> {
+  const logById = logIndex(research);
   const rows = (Array.isArray(research?.namesakes) ? research.namesakes : []) as any[];
+  const stamped = new Set<string>();
   for (const a of applied) {
     if (a.section !== "namesakes" || a.noop) continue;
     const fields = (ops[a.opIndex] as any)?.fields;
-    if (a.op === "update" && !("record_ids" in (fields ?? {})) && !("log_entry_ids" in (fields ?? {}))) continue;
+    if (a.op === "update" && !RESTAMPING_FIELDS.some((f) => f in (fields ?? {}))) continue;
     const row = rows.find((r) => r && r.id === a.entryId);
     if (!row) continue;
-    const stamp: Record<string, string> = {};
-    const recordIds = (Array.isArray(row.record_ids) ? row.record_ids : []).map(async (id: unknown) => {
-      if (typeof id !== "string") return id;
-      const bare = arkToBareId(id);
-      // A bare id is a record persona's.
-      const ark = toArk(id).startsWith("ark:/") ? toArk(id) : `ark:/61903/1:1:${bare}`;
-      // The form of a log that finds the record but names no persona for it; a
-      // later cited log may still name one.
-      let found: string | undefined;
-      for (const logId of Array.isArray(row.log_entry_ids) ? row.log_entry_ids : []) {
-        const entry = logById.get(logId);
-        if (!entry || !PERSONA_BEARING_PRODUCERS.has(entry.tool) || typeof entry.results_ref !== "string") continue;
-        const results = (await readResults(entry.results_ref)) ?? [];
-        const hit = results.find((r) => r && typeof r.recordId === "string" && arkToBareId(r.recordId) === bare);
-        let persona: unknown = hit?.primaryId;
-        let form: unknown = hit?.recordId;
-        if (!isPersonaId(persona)) {
-          // A record_read names its persona only among the record's persons, and a
-          // row may list another member of a hit's or a read's household.
-          const persons = results.flatMap((r) => (Array.isArray(r?.gedcomx?.persons) ? r.gedcomx.persons : []));
-          const person = personaFor({ persons }, ark);
-          persona = person?.id;
-          form ??= person?.ark;
-        }
-        if (typeof form !== "string") continue;
-        if (isPersonaId(persona)) {
-          stamp[form] = persona;
-          return form;
-        }
-        found ??= form;
-      }
-      // Accepted unstamped, unlike #699's assertions: the cap reads only that a row exists, so this loses a count, not identity.
-      return found ?? id;
-    });
-    row.record_ids = await Promise.all(recordIds);
+    const { recordIds, stamp, personas } = await lookUpNamesakePersonas(row, logById, readResults);
+    row.record_ids = recordIds;
     if (Object.keys(stamp).length > 0) row.record_persona_ids = stamp;
     else delete row.record_persona_ids;
+    const year = earliestPersonaBirthYear(personas);
+    if (year !== null) row.birth_year = year;
+    else delete row.birth_year;
+    stamped.add(row.id);
   }
+  return stamped;
+}
+
+/** The persons the call's applied person_evidence ops link, as they stand after it. */
+export function linkedPersonIds(research: any, applied: ReadonlyArray<AppliedByApplyOne>): string[] {
+  const ids = new Set(applied.filter((a) => a.section === "person_evidence" && !a.noop).map((a) => a.entryId));
+  if (ids.size === 0) return [];
+  const out = new Set<string>();
+  for (const e of (Array.isArray(research?.person_evidence) ? research.person_evidence : []) as any[]) {
+    if (e && ids.has(e.id) && typeof e.person_id === "string") out.add(e.person_id);
+  }
+  return [...out];
+}
+
+/** The fill in of #3363 (chesworthrm, 2026-11-06): each row of `personIds` with
+ *  no `birth_year` gets the year the persona lookup finds, from personas of the
+ *  row's given name only, and nothing else of the row changes; a row it finds
+ *  none for stays without one. Runs when a call
+ *  links the row's person, so a row written before the stamp read years gets
+ *  one. Rows in `skip` (just stamped) are left alone. Returns the ids it filled. */
+export async function fillNamesakeBirthYears(
+  research: any,
+  personIds: Iterable<string>,
+  readResults: (ref: string) => Promise<any[] | null>,
+  skip: ReadonlySet<string> = new Set(),
+): Promise<string[]> {
+  const persons = new Set(personIds);
+  const rows = ((Array.isArray(research?.namesakes) ? research.namesakes : []) as any[]).filter(
+    (r) => r && persons.has(r.person_id) && r.birth_year === undefined && !skip.has(r.id),
+  );
+  if (rows.length === 0) return [];
+  const logById = logIndex(research);
+  const filled: string[] = [];
+  for (const row of rows) {
+    const year = earliestPersonaBirthYear((await lookUpNamesakePersonas(row, logById, readResults)).personas);
+    if (year === null) continue;
+    row.birth_year = year;
+    filled.push(String(row.id));
+  }
+  return filled;
 }
 
 /** What the namesake warning lists for one person. */
@@ -4581,14 +5001,17 @@ export function namesakeCitationRefusals(
             : judgedStrong === undefined
               ? `its only link to '${c.personId}' rests on an assertion that records an absence, which ties nothing`
               : `its link '${judgedStrong.id}' to '${c.personId}' is not tied: ${(v?.verdicts.get(judgedStrong.id)?.reasons[0] ?? "nothing in the record ties it").replace(/\.$/, "")}`;
+        // The rows that cap the judged link; every row when no link is judged.
+        const capping = judgedStrong === undefined ? [] : (v?.verdicts.get(judgedStrong.id)?.rows ?? []);
+        const named = capping.length > 0 ? capping : own;
         findings.push({
           index: c.index,
           message:
-            `'${c.personId}' has a recorded namesake (${own.map((r) => `'${r.id}'`).join(", ")}), so a record goes ` +
+            `'${c.personId}' has a recorded namesake (${named.map((r: any) => `'${r.id}'`).join(", ")}), so a record goes ` +
             `onto '${c.personId}''s facts and names only when something in it ties it to '${c.personId}'. The ` +
             `${c.label} this op ${c.added ? "adds" : "changes"} cites ${ref} (research source '${src}'), and ${reason}. ` +
-            `Nothing was written. Cite only records that tie to '${c.personId}', or hand the link to the ` +
-            "person-evidence agent, which owns person_evidence, to tie it first; a relationship added in this same " +
+            `Nothing was written. Cite only records that tie to '${c.personId}', or return ` +
+            "`Hand-back: person-evidence` so the person-evidence agent, which owns person_evidence, ties it first; a relationship added in this same " +
             "call does not count, so add it in an earlier call.",
         });
       }
@@ -4618,6 +5041,10 @@ export function namesakeCallCheck(
   const findings: Array<{ index: number | null; message: string }> = [];
   for (const { entry, rows, pairs, verdict } of assertedNamesakeVerdicts(before, after, startingPersonIds, { startingTree })) {
     if (verdict.allowed) continue;
+    // #4226: as in `circularCorroborationCallCheck` — the cap judges a (person,
+    // record) pairing, which a derived row shares with its trigger, so its
+    // finding duplicates one the caller already has.
+    if (isDerivedEntryLink(entry)) continue;
     let index: number | null = null;
     for (let i = applied.length - 1; i >= 0; i--) {
       if (applied[i].section === "person_evidence" && applied[i].entryId === entry.id) {
@@ -4803,9 +5230,11 @@ export function mergeNamesakeRefusals(
             `'${d.T}' does not share in the tree.`;
         }
       }
-      const rows = d.rows.map((r) => `'${r.id}'`).join(", ");
+      // The rows of T that cap this link, which the age exemption may have narrowed.
+      const capping = verdict.rows.length > 0 ? verdict.rows : d.rows;
+      const rows = capping.map((r) => `'${r.id}'`).join(", ");
       lines.push(
-        `person_evidence '${id}' on '${d.G}' would stand under the namesake row${d.rows.length > 1 ? "s" : ""} ` +
+        `person_evidence '${id}' on '${d.G}' would stand under the namesake row${capping.length > 1 ? "s" : ""} ` +
           `${rows} of '${d.T}' after this merge: nothing in source '${verdict.source}' ties assertion ` +
           `'${e.assertion_id}' to '${d.T}'. ${namesakeReasonText(verdict)}${mark}`,
       );
@@ -5952,6 +6381,88 @@ function stripQuoted(text: string): string {
   return text
     .replace(/"[^"\n]*"|“[^”\n]*”/g, " ")
     .replace(/(^|[\s(])'[^'\n]+'(?=[\s.,;:)]|$)/g, "$1 ");
+}
+
+/** Text normalized for the both-readings check: `[?]` removed, whitespace
+ *  collapsed, case folded. */
+function readingText(v: unknown): string {
+  return typeof v === "string" ? normalizeUncertainValue(v) : "";
+}
+
+/** Where `needle` occurs in `hay` as whole words (Unicode letters and digits). */
+function wholeWordSpans(hay: string, needle: string): Array<[number, number]> {
+  if (needle === "") return [];
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const re = new RegExp(`(?<![\\p{L}\\p{N}])${escaped}(?![\\p{L}\\p{N}])`, "gu");
+  const out: Array<[number, number]> = [];
+  for (const m of hay.matchAll(re)) out.push([m.index!, m.index! + m[0].length]);
+  return out;
+}
+
+/** True when the text names every reading as whole words, a shorter reading
+ *  counting only where it is not inside a longer one that contains it. */
+export function namesEveryReading(text: string, readings: readonly string[]): boolean {
+  const hay = readingText(text);
+  const wanted = [...new Set(readings.map(readingText).filter((r) => r !== ""))];
+  const spans = new Map(wanted.map((r) => [r, wholeWordSpans(hay, r)]));
+  return wanted.every((r) => {
+    const longer = wanted.filter((o) => o !== r && o.length > r.length && o.includes(r));
+    const covered = longer.flatMap((o) => spans.get(o) ?? []);
+    return (spans.get(r) ?? []).some(([a, b]) => !covered.some(([x, y]) => a >= x && b <= y));
+  });
+}
+
+/** Ruling 10 (#4286): a proof above `not_proved` that cites a value its own page
+ *  disputes names both readings. The check is literal: each reading's value, with
+ *  `[?]` removed and case folded, appears as whole words in the narrative or a
+ *  claim's text. A paraphrase ("the page gives another name") does not count. A
+ *  proof citing the researcher's own reading is settled and is not checked; one
+ *  citing the value they read differently still is.
+ *  Runs on every write of the summary, not only one that touches the narrative,
+ *  so a summary written before the page was read is caught on its next edit. */
+export function disputedValueNarrativeInvariants(entry: any, preCallResearch: any): string[] {
+  if (typeof entry?.tier !== "string" || entry.tier === "not_proved") return [];
+  const groups = disputeGroups(preCallResearch);
+  if (groups.size === 0) return [];
+  const all: any[] = Array.isArray(preCallResearch?.assertions) ? preCallResearch.assertions : [];
+  const byId = new Map<string, any>(all.filter((a) => typeof a?.id === "string").map((a) => [a.id, a]));
+  const logById = new Map<string, any>(
+    (Array.isArray(preCallResearch?.log) ? preCallResearch.log : []).map((e: any) => [e?.id, e]),
+  );
+  const claims: any[] = Array.isArray(entry?.claims) ? entry.claims : [];
+  const cited = [
+    ...(Array.isArray(entry?.supporting_assertion_ids) ? entry.supporting_assertion_ids : []),
+    ...claims.flatMap((c: any) => (Array.isArray(c?.supporting_assertion_ids) ? c.supporting_assertion_ids : [])),
+  ].filter((id: unknown): id is string => typeof id === "string");
+  const text = [
+    entry?.narrative_markdown,
+    ...claims.flatMap((c: any) => [c?.claim, c?.finding]),
+  ].filter((t) => typeof t === "string").join("\n");
+  const errors: string[] = [];
+  const seen = new Set<string>();
+  for (const id of cited) {
+    const a = byId.get(id);
+    // Citing the researcher's own reading is what settles it; citing the value
+    // they read differently still names every reading.
+    if (!a || isResearcherReading(a, logById)) continue;
+    const key =
+      typeof a.disputes_assertion_id === "string"
+        ? liveSuccessorId(a.disputes_assertion_id, byId)
+        : liveSuccessorId(a.id, byId);
+    const g = groups.get(key);
+    if (!g || seen.has(key)) continue;
+    seen.add(key);
+    const readings = [g.target, ...g.disputers].map((x) => String(x.value ?? ""));
+    if (namesEveryReading(text, readings)) continue;
+    errors.push(
+      `proof_summaries ${entry?.id ?? "(entry)"} cites ${id}, whose ${g.target.fact_type} the record's own page ` +
+        `reads differently: the index reads "${readingText(g.target.value)}", the page reads ` +
+        `${g.disputers.map((d) => `"${readingText(d.value)}"`).join(", ")}. A conclusion that relies on that ` +
+        "value names both readings, word for word, in narrative_markdown or a claim. Either write both " +
+        "readings in, or stop citing it and cite a value no page disputes.",
+    );
+  }
+  return errors;
 }
 
 /** A conclusion above `not_proved` may not STATE a parent nobody identified.
@@ -7127,6 +7638,11 @@ interface SingleSuccess {
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces?: ResolvedPlaceEcho[];
   /** Places looked up and left with no standard_place (§3.6). */
+  /** #4226: derived `person_evidence` rows a gate refused, so they were rolled
+   *  back out of the document rather than failing the call. Present only when
+   *  an entry did not expand fully, so the caller can see why it got fewer
+   *  rows than the entry has facts. */
+  skippedDerivedLinks?: string[];
   unresolvedPlaces?: string[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
@@ -7137,6 +7653,11 @@ interface BatchSuccess {
   sourceDescriptionId?: string;
   sourceReuse?: SourceReuseEcho;
   resolvedPlaces?: ResolvedPlaceEcho[];
+  /** #4226: derived `person_evidence` rows a gate refused, so they were rolled
+   *  back out of the document rather than failing the call. Present only when
+   *  an entry did not expand fully, so the caller can see why it got fewer
+   *  rows than the entry has facts. */
+  skippedDerivedLinks?: string[];
   unresolvedPlaces?: string[];
   filesWritten: string[];
   validation: { valid: true; warnings: string[] };
@@ -7291,6 +7812,11 @@ interface AppliedByApplyOne {
   /** A settled no-op (e.g. re-declaring an already-exhaustive question): the
    *  document was not mutated, so the caller may skip the write. */
   noop?: boolean;
+  /** #4226: this op was a DERIVED `person_evidence` row and a gate refused it,
+   *  so it was rolled back out of the document instead of failing the call.
+   *  Carries the first refusal, for the response's skip list. The caller did
+   *  not write this row and cannot act on a failure about it. */
+  skippedDerived?: string;
   warnings?: string[];
 }
 
@@ -7417,7 +7943,7 @@ function rewriteLinkedFacts(
       const before = snapshot(fact);
       // A concluded fact is the value proof-conclusion landed, and a proof
       // summary may cite it. Correcting a misread record still has to reach it —
-      // leaving a known-wrong concluded value on the upload target is worse —
+      // leaving a known-wrong concluded value on the deliverable is worse —
       // but it must never happen quietly.
       const concluded = fact.primary === true;
       // A re-CLASSIFIED assertion no longer describes this fact's type, and the
@@ -7495,7 +8021,7 @@ function rewriteLinkedFacts(
             if (concluded) concludedTouched.add(fact);
             // Never silent. A blank string withdraws a claim exactly as `null`
             // does, and it is also the likelier typo; either way this deleted
-            // data from the upload target.
+            // data from the deliverable.
             mutationWarnings.push(
               `fact '${fact.id}' lost its '${attr}' because assertion '${a.entryId}' no longer ` +
                 "asserts one. If that was a typo rather than a withdrawal, set the field back.",
@@ -7615,7 +8141,16 @@ function retireRejectedLinks(
     const rj = rejections.find((r) => r && r.id === a.entryId);
     if (!rj || typeof rj.assertion_id !== "string" || typeof rj.person_id !== "string") continue;
     const live = links.filter(
-      (pe) => pe && !pe.superseded_by && pe.assertion_id === rj.assertion_id && pe.person_id === rj.person_id,
+      // A link claims its whole record entry, so retiring it must retire the rows
+      // derived from it too (#4355 review). The derived rationale names the
+      // trigger assertion, and the trailing ":" keeps a_001 from matching a_0011.
+      (pe) =>
+        pe &&
+        !pe.superseded_by &&
+        pe.person_id === rj.person_id &&
+        (pe.assertion_id === rj.assertion_id ||
+          (isDerivedEntryLink(pe) &&
+            pe.rationale.startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${rj.assertion_id}:`))),
     );
     if (live.length === 0) continue;
     for (const pe of live) pe.superseded_by = rj.id;
@@ -7626,9 +8161,11 @@ function retireRejectedLinks(
     const person = (tree?.persons ?? []).find((p) => p && p.id === rj.person_id);
     const removed: string[] = [];
     const kept: string[] = [];
+    // The derived rows retired above take their facts with them (#4355 review).
+    const retiredAssertions = new Set(live.map((pe) => pe.assertion_id));
     if (person && Array.isArray(person.facts)) {
       person.facts = person.facts.filter((f) => {
-        if (!f || f.assertion_id !== rj.assertion_id) return true;
+        if (!f || !retiredAssertions.has(f.assertion_id)) return true;
         const otherEvidence = (f.sources ?? []).some((s) => typeof s?.ref === "string" && s.ref !== ownRef);
         if (otherEvidence) {
           kept.push(f.id ?? f.type ?? "(fact)");
@@ -7655,6 +8192,90 @@ function retireRejectedLinks(
     }
   }
   return { mutated, warnings };
+}
+
+/**
+ * Retire the rows a link derived when that link is superseded onto a DIFFERENT
+ * tree person, pointing each at the replacement's row for the same assertion.
+ *
+ * Step 6 of person-evidence.md corrects a wrong link in two calls: append the
+ * replacement, then supersede the old entry with it. Retiring only the entry
+ * named in the update leaves every row it derived on the old person, which is
+ * the "one entry, one person" split the entry rule exists to stop (#4355
+ * review). The expansion on the first call has already put the replacement's
+ * own rows on the new person, so the row to point at exists by the second.
+ *
+ * A supersede onto the SAME person is a correction of that link, not a move,
+ * and leaves the derived rows alone.
+ *
+ * A post-apply pass for the same reason `retireRejectedLinks` is one: `applyOne`
+ * cannot report a change it makes to another entry. It fabricates no link -- a
+ * derived row with no replacement row to name is left live and named in a
+ * warning, because `superseded_by` may only name a link for the same assertion.
+ */
+function retireSupersededDerivedLinks(
+  applied: AppliedOp[],
+  research: any,
+  beforeResearch: any,
+): { warnings: string[] } {
+  const warnings: string[] = [];
+  const links: any[] = Array.isArray(research?.person_evidence) ? research.person_evidence : [];
+  const before: any[] = Array.isArray(beforeResearch?.person_evidence) ? beforeResearch.person_evidence : [];
+
+  for (const a of applied) {
+    if (a.section !== "person_evidence" || a.op !== "update" || a.noop) continue;
+    const pe = links.find((x) => x && x.id === a.entryId);
+    if (!pe || typeof pe.superseded_by !== "string" || pe.superseded_by === "") continue;
+    // Only a supersede THIS call set. An unrelated update to an already-retired
+    // link must not re-run the move.
+    const was = before.find((x) => x && x.id === a.entryId);
+    if (was && was.superseded_by === pe.superseded_by) continue;
+    const target = links.find((x) => x && x.id === pe.superseded_by);
+    if (!target || String(target.person_id) === String(pe.person_id)) continue;
+
+    const derived = links.filter(
+      (d) =>
+        d &&
+        !d.superseded_by &&
+        String(d.person_id) === String(pe.person_id) &&
+        isDerivedEntryLink(d) &&
+        String(d.rationale).startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${pe.assertion_id}:`),
+    );
+    if (derived.length === 0) continue;
+
+    const moved: string[] = [];
+    const stranded: string[] = [];
+    for (const d of derived) {
+      const replacement = links.find(
+        (x) =>
+          x &&
+          !x.superseded_by &&
+          x.id !== d.id &&
+          String(x.assertion_id) === String(d.assertion_id) &&
+          String(x.person_id) === String(target.person_id),
+      );
+      if (!replacement) {
+        stranded.push(`${d.id} (${d.assertion_id})`);
+        continue;
+      }
+      d.superseded_by = replacement.id;
+      moved.push(`${d.id} -> ${replacement.id}`);
+    }
+    if (moved.length > 0) {
+      warnings.push(
+        `${pe.id} moved ${pe.assertion_id} to ${target.person_id}, so the rows it derived went ` +
+          `with it: ${moved.join(", ")}. A record entry is one person.`,
+      );
+    }
+    if (stranded.length > 0) {
+      warnings.push(
+        `${stranded.join(", ")} stayed on ${pe.person_id}: ${target.person_id} has no link for ` +
+          `that assertion to supersede them with, and a link is superseded only by one for the ` +
+          `same assertion. Link ${target.person_id} to those assertions, or reject the pairing.`,
+      );
+    }
+  }
+  return { warnings };
 }
 
 /**
@@ -8315,6 +8936,10 @@ function applyOne(
   // Ids that count as taken beyond the entries the document shows: the ones ops
   // that failed would have had. Only the failure path sets it.
   reservedIds?: ReadonlySet<string>,
+  // #4226: this op is a `person_evidence` row `planEntryLinkExpansion` derived
+  // from the caller's own link, not one the caller wrote. Set by index at the
+  // call site, never from the op's contents.
+  derivedLink = false,
 ): AppliedByApplyOne {
   const section = op.section;
   // hasOwn, not a bare index: `section` is LLM-supplied, and a bare index walks
@@ -8606,6 +9231,9 @@ function applyOne(
       throw new ResearchAppendError(
         "record_document_id is not updatable: research_append stamps it from the record's results sidecar on append",
       );
+    }
+    if (section === "assertions" && "disputes_assertion_id" in op.fields) {
+      throw new ResearchAppendError(DISPUTES_NOT_CALLERS);
     }
     const existingIndex = array.findIndex((e) => e && e.id === op.entryId);
     if (existingIndex === -1) {
@@ -9119,6 +9747,40 @@ function applyOne(
       !!priorPair &&
       (priorPair.assertion_id !== resultEntry.assertion_id ||
         priorPair.person_id !== resultEntry.person_id);
+
+    // #4355 review: the entry rule governs APPENDS, so re-pointing `person_id`
+    // on a link that already expanded walked around it -- the trigger moved and
+    // the rows it derived stayed on the old person, which is the "one entry, one
+    // person" split the rule exists to stop. Refuse the move and name step 6,
+    // which moves the derived rows with the trigger
+    // (`retireSupersededDerivedLinks`). A re-point of a link that derived
+    // nothing is untouched: it is legitimate correction.
+    if (
+      op.op === "update" &&
+      !!priorPair &&
+      priorPair.person_id !== resultEntry.person_id &&
+      !resultEntry.superseded_by
+    ) {
+      const stranded = ((research?.person_evidence ?? []) as any[]).filter(
+        (d) =>
+          d &&
+          !d.superseded_by &&
+          d.id !== resultEntry.id &&
+          String(d.person_id) === String(priorPair?.person_id) &&
+          isDerivedEntryLink(d) &&
+          String(d.rationale).startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${resultEntry.assertion_id}:`),
+      );
+      if (stranded.length > 0) {
+        invariantErrors.push(
+          `${resultEntry.id} links ${resultEntry.assertion_id}, which claimed its whole record entry ` +
+            `for ${priorPair.person_id}: ${stranded.map((d) => `${d.id} (${d.assertion_id})`).join(", ")} ` +
+            `were derived from it. Re-pointing person_id would move this one fact and leave those on ` +
+            `${priorPair.person_id}, and a record entry is one person. Correct it the way step 6 of ` +
+            `person-evidence does instead: append the link to '${resultEntry.person_id}', then update ` +
+            `${resultEntry.id} with { superseded_by: "<that id>" } -- which moves the derived rows too.`,
+        );
+      }
+    }
     const wasRetired = !!priorPair?.superseded_by;
     const reRaising =
       op.op === "append" ||
@@ -9154,6 +9816,8 @@ function applyOne(
         );
       }
     }
+    invariantErrors.push(...supersedeTargetInvariants(op, resultEntry, research, priorPair));
+    invariantErrors.push(...attachmentReplacementTierInvariants(op, resultEntry, research, priorPair));
     invariantErrors.push(...personEvidenceInvariants(resultEntry, research));
     invariantErrors.push(...coreIdentifierConflictInvariants(resultEntry));
     // A REFUSAL, not a warning. The lead's standing ruling on issue #2272 is
@@ -9172,8 +9836,8 @@ function applyOne(
     // the trap the score gate avoids too. Keyed on the op, not the field: an
     // APPEND that arrives already carrying `superseded_by` is a new link, and
     // exempting it let any confident link on a contradicted persona through
-    // with an invented supersede pointer (the validator does not check that
-    // a person_evidence `superseded_by` names an existing entry).
+    // with an invented supersede pointer (the document validator does not check
+    // the pointer; `supersedeTargetInvariants` checks it only on the op that sets it).
     invariantErrors.push(
       ...(op.op === "update" && resultEntry.superseded_by
         ? []
@@ -9232,7 +9896,15 @@ function applyOne(
     // gate). Exempt only on extraction_append's internal flag AND the entry's
     // full attachment shape, so neither half alone reaches the exemption.
     const exemptAttachment = attachmentLink && op.op === "append" && isAttachmentLink(resultEntry);
-    if (writesScore && !exemptAttachment) {
+    // #4226: a derived row carries no score because none was computed for its
+    // pairing, and none can be: the attestation is keyed on the ASSERTION, and
+    // its persona arm fires only where the assertion carries a non-null
+    // `record_persona_id` -- null on thousands of corpus links. The caller made
+    // one scored identity decision about the entry, which is what the ruling
+    // says a link is. Keyed on the op's index, so no caller-supplied shape can
+    // reach this exemption.
+    const exemptDerived = derivedLink && op.op === "append";
+    if (writesScore && !exemptAttachment && !exemptDerived) {
       invariantErrors.push(
         ...personEvidenceScoreInvariants(
           resultEntry,
@@ -9301,6 +9973,9 @@ function applyOne(
     // source is invalid whether or not this call put it there. Lowering the
     // tier in the same update satisfies it, so the deny stays satisfiable.
     invariantErrors.push(...conflictedSourceInvariants(resultEntry, preCallResearch));
+    // Also ungated (#4286): a page that disputes a cited value is read after the
+    // summary is written as often as before it.
+    invariantErrors.push(...disputedValueNarrativeInvariants(resultEntry, preCallResearch));
     // Also NOT tier-gated, and reads LIVE research: a conflict resolved only in
     // prose must reach conflicts[] before any summary relies on it. See
     // `unpersistedConflictResolutionInvariants` for scope and what it lets through.
@@ -9337,6 +10012,17 @@ function applyOne(
     }
   }
   if (invariantErrors.length > 0) {
+    // #4226: a derived row is the TOOL's, not the caller's. Any gate refusing
+    // one must drop that row, never fail the call: the caller did not write it
+    // and cannot act on a message about it. General on purpose -- an earlier
+    // draft pre-checked two named invariants in the planner instead, and the
+    // circular-corroboration gate and the namesake cap, which fire here, each
+    // emitted a second copy of their trigger's own error (22 tests).
+    if (derivedLink && op.op === "append" && typeof arrayIndex === "number") {
+      const list = research[section];
+      if (Array.isArray(list) && list.length > arrayIndex) list.splice(arrayIndex, 1);
+      return { section, op: op.op, entryId, skippedDerived: invariantErrors[0] };
+    }
     throw new ResearchAppendError(invariantErrors);
   }
 
@@ -9729,7 +10415,7 @@ export function reextractionKey(a: any): string | undefined {
 /** A fact type's comparison key after the `FACT_TYPE_ALIASES` fold: "Baptism",
  *  `baptism` and `christening` are one fact type, as are "BirthRegistration" and
  *  `birth_registration`. */
-function canonicalFactKey(ft: unknown): string {
+export function canonicalFactKey(ft: unknown): string {
   const key = factTypeKey(ft);
   return Object.hasOwn(FACT_TYPE_ALIASES, key) ? factTypeKey(FACT_TYPE_ALIASES[key]) : key;
 }
@@ -9975,8 +10661,7 @@ async function checkLocalityFirstPlaces(
 ): Promise<void> {
   if (errors.length > 0) return;
   for (const [i, op] of ops.entries()) {
-    if (op.section !== "localities") continue;
-    const body = op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
+    const body = localityBody(op);
     if (!body || typeof body !== "object" || !Object.hasOwn(body, "for_place")) continue;
     const forPlace = (body as Record<string, unknown>).for_place;
     if (!isCheckablePlaceList(forPlace)) continue;
@@ -10001,6 +10686,106 @@ async function checkLocalityFirstPlaces(
             "write this entry: return to your caller saying the place did not resolve.",
         ),
       );
+    }
+  }
+}
+
+/** What a `localities` op writes: an append's `entry`, an update's `fields`. */
+function localityBody(op: any): unknown {
+  if (!op || op.section !== "localities") return undefined;
+  return op.op === "append" ? op.entry : op.op === "update" ? op.fields : undefined;
+}
+
+/** The `collections` lists of a batch's `localities` writes, by op index: an
+ *  append's `entry.collections`, an update's `fields.collections`. */
+function localityCollectionLists(ops: readonly unknown[]): Array<[number, Record<string, unknown>[]]> {
+  const out: Array<[number, Record<string, unknown>[]]> = [];
+  ops.forEach((op: any, i) => {
+    const body = localityBody(op);
+    const list = body && typeof body === "object" ? (body as { collections?: unknown }).collections : undefined;
+    if (!Array.isArray(list)) return;
+    const items = list.filter((c): c is Record<string, unknown> => !!c && typeof c === "object" && !Array.isArray(c));
+    if (items.length > 0) out.push([i, items]);
+  });
+  return out;
+}
+
+/** FamilySearch's collection catalog as `researchAppendFromCaller` read it before
+ *  the lock, or `"unavailable"` when that read failed. */
+export type CollectionCatalog = ReadonlyMap<string, CollectionCounts> | "unavailable";
+
+/**
+ * Stamp each `localities` collection's `person_count` / `record_count` from
+ * FamilySearch's catalog (issue #4385): research-plan decides a name search vs an
+ * image browse on them. An id the catalog lacks, or every id when the catalog
+ * could not be read, gets null counts, which send research-plan back to
+ * collections_search. A warning names each change; the write is never refused.
+ */
+function stampLocalityCollectionCounts(
+  ops: ResearchAppendOp[],
+  catalog: CollectionCatalog | undefined,
+  warnings: string[],
+  fmt: (i: number, msg: string) => string,
+): void {
+  if (catalog === undefined) return;
+  for (const [i, items] of localityCollectionLists(ops)) {
+    for (const c of items) if (typeof c.id === "number") c.id = String(c.id);
+    if (catalog === "unavailable") {
+      for (const c of items) {
+        c.person_count = null;
+        c.record_count = null;
+      }
+      warnings.push(
+        fmt(
+          i,
+          "localities collections: FamilySearch's collection catalog could not be read, so every " +
+            "person_count and record_count in this entry was set to null (unknown)",
+        ),
+      );
+      continue;
+    }
+    for (const c of items) {
+      if (typeof c.id !== "string" || c.id === "") {
+        c.person_count = null;
+        c.record_count = null;
+        warnings.push(
+          fmt(i, "localities collections: a collection with no id cannot be checked; person_count and record_count set to null (unknown)"),
+        );
+        continue;
+      }
+      const id = c.id;
+      const counts = catalog.get(id);
+      if (!counts) {
+        c.person_count = null;
+        c.record_count = null;
+        warnings.push(
+          fmt(
+            i,
+            `localities collections '${id}' is not in FamilySearch's collection catalog; ` +
+              "person_count and record_count set to null (unknown)",
+          ),
+        );
+        continue;
+      }
+      const changes: string[] = [];
+      for (const [key, value] of [
+        ["person_count", counts.personCount],
+        ["record_count", counts.recordCount],
+      ] as const) {
+        const was = Object.hasOwn(c, key) ? JSON.stringify(c[key]) : "absent";
+        // collections_search no longer returns a record count (issue #4416), so
+        // locality-guide leaves `record_count` out and this stamp supplies it:
+        // filling it is the contract, not a correction worth a warning.
+        if (c[key] !== value && !(key === "record_count" && was === "absent")) {
+          changes.push(`${key} ${was} -> ${value}`);
+        }
+        c[key] = value;
+      }
+      if (changes.length > 0) {
+        warnings.push(
+          fmt(i, `localities collections '${id}': ${changes.join(", ")}, set from FamilySearch's catalog`),
+        );
+      }
     }
   }
 }
@@ -10583,6 +11368,10 @@ async function prepareOps(
     if (!entry || typeof entry !== "object") continue;
     // Only the sidecar names the document (stamped below); a caller's value is dropped.
     delete entry.record_document_id;
+    if ("disputes_assertion_id" in entry && options.stampDisputes !== true) {
+      errors.push(fmt(i, DISPUTES_NOT_CALLERS));
+      continue;
+    }
 
     // ── D2: persona/record-id matrix against the log entry's sidecar ──
     let matchedRecord: any = null;
@@ -10948,6 +11737,7 @@ async function prepareOps(
   errors.push(...retiredAssertionCitations(ops, research, fmt));
 
   await checkLocalityFirstPlaces(ops, errors, warnings, fmt);
+  if (errors.length === 0) stampLocalityCollectionCounts(ops, options.collectionCatalog, warnings, fmt);
   if (options.judgeSuppliedPlaces === true) await judgeTimelinePlaces(ops, research, recordStandards, warnings, fmt);
 
   if (errors.length > 0) throw new ResearchAppendError(errors);
@@ -11000,11 +11790,23 @@ export interface ResearchAppendOptions {
    *  is the caller's own, so it is judged (`judgeTimelinePlaces`). A tool builds
    *  its timeline from the project's own standard places. */
   judgeSuppliedPlaces?: boolean;
+  /** Set only by `researchAppendFromCaller`: the catalog `localities` collection
+   *  counts are stamped from (`stampLocalityCollectionCounts`). Omitted = not stamped. */
+  collectionCatalog?: CollectionCatalog;
   /** extraction_append's re-extraction (#3678): retire these assertions of
    *  `recordId` against the batch's appends, in the same write (`planRetirement`).
    *  Never set by a tool caller. */
   retireAssertions?: RetireAssertions;
+  /** extraction_append's page readings (#4286): its assertion appends may carry
+   *  `disputes_assertion_id`. Never set by a tool caller. */
+  stampDisputes?: boolean;
 }
+
+/** `disputes_assertion_id` is the tool's to write, never a caller's (#4286). */
+export const DISPUTES_NOT_CALLERS =
+  "disputes_assertion_id is written only by extraction_append, when record-structurer reports what a " +
+  "read page says (`attachWaitingPages` with `pageReadings`). Leave it out: a page reading is not written " +
+  "through research_append.";
 
 export interface RetireAssertions {
   recordId: string;
@@ -11168,14 +11970,305 @@ function expandNarrativeEdits(
 /** The one field a direct `research_append` call may change on an assertion. */
 const CALLER_ASSERTION_FIELDS = new Set(["informant_bias_notes"]);
 
+/** #4226: the rows a one-party `person_evidence` append implies.
+ *
+ *  Lead ruling 2026-11-04 — a link means THE RECORD ENTRY is this person, so
+ *  once the person in role X of record Y is linked to tree person Z, every
+ *  one-party fact of that entry belongs to Z. The caller writes one link; this
+ *  writes the rest.
+ *
+ *  Four rules decide what is in an entry, and each has cost a measurement:
+ *
+ *  - **The party key is `recordPartyKeyer`'s**, not a local one. It reads the
+ *    whole record (persona id, else role, with #2537's corrections) and is the
+ *    same key `contradictionScope` uses, so the write rule and the gate cannot
+ *    disagree about what a party is.
+ *  - **`absent` is not an entry, and that is applied HERE, at the key.** The
+ *    keyer returns the persona id for negative evidence filed against a persona
+ *    (anders-monsen's "Unna absent from 1801 Hamre" is filed on ANDERS' persona
+ *    and linked to Unna). Dropped only at the point of use, it makes Unna a
+ *    holder of Anders' entry and the refusal below fires on a correct record.
+ *    Both spellings: `record_basis: "absent"` and the legacy `record_role`.
+ *  - **A two-party fact is neither a trigger nor a product.** Its link does not
+ *    say which of the two parties it is about, so it cannot identify an entry
+ *    (ADR-0009 constraint 3).
+ *  - **An attachment-shaped link does not trigger.** The baseline step assumes
+ *    every FamilySearch attachment is correct and runs no `same_person`;
+ *    expanding there multiplies an assumption instead of recording a judgement.
+ *
+ *  The refusal ("an entry belongs to one tree person") counts only ONE-PARTY
+ *  links on the holder side. Counting any live link refuses 1,138 further
+ *  (entry, person) pairs across the committed corpus -- roughly 44% of all
+ *  linked record parties are multi-person solely through two-party links.
+ *  Measured by `dev/replay-entry-link.ts`.
+ *
+ *  A derived row that an invariant would refuse is SKIPPED and reported, never
+ *  raised: the caller did not write it and cannot act on a failure about it. */
+export function planEntryLinkExpansion(
+  ops: ResearchAppendOp[],
+  research: any,
+): { derived: ResearchAppendOp[]; refusals: string[] } {
+  const derived: ResearchAppendOp[] = [];
+  const refusals: string[] = [];
+
+  // The two call-level post-checks below -- `circularCorroborationCallCheck`
+  // and `namesakeCallCheck` -- skip a row carrying this rationale, because a
+  // derived row's finding is always a second copy of its trigger's. They read
+  // the FINISHED document, which cannot tell who wrote a row, so a caller that
+  // writes the prefix itself skips both gates. Refuse it at the boundary: the
+  // prefix is the tool's, and the gates' skip is sound only while that holds.
+  for (const [i, op] of ops.entries()) {
+    if (op.section !== "person_evidence") continue;
+    const rationale =
+      op.op === "append" ? (op.entry as any)?.rationale : (op.fields as any)?.rationale;
+    if (isDerivedEntryLink({ rationale })) {
+      refusals.push(
+        `ops[${i}]: a person_evidence rationale starting "${DERIVED_ENTRY_LINK_PREFIX}" is ` +
+          `written only by research_append, for the rows it derives when a one-party link ` +
+          `claims its record entry. Write your own rationale for the link you are making.`,
+      );
+    }
+  }
+  if (refusals.length > 0) return { derived, refusals };
+
+  const live = new Map<string, any>();
+  for (const [id, a] of batchAssertionsById(research, ops)) {
+    if (isLiveAssertion(a)) live.set(id, { ...a, id });
+  }
+
+  const byRecord = new Map<string, any[]>();
+  for (const a of live.values()) {
+    if (recordBasisOf(a) === "absent" || a.record_role === "absent") continue;
+    const rec = arkToBareId(String(a.record_id ?? ""));
+    if (rec === "") continue;
+    const list = byRecord.get(rec);
+    if (list) list.push(a);
+    else byRecord.set(rec, [a]);
+  }
+  const entryOf = new Map<string, string>();
+  const inEntry = new Map<string, any[]>();
+  for (const [rec, list] of byRecord) {
+    const keyer = recordPartyKeyer(list);
+    for (const a of list) {
+      const party = keyer(a);
+      if (party === null) continue;
+      const k = `${rec}/${party}`;
+      entryOf.set(a.id, k);
+      const bucket = inEntry.get(k);
+      if (bucket) bucket.push(a);
+      else inEntry.set(k, [a]);
+    }
+  }
+
+  // Links the document already holds, PLUS this batch's own appends: a batch
+  // linking two facts of one entry must not derive the second from the first.
+  type Held = { person: string; assertionId: string; oneParty: boolean };
+  const held: Held[] = [];
+  const note = (personId: unknown, assertionId: unknown): void => {
+    const a = live.get(String(assertionId));
+    if (!a) return;
+    held.push({
+      person: String(personId),
+      assertionId: String(assertionId),
+      oneParty: !isTwoParty(a.fact_type),
+    });
+  };
+  // A link this call is retiring is not a holder. Without this the refusal
+  // below names a link the same call removes, so correcting a wrong link takes
+  // two calls -- and the refusal's own advice ("supersede the existing link,
+  // record a rejected_links entry") does not work when followed in one.
+  const retiring = new Set<string>();
+  const rejectedNow = new Set<string>();
+  for (const op of ops) {
+    if (op.section === "person_evidence" && op.op === "update") {
+      const by = (op.fields as any)?.superseded_by;
+      if (by != null && String(by) !== "") retiring.add(String(op.entryId));
+    } else if (op.section === "rejected_links" && op.op === "append") {
+      const e = op.entry as any;
+      if (e && typeof e === "object") {
+        rejectedNow.add(`${String(e.assertion_id)}\u0000${String(e.person_id)}`);
+      }
+    }
+  }
+  // Step 6 of person-evidence.md corrects a wrong link in TWO calls: append the
+  // replacement to get its `pe_` id, then update the old entry's `superseded_by`
+  // with it. On that FIRST call the wrong link is still live and still holds the
+  // entry, so the refusal below fired on the one route that fixes a wrong link --
+  // and neither way out it offered worked: a rejection needs `researcher_words`
+  // only the researcher can give (lead, 2026-10-20), and a supersede needs the
+  // replacement link this very call is making (#4355 review). An assertion this
+  // call re-links to someone else is no longer a holder, and neither are the rows
+  // that assertion derived.
+  const relinkedTo = new Map<string, Set<string>>();
+  for (const op of ops) {
+    if (op.section !== "person_evidence" || op.op !== "append") continue;
+    const e = op.entry as any;
+    if (!e || typeof e !== "object") continue;
+    const a = String(e.assertion_id);
+    const to = relinkedTo.get(a);
+    if (to) to.add(String(e.person_id));
+    else relinkedTo.set(a, new Set([String(e.person_id)]));
+  }
+  const movedAway = (assertionId: string, personId: string): boolean =>
+    [...(relinkedTo.get(assertionId) ?? [])].some((p) => p !== personId);
+
+  for (const pe of (research?.person_evidence ?? []) as any[]) {
+    if (pe?.superseded_by != null) continue;
+    if (retiring.has(String(pe?.id))) continue;
+    if (rejectedNow.has(`${String(pe?.assertion_id)}\u0000${String(pe?.person_id)}`)) continue;
+    if (movedAway(String(pe?.assertion_id), String(pe?.person_id))) continue;
+    if (
+      isDerivedEntryLink(pe) &&
+      [...relinkedTo.keys()].some(
+        (a) =>
+          movedAway(a, String(pe?.person_id)) &&
+          String(pe?.rationale).startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${a}:`),
+      )
+    ) {
+      continue;
+    }
+    // Its trigger is being rejected in this same call, so it retires with it and
+    // cannot hold the entry against the replacement link (#4355 review).
+    if (
+      isDerivedEntryLink(pe) &&
+      [...rejectedNow].some((k) => {
+        const [ra, rp] = k.split("\u0000");
+        return (
+          rp === String(pe?.person_id) &&
+          String(pe?.rationale).startsWith(`${DERIVED_ENTRY_LINK_PREFIX}${ra}:`)
+        );
+      })
+    ) {
+      continue;
+    }
+    note(pe?.person_id, pe?.assertion_id);
+  }
+  for (const op of ops) {
+    if (op.section !== "person_evidence" || op.op !== "append") continue;
+    const e = op.entry as any;
+    if (e && typeof e === "object") note(e.person_id, e.assertion_id);
+  }
+  const heldByEntry = new Map<string, Held[]>();
+  for (const h of held) {
+    const k = entryOf.get(h.assertionId);
+    if (k === undefined) continue;
+    const b = heldByEntry.get(k);
+    if (b) b.push(h);
+    else heldByEntry.set(k, [h]);
+  }
+
+  const emitted = new Set<string>();
+
+  for (const op of ops) {
+    if (op.section !== "person_evidence" || op.op !== "append") continue;
+    const entry = op.entry as any;
+    if (!entry || typeof entry !== "object") continue;
+    const trigger = live.get(String(entry.assertion_id));
+    if (!trigger) continue;
+    if (isTwoParty(trigger.fact_type)) continue;
+    if (isAttachmentLink(entry)) continue;
+    if (isDerivedEntryLink(entry)) continue;
+    const k = entryOf.get(trigger.id);
+    if (k === undefined) continue;
+    const person = String(entry.person_id);
+
+    const others = [
+      ...new Set(
+        (heldByEntry.get(k) ?? [])
+          .filter((h) => h.oneParty && h.person !== person)
+          .map((h) => h.person),
+      ),
+    ];
+    if (others.length > 0) {
+      const theirs = (heldByEntry.get(k) ?? [])
+        .filter((h) => h.oneParty && h.person !== person)
+        .map((h) => h.assertionId);
+      refusals.push(
+        `person_evidence for '${person}' links ${trigger.id}, but that record entry ` +
+          `(${k}) is already this project's entry for ${others.join(", ")}, via ${theirs.join(", ")}. ` +
+          `A record entry is one person: linking a one-party fact of it claims the whole entry. ` +
+          `If new evidence shows that existing link is wrong, correct THAT link the way step 6 of ` +
+          `person-evidence does: append the replacement for its assertion, then update it with ` +
+          `{ superseded_by: "<the new id>" }. If the researcher said this record is not that ` +
+          `person, append a rejected_links entry for that pairing in THIS SAME call, which retires ` +
+          `the existing link for you. Otherwise link an assertion of the party you actually mean.`,
+      );
+      continue;
+    }
+
+    const already = new Set(
+      (heldByEntry.get(k) ?? []).filter((h) => h.person === person).map((h) => h.assertionId),
+    );
+    for (const sib of inEntry.get(k) ?? []) {
+      if (already.has(sib.id) || isTwoParty(sib.fact_type)) continue;
+      const dedupe = `${k}\u0000${person}\u0000${sib.id}`;
+      if (emitted.has(dedupe)) continue;
+      const row: Record<string, unknown> = {
+        assertion_id: sib.id,
+        person_id: person,
+        confidence: entry.confidence,
+        match_score: null,
+        rationale: derivedEntryLinkRationale(String(trigger.id), k),
+      };
+      // Inherited, not defaulted. `unexplainedMoveInvariants` reads the move off
+      // the RECORD and the PARTY -- the same record and party a derived row sits
+      // on -- so a `confident` trigger that cleared it by carrying a bridge would
+      // otherwise produce rows that every one get refused, and the entry would
+      // not expand at all. That is the bug this card exists to fix, surviving on
+      // a named class.
+      if (typeof entry.move_bridge === "string" && entry.move_bridge.trim() !== "") {
+        row.move_bridge = entry.move_bridge;
+      }
+      if (entry.core_identifier_conflict != null) {
+        row.core_identifier_conflict = entry.core_identifier_conflict;
+      }
+      // No gate pre-check here. Every gate runs in `applyOne`, which rolls a
+      // refused derived row back out of the document (`skippedDerived`). A
+      // second, partial copy of that rule in this planner is what let the
+      // circular-corroboration gate and the namesake cap through.
+      emitted.add(dedupe);
+      derived.push({ section: "person_evidence", op: "append", entry: row });
+    }
+  }
+  return { derived, refusals };
+}
+
+/** How long a caller's write waits on the catalog before stamping null counts. A
+ *  cold read can run past 30s (2 of 51 in the committed e2e logs took 33s and 36s), and Cowork's bridge aborts a call at 60s
+ *  (`COWORK_CALL_ABORT_MS`), which the write's own place lookups also spend. The
+ *  read keeps running and fills the cache for the next write. */
+export const CATALOG_READ_BUDGET_MS = 20_000;
+
+/** `loadCatalog`, or `"unavailable"` when it fails or outlasts the budget. A spent
+ *  FamilySearch budget is a refusal, not a failed read, and is rethrown. */
+async function readCatalog(loadCatalog: CollectionCatalogLoader): Promise<CollectionCatalog> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<"unavailable">((done) => {
+    timer = setTimeout(() => done("unavailable"), CATALOG_READ_BUDGET_MS);
+  });
+  const read = loadCatalog().catch((err: unknown) => {
+    if (isFsBudgetExhausted(err)) throw err;
+    return "unavailable" as const;
+  });
+  try {
+    return await Promise.race([read, timeout]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** `research_append` as an MCP caller reaches it. Assertions are written only by
  *  `extraction_append`, which calls `researchAppend` directly and so never meets
  *  this check. A caller may update one existing assertion's
  *  `informant_bias_notes`, to record a re-reading or a doubt; any other
  *  `assertions` write is refused, whole call, before anything is read
- *  (genealogist ruling 2026-10-05, option B). */
+ *  (genealogist ruling 2026-10-05, option B). `loadCatalog` reads FamilySearch's
+ *  collection catalog through the caller's session (`collectionCatalogLoader`,
+ *  bound in `server.ts`); null skips the collection-count stamp: the unit eval
+ *  harness, which never contacts FamilySearch. */
 export async function researchAppendFromCaller(
   input: ResearchAppendInput,
+  loadCatalog: CollectionCatalogLoader | null,
 ): Promise<ResearchAppendResult> {
   // Judged on the decode `researchAppend` will make, and made in the one place it is
   // made (`decodeArg`). The decoded value is NOT written back: `researchAppend` decodes
@@ -11206,7 +12299,14 @@ export async function researchAppendFromCaller(
   if (errors.length > 0) {
     return isBatch ? { ok: false, errors, opsReceived: ops.length } : { ok: false, errors };
   }
-  return researchAppend(input, { judgeSuppliedPlaces: true });
+  // Read before the project lock: a cold catalog fetch can run past 30s.
+  const decodedEntry = decodeArg(input.entry);
+  const writeOps = isBatch ? ops : [{ section: input.section, op: input.op, entry: decodedEntry, fields: decodedFields }];
+  let collectionCatalog: CollectionCatalog | undefined;
+  if (loadCatalog && localityCollectionLists(writeOps).length > 0) {
+    collectionCatalog = await readCatalog(loadCatalog);
+  }
+  return researchAppend(input, { judgeSuppliedPlaces: true, collectionCatalog });
 }
 
 export async function researchAppend(
@@ -11366,6 +12466,22 @@ export async function researchAppend(
       retracted = plan.retracted;
     }
 
+    // #4226: a one-party link claims its whole record entry, so write the rest
+    // of that entry's rows. BEFORE prepareOps, never inside it: prepareOps is
+    // where the batch's derived views are built FROM `ops`
+    // (`batchAssertionsById`, `batchPersonLinks`, the per-record attestation
+    // load), so rows added inside it would be judged against a snapshot
+    // computed without them -- the contradiction gate's two-party arm and the
+    // score-gate load would both silently miss them.
+    const expansion = planEntryLinkExpansion(ops, research);
+    if (expansion.refusals.length > 0) return fail(boundErrors(expansion.refusals));
+    const derivedFrom = ops.length;
+    ops.push(...expansion.derived);
+    // Index-based, not a marker on the op: the failure path below re-applies
+    // `structuredClone(ops)`, which would drop any non-enumerable property.
+    const derivedOpIndices = new Set<number>();
+    for (let i = derivedFrom; i < ops.length; i++) derivedOpIndices.add(i);
+
     // ─── Composite + enforcement pre-pass (stamps ids, mutates the tree) ─────
     const readSidecar = sidecarReader(projectPath);
     const prep = await prepareOps(input, ops, research, tree, projectPath, fmt, options, readSidecar);
@@ -11402,6 +12518,7 @@ export async function researchAppend(
         storedCollectionUrls,
         options.attachmentLink === true,
         ctx.reserved,
+        derivedOpIndices.has(opIndex),
       ),
       opIndex,
     });
@@ -11439,6 +12556,7 @@ export async function researchAppend(
           startingTree: prep.startingTree,
           applyOp,
           fmt,
+          readResults: sidecarResultsReader(readSidecar),
         });
         return fail(every.errors, every.hints);
       } catch {
@@ -11457,8 +12575,14 @@ export async function researchAppend(
     // #3601: a rejection retires its pair's live link and that link's facts,
     // in this same all-or-nothing write.
     const retire = retireRejectedLinks(applied, research, tree);
+    // #4355 review: a link superseded onto a different person takes the rows it
+    // derived with it, or they strand on the old person.
+    const movedDerived = retireSupersededDerivedLinks(applied, research, beforeResearch);
 
-    await stampNamesakePersonas(research, ops, applied, sidecarResultsReader(readSidecar));
+    // The rows' personas and birth years, before the namesake judgement reads them.
+    const readResults = sidecarResultsReader(readSidecar);
+    const stamped = await stampNamesakePersonas(research, ops, applied, readResults);
+    await fillNamesakeBirthYears(research, linkedPersonIds(research, applied), readResults, stamped);
 
     // When this call resolves the project's last open question, the minted
     // persons no edge connects to an imported person go, with the links that
@@ -11479,7 +12603,7 @@ export async function researchAppend(
     // may arrive in any order within the call.
     const namesakeMsgs = namesakeMessages({ research: beforeResearch }, { research, tree }, applied, prep.startingPersonIds, fmt, prep.startingTree);
 
-    const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? []), ...retire.warnings];
+    const opWarnings = [...prep.warnings, ...applied.flatMap((a) => a.warnings ?? []), ...retire.warnings, ...movedDerived.warnings];
     // Folded into locals rather than mutated onto `prep`: both the mutation test
     // and the write branch below have to see the rewrite's tree write, and the
     // degrade path below can take it back.
@@ -11649,16 +12773,26 @@ export async function researchAppend(
       valid: true as const,
       warnings: [...validationWarnings, ...opWarnings, ...rewriteWarnings, ...removalWarnings, ...treeEncodingWarnings, ...planItemWarnings, ...(persistenceWarning ? [persistenceWarning] : []), ...transcriptionWarnings, ...namesakeWarnings],
     };
-    const extras: Pick<BatchSuccess, "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces" | "unresolvedPlaces"> = {};
+    const extras: Pick<
+      BatchSuccess,
+      "sourceDescriptionId" | "sourceReuse" | "resolvedPlaces" | "unresolvedPlaces" | "skippedDerivedLinks"
+    > = {};
     if (prep.sourceDescriptionId) extras.sourceDescriptionId = prep.sourceDescriptionId;
     if (prep.sourceReuse) extras.sourceReuse = prep.sourceReuse;
     if (prep.resolvedPlaces.length > 0) extras.resolvedPlaces = prep.resolvedPlaces;
     if (prep.unresolvedPlaces.length > 0) extras.unresolvedPlaces = prep.unresolvedPlaces;
 
+    // #4226: a derived row a gate refused was rolled back out of the document,
+    // so it is not a result. Reported instead, so the caller can see that the
+    // entry did not expand fully rather than silently getting fewer rows.
+    const skippedDerived = applied.flatMap((a) => (a.skippedDerived ? [a.skippedDerived] : []));
+    if (skippedDerived.length > 0) extras.skippedDerivedLinks = skippedDerived;
+    const written = applied.filter((a) => !a.skippedDerived);
+
     if (isBatch) {
       return {
         ok: true,
-        results: applied.map((a) => ({ section: a.section, op: a.op, entryId: a.entryId })),
+        results: written.map((a) => ({ section: a.section, op: a.op, entryId: a.entryId })),
         ...extras,
         filesWritten,
         validation: validationBlock,
@@ -11994,6 +13128,8 @@ async function everyOpFailure(c: {
   startingTree: SimplifiedGedcomX | null;
   applyOp: ApplyOp;
   fmt: (i: number, msg: string) => string;
+  /** The sidecar reader the namesake stamp and fill in use. */
+  readResults: (ref: string) => Promise<any[] | null>;
 }): Promise<{ errors: string[]; hints: ExampleHint[] }> {
   const { ops, first, before, fmt } = c;
   const failures: OpFailure[] = [];
@@ -12030,6 +13166,13 @@ async function everyOpFailure(c: {
   const hints = failures.map((f) => failedOpHint(ops[f.index], f.errors));
   let documentLines: string[] = [];
   if (applied.some((a) => !a.noop)) {
+    // The namesake stamp and fill in, as the success path runs them, on copies of
+    // the rows: they write in place, and the rows are still `before`'s.
+    if (Array.isArray(doc.namesakes)) {
+      doc = { ...doc, namesakes: doc.namesakes.map((r: any) => (r && typeof r === "object" ? { ...r } : r)) };
+    }
+    const stamped = await stampNamesakePersonas(doc, ops, applied, c.readResults);
+    await fillNamesakeBirthYears(doc, linkedPersonIds(doc, applied), c.readResults, stamped);
     const validation = await validateIntroduced(
       { research: before.research, tree: before.tree },
       { research: doc, tree: c.tree },

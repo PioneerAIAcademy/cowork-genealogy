@@ -1,0 +1,53 @@
+{
+  "tool": "record_read",
+  "description": "Full record for either directory row in record-search-tallman-ny-directory-only (issue #4139). Mirrors the search row's own gedcomx; no new claims. Stocked so a record_read during triage does not abort the run as an unregistered tool.",
+  "args": {
+    "recordId": "~QV2K-"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "P1",
+        "gender": "Male",
+        "names": [
+          {
+            "id": "N1",
+            "preferred": true,
+            "given": "Jonathan",
+            "surname": "Tallman",
+            "type": "BirthName"
+          }
+        ],
+        "facts": [
+          {
+            "id": "F1",
+            "type": "Residence",
+            "date": "1840",
+            "place": "Plattsburgh, Clinton, New York, United States"
+          },
+          {
+            "id": "F2",
+            "type": "Occupation",
+            "value": "Blacksmith",
+            "date": "1840"
+          }
+        ]
+      }
+    ],
+    "relationships": [],
+    "sources": [
+      {
+        "id": "S1",
+        "title": "United States, City and County Directories, 1820-1995",
+        "collectionId": "2469727",
+        "ark": "ark:/61903/1:1:QV2K-7TLM"
+      }
+    ],
+    "places": [
+      {
+        "id": "PL1",
+        "name": "Plattsburgh, Clinton, New York, United States"
+      }
+    ]
+  }
+}

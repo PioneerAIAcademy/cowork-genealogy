@@ -80,8 +80,11 @@ def test_an_exact_ref_is_answered_without_running_node(tmp_path, monkeypatch):
     # TOOL through node. The unknown-argument guard (#3947) is a separate,
     # cross-cutting call that precedes every mock tool call, so it is excluded
     # here rather than weakening the assertion to "few enough" — a staged read
-    # that fell back to running the tool would still fail.
-    tool_calls = [c for c in calls if "rejectUnknownArgs" not in (c[0] if c else "")]
+    # that fell back to running the tool would still fail. The MCP-boundary
+    # compactor (`compactRecordReadAnswer`) is excluded for the same reason:
+    # production compacts every record_read answer, a sidecar read included.
+    excluded = ("rejectUnknownArgs", mock._RECORD_READ_COMPACTOR)
+    tool_calls = [c for c in calls if not any(s in (c[0] if c else "") for s in excluded)]
     assert tool_calls == []
 
 

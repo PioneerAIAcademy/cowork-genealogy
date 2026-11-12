@@ -13,6 +13,8 @@ import {
   RETRYABLE_STATUS,
   DEFAULT_RETRY_BUDGET_MS,
   CONNECT_ATTEMPT_TIMEOUT_MS,
+  MIN_REQUEST_AFTER_WAIT_MS,
+  pauseWaitAllowance,
   raiseConnectAttemptTimeout,
 } from "../../src/utils/http.js";
 import { socketFetchFailure } from "../helpers/fetch-failed.js";
@@ -406,6 +408,19 @@ describe("fetchWithRetry", () => {
     ).rejects.toThrow(/Server requested a 60s wait/);
   });
 
+  it("reads the body of the response it holds before throwing for a Retry-After past the budget", async () => {
+    // An unread undici body keeps its socket until GC, and nothing else will
+    // read this one once the loop throws.
+    // fetchWithTimeout wraps each body reader on the response, so keep the spy
+    // itself rather than reading it back off the response.
+    const text = vi.fn(async () => "slow down");
+    mockFetch.mockResolvedValueOnce({ ...mockResponse(429, { retryAfter: "60" }), text });
+    await expect(
+      fetchWithRetry("https://example.com", {}, 1000, { budgetMs: 5000, baseMs: 1 }),
+    ).rejects.toThrow(/Server requested a 60s wait/);
+    expect(text).toHaveBeenCalledTimes(1);
+  });
+
   it("honours Retry-After within budget", async () => {
     mockFetch
       .mockResolvedValueOnce(mockResponse(429, { retryAfter: "1" }))
@@ -515,6 +530,186 @@ describe("raiseConnectAttemptTimeout", () => {
     });
     vi.resetModules();
     await expect(import("../../src/utils/http.js")).resolves.toHaveProperty("raiseConnectAttemptTimeout");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The two optional hooks `fsFetch` uses for a connector user's 429 pause
+// (self-hosted beta E4, issue #3999). No caller that passes neither sees any
+// change; the cases above all pass none.
+
+describe("fetchWithRetry's onRetryableResponse and beforeAttempt hooks", () => {
+  it("onRetryableResponse sees a 429 whose Retry-After is past the budget BEFORE the loop throws", async () => {
+    const seen: Array<[number, number | null]> = [];
+    mockFetch.mockResolvedValue(mockResponse(429, { retryAfter: "60" }));
+    await expect(
+      fetchWithRetry("https://example.com", {}, 1000, {
+        budgetMs: 5000,
+        baseMs: 1,
+        onRetryableResponse: (status, ra) => seen.push([status, ra]),
+      }),
+    ).rejects.toThrow(/Server requested a 60s wait/);
+    expect(seen).toEqual([[429, 60_000]]);
+  });
+
+  it("onRetryableResponse sees every retryable response, a 5xx and a header-less 429 included, and no 200", async () => {
+    const seen: Array<[number, number | null]> = [];
+    mockFetch
+      .mockResolvedValueOnce(mockResponse(503))
+      .mockResolvedValueOnce(mockResponse(429))
+      .mockResolvedValueOnce(mockResponse(200));
+    const res = await fetchWithRetry("https://example.com", {}, 1000, {
+      budgetMs: 5000,
+      baseMs: 1,
+      onRetryableResponse: (status, ra) => seen.push([status, ra]),
+    });
+    expect(res.status).toBe(200);
+    expect(seen).toEqual([
+      [503, null],
+      [429, null],
+    ]);
+  });
+
+  it("beforeAttempt runs before every attempt, and may wait only while the request keeps time to run", async () => {
+    const maxWait: number[] = [];
+    let firstStart = 0;
+    let firstEnd = 0;
+    mockFetch
+      .mockImplementationOnce(() => {
+        firstStart = Date.now();
+        return new Promise((resolve) =>
+          setTimeout(() => {
+            firstEnd = Date.now();
+            resolve(mockResponse(503));
+          }, 100),
+        );
+      })
+      .mockResolvedValueOnce(mockResponse(200));
+    const res = await fetchWithRetry("https://example.com", {}, 1000, {
+      budgetMs: 5000,
+      baseMs: 1,
+      beforeAttempt: async (ms) => {
+        maxWait.push(ms);
+      },
+    });
+    expect(res.status).toBe(200);
+    expect(maxWait).toHaveLength(2);
+    // With retries left, the first attempt's time runs to the 5 s deadline,
+    // which is later than its 1 s timeout; it keeps 2 s of that.
+    expect(maxWait[0]).toBe(3_000);
+    // A later one runs until the deadline, less the 2 s it keeps, so it loses at
+    // least the time the first attempt took. Measured by the same clock rather
+    // than assumed to be 100 ms: Node can fire a 100 ms timer a millisecond early.
+    expect(maxWait[1]).toBeLessThanOrEqual(3_000 - (firstEnd - firstStart));
+    expect(firstEnd - firstStart).toBeGreaterThanOrEqual(90);
+    expect(maxWait[1]).toBeGreaterThan(2_000);
+  });
+
+  it("a first attempt with retries left still runs no longer than its own timeout, hook or no hook", async () => {
+    // The first request hangs until its timeout fires; the retry answers at once.
+    const hangThenOk = () => {
+      const starts: number[] = [];
+      const aborts: number[] = [];
+      mockFetch.mockImplementationOnce((_url: string, init?: RequestInit) => {
+        starts.push(Date.now());
+        return new Promise((_resolve, reject) => {
+          init?.signal?.addEventListener("abort", () => {
+            aborts.push(Date.now());
+            const err = new Error("The operation timed out.");
+            err.name = "TimeoutError";
+            reject(err);
+          });
+        });
+      });
+      mockFetch.mockResolvedValueOnce(mockResponse(200));
+      return { firstRequestMs: () => aborts[0]! - starts[0]! };
+    };
+
+    // No hook: exactly the 1 s timeout, though the 5 s budget runs later.
+    const plain = hangThenOk();
+    expect((await fetchWithRetry("https://example.com", {}, 1000, { attempts: 2, budgetMs: 5000, baseMs: 1 })).status).toBe(200);
+    expect(plain.firstRequestMs()).toBeGreaterThanOrEqual(950);
+    expect(plain.firstRequestMs()).toBeLessThan(1_200);
+
+    // A 200 ms wait in the hook may come out of the budget here, but the
+    // request still gets no more than its own 1 s.
+    const hooked = hangThenOk();
+    const res = await fetchWithRetry("https://example.com", {}, 1000, {
+      attempts: 2,
+      budgetMs: 5000,
+      baseMs: 1,
+      beforeAttempt: (ms) => new Promise((resolve) => setTimeout(resolve, Math.min(ms, 200))),
+    });
+    expect(res.status).toBe(200);
+    expect(hooked.firstRequestMs()).toBeGreaterThanOrEqual(950);
+    expect(hooked.firstRequestMs()).toBeLessThan(1_200);
+  });
+
+  it("pauseWaitAllowance leaves the request at least 2 s, or half its time, and stays inside the budget", () => {
+    expect(MIN_REQUEST_AFTER_WAIT_MS).toBe(2_000);
+    expect(pauseWaitAllowance(30_000, 10_000)).toBe(10_000);
+    expect(pauseWaitAllowance(10_000, 10_000)).toBe(8_000);
+    expect(pauseWaitAllowance(1_000, 10_000)).toBe(500);
+    expect(pauseWaitAllowance(5_000, 0)).toBe(0);
+    expect(pauseWaitAllowance(0, 10_000)).toBe(0);
+  });
+
+  it("a wait in beforeAttempt comes out of the first attempt's timeout, never on top of it", async () => {
+    // A connection that stalls until its timeout fires, as above.
+    mockFetch.mockImplementation((_url: string, init?: RequestInit) => {
+      return new Promise((_resolve, reject) => {
+        init?.signal?.addEventListener("abort", () => {
+          const err = new Error("The operation timed out.");
+          err.name = "TimeoutError";
+          reject(err);
+        });
+      });
+    });
+    const started = Date.now();
+    const err = (await fetchWithRetry("https://example.com/stalls", {}, 1000, {
+      attempts: 1,
+      budgetMs: 5000,
+      beforeAttempt: (ms) => new Promise((resolve) => setTimeout(resolve, Math.min(ms, 450))),
+    }).catch((e: unknown) => e)) as Error;
+    const elapsed = Date.now() - started;
+    // The 450 ms wait left about 550 ms for the request: about 1 s in all, not 1.45 s.
+    const timedOutAfter = Number(/timed out after (\d+)ms/.exec(err.message)?.[1]);
+    expect(timedOutAfter).toBeGreaterThan(450);
+    expect(timedOutAfter).toBeLessThanOrEqual(555);
+    expect(elapsed).toBeLessThan(1_250);
+  });
+
+  it("a marked refusal from beforeAttempt is rethrown at once: no fetch, no retry", async () => {
+    const refusal = fsBudget.markFsRefusal(new Error("FamilySearch asked this account to wait; try again in about 60 seconds."));
+    let calls = 0;
+    await expect(
+      fetchWithRetry("https://example.com", {}, 1000, {
+        budgetMs: 5000,
+        baseMs: 1,
+        beforeAttempt: async () => {
+          calls++;
+          throw refusal;
+        },
+      }),
+    ).rejects.toBe(refusal);
+    expect(calls).toBe(1);
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("a marked refusal on a retry drops the 429 in hand and names the refusal, not the 429", async () => {
+    const refusal = fsBudget.markFsRefusal(new Error("paused"));
+    mockFetch.mockResolvedValueOnce(mockResponse(429));
+    let calls = 0;
+    await expect(
+      fetchWithRetry("https://example.com", {}, 1000, {
+        budgetMs: 5000,
+        baseMs: 1,
+        beforeAttempt: async () => {
+          if (calls++ > 0) throw refusal;
+        },
+      }),
+    ).rejects.toBe(refusal);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });
 

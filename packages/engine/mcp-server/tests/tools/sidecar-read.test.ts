@@ -6,6 +6,8 @@ import { tmpdir } from "os";
 import {
   sidecarRead,
   fitPage,
+  BATCH_OFFSET_MESSAGE,
+  SIDECAR_READ_BATCH_BUDGET,
   SIDECAR_READ_MAX_CHARS,
 } from "../../src/tools/sidecar-read.js";
 import { writerToolResult } from "../../src/tool-result.js";
@@ -13,6 +15,7 @@ import { setProjectStore, type ProjectStore } from "../../src/store/project-stor
 import { NO_PROJECT_MESSAGE_READ } from "../../src/utils/project-io.js";
 import { ON_PG, fileStoreOnly } from "../helpers/store-backend.js";
 import { CLI_SPILL_CHARS } from "../helpers/cli-spill.js";
+import { escapedBody } from "../helpers/wiki-pages.js";
 
 /** A ProjectStore stub whose readText returns `text` and records its calls. */
 function storeReturning(text: string, calls: Array<[string, string]> = []): ProjectStore {
@@ -630,6 +633,160 @@ describe("sidecar_read: a staged transcription, and several refs", () => {
   it("refuses `ref` and `refs` together, and an empty `refs`", async () => {
     expect((await sidecarRead({ projectPath: dir, ref: "uploads/note.txt", refs: ["uploads/note.txt"] } as any)).ok).toBe(false);
     expect((await sidecarRead({ projectPath: dir, refs: [] })).ok).toBe(false);
+  });
+
+  // ─── one budget across a `refs` batch ──────────────────────────────────────
+
+  /** A padded register page with quotes and line breaks, so escaping counts. */
+  const registerPage = (chars: number, tag: string) => {
+    const line = `  "${tag}"  |  1850  |  "farmer"  |   \n`;
+    return line.repeat(Math.ceil(chars / line.length)).slice(0, chars);
+  };
+
+  /** `first`'s text read on by `ref` and `offset: nextOffset` until it is whole. */
+  const readOn = async (ref: string, first: { content: string; truncated: boolean; nextOffset?: number }) => {
+    let text = first.content;
+    let at = first;
+    while (at.truncated) {
+      const next = await sidecarRead({ projectPath: dir, ref, offset: at.nextOffset });
+      expect(next.ok).toBe(true);
+      if (!next.ok) break;
+      expect(next.offset).toBe(at.nextOffset);
+      text += next.content;
+      at = next;
+    }
+    return text;
+  };
+
+  it("fills the budget with whole pages, smallest first: twelve 4.3k pages, the rest cut or empty", async () => {
+    // Twelve register pages of 4,300 to 4,410 characters, listed out of size order.
+    const sizeRank = [5, 11, 0, 8, 3, 10, 1, 7, 4, 9, 2, 6];
+    const texts = sizeRank.map((k) => registerPage(4_300 + 10 * k, "a"));
+    const pages: string[] = [];
+    for (const t of texts) pages.push(await stageTranscription(t));
+    const r = await sidecarRead({ projectPath: dir, refs: pages });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const answer = writerToolResult(r).content[0].text.length;
+    expect(answer).toBeLessThanOrEqual(SIDECAR_READ_BATCH_BUDGET);
+    expect(answer).toBeGreaterThan(SIDECAR_READ_BATCH_BUDGET - 1_000);
+    expect(r.results.map((x) => x.ok && x.ref)).toEqual(pages);
+
+    const bySize = pages.map((_, i) => i).sort((a, b) => sizeRank[a] - sizeRank[b]);
+    const whole = bySize.filter((i) => r.results[i].ok && !(r.results[i] as { truncated: boolean }).truncated);
+    expect(whole.length).toBeGreaterThanOrEqual(7);
+    expect(whole).toEqual(bySize.slice(0, whole.length));
+    for (const i of whole) expect(r.results[i]).toEqual(await sidecarRead({ projectPath: dir, ref: pages[i] }));
+
+    const [cutAt, ...emptyAt] = bySize.slice(whole.length);
+    const cut = r.results[cutAt];
+    expect(cut.ok && cut.truncated).toBe(true);
+    if (!cut.ok) return;
+    expect(cut.content.length).toBeGreaterThan(0);
+    expect(cut.nextOffset).toBe(cut.content.length);
+    expect(answer - escapedBody(cut.content) + escapedBody(texts[cutAt])).toBeGreaterThan(SIDECAR_READ_BATCH_BUDGET);
+    expect(emptyAt.length).toBeGreaterThan(0);
+    for (const i of emptyAt) {
+      expect(r.results[i]).toEqual({
+        ok: true,
+        ref: pages[i],
+        totalChars: texts[i].length,
+        offset: 0,
+        content: "",
+        truncated: true,
+        nextOffset: 0,
+      });
+    }
+
+    for (const [i, x] of r.results.entries()) {
+      expect(x.ok).toBe(true);
+      if (!x.ok) return;
+      expect(await readOn(pages[i], x)).toBe(texts[i]);
+    }
+  });
+
+  it("holds three 19k pages and a note to one budget: the note and one page whole, one cut, one empty", async () => {
+    const texts = ["a", "b", "c"].map((tag) => registerPage(19_000, tag));
+    const pages: string[] = [];
+    for (const t of texts) pages.push(await stageTranscription(t));
+    const r = await sidecarRead({ projectPath: dir, refs: [pages[0], "uploads/note.txt", pages[1], pages[2]] });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(writerToolResult(r).content[0].text.length).toBeLessThanOrEqual(SIDECAR_READ_BATCH_BUDGET);
+    expect(r.results[1]).toMatchObject({ ok: true, content: "a note", truncated: false });
+    expect(r.results[0]).toMatchObject({ ok: true, content: texts[0], truncated: false });
+    const cut = r.results[2];
+    expect(cut.ok && cut.truncated).toBe(true);
+    if (!cut.ok) return;
+    expect(cut.nextOffset).toBe(cut.content.length);
+    expect(escapedBody(cut.content)).toBeGreaterThan(12_000);
+    expect(r.results[3]).toMatchObject({ ok: true, content: "", truncated: true, offset: 0, nextOffset: 0 });
+  });
+
+  it("continues each cut or empty page of a batch by `ref` and `offset: nextOffset` to its exact text", async () => {
+    const texts = ["a", "b", "c"].map((tag) => registerPage(19_000, tag));
+    const pages: string[] = [];
+    for (const t of texts) pages.push(await stageTranscription(t));
+    const r = await sidecarRead({ projectPath: dir, refs: pages });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    expect(r.results.map((x) => x.ok && x.truncated)).toEqual([false, true, true]);
+    for (const [i, first] of r.results.entries()) {
+      expect(first.ok).toBe(true);
+      if (!first.ok) return;
+      expect(await readOn(pages[i], first)).toBe(texts[i]);
+    }
+  });
+
+  it("refuses `refs` with `offset: nextOffset` rather than re-reading from 0, and still reads `offset: 0`", async () => {
+    const pages: string[] = [];
+    for (const tag of ["a", "b", "c"]) pages.push(await stageTranscription(registerPage(19_000, tag)));
+    const r = await sidecarRead({ projectPath: dir, refs: pages });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    const cut = r.results[1];
+    expect(cut.ok && cut.truncated && cut.content.length > 0).toBe(true);
+    if (!cut.ok) return;
+    for (const refs of [[pages[1]], pages]) {
+      expect(await sidecarRead({ projectPath: dir, refs, offset: cut.nextOffset })).toEqual({
+        ok: false,
+        reason: "invalid_ref",
+        errors: [BATCH_OFFSET_MESSAGE],
+      });
+    }
+    expect(await sidecarRead({ projectPath: dir, refs: pages, offset: 0 })).toEqual(r);
+  });
+
+  it("returns a page empty, not one unit over, when its first unit escapes wider than what is left", async () => {
+    const batch = async (filler: number, big: string) => {
+      await getProjectStore().writeBytes(dir, "uploads/a.txt", new TextEncoder().encode("x".repeat(filler)));
+      await getProjectStore().writeBytes(dir, "uploads/b.txt", new TextEncoder().encode(big));
+      const r = await sidecarRead({ projectPath: dir, refs: ["uploads/a.txt", "uploads/b.txt"] });
+      if (!r.ok || !r.results[0].ok || !r.results[1].ok) throw new Error("batch failed");
+      return { r, filler: r.results[0], big: r.results[1] };
+    };
+    // A plain page is cut to exactly what is left, so this measures the room for the filler and the cut.
+    const probe = await batch(30_000, "y".repeat(45_000));
+    expect(probe.filler.truncated).toBe(false);
+    const room = 30_000 + probe.big.content.length;
+    // Same envelope, three units left: a control character escapes to six.
+    const { r, filler, big } = await batch(room - 3, "\u0001".repeat(45_000));
+    expect(filler.truncated).toBe(false);
+    expect(big).toMatchObject({ content: "", truncated: true, offset: 0, nextOffset: 0 });
+    expect(writerToolResult(r).content[0].text.length).toBeLessThanOrEqual(SIDECAR_READ_BATCH_BUDGET);
+  });
+
+  it("leaves a batch that fits the budget as each ref alone would read it", async () => {
+    const texts = ["a", "b"].map((tag) => registerPage(14_000, tag));
+    const pages: string[] = [];
+    for (const t of texts) pages.push(await stageTranscription(t));
+    const r = await sidecarRead({ projectPath: dir, refs: pages });
+    expect(r.ok).toBe(true);
+    if (!r.ok) return;
+    for (const [i, ref] of pages.entries()) {
+      expect(r.results[i]).toEqual(await sidecarRead({ projectPath: dir, ref }));
+      expect(r.results[i]).toMatchObject({ content: texts[i], truncated: false });
+    }
   });
 });
 

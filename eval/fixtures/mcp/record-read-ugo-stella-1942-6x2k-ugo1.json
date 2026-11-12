@@ -1,0 +1,97 @@
+{
+  "tool": "record_read",
+  "description": "The 1942 Milan marriage behind the top Ugo Stella hit, for ut_search_records_ugo, so a record_read of it answers. Reconstructed from the Ugo Stella alpha feedback as issue #2213 records it (bundle feedback-2026-09-22T15-34-02-839294Z.zip): the record's ids, collection id and the groom are hand-authored.",
+  "args": {
+    "recordId": "~6X2K-UGO1"
+  },
+  "response": {
+    "persons": [
+      {
+        "id": "p1",
+        "names": [
+          {
+            "given": "Ugo",
+            "surname": "Stella"
+          }
+        ],
+        "facts": []
+      },
+      {
+        "id": "p2",
+        "names": [
+          {
+            "given": "Giuseppa",
+            "surname": "Bilancioni"
+          }
+        ],
+        "facts": []
+      },
+      {
+        "id": "p3",
+        "names": [
+          {
+            "given": "Mafalda",
+            "surname": "Stella"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Birth",
+            "date": "1908",
+            "place": "Sassoferrato, Ancona, Marche, Italy"
+          },
+          {
+            "type": "Marriage",
+            "date": "1942",
+            "place": "Milano, Milano, Lombardia, Italy"
+          }
+        ]
+      },
+      {
+        "id": "p4",
+        "names": [
+          {
+            "given": "Carlo",
+            "surname": "Ferrari"
+          }
+        ],
+        "facts": [
+          {
+            "type": "Marriage",
+            "date": "1942",
+            "place": "Milano, Milano, Lombardia, Italy"
+          }
+        ]
+      }
+    ],
+    "relationships": [
+      {
+        "type": "Couple",
+        "person1": "p1",
+        "person2": "p2"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "p1",
+        "child": "p3"
+      },
+      {
+        "type": "ParentChild",
+        "parent": "p2",
+        "child": "p3"
+      },
+      {
+        "type": "Couple",
+        "person1": "p3",
+        "person2": "p4"
+      }
+    ],
+    "sources": [
+      {
+        "title": "Italy, Milano, Milano, Civil Registration (State Archive), 1866-1942",
+        "recordId": "ark:/61903/1:1:6X2K-UGO1"
+      }
+    ],
+    "places": []
+  }
+}

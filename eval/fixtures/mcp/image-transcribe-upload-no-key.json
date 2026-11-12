@@ -1,0 +1,11 @@
+{
+  "tool": "image_transcribe",
+  "description": "image_transcribe refusing the uploaded screenshot uploads/ma-1855-census-josiah-barnes.png because no OpenRouter key is configured for this user (ut_search_external_sites_ulr). Production checks the key before it reads the file, so this is the answer whatever the upload holds. The error text is OPENROUTER_API_KEY_MISSING_MESSAGE in packages/engine/mcp-server/src/auth/config.ts, verbatim. Marked is_error because production returns a thrown error with isError: true, so nothing is staged. Its Claude Desktop and config.json steps do not apply to a hosted researcher; the agent asks for the results text instead.",
+  "args": {
+    "file": "uploads/ma-1855-census-josiah-barnes.png"
+  },
+  "is_error": true,
+  "response": {
+    "error": "No OpenRouter API key is configured. Tell the user to get one at https://openrouter.ai/keys and enter it in Claude Desktop under Settings → Desktop app → Extensions → Genealogy Research → Configure, or add it to ~/.familysearch-mcp/config.json as the \"openRouterApiKey\" field. Do not ask the user to paste the key into the chat."
+  }
+}

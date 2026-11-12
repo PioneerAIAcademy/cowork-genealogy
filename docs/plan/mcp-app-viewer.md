@@ -1,9 +1,9 @@
 # MCP App viewer: research cards and a case file inside Claude
 
 **Status:** Adopted. M0 is closed: every row of `docs/mcp-app-host-probe.md`'s record has
-an answer (2026-11-08). The fold's skeleton is built and tested on the connector path, but no card has
-drawn through the door yet, so the fold is not done (see "The fold"). The demo scope is
-not built.
+an answer (2026-11-08). The fold's skeleton is built and tested on the connector path, but
+no card has drawn through the door yet, so the fold is not done (see "The fold"). The
+demo scope is not built.
 **Owner:** the MCP App session, full-time. A second session, remote-server, owns the
 door, sign-in, `project_list` and the self-hosted stack. The lead merges.
 

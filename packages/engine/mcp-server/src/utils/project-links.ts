@@ -11,7 +11,7 @@ import { getProjectStore } from "../store/project-store.js";
 import type { AppConfig } from "../types/auth.js";
 
 export interface ProjectLinks {
-  /** `<webPublicUrl>/#/p/<id>/upload` — only when `uploadsEnabled`. */
+  /** `<webPublicUrl>/upload/<id>`, the web tier's upload page (#4001) — only when `uploadsEnabled`. */
   uploadUrl?: string;
 }
 
@@ -26,5 +26,5 @@ export async function projectLinks(principal: Principal): Promise<ProjectLinks> 
   const config = await loadConfig(principal);
   const base = webPublicBase(config);
   if (!base || config.uploadsEnabled !== true) return {};
-  return { uploadUrl: `${base}/#/p/${id}/upload` };
+  return { uploadUrl: `${base}/upload/${id}` };
 }

@@ -1,0 +1,50 @@
+{
+  "test": {
+    "id": "ut_locality_guide_w6j",
+    "skill": "locality-guide",
+    "name": "Names FamilySearch collection 2285341 and Yorkshire BMD for a Yorkshire 1851 death record",
+    "type": "positive",
+    "description": "From issue #3178 row 2615. Live collections_search for Yorkshire, England (measured 2026-11-04) returns 167 England-level collections, including 2285341 'England and Wales, Death Registration Index 1837-2007'. Live external_links_search returns 122 links, including http://www.yorkshirebmd.org.uk/ ('Yorkshire Births Marriages & Deaths Indexes'). The test checks that the guide names that collection and that regional index instead of describing civil registration in general terms.",
+    "tags": [
+      "from-cowork",
+      "yorkshire-1851-death-collection",
+      "re-invoke-safe",
+      "collection-id",
+      "england",
+      "civil-registration"
+    ]
+  },
+  "input": {
+    "delegation": "Build a locality guide for Yorkshire, England for 1851. I'm trying to find a death record from that year. What records exist and where can I search?\n\nprojectPath: <workspace>",
+    "scenario": "yorkshire-1851-death-collection"
+  },
+  "execution": {
+    "max_wall_clock_seconds": 900,
+    "sdk_message_silence_seconds": 360
+  },
+  "mcp_fixtures": [
+    "collections-search-yorkshire",
+    "collections-search-any",
+    "external-links-search-yorkshire",
+    "external-links-search-any",
+    "wiki-read-england-civil-registration",
+    "wiki-search-england-civil-registration",
+    "place-search-yorkshire",
+    "place-search-england",
+    "place-search-any",
+    "place-search-all-any",
+    "wiki-search-any",
+    "wiki-read-any",
+    "wikipedia-search-any",
+    "volume-search-any",
+    "place-population-any",
+    "wiki-place-page-any",
+    "catalog-search-empty"
+  ],
+  "judge_context": [
+    "The collections_search fixture returns FamilySearch collection 2285341, 'England and Wales, Death Registration Index 1837-2007', among 167 collections, past the point where the judge's view of that result is cut off. The guide must name this collection by number or exact title as an indexed source for an 1851 death. A guide that describes civil registration generically, without naming it, has not used the tool response and must not pass. Citing a collection number the tools did not return is a failure.",
+    "The external_links_search fixture returns http://www.yorkshirebmd.org.uk/ ('Yorkshire Births Marriages & Deaths Indexes'), past the point where the judge's view is cut off. The guide should name Yorkshire BMD as a regional index for a Yorkshire death. Citing it is grounded in tool output.",
+    "The same collections result also returns 1473016, 'England, Deaths and Burials, 1538-1991'. The guide may cite it for parish burials; that is grounded.",
+    "The wiki_read fixture for England Civil Registration says civil registration began on 1 July 1837, that early registration was required in law but weakly enforced so some events were never registered, that parish records stay essential after 1837, and that the civil registration indexes are organised by quarter. The guide should reflect these. It must not state certificate prices or ordering details the tools did not return."
+  ]
+}

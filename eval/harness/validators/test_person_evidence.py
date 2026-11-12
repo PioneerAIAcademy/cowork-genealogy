@@ -18,11 +18,13 @@ rules + tag-gated regression checks.
 from __future__ import annotations
 
 import json
+import re
 
 import pytest
 
 
 from harness.record_basis import record_basis_of
+from harness.skill_invocation import is_attachment_link
 from validators_lib import (
     as_mapping,
     assert_foreign_keys_valid,
@@ -1486,6 +1488,286 @@ def test_corridor_move_links_confident(before_state, after_state, test):
     )
 
 
+# --- Arrival to naturalization interval (issue #3969) -----------------
+
+# The Gaetjen scenarios: a_007 is the 13 Aug 1875 naturalization, a_014 the
+# 2 Jun 1871 arrival.
+_INTERVAL_ASSERTIONS = ("a_007", "a_014")
+
+# Keyed on the shortfall itself, never on the requirement alone: "meets the
+# five-year residence requirement" is the false claim the issue's baseline
+# made. Also never on "five year(s)" (the 1854 vs ~1859 birth-year gap),
+# "residence" (every rationale's "Residence check:" line) or "four years"
+# (the committed runs call the 1871-1875 path coherent in those words).
+# A bare "1876" is not keyed either: the log names a different Hermann
+# Gatjen "naturalized New York 1876". "5 Cook" is the register's address, so
+# a "5" before it is not the five years.
+_FIVE = r"(?:five|5)\b(?!\s+Cook)"
+_SHORTFALL = re.compile(
+    r"\bshort(?:fall)?\b(?!-)"
+    r"|earliest lawful"
+    r"|\b(?:earliest|eligible|lawful|until|no earlier than|not before)\D{0,40}\b1876\b"
+    r"|\b(?:less|fewer) than (?:the )?(?:required )?" + _FIVE +
+    r"|\b(?:below|under|before) (?:the )?(?:required )?(?:five|5)[- ](?:full )?years?"
+    r"|\b(?:only|about|roughly|just over) (?:four|4)[- ]years?.{0,60}?\b" + _FIVE +
+    r"|\b(?:four|4)[- ]years?.{0,40}?(?:require|need|demand)",
+    re.IGNORECASE | re.DOTALL,
+)
+# A negator up to two words before the match, in the same clause: "no
+# shortfall", "no residence shortfall", "does not fall short".
+_NEGATED = re.compile(r"\b(?:no|not|without|never|nor)\b(?:\s+\S+){0,2}\s*$", re.IGNORECASE)
+_CLAUSE_BREAK = re.compile(r"[,.;:!?\n]")
+# A negator anywhere earlier in the clause: "there is no evidence that this was
+# a return trip", "nothing here is impossible".
+_CLAUSE_NEGATOR = re.compile(
+    r"\b(?:no|not|nothing|none|without|never|nor|cannot|can't)\b", re.IGNORECASE
+)
+_MET = re.compile(r"(?<!not )\b(?:met|meets?|satisf(?:y|ies|ied))\b", re.IGNORECASE)
+_SENTENCE_END = re.compile(r"\.(?:\s|$)|\n")
+_INTERVAL_CONFLICT = re.compile(r"interval|residence (?:requirement|required)", re.IGNORECASE)
+
+# The body's check line: "Naturalization check: arrival [date] to naturalization
+# [date]: [interval] vs [required] years: met / short, [the project record that
+# explains it, or nothing]." Its verdict is read from that line, so the Residence
+# check line beside it (which names the 1869 directory in every I1 rationale of
+# the return-trip scenario) never decides it.
+_NAT_CHECK = re.compile(
+    r"Naturalization check:(.*?)(?=\b(?:Date|Residence|Naturalization) check:|\Z)",
+    re.IGNORECASE | re.DOTALL,
+)
+_VERDICT = re.compile(r":\s*(met|short)\b(?!\s*/)", re.IGNORECASE)
+_TEMPLATE_COPY = re.compile(r"\bmet\s*/\s*short\b", re.IGNORECASE)
+# A project record that explains the shortfall, named in the verdict's slot.
+_EXPLAINER = re.compile(
+    r"\bsrc_003\b|\ba_01[56]\b|\bpe_00[12]\b|\b1869\b|director|discharge|\bfather\b|\breturn",
+    re.IGNORECASE,
+)
+_RETURN_TRIP = re.compile(
+    r"\breturn (?:trip|voyage|journey|visit)\b|\b(?:is|was) a return\b"
+    r"|\breturned (?:to|from)\b|\bcame back\b|\bre-?entry\b",
+    re.IGNORECASE,
+)
+# The arrival set against the earlier residence as if one excluded the other.
+_INVERTS = re.compile(
+    r"impossib|inconsistent|incompatible|(?:cannot|could not|can't) be reconciled|irreconcil"
+    r"|\bcontradicts\b|(?<!may be )(?<!might be )(?<!could be )\bdifferent (?:men|persons|people|individuals)\b"
+    r"|(?:cannot|could not|can't) (?:both )?be (?:in both|the same (?:man|person|individual))"
+    r"|two places at once|in both places",
+    re.IGNORECASE,
+)
+# Only on a stub, or in a sentence that names one: the arrival taken off the
+# subject because of the residence. The same words on the subject's own link,
+# with no stub in them, are the return trip stated.
+_STUB_INVERTS = re.compile(
+    r"(?:cannot|could not|can't|couldn't) have (?:first )?arrived"
+    r"|(?:cannot|could not|can't|couldn't) (?:have been|be) (?:I\d+|him|his)\b(?!(?:'s)?\s+first\b)"
+    r"(?:[^.;:]|\.(?=\d))*?(?:\b(?:because|since|given)\b|:)(?:[^.;]|\.(?=\d))*?"
+    r"(?:\b1869\b|director|residen|\bsrc_003\b|\bpe_00[12]\b)"
+    r"|\b(?:because|since|given)\b(?:[^.;]|\.(?=\d))*?"
+    r"(?:\b1869\b|director|residen|\bsrc_003\b|\bpe_00[12]\b)(?:[^.;]|\.(?=\d))*?"
+    r"(?:cannot|could not|can't|couldn't) (?:have been|be) (?:I\d+|him|his)\b(?!(?:'s)?\s+first\b)",
+    re.IGNORECASE,
+)
+_STUB = re.compile(r"\bstub", re.IGNORECASE)
+_RESIDENCE_SIDE = re.compile(
+    r"\b1869\b|director|\bsrc_003\b|\bpe_00[12]\b|\ba_01[56]\b", re.IGNORECASE
+)
+_ARRIVAL_SIDE = re.compile(r"\b1871\b|arriv|passenger", re.IGNORECASE)
+# The arrival persona's assertions in the Gaetjen scenarios (src_002).
+_ARRIVAL_PERSONA = ("a_010", "a_011", "a_012", "a_013", "a_014")
+
+
+def _norm(text):
+    """Collapse "U.S." so its full stops do not end a sentence."""
+    return re.sub(r"\bU\.\s?S\.", "US", text or "")
+
+
+def _clause_negated(text, start):
+    """A negator earlier in the clause, and not before a "but": "not a
+    contradiction but a return trip" states the return trip."""
+    clause = _CLAUSE_BREAK.split(text[:start])[-1]
+    return bool(_CLAUSE_NEGATOR.search(re.split(r"\bbut\b", clause)[-1]))
+
+
+def _check_verdicts(text):
+    """(verdict, slot) for each Naturalization check line: its first `: met` or
+    `: short` (a copied `met / short` gives none), and as the slot the rest of
+    that sentence and the one after it ("short ~10 months. src_003 explains it")."""
+    out = []
+    for line in _NAT_CHECK.finditer(_norm(text)):
+        verdict = _VERDICT.search(line.group(1))
+        if verdict:
+            rest = line.group(1)[verdict.end():]
+            out.append((verdict.group(1).lower(), " ".join(_SENTENCE_END.split(rest, 2)[:2])))
+    return out
+
+
+def _slot_explains(slot):
+    """The slot names an explaining record before any negator: "short, src_003"
+    does; "short, nothing" and "short, not explained by the directory" do not."""
+    m = _EXPLAINER.search(slot)
+    return bool(m) and not _CLAUSE_NEGATOR.search(slot[: m.start()])
+
+
+def _states_naturalization_shortfall(text):
+    """Names a shortfall against the residence the law required. A check line's
+    verdict decides when there is one (`short` yes, `met` no). Otherwise a
+    free-text shortfall beside the 1871 arrival counts, unless negated in its
+    own clause ("no shortfall") or its sentence reports the requirement met."""
+    verdicts = [v for v, _ in _check_verdicts(text)]
+    if verdicts:
+        return "short" in verdicts
+    text = _TEMPLATE_COPY.sub("", _norm(text))
+    if "1871" not in text:
+        return False
+    for m in _SHORTFALL.finditer(text):
+        if _NEGATED.search(_CLAUSE_BREAK.split(text[: m.start()])[-1]):
+            continue
+        if _MET.search(_SENTENCE_END.split(text[m.end():], 1)[0]):
+            continue
+        return True
+    return False
+
+
+def _states_return_trip(text):
+    """An explicit return trip, not negated in its clause ("no record of a
+    return trip", "this cannot have been a return trip")."""
+    text = _norm(text)
+    return any(not _clause_negated(text, m.start()) for m in _RETURN_TRIP.finditer(text))
+
+
+def _unexplained_shortfall(text):
+    """A check line that says short with no explaining record in its slot, or,
+    with no check line, a free-text shortfall and no return trip stated."""
+    verdicts = _check_verdicts(text)
+    if verdicts:
+        return any(v == "short" and not _slot_explains(slot) for v, slot in verdicts)
+    return _states_naturalization_shortfall(text) and not _states_return_trip(text)
+
+
+def _sets_residence_against_arrival(text, on_stub=False):
+    """A sentence calling the earlier residence and the arrival mutually
+    exclusive ("a biographical impossibility", "cannot be in both places"), or
+    denying the return trip ("there is no record of a return trip"), with both
+    named in it or the sentence before. A stated return trip clears it. A
+    tripwire for that phrasing; the judge is the primary guard."""
+    text = _norm(text)
+    if _states_return_trip(text):
+        return False
+    previous = ""
+    for sentence in re.split(r"(?<=[.!?])\s+|\n", text):
+        window = previous + " " + sentence
+        previous = sentence
+        if not (_RESIDENCE_SIDE.search(window) and _ARRIVAL_SIDE.search(window)):
+            continue
+        if any(not _clause_negated(sentence, m.start()) for m in _INVERTS.finditer(sentence)):
+            return True
+        if (on_stub or _STUB.search(sentence)) and _STUB_INVERTS.search(sentence):
+            return True
+        if any(_clause_negated(sentence, m.start()) for m in _RETURN_TRIP.finditer(sentence)):
+            return True
+    return False
+
+
+def _residence_conflict(text):
+    """A core_identifier_conflict naming both the earlier residence and the
+    arrival: the field is a contradiction claim by definition."""
+    text = _norm(text)
+    return bool(_RESIDENCE_SIDE.search(text) and _ARRIVAL_SIDE.search(text))
+
+
+def _is_interval_conflict(text):
+    """A conflict about the interval, not the 1854 vs ~1859 birth year: it
+    names the interval or the requirement, states the shortfall, or sets the
+    1871 arrival against the naturalization."""
+    return bool(
+        _INTERVAL_CONFLICT.search(text)
+        or _states_naturalization_shortfall(text)
+        or ("1871" in text and re.search(r"naturaliz", text, re.IGNORECASE))
+    )
+
+
+def _live_interval_entries(after_state):
+    research = after_state.get("research_json") or {}
+    return [
+        e for e in (research.get("person_evidence") or [])
+        if not e.get("superseded_by") and e.get("assertion_id") in _INTERVAL_ASSERTIONS
+    ]
+
+
+def test_naturalization_shortfall_stated(after_state, test, agent_returns=None, text_response=None):
+    """Tag-gated (`naturalization-shortfall`): the 1871 arrival leaves about
+    four years before the 1875 naturalization, against five required, and
+    nothing in the project explains it. A rationale on the arrival's or the
+    naturalization's entry (linked to I1 or a stub) names the shortfall, and
+    neither links to I1 `confident` (lead ruling 2026-11-01: `probable` at
+    most). A run that writes neither entry and asks first passes when its
+    reply names the shortfall."""
+    if "naturalization-shortfall" not in (test.get("tags") or []):
+        pytest.skip("not a naturalization-shortfall test")
+    entries = _live_interval_entries(after_state)
+    confident = [
+        (e.get("id"), e.get("assertion_id"))
+        for e in entries
+        if e.get("person_id") == "I1" and e.get("confidence") == "confident"
+    ]
+    assert not confident, (
+        "an unexplained arrival-to-naturalization shortfall caps the arrival's "
+        f"and the naturalization's links at `probable`; `confident` on I1: {confident}"
+    )
+    if entries:
+        assert any(_states_naturalization_shortfall(e.get("rationale")) for e in entries), (
+            "no rationale on the a_007/a_014 entries states the residence shortfall "
+            "(June 1871 arrival, 13 Aug 1875 naturalization, five years required): "
+            f"{[(e.get('id'), e.get('assertion_id'), e.get('person_id')) for e in entries]}"
+        )
+        return
+    from harness.skill_runner import subject_reply_text
+
+    reply = subject_reply_text(agent_returns, text_response, "person-evidence", test)
+    assert _states_naturalization_shortfall(reply), (
+        "the run linked neither a_007 nor a_014, and its reply does not state the "
+        "residence shortfall either"
+    )
+
+
+def test_naturalization_exception_not_flagged(after_state, test):
+    """Tag-gated (`naturalization-exception`): an 1869 directory in the project
+    shows residence before the 1871 arrival, so the arrival is a return trip
+    and the interval decides nothing. No a_007/a_014 rationale may state a
+    shortfall it leaves unexplained, and no a_007/a_014 entry may carry a
+    `core_identifier_conflict` about the interval. No tier is asserted: the
+    arrival is a weak match on its own and may stay speculative or stubbed."""
+    if "naturalization-exception" not in (test.get("tags") or []):
+        pytest.skip("not a naturalization-exception test")
+    entries = _live_interval_entries(after_state)
+    unexplained = [e.get("id") for e in entries if _unexplained_shortfall(e.get("rationale"))]
+    assert not unexplained, (
+        "the project's 1869 directory makes the 1871 arrival a return trip, but "
+        f"these rationales state a shortfall and leave it unexplained: {unexplained}"
+    )
+    research = after_state.get("research_json") or {}
+    inverted = [
+        e.get("id") for e in (research.get("person_evidence") or [])
+        if not e.get("superseded_by")
+        and e.get("assertion_id") in _INTERVAL_ASSERTIONS + _ARRIVAL_PERSONA
+        and (_sets_residence_against_arrival(e.get("rationale"), on_stub=e.get("person_id") != "I1")
+             or _residence_conflict(e.get("core_identifier_conflict")))
+    ]
+    assert not inverted, (
+        "residence attested before the 1871 arrival makes it a return trip, not a "
+        f"contradiction; these entries treat it as one: {inverted}"
+    )
+    conflicts = [
+        (e.get("id"), e.get("core_identifier_conflict")) for e in entries
+        if _is_interval_conflict(e.get("core_identifier_conflict") or "")
+    ]
+    assert not conflicts, (
+        "an explained arrival-to-naturalization interval is not a "
+        f"core_identifier_conflict: {conflicts}"
+    )
+
+
 # --- Namesakes (issue #3363, PR 2) ------------------------------------
 
 
@@ -1706,4 +1988,59 @@ def test_identity_links_follow_their_persona(before_state, after_state, tool_cal
         "a persona's own facts (name, birth, death, ...) must be linked to the one "
         "person that persona is -- check the list answers for a mixed-up id:\n  "
         + "\n  ".join(problems)
+    )
+
+
+# --- Attachment links on named assertions are superseded, the rest left alone ---
+
+def test_supersedes_named_attachment_links(before_state, after_state, test):
+    """Tag-gated (``supersedes-named-attachment-links``, issue #3516 PR D).
+
+    In the scenario, the assertions the delegation names are exactly those
+    carrying a question id, and each has only a live attachment link. For each
+    one, a new `pe_` to the same person with a non-null `match_score` is written
+    and the attachment link's `superseded_by` names it. Every other live
+    attachment link (an assertion with no question id) is unchanged, and its
+    assertion-person pair gains no new `pe_`.
+    """
+    if "supersedes-named-attachment-links" not in (test.get("tags") or []):
+        pytest.skip("not a supersedes-named-attachment-links test")
+    before = before_state.get("research_json") or {}
+    after = after_state.get("research_json") or {}
+    named = {
+        a["id"] for a in before.get("assertions", [])
+        if isinstance(a, dict) and a.get("extracted_for_question_ids")
+    }
+    old_links = [
+        pe for pe in before.get("person_evidence", [])
+        if isinstance(pe, dict) and not pe.get("superseded_by") and is_attachment_link(pe)
+    ]
+    assert old_links and named, (
+        "scenario drift: expected live attachment links and question-tied assertions before the run"
+    )
+    after_by_id = {pe.get("id"): pe for pe in after.get("person_evidence", []) if isinstance(pe, dict)}
+    old_ids = {pe["id"] for pe in before.get("person_evidence", []) if isinstance(pe, dict)}
+    new_links = [pe for pid, pe in after_by_id.items() if pid not in old_ids]
+
+    problems: list[str] = []
+    for old in old_links:
+        aid, person = old.get("assertion_id"), old.get("person_id")
+        now = after_by_id.get(old["id"]) or {}
+        fresh = [pe for pe in new_links if pe.get("assertion_id") == aid and pe.get("person_id") == person]
+        if aid in named:
+            target = after_by_id.get(now.get("superseded_by") or "")
+            if not target:
+                problems.append(f"{old['id']} ({aid}, named) is still live or superseded by a missing entry")
+            elif target.get("assertion_id") != aid or target.get("person_id") != person:
+                problems.append(f"{old['id']} ({aid}) is superseded by {target.get('id')}, a link for another pair")
+            elif target.get("match_score") is None:
+                problems.append(f"{target.get('id')} superseding {old['id']} ({aid}) carries no match_score")
+        else:
+            if now.get("superseded_by"):
+                problems.append(f"{old['id']} ({aid}, not named) was superseded by {now.get('superseded_by')}")
+            if fresh:
+                problems.append(f"{aid} (not named) gained {[pe.get('id') for pe in fresh]}")
+    assert not problems, (
+        "named assertions' attachment links must be superseded by a scored link, "
+        "and every other attachment link left alone:\n  - " + "\n  - ".join(problems)
     )

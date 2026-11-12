@@ -41,8 +41,8 @@
 >    viewer) can show the scan beside its transcription.
 > 3. **Key handling stays config-only (§6.4–§6.5)** — `getOpenRouterApiKey`
 >    reads the key only from the config, never from env. Each runtime's
->    entrypoint or orchestrator fills that config: `config.json`, the `.mcpb`
->    install dialog layered over it, and bridges for e2e, the hosted sandbox
+>    entrypoint or orchestrator fills that config: `config.json`, the `.mcpb`'s
+>    settings layered over it, and bridges for e2e, the hosted sandbox
 >    and the prototype's container.
 >
 > **Phase 0 is COMPLETE — spike PR 723.**
@@ -387,8 +387,8 @@ consistent across schema, manifest, and skill.)*
   (Input, and "ark format"), shared unchanged. Among them: when `ark` and
   `imageArk` are one ARK and only one carries `i`/`cc`/`groupId`, the one
   carrying them is read, since `i=` can pick the page. `imageArk` therefore counts as
-  the `ark` form in the exactly-one check, and the staged `source` and
-  `metadata` report it as `ark`.
+  the `ark` form in the exactly-one check, and the staged `source` and the
+  in-process `metadata` report it as `ark`.
 - `memoryArtifactUrl` is a person's **memory** artifact, as carried by a
   `person_read` source that came from the memories API — a scanned will,
   certificate, obituary clipping or compiled history uploaded by a relative. It
@@ -490,8 +490,10 @@ consistent across schema, manifest, and skill.)*
   `staged: null` + `stagingError`, and then the text comes back inline.
 - **With no project** — no `projectPath`, or a folder holding neither project
   file — an `imageId`, `ark` or `memoryArtifactUrl` is read with `projectPath`
-  removed, and the MCP entry point returns the full `transcription` inline with
-  no `staged`, `digest`, `imageRef` or `stagingError`. Nothing is written
+  removed, and the MCP entry point returns the `transcription` inline with
+  no `staged`, `digest`, `imageRef` or `stagingError`. A page longer than
+  `INLINE_TRANSCRIPTION_MAX_CHARS` (36,000 characters, JSON-escaped) is cut at a
+  line boundary and `truncationNotice` says so (see "Output"). Nothing is written
   anywhere: no `images/`, no `results/`, and no cap log (§5.8 "Calls with no
   `projectPath`"). A `file` still needs a project, because its path is
   project-relative. **Decided (lead, 2026-11-02):** transcribing an
@@ -522,15 +524,18 @@ periods) because the model reads natural language, not query syntax.
 Bidirectional: searching for "Betty Martin" also includes "Elizabeth"
 and all other variants.
 
-When expansion fires, the response includes a `nameExpansion` field
-(reversing the prior §5.3.1 decision — the genealogist needs to know
-which name forms the found check credited):
+When expansion fires, `imageTranscribeTool`'s in-process result carries a
+`nameExpansion` field:
 
 - `original`: the caller's `lookingFor` string
 - `expanded`: the rewritten `lookingFor` the found check saw (the OCR
   prompt never sees any form of it)
 - `expansions`: which formal names were expanded and to which variant
   forms (keyed by the table's formal name, e.g. `"Elizabeth"`)
+
+The MCP answer drops it (see "Output"). It was added so a genealogist could see which
+name forms the found check credited, but no caller relays it, and the
+search-images agent reads every `FOUND` page in full before it reports one.
 
 This uses the same underlying name-variant tables as `get_name_variants`, without
 `variantsInResults`, which has no equivalent for VLM transcription.
@@ -563,19 +568,34 @@ This uses the same underlying name-variant tables as `get_name_variants`, withou
    content part with the `file-parser` plugin (engines `native`, free `cloudflare-ai`,
    paid `mistral-ocr`) is the alternative request shape — not built, because the measured
    path works with no plugin fee.
+4a. **Clean the layout, losslessly** (`normalizeTranscription`,
+   `src/utils/staged-compaction.ts`): trailing whitespace goes from every line; on a
+   line made only of rule characters (`-`, `=`, `_`, box-drawing rules, with any
+   `|`, `:`, `+` and spaces), every run of four or more of one rule character becomes
+   three, except on a line of column rulings (runs with only spaces between them,
+   `--------    --   --------`), which stays as it is because each run's length is
+   its column's width; three or more line breaks become two. It runs in time linear
+   in the page's length. No character of what the page says
+   changes, and the inner column padding of a fixed-width table stays, because it is
+   what places a value in its column. On wide registers the OCR pads every line to
+   the table's width and draws a page-wide `====` row under the header: on the
+   sampled pages that was 8% of the largest inline page and 31% of the largest
+   staged page. Everything after this step (the found check, the staged element, the
+   digest, the inline text, `person_read`'s memories) reads the cleaned text. The
+   OCR prompt is unchanged.
 5. **Found check** (with `lookingFor`, on a complete read only): one more
    OpenRouter request, **text-only** — the transcription plus the expanded
    `lookingFor` (§5.3.1), no image — whose reply's final-line marker sets
    `found` (§6.2). It runs on what is left of the OCR leg's single budget
    (§5.7) and is best-effort: a failure omits `found`, never fails the read.
    Skipped on a truncated read. It runs before staging, so the staged element
-   and the `digest` carry its verdict.
+   carries its verdict.
 6. **Stage** (with `projectPath`): the transcription is retained host-side through the
    search tools' channel (§5.5) and a `digest` is computed. Best-effort. For an `imageId`
    or `ark`, the staged source carries the image group's coverage place (§5.5.1), looked
    up beside steps 1–4.
-7. **Return** `staged` / `digest` / `found` + light metadata (§5.5) — the text only when
-   staging failed. No image block.
+7. **Return** `staged` / `digest` / `found` (see "Output") — the text only with no project or
+   when staging failed. No image block.
 
 There is **no size cap for transport reasons** — the bytes go host→OpenRouter, never back
 over MCP. The only cap is the provider's request limit (§7), and the tool refuses rather than
@@ -590,11 +610,31 @@ triages on `found` and `digest`, reads the page with
 `sidecar_read({ projectPath, ref: staged.resultsRef })` only when it needs it,
 and hands `staged.resultsRef` to the `record-structurer` agent, which passes it
 to `extraction_append` as `transcriptionRef`. The text comes back inline only
-when `staged` is null. The strip is `compactStagedImageTranscribe`
-(`src/utils/staged-compaction.ts`), applied at the MCP boundary and never inside
-`imageTranscribeTool`, because person_read's memories leg calls that function
-in-process and reads the text. The unit harness applies the same compiled
-function to its canned responses.
+when `staged` is null or absent.
+
+**One compactor shapes every leg:** `compactImageTranscribeAnswer`
+(`src/utils/staged-compaction.ts`), applied at the MCP boundary to the staged
+answer, the no-project answer and the staging-failed answer alike, and never
+inside `imageTranscribeTool`, because person_read's memories leg calls that
+function in-process and reads the whole text. It:
+
+- drops `transcription` when `staged` is set;
+- otherwise cuts an inline `transcription` whose JSON-escaped length is over
+  `INLINE_TRANSCRIPTION_MAX_CHARS` (36,000) at a heading or line boundary, with
+  `pageText` (`src/utils/text-page.ts`, the paging `sidecar_read` and the wiki
+  tools use), and adds a sentence to `truncationNotice` giving the characters shown
+  and the page's total and saying how to get the whole page. It sets no `truncated`,
+  which means the OCR stopped at its cap (see "Response"), and it keeps `found`, which the
+  found check decided over the whole page. A tool result over about 50,000
+  characters reaches the caller as a notice with no data, and `OCR_MAX_TOKENS`
+  allows a page of about 64,000;
+- drops `nameExpansion` (see "Given-name expansion in `lookingFor`"), and `metadata`
+  except a resolved `memoryArtifactUrl` (see "Input"). The staged element keeps the model, content type and
+  size.
+
+It is idempotent. The unit harness runs the same compiled `normalizeTranscription`,
+`transcriptionDigest` and `compactImageTranscribeAnswer` on its canned responses, on
+both legs.
 
 Why: the `image-reader` agent retyped every page as output (about 1,040 output
 tokens a read), and 79 of its 107 reads from 2026-09-15 to 2026-10-16 staged
@@ -605,38 +645,41 @@ Text only, no image block:
 
 ```typescript
 {
-  transcription?: string     // faithful full-page OCR — never doctored. Present ONLY when staged is null
-                             // (staging failed). imageTranscribeTool's in-process return always carries it.
+  transcription?: string     // faithful full-page OCR — never doctored; its layout is cleaned losslessly (pipeline step 4a).
+                             // Present ONLY with no project, or when staged is null (staging failed), and then
+                             // cut at INLINE_TRANSCRIPTION_MAX_CHARS. imageTranscribeTool's in-process return
+                             // always carries it whole.
   viewerUrl?: string         // FamilySearch viewer URL for the image.
                              // Present for imageId and ark inputs; absent for file and memoryArtifactUrl.
                              // DGS: https://www.familysearch.org/search/film/<dgs>?i=<n-1> (zero-indexed,
                              //   verified 2026-10-01: image 00697 of film 004528077 opens at i=696).
                              // ARK: the resolver URL, preserving i=/cc=/groupId= context params.
   truncated?: true           // present when the OCR hit its output-token cap (finish_reason or native_finish_reason marks it — §6.2); transcription is PARTIAL
-  truncationNotice?: string  // tool-voiced plain sentence companion to `truncated`; present iff `truncated`
+  truncationNotice?: string  // tool-voiced plain sentences: present when `truncated`, and when the inline
+                             // transcription was cut for delivery (that cut sets no `truncated`)
   found?: "FOUND" | "NOT FOUND"  // present only when lookingFor was set, the read was not truncated (§6.2),
                              // AND the text-only found check (§6.1) replied with a parseable marker —
                              // omitted when that second call fails (it is best-effort)
   imageRef?: string          // present iff projectPath given + save succeeded (§8.5) — e.g. "images/<key>.jpg"; never for a `file` input
   staged: { resultsRef: string; returnedCount: number } | null  // the staging handle (search-result-staging-spec.md); null when staging failed
   stagingError?: string      // why `staged` is null
-  digest: {                  // what a caller triages on without the full text
+  digest: {                  // what a caller triages on without the full text (transcriptionDigest)
     id: string               // imageId / ark / memory URL, or `capture:<basename>` for a `file`
-    chars: number            // transcription length
-    excerpt: string          // first 300 chars
-    found?: "FOUND" | "NOT FOUND"
-    truncated?: true
+    chars: number            // length of the staged transcription; the e2e orchestrator matches a
+                             // finalized sidecar element on id + chars
+    excerpt: string          // the page's opening lines, at most 300 chars: blank lines, code fences
+                             // and rule-only lines dropped, each line's runs of spaces collapsed to one
   }
-  metadata: {
-    imageId?: string
-    ark?: string
-    file?: string            // the project-relative ref that was read
-    contentType: string      // what was sent to the model: image/jpeg, image/png, application/pdf, …
-    model: string            // the OpenRouter model slug actually used
-    sizeBytes: number        // raw input size (sent to OCR as-is; no pre-processing)
+  metadata?: {               // present only when a Memories page URL was resolved
+    memoryArtifactUrl: string
   }
 }
 ```
+
+`found` and `truncated` ride the top level; the digest does not repeat them.
+`imageTranscribeTool`'s in-process result also carries `nameExpansion` and the
+full `metadata` (`imageId?`, `ark?`, `file?`, `memoryArtifactUrl?`, `contentType`,
+`model`, `sizeBytes`), which the compactor drops.
 
 **The staged element** (one per call, `results[0]` of the envelope, snake_case — it is
 persisted project state): `{ id, source: { imageId | ark | memoryArtifactUrl | file, place? },
@@ -768,6 +811,29 @@ derive it from run-log `usage.timeline` gaps**: those are per SDK message, not
 per tool call, and the figures they gave here (p90 79s, max 167s) were both
 inflated and a model generation stale.
 
+**A connector caller gets a tighter, single budget instead (self-hosted beta
+E5).** The 90+90+180=360s worst case above describes LOCAL and the worker. A
+connector-surface caller is instead held to one 180s budget
+(`CONNECTOR_TRANSCRIBE_BUDGET_MS`) that starts when the tool is entered — the
+Memories lookup, the fetch and the OCR all spend from it — chosen to leave
+room, under Claude's measured 230s per-call timeout (measured 2026-11-08), for
+the trip both ways and the staging write. Within that budget:
+one download attempt only (no fallback-URL retry), at a per-attempt timeout
+well under it (`CONNECTOR_FETCH_TIMEOUT_MS`, 30s — the download leg measures
+p50 1.9s/max 8.0s, so this is ample headroom); the OCR then gets whatever the
+budget has left, minus a fixed margin reserved for the staging write that runs
+after it returns (`CONNECTOR_STAGING_MARGIN_MS`). `runOcr`/`runFoundCheck`
+(`utils/ocr.ts`) stay principal-free either way — the connector clamp is
+computed in `image-transcribe.ts` and passed down as an ordinary `timeoutMs`,
+the same parameter `person_read`'s own ~40s memories-phase budget already uses,
+and whichever cap is tighter wins. **One known, accepted gap:** when
+`projectPath` and `imageId`/`ark` are given, `imageGroupPlace`'s lookup (the
+staged page's coverage place) is awaited after the OCR, inside the staging
+block, with its own default ~20s worst case (two sequential FamilySearch
+group-service calls) not drawn from this budget — so the true worst case on
+that one narrow path is "the 180s budget, plus up to ~20s of staging-time place
+lookup," not a hard 180s ceiling on every path.
+
 ### 5.8 Image cap (hard, shared, persisted)
 
 An agent can enter an unbounded page-by-page hunt through a browse-only image
@@ -849,12 +915,23 @@ alternative under-counts every delegated read; the refusal says "this server ses
 for that case, never "this project", because it can be refusing pages another project
 read.
 
-**Known limitation — header-less http requests share a bucket.** A request with no
-`X-Genealogy-Project-Id` header binds an *unbound* store (no `projectId`, and its
-I/O refuses), so its reads count in memory under the no-project scope, as on the
-file backend: two header-less patrons can advance one another's count. They never
-pool a bound patron's count — reads recorded under a `projectId` are excluded from
-that union. Accepted: such a session already fails every persistence call.
+**Per-user scope for a connector call naming no project.** A
+connector request that names no `projectPath` binds an *unbound* store (no
+`projectId`, and its I/O refuses), so its reads count in memory, as on the file
+backend — but `checkImageBrowseCap` also takes the `Principal`, and scopes that
+in-memory count to the connector caller's own id (`connectorUserId`,
+`utils/user-limits.ts`) rather than to one bucket shared by every connector
+patron. Two connector users calling with no project each get their own 20;
+neither advances the other's count, and the refusal for this case says the
+images were read "without a project under your account" rather than "in this
+server session" — the old wording, kept only for the LOCAL/file-backend case
+below, is misleading on a process many users share. A worker request always
+carries a project (`X-Genealogy-Project-Id`), so it never reaches this scope at
+all — it is counted against that project's log like any other bound call. The
+LOCAL/file-backend process (the desktop `.mcpb`, both harnesses) has exactly
+one user per process, so its no-project reads keep pooling as before, under
+"this server session" wording — there is only ever one caller to protect from
+there.
 
 **The trade, stated.** Because the count is persisted, a legitimate 21st page in
 the same project is refused **permanently** — a restart no longer resets it. The
@@ -1094,13 +1171,16 @@ success and the caller cannot tell a half-read census page from a whole one.
   invariant that `truncated: true` never ships beside an empty `transcription`,
   and it is the case the §5.6 "empty → throw" row governs — the two are
   consistent, not contradictory.
-- The `transcription` stays **verbatim** — the signal rides the sibling
-  fields, never spliced into the OCR text (that would re-create the
-  prose/OCR blend a truncation notice must never introduce).
+- The `transcription` stays **verbatim**, apart from the lossless layout cleanup
+  (pipeline step 4a) — the signal rides the sibling fields, never spliced into the
+  OCR text (that would re-create the prose/OCR blend a truncation notice must
+  never introduce). The delivery cut on an inline answer (see "Output") is signalled the
+  same way, by a sentence in `truncationNotice`, and sets no `truncated`: the page
+  was read whole, so `found` stands.
 - **Skip the found check on a truncated read.** A target may sit below the
   cut, so a half-read page must never surface a clean `NOT FOUND` negative —
-  the second call is not made at all, and `found` is absent from the response,
-  the staged element and the digest alike.
+  the second call is not made at all, and `found` is absent from the response
+  and the staged element alike.
 - **Out of scope:** a model that stops early on its own
   (`finish_reason: "stop"` on an unfinished page — no cheap signal, a
   model-quality problem) and a transport cut mid-body (already thrown by
@@ -1127,8 +1207,9 @@ flow. Storage follows the existing per-user config convention exactly:
   `0o600`. Nothing in the engine writes that file.
 - The FS `login` analogy is **imperfect**: FS login is a browser OAuth
   round-trip the tool drives itself; an API key is a static paste the tool
-  cannot obtain on its own. The user sets the key in the `.mcpb`'s install
-  dialog (the extension's **OpenRouter API key** field, §6.5) or directly in
+  cannot obtain on its own. The user sets the key in the `.mcpb`'s settings
+  (the **OpenRouter API key** field on the extension's **Configure** page in
+  Claude Desktop, §6.5) or directly in
   `~/.familysearch-mcp/config.json` as the `openRouterApiKey` field. It
   never passes through a tool-call argument, so it never appears in the
   session transcript. `openRouterModel` is set in `config.json` only. There is no
@@ -1152,7 +1233,7 @@ as environment and not as a file baked into an image:
 
 | Runtime | Server runs | How `openRouterApiKey` reaches `config.json` |
 |---|---|---|
-| **Cowork desktop** | host (`.mcpb`) | the user enters it in the extension's install dialog (`user_config.openrouter_api_key` in `manifest.json`), which Claude Desktop passes as `GENEALOGY_OPENROUTER_API_KEY` and `src/index.ts` layers over `~/.familysearch-mcp/config.json` at start-up (`installConfigFromEnv`); or edits `config.json` directly. The dialog's key wins when both are set |
+| **Cowork desktop** | host (`.mcpb`) | the user enters it on the extension's Configure page in Claude Desktop (`user_config.openrouter_api_key` in `manifest.json`), which Claude Desktop passes as `GENEALOGY_OPENROUTER_API_KEY` and `src/index.ts` layers over `~/.familysearch-mcp/config.json` at start-up (`installConfigFromEnv`); or edits `config.json` directly. The extension's key wins when both are set |
 | **Hosted web** | inside the E2B sandbox | Fly secret `OPENROUTER_API_KEY` → `config.py` `Settings.openrouter_api_key` → a `write_config(sandbox, {openRouterApiKey})` sibling of `fs_oauth.write_tokens`, written into the sandbox's `~/.familysearch-mcp/config.json` at session create (`sessions.py`) |
 | **Search-agent prototype** | a container (`build/http.js`, the shared compose `tools` service) | compose passes the stack's `OPENROUTER_API_KEY` to the service; the entrypoint layers it and the other per-user keys `PER_USER_ENV` names over the config it starts from (`src/hosted-config-env.ts`) before building the server |
 | **e2e harness** | node subprocess of the harness | the harness reads `OPENROUTER_API_KEY` from `eval/.env` and stages `openRouterApiKey` into the `~/.familysearch-mcp/config.json` the subprocess reads (consistent with e2e already depending on the developer's real `tokens.json` there) |
@@ -1166,7 +1247,7 @@ was claimed here until 2026-09-20, is the stronger sentence that the server make
 `GENEALOGY_OPENROUTER_API_KEY`, and a shipped tool
 (`research-append.ts`) reads two debug-hold variables, which `http.ts` also reads
 only to name them at start-up (`research-append-tool-spec.md` §11.5). The bridge is at the
-**entrypoint** for a container and for the desktop install dialog, and at the
+**entrypoint** for a container and for the desktop extension's settings, and at the
 **orchestrator** for a sandbox; all are outside the tool, which is the line that
 matters. The hosted-path
 `fs_oauth.write_tokens` (`TOKENS_PATH = {HOME}/.familysearch-mcp/tokens.json`,
@@ -1473,8 +1554,18 @@ Mirror `tests/tools/wiki-search.test.ts` (stub global `fetch`, mock the
   carries the transcription and the expanded key, and `found` comes from its
   final-line marker; a second-call failure or an unparseable reply omits
   `found` with the transcription intact; no second call without `lookingFor`
-  or on a truncated read; the staged element and the digest carry `found`
+  or on a truncated read; the staged element carries `found`
   (`tests/tools/image-transcribe.test.ts`, `tests/utils/ocr.test.ts`).
+- **Layout cleanup**: lossless on meaningful text (every line with words survives
+  byte for byte, in order; inner column padding stays), an ordinary page comes back
+  byte-identical, and it is idempotent; the found check, the staged element and the
+  digest all read the cleaned text (`tests/utils/staged-compaction.test.ts`,
+  `tests/tools/image-transcribe.test.ts`).
+- **The one compactor**: the staged and the no-project answer both carry no
+  `metadata` or `nameExpansion`; an inline page over the bound is cut at a line
+  boundary with a `truncationNotice`, keeps `found`, sets no `truncated`, and
+  serializes to 37,000 characters or fewer from a 40,000-character page; the
+  compactor is idempotent on every leg (same two files).
 - **No key** → LLM-instruction error, **and `fetch` to OpenRouter is never
   called** (fail closed).
 - **OpenRouter non-2xx** → clean `OpenRouter OCR failed: …`.

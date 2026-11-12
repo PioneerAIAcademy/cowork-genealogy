@@ -255,7 +255,8 @@ async def test_chat_off_starts_with_no_queue_and_no_refresher(monkeypatch):
     assert application.state.queue is None and health["queue"] is None
 
 
-_BETA_PATHS = {"/privacy", "/terms", "/api/account"}
+_BETA_PATHS = {"/", "/upload/{project_id}", "/pdfjs/{name}", "/pdfjs/cmaps/{name}", "/privacy", "/terms",
+               "/api/account"}
 
 
 def test_chat_off_adds_the_policy_and_account_routes_and_chat_on_does_not(monkeypatch):
@@ -275,7 +276,9 @@ async def test_chat_off_serves_the_policy_pages_with_no_cookie(monkeypatch, path
     assert "Placeholder" in r.text
 
 
-@pytest.mark.parametrize("path", ["/privacy", "/terms", "/api/account"])
+@pytest.mark.parametrize("path", ["/", "/upload/proj_0123456789abcdef", "/pdfjs/pdf.min.mjs",
+                                  "/pdfjs/cmaps/Adobe-Japan1-UCS2.bcmap",
+                                  "/privacy", "/terms", "/api/account"])
 async def test_chat_on_answers_404_for_the_policy_and_account_routes(path):
     async with make_client(FakeStore(), FakeQueue()) as c:
         assert (await c.get(path)).status_code == 404

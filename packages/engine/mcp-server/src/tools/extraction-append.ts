@@ -38,6 +38,9 @@ import {
 } from "./research-append.js";
 import {
   extractRecord,
+  classifyReading,
+  normalizeFactType,
+  withDoubt,
   collectionTitle,
   EXTRACTED_SOURCE_CLASSIFICATION,
   type ExtractDocument,
@@ -45,6 +48,7 @@ import {
 } from "../utils/record-extract.js";
 import { readProjectJson, NoProjectError, noProjectResult } from "../utils/project-io.js";
 import {
+  listStagedEnvelopes,
   checkStagedResults,
   findFulltextHit,
   locateStagedRef,
@@ -58,7 +62,7 @@ import {
 } from "../utils/results-staging.js";
 import { deedFormulaErrors } from "../utils/deed-formula.js";
 import { recordImageReadCap } from "../utils/image-store.js";
-import { waitingPages } from "../utils/waiting-pages.js";
+import { waitingPages, pageKey } from "../utils/waiting-pages.js";
 import { extractImageArk } from "./record-read.js";
 import { arkToBareId } from "../utils/ark.js";
 import { selectSubjectPersona } from "../utils/record-persona-select.js";
@@ -69,7 +73,7 @@ import { recordReadTool } from "./record-read.js";
 import type { RecordReadInput, RecordReadResult } from "../types/record-read.js";
 import { researchLogAppend, type ResearchLogAppendOp } from "./research-log-append.js";
 import { mapWithConcurrency } from "../utils/place-resolver.js";
-import { sourceIdsForRecordIds, activePlanItems } from "./research-append.js";
+import { sourceIdsForRecordIds, activePlanItems, canonicalFactKey } from "./research-append.js";
 import { findAnchor, collectSourceRefs, ATTACHMENT_LINK_RATIONALE } from "../utils/tree-person.js";
 import { isRejectedPair } from "../utils/rejected-links.js";
 import { isLiveAssertion, RETRACTED } from "../utils/assertion-liveness.js";
@@ -131,6 +135,13 @@ export async function runExtractionAppend(
       ],
     };
   }
+  if ((input as any)?.pageReadings !== undefined && input.attachWaitingPages === undefined) {
+    return {
+      ok: false,
+      records: [],
+      errors: ["`pageReadings` goes with `attachWaitingPages: true` only: it is what a kept page says beyond its index."],
+    };
+  }
   if (got.length !== 1) {
     return {
       ok: false,
@@ -159,7 +170,7 @@ export async function runExtractionAppend(
   if (input.recordIds !== undefined) return recordIdsMode(input, deps, principal);
   if (input.personId !== undefined) return personIdMode(input, deps, principal);
   if (input.absences !== undefined) return absencesMode(input);
-  if (input.attachWaitingPages !== undefined) return attachWaitingPagesMode(input);
+  if (input.attachWaitingPages !== undefined) return attachWaitingPagesMode(input, deps, principal);
   return documentsMode(input);
 }
 
@@ -222,6 +233,8 @@ export interface ExtractionBatchInput {
   personId?: string;
   /** Keep the pages `project_context` lists in `waitingPages`. Takes no refs: code joins them. */
   attachWaitingPages?: boolean;
+  /** With `attachWaitingPages` only: what each page adds to or reads differently from its index (#4286). */
+  pageReadings?: PageReadingsInput[];
   /** Expected-but-absent persons for a record in `recordIds` or `documents`, keyed by its id. */
   absentPersons?: { recordId?: string; name: string; factType?: string; note?: string }[];
   /** Extract an already-extracted record again and retire its old assertions (#3678). */
@@ -266,6 +279,8 @@ export interface ExtractionBatchResult {
   unselected?: number;
   /** `attachWaitingPages` only: sources that gained their page. */
   attached?: number;
+  /** `attachWaitingPages` with `pageReadings` only: page readings written as assertions. */
+  readings?: number;
   /** Links the writer refused. */
   refused?: number;
   /** Assertions linked to tree persons other than the run's own, by person. */
@@ -524,7 +539,22 @@ function reextractTarget(
         "a re-extraction retires only the assertions of the id it names.",
     };
   }
-  const ids = liveAssertionsOfRecord(research, bare, arkToBareId).map((a) => a.id as string);
+  // A page's own readings are left alone (#4286): they cite the page's
+  // image_transcribe entry, or the researcher's user_provided one, never their
+  // source's. A dispute of a retired index assertion follows its superseded_by.
+  const logTool = new Map<string, unknown>(
+    (Array.isArray(research?.log) ? research.log : []).map((e: any) => [e?.id, e?.tool]),
+  );
+  const sourceLog = new Map<string, unknown>(
+    (Array.isArray(research?.sources) ? research.sources : []).map((s: any) => [s?.id, s?.log_entry_id]),
+  );
+  const isPageReading = (a: any) =>
+    typeof a.log_entry_id === "string" &&
+    a.log_entry_id !== sourceLog.get(a.source_id) &&
+    (logTool.get(a.log_entry_id) === "image_transcribe" || logTool.get(a.log_entry_id) === "user_provided");
+  const ids = liveAssertionsOfRecord(research, bare, arkToBareId)
+    .filter((a) => !isPageReading(a))
+    .map((a) => a.id as string);
   const referrers = assertionReferrers(research, tree, new Set(ids));
   if (referrers.length > 0) return { refusal: `its assertions are still in use. ${referrers.join(" ")}` };
   return { ids };
@@ -1200,14 +1230,237 @@ async function tieOutcome(
   if (warnings.length > 0) o.warnings = [...(o.warnings ?? []), ...warnings];
 }
 
+/** One thing a read page says that its record's index does not (#4286). The
+ *  persona is named by an assertion id, never a role. */
+export interface PageReadingInput {
+  /** The index assertion this reading disputes. Exactly one of this and `personAssertionId`. */
+  disputesAssertionId?: string;
+  /** Any assertion of the persona this new fact is about. */
+  personAssertionId?: string;
+  type: string;
+  value?: string;
+  date?: string;
+  place?: string;
+  note?: string;
+  /** The researcher's own reading, verbatim. Only with `disputesAssertionId`. */
+  researcherWords?: string;
+}
+
+/** What one held record's page adds to or reads differently from its index. */
+export interface PageReadingsInput {
+  sourceId: string;
+  /** Empty when the page confirms the index: nothing is written for it. */
+  readings: PageReadingInput[];
+}
+
+const PAGE_READINGS_KEYS = new Set(["sourceId", "readings"]);
+const PAGE_READING_KEYS = new Set([
+  "disputesAssertionId", "personAssertionId", "type", "value", "date", "place", "note", "researcherWords",
+]);
+
+/** A reading, checked and resolved against the project before anything is written. */
+interface ResolvedReading {
+  reading: PageReadingInput;
+  target: any;
+  factType: string;
+}
+
+/** Shape and reference errors for `pageReadings`, path-named. Writes nothing. */
+function pageReadingsErrors(
+  pageReadings: unknown,
+  research: any,
+  waitingSourceIds: ReadonlySet<string>,
+): { errors: string[]; resolved: Map<string, ResolvedReading[]> } {
+  const errors: string[] = [];
+  const resolved = new Map<string, ResolvedReading[]>();
+  if (!Array.isArray(pageReadings)) {
+    return { errors: ["`pageReadings` must be a list of { sourceId, readings }."], resolved };
+  }
+  const sources = new Map<string, any>(
+    (Array.isArray(research.sources) ? research.sources : [])
+      .filter((s: any) => typeof s?.id === "string")
+      .map((s: any) => [s.id, s]),
+  );
+  const live = new Map<string, any>(
+    (Array.isArray(research.assertions) ? research.assertions : [])
+      .filter((a: any) => typeof a?.id === "string" && isLiveAssertion(a))
+      .map((a: any) => [a.id, a]),
+  );
+  const str = (v: unknown) => typeof v === "string" && v.trim() !== "";
+  pageReadings.forEach((pr: any, i: number) => {
+    const at = `pageReadings[${i}]`;
+    if (!pr || typeof pr !== "object" || Array.isArray(pr)) {
+      errors.push(`${at}: must be { sourceId, readings }.`);
+      return;
+    }
+    for (const k of Object.keys(pr)) if (!PAGE_READINGS_KEYS.has(k)) errors.push(`${at}: unknown key \`${k}\`.`);
+    const sourceId = pr.sourceId;
+    if (!str(sourceId)) {
+      errors.push(`${at}.sourceId: required.`);
+      return;
+    }
+    if (resolved.has(sourceId)) {
+      errors.push(`${at}.sourceId: ${sourceId} is named twice; send one entry per source.`);
+      return;
+    }
+    const source = sources.get(sourceId);
+    if (!source) {
+      errors.push(`${at}.sourceId: no source ${sourceId}.`);
+      return;
+    }
+    if (!Array.isArray(pr.readings)) {
+      errors.push(`${at}.readings: must be a list; send [] when the page confirms the index.`);
+      return;
+    }
+    const waiting = waitingSourceIds.has(sourceId);
+    const kept = typeof source.transcription === "string" && source.transcription !== "";
+    if (!waiting) {
+      if (!kept || typeof source.image_ark !== "string") {
+        errors.push(`${at}.sourceId: ${sourceId} has no read page waiting. Read the page with image_transcribe first.`);
+        return;
+      }
+      if (pr.readings.length === 0 || pr.readings.some((r: any) => !str(r?.researcherWords))) {
+        errors.push(
+          `${at}: the page for ${sourceId} is already kept, so only a researcher's own reading ` +
+            "(`researcherWords`) can be sent for it now.",
+        );
+        return;
+      }
+    }
+    const out: ResolvedReading[] = [];
+    pr.readings.forEach((r: any, j: number) => {
+      const rat = `${at}.readings[${j}]`;
+      if (!r || typeof r !== "object" || Array.isArray(r)) {
+        errors.push(`${rat}: must be an object.`);
+        return;
+      }
+      const before = errors.length;
+      for (const k of Object.keys(r)) if (!PAGE_READING_KEYS.has(k)) errors.push(`${rat}: unknown key \`${k}\`.`);
+      for (const k of ["value", "date", "place", "note", "researcherWords"]) {
+        if (r[k] !== undefined && typeof r[k] !== "string") errors.push(`${rat}.${k}: must be text.`);
+      }
+      if (!str(r.type)) errors.push(`${rat}.type: required.`);
+      if (![r.value, r.date, r.place].some(str)) errors.push(`${rat}: give the page's \`value\`, \`date\` or \`place\`.`);
+      const ids = [r.disputesAssertionId, r.personAssertionId].filter((x) => x !== undefined);
+      if (ids.length !== 1) {
+        errors.push(
+          `${rat}: send exactly one of \`disputesAssertionId\` (the index reads it differently) or ` +
+            "`personAssertionId` (a fact the index lacks).",
+        );
+      }
+      if (r.researcherWords !== undefined && r.disputesAssertionId === undefined) {
+        errors.push(`${rat}.researcherWords: only with \`disputesAssertionId\`.`);
+      }
+      if (errors.length > before) return;
+      const id = (r.disputesAssertionId ?? r.personAssertionId) as string;
+      const target = live.get(id);
+      if (!target) {
+        errors.push(`${rat}: ${id} is not a live assertion.`);
+        return;
+      }
+      if (target.source_id !== sourceId) {
+        errors.push(`${rat}: ${id} is on ${target.source_id}, not ${sourceId}. A page speaks only to its own record's index.`);
+        return;
+      }
+      const factType = normalizeFactType(r.type);
+      if (r.disputesAssertionId !== undefined && canonicalFactKey(factType) !== canonicalFactKey(target.fact_type)) {
+        errors.push(
+          `${rat}.type: ${id} is a ${target.fact_type}; a disputing reading has the same type. ` +
+            "Send a different fact with `personAssertionId`.",
+        );
+        return;
+      }
+      out.push({ reading: r, target, factType });
+    });
+    resolved.set(sourceId, out);
+  });
+  return { errors, resolved };
+}
+
+/** The record's index read, for classifying what its page says: the source's own
+ *  log entry's sidecar, else a fresh host-side read (an accepted hint keeps none). */
+async function indexDocOf(
+  projectPath: string,
+  research: any,
+  source: any,
+  recordId: string,
+  deps: ExtractionAppendDeps,
+  principal: Principal,
+): Promise<ExtractDocument | string> {
+  const entry = (Array.isArray(research.log) ? research.log : []).find((e: any) => e?.id === source?.log_entry_id);
+  if (typeof entry?.results_ref === "string" && entry.results_ref !== "") {
+    try {
+      const doc = findStagedDoc(await readStagedResults(projectPath, entry.results_ref), recordId);
+      if (doc?.gedcomx) return doc;
+    } catch {
+      // Fall through to a fresh read.
+    }
+  }
+  try {
+    const r = await deps.readRecord({ recordId, projectPath }, principal);
+    if (!r.staged) return `${recordId} could not be read again: ${r.stagingError ?? "no staging handle returned"}.`;
+    const doc = findStagedDoc(await readStagedResults(projectPath, r.staged.resultsRef), recordId);
+    return doc?.gedcomx ? doc : `${recordId} was read again but its index was not in the read.`;
+  } catch (e) {
+    return `${recordId} could not be read again: ${e instanceof Error ? e.message : String(e)}.`;
+  }
+}
+
+/** The assertion a page reading becomes. Code decides every classification. */
+function pageAssertion(r: ResolvedReading, doc: ExtractDocument, logEntryId: string): Record<string, unknown> {
+  const gx = doc.gedcomx ?? {};
+  const role = r.target.record_role;
+  const cls = classifyReading(detectRecordType(gx), role, r.factType, collectionTitle(gx));
+  const disputes = r.reading.disputesAssertionId !== undefined;
+  const raw = String(r.reading.value ?? r.reading.date ?? r.reading.place).trim();
+  const value = disputes && r.reading.researcherWords === undefined ? withDoubt(raw) : raw;
+  const words = r.reading.researcherWords !== undefined ? `the researcher read: "${r.reading.researcherWords}"` : undefined;
+  const bias = [cls.bias, r.reading.note, words].filter((x) => typeof x === "string" && x.trim() !== "").join("; ");
+  return {
+    source_id: r.target.source_id,
+    record_id: r.target.record_id,
+    record_role: role,
+    fact_type: r.factType,
+    value,
+    // As extraction keeps them: `date` and `place` always ride beside the value, so
+    // a timeline and the year checks read them; the `[?]` stays in `value` only.
+    ...(r.reading.date !== undefined ? { date: r.reading.date } : {}),
+    ...(r.reading.place !== undefined ? { place: r.reading.place } : {}),
+    information_quality: cls.information_quality,
+    informant: cls.informant,
+    informant_proximity: cls.informant_proximity,
+    record_basis: "stated",
+    log_entry_id: logEntryId,
+    extracted_for_question_ids: Array.isArray(r.target.extracted_for_question_ids)
+      ? [...r.target.extracted_for_question_ids]
+      : [],
+    ...(bias ? { informant_bias_notes: bias } : {}),
+    ...(disputes ? { disputes_assertion_id: r.reading.disputesAssertionId } : {}),
+  };
+}
+
+/** One log op's entry id, or the refusal. */
+async function logOne(projectPath: string, op: Record<string, unknown>): Promise<string | { error: string }> {
+  const r: any = await researchLogAppend({ projectPath, ...op } as any);
+  if (!r.ok) return { error: (r.errors ?? []).join("; ") };
+  return r.logId as string;
+}
+
 /**
- * Copy each waiting page's text and scan onto its record's source. It takes no
- * refs, so a caller cannot name the wrong page, and it writes no assertion and no
- * log entry. The page's file is left alone: a second held record extracted later
- * can still find it, and a refused write loses nothing. One write per page, so a
- * refusal leaves the others done.
+ * Copy each waiting page's text and scan onto its record's source, and write what
+ * `record-structurer` reported the page says beyond its index (`pageReadings`,
+ * #4286). It takes no refs, so a caller cannot name the wrong page. With no
+ * readings it writes no assertion and no log entry, and the page's file is left
+ * alone. A page with readings is logged once, with no `query`, so its entry keeps
+ * the page's `ark` and a second held record still finds it. One write per source,
+ * so a refusal leaves the others done; a source whose index cannot be read for
+ * classification is refused whole and its page keeps waiting.
  */
-async function attachWaitingPagesMode(input: ExtractionBatchInput): Promise<ExtractionBatchResult> {
+async function attachWaitingPagesMode(
+  input: ExtractionBatchInput,
+  deps: ExtractionAppendDeps,
+  principal: Principal,
+): Promise<ExtractionBatchResult> {
   if (input.attachWaitingPages !== true) {
     return { ok: false, records: [], errors: ["`attachWaitingPages` must be true."] };
   }
@@ -1218,57 +1471,153 @@ async function attachWaitingPagesMode(input: ExtractionBatchInput): Promise<Extr
     return { ok: false, records: [], errors: [`could not read research.json: ${e instanceof Error ? e.message : String(e)}`] };
   }
   const waiting = await waitingPages(input.projectPath, research);
-  const sourceIdsByRef = new Map<string, string[]>();
-  for (const w of waiting) sourceIdsByRef.set(w.ref, [...(sourceIdsByRef.get(w.ref) ?? []), w.sourceId]);
+  const refOf = new Map<string, string>(waiting.map((w) => [w.sourceId, w.ref]));
 
+  let resolved = new Map<string, ResolvedReading[]>();
+  if (input.pageReadings !== undefined) {
+    const checked = pageReadingsErrors(input.pageReadings, research, new Set(refOf.keys()));
+    if (checked.errors.length > 0) return { ok: false, records: [], errors: checked.errors };
+    resolved = checked.resolved;
+  }
+
+  type PageRow = { transcription?: unknown; image_ref?: unknown; truncated?: unknown };
+  const sourceById = new Map<string, any>((research.sources as any[]).map((s: any) => [s?.id, s]));
   const kept: string[] = [];
   const errors: string[] = [];
-  for (const [ref, sourceIds] of sourceIdsByRef) {
-    let row: { transcription?: unknown; image_ref?: unknown; truncated?: unknown } | undefined;
-    try {
-      const rows = await readStagedResults(input.projectPath, ref);
-      row = (rows as any[]).find((r) => typeof r?.transcription === "string" && r.transcription !== "");
-    } catch {
-      row = undefined;
+  const said: string[] = [];
+  let readingsWritten = 0;
+  const rowOf = new Map<string, PageRow | null>();
+  const pageLogOf = new Map<string, string | { error: string }>();
+
+  for (const sourceId of [...new Set([...refOf.keys(), ...resolved.keys()])]) {
+    const ref = refOf.get(sourceId);
+    const readings = resolved.get(sourceId) ?? [];
+    const ops: ResearchAppendOp[] = [];
+
+    let row: PageRow | null | undefined;
+    if (ref !== undefined) {
+      row = rowOf.get(ref);
+      if (row === undefined) {
+        try {
+          const rows = await readStagedResults(input.projectPath, ref);
+          row = (rows as any[]).find((r) => typeof r?.transcription === "string" && r.transcription !== "") ?? null;
+        } catch {
+          row = null;
+        }
+        rowOf.set(ref, row ?? null);
+      }
+      if (!row) {
+        errors.push(`the page at ${ref} could not be read; read it again with image_transcribe.`);
+        continue;
+      }
     }
-    if (!row) {
-      errors.push(`the page at ${ref} could not be read; read it again with image_transcribe.`);
+
+    let doc: ExtractDocument | undefined;
+    if (readings.length > 0) {
+      const got = await indexDocOf(
+        input.projectPath, research, sourceById.get(sourceId), readings[0].target.record_id, deps, principal,
+      );
+      if (typeof got === "string") {
+        errors.push(
+          `the page for ${sourceId} was not kept, so it stays waiting: its index is needed to classify ` +
+            `what the page says, and ${got}`,
+        );
+        continue;
+      }
+      doc = got;
+    }
+
+    let pageLogId: string | undefined;
+    if (ref !== undefined && readings.some((r) => r.reading.researcherWords === undefined)) {
+      let logged = pageLogOf.get(ref);
+      if (logged === undefined) {
+        const existing = (Array.isArray(research.log) ? research.log : []).find(
+          (e: any) => e?.tool === "image_transcribe" && e?.results_ref === ref,
+        );
+        logged = existing
+          ? (existing.id as string)
+          : await logOne(input.projectPath, {
+              tool: "image_transcribe", outcome: "positive", resultsExamined: 1, stagedResultsRef: ref,
+            });
+        pageLogOf.set(ref, logged);
+      }
+      if (typeof logged !== "string") {
+        errors.push(`the page for ${sourceId} was not kept: its read could not be logged: ${logged.error}`);
+        continue;
+      }
+      pageLogId = logged;
+    }
+
+    if (ref !== undefined && row) {
+      const imageRef = typeof row.image_ref === "string" && row.image_ref !== "" ? row.image_ref : undefined;
+      // The cap store is per process, and this can run in a later one than the read.
+      if (imageRef) recordImageReadCap(input.projectPath, imageRef, row.truncated === true);
+      ops.push({
+        section: "sources",
+        op: "update",
+        entryId: sourceId,
+        fields: { transcription: row.transcription, ...(imageRef ? { image_filename: imageRef } : {}) },
+      } as ResearchAppendOp);
+    }
+
+    let refusedHere = false;
+    for (const r of readings) {
+      let logId = pageLogId;
+      if (r.reading.researcherWords !== undefined) {
+        const own = await logOne(input.projectPath, {
+          tool: "user_provided", query: { recordId: r.target.record_id }, outcome: "positive", resultsExamined: 1,
+        });
+        if (typeof own !== "string") {
+          errors.push(`the researcher's reading for ${sourceId} was not written: it could not be logged: ${own.error}`);
+          refusedHere = true;
+          break;
+        }
+        logId = own;
+      }
+      ops.push({ section: "assertions", op: "append", entry: pageAssertion(r, doc!, logId!) } as ResearchAppendOp);
+    }
+    if (refusedHere || ops.length === 0) continue;
+
+    const written = await researchAppend(
+      { projectPath: input.projectPath, ops } as ResearchAppendInput,
+      { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append", stampDisputes: true },
+    );
+    if (!written.ok) {
+      errors.push(`the page for ${sourceId} was not kept: ${written.errors.join("; ")}`);
       continue;
     }
-    const imageRef = typeof row.image_ref === "string" && row.image_ref !== "" ? row.image_ref : undefined;
-    // The cap store is per process, and this can run in a later one than the read.
-    if (imageRef) recordImageReadCap(input.projectPath, imageRef, row.truncated === true);
-    const written = await researchAppend(
-      {
-        projectPath: input.projectPath,
-        ops: sourceIds.map((id) => ({
-          section: "sources" as const,
-          op: "update" as const,
-          entryId: id,
-          fields: { transcription: row!.transcription, ...(imageRef ? { image_filename: imageRef } : {}) },
-        })),
-      } as ResearchAppendInput,
-      { allowedSections: EXTRACTION_SECTIONS, toolName: "extraction_append" },
-    );
-    if (written.ok) kept.push(...sourceIds);
-    else errors.push(`the page for ${sourceIds.join(", ")} was not kept: ${written.errors.join("; ")}`);
+    if (ref !== undefined) kept.push(sourceId);
+    readingsWritten += readings.length;
+    for (const r of readings) {
+      const v = String(r.reading.value ?? r.reading.date ?? r.reading.place).trim();
+      said.push(
+        r.reading.researcherWords !== undefined
+          ? `The researcher reads ${r.target.fact_type} "${v}" where the index reads "${r.target.value}".`
+          : r.reading.disputesAssertionId !== undefined
+            ? `The index reads ${r.target.fact_type} "${r.target.value}"; the page reads "${v}".`
+            : `The page adds ${r.factType} "${v}".`,
+      );
+    }
   }
 
   const titles = kept.map((id) => {
-    const source = (research.sources as any[]).find((s) => s?.id === id);
+    const source = sourceById.get(id);
     return typeof source?.citation_detail?.what === "string" ? source.citation_detail.what : id;
   });
-  return {
-    ok: kept.length > 0 || errors.length === 0,
-    records: [],
-    attached: kept.length,
-    summary:
-      (kept.length > 0
-        ? `Kept the page for ${titles.join("; ")}.`
+  const lead =
+    kept.length > 0
+      ? `Kept the page for ${titles.join("; ")}.`
+      : readingsWritten > 0
+        ? ""
         : errors.length > 0
           ? "No page was kept."
-          : "No read pages were waiting to be kept.") +
-      (errors.length > 0 ? ` ${errors.join(" ")}` : ""),
+          : "No read pages were waiting to be kept.";
+  return {
+    ok: kept.length > 0 || readingsWritten > 0 || errors.length === 0,
+    records: [],
+    attached: kept.length,
+    ...(input.pageReadings !== undefined ? { readings: readingsWritten } : {}),
+    summary: [lead, ...said, ...errors].filter((x) => x !== "").join(" "),
     ...(errors.length > 0 ? { errors } : {}),
   };
 }
@@ -1607,6 +1956,27 @@ async function citeFulltextHit(
  * `recordIds`: the resend skip, one log batch, and one research_append per
  * source.
  */
+/** The image ARK an `image_transcribe` read was made of, from its staged
+ *  payload or its log entry; undefined for any other ref (#4286). A page that
+ *  documents mode itself logged carries `query: { recordId }` and no ARK, and is
+ *  already its own source, so it is not found here. */
+async function pageArkOfRef(projectPath: string, log: any[], ref: string): Promise<string | undefined> {
+  if (splitHitRef(ref).hit !== undefined) return undefined;
+  const arkOf = (e: any) =>
+    e?.tool === "image_transcribe" ? (e.query?.ark ?? e.query?.imageArk) : undefined;
+  if (ref.startsWith(`${STAGING_SUBDIR}/`)) {
+    const at = await locateStagedRef(projectPath, ref);
+    if (at.state === "logged") return arkOf(log.find((e) => e?.id === at.logId));
+    if (at.state !== "live") return undefined;
+    const staged = await listStagedEnvelopes(projectPath, "image_transcribe");
+    const hit = staged.find((e) => e.ref === at.ref);
+    const ark = (hit?.envelope.payload as { query?: { ark?: unknown } } | undefined)?.query?.ark;
+    return typeof ark === "string" ? ark : undefined;
+  }
+  const ark = arkOf(log.find((e) => e?.results_ref === ref && e?.tool === "image_transcribe"));
+  return typeof ark === "string" ? ark : undefined;
+}
+
 async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBatchResult> {
   const docs = input.documents ?? [];
   const errors: string[] = [];
@@ -1694,6 +2064,41 @@ async function documentsMode(input: ExtractionBatchInput): Promise<ExtractionBat
       o.srcId = [...existing][0];
       o.summary = `${o.recordId}: already extracted as ${o.srcId}; nothing written.`;
       await tieOutcome(o, input.projectPath, research, input.questionIds);
+    }
+  }
+
+  // A page of a record already held is that record's page (#4286): it is kept on
+  // the record's source and what it says goes through `pageReadings`, so it never
+  // becomes a second source. Only a page `waitingPages` would join is refused: an
+  // ARK whose `i=` or `groupId` picks the image never joins, because a failed read
+  // falls back to the bare URL and can land on any image.
+  const heldPages = new Map<string, string>();
+  for (const s of Array.isArray(research.sources) ? research.sources : []) {
+    if (typeof s?.image_ark !== "string" || s.image_ark === "") continue;
+    const key = pageKey(s.image_ark);
+    if (key !== null && !heldPages.has(key)) heldPages.set(key, s.id);
+  }
+  if (heldPages.size > 0) {
+    const logEntries: any[] = Array.isArray(research.log) ? research.log : [];
+    for (const o of outcomes) {
+      const ref = o.d.transcriptionRef;
+      if (o.status !== "extracted" || !ref) continue;
+      let ark: string | undefined;
+      try {
+        ark = await pageArkOfRef(input.projectPath, logEntries, ref);
+      } catch {
+        ark = undefined;
+      }
+      const key = ark === undefined ? null : pageKey(ark);
+      const held = key === null ? undefined : heldPages.get(key);
+      if (held === undefined) continue;
+      const refusal =
+        `that page is the page of a record already held (${held}). Keep it with ` +
+        "`extraction_append({ projectPath, attachWaitingPages: true, pageReadings })`, sending only what the page " +
+        "adds to or reads differently from that record's index, so it never becomes a second source.";
+      o.status = "refused";
+      o.errors = [refusal];
+      o.summary = `${o.recordId}: not extracted: ${refusal}`;
     }
   }
 
@@ -1993,6 +2398,9 @@ export function buildExtractionOps(
  * for the event type too. Falls back to any dated fact only when the record
  * carries none of its own event type, which is better than `unknown` and is the
  * only case where the old behaviour was right.
+ *
+ * Dating a person's age is a different job and has its own list, `EVENT_FACT` in
+ * `utils/record-extract.ts` (`eventDateFor`): keep the two in step.
  */
 const RECORD_EVENT_FACT: Record<string, RegExp> = {
   census: /census/i,
@@ -2065,8 +2473,9 @@ export const extractionAppendSchema = {
     "attaches it as an UNVERIFIED candidate (`speculative`, no score). Checking " +
     "those links is a separate request.\n" +
     "- `attachWaitingPages: true` — keep the read pages `project_context` lists " +
-    "under `waitingPages`, each on the source that waited. It takes no refs, and " +
-    "writes no assertion and no log entry.\n" +
+    "under `waitingPages`, each on the source that waited. It takes no refs. With " +
+    "`pageReadings`, also write what each page adds to or reads differently from its " +
+    "record's index; without, it writes no assertion and no log entry.\n" +
     "\n" +
     "Returns one outcome per record, each with a code-written `summary`: relay " +
     "it verbatim, since you do not see the record yourself; `personId` also " +
@@ -2095,8 +2504,46 @@ export const extractionAppendSchema = {
       attachWaitingPages: {
         type: "boolean",
         description:
-          "KEEP READ PAGES. Send `true` alone when `project_context` lists `waitingPages`: code copies " +
-          "each page onto the source of the record it shows. No refs, no assertions.",
+          "KEEP READ PAGES. Send `true` when `project_context` lists `waitingPages`: code copies " +
+          "each page onto the source of the record it shows. No refs. Send `pageReadings` beside it.",
+      },
+      pageReadings: {
+        type: "array",
+        description:
+          "WHAT EACH KEPT PAGE SAYS, with `attachWaitingPages` only: one entry per waiting page, " +
+          "carrying only what the page adds to or reads differently from its record's index " +
+          "(`waitingPages[].index`). `readings: []` when the page confirms the index. A reading " +
+          "names an index assertion by id, never a role: `disputesAssertionId` when the page reads " +
+          "that assertion differently, `personAssertionId` (any assertion of the persona) for a fact " +
+          "the index lacks. Code classifies; send no classification. `researcherWords` (the " +
+          "researcher's own reading, verbatim) goes with `disputesAssertionId`, and is the only " +
+          "reading a page already kept takes.",
+        items: {
+          type: "object",
+          additionalProperties: false,
+          required: ["sourceId", "readings"],
+          properties: {
+            sourceId: { type: "string" },
+            readings: {
+              type: "array",
+              items: {
+                type: "object",
+                additionalProperties: false,
+                required: ["type"],
+                properties: {
+                  disputesAssertionId: { type: "string" },
+                  personAssertionId: { type: "string" },
+                  type: { type: "string" },
+                  value: { type: "string" },
+                  date: { type: "string" },
+                  place: { type: "string" },
+                  note: { type: "string" },
+                  researcherWords: { type: "string" },
+                },
+              },
+            },
+          },
+        },
       },
       recordIds: {
         type: "array",

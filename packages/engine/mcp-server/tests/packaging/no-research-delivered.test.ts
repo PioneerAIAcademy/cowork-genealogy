@@ -6,7 +6,7 @@ import { allToolSchemas } from "../../src/tool-schemas.js";
 
 // Step mode phase 2 deleted `research_delivered`: a one-off ask ends on the
 // model's own end of turn, and on the prototype the step gate stops a second
-// step (docs/plan/research-step-mode.md, Phase 2).
+// step (docs/specs/research-step-mode-spec.md, Phase 2).
 
 const mcpRoot = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const manifest = JSON.parse(readFileSync(join(mcpRoot, "manifest.json"), "utf8")) as {

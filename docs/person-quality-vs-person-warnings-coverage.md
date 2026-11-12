@@ -1,6 +1,6 @@
 # FamilySearch quality issues vs. `person_warnings` — coverage table
 
-**Measured 2026-09-26 against `main` at `d4ee13393`; #2727's changes to `person_warnings` (the D6 facts, the burial pairing) move no row. Updated for PR #2994, which adds four checks and corrects the rows that counted a merge-only check. The tag tally moved to 82 (54 self-checks, 28 mirrors) after `hasEventInOtherCountry`, the female lower age bound at childbirth, PR #2994's four checks and `hasBirthFarFromParentsResidence` shipped; the rows themselves were not re-measured, apart from the ones PR #2994 changes. Issue #3976 later added `hasPlaceStandardOtherCountry`, moving the tally to 83 (55 self-checks, 28 mirrors).** Step 2 of issue #2225: every
+**Measured 2026-09-26 against `main` at `d4ee13393`; #2727's changes to `person_warnings` (the D6 facts, the burial pairing) move no row. Updated for PR #2994, which adds four checks and corrects the rows that counted a merge-only check. The tag tally moved to 82 (54 self-checks, 28 mirrors) after `hasEventInOtherCountry`, the female lower age bound at childbirth, PR #2994's four checks and `hasBirthFarFromParentsResidence` shipped; the rows themselves were not re-measured, apart from the ones PR #2994 changes. Issue #3976 later added `hasPlaceStandardOtherCountry`, moving the tally to 83 (55 self-checks, 28 mirrors). The impossible-date and family checks then added twenty, to 103 (75 self-checks, 28 mirrors), and moved the five rows they cover. Issue #4345 then added `hasInterleavedChildrenIgnoreSimilarSpouses`, to 104 (76 self-checks, 28 mirrors); it has no FamilySearch counterpart, so no row moved.** Step 2 of issue #2225: every
 FamilySearch quality `issueType` set against the `person_warnings` tag catalogue, so
 the uncovered set is counted rather than asserted. Step 3 was to add checks only for what
 this table leaves uncovered; PR #2994 added four (§ Step 3), and the rows below include them. The tally is under "The count" below.
@@ -17,10 +17,10 @@ this table leaves uncovered; PR #2994 added four (§ Step 3), and the rows below
   in [`person-quality-tool-spec.md`](specs/person-quality-tool-spec.md) § Missing-template
   fallback), and the API may add types. Those are not counted, and a live profile can
   surface one through the fallback sentence.
-- **`person_warnings` side:** the 83 tags in the § Tag Catalogue of
-  [`person-warnings-tool-spec.md`](specs/person-warnings-tool-spec.md): 55 self-checks
+- **`person_warnings` side:** the 104 tags in the § Tag Catalogue of
+  [`person-warnings-tool-spec.md`](specs/person-warnings-tool-spec.md): 76 self-checks
   plus 28 relative mirrors. `person-warnings-spec-drift.test.ts` holds that catalogue
-  and `ALL_WARNING_TAGS` in exact agreement, so 83 is the shipped count. Not every tag
+  and `ALL_WARNING_TAGS` in exact agreement, so 104 is the shipped count. Not every tag
   fires in `person_warnings`: the catalogue marks the ones that fire only in merge mode
   (`merge_warnings`), and a verdict below counts only what `person_warnings` runs.
 - **No live profiles were read.** Every verdict comes from the template text and the
@@ -54,11 +54,11 @@ which is the only thing an offline check can read. Every check but that one is o
 | `MISSING_EVENT_PLACE` | Uncovered | — | yes | |
 | `MISSING_PLACE_JURISDICTIONS` | Uncovered | — | no | Needs the place hierarchy |
 | `MISSING_EVENT_DATE` | Uncovered | — | yes | |
-| `NON_STANDARD_PLACE` | Uncovered | — | partly | Tree carries `standard_place`; its absence is visible |
-| `NON_STANDARD_DATE` | Uncovered | — | partly | Tree carries `standard_date`; as above |
+| `NON_STANDARD_PLACE` | Covered | `nonStandardPlace` | yes | A fact with `place` text and no `standard_place`. Implausible, gate-exempt, reported last |
+| `NON_STANDARD_DATE` | Partial | `nonStandardDate` | yes | Fires only when neither `standard_date` nor `stdDate` can read the text (`dead`, `Spring 1790`); a date `stdDate` reads (`abt 1868`) does not fire, though it carries no `standard_date` |
 | `NO_GIVEN_NAME_FOUND` | Partial | `missingGivenNamesWithoutExactBirthLikeDate`, `hasBlankName` | yes | The first fires only in merge mode, and only when there is also no exact birth-like date. In `person_warnings`, `hasBlankName` fires on a blank given name, not an absent one |
 | `NO_SURNAME_FOUND` | Partial | `missingSurnames`, `hasBlankName` | yes | `missingSurnames` fires only in merge mode. In `person_warnings`, `hasBlankName` fires on a blank surname, not an absent one |
-| `NO_GENDER_FOUND` | Uncovered | — | yes | |
+| `NO_GENDER_FOUND` | Covered | `noGenderFound` | yes | Implausible, gate-exempt, reported last |
 
 ## VERIFIABILITY (6)
 
@@ -103,14 +103,14 @@ All profile-versus-source comparisons, which `person_warnings` never makes.
 | `OLD_DEATH` | Partial | `hasAgeRangeGreaterThan120` | yes | Ours fires above 120, as an impossibility; FamilySearch's "older than usual" is a lower norm |
 | `OLD_MARRIAGE` | Partial | `hasLateMarriage90` | yes | Same shape: our extreme vs. their norm |
 | `YOUNG_MARRIAGE` | Partial | `hasEarlyMarriage14` | yes | **Unsure** whether this is Covered: depends on FamilySearch's unpublished norm |
-| `OLD_BIRTH` | Partial | `latestChildBirthToBirth80`, `latestChildBirthToBirthFemale45` (+ mirrors) | yes | A father has only the 80-year check |
+| `OLD_BIRTH` | Partial | `latestChildBirthToBirth75`, `latestChildBirthToBirth80`, `latestChildBirthToBirthFemale45` (+ mirrors) | yes | A father is checked from 75 |
 | `PARENT_DIED_TOO_YOUNG_FOR_CHILDREN` | Partial | indirect: `earliestChildBirthToBirth12` / `hasDeathBeforeChildBirth*` mirrors | yes | **Unsure.** A parent dead at D years has a child born at age ≤ D or after death, so one of ours fires when D ≤ 12. Between 12 and FamilySearch's age, nothing fires |
 | `DIED_TOO_YOUNG_FOR_CHILDREN` | Partial | indirect, as above, on the anchor | yes | **Unsure**, same gap |
 | `COPARENT_DIED_TOO_YOUNG_FOR_CHILDREN` | Partial | indirect, through the relative mirrors | yes | **Unsure**, same gap |
 | `DIED_TOO_YOUNG_FOR_COUPLE_RELATIONSHIP` | Partial | `hasEarlyMarriage14`; `hasYoungSpouse15` when run on the spouse | yes | On the anchor, fires only if a marriage date exists |
 | `IMPOSSIBLE_EVENT_ORDER` | Partial | see the breakdown below | yes | Covered in substance, but ours tolerates 1–2 years where FamilySearch's order is strict |
 | `DELAYED_BURIAL` | Partial | `hasDelayedBurial365` | yes | Ours fires above 365 days, as `implausible`; FamilySearch compares against a norm it does not publish. **Naming trap:** `hasBurialAfterDeath31` is the opposite condition, burial *before* death |
-| `OLD_CHRISTENING` | Uncovered | — | yes | `hasEventBeforeChristening365_3` is a different condition |
+| `OLD_CHRISTENING` | Partial | `hasLateChristening18` | yes | Ours fires at 18 or more years after the birth; FamilySearch compares against a norm it does not publish |
 | `BORN_BEFORE_PARENTS_MARRIED` | Uncovered | — | yes | Listed under "NOT currently checked" in check-warnings' tag catalogue. **Unsure** whether it should be a warning at all: it is common and often true |
 | `CHILD_BORN_BEFORE_MARRIAGE` | Uncovered | — | yes | The same condition from the parent's side |
 | `CHILD_OF_CHILDLESS_COUPLE` | Covered | `hasNoChildrenConflict` | yes | The person is a biological or unspecified child of both partners of a couple marked `CoupleNeverHadChildren` |
@@ -129,37 +129,36 @@ All profile-versus-source comparisons, which `person_warnings` never makes.
 |---|---|
 | `DEATH:CHILD_BIRTH` | `hasDeathBeforeChildBirth*` (father 300 days / 2 years, mother 2 days / 1 year) |
 | `PARENT_DEATH:BIRTH` | The same checks through their relative mirrors |
-| `BIRTH:PARENT_BIRTH`, `CHILD_BIRTH:BIRTH` | `earliestChildBirthToBirth12` (a negative parental age is ≤ 12) |
-| `DEATH:PARENT_BIRTH` | Indirect, as the row above |
-| `CHRISTENING:PARENT_BIRTH` | **Unsure**: indirect only if the child's birth is also recorded |
-| `DEATH:SPOUSE_BIRTH`, `SPOUSE_DEATH:BIRTH` | None in `person_warnings`: no rule compares one spouse's death with the other's birth. `relativesHasEventBeforeBirth365_2`, which a dated marriage could trip, fires only in merge mode |
+| `BIRTH:PARENT_BIRTH`, `CHILD_BIRTH:BIRTH` | `hasChildBornBeforeParent` (a contradiction), and `earliestChildBirthToBirth12` (a negative parental age is ≤ 12) |
+| `DEATH:PARENT_BIRTH` | `earliestChildEventToBirth12` when the child has no birth-like fact; indirect through the row above when it has one |
+| `CHRISTENING:PARENT_BIRTH` | `earliestChildBirthToBirth12`, which reads a christening as birth-like, and `hasChildBornBeforeParentEstimated` |
+| `DEATH:SPOUSE_BIRTH`, `SPOUSE_DEATH:BIRTH` | `hasSpouseNotAliveTogether` (and its `…Estimated` form), from both spouses |
 | Same-person pairs (burial before death, christening before birth, any event before birth or after death) | `hasBurialBeforeDeath`, `hasChristeningBeforeBirth`, `hasEventBeforeBirth365_2`, `hasEventAfterDeath1` |
 
 ## The count
 
 | Category | Covered | Partial | Uncovered | Total |
 |---|---|---|---|---|
-| COMPLETENESS | 0 | 2 | 10 | 12 |
+| COMPLETENESS | 2 | 3 | 7 | 12 |
 | VERIFIABILITY | 0 | 1 | 5 | 6 |
 | CONSISTENCY | 0 | 0 | 11 | 11 |
-| COHERENCE | 11 | 11 | 7 | 29 |
-| **All** | **11** | **14** | **33** | **58** |
+| COHERENCE | 11 | 12 | 6 | 29 |
+| **All** | **13** | **16** | **29** | **58** |
 
-**33 of 58 FamilySearch issue types are uncovered.** Most of those gaps are
+**29 of 58 FamilySearch issue types are uncovered.** Most of those gaps are
 structural, not missing checks:
 
-- **26** are COMPLETENESS, VERIFIABILITY or CONSISTENCY. They need source tags, source
+- **23** are COMPLETENESS, VERIFIABILITY or CONSISTENCY. They need source tags, source
   content or the place hierarchy, or they are completeness nags rather than
   contradictions. None of them is coherence, which is all `person_warnings` checks.
 - **4** are COHERENCE but need a place authority (`DATE_PLACE_MISMATCH` ×3,
   `ALTERNATING_LOCATIONS`), so an offline check cannot decide them. The one check
   that does look up places, `hasBirthFarFromParentsResidence`, reads only
   coordinates, so it decides none of the four.
-- **3** are COHERENCE and decidable from the tree alone, and left out on purpose:
-  `OLD_CHRISTENING`, `BORN_BEFORE_PARENTS_MARRIED` and `CHILD_BORN_BEFORE_MARRIAGE`
-  (§ Step 3).
+- **2** are COHERENCE and decidable from the tree alone, and left out on purpose:
+  `BORN_BEFORE_PARENTS_MARRIED` and `CHILD_BORN_BEFORE_MARRIAGE` (§ Step 3).
 
-Half of the 14 partials are **threshold** differences: ours fires at an extreme, while
+Half of the 16 partials are **threshold** differences: ours fires at an extreme, while
 FamilySearch compares against a norm it does not publish. The rest catch a narrower
 case, catch it only in merge mode, or catch it only indirectly. Four of the partials
 are marked unsure.
@@ -173,8 +172,8 @@ premise no longer holds. At the lead's request, PR #2994 adds `hasDelayedBurial3
 `hasNoChildrenConflict`, `hasNoCoupleRelationshipsConflict` and `hasStillbirthConflict`.
 They run for every person in the project tree, linked to FamilySearch or not.
 
-Still uncovered on purpose: an old christening, and a birth before the parents'
-marriage. The second is common and frequently true, and check-warnings' tag
+Still uncovered on purpose: a birth before the parents' marriage. An old
+christening is now `hasLateChristening18`. The second is common and frequently true, and check-warnings' tag
 catalogue excludes it.
 
 ## The reverse direction: `person_warnings` checks with no FamilySearch counterpart
@@ -183,7 +182,7 @@ Context, not gaps. None of these appears among the 58 templates:
 
 - **Duplicate and conflicting records:** `similarChildren`, `similarChildrenConflictingDates`,
   `similarSpouses`, `similarSpousesConflictingDates`, `hasDissimilarSpousesWithSameMarriageYear`,
-  `tooManyBirthDates2`, `tooManyDeathDates2`, `deathRangeGreaterThan2`.
+  `hasInterleavedChildrenIgnoreSimilarSpouses`, `tooManyBirthDates2`, `tooManyDeathDates2`, `deathRangeGreaterThan2`.
 - **Generation-span and timing extremes:** `childBirthRange40`, `earliestChildMarriageToBirth30`,
   `latestChildBirthToMarriage35`, `childMarriageToMarriage15`, `hasDeathAfterChildBirth90`,
   `hasChildDeathAfterParentBirth200`.

@@ -9,7 +9,7 @@ It is for anyone from a first-time family historian to a certified
 genealogist. Ask it a question about your family and it plans the research,
 searches online records and reads what it finds. It records every search and
 every piece of evidence, and tells you how sure it is and why. It runs in
-Claude Desktop's Cowork tab, using your FamilySearch account.
+Cowork, in Claude Desktop, using your FamilySearch account.
 
 ## What you can do
 
@@ -81,11 +81,11 @@ and why.
 
 ## What you need
 
-- **Claude Desktop** with the Cowork tab.
+- **Claude Desktop**, with Cowork.
 - **A FamilySearch account** (free). It asks you to sign in the first time it
   needs one.
 - **An OpenRouter API key**, to read page scans. Get one at
-  <https://openrouter.ai/keys>; you paste it in when you install. OpenRouter
+  <https://openrouter.ai/keys>; you paste it in after you install. OpenRouter
   charges per use. Without a key it can't read page scans or transcribe
   FamilySearch memories, and hint reviews are less complete.
 
@@ -117,21 +117,25 @@ again.
 
 ### 2. Install the MCP server
 
-Claude Desktop → **Settings** → **Extensions** → **Advanced Settings** →
-**Install extension** → select `genealogy-mcp.mcpb`. Claude Desktop warns that
-the extension isn't signed; allow it. Paste your OpenRouter key into the
-**OpenRouter API key** field, or leave it blank. "Genealogy Research" appears in
-your list of extensions; to add or change the key later, click it there.
+Claude Desktop → **Settings** (Ctrl+, or ⌘,) → **Desktop app** → **Manage**
+next to Extensions → **Advanced settings** → **Install extension** → select
+`genealogy-mcp.mcpb` → **Install**. Claude Desktop warns that Anthropic hasn't
+verified the extension; click **Install** again to allow it.
+
+Then, on the Extensions page, click **Configure** next to Genealogy Research.
+Paste your OpenRouter key into **OpenRouter API key** and click **Save**, or
+leave it blank. To change the key later, come back to this page.
 
 ### 3. Install the plugin
 
-Claude Desktop → **Cowork** tab → **Customize** → **Add** → **Upload Plugin** →
-select `genealogy-plugin.zip`. Upload it from the Cowork tab, not the Code tab;
-the two keep separate plugin lists.
+Claude Desktop → **Customize** (in the sidebar) → **Plugins** → **+ Add** →
+**Upload plugin** → select `genealogy-plugin.zip` → **Upload**.
 
 ### 4. Restart Claude Desktop
 
-Quit Claude Desktop completely and reopen it. Closing the window isn't enough.
+Quit Claude Desktop completely and reopen it. Closing the window isn't enough. On
+Windows, right-click its icon in the system tray and choose **Exit**; on a Mac,
+press ⌘Q.
 
 ### 5. Install the Research Viewer
 
@@ -150,9 +154,13 @@ The Viewer isn't signed yet, so your computer warns you about it the first time.
 
 ### Updating
 
-Download the files again and install them. The MCP server installs over the
-old one. For the plugin, remove the old one in Cowork → Customize first, then
-upload the new zip; uploading on top of the old one can leave old skills
+Download the files again and install them. For the MCP server, follow step 2.
+While the old copy is installed, Claude Desktop offers only **Uninstall**:
+click it, confirm, then click **Install**. Uninstalling also removes an
+OpenRouter key saved under **Configure**, so paste it in again there; a key in
+`~/.familysearch-mcp/config.json` stays. For the plugin,
+remove the old one first (Customize → Plugins → **Yours** → **…** next to it → **Remove**),
+then upload the new zip; uploading on top of the old one can leave old skills
 behind. Then restart Claude Desktop. Install the new Research Viewer over the
 old one; on a Mac, run the Terminal command again.
 
@@ -173,7 +181,8 @@ or later from <https://nodejs.org>.
    `https://github.com/pioneeraiacademy/cowork-genealogy`, set **Local path**
    to `C:\src\cowork-genealogy`, and click **Clone**. Don't clone into
    Documents or Desktop: they sync to OneDrive, which breaks the build.
-2. **Get npm 11.12**, newer than the npm that comes with Node. Run this once.
+2. **Get npm 11.12**: the MCP server's build needs npm 11.12 or a later 11.x,
+   which older Node releases do not ship. Run this once.
    On Windows, run it in Command Prompt (Start → type `cmd`), not PowerShell.
    On macOS, put `sudo` in front if it fails with a permissions error.
 
@@ -193,14 +202,16 @@ or later from <https://nodejs.org>.
 Then install the two files from the `releases` folder as in steps 2–4.
 
 The downloaded Research Viewer works with files built from any branch. To run
-the Viewer from your checkout instead: on macOS/Linux, run `corepack enable`
-once, then `make electron`; on Windows, double-click `eval\Setup.bat` once, then
-`eval\Viewer.bat`.
+the Viewer from your checkout instead you need a newer Node.js: 22.22.2 or
+later on 22, 24.15 or later on 24, or 26 or later (23 and 25 are refused). Then
+on macOS/Linux, run `corepack enable` once, then `make electron`; on Windows,
+double-click `eval\Setup.bat` once, then `eval\Viewer.bat`.
 
 ## Using it
 
-In Cowork, open a folder for the project and give the person's FamilySearch ID
-and what you want to find out:
+Start a Cowork task: click **New**, choose **Cowork** under the message box,
+then **Project or folder** → **Add folder** and pick a folder for the project.
+Give it the person's FamilySearch ID and what you want to find out:
 
 > Start a project for KWCJ-RN4, Patrick Flynn, born about 1845 in Ireland. I
 > want to find his parents.
