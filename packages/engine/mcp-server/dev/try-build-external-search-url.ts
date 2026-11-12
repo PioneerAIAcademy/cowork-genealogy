@@ -241,6 +241,24 @@ const cases: Array<{ label: string; input: Parameters<typeof buildExternalSearch
     },
   },
   {
+    // Issue #4402. Open the printed URL in a real browser: it should list
+    // FABBIE S MCELWEE, Serial Patent SER-569015, 24 Feb 1917, Broadwater
+    // County (verified 2026-11-11, spec §10). A headless browser shows an
+    // empty page — the embedded search app is Cloudflare-fronted.
+    label: "blm_glo, the verified Fabbie McElwee Montana patent (issue #4402)",
+    input: {
+      site: "blm_glo",
+      attributes: { surname: "McElwee", givenName: "Fabbie", usState: "Montana" },
+    },
+  },
+  {
+    label: "blm_glo, a state-land state (expect outside_coverage, no URL)",
+    input: {
+      site: "blm_glo",
+      attributes: { surname: "McElwee", usState: "Pennsylvania" },
+    },
+  },
+  {
     label: "unsupported site (expect unsupported_site + supportedSites)",
     input: {
       site: "wiewaswie",

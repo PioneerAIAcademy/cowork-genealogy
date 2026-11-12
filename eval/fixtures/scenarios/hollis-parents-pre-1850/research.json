@@ -1,0 +1,21 @@
+{
+  "project": {
+    "id": "rp_001",
+    "objective": "Identify the parents of Reuben Hollis, born about 1795 in Rowan County, North Carolina. A family record names Ezekiel Hollis (died 1847) as a possible father, unconfirmed.",
+    "subject_person_ids": ["I1"],
+    "status": "active",
+    "created": "2026-05-13",
+    "updated": "2026-05-13"
+  },
+  "questions": [],
+  "plans": [],
+  "log": [],
+  "sources": [],
+  "assertions": [],
+  "person_evidence": [],
+  "conflicts": [],
+  "hypotheses": [],
+  "timelines": [],
+  "proof_summaries": [],
+  "evaluations": []
+}

@@ -3138,6 +3138,13 @@ describe("Research closed shapes", () => {
     expect(result.errors).toEqual([]);
   });
 
+  it("accepts the blm_glo search site on external_site.site (#4402)", async () => {
+    const research = maximalResearch();
+    research.log[1].external_site.site = "blm_glo";
+    const result = await validateParsed(research, maximalTree);
+    expect(result.errors).toEqual([]);
+  });
+
   // #1270 — pages_read[].section is the `locality_page_section` closed enum.
   // validateLocalities never descended into pages_read before, so a misspelled
   // section reached disk with valid: true. The maximal document above carries

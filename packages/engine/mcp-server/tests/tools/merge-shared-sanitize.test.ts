@@ -85,7 +85,7 @@ describe("sanitizeCandidate — record-only field stripping", () => {
 describe("sanitizeCandidate — person-level source refs (#2696)", () => {
   const run = (sources: unknown) =>
     sanitizeCandidate({
-      persons: [{ id: "P1", gender: "Male", names: [{ given: "A", surname: "B" }], sources } as any],
+      persons: [{ id: "P1", gender: "Male", names: [{ id: "N1", given: "A", surname: "B" }], sources } as any],
       sources: [{ id: "S1", title: "Census" }],
     });
 
@@ -111,5 +111,52 @@ describe("sanitizeCandidate — person-level source refs (#2696)", () => {
     const { candidate, warnings } = run([{ ref: "S1" }, { ref: "S9" }]);
     expect(candidate.persons![0].sources).toEqual([{ ref: "S1" }]);
     expect(warnings.some((w) => /dropped 1 person-level/.test(w))).toBe(true);
+  });
+});
+
+describe("sanitizeCandidate — a compacted record_read answer (#4415)", () => {
+  it("fills the fields the tree requires and builds a source from the citation", () => {
+    const { candidate, warnings } = sanitizeCandidate({
+      persons: [
+        { id: "a", names: [{ given: "Ann" }], facts: [{ type: "Birth", date: "1850" }] },
+        { id: "b", gender: "Male", names: [{ surname: "Ross" }] },
+      ],
+      relationships: [
+        { type: "Couple", person1: "a", person2: "b" },
+        { type: "ParentChild", parent: "a", child: "gone" },
+      ],
+      citation: '"Ohio, Deaths, 1908-1953", <i>FamilySearch</i>, Ann Ross.',
+      recordUrl: "https://www.familysearch.org/ark:/61903/1:2:QQ",
+    } as any);
+    expect(candidate.persons![0]).toMatchObject({
+      gender: "Unknown",
+      names: [{ id: "n_0_0", given: "Ann", surname: "" }],
+      facts: [{ id: "f_0_0" }],
+    });
+    expect(candidate.persons![1].names![0]).toMatchObject({ id: "n_1_0", given: "", surname: "Ross" });
+    expect(candidate.relationships).toEqual([{ id: "r_0", type: "Couple", person1: "a", person2: "b" }]);
+    expect(candidate.sources).toEqual([
+      {
+        id: "S1",
+        title: "Ohio, Deaths, 1908-1953",
+        citation: '"Ohio, Deaths, 1908-1953", <i>FamilySearch</i>, Ann Ross.',
+        url: "https://www.familysearch.org/ark:/61903/1:2:QQ",
+      },
+    ]);
+    expect(warnings.some((w) => w.includes("naming a person not in"))).toBe(true);
+    expect(warnings.some((w) => w.includes('gender "Unknown"'))).toBe(true);
+  });
+
+  it("drops the comma FamilySearch puts inside the quoted title", () => {
+    const { candidate } = sanitizeCandidate({
+      persons: [],
+      citation: '"United States Census, 1860," database, FamilySearch, Schuylkill County.',
+    } as any);
+    expect(candidate.sources?.[0]?.title).toBe("United States Census, 1860");
+  });
+
+  it("never writes a url key when the answer has no recordUrl", () => {
+    const { candidate } = sanitizeCandidate({ persons: [], collectionTitle: "United States Census, 1860" } as any);
+    expect(candidate.sources).toEqual([{ id: "S1", title: "United States Census, 1860" }]);
   });
 });

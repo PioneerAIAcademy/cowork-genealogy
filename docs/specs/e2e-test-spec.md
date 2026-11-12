@@ -659,21 +659,63 @@ roll-up does not display them (§7.4 blind-grading constraint).
 ## 5. Entry Point: The `/research` Skill
 
 Autonomous e2e tests invoke the agent via the same entry point a production
-user would type: the `/research` skill. The harness sends a single
-user message of the form (single-ask fixtures do not — they send the patron's
-message verbatim; see §16):
+user would type: the `/research` skill. The harness opens the run with one
+user message of the form (single-ask fixtures do not; they send the patron's
+message verbatim, see §16):
 
 ```
 /research --autonomous <researcher_question>
 ```
 
-The harness still sends `--autonomous`, but since the continuous-work change to
-`research/SKILL.md` (2026-09-23) **no plugin body reads it**: proceeding without pausing
-is now what every run does, with or without the string. It is kept in the
-message because it is a listed trigger in `research/SKILL.md`'s description,
-and because removing it would change what every committed run log was
-produced under. No test-mode system prompt is added; the e2e test exercises
-the production code path.
+When the fixture bundles provided documents, the message also names them (§6.2).
+After that, under the default `--step-mode job`, the harness answers for the
+researcher, one reply per turn, with what `next_auto_reply` returns ("Keep going.",
+or "Wrap it up." in place of a further round of planning); `--wrap-up-after` swaps
+in "Wrap it up." after a named step. A `job` turn that ends cleanly on a question
+for the researcher, while research is left (it did not run proof-conclusion and the
+project is not completed), is answered with the fixture's own `researcher_question`,
+at most once per run. The run ends when the host sends no reply (sections A2 and F
+of `docs/specs/research-step-mode-spec.md` list when) or one of §6's stop signals
+ends it. `--step-mode step` sends no replies.
+
+**Only the router reads the flag.** No other plugin body contains `--autonomous`:
+`grep -rln -- '--autonomous' packages/engine/plugin/` lists only the router. These
+rules in `research/SKILL.md` branch on it; find them with
+`grep -n -E -- '--autonomous|autonomous run' packages/engine/plugin/skills/research/SKILL.md`:
+
+- **A trigger.** The description's trigger list names "any message with `--autonomous`".
+- **Always a job.** §"Bounded request or job" says "`--autonomous` is always a job":
+  the bounded-request list does not apply, so a fixture question shaped like a
+  bounded ask ("Did X and Y have a son named Z?") is routed as a job from project
+  state, one step per turn, rather than handed straight to the step that owns a
+  single deliverable.
+- **No researcher present.** On an autonomous run the router hands `userPresent: no`
+  to three agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
+  run" (§"One step per turn"), and its spawn fields say "`no` in an autonomous run,
+  otherwise `yes`". `@plugin:search-hints` gets it from its routing-table row:
+  "`userPresent: no` ONLY on an `--autonomous` run". `@plugin:person-evidence` gets
+  it on a "Keep going." or "Wrap it up." turn too: "A wrap-up turn and an autonomous
+  run pass it too" (§"One step per turn"), and its spawn fields name the same, "turn
+  and in an autonomous run". The rules are there so an e2e run neither waits on an
+  external-site capture nobody will upload nor asks for hint verdicts nobody will
+  give. No check makes the router send the field to search-external-sites or
+  search-hints (the research unit suite checks it only on person-evidence's spawn),
+  and an agent reads a missing field as `yes`:
+  `eval/runlogs/e2e/clark-parents/run-2026-11-04_10-52-03.json` spawned
+  search-external-sites without it, and that plan item stayed `in_progress` waiting
+  for a capture.
+
+Those three agents read the `userPresent` field, not the string. The e2e
+orchestrator writes no delegation, so it cannot pass `userPresent: no` itself: the
+flag is how an e2e run gets it. That is why the flag stays as e2e's opening (lead,
+2026-11-10); decision 22 of the step-mode spec records that ruling, which rescinded
+the earlier plan to retire the flag. Removing it would also change what every
+committed run log was produced under. The harness adds no test-mode system prompt.
+Where e2e still departs from production (among them the flag-gated rules above,
+the tool blocks in §6.1, the hosted completion halt §6 does not emulate, and the
+hosted alpha's own system prompt, §16.5), those sections say so. How a patron's
+message, which carries no flag, is routed is measured by the single-ask panel
+(§16, `make e2e-single-ask`), not here.
 
 `/research` is specified separately. For the contract that matters
 here:
@@ -684,8 +726,11 @@ here:
   conflict-resolution → proof-conclusion, iterating as needed)
 - It instructs the agent to read `research.json` and decide the
   next sub-skill based on state
-- It does not pause for clarifying questions, and that no longer depends on
-  the flag
+- It runs one step per turn and ends the turn on a "Continue with …?" offer,
+  except after a step that ends on a question only the researcher can answer, a
+  final conclusion, or a step that found nothing further to do (§"One step per
+  turn" in `research/SKILL.md`). A "Wrap it up." turn runs §"Wrap it up" in that
+  one turn. The harness answers as above.
 
 ---
 
@@ -884,7 +929,7 @@ the `max_cost_usd` note in §6 step 5.
    **No continue-nudge (step mode phase 2).** A run is a step-mode run (`--step-mode
    job` is the default) and nothing vetoes a stop: a step turn ends at its boundary on
    purpose, and the host's reply, `next_auto_reply`, continues the run (section F of
-   `docs/plan/research-step-mode.md`). No Stop hook is bound, and a run writes neither
+   `docs/specs/research-step-mode-spec.md`). No Stop hook is bound, and a run writes neither
    `usage.continue_nudges` nor `usage.hand_back_classes`; `make e2e-nudges` leaves such
    a run out and says how many it left out. `test_e2e_step_mode_stop.py` fails if any
    harness module binds a Stop hook again. The hosted planes' completion halt is NOT
@@ -2727,7 +2772,7 @@ There is no `expected-findings.json` and no judge.
   provided-documents suffix. The system prompt is the autonomous mode's.
 - **No continue nudges.** No harness run binds a Stop hook (step mode phase 2), and
   there is no stall resume (it sends a second message). This matches Cowork today and step
-  mode's cap 0 (`docs/plan/research-step-mode.md`, decision 1).
+  mode's cap 0 (`docs/specs/research-step-mode-spec.md`, decision 1).
 - **No live-tree block.** §6.1 exists to hide an answer key; a single-ask fixture
   has none, and asks like "review the sources attached to <PID>" need
   `person_read`. The fixture's own `blocked_tools` still applies.

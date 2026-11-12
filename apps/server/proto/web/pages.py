@@ -108,9 +108,9 @@ def signed_out_page(*, public_url: str, sign_in: Literal["familysearch", "dev"] 
 <li><strong>Living people.</strong> Do not store information about living people.</li>
 <li><strong>This is a beta.</strong> Nothing promises your work survives, so download what you want to keep.</li>
 <li><strong>No desktop extension.</strong> Turn the Genealogy Research desktop extension off on that Claude account,
-under Settings → Extensions on each computer, or use a second Claude account.</li>
+under Settings → Desktop app → Extensions on each computer, or use a second Claude account.</li>
 <li><strong>Signing in again.</strong> Placeholder: what to expect when FamilySearch ends a session, and when the
-connector itself needs reconnecting (Settings → Connectors), will be written from the live sittings.</li>
+connector itself needs reconnecting (Customize → Connectors), will be written from the live sittings.</li>
 <li><strong>Feedback.</strong> Email it with the conversation pasted in, because this server does not store your
 conversations. Placeholder: the feedback address has not been supplied yet.</li>
 <li><strong>Team and Enterprise plans.</strong> An Owner adds the connector and makes the plugin available.</li>
@@ -261,8 +261,14 @@ async function textLayer(file) {
   const head = new Uint8Array(await file.slice(0, 5).arrayBuffer());
   if (String.fromCharCode(...head) !== "%PDF-") return "";
   const lib = await loadPdfjs();
+  // A CID font with no /ToUnicode table (common in CJK PDFs) needs the predefined CMap
+  // named by its /Encoding; without cMapUrl, pdf.js cannot resolve one and the text comes
+  // back empty or garbled. cMapPacked is already pdf.js's default; named for clarity.
+  const cMapUrl = new URL("cmaps/", PDFJS_DIR).href;
   // pdf.js 6 cleans up through the loading task: the document has no destroy().
-  const task = lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()), verbosity: 0 });
+  const task = lib.getDocument({
+    data: new Uint8Array(await file.arrayBuffer()), verbosity: 0, cMapUrl, cMapPacked: true,
+  });
   try {
     const doc = await task.promise;
     const pages = [];

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Phase 0, the one question the committed corpus cannot answer.
 
-`docs/plan/research-step-mode.md` makes every turn end at a step boundary, and on
+`docs/specs/research-step-mode-spec.md` makes every turn end at a step boundary, and on
 the hosted planes the boundary is a `PreToolUse` **deny** on the delegation that
 would start the next step. Most of what that needs is already measured for free:
 
@@ -74,7 +74,7 @@ then carried straight on: it did the queued `Write` AND called
 `research_delivered`. The control did the second task too, so arm A skipping it
 would have been meaningful -- it did not skip it. The boundary leaked.
 
-So the design premise in `research-step-mode.md` -- "the boundary is a deny on
+So the design premise in `docs/specs/research-step-mode-spec.md` -- "the boundary is a deny on
 the delegation that would start the next step" -- is FALSIFIED for the only case
 that matters, a turn with more than one thing to do. A deny is a tool RESULT;
 the model treats it as one failed item on its list and continues. That is
