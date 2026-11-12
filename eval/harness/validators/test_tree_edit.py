@@ -23,6 +23,8 @@ import re
 
 import pytest
 
+from validators_lib import bare_tool_name
+
 
 # --- Cross-file referential integrity ---------------------------------
 
@@ -87,21 +89,26 @@ def _trees_equal(before: dict | None, after: dict | None) -> bool:
     return before == after
 
 
-def test_verification_reads_the_tree(builtin_tool_calls, test):
+def test_verification_reads_the_tree(tool_calls, test):
     """Tag-gated (reads-tree): the delegation states the values it wants
-    confirmed, so a reply can repeat them without looking. Only a Read of
-    tree.gedcomx.json shows the tree was checked."""
+    confirmed, so a reply can repeat them without looking. tree-edit reads the
+    tree only through ``tree_query`` (it holds no ``Read``), so a ``tree_query``
+    call that covers I1, by naming it or by reading the whole tree, shows the
+    tree was checked."""
     if "reads-tree" not in test.get("tags", []):
         pytest.skip("not a reads-tree scenario")
-    reads = [
-        (c.get("args") or {}).get("file_path", "")
-        for c in builtin_tool_calls or []
-        if c.get("tool") == "Read"
-    ]
-    tree_reads = [r for r in reads if r.replace("\\", "/").endswith("tree.gedcomx.json")]
-    assert tree_reads, (
-        "The agent reported on the tree without reading tree.gedcomx.json; "
-        f"its Read calls were {reads[:3]}"
+    calls = tool_calls or []
+    covering = []
+    for c in calls:
+        if bare_tool_name(str(c.get("tool") or "")) != "tree_query":
+            continue
+        args = c.get("args") or c.get("input") or {}
+        person_ids = args.get("personIds")
+        if not person_ids or "I1" in person_ids:
+            covering.append(c)
+    assert covering, (
+        "The agent reported on the tree without a tree_query call covering I1; "
+        f"its tool calls were {[bare_tool_name(str(c.get('tool') or '')) for c in calls][:5]}"
     )
 
 
@@ -302,16 +309,21 @@ def _facts_of(state: dict, person_id: str) -> list:
 
 def test_namesake_citation_refused_and_handed_back(before_state, after_state, text_response, test, agent_returns=None):
     """Tag-gated (`namesake-citation`): with a namesake on I1 and the census
-    untied to him, no fact is added to I1 and the return hands the census link
-    to person-evidence."""
+    untied to him, no fact is added to I1 and the return names person-evidence
+    as the owner of the census link. Any wording counts, as in
+    ``test_universal.test_hand_back_names_its_owner``; nothing reads a
+    ``Hand-back:`` line (issue #4170)."""
     if "namesake-citation" not in (test.get("tags") or []):
         pytest.skip("not a namesake-citation test")
     added = [f.get("type") for f in _facts_of(after_state, "I1") if f not in _facts_of(before_state, "I1")]
     assert not added, f"facts were added to I1 although the census is untied to him: {added}"
     from harness.skill_runner import subject_reply_text
-    text_response = subject_reply_text(agent_returns, text_response, "tree-edit", test)
-    assert re.search(r"hand[- ]?back[^\n]{0,40}`?person-evidence", text_response or "", re.I), (
-        f"the refused citation was not handed to person-evidence: {(text_response or '')[:600]!r}"
+    # A failed spawn is recorded under the agent's name with `is_error`, and its
+    # runtime text ("Available agents: ...") names every owner (issue #3935).
+    own_returns = [r for r in (agent_returns or []) if not r.get("is_error")]
+    text_response = subject_reply_text(own_returns, text_response, "tree-edit", test)
+    assert "person-evidence" in (text_response or "").lower(), (
+        f"the reply does not name person-evidence as the owner of the census link: {(text_response or '')[:600]!r}"
     )
 
 
