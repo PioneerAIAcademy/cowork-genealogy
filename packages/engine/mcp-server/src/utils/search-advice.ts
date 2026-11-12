@@ -6,7 +6,7 @@
 // so the tool and the eval mock run this one function and cannot disagree.
 
 import { censusNote, type CensusNote, type CensusNoteInput } from "./census-note.js";
-import { patronymicVariants, searchFoundNobody } from "./surname-variant-hints.js";
+import { PATRONYMIC_ABBREVIATIONS, patronymicVariants, searchFoundNobody } from "./surname-variant-hints.js";
 
 export interface ChildrenSearchNote {
   /** The arguments that hold the search to one source or place. */
@@ -67,6 +67,14 @@ export function childrenSearchNote(input: SearchAdviceInput): ChildrenSearchNote
   };
 }
 
+/** The surname ends in an abbreviation of -datter/-dotter after the genitive s:
+ *  "Halsteinsdr", "Persdtr", "Olsd". */
+function isAbbreviatedPatronymic(surname: string): boolean {
+  const lower = surname.toLowerCase();
+  const endings = new Set(Object.values(PATRONYMIC_ABBREVIATIONS).flat());
+  return [...endings].some((a) => lower.length > a.length + 2 && lower.endsWith(`s${a}`));
+}
+
 /** Countries whose records index people under patronymics (lead, 2026-11-12). */
 export const PATRONYMIC_COUNTRIES: readonly string[] = ["norway", "sweden"];
 
@@ -89,12 +97,14 @@ function searchedCountries(input: SearchAdviceInput): string[] {
  * The note on a search that carried a surname, found nobody, and was scoped to
  * a country in `PATRONYMIC_COUNTRIES` by `recordCountry` or by the last segment
  * of a place; `undefined` otherwise. A -datter/-dotter surname is left to
- * `surnameVariantHints`, which names the forms to try in the same field.
+ * `surnameVariantHints`, which names the forms to try in the same field, and so
+ * is one of those abbreviated forms ("Halsteinsd"): the caller is already
+ * working that hint's list.
  */
 export function patronymicSearchNote(input: SearchAdviceInput, out: SearchCounts): PatronymicSearchNote | undefined {
   const surname = text(input.surname);
   if (!surname || !searchFoundNobody(out)) return undefined;
-  if (patronymicVariants(surname).length > 0) return undefined;
+  if (patronymicVariants(surname).length > 0 || isAbbreviatedPatronymic(surname)) return undefined;
   if (!searchedCountries(input).some((c) => PATRONYMIC_COUNTRIES.includes(c))) return undefined;
   return { searched: surname, note: PATRONYMIC_SEARCH_NOTE };
 }

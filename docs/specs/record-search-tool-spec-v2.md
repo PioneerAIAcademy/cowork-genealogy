@@ -1355,7 +1355,8 @@ In Norway and Sweden the surname in a record is a patronymic that changes each
 generation, or a farm or emigrant name taken later. A person searched under the
 surname a tree holds can be indexed under one the caller cannot guess. On such a
 search that found nobody, the tool says to send it next with no `surname`: the
-given name, the parents' given names and `recordCountry`.
+same search keeping the given name, the place and the years, with the parents'
+given names added and `recordCountry` as the anchor.
 
 **Measured basis.** The agent body states the rule. On Haiku 5.5 at low effort
 `ut_search_records_021` failed 7 of 10 runs: the agent tried the parents' names
@@ -1371,7 +1372,8 @@ Fires when **all** of:
 - `recordCountry`, or the last segment of a place argument, is Norway or Sweden
   (`PATRONYMIC_COUNTRIES`);
 - the surname is not a *-datter* / *-dotter* patronymic, which
-  `surnameVariantHints` answers with the forms to try in the same field.
+  `surnameVariantHints` answers with the forms to try in the same field, nor one
+  of those abbreviated forms ("Halsteinsdr", "Halsteinsd").
 
 ```json
 "patronymicSearch": { "searched": "Moen", "note": "This search carried a surname and found nobody. ..." }

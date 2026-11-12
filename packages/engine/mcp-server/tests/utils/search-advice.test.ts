@@ -83,6 +83,15 @@ describe("patronymicSearchNote", () => {
     expect(patronymicSearchNote({ surname: "Halsteinsdatter", recordCountry: "Norway" }, NIL)).toBeUndefined();
     expect(patronymicSearchNote({ surname: "Persdotter", recordCountry: "Sweden" }, NIL)).toBeUndefined();
   });
+
+  it("leaves an abbreviated -datter form to that hint too, and still fires on an ordinary surname", () => {
+    for (const surname of ["Halsteinsdr", "Halsteinsdtr", "Halsteinsd", "PERSDTR"]) {
+      expect(patronymicSearchNote({ surname, recordCountry: "Norway" }, NIL)).toBeUndefined();
+    }
+    for (const surname of ["Moen", "Monsen", "Lund", "Sd"]) {
+      expect(patronymicSearchNote({ surname, recordCountry: "Norway" }, NIL)).toBeDefined();
+    }
+  });
 });
 
 describe("searchAdvice", () => {
