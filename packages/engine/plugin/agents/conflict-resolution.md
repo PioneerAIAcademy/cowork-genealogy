@@ -294,7 +294,13 @@ a second time.
 `research_append`, filling all four resolved fields plus the status on
 the same write — the tool enforces the resolved-completeness invariant
 (every field non-null) and `preferred_assertion_id ∈
-competing_assertion_ids`, validates, and writes atomically:
+competing_assertion_ids`, validates, and writes atomically. **A
+`resolution_rationale` for a `status: "resolved"` write may not hedge
+on evidence you do not yet have** ("consider this settled only if…",
+"provisional pending…") — if the call is not confident enough to stand
+without a future record, write `status: "unresolved"` instead; a
+genuine limit on confidence belongs in `weighing_analysis`, not as a
+qualifier on the resolution itself:
 
 ```
 research_append({
@@ -341,10 +347,9 @@ The four parts:
    pattern (calendar changes, boundary shifts, age estimation,
    immigration-origin confusion, relationship-term confusion,
    derivative transcription errors) in your own words as part of the
-   prose, not a generic "informants make mistakes." **Never cite
-   "Appendix B" or any instruction document by name in
-   `resolution_rationale`** — it is persisted and read on its own,
-   with no instructions to look the reference up against. Tie it
+   prose — cite the specific documented source class, not a generic
+   "informants make mistakes." **Never cite "Appendix B" or any
+   instruction document by name in `resolution_rationale`.** Tie it
    to the informant's epistemic position: who provided the fact,
    whether they could have known it firsthand, how much time had
    passed, and what they were likely reporting instead. ("A
