@@ -336,7 +336,14 @@ def test_fetches_registration_start_date(tool_calls, test):
     only because the agent happened to fetch anyway before stopping, so this
     was a latent contradiction surfaced by sampling, not a regression.
 
-    Step 0 declares five hard blocks. The four named above are the ones any
+    `blocked-by-conflict` is the fifth member (issue #4323): an unresolved
+    conflict that lists the question in `blocks_question_ids` is a Step 0 hard
+    block, because the `blocked_by_conflict` write it produces carries
+    `stop_criteria: null` and no start date can change it. ut_d3c failed here
+    3/3 on Sonnet 5 medium with every judge dimension 3 before the block moved
+    into Step 0.
+
+    Step 0 declares six hard blocks. The five named above are the ones any
     test exercises; the classification and person_evidence blocks have no test
     today, so a test that stops at one will need its tag added here too.
     """
@@ -348,6 +355,7 @@ def test_fetches_registration_start_date(tool_calls, test):
         or "refuse-planned" in tags
         or "already-declared" in tags
         or "tentative-value-sweep" in tags
+        or "blocked-by-conflict" in tags
     ):
         pytest.skip("returns at a Step 0 precondition — Step 1 is never reached")
     called = [bare_tool_name(c.get("tool", "")) for c in (tool_calls or [])]

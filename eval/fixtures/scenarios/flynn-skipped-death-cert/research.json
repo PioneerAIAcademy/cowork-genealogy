@@ -133,9 +133,11 @@
           "jurisdiction": "Schuylkill County, Pennsylvania",
           "date_range": "1898",
           "repository": "FamilySearch",
-          "rationale": "Patrick's 1908 death falls under Pennsylvania mandatory state registration (effective 1906). The 1908 state death certificate is held by the Pennsylvania State Archives but is not available online or by mail order for this period — confirmed in-person access only, with no microfilm copy in circulation. No remote access path exists.",
+          "rationale": "Patrick's ca. 1898 death falls in Schuylkill County's county death registration period (1893-1906). His death record would name his parents and birthplace.",
           "fallback_for": null,
-          "status": "skipped"
+          "status": "skipped",
+          "skip_category": "no_coverage",
+          "skip_reason": "Schuylkill County's pre-1906 death records were destroyed in the 1920 courthouse fire; no duplicate copies survive, including at the Pennsylvania State Archives."
         },
         {
           "id": "pli_006",

@@ -109,8 +109,8 @@ Upload them, or conclude without them."
 
 **Under `wrapUp: yes`** skip: the exhaustiveness-evaluation confirmation above,
 this active-plan check when the question has no plan, and Step 0's
-`person_evidence` and tentative-value blocks. Keep the already-declared stop.
-Write the stop as §"Wrap it up" says.
+`person_evidence`, tentative-value and open-conflict blocks. Keep the
+already-declared stop. Write the stop as §"Wrap it up" says.
 
 The `evidence_class` and `independent_verification` criteria in Step 2 are
 meaningless against unclassified assertions, or when the persons the judgment
@@ -151,6 +151,10 @@ criteria, run two checks over the assertions tied to this question
 
 Do not declare exhaustive while a blocking check fails.
 
+**Open conflict (hard block).** If an `unresolved` conflict lists this question
+in `blocks_question_ids`, stop: write the `blocked_by_conflict` stop as Step 4
+says, with every plan's `log_entry_ids`, and route to `conflict-resolution`.
+
 ## 1. Gather evidence
 
 Reached only when Step 0 neither stopped nor refused. A run that ends at a
@@ -171,15 +175,13 @@ otherwise. Do not begin Step 2 until both have returned or failed.
 
 ## 2. Assess the 7-Point Stop Criteria
 
-**This is the gate.** Assess the seven in the order below. **The verdict stops
-at the first that fails — name it. The record does not.** Write all seven either
-way, each a 1-2 sentence assessment tied to project state: what was met, what
-failed, and what the evidence could not reach. Where a criterion turns on
-whether a civil registration record could exist for this event, state the start
-date Step 1 read and the page it came from; "registration had not begun" is an
-assessment only when it rests on that fetched date. Declaring requires all seven met,
-written only in the call's arguments. A decline carries the same seven, honestly
-assessed, with the blocking criterion named in `justification`.
+**This is the gate.** Assess the seven in order. **The verdict stops at the
+first that fails — name it.** Each assessment is 1-2 sentences tied to project
+state: what was met, what failed, what stayed unreachable. Where one turns on
+whether civil registration existed, state the start date Step 1 read and its
+page; "registration had not begun" holds only on that fetched date. Declaring
+requires all seven met, written only in the call's arguments. A decline names
+the blocking criterion and its assessment in `justification`.
 
 | Criterion | Key question |
 |-----------|-------------|

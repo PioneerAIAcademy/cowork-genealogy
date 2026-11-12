@@ -1,0 +1,34 @@
+{
+  "execution": {
+    "max_wall_clock_seconds": 900
+  },
+  "test": {
+    "id": "ut_research_exhaustiveness_d3c",
+    "skill": "research-exhaustiveness",
+    "name": "Unresolved conflict writes blocked_by_conflict, not a stop-gate value",
+    "type": "positive",
+    "description": "The flynn-unresolved-conflict scenario has all planned searches for q_001 completed and strong evidence naming Thomas Flynn as Patrick's father, but c_001 (a birthplace conflict: Ireland vs. Pennsylvania) is open and blocks_question_ids includes q_001. The agent must persist stopped_because: \"blocked_by_conflict\" with stop_criteria: null and leave status: \"in_progress\" unchanged. A gate value is a FAIL; so is declining without writing anything.",
+    "tags": [
+      "conflict-resolution",
+      "blocked-by-conflict",
+      "stop-criteria",
+      "declaration-honesty",
+      "no-gate-declaration"
+    ]
+  },
+  "input": {
+    "delegation": "Assess whether question q_001 is reasonably exhaustive and record the outcome — declaring if all seven stop criteria are met, and recording the blocker if they are not.\n\nquestionId: q_001\nprojectPath: <workspace>",
+    "scenario": "flynn-unresolved-conflict"
+  },
+  "mcp_fixtures": [
+    "wiki-read-pennsylvania-vital-records"
+  ],
+  "judge_context": [
+    "The only correct write is stopped_because: \"blocked_by_conflict\" — c_001 (birthplace conflict, Ireland vs. Pennsylvania) is open, status is \"unresolved\", and its blocks_question_ids includes q_001. No stop-gate value (question_answered, record_exhausted, nothing_further_reachable) is acceptable while this conflict is unresolved.",
+    "stop_criteria must be null — blocked_by_conflict is a non-gate early termination and carries no per-criterion analysis.",
+    "status must remain \"in_progress\" — a non-gate stopped_because never permits exhaustive_declared.",
+    "A response that declines without persisting anything (stopped_because stays null) is a FAIL — the agent must record the outcome, not merely narrate it.",
+    "Stop criteria coverage on a blocked_by_conflict write: pass when the agent names the blocking conflict (c_001 by id or describing its fact_type and competing values) and ties its write to the conflict's presence. A vague 'conflicts remain' without identifying c_001 is partial.",
+    "The strong parentage evidence is not a reason to grant a gate value — the conflict_resolution stop criterion is not met while c_001 is open. Treating the conflict as minor or already settled is the failure mode."
+  ]
+}
