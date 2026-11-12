@@ -563,9 +563,9 @@ agents.**
 | Surface | Honored where | Today |
 |---|---|---|
 | **Main thread** `model` + `effort` | hosted alpha and beta, both harnesses — not Cowork | `packages/engine/plugin/main-thread.json`: `claude-sonnet-4-6` at `medium`. Read by `apps/server/app/agent/main_thread.py` (the alpha's runner and control plane, the beta worker) and `eval/harness/harness/main_thread.py` (both harnesses), and passed as `ClaudeAgentOptions(model=, effort=)`, the `--model` / `--effort` flags. Nothing else sets either: no `fly.toml` key, no environment variable, no per-project model. The control-plane image copies the file (`deploy/Dockerfile`); the Cowork zip leaves it out |
-| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor`, `research-exhaustiveness`, `locality-guide` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project`, `convert-dates`, `evaluate-search-results`, `proof-conclusion`, `research-plan` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking`, `citation`, `timeline`, `record-structurer`, `conflict-resolution`, `search-full-text`, `check-warnings`, `question-selection` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
+| **Agent `model:`** | Cowork, hosted, both harnesses | every agent names one (`tests/packaging/agent-model-effort.test.ts`). `gps-mentor`, `research-exhaustiveness`, `locality-guide`, `person-evidence` → `claude-sonnet-5`; `tree-survey`, `where-else-to-search`, `tree-edit`, `search-external-sites`, `init-project`, `convert-dates`, `evaluate-search-results`, `proof-conclusion`, `research-plan`, `search-records` → `claude-sonnet-5-5`; `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `survey-surname`, `search-images`, `translation`, `search-hints`, `hypothesis-tracking`, `citation`, `timeline`, `record-structurer`, `conflict-resolution`, `search-full-text`, `check-warnings`, `question-selection`, `source-evaluation` → `claude-haiku-5-5`; every other agent → `claude-sonnet-4-6` |
 | **Skill `model:` / `effort:`** | nowhere | a skill cannot set either, and none declares one |
-| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites`, `timeline`, `record-structurer`, `conflict-resolution`, `convert-dates`, `check-warnings`, `evaluate-search-results`, `locality-guide`, `research-plan` → `low`; `survey-surname`, `search-images`, `search-hints`, `citation`, `search-full-text`, `research-exhaustiveness`, `proof-conclusion`, `question-selection` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
+| **Agent `effort:`** | Cowork, hosted, both harnesses — Cowork and Claude Code verified live 2026-08-25 | every agent names one. `search-wikipedia`, `search-familysearch-wiki`, `validate-schema`, `tree-survey`, `init-project`, `where-else-to-search`, `translation`, `tree-edit`, `hypothesis-tracking`, `search-external-sites`, `timeline`, `record-structurer`, `conflict-resolution`, `convert-dates`, `check-warnings`, `evaluate-search-results`, `locality-guide`, `research-plan`, `search-records`, `source-evaluation` → `low`; `survey-surname`, `search-images`, `search-hints`, `citation`, `search-full-text`, `research-exhaustiveness`, `proof-conclusion`, `question-selection`, `person-evidence` → `medium`; every other agent → `high`. It outranks the session's `--effort` and a `.claude/settings.json` `effortLevel` (CLI 2.1.308, `apps/server/dev/probe_effort_capture.py`, 2026-11-03) |
 | **Per-spawn effort** (CLI 2.1.294+) | the `Agent` call's own `effort` field, which outranks the agent's `effort:` | nothing sets it, and the model set it on none of ~7,000 recorded spawns (committed e2e and unit run logs, and medium and low runs, 2026-11-03). The alpha logs a per-turn count of spawns that carry one; `api_calls.effort` records each request's `output_config.effort`, and `make alpha-costs` splits the by-agent table on it |
 
 > **A skill cannot set its model or effort.** To route a step to a different
@@ -871,20 +871,34 @@ There **is** an orchestrator, and it is a skill:
    overrides a direct request for a downstream skill and sends the router back
    through the table; a change to routing behaviour that edits only the table
    can be reversed by that section.
-3. **One mode, in the router.** It runs the loop in one continuous turn — no
-   clarifying questions, decisions logged to the audit-trail fields — for every
-   run, with no flag to turn it on. **`--autonomous` gates no branch in any
-   plugin body**: the router's went with S2, and six others
-   (`search-external-sites`, `question-selection`, `search-records`,
+3. **One loop, in the router.** It runs every job the same way: one step per turn
+   where a host replies (below; in Cowork a "keep going" runs the steps in one
+   turn), decisions logged to the audit-trail fields. **Only the router reads
+   `--autonomous`,** for a trigger and two rules. Its own flag branch went with
+   S2, and six others (`search-external-sites`, `question-selection`, `search-records`,
    `research-plan`, `agents/proof-conclusion.md`, `agents/gps-mentor.md`) were
    folded in beside it on the lead's call, because the browser never sends the
-   flag and every one of those branches was dead on a hosted run.
-   `agents/person-evidence.md` was left out: its resolve-downward rule still
-   applies only to "an autonomous `/research` run", in words rather than the
-   flag, which a browser turn never is. The string survives in exactly two
-   places: the trigger list in `research/SKILL.md`'s description, and the
-   message the e2e harness and `make proto-demo` still build. So no offline suite
-   sees the difference; only the paid eval runs do.
+   flag and every one of those branches was dead on a hosted run. The router has
+   since come to read it again: besides the trigger in its description, an
+   autonomous message is always a job, never a bounded ask, and the router hands
+   `userPresent: no` to
+   `search-external-sites` and `search-hints`, which get it on no other run, and to
+   `person-evidence`, which also gets it on a "Keep going." or "Wrap it up." turn
+   (`docs/specs/e2e-test-spec.md` §5 quotes each rule). Those agents read that
+   field, not the string. `agents/person-evidence.md` was left out of the folding; its
+   resolve-downward rule now applies when its delegation says `userPresent: no`.
+   `agents/search-records.md` hands back `userPresent: no` for
+   search-external-sites only when its delegation says the search is part of an
+   autonomous run, which the router's search-records delegation does not carry;
+   the router sets the field itself when it spawns search-external-sites. Outside
+   the plugin, the flag is sent by the e2e harness's opening message; by
+   `opening_prompt` in `apps/server/proto/demo.py`, the prototype's default opener
+   (`make proto-demo` when no `--prompt` is given, and the `cap_main_real` and
+   `concurrent_rss_heavy` cases of `make proto-bounds`; their `-aws` twins run the
+   same scripts); and by the two research unit tests that pin the trigger and the
+   always-a-job rule (`ut_research_005`, `ut_research_023`).
+   Offline suites pin that the flag is sent; none can see what the router does
+   with it. Only the paid eval runs do.
    **gps-mentor runs only when the user asks for a second opinion, and the router
    does not yield on its verdict.** The one verdict table in the file is advisory
    — `address_first` is surfaced and recorded, and does not block, re-open a
@@ -1475,8 +1489,8 @@ enforcing-vs-shadow status.
   spawn check, which can make the runtime refuse the agent — see §5.2.
 - **Rebuild only where it matters.** The unit harness and Claude Code read your
   working tree — no rebuild. Cowork runs the uploaded `.zip`: `make plugin`, then
-  **remove the old plugin before uploading the new one** (Cowork tab, not the
-  Code tab — separate plugin lists), then fully quit and reopen Claude Desktop.
+  **remove the old plugin before uploading the new one** (Customize → Plugins → Yours),
+  then fully quit and reopen Claude Desktop.
   Full table: `docs/skill-lifecycle.md` → "Rebuilding and reinstalling", which
   opens by calling this "the single most common way to spend an hour testing a
   fix that was never loaded."
@@ -2366,13 +2380,20 @@ decides changes nothing about whether the gate runs. **Generalized: it changes w
 decides, not what the run can reach.** `question-selection` applies the same shape —
 with nobody waiting to answer, skip the ask and take the action.
 
-Since 2026-09-23 this is no longer a *mode* difference at all: no plugin body reads
-`--autonomous`, so the rule is unconditional and the question is only ever "can a human
-act on this right now?". Two bodies keep a genuine two-sided answer because a human
-sometimes CAN — `agents/person-evidence.md` (a user who asked for a link can adjudicate
-it; mid-run nobody can) and `search-external-sites` (a user who named the plan item will
-capture it; mid-run nobody will). Both have eval fixtures on each side. Production behaviour is preserved; only the prompt is
-gone.
+Since 2026-09-23 no agent reads `--autonomous`: the question an agent asks is only ever
+"can a human act on this right now?". Three bodies keep a genuine two-sided answer because
+a human sometimes CAN, and each reads it from the `userPresent` field of its delegation:
+`agents/person-evidence.md` (a user who asked for a link can adjudicate it; mid-run nobody
+can), `search-external-sites` (a user who named the plan item will capture it; mid-run
+nobody will) and `search-hints` (a user who asked for a hint review will give verdicts;
+mid-run nobody will). Each has eval fixtures on each side. The mode difference survives in
+the router, which sets that field from the flag: on an autonomous e2e run the router hands
+search-external-sites and search-hints `userPresent: no` where a hosted "Keep going." run
+leaves them at `yes` (search-hints gets no field, which means yes). So an autonomous e2e
+run is meant never to reach their `yes` side, but no check makes the router send the field
+to those two (the research unit suite checks it only on person-evidence's spawn): one
+committed step-mode run spawned search-external-sites without it, and its capture item
+stayed waiting (`docs/specs/e2e-test-spec.md` §5).
 
 Removing a capability is the bug. Two were found on 2026-08-31, both in skill bodies,
 both green in CI for months. The first is fixed; the second stands:
@@ -2426,10 +2447,13 @@ check that would have caught your change, say so in the PR** rather than implyin
 CI covered you (§9.4).
 
 **Write a rule that behaves differently when no user is present.** Ask which of the two
-things it removes — a pause, or a capability (§9.5). Note that the flag itself is
-retired: no plugin body reads `--autonomous`, so the condition is the situation, not a
-string in the message. Removing the pause is the
-established shape and is fine: decide instead of asking, and log the decision.
+things it removes: a pause, or a capability (§9.5). Note that no agent reads
+`--autonomous`: key an agent's rule on the `userPresent` field of its delegation, not on a
+string in the message. The router sets that field per agent: in its spawn-fields paragraph
+(§"What to do"), in §"One step per turn", in §"Wrap it up" and, for search-hints, in its
+routing-table row; a new agent that needs it also needs its own line in the router.
+Removing the pause is the established shape and is fine: decide instead of asking, and
+log the decision.
 Removing a capability makes the benchmark stop measuring production, silently, and
 is almost never what you want. If a headless run genuinely cannot perform the step,
 supply its input as a fixture rather than deleting the step, and if you cannot do
