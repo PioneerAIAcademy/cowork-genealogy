@@ -72,12 +72,12 @@ export const HOSTED_LOGIN_UNAVAILABLE =
 export const OPENROUTER_API_KEY_MISSING_MESSAGE =
   "No OpenRouter API key is configured. Tell the user to get one at " +
   "https://openrouter.ai/keys and enter it in Claude Desktop under Settings → " +
-  "Extensions → Genealogy Research, or add it to " +
+  "Desktop app → Extensions → Genealogy Research → Configure, or add it to " +
   "~/.familysearch-mcp/config.json as the \"openRouterApiKey\" field. " +
   "Do not ask the user to paste the key into the chat.";
 
 // The one variable the stdio entrypoint reads. manifest.json's `user_config`
-// asks for the key in Claude Desktop's extension install dialog, and its
+// asks for the key on the extension's Configure page in Claude Desktop, and its
 // `mcp_config.env` hands the answer over under this name — an environment
 // variable is the only channel `user_config` has.
 export const INSTALL_OPENROUTER_KEY_ENV = "GENEALOGY_OPENROUTER_API_KEY";

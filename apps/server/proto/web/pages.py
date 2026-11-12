@@ -108,9 +108,9 @@ def signed_out_page(*, public_url: str, sign_in: Literal["familysearch", "dev"] 
 <li><strong>Living people.</strong> Do not store information about living people.</li>
 <li><strong>This is a beta.</strong> Nothing promises your work survives, so download what you want to keep.</li>
 <li><strong>No desktop extension.</strong> Turn the Genealogy Research desktop extension off on that Claude account,
-under Settings → Extensions on each computer, or use a second Claude account.</li>
+under Settings → Desktop app → Extensions on each computer, or use a second Claude account.</li>
 <li><strong>Signing in again.</strong> Placeholder: what to expect when FamilySearch ends a session, and when the
-connector itself needs reconnecting (Settings → Connectors), will be written from the live sittings.</li>
+connector itself needs reconnecting (Customize → Connectors), will be written from the live sittings.</li>
 <li><strong>Feedback.</strong> Email it with the conversation pasted in, because this server does not store your
 conversations. Placeholder: the feedback address has not been supplied yet.</li>
 <li><strong>Team and Enterprise plans.</strong> An Owner adds the connector and makes the plugin available.</li>
