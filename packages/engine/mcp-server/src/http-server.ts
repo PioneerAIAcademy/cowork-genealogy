@@ -25,7 +25,10 @@
 // an absent row is free, and a NULL owner is refused with the rest. A call
 // naming no project runs under the user's principal on a store that refuses
 // every project tool and answers `project_list` with `ownedProjects` plus one
-// fresh path.
+// fresh path. A `tools/call` refused for someone else's project, or because a
+// lookup failed, is answered 200 with an `isError` result, so its message
+// reaches the model (`refuseConnectorCall`); any other request refused for
+// those reasons keeps its 403 or 503. A 401 is always HTTP.
 //
 // A connector caller's `tools/call` runs holding one of that user's
 // `USER_CALL_CAP` slots (self-hosted beta E4, per user; `utils/user-limits.ts`).
@@ -290,6 +293,23 @@ const NOT_YOUR_PROJECT = {
   id: null,
 };
 
+/**
+ * What the model is told when the door refuses a connector `tools/call` for a
+ * project that is not the caller's, or because a lookup failed. These go out as
+ * tool errors, not as HTTP 403 and 503: Claude replaces a 403's body with
+ * "blocked by a firewall or security service" and drops a 503's, so neither
+ * message reached the researcher or the card (issue #3529, item 13, measured
+ * at claude.ai and in Desktop Chat). Each says the call did not run and what to
+ * do next, since a model shown only "forbidden" guessed at a sign-in problem.
+ */
+export const NOT_YOUR_PROJECT_MESSAGE =
+  "This project is not yours, so this call did not run. " +
+  "Use a projectPath that project_list returns.";
+export const AUTHORIZATION_UNAVAILABLE_MESSAGE =
+  "The server could not check this call just now, so it did not run. " +
+  "This is a temporary problem on the server, not a missing project and not a sign-in problem. " +
+  "Wait a moment and send the same call again.";
+
 /** What a connector call naming no project is told when it reaches the store.
  *  The dispatcher turns the thrown Error into an `isError` result, so this
  *  reaches the model as an instruction; it names the argument, not a header. */
@@ -507,6 +527,34 @@ function isToolsCall(body: unknown): boolean {
 }
 
 /**
+ * Refuse a CONNECTOR request for a reason that is not the caller's sign-in.
+ *
+ * A `tools/call` is answered 200 with an `isError` result carrying `message`,
+ * so the text reaches the model and the card as any tool's error does. Anything
+ * else (`initialize`, `tools/list`, a notification) has no tool result to carry
+ * a message, so it keeps the HTTP status and body. Never used for a 401, which
+ * must stay HTTP: that status is what makes Claude offer Reconnect. Never used
+ * on the worker path, whose statuses the worker reads.
+ */
+function refuseConnectorCall(
+  res: http.ServerResponse,
+  body: unknown,
+  status: number,
+  httpBody: unknown,
+  message: string,
+): void {
+  if (!isToolsCall(body)) {
+    sendJson(res, status, httpBody);
+    return;
+  }
+  sendJson(res, 200, {
+    jsonrpc: "2.0",
+    id: (body as { id: string | number }).id,
+    result: { content: [{ type: "text", text: message }], isError: true },
+  });
+}
+
+/**
  * The tool a body names, for the log line only. `-` when it names none.
  *
  * SANITIZED, because this is the only caller-controlled field on E1's audit
@@ -660,9 +708,10 @@ async function handleMcpPost(
       try {
         caller = await options.lookupConnector(sha256Hex(bearer));
       } catch (error) {
-        // Never an admission, exactly as an `authorize` that throws is not.
+        // Never an admission, exactly as an `authorize` that throws is not. The
+        // token was not checked, so the answer carries nothing but the outage.
         process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
-        sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
+        refuseConnectorCall(res, body.value, 503, AUTHORIZATION_UNAVAILABLE, AUTHORIZATION_UNAVAILABLE_MESSAGE);
         return;
       }
     }
@@ -720,7 +769,7 @@ async function handleMcpPost(
         owner = await options.projectOwner(connectorProjectId);
       } catch (error) {
         process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
-        sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
+        refuseConnectorCall(res, body.value, 503, AUTHORIZATION_UNAVAILABLE, AUTHORIZATION_UNAVAILABLE_MESSAGE);
         return;
       }
       // A NULL owner is refused with the rest: a connector never claims an
@@ -730,7 +779,7 @@ async function handleMcpPost(
         process.stderr.write(
           `ev=tool_refused reason=not_owner surface=connector user_id=${caller.userId}\n`,
         );
-        sendJson(res, 403, NOT_YOUR_PROJECT);
+        refuseConnectorCall(res, body.value, 403, NOT_YOUR_PROJECT, NOT_YOUR_PROJECT_MESSAGE);
         return;
       }
       store = options.bindStore(connectorProjectId, disconnected.signal, undefined, {
@@ -789,7 +838,7 @@ async function handleMcpPost(
       again = await options.lookupConnector(capTokenSha256);
     } catch (error) {
       process.stderr.write(`ev=tool_authorize_failed error=${errorLabel(error)} surface=connector\n`);
-      sendJson(res, 503, AUTHORIZATION_UNAVAILABLE);
+      refuseConnectorCall(res, body.value, 503, AUTHORIZATION_UNAVAILABLE, AUTHORIZATION_UNAVAILABLE_MESSAGE);
       return false;
     }
     if (!again || again.userId !== userId) {
