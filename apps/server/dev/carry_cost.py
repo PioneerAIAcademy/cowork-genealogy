@@ -27,8 +27,8 @@ How each figure is measured:
   not a tool result, `isMeta`, a compaction summary or an interrupt marker. In a log that
   records `promptSource`, the row must also be marked "sdk"; rows the mark and the text rule
   read differently, either way, are counted and printed. A message counts only if a call
-  follows it. A "Yes." answering the hand-back line (`app.agent.hand_back`) is the runner's
-  auto-continue or the Continue button, not a new request, so it is folded into the message
+  follows it. A "Yes." answering the retired hand-back line (`HAND_BACK_RE` below) was the
+  alpha runner's auto-continue or the Continue button, not a new request, so it is folded into the message
   before it; the figure without folding is printed too. As in the runner, the text a hand-back
   would end is cleared at each prompt, interrupt and API error, so only a "Yes." right after a
   turn that ended on the hand-back line is folded.
@@ -61,6 +61,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from collections import Counter
 from contextlib import ExitStack
@@ -70,7 +71,6 @@ from pathlib import Path
 SERVER_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(SERVER_DIR))
 
-from app.agent.hand_back import AUTO_CONTINUE_TEXT, ends_with_hand_back  # noqa: E402
 from app.agent.spend import (  # noqa: E402
     cache_write_1h_rate,
     price_usd,
@@ -97,6 +97,16 @@ finally:
 
 SEEDS = (2_000, 5_000, 10_000)
 BAR = 0.10
+
+
+# The hand-back line older bundles end turns on, and the "Yes." that answered it. The alpha
+# runner's auto-continue chain that read them is deleted; bundles recorded before keep them.
+HAND_BACK_RE = re.compile(r"(?:^|\n)\s*Next: .+\. Continue\?\s*$")
+AUTO_CONTINUE_TEXT = "Yes."
+
+
+def ends_with_hand_back(text: str | None) -> bool:
+    return bool(text) and HAND_BACK_RE.search(text) is not None
 
 
 @dataclass
