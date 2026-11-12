@@ -3,11 +3,11 @@
     "f1": "true",
     "f2": "partial"
   },
-  "proof_quality_score": 3,
   "notes": {
-    "f2": "Reached the correct conclusion (only five children) via a different route than the specific hint: it never mentions 'John A Morgan' or the 1873 birth record, instead investigating and eliminating four unrelated candidate children (Ralph J. Mogan, Elizabeth Mitchell, a Migan infant, John H. Magan). Did not contradict the finding, and reached the right headline answer with solid, independently corroborating evidence. Partial: the second clause, that the 1873 John A Morgan birth belongs to a different family, is absent."
+    "f1": "Only the five known children are in the tree; no John A Morgan, no 1873 birth, and none of the rejected record ids or 9NJ7 PIDs in the tree or research.json.",
+    "f2": "ps_001 concludes the five are the only children established (four other candidates ruled out with reasons), but the 1873 John A Morgan hint is never addressed, so the part of the conclusion that rejects that birth is missing."
   },
-  "annotator": "122873616+Cia-3@users.noreply.github.com",
-  "findings_hash": "b664b5427561e97317e87627ca566165b1bbd185c144a97afe2ea2821fe1ae58",
-  "blind_bundle_digest": "2e6ae0101c919a91dd19e807307c1675355853cd085973d69e6fd264b94992fb"
+  "annotator": "benter-070",
+  "findings_hash": "5341f2247fe095ed8056fcaf58b9af9b6fcd268d62f83541b60c49827d449c9f",
+  "blind_bundle_digest": "79c1a9b69e96397c79648f605e888f8e65d8165d514449688105ea74b6d3fad8"
 }
