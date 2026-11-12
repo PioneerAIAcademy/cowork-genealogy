@@ -238,8 +238,9 @@ function nilEscalationNote(research: any, newEntries: any[]): string | null {
  */
 export const PLAN_RATIONALE_NOTE =
   "This is the first search for plan item {planItemId} to find nothing. The plan " +
-  'item\'s rationale: "{rationale}" Before any other retry, search under every ' +
-  "name, place and source that rationale gives and you have not yet searched.";
+  'item\'s rationale: "{rationale}" If it gives a name, place or source you have ' +
+  "not yet searched, search that next, before any other retry. Then carry on with " +
+  "the other retries: this note does not end the search.";
 
 /**
  * The `planRationale` note for the plan items whose first nil this call logged,

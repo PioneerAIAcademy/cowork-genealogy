@@ -2095,7 +2095,8 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
       expect(r.ok).toBe(true);
       expect(r.planRationale).toContain("first search for plan item pli_001 to find nothing");
       expect(r.planRationale).toContain(`"${RATIONALE}"`);
-      expect(r.planRationale).toContain("Before any other retry");
+      expect(r.planRationale).toContain("search that next, before any other retry");
+      expect(r.planRationale).toContain("does not end the search");
       expect(r.escalationDue).toBeUndefined();
     });
 

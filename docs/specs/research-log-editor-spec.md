@@ -488,8 +488,9 @@ A third advisory rides a top-level `escalationDue` string rather than
   call that brings several plan items to the threshold gets one line per item.
 - **Plan rationale:** when a call logs the **first** nil `record_search` /
   `fulltext_search` entry for a plan item (the same nil test as above),
-  `planRationale` quotes the plan item's `rationale` and says to search every
-  name, place and source it gives before any other retry. The rationale is where
+  `planRationale` quotes the plan item's `rationale` and says to search next, before
+  any other retry, any name, place or source it gives that is not yet searched,
+  then to carry on with the other retries. The rationale is where
   research-plan puts what it knew about the search: another surname the person
   may be under, how a collection is indexed, a second jurisdiction. It fires for
   any record type. It stays silent when the plan item already had a nil, when any
