@@ -78,10 +78,8 @@ cd ..\..\..\eval
 
 echo.
 echo Installing pnpm (Node package manager for the viewer)...
-REM Pin to the version in package.json "packageManager". pnpm 10 blocks
-REM dependency build scripts by default, which skips electron's binary
-REM download and breaks the viewer; pnpm 9.x runs them. Keep this in sync
-REM with the "packageManager" field in the repo-root package.json.
+REM Pin to the version in the repo-root package.json "packageManager" field,
+REM and keep the two in sync.
 call npm install -g pnpm@9.15.9
 if errorlevel 1 (
   echo.
@@ -107,18 +105,18 @@ if errorlevel 1 (
   exit /b 1
 )
 
-REM A warm pnpm store can skip electron's postinstall (the binary download +
-REM path.txt write), so "pnpm install" alone doesn't guarantee a launchable
-REM viewer -- electron-vite then dies with "Error: Electron uninstall". Force
-REM the rebuild so the binary is always materialized in this checkout.
+REM Electron 42+ has no install script of its own; apps\electron's postinstall
+REM runs install-electron, but that step does not fail the install, so check
+REM here. Without the binary electron-vite dies with "Error: Electron
+REM uninstall". install-electron exits at once when the binary is present.
 echo.
 echo Ensuring the Electron viewer binary is installed...
-call pnpm --filter @genealogy/electron rebuild electron
+call pnpm --filter @genealogy/electron exec install-electron
 if errorlevel 1 (
   echo.
   echo ERROR: Could not install the Electron binary. Setup aborted.
   echo Re-run Setup.bat, or from the repo root run:
-  echo   pnpm --filter @genealogy/electron rebuild electron
+  echo   pnpm --filter @genealogy/electron exec install-electron
   cd eval
   pause
   exit /b 1
