@@ -61,6 +61,7 @@ from typing import Any
 from e2e import judge as judge_module
 from e2e.env import ENV_FILE, load_env_file
 from e2e.judge import derive_verdict  # shared with apply_avoid_guard; re-exported for our callers
+from e2e.avoid_guard import read_starting_state
 from e2e.blind_bundle import bundle_digest, bundle_paths
 from e2e.provenance import findings_hash
 
@@ -149,6 +150,9 @@ def grade_case(
             judge_output,
             expected_findings=case["expected_findings"],
             final_tree=case["final_tree"],
+            final_research=case.get("final_research"),
+            starting_tree=case.get("starting_tree"),
+            starting_research=case.get("starting_research"),
             subject_person_ids=case.get("subject_person_ids"),
         )
     except Exception as e:  # noqa: BLE001 — record, don't abort the sweep
@@ -343,6 +347,7 @@ def load_annotated_runs(
             err(f"{tree_path.name} unreadable ({e})")
             continue
         research_path = ann_path.parent / f"{stem}.final-research.json"
+        starting_tree, starting_research = read_starting_state(fixture_dir)
         final_research = None
         if research_path.exists():
             try:
@@ -436,6 +441,8 @@ def load_annotated_runs(
             "expected_findings": expected,
             "final_tree": final_tree,
             "final_research": final_research,
+            "starting_tree": starting_tree,
+            "starting_research": starting_research,
             "subject_person_ids": sorted(subject_ids),
             "human": human,
             # rung 7: True when a findings_hash was present and matched; False for

@@ -80,6 +80,7 @@ from harness.skill_invocation import (
 )
 
 from e2e import pricing
+from e2e.avoid_guard import read_starting_state
 from e2e import provenance
 from e2e.mcp_health import (
     CONSECUTIVE_TOOL_SEARCH_MISSES,
@@ -3643,10 +3644,16 @@ async def run_e2e_test(
                 # Deterministic §3.4.1 backstop: an `avoid` finding whose
                 # target is still in the final tree is forced to matched:
                 # "false" and the verdict recomputed (downgrade-only).
+                _, starting_research = read_starting_state(
+                    fixture.starting_research_path.parent
+                )
                 judge_output = judge_module.apply_avoid_guard(
                     judge_output,
                     expected_findings=fixture.expected_findings,
                     final_tree=final_tree,
+                    final_research=final_research,
+                    starting_tree=starting_tree,
+                    starting_research=starting_research,
                     subject_person_ids=fixture.subject_person_ids,
                 )
                 verdict = str(judge_output.get("verdict") or "fail")

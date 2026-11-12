@@ -133,11 +133,13 @@ fixture will declare `"image_basis": true` and that image ark must land in
     `ark:/61903/...` in `supporting_sources`.
   - Outcome 3: replace the findings with a `"polarity": "avoid"` finding
     naming the wrong claim, paired with a `required: true` finding
-    documenting the negative conclusion. Copy the JSON *shape* from
-    `eval/tests/e2e/thomas-seaver-other-wife/expected-findings.json` — that
-    file is a valid instance of the pair. (Its README is not a model for
-    yours: that fixture was authored in this shape from the start, not
-    resolved from a hint.) Put the disproving record's literal
+    documenting the negative conclusion. A wrong person carries
+    `details.relation` and `details.wrong_candidate` with `name`, `note` and
+    `records`, the sorted `ark:/61903/1:1:` ARK of every persona on every
+    record of the rejected candidate (spec §3.4.1); a wrong fact carries
+    `fact_type` and the avoided `date` or `place`. Copy the JSON *shape* from
+    `eval/tests/e2e/rozal-sarman-daughter/expected-findings.json`, a resolved
+    wrong-person pair. Put the disproving record's literal
     `ark:/61903/...` in `supporting_sources` on whichever of the two findings
     it naturally belongs to (often the `avoid` finding, if it's the record
     that contradicts the hint). Write the absence — "no record in
