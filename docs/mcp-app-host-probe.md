@@ -447,8 +447,8 @@ is an answer.
 
 | Run | |
 |---|---|
-| Date | 2026-11-05 and 2026-11-06; the rest on 2026-11-08 |
-| Claude Desktop version | 4.16336.0; 4.23118.0 on 2026-11-08 |
+| Date | 2026-11-05 and 2026-11-06; the rest on 2026-11-08; the reconnect and one-install rows on 2026-11-12 |
+| Claude Desktop version | 4.16336.0; 4.23118.0 on 2026-11-08; 5.1231.2 on 2026-11-12 |
 | Where the task ran (cloud or local), and whether it had a folder | Cloud (`cse_` session), with a folder on this Mac. On 2026-11-08 an ordinary chat with no folder, in Desktop or at claude.ai, was a cloud session too (`E=remote_cowork`, `T=cloud_default`) |
 | Account the connector is on (organization or personal) | Personal for `Genealogy Viewer`. On 2026-11-08 the sign-in probe's connector was added from Desktop's Customize page on the same account, which is on the Ultra plan |
 | macOS version | 15.8.2 |
@@ -476,6 +476,8 @@ hypothesis and conclusion get a card, and the router lines shrink to match.
 | "Always allow" chosen at the prompt, Desktop Chat, 2026-11-08 (`record_read`) | Does not stick: asked again on the next two calls, and the connector's page still showed Needs approval |
 | "Always allow" set on the connector's page, Desktop Chat, 2026-11-08 (`record_read`, `record_search`) | No prompt, from the main thread and from an agent, in an open conversation, a new one and after restarting Desktop |
 | Bulk allow on the connector's page | One control per group: Interactive tools, Read-only tools and Other tools. None covers every tool, and App-only tools have none |
+| After a reconnect, Desktop Chat, 2026-11-12 (`record_read`) | No prompt: the page's "Always allow" is kept |
+| After deleting the connector and connecting it again from the plugin's Connectors tab, same URL, Desktop Chat, 2026-11-12 (`record_read`, `record_search`) | Approvals reset, though the sign-in was kept |
 
 ### Card renders
 
@@ -494,6 +496,7 @@ Claude Desktop was restarted after the connector was added, and read the table b
 | Connector, claude.ai Incognito chat | Yes | `mcp__Genealogy_Research__show_project` |
 | Connector, after a ToolSearch load | Yes: `show_project` is deferred on all three surfaces | `mcp__Genealogy_Viewer__show_project` |
 | Connector, with the variant plugin | Yes, from "show me the project" in Desktop Chat | `mcp__Genealogy_Research__show_project` |
+| Connector bundled in the plugin (`.mcp.json`), 2026-11-12 | Yes, in Desktop Chat and at claude.ai. It becomes an ordinary account connector (Web, Custom), and claude.ai labels the card's row "Unverified" (tooltip: "Custom · Not verified by Anthropic"). Desktop shows no badge, and a hand-added connector showed none at claude.ai on 2026-11-08, so the cause is not separated from a claude.ai change | `mcp__Genealogy_Research__show_project` |
 | Artifact (shows the page, not a card) | Yes, in Desktop Chat and in Chrome at claude.ai | — |
 
 | You see | `resources/read` lines | It means |
@@ -517,6 +520,12 @@ resource itself.
 | Connector, 2026-11-06 | `claude-code` 2.1.319-ccs, about 1.5 s before each conversation's first tool call, on all three surfaces. On 2026-11-05 a chat's calls had no such line | `io.modelcontextprotocol/ui` |
 | Connector, 2026-11-08 | `claude-code` 2.1.320-ccs in each Desktop Chat conversation, on this server and on the sign-in probe. An ordinary claude.ai chat also opened a client of its own, version not read. An Incognito chat opened none: its calls ran on a session already open | `io.modelcontextprotocol/ui`, read in Desktop Chat |
 | Artifact | `Claude` 1.0, at the page's first call | None |
+
+| Host capabilities a card is offered | |
+|---|---|
+| claude.ai and Desktop Chat, 2026-11-08 | `openLinks`, `downloadFile`, `updateModelContext` (text, image), `message` (text), `serverTools`, `serverResources`, `logging`, `sandbox` |
+| iPhone app 1.261104.19 | `openLinks`, `updateModelContext` (text, image), `message` (text, image), `serverTools`, `serverResources`, `logging`; no `downloadFile` or `sandbox` |
+| Artifact | None, and `updateModelContext` not offered |
 
 ### What the page sees
 
@@ -548,7 +557,10 @@ account's plugins synced from claude.ai. An Incognito chat is a plain chat.
 
 With the skill and no agent, an Incognito chat declined "Research the parents of …",
 saying its research agents are not available there, and answered a request for a plan
-from the main thread, with nothing saved.
+from the main thread, with nothing saved. A connector bundled in the plugin keeps the
+`mcp__Genealogy_Research__` names, so agents keep their tools: on 2026-11-12 an agent
+spawned through one at claude.ai and in Desktop Chat. In Desktop Chat an agent's row is a
+title only: it cannot be opened, and it does not name the agent.
 
 ### Fullscreen
 
@@ -637,7 +649,8 @@ rules' links need.
 ### Door refusals
 
 **Decides:** whether the door's 400, 403 and 503 stay HTTP errors or become tool errors on
-the connector path. A 401 stays HTTP, because that is what makes Claude refresh. Read on
+the connector path. A 401 stays HTTP, because that is what brings up Claude's Reconnect card
+(and makes it refresh, where a refresh token exists). Read on
 the sign-in probe with the stub card: a project path picks the refusal, and the card's
 `Door refuses` buttons send the same three.
 
@@ -668,7 +681,7 @@ holding two copies of every tool, as "Local testing" asks.
 
 | | Answer |
 |---|---|
-| A switch exists, and it holds for one conversation only | A switch exists in Desktop Chat: the message box's `+`, then Connectors, one toggle per connector. It does not hold for one conversation: the connector stays off in every new conversation until switched back on. In the conversation where it was switched off, a tool already listed was removed |
+| A switch exists, and it holds for one conversation only | A switch exists in Desktop Chat: the message box's `+`, then Connectors, one toggle per connector. It does not hold for one conversation: the connector stays off in every new conversation until switched back on. In the conversation where it was switched off, a tool already listed was removed. A connector bundled in the plugin has the same switch and stays off the same way, in Desktop Chat (2026-11-12) |
 
 ### `AskUserQuestion`
 

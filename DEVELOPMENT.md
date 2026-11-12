@@ -91,7 +91,9 @@ CI's `vitest-pg` job runs the engine suite on Postgres for every PR.
 1. Back up first, with `make malachi-backup`. A bad store or schema change is the one
    mistake a redeploy does not undo.
 2. Undo a bad deploy by redeploying the previous commit. Sign-ins survive a redeploy,
-   because the server keeps its tokens in Postgres.
+   because the server keeps its tokens in Postgres. Until the card page's URI carries
+   the build (the MCP App plan's M1), Claude may keep showing the old page on a card it
+   already drew.
 3. Deploy nothing during the demo or its rehearsals.
 
 **A test server comes later,** when an hour's breakage would hurt users the lead cannot

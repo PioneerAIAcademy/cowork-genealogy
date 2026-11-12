@@ -272,6 +272,9 @@ from it, and an unannotated tool defaults to "not read-only".
   `resources/read`. `_meta.ui.csp.resourceDomains` (the `--public-url` origin, plus
   `https://assets.claude.ai` if the page uses the host's fonts) goes on the
   `resources/read` content item, where the spec and Claude's quickstart read it.
+  Claude caches the page per connector and app (the record's **Card renders**), so M1
+  puts the build in the URI: a deploy, or a rollback, then reaches cards that already
+  read the page.
 - **Images:** on the thin server, `/img/<token>`, outside the secret, reads the signed
   `image_filename` ref through the store. The token is an HMAC, with a per-process
   key, over the project's path relative to `--root`, that ref and a 10-minute
@@ -810,12 +813,15 @@ a signed image link serves a page from MinIO. Sign-in itself needs issues #3992 
 - The edge's commented `/img/` block becomes
   `location = /img { proxy_pass $tools_upstream; }`: an exact path, with the token in the
   query.
-- A tool error reaches the card as text. A 401 stays HTTP, because that is what makes
-  Claude refresh. Whether the door's 400, 403 and 503 become tool errors on the connector
+- A tool error reaches the card as text. A 401 stays HTTP, because that is what brings
+  up Claude's Reconnect card (and makes it refresh, where a refresh token exists). Whether the door's 400, 403 and 503 become tool errors on the connector
   path is now due: the record's **Door refusals** shows our text survives a 400 and is
   replaced on a 403 and a 503.
 - Later, `show_project`'s `_meta` carries `session: {signedIn, url}` for a sign-in
-  banner.
+  banner. A sign-in link in a tool's message is not clickable in a Desktop Chat reply,
+  and Claude may caution against opening it (the beta plan's P0.2 item 10), so the
+  banner would give a clickable button. Until it has a milestone, the link in the
+  tool's message is the beta's route.
 
 ### Who edits which file first
 
@@ -836,4 +842,6 @@ a signed image link serves a page from MinIO. Sign-in itself needs issues #3992 
   - **`make e2e-view`** becomes `make viewer PROJECT=eval/e2e-view`.
   - **Windows:** `eval/Viewer.bat` and `ViewE2E.bat` switch from Electron to the
     same thing, staying on `EVAL_OWNED` in `windows-wrappers.test.ts`.
-  - **Print and GEDCOM export** go with them. The card's sandbox allows neither.
+  - **Print and GEDCOM export** go with them. The card's sandbox allows neither on its
+    own; claude.ai and Desktop Chat offer the host's `downloadFile`, and the iPhone app
+    does not (the record's host capabilities).
