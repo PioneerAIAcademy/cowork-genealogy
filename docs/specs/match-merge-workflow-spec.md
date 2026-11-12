@@ -454,14 +454,14 @@ Each addition updates the **three** places per the repo rule:
   side typically `person.sources[]`, on the **tree** side typically
   `facts[].sources[]` (and relationships). `hasSameCensus` reads them directly
   from `mob.tree.sources` (the `Mob` already holds the full document):
-  `getCensusTitles(mob)` gathers the anchor's `ref`s across `person`/`facts`/
-  `names`, resolves them against `sources[].title`, and keeps titles containing
-  `"Census"`; when the anchor references no sources (e.g. a single-record
-  candidate doc) it falls back to all of that document's source titles. Titles
-  are present on **both** sides in practice, so the explicit side-input fallback
-  is **not implemented for v1** — `hasSameCensus` degrades to "no match" (never
-  throws) when titles are absent; the side input can be added later if a provider
-  omits titles. Divergence from Java: our simplified model stores one title per
+  `getCensusSources(mob, fallbackToAll)` gathers the anchor's `ref`s across
+  `person`/`facts`/`names`, resolves them against `sources[]`, and keeps the
+  titles containing `"Census"` with their urls. Only the candidate (a
+  single-record document whose persona may reference no sources) falls back to
+  all of its document's sources; an unsourced tree person contributes none. The
+  explicit side-input fallback is **not implemented for v1** — `hasSameCensus`
+  degrades to "no match" (never throws) when titles are absent. What it compares
+  and skips: `record-read-tool-spec.md` §7. Divergence from Java: our simplified model stores one title per
   source, so we compare title arrays directly and do **not** split on
   `MobMergeUtil.TITLE_DELIMITER`. Non-English census titles remain unhandled
   (`warnings.java` TODOs this too).
@@ -536,7 +536,9 @@ under Block — corrected to match.)
 
 - **Re-run / idempotency.** Re-processing a census already merged must be a
   detected no-op, not a duplicate. `source_attachments` (already-attached
-  detection) + research-log state drive this; `hasSameCensus` is a backstop.
+  detection) + research-log state drive this. `hasSameCensus` is not a backstop
+  here: a tree census source whose url is the paired persona's ark or the
+  record's ark is skipped as this same record (`record-read-tool-spec.md` §7).
 - **Always-link → no duplicate persons.** Every census persona is linked to a
   tree person (matched, or minted by create-or-enrich); there is no unpaired
   document carry-in (§3, §4).
