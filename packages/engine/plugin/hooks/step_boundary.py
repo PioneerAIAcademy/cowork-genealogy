@@ -3,7 +3,7 @@
 A turn does ONE step. `step_allowed` decides whether a candidate agent may run
 given the steps the turn has already taken, so each plane asks the same question
 and gets the same answer. The one exception is a turn init-project opens: the
-step after it is the turn's real step (plan section H), so a bounded first
+step after it is the turn's real step (spec section H), so a bounded first
 message runs its deliverable in the turn that created the project.
 
 **This is a LIBRARY, not a registered hook** (lead, 2026-10-21). The prototype
@@ -31,8 +31,8 @@ ROUTER = "research"
 # A turn's first step fixes the group (in a turn init-project opens, the step after
 # it does); the rest of that group may follow it.
 # Every agent and skill the router can spawn is in exactly one group here, or in
-# a one-member group below -- `test_step_boundary_covers_every_agent` fails when
-# one is in none, so a new agent cannot ship without a decision about what may
+# a one-member group below -- `test_every_shipped_agent_and_skill_has_a_group`
+# (`eval/harness/tests/unit/test_step_boundary.py`) fails when one is in none, so a new agent cannot ship without a decision about what may
 # follow it in a turn.
 GROUPS: dict[str, tuple[str, ...]] = {
     "setup": ("init-project", "question-selection", "locality-guide"),
@@ -82,7 +82,7 @@ for _solo in _SOLO:
     GROUPS[_solo] = (_solo,)
 del _solo
 
-# A turn this step opens is grouped by the step AFTER it (plan section H): project
+# A turn this step opens is grouped by the step AFTER it (spec section H): project
 # creation runs inside the one-shot's turn, so a bounded ask reaches its deliverable
 # and a job its question in the turn that created the project.
 UNGROUPED_OPENER = "init-project"
@@ -114,7 +114,7 @@ WRAPUP_ORDER: tuple[str, ...] = (
 )
 
 # What "Continue with <label>?" says. The three the researcher actually sees in
-# the common flow are fixed by the plan's "What the researcher sees" table:
+# the common flow are fixed by the spec's "What the researcher sees" table:
 # plan, search and link.
 STEP_LABELS: dict[str, str] = {
     "setup": "setting up the project",
@@ -410,8 +410,7 @@ REPLY_SEARCH_MORE = "Search more."
 # The offer only the researcher can answer.
 WRAP_UP = "wrap-up"
 
-# How many replies one run may send. Replaces the alpha's
-# `auto_continue_max_steps`, which is 30 today.
+# How many replies one run may send.
 MAX_AUTO_REPLIES = 30
 
 # A research-plan turn following one of these is the ordinary first plan, not a
