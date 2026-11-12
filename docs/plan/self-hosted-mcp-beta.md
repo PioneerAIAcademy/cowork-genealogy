@@ -258,7 +258,7 @@ Desktop 4.23118 and 5.1231. Items 6, 8 and 9 run before the first invited user.
 
 **Done when:** stopping `tools` emails the lead, and yesterday's `ev=tool_call` lines survive a redeploy.
 
-**D3 Release.** `make malachi-deploy REF=<sha>` deploys one commit. Web, tools and the plugin zip come from the same commit; a demo zip may add the variant's router commit. Freeze tool schemas before warming approvals, because a change to a tool's metadata means removing and re-adding the connector. `make plugin-connector VERSION=x.y.z MARKETPLACE=<name>` builds `releases/genealogy-plugin-connector.zip`.
+**D3 Release.** `make malachi-deploy REF=<sha>` deploys one commit. Web, tools and the plugin zip come from the same commit; a demo zip may add the variant's router commit. Freeze tool schemas before warming approvals, because a change to a tool's metadata means removing and re-adding the connector. `make plugin-connector VERSION=x.y.z MARKETPLACE=<name> SERVER_URL=https://<host>/mcp` builds `releases/genealogy-plugin-connector.zip`.
 
 **D4 Onboarding page.**
 1. Install the plugin once from the Plugins page. It follows the Claude account.

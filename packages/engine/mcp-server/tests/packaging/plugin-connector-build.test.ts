@@ -125,8 +125,10 @@ describe("connector plugin build", () => {
     ["missing version", ["--marketplace", marketplace, "--server-url", serverUrl], /--version x\.y\.z/],
     ["missing marketplace", ["--version", version, "--server-url", serverUrl], /--marketplace name/],
     ["missing server URL", ["--version", version, "--marketplace", marketplace], /--server-url https/],
-  ])("refuses %s before creating output", (_label, args, reason) => {
-    const invalid = join(temp, "invalid");
+  ])("refuses %s before creating output", (label, args, reason) => {
+    // A folder of its own per case: with one shared folder, a case that wrongly
+    // built would make every later case fail its "no output" check too.
+    const invalid = join(temp, `invalid-${label.replace(/\W+/g, "-")}`);
     const result = build(["--connector", ...args, "--out", invalid]);
     expect(result.status).toBe(1);
     expect(result.stderr).toMatch(reason);
@@ -147,8 +149,8 @@ describe("connector plugin build", () => {
     ["an uppercase host", "https://Tools.Example.test/mcp"],
     ["the default port spelled out", "https://tools.example.test:443/mcp"],
     ["not a URL", "tools.example.test/mcp"],
-  ])("refuses a server URL with %s before creating output", (_label, url) => {
-    const invalid = join(temp, "invalid-url");
+  ])("refuses a server URL with %s before creating output", (label, url) => {
+    const invalid = join(temp, `invalid-url-${label.replace(/\W+/g, "-")}`);
     const result = build(["--connector", "--version", version, "--marketplace", marketplace, "--server-url", url, "--out", invalid]);
     expect(result.status).toBe(1);
     expect(result.stderr).toMatch(/--server-url https/);
