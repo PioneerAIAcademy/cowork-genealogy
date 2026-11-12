@@ -63,7 +63,7 @@ dependency of `apps/electron` — peer-depends on `electron`, which declared
   workspace, `2.0.1`, pulled only by `electron`. **Fixed 2026-11-12** (issue #4188)
   by removing the package, not by a patch: no patched `extract-zip` exists, but
   electron 42 and later depend on `@electron-internal/extract-zip` instead, so the
-  move to 44.11.1 (next entry's update) dropped it. `pnpm why -r extract-zip` prints
+  move to 44.11.1 (see the electron entry below) dropped it. `pnpm why -r extract-zip` prints
   nothing. Under Deferred from 2026-09-08 until then.
 
 - **zod 3.25.76** (HIGH GHSA-mrhx-c7xc-m3w5, fix `>=4.6.6`) — `eval/app`, a
@@ -256,8 +256,11 @@ dependency of `apps/electron` — peer-depends on `electron`, which declared
   `GHSA-h3v5-h239-pg29`. 44.x rather than 42.x because 42 lost upstream support when
   45.0.0 shipped. The same PR took `@electron/asar` 3 → 4 and
   `@electron-toolkit/eslint-config-ts` 3 → 4. From 42 on, `electron` no longer
-  downloads its binary in `postinstall`: the first `require('electron')` (for example
-  `electron-vite dev`) fetches it.
+  downloads its binary in its own `postinstall`, and electron-vite 6 reads
+  `node_modules/electron/path.txt` without triggering the download, so a fresh
+  install failed `electron-vite dev` with "Electron uninstall". `apps/electron` now
+  runs Electron's `install-electron` as its `postinstall` to restore the install-time
+  download.
 
 - **@xmldom/xmldom** (MODERATE), **browserslist** (HIGH), **fast-uri** (HIGH ×4),
   **js-yaml** (HIGH), **nanoid** (HIGH GHSA-2v37-7h3g-55p8) — root pnpm workspace,
@@ -526,7 +529,7 @@ manifest) and both extract-zip alerts close.
 | `apps/electron/package.json` | development | 12 | electron ×12 |
 | `packages/engine/mcp-server/package-lock.json` | development | 2 | tmp ×2 |
 | `apps/server/proto/worker/requirements.txt` | runtime | 20 | PyJWT ×15, mcp ×4, certifi |
-| `apps/server/proto/web/requirements.txt` | runtime | 1 | certifi |
+| `apps/server/proto/web/requirements.txt` | runtime | 1 | certifi (CRITICAL) |
 | `apps/server/sandbox/requirements.txt` | runtime | 4 | mcp ×4 |
 
 †The pnpm workspace's dev-tooling rows (the glob/minimatch eslint chain) are
