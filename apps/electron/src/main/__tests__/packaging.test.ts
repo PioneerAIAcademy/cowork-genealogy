@@ -109,6 +109,16 @@ describe('electron packaging contract (#1070)', () => {
     }
   })
 
+  it('fetches the Electron binary before electron-vite starts', () => {
+    const { scripts = {} } = readPkg(APP_ROOT)
+    expect(scripts.postinstall ?? '', 'postinstall no longer runs install-electron').toMatch(
+      /^install-electron\b/
+    )
+    expect(scripts.dev ?? '', 'dev no longer runs install-electron before electron-vite').toMatch(
+      /&&\s*install-electron\s*&&\s*electron-vite dev\b/
+    )
+  })
+
   it('declares @electron/asar rather than relying on hoisting', () => {
     // The check imports it. It resolves today only because `.npmrc` hoists an
     // electron-builder transitive — a guard against a resolution bug should not

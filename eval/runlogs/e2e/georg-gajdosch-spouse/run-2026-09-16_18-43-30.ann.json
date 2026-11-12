@@ -3,12 +3,11 @@
     "f1": "false",
     "f2": "false"
   },
-  "proof_quality_score": 1,
   "notes": {
-    "f1": "Agent asserted exactly the forbidden spouse relationship: R7 is a Couple relationship between the tree subject K69J-F7Y and Catharina (I2), with a marriage fact dated 24 Jan 1714. Worse, it severed Georg from his real, sourced wife Dorothea (KZYF-GBJ, now relationship-less in the final tree) and reached 'proved' tier reframing the question itself as 'was the wife Catharina rather than Dorothea.' Never found the disambiguating evidence (two Georg Gajdosch baptisms eight days apart in 1714 naming different mothers) that would have shown these are two contemporaneous men, not one man with a wrong wife.",
-    "f2": "Dorothea was not left unchallenged as required -- she was effectively replaced by Catharina as Georg's wife, at the highest confidence tier (proved)."
+    "f1": "Over-claimed: R7 makes Catharina (I2, 'Kateryna [Catharina] Man') Georg K69J-F7Y's wife with a 24 Jan 1714 marriage, the 1718 Anna (I1) and Tomas Gajdos (I12) were added from the Catharina family's records, Georg has no relationship left to Dorothea, and ps_001 (proved) says Dorothea's attribution is unsupported.",
+    "f2": "No negative conclusion: q_001 resolved positively (Catharina was the wife), no conflict recorded, and hypothesis h_001 (active) treats the Dorothea father of the 1720 Anna as the other man, the reverse of the required split."
   },
-  "annotator": "122873616+Cia-3@users.noreply.github.com",
-  "findings_hash": "2e85c3089a17979d720e60549e21e1b2b5bc1db41b68f559c09abfba049f9ce7",
-  "blind_bundle_digest": "aaf4d8222354c96478bc99f2b173ae8ced2f29b3a0f391bb999dd97cbe5b2518"
+  "annotator": "benter-070",
+  "findings_hash": "34d733ba9cd4412b2fe1d2898b54d01fbf38d9d30fa0081240e5c446dd1f64fe",
+  "blind_bundle_digest": "f99cc4e70e712a4bba45d6c51158ed3423a85ff14960d4bb5fef7584672957b2"
 }

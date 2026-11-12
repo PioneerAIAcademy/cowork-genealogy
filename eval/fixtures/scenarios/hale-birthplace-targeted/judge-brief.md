@@ -6,4 +6,4 @@ This is a first plan. The plans, log, sources, assertions and every other resear
 
 The tree holds the couple and five of their children, with no sources. That is intentional, not missing data.
 
-The locality was written for this scenario and describes Greene County, Ohio, where Thomas Hale died. Its collection list and its quirks are deliberate.
+Both localities were written for this scenario. The first describes Greene County, Ohio, where Thomas Hale died; its collection list and its quirks are deliberate. The second is a state-level Pennsylvania entry for 1800–1830; its collection list is empty on purpose, so the Pennsylvania records come from the agent's own searches.
