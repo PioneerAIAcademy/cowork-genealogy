@@ -7,6 +7,7 @@ import type { RelativeTerms } from "./relative-terms.js";
 import type { JurisdictionCandidate } from "../utils/marriage-jurisdictions.js";
 import type { SurnameVariantHints } from "../utils/surname-variant-hints.js";
 import type { CensusNote } from "../utils/census-note.js";
+import type { ChildrenSearchNote } from "../utils/search-advice.js";
 
 export interface FSDisplay {
   name?: string;
@@ -476,4 +477,8 @@ export interface RecordSearchToolResponse {
   // names. Advisory only; serialized BEFORE `results` and never staged. See
   // `utils/census-note.ts`.
   census?: CensusNote;
+  // On a search that names a parent and no child and is held to one collection,
+  // batch or place: the note to repeat it unheld. Advisory; before `results`,
+  // never staged. See `utils/search-advice.ts`.
+  childrenSearch?: ChildrenSearchNote;
 }

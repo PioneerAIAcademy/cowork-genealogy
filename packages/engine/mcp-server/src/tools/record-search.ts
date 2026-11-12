@@ -56,7 +56,7 @@ import {
   marriageJurisdictionCandidates,
 } from "../utils/marriage-jurisdictions.js";
 import { searchFoundNobody, surnameVariantHints } from "../utils/surname-variant-hints.js";
-import { censusNote } from "../utils/census-note.js";
+import { searchAdvice, SEARCH_ADVICE_KEYS } from "../utils/search-advice.js";
 import { rankSearchMatches, buildRelativeTermNote, PAGE_DEEPER_ADVICE } from "./rank-search-matches.js";
 import { rejectedTokenMessage } from "../auth/config.js";
 import { mapWithConcurrency, placeSearchNames } from "../utils/place-resolver.js";
@@ -1626,12 +1626,17 @@ export async function recordSearchTool(
   // bound drops first — that matters on the rows-present `subjectResolvable:
   // false` branch.
   const surnameHints = surnameVariantHints(input, out);
-  let answer = surnameHints ? withKeyBeforeResults(out, "surnameVariantHints", surnameHints) : out;
 
-  // What the census table in code holds for a census search's year and place
-  // (`utils/census-note.ts`). From the arguments alone, never staged.
-  const census = censusNote(input);
-  if (census) answer = withKeyBeforeResults(answer, "census", census);
+  // How to search next (`utils/search-advice.ts`): the note on a children search
+  // held to one source, and the census block. From the arguments alone, never
+  // staged. Placed before `surnameVariantHints`, which stays the last key ahead
+  // of `results`.
+  let answer = out;
+  const advice = searchAdvice(input as unknown as Record<string, unknown>);
+  for (const key of SEARCH_ADVICE_KEYS) {
+    if (advice[key]) answer = withKeyBeforeResults(answer, key, advice[key]);
+  }
+  if (surnameHints) answer = withKeyBeforeResults(answer, "surnameVariantHints", surnameHints);
 
   return answer;
 }

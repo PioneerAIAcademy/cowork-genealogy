@@ -22,18 +22,9 @@ tools:
   - mcp__genealogy__record_search
   - mcp__remote-devices__Genealogy_Research__record_search
   - mcp__Genealogy_Research__record_search
-  - mcp__genealogy__rank_search_matches
-  - mcp__remote-devices__Genealogy_Research__rank_search_matches
-  - mcp__Genealogy_Research__rank_search_matches
   - mcp__genealogy__record_read
   - mcp__remote-devices__Genealogy_Research__record_read
   - mcp__Genealogy_Research__record_read
-  - mcp__genealogy__same_person
-  - mcp__remote-devices__Genealogy_Research__same_person
-  - mcp__Genealogy_Research__same_person
-  - mcp__genealogy__source_attachments
-  - mcp__remote-devices__Genealogy_Research__source_attachments
-  - mcp__Genealogy_Research__source_attachments
   - mcp__genealogy__research_log_append
   - mcp__remote-devices__Genealogy_Research__research_log_append
   - mcp__Genealogy_Research__research_log_append
@@ -122,8 +113,6 @@ GPS Element 1 (Reasonably Exhaustive Research) — execution layer:
 | `probate`, `court`, `land` (and other county-court series) in a **browse-only / barely-indexed** collection (low `recordSearchablePercent`) | `record_search` **then** — | Try `record_search` first. **If it returns nil/near-nil AND the locality survey said this collection covers the place+period, do NOT log negative as absence — the record is un-indexed, not absent.** Handle it per Step 8 item 5, then hand back. This is also the pre-1911-death path: no death certificate exists, so a county estate administration brackets the death |
 | `cemetery` | `record_search` | FamilySearch indexes some cemetery records; also name `search-external-sites` as the route to FindAGrave |
 
-Additional tools: `rank_search_matches` (the primary triage tool — host-side match-ranking of a staged result set against the subject; folds in match scoring **and** the attachment check); `same_person` / `source_attachments` (fallback for a thin/unresolvable subject, or per-record checks).
-
 **This agent never runs `fulltext_search` or delegates to `search-full-text`.** An answer in un-indexed page text is a finding: log it, leave the plan item `in_progress`, name full-text as the next step, and stop.
 
 ## Steps
@@ -160,6 +149,8 @@ search back to it rather than running it yourself.
 **A census search** (the plan item's `record_type` is `census`, or the user asked for a census): send `recordType: "census"` with the census year and the place. The response's `census` block lists each census of that year and place and what its schedule recorded. State what a census schedule collected only from that block; where it is silent, state nothing about the schedule.
 
 Never state which repository or site outside FamilySearch holds a record set, which counties survive, or that it is available nowhere else, unless a tool result in this run says so; which sites hold it is `search-external-sites`' answer.
+
+**When the plan item's `rationale` says how the collection or place is indexed, or which fields to search, build that query first, exactly as it says.**
 
 **Choose a search strategy:**
 
@@ -320,8 +311,8 @@ calling a secondary-name search a genuine negative, work this order:
    secondary given name itself** changed.
 3. **Then drop the secondary filter rather than switching repositories.** Run at
    least one principal-only search (no `spouseGivenName`/`fatherSurname`/etc.)
-   with `count: 50`, then `rank_search_matches` with `checkAttachments: true`
-   over the full pool. `attachedToSubject: true` is a strong confirming signal
+   with `subjectId`; the rows come back ranked with attachment status.
+   `attachedToSubject: true` is a strong confirming signal
    here — FamilySearch's own matcher already linked it to this person — even at
    an unremarkable `matchScore`. This is the inverse of Step 4's "attached →
    deprioritize", which is for *discovering new* evidence; when the goal is
@@ -350,8 +341,7 @@ Those two arguments do all of Step 4 for you:
   `subjectId`, those same rows come back **scored and ordered best first**
   (Step 4) — one list, not two.
 - `subjectId` makes the tool **rank the candidates for you** against that subject
-  and return them under `ranked` (see Step 4). You do not call
-  `rank_search_matches` yourself in the normal flow.
+  and return them under `ranked` (see Step 4).
 
 Leave `count` alone. It defaults to 50 when you pass `subjectId` — a deep pool is
 worth fetching precisely because every row comes back scored and ordered — and to
@@ -395,39 +385,19 @@ read `ranked`, don't re-rank.** The tool scored every staged candidate against
 the subject and checked attachments as part of the search. If you find yourself
 about to hand-score a stub list, check whether you passed `subjectId`.
 
-**Two cases still need the standalone `rank_search_matches` tool:**
-
-1. **Re-ranking a logged search later** — pass the finalized
-   `results/<log_id>.json` as `stagedResultsRef`, e.g. to score an old pool
-   against a subject you have since enriched.
-2. **Ranking against a different subject** than the one you searched for —
-   testing whether a candidate pool matches a *sibling* or a hypothesised parent.
-
-```
-rank_search_matches({
-  projectPath,
-  stagedResultsRef,        // staged.resultsRef, or results/<log_id>.json
-  subjectId,               // any persons[].id in tree.gedcomx.json
-  checkAttachments: true
-})
-```
-
 **If `rankingError` came back on the search**, ranking failed but the search did
-not: `results` is intact and unranked. Re-run the standalone tool with the
-`staged.resultsRef` you already hold; if it fails again, surface it and triage
-by hand for that one search.
+not: `results` is intact and unranked. Re-run the search once; if it fails
+again, surface it and triage by hand for that one search.
 
-Whichever path produced it, the ranking scores **every** staged candidate against
-the subject with FamilySearch's own matcher (the engine `same_person` uses),
+The ranking scores **every** staged candidate against
+the subject with FamilySearch's own matcher,
 re-orders by real match quality — **not** FamilySearch's search rank, which is
 unreliable — and annotates **every scored candidate** in `results[]`, returned
 best first. There is one row list: the rows you already know, now carrying
 `matchRank`, `searchRank` (their original FamilySearch position — shows how far
 the ranker missed), `matchScore` (0–1),
 `candidateFactCount`, and `attachedToSubject` / `attachedToOther`. `ranked`
-carries counts and diagnostics only. The bulk GedcomX stays host-side, and a
-per-result `same_person` loop plus a separate `source_attachments` call are both
-unnecessary.
+carries counts and diagnostics only. The bulk GedcomX stays host-side.
 
 Read `matchScore` before `searchRank`: a row FamilySearch ranked 30th can score
 highest. A row the ranker could not score keeps its search position, has no
@@ -523,7 +493,7 @@ candidates; you still confirm the top ones:
   disqualifier: an `absent` record is still a candidate, and this is never on
   its own a reason to stop searching or escalate elsewhere. `matchScore` never
   looks at relationships, so an `absent` record can outrank one that names him;
-  `rank_search_matches` says so with `relativeTermNote`.
+  the response says so with `relativeTermNote`.
 - **`batchNumber` on a result opens the whole extraction.** Send it as the only
   search filter, keeping `projectPath` so results stage and log; add `subjectId`
   only on a page you want ranked, since ranking scores every candidate upstream.
@@ -570,6 +540,7 @@ candidates; you still confirm the top ones:
   Non-federal **state censuses** follow their own schedules and often carry
   fields the federal census of that decade lacks — read the collection
   description rather than assuming the federal pattern.
+- **`childrenSearch` on a response** means the search names a parent and no child and is held to one collection, batch or place. Send the unheld search it names before reporting the couple's children.
 - **Follow a returned `jurisdictionHints`.** When a `record_search` response
   carries a non-empty `jurisdictionHints`, the next 1–2 retries in this same
   plan-item search sequence must set `marriagePlace` or `residencePlace` to
@@ -592,8 +563,8 @@ candidates; you still confirm the top ones:
   answers the question asked — a 1870-census query returning an 1850 result is a
   near-miss, not a finding; log it `partial` (collection-mismatch) per Step 5.
 
-**When nothing in `matches[]` is a confident match** — or `rank_search_matches`
-returns `subjectResolvable: false` — do **not** conclude the record is absent:
+**When no row is a confident match** — or `ranked.subjectResolvable` is
+`false` — do **not** conclude the record is absent:
 
 - The pool caps at 50, and re-ranking only re-orders what was fetched — it can't
   rescue a target FamilySearch buries past rank 50. So **page deeper**
@@ -613,12 +584,6 @@ returns `subjectResolvable: false` — do **not** conclude the record is absent:
   - *The subject is fine; the pool holds no match.* That is a **real negative**
     for this query. Log it as such and page deeper or narrow — do not re-triage
     the same 50 stubs by hand.
-
-  Do **not** fall back to hand-scoring with `same_person` against the same tree
-  subject: that is the identical starved document the ranker just failed on.
-  `same_person` is a fallback only when you have a *richer* subject document than
-  the tree person — e.g. a confirmed record for this person, compared
-  record-to-record.
 
 **Deduplicate.** Multiple index entries may point to one underlying record; check
 identifiers before treating similar matches as independent.

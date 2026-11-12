@@ -71,11 +71,19 @@ function searchedPlace(input: CensusNoteInput): string | undefined {
   );
 }
 
-/** The forms cover the place, or the place is a bare country they lie in. */
+/** The forms cover the place; or the place is a bare country they lie in; or the
+ *  place leaves its country off ("Dodge County, Wisconsin") and a form without
+ *  its own country is a whole-segment suffix of it. */
 function formsCover(forms: readonly string[], place: string): boolean {
   if (placeMatches(forms, place)) return true;
   const want = segments(place);
-  return want.length === 1 && forms.some((f) => segments(f).pop() === want[0]);
+  if (want.length === 1 && forms.some((f) => segments(f).pop() === want[0])) return true;
+  return forms.some((f) => {
+    const withoutCountry = segments(f).slice(0, -1);
+    if (withoutCountry.length === 0 || withoutCountry.length > want.length) return false;
+    const tail = want.slice(want.length - withoutCountry.length);
+    return withoutCountry.every((seg, i) => seg === tail[i]);
+  });
 }
 
 function recorded(row: CensusRow): string | undefined {

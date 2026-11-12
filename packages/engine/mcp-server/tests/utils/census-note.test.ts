@@ -123,6 +123,22 @@ describe("censusNote", () => {
     expect(note?.schedules.map((s) => s.collectionId)).toContain("1401638");
   });
 
+  it("reads a place written without its country", () => {
+    const note = censusNote({
+      recordType: "census",
+      residenceYearFrom: 1860,
+      residenceYearTo: 1860,
+      residencePlace: "Dodge County, Wisconsin",
+    });
+    expect(note?.schedules.map((s) => s.collectionId)).toContain("1473181");
+    // A state named alone is still a state, and a county is not mistaken for one.
+    const bare = censusNote({ recordType: "census", residenceYearFrom: 1860, residenceYearTo: 1860, residencePlace: "Wisconsin" });
+    expect(bare?.schedules.map((s) => s.collectionId)).toContain("1473181");
+    expect(
+      censusNote({ recordType: "census", residenceYearFrom: 1860, residenceYearTo: 1860, residencePlace: "Dodge County" }),
+    ).toBeUndefined();
+  });
+
   it("gives the census a pinned collection belongs to, with no year or place", () => {
     const note = censusNote({ collectionId: "1401638", surname: "Flynn" } as never);
     expect(note?.schedules).toEqual([expect.objectContaining({ year: 1850, census: "United States" })]);
