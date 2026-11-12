@@ -1071,6 +1071,45 @@ plan writes are. Promoting the warning to a refusal needs the ADR-0011 limit-2
 inspection over real windowed plans, which do not exist yet; the first come from
 question-selection's eval run.
 
+### `original` needs stored evidence
+
+**Rule.** `research_append` refuses a call whose end state leaves a source
+`source_classification: "original"` without stored evidence that the record itself
+was examined: a non-empty `transcription`, a non-empty `image_filename`, or a
+FamilySearch document-image ARK (`3:1:` or `3:2:`, the one spelling in
+`utils/ark.ts`) in `url`. It fires on a source that becomes `original` in the call,
+and on an `original` that had evidence and loses it. A `1:1` ARK is an index entry,
+someone else's transcription, so it never qualifies, and there is no free-text
+escape. Lead ruling 2026-09-02.
+
+**Who it binds.** Every writer, judged on the documents and the call's own ops
+(ADR-0011). One batch shape is exempt: at least one assertion append, every one
+`record_role: "absent"`. That is `extraction_append`'s absence browse, which may
+write `original` for a page-by-page image browse with no stored image
+(genealogist ruling 2026-09-30). A caller cannot produce it, because
+`researchAppendFromCaller` refuses assertion appends.
+
+**What it does not count, and why.** `image_ark` is not evidence: it postdates the
+ruling (it was added 2026-11-05) and the extractor stamps it on every index read whose GedcomX names
+a page, while `waitingPages` reads it without a transcription as a page not yet
+read. An `original` that never had evidence, written before the rule, stays
+writable, so old projects are not locked.
+
+**Narrowings of the 2026-09-02 text, chosen on the facts of 2026-11-12.**
+- The upload half (store uploads and set `image_filename` so they can qualify) is
+  not built: the 2026-09-30 document-path ruling makes every document `derivative`
+  or `authored` ("Nothing on this path is `original`",
+  `research-append-tool-spec.md`), so storage to qualify an upload would enable
+  what the later ruling forbids.
+- `3:2:` counts as well as `3:1:`, because `ark.ts` defines both as document images.
+- The absence browse is exempt, as above.
+
+**Cost, measured.** The ruling accepted demoting about 199 of 232 `original`
+sources. Since 2026-10-16 the extractor writes `derivative` for every index read;
+across the 31 e2e runs from 2026-10-17 to 2026-11-12 there are 0 `original`
+sources in 152, so the gate refuses nothing in that corpus. It binds the upgrade
+the extractor's own comment names: a later, evidenced edit after reading the page.
+
 ### A completed plan item needs a log entry naming it
 
 `research_append` refuses a `plan_items` op that leaves the item at
