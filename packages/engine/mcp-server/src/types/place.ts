@@ -85,6 +85,9 @@ export interface PlaceResult {
   // Links
   familysearchUrl: string;
   wikipediaUrl?: string;       // FamilySearch's curated WIKIPEDIA_LINK attribute
+
+  // The place's other name the exact query matched (see SimplifiedPlaceResult)
+  matchedName?: { name: string; lang: string };
 }
 
 // LLM-facing place shape: `place_search` / `place_search_all` always and only
@@ -101,17 +104,20 @@ export interface SimplifiedPlaceResult {
   longitude?: number;
   familysearchUrl: string;
   wikipediaUrl?: string;
+  // On an exact hit only: the name of this place the query matched, when it is
+  // not the result's own (Arsdorf for "Ueschdref" carries
+  // { name: "Ueschdref", lang: "lb" }), taken from the place's name list.
+  matchedName?: { name: string; lang: string };
 }
 
 export interface PlaceSearchToolResponse {
   results: SimplifiedPlaceResult[];
-  // Present only when the results came from the fuzzy "sounds like" fallback
-  // because the exact query did not match the place itself; absent on an exact hit, keeping
-  // that response byte-identical to the pre-fallback shape. Top-level rather
-  // than per-result because every result in one response comes from one
-  // query. Must stay OPTIONAL: mcp-fixture-shape.test.ts fails a new required
-  // field across the eval/fixtures/mcp files.
-  matchType?: "fuzzy";
+  // "exact" when the exact-name query produced the results, "fuzzy" when they
+  // came from the "sounds like" fallback. Every response from both tools
+  // carries it. Top-level rather than per-result because every result in one
+  // response comes from one query. Must stay OPTIONAL: mcp-fixture-shape.test.ts
+  // fails a new required field across the eval/fixtures/mcp files.
+  matchType?: "exact" | "fuzzy";
   // `place_search` only: the standard_place the writers store for the query
   // text on a fact that cites no record, or null, and why. Optional for the
   // same reason.

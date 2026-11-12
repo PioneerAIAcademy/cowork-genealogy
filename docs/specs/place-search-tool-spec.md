@@ -63,9 +63,11 @@ it lives only on this `ws-ui` attributes endpoint.
 
 The single entry point any tool should call when it needs FamilySearch place
 data or IDs for a named place. Returns a `PlaceSearchOutcome` —
-`{ results: PlaceResult[], matchType?: "fuzzy" }` — where `results` still
-carries IDs for in-server use and `matchType` is present only when the results
-came from the fuzzy fallback (step 1 below).
+`{ results: PlaceResult[], matchType: "exact" | "fuzzy", listings }` — where
+`results` still carries IDs for in-server use, `matchType` is `"fuzzy"` when the
+results came from the fuzzy fallback (step 1 below) and `"exact"` otherwise, and
+`listings` holds the Place_resource listings step 5 fetched, by Primary ID, for
+`place_search_all` to reuse.
 
 | Param | Type | Required | Description |
 |-------|------|----------|-------------|
@@ -88,7 +90,7 @@ Steps:
    thrown search error still propagates.
    - **Zero exact entries** (an empty *success*). Fallback entries replace the
      empty set and mark the outcome `matchType: "fuzzy"`; a fallback that also
-     returns nothing yields `[]` with no flag.
+     returns nothing yields `[]`, `matchType: "exact"`.
    - **The exact query matched only a qualifier.** The `placeName` is
      comma-qualified, the first exact entry's `name` equals one of the segments
      after the leaf, and no exact entry's `name` equals the leaf (names compared
@@ -98,7 +100,7 @@ Steps:
      comma segment equal to the **first qualifier of `placeName`** (segment 1,
      the same segment step 2 derives; an explicit `contextName` is not consulted
      here). A whole segment, not a substring: "India" does not match "Indiana".
-     Otherwise the exact entries are kept, unflagged — so a leaf that is not a
+     Otherwise the exact entries are kept, `matchType: "exact"` — so a leaf that is not a
      place (`"Hospital, Cincinnati, Ohio"`, whose fuzzy query returns a Hospital
      in South Africa; `"Hospital, India"`, whose fuzzy hits are in Indiana) keeps
      its exact answer.
@@ -146,9 +148,30 @@ Steps:
    and take the `WIKIPEDIA_LINK` attribute's `url` as `wikipediaUrl` (see
    [Wikipedia link source](#wikipedia-link-source)). Graceful: a non-OK status,
    network error, or absent attribute yields no `wikipediaUrl`, not an error.
-5. **Cache** — memoize the whole `PlaceSearchOutcome` (results **and** match
-   type, so a cache hit returns `matchType: "fuzzy"` again rather than dropping
-   it) in a module-level `Map` keyed by the
+5. **Matched name** — on an exact outcome only, say which of a result's names
+   the query matched when it is not the result's own. "Ueschdref, Luxembourg"
+   returns Arsdorf, whose Luxembourgish name is Ueschdref; with nothing saying
+   so, an agent read that exact hit as a guess and built its guide for Eschdorf.
+   For each result with a Primary ID whose `name` differs from the leaf (both
+   case- and accent-folded with `foldPlaceName`), fetch that Primary ID's
+   [Place_resource](#place_resource) listing once (`getPlaceListing`) and set
+   `matchedName: { name, lang }` from the first name in the listing's **bare
+   entry** (`id` equal to the Primary ID, no `display`) that folds equal to the
+   leaf. A result named after the leaf costs nothing: `"Paris"` makes no extra
+   request. A fuzzy hit is by definition not one of the place's names, so a
+   fuzzy outcome is never named. The name comes from this listing because
+   nothing else carries it: the search response gives each entry only its
+   `display` name and an English `names` list (checked 2026-11-10), and the
+   entry-level `lang` is the place's locale, not the matched name's language —
+   `"Pressburg"`, a German name, comes back `sk`/`hu`, and `"Paris"` comes back
+   `fr`/`af`. Only the bare entry lists every name: Arsdorf's (10355380)
+   carries `{ lang: "lb", value: "Ueschdref" }`, its representation entries
+   only "Arsdorf". Enrichment: a listing fetch that fails leaves the result
+   unnamed and is not kept in `listings` (a spent FamilySearch budget still
+   throws).
+6. **Cache** — memoize the whole `PlaceSearchOutcome` (results, match type and
+   matched names, so a cache hit returns them again rather than dropping
+   them) in a module-level `Map` keyed by the
    normalized `(placeName, contextName)` pair (trimmed + lowercased). The
    resolver's own memo in `place-resolver.ts` additionally keys on the year, so
    a dated and an undated search of one place do not share an entry. No TTL;
@@ -169,7 +192,7 @@ Steps:
 
 `placeSearchTool({ placeName, contextName? })` runs `placeSearch`, projects each
 `PlaceResult` to `SimplifiedPlaceResult` via `simplifyPlaceResult`, and returns
-`{ results: SimplifiedPlaceResult[], matchType?: "fuzzy", verdict }`.
+`{ results: SimplifiedPlaceResult[], matchType: "exact" | "fuzzy", verdict }`.
 
 ### Input
 
@@ -184,9 +207,14 @@ Steps:
 
 ### Output
 
-`{ results: SimplifiedPlaceResult[], matchType?: "fuzzy", verdict }`. The **top-level**
-`matchType` is present only when the results came from the fuzzy fallback; on
-an exact hit the field is absent. The `verdict` comes from `resolveStandardPlace`
+`{ results: SimplifiedPlaceResult[], matchType: "exact" | "fuzzy", verdict }`. The **top-level**
+`matchType` is on every response: `"fuzzy"` when the results came from the fuzzy
+fallback, `"exact"` otherwise. `"exact"` means only that the exact-name query
+produced these results, not that the place named was found: the exact query can
+match a qualifier instead (`"Xqzwvillage, Germany"` returns Germany, `"exact"`),
+so the tool description tells the caller that when no result's `standardPlace`
+starts with the name sent and none carries a `matchedName`, the search matched
+another part of the text, not the place. The `verdict` comes from `resolveStandardPlace`
 and is independent of the fallback: for `"Sierkopas, Germany"` the results are the
 fuzzy Sierokopaß while the verdict names the context, Germany. It is top-level rather than per-result because
 every result in one response comes from one query. It must stay **optional** — the
@@ -234,6 +262,7 @@ is optional in the type, for the same fixture reason as `matchType`;
 | `longitude` | number? | Geographic longitude. |
 | `familysearchUrl` | string | Link to the place on the FamilySearch website. |
 | `wikipediaUrl` | string? | Link to the Wikipedia article (when enrichment succeeds). |
+| `matchedName` | `{ name, lang }`? | Exact outcomes only: the place's other name the query matched, with its language, when it is not the result's own name (Arsdorf for `"Ueschdref"` carries `{ "name": "Ueschdref", "lang": "lb" }`). Step 5 of `placeSearch`. |
 
 No `placeId`, `placeRepId`, `score`, `name`, `parentPlaceRepId`, or `wikipedia`
 object is present — those exist only on the internal `PlaceResult`.
@@ -250,7 +279,8 @@ object is present — those exist only on the internal `PlaceResult`.
       "familysearchUrl": "https://www.familysearch.org/en/research/places/?text=Paris&focusedId=3988097",
       "wikipediaUrl": "https://en.wikipedia.org/wiki/Paris,_Idaho"
     }
-  ]
+  ],
+  "matchType": "exact"
 }
 ```
 
@@ -268,9 +298,13 @@ object is present — those exist only on the internal `PlaceResult`.
     "includes the standardized place name (standardPlace), place type, date " +
     "range, coordinates, a FamilySearch link, and (when available) a " +
     "Wikipedia link. " +
-    'If the response carries matchType: "fuzzy", the place you named had no ' +
-    "exact match and these are sounds-alike corrections. Confirm one " +
-    "before using it. " +
+    'matchType is "exact" when the exact-name query produced these results, or ' +
+    '"fuzzy" when the place you named had no exact match and these are ' +
+    "sounds-alike corrections; confirm a fuzzy one before using it. A result " +
+    "with matchedName matched your text through that other name of the place " +
+    "(e.g. its name in another language): an exact match, not a guess. If no " +
+    "result's standardPlace starts with the name you sent and none carries a " +
+    "matchedName, the search matched another part of your text, not the place. " +
     "Use place_search_all instead when you need every historical jurisdiction " +
     "a place has belonged to over time.",
   inputSchema: {
@@ -416,6 +450,20 @@ Accept: application/json
 Response: `places[0]` with the same display/coord/temporal fields plus
 `jurisdiction.resourceId` (parent rep ID). Accepts **rep IDs only**.
 
+### Place_resource
+
+```
+GET https://api.familysearch.org/platform/places/{primaryId}
+Accept: application/json
+```
+
+Response: `places[]` — the bare place entry (`id` equal to the Primary ID, no
+`display`), whose `names[]` lists every name of the place as `{ lang, value }`,
+then one entry per representation (`place.resourceId` equal to the Primary ID)
+with its own `display` and names. `getPlaceListing` (`utils/place-api.ts`)
+returns both: the representations and the bare entry's names with `lang`.
+Step 5 reads the names; `place_search_all` reads the representations.
+
 ---
 
 ## Wikipedia link API Reference
@@ -442,11 +490,12 @@ ignore it for `wikipediaUrl`.)
 
 | Condition | Behavior |
 |-----------|----------|
-| Exact search returns no results (empty body or empty entries) | Single-token leaf: retry once with the [fuzzy query](#fuzzy-query-the-fallback); hits are returned with `matchType: "fuzzy"`. Multi-word leaf, or the fuzzy query also empty: return `{ results: [], verdict }` with no flag |
-| Exact search matched only a qualifier (first entry's name equals a segment after the leaf, not the leaf) | Single-token leaf: retry once with the fuzzy query; use its hits, flagged `matchType: "fuzzy"`, only when one has a whole `fullName` segment equal to the first qualifier. Otherwise, or for a multi-word leaf, or when the fuzzy query throws, return the exact hits with no flag |
+| Exact search returns no results (empty body or empty entries) | Single-token leaf: retry once with the [fuzzy query](#fuzzy-query-the-fallback); hits are returned with `matchType: "fuzzy"`. Multi-word leaf, or the fuzzy query also empty: return `{ results: [], matchType: "exact", verdict }` |
+| Exact search matched only a qualifier (first entry's name equals a segment after the leaf, not the leaf) | Single-token leaf: retry once with the fuzzy query; use its hits, flagged `matchType: "fuzzy"`, only when one has a whole `fullName` segment equal to the first qualifier. Otherwise, or for a multi-word leaf, or when the fuzzy query throws, return the exact hits, `matchType: "exact"` |
 | A description lookup 404s | Fall back to the search-entry data; do not drop the place |
 | FamilySearch search/description returns other non-OK status | Throw `"FamilySearch API error: {status} {statusText}"` |
 | Wikipedia API fails (any status or network error) | Omit Wikipedia fields (graceful degradation) |
+| The matched-name listing fetch fails (step 5) | Omit `matchedName` for that place's results; a spent FamilySearch budget still throws |
 
 ---
 
@@ -454,9 +503,10 @@ ignore it for `wikipediaUrl`.)
 
 | File | Contents |
 |------|----------|
-| `packages/engine/mcp-server/src/types/place.ts` | `SimplifiedPlaceResult`, `PlaceResult` (internal), `PlaceSearchToolResponse = { results: SimplifiedPlaceResult[], matchType?: "fuzzy", verdict?: { standardPlace, reason } }`, and the FS/Wikipedia response types. |
+| `packages/engine/mcp-server/src/types/place.ts` | `SimplifiedPlaceResult`, `PlaceResult` (internal), `PlaceSearchToolResponse = { results: SimplifiedPlaceResult[], matchType?: "exact" \| "fuzzy", verdict?: { standardPlace, reason } }` (`matchType` optional in the type for the fixture reason above, present on every response), and the FS/Wikipedia response types. |
 | `packages/engine/mcp-server/src/utils/place-verdict.ts` | `placeAnswer`, the writers' rule the `verdict` reports. |
-| `packages/engine/mcp-server/src/tools/place-search.ts` | Internal `placeSearch` + module cache, `getPlaceRepIds`, `getPlaceWikipediaUrl` (reads the `WIKIPEDIA_LINK` attribute), `simplifyPlaceResult`, `placeSearchTool` + `placeSearchToolSchema`, `placeSearchAllTool` + `placeSearchAllToolSchema`. Plus the reusable helpers `searchPlace`, `getPlaceById`, `getPlaceByPrimaryId`, `getPlaceCandidateNames`, `extractPrimaryId`, `toPlaceResult`. |
+| `packages/engine/mcp-server/src/tools/place-search.ts` | Internal `placeSearch` + module cache, `simplifyPlaceResult`, `placeSearchTool` + `placeSearchToolSchema`, `placeSearchAllTool` + `placeSearchAllToolSchema`, `toPlaceResult`. Re-exports the `utils/place-api.ts` fetchers below. |
+| `packages/engine/mcp-server/src/utils/place-api.ts` | The Places fetchers: `searchPlace`, `getPlaceById`, `getPlaceByPrimaryId`, `getPlaceListing` (representations and the bare entry's names with `lang`), `getPlaceReps`, `getPlaceRepIds`, `getPlaceWikipediaUrl` (reads the `WIKIPEDIA_LINK` attribute), `getPlaceCandidateNames`, `extractPrimaryId`. |
 | `packages/engine/mcp-server/src/tool-schemas.ts`, `src/index.ts`, `manifest.json` | Registration for both tools. |
 | `packages/engine/mcp-server/tests/tools/place-search.test.ts` | Unit + integration coverage. |
 | `packages/engine/mcp-server/dev/try-place-search.ts`, `dev/try-place-search-all.ts` | Live smoke scripts. |
@@ -469,14 +519,16 @@ ignore it for `wikipediaUrl`.)
 cd packages/engine/mcp-server && npm run build && npm test
 
 # Live smoke (no auth):
-npx tsx dev/try-place-search.ts Paris Idaho     # Paris in Idaho — no matchType key
+npx tsx dev/try-place-search.ts Paris Idaho     # Paris in Idaho — matchType "exact", no matchedName
+npx tsx dev/try-place-search.ts Ueschdref Luxembourg  # Arsdorf, matchType "exact", matchedName { Ueschdref, lb }
+npx tsx dev/try-place-search.ts Eschdref Luxembourg   # matchType "fuzzy", no matchedName
 npx tsx dev/try-place-search.ts Paris France    # Paris in France
 npx tsx dev/try-place-search.ts Paris           # all Paris matches, unfiltered
 npx tsx dev/try-place-search.ts Sierkopas Germany  # fuzzy fallback: Sierokopaß, Neidenburg present, matchType "fuzzy"
 npx tsx dev/try-place-search.ts Helvesieck Germany # fuzzy fallback: Helvesiek, Rotenburg, Lower Saxony, matchType "fuzzy" (one-edit misspelling)
 npx tsx dev/try-place-search.ts Brixtol            # fuzzy + no context: capped at 10 results, returns in seconds
 npx tsx dev/try-place-search.ts "Sierkopas, Germany"          # qualifier trigger: Sierokopaß first, matchType "fuzzy"
-npx tsx dev/try-place-search.ts "Hospital, Cincinnati, Ohio"  # qualifier trigger, nothing in context: Cincinnati, no matchType
+npx tsx dev/try-place-search.ts "Hospital, Cincinnati, Ohio"  # qualifier trigger, nothing in context: Cincinnati, matchType "exact"
 ```
 
 Confirm no result object contains `placeId`, `placeRepId`, `score`, `name`, or
