@@ -1,14 +1,13 @@
 {
   "per_finding": {
-    "f1": "true",
+    "f1": "partial",
     "f2": "partial"
   },
-  "proof_quality_score": 2,
   "notes": {
-    "f1": "Catharina and Anna 1718 are in the tree but under a separate Georg stub (I1), never linked to K69J-F7Y; Dorothea's couple link is untouched. The subject as Anna's father appears only as a possible claim in the proof summary, not in the tree. The judge graded f1 false as a rejected candidate written into the tree; I disagree, because I1, I2 and I3 are a separate family with no edge to K69J-F7Y and R1 (Georg and Dorothea) is unchanged.",
-    "f2": "Regraded from true to partial after review on PR #4472, with the judge's f2 label already seen in that review. ps_001 separates two Georgs, but h_001 (subject is Dorothea's Georg) and h_002 (subject is Catharina's Georg) both stay active, the claim that the subject fathered Anna stays at possible, and Dorothea is called neither refuted nor confirmed. The negative conclusion f2 asks for is not reached."
+    "f1": "The subject K69J-F7Y keeps Dorothea and Joannes, and nothing links Catharina or the 1718 Anna to him; the two Georgs are deliberately left unmerged. But a separate Georg (I1), Catharina (I2), Anna (I3) and their relationships R7-R9 were written into the tree from the 1718 Anna entry, which the finding lists among the rejected records.",
+    "f2": "Found the evidence for the right answer (log_026: Joannes and Martin eight days apart, two Georgs in Lidecko) but stopped short of the required conclusion: both hypotheses left active, Dorothea described as neither confirmed nor refuted, and the 1718 Anna not assigned to the other Georg."
   },
-  "annotator": "EdmondOware",
-  "findings_hash": "2e85c3089a17979d720e60549e21e1b2b5bc1db41b68f559c09abfba049f9ce7",
-  "blind_bundle_digest": "b94997b64a95038fe8c0413464add0bbbcd7d0d1121b1b17eb1a7e0c6e10c592"
+  "annotator": "benter-070",
+  "findings_hash": "34d733ba9cd4412b2fe1d2898b54d01fbf38d9d30fa0081240e5c446dd1f64fe",
+  "blind_bundle_digest": "a8cb0ca17d7bf8e0024d01663681cf13b2e442b15558294bbea65269ab5bf6d0"
 }
