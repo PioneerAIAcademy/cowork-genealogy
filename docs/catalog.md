@@ -126,7 +126,7 @@ them (CLAUDE.md, "External service dependencies").
 
 The `image_transcribe` tool OCRs page scans host-side via OpenRouter
 (default model `google/gemini-3.7-flash`). It needs an
-OpenRouter API key, entered in the extension's install dialog or saved in
+OpenRouter API key, entered on the extension's Configure page in Claude Desktop or saved in
 `~/.familysearch-mcp/config.json` (`openRouterApiKey`); if the key is missing
 or rejected, the error directs the user to one of those two places (never a
 tool call). The e2e harness and the
