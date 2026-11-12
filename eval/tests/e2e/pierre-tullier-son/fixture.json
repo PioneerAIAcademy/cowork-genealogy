@@ -1,10 +1,10 @@
 {
   "id": "pierre-tullier-son",
-  "name": "Pierre Albert Tullier — additional son Pierre Jacques Dominique (b. 1796)",
+  "name": "Pierre Albert Tullier — additional son Pierre Jacques Dominique (b. 1799)",
   "genre": "record-hint",
   "source_pid": "GPX7-28P",
   "captured": "2026-07-24",
-  "researcher_question": "Did Pierre Albert Tullier and his wife Constance Dorothé Leys have a son, Pierre Jacques Dominique, born 1796, in addition to their five children recorded from 1805 onward?",
+  "researcher_question": "Did Pierre Albert Tullier and his wife Constance Dorothé Leys have a son, Pierre Jacques Dominique, born about 1799, in addition to the children recorded to them in Bambecque from 1801 onward?",
   "tags": {
     "question_type": "children",
     "era": "1790s",
@@ -15,9 +15,10 @@
     "judge": "claude-haiku-4-5-20251001"
   },
   "difficulty": "hard",
-  "notes": "Record-hint fixture (filtered-list-samples.csv row 6, flag adds_son, confidence 3). RESOLVED (issue #856): FALSE MATCH — the 1825 marriage hint does not establish a 1796 son of this couple (birth predates their 1800 marriage; their documented children run 1801-1816; parents named only as bare 'Pierre'/'Constance' in the hint vs full 'Pierre Albert'/'Constance Dorothé' on their own children's records). expected-findings.json is a polarity:avoid guard + a required documented-negative-conclusion finding. See README 'Notes for reviewers'.",
+  "notes": "Record-hint fixture (filtered-list-samples.csv row 6, flag adds_son, confidence 3). Re-resolved (issue #4445; first resolved FALSE MATCH in issue #856): TRUE MATCH, corrected birth year. The 1825 Bambecque marriage (hint persona ark:/61903/1:1:8NJR-PD3Z is the groom's FATHER) is of the couple's son Pierre Jacques Dominique, born 2 Nov 1799 at Houtkerque (ark:/61903/1:1:DPJ5-4QW2), not 1796: the index's 1796 is the bride's year, the act gives the groom aged 25 and born at Houtkerque 10 Brumaire an VIII, and his 1877 death index gives 1798-1799. Only one Pierre Tuilier x Constance Ley couple is in the Nord index, and they married at Bambecque 12 Mar 1800 (parish) and 24 Sep 1800 (civil). expected-findings.json is one required positive finding. Image readings used were not licensed by the two-indexed-entries check; the call stands on the index. See README 'Notes for reviewers'.",
   "hint": {
     "persona_ark": "ark:/61903/1:1:8NJR-PD3Z",
-    "identity": "different"
-  }
+    "identity": "same"
+  },
+  "image_basis": true
 }

@@ -1,10 +1,10 @@
 {
   "per_finding": {
-    "f1": "false",
-    "f2": "false"
+    "f1": "partial"
   },
   "notes": {
-    "f1": "The expected behavior was for the agent to reject the candidate or explicitly document the individual as a rejected hypothesis. Instead, the agent created a new person (I1), gathered evidence supporting that person's relationship, never recorded a rejection, and appeared to be working toward attaching the person before the run timed out. Although it never actually created the ParentChild relationship, the overall behavior was consistent with accepting the hint rather than rejecting it. Because this fixture is designed to verify that the agent avoids a false match, the run should be evaluated based on its research direction, not simply on the fact that the attachment was never completed.",
-    "f2": "The fixture expects the agent to produce a clear, documented negative conclusion. However, the run generated no proof summary and did not include any written statement rejecting the hint. Instead, the available research notes point in the opposite direction, indicating that the agent was building a case in support of the proposed relationship rather than concluding it should be rejected."
-  }
+    "f1": "Tree carries the son as I1 with the correct birth (1 Nov 1799, Houtkerque), but no ParentChild edge to Pierre Albert Tullier or Constance Dorothé Leys. person_evidence links the 1799 act's parents to the couple as probable; no proof summary written and q_001 left open. Right person and birth, relationship not encoded in the tree."
+  },
+  "findings_hash": "5172428ed4a359431f406a75fce4e952d0dc5257c244c71e9ff2307ec2f889fa",
+  "blind_bundle_digest": "b94ea9ce675891e22c4bbf169aea470e9d6bfc9a287eb3b2336c3b5dc9ae5bc4"
 }
