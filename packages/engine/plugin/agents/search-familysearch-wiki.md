@@ -79,9 +79,9 @@ question from your training knowledge — the wiki provides current, sourced
 guidance that you must retrieve. Even if you believe you know the answer, call
 the tool and synthesize only from what it returns.
 
-1. Call the `wiki_search` MCP tool, passing the research question as the `query`
-   parameter. Phrase it as a natural-language question (e.g. "How do I find
-   Italian birth records?").
+1. Call the `wiki_search` MCP tool with `includeText: true`, passing the research
+   question as the `query` parameter. Phrase it as a natural-language question
+   (e.g. "How do I find Italian birth records?").
 2. The tool returns `{ query, results, ... }`. Each entry in `results` has
    `page_title`, `section_heading`, `chunk_text`, and `source_url`, ranked by
    relevance.

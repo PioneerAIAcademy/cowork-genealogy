@@ -201,7 +201,7 @@ FamilySearch wiki tools; `wikipedia_search` is the separate, general Wikipedia
 tool:
 
 ```
-wiki_search({ query: "German immigration Pennsylvania 1840s" })  // FamilySearch wiki
+wiki_search({ query: "German immigration Pennsylvania 1840s", includeText: true })  // FamilySearch wiki
 wiki_read({ url: "<specific FamilySearch wiki page URL>" })       // FamilySearch wiki
 wikipedia_search({ query: "History of Schuylkill County Pennsylvania" })  // Wikipedia
 place_search({ placeName: "Schuylkill County, Pennsylvania" })
