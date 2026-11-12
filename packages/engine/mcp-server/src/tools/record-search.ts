@@ -1627,12 +1627,12 @@ export async function recordSearchTool(
   // false` branch.
   const surnameHints = surnameVariantHints(input, out);
 
-  // How to search next (`utils/search-advice.ts`): the note on a children search
-  // held to one source, and the census block. From the arguments alone, never
-  // staged. Placed before `surnameVariantHints`, which stays the last key ahead
-  // of `results`.
+  // How to search next (`utils/search-advice.ts`): the patronymic note on a nil,
+  // the note on a children search held to one source, and the census block.
+  // From the arguments and counts alone, never staged. Placed before
+  // `surnameVariantHints`, which stays the last key ahead of `results`.
   let answer = out;
-  const advice = searchAdvice(input as unknown as Record<string, unknown>);
+  const advice = searchAdvice(input as unknown as Record<string, unknown>, out);
   for (const key of SEARCH_ADVICE_KEYS) {
     if (advice[key]) answer = withKeyBeforeResults(answer, key, advice[key]);
   }

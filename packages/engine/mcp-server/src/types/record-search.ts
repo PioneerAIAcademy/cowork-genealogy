@@ -7,7 +7,7 @@ import type { RelativeTerms } from "./relative-terms.js";
 import type { JurisdictionCandidate } from "../utils/marriage-jurisdictions.js";
 import type { SurnameVariantHints } from "../utils/surname-variant-hints.js";
 import type { CensusNote } from "../utils/census-note.js";
-import type { ChildrenSearchNote } from "../utils/search-advice.js";
+import type { ChildrenSearchNote, PatronymicSearchNote } from "../utils/search-advice.js";
 
 export interface FSDisplay {
   name?: string;
@@ -481,4 +481,7 @@ export interface RecordSearchToolResponse {
   // batch or place: the note to repeat it unheld. Advisory; before `results`,
   // never staged. See `utils/search-advice.ts`.
   childrenSearch?: ChildrenSearchNote;
+  // On a surname search that found nobody in a country whose records index
+  // people under patronymics: the search to send next. Same placement.
+  patronymicSearch?: PatronymicSearchNote;
 }

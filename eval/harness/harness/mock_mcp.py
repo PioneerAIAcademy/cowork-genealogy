@@ -512,9 +512,10 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
 SURNAME_VARIANT_HINTS_KEY = "surnameVariantHints"
 _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
 
-# What record_search adds to an answer to say how to search next: `childrenSearch`
-# and `census`. Computed by the compiled `searchAdvice` from the call's own
-# arguments, so no fixture carries a copy.
+# What record_search adds to an answer to say how to search next:
+# `patronymicSearch`, `childrenSearch` and `census`. Computed by the compiled
+# `searchAdvice` from the call's own arguments and the answer's counts, so no
+# fixture carries a copy.
 _SEARCH_ADVICE_JS = _MCP_BUILD / "utils" / "search-advice.js"
 
 _UNKNOWN_ARGS_JS = _MCP_BUILD / "utils" / "unknown-args.js"
@@ -703,7 +704,7 @@ def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> di
         return None
 
 
-def _search_advice(args: dict[str, Any]) -> list[tuple[str, Any]]:
+def _search_advice(args: dict[str, Any], response: dict[str, Any]) -> list[tuple[str, Any]]:
     """Production's `searchAdvice` for a `record_search` call, as (key, value)
     pairs in the order production serializes them before `results`. Empty when
     nothing applies, the build predates it, or node fails (with a warning: a
@@ -714,12 +715,15 @@ def _search_advice(args: dict[str, Any]) -> list[tuple[str, Any]]:
         f"import {{ searchAdvice, SEARCH_ADVICE_KEYS }} from '{_node_module_url(_SEARCH_ADVICE_JS)}';"
         " import { readFileSync } from 'node:fs';"
         " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-        " const advice = searchAdvice(input);"
+        " const advice = searchAdvice(input.args, input.counts);"
         " process.stdout.write(JSON.stringify("
         " SEARCH_ADVICE_KEYS.filter((k) => advice[k]).map((k) => [k, advice[k]])));"
     )
     try:
-        proc = _run_node_eval(script, json.dumps(args), timeout=NODE_EVAL_TIMEOUT_DEFAULT, store=False)
+        counts = {"totalMatches": response.get("totalMatches"), "ranked": response.get("ranked")}
+        proc = _run_node_eval(
+            script, json.dumps({"args": args, "counts": counts}), timeout=NODE_EVAL_TIMEOUT_DEFAULT, store=False
+        )
         if proc.returncode != 0:
             raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
         return [(k, v) for k, v in json.loads(proc.stdout.strip())]
@@ -2069,7 +2073,7 @@ def create_mock_server(
 
             # The search advice, as production adds it: each key before `results`.
             if _name == "record_search" and isinstance(response, dict) and "error" not in response:
-                for _advice_key, _advice in _search_advice(dict(args)):
+                for _advice_key, _advice in _search_advice(dict(args), response):
                     response = _place_before_results({**response, _advice_key: _advice}, _advice_key)
 
             # Production serializes surnameVariantHints immediately before

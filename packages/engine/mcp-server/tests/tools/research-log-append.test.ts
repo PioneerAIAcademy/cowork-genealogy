@@ -2086,6 +2086,65 @@ describe("research_log_append — nil-escalation note (#2735)", () => {
     expect(r.escalationDue).toContain("census plan item pli_002");
   });
 
+  describe("planRationale, on the first nil for a plan item", () => {
+    const RATIONALE = "The 1850 census places Patrick in a household.";
+
+    it("quotes the plan item's rationale and says to search what it names first", async () => {
+      await write(project([]));
+      const r: any = await logNil();
+      expect(r.ok).toBe(true);
+      expect(r.planRationale).toContain("first search for plan item pli_001 to find nothing");
+      expect(r.planRationale).toContain(`"${RATIONALE}"`);
+      expect(r.planRationale).toContain("Before any other retry");
+      expect(r.escalationDue).toBeUndefined();
+    });
+
+    it("fires for any record type, not only a census", async () => {
+      await write(project([], { recordType: "probate" }));
+      expect(((await logNil()) as any).planRationale).toContain(RATIONALE);
+    });
+
+    it("fires once for a batch whose nils are the item's first", async () => {
+      await write(project([]));
+      const r: any = await researchLogAppend({ projectPath: dir, ops: [nilOp("Flynn"), nilOp("Flinn")] });
+      expect(r.ok).toBe(true);
+      expect(r.planRationale.match(/first search for plan item/g)).toHaveLength(1);
+    });
+
+    it("stays silent once the plan item already has a nil", async () => {
+      await write(project([nil(1)]));
+      expect(((await logNil()) as any).planRationale).toBeUndefined();
+    });
+
+    it("stays silent when the plan item has already found something", async () => {
+      await write(project([nil(1, { outcome: "positive", results_examined: 1 })]));
+      expect(((await logNil()) as any).planRationale).toBeUndefined();
+    });
+
+    it("stays silent for a search that had results it left unexamined", async () => {
+      await write(project([]));
+      const r: any = await researchLogAppend({ projectPath: dir, ...nilOp(), resultsAvailable: 450 });
+      expect(r.ok).toBe(true);
+      expect(r.planRationale).toBeUndefined();
+    });
+
+    it("stays silent when the rationale is blank", async () => {
+      const research: any = project([]);
+      research.plans[0].items[0].rationale = "   ";
+      await write(research);
+      const r: any = await logNil();
+      expect(r.ok).toBe(true);
+      expect(r.planRationale).toBeUndefined();
+    });
+
+    it("stays silent when the search serves no plan item", async () => {
+      await write(project([]));
+      const adhoc: any = await researchLogAppend({ projectPath: dir, ...nilOp(), planItemId: null });
+      expect(adhoc.ok).toBe(true);
+      expect(adhoc.planRationale).toBeUndefined();
+    });
+  });
+
   it("stays silent at the second nil", async () => {
     await write(project([nil(1)]));
     const r: any = await logNil();

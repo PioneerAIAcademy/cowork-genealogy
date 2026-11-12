@@ -408,7 +408,9 @@ candidates; you still confirm the top ones:
 
 - **Logical cross-check every strong match.** Role in the record (a 5-year-old
   cannot be Head of Household), age/birth year vs. the expected range, place
-  consistency. Flag any impossibility as `needs-review` regardless of score —
+  consistency. An indexed role is checked against age even where the schedule
+  could not have stated it: a child indexed as head of household is
+  `needs-review`, never explained away as the indexer's inference. Flag any impossibility as `needs-review` regardless of score —
   score is one input, reason is the arbiter. Write the cross-check result for
   the top match — role against age, birth-year gap to the subject, place — into
   the log `notes` before you triage: a gap over two years or an impossible role
@@ -540,6 +542,7 @@ candidates; you still confirm the top ones:
   Non-federal **state censuses** follow their own schedules and often carry
   fields the federal census of that decade lacks — read the collection
   description rather than assuming the federal pattern.
+- **`patronymicSearch` on a response:** send the search it names next, before any other retry.
 - **`childrenSearch` on a response** means the search names a parent and no child and is held to one collection, batch or place. Send the unheld search it names before reporting the couple's children.
 - **Follow a returned `jurisdictionHints`.** When a `record_search` response
   carries a non-empty `jurisdictionHints`, the next 1–2 retries in this same
@@ -663,7 +666,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 
 **This section's levers (including name-spelling/phonetic variants) apply to genuine nil results only.** A collection mismatch is a different failure mode with a narrower remedy — see Step 5's Collection-mismatch note. Do not apply this section's spelling-variant escalation to a mismatch.
 
-1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`.
+1. **Log the nil result** via `research_log_append` with `outcome: "negative"` and the exact parameters used. Omit `stagedResultsRef`. When its response carries `planRationale`, search what that rationale names before any other retry.
 2. **Iterate through search strategy levers** before declaring negative. Read the “Search strategy levers” reference at the end of this file. Try at least 3 lever variations for important plan items. **Log each retry via `research_log_append` — either its own call immediately after the retry completes, or grouped as an `ops[]` array in one `research_log_append` call — but flush every few retries rather than holding the whole ladder for one call at the end.** A batch still unsent when a run aborts loses every retry inside it; log incrementally enough that an abort mid-ladder still leaves a trail.
    **Wildcards are a sanctioned lever here, after the explicit variants.** Once you
    have tried the spellings you can name, `surname: "Fl*n"` or `givenName: "Eli?abeth"`
