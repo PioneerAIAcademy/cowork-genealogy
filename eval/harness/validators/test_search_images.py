@@ -242,8 +242,7 @@ def test_bisect_before_transcribe(tool_calls, test):
     outside = []
     for _, c in reads:
         image_id = (c.get("args") or {}).get("imageId")
-        parts = _id_parts(image_id)
-        if not _in_ranges(image_id, ranges) or not parts or parts[0] != low_parts[0] or parts[1] < low_parts[1]:
+        if not _in_ranges(image_id, ranges) or not _id_parts(image_id) or image_id < low:
             outside.append(image_id)
     assert not outside, f"read pages before the bracket's lowImageId {low} or outside {group}'s imageIdRanges: {outside}"
 

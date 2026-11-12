@@ -74,6 +74,17 @@ def test_passes_on_a_read_in_the_second_of_two_ranges():
     check_bisect(_calls("008230326_00090", ranges=ranges), _TEST)
 
 
+def test_passes_on_a_read_of_a_later_film_in_the_same_group():
+    ranges = [["008230326_00001", "008230326_00370"], ["008230327_00001", "008230327_00050"]]
+    check_bisect(_calls("008230327_00010", ranges=ranges, bisect=_bisect("008230326_00300")), _TEST)
+
+
+def test_fails_on_a_read_of_an_earlier_film_in_the_same_group():
+    ranges = [["008230325_00001", "008230325_00050"], ["008230326_00001", "008230326_00370"]]
+    with pytest.raises(AssertionError, match="008230325_00010"):
+        check_bisect(_calls("008230325_00010", ranges=ranges), _TEST)
+
+
 def test_fails_on_a_read_before_the_low_image():
     with pytest.raises(AssertionError, match="lowImageId"):
         check_bisect(_calls("008230326_00074"), _TEST)
