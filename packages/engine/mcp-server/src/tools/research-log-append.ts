@@ -58,7 +58,11 @@ import {
   type StoredCollectionUrls,
 } from "../utils/external-collections-store.js";
 import { isHttpUrl, isNonNegativeInteger } from "../utils/search-helpers.js";
-import { HEAD_ONLY_US_CENSUS_YEARS } from "../data/census-table.js";
+import {
+  BRITISH_RELATIONSHIP_COLUMN_FROM,
+  HEAD_ONLY_US_CENSUS_YEARS,
+  US_RELATIONSHIP_COLUMN_FROM,
+} from "../data/census-table.js";
 
 const EXTERNAL_SITE_VALUES = VALIDATOR_ENUMS.external_site;
 const OUTCOME_VALUES = VALIDATOR_ENUMS.log_outcome;
@@ -487,12 +491,12 @@ const CENSUS_AFTER = new RegExp(
 function relationshipColumnFrom(qualifier: string): number | null {
   const q = qualifier.toLowerCase();
   if (/\b(?:england|english|wales|welsh|scotland|scottish|britain|british|uk|united\s+kingdom)\b/.test(q)) {
-    return 1851;
+    return BRITISH_RELATIONSHIP_COLUMN_FROM;
   }
   if (/\b(?:ireland|irish|canada|canadian|denmark|danish|norway|norwegian|sweden|swedish|germany|german|prussia|prussian)\b/.test(q)) {
     return Number.NaN; // named, non-US, undocumented here -> skip
   }
-  return 1880; // unqualified or explicitly US/federal
+  return US_RELATIONSHIP_COLUMN_FROM; // unqualified or explicitly US/federal
 }
 
 /** An explicitly US mention: never re-jurisdictioned by a staged payload. */

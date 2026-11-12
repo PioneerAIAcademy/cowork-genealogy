@@ -56,6 +56,7 @@ import {
   marriageJurisdictionCandidates,
 } from "../utils/marriage-jurisdictions.js";
 import { searchFoundNobody, surnameVariantHints } from "../utils/surname-variant-hints.js";
+import { censusNote } from "../utils/census-note.js";
 import { rankSearchMatches, buildRelativeTermNote, PAGE_DEEPER_ADVICE } from "./rank-search-matches.js";
 import { rejectedTokenMessage } from "../auth/config.js";
 import { mapWithConcurrency, placeSearchNames } from "../utils/place-resolver.js";
@@ -1625,11 +1626,14 @@ export async function recordSearchTool(
   // bound drops first — that matters on the rows-present `subjectResolvable:
   // false` branch.
   const surnameHints = surnameVariantHints(input, out);
-  if (surnameHints) {
-    return withKeyBeforeResults(out, "surnameVariantHints", surnameHints);
-  }
+  let answer = surnameHints ? withKeyBeforeResults(out, "surnameVariantHints", surnameHints) : out;
 
-  return out;
+  // What the census table in code holds for a census search's year and place
+  // (`utils/census-note.ts`). From the arguments alone, never staged.
+  const census = censusNote(input);
+  if (census) answer = withKeyBeforeResults(answer, "census", census);
+
+  return answer;
 }
 
 /** `out` with `key` inserted immediately before `results`, every other key in

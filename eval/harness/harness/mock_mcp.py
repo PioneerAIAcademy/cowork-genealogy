@@ -512,6 +512,12 @@ NIL_SEARCH_NEEDS_LOG_NOTE = (
 SURNAME_VARIANT_HINTS_KEY = "surnameVariantHints"
 _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
 
+# `census` on a record_search answer: what the engine's census table holds for
+# the year and place a census search names. Computed by the compiled `censusNote`
+# from the call's own arguments, so no fixture carries a copy.
+CENSUS_NOTE_KEY = "census"
+_CENSUS_NOTE_JS = _MCP_BUILD / "utils" / "census-note.js"
+
 _UNKNOWN_ARGS_JS = _MCP_BUILD / "utils" / "unknown-args.js"
 
 _VOLUME_SEARCH_JS = _MCP_BUILD / "tools" / "volume-search.js"
@@ -695,6 +701,28 @@ def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> di
         return json.loads(proc.stdout.strip()).get("hint")
     except Exception as exc:  # noqa: BLE001 — advisory, never fails the call
         warnings.warn(f"mock record_search could not compute surnameVariantHints ({exc})", stacklevel=2)
+        return None
+
+
+def _census_note(args: dict[str, Any]) -> dict[str, Any] | None:
+    """Production's `census` note for a `record_search` call, or None when it has
+    none, the build predates it, or node fails (with a warning: a harness fault
+    must not look like the model ignoring the note)."""
+    if not _compiled_module_present(_CENSUS_NOTE_JS, "record_search responses will carry no census note"):
+        return None
+    script = (
+        f"import {{ censusNote }} from '{_node_module_url(_CENSUS_NOTE_JS)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        " process.stdout.write(JSON.stringify({ note: censusNote(input) ?? null }));"
+    )
+    try:
+        proc = _run_node_eval(script, json.dumps(args), timeout=NODE_EVAL_TIMEOUT_DEFAULT, store=False)
+        if proc.returncode != 0:
+            raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
+        return json.loads(proc.stdout.strip()).get("note")
+    except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as exc:
+        warnings.warn(f"mock record_search could not compute the census note ({exc})", stacklevel=2)
         return None
 
 
@@ -2042,6 +2070,12 @@ def create_mock_server(
             # the order matches.
             if isinstance(response, dict) and SURNAME_VARIANT_HINTS_KEY in response:
                 response = _place_before_results(response, SURNAME_VARIANT_HINTS_KEY)
+
+            # Then `census`, as production does: from the arguments alone.
+            if _name == "record_search" and isinstance(response, dict) and "error" not in response:
+                _census = _census_note(dict(args))
+                if _census:
+                    response = _place_before_results({**response, CENSUS_NOTE_KEY: _census}, CENSUS_NOTE_KEY)
 
             entry["response"] = response
             entry["response_fixture"] = source_name

@@ -52,16 +52,10 @@ tools:
   - mcp__genealogy__tree_query
   - mcp__remote-devices__Genealogy_Research__tree_query
   - mcp__Genealogy_Research__tree_query
-  - mcp__genealogy__wiki_search
-  - mcp__remote-devices__Genealogy_Research__wiki_search
-  - mcp__Genealogy_Research__wiki_search
-  - mcp__genealogy__wiki_read
-  - mcp__remote-devices__Genealogy_Research__wiki_read
-  - mcp__Genealogy_Research__wiki_read
   - mcp__genealogy__catalog_search
   - mcp__remote-devices__Genealogy_Research__catalog_search
   - mcp__Genealogy_Research__catalog_search
-model: claude-sonnet-5-5
+model: claude-haiku-5-5
 effort: low
 ---
 
@@ -163,13 +157,9 @@ search back to it rather than running it yourself.
 
 ### 2. Construct the search query
 
-**Pre-work — issue this before constructing the query. Do not drop the call.**
+**A census search** (the plan item's `record_type` is `census`, or the user asked for a census): send `recordType: "census"` with the census year and the place. The response's `census` block lists each census of that year and place and what its schedule recorded. State what a census schedule collected only from that block; where it is silent, state nothing about the schedule.
 
-- **The search is a census search** (the plan item's `record_type` is `census`, or the user asked for a census): `wiki_read({ url: "https://www.familysearch.org/en/wiki/{Country}_Census" })` for the jurisdiction's country — `United_States_Census`, `England_Census`, `Norway_Census`, `Luxembourg_Census`. Take the country from the jurisdiction string when it names one; when it names only a county and state, resolve the country from those and say which you did. Never state what a census schedule collected from memory.
-- **If that page does not settle which fields the schedule collected for the year you are searching**, follow its own per-year link (`United_States_Census_{year}`) before asserting or denying a field.
-- A constructed URL that 404s, or a page that comes back generic, is a gap to record and report — not a prompt to fill from memory.
-- **A state census** (in the US, a year not ending in 0) uses the state's page: `wiki_read({ url: "https://www.familysearch.org/en/wiki/{State}_Census" })`.
-- Never state which repository or site outside FamilySearch holds a record set, which counties survive, or that it is available nowhere else, unless a tool result in this run says so; which sites hold it is `search-external-sites`' answer.
+Never state which repository or site outside FamilySearch holds a record set, which counties survive, or that it is available nowhere else, unless a tool result in this run says so; which sites hold it is `search-external-sites`' answer.
 
 **Choose a search strategy:**
 
@@ -313,13 +303,6 @@ For wildcard rules and fuzzy matching behavior, read the “Name search mechanic
 - Initials (J. Smith)
 - Maiden names for married women
 - **Nicknames unrelated to the given name itself** — a call name drawn from an interest, trait, or birth order rather than a diminutive of the recorded name, or one adopted specifically to distinguish same-named relatives (four Sarahs in one family, each known by a different nickname). These will not surface from spelling or phonetic variants; they come from family sources (a will, a letter, an obituary) or from the researcher's own knowledge of the family.
-
-For the historical reasoning behind why one person's name appears in several
-spellings within one record set — spelling wasn't standardized before
-widespread literacy, and names were written phonetically, filtered through the
-recorder's accent — fetch FamilySearch's own explanation on demand rather than
-reconstructing it here: `wiki_search({ query: "guessing a name variation" })`,
-then `wiki_read` the page it returns.
 
 **Secondary names need variants too — the given name, not just the surname.** The
 variant strategy applies to `spouseGivenName`, `fatherSurname`, `motherGivenName`
@@ -570,8 +553,8 @@ candidates; you still confirm the top ones:
   sentence you are already building, not as a fact appended once the
   candidate reasoning is settled.
   **When a match turns on a field — or before calling one absent — check what
-  that year's schedule actually collected, from the census page fetched in
-  Step 2. Three rules hold whatever the page says:**
+  that year's schedule recorded, in the response's `census` block. Three rules
+  hold:**
   - **State what the schedule recorded; label everything else inferred, and name
     what it was inferred from** (surname, age, listing order). This is not only
     about relationships: any fact the schedule did not collect that year —
@@ -741,7 +724,7 @@ For each person of the subject's name you concluded is not the subject (Step 4),
 
    **No plan item → no escalation**, however many variants came back nil; an ad-hoc search ends when you log it (Step 1).
 
-   **No FamilySearch collection for the record set → hand back after one logged search, planned or ad-hoc.** When the census wiki page shows no FamilySearch collection for the place and year, run and log (Step 5) one `record_search` for them; if it returns no census record, report the year as "not on FamilySearch" and return `Hand-back: search-external-sites — <record set, place, years>; FamilySearch holds no collection for these years`, with `userPresent` as above. A nil on a collection FamilySearch holds is not this case.
+   **A census year FamilySearch does not index → hand back after one logged search, planned or ad-hoc.** When the response's `census.schedules` holds no census for a year the search is for, log that search (Step 5); if it returned no census record of that year, report the year as "not on FamilySearch" and return `Hand-back: search-external-sites — <record set, place, years>; FamilySearch holds no collection for these years`, with `userPresent` as above. A nil on a census that `census.schedules` lists is not this case.
 
    ❌ WRONG: Ending your return with "FamilySearch is exhausted — would you like me to check Ancestry?" Offering the escalation as a question is not escalating.
    ✅ CORRECT: Log the nils, then return "Hand-back: search-external-sites — FamilySearch variants exhausted; <person attributes, plan item, userPresent>".
