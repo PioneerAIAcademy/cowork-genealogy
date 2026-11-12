@@ -461,9 +461,9 @@ Each addition updates the **three** places per the repo rule:
   all of its document's sources; an unsourced tree person contributes none. The
   explicit side-input fallback is **not implemented for v1** — `hasSameCensus`
   degrades to "no match" (never throws) when titles are absent. What it compares
-  and skips: `record-read-tool-spec.md` §7. Divergence from Java: our simplified model stores one title per
-  source, so we compare title arrays directly and do **not** split on
-  `MobMergeUtil.TITLE_DELIMITER`. Non-English census titles remain unhandled
+  and skips: `record-read-tool-spec.md` §7. Divergence from Java: our simplified
+  model stores one title per source, so we compare per source and do **not**
+  split on `MobMergeUtil.TITLE_DELIMITER`. Non-English census titles remain unhandled
   (`warnings.java` TODOs this too).
 - **`hasEventsOutsideLifespan` helper (defined, not ported — we lack the FS
   source).** A separate helper from the lifespan>120 check; returns `NEAR`/`FAR`
