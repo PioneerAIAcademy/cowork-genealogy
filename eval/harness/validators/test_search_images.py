@@ -189,11 +189,30 @@ def _calls_named(tool_calls, name: str) -> list[tuple[int, dict]]:
     return [(i, c) for i, c in enumerate(tool_calls or []) if (c.get("tool") or "").endswith(name)]
 
 
+_IMAGE_ID = re.compile(r"(\d{9})_(\d{5})")
+
+
+def _id_parts(image_id) -> tuple[str, int] | None:
+    match = _IMAGE_ID.fullmatch(image_id) if isinstance(image_id, str) else None
+    return (match.group(1), int(match.group(2))) if match else None
+
+
+def _in_ranges(image_id, ranges) -> bool:
+    parts = _id_parts(image_id)
+    for pair in ranges:
+        if not (isinstance(pair, (list, tuple)) and len(pair) == 2):
+            continue
+        first, last = _id_parts(pair[0]), _id_parts(pair[1])
+        if parts and first and last and parts[0] == first[0] == last[0] and first[1] <= parts[1] <= last[1]:
+            return True
+    return False
+
+
 def test_bisect_before_transcribe(tool_calls, test):
     """Tag-gated: one year in a split group is found with volume_bisect, not by
     probing pages. The first volume_bisect call precedes every image_transcribe,
-    and no page before the bracket's lowPosition is read (positions index the
-    group's image_search list from 0)."""
+    and every page read lies inside one of the group's `imageIdRanges` and at or
+    after the bracket's `lowImageId`."""
     if "bisect-navigation" not in test.get("tags", []):
         pytest.skip("not a bisect-navigation test")
     bisects = _calls_named(tool_calls, "volume_bisect")
@@ -204,23 +223,29 @@ def test_bisect_before_transcribe(tool_calls, test):
         f"image_transcribe of {reads[0][1].get('args', {}).get('imageId')} came before the first volume_bisect"
     )
     group = (bisects[0][1].get("args") or {}).get("imageGroupNumber")
-    listing: list[str] = []
+    ranges: list = []
     for _, c in _calls_named(tool_calls, "image_search"):
         if (c.get("args") or {}).get("imageGroupNumber") == group:
-            listing = list((c.get("response") or {}).get("imageIds") or [])
-    assert listing, f"expected an image_search listing of {group}, which the bracket positions index"
+            ranges = list((c.get("response") or {}).get("imageIdRanges") or [])
+    assert ranges, f"expected an image_search listing of {group} with non-empty imageIdRanges"
     bracket = next(
-        (c.get("response") or {}).get("bracket")
-        for _, c in reversed(bisects)
-        if isinstance((c.get("response") or {}).get("bracket"), dict)
+        (
+            (c.get("response") or {}).get("bracket")
+            for _, c in reversed(bisects)
+            if isinstance((c.get("response") or {}).get("bracket"), dict)
+        ),
+        {},
     )
-    low = bracket["lowPosition"]
+    low = bracket.get("lowImageId")
+    low_parts = _id_parts(low)
+    assert low_parts, f"volume_bisect's bracket carries no usable lowImageId: {low!r}"
     outside = []
     for _, c in reads:
         image_id = (c.get("args") or {}).get("imageId")
-        if image_id not in listing or listing.index(image_id) < low:
+        parts = _id_parts(image_id)
+        if not _in_ranges(image_id, ranges) or not parts or parts[0] != low_parts[0] or parts[1] < low_parts[1]:
             outside.append(image_id)
-    assert not outside, f"read pages before the bracket (lowPosition {low}) or outside {group}: {outside}"
+    assert not outside, f"read pages before the bracket's lowImageId {low} or outside {group}'s imageIdRanges: {outside}"
 
 
 def test_item_route_before_transcribe(tool_calls, test):
