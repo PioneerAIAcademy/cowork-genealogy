@@ -872,7 +872,8 @@ There **is** an orchestrator, and it is a skill:
    through the table; a change to routing behaviour that edits only the table
    can be reversed by that section.
 3. **One loop, in the router.** It runs every job the same way: one step per turn
-   (below), decisions logged to the audit-trail fields. **Only the router reads
+   where a host replies (below; in Cowork a "keep going" runs the steps in one
+   turn), decisions logged to the audit-trail fields. **Only the router reads
    `--autonomous`,** for a trigger and two rules. Its own flag branch went with
    S2, and six others (`search-external-sites`, `question-selection`, `search-records`,
    `research-plan`, `agents/proof-conclusion.md`, `agents/gps-mentor.md`) were
@@ -2388,8 +2389,11 @@ nobody will) and `search-hints` (a user who asked for a hint review will give ve
 mid-run nobody will). Each has eval fixtures on each side. The mode difference survives in
 the router, which sets that field from the flag: on an autonomous e2e run the router hands
 search-external-sites and search-hints `userPresent: no` where a hosted "Keep going." run
-leaves them at `yes` (search-hints gets no field, which means yes), so an autonomous e2e
-run never reaches their `yes` side.
+leaves them at `yes` (search-hints gets no field, which means yes). So an autonomous e2e
+run is meant never to reach their `yes` side, but no check makes the router send the field
+to those two (the research unit suite checks it only on person-evidence's spawn): one
+committed step-mode run spawned search-external-sites without it, and its capture item
+stayed waiting (`docs/specs/e2e-test-spec.md` §5).
 
 Removing a capability is the bug. Two were found on 2026-08-31, both in skill bodies,
 both green in CI for months. The first is fixed; the second stands:
@@ -2446,9 +2450,10 @@ CI covered you (§9.4).
 things it removes: a pause, or a capability (§9.5). Note that no agent reads
 `--autonomous`: key an agent's rule on the `userPresent` field of its delegation, not on a
 string in the message. The router sets that field per agent: in its spawn-fields paragraph
-(§"What to do"), in §"One step per turn" and, for search-hints, in its routing-table row;
-a new agent that needs it also needs its own line in the router. Removing the pause is the
-established shape and is fine: decide instead of asking, and log the decision.
+(§"What to do"), in §"One step per turn", in §"Wrap it up" and, for search-hints, in its
+routing-table row; a new agent that needs it also needs its own line in the router.
+Removing the pause is the established shape and is fine: decide instead of asking, and
+log the decision.
 Removing a capability makes the benchmark stop measuring production, silently, and
 is almost never what you want. If a headless run genuinely cannot perform the step,
 supply its input as a fixture rather than deleting the step, and if you cannot do

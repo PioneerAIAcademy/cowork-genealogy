@@ -86,7 +86,7 @@ entry says so.
     `eval/harness/e2e/orchestrator.py`), and that flag gives search-external-sites and
     search-hints `userPresent: no` in e2e. The orchestrator writes no delegation, so it
     cannot pass `userPresent: no` itself, and production routing is measured by the
-    single-ask panel (`make e2e-single-ask`), not e2e. The ruling rests on the routing
+    single-ask panel (`make e2e-single-ask`), not e2e. The ruling also rests on the routing
     failures recorded from alpha feedback: all but one began from a single ask, not an
     e2e-shaped question. The two other options lost: renaming the flag keeps it under
     another name, and opening e2e on production routing would mix routing misses into

@@ -672,11 +672,11 @@ After that, under the default `--step-mode job`, the harness answers for the
 researcher, one reply per turn, with what `next_auto_reply` returns ("Keep going.",
 or "Wrap it up." in place of a further round of planning); `--wrap-up-after` swaps
 in "Wrap it up." after a named step. A `job` turn that ends cleanly on a question
-for the researcher is answered once, with the fixture's own `researcher_question`,
-unless it ran proof-conclusion or the project is completed. The run ends when the
-host sends no reply (sections A2 and F of `docs/specs/research-step-mode-spec.md`
-list when) or one of §6's stop signals ends it. `--step-mode step` sends no
-replies.
+for the researcher, while research is left (it did not run proof-conclusion and the
+project is not completed), is answered with the fixture's own `researcher_question`,
+at most once per run. The run ends when the host sends no reply (sections A2 and F
+of `docs/specs/research-step-mode-spec.md` list when) or one of §6's stop signals
+ends it. `--step-mode step` sends no replies.
 
 **Only the router reads the flag.** No other plugin body contains `--autonomous`:
 `grep -rln -- '--autonomous' packages/engine/plugin/` lists only the router. These
@@ -696,8 +696,14 @@ rules in `research/SKILL.md` branch on it; find them with
   "`userPresent: no` ONLY on an `--autonomous` run". `@plugin:person-evidence` gets
   it on a "Keep going." or "Wrap it up." turn too: "A wrap-up turn and an autonomous
   run pass it too" (§"One step per turn"), and its spawn fields name the same, "turn
-  and in an autonomous run". So an e2e run neither waits on an external-site capture
-  nobody will upload nor asks for hint verdicts nobody will give.
+  and in an autonomous run". The rules are there so an e2e run neither waits on an
+  external-site capture nobody will upload nor asks for hint verdicts nobody will
+  give. No check makes the router send the field to search-external-sites or
+  search-hints (the research unit suite checks it only on person-evidence's spawn),
+  and an agent reads a missing field as `yes`:
+  `eval/runlogs/e2e/clark-parents/run-2026-11-04_10-52-03.json` spawned
+  search-external-sites without it, and that plan item stayed `in_progress` waiting
+  for a capture.
 
 Those three agents read the `userPresent` field, not the string. The e2e
 orchestrator writes no delegation, so it cannot pass `userPresent: no` itself: the
@@ -705,10 +711,11 @@ flag is how an e2e run gets it. That is why the flag stays as e2e's opening (lea
 2026-11-10); decision 22 of the step-mode spec records that ruling, which rescinded
 the earlier plan to retire the flag. Removing it would also change what every
 committed run log was produced under. The harness adds no test-mode system prompt.
-Where e2e still departs from production (the flag-gated rules above, the tool
-blocks in §6.1, and the hosted alpha's own system prompt, §16.5), those sections
-say so. How a patron's message, which carries no flag, is routed is measured by
-the single-ask panel (§16, `make e2e-single-ask`), not here.
+Where e2e still departs from production (among them the flag-gated rules above,
+the tool blocks in §6.1, the hosted completion halt §6 does not emulate, and the
+hosted alpha's own system prompt, §16.5), those sections say so. How a patron's
+message, which carries no flag, is routed is measured by the single-ask panel
+(§16, `make e2e-single-ask`), not here.
 
 `/research` is specified separately. For the contract that matters
 here:
