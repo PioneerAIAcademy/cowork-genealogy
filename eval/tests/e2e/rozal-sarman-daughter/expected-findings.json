@@ -4,13 +4,18 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Rozál Sármán (PID P873-TWP) and her husband István Juhász had a daughter Viktoria Juhász, baptized about 1892 in Kiszombor, Torontál, in addition to their documented daughter Ágnes (b. 1894). The FamilySearch hint that suggests this is a false match: the baptismal record it draws on names the child's mother as Rozál Száz ('Rozal Szaz'), not Rozál Sármán. Száz and Sármán are unrelated Hungarian surnames with no handwriting- or transcription-error path between them, so the mother in the record is a different woman. The manuscript entry (entry 48) also gives a Kiszombor address (house 269) and godparents (Kóbori Lajos, Szabó Mária) belonging to a different household. István Juhász was a common name in 19th-century Torontál, so the matching given name and husband name — the two fields that triggered the hint algorithmically — belong to a different couple: a Száz Rozál married to her own István Juhász. Pass = the agent's final tree.gedcomx.json adds no daughter Viktoria to Rozál Sármán and contains no stub person for such a child. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
+      "description": "The agent must NOT assert that Rozál Sármán (PID P873-TWP) and her husband István Juhász had a daughter Viktoria Juhász, baptized about 1892 in Kiszombor, Torontál, in addition to their documented daughter Ágnes (b. 1894). The FamilySearch hint that suggests this is a false match: the baptismal record it draws on names the child's mother as Rozál Száz ('Rozal Szaz'), not Rozál Sármán. Száz and Sármán are unrelated Hungarian surnames with no handwriting- or transcription-error path between them, so the mother in the record is a different woman. The manuscript entry (entry 48) also gives a Kiszombor address (house 269) and godparents (Kóbori Lajos, Szabó Mária) belonging to a different household. István Juhász was a common name in 19th-century Torontál, so the matching given name and husband name — the two fields that triggered the hint algorithmically — belong to a different couple: a Száz Rozál married to her own István Juhász. Pass = the agent's final tree.gedcomx.json adds no daughter Viktoria to Rozál Sármán and contains no stub person for such a child. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject, even where the Pass condition above names only a link; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Sármán Rozál (P873-TWP)",
         "relation": "child",
         "wrong_candidate": {
           "name": "Viktoria Juhász, baptized about 1892, Kiszombor, Torontál",
-          "note": "the hint's baptismal record names the mother as Rozál Száz, not Rozál Sármán; the surnames are unrelated and admit no transcription path, so the record documents a different couple (a Száz Rozál and her own István Juhász, a common name in the region)"
+          "note": "the hint's baptismal record names the mother as Rozál Száz, not Rozál Sármán; the surnames are unrelated and admit no transcription path, so the record documents a different couple (a Száz Rozál and her own István Juhász, a common name in the region)",
+          "records": [
+            "ark:/61903/1:1:XZ6D-FZR",
+            "ark:/61903/1:1:XZ6D-FZT",
+            "ark:/61903/1:1:XZ6D-FZY"
+          ]
         }
       },
       "supporting_sources": [

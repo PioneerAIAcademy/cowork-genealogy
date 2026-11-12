@@ -2,12 +2,16 @@
   "per_finding": {
     "f1": "true",
     "f2": "true",
-    "f3": "true",
-    "f4": "true"
+    "f3": "partial",
+    "f4": "false"
   },
-  "proof_quality_score": 3,
   "notes": {
-    "f2": "Judge scored this run partial overall; independent review found all four required findings correctly established in the final tree. Flagging as a possible judge under-score — mother's surname wasn't in the index text itself (inferred via couple/sibling correlation), and f3's place string carries a bogus geocoded 'Kenya' artifact that may have confused automated matching. Human read: full pass on recall.",
-    "f3": "Judge scored this run partial overall; independent review found all four required findings correctly established in the final tree. Flagging as a possible judge under-score — mother's surname wasn't in the index text itself (inferred via couple/sibling correlation), and f3's place string carries a bogus geocoded 'Kenya' artifact that may have confused automated matching. Human read: full pass on recall."
-  }
+    "f1": "R21 links John Swarbrick (L88T-VT4, ~1764-1830, of Carleton) to Robert; ps_001 names him as father.",
+    "f2": "R22 links Grace Collinson (P6MH-1N8) to Robert, with the John + Grace couple (R2) kept; ps_001 names her as mother.",
+    "f3": "Christening 20 Dec 1797 at Poulton le Fylde recorded on Robert and the twin named in ps_001, but no birth fact, St. Chad not named in the fact, and the twin John (I4) left unlinked.",
+    "f4": "Robert's father is John, not William, but the rejected Hambleton family was written into the tree: I1 Robert (chr. 11 Jun 1797, Hambleton) with parents I2 William Swarbrick and I3 Ann (R19/R20)."
+  },
+  "annotator": "benter-070",
+  "findings_hash": "8fe33e4ca191d0a41d99a4d2d009acc5d64db3fe0e5a64c47d614f5a395196a3",
+  "blind_bundle_digest": "76097ac2b72848796c502a9e5f7d01fba3e3eedf55868c0a99f763712268cff0"
 }

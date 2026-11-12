@@ -40,7 +40,7 @@ The MCP server exposes 57 tools.
 | `record_person_matches` | Tree-person matches for a historical record persona | OAuth |
 | `person_person_matches` | Possible-duplicate tree-person matches for a tree person | OAuth |
 | `record_record_matches` | Other historical records describing the same individual | OAuth |
-| `person_read` | FamilySearch Family Tree person data — relatives (including **siblings**, fetched via each parent) and attached sources, and for a non-living subject their source-style **memories** (scanned wills, certificates, obituaries), transcribed inline where the read's time budget allowed | OAuth |
+| `person_read` | FamilySearch Family Tree person data — relatives (including **siblings**, fetched via each parent) and the subject's attached sources (relatives carry none, and a source with a record link carries the link but no citation, which `record_read` returns), and for a non-living subject their source-style **memories** (scanned wills, certificates, obituaries), transcribed inline where the read's time budget allowed | OAuth |
 | `tree_gaps` | Survey a FamilySearch tree for holes it likely has records for (parents missing before a line ends, couples with no children, gaps between births, a wife with no surname, a person with no birth date or place, a deceased adult with no spouse or death date) across up to 8 generations of ancestors and 4 of descendants; returns the holes with a search year range, place, collection coverage (with census years and place level) and `pendingHints` (how many of FamilySearch's pending record hints are about the event the hole is missing, read from the collection title, with a census counted only if taken in the hole's window), holes with a fitting hint first, never the tree; living people never carry a hole | OAuth |
 | `person_ancestors` | FamilySearch Family Tree pedigree — a person (or, when no ID is given, the logged-in user) plus up to N generations of ancestors, each tagged with its Ahnentafel (ascendancy) number; relationships are endpoint-closed, and `notes[]` reports any edge dropped for naming a person not returned | OAuth |
 | `source_attachments` | Check whether source ARKs are already attached to tree persons | OAuth |
@@ -126,7 +126,7 @@ them (CLAUDE.md, "External service dependencies").
 
 The `image_transcribe` tool OCRs page scans host-side via OpenRouter
 (default model `google/gemini-3.7-flash`). It needs an
-OpenRouter API key, entered in the extension's install dialog or saved in
+OpenRouter API key, entered on the extension's Configure page in Claude Desktop or saved in
 `~/.familysearch-mcp/config.json` (`openRouterApiKey`); if the key is missing
 or rejected, the error directs the user to one of those two places (never a
 tool call). The e2e harness and the
