@@ -416,11 +416,11 @@ the measured median).
 **First time (and after any skill or MCP-server change):** run
 `eval\CoworkInstall.bat` (`make cowork-install`). It builds **both** artifacts
 and prints where each one goes — install the `.mcpb` in Claude Desktop →
-Settings → Extensions → Advanced Settings → Install extension (over the old copy
-— no uninstall needed), and the `.zip` in Cowork → Customize, **removing any
-existing Genealogy Research plugin first**, via Add → Upload Plugin. Upload it
-from the **Cowork** tab, not the Code tab — they keep separate plugin lists.
-**Fully quit and reopen** Claude Desktop after installing. The headless
+Settings → Desktop app → Extensions → Advanced settings → Install extension
+(while an old copy is installed it offers only Uninstall: uninstall, then
+install), and the `.zip` in Customize → Plugins → Yours, **removing any existing
+Genealogy Research plugin first**, via + Add → Upload plugin. **Fully quit and
+reopen** Claude Desktop after installing. The headless
 `RunE2E.bat` path doesn't use these (it runs the compiled engine directly), so
 this is only for the live Cowork loop.
 
