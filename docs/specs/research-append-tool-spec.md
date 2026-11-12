@@ -2309,6 +2309,71 @@ two-party link usually sits on an entry whose own person already holds it
 through a one-party link of their own, and there nothing is unreached: the
 facts belong to that person and are already linked to them.
 
+### 5.14 A localities guide carries the template's three headings (a precondition)
+
+A `localities` write is **refused** when its `guide_markdown` is a string that lacks
+any of the locality-guide template's three level-two headings: `## Jurisdiction
+overview`, `## Available record types` and `## Research tips`. The
+wiring is `localityGuideHeadingRefusals` in `research-append.ts`, called from
+`prepareOps` on the line before the `for_place` check (§5.8). The titles are
+`LOCALITY_GUIDE_HEADINGS` and the matcher is `missingGuideHeadings`.
+
+**Why.** On Sonnet 5 at low effort, `ut_locality_guide_010` (New Orleans record loss)
+saved a guide whose sections were renamed to fit a narrow question ("## Where to look
+for copies or substitutes"), with no `## Available record types`. The same miss hit
+`ut_locality_guide_002`. research-plan reads the guide back from `guide_markdown`,
+and the eval's `test_persisted_guide_is_the_guide` requires the template headings.
+010 was deleted from the suite for it, to be restored once this rule is in.
+
+- **Matching rule.** The eval validator's `_heading()`
+  (`eval/harness/validators/test_locality_guide.py`), which grades the saved guide: a
+  line that starts with exactly two `#`s, then spaces or tabs, then the title, in any
+  case, with anything after it. `## AVAILABLE RECORD TYPES (1840-1900)` passes;
+  `### Available record types` and the words in mid-line do not. The JS form is
+  `(?<![^\n])##[ \t]+<title>` with the flags `iu`, not `^##[ \t]+<title>` with `im`:
+  JS's `m` also starts a line after a lone `\r`, U+2028 or U+2029, which Python's
+  `MULTILINE` does not, and JS's `i` without `u` does not match `ſ` for `s`, which
+  Python's `IGNORECASE` does. The two agree on all 16 shapes in the parity table in
+  `research-append.test.ts`, whose expected values are `_heading()`'s own answers.
+  They still differ on `İ` or `ı` standing for an `i`, which Python matches and no
+  English heading carries.
+- **When the rule runs.** On a `localities` `append`, and on an `update` whose
+  `fields` set `guide_markdown`, when the value is a string. An empty string is
+  refused, naming all three. It runs whether or not an earlier `prepareOps` check has
+  refused the batch: it is synchronous and makes no lookup, so one refused call names
+  every fix. Once it refuses, the `for_place` lookup (§5.8) and the collection-count
+  stamp (§5.12) are skipped.
+- **What it does not check.** An absent `guide_markdown`, or `null`: the schema
+  allows both (`$defs/locality` does not require the field and types it
+  `["string", "null"]`). An `update` whose `fields` do not set it. Entries already in
+  `research.json`, so a guide saved before the rule stays as it is. A value of any
+  other type is left to the schema check.
+- **The refusal.** One per op, `ops[i]:`-prefixed in a batch. It names each missing
+  heading and asks for the fix, never for the guide to be left out:
+  > `guide_markdown lacks the locality guide template's heading(s) '## <title>'[, '## <title>']. Add it|each as its own line beginning with exactly those words after two #s, put the guide's text for that section under it, and re-send this entry with the whole guide.`
+
+  ("heading" and "it" for one missing heading, "headings" and "each" for more.)
+
+  A single-op refusal also carries the `localities` worked example
+  (`research-append-examples.ts`), whose guide carries all three headings.
+- **Not covered.** A guide returned with no project is never written, so this rule
+  cannot reach it (the no-project misses on 002 and 026). The collection-catalog read
+  for §5.12 happens before the lock, so a call this rule refuses still makes it.
+- **Keeping the titles in step.** `tests/packaging/locality-guide-headings.test.ts`
+  runs `missingGuideHeadings` on the template block under "Locality Guide Output
+  Format" in `packages/engine/plugin/agents/locality-guide.md`, and fails when the
+  template drops, demotes or renames a heading; it also renames each heading in a
+  copy to show the check can fail. A rename the validator does not follow fails the
+  locality-guide eval suite, which owes a re-run on any template edit.
+
+**Decision: a writer precondition, not an agent-body line** (review-ready,
+2026-11-11). Whether a guide carries its headings can be decided from the document
+alone, so ADR-0011 and CLAUDE.md's lane rule put it at the writer, beside §5.8 and
+§5.12. Rejected: a line in `agents/locality-guide.md` telling the agent to keep the
+headings. The body is where Sonnet 5 already ignores the template, prose is the last
+resort, and that edit would owe a paid locality-guide eval run. Step 6 of the agent
+already says to fix a refused entry and call again.
+
 ## 6. Decisions recorded
 
 - **One tool with `section` + `op`, not per-section tools.** Same rationale as
@@ -2463,6 +2528,14 @@ and the §3.1 rewrite of a fact already carrying the corrected assertion's
   write kept; a collection with no id nulled; a number id stored as a string; a spent
   FamilySearch budget rethrown; an update stamped like an append;
   a null loader and an internal `researchAppend` write left unstamped.
+- **locality guide headings** (§5.14): each heading missing in turn refused and named
+  alone; all three, extra sections, and an upper-case heading with a suffix accepted;
+  a level-three heading, the words in mid-line and an empty guide refused; `null` and
+  an absent key accepted; an update not setting the guide accepted over a persisted
+  heading-less one, and one setting a heading-less guide refused; a batch refusal
+  names only its op and makes no place lookup; the refusal never asks for the guide
+  to be dropped; the worked example passes the rule. A parity table pins
+  `missingGuideHeadings` to the eval validator's `_heading()` answers on 16 shapes.
 - **place levers** — sidecar copy preferred over geocoding; `resolvedPlaces`
   echo; country-contradiction rejected; `standard_place: null` opt-out honored;
   `opsReceived` echoed on batch failures.
