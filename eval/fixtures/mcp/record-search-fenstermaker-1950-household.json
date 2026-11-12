@@ -1,0 +1,149 @@
+{
+  "tool": "record_search",
+  "description": "Any other Fenstermaker-surnamed search in ut_search_records_d33 (e.g. for Robert): the same 1950 Wichita household, served from Robert's persona. Listed AFTER record-search-juanita-fenstermaker-1950.",
+  "args": {
+    "surname": "~Fenstermaker"
+  },
+  "response": {
+    "query": {
+      "surname": "Fenstermaker",
+      "residencePlace": "Wichita, Sedgwick, Kansas, United States",
+      "residenceYearFrom": 1950,
+      "residenceYearTo": 1950
+    },
+    "totalMatches": 1,
+    "paginationCappedAt": 100,
+    "returned": 1,
+    "offset": 0,
+    "hasMore": false,
+    "results": [
+      {
+        "personId": "6XJ4-K2R",
+        "recordId": "6XJ4-K2R",
+        "personName": "Robert Fenstermaker",
+        "score": 0.86,
+        "sex": "Male",
+        "birthDate": "about 1918",
+        "birthPlace": "Kansas, United States",
+        "events": [
+          {
+            "type": "Residence",
+            "date": "1950",
+            "place": "Wichita, Sedgwick, Kansas, United States"
+          }
+        ],
+        "arkUrl": "https://www.familysearch.org/ark:/61903/1:1:6XJ4-K2R",
+        "collectionId": "4464515",
+        "collectionTitle": "United States Census, 1950",
+        "recordTitle": "Robert Fenstermaker in household of Robert Fenstermaker, 1950",
+        "treeMatches": [],
+        "primaryId": "P1",
+        "gedcomx": {
+          "persons": [
+            {
+              "id": "P1",
+              "gender": "Male",
+              "names": [
+                {
+                  "id": "N1",
+                  "preferred": true,
+                  "given": "Robert",
+                  "surname": "Fenstermaker",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F1",
+                  "type": "Residence",
+                  "date": "1950",
+                  "place": "Wichita, Sedgwick, Kansas, United States"
+                },
+                {
+                  "id": "F2",
+                  "type": "Birth",
+                  "date": "about 1918",
+                  "place": "Kansas, United States"
+                }
+              ]
+            },
+            {
+              "id": "P2",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N2",
+                  "preferred": true,
+                  "given": "Juanita",
+                  "surname": "Fenstermaker",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F3",
+                  "type": "Residence",
+                  "date": "1950",
+                  "place": "Wichita, Sedgwick, Kansas, United States"
+                },
+                {
+                  "id": "F4",
+                  "type": "Birth",
+                  "date": "about 1921",
+                  "place": "Kansas, United States"
+                }
+              ]
+            },
+            {
+              "id": "P3",
+              "gender": "Female",
+              "names": [
+                {
+                  "id": "N3",
+                  "preferred": true,
+                  "given": "Carol",
+                  "surname": "Fenstermaker",
+                  "type": "BirthName"
+                }
+              ],
+              "facts": [
+                {
+                  "id": "F5",
+                  "type": "Residence",
+                  "date": "1950",
+                  "place": "Wichita, Sedgwick, Kansas, United States"
+                },
+                {
+                  "id": "F6",
+                  "type": "Birth",
+                  "date": "about 1944",
+                  "place": "Kansas, United States"
+                }
+              ]
+            }
+          ],
+          "relationships": [
+            {
+              "id": "CR1",
+              "type": "Couple",
+              "person1": "P1",
+              "person2": "P2"
+            },
+            {
+              "id": "CR2",
+              "type": "ParentChild",
+              "parent": "P1",
+              "child": "P3"
+            },
+            {
+              "id": "CR3",
+              "type": "ParentChild",
+              "parent": "P2",
+              "child": "P3"
+            }
+          ]
+        }
+      }
+    ]
+  }
+}

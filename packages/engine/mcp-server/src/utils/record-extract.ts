@@ -595,7 +595,7 @@ function roleFamily(role: string): RoleFamily {
   return "other";
 }
 
-interface Classification {
+export interface Classification {
   informant: string;
   informant_proximity: string;
   information_quality: string;
@@ -971,6 +971,22 @@ export function normalizeFactType(raw: unknown): string {
     .replace(/[^A-Za-z0-9]+/g, "_")
     .replace(/^_+|_+$/g, "")
     .toLowerCase();
+}
+
+/**
+ * The classification of one fact a read page adds to an indexed record (#4286):
+ * the `classify` row `extractRecord`'s `push()` takes for a FamilySearch record,
+ * keyed on the record type, the persona's role and the fact. Never copied from a
+ * sibling assertion. `bias` and `defaulted` are returned as `push()` reads them.
+ */
+export function classifyReading(
+  recordType: RecordType,
+  role: string,
+  factType: string,
+  collection?: string,
+  relationshipType?: string,
+): Classification {
+  return classify(recordType, role, factClassOf(factType, recordType), collection, factType, relationshipType ?? "");
 }
 
 function factClassOf(factType: string, recordType: RecordType): FactClass {
@@ -1790,7 +1806,7 @@ const DOUBLE_DATED = /\b\d{4}\/\d{1,4}\b/;
 export const TRAILING_DOUBT = /\s*\[\?\]$/;
 
 /** A value with the doubt marker, added once. */
-const withDoubt = (v: string) => (v.includes("[?]") ? v : `${v} [?]`);
+export const withDoubt = (v: string) => (v.includes("[?]") ? v : `${v} [?]`);
 
 /**
  * The dates the calendar route may apply to (genealogist ruling, 2026-09-30,
