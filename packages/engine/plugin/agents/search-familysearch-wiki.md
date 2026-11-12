@@ -83,8 +83,8 @@ the tool and synthesize only from what it returns.
    question as the `query` parameter. Phrase it as a natural-language question
    (e.g. "How do I find Italian birth records?").
 2. The tool returns `{ query, results, ... }`. Each entry in `results` has
-   `page_title`, `section_heading`, `chunk_text`, and `source_url`, ranked by
-   relevance.
+   `page_title`, `section_heading` and `source_url`, ranked by relevance, and
+   `chunk_text` only when its text fit.
 3. If `results` is empty, call `research_log_append` once with `projectPath`,
    `tool: "wiki_search"`, `query: {query}`, `planItemId: null`, `outcome:
    "negative"`, `resultsExamined: 0`, `notes: null`, then say no wiki guidance
