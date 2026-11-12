@@ -29,8 +29,6 @@ import type {
   PersonQualityToolResult,
   QualityCategoryOut,
   QualityConflictOut,
-  QualityFactOut,
-  QualityFactSourceOut,
   QualityIssueOut,
 } from "../types/person-quality.js";
 import { rejectedTokenMessage } from "../auth/config.js";
@@ -138,10 +136,9 @@ export const personQualityToolSchema = {
     "returns the live quality issues as plain English sentences (e.g. \"The " +
     "burial date is missing.\") grouped into four categories — Completeness, " +
     "Verifiability (source tagging), Consistency, and Coherence — plus an " +
-    "overall score. Each issue carries its conclusionType and conclusionId so " +
-    "it can be traced to the exact fact. Pass detail=true to also get the " +
-    "per-fact breakdown — which attached sources touch each fact and whether " +
-    "each agrees, and which sources disagree with each other. Accepts any " +
+    "overall score. Each issue carries its conclusionType. Pass detail=true to also get " +
+    "the attached sources that disagree with each other, each as the field, " +
+    "the differing values and the sources' links (the `url` person_read returns). Accepts any " +
     "tree-person id. With projectPath, a project's own id is looked up in the " +
     "project's tree and the person is scored under their FamilySearch link; a " +
     "person with no link gets a one-sentence answer, without contacting " +
@@ -166,10 +163,8 @@ export const personQualityToolSchema = {
       detail: {
         type: "boolean",
         description:
-          "Include the per-fact breakdown: for each of the person's conclusions, " +
-          "its score, the issues affecting it, and which attached sources touch " +
-          "it and whether each agrees — plus the disagreements between attached " +
-          "sources. Defaults to false; omit it for a per-person summary.",
+          "Include the disagreements between attached sources: for each, the " +
+          "field, the differing values and the sources' links. Defaults to false; omit it for a per-person summary.",
       },
     },
     required: ["personId"],
@@ -181,54 +176,6 @@ export const personQualityToolSchema = {
 // sends all of it on every request; excluding it by default is what keeps the
 // existing caller's payload byte-identical.
 
-// A source as it bears on one fact. `agrees` is null when upstream omitted it —
-// never defaulted to true, which would assert agreement nobody measured.
-function sourceOut(
-  title: string | undefined,
-  uri: string | undefined,
-  agrees: boolean | undefined,
-): QualityFactSourceOut {
-  return {
-    title: typeof title === "string" ? title : null,
-    uri: typeof uri === "string" ? uri : null,
-    agrees: typeof agrees === "boolean" ? agrees : null,
-  };
-}
-
-// conclusionId -> the attached sources touching it, deduped by source uri.
-//
-// Upstream nests the other way round (source -> conclusions), and a single
-// source can repeat the same conclusion id inside its own `conclusions[]` — 13
-// of 28 sources did on KD96-TV2. Inverting turns that into one source listed
-// twice under one fact, so the dedupe key here is the URI, not the conclusion
-// id. Measured lossless: 21 duplicate (conclusion, uri) pairs, none of which
-// disagreed on `agreesWithSource`. See dev/probe-person-quality-detail.ts,
-// finding 4 — whose "dedupe by id" is correct for the raw shape, not this one.
-function sourcesByConclusion(
-  scores: FSPersonScores,
-): Map<string, QualityFactSourceOut[]> {
-  const byConclusion = new Map<string, QualityFactSourceOut[]>();
-  const seen = new Map<string, Set<string>>();
-
-  for (const cluster of scores.sourceClusters?.sourceClusters ?? []) {
-    for (const source of cluster.sources ?? []) {
-      for (const conclusion of source.conclusions ?? []) {
-        const id = conclusion.id;
-        if (typeof id !== "string") continue;
-        const key = source.uri ?? source.title ?? "";
-        const seenHere = seen.get(id) ?? new Set<string>();
-        if (seenHere.has(key)) continue;
-        seenHere.add(key);
-        seen.set(id, seenHere);
-        const list = byConclusion.get(id) ?? [];
-        list.push(sourceOut(source.title, source.uri, conclusion.agreesWithSource));
-        byConclusion.set(id, list);
-      }
-    }
-  }
-  return byConclusion;
-}
-
 // Group the pairwise conflict list into one entry per real disagreement.
 //
 // Upstream restates a single disagreement once per source pair, so the raw list
@@ -236,10 +183,7 @@ function sourcesByConclusion(
 // entries encoding 5 actual disagreements. Passing that through would flood the
 // context — the very failure the original exclusion was guarding against.
 // Grouping key is (field name, its sorted value set).
-function groupConflicts(
-  scores: FSPersonScores,
-  titleByUri: Map<string, string>,
-): QualityConflictOut[] {
+function groupConflicts(scores: FSPersonScores): QualityConflictOut[] {
   const groups = new Map<
     string,
     { field: string; values: string[]; uris: Set<string> }
@@ -265,59 +209,16 @@ function groupConflicts(
   return [...groups.values()].map(({ field, values, uris }) => ({
     field,
     values,
-    sources: [...uris].map((uri) => sourceOut(titleByUri.get(uri), uri, undefined)),
+    sources: [...uris],
   }));
 }
 
-// One entry per conclusion, carrying the rendered sentence of each issue that
-// affects it. Upstream gives `affectingIssueIds`, which join onto
-// `FSQualityIssue.id` — a field this tool's issue output does not carry, so the
-// join is resolved here and the sentence emitted rather than an id that would
-// point at nothing on the caller's side.
-function buildDetail(
-  scores: FSPersonScores,
-  rawIssues: FSQualityIssue[],
-): PersonQualityDetail {
-  const sentenceById = new Map<string, string>();
-  for (const issue of rawIssues) {
-    if (typeof issue.id === "string") {
-      sentenceById.set(issue.id, renderIssueSentence(issue));
-    }
-  }
-
-  const titleByUri = new Map<string, string>();
-  for (const cluster of scores.sourceClusters?.sourceClusters ?? []) {
-    for (const source of cluster.sources ?? []) {
-      if (typeof source.uri === "string" && typeof source.title === "string") {
-        titleByUri.set(source.uri, source.title);
-      }
-    }
-  }
-
-  const sourcesFor = sourcesByConclusion(scores);
-
-  const facts: QualityFactOut[] = (scores.conclusionScores ?? []).map((entry) => {
-    const fact: QualityFactOut = {
-      conclusionId:
-        typeof entry.conclusionId === "string" ? entry.conclusionId : null,
-      conclusionType:
-        typeof entry.conclusionType === "string" ? entry.conclusionType : null,
-      score: numOrNull(entry.combinedDisplayScore),
-      issues: (entry.affectingIssueIds ?? [])
-        .map((id) => sentenceById.get(id))
-        .filter((s): s is string => typeof s === "string"),
-      sources:
-        (typeof entry.conclusionId === "string"
-          ? sourcesFor.get(entry.conclusionId)
-          : undefined) ?? [],
-    };
-    if (typeof entry.relationshipId === "string") {
-      fact.relationshipId = entry.relationshipId;
-    }
-    return fact;
-  });
-
-  return { facts, conflicts: groupConflicts(scores, titleByUri) };
+// The disagreements between attached sources. Each source is its link, the same
+// string `person_read` returns as that source's `url`, so a caller matches the
+// two by equality. The per-fact breakdown upstream also sends (issue #4420) is
+// not returned: nothing read it, and it was most of a large answer.
+function buildDetail(scores: FSPersonScores): PersonQualityDetail {
+  return { conflicts: groupConflicts(scores) };
 }
 
 /**
@@ -449,8 +350,6 @@ export async function personQualityTool(
     sentence: renderIssueSentence(issue),
     conclusionType:
       typeof issue.conclusionType === "string" ? issue.conclusionType : undefined,
-    conclusionId:
-      typeof issue.conclusionId === "string" ? issue.conclusionId : undefined,
     scoreType: typeof issue.scoreType === "string" ? issue.scoreType : undefined,
   }));
 
@@ -474,7 +373,7 @@ export async function personQualityTool(
   // Absent, not empty, when the flag is off — the byte-identical guarantee D2
   // rests on, pinned by a deep-equal test in tests/tools/person-quality.test.ts.
   if (input.detail === true) {
-    result.detail = buildDetail(scores, rawIssues);
+    result.detail = buildDetail(scores);
   }
 
   return result;

@@ -25,7 +25,7 @@ code is HTTP-only — it does not import any FamilySearch internal code.
 |-------|------|----------|-------------|
 | `personId` | string | Yes | Tree-person id. A FamilySearch person id (e.g. `"KD96-TV2"`) is scored; any other id is answered without a network call — see "Non-FamilySearch ids" below. camelCase at the MCP boundary, per repo convention. |
 | `projectPath` | string | No | Absolute path of the project folder. With it, a project's own tree id is resolved to the person's FamilySearch link — see "Non-FamilySearch ids" below. |
-| `detail` | boolean | No | Opt in to the per-fact and per-source breakdown. Defaults to `false`, and when it is off the response is byte-identical to what it was before the flag existed. |
+| `detail` | boolean | No | Opt in to the disagreements between attached sources. Defaults to `false`, and when it is off the response carries no `detail`. |
 
 Example:
 ```json
@@ -263,19 +263,20 @@ and `issues[]`. For `KD96-TV2`:
     { "scoreType": "COHERENCE",     "count": 0, "score": 1.0 }
   ],
   "issues": [
-    { "sentence": "The burial date is missing.", "conclusionType": "BURIAL", "conclusionId": "d57d443f-…", "scoreType": "COMPLETENESS" },
-    { "sentence": "A marriage place is missing a city.", "conclusionType": "MARRIAGE", "conclusionId": "5ced6592-…", "scoreType": "COMPLETENESS" },
-    { "sentence": "A residence has no tagged sources.", "conclusionType": "RESIDENCE", "conclusionId": "e77ececa-…", "scoreType": "VERIFIABILITY" }
+    { "sentence": "The burial date is missing.", "conclusionType": "BURIAL", "scoreType": "COMPLETENESS" },
+    { "sentence": "A marriage place is missing a city.", "conclusionType": "MARRIAGE", "scoreType": "COMPLETENESS" },
+    { "sentence": "A residence has no tagged sources.", "conclusionType": "RESIDENCE", "scoreType": "VERIFIABILITY" }
   ]
 }
 ```
 
 Where the values come from: `segment`, `overallScore`, and each issue's
-`conclusionType` / `conclusionId` / `scoreType` come straight from the API;
+`conclusionType` / `scoreType` come straight from the API;
 `issueCount` and the per-category `count` are derived (counted from
 `issues`); `score` is the API category `displayScore`; `sentence` is the
-interpolated PDF template. Each issue keeps `conclusionType` + `conclusionId`
-so the sentence is traceable to its exact fact.
+interpolated PDF template. Each issue keeps `conclusionType`. The upstream
+`conclusionId` is not returned: it names a fact id no tool the
+caller holds returns, and the `detail.facts` breakdown it joined onto is gone too.
 
 No human "quality band" (e.g. "High Quality") is emitted: the real
 `overallScore` (0–1) is returned so the LLM can describe it, and FamilySearch's
@@ -292,50 +293,22 @@ absent, not empty, so the default payload is byte-identical to what it was befor
 the flag existed. That is the whole point of the flag: a per-person summary wants
 a lean answer, while a tree audit (`source-evaluation`, the tool's only caller since
 check-warnings dropped it) wants to
-know *which fact* and *which source*, and one tool serves both without either
+know *which attached sources disagree*, and one tool serves both without either
 paying for the other's context.
 
 ```json
 "detail": {
-  "facts": [
-    {
-      "conclusionId": "d57d443f-…",
-      "conclusionType": "BURIAL",
-      "score": 0.86,
-      "issues": ["The burial date is missing."],
-      "sources": [
-        { "title": "Christian Peder Hole, \"Minnesota, Deaths, 1887-2001\"",
-          "uri": "https://familysearch.org/ark:/61903/1:1:…",
-          "agrees": true }
-      ]
-    },
-    { "conclusionId": "…", "conclusionType": "MARRIAGE", "relationshipId": "M5PN-FXR",
-      "score": 1, "issues": [], "sources": [] }
-  ],
   "conflicts": [
     { "field": "Birth Date",
       "values": ["+1876-10-02", "+1877"],
-      "sources": [ { "title": "…", "uri": "…", "agrees": null } ] }
+      "sources": ["https://familysearch.org/ark:/61903/1:1:…", "https://familysearch.org/ark:/61903/1:1:…"] }
   ]
 }
 ```
 
-**`facts[]` — one entry per `conclusionScores` entry.** `score` is the upstream
-`combinedDisplayScore`. `relationshipId` is present only where upstream sends one
-(the MARRIAGE conclusions). Expect the result to be **sparse**: only 5 of
-`KD96-TV2`'s 14 conclusions have any attached source, so 9 carry `sources: []`.
+**There is no per-fact breakdown.** The `conclusionScores` entries and the per-source `agreesWithSource` list that this block once carried (`detail.facts[]`) are no longer returned. Nothing read them, and on a well-sourced person they were most of the answer: Tallman's `detail` was 18,368 characters and is ~3,950 without them, and hosted answers reached 65.3k. The upstream fields are still modelled in `types/person-quality.ts` (`FSConclusionScore`) so the response is documented, but `buildDetail` does not read them.
 
-**`issues[]` inside a fact holds rendered sentences, not ids.** Upstream gives
-`affectingIssueIds`, which join onto `issues[].id` — and `id` is not part of this
-tool's issue output, so passing the ids through would hand the caller keys that
-join to nothing. The join is resolved here and the sentence emitted, which
-extends the existing traceability guarantee above rather than inventing a second one.
-
-**`sources[]` is deduped by source `uri`.** Upstream nests source → conclusions,
-and one source may list the same conclusion id twice (13 of 28 sources on
-`KD96-TV2`). Inverting to conclusion → sources turns that into one source listed
-twice under one fact. Deduping by uri is lossless here: of the 21 duplicate
-`(conclusion, uri)` pairs, **none** disagreed on `agreesWithSource`.
+**`conflicts[].sources` is a list of link strings,** each exactly the `url` `person_read` returns for that source, so a caller matches a conflict to an attached source by string equality. No title and no `agrees`: the title is on the `person_read` entry, and `agrees` was always `null` here because the conflict list names source URIs, not per-conclusion agreement.
 
 **`conflicts[]` is reduced, not passed through.** Upstream restates a single
 disagreement once per source pair, so the raw list grows quadratically with the
@@ -343,14 +316,6 @@ number of sources holding the field — `KD96-TV2` returns **50** entries encodi
 **5** real disagreements. Entries are grouped by `(field name, sorted value set)`
 and carry every source that took part. Passing the raw list through would flood
 the context, which is the failure the original exclusion was guarding against.
-
-**`agrees: false` has never been observed.** Every `agreesWithSource` on the one
-person probed so far was `true`, so the disagreement branch is **unverified** —
-this spec deliberately says nothing about how it renders. `agrees` is `null`, not
-`false`, when upstream omits the field, so an absent value is never reported as
-disagreement. On `conflicts[].sources` it is always `null`: the conflict list
-names source URIs, not per-conclusion agreement. Probe a person carrying a
-disagreement before writing that branch down.
 
 **OPEN — include friendly category labels?** The API returns only
 `scoreType`. FamilySearch's UI shows friendlier names. Current behavior:

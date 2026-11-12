@@ -196,7 +196,9 @@ describe("personQualityTool", () => {
     expect(result.overallScore).toBe(0.97);
     expect(result.issueCount).toBe(2);
     expect(result.issues[0].sentence).toBe("The burial date is missing.");
-    expect(result.issues[0].conclusionId).toBe("d57d443f");
+    expect(result.issues[0].conclusionType).toBe("BURIAL");
+    // The fact id joins onto nothing the caller holds (issue #4420).
+    expect("conclusionId" in result.issues[0]).toBe(false);
     expect(result.categories).toEqual([
       { scoreType: "COMPLETENESS", count: 1, score: 0.91 },
       { scoreType: "VERIFIABILITY", count: 1, score: 1 },
@@ -379,49 +381,30 @@ describe("personQualityTool detail flag", () => {
     expect(onWithoutDetail).toEqual(off);
   });
 
-  it("renders each fact's affecting issues as sentences, not raw ids", async () => {
+  it("returns no per-fact breakdown, and no fact id on an issue (issue #4420)", async () => {
     mockOk(detailBody());
     const result = scored(await personQualityTool({ personId: "BBBB-111", detail: true }, LOCAL));
-    const burial = result.detail?.facts.find((f) => f.conclusionType === "BURIAL");
-    // The raw id joins onto issues[].id, which this tool's output does not
-    // carry — so passing the id through would hand the caller a dangling key.
-    expect(burial?.issues).toEqual(["The burial date is missing."]);
-    expect(burial?.score).toBe(0.5);
-    const name = result.detail?.facts.find((f) => f.conclusionType === "NAME");
-    expect(name?.issues).toEqual([]);
+    expect(Object.keys(result.detail ?? {})).toEqual(["conflicts"]);
+    for (const issue of result.issues) expect("conclusionId" in issue).toBe(false);
   });
 
-  it("carries relationshipId only on the conclusions that have one", async () => {
-    mockOk(detailBody());
+  it("names a conflict's sources by link alone, the string person_read returns as url", async () => {
+    const body = detailBody();
+    body.personScores!.sourceClusters!.conflicts = [
+      {
+        sourceUris: ["https://example.org/ark:/1", "https://example.org/ark:/2"],
+        conflictingFields: [{ name: "Birth Date", values: ["+1876", "+1877"] }],
+      },
+    ];
+    mockOk(body);
     const result = scored(await personQualityTool({ personId: "BBBB-111", detail: true }, LOCAL));
-    const byType = new Map(
-      result.detail?.facts.map((f) => [f.conclusionType, f]) ?? [],
-    );
-    expect(byType.get("MARRIAGE")?.relationshipId).toBe("M111-AAA");
-    expect("relationshipId" in (byType.get("NAME") ?? {})).toBe(false);
-  });
-
-  it("dedupes a fact's sources by uri and keeps each source's agreement", async () => {
-    mockOk(detailBody());
-    const result = scored(await personQualityTool({ personId: "BBBB-111", detail: true }, LOCAL));
-    const name = result.detail?.facts.find((f) => f.conclusionType === "NAME");
-    // ark:/1 lists c-name twice; it must appear once.
-    expect(name?.sources).toEqual([
-      { title: "1900 census", uri: "https://example.org/ark:/1", agrees: true },
-      { title: "Death index", uri: "https://example.org/ark:/2", agrees: true },
+    expect(result.detail?.conflicts).toEqual([
+      {
+        field: "Birth Date",
+        values: ["+1876", "+1877"],
+        sources: ["https://example.org/ark:/1", "https://example.org/ark:/2"],
+      },
     ]);
-    const burial = result.detail?.facts.find((f) => f.conclusionType === "BURIAL");
-    expect(burial?.sources).toEqual([
-      { title: "1900 census", uri: "https://example.org/ark:/1", agrees: false },
-    ]);
-  });
-
-  it("leaves sources empty for a conclusion nothing is attached to", async () => {
-    mockOk(detailBody());
-    const result = scored(await personQualityTool({ personId: "BBBB-111", detail: true }, LOCAL));
-    // Real data is sparse: only 5 of KD96-TV2's 14 conclusions have any source.
-    const marriage = result.detail?.facts.find((f) => f.conclusionType === "MARRIAGE");
-    expect(marriage?.sources).toEqual([]);
   });
 
   it("groups the pairwise conflict list down to one entry per disagreement", async () => {
@@ -483,7 +466,7 @@ describe("personQualityTool detail flag", () => {
     delete body.personScores!.sourceClusters;
     mockOk(body);
     const result = scored(await personQualityTool({ personId: "BBBB-111", detail: true }, LOCAL));
-    expect(result.detail).toEqual({ facts: [], conflicts: [] });
+    expect(result.detail).toEqual({ conflicts: [] });
   });
 });
 

@@ -200,7 +200,7 @@ and plan from the tree.
 
 **Survey what the tree already holds, before planning new searches.** For
 the subject and every other person in scope for this question, call
-`tree_query({ projectPath, personIds })` for the facts, relationships and cited
+`tree_query({ projectPath, personIds, includeSources: true })` for the facts, relationships and cited
 sources it already records for them — **every fact, whether or not a
 source is attached to it.** For every one you find, **write down its date,
 place, and value (for a source, what it records) before deciding what to
