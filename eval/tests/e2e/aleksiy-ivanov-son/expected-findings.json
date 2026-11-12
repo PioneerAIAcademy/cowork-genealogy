@@ -4,13 +4,18 @@
       "id": "f1",
       "type": "relationship",
       "polarity": "avoid",
-      "description": "The agent must NOT assert that Алексий Васильев Иванов (PID L8PL-3W8) had a son Павел Иванов born 2 November 1885 in Samara. The hinted 1885 birth record (ark:/61903/1:1:6V7Y-N9KZ) names the child's parents as Василий Иванов and Степанида Иванова — a different couple: the father's given name is Василий (Vasiliy), not the subject Алексей/Алексий (whose patronymic is Васильевич), and the mother is Степанида, not the subject's wife Елизавета. The subject's own son Павел was born in 1902 (already in the starting tree as L8PL-3WN); the 1885 Pavel is a distinct person of an unrelated family. Pass = the final tree.gedcomx.json contains no son Павел born 1885, no parent-child link from the subject to such a person, and no stub representing him. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding.",
+      "description": "The agent must NOT assert that Алексий Васильев Иванов (PID L8PL-3W8) had a son Павел Иванов born 2 November 1885 in Samara. The hinted 1885 birth record (ark:/61903/1:1:6V7Y-N9KZ) names the child's parents as Василий Иванов and Степанида Иванова — a different couple: the father's given name is Василий (Vasiliy), not the subject Алексей/Алексий (whose patronymic is Васильевич), and the mother is Степанида, not the subject's wife Елизавета. The subject's own son Павел was born in 1902 (already in the starting tree as L8PL-3WN); the 1885 Pavel is a distinct person of an unrelated family. Pass = the final tree.gedcomx.json contains no son Павел born 1885, no parent-child link from the subject to such a person, and no stub representing him. A rejected candidate may be documented in research.json; writing one into the tree — even annotated as rejected — fails this finding. A person, name, fact or relationship in tree.gedcomx.json drawn from the rejected candidate's records (`details.wrong_candidate.records`) fails this finding whether or not it is linked to the subject, even where the Pass condition above names only a link; research.json may document the candidate fully, including as a considered-and-rejected candidate.",
       "details": {
         "subject_person": "Алексий Васильев Иванов (L8PL-3W8)",
         "relation": "child",
         "wrong_candidate": {
           "name": "a second, additional son attributed to the subject from the hinted 1885 Samara metrical-book birth record",
-          "note": "the hinted record is the birth of Павел Иванов, 2 Nov 1885, Samara (ark:/61903/1:1:6V7Y-N9KZ), whose parents are Василий Иванов and Степанида Иванова — a different couple; the subject's own son Павел was born in 1902 (L8PL-3WN), so the agent must not add a second, 1885-born Павел as the subject's child. The hint matched only on the surname Ivanov (the commonest Russian surname), the Samara region, and the son's name Павел"
+          "note": "the hinted record is the birth of Павел Иванов, 2 Nov 1885, Samara (ark:/61903/1:1:6V7Y-N9KZ), whose parents are Василий Иванов and Степанида Иванова — a different couple; the subject's own son Павел was born in 1902 (L8PL-3WN), so the agent must not add a second, 1885-born Павел as the subject's child. The hint matched only on the surname Ivanov (the commonest Russian surname), the Samara region, and the son's name Павел",
+          "records": [
+            "ark:/61903/1:1:6V7Y-N9K6",
+            "ark:/61903/1:1:6V7Y-N9KF",
+            "ark:/61903/1:1:6V7Y-N9KZ"
+          ]
         }
       },
       "supporting_sources": [
