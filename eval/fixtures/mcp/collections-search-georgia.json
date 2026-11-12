@@ -5,9 +5,7 @@
     "standardPlace": "~Georgia"
   },
   "response": {
-    "query": {
-      "standardPlace": "Georgia, United States"
-    },
+    "collectionUrl": "https://www.familysearch.org/search/collection/{id}",
     "scope": "Georgia, United States",
     "totalForPlace": 2,
     "results": [
@@ -15,19 +13,13 @@
         "id": "1420203",
         "title": "Georgia, County Marriages, 1785-1950",
         "dateRange": "1785-1950",
-        "recordCount": 3210000,
-        "personCount": 6420000,
-        "imageCount": 1605000,
-        "url": "https://www.familysearch.org/search/collection/1420203"
+        "personCount": 6420000
       },
       {
         "id": "1911978",
         "title": "Georgia, Probate Records, 1742-1990",
         "dateRange": "1742-1990",
-        "recordCount": 890000,
-        "personCount": 890000,
-        "imageCount": 445000,
-        "url": "https://www.familysearch.org/search/collection/1911978"
+        "personCount": 890000
       }
     ]
   }

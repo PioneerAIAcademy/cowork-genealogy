@@ -331,7 +331,7 @@ def main(argv: list[str] | None = None) -> int:
         choices=("step", "job"),
         default="job",
         help=(
-            "Step mode (docs/plan/research-step-mode.md section F): one persistent "
+            "Step mode (docs/specs/research-step-mode-spec.md section F): one persistent "
             "session, one step per turn, each boundary answered by the host's own "
             "next_auto_reply. `job` (the default) opens as a \"Keep going\" run, "
             "which is what a fixture that should reach a proof wants; `step` runs "

@@ -145,9 +145,11 @@ zero matches.** Upstream answers `200` in both cases and the two bodies are
 otherwise identical — same `title`, `entries: []`, `results: 0`. The only
 explicit discriminator is a `not-found` entry in `links` (an epoch `updated` of
 `1970-01-01T00:00:00.001Z` is a second tell; the link is the one the tool keys
-on). Measured 2026-09-10:
+on). A `not-found` link does **not**, by itself, establish that the id names
+nothing — see *A live tree person returns the same shape* below. Measured
+2026-09-10:
 
-| | genuine zero | unresolvable id |
+| | genuine zero | never-assigned id |
 |---|---|---|
 | `entries` / `results` | `[]` / 0 | `[]` / 0 |
 | `title` | `Matches for <ark>` | `Matches for <ark>` |
@@ -179,7 +181,10 @@ restricted — `person_read` returns `403`, i.e. it *exists* but is not viewable
 for `KW66-5VV` too, so the evidence cannot separate "the match endpoint ignores
 the merge redirect" from "it follows the redirect to a survivor that itself has
 no visible matches." Either way the retired id yields not-found, not the
-survivor's matches. A populated retired-vs-survivor comparison could not be made;
+survivor's matches. The 2026-11-09 measurement below settles that question: the
+redirect **is** followed, so Outcome B holds wherever the survivor has a
+match-resolution record of its own. A populated retired-vs-survivor comparison
+could not be made here;
 this rests on the single merged-away candidate the pool yielded (n=1). The pool
 is the tree PIDs in the committed `*.gedcomx.json` fixtures, and its one redirect,
 `KD96-TV5`, was **not** an organic discovery: it is a deliberately-embedded id in
@@ -189,6 +194,57 @@ encounter-rate estimate — it does not establish how often an organic research
 session hits a retired id; it is a property of *this* committed-fixture pool on
 this date, not a general FamilySearch merge rate. This paragraph records what was
 measured; it does not prescribe a behaviour or error-text change.
+
+**A live, viewable tree person returns the same not-found shape, so the shape
+does not mean "no such person" (measured 2026-11-09).** Every row below was
+produced by `npx tsx dev/probe-match-not-found.ts` on 2026-11-09, paired with a
+`GET /platform/tree/persons/<pid>` (`redirect: "manual"`, status only) as an
+independent existence oracle. `links` is the match response's link set.
+
+| id | tree-persons | match `links` | `updated` | what it is | measured |
+|---|---|---|---|---|---|
+| `P4M8-VM7` | `200` | `not-found`, `target-system`, `self` | epoch | live, viewable, 0 sources | 2026-11-09 |
+| `L4BP-ZWW` | `200` | `not-found`, `target-system`, `self` | epoch | live, viewable | 2026-11-09 |
+| `KW66-5VV` | `403` | `not-found`, `target-system`, `self` | epoch | exists, restricted | 2026-11-09 |
+| `KD96-TV5` | `301` → `KW66-5VV` (`403`) | `not-found`, `target-system`, `self` | epoch | merged, survivor restricted | 2026-11-09 |
+| `LZNY-BRF` | `301` → `PFTB-NS6` | `target-system`, `self` | real | merged away | 2026-11-09 |
+| `PFTB-NS6` | `200` | `target-system`, `self` | real, same instant as `LZNY-BRF` | the survivor | 2026-11-09 |
+| `ZZZZ-ZZZ` | `404` | `not-found`, `target-system`, `self` | epoch | never assigned | 2026-11-09 |
+| `L6KS-9PW` | `200` | `self` | real | control, 1 match | 2026-11-09 |
+| `275H-YL3` | `200` | `self` | real | control, 10 matches | 2026-11-09 |
+| `KNDX-MKG` | `200` | `self` | real | control, 2 matches | 2026-11-09 |
+
+**Nothing in the response body separates a live person from a never-assigned
+id.** `P4M8-VM7` (tree-persons `200`) and `ZZZZ-ZZZ` (tree-persons `404`) were
+compared field by field: identical key sets (`entries`, `links`, `results`,
+`title`, `updated`), identical `entries: []` / `results: 0`, identical link
+names, epoch `updated` on both. The only differing values are the id echoed back
+in `title` and in the `not-found` and `self` hrefs. So the two cases are
+separable **only** by an independent existence check, not by keying on any field
+of this answer.
+
+The three controls rule out the account-or-token hypothesis for this run: on the
+same token and date they returned populated results with no `not-found` link, so
+the not-found answers above are about those ids rather than a degraded slot.
+`P4M8-VM7`'s person page was checked by hand the same day and shows no Record
+Hints — its one Research Help item is the "No Sources Attached" data-quality
+notice — so **zero matches is the correct answer for him and the error is not**.
+
+**This qualifies the merged-away finding above.** A merged-away id does *not*
+uniformly return not-found: `KD96-TV5` does and `LZNY-BRF` does not. The
+difference is **not** the survivor's viewability — `P4M8-VM7` and `L4BP-ZWW` are
+live and viewable and read not-found anyway. It is whether a match-resolution
+record exists for the id at all, which `updated` reports: the epoch on every
+not-found row above, a real timestamp on every other.
+
+`LZNY-BRF` and its survivor `PFTB-NS6` return the same links, the same
+`results`, and the same `updated` to the millisecond
+(`2026-09-30T23:22:04.016Z`), so the retired id is serving the **survivor's**
+record. That is Outcome B, measured rather than inferred — the 2026-09-15 run
+recorded it as not observed and could not have observed it, since its only merge
+candidate's survivor had no record either. `KD96-TV5` reads not-found because
+`KW66-5VV` has no record, not because it is restricted. The 2026-09-15
+paragraph's reading holds for its own case and not as a general rule.
 
 **The record-persona (`1:1:`) side is NOT ESTABLISHED.** No independent
 retirement/merge oracle exists for a record persona: `person_read` and

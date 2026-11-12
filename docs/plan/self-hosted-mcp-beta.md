@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a limited beta
 
-**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2's first half (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget; PR #4292), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), and D1's stack. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
+**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2's first half (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget; PR #4292), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), D1's stack, and S2's block and delete targets. The rest is listed under "Who builds what". The reconnect design under "When a FamilySearch session ends" is expected, not measured: the live sittings decide it. FamilySearch's approval, as any app on its API needs, comes before launch.
 
 ## What this is
 
@@ -79,7 +79,7 @@ Funnel sends `https://malachi.taild68f1b.ts.net/` to 127.0.0.1:8006, where an ng
 - a FamilySearch call answers 401, and the tool returns a message with a sign-in link, over HTTP 200;
 - the user opens the link, signs in, and says "continue" in the same task. `store_grant` replaces the token, and the door reads it on the next call.
 
-A 401 from the door itself has no way back in the chat: the tools fail, then vanish, and the user reconnects under Settings → Connectors. So nothing answers 401 at the door because a FamilySearch session ended.
+A 401 from the door itself has no way back in the chat: the tools fail, then vanish, and the user reconnects under Customize → Connectors. So nothing answers 401 at the door because a FamilySearch session ended.
 
 **Data.**
 - **Postgres.** The web and tool tiers each use a DML-only role. `migrate` runs with the owner role and then grants that role its tables.
@@ -190,7 +190,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 
 **W2 Sign-in.**
 - **Users** are keyed by FamilySearch id, with a unique index. Email stays required and unique: an identity with no email, or with one another user has, is refused with a message.
-- **The browser session** stays the `wb_session` cookie. With chat off it lasts 24 hours; with chat on, 30 days, as today. `/auth/logout` ends it on the server, with every other session the user holds and their connector tokens, so signing out also disconnects Claude until the user reconnects under Settings → Connectors.
+- **The browser session** stays the `wb_session` cookie. With chat off it lasts 24 hours; with chat on, 30 days, as today. `/auth/logout` ends it on the server, with every other session the user holds and their connector tokens, so signing out also disconnects Claude until the user reconnects under Customize → Connectors.
 - **Requests:**
   - the consent POST needs a same-origin `Origin`, and a missing or null `Origin` is refused there;
   - `/token` takes no `Origin` check, because it carries no cookie and the code and the PKCE verifier authenticate it;
@@ -227,11 +227,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 
 **S1 Schema.** Shipped: numbered files from 016.
 
-**S2 Deleting and blocking one user (issue #4000).**
-- **Deleting.** `make beta-delete-user ACCOUNT=<id> CODE=<deletion code>` refuses a wrong code. Otherwise it deletes the user's rows and objects, and says that a backup already taken keeps them.
-- **Blocking.** `make beta-block-user ACCOUNT=<id>` sets `blocked_at` and `sessions_revoked_at`.
-- Both run on `malachi`, inside the compose network.
-- **Done when:** a test deletes a seeded user and finds none of their rows, connector tokens or objects, and a blocked user's cookie is refused and their token gets 401.
+**S2 Deleting and blocking one user.** Shipped: `make beta-block-user ACCOUNT=<id>` sets `blocked_at` and `sessions_revoked_at`. `make beta-delete-user ACCOUNT=<id> CODE=<deletion code>` refuses a wrong code, and otherwise prints what it would delete; with `CONFIRM=yes` it deletes the user's rows, objects and exports, and says that a backup already taken keeps them. Both run in the web image on `malachi` (`apps/server/proto/malachi/user_admin.py`).
 
 ## Phase 2: the plugin (`packages/engine/plugin`)
 
@@ -256,7 +252,7 @@ A 401 from the door itself has no way back in the chat: the tools fail, then van
 - **DNS:** `tools` names public resolvers. The host's resolver gives the tailnet address, whose listener refuses a container, and public DNS gives the Funnel relay.
 - **Off by default:** `OPENROUTER_LINKING_ENABLED` always, and `UPLOADS_ENABLED` until issue #4001 lands.
 - **Settings:** compose sets `WEB_PUBLIC_URL` from `PUBLIC_URL`. W2's redirect and budget settings, `FS_REDIRECT_URI` and `GENEALOGY_SIGNIN_CALLS_PER_MINUTE`, are in compose and the env template, unset by default. Before invited users, set the FamilySearch budget, and the transcription cap at 5 or more.
-- **Make targets:** `malachi-up`, `-check`, `-logs`, `-deploy REF=<sha>`, `-backup`, `-restore-check`, `-restore`, `-export`, `-openrouter EMAIL=`, `-prune`, `-down`, `-wipe` and `-rehearsal`.
+- **Make targets:** `malachi-up`, `-check`, `-logs`, `-deploy REF=<sha>`, `-backup`, `-restore-check`, `-restore`, `-export`, `-openrouter EMAIL=`, `-prune`, `-down`, `-wipe` and `-rehearsal`; `beta-block-user ACCOUNT=` and `beta-delete-user ACCOUNT= CODE= [CONFIRM=yes]`.
 - **Never** run `tailscale serve reset`, `tailscale funnel --https=443 off` or `make proto-up` with defaults on `malachi`, and do not reboot it for a test: `/wiki` and `/pop-stats` are production ingress for every installed `.mcpb`.
 
 **D2 Monitoring.** Before invited users: a scheduled `make malachi-check` that emails the lead, and logs that survive a redeploy. The per-call log line ties a call to a user. `make malachi-backup` runs by hand, and nothing schedules it.
@@ -275,8 +271,8 @@ The page also says:
 - **A paid Claude plan:** plugins need one.
 - **Living people:** do not store information about living people.
 - **This is a beta:** nothing promises your work survives, so download what you want to keep.
-- **No desktop extension** on that Claude account: turn it off under Settings → Extensions on each computer, or use a second Claude account.
-- **Signing in again:** what to expect when FamilySearch ends a session, and when the connector token itself expires (reconnect under Settings → Connectors), written from the sittings.
+- **No desktop extension** on that Claude account: turn it off under Settings → Desktop app → Extensions on each computer, or use a second Claude account.
+- **Signing in again:** what to expect when FamilySearch ends a session, and when the connector token itself expires (reconnect under Customize → Connectors), written from the sittings.
 - **Feedback:** where to email it, with the conversation pasted in.
 - **Team and Enterprise plans:** an Owner adds the connector and makes the plugin available.
 

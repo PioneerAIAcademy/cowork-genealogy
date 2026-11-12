@@ -179,8 +179,10 @@ back as several disagreeing rows). The tool collapses them to one row per
     "response returns only matching links plus `returned` (their count). Pass " +
     "`projectPath` to store the place's full list (every year, every host) in the " +
     "project for research_query({section: 'external_collections'}). Inline `results[]` is " +
-    "deduplicated and capped at 200 (`inlineCapped`). A whole country such as the United " +
-    "States is too large: ask for a state.",
+    "deduplicated and capped at 200 (`inlineCapped`). A place with more than 1000 links, " +
+    "such as the United States, returns an error and no list; given `projectPath`, it is " +
+    "recorded as looked up, so build_external_search_url accepts a site-wide search for " +
+    "exactly that place. Look up a smaller place inside it for its own collections.",
   inputSchema: {
     type: "object",
     properties: {
@@ -264,12 +266,12 @@ earlier); `count=1001` is HTTP 400. Offset paging is wrong here, not merely slow
 the endpoint's order changes on every call, so pages repeat and skip rows (six
 paged fetches of Venango's 510 gave 337–365 distinct rows).
 
-**A partial list is an error, never an answer**, and nothing is stored:
+**A partial list is an error, never an answer**, and no rows are stored:
 
 | Response | Result |
 |----------|--------|
 | no numeric `totalResults` | error: completeness cannot be told |
-| `totalResults` > 1000 | error naming a smaller scope — a state or county, not a whole country (the United States has 1,998) |
+| `totalResults` > 1000 | error; with `projectPath`, the place is recorded as `too_large` (below), else the error says to pass `projectPath`. Either way it names a smaller place for that place's own collections (the United States has 1,998) |
 | `totalResults` > rows returned | error: the list is partial |
 
 A place with no curated links answers `{"totalResults": 0, "collections": []}`,
@@ -326,6 +328,14 @@ them.
   given; a bare `"England"` therefore gets an empty entry beside the 753 rows
   tagged `England, United Kingdom`, and `research_query({place: "England"})`
   reaches none of them — pass `place_search`'s full name.
+- **A place too large to list is recorded, not skipped.** Decided 2026-11-11
+  (chesworthrm, reviewing the place gate): a `totalResults` > 1000 refusal stores
+  `{ "rows": [], "too_large": true }` for the queried place, so the refusal counts
+  as the lookup for `build_external_search_url`'s place gate
+  (`build-external-search-url-tool-spec.md` §3.12). It covers only that exact
+  place, never one inside it, and `project_context` reports it as `tooLarge`, not
+  as zero collections. Rows another place's fetch files under it keep the flag;
+  only a fetch of that same place clears it.
 - **The full list, always.** Every row, every year, every host: `startYear`,
   `endYear` and `host` narrow only the inline copy.
 - **Same bytes for the same data.** Places and rows are sorted, nothing is
@@ -409,7 +419,7 @@ project convention:
 | Other non-2xx | Throw: `"FamilySearch external-links API error: ${status} ${statusText}."` |
 | Invalid JSON in response | Throw: `"FamilySearch returned a response that was not valid JSON. Retry once; if it persists, surface this to the user."` |
 | No numeric `totalResults` | Throw: completeness cannot be told; nothing is stored. Retry once, then surface to the user. |
-| `totalResults` > 1000 | Throw, naming a smaller scope (a state or county, not a whole country); nothing is stored. |
+| `totalResults` > 1000 | Throw. With `projectPath` naming a project, first store the place as `too_large` (no rows) and say it now counts as looked up for a site-wide build of exactly that place; otherwise say to pass `projectPath`. Both name a smaller place for its own collections. |
 | `totalResults` > rows returned | Throw: the list is partial; nothing is stored. Retry once, then surface to the user. |
 | Zero matches after filter | Return `results: []` (with the place's `totalForPlace`). Not an error. |
 
@@ -470,7 +480,7 @@ API. Bypasses the MCP harness for fast debugging. Modeled on
 | 1 | Returns matching collections with url + linkText only | Happy path + field stripping |
 | 2 | Includes collections with empty start/end years | Permissive empty-year inclusion (always) |
 | 3 | Fetches the whole list in ONE request (offset=0, count=1000) — never pages | One request; inline cap 200 + `inlineCapped` |
-| 4 | Refuses a response with no totalResults / a partial list / a place over 1,000 | The three completeness errors; nothing stored (`external-links-search-store.test.ts`) |
+| 4 | Refuses a response with no totalResults / a partial list / a place over 1,000 | The three completeness errors; no rows stored, and a place over 1,000 stored as `too_large` — kept through another place's fetch, cleared by its own, shown as `tooLarge` by `project_context` (`external-links-search-store.test.ts`) |
 | 5 | Returns empty results cleanly for a place that resolves but has no collections | Empty-data path (`results: []`, `totalForPlace: 0`) |
 | 6 | Throws an instructional error on 403 | Rate-limit / WAF error wording |
 | 7 | Throws an instructional error on 429 | Rate-limit error wording |
