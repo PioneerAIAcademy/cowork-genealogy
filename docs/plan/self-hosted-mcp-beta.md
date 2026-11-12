@@ -1,6 +1,6 @@
 # Self-hosted remote MCP server: a limited beta
 
-**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2's first half (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget; PR #4292), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), D1's stack, and S2's block and delete targets. The rest is listed under "Who builds what". The live sittings measured the reconnect design under "When a FamilySearch session ends" (P0.2 items 10 and 11). FamilySearch's approval, as any app on its API needs, comes before launch.
+**Status:** Draft (2026-11-05). Shipped: `project_list`'s desktop and worker halves (PR #3852), E1's one front door (PR #4225), S1, W1, W2 (users by FamilySearch id, 24-hour sessions with the chat off, single-use state, the redirect setting and the sign-in budget, PR #4292; Claude's authorization server and the door's 401, issue #3997, whose first live sign-in is owed), W3's viewer data, uploads, download, OpenRouter linking, the policy routes (their text is L1) and account data, E2's settings and the connector's `project_list`, E4's process-wide and per-user limits, E5's direct reads (issue #4311; its live connector check is owed), the connector plugin build, the probe's reconnect flags, G5's capture wording (PR #4387), D1's stack, and S2's block and delete targets. The rest is listed under "Who builds what". The live sittings measured the reconnect design under "When a FamilySearch session ends" (P0.2 items 10 and 11). FamilySearch's approval, as any app on its API needs, comes before launch.
 
 ## What this is
 
@@ -195,11 +195,13 @@ Desktop 4.23118 and 5.1231. Items 6, 8 and 9 run before the first invited user.
   - `/token` takes no `Origin` check, because it carries no cookie and the code and the PKCE verifier authenticate it;
   - other cookie routes keep `SameSite=Lax`, as today.
 - **The FamilySearch redirect URI** defaults to `<public URL>/callback`, and `FS_REDIRECT_URI` overrides it.
-- **Claude's authorization server (issue #3997)** runs on the Python MCP SDK's handlers (`create_auth_routes`, with `mcp` moved from the dev group into `proto-web`):
+- **Claude's authorization server (issue #3997)** runs on the Python MCP SDK's `/authorize` and `/token` handlers (`create_auth_routes`, with `mcp` added to `proto-web`). `OAUTH_ISSUER` on the web tier turns it on, and the tier refuses to start unless that equals `PUBLIC_URL`, with FamilySearch sign-in on and chat off:
   - **Metadata:** our own, advertising client metadata documents, `none` and `S256`, with no registration or revocation endpoint. The issuer is one setting, printed byte for byte the same by both tiers' metadata.
-  - **Clients:** `/authorize` checks a fixed allowlist of Claude's client documents, recorded in P0.2. Each entry sets `token_endpoint_auth_method` none, `grant_types` `[authorization_code]` and the advertised scope.
-  - **Consent:** the consent page names the client and its redirect host, links the policies, says everything is deleted when the beta ends, records the terms acceptance and refuses framing.
+  - **Clients:** `/authorize` checks a fixed allowlist of Claude's client documents, recorded in P0.2: one client id and its one redirect. Each entry sets `token_endpoint_auth_method` none and the advertised scope.
+  - **Refresh:** no refresh token is issued, and the metadata advertises `authorization_code` only. A refresh request answers `invalid_grant`, the code that sends a client back to `/authorize`: Claude may still hold a refresh token from an earlier server at the same URL (P0.2 item 14).
+  - **Consent:** the consent page names the client and its redirect host, says to continue only if the user just clicked Connect in Claude, links the policies, says everything is deleted when the beta ends, records the terms acceptance and refuses framing.
   - **Codes and tokens:** stored only as hashes, and the code is deleted when it is exchanged. One constant sets the token's lifetime.
+  - **The door's 401** names the metadata and the scope, and says `error="invalid_token"` when a token was sent and refused, as the probe did.
 - **One callback** serves both flows, told apart by the signed state cookie. With chat off, it consumes the single-use state record before it calls FamilySearch; with chat on, the signed state cookie alone guards it, as today. It stores the FamilySearch token, encrypted with Fernet as today. With chat off it creates a user only in the connector flow, with the terms accepted, under the allowlist. A plain browser sign-in by an existing user replaces their FamilySearch token and leaves their connector token alone. It refuses a blocked user.
 - **FamilySearch budget (issue #3992),** off unless set: the code exchange and the identity read share one small process-wide budget. A missing, mismatched or used state is refused without touching it. Past the budget, the callback answers 503 "busy, try again" with the state intact.
 - **Done when:**
@@ -220,7 +222,7 @@ Desktop 4.23118 and 5.1231. Items 6, 8 and 9 run before the first invited user.
 - **`/`, signed in:** the FamilySearch account's name, "go back to Claude and say continue", the account id and deletion code, and the user's projects, each with upload and download links.
 - **`/upload/<project id>`:** pdf.js sends the text layer beside the original, with progress. Serve pdf.js from the tier. `uploadUrl` points here.
 - **OpenRouter link and unlink,** shown only when linking is on.
-- **Done when:** the done-when list on issue #4001 passes. Issue #3997 adds the bare landing first, because without it a sign-in ends on a 404.
+- **Done when:** the done-when list on issue #4001 passes.
 
 ### Schema and deletion
 
@@ -322,7 +324,7 @@ When FamilySearch hosts the open beta:
 Each of these is additive and keeps the handoff's behavior as the default, except where the handoff's alignment section says. Before each one, check for open PRs on the same files, keep the PR small, and ask Richard to review it. Each change also lists its new settings in the handoff plan's step 9 or 15, unset there.
 - **Done:** PR #3852's `project_list` and router step; W1; W3's routes; E1; E4's process-wide and per-user limits; S1's schema files.
 - **Web tier,** `apps/server/proto/web/`: W2 and W4. With chat off, sign-in asks for no `offline_access` and the callback stores no refresh token. Chat on stays the default.
-- **Dependencies,** `apps/server/pyproject.toml`, `apps/server/uv.lock` and `apps/server/proto/web/requirements.txt`: `mcp` joins `proto-web`. It brings nine packages `proto-web` lacks: `httpx-sse`, `jsonschema` with `attrs`, `jsonschema-specifications`, `referencing` and `rpds-py`, `pydantic-settings`, `pyjwt` and `sse-starlette`. Before W2 merges, Richard reviews the dependency change.
+- **Dependencies,** `apps/server/pyproject.toml`, `apps/server/uv.lock` and `apps/server/proto/web/requirements.txt`: `mcp` joins `proto-web`. It brings ten packages `proto-web` lacks: `httpx-sse`, `jsonschema` with `attrs`, `jsonschema-specifications`, `referencing` and `rpds-py`, `pydantic-settings`, `pyjwt`, `sse-starlette`, and `pywin32`, pinned under a win32 marker only. Before W2 merges, Richard reviews the dependency change.
 - **The tool server,** `packages/engine/mcp-server/`: E2, E3 and E5, and the MCP App's fold into `createServer`.
 - **The plugin,** which `eb-worker.zip` carries: G5's wording, E3's and E5's agent lines, and G6.
 
@@ -332,7 +334,7 @@ The lead's two agents hold the first group. The team builds the rest; an issue l
 
 | Item | Issue | Who | Due |
 |---|---|---|---|
-| W2 Claude's authorization server | issue #3997 | remote-server agent | 19 Nov |
+| W2 Claude's authorization server | issue #3997 | remote-server agent | Merged; the first live sign-in is owed |
 | E3 Sign-in link and wording | issue #3995 | remote-server agent | 23 Nov |
 | D2 Monitoring | none | remote-server agent | Before invited users |
 | MCP App cards, case file and fold | [the MCP App plan](mcp-app-viewer.md) | MCP App agent | The demo |

@@ -50,6 +50,7 @@ import {
   keptFamilySearchStatus,
   toolNameOf,
   PRM_PATH,
+  CONNECTOR_SCOPE,
   startHttpServer,
   TURN_ID_HEADER,
   type AuthorizeRequest,
@@ -863,22 +864,40 @@ describe("tool server over Streamable HTTP", () => {
           headers: { Host: "evil.example" },
         });
         expect(res.status).toBe(200);
+        // The shape Claude signed in against (the connector probe, issue #3529).
         expect(await res.json()).toEqual({
           resource: `${issuer}/mcp`,
           authorization_servers: [issuer],
+          scopes_supported: [CONNECTOR_SCOPE],
+          bearer_methods_supported: ["header"],
         });
 
-        const refused = await fetch(`${url}/mcp`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream" },
-          body: JSON.stringify(call("convert_calendar", {})),
-        });
+        const post = (headers: Record<string, string>) =>
+          fetch(`${url}/mcp`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", ...headers },
+            body: JSON.stringify(call("convert_calendar", {})),
+          });
+        // No token: no error code (RFC 6750 3.1), and the URL the challenge
+        // names is the one just served.
+        const noToken = await post({});
+        expect(noToken.status).toBe(401);
+        expect(noToken.headers.get("WWW-Authenticate")).toBe(
+          `Bearer resource_metadata="${issuer}${PRM_PATH}", scope="${CONNECTOR_SCOPE}"`,
+        );
+        await noToken.text();
+        // A token that was sent and refused says so: this is what tells Claude
+        // to offer Reconnect rather than report the server unreachable.
+        const refused = await post({ Authorization: "Bearer not-a-token-this-server-issued" });
         expect(refused.status).toBe(401);
-        // The URL the challenge names is the one just served.
         expect(refused.headers.get("WWW-Authenticate")).toBe(
-          `Bearer resource_metadata="${issuer}${PRM_PATH}"`,
+          `Bearer error="invalid_token", resource_metadata="${issuer}${PRM_PATH}", scope="${CONNECTOR_SCOPE}"`,
         );
         await refused.text();
+        // An admitted token is still admitted on this server.
+        const admitted = await post(connectorHeaders());
+        expect(admitted.status).toBe(200);
+        await admitted.text();
       } finally {
         withIssuer.closeAllConnections();
         await new Promise<void>((r) => withIssuer.close(() => r()));
@@ -1624,6 +1643,46 @@ describe("E4. per-user limits on the connector door (#3999)", () => {
     expect((await res.json()).error.message).toBe("Not authenticated. Sign in again to reconnect.");
     expect(gated.entered.has(blockedId)).toBe(false);
     await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+  });
+
+  it("with an issuer, that refusal says the token is dead, so the client signs in again", async () => {
+    // The same path on a server that has an issuer: the shared one has none, so
+    // its challenge is the bare `Bearer` whatever the door passes.
+    const issuer = "https://beta.example";
+    const withIssuer = await startHttpServer({
+      host: "127.0.0.1", port: 0, baseConfig: {}, bindStore, authorize, lookupConnector, projectOwner,
+      ownedProjects, issuer,
+    });
+    const addr = withIssuer.address();
+    if (!addr || typeof addr !== "object") throw new Error("no port");
+    const post = (projectPath: string) =>
+      fetch(`http://127.0.0.1:${addr.port}/mcp`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Accept: "application/json, text/event-stream", ...userA },
+        body: JSON.stringify(call("project_context", { projectPath })),
+      });
+    try {
+      bindStore.mockClear();
+      const gated = gatedStores(5);
+      const held = Array.from({ length: 4 }, (_, i) => post(projPath("f", i)));
+      const waiting = post(projPath("f", 4));
+      try {
+        await vi.waitFor(() => expect(__userLimitsStateForTests("u_A")).toMatchObject({ running: 4, waiting: 1 }));
+        lookupConnector.mockImplementationOnce(async () => null);
+      } finally {
+        await release(gated, held);
+      }
+      const res = await waiting;
+      expect(res.status).toBe(401);
+      expect(res.headers.get("WWW-Authenticate")).toBe(
+        `Bearer error="invalid_token", resource_metadata="${issuer}${PRM_PATH}", scope="${CONNECTOR_SCOPE}"`,
+      );
+      await res.text();
+      await vi.waitFor(() => expect(__userLimitsStateForTests().users).toBe(0));
+    } finally {
+      withIssuer.closeAllConnections();
+      await new Promise<void>((r) => withIssuer.close(() => r()));
+    }
   });
 
   it("a call that waited runs with the FamilySearch token the second lookup returns", async () => {
