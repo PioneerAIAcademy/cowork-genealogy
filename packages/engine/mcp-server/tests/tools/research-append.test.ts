@@ -18562,8 +18562,9 @@ describe("research_append: a localities guide carries the template's three headi
       await writeProject();
       const r = await append(without(title));
       expect(r.ok).toBe(false);
+      expect(refusals(r)).toHaveLength(1);
       const msg = refusals(r).join(" ");
-      expect(msg).toContain(`'## ${title}'`);
+      expect(msg).toContain(`heading '## ${title}'. Add it as its own line`);
       for (const other of LOCALITY_GUIDE_HEADINGS.filter((t) => t !== title)) {
         expect(msg).not.toContain(`'## ${other}'`);
       }
@@ -18611,6 +18612,7 @@ describe("research_append: a localities guide carries the template's three headi
     await writeProject();
     const msg = refusals(await append("")).join(" ");
     for (const title of LOCALITY_GUIDE_HEADINGS) expect(msg).toContain(`'## ${title}'`);
+    expect(msg).toContain("headings '## Jurisdiction overview', '## Available record types', '## Research tips'. Add each as its own line");
   });
 
   it("does not check a null guide or an absent one", async () => {
@@ -18671,6 +18673,78 @@ describe("research_append: a localities guide carries the template's three headi
     expect(checkFirstPlace).not.toHaveBeenCalled();
   });
 
+  it("in a batch, names every refused guide, not only the first", async () => {
+    await writeProject();
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "localities", op: "append", entry: entry(without("Jurisdiction overview")) },
+        { section: "localities", op: "append", entry: entry(without("Research tips")) },
+      ],
+    });
+    const errors = failure(r).errors;
+    expect(errors.filter((e) => e.startsWith("ops[0]: guide_markdown"))).toHaveLength(1);
+    expect(errors.filter((e) => e.startsWith("ops[1]: guide_markdown"))).toHaveLength(1);
+  });
+
+  it("returns a refusal an earlier check collected together with the guide's", async () => {
+    await writeProject();
+    const { id: _omit, ...sourceNoId } = validSource("x");
+    const r = await researchAppend({
+      projectPath: dir,
+      ops: [
+        { section: "sources", op: "append", entry: { ...sourceNoId, gedcomx_source_description_id: "S999" } },
+        { section: "localities", op: "append", entry: entry(without("Research tips")) },
+      ],
+    });
+    const msg = failure(r).errors.join(" ");
+    expect(msg).toMatch(/ops\[0\]: gedcomx_source_description_id 'S999' not found/);
+    expect(msg).toMatch(/ops\[1\]: guide_markdown lacks .*'## Research tips'/);
+  });
+
+  it.each([
+    ["a number", 5, "a number"],
+    ["an array of lines", ["## Jurisdiction overview", "## Available record types", "## Research tips"], "an array"],
+    ["an object", { text: GUIDE }, "an object"],
+  ])("refuses a guide that is %s, which the schema check does not type", async (_label, guide, got) => {
+    await writeProject();
+    const r = await append(guide);
+    expect(r.ok).toBe(false);
+    expect(refusals(r).join(" ")).toContain(`guide_markdown must be the whole guide as one markdown string, not ${got}`);
+    expect((await readResearch()).localities ?? []).toHaveLength(0);
+  });
+
+  it("refuses an update that sets a non-string guide", async () => {
+    await writeProject();
+    expect((await append(GUIDE)).ok).toBe(true);
+    const r = await researchAppend({
+      projectPath: dir, section: "localities", op: "update", entryId: "loc_001", fields: { guide_markdown: 7 },
+    });
+    expect(refusals(r).join(" ")).toContain("not a number");
+    expect((await readResearch()).localities[0].guide_markdown).toBe(GUIDE);
+  });
+
+  it("still reads the collection catalog on a call it refuses, which warms it for the re-send", async () => {
+    // Deliberate (spec §5.14, "Not covered"): skipping the read would leave a cold
+    // cache for the corrected re-send, whose counts research-plan reads.
+    await writeProject();
+    const loader = vi.fn(async () => new Map());
+    const refused = await researchAppendFromCaller(
+      {
+        projectPath: dir,
+        section: "localities",
+        op: "append",
+        entry: {
+          ...entry(without("Research tips")),
+          collections: [{ id: "4237104", title: "Portugal, Church Books", date_range: "1539-1911" }],
+        },
+      } as never,
+      loader,
+    );
+    expect(refused.ok).toBe(false);
+    expect(loader).toHaveBeenCalledTimes(1);
+  });
+
   it("tells the agent to add the heading and re-send, never to drop the guide", async () => {
     await writeProject();
     const msg = refusals(await append(without("Available record types"))).join(" ");
@@ -18689,8 +18763,9 @@ describe("research_append: a localities guide carries the template's three headi
 
 // The engine and the eval grader must agree on every shape, or a guide the tool
 // accepted fails the test that exists to catch it. Expected values are the
-// validator's own `_heading()` answers, measured 2026-11-12 by running that function
-// on these strings after the other two headings.
+// validator's own `_heading()` answers on these strings after the other two
+// headings; the same table runs against `_heading()` itself in
+// eval/harness/tests/unit/test_locality_guide_validators.py. Change one, change both.
 describe("missingGuideHeadings agrees with the eval validator's _heading() (#4479)", () => {
   const BEFORE = "## Jurisdiction overview\n\n## Available record types\n\n";
   it.each([
@@ -18698,9 +18773,9 @@ describe("missingGuideHeadings agrees with the eval validator's _heading() (#447
     ["x\n## Research tips", true],
     ["x\r\n## Research tips", true],
     ["x\r## Research tips", false],
-    ["x ## Research tips", false],
-    ["x ## Research tips", false],
-    ["## Reſearch tips", true],
+    ["x\u2028## Research tips", false],
+    ["x\u2029## Research tips", false],
+    ["## Re\u017fearch tips", true],
     ["## RESEARCH TIPS (1840)", true],
     ["### Research tips", false],
     ["Notes: ## Research tips", false],
@@ -18710,8 +18785,21 @@ describe("missingGuideHeadings agrees with the eval validator's _heading() (#447
     ["## research tipsy", true],
     ["", false],
     ["##  Research tips", true],
+    ["# Research tips", false],
+    ["Research tips", false],
+    ["##\nResearch tips", false],
+    ["##\u00a0Research tips", false],
+    ["> ## Research tips", false],
+    ["- ## Research tips", false],
+    ["## Research tips and tricks", true],
   ])("%j has the heading: %s", (tail, found) => {
     expect(missingGuideHeadings(BEFORE + tail)).toEqual(found ? [] : ["Research tips"]);
+  });
+
+  it("does not count a heading behind a byte-order mark at the very start", () => {
+    expect(missingGuideHeadings("\ufeff## Research tips\n## Jurisdiction overview\n## Available record types")).toEqual([
+      "Research tips",
+    ]);
   });
 });
 

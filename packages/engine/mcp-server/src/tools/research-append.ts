@@ -10717,10 +10717,11 @@ export function missingGuideHeadings(markdown: string): string[] {
 
 /**
  * Refuse a `localities` write whose `guide_markdown` lacks a template heading
- * (spec §5.14). Runs on an append, and on an update whose `fields` set the key, when
- * its value is a string; an absent key and `null` are the schema's to allow, and a
- * persisted guide is never re-read. Synchronous, so it runs even when an earlier
- * gate refused: one refused call names every fix.
+ * (spec §5.14). Runs on an append, and on an update whose `fields` set the key. An
+ * absent key and `null` are the schema's to allow, and a persisted guide is never
+ * re-read. Any other non-string is refused here, since `validator.ts` does not type
+ * this field. Synchronous, so it runs even when an earlier `prepareOps` check has
+ * already collected a refusal, and both come back in one call.
  */
 function localityGuideHeadingRefusals(
   ops: ResearchAppendOp[],
@@ -10730,7 +10731,19 @@ function localityGuideHeadingRefusals(
   for (const [i, op] of ops.entries()) {
     const body = localityBody(op);
     const guide = body && typeof body === "object" ? (body as Record<string, unknown>).guide_markdown : undefined;
-    if (typeof guide !== "string") continue;
+    if (guide === undefined || guide === null) continue;
+    if (typeof guide !== "string") {
+      const got = Array.isArray(guide) ? "an array" : typeof guide === "object" ? "an object" : `a ${typeof guide}`;
+      out.push(
+        fmt(
+          i,
+          `guide_markdown must be the whole guide as one markdown string, not ${got}. Re-send this ` +
+            `entry with it as a string carrying the template's ` +
+            `${LOCALITY_GUIDE_HEADINGS.map((t) => `'## ${t}'`).join(", ")} lines.`,
+        ),
+      );
+      continue;
+    }
     const missing = missingGuideHeadings(guide);
     if (missing.length === 0) continue;
     const many = missing.length > 1;
