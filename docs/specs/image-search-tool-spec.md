@@ -431,7 +431,7 @@ old answer (every id in one array under a 13-character key wrapper) for a
 6,295-image group was 113,324 characters, and any
 group past 2,778 images crossed the 50,000-character line above which Claude
 Code saves a tool result to a file and hands the agent a preview
-(`docs/specs/catalog-search-tool-spec.md:464`). The full list bought the agent
+(`docs/specs/catalog-search-tool-spec.md`, "Answer size" → "Why"). The full list bought the agent
 nothing: it may read at most `IMAGE_BROWSE_CAP` = 20 pages of a group per
 project (`src/utils/browse-budget.ts`), and in every sample and fixture the ids
 form one unbroken run. A run answers in about 75 characters whatever its
