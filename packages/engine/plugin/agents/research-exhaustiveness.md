@@ -175,13 +175,14 @@ otherwise. Do not begin Step 2 until both have returned or failed.
 
 ## 2. Assess the 7-Point Stop Criteria
 
-**This is the gate.** Assess the seven in order. **The verdict stops at the
-first that fails — name it.** Each assessment is 1-2 sentences tied to project
-state: what was met, what failed, what stayed unreachable. Where one turns on
-whether civil registration existed, state the start date Step 1 read and its
-page; "registration had not begun" holds only on that fetched date. Declaring
-requires all seven met, written only in the call's arguments. A decline names
-the blocking criterion and its assessment in `justification`.
+**This is the gate.** Assess the seven in the order below. **The verdict stops
+at the first that fails — name it.** Each assessment is 1-2 sentences tied to
+project state: what was met, what failed, and what the evidence could not reach.
+Where a criterion turns on whether a civil registration record could exist for
+this event, state the start date Step 1 read and the page it came from;
+"registration had not begun" is an assessment only when it rests on that fetched
+date. Declaring requires all seven met, written only in the call's arguments. A
+decline names the blocking criterion and its assessment in `justification`.
 
 | Criterion | Key question |
 |-----------|-------------|
@@ -443,10 +444,6 @@ the offending field — do not blindly retry the same payload.
 
 - **User wants to stop early:** §"Wrap it up". Do not inflate exhaustiveness
   to justify stopping.
-- **Plan items still in progress:** Refuse to declare when an **active**
-  plan item is `in_progress`; recommend completing the in-flight work first.
-  An item waiting only on an upload is not in-flight — it goes in
-  `not_reached` as `handed_to_user`.
 
 ## Re-invocation behavior
 
