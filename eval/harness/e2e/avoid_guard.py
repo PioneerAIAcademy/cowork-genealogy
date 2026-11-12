@@ -251,10 +251,19 @@ def parse_date(text: str | None) -> tuple[int, int | None, int | None] | None:
     return (int(year), month, day)
 
 
-def _date_matches(avoided: tuple[int, int | None, int | None], fact: dict[str, Any]) -> bool:
+def _date_matches(
+    avoided: tuple[int, int | None, int | None], fact: dict[str, Any], *, coarser_ok: bool
+) -> bool:
+    """Every component the avoided date states equals the fact's. With
+    `coarser_ok`, a fact that states fewer components ("Aug 1808", "1808")
+    also matches when every component it does state agrees."""
     for text in (fact.get("standard_date"), fact.get("date")):
         stated = parse_date(text if isinstance(text, str) else None)
-        if stated and all(a is None or a == b for a, b in zip(avoided, stated)):
+        if not stated:
+            continue
+        if all(a is None or a == b for a, b in zip(avoided, stated)):
+            return True
+        if coarser_ok and all(b is None or a == b for a, b in zip(avoided, stated)):
             return True
     return False
 
@@ -266,19 +275,36 @@ def _place_matches(place: str, fact: dict[str, Any]) -> bool:
     )
 
 
-def _value(finding: dict[str, Any], tree: dict[str, Any]) -> dict[tuple, Hit]:
+def _value(finding: dict[str, Any], tree: dict[str, Any], subjects: set[str]) -> dict[tuple, Hit]:
+    """The avoided value, on any person or Couple when the avoided date is a
+    full day-month-year; a year-only or month-year value is too common to
+    hold against an unrelated relative, so it binds on the subject only. On
+    the subject, a fact dated less precisely than the avoided date also
+    counts when the place matches too (a wrong "1808, Laakirchen" death)."""
     hits: dict[tuple, Hit] = {}
     ftype = _fact_type_key((finding.get("details") or {}).get("fact_type"))
     date, place = avoided_value(finding)
     avoided_date = parse_date(date)
     if not ftype or not (avoided_date or place):
         return hits
+    full_date = bool(avoided_date and avoided_date[2] is not None)
 
     def scan(holder: tuple[str, ...], facts: list[dict[str, Any]], ids: list[str], label: str) -> None:
+        on_subject = bool(set(ids) & subjects)
+        if avoided_date and not full_date and not on_subject:
+            return
         for f in facts or []:
             if _fact_type_key(f.get("type")) != ftype:
                 continue
-            found = _date_matches(avoided_date, f) if avoided_date else _place_matches(place or "", f)
+            if avoided_date:
+                found = _date_matches(avoided_date, f, coarser_ok=False) or (
+                    on_subject
+                    and bool(place)
+                    and _place_matches(place or "", f)
+                    and _date_matches(avoided_date, f, coarser_ok=True)
+                )
+            else:
+                found = _place_matches(place or "", f)
             if found:
                 stated = f.get("standard_date") or f.get("date") or f.get("place")
                 hits[(*holder, ftype, avoided_date or place)] = Hit(
@@ -397,7 +423,7 @@ def finding_hits(
         if not presence and _candidate(finding).get("provenance_only") is not True:
             result.hits.update(_edge(finding, tree, subjects, recover_findings, starting_tree))
     elif branch == "fact":
-        result.hits.update(_value(finding, tree))
+        result.hits.update(_value(finding, tree, subjects))
         record = _candidate(finding).get("record")
         if record:
             result.hits.update(_provenance([record], tree, research))

@@ -467,6 +467,37 @@ def test_a_fact_avoid_passes_on_another_date():
     assert _guard(output, _fact_avoid(), _tree(subject)) is output
 
 
+def test_a_year_only_avoided_value_binds_on_the_subject_not_on_a_relative():
+    # wasyl-kapach-birth f3's shape: a bare year is too common to hold against
+    # a relative a correct run fills in.
+    findings = _fact_avoid()
+    findings["findings"][0]["details"] = {"fact_type": "Birth", "wrong_value": "1883"}
+    wife = _person("I1", "Tekla", "Kapach", facts=[{"id": "F1", "type": "Birth", "date": "abt 1883"}])
+    output = _valid_output()
+    assert _guard(output, findings, _tree(_subject(), wife)) is output
+    subject = _subject()
+    subject["facts"] = [{"id": "F2", "type": "Birth", "date": "1883"}]
+    assert _guard(_valid_output(), findings, _tree(subject))["avoid_guard"]["forced_false"][0]["person_ids"] == ["S1"]
+
+
+def test_a_coarser_date_on_the_subject_counts_when_the_place_matches():
+    findings = _fact_avoid()
+    findings["findings"][0]["details"]["wrong_candidate"] = {"date": "24 August 1808", "place": "Laakirchen"}
+    for date, place, forced in (
+        ("Aug 1808", "Laakirchen, Gmunden, Austria", True),
+        ("1808", "Laakirchen", True),
+        ("1808", "Linz", False),
+        ("Sep 1808", "Laakirchen", False),
+    ):
+        subject = _subject()
+        subject["facts"] = [{"id": "F1", "type": "Death", "date": date, "place": place}]
+        out = _guard(_valid_output(), findings, _tree(subject))
+        assert ("avoid_guard" in out) is forced, (date, place)
+    relative = _person("I1", "Simon", "Heydocker", facts=[{"id": "F1", "type": "Death", "date": "1808", "place": "Laakirchen"}])
+    output = _valid_output()
+    assert _guard(output, findings, _tree(_subject(), relative)) is output
+
+
 def test_a_fact_avoid_reads_a_marriage_on_the_couple():
     findings = _fact_avoid()
     details = findings["findings"][0]["details"]

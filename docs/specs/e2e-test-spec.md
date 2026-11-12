@@ -325,7 +325,11 @@ from its own shape (Decision 20 of `docs/plan/conclusion-tree.md`):
   person, the subject included, or on a Couple (a Marriage lives on the edge).
   The value is `details.date`/`.place`, `wrong_candidate.date`/`.place`, or
   `details.wrong_value`. A stated date decides: every component it states
-  (year, month, day) must equal the fact's; place is then not compared. A
+  (year, month, day) must equal the fact's. A full day-month-year binds on
+  any person; a year-only or month-year value binds on the subject only,
+  since a bare year is too common to hold against a relative. On the subject,
+  a fact dated less precisely ("1808" against "24 August 1808") also counts
+  when its stated components agree and the avoided place matches too. A
   `wrong_candidate.record` is also checked by provenance.
 - **Wrong-relationship** — a `relationship` finding with no records. It fails
   on an edge joining a subject to the candidate in the role

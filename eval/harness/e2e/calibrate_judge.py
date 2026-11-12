@@ -426,7 +426,7 @@ def load_annotated_runs(
             human["notes"] = notes
         if "proof_quality_score" in ann:
             human["proof_quality_score"] = ann["proof_quality_score"]
-        # Subject id(s) for the avoid-guard's subject exemption — a real
+        # Subject id(s) for the avoid guard's edge check — a real
         # source_pid plus final_research's project.subject_person_ids.
         subject_ids: set[str] = set()
         src = fixture.get("source_pid")
