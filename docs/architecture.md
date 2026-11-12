@@ -871,27 +871,33 @@ There **is** an orchestrator, and it is a skill:
    overrides a direct request for a downstream skill and sends the router back
    through the table; a change to routing behaviour that edits only the table
    can be reversed by that section.
-3. **One mode, in the router.** It runs the loop the same way for every run: one
-   step per turn (below), decisions logged to the audit-trail fields. **Only the
-   router reads `--autonomous`.** Its own flag branch went with S2, and six others
-   (`search-external-sites`, `question-selection`, `search-records`,
+3. **One loop, in the router.** It runs every job the same way: one step per turn
+   (below), decisions logged to the audit-trail fields. **Only the router reads
+   `--autonomous`,** for a trigger and two rules. Its own flag branch went with
+   S2, and six others (`search-external-sites`, `question-selection`, `search-records`,
    `research-plan`, `agents/proof-conclusion.md`, `agents/gps-mentor.md`) were
    folded in beside it on the lead's call, because the browser never sends the
    flag and every one of those branches was dead on a hosted run. The router has
-   since come to read it again, for two rules: an autonomous message is always a
-   job, never a bounded ask, and it hands `userPresent: no` to
+   since come to read it again: besides the trigger in its description, an
+   autonomous message is always a job, never a bounded ask, and the router hands
+   `userPresent: no` to
    `search-external-sites` and `search-hints`, which get it on no other run, and to
    `person-evidence`, which also gets it on a "Keep going." or "Wrap it up." turn
-   (`docs/specs/e2e-test-spec.md` §5 quotes each rule). The agents read that field,
-   not the string. `agents/person-evidence.md` was left out of the folding; its
+   (`docs/specs/e2e-test-spec.md` §5 quotes each rule). Those agents read that
+   field, not the string. `agents/person-evidence.md` was left out of the folding; its
    resolve-downward rule now applies when its delegation says `userPresent: no`.
    `agents/search-records.md` hands back `userPresent: no` for
    search-external-sites only when its delegation says the search is part of an
    autonomous run, which the router's search-records delegation does not carry;
    the router sets the field itself when it spawns search-external-sites. Outside
-   the plugin, the e2e harness and `make proto-demo` send the flag, in the opening
-   message they build. So no offline suite sees the difference; only the paid eval
-   runs do.
+   the plugin, the flag is sent by the e2e harness's opening message; by
+   `opening_prompt` in `apps/server/proto/demo.py`, the prototype's default opener
+   (`make proto-demo` when no `--prompt` is given, and the `cap_main_real` and
+   `concurrent_rss_heavy` cases of `make proto-bounds`; their `-aws` twins run the
+   same scripts); and by the two research unit tests that pin the trigger and the
+   always-a-job rule (`ut_research_005`, `ut_research_023`).
+   Offline suites pin that the flag is sent; none can see what the router does
+   with it. Only the paid eval runs do.
    **gps-mentor runs only when the user asks for a second opinion, and the router
    does not yield on its verdict.** The one verdict table in the file is advisory
    — `address_first` is surfaced and recorded, and does not block, re-open a
@@ -2380,9 +2386,10 @@ a human sometimes CAN, and each reads it from the `userPresent` field of its del
 can), `search-external-sites` (a user who named the plan item will capture it; mid-run
 nobody will) and `search-hints` (a user who asked for a hint review will give verdicts;
 mid-run nobody will). Each has eval fixtures on each side. The mode difference survives in
-the router, which sets that field from the flag: an e2e run hands search-external-sites and
-search-hints `userPresent: no` where a hosted "Keep going." run leaves them at `yes`
-(search-hints gets no field, which means yes), so e2e never reaches their `yes` side.
+the router, which sets that field from the flag: on an autonomous e2e run the router hands
+search-external-sites and search-hints `userPresent: no` where a hosted "Keep going." run
+leaves them at `yes` (search-hints gets no field, which means yes), so an autonomous e2e
+run never reaches their `yes` side.
 
 Removing a capability is the bug. Two were found on 2026-08-31, both in skill bodies,
 both green in CI for months. The first is fixed; the second stands:
@@ -2438,8 +2445,9 @@ CI covered you (§9.4).
 **Write a rule that behaves differently when no user is present.** Ask which of the two
 things it removes: a pause, or a capability (§9.5). Note that no agent reads
 `--autonomous`: key an agent's rule on the `userPresent` field of its delegation, not on a
-string in the message. The router sets that field per agent in its spawn fields, so a new
-agent that needs it also needs its own line there. Removing the pause is the
+string in the message. The router sets that field per agent: in its spawn-fields paragraph
+(§"What to do"), in §"One step per turn" and, for search-hints, in its routing-table row;
+a new agent that needs it also needs its own line in the router. Removing the pause is the
 established shape and is fine: decide instead of asking, and log the decision.
 Removing a capability makes the benchmark stop measuring production, silently, and
 is almost never what you want. If a headless run genuinely cannot perform the step,
