@@ -142,7 +142,7 @@ subject triggers** (Step 3 pre-work) and **write the plan**:
 |------|---------|
 | `collections_search` | Which FamilySearch record collections cover this place — the records to consider planning |
 | `volume_search` | Digitized volumes (image groups) for this place/period — browse-only films not in indexed collections |
-| `tree_query` | The project tree's persons, facts, relationships and cited sources |
+| `tree_query` | The project tree's persons, facts and relationships; the subjects' sources with `includeSources` |
 | `project_context`, `research_query`, `external_links_search` | FS-curated third-party collections, stored per place (Step 2(b)) |
 | `place_search` | Resolve a place name to its canonical `standardPlace` + hierarchy, for writing plan items |
 | `place_search_all` | Jurisdiction succession over time — the boundary-correct jurisdiction at the event date |
@@ -200,8 +200,9 @@ and plan from the tree.
 
 **Survey what the tree already holds, before planning new searches.** For
 the subject and every other person in scope for this question, call
-`tree_query({ projectPath, personIds })` for the facts, relationships and cited
-sources it already records for them — **every fact, whether or not a
+`tree_query({ projectPath, personIds })` for the facts, relationships and source ids
+it already records for them, and `tree_query({ projectPath, personIds: subjectPersonIds,
+includeSources: true })` for what the subjects' sources record — **every fact, whether or not a
 source is attached to it.** For every one you find, **write down its date,
 place, and value (for a source, what it records) before deciding what to
 plan for that person** —

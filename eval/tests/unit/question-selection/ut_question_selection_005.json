@@ -19,7 +19,7 @@
   },
   "judge_context": [
     "Should recognize that all planned direct searches are complete (1850, 1860, 1870, 1880, 1900 censuses and death certificate) and no further direct evidence paths remain unexplored",
-    "Should name FAN (Family/Associates/Neighbors) avenues for research-plan to add as items on q_001 — examples: Thomas Flynn's neighbors in the 1850 census, witnesses to his land deeds, others from the same Irish emigrant community in Schuylkill County records.",
+    "Should say that FAN research (Patrick's and Thomas Flynn's family, associates and neighbours) is the remaining avenue, and that it goes to research-plan as items on q_001, not as a new question. It must NOT name which records, record years, collections or jurisdictions to search: choosing those is research-plan's job, and test_handback_not_record_scoped checks part of it mechanically. A reply that routes to proof-conclusion and never names the FAN pivot or research-plan at all is Completeness 2.",
     "GRADING NOTE — Tool Arguments: if the skill calls validate_research_schema, gets a validation error, self-corrects, and re-validates successfully, score Tool Arguments=3. The self-correction loop is the intended use of validate_research_schema — a single repair attempt is not a partial.",
     "**A FAN pivot is plan items, not a new question** (step mode, section E). The tool ADMITS a write here — q_001 carries a proof summary and has nothing open, which is the exemption — so this one is not refused; it is the prose that changed. Pivoting to an associate is a search on the question already open, so it routes to `research-plan`. Writing a second question is the failure this test now grades."
   ]
