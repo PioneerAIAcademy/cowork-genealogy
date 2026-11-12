@@ -304,7 +304,7 @@ A public text or unit test drawn from a report names no account id or anyone who
 
 The first invited user waits for all of these.
 
-1. **Security reviews** as each item merges: E2, E3, W2 and W4, with `/security-review` and `/code-review ultra`.
+1. **Security reviews** as each item merges: E2, E3, W2 and W4, with `/security-review` and `/review`. `/code-review ultra` runs only where one of those calls for it (lead, 2026-11-12).
 2. **The acceptance run,** with a new Claude account and a new FamilySearch account on the allowlist, on the zip users will install, built from the launch commit with the MCP App work and G6 merged. It runs in claude.ai chat and Desktop Chat:
    1. install the plugin, connect it from its Connectors tab and sign in;
    2. research a person, and see the cards and case file;
