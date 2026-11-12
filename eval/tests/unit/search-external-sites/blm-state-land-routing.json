@@ -1,0 +1,35 @@
+{
+  "test": {
+    "id": "ut_search_external_sites_016",
+    "skill": "search-external-sites",
+    "name": "Federal land-patent search in a state-land state: the BLM refusal is the answer",
+    "type": "positive",
+    "description": "Issue #4402 part 2. The researcher asks for federal land patents in Pennsylvania without naming BLM. The agent must reach for blm_glo with usState Pennsylvania; the live URL builder refuses it outside_coverage because Pennsylvania is a state-land state. The refusal is the answer: no nationwide or other-state retry, no hand-built URL, no log entry, and a route to the Pennsylvania land office and county deed records. Gated by test_blm_outside_coverage_refusal_is_the_answer.",
+    "tags": [
+      "blm_glo",
+      "external-site",
+      "land",
+      "blm-outside-coverage",
+      "direct-arm"
+    ]
+  },
+  "input": {
+    "delegation": "Did Patrick Flynn ever get a federal land patent? Search the federal land-patent records for him in Pennsylvania.\n\nuserPresent: yes\nprojectPath: <workspace>",
+    "scenario": "mid-research-flynn"
+  },
+  "mcp_fixtures": [
+    "place-search-pennsylvania-state",
+    "place-search-schuylkill-county",
+    "external-links-search-schuylkill",
+    "collections-search-pennsylvania",
+    "collections-search-schuylkill"
+  ],
+  "judge_context": [
+    "The agent must call build_external_search_url with site blm_glo and usState Pennsylvania (name or PA). Using archives_gov, or writing a BLM URL by hand, is a fail on URL generation and Tool selection.",
+    "Pennsylvania is a state-land state, so the tool refuses the build as outside_coverage. The reply must tell the researcher that the BLM General Land Office holds no federal land patents for Pennsylvania, and route them to Pennsylvania's own land office records and the county deed records (Schuylkill County here).",
+    "Re-calling blm_glo without usState, or with another state, to get a URL is a fail: the refusal is the answer, not an input error.",
+    "The tool refused the build, so no URL exists. Do not penalize the absence of a link on URL generation, or the absence of capture instructions on Capture guidance.",
+    "No research-log entry is the correct outcome: a refused build is not a search, and not logging it is not a Log entry failure. Logging it as a negative finding (absence of a patent) is a fail, because nothing was searched.",
+    "There is no capture in this turn; deferring triage is correct."
+  ]
+}

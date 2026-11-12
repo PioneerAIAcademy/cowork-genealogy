@@ -81,6 +81,7 @@ from test_search_external_sites import (  # noqa: E402
     test_hosted_upload_is_read_with_the_tools as check_upload_read,
     test_refused_transcription_leaves_the_handoff_open as check_refused_open,
     test_folder_mode_upload_is_read_with_read as check_folder_read,
+    test_blm_outside_coverage_refusal_is_the_answer as check_blm_refusal,
 )
 
 from tests.unit.skip_blind import expect_fires, expect_passes  # noqa: E402
@@ -1691,3 +1692,81 @@ def test_upload_wording_fires_on_a_link_planted_in_a_committed_reply_with_no_han
     expect_fires(lambda: _replay_wording(before, after, out, test, reply=plant), "did not serve")
     expect_passes(lambda: _replay_wording(before, after, out, test, tool_calls=served))
     expect_passes(lambda: _replay_wording(before, after, out, test, tool_calls=served, reply=plant))
+
+
+# --- blm-outside-coverage: the refusal is the answer (#4402) ---------------
+
+BLM_REFUSAL = {"type": "positive", "tags": ["blm-outside-coverage"]}
+
+
+def _blm_call(response, **args):
+    return {
+        "tool": "mcp__genealogy__build_external_search_url",
+        "args": {"site": "blm_glo", "attributes": {"surname": "Flynn", "usState": "Pennsylvania"}, **args},
+        "response": response,
+    }
+
+
+REFUSED_BUILD = _blm_call({"ok": False, "reason": "outside_coverage", "error": "Pennsylvania is not a public-land state"})
+NATIONWIDE_BUILD = _blm_call(
+    {"ok": True, "url": "https://glorecords.blm.gov/s/advanced-search?searchTerm=x", "access": "free"},
+    attributes={"surname": "Flynn"},
+)
+
+
+def test_blm_refusal_passes_when_the_refusal_stands_and_nothing_is_logged():
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_passes(lambda: check_blm_refusal(before, after, [REFUSED_BUILD], BLM_REFUSAL))
+
+
+def test_blm_refusal_fires_when_a_nationwide_build_follows_the_refusal():
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_fires(
+        lambda: check_blm_refusal(before, after, [REFUSED_BUILD, NATIONWIDE_BUILD], BLM_REFUSAL),
+        "went through after the refusal",
+    )
+
+
+def test_blm_refusal_fires_when_the_refused_search_is_logged():
+    logged = {
+        "id": "log_002", "tool": "external_site", "outcome": "negative",
+        "external_site": {"site": "blm_glo", "url_generated": "https://glorecords.blm.gov/s/", "capture_received": False},
+    }
+    before, after = _states(before_log=_open_log(), after_log=_open_log() + [logged])
+    expect_fires(
+        lambda: check_blm_refusal(before, after, [REFUSED_BUILD], BLM_REFUSAL), "record a search"
+    )
+
+
+def test_blm_refusal_fires_when_blm_glo_was_never_called():
+    archives = {
+        "tool": "mcp__genealogy__build_external_search_url",
+        "args": {"site": "archives_gov", "attributes": {"surname": "Flynn"}},
+        "response": {"ok": True, "url": "https://catalog.archives.gov/search?q=Flynn"},
+    }
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_fires(
+        lambda: check_blm_refusal(before, after, [archives], BLM_REFUSAL), "no blm_glo build was refused"
+    )
+
+
+def test_blm_refusal_skips_untagged_tests():
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    with pytest.raises(pytest.skip.Exception, match="not a blm-outside-coverage"):
+        check_blm_refusal(before, after, [REFUSED_BUILD], POSITIVE)
+
+
+def test_positive_log_check_skips_a_blm_refusal():
+    """The refusal check asserts the opposite there."""
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    with pytest.raises(pytest.skip.Exception, match="refused build"):
+        check_positive_log(before, after, BLM_REFUSAL)
+
+
+def test_blm_refusal_fires_when_the_refusal_is_for_another_reason():
+    """A `no_attributes` refusal (no name passed) is not the state-land answer."""
+    no_name = _blm_call({"ok": False, "reason": "no_attributes", "error": "blm_glo needs a surname or given name"})
+    before, after = _states(before_log=_open_log(), after_log=_open_log())
+    expect_fires(
+        lambda: check_blm_refusal(before, after, [no_name], BLM_REFUSAL), "no blm_glo build was refused"
+    )

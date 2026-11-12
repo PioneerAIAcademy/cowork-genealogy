@@ -47,11 +47,15 @@ def test_positive_appends_external_site_log_entry(before_state, after_state, tes
 
     Not under `transcribe-refused-stays-open`: a refused transcription logs
     nothing, which `test_refused_transcription_leaves_the_handoff_open` asserts,
-    so this would fail the correct run there (#3990)."""
+    so this would fail the correct run there (#3990). Nor under
+    `blm-outside-coverage`: a refused build has no URL to log, which
+    `test_blm_outside_coverage_refusal_is_the_answer` asserts (#4402)."""
     if test.get("type") != "positive":
         pytest.skip("only positive tests record log entries")
     if "transcribe-refused-stays-open" in test.get("tags", []):
         pytest.skip("a refused transcription logs no entry")
+    if "blm-outside-coverage" in test.get("tags", []):
+        pytest.skip("a refused build logs no entry")
     if before_state.get("research_json") is None:
         pytest.skip("no research.json in scenario")
     new_entries = _new_log_entries(before_state, after_state)
@@ -586,6 +590,34 @@ def test_archion_browse_handoff(tool_calls, test):
         f"the archion call carried no Archion parish page as baseUrl: {args.get('baseUrl')!r}"
     )
     assert args.get("projectPath"), "the archion call omitted projectPath, so the hand-off was not logged by the tool"
+
+
+def test_blm_outside_coverage_refusal_is_the_answer(before_state, after_state, tool_calls, test):
+    """Tag-gated (blm-outside-coverage, #4402). A `blm_glo` build for a
+    state-land state is refused `outside_coverage`, and that refusal is the
+    answer: the agent does not re-call without the state or with another one to
+    get a URL, and logs nothing, since no URL was built."""
+    if "blm-outside-coverage" not in test.get("tags", []):
+        pytest.skip("not a blm-outside-coverage scenario")
+    blm = [
+        c for c in (tool_calls or [])
+        if _bare_tool_name(c.get("tool")) == "build_external_search_url"
+        and _as_mapping(c.get("args")).get("site") == "blm_glo"
+    ]
+    responses = [_as_mapping(c.get("response")) for c in blm]
+    errors = []
+    if not any(r.get("ok") is False and r.get("reason") == "outside_coverage" for r in responses):
+        errors.append(
+            f"no blm_glo build was refused outside_coverage; blm_glo calls: {[_as_mapping(c.get('args')) for c in blm]}"
+        )
+    built = [_as_mapping(c.get("args")) for c, r in zip(blm, responses) if r.get("ok") is True]
+    if built:
+        errors.append(f"a blm_glo build went through after the refusal: {built}")
+    if before_state.get("research_json") is not None:
+        logged = [e.get("id") for e in _new_external_entries(before_state, after_state, "external_site")]
+        if logged:
+            errors.append(f"log {logged} record a search, though no URL was built")
+    assert not errors, "the outside_coverage refusal was not taken as the answer:\n  - " + "\n  - ".join(errors)
 
 
 def test_fs_holdings_note_reaches_the_researcher(text_response, test, agent_returns=None):
