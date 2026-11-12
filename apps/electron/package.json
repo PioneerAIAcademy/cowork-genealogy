@@ -7,7 +7,7 @@
   "author": "Pioneer Academy",
   "homepage": "https://github.com/PioneerAIAcademy/cowork-genealogy",
   "scripts": {
-    "postinstall": "install-electron",
+    "postinstall": "install-electron || echo WARNING - the Electron binary did not install, so the viewer cannot start. Retry with: pnpm --filter @genealogy/electron exec install-electron",
     "format": "prettier --write .",
     "lint": "eslint --cache . --max-warnings 0",
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json --composite false",
