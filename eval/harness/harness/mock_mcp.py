@@ -514,9 +514,6 @@ _SURNAME_HINTS_JS = _MCP_BUILD / "utils" / "surname-variant-hints.js"
 
 _UNKNOWN_ARGS_JS = _MCP_BUILD / "utils" / "unknown-args.js"
 
-_VOLUME_SEARCH_JS = _MCP_BUILD / "tools" / "volume-search.js"
-
-
 #: Compiled modules already warned about, so a missing build says so once per
 #: process rather than once per call. Keyed on the path, so a second module
 #: still gets its own warning.
@@ -567,13 +564,6 @@ def _unknown_args_module_present() -> bool:
     )
 
 
-def _volume_search_module_present() -> bool:
-    """A build predating #4414 serves every volume_search fixture unfiltered,
-    which reads as `omitSearchable` being silently ignored."""
-    return _compiled_module_present(
-        _VOLUME_SEARCH_JS,
-        "volume_search responses will NOT have omitSearchable applied",
-    )
 
 
 
@@ -698,33 +688,33 @@ def _surname_variant_hints(args: dict[str, Any], response: dict[str, Any]) -> di
         return None
 
 
-def _filter_searchable_volumes(response: dict[str, Any]) -> dict[str, Any]:
-    """Production's `omitSearchable` post-processing (#4414), applied to a
-    canned `volume_search` fixture exactly as `volumeSearchTool` applies it to
-    its own computed page — before `fitToBudget`.
+def _call_compiled_pure(
+    module: str, export: str, args: list[Any], *, consequence: str, fallback: Any
+) -> Any:
+    """`export(...args)` from the compiled `<_MCP_BUILD>/<module>`, for a pure
+    function of its arguments: no network, no file I/O, no store, so DEFAULT
+    timeout and no store prelude, same reasoning as `_reject_unknown_args`.
 
-    Calls the COMPILED `filterSearchableVolumes` (`build/tools/volume-search.js`),
-    never a Python restatement: the omission rule (two searchability signals, a
-    labelling tie-break, the concept-id fallback) is tool behaviour, and a
-    second copy is a second thing to drift (CLAUDE.md, "Code reuse"). A node
-    failure serves the fixture unfiltered, with a warning — a harness fault
-    must not read as the flag having been exercised.
+    The shared bridge for a canned fixture that production would have passed
+    through a pure exported function (CLAUDE.md, "Code reuse"): the rule runs
+    out of the build, never as a Python restatement. `module` resolves against
+    `_MCP_BUILD` at call time. Returns `fallback`, with a warning naming
+    `consequence`, when the build lacks the module or node fails — a harness
+    fault must not read as the model behaving.
     """
-    if not _volume_search_module_present():
-        return response
+    js = _MCP_BUILD / module
+    if not _compiled_module_present(js, consequence):
+        return fallback
     script = (
-        f"import {{ filterSearchableVolumes }} from '{_node_module_url(_VOLUME_SEARCH_JS)}';"
+        f"import {{ {export} }} from '{_node_module_url(js)}';"
         " import { readFileSync } from 'node:fs';"
-        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
-        " process.stdout.write(JSON.stringify(filterSearchableVolumes(input)));"
+        " const args = JSON.parse(readFileSync(0, 'utf-8'));"
+        f" process.stdout.write(JSON.stringify({export}(...args)));"
     )
     try:
-        # DEFAULT, not LONG, and store=False: `filterSearchableVolumes` is a
-        # pure function over the response object -- no network, no file I/O,
-        # no store, same reasoning as `_reject_unknown_args`.
         proc = _run_node_eval(
             script,
-            json.dumps(response),
+            json.dumps(args),
             timeout=NODE_EVAL_TIMEOUT_DEFAULT,
             store=False,
         )
@@ -732,11 +722,39 @@ def _filter_searchable_volumes(response: dict[str, Any]) -> dict[str, Any]:
             raise RuntimeError(proc.stderr.strip() or f"exit {proc.returncode}")
         return json.loads(proc.stdout)
     except (subprocess.SubprocessError, OSError, ValueError, RuntimeError) as e:
-        warnings.warn(
-            f"mock volume_search could not apply omitSearchable ({e}); the fixture was served unfiltered.",
-            stacklevel=2,
-        )
-        return response
+        warnings.warn(f"compiled {export} failed in node ({e}); {consequence}", stacklevel=3)
+        return fallback
+
+
+def _filter_searchable_volumes(response: dict[str, Any]) -> dict[str, Any]:
+    """Production's `omitSearchable` post-processing (#4414), applied to a
+    canned `volume_search` fixture exactly as `volumeSearchTool` applies it to
+    its own computed page — before `fitToBudget` — through the compiled
+    `filterSearchableVolumes`. A build predating #4414, or a node failure,
+    serves the fixture unfiltered, with a warning."""
+    return _call_compiled_pure(
+        "tools/volume-search.js",
+        "filterSearchableVolumes",
+        [response],
+        consequence="volume_search responses will NOT have omitSearchable applied",
+        fallback=response,
+    )
+
+
+def _compact_wiki_search(response: dict[str, Any], include_text: Any) -> dict[str, Any]:
+    """Production's wiki_search answer (#4417) from a canned fixture in the
+    server's shape: references by default, cleaned and capped text with
+    `includeText`, through the compiled `compactWikiSearchAnswer`, keyed on the
+    call's own `includeText` exactly as the tool reads it (`=== true`). Fails
+    OPEN: no build, or a node failure, serves the fixture unchanged with a
+    warning."""
+    return _call_compiled_pure(
+        "tools/wiki-search.js",
+        "compactWikiSearchAnswer",
+        [response, include_text is True],
+        consequence="wiki_search fixtures are served unchanged, with chunk_text and rank",
+        fallback=response,
+    )
 
 
 def _place_before_results(response: dict[str, Any], key: str) -> dict[str, Any]:
@@ -1845,6 +1863,16 @@ def create_mock_server(
                 and args.get("omitSearchable")
             ):
                 response = _filter_searchable_volumes(response)
+
+            # Production's wiki_search returns references unless the call asks for
+            # text (#4417); the fixture carries the server's answer, so the compiled
+            # compactor shapes it, keyed on the call's own `includeText`.
+            if (
+                _name == "wiki_search"
+                and isinstance(response, dict)
+                and "error" not in response
+            ):
+                response = _compact_wiki_search(response, args.get("includeText"))
 
             # Production's record_search and fulltext_search return (and stage)
             # `query: echoQuery(input)` — every argument the call sent — while a
