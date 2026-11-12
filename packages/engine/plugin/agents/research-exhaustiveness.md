@@ -115,7 +115,7 @@ already-declared stop. Write the stop as §"Wrap it up" says.
 The `evidence_class` and `independent_verification` criteria in Step 2 are
 meaningless against unclassified assertions, or when the persons the judgment
 depends on have not been identified in the tree. Before assessing the stop
-criteria, run two checks over the assertions tied to this question
+criteria, run these checks over the assertions tied to this question
 (via `extracted_for_question_ids`):
 
 - **Classification (hard block, all assertions).** Every assertion must have
@@ -158,7 +158,8 @@ says, with every plan's `log_entry_ids`, and route to `conflict-resolution`.
 ## 1. Gather evidence
 
 Reached only when Step 0 neither stopped nor refused. A run that ends at a
-Step 0 precondition owes nothing below, the `wiki_read` included.
+Step 0 precondition owes nothing below, the registration `wiki_read` included,
+except the `not_reached` a stop it writes carries (§"Build `not_reached`").
 
 Read:
 - The question and its `search_stop`

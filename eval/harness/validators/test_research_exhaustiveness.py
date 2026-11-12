@@ -343,9 +343,10 @@ def test_fetches_registration_start_date(tool_calls, test):
     3/3 on Sonnet 5 medium with every judge dimension 3 before the block moved
     into Step 0.
 
-    Step 0 declares six hard blocks. The five named above are the ones any
-    test exercises; the classification and person_evidence blocks have no test
-    today, so a test that stops at one will need its tag added here too.
+    Step 0 declares six hard blocks. The five tags named above cover four of
+    them — `refuse-in-progress` and `refuse-planned` are both the active-plan
+    check. The classification and person_evidence blocks have no test today, so
+    a test that stops at one will need its tag added here too.
     """
     tags = test.get("tags") or []
     if "near-miss" in tags:

@@ -18,6 +18,7 @@ call under whichever of the three server spellings the session resolved
 match nothing on two thirds of runs.
 """
 
+import json
 import sys
 from pathlib import Path
 
@@ -46,7 +47,7 @@ TENTATIVE_VALUE = {"tags": [
 # `no-gate-declaration` and `conflict-resolution`, which a gate must not key on.
 BLOCKED_BY_CONFLICT = {"tags": [
     "conflict-resolution", "blocked-by-conflict", "stop-criteria",
-    "declaration-honesty", "no-gate-declaration",
+    "declaration-honesty", "no-gate-declaration", "no-exhaustive-declaration",
 ]}
 
 
@@ -225,3 +226,41 @@ def test_a_conflict_test_without_the_block_tag_still_owes_the_fetch():
     except AssertionError:
         return
     pytest.fail("the check did not fire on a run that owes the fetch")
+
+
+def test_d3c_is_graded_by_the_no_gate_validator():
+    """d3c's verdict needs a deterministic check, not just the judge: it is
+    exempt from the registration fetch, so without `no-exhaustive-declaration`
+    a run that wrote `question_answered` over the open conflict was graded by
+    nothing but the LLM (code review on #4323). Reads the real test file so
+    dropping the tag fails here.
+
+    Three-way for the reason given in
+    `test_a_decline_without_a_step_0_tag_still_owes_the_fetch`: a validator
+    that no longer gates on d3c raises `Skipped`, which would otherwise mark
+    THIS test skipped — green."""
+    from test_research_exhaustiveness import test_no_exhaustive_declaration
+
+    d3c = json.loads(
+        (Path(__file__).resolve().parents[3] / "tests" / "unit"
+         / "research-exhaustiveness"
+         / "direct-ut_research_exhaustiveness_d3c.json").read_text(encoding="utf-8")
+    )["test"]
+    assert d3c["tags"] == BLOCKED_BY_CONFLICT["tags"]
+
+    def state(stopped_because, status):
+        return {"research_json": {"questions": [{
+            "id": "q_001", "status": status,
+            "search_stop": {"stopped_because": stopped_because},
+        }]}}
+
+    def run(after):
+        try:
+            test_no_exhaustive_declaration(state(None, "in_progress"), after, d3c)
+        except pytest.skip.Exception:
+            pytest.fail("the no-gate validator skipped d3c — its verdict is "
+                        "graded by the judge alone")
+
+    with pytest.raises(AssertionError, match="Unexpected stop-gate write"):
+        run(state("question_answered", "exhaustive_declared"))
+    run(state("blocked_by_conflict", "in_progress"))

@@ -13,7 +13,8 @@
       "blocked-by-conflict",
       "stop-criteria",
       "declaration-honesty",
-      "no-gate-declaration"
+      "no-gate-declaration",
+      "no-exhaustive-declaration"
     ]
   },
   "input": {
