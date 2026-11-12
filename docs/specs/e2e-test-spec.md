@@ -884,7 +884,7 @@ the `max_cost_usd` note in §6 step 5.
    **No continue-nudge (step mode phase 2).** A run is a step-mode run (`--step-mode
    job` is the default) and nothing vetoes a stop: a step turn ends at its boundary on
    purpose, and the host's reply, `next_auto_reply`, continues the run (section F of
-   `docs/plan/research-step-mode.md`). No Stop hook is bound, and a run writes neither
+   `docs/specs/research-step-mode-spec.md`). No Stop hook is bound, and a run writes neither
    `usage.continue_nudges` nor `usage.hand_back_classes`; `make e2e-nudges` leaves such
    a run out and says how many it left out. `test_e2e_step_mode_stop.py` fails if any
    harness module binds a Stop hook again. The hosted planes' completion halt is NOT
@@ -1994,7 +1994,7 @@ Per run, under `eval/runlogs/e2e/<test-id>/`:
 | `run-<timestamp>.final-tree.gedcomx.json` | The agent's final tree (input to the judge) |
 | `run-<timestamp>.final-research.json` | The agent's final `research.json` |
 | `run-<timestamp>.ann.json` | *Optional.* A human's calibration grade of this run — present only when someone grades it, never auto-emitted (see §7.4) |
-| `reports/run-<timestamp>.txt` | *Gitignored, regenerable.* A plain-text reading of the run log — the main researcher's tokens, cost and busiest moment, every helper launch with its cost, time, busiest moment and squeezes, and a closing summary (`e2e/run_report.py`). Helper time is `subagents[].duration_seconds`, else the `duration_ms` in that helper's Agent-call trailer (joined on `agentId`; gone once the 14-day strip drops `response_summary`). Written after every `run-` run (never a `scratch_` one); `make e2e-report` backfills; only the newest five per fixture are kept. **Carries no verdict, recall or per-finding result until the run's `.ann.json` exists** (§7.4 — it sits in the folder the blind grader works from); `make e2e-report` re-renders it once graded. |
+| `reports/run-<timestamp>.txt` | *Gitignored, regenerable.* A plain-text reading of the run log — the main researcher's tokens, cost and busiest moment, every helper launch with its cost, time, busiest moment and squeezes, each MCP answer that reached an agent only as Claude Code's "too large, saved to file" notice (omitted when none), and a closing summary (`e2e/run_report.py`). Helper time is `subagents[].duration_seconds`, else the `duration_ms` in that helper's Agent-call trailer (joined on `agentId`; gone once the 14-day strip drops `response_summary`). Written after every `run-` run (never a `scratch_` one); `make e2e-report` backfills; only the newest five per fixture are kept. **Carries no verdict, recall or per-finding result until the run's `.ann.json` exists** (§7.4 — it sits in the folder the blind grader works from); `make e2e-report` re-renders it once graded. |
 | `comparison/NN_comparison.txt` | *Gitignored.* Two runs side by side — `make e2e-compare TEST=<slug>` (the two newest) or `BEFORE=`/`AFTER=`; numbered upward, newest five kept. Names whether the plugin skills + agents (`skills_hash`) and the recorded run settings differ. Verdict and recall only when **both** runs are graded (§7.4). |
 
 ### 8.1 `run-<timestamp>.json` fields
@@ -2727,7 +2727,7 @@ There is no `expected-findings.json` and no judge.
   provided-documents suffix. The system prompt is the autonomous mode's.
 - **No continue nudges.** No harness run binds a Stop hook (step mode phase 2), and
   there is no stall resume (it sends a second message). This matches Cowork today and step
-  mode's cap 0 (`docs/plan/research-step-mode.md`, decision 1).
+  mode's cap 0 (`docs/specs/research-step-mode-spec.md`, decision 1).
 - **No live-tree block.** §6.1 exists to hide an answer key; a single-ask fixture
   has none, and asks like "review the sources attached to <PID>" need
   `person_read`. The fixture's own `blocked_tools` still applies.

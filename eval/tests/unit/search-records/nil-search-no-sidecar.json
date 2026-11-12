@@ -10,7 +10,8 @@
       "negative-result",
       "sidecar-nil",
       "log-honest-no-match",
-      "direct-arm"
+      "direct-arm",
+      "outside-holding-claim"
     ]
   },
   "input": {

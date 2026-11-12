@@ -590,6 +590,9 @@ Suggest next steps:
   "unresolved" is better than a premature resolution (Standard 49).
 - **A reading the user disputes is recorded with [?], and the conflict
   is settled by another record or by the user.**
+- **A record's own page reading its index differently is not a conflict.**
+  Open none for it. Report both readings; another record or the
+  researcher's own reading settles it.
 - **Date conflicts require a `convert_calendar` call — no exceptions.**
   Call it once per competing date before stating any calendar fact or
   ruling on the dates. A correct answer reached without the call is a

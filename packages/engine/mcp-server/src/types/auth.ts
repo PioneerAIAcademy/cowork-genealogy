@@ -46,9 +46,6 @@ export interface AppConfig {
   webPublicUrl?: string;
   /** On, with `webPublicUrl`, `project_context` returns `uploadUrl`. */
   uploadsEnabled?: boolean;
-  /** The beta's transcription switch. Unset means run as today. Its reader is
-   *  issue #3996. */
-  transcriptionEnabled?: boolean;
   /** Which matcher scores `same_person` and ranking: `"familysearch"` (the default) or `"service"`. */
   matcher?: "familysearch" | "service";
   /** The matcher service's base URL; required when `matcher` is `"service"`. */

@@ -677,7 +677,7 @@ def _build_hooks(HookMatcher, project_dir: Path, agent=None) -> dict:
     """The session's hooks. PreToolUse is the only restraint on a bypassPermissions
     session; ``PostToolUse`` ends the turn when a proof-conclusion call completes the
     project. No ``Stop`` hook: a step-mode turn ends at its boundary on purpose
-    (docs/plan/research-step-mode.md, Phase 2).
+    (docs/specs/research-step-mode-spec.md, Phase 2).
 
     The counter lives here rather than on a module global, so two sandboxes in one
     process cannot read each other's state."""
