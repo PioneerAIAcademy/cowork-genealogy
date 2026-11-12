@@ -27,7 +27,7 @@ production-reachable finding open: `pnpm audit --prod` is clean since issue #418
 moved `electron` to 44.11.1, which also took `extract-zip` out of the tree. `electron`
 is still the one package whose advisories ship (see the two paragraphs below), so a
 new one is never dev-only. Everything open lives in **devDependencies** — dev tooling
-(eslint, vite/vitest, electron-builder, `@anthropic-ai/mcpb`) or the internal-only
+(eslint, electron-builder, `@electron/asar`, `@anthropic-ai/mcpb`) or the internal-only
 Eval CRUD UI. Check reachability with `pnpm why --prod -r <pkg>` — **without `-r`
 the command inspects only the root package, which declares no dependencies, so it
 returns nothing for everything** (`pnpm why --prod react` is silent even though
@@ -55,14 +55,16 @@ reasoning above does not cover it. Treat `electron` findings as shipping.
 **`pnpm audit --prod` reaches through peer edges, and was right to.** It flagged
 `extract-zip` as production because `@electron-toolkit/utils` — a real production
 dependency of `apps/electron` — peer-depends on `electron`, which declared
-`extract-zip` up to 41.x. Any dependency `electron` declares is reached the same way.
+`extract-zip` until 40.10.3, 41.7.2 and 42.4.0 moved it to `@electron-internal/extract-zip`.
+Any dependency `electron` declares is reached the same way.
 
 ## Fixed
 
 - **extract-zip** (HIGH ×2: GHSA-7pqw-9j4j-h8q3, GHSA-jmr9-qjv8-65gv) — root pnpm
   workspace, `2.0.1`, pulled only by `electron`. **Fixed 2026-11-12** (issue #4188)
   by removing the package, not by a patch: no patched `extract-zip` exists, but
-  electron 42 and later depend on `@electron-internal/extract-zip` instead, so the
+  every electron 43.x and 44.x (and 40.10.3+, 41.7.2+, 42.4.0+) depends on
+  `@electron-internal/extract-zip` instead, so the
   move to 44.11.1 (see the electron entry below) dropped it. `pnpm why -r extract-zip` prints
   nothing. Under Deferred from 2026-09-08 until then.
 
@@ -404,18 +406,22 @@ dependency of `apps/electron` — peer-depends on `electron`, which declared
   already the **newest release of its major line** — the only patched line is
   11.x. eslint and its plugin ecosystem call the minimatch 3 API, so an
   override across the major is not safe and is out of scope for a minor/patch
-  pass. No sibling issue owns this; it clears when the eslint toolchain moves.
+  pass. No sibling issue owns this; it clears when its parents move: the eslint
+  toolchain, electron-builder and, since issue #4188, `@electron/asar` 4.3.1
+  (minimatch ^10.0.1).
   **Revisit when** a patched 3.x/5.x/9.x/10.x publishes (as happened for
   brace-expansion), or the parents move to minimatch 11.
 
 - **glob** (MODERATE GHSA-3g3m-2fjr-6pw4, AbortSignal cancellation bypass;
   vulnerable `>= 9.0.0, <= 14.0.1`, fix `>=14.0.2`) — root
   pnpm workspace, dev-only. **Deferred 2026-11-04 — no in-major fix exists.**
-  The tree resolves 7.2.3 and 10.5.0; only the 10.x copy is in the vulnerable
-  range (7.2.3 predates it). `npm view glob versions` (checked 2026-11-04):
-  10.5.0 is the newest 10.x — the only patched line is 14.x, a cross-major
-  move. **Revisit when** a patched 10.x publishes or the parents move to
-  glob 14.
+  The tree resolves 7.2.3, 10.5.0 and 13.0.7; the 10.x and 13.x copies are in
+  the vulnerable range (7.2.3 predates it). 10.5.0 comes through electron-builder;
+  13.0.7 arrived 2026-11-12 with `@electron/asar` 4.3.1 (issue #4188), the newest
+  asar, which declares `glob ^13.0.2`. `npm view glob versions` (checked
+  2026-11-12): 10.5.0 and 13.0.7 are the newest of their lines, so the only
+  patched line is 14.x, a cross-major move. **Revisit when** a patched 10.x or
+  13.x publishes, or electron-builder and `@electron/asar` move to glob 14.
 
 - **zod** (HIGH GHSA-mrhx-c7xc-m3w5, memory exhaustion validating oversized
   constrained collections) — `packages/engine/mcp-server` only, the dev-only
@@ -532,7 +538,8 @@ manifest) and both extract-zip alerts close.
 | `apps/server/proto/web/requirements.txt` | runtime | 1 | certifi (CRITICAL) |
 | `apps/server/sandbox/requirements.txt` | runtime | 4 | mcp ×4 |
 
-†The pnpm workspace's dev-tooling rows (the glob/minimatch eslint chain) are
+†The pnpm workspace's dev-tooling rows (glob and minimatch, pulled by eslint,
+electron-builder and `@electron/asar`) are
 reported `runtime` by Dependabot, which cannot resolve dev scope through a pnpm
 workspace lockfile — the same misclassification the 2026-09-21 measurement
 recorded. `pnpm why --prod -r` is the arbiter. After #4188's rescan
