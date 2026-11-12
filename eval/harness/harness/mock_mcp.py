@@ -1141,6 +1141,47 @@ def _record_birth_ranges(response: dict[str, Any]) -> dict[str, str] | None:
         return None
 
 
+#: The compiled function production's server applies to every `record_read`
+#: answer at the MCP boundary (#4415).
+_RECORD_READ_COMPACTOR = "compactRecordReadAnswer"
+
+
+def _compact_record_read(response: dict[str, Any], record_id: str) -> dict[str, Any]:
+    """Run the compiled `compactRecordReadAnswer` on a served `record_read`.
+
+    `record_id` is the agent's call `recordId`, never the fixture's
+    `args.recordId`, which carries the `~` predicate prefix. Applied after
+    staging, so the staged sidecar keeps the full document, as production's
+    does. Returns the response untouched, with a warning, when the build is
+    absent or node fails.
+    """
+    compactor_js = _MCP_BUILD / "utils" / "staged-compaction.js"
+    if not compactor_js.exists():
+        warnings.warn(f"mock record_read compaction skipped: no engine build at {_MCP_BUILD}", stacklevel=2)
+        return response
+    script = (
+        f"import {{ {_RECORD_READ_COMPACTOR} }} from '{_node_module_url(compactor_js)}';"
+        " import { readFileSync } from 'node:fs';"
+        " const input = JSON.parse(readFileSync(0, 'utf-8'));"
+        f" process.stdout.write(JSON.stringify({_RECORD_READ_COMPACTOR}(input.response, input.recordId)));"
+    )
+    try:
+        proc = _run_node_eval(
+            script,
+            json.dumps({"response": response, "recordId": record_id}),
+            timeout=NODE_EVAL_TIMEOUT_LONG,
+            store=False,
+        )
+        out = proc.stdout.strip()
+        if proc.returncode != 0 or not out:
+            warnings.warn(f"mock record_read compaction printed nothing: {proc.stderr[:300]}", stacklevel=2)
+            return response
+        return json.loads(out)
+    except Exception as exc:  # noqa: BLE001 — a harness fault degrades, never fails the call
+        warnings.warn(f"mock record_read compaction failed in node ({exc})", stacklevel=2)
+        return response
+
+
 def _stage_record_read(
     workspace: Path, args: dict[str, Any], response: dict[str, Any]
 ) -> dict[str, Any]:
@@ -1873,6 +1914,18 @@ def create_mock_server(
             # `_stage_record_read`, which both read them (#4127).
             if _name == "record_read" and isinstance(response, dict) and "indexFields" in response:
                 response = {k: v for k, v in response.items() if k != "indexFields"}
+
+            # Production's server compacts every record_read answer at the MCP
+            # boundary (#4415): after staging, so the sidecar stays full, and with
+            # the agent's own `recordId`. The extraction_append records map below
+            # is in-process in production and stays full.
+            if (
+                _name == "record_read"
+                and isinstance(response, dict)
+                and "error" not in response
+                and isinstance(response.get("persons"), list)
+            ):
+                response = _compact_record_read(response, str(args.get("recordId") or ""))
 
             # Production's image_transcribe stages the page and returns its ref,
             # not the text (#2490): `staged` + `digest`, `transcription` dropped.

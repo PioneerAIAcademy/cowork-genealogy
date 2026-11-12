@@ -11,7 +11,7 @@
 > `conflicts[]` says about a disputed field); the tool does only the
 > string-templating.
 
-An offline tool that builds a pre-filled search URL for one of eighteen
+An offline tool that builds a pre-filled search URL for one of nineteen
 supported external genealogy sites from structured search attributes, either
 as a fresh site-wide search or by appending parameters onto a FamilySearch-
 curated collection link. Given a `projectPath` it also logs the hand-off (§6).
@@ -97,7 +97,7 @@ build_external_search_url({
       | "chronicling_america" | "digital_newspaper_archive" | "archives_gov"
       | "archive_org" | "billiongraves" | "digitalarkivet" | "antenati"
       | "library_archives_canada" | "american_ancestors" | "italian_genealogy"
-      | "archion" | "matricula" | "openarch",
+      | "archion" | "matricula" | "openarch" | "blm_glo",
 
   // A FamilySearch-curated collection link (SKILL.md Case A, :258-277). When
   // present, attributes are appended onto it rather than a fresh site-wide
@@ -216,6 +216,10 @@ so the line is built here rather than in the agent.
   the user sets the range in the site's own UI), `openarch` (some networks
   are refused by the site outright — a page that never loads is the network
   being blocked, not evidence the record is missing; measured 2026-10-22),
+  `blm_glo` (federal land only — the public-land states; patents only, other
+  GLO record types via the site's Document Category filter; and a free-text
+  name search that can miss a patent indexed under initials, so re-run
+  surname-only before reading a nil as absence; §10.1),
   and the two browse sites
   `archion` and `matricula` (the path through the site — parish → register
   type → volume → image — and, for Archion, that viewing needs a pass; §3.11).
@@ -314,7 +318,7 @@ The full behaviour is in §3.11.
 
 ### 3.3 `digital_newspaper_archive` requires `baseUrl`
 
-Unlike the other seventeen sites, `digital_newspaper_archive` has no fixed
+Unlike the other eighteen sites, `digital_newspaper_archive` has no fixed
 site-wide URL — it is an open bucket for whichever state/regional free
 archive applies to the place being researched (Utah Digital Newspapers,
 California Digital Newspaper Collection, …), and "which one is identified by
@@ -566,6 +570,7 @@ here — this section documents the same mapping the implementation embeds.
 | `american_ancestors` | `https://app.americanancestors.org/SearchResults/AdvancedSearch` | — | `Keywords` (`givenName`+`surname`+`keywords`, space-joined — **not** `Name.First`/`Name.Last`, confirmed non-binding via round-trip GET reflection testing), `Location` (`birthPlace`, falling back to `deathPlace`), `FromYear`/`ToYear` (both set to `birthYear`) |
 | `italian_genealogy` | `https://www.italiangenealogy.com/forum/search` | `terms=all`, `sf=all`, `sr=posts` (the exact fields present on the one confirmed-working search URL — omitting them was not tested) | `keywords` (`givenName`+`surname`+`keywords`, space-joined). A phpBB forum, not a records database — no structured name/date/place fields exist anywhere on the site |
 | `openarch` | `https://www.openarchieven.nl/search.php` | `lang=en` (§3.4) | `name` only: `givenName`+`surname` (hyphens inside a name part become spaces — a hyphen is the site's *exclude* operator, measured 2026-10-22 turning "Johanna-Willemina" into 542 unrelated rows against the 1 right baptism) plus the chosen event's year as a trailing `YYYY-YYYY` period — the site's own in-field syntax, echoed back as "from the period …"; a single year is passed as both ends. **The site's `eventtype`/`eventplace` URL filters are deliberately never sent** (measured 2026-10-22): `eventtype` matches record-level type values that church-book (DTB) records carry differently per archive, so a 1800 baptism found without it vanishes under `eventtype=Geboorte`; `eventplace` matches the place as each record spells it, so every form of a comma-qualified FamilySearch place returns nothing ('s-Gravenhage vs The Hague). A `notes` entry tells the user to narrow by event type and place on the results page, naming the supplied place. **One event per search**, marriage > birth > death — its year scopes the period, and the losing events' attributes are reported in `notes`. A call with a year/place but no name part refuses as `no_attributes` (a bare period is not a person search). Measured 2026-10-22: the name+period URL for Maijert Zwaan 1827 returns 3 rows including both 24-6-1827 Rijnsburg civil-marriage entries |
+| `blm_glo` | `https://glorecords.blm.gov/s/advanced-search` | — | `searchTerm` only — the portal's embedded search app takes its route in this one parameter, so its value is the app's own query, form-encoded and then encoded again by the outer append: `/search?q=<surname given>&geostatecodes=<POSTAL>&documenttype=Patent&page=1&pageSize=25`. `q` is `surname`+`givenName`, space-joined (the site has one free-text box, no name fields); `geostatecodes` is the upper-case postal code from `usState`, present only when it resolves. A call with no name part refuses as `no_attributes` (a state alone is not a person search); a `usState` that resolves to a state outside the 30 public-land states refuses as `outside_coverage` (§5). Verified in a real browser 2026-11-11 (§10.1) |
 | `archion` | `https://www.archion.de/de/` (the site root, returned only without `baseUrl`) | — | none — **browse, not search** (§3.11): the caller's parish `baseUrl` is returned unchanged |
 | `matricula` | `https://data.matricula-online.eu/de/` (likewise) | — | none — **browse, not search** (§3.11) |
 
@@ -604,8 +609,8 @@ The static `access` value each site returns (§3.1). `digital_newspaper_archive`
 returns the class value state archives carry generally, `"free_bot_protected"`,
 for whichever archive `baseUrl` names — **not verified per archive** — and
 refuses a `baseUrl` on another supported site's own domain (`invalid_base_url`
-naming that site, §3.2). That refusal covers the other seventeen sites and
-nothing else: a **subscription archive outside** the eighteen still receives the
+naming that site, §3.2). That refusal covers the other eighteen sites and
+nothing else: a **subscription archive outside** the nineteen still receives the
 class default, measured 2026-09-15 returning `free_bot_protected` for
 genealogybank.com, newspaperarchive.com, newsbank.com and
 britishnewspaperarchive.co.uk. This matters because `SKILL.md` instructs the
@@ -620,7 +625,7 @@ round 5).
 |------|----------|
 | `ancestry`, `myheritage`, `findmypast`, `newspapers`, `archion` | `subscription` |
 | `chronicling_america`, `digital_newspaper_archive`, `library_archives_canada`, `openarch` | `free_bot_protected` |
-| `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `american_ancestors`, `italian_genealogy`, `matricula` | `free` |
+| `findagrave`, `archives_gov`, `archive_org`, `billiongraves`, `digitalarkivet`, `antenati`, `american_ancestors`, `italian_genealogy`, `matricula`, `blm_glo` | `free` |
 
 `library_archives_canada` moved into `free_bot_protected` on 2026-09-15: the
 collection-search host answers HTTP 403 with `cf-mitigated: challenge` and a
@@ -652,6 +657,8 @@ nil.
 | `baseUrl`'s host does not belong to `site` (a MyHeritage link with `site: "ancestry"`), or is a host the site retired (`chroniclingamerica.loc.gov`) | `{ ok: false, reason: "invalid_base_url" }` naming both hosts (§3.2) |
 | `chronicling_america` with `searchStartYear` after `searchEndYear` | no `dates` window; `notes` says the start is after the end |
 | `chronicling_america` window entirely outside 1798–1963 | `{ ok: false, reason: "outside_coverage" }` — a URL for it could only log a nil as evidence of absence; a window that only partly overlaps succeeds, with a note |
+| `blm_glo` with a `usState` outside the 30 public-land states (the 13 original states, TX, KY, TN, VT, ME, WV, HI, and DC) | `{ ok: false, reason: "outside_coverage" }` — BLM GLO holds no federal patent there, so a URL could only log a nil as evidence of absence; the error routes to the state's own land office and county deed records |
+| `blm_glo` `baseUrl` on any path but `/s/advanced-search` (the legacy `/search/default.aspx` and `/results/default.aspx`, or the portal root) | `{ ok: false, reason: "invalid_base_url" }` — the legacy paths 301 to `/s/` and drop every parameter, and no other portal path reads `searchTerm`, so the search would run unscoped (§10.1) |
 | `findmypast` call carrying only a tuning knob (`birthYearOffset` / `placeProximityMiles`) | `{ ok: false, reason: "no_attributes" }` — a knob without its slot searches nothing |
 | `attributes` is a JSON string | coerced to the object first; if the result is still not an object, `no_attributes` with an error naming the type |
 | every supplied attribute is rejected by its validator (`{ birthYear: 99999 }`) | `no_attributes`, with each rejection note carried in `errors` so the caller learns why |
@@ -717,7 +724,7 @@ nil.
 
 ## 7. Test plan (vitest)
 
-- **One passing case per site** — the eighteen rows in §4, each producing the
+- **One passing case per site** — the nineteen rows in §4, each producing the
   documented parameter names with the correct join/encoding.
 - **openarch's one-event slot** — the chosen event's year rides as a
   `YYYY-YYYY` period inside `name`, and no `eventtype`/`eventplace` parameter
@@ -745,7 +752,7 @@ nil.
   `base_url_required`; with it, only `q=<given>+<surname>[+<keywords>]` is
   appended, and a facet/date parameter is never invented even if
   `attributes` supplies `searchStartYear`/`usState`.
-- **Unsupported site** — `supportedSites` names exactly the eighteen supported
+- **Unsupported site** — `supportedSites` names exactly the nineteen supported
   sites.
 - **Browse sites** — the Baiersbronn Archion parish page and a Baiersbronn
   viewer URL (`cHash` kept) come back unchanged with `access: "subscription"`
@@ -782,6 +789,13 @@ nil.
   no such note.
 - **Relative names, partial** — only `fatherGivenName` set still produces a
   `father`/`father_first` value from that half alone.
+- **`blm_glo`** — McElwee/Fabbie/"Montana" builds the §10.1 browser-verified
+  URL character for character, and `MT` or a comma-qualified Montana place
+  builds the same one; reserved characters in a name stay inside the inner
+  `q`; no `usState` is nationwide with a note; an unresolvable one drops the
+  facet with a note; a state with no name is `no_attributes`; every
+  state-land state, DC and a comma-qualified Pennsylvania place refuse as
+  `outside_coverage`, and the public-land edges (Ohio, Alaska) build.
 - **`access` classification** — every supported site returns the value in
   §4.1's table; `american_ancestors` returns `"free"` and still carries the
   results-viewing note; `digital_newspaper_archive` returns
@@ -1158,6 +1172,38 @@ conditions as a confound (relevant specifically to the sites blocked by
 Cloudflare/WAF challenges here). Each site above is one measurement, by one
 session, on one day (2026-09-11) — the same evidentiary caveat §9 already
 states for Chronicling America applies identically to all of these.
+
+### 10.1 `blm_glo` — the GLO Portal (2026-11-11)
+
+**Full end-to-end verification, in a real browser (one operator, one
+network, one day).** The legacy URLs (`/search/default.aspx`,
+`/results/default.aspx?searchCriteria=…`) 301 to the Salesforce "GLO
+Portal" at `/s/` and drop every parameter, so neither legacy shape is
+templated. The portal's search is a separate app embedded in a frame
+(`glo-entry-prod.blm.gov/ui`, Cloudflare-fronted, results fetched with a
+guest token from `/ui/func/dsto/api/search`). Its code reads `q`, `page`,
+`pageSize`, and treats every other key as a facet with `|`-joined values.
+
+- The portal's own search box produced
+  `/s/advanced-search?searchTerm=%2Fsearch%3Fq%3DMcElwee%26page%3D1%26pageSize%3D25`.
+- Applying the State and Document Category filters in the UI gave a
+  **fragment** URL, `/s/advanced-search#/search?q=*&geostatecodes=MT&documenttype=Patent&page=1&pageSize=25`,
+  which reproduced in a private window. This tool cannot build a `#` form,
+  so the facets were tested inside `searchTerm` instead:
+  - `…?searchTerm=%2Fsearch%3Fq%3DMcElwee%2BFabbie%26geostatecodes%3DMT%26documenttype%3DPatent%26page%3D1%26pageSize%3D25`
+    listed FABBIE S MCELWEE (Patentee), Serial Patent, Accession
+    SER-569015, 02-24-1917, Broadwater County, Montana — the patent an alpha tester found
+    with the legacy URL.
+  - The same URL with `geostatecodes%3DPA` returned "No results found
+    with these parameters" — so the state facet binds; it is not ignored.
+- No login and no challenge page in the browser or the private window →
+  `access: "free"`. A headless Chromium got an empty results page (the
+  embedded app's config request 404ed), so an automated check of this site
+  cannot stand in for a browser one.
+
+**Not checked:** other states' facet values beyond MT and PA (the facet
+takes the postal code the UI itself emitted); `documenttype` values other
+than `Patent`; a second network or day.
 
 ## 11. The three unchecked ports, measured (2026-09-24/25)
 

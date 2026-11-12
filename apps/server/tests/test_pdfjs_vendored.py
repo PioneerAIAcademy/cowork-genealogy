@@ -7,7 +7,8 @@ the same versioned URLs the browser uses, so a pdf.js call the vendored version 
 dropped ``doc.destroy()``) fails here instead of a PDF quietly going up without its text.
 
 Fixtures in ``tests/fixtures/pdfjs/``, written by its ``make_pdfs.py``: a one-line text
-PDF, a two-line one (a register's rows), and an image-only one (a scan).
+PDF, a two-line one (a register's rows), a CID-keyed CJK font with no ToUnicode table
+(cid), and an image-only one (a scan).
 
 Needs ``node`` (Node 22 in the server-pytest job). Without it the tests skip locally and
 fail under CI, so a runner that lost Node cannot pass them silently.
@@ -15,6 +16,7 @@ fail under CI, so a runner that lost Node cannot pass them silently.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -58,8 +60,21 @@ def _text_layer(pdf: str, tmp_path: Path, *, name: str | None = None, mime: str 
     runner = tmp_path / "run.mjs"
     runner.write_text(
         'import { readFile } from "node:fs/promises";\n'
+        'import { fileURLToPath } from "node:url";\n'
         f"globalThis.location = {{ href: {json.dumps(page_url)} }};\n"
         "const say = () => {};\n"
+        # pdf.js's Node fetch path (NodeBinaryDataFactory) reads a character map with
+        # process.getBuiltinModule("fs/promises").readFile(cMapUrl + name) -- a plain string
+        # built from a file: URL's .href, which bare fs.readFile cannot resolve. The page
+        # itself (pages.py) is not changed to suit Node; only this runner's environment is
+        # patched, so the test still exercises the page's own new URL("cmaps/", PDFJS_DIR).
+        "const _origGetBuiltinModule = process.getBuiltinModule.bind(process);\n"
+        "process.getBuiltinModule = (name) => {\n"
+        "  const mod = _origGetBuiltinModule(name);\n"
+        '  if (name !== "fs/promises") return mod;\n'
+        "  return { ...mod, readFile: (path, ...rest) =>\n"
+        '    mod.readFile(typeof path === "string" && path.startsWith("file:") ? fileURLToPath(path) : path, ...rest) };\n'
+        "};\n"
         + BLOCK
         + f"const bytes = await readFile({json.dumps(str(FIXTURES / pdf))});\n"
         f"const file = new File([bytes], {json.dumps(name or pdf)}, {{ type: {json.dumps(mime)} }});\n"
@@ -110,3 +125,24 @@ def test_a_word_split_across_fonts_stays_one_word(tmp_path):
     """pdf.js starts a new item on a font change ("J" bold, "ohn" regular) and adds its own
     space item where the glyphs leave a gap, so the items join with nothing between them."""
     assert _text_layer("split.pdf", tmp_path) == "--- Page 1 ---\nJohn Smith"
+
+
+def test_a_cid_font_pdf_reads_its_text(tmp_path):
+    """#4448: a CID-keyed CJK font with no /ToUnicode and no embedded font file needs the
+    predefined CMap pdf.js resolves through cMapUrl; without it this reads empty or garbled."""
+    assert _text_layer("cid.pdf", tmp_path) == "--- Page 1 ---\n田中 東京"
+
+
+def test_the_vendored_cmaps_match_their_digest():
+    """#4448: the README pins cmaps/ by one aggregate digest rather than 168 table rows."""
+    cmaps = PDFJS / "cmaps"
+    names = sorted(p.name for p in cmaps.iterdir())
+    assert names.count("LICENSE") == 1
+    assert len(names) - 1 == 168, "168 .bcmap files expected, plus LICENSE"
+    assert all(name.endswith(".bcmap") or name == "LICENSE" for name in names)
+    lines = "".join(f"{name} {hashlib.sha256((cmaps / name).read_bytes()).hexdigest()}\n" for name in names)
+    digest = hashlib.sha256(lines.encode()).hexdigest()
+    readme = (PDFJS / "README.md").read_text(encoding="utf-8")
+    pinned = re.search(r"cmaps/ digest: `([0-9a-f]{64})`", readme)
+    assert pinned, "README.md must carry a `cmaps/ digest: `<sha256>`` line"
+    assert digest == pinned.group(1), "cmaps/ changed without updating the README's digest"

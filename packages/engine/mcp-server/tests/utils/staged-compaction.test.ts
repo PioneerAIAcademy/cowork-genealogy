@@ -22,7 +22,16 @@ import {
   transcriptionDigest,
   DIGEST_EXCERPT_CHARS,
   INLINE_TRANSCRIPTION_MAX_CHARS,
+  compactRecordReadAnswer,
+  RECORD_READ_FULL_PERSONAS,
+  RECORD_READ_STUB_PERSONAS,
 } from "../../src/utils/staged-compaction.js";
+import type { RecordReadResult } from "../../src/types/record-read.js";
+import {
+  loadRecordReadFixture,
+  loadRecordReadFixtures,
+  syntheticHousehold,
+} from "../helpers/record-read-fixtures.js";
 import type { RecordSearchToolResponse } from "../../src/types/record-search.js";
 import type { FulltextResult, FulltextSearchResponse } from "../../src/types/fulltext-search.js";
 import type { ImageTranscribeResult } from "../../src/types/image-transcribe.js";
@@ -824,3 +833,150 @@ describe("compactImageTranscribeAnswer", () => {
   });
 });
 
+// ────────────────────────────────────────────────────────────────────
+// compactRecordReadAnswer (issue #4415)
+// ────────────────────────────────────────────────────────────────────
+
+describe("compactRecordReadAnswer", () => {
+  const fixtures = loadRecordReadFixtures();
+  const size = (v: unknown) => JSON.stringify(v).length;
+  const compact = (r: RecordReadResult, id: string) =>
+    compactRecordReadAnswer(structuredClone(r), id) as Record<string, any>;
+
+  it("the committed record_read fixtures compact to at most 55% of their size", () => {
+    // A glob that silently matched nothing would pass the ratio vacuously.
+    expect(fixtures.length).toBeGreaterThanOrEqual(91);
+    let before = 0;
+    let after = 0;
+    for (const f of fixtures) {
+      before += size(f.response);
+      after += size(compact(f.response, f.recordId));
+    }
+    expect(after).toBeLessThanOrEqual(0.55 * before);
+  });
+
+  it("a 150-persona household compacts to at most 39,000 characters", () => {
+    const out = compact(syntheticHousehold(150), "AB75-XYZ");
+    expect(size(out)).toBeLessThanOrEqual(39_000);
+    expect(out.persons).toHaveLength(RECORD_READ_FULL_PERSONAS + RECORD_READ_STUB_PERSONAS);
+    expect(out.personsOmitted).toBe(150 - RECORD_READ_FULL_PERSONAS - RECORD_READ_STUB_PERSONAS);
+    const ids = new Set(out.persons.map((p: any) => p.id));
+    for (const r of out.relationships) {
+      for (const e of [r.parent, r.child, r.person1, r.person2].filter(Boolean)) {
+        expect(ids.has(e)).toBe(true);
+      }
+    }
+    for (const id of Object.keys(out.birthRanges)) expect(ids.has(id)).toBe(true);
+    const stubs = out.persons.filter((p: any) => p.facts === undefined);
+    expect(stubs).toHaveLength(RECORD_READ_STUB_PERSONAS);
+    for (const s of stubs) expect(Object.keys(s).sort()).toEqual(["ark", "gender", "id", "names"]);
+  });
+
+  it("is idempotent over every fixture and the large household", () => {
+    const cases = [
+      ...fixtures.map((f) => [f.response, f.recordId] as const),
+      [syntheticHousehold(150), "AB75-XYZ"] as const,
+    ];
+    for (const [r, id] of cases) {
+      const once = compact(r, id);
+      const twice = compactRecordReadAnswer(structuredClone(once) as RecordReadResult, id);
+      expect(twice).toEqual(once);
+    }
+  });
+
+  it("cites the requested persona's own Person source, found by ark or by bare id", () => {
+    const f = loadRecordReadFixture("record-read-tallman-2v7m-6qm.json");
+    const edward = "Edward Tallman in entry for Orrin Tallman";
+    for (const id of ["2V7M-6QM", "ark:/61903/1:1:2V7M-6QM", "p_15021461820"]) {
+      expect(compact(f.response, id).citation).toContain(edward);
+    }
+    // Unknown persona: the Record source's citation.
+    expect(compact(f.response, "ZZZZ-ZZZ").citation).toContain("Entry for Orrin Tallman and Edward Tallman");
+  });
+
+  it("flattens sources and drops ids, places and the redundant fields", () => {
+    const f = loadRecordReadFixture("record-read-tallman-2v7m-6qm.json");
+    const out = compact(f.response, f.recordId);
+    expect(out.sources).toBeUndefined();
+    expect(out.places).toBeUndefined();
+    expect(out.recordUrl).toBe("https://www.familysearch.org/ark:/61903/1:2:99FF-4NZ4");
+    // The citation already names the collection.
+    expect(out.collectionTitle).toBeUndefined();
+    expect(out.imageArk).toBe(f.response.imageArk);
+    expect(out.viewerUrl).toBe(f.response.viewerUrl);
+    for (const p of out.persons) {
+      expect(p.id).toBeDefined();
+      expect(p.ark).toBeDefined();
+      expect(p.sources).toBeUndefined();
+      for (const n of p.names ?? []) {
+        expect(n.id).toBeUndefined();
+        expect(n.type).toBeUndefined();
+      }
+      for (const fact of p.facts ?? []) {
+        expect(fact.id).toBeUndefined();
+        expect(fact.sources).toBeUndefined();
+        if (fact.standard_place !== undefined) expect(fact.place).not.toBe(fact.standard_place);
+      }
+    }
+    for (const r of out.relationships) expect(r.id).toBeUndefined();
+    expect(out.persons[0].principal).toBe(true);
+    expect(out.persons[0].facts[0].place).toBe("Burlington, Vermont, United States");
+  });
+
+  it("keeps a collection title the citation lacks, and a title when no source has a citation", () => {
+    const withCollection = compactRecordReadAnswer(
+      {
+        persons: [{ id: "p1", names: [{ given: "A", surname: "B" }] }],
+        sources: [
+          { id: "s1", resource_type: "Record", citation: "Entry for A B.", url: "https://x/ark:/61903/1:2:Q" },
+          { id: "s2", resource_type: "Collection", title: "Ohio, Deaths" },
+        ],
+      },
+      "p1",
+    );
+    expect(withCollection).toMatchObject({ citation: "Entry for A B.", collectionTitle: "Ohio, Deaths" });
+    const titleOnly = compactRecordReadAnswer(
+      { persons: [{ id: "p1" }], sources: [{ id: "S1", title: "United States Census, 1850" }] },
+      "p1",
+    );
+    expect(titleOnly.citation).toBeUndefined();
+    expect(titleOnly.collectionTitle).toBe("United States Census, 1850");
+  });
+
+  it("strips FamilySearch's relationship-type prefix", () => {
+    const out = compactRecordReadAnswer(
+      {
+        persons: [{ id: "a" }, { id: "b" }],
+        relationships: [
+          { id: "r1", type: "http://familysearch.org/types/relationships/Sibling", person1: "a", person2: "b" },
+        ],
+      },
+      "a",
+    );
+    expect(out.relationships).toEqual([{ type: "Sibling", person1: "a", person2: "b" }]);
+  });
+
+  it("keeps the requested persona, its relatives and the principal whole when they sit past slot 40", () => {
+    const doc = syntheticHousehold(150);
+    // Persona 120 is asked for; the chain makes 119 and 121 its relatives.
+    // The principal is persona 0; move the flag to persona 140.
+    delete (doc.persons![0] as any).principal;
+    (doc.persons![140] as any).principal = true;
+    const out = compact(doc, "ark:/61903/1:1:AB120-XYZ");
+    const byId = new Map(out.persons.map((p: any) => [p.id, p]));
+    for (const i of [119, 120, 121, 140]) {
+      const p: any = byId.get(`p_${1000 + i}`);
+      expect(p, `persona ${i}`).toBeDefined();
+      expect(p.facts, `persona ${i}`).toHaveLength(3);
+    }
+    // The remaining full slots fill in document order.
+    expect((byId.get("p_1000") as any).facts).toHaveLength(3);
+    expect((byId.get("p_1035") as any).facts).toHaveLength(3);
+    expect((byId.get("p_1036") as any).facts).toBeUndefined();
+  });
+
+  it("leaves an answer with no persons array untouched", () => {
+    const odd = { error: "x" } as unknown as RecordReadResult;
+    expect(compactRecordReadAnswer(odd, "p1")).toEqual({ error: "x" });
+  });
+});

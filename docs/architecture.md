@@ -923,7 +923,7 @@ There **is** an orchestrator, and it is a skill:
    (`docs/specs/research-append-tool-spec.md` §11.8).
 
    **A turn runs ONE step** (step mode, decision 25,
-   `docs/plan/research-step-mode.md`): it reports the step and ends with
+   `docs/specs/research-step-mode-spec.md`): it reports the step and ends with
    "Continue with &lt;label&gt;?", so finishing a sub-skill is where the turn
    stops. `packages/engine/plugin/hooks/step_boundary.py`, loaded as a library,
    enforces that boundary on the FS prototype always, on every e2e run (the e2e
@@ -2314,7 +2314,7 @@ changes how a correct change is made:
    counts, refusing a percentage whose denominator would be doing the work. Read
    its `concentration:` block before quoting even a count.
   4. **Step mode's boundary is enforced on one plane and graded on another.** Under
-     `docs/plan/research-step-mode.md` decision 25 (lead, 2026-10-19, amended
+     `docs/specs/research-step-mode-spec.md` decision 25 (lead, 2026-10-19, amended
      2026-10-21), a step ends by asking the researcher with `AskUserQuestion`, and what
      stops a model starting the next step without asking differs by plane: the FS
      prototype gets a `PreToolUse` deny and then a halt; **Cowork and the alpha get

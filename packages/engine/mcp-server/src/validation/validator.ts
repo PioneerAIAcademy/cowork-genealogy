@@ -291,6 +291,9 @@ const EXTERNAL_SITE_VALUES = new Set([
   // Open Archieven (issue #3185): the Dutch archives aggregator, searchable
   // by name.
   "openarch",
+  // BLM General Land Office (issue #4402): federal land patents for the
+  // public-land states.
+  "blm_glo",
 ]);
 
 /**

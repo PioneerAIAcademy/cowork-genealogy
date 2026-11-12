@@ -1,6 +1,7 @@
 """Minimal one-page PDFs, written by hand: a text layer, two lines of text (a register's
-rows), a word split across two fonts beside a gap with no space character (split), and
-an image only (a scan). Run: python make_pdfs.py <this directory>."""
+rows), a word split across two fonts beside a gap with no space character (split), a
+CID-keyed CJK font with no ToUnicode table and no embedded font file (cid), and an image
+only (a scan). Run: python make_pdfs.py <this directory>."""
 import sys, zlib
 from pathlib import Path
 
@@ -56,6 +57,30 @@ def split_pdf() -> bytes:
         b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>",
     ])
 
+def cid_pdf() -> bytes:
+    # 田中 東京 ("Tanaka", a name, and "Tokyo", a place) as a UCS-2BE hex string: the
+    # /Encoding /UniJIS-UCS2-H predefined CMap treats the content stream's codes as
+    # Unicode code points directly, mapping them to CIDs for the Adobe-Japan1 ordering.
+    # No /ToUnicode and no embedded font file (no /FontFile3 on the descriptor): pdf.js
+    # can only recover these glyphs' codes -- let alone their text -- by resolving the
+    # named CMap through cMapUrl.
+    content = b"BT /F1 24 Tf 72 720 Td <75304E2D002067714EAC> Tj ET"
+    return pdf([
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R "
+        b"/Resources << /Font << /F1 5 0 R >> >> >>",
+        stream(content),
+        b"<< /Type /Font /Subtype /Type0 /BaseFont /MS-Mincho /Encoding /UniJIS-UCS2-H "
+        b"/DescendantFonts [6 0 R] >>",
+        b"<< /Type /Font /Subtype /CIDFontType0 /BaseFont /MS-Mincho "
+        b"/CIDSystemInfo << /Registry (Adobe) /Ordering (Japan1) /Supplement 6 >> "
+        b"/FontDescriptor 7 0 R /DW 1000 >>",
+        b"<< /Type /FontDescriptor /FontName /MS-Mincho /Flags 4 "
+        b"/FontBBox [0 -200 1000 900] /ItalicAngle 0 /Ascent 880 /Descent -120 "
+        b"/CapHeight 880 /StemV 80 >>",
+    ])
+
 def scan_pdf() -> bytes:
     w = h = 8  # a tiny grey image: no text operators anywhere
     raw = zlib.compress(bytes([128]) * (w * h))
@@ -75,4 +100,5 @@ out = Path(sys.argv[1])
 (out / "scan.pdf").write_bytes(scan_pdf())
 (out / "rows.pdf").write_bytes(rows_pdf())
 (out / "split.pdf").write_bytes(split_pdf())
+(out / "cid.pdf").write_bytes(cid_pdf())
 print("wrote", sorted(p.name for p in out.iterdir()))

@@ -37,7 +37,8 @@ export type ExternalSearchSite =
   | "italian_genealogy"
   | "archion"
   | "matricula"
-  | "openarch";
+  | "openarch"
+  | "blm_glo";
 
 export interface BuildExternalSearchUrlAttributes {
   givenName?: string;
@@ -265,9 +266,7 @@ const US_STATE_CODES: Record<string, string> = Object.entries(US_STATE_NAMES).re
 // Reuses `usStateFacet`'s right-to-left segment scan, so the same
 // "Indiana, Pennsylvania" mis-scoping it guards against is guarded here.
 function newspapersRegion(v: unknown): string | undefined {
-  const full = usStateFacet(v);
-  if (full === undefined) return undefined;
-  const code = US_STATE_CODES[full];
+  const code = usStateCode(v);
   return code === undefined ? undefined : `us-${code}`;
 }
 
@@ -323,6 +322,24 @@ function chroniclingAmericaWindow(a: BuildExternalSearchUrlAttributes): YearWind
   const e = Number(end);
   if (s > e) return { halfWindow: false, inverted: true };
   return { start: s, end: e, dates: `${start}/${end}`, halfWindow: false, inverted: false };
+}
+
+// ─── BLM General Land Office (spec §10, #4402) ───────────────────────────────
+
+// The 30 public-land states, as `US_STATE_CODES` values (lowercase). Every
+// other state — the 13 original states, TX, KY, TN, VT, ME, WV, HI — and DC
+// granted its own land, so BLM GLO holds no patent there and a search could
+// only log a nil as evidence of absence.
+const BLM_PUBLIC_LAND_STATES: ReadonlySet<string> = new Set([
+  "al", "ak", "az", "ar", "ca", "co", "fl", "id", "il", "in", "ia", "ks", "la", "mi", "mn",
+  "ms", "mo", "mt", "ne", "nv", "nm", "nd", "oh", "ok", "or", "sd", "ut", "wa", "wi", "wy",
+]);
+
+// Lowercase postal code for a state name, code or comma-qualified place, via
+// `usStateFacet`'s right-to-left scan. Shared by blm_glo and newspapersRegion.
+function usStateCode(v: unknown): string | undefined {
+  const full = usStateFacet(v);
+  return full === undefined ? undefined : US_STATE_CODES[full];
 }
 
 // ─── OpenArch's one-event slot ───────────────────────────────────────────────
@@ -618,6 +635,23 @@ function siteWideParams(
         ),
       };
     }
+    case "blm_glo": {
+      // The portal's search is an embedded app whose route rides in ONE outer
+      // parameter, `searchTerm`, holding the app's own query (spec §10): a
+      // free-text `q` plus facet keys. The `#/search?…` form the UI shows after
+      // filtering is a fragment this tool cannot build; facets inside
+      // `searchTerm` were verified to bind instead. The inner query is
+      // form-encoded here and the outer append encodes it again, which is the
+      // double encoding the verified URL carries. Both reads stay above the
+      // no-name return so RECOGNIZED_KEYS records them.
+      const q = joinPresent(" ", a.surname, a.givenName);
+      const state = usStateCode(a.usState);
+      if (q === undefined) return { searchTerm: undefined };
+      const inner: Array<[string, string]> = [["q", q]];
+      if (state !== undefined) inner.push(["geostatecodes", state.toUpperCase()]);
+      inner.push(["documenttype", "Patent"], ["page", "1"], ["pageSize", "25"]);
+      return { searchTerm: `/search?${toQueryString(inner)}` };
+    }
     case "archion":
     case "matricula":
       // Browse sites (spec §3.11): church books are reached parish → register
@@ -653,6 +687,9 @@ const SITE_BASE_URL: Record<ExternalSearchSite, string | null> = {
   // (openarch.nl) submits its search form to this same endpoint, so one host
   // serves both; `SITE_FIXED_PARAMS` keeps the hand-off on the English UI.
   openarch: "https://www.openarchieven.nl/search.php",
+  // BLM's GLO Portal (the legacy glorecords.blm.gov/search/ URLs 301 here and
+  // drop every parameter — spec §10).
+  blm_glo: "https://glorecords.blm.gov/s/advanced-search",
   // Browse sites: the site root, returned only when no parish `baseUrl` was
   // supplied (spec §3.11).
   archion: "https://www.archion.de/de/",
@@ -743,6 +780,11 @@ const SITE_ACCESS: Record<ExternalSearchSite, AccessClassification> = {
   // challenge. Classified into this tier for the tier's stated purpose — a
   // capture blocked from such a range must narrate as expected, not as a nil.
   openarch: "free_bot_protected",
+  // Measured 2026-11-11 in an ordinary browser and a private window: results
+  // with no login and no challenge page (spec §10). The embedded search app's
+  // host (glo-entry-prod.blm.gov) is Cloudflare-fronted; a headless browser
+  // got no results there, a real one did.
+  blm_glo: "free",
 };
 
 // US/UK variants share one parameter table (spec §3.9) — confirmed to use the
@@ -834,6 +876,13 @@ const SITE_NOTES: Partial<Record<ExternalSearchSite, string>> = {
   openarch:
     "some networks are refused by this site outright (connection drop, no challenge page) — a page " +
     "that never loads is the network being blocked, not evidence the record is missing",
+  blm_glo:
+    "federal land only: patents for the 30 public-land states — the 13 original states and TX, KY, TN, " +
+    "VT, ME, WV and HI granted their own land, so look for state land-office and county deed records " +
+    "there; this search is limited to land patents — for land-status records, survey plats or " +
+    "warrant files, change the Document Category filter on the site; the names go in one free-text " +
+    "search, so a patent indexed under initials or a middle name may not match the full given name — " +
+    "re-run with the surname alone before treating no result as absence",
   digital_newspaper_archive:
     "this archive's URL carries no date filter — tell the user which date range to set in the site's own UI. " +
     "The access classification is this class's default, NOT checked against this archive: if it turns out to " +
@@ -909,6 +958,15 @@ function baseUrlHostError(site: ExternalSearchSite, baseUrl: string): string | u
   const allowed = [siteUrl, UK_BASE_URL[site]].filter((u): u is string => u !== undefined).map(hostOf);
   if (!allowed.some((h) => inDomainOf(host, h))) {
     return `baseUrl host "${host}" does not belong to ${site} (expected ${allowed.map(registrableDomain).join(" or ")})`;
+  }
+  // The GLO Portal kept its host but retired its paths: the legacy
+  // /search/default.aspx and /results/default.aspx 301 to /s/ and drop every
+  // parameter (spec §10.1), and only /s/advanced-search reads `searchTerm`.
+  if (site === "blm_glo" && new URL(baseUrl).pathname.replace(/\/+$/, "") !== "/s/advanced-search") {
+    return (
+      `baseUrl path "${new URL(baseUrl).pathname}" does not take a search on ${site} — the legacy paths ` +
+      `redirect and drop every parameter, so the search would run unscoped; use ${siteUrl}`
+    );
   }
   return undefined;
 }
@@ -1292,6 +1350,16 @@ function siteNotes(
         ...shadowedNotes(site, "Location", [["birthPlace", a.birthPlace], ["deathPlace", a.deathPlace]], str),
       );
       break;
+    case "blm_glo":
+      if (str(a.usState) === undefined) {
+        notes.push("no usState supplied — the search covers every public-land state");
+      } else if (usStateCode(a.usState) === undefined) {
+        notes.push("'usState' names no US state this site can facet on — no state filter was applied");
+      }
+      if (params.searchTerm === undefined) {
+        notes.push("blm_glo needs a surname or given name — a state alone is not a person search");
+      }
+      break;
   }
   return notes;
 }
@@ -1366,6 +1434,21 @@ export function buildExternalSearchUrl(input: BuildExternalSearchUrlInput): Buil
         errors: [
           `searchStartYear/searchEndYear ${window.start}–${window.end} lie entirely outside Chronicling America's ` +
             `${first}–${last} digitised page corpus — route to the state/regional archive for the place or a paid site`,
+        ],
+      };
+    }
+  }
+
+  if (site === "blm_glo") {
+    const code = usStateCode(a.usState);
+    if (code !== undefined && !BLM_PUBLIC_LAND_STATES.has(code)) {
+      return {
+        ok: false,
+        reason: "outside_coverage",
+        errors: [
+          `${US_STATE_NAMES[code].replace(/\b(?!of\b)\w/g, (c) => c.toUpperCase())} is not a public-land state — BLM GLO holds no federal land patents there, ` +
+            "so a search could only return a nil that is not evidence of absence; search that state's own " +
+            "land office and county deed records instead",
         ],
       };
     }
@@ -1568,7 +1651,9 @@ export const buildExternalSearchUrlSchema = {
     "digital_newspaper_archive, which has no fixed site-wide URL. archion and " +
     "matricula are browse sites: pass the parish page as `baseUrl` (from the wiki " +
     "or locality guide) and it comes back unchanged with the browse path in " +
-    "`notes`. Pass `locale: " +
+    "`notes`. blm_glo (BLM General Land Office) searches federal land patents by " +
+    "surname, given name and `usState`, and refuses a state that is not a " +
+    "public-land state as `outside_coverage`. Pass `locale: " +
     "\"uk\"` for the .co.uk variant of ancestry or findmypast (ignored, with a " +
     "note, for any other site). You decide which record type/event the search " +
     "targets and how to resolve any conflicts[] entry on a disputed field; the " +
@@ -1690,7 +1775,10 @@ export const buildExternalSearchUrlSchema = {
           },
           usState: {
             type: "string",
-            description: "Chronicling America only: the US state to scope the search to.",
+            description:
+              "Chronicling America and blm_glo only: the US state to scope the search to — a name " +
+              "(\"Montana\"), a postal code (\"MT\") or a comma-qualified place (\"Broadwater, Montana, " +
+              "United States\").",
           },
         },
       },

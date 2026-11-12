@@ -40,11 +40,6 @@ DORMANT: dict[str, str] = {
         "with that category in b68d2e9ec; the validator was kept and no positive "
         "test carries the tag yet"
     ),
-    "namesake-pool-row": (
-        "its only test, ut_search_records_031, was deleted on chesworthrm's ruling on "
-        "issue #3363 (2026-11-09): it failed 3 of 9 runs on main, writing no pool row, "
-        "and the engine has no signal to check; issue #4408 restores it"
-    ),
     "not-reached-wiki": (
         "its only test, ut_research_exhaustiveness_019, was deleted by PR #3917: "
         "it fails 2 of 4 on main because the agent skips the localities read; "

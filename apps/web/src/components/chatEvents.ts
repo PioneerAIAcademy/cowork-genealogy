@@ -43,11 +43,6 @@ export interface ChatMessage {
   streamText?: string
   streamThinking?: string
   error?: boolean
-  // Closed by an `auto_continue` event: the server answered this message's
-  // hand-back itself (issue #2653). The next content event opens a new bubble
-  // rather than folding onto this one, so each auto-continued step reads as
-  // its own reply.
-  handedBack?: boolean
   // A user message typed WHILE a turn was running (PR #2870 item 1b). The
   // server holds it rather than enqueueing it -- two turns on one session would
   // resume the same SDK session -- so the bubble says it is waiting. Cleared at
@@ -263,16 +258,7 @@ export function foldChatEvent(
 
   const next = [...prev]
   let last = next[next.length - 1]
-  if (kind === 'auto_continue') {
-    // The server is answering the hand-back itself: close the bubble the
-    // literal ended, so the synthetic turn's content opens a fresh one. No
-    // user bubble — the "Yes." was never a message the user sent.
-    if (last && last.role === 'assistant' && !last.handedBack) {
-      next[next.length - 1] = { ...last, handedBack: true }
-    }
-    return next
-  }
-  if (!last || last.role !== 'assistant' || last.handedBack) {
+  if (!last || last.role !== 'assistant') {
     last = { role: 'assistant', text: '', tools: [] }
     next.push(last)
   } else {

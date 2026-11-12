@@ -178,7 +178,7 @@ def test_dispose_named_items(before_state, after_state, test):
             if was == now:
                 continue
             # `in_progress` counts too, since section B of
-            # docs/plan/research-step-mode.md: a search that ran without closing
+            # docs/specs/research-step-mode-spec.md: a search that ran without closing
             # its item leaves it `in_progress`, and the router's dispose row now
             # names those as well. Leaving them out is what let a searched item
             # sit undisposed while the declaration stayed refused for good.

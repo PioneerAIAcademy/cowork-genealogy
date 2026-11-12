@@ -16,6 +16,13 @@ parents checks), following CLAUDE.md's "a new lint must be proven to fail":
   - `_VERIFY_SIGNALS` was checked against every new question joined into one
     string, so one correctly framed question could mask a co-written bad
     one. Fixed by checking each question independently.
+
+Also pins `test_handback_not_record_scoped`'s `_last_sentence` fix (PR #4466
+review item 1): a naive split on [.!?] breaks on a single-letter initial
+or a date qualifier ("Thomas J. Flynn", "b. ca. 1795"), which silently
+drops an earlier record mention from what gets checked -- a false
+negative, not a false positive. Three observed-shape sentences that must
+still fail, and the issue's own worked example that must still pass.
 """
 
 import sys
@@ -31,6 +38,7 @@ sys.path.insert(0, str(_VALIDATORS_DIR))
 from test_question_selection import (  # noqa: E402
     test_disputed_parents_missing_info_handled as check_missing_info,
     test_first_question_tests_disputed_parents as check_disputed_parents,
+    test_handback_not_record_scoped as check_handback,
     test_new_question_has_date_window as check_date_window,
     test_motivation_objective_decomposed as check_motivation,
     test_new_question_not_vague as check_not_vague,
@@ -420,3 +428,139 @@ def test_date_window_one_bad_question_is_not_masked_by_a_good_one():
 def test_date_window_ignores_questions_that_already_existed():
     old = _q("q_001", "Who were his parents?")
     check_date_window(_state([old]), _state([old]))
+
+
+# --- test_handback_not_record_scoped: the #4166-review _last_sentence fix ---
+#
+# Pins the fix to `_last_sentence`'s abbreviation-rejoin logic (PR #4466 review
+# item 1): a naive split on [.!?] breaks on a single-letter initial or a date
+# qualifier ("Thomas J. Flynn", "b. ca. 1795"), silently dropping an earlier
+# record mention from what gets checked -- a false negative. Both directions
+# per CLAUDE.md's "a new lint must be proven to fail": the three reviewer-given
+# sentences must fail, and the issue's own worked example must still pass.
+
+
+def _before(has_planned=False, has_in_progress=False):
+    items = []
+    if has_planned:
+        items.append({"id": "pli_001", "status": "planned"})
+    if has_in_progress:
+        items.append({"id": "pli_002", "status": "in_progress"})
+    return {"research_json": {"plans": [{"items": items}] if items else []}}
+
+
+def _reply(caller_lines: str, summary_tail: str) -> str:
+    return (
+        f"{caller_lines}\n\n---\n\n"
+        "Some plain-language paragraph about the question.\n\n"
+        f"{summary_tail}"
+    )
+
+
+def _test_dict():
+    return {"delegation": "Select and record the next research question.\n\nprojectPath: <workspace>"}
+
+
+_SENTENCE_LEAK_CASES = [
+    "Next, the 1850 census will be searched for Thomas J. Flynn.",
+    "Next I will search the 1850 census for Reuben Hollis, b. ca. 1795, of Rowan County.",
+    "Research will check the U.S. census for Thomas J. Flynn.",
+]
+
+
+@pytest.mark.parametrize("summary_tail", _SENTENCE_LEAK_CASES)
+def test_fires_on_record_leaked_past_an_abbreviation(summary_tail):
+    """Before the fix, `_last_sentence` split right after "J." / "ca." and
+    returned only the fragment past it, so the record mention earlier in
+    the same sentence never reached the pattern check."""
+    reply = _reply("**Next step:** plan research for this question.", summary_tail)
+    with pytest.raises(AssertionError, match="names a record"):
+        check_handback(
+            before_state=_before(),
+            text_response=None,
+            test=_test_dict(),
+            agent_returns=[{"subagent_type": "question-selection", "text": reply}],
+        )
+
+
+def test_passes_the_issues_own_worked_example():
+    """The issue's own legitimate return -- "Sr." must not be read as a
+    sentence boundary either."""
+    reply = _reply(
+        "**Next step:** plan research for this question.",
+        "A research plan will now be built to test whether Paul Sr. was his father.",
+    )
+    check_handback(
+        before_state=_before(),
+        text_response=None,
+        test=_test_dict(),
+        agent_returns=[{"subagent_type": "question-selection", "text": reply}],
+    )
+
+
+def test_carve_out_covers_in_progress_not_only_planned():
+    """A plan item already `in_progress` (not merely `planned`) was already
+    weighed by research-plan; naming it is describing the plan, not
+    choosing a record (ut_question_selection_001, ut_question_selection_d01).
+    The validator itself `pytest.skip`s this case -- the carve-out IS a skip,
+    not a clean pass -- so confirming that is what proves it fired."""
+    reply = _reply(
+        '**Next step:** Complete `pli_006` -- the Thomas Flynn probate search on FamilySearch.',
+        "Once the probate search is complete, the question can be concluded.",
+    )
+    with pytest.raises(pytest.skip.Exception):
+        check_handback(
+            before_state=_before(has_in_progress=True),
+            text_response=None,
+            test=_test_dict(),
+            agent_returns=[{"subagent_type": "question-selection", "text": reply}],
+        )
+
+
+def test_no_carve_out_still_fires_on_a_record_name():
+    """Without any planned/in_progress item on the project, naming a record
+    is still a violation -- the carve-out test above is not vacuously
+    passing because the check never fires at all."""
+    reply = _reply(
+        '**Next step:** Complete `pli_006` -- the Thomas Flynn probate search on FamilySearch.',
+        "Once the probate search is complete, the question can be concluded.",
+    )
+    with pytest.raises(AssertionError, match="names a record"):
+        check_handback(
+            before_state=_before(),
+            text_response=None,
+            test=_test_dict(),
+            agent_returns=[{"subagent_type": "question-selection", "text": reply}],
+        )
+
+
+def test_will_pattern_does_not_flag_the_modal_verb():
+    """Pins the `(?!\\s+be\\b)` fix (ut_question_selection_007's flaky run-0
+    fail): "her will be planned" is the modal auxiliary (her [searches] will
+    be planned), not "her will" the legal document, and must not fire."""
+    reply = _reply(
+        "**Next step:** plan research for this question.",
+        "Searches for her will be planned next.",
+    )
+    check_handback(
+        before_state=_before(),
+        text_response=None,
+        test=_test_dict(),
+        agent_returns=[{"subagent_type": "question-selection", "text": reply}],
+    )
+
+
+def test_will_pattern_still_flags_the_document_noun():
+    """The pattern must still catch the actual document: "her will" as a
+    noun, not followed by "be", is unaffected by the modal-verb carve-out."""
+    reply = _reply(
+        "**Next step:** plan research for this question.",
+        "Her will names her surviving children.",
+    )
+    with pytest.raises(AssertionError, match="names a record"):
+        check_handback(
+            before_state=_before(),
+            text_response=None,
+            test=_test_dict(),
+            agent_returns=[{"subagent_type": "question-selection", "text": reply}],
+        )
