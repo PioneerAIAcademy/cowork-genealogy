@@ -173,7 +173,7 @@ The default is **broad-to-narrow**. Use narrow-to-broad only when you have high-
 | `residencePlace` | Plan item jurisdiction | The primary geographic filter |
 | `recordCountry` | Plan item jurisdiction | Anchor — one of `surname`, `recordCountry` or `batchNumber` is required. **Rejected if combined with `batchNumber`** |
 | `batchNumber` | A previous result's `batchNumber` (on `ranked[]` stubs too) — scan the hits, not just the top one | Extraction batch. Anchors alone — send it with no other **search filter** (keep `projectPath`/`subjectId`); add only a `surname` to narrow. Quote it verbatim; never reformat or pad it |
-| `collectionId` | From `collections_search` output or plan rationale | Narrow to a specific collection when possible |
+| `collectionId` | The plan item, or a previous result's `collectionId` | Narrow to a specific collection when possible |
 | `spouseGivenName` / `fatherSurname` / etc. | Known spouse/parent names | Narrows the result set — see "Relative-name anchors" below before reading a nil as meaningful |
 | `surnameExact`, `givenNameExact`, `birthPlaceExact`, `marriagePlaceExact`, `birthYearExact`, `marriageYearExact`, `fatherGivenNameExact`, `spouseSurnameExact` (and the same `Exact` suffix on every other name, place, and year field) | — | Boolean. **Leave unset unless a rule below says otherwise.** See "Exact-match qualifiers" |
 
@@ -1209,7 +1209,7 @@ When a search returns 0 hits with reasonable inputs, try in this order:
 
 **Still 0 hits across all variations:** the records may be unindexed.
 Call `catalog_search` for the place: it indexes filmed and image-only
-holdings that `collections_search` (indexed collections only) cannot see, and a
+holdings the indexed collections do not show, and a
 film note's `imageGroupNumber` feeds `image_search` / `fulltext_search`. A
 small place may be catalogued under its parent: on 0 hits, retry once at the
 parent jurisdiction. Other routes: image browsing, Full-Text Search, or
