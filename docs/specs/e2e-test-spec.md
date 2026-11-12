@@ -659,21 +659,51 @@ roll-up does not display them (§7.4 blind-grading constraint).
 ## 5. Entry Point: The `/research` Skill
 
 Autonomous e2e tests invoke the agent via the same entry point a production
-user would type: the `/research` skill. The harness sends a single
-user message of the form (single-ask fixtures do not — they send the patron's
-message verbatim; see §16):
+user would type: the `/research` skill. The harness opens the run with one
+user message of the form (single-ask fixtures do not; they send the patron's
+message verbatim, see §16):
 
 ```
 /research --autonomous <researcher_question>
 ```
 
-The harness still sends `--autonomous`, but since the continuous-work change to
-`research/SKILL.md` (2026-09-23) **no plugin body reads it**: proceeding without pausing
-is now what every run does, with or without the string. It is kept in the
-message because it is a listed trigger in `research/SKILL.md`'s description,
-and because removing it would change what every committed run log was
-produced under. No test-mode system prompt is added; the e2e test exercises
-the production code path.
+When the fixture bundles provided documents, the message also names them (§6.2).
+After that, under the default `--step-mode job`, the harness answers for the
+researcher, one reply per turn, with what `next_auto_reply` returns ("Keep going.",
+or "Wrap it up." in place of a further round of planning), and answers a turn that
+ends on a question for the researcher once, with the fixture's own
+`researcher_question`. The run ends when the host has no reply to send or a cap in
+§6 fires; section F of `docs/specs/research-step-mode-spec.md` lists when the host
+sends none.
+
+**Only the router reads the flag.** No other plugin body contains `--autonomous`.
+These rules in `research/SKILL.md` branch on it; find them with
+`grep -n -E -- '--autonomous|autonomous run' packages/engine/plugin/skills/research/SKILL.md`:
+
+- **A trigger.** The description's trigger list names "any message with `--autonomous`".
+- **Always a job.** §"Bounded request or job" says "`--autonomous` is always a job":
+  the bounded-request list does not apply, so a fixture question shaped like a
+  bounded ask ("Did X and Y have a son named Z?") runs the whole job, one step per
+  turn, instead of being answered once with the run then ending.
+- **No researcher present.** On an autonomous run the router hands `userPresent: no`
+  to three agents. `@plugin:search-external-sites` "gets `no` only in an autonomous
+  run" (§"One step per turn"), and its spawn fields say "`no` in an autonomous run,
+  otherwise `yes`". `@plugin:search-hints` gets it from its routing-table row:
+  "`userPresent: no` ONLY on an `--autonomous` run". `@plugin:person-evidence` gets
+  it on a "Keep going." or "Wrap it up." turn too: "A wrap-up turn and an autonomous
+  run pass it too" (§"One step per turn"), and its spawn fields name the same, "turn
+  and in an autonomous run". So an e2e run neither waits on an external-site capture
+  nobody will upload nor asks for hint verdicts nobody will give.
+
+The agents read the `userPresent` field, not the string. The e2e orchestrator
+writes no delegation, so it cannot pass `userPresent: no` itself: the flag is how
+an e2e run gets it. That is why the flag stays as e2e's opening (lead,
+2026-11-10), and why decision 22 of the step-mode spec, which planned to retire
+it, is rescinded. Removing it would also change what every committed run log was
+produced under. No test-mode system prompt is added; apart from the router's
+flag-gated rules above, the e2e test runs production's code path. How a patron's
+message, which carries no flag, is routed is measured by the single-ask panel
+(§16, `make e2e-single-ask`), not here.
 
 `/research` is specified separately. For the contract that matters
 here:
@@ -684,8 +714,10 @@ here:
   conflict-resolution → proof-conclusion, iterating as needed)
 - It instructs the agent to read `research.json` and decide the
   next sub-skill based on state
-- It does not pause for clarifying questions, and that no longer depends on
-  the flag
+- It runs one step per turn and ends the turn on a "Continue with …?" offer,
+  except after a step that ends on a question only the researcher can answer, a
+  final conclusion, or a step that found nothing further to do (§"One step per
+  turn" in `research/SKILL.md`); the harness answers as above
 
 ---
 
