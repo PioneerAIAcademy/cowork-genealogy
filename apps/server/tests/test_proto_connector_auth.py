@@ -287,6 +287,14 @@ async def test_an_oversized_consent_body_is_refused(connector_on):
         r = await c.post("/connect", content=b"request=" + signed + b"&pad=" + b"x" * connector_auth.CONSENT_BODY_MAX,
                          headers=headers)
         assert r.status_code == 400 and auth.FS_OAUTH_COOKIE not in r.cookies and store.signin_states == {}
+
+        # No declared length at all (a chunked body): refused unread, however small.
+        async def chunks():
+            yield b"request=" + signed
+
+        r = await c.post("/connect", content=chunks(), headers=headers)
+        assert "content-length" not in r.request.headers
+        assert r.status_code == 400 and store.signin_states == {}
         assert (await c.post("/connect", content=b"request=" + signed + b"&pad=x", headers=headers)).status_code == 303
 
 

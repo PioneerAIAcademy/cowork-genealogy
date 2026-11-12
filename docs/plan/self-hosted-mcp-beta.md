@@ -214,6 +214,11 @@ Desktop 4.23118 and 5.1231. Items 6, 8 and 9 run before the first invited user.
   - the web tier's issuer equals the tools tier's `authorization_servers[0]`, byte for byte;
   - with chat off, an existing user's plain browser sign-in replaces the FamilySearch token, leaves the connector token unchanged, and the next tool call uses the new token;
   - after `/auth/logout`, a tool call with that user's connector token gets 401 from the tools tier.
+- **Owed at the first deploy, by hand,** because no test reaches Claude's own client:
+  1. the consent page's Agree button answers 303 in a real browser, not 403;
+  2. the first connection shows a fresh sign-in (`/authorize`, then a token), though Claude may first send a refresh token an earlier server at this URL issued;
+  3. a dead token at the door brings up Claude's Reconnect card;
+  4. a sign-in started in one Claude account cannot be finished in a browser signed in to another (P0.2 item 6, and launch gate 4).
 
 **W3 Project routes.** Shipped: uploads, the download, OpenRouter linking (off on `malachi`), the policy routes, the account data with its deletion code, and the viewer data routes, of which the beta uses only `GET /api/projects`, for W4's list. Project routes are keyed by project and owner-checked.
 

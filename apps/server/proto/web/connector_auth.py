@@ -306,13 +306,13 @@ def _refused(message: str, status: int) -> HTMLResponse:
 
 async def _form_field(request: Request, name: str) -> str | None:
     """One field of a small urlencoded form, or None. The body is bounded by its declared
-    length before it is read, and never parsed as multipart."""
+    length before it is read, and never parsed as multipart. A body with no declared length
+    (chunked) is refused unread: a browser's form post always declares one, and the server
+    reads no more than was declared, so this one check bounds what is read."""
     declared = request.headers.get("content-length", "")
     if not declared.isascii() or not declared.isdigit() or int(declared) > CONSENT_BODY_MAX:
         return None
     body = await request.body()
-    if len(body) > CONSENT_BODY_MAX:
-        return None
     values = parse_qs(body.decode("utf-8", "replace")).get(name)
     return values[0] if values else None
 
