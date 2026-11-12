@@ -178,7 +178,8 @@ describe("wiki_search answer", () => {
     const raw = Array.from({ length: 20 }, (_, i) => item(i, `${i} `.repeat(2100).slice(0, 4200)));
     serve(answerOf(raw));
     const result = await wikiSearch({ query: "q", includeText: true }, LOCAL);
-    expect(JSON.stringify(result).length).toBeLessThanOrEqual(WIKI_SEARCH_TEXT_BUDGET);
+    // The literal, not the constant: a raised budget must fail here.
+    expect(JSON.stringify(result).length).toBeLessThanOrEqual(24_000);
     expect(result.results.map((r) => r.source_url)).toEqual(raw.map((r) => r.source_url));
     expect(result.results[0].chunk_text).toBe(raw[0].chunk_text);
     expect(result.results[19]).not.toHaveProperty("chunk_text");
