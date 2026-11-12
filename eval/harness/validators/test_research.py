@@ -1031,6 +1031,32 @@ def test_new_person_starts_at_new_project_path(test, tool_calls, builtin_tool_ca
     assert not named, f"the '{callee}' hand-off names a listed project's path {named}: {handoff[:300]}"
 
 
+def test_no_project_reads_new_project_path(test, tool_calls, builtin_tool_calls):
+    """Tag-gated (``reads-new-project-path``). The hosted ``project_list`` answer
+    gives a ``newProjectPath``, so the router reads project state there and at no
+    other path, the working folder included, and the first hand-off names no
+    listed project's path."""
+    if "reads-new-project-path" not in (test.get("tags") or []):
+        pytest.skip("not a reads-new-project-path test")
+    listing = _hosted_listing(tool_calls)
+    new_path = listing.get("newProjectPath")
+    assert new_path, f"the router never received a hosted project_list answer with a newProjectPath: {listing}"
+    read_paths = [
+        (c.get("args") or {}).get("projectPath")
+        for c in tool_calls or []
+        if bare_tool_name(str(c.get("tool") or "")) == "project_context"
+    ]
+    assert new_path in read_paths, f"project_context was never called with newProjectPath {new_path!r}: {read_paths}"
+    other = [p for p in read_paths if p != new_path]
+    assert not other, f"project_context was called at a path other than newProjectPath {new_path!r}: {other}"
+    callee = _expected_skill(test)
+    handoff = _first_handoff_args(callee, builtin_tool_calls)
+    assert handoff is not None, f"no hand-off to '{callee}'"
+    listed = [p.get("projectPath") for p in listing.get("projects") or [] if p.get("projectPath")]
+    named = [p for p in listed if p in handoff]
+    assert not named, f"the '{callee}' hand-off names a listed project's path {named}: {handoff[:300]}"
+
+
 def test_named_subject_continues_the_listed_project(test, tool_calls, builtin_tool_calls, text_response):
     """Tag-gated (``uses-listed-project``). The message names the one listed
     project's subject, so the router reads that project, the first hand-off names
