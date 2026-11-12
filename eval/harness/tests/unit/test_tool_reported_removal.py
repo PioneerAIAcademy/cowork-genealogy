@@ -154,6 +154,28 @@ def test_a_refused_call_removes_nothing():
     assert removal([append_call(message("I2"), ok=False)], BEFORE) == set()
 
 
+@pytest.mark.parametrize("ok", [None, "missing", 1, "true"])
+def test_a_response_whose_ok_is_not_true_removes_nothing(ok):
+    call = append_call(message("I2"))
+    if ok == "missing":
+        del call["response"]["ok"]
+    else:
+        call["response"]["ok"] = ok
+    assert removal([call], BEFORE) == set()
+
+
+def test_a_merge_survivor_minted_during_the_run_counts():
+    calls = [merge_call("I3", "I2"), append_call(message("I3"))]
+    assert removal(calls, BEFORE) == {"I3"}
+    assert removal(calls[1:], BEFORE) == set()
+
+
+def test_a_refused_merge_adds_no_candidate():
+    refused = merge_call("I3", "I2")
+    refused["response"] = {"ok": False}
+    assert removal([refused, append_call(message("I3"))], BEFORE) == set()
+
+
 @pytest.mark.parametrize("response", [None, "the last open question is resolved, so the minted persons I2", {}, {"ok": True},
                                       {"ok": True, "validation": None}, {"ok": True, "validation": {"warnings": "I2"}}])
 def test_a_response_without_the_warning_removes_nothing(response):
@@ -267,6 +289,14 @@ def test_no_deletes_passes_a_merge_then_the_sweep():
     fails(check_no_deletes, before, after, tool_calls=calls[1:])
 
 
+MINTED_SURVIVOR = [merge_call("I3", "I2"), append_call(message("I3", links=2))]
+
+
+def test_no_deletes_passes_a_merge_into_a_person_minted_during_the_run():
+    passes(check_no_deletes, state(BEFORE, LINKS_BEFORE), state(AFTER, LINKS_AFTER), tool_calls=MINTED_SURVIVOR)
+    fails(check_no_deletes, state(BEFORE, LINKS_BEFORE), state(AFTER, []), tool_calls=MINTED_SURVIVOR)
+
+
 # --- test_ownership_table -----------------------------------------------------
 
 def ownership(before, after, tool_calls=None):
@@ -313,6 +343,11 @@ def test_ownership_passes_a_merge_then_the_sweep():
     calls = [merge_call("I2", "I9"), append_call(message("I2", links=3))]
     passes(ownership, before, after, tool_calls=calls)
     fails(ownership, before, after, tool_calls=calls[1:])
+
+
+def test_ownership_passes_a_merge_into_a_person_minted_during_the_run():
+    passes(ownership, state(BEFORE, LINKS_BEFORE), state(AFTER, LINKS_AFTER), tool_calls=MINTED_SURVIVOR)
+    fails(ownership, state(BEFORE, LINKS_BEFORE), state(AFTER, []), tool_calls=MINTED_SURVIVOR)
 
 
 # --- test_no_tree_write_below_probable ------------------------------------------
@@ -366,6 +401,32 @@ def test_tree_fails_on_a_refused_call():
 
 def test_tree_fails_with_no_tool_calls():
     fails(tree_write, BEFORE, AFTER)
+
+
+def tree_call(args, ok=True, written=("tree.gedcomx.json",), tool="mcp__genealogy__tree_edit"):
+    return {"tool": tool, "args": {"projectPath": "/p", **args}, "matched": {}, "response_fixture": None,
+            "response": {"ok": ok, "filesWritten": list(written)}}
+
+
+@pytest.mark.parametrize("call", [
+    tree_call({"operation": "update_fact", "personId": "I2", "factId": "F1", "fact": {"primary": True}}),
+    tree_call({"ops": [{"operation": "add_relationship", "relationship": {"type": "ParentChild", "parent": "I2", "child": "I9"}}]}),
+    tree_call({"operation": "remove", "personId": "I2", "factId": "F1"}, tool="mcp__genealogy__tree_correct"),
+    tree_call({"merges": [["I2", "I8"]]}, written=("tree.gedcomx.json", "research.json"), tool="mcp__genealogy__merge_tree_persons"),
+    tree_call({"personId": "I2", "assertionIds": ["a_003"]}, tool="mcp__Genealogy_Research__materialize_facts"),
+])
+def test_tree_fails_a_write_to_a_person_the_sweep_then_removed(call):
+    fails(tree_write, BEFORE, AFTER, tool_calls=[call, append_call(message("I2"))])
+
+
+@pytest.mark.parametrize("call", [
+    tree_call({"operation": "add_source", "source": {"title": "1850 census"}}),
+    tree_call({"operation": "update_fact", "personId": "I2", "factId": "F1"}, ok=False),
+    tree_call({"operation": "update_fact", "personId": "I2", "factId": "F1"}, written=("research.json",)),
+    tree_call({"operation": "update_fact", "personId": "I2", "factId": "F1"}, tool="mcp__genealogy__tree_query"),
+])
+def test_tree_passes_a_call_that_wrote_no_swept_person(call):
+    passes(tree_write, BEFORE, AFTER, tool_calls=[call, append_call(message("I2"))])
 
 
 def test_tree_reads_both_trees_as_the_healer_leaves_them():

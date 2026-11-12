@@ -275,9 +275,9 @@ def test_no_entries_deleted(before_state, after_state, tool_calls=None):
     question, research_append's unanchored-person sweep removes minted persons
     with the `person_evidence` and `rejected_links` entries naming them, and
     reports it (research-append-tool-spec.md §5.11). An entry in those two
-    sections is exempt only when its `person_id` is a person
-    `_tool_reported_removal` confirms the tool removed. Every other deletion
-    still fails.
+    sections is exempt only when its `person_id`, read through any successful
+    merge's remap, is a person `_tool_reported_removal` confirms the tool
+    removed. Every other deletion still fails.
     """
     before_research = before_state.get("research_json")
     after_research = after_state.get("research_json")
@@ -601,18 +601,20 @@ def _tool_reported_removal(tool_calls, before_tree) -> set[str]:
     them, and says so in `validation.warnings` (research-append-tool-spec.md
     §5.11). That deletion is the tool's, not the caller's.
 
-    A person counts only when it is in the before tree AND a successful
-    (`ok is True`, the `_merge_remap` gate) research_append response carries a
-    warning that starts with `_UNANCHORED_REMOVAL_PREFIX` and lists the
-    person's id where the message lists one: right after `person(s): ` or a
-    `, ` separator, never inside a name. Candidates come from the tree, not from
-    splitting names, so a name with a comma in it cannot split wrongly, and a
-    reworded message exempts nothing, which fails safe. A person the agent took
-    out by any other path is not named, and still counts against it. The person
-    need not be absent afterwards: ids are reused (highest plus one), so a later
-    write may mint a new person under a removed one's id.
+    A person counts only when it is a candidate AND a successful (`ok is True`,
+    the `_merge_remap` gate) research_append response carries a warning that
+    starts with `_UNANCHORED_REMOVAL_PREFIX` and has the person's id right
+    after `person(s): ` or `, `, where the message lists its persons. The
+    candidates are the before tree's persons and every successful merge's
+    survivor, which the run may have minted. The message is never split on
+    names; the cost is that a name holding `, <another candidate's id>` would
+    count that id too, which no real name does. A reworded message exempts
+    nothing, which fails safe. A person the agent took out by any other path is
+    not named, and still counts against it. The person need not be absent
+    afterwards: ids are reused (highest plus one), so a later write may mint a
+    new person under a removed one's id.
     """
-    candidates = _person_ids(before_tree)
+    candidates = _person_ids(before_tree) | set(_merge_remap(tool_calls).values())
     if not candidates:
         return set()
     warnings: list[str] = []

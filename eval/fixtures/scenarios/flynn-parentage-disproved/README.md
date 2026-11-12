@@ -45,12 +45,15 @@ relationship, and no alternative father). The agent itself writes nothing to
 q_001 is the project's only open question, so the call that resolves it with
 the `disproved` proof also runs `research_append`'s unanchored-person sweep:
 I2 Thomas Flynn is a minted person and no relationship connects him to I1,
-the project's subject, so the tool removes him with his links `pe_002` and `pe_003`, unless the conclusion names
-him in its claims, and says so in its response. That removal is the tool's,
-not the agent's.
+the project's subject, so the tool removes him with his links `pe_002` and `pe_003`,
+and says so in its response. It keeps him when the conclusion names him in its
+claims, or when its supporting assertions link only to him (`a_003` or `a_004`,
+with neither `a_001` nor `a_005`). Either outcome is the tool's, not the agent's.
 
 ## Used by
 
 - proof-conclusion positive tests `ut_proof_conclusion_006` and
   `ut_proof_conclusion_d3c`: write a `disproved`-tier conclusion **and add
   nothing to `tree.gedcomx.json`** (the tool's sweep aside).
+- `eval/harness/tests/unit/test_tool_reported_removal.py` (the `_flynn` cases)
+  builds the sweep's before and after from this scenario's I2 and his links.

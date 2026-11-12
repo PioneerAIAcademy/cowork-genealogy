@@ -25,7 +25,7 @@
     "Should use definitive phrasing appropriate to an affirmative refutation (not hedging)",
     "Must NOT update tree.gedcomx.json — no ParentChild relationship is added, and the real father is left as a separate future question (not concluded here)",
     "narrative_markdown should cite the Ballingarry burial register and the birth-year evidence and stand alone",
-    "If this conclusion resolves the project's last open question, research_append itself removes I2 Thomas Flynn and his person_evidence links unless the conclusion names him in its claims, and says so in its response. That removal is the tool's, by design, not a tree write by the agent; do not mark the agent down for it."
+    "If this conclusion resolves the project's last open question, research_append itself may remove I2 Thomas Flynn and his person_evidence links, and says so in its response. It keeps him when the conclusion names him in its claims, or when its supporting assertions link only to him (a_003 or a_004, with neither a_001 nor a_005). Either outcome is the tool's, by design, not a tree write by the agent; do not mark the agent down for it."
   ],
   "judge_reads_files": true,
   "execution": {
