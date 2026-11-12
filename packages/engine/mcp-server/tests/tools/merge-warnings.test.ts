@@ -13,6 +13,9 @@ import {
 import { Mob } from "../../src/utils/mob.js";
 import { mergeWarnings } from "../../src/tools/merge-warnings.js";
 import type { SimplifiedGedcomX } from "../../src/types/gedcomx.js";
+import type { RecordReadResult } from "../../src/types/record-read.js";
+import { compactRecordReadAnswer } from "../../src/utils/staged-compaction.js";
+import { loadRecordReadFixture, syntheticHousehold } from "../helpers/record-read-fixtures.js";
 
 // ────────────────────────────────────────────────────────────────────
 // hasSameCensus — census collection titles from sources[].title
@@ -592,6 +595,54 @@ describe("merge_warnings tool", () => {
     expect(result.errors.join(" ")).toContain("leave a new person's persona out of merges");
   });
 
+  // Issue #4345: the interleaved-children tag is `implausible`, which is advisory
+  // in merge_warnings; only `contradiction` blocks a merge there.
+  it("reports hasInterleavedChildrenIgnoreSimilarSpouses as implausible, not a block", async () => {
+    const birth = (id: string, date: string) => ({ id, type: "Birth", date, standard_date: date });
+    await writeProject({
+      persons: [
+        { id: "H", gender: "Male", names: [{ id: "NH", given: "Henry", surname: "Ward" }] },
+        { id: "A", gender: "Female", names: [{ id: "NA", given: "Agnes", surname: "Brown" }] },
+        { id: "A1", gender: "Male", names: [{ id: "NA1", given: "Albert", surname: "Ward" }], facts: [birth("A1B", "1850")] },
+        { id: "A2", gender: "Male", names: [{ id: "NA2", given: "Arthur", surname: "Ward" }], facts: [birth("A2B", "1860")] },
+      ],
+      relationships: [
+        { id: "R1", type: "Couple", person1: "H", person2: "A" },
+        { id: "R2", type: "ParentChild", parent: "H", child: "A1" },
+        { id: "R3", type: "ParentChild", parent: "A", child: "A1" },
+        { id: "R4", type: "ParentChild", parent: "H", child: "A2" },
+        { id: "R5", type: "ParentChild", parent: "A", child: "A2" },
+      ],
+      sources: [],
+    });
+
+    // The record: Henry with a second wife, Bertha, and their son born 1855.
+    const result = await mergeWarnings({
+      projectPath: dir,
+      candidateGedcomx: {
+        persons: [
+          { id: "C1", gender: "Male", names: [{ id: "N1", given: "Henry", surname: "Ward" }] },
+          { id: "C2", gender: "Female", names: [{ id: "N2", given: "Bertha", surname: "Clark" }] },
+          { id: "C3", gender: "Male", names: [{ id: "N3", given: "Xavier", surname: "Ward" }], facts: [birth("XB", "1855")] },
+        ],
+        relationships: [
+          { id: "CR1", type: "Couple", person1: "C1", person2: "C2" },
+          { id: "CR2", type: "ParentChild", parent: "C1", child: "C3" },
+          { id: "CR3", type: "ParentChild", parent: "C2", child: "C3" },
+        ],
+        sources: [],
+      },
+      merges: [["H", "C1"]],
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+    const hit = result.warnings.filter((w) => w.issueType === "hasInterleavedChildrenIgnoreSimilarSpouses");
+    expect(hit).toHaveLength(1);
+    expect(hit[0].severity).toBe("implausible");
+    expect(result.warnings.filter((w) => w.severity === "contradiction")).toEqual([]);
+  });
+
   it("candidate with one paired and one unpaired persona returns ok: true", async () => {
     await writeProject({
       persons: [
@@ -681,5 +732,132 @@ describe("mergeWarnings sanitize parity", () => {
     expect(result.sanitizeWarnings.some((w: string) => w.includes("person-level source"))).toBe(true);
     // The legacy preferred:false on the on-disk tree is healed in memory too.
     expect(result.sanitizeWarnings.some((w: string) => w.includes("'preferred: false'"))).toBe(true);
+  });
+});
+
+// ────────────────────────────────────────────────────────────────────
+// a record_read answer as candidateGedcomx, full or compacted (#4415)
+// ────────────────────────────────────────────────────────────────────
+
+describe("merge_warnings takes a record_read answer, full or compacted", () => {
+  let dir: string;
+  beforeEach(async () => {
+    dir = await mkdtemp(join(tmpdir(), "merge-warnings-record-read-"));
+    await writeFile(join(dir, "research.json"), JSON.stringify(minimalResearch));
+  });
+  afterEach(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+
+  const writeTree = (tree: unknown) =>
+    writeFile(join(dir, "tree.gedcomx.json"), JSON.stringify(tree));
+  const compacted = (r: unknown, id: string) =>
+    compactRecordReadAnswer(structuredClone(r) as RecordReadResult, id);
+  const warningKeys = (ws: Array<Record<string, unknown>>) =>
+    ws
+      .map((w) => JSON.stringify([w.issueType, w.personId, w.relatedPersonId, w.severity, w.mobRole]))
+      .sort();
+
+  it("a compacted Tallman answer gives the same warnings as the full one, and both are ok", async () => {
+    // Orrin Tallman dies in 1930 on the record; the tree has him dead in 1900.
+    await writeTree({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "Orrin", surname: "Tallman" }],
+          facts: [
+            { id: "F1", type: "Birth", date: "1878", standard_date: "1878" },
+            { id: "F2", type: "Death", date: "1900", standard_date: "1900" },
+          ],
+        },
+      ],
+      relationships: [],
+      sources: [],
+    });
+    const f = loadRecordReadFixture("record-read-tallman-2v7m-6qm.json");
+    const merges: Array<[string, string]> = [["I1", "p_15021461819"]];
+
+    const full: any = await mergeWarnings({ projectPath: dir, candidateGedcomx: structuredClone(f.response), merges });
+    const small: any = await mergeWarnings({
+      projectPath: dir,
+      candidateGedcomx: compacted(f.response, f.recordId),
+      merges,
+    });
+    expect(full.ok, JSON.stringify(full.errors)).toBe(true);
+    expect(small.ok, JSON.stringify(small.errors)).toBe(true);
+    expect(full.warnings.length).toBeGreaterThan(0);
+    expect(warningKeys(small.warnings)).toEqual(warningKeys(full.warnings));
+  });
+
+  it("hasSameCensus fires on a compacted census answer through the source rebuilt from its citation", async () => {
+    await writeTree({
+      persons: [
+        {
+          id: "I1",
+          gender: "Male",
+          names: [{ id: "N1", given: "John", surname: "Becker" }],
+          facts: [{ id: "F1", type: "Census", date: "1900", standard_date: "1900", sources: [{ ref: "S9" }] }],
+        },
+      ],
+      relationships: [],
+      sources: [{ id: "S9", title: "United States, Census, 1900" }],
+    });
+    const f = loadRecordReadFixture("record-read-becker-1900-mm8c-43q.json");
+    const result: any = await mergeWarnings({
+      projectPath: dir,
+      candidateGedcomx: compacted(f.response, f.recordId),
+      merges: [["I1", "p_1"]],
+    });
+    expect(result.ok, JSON.stringify(result.errors)).toBe(true);
+    expect(result.warnings.map((w: any) => w.issueType)).toContain("hasSameCensus");
+    expect(result.sanitizeWarnings.some((w: string) => w.includes("built source S1"))).toBe(true);
+  });
+
+  it("a compacted 150-persona answer with stubs and omissions is ok", async () => {
+    await writeTree({
+      persons: [{ id: "I1", gender: "Female", names: [{ id: "N1", given: "Given0", surname: "Householder" }] }],
+      relationships: [],
+      sources: [],
+    });
+    const answer = compacted(syntheticHousehold(150), "AB00-XYZ");
+    expect(answer.personsOmitted).toBeGreaterThan(0);
+    const result: any = await mergeWarnings({ projectPath: dir, candidateGedcomx: answer, merges: [["I1", "p_1000"]] });
+    expect(result.ok, JSON.stringify(result.errors)).toBe(true);
+  });
+
+  it("a live-shaped answer with a Sibling relationship is ok, and the drop is reported", async () => {
+    await writeTree({
+      persons: [{ id: "I1", gender: "Male", names: [{ id: "N1", given: "A", surname: "B" }] }],
+      relationships: [],
+      sources: [],
+    });
+    const answer = {
+      persons: [
+        { id: "a", names: [{ given: "A", surname: "B" }], facts: [{ type: "Birth", date: "1850" }] },
+        { id: "b", gender: "Female", names: [{ given: "C" }] },
+      ],
+      relationships: [
+        { id: "r1", type: "http://familysearch.org/types/relationships/Sibling", person1: "a", person2: "b" },
+      ],
+      sources: [{ id: "sd_da1", resource_type: "DigitalArtifact", url: "https://x/ark:/61903/3:1:Q" }],
+    };
+    const result: any = await mergeWarnings({ projectPath: dir, candidateGedcomx: answer, merges: [["I1", "a"]] });
+    expect(result.ok, JSON.stringify(result.errors)).toBe(true);
+    expect(result.sanitizeWarnings.some((w: string) => w.includes("not ParentChild or Couple"))).toBe(true);
+    expect(result.sanitizeWarnings.some((w: string) => w.includes("with no title"))).toBe(true);
+  });
+
+  it("a compacted hand-written fixture with no Record source is ok", async () => {
+    await writeTree({
+      persons: [{ id: "I1", gender: "Male", names: [{ id: "N1", given: "George", surname: "Ackerman" }] }],
+      relationships: [],
+      sources: [],
+    });
+    const f = loadRecordReadFixture("record-read-ackerman-1860-m7qz-8kd.json");
+    const answer = compacted(f.response, f.recordId);
+    expect(answer.recordUrl).toBeUndefined();
+    const result: any = await mergeWarnings({ projectPath: dir, candidateGedcomx: answer, merges: [["I1", "p1"]] });
+    expect(result.ok, JSON.stringify(result.errors)).toBe(true);
   });
 });

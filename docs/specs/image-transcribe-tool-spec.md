@@ -41,8 +41,8 @@
 >    viewer) can show the scan beside its transcription.
 > 3. **Key handling stays config-only (§6.4–§6.5)** — `getOpenRouterApiKey`
 >    reads the key only from the config, never from env. Each runtime's
->    entrypoint or orchestrator fills that config: `config.json`, the `.mcpb`
->    install dialog layered over it, and bridges for e2e, the hosted sandbox
+>    entrypoint or orchestrator fills that config: `config.json`, the `.mcpb`'s
+>    settings layered over it, and bridges for e2e, the hosted sandbox
 >    and the prototype's container.
 >
 > **Phase 0 is COMPLETE — spike PR 723.**
@@ -811,6 +811,29 @@ derive it from run-log `usage.timeline` gaps**: those are per SDK message, not
 per tool call, and the figures they gave here (p90 79s, max 167s) were both
 inflated and a model generation stale.
 
+**A connector caller gets a tighter, single budget instead (self-hosted beta
+E5).** The 90+90+180=360s worst case above describes LOCAL and the worker. A
+connector-surface caller is instead held to one 180s budget
+(`CONNECTOR_TRANSCRIBE_BUDGET_MS`) that starts when the tool is entered — the
+Memories lookup, the fetch and the OCR all spend from it — chosen to leave
+room, under Claude's measured 230s per-call timeout (measured 2026-11-08), for
+the trip both ways and the staging write. Within that budget:
+one download attempt only (no fallback-URL retry), at a per-attempt timeout
+well under it (`CONNECTOR_FETCH_TIMEOUT_MS`, 30s — the download leg measures
+p50 1.9s/max 8.0s, so this is ample headroom); the OCR then gets whatever the
+budget has left, minus a fixed margin reserved for the staging write that runs
+after it returns (`CONNECTOR_STAGING_MARGIN_MS`). `runOcr`/`runFoundCheck`
+(`utils/ocr.ts`) stay principal-free either way — the connector clamp is
+computed in `image-transcribe.ts` and passed down as an ordinary `timeoutMs`,
+the same parameter `person_read`'s own ~40s memories-phase budget already uses,
+and whichever cap is tighter wins. **One known, accepted gap:** when
+`projectPath` and `imageId`/`ark` are given, `imageGroupPlace`'s lookup (the
+staged page's coverage place) is awaited after the OCR, inside the staging
+block, with its own default ~20s worst case (two sequential FamilySearch
+group-service calls) not drawn from this budget — so the true worst case on
+that one narrow path is "the 180s budget, plus up to ~20s of staging-time place
+lookup," not a hard 180s ceiling on every path.
+
 ### 5.8 Image cap (hard, shared, persisted)
 
 An agent can enter an unbounded page-by-page hunt through a browse-only image
@@ -892,12 +915,23 @@ alternative under-counts every delegated read; the refusal says "this server ses
 for that case, never "this project", because it can be refusing pages another project
 read.
 
-**Known limitation — header-less http requests share a bucket.** A request with no
-`X-Genealogy-Project-Id` header binds an *unbound* store (no `projectId`, and its
-I/O refuses), so its reads count in memory under the no-project scope, as on the
-file backend: two header-less patrons can advance one another's count. They never
-pool a bound patron's count — reads recorded under a `projectId` are excluded from
-that union. Accepted: such a session already fails every persistence call.
+**Per-user scope for a connector call naming no project.** A
+connector request that names no `projectPath` binds an *unbound* store (no
+`projectId`, and its I/O refuses), so its reads count in memory, as on the file
+backend — but `checkImageBrowseCap` also takes the `Principal`, and scopes that
+in-memory count to the connector caller's own id (`connectorUserId`,
+`utils/user-limits.ts`) rather than to one bucket shared by every connector
+patron. Two connector users calling with no project each get their own 20;
+neither advances the other's count, and the refusal for this case says the
+images were read "without a project under your account" rather than "in this
+server session" — the old wording, kept only for the LOCAL/file-backend case
+below, is misleading on a process many users share. A worker request always
+carries a project (`X-Genealogy-Project-Id`), so it never reaches this scope at
+all — it is counted against that project's log like any other bound call. The
+LOCAL/file-backend process (the desktop `.mcpb`, both harnesses) has exactly
+one user per process, so its no-project reads keep pooling as before, under
+"this server session" wording — there is only ever one caller to protect from
+there.
 
 **The trade, stated.** Because the count is persisted, a legitimate 21st page in
 the same project is refused **permanently** — a restart no longer resets it. The
@@ -1173,8 +1207,9 @@ flow. Storage follows the existing per-user config convention exactly:
   `0o600`. Nothing in the engine writes that file.
 - The FS `login` analogy is **imperfect**: FS login is a browser OAuth
   round-trip the tool drives itself; an API key is a static paste the tool
-  cannot obtain on its own. The user sets the key in the `.mcpb`'s install
-  dialog (the extension's **OpenRouter API key** field, §6.5) or directly in
+  cannot obtain on its own. The user sets the key in the `.mcpb`'s settings
+  (the **OpenRouter API key** field on the extension's **Configure** page in
+  Claude Desktop, §6.5) or directly in
   `~/.familysearch-mcp/config.json` as the `openRouterApiKey` field. It
   never passes through a tool-call argument, so it never appears in the
   session transcript. `openRouterModel` is set in `config.json` only. There is no
@@ -1198,7 +1233,7 @@ as environment and not as a file baked into an image:
 
 | Runtime | Server runs | How `openRouterApiKey` reaches `config.json` |
 |---|---|---|
-| **Cowork desktop** | host (`.mcpb`) | the user enters it in the extension's install dialog (`user_config.openrouter_api_key` in `manifest.json`), which Claude Desktop passes as `GENEALOGY_OPENROUTER_API_KEY` and `src/index.ts` layers over `~/.familysearch-mcp/config.json` at start-up (`installConfigFromEnv`); or edits `config.json` directly. The dialog's key wins when both are set |
+| **Cowork desktop** | host (`.mcpb`) | the user enters it on the extension's Configure page in Claude Desktop (`user_config.openrouter_api_key` in `manifest.json`), which Claude Desktop passes as `GENEALOGY_OPENROUTER_API_KEY` and `src/index.ts` layers over `~/.familysearch-mcp/config.json` at start-up (`installConfigFromEnv`); or edits `config.json` directly. The extension's key wins when both are set |
 | **Hosted web** | inside the E2B sandbox | Fly secret `OPENROUTER_API_KEY` → `config.py` `Settings.openrouter_api_key` → a `write_config(sandbox, {openRouterApiKey})` sibling of `fs_oauth.write_tokens`, written into the sandbox's `~/.familysearch-mcp/config.json` at session create (`sessions.py`) |
 | **Search-agent prototype** | a container (`build/http.js`, the shared compose `tools` service) | compose passes the stack's `OPENROUTER_API_KEY` to the service; the entrypoint layers it and the other per-user keys `PER_USER_ENV` names over the config it starts from (`src/hosted-config-env.ts`) before building the server |
 | **e2e harness** | node subprocess of the harness | the harness reads `OPENROUTER_API_KEY` from `eval/.env` and stages `openRouterApiKey` into the `~/.familysearch-mcp/config.json` the subprocess reads (consistent with e2e already depending on the developer's real `tokens.json` there) |
@@ -1212,7 +1247,7 @@ was claimed here until 2026-09-20, is the stronger sentence that the server make
 `GENEALOGY_OPENROUTER_API_KEY`, and a shipped tool
 (`research-append.ts`) reads two debug-hold variables, which `http.ts` also reads
 only to name them at start-up (`research-append-tool-spec.md` §11.5). The bridge is at the
-**entrypoint** for a container and for the desktop install dialog, and at the
+**entrypoint** for a container and for the desktop extension's settings, and at the
 **orchestrator** for a sandbox; all are outside the tool, which is the line that
 matters. The hosted-path
 `fs_oauth.write_tokens` (`TOKENS_PATH = {HOME}/.familysearch-mcp/tokens.json`,

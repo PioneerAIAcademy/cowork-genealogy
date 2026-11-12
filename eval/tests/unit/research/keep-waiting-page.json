@@ -2,9 +2,9 @@
   "test": {
     "id": "ut_research_wp1",
     "skill": "research",
-    "name": "A read page of a held record is kept with one call before the next step",
+    "name": "A read page of a held record goes to record-structurer in one spawn before the next step",
     "type": "positive",
-    "description": "`flynn-read-page-waiting` has a read page of src_003 staged, which `project_context` lists under `waitingPages`. The router must keep it with extraction_append({ attachWaitingPages: true }) from the main thread, then route as usual.",
+    "description": "`flynn-read-page-waiting` has a read page of src_003 staged, which `project_context` lists under `waitingPages`. The router must hand it to record-structurer in one spawn, with projectPath, and not keep it itself, then route as usual.",
     "tags": [
       "keeps-waiting-page",
       "step-mode"
@@ -58,9 +58,10 @@
   },
   "judge_reads_files": true,
   "judge_context": [
-    "`extraction_append({ projectPath, attachWaitingPages: true })` comes first, from the main thread. A deterministic validator (test_keeps_waiting_page) checks the call and the kept text; do not re-grade those.",
-    "The page names Michael Flynn, whom the project does not hold. Keeping a page writes no assertion, so leaving him out is correct. Do not mark it as a missed fact.",
-    "Agents are stubbed here: a step routed after the page is kept changes nothing, and that is not a failure.",
+    "The router spawns record-structurer once for the waiting page, with projectPath, and does not call extraction_append({ attachWaitingPages: true }) itself. A deterministic validator (test_keeps_waiting_page) checks the spawn and the call; do not re-grade those.",
+    "record-structurer is stubbed here, so the page is not kept in this test and src_003 still has no transcription afterwards. That is not a failure.",
+    "The page names Michael Flynn, whom the project does not hold. Leaving him out is correct. Do not mark it as a missed fact.",
+    "Agents are stubbed here: a step routed after the page pass changes nothing, and that is not a failure.",
     "The turn ends with one \"Continue with …?\" line for whatever comes next."
   ]
 }
